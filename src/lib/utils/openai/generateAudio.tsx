@@ -6,14 +6,9 @@ import { handleError } from "../handleError";
 interface GenerateAudioParams {
   messages: Message[];
   role: MessageRole;
-  taskId?: string | null;
 }
 
-export async function generateAudio({
-  messages,
-  role,
-  taskId,
-}: GenerateAudioParams) {
+export async function generateAudio({ messages, role }: GenerateAudioParams) {
   try {
     const response = await openAiClient.chat.completions.create({
       model: "gpt-4o-audio-preview",
@@ -32,8 +27,6 @@ export async function generateAudio({
       throw new Error("Audio Generator API returned no audio data.");
     }
 
-    console.log("\x1b[36m%s\x1b[0m", "generateAudio taskId: ", taskId);
-
     const taskUsage = response.usage?.total_tokens;
     const taskData: Message = {
       whois: role,
@@ -50,7 +43,7 @@ export async function generateAudio({
       ],
     };
 
-    return JSON.stringify({ taskData, taskUsage });
+    return JSON.stringify({ taskData, taskUsage, generatedAudio: true });
   } catch (error) {
     handleError({ error, source: "generateAudio" });
   }

@@ -1,5 +1,13 @@
 import { BillingCycle, PlanName } from "@/types/PlanData.d";
 
+export type PlanLimits = Record<PlanName, { images: number; audio: number }>;
+
+export const PLAN_LIMITS: PlanLimits = {
+  Lite: { images: 3, audio: 0 },
+  Pro: { images: 20, audio: 20 },
+  Premium: { images: -1, audio: -1 },
+};
+
 export function getExpiresOn(plan: PlanName, billing?: BillingCycle): Date {
   const currentDate = new Date();
   let expiresOn: Date = new Date();

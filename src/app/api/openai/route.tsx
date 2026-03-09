@@ -12,9 +12,50 @@ import {
   resolveAssistantRoleForPlan,
   resolveEntitlements,
 } from "@/lib/utils/resolve-entitlements";
+import User from "@/lib/database/models/user.model";
+import { checkUsageLimit } from "@/lib/utils/check-usage-limit";
+import type { OpenAIErrorType } from "@/lib/utils/openai/generateResponse";
 
 const OPENAI_RATE_LIMIT_MAX_REQUESTS = 20;
 const OPENAI_RATE_LIMIT_WINDOW_MS = 60_000;
+const LIMIT_BLOCKED_REASONS = new Set(["image_limit", "audio_limit"]);
+
+const OPENAI_ERROR_STATUS_MAP: Record<OpenAIErrorType, number> = {
+  rate_limit: 429,
+  timeout: 504,
+  service_error: 502,
+  unknown: 500,
+};
+
+const OPENAI_ERROR_MESSAGES: Record<OpenAIErrorType, string> = {
+  rate_limit: "The AI service is receiving too many requests. Please retry.",
+  timeout: "The AI service timed out. Please try again.",
+  service_error:
+    "The AI service is temporarily unavailable. Please try again shortly.",
+  unknown: "An error occurred while processing your request.",
+};
+
+interface OpenAIResponsePayload {
+  taskData?: Messages["messages"][number];
+  taskUsage?: number;
+  generatedImage?: boolean;
+  generatedAudio?: boolean;
+  blockedReason?: string;
+  errorType?: OpenAIErrorType;
+}
+
+function getBlockedMessage(taskData?: OpenAIResponsePayload["taskData"]) {
+  if (!taskData || !Array.isArray(taskData.content)) {
+    return "Generation limit reached for your current plan.";
+  }
+
+  const message = taskData.content.find(
+    (contentItem) =>
+      contentItem.type === "text" && typeof contentItem.text === "string",
+  )?.text;
+
+  return message ?? "Generation limit reached for your current plan.";
+}
 
 export async function POST(req: Request): Promise<NextResponse> {
   try {
@@ -68,6 +109,51 @@ export async function POST(req: Request): Promise<NextResponse> {
     }
 
     const entitlements = resolveEntitlements(userData?.plan?.name);
+    const imageUsage = checkUsageLimit({
+      planName: userData?.plan?.name,
+      currentCount: userData?.plan?.imageGenerations,
+      limitType: "images",
+      usagePeriodStart: userData?.plan?.usagePeriodStart,
+    });
+    const audioUsage = checkUsageLimit({
+      planName: userData?.plan?.name,
+      currentCount: userData?.plan?.audioGenerations,
+      limitType: "audio",
+      usagePeriodStart: userData?.plan?.usagePeriodStart,
+    });
+
+    if (imageUsage.didReset || audioUsage.didReset) {
+      await User.findOneAndUpdate(
+        { clerkId: userId },
+        {
+          $set: {
+            "plan.imageGenerations": 0,
+            "plan.audioGenerations": 0,
+            "plan.usagePeriodStart": new Date(),
+          },
+        },
+        {
+          strict: true,
+          upsert: false,
+        },
+      );
+    }
+
+    const imageLimitReached =
+      entitlements.supportsImageGeneration && !imageUsage.allowed;
+    const audioLimitReached =
+      entitlements.supportsAudioGeneration && !audioUsage.allowed;
+
+    const resolvedEntitlements = {
+      ...entitlements,
+      supportsImageGeneration:
+        entitlements.supportsImageGeneration && !imageLimitReached,
+      supportsAudioGeneration:
+        entitlements.supportsAudioGeneration && !audioLimitReached,
+      imageLimitReached,
+      audioLimitReached,
+    };
+
     const selectedRole = resolveAssistantRoleForPlan({
       assistantRoleId,
       planName: userData?.plan?.name,
@@ -100,18 +186,68 @@ export async function POST(req: Request): Promise<NextResponse> {
     const aiResponse = await generateResponse({
       messages,
       taskId,
+      userId,
       assistantRoleId: selectedRole.id,
-      entitlements,
+      entitlements: resolvedEntitlements,
     });
-    const { taskData, taskUsage } = JSON.parse(aiResponse as string);
+    const aiPayload = JSON.parse(aiResponse as string) as OpenAIResponsePayload;
 
-    console.log("Generated Task Data:", taskData.content);
+    if (aiPayload.errorType) {
+      return NextResponse.json(
+        { error: OPENAI_ERROR_MESSAGES[aiPayload.errorType] },
+        { status: OPENAI_ERROR_STATUS_MAP[aiPayload.errorType] },
+      );
+    }
+
+    if (
+      aiPayload.blockedReason &&
+      LIMIT_BLOCKED_REASONS.has(aiPayload.blockedReason)
+    ) {
+      return NextResponse.json(
+        { error: getBlockedMessage(aiPayload.taskData) },
+        { status: 403 },
+      );
+    }
+
+    const { taskData, taskUsage, generatedImage, generatedAudio } = aiPayload;
+
+    if (!taskData) {
+      throw new Error("AI response payload is missing task data.");
+    }
 
     await updateTask(taskId, {
       messages: [...messages, taskData],
       usage: taskUsage || 0,
       assistantRoleId: selectedRole.id,
     } as UpdateTaskParams);
+
+    const usageIncrementFields: Record<string, number> = {};
+    if (generatedImage) {
+      usageIncrementFields["plan.imageGenerations"] = 1;
+    }
+    if (generatedAudio) {
+      usageIncrementFields["plan.audioGenerations"] = 1;
+    }
+
+    if (Object.keys(usageIncrementFields).length > 0) {
+      const counterUpdate: {
+        $inc: Record<string, number>;
+        $set?: Record<string, Date>;
+      } = {
+        $inc: usageIncrementFields,
+      };
+
+      if (!userData?.plan?.usagePeriodStart) {
+        counterUpdate.$set = {
+          "plan.usagePeriodStart": new Date(),
+        };
+      }
+
+      await User.findOneAndUpdate({ clerkId: userId }, counterUpdate, {
+        strict: true,
+        upsert: false,
+      });
+    }
 
     return NextResponse.json({
       taskData,
@@ -122,8 +258,8 @@ export async function POST(req: Request): Promise<NextResponse> {
     console.error("OpenAI route error:", error);
 
     return NextResponse.json(
-      { error: "An error occurred while processing your request." },
-      { status: 500 },
+      { error: OPENAI_ERROR_MESSAGES.unknown },
+      { status: OPENAI_ERROR_STATUS_MAP.unknown },
     );
   }
 }

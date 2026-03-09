@@ -1,14 +1,15 @@
 import { openAiClient } from "@/constants/openai";
 import { ContentItem, Message, MessageRole } from "@/types";
 import { handleError } from "../handleError";
-// import axios, { AxiosError } from "axios";
-
 import sharp from "sharp";
+import uploadFileToAWS from "@/lib/utils/aws/uploadFileToAWS";
+import { generateString } from "@/lib/utils/generateString";
 
 interface GenerateImageParams {
   prompt: string;
   role: MessageRole;
   taskId: string;
+  userId: string;
 }
 
 async function convertToPng(imageUrl: string): Promise<Buffer | undefined> {
@@ -28,6 +29,7 @@ export async function generateImage({
   prompt,
   role,
   taskId,
+  userId,
 }: GenerateImageParams) {
   try {
     const response = await openAiClient.images.generate({
@@ -47,54 +49,19 @@ export async function generateImage({
       throw new Error("Image URL is undefined");
     }
 
-    console.log("\x1b[33m%s\x1b[0m", "generateImage imageUrl: ", imageUrl);
-
     const imgBuffer = await convertToPng(imageUrl);
 
     if (!imgBuffer) {
       throw new Error("Failed to convert image to PNG");
     }
 
-    console.log("taskID: ", taskId);
-    /*  
-    try {
-      const awsResp = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/aws`,
-        {
-          taskId,
-          imgBuffer: imgBuffer.toString("base64"),
-        },
-        {
-          headers: { "Content-Type": "application/json" },
-        }
-      );
-    
-      console.log("\x1b[33m%s\x1b[0m", "generateImage awsData: ", awsResp.data);
-    
-      if (!awsResp.status || awsResp.status !== 200) {
-        throw new Error("Failed to upload image to AWS");
-      }
-    
-      const awsData = awsResp.data;
-    } catch (error: unknown) { 
-      console.error("Axios Error:", error);
-    
-      if (error instanceof AxiosError) { 
-        const axiosError = error as AxiosError;
-        console.error(
-          "Axios Error Response:",
-          axiosError.response ? JSON.stringify(axiosError.response.data, null, 2) : "No response data"
-        );
-        console.error("Axios Request Error:", axiosError.request ? "Request failed" : "No request issue");
-      } else {
-        console.error("Unexpected Error:", (error as Error).message);
-      }
-    
-      throw new Error("AWS request failed");
-    }
-
-
- */
+    const fileName = `${taskId}_image_${generateString()}.png`;
+    const imageS3Url = await uploadFileToAWS(
+      imgBuffer,
+      fileName,
+      "image/png",
+      `${userId}/images`,
+    );
 
     const taskData: Message = {
       whois: role,
@@ -106,12 +73,12 @@ export async function generateImage({
         },
         {
           type: "image_url",
-          image_url: { url: "url" in respData ? respData.url : null },
+          image_url: { url: imageS3Url },
         },
       ] as ContentItem[],
     };
 
-    return JSON.stringify({ taskData });
+    return JSON.stringify({ taskData, generatedImage: true });
   } catch (error) {
     handleError({ error, source: "generateImage" });
   }

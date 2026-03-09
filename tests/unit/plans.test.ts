@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { getExpiresOn, getPlanIcon } from "@/constants/plans";
+import { getExpiresOn, getPlanIcon, PLAN_LIMITS } from "@/constants/plans";
 
 describe("plans constants", () => {
   beforeEach(() => {
@@ -42,5 +42,11 @@ describe("plans constants", () => {
     expect(() => getPlanIcon("InvalidPlan" as never)).toThrow(
       "No plan found with the name: InvalidPlan",
     );
+  });
+
+  it("defines image and audio limits for each plan", () => {
+    expect(PLAN_LIMITS.Lite).toEqual({ images: 3, audio: 0 });
+    expect(PLAN_LIMITS.Pro).toEqual({ images: 20, audio: 20 });
+    expect(PLAN_LIMITS.Premium).toEqual({ images: -1, audio: -1 });
   });
 });

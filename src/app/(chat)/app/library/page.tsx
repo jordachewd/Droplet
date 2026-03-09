@@ -8,24 +8,8 @@ import {
 import PageWrapper from "@/components/layout/page-wrapper";
 import PageHead from "@/components/layout/page-head";
 import { getRecentTasksByUserId } from "@/lib/utils/task-queries";
+import { mapDateToLabel } from "@/lib/utils/map-date-to-label";
 import { ConversationListItem } from "@/types/AssistantRoleData.d";
-
-function mapDateToLabel(isoDate: string): string {
-  const diffMs = Date.now() - new Date(isoDate).getTime();
-  const diffMinutes = Math.max(1, Math.floor(diffMs / 60000));
-
-  if (diffMinutes < 60) {
-    return `${diffMinutes} min ago`;
-  }
-
-  const diffHours = Math.floor(diffMinutes / 60);
-  if (diffHours < 24) {
-    return `${diffHours} h ago`;
-  }
-
-  const diffDays = Math.floor(diffHours / 24);
-  return `${diffDays} d ago`;
-}
 
 export default async function LibraryPage() {
   const { userId } = await auth();

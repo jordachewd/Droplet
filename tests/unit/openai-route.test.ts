@@ -5,6 +5,7 @@ import { generateTitle } from "@/lib/utils/openai/generateTitle";
 import { createTask, updateTask } from "@/lib/actions/task.actions";
 import { getUserById } from "@/lib/actions/user.actions";
 import { auth } from "@clerk/nextjs/server";
+import User from "@/lib/database/models/user.model";
 
 vi.mock("@/lib/utils/openai/generateResponse", () => ({
   generateResponse: vi.fn(),
@@ -27,6 +28,12 @@ vi.mock("@/lib/actions/user.actions", () => ({
   getUserById: vi.fn(),
 }));
 
+vi.mock("@/lib/database/models/user.model", () => ({
+  default: {
+    findOneAndUpdate: vi.fn(),
+  },
+}));
+
 function buildRequest(payload: unknown): Request {
   return new Request("http://localhost:3000/api/openai", {
     method: "POST",
@@ -40,7 +47,14 @@ describe("POST /api/openai", () => {
     vi.clearAllMocks();
     vi.mocked(auth).mockResolvedValue({ userId: "user_123" } as never);
     vi.mocked(getUserById).mockResolvedValue({
-      plan: { expiresOn: new Date(Date.now() + 86400000) },
+      clerkId: "user_123",
+      plan: {
+        name: "Lite",
+        expiresOn: new Date(Date.now() + 86400000),
+        imageGenerations: 0,
+        audioGenerations: 0,
+        usagePeriodStart: new Date(),
+      },
     } as never);
     vi.mocked(generateTitle).mockResolvedValue(
       JSON.stringify({ title: "Generated title", usage: 7 }),
@@ -54,9 +68,12 @@ describe("POST /api/openai", () => {
           content: [{ type: "text", text: "Hello from AI" }],
         },
         taskUsage: 11,
+        generatedImage: false,
+        generatedAudio: false,
       }),
     );
     vi.mocked(updateTask).mockResolvedValue({} as never);
+    vi.mocked(User.findOneAndUpdate).mockResolvedValue({} as never);
   });
 
   afterEach(() => {
@@ -109,9 +126,12 @@ describe("POST /api/openai", () => {
     expect(generateResponse).toHaveBeenCalledWith({
       messages: [{ role: "user", whois: "user", content: "new chat" }],
       taskId: "task_123",
+      userId: "user_123",
       assistantRoleId: "strategist",
       entitlements: expect.objectContaining({
         planName: "Lite",
+        imageLimitReached: false,
+        audioLimitReached: false,
       }),
     });
     expect(updateTask).toHaveBeenCalledWith("task_123", {
@@ -146,6 +166,7 @@ describe("POST /api/openai", () => {
     expect(generateResponse).toHaveBeenCalledWith({
       messages: [{ role: "user", whois: "user", content: "continue" }],
       taskId: "existing-task",
+      userId: "user_123",
       assistantRoleId: "strategist",
       entitlements: expect.objectContaining({
         planName: "Lite",
@@ -194,6 +215,216 @@ describe("POST /api/openai", () => {
     expect(response.status).toBe(500);
     expect(payload.error).toBeTypeOf("string");
     expect(updateTask).not.toHaveBeenCalled();
+  });
+
+  it("maps OpenAI rate_limit error type to HTTP 429", async () => {
+    vi.mocked(generateResponse).mockResolvedValue(
+      JSON.stringify({ errorType: "rate_limit" }),
+    );
+
+    const req = buildRequest({
+      taskId: "existing-task",
+      messages: [{ role: "user", whois: "user", content: "continue" }],
+    });
+
+    const response = await POST(req);
+    const payload = await response.json();
+
+    expect(response.status).toBe(429);
+    expect(payload.error).toContain("too many requests");
+  });
+
+  it("maps OpenAI timeout error type to HTTP 504", async () => {
+    vi.mocked(generateResponse).mockResolvedValue(
+      JSON.stringify({ errorType: "timeout" }),
+    );
+
+    const req = buildRequest({
+      taskId: "existing-task",
+      messages: [{ role: "user", whois: "user", content: "continue" }],
+    });
+
+    const response = await POST(req);
+    const payload = await response.json();
+
+    expect(response.status).toBe(504);
+    expect(payload.error).toContain("timed out");
+  });
+
+  it("maps OpenAI service_error type to HTTP 502", async () => {
+    vi.mocked(generateResponse).mockResolvedValue(
+      JSON.stringify({ errorType: "service_error" }),
+    );
+
+    const req = buildRequest({
+      taskId: "existing-task",
+      messages: [{ role: "user", whois: "user", content: "continue" }],
+    });
+
+    const response = await POST(req);
+    const payload = await response.json();
+
+    expect(response.status).toBe(502);
+    expect(payload.error).toContain("temporarily unavailable");
+  });
+
+  it("returns 403 when image generation is blocked by usage limit", async () => {
+    vi.mocked(getUserById).mockResolvedValue({
+      clerkId: "user_123",
+      plan: {
+        name: "Lite",
+        expiresOn: new Date(Date.now() + 86400000),
+        imageGenerations: 3,
+        usagePeriodStart: new Date(),
+      },
+    } as never);
+    vi.mocked(generateResponse).mockResolvedValue(
+      JSON.stringify({
+        blockedReason: "image_limit",
+        taskData: {
+          whois: "assistant",
+          role: "assistant",
+          content: [
+            {
+              type: "text",
+              text: "Image generation limit reached for your current plan.",
+            },
+          ],
+        },
+      }),
+    );
+
+    const req = buildRequest({
+      taskId: "existing-task",
+      messages: [{ role: "user", whois: "user", content: "generate image" }],
+    });
+
+    const response = await POST(req);
+    const payload = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(payload.error).toContain("Image generation limit reached");
+    expect(updateTask).not.toHaveBeenCalled();
+  });
+
+  it("returns 403 when audio generation is blocked by usage limit", async () => {
+    vi.mocked(getUserById).mockResolvedValue({
+      clerkId: "user_123",
+      plan: {
+        name: "Pro",
+        expiresOn: new Date(Date.now() + 86400000),
+        audioGenerations: 20,
+        usagePeriodStart: new Date(),
+      },
+    } as never);
+    vi.mocked(generateResponse).mockResolvedValue(
+      JSON.stringify({
+        blockedReason: "audio_limit",
+        taskData: {
+          whois: "assistant",
+          role: "assistant",
+          content: [
+            {
+              type: "text",
+              text: "Audio generation limit reached for your current plan.",
+            },
+          ],
+        },
+      }),
+    );
+
+    const req = buildRequest({
+      taskId: "existing-task",
+      assistantRoleId: "teacher",
+      messages: [{ role: "user", whois: "user", content: "generate audio" }],
+    });
+
+    const response = await POST(req);
+    const payload = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(payload.error).toContain("Audio generation limit reached");
+    expect(updateTask).not.toHaveBeenCalled();
+  });
+
+  it("increments image generation counter after a successful image response", async () => {
+    vi.mocked(generateResponse).mockResolvedValue(
+      JSON.stringify({
+        taskData: {
+          whois: "assistant",
+          role: "assistant",
+          content: [{ type: "text", text: "Generated image output." }],
+        },
+        taskUsage: 10,
+        generatedImage: true,
+      }),
+    );
+
+    const req = buildRequest({
+      taskId: "existing-task",
+      messages: [{ role: "user", whois: "user", content: "create image" }],
+    });
+
+    const response = await POST(req);
+
+    expect(response.status).toBe(200);
+    expect(User.findOneAndUpdate).toHaveBeenCalledWith(
+      { clerkId: "user_123" },
+      {
+        $inc: {
+          "plan.imageGenerations": 1,
+        },
+      },
+      {
+        strict: true,
+        upsert: false,
+      },
+    );
+  });
+
+  it("increments audio generation counter after a successful audio response", async () => {
+    vi.mocked(getUserById).mockResolvedValue({
+      clerkId: "user_123",
+      plan: {
+        name: "Pro",
+        expiresOn: new Date(Date.now() + 86400000),
+        audioGenerations: 0,
+        usagePeriodStart: new Date(),
+      },
+    } as never);
+    vi.mocked(generateResponse).mockResolvedValue(
+      JSON.stringify({
+        taskData: {
+          whois: "assistant",
+          role: "assistant",
+          content: [{ type: "text", text: "Generated audio output." }],
+        },
+        taskUsage: 9,
+        generatedAudio: true,
+      }),
+    );
+
+    const req = buildRequest({
+      taskId: "existing-task",
+      assistantRoleId: "teacher",
+      messages: [{ role: "user", whois: "user", content: "create audio" }],
+    });
+
+    const response = await POST(req);
+
+    expect(response.status).toBe(200);
+    expect(User.findOneAndUpdate).toHaveBeenCalledWith(
+      { clerkId: "user_123" },
+      {
+        $inc: {
+          "plan.audioGenerations": 1,
+        },
+      },
+      {
+        strict: true,
+        upsert: false,
+      },
+    );
   });
 
   it("returns 500 when response generation throws", async () => {

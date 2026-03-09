@@ -11,6 +11,8 @@ export interface Entitlements {
   allowedRoleIds: AssistantRoleId[];
   supportsImageGeneration: boolean;
   supportsAudioGeneration: boolean;
+  imageLimitReached: boolean;
+  audioLimitReached: boolean;
 }
 
 export function resolveEntitlements(planName?: PlanName | null): Entitlements {
@@ -22,6 +24,8 @@ export function resolveEntitlements(planName?: PlanName | null): Entitlements {
       allowedRoleIds: ASSISTANT_ROLES.map((role) => role.id),
       supportsImageGeneration: true,
       supportsAudioGeneration: true,
+      imageLimitReached: false,
+      audioLimitReached: false,
     };
   }
 
@@ -31,6 +35,8 @@ export function resolveEntitlements(planName?: PlanName | null): Entitlements {
       allowedRoleIds: ASSISTANT_ROLES.map((role) => role.id),
       supportsImageGeneration: true,
       supportsAudioGeneration: true,
+      imageLimitReached: false,
+      audioLimitReached: false,
     };
   }
 
@@ -45,6 +51,8 @@ export function resolveEntitlements(planName?: PlanName | null): Entitlements {
     ],
     supportsImageGeneration: true,
     supportsAudioGeneration: false,
+    imageLimitReached: false,
+    audioLimitReached: false,
   };
 }
 

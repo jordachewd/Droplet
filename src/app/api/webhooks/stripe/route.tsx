@@ -176,6 +176,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           expiresOn: theExpireDate,
           amount: theAmount,
           stripeId: id,
+          imageGenerations: 0,
+          audioGenerations: 0,
+          usagePeriodStart: new Date(),
         } as PlanData,
       };
 

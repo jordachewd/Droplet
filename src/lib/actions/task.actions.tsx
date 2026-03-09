@@ -63,3 +63,41 @@ export async function updateTask(taskId: string, task: UpdateTaskParams) {
     handleError({ error, source: "updateTask" });
   }
 }
+
+// DELETE TASK
+export async function deleteTask(taskId: string) {
+  try {
+    const { userId } = await auth();
+    if (!userId) {
+      return serializeForClient({
+        message: "Unauthorized",
+        status: 401,
+        source: "deleteTask",
+      });
+    }
+
+    await connectToDatabase();
+
+    const deletedTask = await Task.findOneAndDelete({ _id: taskId, userId });
+
+    if (!deletedTask) {
+      return serializeForClient({
+        message: "Task not found or not owned by user",
+        status: 404,
+        source: "deleteTask",
+      });
+    }
+
+    return serializeForClient({
+      message: "Task deleted successfully",
+      status: 200,
+      source: "deleteTask",
+    });
+  } catch (error) {
+    return serializeForClient({
+      message: error instanceof Error ? error.message : "Task deletion failed",
+      status: 500,
+      source: "deleteTask",
+    });
+  }
+}

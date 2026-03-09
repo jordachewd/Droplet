@@ -141,6 +141,9 @@ describe("POST /api/webhooks/stripe", () => {
           billing: "Monthly",
           amount: 29,
           stripeId: "cs_test_123",
+          imageGenerations: 0,
+          audioGenerations: 0,
+          usagePeriodStart: expect.any(Date),
         }),
       }),
       {

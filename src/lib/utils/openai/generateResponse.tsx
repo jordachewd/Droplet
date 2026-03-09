@@ -10,19 +10,58 @@ import {
   ChatCompletionMessageParam,
   ChatCompletionTool,
 } from "openai/resources/chat/completions.mjs";
-import { handleError } from "../handleError";
 import { Entitlements } from "@/lib/utils/resolve-entitlements";
+import { APIError } from "openai";
 
 interface GenerateResponseParams {
   messages: Message[];
   taskId: string;
+  userId: string;
   assistantRoleId?: string | null;
   entitlements: Entitlements;
+}
+
+export type OpenAIErrorType =
+  | "rate_limit"
+  | "timeout"
+  | "service_error"
+  | "unknown";
+
+type BlockedReason =
+  | "image_limit"
+  | "audio_limit"
+  | "image_disabled"
+  | "audio_disabled";
+
+function createBlockedResponsePayload({
+  message,
+  taskUsage,
+  blockedReason,
+}: {
+  message: string;
+  taskUsage: number;
+  blockedReason: BlockedReason;
+}) {
+  return JSON.stringify({
+    taskData: {
+      whois: "assistant",
+      role: "assistant",
+      content: [
+        {
+          type: "text",
+          text: message,
+        },
+      ] as ContentItem[],
+    },
+    taskUsage,
+    blockedReason,
+  });
 }
 
 export async function generateResponse({
   messages,
   taskId,
+  userId,
   assistantRoleId,
   entitlements,
 }: GenerateResponseParams) {
@@ -68,25 +107,26 @@ export async function generateResponse({
           !entitlements.supportsImageGeneration ||
           !selectedRole.supportsImage
         ) {
-          return JSON.stringify({
-            taskData: {
-              whois: "assistant",
-              role: "assistant",
-              content: [
-                {
-                  type: "text",
-                  text: "Image generation is not enabled for the current plan or role.",
-                },
-              ] as ContentItem[],
-            },
+          const isImageLimitReached =
+            entitlements.imageLimitReached && selectedRole.supportsImage;
+
+          return createBlockedResponsePayload({
+            message: isImageLimitReached
+              ? "Image generation limit reached for your current plan."
+              : "Image generation is not enabled for the current plan or role.",
             taskUsage: chatData.usage?.total_tokens ?? 0,
+            blockedReason: isImageLimitReached
+              ? "image_limit"
+              : "image_disabled",
           });
         }
 
         return await generateImage({
-          prompt: parsedArgs.prompt,
+          prompt:
+            typeof parsedArgs.prompt === "string" ? parsedArgs.prompt : "",
           role: message.role as MessageRole,
           taskId,
+          userId,
         });
       }
 
@@ -95,25 +135,23 @@ export async function generateResponse({
           !entitlements.supportsAudioGeneration ||
           !selectedRole.supportsAudio
         ) {
-          return JSON.stringify({
-            taskData: {
-              whois: "assistant",
-              role: "assistant",
-              content: [
-                {
-                  type: "text",
-                  text: "Audio generation is not enabled for the current plan or role.",
-                },
-              ] as ContentItem[],
-            },
+          const isAudioLimitReached =
+            entitlements.audioLimitReached && selectedRole.supportsAudio;
+
+          return createBlockedResponsePayload({
+            message: isAudioLimitReached
+              ? "Audio generation limit reached for your current plan."
+              : "Audio generation is not enabled for the current plan or role.",
             taskUsage: chatData.usage?.total_tokens ?? 0,
+            blockedReason: isAudioLimitReached
+              ? "audio_limit"
+              : "audio_disabled",
           });
         }
 
         return await generateAudio({
           messages: Array.isArray(parsedArgs) ? parsedArgs : [parsedArgs],
           role: message.role as MessageRole,
-          taskId,
         });
       }
     }
@@ -130,8 +168,28 @@ export async function generateResponse({
         ] as ContentItem[],
       },
       taskUsage: chatData.usage?.total_tokens ?? 0,
+      generatedImage: false,
+      generatedAudio: false,
     });
   } catch (error) {
-    handleError({ error, source: "generateResponse" });
+    if (error instanceof APIError) {
+      const status = error.status ?? 0;
+
+      if (status === 429) {
+        return JSON.stringify({ errorType: "rate_limit" as OpenAIErrorType });
+      }
+
+      if (status === 408 || status === 504) {
+        return JSON.stringify({ errorType: "timeout" as OpenAIErrorType });
+      }
+
+      if ([500, 502, 503].includes(status)) {
+        return JSON.stringify({
+          errorType: "service_error" as OpenAIErrorType,
+        });
+      }
+    }
+
+    return JSON.stringify({ errorType: "unknown" as OpenAIErrorType });
   }
 }
