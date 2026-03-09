@@ -49,11 +49,11 @@ Based on the validated direction from `NewPlan.md`:
 
 ## 2. User Roles
 
-| Role | Access |
-|---|---|
-| **Anonymous** | Landing page, pricing, roles showcase, sign-in/sign-up only |
-| **Client** | Chat (`/app`), conversation resume, library, new conversation, profile, plans, billing history |
-| **Admin** | All client access + admin dashboard (`/dashboard`) |
+| Role          | Access                                                                                         |
+| ------------- | ---------------------------------------------------------------------------------------------- |
+| **Anonymous** | Landing page, pricing, roles showcase, sign-in/sign-up only                                    |
+| **Client**    | Chat (`/app`), conversation resume, library, new conversation, profile, plans, billing history |
+| **Admin**     | All client access + admin dashboard (`/dashboard`)                                             |
 
 Role is stored in `User.role` (Mongoose) and synced to Clerk `publicMetadata.role`.
 Admin access is enforced at the proxy level (`src/proxy.tsx`) via Clerk session claims (`metadata.role === "admin"`).
@@ -64,15 +64,15 @@ Admin access is enforced at the proxy level (`src/proxy.tsx`) via Clerk session 
 
 7 predefined roles defined in `src/constants/assistant-roles.tsx`:
 
-| Role ID | Label | Category | Image | Audio |
-|---|---|---|---|---|
-| `strategist` | Strategist | Productivity | Yes | No |
-| `teacher` | Teacher | Learning | Yes | Yes |
-| `developer` | Developer | Productivity | Yes | No |
-| `creator` | Creator | Creative | Yes | Yes |
-| `best-friend` | Best Friend | Companion | No | Yes |
-| `boyfriend` | Boyfriend | Companion | No | Yes |
-| `girlfriend` | Girlfriend | Companion | No | Yes |
+| Role ID       | Label       | Category     | Image | Audio |
+| ------------- | ----------- | ------------ | ----- | ----- |
+| `strategist`  | Strategist  | Productivity | Yes   | No    |
+| `teacher`     | Teacher     | Learning     | Yes   | Yes   |
+| `developer`   | Developer   | Productivity | Yes   | No    |
+| `creator`     | Creator     | Creative     | Yes   | Yes   |
+| `best-friend` | Best Friend | Companion    | No    | Yes   |
+| `boyfriend`   | Boyfriend   | Companion    | No    | Yes   |
+| `girlfriend`  | Girlfriend  | Companion    | No    | Yes   |
 
 Each role has: `id`, `label`, `tagline`, `description`, `category`, `icon`, `starterPrompts[]`, `systemPrompt`, `supportsImage`, `supportsAudio`.
 
@@ -89,11 +89,11 @@ Each role has: `id`, `label`, `tagline`, `description`, `category`, `icon`, `sta
 
 ## 4. Subscription Plans
 
-| Plan | Price | Duration | Limits |
-|---|---|---|---|
-| **Lite** | Free | 3 days | Limited messaging, file uploads, 3 image generations, no audio |
-| **Pro** | $29 | Monthly or Yearly | Unlimited messaging/uploads, 20/mo image/audio |
-| **Premium** | $69 | Monthly or Yearly | Unlimited everything |
+| Plan        | Price | Duration          | Limits                                                         |
+| ----------- | ----- | ----------------- | -------------------------------------------------------------- |
+| **Lite**    | Free  | 3 days            | Limited messaging, file uploads, 3 image generations, no audio |
+| **Pro**     | $29   | Monthly or Yearly | Unlimited messaging/uploads, 20/mo image/audio                 |
+| **Premium** | $69   | Monthly or Yearly | Unlimited everything                                           |
 
 ### Plan Lifecycle
 
@@ -133,45 +133,45 @@ Each role has: `id`, `label`, `tagline`, `description`, `category`, `icon`, `sta
 
 ### 6.1 User
 
-| Field | Type | Required | Index | Notes |
-|---|---|---|---|---|
-| clerkId | String | Yes | unique | Clerk user ID |
-| username | String | Yes | unique | |
-| email | String | Yes | No | Not currently queried by filter |
-| role | String (enum) | Yes | No | `"client"` or `"admin"` |
-| registerAt | Date | Yes | No | |
-| plan | Embedded subdoc | Yes | No | See Plan embedded schema |
-| firstName | String | No | No | |
-| lastName | String | No | No | |
-| updatedAt | Date | No | No | |
-| userimg | String | No | No | |
+| Field      | Type            | Required | Index  | Notes                           |
+| ---------- | --------------- | -------- | ------ | ------------------------------- |
+| clerkId    | String          | Yes      | unique | Clerk user ID                   |
+| username   | String          | Yes      | unique |                                 |
+| email      | String          | Yes      | No     | Not currently queried by filter |
+| role       | String (enum)   | Yes      | No     | `"client"` or `"admin"`         |
+| registerAt | Date            | Yes      | No     |                                 |
+| plan       | Embedded subdoc | Yes      | No     | See Plan embedded schema        |
+| firstName  | String          | No       | No     |                                 |
+| lastName   | String          | No       | No     |                                 |
+| updatedAt  | Date            | No       | No     |                                 |
+| userimg    | String          | No       | No     |                                 |
 
 **Plan subdoc**: `{ id, name, amount, billing, startedOn, expiresOn, stripeId }`
 
 ### 6.2 Transaction
 
-| Field | Type | Required | Index | Notes |
-|---|---|---|---|---|
-| userId | ObjectId (ref User) | Yes | Yes | Indexed |
-| stripeId | String | Yes | unique | Stripe session ID |
-| clerkId | String | Yes | Yes | Indexed |
-| createdAt | Date | Yes | No | |
-| expiresOn | Date | Yes | No | |
-| plan | String (enum) | Yes | No | |
-| billing | String (enum) | Yes | No | |
-| amount | Number | Yes | No | |
+| Field     | Type                | Required | Index  | Notes             |
+| --------- | ------------------- | -------- | ------ | ----------------- |
+| userId    | ObjectId (ref User) | Yes      | Yes    | Indexed           |
+| stripeId  | String              | Yes      | unique | Stripe session ID |
+| clerkId   | String              | Yes      | Yes    | Indexed           |
+| createdAt | Date                | Yes      | No     |                   |
+| expiresOn | Date                | Yes      | No     |                   |
+| plan      | String (enum)       | Yes      | No     |                   |
+| billing   | String (enum)       | Yes      | No     |                   |
+| amount    | Number              | Yes      | No     |                   |
 
 ### 6.3 Task
 
-| Field | Type | Required | Index | Notes |
-|---|---|---|---|---|
-| userId | String | Yes | Yes | Indexed, compound index with updatedAt |
-| title | String | Yes | No | |
-| messages | [Message] subdoc | Yes | No | Array of messages |
-| assistantRoleId | String | Yes | Yes | Indexed, defaults to "strategist" |
-| usage | Number | Yes | No | Token usage counter |
-| createdAt | Date | No | No | |
-| updatedAt | Date | No | Yes | Indexed descending |
+| Field           | Type             | Required | Index | Notes                                  |
+| --------------- | ---------------- | -------- | ----- | -------------------------------------- |
+| userId          | String           | Yes      | Yes   | Indexed, compound index with updatedAt |
+| title           | String           | Yes      | No    |                                        |
+| messages        | [Message] subdoc | Yes      | No    | Array of messages                      |
+| assistantRoleId | String           | Yes      | Yes   | Indexed, defaults to "strategist"      |
+| usage           | Number           | Yes      | No    | Token usage counter                    |
+| createdAt       | Date             | No       | No    |                                        |
+| updatedAt       | Date             | No       | Yes   | Indexed descending                     |
 
 Compound index: `{ userId: 1, updatedAt: -1 }`
 
@@ -238,12 +238,12 @@ Compound index: `{ userId: 1, updatedAt: -1 }`
 
 ### Models Used
 
-| Model | Purpose |
-|---|---|
-| `gpt-4o` | Main chat completion |
-| `gpt-4o-mini` | Title generation |
-| `dall-e-3` | Image generation |
-| `gpt-4o-audio-preview` | Audio generation |
+| Model                  | Purpose              |
+| ---------------------- | -------------------- |
+| `gpt-4o`               | Main chat completion |
+| `gpt-4o-mini`          | Title generation     |
+| `dall-e-3`             | Image generation     |
+| `gpt-4o-audio-preview` | Audio generation     |
 
 ### System Prompts
 
@@ -313,21 +313,21 @@ Two tools: `getGeneratedImage` and `getGeneratedAudio`. Conditionally included b
 
 ### Routing
 
-| Route | Type | Description |
-|---|---|---|
-| `/` | Public | Landing page |
-| `/pricing` | Public | Pricing page |
-| `/roles` | Public | Assistant roles showcase |
-| `/sign-in` | Auth | Clerk sign-in |
-| `/sign-up` | Auth | Clerk sign-up |
-| `/app` | Protected | Chat dashboard with role picker |
-| `/app/new` | Protected | Role selection to start new conversation |
-| `/app/library` | Protected | Conversation history list |
-| `/app/roles` | Protected | In-app roles page |
-| `/app/c/[conversationId]` | Protected | Resume existing conversation |
-| `/profile` | Protected | User profile + billing |
-| `/plans` | Protected | Plan selection + checkout |
-| `/dashboard` | Admin | Admin dashboard with live stats |
+| Route                     | Type      | Description                              |
+| ------------------------- | --------- | ---------------------------------------- |
+| `/`                       | Public    | Landing page                             |
+| `/pricing`                | Public    | Pricing page                             |
+| `/roles`                  | Public    | Assistant roles showcase                 |
+| `/sign-in`                | Auth      | Clerk sign-in                            |
+| `/sign-up`                | Auth      | Clerk sign-up                            |
+| `/app`                    | Protected | Chat dashboard with role picker          |
+| `/app/new`                | Protected | Role selection to start new conversation |
+| `/app/library`            | Protected | Conversation history list                |
+| `/app/roles`              | Protected | In-app roles page                        |
+| `/app/c/[conversationId]` | Protected | Resume existing conversation             |
+| `/profile`                | Protected | User profile + billing                   |
+| `/plans`                  | Protected | Plan selection + checkout                |
+| `/dashboard`              | Admin     | Admin dashboard with live stats          |
 
 ### Design System
 
@@ -356,20 +356,20 @@ Two tools: `getGeneratedImage` and `getGeneratedAudio`. Conditionally included b
 
 ## 13. Environment Variables (Required)
 
-| Variable | Purpose |
-|---|---|
-| `MONGODB_URL` | MongoDB connection string |
-| `NEXT_PUBLIC_API_BASE_URL` | App base URL |
-| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk public key |
-| `CLERK_SECRET_KEY` | Clerk secret |
-| `CLERK_WEBHOOK_SECRET` | Clerk webhook verification |
-| `OPENAI_ORG` | OpenAI organization |
-| `OPENAI_PRJ` | OpenAI project |
-| `OPENAI_KEY` | OpenAI API key |
-| `STRIPE_SECRET_KEY` | Stripe secret |
-| `STRIPE_WEBHOOK_SECRET` | Stripe webhook verification |
-| `AWS_S3_REGION` | S3 region |
-| `AWS_S3_BUCKET` | S3 bucket name |
-| `AWS_S3_ACCESS_ID` | S3 access key |
-| `AWS_S3_SECRET_KEY` | S3 secret key |
-| `DOWNLOAD_URL_ALLOWLIST` | Additional allowed download hosts (optional) |
+| Variable                            | Purpose                                      |
+| ----------------------------------- | -------------------------------------------- |
+| `MONGODB_URL`                       | MongoDB connection string                    |
+| `NEXT_PUBLIC_API_BASE_URL`          | App base URL                                 |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk public key                             |
+| `CLERK_SECRET_KEY`                  | Clerk secret                                 |
+| `CLERK_WEBHOOK_SECRET`              | Clerk webhook verification                   |
+| `OPENAI_ORG`                        | OpenAI organization                          |
+| `OPENAI_PRJ`                        | OpenAI project                               |
+| `OPENAI_KEY`                        | OpenAI API key                               |
+| `STRIPE_SECRET_KEY`                 | Stripe secret                                |
+| `STRIPE_WEBHOOK_SECRET`             | Stripe webhook verification                  |
+| `AWS_S3_REGION`                     | S3 region                                    |
+| `AWS_S3_BUCKET`                     | S3 bucket name                               |
+| `AWS_S3_ACCESS_ID`                  | S3 access key                                |
+| `AWS_S3_SECRET_KEY`                 | S3 secret key                                |
+| `DOWNLOAD_URL_ALLOWLIST`            | Additional allowed download hosts (optional) |

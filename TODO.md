@@ -39,10 +39,12 @@ These are active security issues. Must be fixed before any feature work.
 The `getUserById` function accepts any `userId` parameter but only checks that the caller is authenticated — it does not verify the caller owns the requested resource.
 
 **What to do:**
+
 - Compare `authedUserId` against the `userId` parameter
 - If they do not match, throw `"Forbidden"`
 
 **Acceptance Criteria:**
+
 - [ ] `getUserById` returns data only when `authedUserId === userId`
 - [ ] Returns `"Forbidden"` error when a user tries to read another user's data
 - [ ] Existing unit tests (if any) updated to cover this check
@@ -61,10 +63,12 @@ The `getUserById` function accepts any `userId` parameter but only checks that t
 The `getAllTransactions` function accepts any `userId` string but does not verify the caller is requesting their own transactions.
 
 **What to do:**
+
 - Compare `authedUserId` against the `userId` parameter
 - If they do not match, throw `"Forbidden"`
 
 **Acceptance Criteria:**
+
 - [ ] `getAllTransactions` returns data only when `authedUserId === userId`
 - [ ] Throws `"Forbidden"` for cross-user access attempts
 - [ ] Add unit test: user can read own transactions
@@ -80,12 +84,14 @@ The `getAllTransactions` function accepts any `userId` string but does not verif
 **Ref:** TD-API-05
 
 **What to do:**
+
 - Remove `console.log` on line 50 (imageUrl logging)
 - Remove `console.log` on line 58 (taskId logging)
 - The `console.log` inside the commented-out block (line 72) stays commented — it will be removed when the block is removed
 - Keep `console.error` for actual errors
 
 **Acceptance Criteria:**
+
 - [ ] No `console.log` calls in active code
 - [ ] `console.error` for errors remains untouched
 - [ ] TypeScript compiles with no errors
@@ -99,10 +105,12 @@ The `getAllTransactions` function accepts any `userId` string but does not verif
 **Ref:** TD-API-05
 
 **What to do:**
+
 - Remove `console.log` on line 35 (taskId logging)
 - Keep `console.error` for actual errors
 
 **Acceptance Criteria:**
+
 - [ ] No `console.log` calls in the file
 - [ ] TypeScript compiles with no errors
 - [ ] All existing tests pass
@@ -115,10 +123,12 @@ The `getAllTransactions` function accepts any `userId` string but does not verif
 **Ref:** SEC-03
 
 **What to do:**
+
 - Remove `console.log("Generated Task Data:", taskData.content)` on line 108
 - Keep `console.error` for the catch block
 
 **Acceptance Criteria:**
+
 - [ ] No `console.log` in the file
 - [ ] TypeScript compiles with no errors
 - [ ] All existing tests pass
@@ -138,6 +148,7 @@ These tasks complete missing functionality that users expect.
 Create a server action that deletes a task by ID, verifying the authenticated user owns it.
 
 **What to do:**
+
 - Add `deleteTask(taskId: string)` exported function with `"use server"` (already at top of file)
 - Call `auth()` and verify `userId` exists
 - Call `connectToDatabase()`
@@ -145,6 +156,7 @@ Create a server action that deletes a task by ID, verifying the authenticated us
 - Return serialized success/failure response
 
 **Acceptance Criteria:**
+
 - [ ] Auth check before DB access
 - [ ] Filters by both `_id` and `userId`
 - [ ] Returns success response when task found and deleted
@@ -166,11 +178,13 @@ Create a server action that deletes a task by ID, verifying the authenticated us
 The `mapDateToLabel` function is duplicated in two files. Extract it.
 
 **What to do:**
+
 - Create `src/lib/utils/map-date-to-label.ts` with the function (use `.ts` extension — no JSX)
 - Import it in both `chat-sidebar.tsx` and `library/page.tsx`
 - Remove the local copies from both files
 
 **Acceptance Criteria:**
+
 - [ ] Single source of truth for `mapDateToLabel`
 - [ ] Both files import from `@/lib/utils/map-date-to-label`
 - [ ] No duplicate function definitions remain
@@ -188,6 +202,7 @@ The `mapDateToLabel` function is duplicated in two files. Extract it.
 Generated images use temporary OpenAI URLs that expire. They must be persisted to S3.
 
 **What to do:**
+
 - After `convertToPng`, call `uploadFileToAWS` directly (import from `@/lib/utils/aws/uploadFileToAWS`)
 - Use the S3 URL in the returned `taskData` instead of the OpenAI URL
 - Remove all commented-out axios code and its import comment
@@ -197,6 +212,7 @@ Generated images use temporary OpenAI URLs that expire. They must be persisted t
 - Update the caller in `/api/openai/route.tsx` to pass `userId` through to `generateResponse`
 
 **Acceptance Criteria:**
+
 - [ ] `generateImage` accepts `userId` parameter
 - [ ] Generated image uploaded to S3 via `uploadFileToAWS`
 - [ ] S3 URL stored in `taskData.content[].image_url.url` instead of temporary OpenAI URL
@@ -214,6 +230,7 @@ Generated images use temporary OpenAI URLs that expire. They must be persisted t
 **Ref:** TD-UI-04
 
 **What to do:**
+
 - Create a `"use client"` component
 - Show generic error message ("Something went wrong") with a "Try again" button
 - Call Next.js `reset()` on retry
@@ -221,6 +238,7 @@ Generated images use temporary OpenAI URLs that expire. They must be persisted t
 - Give the component a `ErrorPage` CSS class
 
 **Acceptance Criteria:**
+
 - [ ] `"use client"` directive at top
 - [ ] Accepts `error` and `reset` props (Next.js convention)
 - [ ] Shows generic error message
@@ -236,12 +254,14 @@ Generated images use temporary OpenAI URLs that expire. They must be persisted t
 **File (new):** `.env.local.example`
 
 **What to do:**
+
 - List all required environment variables from SPEC.md section 13
 - Use placeholder values (e.g., `your_mongodb_url_here`)
 - Add comments grouping variables by service
 - Do NOT include any actual secrets
 
 **Acceptance Criteria:**
+
 - [ ] All 15 env vars from SPEC.md section 13 listed
 - [ ] No real secrets or API keys
 - [ ] Grouped with comments (MongoDB, Clerk, OpenAI, Stripe, AWS, App)
@@ -262,6 +282,7 @@ These tasks make billing claims enforceable. Critical for product integrity.
 **Ref:** TD-PLAN-02
 
 **What to do:**
+
 - Add `imageGenerations: { type: Number, default: 0 }` to plan subdoc
 - Add `audioGenerations: { type: Number, default: 0 }` to plan subdoc
 - Add `usagePeriodStart: { type: Date, default: Date.now }` to plan subdoc
@@ -269,6 +290,7 @@ These tasks make billing claims enforceable. Critical for product integrity.
 - Update `IUser` interface to match
 
 **Acceptance Criteria:**
+
 - [ ] Plan subdoc includes `imageGenerations` (Number, default 0)
 - [ ] Plan subdoc includes `audioGenerations` (Number, default 0)
 - [ ] Plan subdoc includes `usagePeriodStart` (Date, default Date.now)
@@ -284,6 +306,7 @@ These tasks make billing claims enforceable. Critical for product integrity.
 **Ref:** TD-PLAN-02
 
 **What to do:**
+
 - Add exported `PLAN_LIMITS` constant mapping plan names to their generation limits
 - Lite: 3 images, 0 audio
 - Pro: 20 images, 20 audio
@@ -291,6 +314,7 @@ These tasks make billing claims enforceable. Critical for product integrity.
 - Add TypeScript type for the constant
 
 **Acceptance Criteria:**
+
 - [ ] `PLAN_LIMITS` constant exported with correct values
 - [ ] Typed with `Record<PlanName, { images: number; audio: number }>`
 - [ ] -1 means unlimited
@@ -307,12 +331,14 @@ These tasks make billing claims enforceable. Critical for product integrity.
 **Depends on:** 4.1, 4.2
 
 **What to do:**
+
 - Create a pure function `checkUsageLimit({ planName, currentCount, limitType })` that returns `{ allowed: boolean; limit: number; remaining: number }`
 - Import `PLAN_LIMITS` from constants
 - Handle unlimited (-1) case
 - Handle period reset logic: if `usagePeriodStart` is older than 30 days, usage should be considered reset
 
 **Acceptance Criteria:**
+
 - [ ] Returns `{ allowed: true }` when under limit
 - [ ] Returns `{ allowed: false }` when at or over limit
 - [ ] Returns `{ allowed: true }` for unlimited plans (-1)
@@ -330,12 +356,14 @@ These tasks make billing claims enforceable. Critical for product integrity.
 **Depends on:** 4.1, 4.2, 4.3
 
 **What to do:**
+
 - After successful image generation in `generateResponse`, increment `plan.imageGenerations` via `User.findOneAndUpdate` with `$inc` and `strict: true`
 - Before image generation, check current usage via `checkUsageLimit`
 - If limit exceeded, return the entitlement-blocked response (already exists in generateResponse for disabled capabilities)
 - Pass the usage check result through entitlements
 
 **Acceptance Criteria:**
+
 - [ ] Image generation checked against plan limit before OpenAI call
 - [ ] Counter incremented after successful generation
 - [ ] Returns 403 with descriptive message when limit exceeded
@@ -355,6 +383,7 @@ These tasks make billing claims enforceable. Critical for product integrity.
 Same as 4.4 but for audio generation and `plan.audioGenerations` counter.
 
 **Acceptance Criteria:**
+
 - [ ] Audio generation checked against plan limit before OpenAI call
 - [ ] Counter incremented after successful generation
 - [ ] Returns 403 with descriptive message when limit exceeded
@@ -371,9 +400,11 @@ Same as 4.4 but for audio generation and `plan.audioGenerations` counter.
 **Depends on:** 4.1
 
 **What to do:**
+
 - When updating user plan on `checkout.session.completed`, also reset `plan.imageGenerations` to 0, `plan.audioGenerations` to 0, and set `plan.usagePeriodStart` to `new Date()`
 
 **Acceptance Criteria:**
+
 - [ ] Counters reset to 0 on successful checkout
 - [ ] `usagePeriodStart` set to current date
 - [ ] Existing Stripe webhook tests updated
@@ -392,6 +423,7 @@ Same as 4.4 but for audio generation and `plan.audioGenerations` counter.
 **Ref:** TD-AI-02
 
 **What to do:**
+
 - Import `APIError` from `openai`
 - Catch `APIError` specifically in the catch block
 - Return structured error types: `rate_limit` (429), `timeout` (408/504), `service_error` (500/502/503), `unknown`
@@ -399,6 +431,7 @@ Same as 4.4 but for audio generation and `plan.audioGenerations` counter.
 - Let the caller (`/api/openai` route) map these to HTTP status codes
 
 **Acceptance Criteria:**
+
 - [ ] Catches `APIError` and inspects `status` property
 - [ ] Returns distinguishable error type string
 - [ ] `/api/openai` route maps error types to appropriate HTTP status codes (429, 504, 502)
@@ -416,6 +449,7 @@ Same as 4.4 but for audio generation and `plan.audioGenerations` counter.
 Same pattern as 3.4 but scoped to the chat route group. This catches errors within the `/app` section specifically.
 
 **Acceptance Criteria:**
+
 - [ ] `"use client"` directive
 - [ ] Generic error message with "Try again" button
 - [ ] Calls `reset()` on retry
@@ -434,11 +468,13 @@ Same pattern as 3.4 but scoped to the chat route group. This catches errors with
 **File (new):** `tests/unit/generate-response.test.ts`
 
 **What to do:**
+
 - Mock `openAiClient.chat.completions.create`
 - Test text response path (no tool call)
 - Assert returned JSON has `taskData` and `taskUsage`
 
 **Acceptance Criteria:**
+
 - [ ] Mock OpenAI client
 - [ ] Test text response path returns correct structure
 - [ ] Assert `taskData.content[0].text` contains response text
@@ -453,12 +489,14 @@ Same pattern as 3.4 but scoped to the chat route group. This catches errors with
 **Depends on:** 6.1
 
 **What to do:**
+
 - Mock tool call response for `getGeneratedImage`
 - Mock tool call response for `getGeneratedAudio`
 - Test that correct function is dispatched
 - Test entitlement-blocked response when capability is disabled
 
 **Acceptance Criteria:**
+
 - [ ] Mock tool call for image generation
 - [ ] Mock tool call for audio generation
 - [ ] Assert entitlement-blocked message when capability disabled
@@ -471,6 +509,7 @@ Same pattern as 3.4 but scoped to the chat route group. This catches errors with
 **File (new):** `tests/unit/generate-title.test.ts`
 
 **Acceptance Criteria:**
+
 - [ ] Mock `openAiClient.chat.completions.create`
 - [ ] Test that title and usage are returned
 - [ ] Test error case when API returns empty choices
@@ -484,6 +523,7 @@ Same pattern as 3.4 but scoped to the chat route group. This catches errors with
 **Depends on:** 3.1
 
 **Acceptance Criteria:**
+
 - [ ] Mock auth and database
 - [ ] Test owner can delete their task
 - [ ] Test non-owner cannot delete
@@ -498,6 +538,7 @@ Same pattern as 3.4 but scoped to the chat route group. This catches errors with
 **Depends on:** 2.1
 
 **Acceptance Criteria:**
+
 - [ ] Mock auth and database
 - [ ] Test user can read own data
 - [ ] Test user cannot read another user's data

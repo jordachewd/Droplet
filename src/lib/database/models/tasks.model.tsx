@@ -11,27 +11,33 @@ interface ITask extends Document {
   usage?: number;
 }
 
-const ContentItemSchema = new Schema<ContentItem>({
-  type: { type: String, required: true },
-  text: { type: String },
-  image_url: {
-    url: { type: String, default: null },
+const ContentItemSchema = new Schema<ContentItem>(
+  {
+    type: { type: String, required: true },
+    text: { type: String },
+    image_url: {
+      url: { type: String, default: null },
+    },
+    audio_url: { type: String },
   },
-  audio_url: { type: String },
-});
+  { _id: false },
+);
 
-const MessageSchema = new Schema<Message>({
-  whois: {
-    type: String,
-    enum: ["user", "assistant", "system", "developer"],
+const MessageSchema = new Schema<Message>(
+  {
+    whois: {
+      type: String,
+      enum: ["user", "assistant", "system", "developer"],
+    },
+    role: {
+      type: String,
+      enum: ["user", "assistant", "system", "developer"],
+      required: true,
+    },
+    content: { type: [ContentItemSchema], required: true },
   },
-  role: {
-    type: String,
-    enum: ["user", "assistant", "system", "developer"],
-    required: true,
-  },
-  content: { type: [ContentItemSchema], required: true },
-});
+  { _id: false },
+);
 
 const TaskSchema = new Schema<ITask>({
   userId: { type: String, required: true, index: true },
