@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "skills": {
+    "clean-typescript": {
+      "source": "academind/ai-config",
+      "sourceType": "github",
+      "computedHash": "535a971f9c43d9d4c86841932ff84ba3d53782c41189cffd0f5d7d91ed459659"
+    },
+    "modern-accessible-html-jsx": {
+      "source": "academind/ai-config",
+      "sourceType": "github",
+      "computedHash": "cdec0a56565af67746e062bd991dc68ebe01d3ec594405a9f4307d050b600662"
+    },
+    "modern-best-practice-react-components": {
+      "source": "academind/ai-config",
+      "sourceType": "github",
+      "computedHash": "a0e1c55fe447ea0bf4b6bb6561e78a99eb12dd73553d093bbbfffed3c1d03faf"
+    },
+    "nextjs-app-router-patterns": {
+      "source": "wshobson/agents",
+      "sourceType": "github",
+      "computedHash": "59fb01d2fad75636fbf99b505b7212490cc0e2a79a99bbf103a255c8e18904f1"
+    },
+    "playwright-best-practices": {
+      "source": "currents-dev/playwright-best-practices-skill",
+      "sourceType": "github",
+      "computedHash": "363a92f66b703f0701d41c394a3d654493a0cf34d40d8513c3e87965facfaa2c"
+    },
+    "playwright-generate-test": {
+      "source": "github/awesome-copilot",
+      "sourceType": "github",
+      "computedHash": "8f963da3e25f705ff39755b8b990f20da0c0320cb86ac83fcc4d2d4eca91f6e4"
+    },
+    "tailwind-design-system": {
+      "source": "wshobson/agents",
+      "sourceType": "github",
+      "computedHash": "d0e4d2ba5a99cdc6e264d3927d1d81e85e79f551c8e246fa0a86123217eaad94"
+    },
+    "use-modern-browser-apis": {
+      "source": "academind/ai-config",
+      "sourceType": "github",
+      "computedHash": "076da1f6caaae23ac1feca429e570713e165fac055d2913de62a06dec3d59479"
+    },
+    "vitest": {
+      "source": "antfu/skills",
+      "sourceType": "github",
+      "computedHash": "669c7275f7e1379b06b2bcfa593603aead4c983b951c7e8edbc09640aa38d0a1"
+    },
+    "web-security": {
+      "source": "academind/ai-config",
+      "sourceType": "github",
+      "computedHash": "37c45130687fe29662916293eb647a2c36c35fa681ba2eb3b3a1507e6ac2325a"
+    }
+  }
+}

@@ -1,15 +1,5 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# AI Data & Agents instructions must stay local
-.agents/
-.codex/
-.claude/
-skills-lock.json
-TODO.md
-AGENTS.md
-SPEC.md
-CLAUDE.md
-
 # dependencies
 /node_modules
 /.pnp
@@ -49,10 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-
- 
-
-
 
 # Playwright
 node_modules/
