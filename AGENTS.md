@@ -1,7 +1,3 @@
-## GENERAL REQUIREMENTS
-
-- ALWAYS perform a **React2Shell Security Check** at first start; Do this only once; Read latest documentation on Context7 MCP (https://context7.com/freeqaz/react2shell); Perform needed updates and fixes when necessary;
-
 # Repository Guidelines
 
 > See `SPEC.md` for the full application specification, data models, API surface, and known technical debt.
