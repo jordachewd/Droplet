@@ -1,16 +1,6 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# AI Data & Agents instructions must stay local
-.agents/
-.codex/
-.claude/
-skills-lock.json
-TODO.md
-AGENTS.md
-SPEC.md
-CLAUDE.md
-
-# dependencies
+ # dependencies
 /node_modules
 /.pnp
 .pnp.*
