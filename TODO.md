@@ -1,4 +1,4 @@
-# Cellesseon — TODO
+﻿# Cellesseon — TODO
 
 > Prioritized, actionable development tasks. Each task is sized for 15-30 minutes.
 > Governed by **CellesseonPM2**. Do not add tasks without PM approval.
@@ -7,9 +7,281 @@
 
 ---
 
-## Phase 1: Security & Data Integrity Fixes — COMPLETED
+## Phase 7: Production Readiness — NEXT PRIORITY
 
-All Phase 1 tasks verified and merged.
+Critical product quality and performance improvements for v1 launch readiness.
+
+---
+
+### 7.1 Add `.lean()` and `.select()` to `getUserById` query
+
+**File:** `src/lib/actions/user.actions.tsx`
+**Ref:** AGENTS.md Database Rules
+
+The `getUserById` function fetches full Mongoose documents. Add `.lean()` and `.select()` to fetch only needed fields and avoid document overhead.
+
+**What to do:**
+
+- Change `User.findOne({ clerkId: userId })` to `User.findOne({ clerkId: userId }).select('clerkId username email role plan firstName lastName userimg').lean()`
+- Update the return to pass the lean result through `serializeForClient`
+
+**Acceptance Criteria:**
+
+- [ ] Query uses `.lean()` to return plain objects
+- [ ] Query uses `.select()` to fetch only needed fields
+- [ ] Existing functionality unchanged (returns same shape of data)
+- [ ] TypeScript compiles with no errors (`npx tsc --noEmit`)
+- [ ] All existing tests pass (`npm run test`)
+
+---
+
+### 7.2 Add `.lean()` to `getAllTransactions` query
+
+**File:** `src/lib/actions/transaction.action.tsx`
+**Ref:** AGENTS.md Database Rules
+
+**What to do:**
+
+- Add `.lean()` to the `Transaction.find()` chain
+- Result already goes through `serializeForClient` so no other change needed
+
+**Acceptance Criteria:**
+
+- [ ] Query uses `.lean()` to return plain objects
+- [ ] Existing functionality unchanged
+- [ ] TypeScript compiles with no errors
+- [ ] All existing tests pass
+
+---
+
+### 7.3 Add conversation delete button to chat sidebar
+
+**File:** `src/components/chat/chat-sidebar.tsx`
+**Ref:** TD-UI-06
+
+The `deleteTask` server action exists and is tested, but there is no UI to trigger it. Add a delete button to each conversation item in the sidebar.
+
+**What to do:**
+
+- Import `deleteTask` from `@/lib/actions/task.actions`
+- Add a delete button (trash icon) to each conversation list item
+- On click, call `deleteTask(taskId)` and remove the item from the list
+- Add a confirmation step (e.g., `window.confirm` or inline confirm UI)
+- After successful deletion, if the current conversation was deleted, redirect to `/app`
+- This component uses `"use client"` so direct calls to server actions work
+
+**Acceptance Criteria:**
+
+- [ ] Delete button visible on each conversation item in sidebar
+- [ ] Confirmation before deletion
+- [ ] Calls `deleteTask` with the task ID
+- [ ] Removes item from list on success
+- [ ] Redirects to `/app` if current conversation was deleted
+- [ ] CSS class `SidebarDeleteBtn` on the delete button
+- [ ] TypeScript compiles with no errors
+- [ ] All existing tests pass
+
+---
+
+### 7.4 Add conversation delete button to library page
+
+**File:** `src/app/(chat)/app/library/page.tsx`
+**Ref:** TD-UI-06
+
+Same concept as 7.3 but for the library page conversation list.
+
+**What to do:**
+
+- The library page is a Server Component — create a small `"use client"` wrapper component for the delete button
+- Or: refactor the list item to include a client component for the delete action
+- Import `deleteTask` from `@/lib/actions/task.actions`
+- Add delete button per conversation item
+- After deletion, use `revalidatePath` or `router.refresh()` to update the list
+
+**Acceptance Criteria:**
+
+- [ ] Delete button visible on each conversation item in library
+- [ ] Confirmation before deletion
+- [ ] Calls `deleteTask` with the task ID
+- [ ] List updates after successful deletion
+- [ ] CSS class `LibraryDeleteBtn` on the delete button
+- [ ] TypeScript compiles with no errors
+- [ ] All existing tests pass
+
+---
+
+### 7.5 Refactor `handleError` to preserve stack traces
+
+**File:** `src/lib/utils/handleError.tsx`
+**Ref:** TD-API-06
+
+The current `handleError` concatenates error messages with source strings via `+`, destroying stack traces.
+
+**What to do:**
+
+- When `error` is an `Error` instance, create a new `Error` with the composed message but copy `error.cause` or set `{ cause: error }` to preserve the original
+- Use `new Error(message, { cause: error })` pattern
+- Keep the `source` annotation for debugging context
+
+**Acceptance Criteria:**
+
+- [ ] Original error is preserved as `cause` on the thrown error
+- [ ] Source string still present in thrown error message
+- [ ] Stack trace from original error accessible via `error.cause`
+- [ ] TypeScript compiles with no errors
+- [ ] All existing tests pass
+
+---
+
+### 7.6 Add S3 cleanup on user deletion in Clerk webhook
+
+**File:** `src/app/api/webhooks/clerk/route.tsx`
+**Ref:** TD-FILE-01
+
+When a user is deleted, their S3 objects remain orphaned.
+
+**What to do:**
+
+- In the `user.deleted` handler, after deleting the user from MongoDB, list and delete all S3 objects under the `{clerkId}/` prefix
+- Import `DeleteObjectsCommand` and `ListObjectsV2Command` from `@aws-sdk/client-s3`
+- Import the S3 client from `@/constants/aws`
+- Delete objects in batches (S3 allows up to 1000 per DeleteObjects call)
+- Log errors but do not fail the webhook response — S3 cleanup is best-effort
+
+**Acceptance Criteria:**
+
+- [ ] S3 objects under `{clerkId}/` prefix are deleted on user deletion
+- [ ] Uses batch deletion (ListObjectsV2 + DeleteObjects)
+- [ ] Errors logged but do not fail the webhook response
+- [ ] TypeScript compiles with no errors
+- [ ] All existing tests pass
+
+---
+
+### 7.7 Add S3 cleanup on task deletion
+
+**File:** `src/lib/actions/task.actions.tsx`
+**Ref:** TD-FILE-01
+
+When a task is deleted, associated S3 objects (images) remain orphaned.
+
+**What to do:**
+
+- In `deleteTask`, before or after deleting the task from MongoDB, scan the task's messages for `image_url` entries containing S3 URLs
+- For each S3 URL, extract the key and delete via `deleteFileFromAWS`
+- Log errors but do not fail the deletion — task removal takes priority over S3 cleanup
+- The task must be fetched first (before deletion) to access its messages
+
+**Acceptance Criteria:**
+
+- [ ] Task messages scanned for S3 image URLs before/during deletion
+- [ ] S3 objects deleted for matching URLs
+- [ ] Task deletion succeeds even if S3 cleanup fails
+- [ ] Errors logged but do not prevent task deletion
+- [ ] TypeScript compiles with no errors
+- [ ] All existing tests pass
+
+---
+
+### 7.8 Add `.lean()` and `.select()` to dashboard queries
+
+**File:** `src/app/(chat)/dashboard/page.tsx`
+
+The dashboard uses `countDocuments` (which is fine) but if future queries are added they should follow the `.lean()` / `.select()` convention.
+
+**What to do:**
+
+- Verify existing `countDocuments` calls are optimal (they are — no change needed)
+- Add a comment noting that any future queries in this file must use `.lean()` + `.select()`
+- No code change required unless queries beyond `countDocuments` exist
+
+**Acceptance Criteria:**
+
+- [ ] Existing queries verified as optimal
+- [ ] No unnecessary changes
+- [ ] TypeScript compiles with no errors
+
+---
+
+### 7.9 Add loading skeleton for chat layout
+
+**File (new):** `src/app/(chat)/loading.tsx`
+**Ref:** TD-UI-02
+
+**What to do:**
+
+- Create a `loading.tsx` file for the `(chat)` route group
+- Show a simple loading skeleton (pulsing bars/blocks) matching the chat layout shape
+- Use Tailwind's `animate-pulse` utility
+- CSS class: `ChatLoadingSkeleton`
+
+**Acceptance Criteria:**
+
+- [ ] `loading.tsx` creates a skeleton UI matching chat layout
+- [ ] Uses `animate-pulse` for visual loading feedback
+- [ ] Has unique CSS class `ChatLoadingSkeleton`
+- [ ] TypeScript compiles with no errors
+
+---
+
+### 7.10 Add loading skeleton for account layout
+
+**File (new):** `src/app/(account)/loading.tsx`
+**Ref:** TD-UI-02
+
+**What to do:**
+
+- Create a `loading.tsx` file for the `(account)` route group
+- Show a simple loading skeleton matching the profile/plans page shape
+- CSS class: `AccountLoadingSkeleton`
+
+**Acceptance Criteria:**
+
+- [ ] `loading.tsx` creates a skeleton UI
+- [ ] Uses `animate-pulse` for visual loading feedback
+- [ ] Has unique CSS class `AccountLoadingSkeleton`
+- [ ] TypeScript compiles with no errors
+
+---
+
+### 7.11 Add test coverage configuration
+
+**File:** `vitest.config.ts` (or `vitest.config.mts`)
+
+**What to do:**
+
+- Add `coverage` configuration to the Vitest config
+- Set provider to `v8`
+- Set threshold targets: statements 70%, branches 60%, functions 70%, lines 70%
+- Exclude test files, config files, and type declaration files from coverage
+- Add `test:coverage` script to `package.json`
+
+**Acceptance Criteria:**
+
+- [ ] Coverage config added to Vitest config
+- [ ] `npm run test:coverage` script works
+- [ ] Coverage report generated
+- [ ] TypeScript compiles with no errors
+- [ ] All existing tests pass
+
+---
+
+## Phase 8: Resilience & Cost Controls (Deferred)
+
+Lower priority items for post-launch hardening. Not blocking v1.
+
+- [ ] **8.1** Implement retry/backoff for transient OpenAI failures — Ref: TD-AI-06
+- [ ] **8.2** Replace in-memory rate limiter with persistent store (Redis/Upstash) — Ref: TD-API-01
+- [ ] **8.3** Define yearly billing pricing discount — Ref: TD-PLAN-03
+- [ ] **8.4** Implement response streaming for OpenAI chat — Ref: TD-AI-01
+- [ ] **8.5** Implement Stripe subscription mode (auto-renewal) — Ref: TD-PLAN-01
+- [ ] **8.6** Add per-user token/cost tracking — Ref: TD-AI-03
+
+---
+
+## Completed Phases
+
+### Phase 1: Security & Data Integrity Fixes — COMPLETED
 
 - [x] **1.1** Fix `strict: false` in `updateUser` server action
 - [x] **1.2** Fix `strict: false` in Clerk webhook `user.updated` handler
@@ -21,504 +293,42 @@ All Phase 1 tasks verified and merged.
 - [x] **1.8** Add payload size validation to `/api/aws` POST
 - [x] **1.9** Make `createUser` a non-exported helper
 
-**Validation:** lint ✓ | tsc ✓ | 24 suites, 107 tests ✓
+### Phase 2: Security Fixes (Ownership Enforcement) — COMPLETED
 
----
+- [x] **2.1** Fix `getUserById` ownership enforcement
+- [x] **2.2** Fix `getAllTransactions` ownership enforcement
+- [x] **2.3** Remove `console.log` from `generateImage`
+- [x] **2.4** Remove `console.log` from `generateAudio`
+- [x] **2.5** Remove `console.log` from `/api/openai` route
 
-## Phase 2: Security Fixes (Ownership Enforcement) — NEXT PRIORITY
+### Phase 3: Core Feature Gaps — COMPLETED
 
-These are active security issues. Must be fixed before any feature work.
+- [x] **3.1** Create `deleteTask` server action
+- [x] **3.2** Extract `mapDateToLabel` to shared utility
+- [x] **3.3** Fix `generateImage` to persist images to S3
+- [x] **3.4** Add `error.tsx` for app-level error handling
+- [x] **3.5** Create `.env.local.example` file
 
----
+### Phase 4: Plan Enforcement (Usage Limits) — COMPLETED
 
-### 2.1 Fix `getUserById` ownership enforcement
+- [x] **4.1** Add usage tracking fields to User plan schema
+- [x] **4.2** Define plan limits constant
+- [x] **4.3** Create usage limit check utility
+- [x] **4.4** Enforce image generation limit in `/api/openai` route
+- [x] **4.5** Enforce audio generation limit in `/api/openai` route
+- [x] **4.6** Reset usage counters on plan renewal
 
-**File:** `src/lib/actions/user.actions.tsx`
-**Ref:** SEC-01
+### Phase 5: Error Handling & Resilience — COMPLETED
 
-The `getUserById` function accepts any `userId` parameter but only checks that the caller is authenticated — it does not verify the caller owns the requested resource.
+- [x] **5.1** Add OpenAI error classification to `generateResponse`
+- [x] **5.2** Add `error.tsx` for chat route group
 
-**What to do:**
-- Compare `authedUserId` against the `userId` parameter
-- If they do not match, throw `"Forbidden"`
+### Phase 6: Testing Improvements — COMPLETED
 
-**Acceptance Criteria:**
-- [ ] `getUserById` returns data only when `authedUserId === userId`
-- [ ] Returns `"Forbidden"` error when a user tries to read another user's data
-- [ ] Existing unit tests (if any) updated to cover this check
-- [ ] Add unit test: authenticated user reading own data succeeds
-- [ ] Add unit test: authenticated user reading another user's data fails
-- [ ] TypeScript compiles with no errors (`npx tsc --noEmit`)
-- [ ] All existing tests pass (`npm run test`)
+- [x] **6.1** Add unit tests for `generateResponse` (happy path)
+- [x] **6.2** Add unit tests for `generateResponse` (tool call paths)
+- [x] **6.3** Add unit tests for `generateTitle`
+- [x] **6.4** Add unit test for `deleteTask` server action
+- [x] **6.5** Add unit test for `getUserById` ownership check
 
----
-
-### 2.2 Fix `getAllTransactions` ownership enforcement
-
-**File:** `src/lib/actions/transaction.action.tsx`
-**Ref:** SEC-02
-
-The `getAllTransactions` function accepts any `userId` string but does not verify the caller is requesting their own transactions.
-
-**What to do:**
-- Compare `authedUserId` against the `userId` parameter
-- If they do not match, throw `"Forbidden"`
-
-**Acceptance Criteria:**
-- [ ] `getAllTransactions` returns data only when `authedUserId === userId`
-- [ ] Throws `"Forbidden"` for cross-user access attempts
-- [ ] Add unit test: user can read own transactions
-- [ ] Add unit test: user cannot read another user's transactions
-- [ ] TypeScript compiles with no errors
-- [ ] All existing tests pass
-
----
-
-### 2.3 Remove `console.log` from `generateImage`
-
-**File:** `src/lib/utils/openai/generateImage.tsx`
-**Ref:** TD-API-05
-
-**What to do:**
-- Remove `console.log` on line 50 (imageUrl logging)
-- Remove `console.log` on line 58 (taskId logging)
-- The `console.log` inside the commented-out block (line 72) stays commented — it will be removed when the block is removed
-- Keep `console.error` for actual errors
-
-**Acceptance Criteria:**
-- [ ] No `console.log` calls in active code
-- [ ] `console.error` for errors remains untouched
-- [ ] TypeScript compiles with no errors
-- [ ] All existing tests pass
-
----
-
-### 2.4 Remove `console.log` from `generateAudio`
-
-**File:** `src/lib/utils/openai/generateAudio.tsx`
-**Ref:** TD-API-05
-
-**What to do:**
-- Remove `console.log` on line 35 (taskId logging)
-- Keep `console.error` for actual errors
-
-**Acceptance Criteria:**
-- [ ] No `console.log` calls in the file
-- [ ] TypeScript compiles with no errors
-- [ ] All existing tests pass
-
----
-
-### 2.5 Remove `console.log` from `/api/openai` route
-
-**File:** `src/app/api/openai/route.tsx`
-**Ref:** SEC-03
-
-**What to do:**
-- Remove `console.log("Generated Task Data:", taskData.content)` on line 108
-- Keep `console.error` for the catch block
-
-**Acceptance Criteria:**
-- [ ] No `console.log` in the file
-- [ ] TypeScript compiles with no errors
-- [ ] All existing tests pass
-
----
-
-## Phase 3: Core Feature Gaps
-
-These tasks complete missing functionality that users expect.
-
----
-
-### 3.1 Create `deleteTask` server action
-
-**File:** `src/lib/actions/task.actions.tsx`
-
-Create a server action that deletes a task by ID, verifying the authenticated user owns it.
-
-**What to do:**
-- Add `deleteTask(taskId: string)` exported function with `"use server"` (already at top of file)
-- Call `auth()` and verify `userId` exists
-- Call `connectToDatabase()`
-- Use `Task.findOneAndDelete({ _id: taskId, userId })` to enforce ownership
-- Return serialized success/failure response
-
-**Acceptance Criteria:**
-- [ ] Auth check before DB access
-- [ ] Filters by both `_id` and `userId`
-- [ ] Returns success response when task found and deleted
-- [ ] Returns error response when task not found or user does not own it
-- [ ] Add unit test in `tests/unit/task-actions.test.ts`: owner can delete their task
-- [ ] Add unit test: non-owner cannot delete
-- [ ] Add unit test: unauthenticated user cannot delete
-- [ ] TypeScript compiles with no errors
-- [ ] All existing tests pass
-
----
-
-### 3.2 Extract `mapDateToLabel` to shared utility
-
-**File (new):** `src/lib/utils/map-date-to-label.ts`
-**Files to update:** `src/components/chat/chat-sidebar.tsx`, `src/app/(chat)/app/library/page.tsx`
-**Ref:** TD-UI-05
-
-The `mapDateToLabel` function is duplicated in two files. Extract it.
-
-**What to do:**
-- Create `src/lib/utils/map-date-to-label.ts` with the function (use `.ts` extension — no JSX)
-- Import it in both `chat-sidebar.tsx` and `library/page.tsx`
-- Remove the local copies from both files
-
-**Acceptance Criteria:**
-- [ ] Single source of truth for `mapDateToLabel`
-- [ ] Both files import from `@/lib/utils/map-date-to-label`
-- [ ] No duplicate function definitions remain
-- [ ] Add unit test in `tests/unit/map-date-to-label.test.ts` covering: < 60 min, < 24 hours, >= 24 hours
-- [ ] TypeScript compiles with no errors
-- [ ] All existing tests pass
-
----
-
-### 3.3 Fix `generateImage` to persist images to S3
-
-**File:** `src/lib/utils/openai/generateImage.tsx`
-**Ref:** TD-API-03
-
-Generated images use temporary OpenAI URLs that expire. They must be persisted to S3.
-
-**What to do:**
-- After `convertToPng`, call `uploadFileToAWS` directly (import from `@/lib/utils/aws/uploadFileToAWS`)
-- Use the S3 URL in the returned `taskData` instead of the OpenAI URL
-- Remove all commented-out axios code and its import comment
-- File naming: `${taskId}_image_${generateString()}.png`
-- Folder: `${userId}/images` — note: `userId` is not currently passed to `generateImage`. Add it as a required parameter.
-- Update the caller in `generateResponse.tsx` to pass `userId`
-- Update the caller in `/api/openai/route.tsx` to pass `userId` through to `generateResponse`
-
-**Acceptance Criteria:**
-- [ ] `generateImage` accepts `userId` parameter
-- [ ] Generated image uploaded to S3 via `uploadFileToAWS`
-- [ ] S3 URL stored in `taskData.content[].image_url.url` instead of temporary OpenAI URL
-- [ ] All commented-out axios code removed
-- [ ] `generateResponse` passes `userId` to `generateImage`
-- [ ] `/api/openai` passes `userId` to `generateResponse`
-- [ ] TypeScript compiles with no errors
-- [ ] All existing tests pass
-
----
-
-### 3.4 Add `error.tsx` for app-level error handling
-
-**File (new):** `src/app/error.tsx`
-**Ref:** TD-UI-04
-
-**What to do:**
-- Create a `"use client"` component
-- Show generic error message ("Something went wrong") with a "Try again" button
-- Call Next.js `reset()` on retry
-- Do not leak error details to the user
-- Give the component a `ErrorPage` CSS class
-
-**Acceptance Criteria:**
-- [ ] `"use client"` directive at top
-- [ ] Accepts `error` and `reset` props (Next.js convention)
-- [ ] Shows generic error message
-- [ ] "Try again" button calls `reset()`
-- [ ] Does not display `error.message` or stack trace
-- [ ] Has unique CSS class `ErrorPage`
-- [ ] TypeScript compiles with no errors
-
----
-
-### 3.5 Create `.env.local.example` file
-
-**File (new):** `.env.local.example`
-
-**What to do:**
-- List all required environment variables from SPEC.md section 13
-- Use placeholder values (e.g., `your_mongodb_url_here`)
-- Add comments grouping variables by service
-- Do NOT include any actual secrets
-
-**Acceptance Criteria:**
-- [ ] All 15 env vars from SPEC.md section 13 listed
-- [ ] No real secrets or API keys
-- [ ] Grouped with comments (MongoDB, Clerk, OpenAI, Stripe, AWS, App)
-- [ ] File committed to repository
-
----
-
-## Phase 4: Plan Enforcement (Usage Limits)
-
-These tasks make billing claims enforceable. Critical for product integrity.
-
----
-
-### 4.1 Add usage tracking fields to User plan schema
-
-**File:** `src/lib/database/models/user.model.tsx`
-**Type file:** `src/types/PlanData.d.tsx`
-**Ref:** TD-PLAN-02
-
-**What to do:**
-- Add `imageGenerations: { type: Number, default: 0 }` to plan subdoc
-- Add `audioGenerations: { type: Number, default: 0 }` to plan subdoc
-- Add `usagePeriodStart: { type: Date, default: Date.now }` to plan subdoc
-- Update `PlanData` type in `src/types/PlanData.d.tsx` to include these fields
-- Update `IUser` interface to match
-
-**Acceptance Criteria:**
-- [ ] Plan subdoc includes `imageGenerations` (Number, default 0)
-- [ ] Plan subdoc includes `audioGenerations` (Number, default 0)
-- [ ] Plan subdoc includes `usagePeriodStart` (Date, default Date.now)
-- [ ] `PlanData` type updated with optional fields (backward-compatible)
-- [ ] TypeScript compiles with no errors
-- [ ] All existing tests pass
-
----
-
-### 4.2 Define plan limits constant
-
-**File:** `src/constants/plans.tsx`
-**Ref:** TD-PLAN-02
-
-**What to do:**
-- Add exported `PLAN_LIMITS` constant mapping plan names to their generation limits
-- Lite: 3 images, 0 audio
-- Pro: 20 images, 20 audio
-- Premium: -1 (unlimited) images, -1 (unlimited) audio
-- Add TypeScript type for the constant
-
-**Acceptance Criteria:**
-- [ ] `PLAN_LIMITS` constant exported with correct values
-- [ ] Typed with `Record<PlanName, { images: number; audio: number }>`
-- [ ] -1 means unlimited
-- [ ] Unit test in `tests/unit/plans.test.ts` verifying limit values
-- [ ] TypeScript compiles with no errors
-- [ ] All existing tests pass
-
----
-
-### 4.3 Create usage limit check utility
-
-**File (new):** `src/lib/utils/check-usage-limit.ts`
-**Ref:** TD-PLAN-02
-**Depends on:** 4.1, 4.2
-
-**What to do:**
-- Create a pure function `checkUsageLimit({ planName, currentCount, limitType })` that returns `{ allowed: boolean; limit: number; remaining: number }`
-- Import `PLAN_LIMITS` from constants
-- Handle unlimited (-1) case
-- Handle period reset logic: if `usagePeriodStart` is older than 30 days, usage should be considered reset
-
-**Acceptance Criteria:**
-- [ ] Returns `{ allowed: true }` when under limit
-- [ ] Returns `{ allowed: false }` when at or over limit
-- [ ] Returns `{ allowed: true }` for unlimited plans (-1)
-- [ ] Unit test: Lite plan at limit returns false
-- [ ] Unit test: Pro plan under limit returns true
-- [ ] Unit test: Premium plan always returns true
-- [ ] TypeScript compiles with no errors
-
----
-
-### 4.4 Enforce image generation limit in `/api/openai` route
-
-**File:** `src/app/api/openai/route.tsx`
-**Ref:** TD-PLAN-02
-**Depends on:** 4.1, 4.2, 4.3
-
-**What to do:**
-- After successful image generation in `generateResponse`, increment `plan.imageGenerations` via `User.findOneAndUpdate` with `$inc` and `strict: true`
-- Before image generation, check current usage via `checkUsageLimit`
-- If limit exceeded, return the entitlement-blocked response (already exists in generateResponse for disabled capabilities)
-- Pass the usage check result through entitlements
-
-**Acceptance Criteria:**
-- [ ] Image generation checked against plan limit before OpenAI call
-- [ ] Counter incremented after successful generation
-- [ ] Returns 403 with descriptive message when limit exceeded
-- [ ] Uses `strict: true` on `findOneAndUpdate`
-- [ ] Unit test: generation blocked when at limit
-- [ ] TypeScript compiles with no errors
-- [ ] All existing tests pass
-
----
-
-### 4.5 Enforce audio generation limit in `/api/openai` route
-
-**File:** `src/app/api/openai/route.tsx`
-**Ref:** TD-PLAN-02
-**Depends on:** 4.1, 4.2, 4.3, 4.4
-
-Same as 4.4 but for audio generation and `plan.audioGenerations` counter.
-
-**Acceptance Criteria:**
-- [ ] Audio generation checked against plan limit before OpenAI call
-- [ ] Counter incremented after successful generation
-- [ ] Returns 403 with descriptive message when limit exceeded
-- [ ] Unit test: generation blocked when at limit
-- [ ] TypeScript compiles with no errors
-- [ ] All existing tests pass
-
----
-
-### 4.6 Reset usage counters on plan renewal
-
-**File:** `src/app/api/webhooks/stripe/route.tsx`
-**Ref:** TD-PLAN-02
-**Depends on:** 4.1
-
-**What to do:**
-- When updating user plan on `checkout.session.completed`, also reset `plan.imageGenerations` to 0, `plan.audioGenerations` to 0, and set `plan.usagePeriodStart` to `new Date()`
-
-**Acceptance Criteria:**
-- [ ] Counters reset to 0 on successful checkout
-- [ ] `usagePeriodStart` set to current date
-- [ ] Existing Stripe webhook tests updated
-- [ ] TypeScript compiles with no errors
-- [ ] All existing tests pass
-
----
-
-## Phase 5: Error Handling & Resilience
-
----
-
-### 5.1 Add OpenAI error classification to `generateResponse`
-
-**File:** `src/lib/utils/openai/generateResponse.tsx`
-**Ref:** TD-AI-02
-
-**What to do:**
-- Import `APIError` from `openai`
-- Catch `APIError` specifically in the catch block
-- Return structured error types: `rate_limit` (429), `timeout` (408/504), `service_error` (500/502/503), `unknown`
-- Export a type for the error classification
-- Let the caller (`/api/openai` route) map these to HTTP status codes
-
-**Acceptance Criteria:**
-- [ ] Catches `APIError` and inspects `status` property
-- [ ] Returns distinguishable error type string
-- [ ] `/api/openai` route maps error types to appropriate HTTP status codes (429, 504, 502)
-- [ ] Does not leak OpenAI error details to client
-- [ ] Unit test: mock APIError with status 429 returns rate_limit type
-- [ ] TypeScript compiles with no errors
-- [ ] All existing tests pass
-
----
-
-### 5.2 Add `error.tsx` for chat route group
-
-**File (new):** `src/app/(chat)/error.tsx`
-
-Same pattern as 3.4 but scoped to the chat route group. This catches errors within the `/app` section specifically.
-
-**Acceptance Criteria:**
-- [ ] `"use client"` directive
-- [ ] Generic error message with "Try again" button
-- [ ] Calls `reset()` on retry
-- [ ] Does not leak error details
-- [ ] Has unique CSS class `ChatErrorPage`
-- [ ] TypeScript compiles with no errors
-
----
-
-## Phase 6: Testing Improvements
-
----
-
-### 6.1 Add unit tests for `generateResponse` (happy path)
-
-**File (new):** `tests/unit/generate-response.test.ts`
-
-**What to do:**
-- Mock `openAiClient.chat.completions.create`
-- Test text response path (no tool call)
-- Assert returned JSON has `taskData` and `taskUsage`
-
-**Acceptance Criteria:**
-- [ ] Mock OpenAI client
-- [ ] Test text response path returns correct structure
-- [ ] Assert `taskData.content[0].text` contains response text
-- [ ] Assert `taskUsage` is a number
-- [ ] Test passes
-
----
-
-### 6.2 Add unit tests for `generateResponse` (tool call paths)
-
-**File:** `tests/unit/generate-response.test.ts`
-**Depends on:** 6.1
-
-**What to do:**
-- Mock tool call response for `getGeneratedImage`
-- Mock tool call response for `getGeneratedAudio`
-- Test that correct function is dispatched
-- Test entitlement-blocked response when capability is disabled
-
-**Acceptance Criteria:**
-- [ ] Mock tool call for image generation
-- [ ] Mock tool call for audio generation
-- [ ] Assert entitlement-blocked message when capability disabled
-- [ ] Tests pass
-
----
-
-### 6.3 Add unit tests for `generateTitle`
-
-**File (new):** `tests/unit/generate-title.test.ts`
-
-**Acceptance Criteria:**
-- [ ] Mock `openAiClient.chat.completions.create`
-- [ ] Test that title and usage are returned
-- [ ] Test error case when API returns empty choices
-- [ ] Tests pass
-
----
-
-### 6.4 Add unit test for `deleteTask` server action
-
-**File:** `tests/unit/task-actions.test.ts`
-**Depends on:** 3.1
-
-**Acceptance Criteria:**
-- [ ] Mock auth and database
-- [ ] Test owner can delete their task
-- [ ] Test non-owner cannot delete
-- [ ] Test unauthenticated user cannot delete
-- [ ] Tests pass
-
----
-
-### 6.5 Add unit test for `getUserById` ownership check
-
-**File (new):** `tests/unit/user-actions.test.ts`
-**Depends on:** 2.1
-
-**Acceptance Criteria:**
-- [ ] Mock auth and database
-- [ ] Test user can read own data
-- [ ] Test user cannot read another user's data
-- [ ] Test unauthenticated user gets error
-- [ ] Tests pass
-
----
-
-## Phase 7: Production Readiness (Deferred)
-
-These tasks are important but should be tackled after Phases 2-6 are complete.
-They are ordered by impact.
-
-- [ ] **7.1** Add `.lean()` and `.select()` to `getUserById` query — fetch only needed fields
-- [ ] **7.2** Add `.lean()` to `getAllTransactions` query
-- [ ] **7.3** Implement response streaming for OpenAI chat — Ref: TD-AI-01
-- [ ] **7.4** Replace in-memory rate limiter with persistent store (Redis/Upstash) — Ref: TD-API-01
-- [ ] **7.5** Add S3 cleanup on user deletion in Clerk webhook — Ref: TD-FILE-01
-- [ ] **7.6** Add S3 cleanup on task deletion — Ref: TD-FILE-01
-- [ ] **7.7** Define yearly billing pricing discount — Ref: TD-PLAN-03
-- [ ] **7.8** Add test coverage configuration
-- [ ] **7.9** Add loading skeletons for page transitions — Ref: TD-UI-02
-- [ ] **7.10** Implement retry/backoff for transient OpenAI failures — Ref: TD-AI-06
-- [ ] **7.11** Implement Stripe subscription mode (auto-renewal) — Ref: TD-PLAN-01
+**Validation at Phase 6 completion:** lint pass | tsc pass | 31 suites, 139 tests pass

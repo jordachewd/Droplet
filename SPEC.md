@@ -1,8 +1,7 @@
-# Cellesseon — Application Specification
+﻿# Cellesseon — Application Specification
 
 > Canonical product and system specification for the Cellesseon AI assistant SaaS.
 > This document is governed by **CellesseonPM2** and must reflect approved direction only.
-> See `NewPlan.md` for the original architectural assessment that informed the current direction.
 
 ---
 
@@ -22,8 +21,6 @@ The product monetises through tiered subscription plans paid via Stripe.
 - File upload and image download capabilities
 
 ### Approved v1 Release Scope
-
-Based on the validated direction from `NewPlan.md`:
 
 - 7 predefined assistant roles (no dynamic role creation)
 - Text chat as primary mode
@@ -49,11 +46,11 @@ Based on the validated direction from `NewPlan.md`:
 
 ## 2. User Roles
 
-| Role | Access |
-|---|---|
-| **Anonymous** | Landing page, pricing, roles showcase, sign-in/sign-up only |
-| **Client** | Chat (`/app`), conversation resume, library, new conversation, profile, plans, billing history |
-| **Admin** | All client access + admin dashboard (`/dashboard`) |
+| Role          | Access                                                                                         |
+| ------------- | ---------------------------------------------------------------------------------------------- |
+| **Anonymous** | Landing page, pricing, roles showcase, sign-in/sign-up only                                    |
+| **Client**    | Chat (`/app`), conversation resume, library, new conversation, profile, plans, billing history |
+| **Admin**     | All client access + admin dashboard (`/dashboard`)                                             |
 
 Role is stored in `User.role` (Mongoose) and synced to Clerk `publicMetadata.role`.
 Admin access is enforced at the proxy level (`src/proxy.tsx`) via Clerk session claims (`metadata.role === "admin"`).
@@ -64,15 +61,15 @@ Admin access is enforced at the proxy level (`src/proxy.tsx`) via Clerk session 
 
 7 predefined roles defined in `src/constants/assistant-roles.tsx`:
 
-| Role ID | Label | Category | Image | Audio |
-|---|---|---|---|---|
-| `strategist` | Strategist | Productivity | Yes | No |
-| `teacher` | Teacher | Learning | Yes | Yes |
-| `developer` | Developer | Productivity | Yes | No |
-| `creator` | Creator | Creative | Yes | Yes |
-| `best-friend` | Best Friend | Companion | No | Yes |
-| `boyfriend` | Boyfriend | Companion | No | Yes |
-| `girlfriend` | Girlfriend | Companion | No | Yes |
+| Role ID       | Label       | Category     | Image | Audio |
+| ------------- | ----------- | ------------ | ----- | ----- |
+| `strategist`  | Strategist  | Productivity | Yes   | No    |
+| `teacher`     | Teacher     | Learning     | Yes   | Yes   |
+| `developer`   | Developer   | Productivity | Yes   | No    |
+| `creator`     | Creator     | Creative     | Yes   | Yes   |
+| `best-friend` | Best Friend | Companion    | No    | Yes   |
+| `boyfriend`   | Boyfriend   | Companion    | No    | Yes   |
+| `girlfriend`  | Girlfriend  | Companion    | No    | Yes   |
 
 Each role has: `id`, `label`, `tagline`, `description`, `category`, `icon`, `starterPrompts[]`, `systemPrompt`, `supportsImage`, `supportsAudio`.
 
@@ -89,11 +86,11 @@ Each role has: `id`, `label`, `tagline`, `description`, `category`, `icon`, `sta
 
 ## 4. Subscription Plans
 
-| Plan | Price | Duration | Limits |
-|---|---|---|---|
-| **Lite** | Free | 3 days | Limited messaging, file uploads, 3 image generations, no audio |
-| **Pro** | $29 | Monthly or Yearly | Unlimited messaging/uploads, 20/mo image/audio |
-| **Premium** | $69 | Monthly or Yearly | Unlimited everything |
+| Plan        | Price | Duration          | Limits                                                         |
+| ----------- | ----- | ----------------- | -------------------------------------------------------------- |
+| **Lite**    | Free  | 3 days            | Limited messaging, file uploads, 3 image generations, no audio |
+| **Pro**     | $29   | Monthly or Yearly | Unlimited messaging/uploads, 20/mo image/audio                 |
+| **Premium** | $69   | Monthly or Yearly | Unlimited everything                                           |
 
 ### Plan Lifecycle
 
@@ -103,10 +100,18 @@ Each role has: `id`, `label`, `tagline`, `description`, `category`, `icon`, `sta
 4. Expired plans block OpenAI API calls (checked in `/api/openai` route).
 5. No auto-renewal — plans are one-time payments with set expiration dates.
 
+### Usage Limit Enforcement (Implemented)
+
+- `plan.imageGenerations` and `plan.audioGenerations` counters on User model.
+- `plan.usagePeriodStart` tracks the 30-day rolling window.
+- `checkUsageLimit()` utility validates against `PLAN_LIMITS` constant.
+- `/api/openai` route checks limits before making OpenAI calls.
+- Counters increment after successful generation via `$inc` with `strict: true`.
+- Counters reset to 0 on plan renewal (Stripe webhook).
+
 ### Plan Technical Debt
 
 - **TD-PLAN-01**: No recurring subscription support — Stripe is in one-time payment mode. Deferred from v1.
-- **TD-PLAN-02**: Usage limits for image/audio generation are not enforced in code. No server-side counters tracking generation counts against plan limits. **Critical gap — marketing claims are unenforceable.**
 - **TD-PLAN-03**: Yearly billing has no pricing discount defined.
 
 ---
@@ -117,15 +122,15 @@ Each role has: `id`, `label`, `tagline`, `description`, `category`, `icon`, `sta
 - **Route protection**: `src/proxy.tsx` (Next.js 16 proxy convention). No `middleware.ts`.
 - **Protected routes**: `/app(.*)`, `/profile(.*)`, `/plans(.*)`, `/dashboard/:path*`
 - **Admin routes**: `/dashboard/:path*` — requires `sessionClaims.metadata.role === "admin"`
-- **Server actions**: Must verify `auth()` before DB operations.
+- **Server actions**: Must verify `auth()` before DB operations. Ownership enforcement on all read/write operations.
 - **API routes**: Must verify `auth()` before processing.
 - **Webhooks**: Exempt from auth — verified via Svix (Clerk) and `stripe.webhooks.constructEvent` (Stripe).
 
-### Security Issues (Active)
+### Security Issues — All Resolved
 
-- **SEC-01**: `getUserById` in `user.actions.tsx` allows any authenticated user to read any other user's data. The `userId` parameter is not compared against `authedUserId`. **Ownership not enforced.**
-- **SEC-02**: `getAllTransactions` in `transaction.action.tsx` allows any authenticated user to pass any `userId` to retrieve another user's transaction history. **Ownership not enforced.**
-- **SEC-03**: `/api/openai` route contains a `console.log` that outputs generated task content to server logs. Should be removed.
+- **SEC-01**: `getUserById` ownership enforcement — **RESOLVED**.
+- **SEC-02**: `getAllTransactions` ownership enforcement — **RESOLVED**.
+- **SEC-03**: `console.log` in `/api/openai` route — **RESOLVED**.
 
 ---
 
@@ -133,45 +138,45 @@ Each role has: `id`, `label`, `tagline`, `description`, `category`, `icon`, `sta
 
 ### 6.1 User
 
-| Field | Type | Required | Index | Notes |
-|---|---|---|---|---|
-| clerkId | String | Yes | unique | Clerk user ID |
-| username | String | Yes | unique | |
-| email | String | Yes | No | Not currently queried by filter |
-| role | String (enum) | Yes | No | `"client"` or `"admin"` |
-| registerAt | Date | Yes | No | |
-| plan | Embedded subdoc | Yes | No | See Plan embedded schema |
-| firstName | String | No | No | |
-| lastName | String | No | No | |
-| updatedAt | Date | No | No | |
-| userimg | String | No | No | |
+| Field      | Type            | Required | Index  | Notes                           |
+| ---------- | --------------- | -------- | ------ | ------------------------------- |
+| clerkId    | String          | Yes      | unique | Clerk user ID                   |
+| username   | String          | Yes      | unique |                                 |
+| email      | String          | Yes      | No     | Not currently queried by filter |
+| role       | String (enum)   | Yes      | No     | `"client"` or `"admin"`         |
+| registerAt | Date            | Yes      | No     |                                 |
+| plan       | Embedded subdoc | Yes      | No     | See Plan embedded schema        |
+| firstName  | String          | No       | No     |                                 |
+| lastName   | String          | No       | No     |                                 |
+| updatedAt  | Date            | No       | No     |                                 |
+| userimg    | String          | No       | No     |                                 |
 
-**Plan subdoc**: `{ id, name, amount, billing, startedOn, expiresOn, stripeId }`
+**Plan subdoc**: `{ id, name, amount, billing, startedOn, expiresOn, stripeId, imageGenerations, audioGenerations, usagePeriodStart }`
 
 ### 6.2 Transaction
 
-| Field | Type | Required | Index | Notes |
-|---|---|---|---|---|
-| userId | ObjectId (ref User) | Yes | Yes | Indexed |
-| stripeId | String | Yes | unique | Stripe session ID |
-| clerkId | String | Yes | Yes | Indexed |
-| createdAt | Date | Yes | No | |
-| expiresOn | Date | Yes | No | |
-| plan | String (enum) | Yes | No | |
-| billing | String (enum) | Yes | No | |
-| amount | Number | Yes | No | |
+| Field     | Type                | Required | Index  | Notes             |
+| --------- | ------------------- | -------- | ------ | ----------------- |
+| userId    | ObjectId (ref User) | Yes      | Yes    | Indexed           |
+| stripeId  | String              | Yes      | unique | Stripe session ID |
+| clerkId   | String              | Yes      | Yes    | Indexed           |
+| createdAt | Date                | Yes      | No     |                   |
+| expiresOn | Date                | Yes      | No     |                   |
+| plan      | String (enum)       | Yes      | No     |                   |
+| billing   | String (enum)       | Yes      | No     |                   |
+| amount    | Number              | Yes      | No     |                   |
 
 ### 6.3 Task
 
-| Field | Type | Required | Index | Notes |
-|---|---|---|---|---|
-| userId | String | Yes | Yes | Indexed, compound index with updatedAt |
-| title | String | Yes | No | |
-| messages | [Message] subdoc | Yes | No | Array of messages |
-| assistantRoleId | String | Yes | Yes | Indexed, defaults to "strategist" |
-| usage | Number | Yes | No | Token usage counter |
-| createdAt | Date | No | No | |
-| updatedAt | Date | No | Yes | Indexed descending |
+| Field           | Type             | Required | Index | Notes                                  |
+| --------------- | ---------------- | -------- | ----- | -------------------------------------- |
+| userId          | String           | Yes      | Yes   | Indexed, compound index with updatedAt |
+| title           | String           | Yes      | No    |                                        |
+| messages        | [Message] subdoc | Yes      | No    | Array of messages                      |
+| assistantRoleId | String           | Yes      | Yes   | Indexed, defaults to "strategist"      |
+| usage           | Number           | Yes      | No    | Token usage counter                    |
+| createdAt       | Date             | No       | No    |                                        |
+| updatedAt       | Date             | No       | Yes   | Indexed descending                     |
 
 Compound index: `{ userId: 1, updatedAt: -1 }`
 
@@ -190,9 +195,11 @@ Compound index: `{ userId: 1, updatedAt: -1 }`
 - Rate limiting: 20 requests / 60s per user (in-memory sliding window)
 - Plan expiration check: Blocks expired plans
 - Entitlement resolution: Checks plan-level role access and image/audio capabilities
+- Usage limit enforcement: Validates image/audio generation counts against plan limits
 - Creates/updates Task documents
 - Calls OpenAI `gpt-4o` for chat, `dall-e-3` for images, `gpt-4o-audio-preview` for audio
 - Uses tool calling for image/audio generation dispatch
+- Error classification: Maps OpenAI APIError status codes to structured error types
 
 ### 7.2 POST /api/upload
 
@@ -224,12 +231,11 @@ Compound index: `{ userId: 1, updatedAt: -1 }`
 - Handles: `checkout.session.completed`
 - Idempotency: Checks `Transaction.stripeId` before creating
 - Validates metadata against plan name and billing cycle allowlists
+- Resets usage counters on plan renewal
 
 ### API Technical Debt
 
 - **TD-API-01**: In-memory rate limiter. Does not survive restarts, does not work across instances.
-- **TD-API-03**: `generateImage` returns temporary OpenAI URLs, not persisted to S3. URLs expire.
-- **TD-API-05**: `console.log` statements in `generateImage`, `generateAudio`, and `/api/openai` route.
 - **TD-API-06**: `handleError` utility re-throws with string concatenation, losing stack trace.
 
 ---
@@ -238,12 +244,12 @@ Compound index: `{ userId: 1, updatedAt: -1 }`
 
 ### Models Used
 
-| Model | Purpose |
-|---|---|
-| `gpt-4o` | Main chat completion |
-| `gpt-4o-mini` | Title generation |
-| `dall-e-3` | Image generation |
-| `gpt-4o-audio-preview` | Audio generation |
+| Model                  | Purpose              |
+| ---------------------- | -------------------- |
+| `gpt-4o`               | Main chat completion |
+| `gpt-4o-mini`          | Title generation     |
+| `dall-e-3`             | Image generation     |
+| `gpt-4o-audio-preview` | Audio generation     |
 
 ### System Prompts
 
@@ -253,12 +259,21 @@ Role-aware system prompts built via `buildRoleAwareSystemPrompt()`. Each assista
 
 Two tools: `getGeneratedImage` and `getGeneratedAudio`. Conditionally included based on plan entitlements and role capabilities.
 
+### Error Classification (Implemented)
+
+OpenAI `APIError` is caught and classified into structured error types:
+
+- `rate_limit` (429) -> HTTP 429
+- `timeout` (408/504) -> HTTP 504
+- `service_error` (500/502/503) -> HTTP 502
+- `unknown` -> HTTP 500
+
+Generic error messages returned to client. No OpenAI details leaked.
+
 ### OpenAI Technical Debt
 
 - **TD-AI-01**: No streaming. Users see "Thinking..." with no incremental feedback. Deferred from v1.
-- **TD-AI-02**: No error classification for OpenAI rate limits (429s), timeouts, or service degradation.
 - **TD-AI-03**: No per-user token/cost tracking beyond `usage` field on Task documents.
-- **TD-AI-04**: Premium plan promises "Multiple AI model selection" — no implementation exists.
 - **TD-AI-05**: Audio base64 stored directly in message array, inflating document size.
 - **TD-AI-06**: No retry/backoff for transient OpenAI failures.
 
@@ -271,6 +286,13 @@ Two tools: `getGeneratedImage` and `getGeneratedAudio`. Conditionally included b
 1. Client-side: File selected via `ChatInput` or `UploadFileInput`
 2. `/api/upload`: Validates type + size, uploads to S3 under `{userId}/uploads/`
 3. File URL returned to client
+
+### Image Generation Flow
+
+1. OpenAI generates image via DALL-E 3
+2. Image converted to PNG via `sharp`
+3. PNG uploaded to S3 under `{userId}/images/`
+4. S3 URL stored in task message content
 
 ### Download Flow
 
@@ -296,16 +318,16 @@ Two tools: `getGeneratedImage` and `getGeneratedAudio`. Conditionally included b
 - Download URL allowlisting (SSRF prevention, HTTPS-only)
 - `crypto.getRandomValues` used (not `Math.random`)
 - Auth checks in all server actions and API routes
+- Ownership enforcement in `getUserById`, `getAllTransactions`, `deleteTask`, `updateUser`, `deleteUser`, `updateTask`
 - Generic error messages to clients
 - `/api/aws` DELETE verifies user-owned folder prefix
 - Mongoose `strict: true`, `upsert: false` on all updates
 - `createUserFromWebhook` is non-exported
+- No `console.log` in production code (only `console.error` for actual errors)
 
-### Active Security Issues
+### All Previously Reported Security Issues: RESOLVED
 
-- **SEC-01**: `getUserById` — no ownership enforcement (any authed user can read any user)
-- **SEC-02**: `getAllTransactions` — no ownership enforcement (any authed user can read any user's transactions)
-- **SEC-03**: `console.log` in `/api/openai` route outputs task content to server logs
+No active security issues as of this revision.
 
 ---
 
@@ -313,21 +335,21 @@ Two tools: `getGeneratedImage` and `getGeneratedAudio`. Conditionally included b
 
 ### Routing
 
-| Route | Type | Description |
-|---|---|---|
-| `/` | Public | Landing page |
-| `/pricing` | Public | Pricing page |
-| `/roles` | Public | Assistant roles showcase |
-| `/sign-in` | Auth | Clerk sign-in |
-| `/sign-up` | Auth | Clerk sign-up |
-| `/app` | Protected | Chat dashboard with role picker |
-| `/app/new` | Protected | Role selection to start new conversation |
-| `/app/library` | Protected | Conversation history list |
-| `/app/roles` | Protected | In-app roles page |
-| `/app/c/[conversationId]` | Protected | Resume existing conversation |
-| `/profile` | Protected | User profile + billing |
-| `/plans` | Protected | Plan selection + checkout |
-| `/dashboard` | Admin | Admin dashboard with live stats |
+| Route                     | Type      | Description                              |
+| ------------------------- | --------- | ---------------------------------------- |
+| `/`                       | Public    | Landing page                             |
+| `/pricing`                | Public    | Pricing page                             |
+| `/roles`                  | Public    | Assistant roles showcase                 |
+| `/sign-in`                | Auth      | Clerk sign-in                            |
+| `/sign-up`                | Auth      | Clerk sign-up                            |
+| `/app`                    | Protected | Chat dashboard with role picker          |
+| `/app/new`                | Protected | Role selection to start new conversation |
+| `/app/library`            | Protected | Conversation history list                |
+| `/app/roles`              | Protected | In-app roles page                        |
+| `/app/c/[conversationId]` | Protected | Resume existing conversation             |
+| `/profile`                | Protected | User profile + billing                   |
+| `/plans`                  | Protected | Plan selection + checkout                |
+| `/dashboard`              | Admin     | Admin dashboard with live stats          |
 
 ### Design System
 
@@ -336,40 +358,80 @@ Two tools: `getGeneratedImage` and `getGeneratedAudio`. Conditionally included b
 - Dark/light themes via `data-cellesseon-theme` attribute
 - Bootstrap Icons for iconography
 
+### Error Boundaries
+
+- App-level: `src/app/error.tsx` — generic "Something went wrong" with "Try again" button
+- Chat-level: `src/app/(chat)/error.tsx` — same pattern, scoped to chat routes
+
 ### Frontend Technical Debt
 
 - **TD-UI-02**: No loading skeleton for page transitions.
-- **TD-UI-04**: No error boundary components (`error.tsx` missing).
-- **TD-UI-05**: `mapDateToLabel` function duplicated in `chat-sidebar.tsx` and `library/page.tsx`.
-- **TD-UI-06**: No conversation delete UI.
+- **TD-UI-06**: No conversation delete UI. `deleteTask` server action exists but no frontend calls it.
 
 ---
 
 ## 12. Testing
 
-- **Unit tests**: 24 suites, 107 tests (Vitest) — all passing
+- **Unit tests**: 31 suites, 139 tests (Vitest) — all passing
 - **E2E tests**: 2 Playwright specs (landing page + authenticated flows)
 - **Coverage**: Not configured
-- **Missing test areas**: OpenAI utility functions, deleteTask, conversation resume flow, admin dashboard
+- **Test coverage areas**: Server actions (user, task, transaction), API routes (openai, upload, download, aws, webhooks), utilities (rate-limit, serialize, plan-status, date-formatting, usage-limit, entitlements, map-date-to-label), OpenAI functions (generateResponse, generateTitle, filterAssistantMsg), components (ChatWrapper, ChatInput, CellesseonTheme, AlertMessage), proxy
 
 ---
 
 ## 13. Environment Variables (Required)
 
-| Variable | Purpose |
-|---|---|
-| `MONGODB_URL` | MongoDB connection string |
-| `NEXT_PUBLIC_API_BASE_URL` | App base URL |
-| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk public key |
-| `CLERK_SECRET_KEY` | Clerk secret |
-| `CLERK_WEBHOOK_SECRET` | Clerk webhook verification |
-| `OPENAI_ORG` | OpenAI organization |
-| `OPENAI_PRJ` | OpenAI project |
-| `OPENAI_KEY` | OpenAI API key |
-| `STRIPE_SECRET_KEY` | Stripe secret |
-| `STRIPE_WEBHOOK_SECRET` | Stripe webhook verification |
-| `AWS_S3_REGION` | S3 region |
-| `AWS_S3_BUCKET` | S3 bucket name |
-| `AWS_S3_ACCESS_ID` | S3 access key |
-| `AWS_S3_SECRET_KEY` | S3 secret key |
-| `DOWNLOAD_URL_ALLOWLIST` | Additional allowed download hosts (optional) |
+| Variable                            | Purpose                                      |
+| ----------------------------------- | -------------------------------------------- |
+| `MONGODB_URL`                       | MongoDB connection string                    |
+| `NEXT_PUBLIC_API_BASE_URL`          | App base URL                                 |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk public key                             |
+| `CLERK_SECRET_KEY`                  | Clerk secret                                 |
+| `CLERK_WEBHOOK_SECRET`              | Clerk webhook verification                   |
+| `OPENAI_ORG`                        | OpenAI organization                          |
+| `OPENAI_PRJ`                        | OpenAI project                               |
+| `OPENAI_KEY`                        | OpenAI API key                               |
+| `STRIPE_SECRET_KEY`                 | Stripe secret                                |
+| `STRIPE_WEBHOOK_SECRET`             | Stripe webhook verification                  |
+| `AWS_S3_REGION`                     | S3 region                                    |
+| `AWS_S3_BUCKET`                     | S3 bucket name                               |
+| `AWS_S3_ACCESS_ID`                  | S3 access key                                |
+| `AWS_S3_SECRET_KEY`                 | S3 secret key                                |
+| `DOWNLOAD_URL_ALLOWLIST`            | Additional allowed download hosts (optional) |
+
+---
+
+## 14. Technical Debt Summary
+
+### Active
+
+| ID         | Area     | Description                                                                 | Severity |
+| ---------- | -------- | --------------------------------------------------------------------------- | -------- |
+| TD-API-01  | API      | In-memory rate limiter; does not survive restarts or work across instances  | Medium   |
+| TD-API-06  | API      | handleError utility re-throws with string concatenation, losing stack trace | Medium   |
+| TD-AI-01   | OpenAI   | No response streaming (deferred v1)                                         | Low      |
+| TD-AI-03   | OpenAI   | No per-user token/cost tracking beyond Task.usage field                     | Low      |
+| TD-AI-05   | OpenAI   | Audio base64 stored directly in message array, inflating document size      | High     |
+| TD-AI-06   | OpenAI   | No retry/backoff for transient OpenAI failures                              | Medium   |
+| TD-DB-05   | Database | Task messages array unbounded growth (MongoDB 16MB limit risk)              | High     |
+| TD-DB-07   | Database | Audio base64 inflates Task document size (related to TD-AI-05)              | High     |
+| TD-FILE-01 | Files    | No S3 cleanup on user/task deletion                                         | Medium   |
+| TD-FILE-02 | Files    | Some chat flows send file as base64 in message body                         | Low      |
+| TD-PLAN-01 | Billing  | No recurring Stripe subscriptions (deferred v1)                             | Low      |
+| TD-PLAN-03 | Billing  | Yearly billing has no pricing discount                                      | Low      |
+| TD-UI-02   | Frontend | No loading skeleton for page transitions                                    | Low      |
+| TD-UI-06   | Frontend | No conversation delete UI (server action exists)                            | High     |
+
+### Resolved
+
+| ID         | Description                                              | Resolution                                        |
+| ---------- | -------------------------------------------------------- | ------------------------------------------------- |
+| SEC-01     | getUserById no ownership check                           | Ownership enforced via authedUserId comparison    |
+| SEC-02     | getAllTransactions no ownership check                    | Ownership enforced via authedUserId comparison    |
+| SEC-03     | console.log in /api/openai                               | All console.log removed                           |
+| TD-API-03  | generateImage returns temporary OpenAI URLs              | Images persisted to S3                            |
+| TD-API-05  | console.log in generateImage, generateAudio, /api/openai | All removed                                       |
+| TD-PLAN-02 | Usage limits not enforced                                | Full limit system implemented                     |
+| TD-AI-02   | No OpenAI error classification                           | APIError classified with structured error types   |
+| TD-UI-04   | No error boundary components                             | error.tsx at app-level and chat route group level |
+| TD-UI-05   | mapDateToLabel duplicated                                | Extracted to shared utility                       |

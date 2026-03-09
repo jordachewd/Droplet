@@ -4,13 +4,15 @@ Smart AI assistant SaaS built with Next.js 16, React 19, TypeScript, Tailwind CS
 
 ## Current Status
 
-- **Validation pipeline:** TypeScript, ESLint, Prettier, and Vitest all pass (24 suites, 107 tests).
+- **Validation pipeline:** TypeScript, ESLint, Prettier, and Vitest all pass (31 suites, 139 tests).
 - **E2E:** 2 Playwright specs covering landing page and authenticated flows.
 - **Architecture:** Server Components first, Server Actions for mutations, Clerk proxy-based route protection (Next.js 16 convention).
 - **Product routing:** Public marketing on `/`, authenticated app experience under `/app`, admin dashboard at `/dashboard`.
 - **Assistant model:** 7 predefined AI roles (Strategist, Teacher, Developer, Creator, Best Friend, Boyfriend, Girlfriend) with role-bound system prompts and per-plan entitlements.
 - **Conversation persistence:** Full CRUD with conversation history in sidebar, library page, and resume via `/app/c/[conversationId]`.
 - **Billing:** Three-tier plan system (Lite/Pro/Premium) via Stripe one-time payments.
+- **Usage limits:** Per-plan image and audio generation limits enforced with 30-day rolling counters.
+- **Security:** Ownership enforcement on all data access, webhook signature verification, SSRF-protected downloads, file upload allowlists.
 
 ## Tech Stack
 
@@ -51,7 +53,7 @@ src/
   types/                   # Shared TypeScript types
   proxy.tsx                # Route protection (Next.js 16 proxy)
 tests/
-  unit/                    # 24 suites, 107 tests (Vitest)
+  unit/                    # 31 suites, 139 tests (Vitest)
   e2e/                     # 2 specs (Playwright)
 ```
 
