@@ -1,0 +1,153 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import classNames from "classnames";
+import SidebarHead from "@/components/chat/sidebar/sidebar-head";
+import ChatSidebarNav from "@/components/chat/sidebar/chat-sidebar-nav";
+import ChatSidebarPromo from "@/components/chat/sidebar/chat-sidebar-promo";
+import { ConversationListItem } from "@/types/AssistantRoleData.d";
+import { usePathname } from "next/navigation";
+
+interface ChatSidebarShellProps {
+  historyItems: ConversationListItem[];
+  hasAuthUser: boolean;
+}
+
+export default function ChatSidebarShell({
+  historyItems,
+  hasAuthUser,
+}: ChatSidebarShellProps) {
+  const [isDesktopViewport, setIsDesktopViewport] = useState<boolean>(false);
+  const [desktopCollapsed, setDesktopCollapsed] = useState<boolean>(false);
+  const [mobileOpen, setMobileOpen] = useState<boolean>(false);
+  const desktopMediaQueryRef = useRef<MediaQueryList | null>(null);
+  const pathname = usePathname();
+
+  useEffect(() => {
+    try {
+      const collapsedFromStorage = localStorage.getItem(
+        "cellesseon-sidebar-collapsed",
+      );
+      setDesktopCollapsed(collapsedFromStorage === "true");
+    } catch {
+      setDesktopCollapsed(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        "cellesseon-sidebar-collapsed",
+        String(desktopCollapsed),
+      );
+    } catch {}
+  }, [desktopCollapsed]);
+
+  useEffect(() => {
+    const desktopQuery = window.matchMedia("(min-width: 1024px)");
+    desktopMediaQueryRef.current = desktopQuery;
+    setIsDesktopViewport(desktopQuery.matches);
+
+    const handleBreakpointChange = (event: MediaQueryListEvent) => {
+      setIsDesktopViewport(event.matches);
+      if (event.matches) {
+        setMobileOpen(false);
+      }
+    };
+
+    desktopQuery.addEventListener("change", handleBreakpointChange);
+
+    return () => {
+      desktopQuery.removeEventListener("change", handleBreakpointChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
+
+  const isSidebarOpen = isDesktopViewport ? !desktopCollapsed : mobileOpen;
+
+  function handleOpenMobileSidebar() {
+    setMobileOpen(true);
+  }
+
+  function handleCloseMobileSidebar() {
+    setMobileOpen(false);
+  }
+
+  function handleToggleSidebar() {
+    const isDesktop = desktopMediaQueryRef.current?.matches ?? false;
+
+    if (isDesktop) {
+      setDesktopCollapsed((prevState) => !prevState);
+      return;
+    }
+
+    setMobileOpen((prevState) => !prevState);
+  }
+
+  const chatSidebarClass = classNames(
+    "ChatSidebar fixed bottom-0 left-0 top-0 z-30 flex w-72 flex-col justify-between",
+    "border-r border-lightBorders-400 bg-lightBackground-200 shadow-xl transition-all duration-300",
+    "lg:relative lg:z-10 lg:translate-x-0 lg:shadow-none",
+    "dark:border-darkBorders-500 dark:bg-jwdMarine-1000",
+    mobileOpen ? "translate-x-0" : "-translate-x-full",
+    desktopCollapsed ? "lg:w-[78px]" : "lg:w-72",
+  );
+
+  const navWrapperClass = classNames(
+    "cellesseon-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto",
+    !isSidebarOpen && "lg:items-center",
+  );
+
+  const floatingButtonClass = classNames(
+    "fixed left-3 top-[74px] z-20 rounded-lg border px-2.5 py-1.5 shadow-sm lg:hidden",
+    "border-lightBorders-400 bg-white/95 dark:border-darkBorders-500 dark:bg-jwdMarine-900/95",
+  );
+
+  const sidebarBackdropClass = classNames(
+    "fixed inset-0 z-20 bg-black/35 backdrop-blur-[1px] lg:hidden",
+    !mobileOpen && "hidden",
+  );
+
+  const shouldShowFloatingToggle = !mobileOpen && !isDesktopViewport;
+
+  return (
+    <>
+      {shouldShowFloatingToggle && hasAuthUser && (
+        <button
+          type="button"
+          className={floatingButtonClass}
+          onClick={handleOpenMobileSidebar}
+          aria-label="Open sidebar"
+          aria-expanded="false"
+          aria-controls="chat-sidebar"
+        >
+          <i className="bi bi-layout-sidebar"></i>
+        </button>
+      )}
+
+      <button
+        type="button"
+        className={sidebarBackdropClass}
+        onClick={handleCloseMobileSidebar}
+        aria-label="Close sidebar overlay"
+      />
+
+      <aside className={chatSidebarClass} id="chat-sidebar">
+        <SidebarHead
+          isOpen={isSidebarOpen}
+          onToggleSidebar={handleToggleSidebar}
+          isDesktopCollapsed={desktopCollapsed}
+        />
+
+        <div className={navWrapperClass}>
+          <ChatSidebarNav isOpen={isSidebarOpen} historyItems={historyItems} />
+        </div>
+
+        <ChatSidebarPromo isOpen={isSidebarOpen} />
+      </aside>
+    </>
+  );
+}
