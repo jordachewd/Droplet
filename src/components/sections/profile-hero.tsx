@@ -68,7 +68,9 @@ export default function ProfileHero({ userData }: HeroProps) {
           {updatedAt && (
             <div className="flex items-center gap-2">
               <span className="font-semibold leading-none">Last update:</span>
-              <span className="text-xxs leading-none">{formattedUpdatedAt}</span>
+              <span className="text-xxs leading-none">
+                {formattedUpdatedAt}
+              </span>
             </div>
           )}
 

@@ -1,186 +1,236 @@
-# Cellesseon - Delivery Completion Plan
+# Cellesseon - Completion Plan
 
-> Purpose: one execution document for finishing the SaaS with the least avoidable rework.
+> Purpose: one execution document for finishing the SaaS without avoidable rework.
 >
 > Audience: Project Manager, Architect, and Senior Software Agents.
 >
-> Rule: this plan is evidence-driven. If repository code and older docs disagree, code wins until this plan is explicitly updated.
+> Rule: this plan is based on verified repository state. If older docs disagree with code, code wins until this file is updated.
 
 ---
 
-## 1. Executive Position
+## 1. Executive Judgment
 
-Cellesseon is not blocked by missing pages.
+Cellesseon is not blocked by visual polish.
 
-It is blocked by product-rule drift, incomplete entitlement design, weak usage accounting, route fragmentation, and the absence of a real admin control plane.
+It is blocked by product-rule drift, route fragmentation, incomplete entitlement logic, weak usage accounting, missing storage guardrails, and the absence of a real admin control plane.
 
 The repository already has useful foundations:
 
-- Next.js 16 App Router structure
-- Clerk authentication and proxy-based route protection
+- Next.js 16 App Router
+- Clerk auth and proxy-based route protection
 - Stripe checkout and webhook plumbing
-- MongoDB persistence via Mongoose
-- persona-driven prompting
-- persisted conversations
+- MongoDB persistence through Mongoose
+- persona-based prompting
+- conversation persistence
 - basic image and audio generation hooks
 
-What is still not trustworthy enough to finish the product cleanly:
+The repository is not release-ready because the critical product contract is still inconsistent across code, docs, and intended behavior.
 
-- Lite plan business rules
-- pricing and billing alignment
-- model routing by paid tier
-- all-personas-for-all-plans entitlement policy
-- server-side conversation and storage stop rules
-- admin control surface and auditability
-- usage and cost visibility
-- route and auth boundary clarity
-- prompt strategy by persona and model family
-- streaming response lifecycle
+The correct strategy is not to keep adding features.
 
-This plan fixes sequencing first. Feature work follows that order.
+The correct strategy is to freeze product rules, build one canonical policy layer, move storage and usage accounting onto a safe foundation, then finish UX, admin, public pages, and launch controls on top of that.
 
 ---
 
-## 2. Verified Current State
+## 2. Verified Baseline
 
-The points below are verified from the current repository and must be treated as fact.
+The points below are verified from the current codebase.
 
-| Area | Verified Current State | Why It Matters |
-| --- | --- | --- |
-| Lite lifecycle | Lite still expires after 3 days in plan constants, user defaults, and OpenAI route gating | Permanent free Lite is not implemented |
-| Pricing | Pro is 29 and Premium is 69 in plan constants | Requested pricing is not reflected in code |
-| Auth requirement | `/api/openai` already requires Clerk auth | This now aligns with the new requirement that users must create an account to use the app |
-| Route boundaries | Protected pages are split across `/app`, `/profile`, `/plans`, and `/dashboard` | Product boundaries are harder to reason about than they should be |
-| Admin | Admin is a single dashboard page with three count cards only | Requested admin capabilities do not exist yet |
-| Entitlements | Persona and media access are partially centralized, but conversation caps, storage caps, and daily conversation limits are not | There is no complete entitlement engine |
-| Personas | Lite currently excludes `boyfriend` and `girlfriend` | Requested rule says all personas must be available in all plans |
-| Model routing | Chat, title, image, and audio models are hardcoded in separate utilities | Tier-aware model policy does not exist |
-| Conversations | A `Task` stores the full message history in an embedded array | Document growth, quota enforcement, and analytics remain fragile |
-| Usage accounting | Image and audio counters exist, but request limiting is in-memory and cost tracking is weak | Production abuse control and admin reporting are not ready |
-| Billing mode | Stripe checkout is payment-mode, not recurring subscription-mode | Plan lifecycle semantics must stay explicit |
-| Streaming | Streaming responses are not implemented | Chat UX target is incomplete |
-| Admin editor | Tiptap is not installed | Admin content editing is not started |
+| Area                 | Verified Current State                                                                                        | Impact                                                                          | Evidence                                                                                                   |
+| -------------------- | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Lite lifecycle       | Lite still expires after 3 days                                                                               | Conflicts with permanent free Lite requirement                                  | `src/constants/plans.tsx`, `src/lib/database/models/user.model.tsx`, `src/app/api/openai/route.tsx`        |
+| Pricing              | Pro is 29 and Premium is 69                                                                                   | Conflicts with requested 19 / 39 pricing                                        | `src/constants/plans.tsx`                                                                                  |
+| Public usage access  | `/api/openai` already requires auth                                                                           | Supports account-required chat direction                                        | `src/app/api/openai/route.tsx`                                                                             |
+| Route boundaries     | Protected pages are split across `/app`, `/profile`, `/plans`, `/dashboard`                                   | Product and auth boundaries are harder to reason about than necessary           | `src/proxy.tsx`, `src/app/**`                                                                              |
+| Admin scope          | Admin is a single dashboard page with only aggregate counts                                                   | Requested admin capabilities do not exist                                       | `src/app/(chat)/dashboard/page.tsx`                                                                        |
+| Entitlements         | Lite excludes `boyfriend` and `girlfriend`; media capability is plan-gated in a narrow resolver               | Conflicts with “all personas for all plans” and does not cover full quota logic | `src/lib/utils/resolve-entitlements.tsx`                                                                   |
+| Model routing        | Chat, title, image, and audio models are hardcoded separately                                                 | No plan-aware or model-family-aware AI policy layer exists                      | `src/lib/utils/openai/generateResponse.tsx`, `generateTitle.tsx`, `generateImage.tsx`, `generateAudio.tsx` |
+| Conversation storage | `Task` stores the full message history in one document                                                        | Unsafe for growth; MongoDB document growth remains a release risk               | `src/lib/database/models/tasks.model.tsx`                                                                  |
+| Usage accounting     | Only image/audio counters exist on the user plan subdocument; no cost ledger or durable request ledger exists | Admin analytics, cost governance, and reliable quota enforcement are incomplete | `src/lib/database/models/user.model.tsx`, `src/app/api/openai/route.tsx`                                   |
+| Rate limiting        | OpenAI request limiting is in-memory sliding window                                                           | Does not survive restarts or multiple instances                                 | `src/app/api/openai/route.tsx`, `src/lib/utils/rate-limit.ts*`                                             |
+| Billing mode         | Stripe flow is still one-time/payment-mode behavior with expiry dates                                         | SaaS billing semantics are not yet frozen                                       | `SPEC.md`, Stripe webhook code                                                                             |
+| Streaming            | No streaming route or client implementation exists                                                            | Chat UX target is incomplete                                                    | repository search under `src/**`                                                                           |
+| Public pages         | `/`, `/pricing`, `/personas` exist; `/about`, `/faqs`, privacy, cookie, and terms pages do not                | Requested public-information surface is incomplete                              | `src/app/(public)/**`                                                                                      |
+| FAQ copy             | FAQ content still references a free trial                                                                     | Product messaging is already inconsistent                                       | `src/constants/faqs.tsx`                                                                                   |
+| Theme control        | Theme exists as app-level light/dark switching, but no admin management surface exists                        | Requested settings control is absent                                            | `src/app/layout.tsx`, `src/components/layout/cellesseon-theme.tsx`                                         |
+| Tiptap               | Not installed                                                                                                 | Admin rich-text editing work has not started                                    | `package.json`                                                                                             |
 
-### Verified implications
+### Practical conclusions
 
-1. Do not design any anonymous or public Lite chat path. The current product direction requires authentication before usage.
-2. Do not update prices, plan copy, or paid-plan promises before entitlement rules and billing semantics are frozen.
-3. Do not promise Premium media features until exact capabilities, moderation flow, storage lifecycle, and cost ceilings are approved.
-4. Do not expand AI features before usage accounting exists outside ad hoc conversation state.
-5. Do not treat route cleanup as cosmetic refactoring. It is an auth and product-boundary refactor.
+1. Do not build any anonymous Lite chat path. The code already assumes authenticated AI usage.
+2. Do not touch pricing, paid-plan copy, or plan upgrade UX before plan rules and billing semantics are frozen.
+3. Do not promise Premium-only media features until provider support, moderation flow, storage lifecycle, and cost ceilings are approved.
+4. Do not build admin analytics before a real usage ledger exists.
+5. Do not treat route cleanup as cosmetic refactoring. It is part of auth, ownership, and product-boundary repair.
 
 ---
 
-## 3. Target Product Contract
+## 3. Target Release Contract
 
-This section defines the intended target state for the next serious release.
+This section defines the intended v1 target state.
 
-### 3.1 Commercial tiers
+### 3.1 Non-negotiable product rules
 
-| Tier | Access | Price | Model policy | Core limits |
-| --- | --- | --- | --- | --- |
-| Lite | Account required | Free | Cheapest approved text model at implementation time | Max 5 conversations per day, max 10 user prompts per conversation, max 3 media generations within the approved usage window, conversation hard-stops on any plan or storage limit |
-| Pro | Paid only | 19 | `gpt-5.2-pro` only if verified available and cost-approved | Higher usage ceilings than Lite, paid-only quality improvements, no public access |
-| Premium | Paid only | 39 | `gpt-5.4-pro` only if verified available and cost-approved | Highest usage ceilings plus 3 explicitly defined premium-only features |
-
-### 3.2 Non-negotiable product rules
-
-1. Users must create an account before using chat, uploads, or media generation.
-2. Lite is permanent and free. The old 3-day availability must be removed everywhere.
-3. All personas are available in all plans. Plan tiers must not hide personas.
+1. Users must create an account before using chat, uploads, media generation, or plan-limited features.
+2. Lite is permanent and free. The 3-day trial behavior must be removed everywhere.
+3. All personas are available in all plans.
 4. Lite is limited by usage, not by persona access.
-5. When any limit is reached, the server must end the conversation cleanly and return an exact stop reason.
-6. When a conversation is ended, the UI must direct the user to one of three outcomes only: start a new conversation, upgrade the plan, or contact support.
-7. Every plan must stop conversations before MongoDB storage pressure becomes a runtime failure.
-8. Premium must not promise video or any other advanced media feature until provider support, moderation, storage, and cost controls are approved.
+5. Lite users are capped at 5 conversations per day.
+6. Lite users are capped at 10 user prompts per conversation.
+7. Lite users are capped at 3 media generations in the approved reset window.
+8. Pro and Premium are paid-only.
+9. When any limit is reached, the server must end the conversation with an exact stop reason and exact next action.
+10. Every plan must stop conversations before MongoDB storage pressure becomes a runtime failure.
+11. After a forced stop, the user must be told only one of these next actions: start a new conversation, upgrade the plan, or contact support.
+12. Private pages must be auth-protected and user ownership must be enforced in every read and write path.
+13. Admin routes and admin actions must be role-protected server-side and at the proxy boundary.
 
-### 3.3 Required contract clarifications before implementation
+### 3.2 Tier contract
 
-The following are still incomplete and must be frozen before implementation starts:
+| Tier    | Access              | Price | Model policy                                                                                                    | Required baseline limits                                                                                                                                 |
+| ------- | ------------------- | ----- | --------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Lite    | Auth required, free | 0     | Cheapest approved text + media stack at implementation time                                                     | 5 conversations per day, 10 user prompts per conversation, 3 media generations per approved reset window, hard conversation stop on quota or storage hit |
+| Pro     | Paid only           | 19    | `gpt-5.2-pro` only if verified available and cost-approved; otherwise approved fallback with explicit plan note | Higher ceilings than Lite, paid-only reliability and quality improvements                                                                                |
+| Premium | Paid only           | 39    | `gpt-5.4-pro` only if verified available and cost-approved; otherwise approved fallback with explicit plan note | Highest ceilings plus 3 explicitly defined Premium-only features                                                                                         |
 
-| Topic | Required decision |
-| --- | --- |
-| Lite media reset window | Define whether Lite media limit resets daily, monthly, or on another fixed window. The current codebase has 30-day-style counters; the requested product rules do not state the new reset window clearly. |
-| Pro and Premium ceilings | Define exact daily or monthly ceilings for conversations, prompts, storage, and media so paid plans are enforceable, not vague. |
-| Premium extras | Name the exact 3 premium-only capabilities and define acceptance criteria for each. |
-| Storage budget | Define how per-user and per-conversation storage is calculated for the first 100 users and which limits trigger hard-stop behavior. |
-| Support messaging | Standardize exact user-facing stop messages for usage cap, storage cap, paid-feature block, billing problem, and support escalation. |
-| Yearly billing exposure | Decide whether yearly billing remains exposed in this release or is deferred to reduce billing complexity. |
+### 3.3 Public surface required for release
 
-### 3.4 Recommended contract decisions
+Required public routes:
 
-These are recommended because they reduce implementation risk and reuse existing code patterns.
+- `/`
+- `/about`
+- `/plans`
+- `/faqs`
+- `/personas`
+- `/privacy`
+- `/cookies`
+- `/terms`
+- `/sign-in`
+- `/sign-up`
 
-1. Keep paid plans as payment-mode purchases for this release. Do not redesign billing into auto-renewing subscriptions at the same time as entitlement rewrite.
-2. Keep Lite media limits on an explicit rolling window rather than lifetime limits. Lifetime caps create irreversible support noise and poor UX.
-3. Do not commit to Premium video generation in this release. It is high-cost, high-storage, high-moderation work and the repository is not ready for it.
+Rules for public surface:
+
+1. `/` starts with the current Hero and then expands into clear product-value sections and conversion CTAs.
+2. `/about` explains how the product works, with sections for personas, chat, media, voice, and usage expectations.
+3. `/plans` is public and starts from the current plan-card direction.
+4. `/faqs` is public and starts from the current FAQ accordion direction.
+5. Privacy, cookie, and terms pages must contain real adapted content, not placeholder copy.
+6. “Real content” still requires legal review before production publication. Research alone is not legal approval.
+
+### 3.4 Admin surface required for release
+
+Required admin namespaces:
+
+- `/admin`
+- `/admin/users`
+- `/admin/users/[userId]`
+- `/admin/transactions`
+- `/admin/transactions/[transactionId]`
+- `/admin/usage`
+- `/admin/settings`
+- `/admin/website`
+- `/admin/website/[pageId]`
+
+Admin release requirements:
+
+1. Admin must be able to inspect and manage users.
+2. Admin must be able to inspect transactions and perform real operational actions, not fake labels.
+3. Admin must have usage visibility by user, model, provider, period, and cost basis.
+4. Admin settings must be able to change plan prices, plan descriptions, plan limits, model-per-plan selection, and basic theme settings.
+5. Admin website management must support create, edit, order, publish, and unpublish for public pages.
+6. All admin mutations must produce an audit trail.
 
 ---
 
-## 4. Frozen Architecture Decisions
+## 4. Decisions That Must Be Frozen Before Implementation
 
-These decisions are the recommended stable path. Reversing them later will create avoidable rework.
+These are not optional. Coding before these are settled will create rework.
 
-### 4.1 Route and namespace model
+| Decision                           | Why It Must Be Frozen                                                                   | Recommended Decision                                                                                     |
+| ---------------------------------- | --------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| Billing semantics                  | Current code behaves like expiring one-time purchases; SaaS launch needs explicit rules | Launch with monthly recurring subscriptions only, defer yearly billing until pricing is defined properly |
+| Lite media reset window            | User request defines the count but not the reset window                                 | Freeze this explicitly before implementation; do not infer it from current rolling counters              |
+| Pro/Premium ceilings               | “Higher limits” is not implementable                                                    | Define exact ceilings for conversations, prompts, media, and storage                                     |
+| Premium extras                     | “3 more premium features” is too vague                                                  | Name each feature, define provider, moderation, storage, and success criteria                            |
+| Model availability                 | Requested model IDs may not be available or cost-safe                                   | Verify availability and cost before plan copy is changed                                                 |
+| Storage budget for first 100 users | Conversation-stop rules depend on it                                                    | Approve a conservative storage budget and quota formula before chat changes                              |
+| Legal page review path             | “Real content” without review creates business risk                                     | Research first, publish only after legal/business signoff                                                |
+
+### Hard calls
+
+1. Defer yearly billing from v1. The repository already has monthly/yearly assumptions, but yearly pricing is undefined and not requested.
+2. Do not promise video generation in Premium v1 unless provider support, moderation, storage, and cost ceilings are verified. Premium feature ambition is fine; ungoverned media scope is not.
+3. Do not keep transaction actions named as `suspend` or `decline` if they do not map to real Stripe or entitlement operations.
+
+---
+
+## 5. Frozen Architecture Direction
+
+These are the recommended stable decisions.
+
+### 5.1 Route model
 
 Use product semantics, not historical grouping.
 
-| Area | Target namespace |
-| --- | --- |
-| Public marketing | `/`, `/pricing`, `/personas`, `/sign-in`, `/sign-up` |
-| Authenticated app | `/app`, `/app/new`, `/app/c/[conversationId]`, `/app/library`, `/app/personas`, `/app/account`, `/app/billing` |
-| Admin | `/admin`, `/admin/users`, `/admin/users/[userId]`, `/admin/transactions`, `/admin/transactions/[transactionId]`, `/admin/usage`, `/admin/settings`, `/admin/website`, `/admin/website/[pageId]` |
+| Area                       | Target namespace                                                                                                                                                                                |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Public marketing and legal | `/`, `/about`, `/plans`, `/faqs`, `/personas`, `/privacy`, `/cookies`, `/terms`                                                                                                                 |
+| Authenticated app          | `/app`, `/app/new`, `/app/c/[conversationId]`, `/app/library`, `/app/personas`, `/app/account`, `/app/billing`                                                                                  |
+| Admin                      | `/admin`, `/admin/users`, `/admin/users/[userId]`, `/admin/transactions`, `/admin/transactions/[transactionId]`, `/admin/usage`, `/admin/settings`, `/admin/website`, `/admin/website/[pageId]` |
 
 Routes to retire after migration:
 
 - `/profile`
-- `/plans`
+- `/pricing`
 - `/dashboard`
+- authenticated `/plans`
 
-### 4.2 Auth boundary model
+### 5.2 Auth and role boundary model
 
-1. Public routes stay public by explicit design, but they do not provide app usage.
-2. All signed-in product routes live under `/app(.*)`.
+1. Public pages remain public and informational only.
+2. All signed-in customer product routes live under `/app(.*)`.
 3. All admin routes live under `/admin(.*)`.
-4. Admin authorization is role-based and enforced in both proxy and server-side actions.
-5. API route auth remains explicit. There is no anonymous actor path in this release.
+4. Proxy auth and server-side auth must both enforce admin role for admin paths.
+5. Every server action and API route must continue to enforce auth before mutations.
+6. Every user-owned resource lookup must filter by both resource id and owner id.
 
-### 4.3 Canonical entitlement model
+### 5.3 Canonical entitlement model
 
 Build one server-side entitlement resolver that accepts:
 
-- actor type: client or admin
-- plan: Lite, Pro, Premium
+- actor type: `client` or `admin`
+- plan: `Lite`, `Pro`, `Premium`
 - requested capability: chat, image, audio, upload, download, admin action
 - persona id
-- usage context: daily conversation count, prompt count in current conversation, media count in current window, conversation byte estimate, user storage estimate, billing status
+- usage context: daily conversation count, current conversation prompt count, media count in current window, conversation byte estimate, user storage estimate, billing state
 
 The resolver must return:
 
-- allowed or blocked
-- exact reason code
-- applicable model route
+- `allowed` or `blocked`
+- exact `reasonCode`
+- plan-aware model selection
 - quota snapshot
-- conversation end requirement
-- upgrade requirement if relevant
-- support escalation requirement if relevant
+- whether the current conversation must end
+- whether upgrade is the correct next action
+- whether support contact is the correct next action
 
-No UI component, route, or helper should own business rules directly.
+No UI component, route, or helper should own plan logic directly.
 
-### 4.4 Conversation lifecycle model
+### 5.4 Conversation lifecycle model
 
-Each conversation must have explicit lifecycle state, not implicit failure behavior.
+Conversations need explicit lifecycle state.
 
-Required conversation state fields:
+Required fields at conversation level:
 
 - `promptCount`
 - `mediaCount`
 - `estimatedBytes`
+- `status`
 - `endedAt`
 - `endedReason`
 - `endAction`
 
-Recommended `endedReason` codes:
+Required stop reasons:
 
 - `prompt_limit_reached`
 - `media_limit_reached`
@@ -191,29 +241,34 @@ Recommended `endedReason` codes:
 - `billing_state_invalid`
 - `support_required`
 
-Recommended `endAction` values:
+Allowed next actions:
 
 - `start_new_conversation`
 - `upgrade_plan`
 - `contact_support`
 
-### 4.5 Data model direction
+### 5.5 Data model direction
 
-Current `Task` documents are acceptable only as a transitional state.
+Current `Task` documents are a transitional structure, not a safe long-term ledger.
 
-Recommended model direction:
+Required direction:
 
-| Model | Purpose | Status |
-| --- | --- | --- |
-| `Task` | Conversation shell and summary metadata | Keep, but stop treating it as the entire ledger |
-| `TaskMessage` or equivalent separated message store | Scalable message history outside a single growing document | Strongly recommended |
-| `UsageEvent` | Per request usage, model, provider, tokens, estimated cost, latency, blocked reason | Required |
-| `ConversationCounter` or embedded task counters | Prompt count, media count, estimated bytes, end reason | Required |
-| `AppSetting` | Mutable admin-controlled application configuration | Recommended |
-| `PublicPage` | Admin-managed public pages and ordering | Recommended |
-| `AdminAuditLog` | Admin actions and reason trail | Required |
+| Model                                               | Purpose                                                                                       | Release priority                                          |
+| --------------------------------------------------- | --------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| `Task`                                              | Conversation shell and summary metadata                                                       | Keep, but narrow responsibility                           |
+| `TaskMessage` or equivalent separated message store | Message history without single-document growth risk                                           | Required before launch if embedded history remains unsafe |
+| `UsageEvent`                                        | Request-level usage, model, provider, estimated cost, latency, blocked reason, quota snapshot | Required                                                  |
+| `AppSetting`                                        | Admin-controlled mutable application settings                                                 | Required                                                  |
+| `PublicPage`                                        | Admin-managed public page content and ordering                                                | Required                                                  |
+| `AdminAuditLog`                                     | Audit trail for admin actions                                                                 | Required                                                  |
 
-### 4.6 AI orchestration model
+Non-negotiable storage rule:
+
+1. Do not store binary or large base64 payloads in conversation documents.
+2. Media artifacts must live in object storage with URL references only.
+3. Storage guardrails must stop conversations before Mongo document growth becomes a production incident.
+
+### 5.6 AI policy model
 
 Create one AI policy layer that resolves:
 
@@ -222,73 +277,90 @@ Create one AI policy layer that resolves:
 - image model by plan
 - audio model by plan
 - prompt template version by persona and model family
-- cost and latency telemetry per request
+- output mode where reliability matters: free text vs structured output
+- estimated cost and latency expectations per request
 
-Do not keep model names hardcoded across independent helpers.
+Do not keep model names hardcoded across separate utilities.
 
-### 4.7 Admin domain boundaries
+### 5.7 Prompt architecture
 
-Admin is an operational control plane, not a generic CRUD playground.
+Prompt design must move from isolated persona strings to a managed matrix.
 
-Required admin areas:
+Required prompt dimensions:
 
-| Area | Required capability |
-| --- | --- |
-| Users | Search, inspect, invite or create, suspend or reactivate, soft-remove, view plan, view usage by model, inspect conversations |
-| Transactions | Inspect, annotate, refund-or-flag workflow, entitlement correction workflow |
-| Usage | Per user, per model, per provider, per period analytics; placeholder cards allowed initially if the data layer is still landing |
-| Settings | Manage feature flags, limits, provider toggles, support copy, pricing presentation, plan rules |
-| Website | Create, edit, sort, publish or unpublish public pages and rich content blocks |
+- persona identity
+- plan tier
+- model family/version
+- content modality: chat, image, audio
+- safety constraints
+- answer style and formatting rules
 
-Important correction:
+Required prompt governance:
 
-- Transactions should not implement fake `suspend` or `decline` semantics after Stripe success. Admin actions must map to real operations such as refund, note, investigate, freeze entitlements, or reconcile.
+1. Version prompts.
+2. Keep prompt definitions separate from request handlers.
+3. Add regression prompts and expected-behavior evaluation sets for the highest-risk personas.
+4. Use structured outputs where downstream behavior depends on reliable parsing.
 
-### 4.8 Tiptap decision
+### 5.8 Admin editor baseline
 
-Tiptap is the correct editor baseline for admin rich-text fields.
+Tiptap is the correct editor baseline for admin content.
 
-Context7 confirms:
+Context7 verified:
 
-- baseline React and Next.js setup uses `@tiptap/react`, `@tiptap/pm`, and `@tiptap/starter-kit`
-- Next.js client components should use `immediatelyRender: false`
-- Pro packages require private registry access and token-based setup
+- Next.js React setup should use `@tiptap/react` and `@tiptap/starter-kit`
+- editor initialization should use `immediatelyRender: false` in client components
+- advanced toolkit/pro features may require separate package access and procurement
 
 Practical decision:
 
-1. Baseline admin editor delivery should target Tiptap core first.
-2. If the requested `Dev Toolkit Editor Suite` depends on Pro packages, procurement and token setup are prerequisites.
-3. Do not block the entire admin milestone on premium editor extras if core editing satisfies release needs.
+1. Deliver core editing first with Tiptap OSS baseline.
+2. Treat the requested Dev Toolkit suite as an enhancement only after package access and licensing are confirmed.
+3. Do not block admin content delivery on premium editor extras.
+
+### 5.9 Streaming baseline
+
+Context7 verified that the current OpenAI Node SDK supports streaming via either:
+
+- `openai.chat.completions.stream(...)`
+- `openai.chat.completions.create({ stream: true })`
+- `client.responses.create({ stream: true })`
+
+Practical decision:
+
+1. Choose one streaming contract for the app before frontend work starts.
+2. Prefer a simple server-to-client streaming approach first; do not mix streaming introduction with tool-routing redesign in the same PR.
 
 ---
 
-## 5. Delivery Principles
+## 6. Delivery Principles
 
-This order is mandatory because it prevents waste:
+This sequence is mandatory.
 
-1. Freeze product rules before touching billing, pricing copy, or plan UX.
-2. Freeze entitlement and storage policy before route cleanup and streaming.
-3. Build usage accounting before admin analytics.
-4. Build admin auditability before admin mutations.
-5. Build storage guardrails before promising heavier media features.
-6. Improve AI prompts only after the model-routing contract exists.
-7. Do not mix billing redesign with admin expansion and streaming in the same milestone.
+1. Freeze product rules before editing prices, billing UX, or plan marketing copy.
+2. Freeze entitlement and storage rules before route cleanup and streaming work.
+3. Build usage accounting before admin usage analytics.
+4. Build audit logging before admin mutation features.
+5. Fix storage and quota guardrails before expanding media promises.
+6. Build model-routing policy before rewriting prompts per persona.
+7. Complete public/legal content before launch, but not before the product contract is stable.
+8. Do not combine billing redesign, streaming, and admin-control-plane work in the same milestone.
 
 ---
 
-## 6. Milestone Plan
+## 7. Milestone Plan
 
 ## Milestone 0 - Product Contract Freeze
 
 **Objective**
 
-Freeze the commercial, entitlement, storage, and premium-capability contract so implementation stops chasing moving targets.
+Freeze the commercial, legal, entitlement, and storage contract so implementation stops moving against a changing target.
 
 **Assumptions**
 
-- Account-required access is final.
-- Lite stays free and permanent.
-- Payment-mode Stripe checkout remains acceptable for this release unless explicitly changed.
+- Account-required usage is final.
+- Lite remains free.
+- All personas remain available across plans.
 
 **Dependencies**
 
@@ -296,42 +368,44 @@ Freeze the commercial, entitlement, storage, and premium-capability contract so 
 
 **Blockers**
 
+- Billing semantics are not frozen.
+- Requested model IDs are not verified.
+- Lite media reset window is undefined.
 - Premium extras are vague.
-- Requested model IDs are unverified.
-- Lite media reset window is not defined.
-- Storage-stop calculations for the first 100 users are not defined.
+- Storage budget for the first 100 users is undefined.
 
 **PM / Architect outputs**
 
 1. Approve the final tier matrix.
-2. Approve exact Lite limits, stop reasons, and upgrade messaging.
-3. Define the 3 Premium-only capabilities by exact user-visible behavior.
-4. Approve whether yearly billing stays visible in this release.
-5. Approve support escalation conditions.
+2. Approve whether billing is recurring monthly-only for v1.
+3. Approve exact Lite limit behavior and user-facing stop messages.
+4. Define exact Pro and Premium ceilings.
+5. Define the 3 Premium-only features precisely.
+6. Approve the legal-content review path.
 
-**Senior implementation outputs**
+**Senior agent outputs**
 
-1. Verify OpenAI model availability and approximate cost envelopes for `gpt-5.2-pro` and `gpt-5.4-pro`.
-2. Produce a storage-budget proposal for 100 initial users.
-3. Identify every code path currently tied to Lite expiry, old pricing, and persona restrictions.
+1. Verify model availability and cost envelopes for `gpt-5.2-pro` and `gpt-5.4-pro`.
+2. Produce a storage-budget proposal for the first 100 users.
+3. Produce a matrix of all code paths tied to Lite expiry, old pricing, persona restrictions, and old FAQ copy.
 
 **Risks**
 
-- pricing drift across UI, Stripe metadata, and backend checks
-- selling unimplemented Premium features
-- choosing model tiers that are operationally too expensive
+- product claims drifting again across UI, Stripe, and backend checks
+- promising unsupported Premium features
+- selecting models that are too expensive or unavailable
 
 **Success criteria**
 
-- Lite is approved as permanent free access.
-- Pro is 19 and Premium is 39 in the approved contract.
+- Final plan rules are approved in writing.
+- Billing semantics are explicit.
 - Premium extras are no longer vague.
-- Model promises are either verified or replaced before coding starts.
+- Model claims are verified or replaced.
 
 **What not to do yet**
 
-- Do not update Stripe metadata.
-- Do not update plan copy globally.
+- Do not edit Stripe products or plan copy.
+- Do not start public-page rewrites.
 - Do not start route migrations.
 
 ---
@@ -340,12 +414,12 @@ Freeze the commercial, entitlement, storage, and premium-capability contract so 
 
 **Objective**
 
-Define the entitlement, conversation-stop, and storage-accounting contract that all later work depends on.
+Define the entitlement engine, conversation-stop contract, usage ledger, and storage ledger that everything else depends on.
 
 **Assumptions**
 
-- The app remains single-tenant per user account.
-- All personas remain selectable across all plans.
+- Per-user ownership remains the primary security boundary.
+- Admin is operational, not multi-tenant workspace management.
 
 **Dependencies**
 
@@ -353,43 +427,44 @@ Define the entitlement, conversation-stop, and storage-accounting contract that 
 
 **Blockers**
 
-- Current logic only partially covers persona and media access.
-- Current `Task` model is too coarse to act as the sole policy source.
+- Current quota logic only covers image/audio counters.
+- Current `Task` structure is not safe enough for long-lived conversation growth.
 
 **PM / Architect outputs**
 
-1. Approve the canonical entitlement contract.
-2. Approve all user-visible blocked-state messages.
-3. Approve the conversation-end state model and action matrix.
-4. Approve the storage budget formula and thresholds.
+1. Approve resolver inputs and outputs.
+2. Approve stop reasons and next-action matrix.
+3. Approve storage-quota formula.
+4. Approve required new models.
 
-**Senior implementation outputs**
+**Senior agent outputs**
 
-1. Define the canonical resolver input and output types.
-2. Define the required counters for conversations, media, and storage.
-3. Define the migration path from current `Task.messages` behavior.
-4. Define the new models required for usage, settings, and auditability.
+1. Define `EntitlementDecision` types and reason codes.
+2. Define `UsageEvent`, `AppSetting`, `PublicPage`, and `AdminAuditLog` schemas.
+3. Define message-storage migration strategy.
+4. Define request-level cost and latency capture fields.
 
 **Risks**
 
-- plan text diverges from backend behavior again
-- storage rules become approximate and inconsistent
-- UX messaging differs from actual stop reasons
+- quota logic being split again between UI and backend
+- inconsistent stop reasons across features
+- underestimating storage pressure
 
 **Success criteria**
 
-- One approved policy contract exists before feature coding starts.
-- Every required stop reason and next action is defined.
-- Required model additions are explicit, not implied.
+- One approved policy contract exists.
+- One approved data-contract document exists.
+- No unresolved ambiguity remains around stop behavior.
 
 **What not to do yet**
 
-- Do not hardcode new limits directly in components.
-- Do not start admin CRUD before policy contracts exist.
+- Do not code admin pages.
+- Do not rewrite prompts.
+- Do not implement streaming.
 
 ---
 
-## Milestone 2 - Route And Auth Boundary Redesign
+## Milestone 2 - Route And Auth Boundary Repair
 
 **Objective**
 
@@ -398,270 +473,254 @@ Make product boundaries obvious, enforceable, and maintainable.
 **Assumptions**
 
 - Public pages remain marketing-only.
-- All app usage requires authentication.
+- Customer product lives under `/app`.
+- Admin lives under `/admin`.
 
 **Dependencies**
 
-- Milestone 0
 - Milestone 1
 
 **Blockers**
 
-- Final route map must be approved.
+- Current proxy and route structure still protect `/profile`, `/plans`, and `/dashboard`.
 
 **PM / Architect outputs**
 
-1. Approve the namespace map for public, app, and admin.
-2. Freeze redirect behavior for legacy routes.
-3. Approve account and billing information architecture under `/app`.
+1. Approve final route map.
+2. Approve redirect strategy from retired routes.
+3. Approve admin and client navigation shells.
 
-**Senior implementation outputs**
+**Senior agent outputs**
 
-1. Move account semantics under `/app/account`.
-2. Move billing semantics under `/app/billing`.
-3. Move admin semantics under `/admin`.
-4. Simplify proxy protection rules.
-5. Update internal navigation and CTA targets.
-6. Add tests for protected and admin-only route behavior.
+1. Refactor proxy protection to `/app(.*)` and `/admin(.*)`.
+2. Move current admin entry out of `/dashboard`.
+3. Consolidate account and billing routes into authenticated `/app` namespace.
+4. Ensure no private feature is reachable from a public route.
 
 **Risks**
 
-- redirect loops
+- auth regressions during route moves
 - broken deep links
-- hidden unprotected routes
-- stale links in header, avatar menu, and chat sidebar
+- duplicated plan/account entry points lingering in navigation
 
 **Success criteria**
 
-- Public routes are public by design only.
-- Signed-in routes are fully under `/app`.
-- Admin routes are fully under `/admin`.
-- Legacy route compatibility is explicit and temporary.
+- Route tree matches the approved target map.
+- Proxy protection matches the new namespaces.
+- Old routes either redirect cleanly or are removed intentionally.
 
 **What not to do yet**
 
-- Do not redesign the full UI during the route move.
-- Do not broaden existing API auth exceptions.
+- Do not fill admin pages with full features yet.
+- Do not change plan pricing copy yet.
 
 ---
 
-## Milestone 3 - Entitlement Engine Rewrite
+## Milestone 3 - Plan, Billing, And User Lifecycle Alignment
 
 **Objective**
 
-Create one source of truth for plans, capabilities, limits, stop reasons, and model selection.
+Make plan state, billing state, and user-facing plan copy tell the same truth.
 
 **Assumptions**
 
-- All persona access is plan-independent.
-- Limits, not personas, differentiate plans.
+- Milestone 0 froze billing semantics.
 
 **Dependencies**
 
-- Milestone 0
-- Milestone 1
+- Milestone 2
 
 **Blockers**
 
-- Current logic covers only part of the rule set.
+- Current code embeds 3-day Lite expiry and one-time-payment-style plan expiry assumptions.
 
 **PM / Architect outputs**
 
-1. Approve the final entitlement matrix.
-2. Approve all stop-message copy.
-3. Approve paid-feature upgrade prompts.
+1. Approve final purchase and renewal flow.
+2. Approve customer-visible billing states and failure states.
+3. Approve upgrade and downgrade rules.
 
-**Senior implementation outputs**
+**Senior agent outputs**
 
-1. Replace Lite expiry logic across model defaults, route gating, and billing state.
-2. Remove persona restrictions from plan enforcement.
-3. Centralize conversation count, prompt count, media count, and storage checks.
-4. Resolve model policy through the entitlement layer.
-5. Return exact reason codes for UI and admin analytics.
+1. Remove Lite expiry logic from all code paths.
+2. Align Stripe metadata, webhook processing, database fields, and UI copy.
+3. Apply new prices and plan descriptions in one pass after logic is ready.
+4. Ensure new users default to Lite automatically.
+5. Ensure paid users only access Pro/Premium features when billing state is valid.
 
 **Risks**
 
-- old plan checks survive in hidden paths
-- upgrade prompts trigger at the wrong time
-- conversation termination feels inconsistent
+- charging users for features not enforced correctly
+- stale FAQ, pricing, and checkout copy persisting after backend changes
+- renewal edge cases leaving entitlements in the wrong state
 
 **Success criteria**
 
-- Every capability check goes through one policy layer.
-- Lite no longer expires by date.
-- All personas are available on Lite, Pro, and Premium.
-- UI does not hardcode business limits.
+- Billing state and entitlement state align.
+- Lite is permanent and free.
+- Pro and Premium price/copy/logic all match.
 
 **What not to do yet**
 
-- Do not start streaming work before this is stable.
-- Do not add new persona families during this rewrite.
+- Do not launch streaming.
+- Do not publish final plan marketing before webhook and entitlement tests pass.
 
 ---
 
-## Milestone 4 - Conversation, Storage, And Usage Accounting
+## Milestone 4 - Usage Ledger And Storage Guardrails
 
 **Objective**
 
-Make quota enforcement, storage safety, and cost visibility durable.
+Move from fragile counters to reliable usage accounting and conversation-stop enforcement.
 
 **Assumptions**
 
-- MongoDB remains the persistence layer.
-- S3 remains the file storage layer.
+- Quota rules are already frozen.
 
 **Dependencies**
 
-- Milestone 1
 - Milestone 3
 
 **Blockers**
 
-- `Task` documents still embed full message histories.
-- There is no real usage ledger.
+- Current usage state is insufficient for cost reporting and robust enforcement.
+- Current conversation storage remains embedded and risky.
 
 **PM / Architect outputs**
 
-1. Approve per-user and per-conversation storage budget rules.
-2. Approve conversation retention policy by plan.
-3. Approve which metrics must be visible to users versus admin only.
+1. Approve storage budget thresholds and escalation behavior.
+2. Approve usage and cost metrics visible to admin.
 
-**Senior implementation outputs**
+**Senior agent outputs**
 
-1. Add explicit per-conversation counters: prompt count, media count, estimated bytes, ended reason.
-2. Introduce `UsageEvent` or equivalent usage ledger.
-3. Track model, provider, token counts, latency, estimated cost, and blocked reasons.
-4. Define and implement a safe migration path from `Task`-only storage.
-5. Add index strategy for usage queries and admin reporting.
-6. Stop storing heavy payloads inline where references are sufficient.
+1. Implement request-level usage event logging.
+2. Implement conversation-level prompt/media/storage counters.
+3. Stop storing oversized payloads in Mongo.
+4. Introduce conversation-end enforcement tied to quota and storage thresholds.
+5. Replace in-memory-only operational assumptions where needed for launch safety.
 
 **Risks**
 
-- inability to explain model cost per user
-- quota checks depending on parsing message arrays
-- MongoDB document growth reaching failure thresholds
-- support unable to explain why a conversation ended
+- Mongo document growth causing hard failures
+- inaccurate cost reporting
+- quota bypasses under concurrency
 
 **Success criteria**
 
-- Lite daily conversation cap can be enforced server-side.
-- Prompt and media caps are enforced server-side.
-- Storage budget breaches are detected before document failure.
-- Usage can be reported per user, per model, per provider, and per period.
+- Every AI request emits a durable usage record.
+- Every forced stop has a stored reason.
+- Storage limits are enforced before database failure conditions.
 
 **What not to do yet**
 
-- Do not over-engineer multi-tenant analytics.
-- Do not change database technology.
+- Do not add more media-heavy features.
+- Do not build polished usage dashboards before the ledger is trusted.
 
 ---
 
-## Milestone 5 - Pricing And Billing Alignment
+## Milestone 5 - Chat Lifecycle, Prompt Quality, And Streaming
 
 **Objective**
 
-Align account defaults, pricing, checkout, and persisted plan state with the approved contract.
+Finish the core assistant experience: clean conversation lifecycle, persona-aware prompt quality, and streamed responses.
 
 **Assumptions**
 
-- Stripe remains the payment provider.
-- Payment-mode checkout stays in place unless approved otherwise.
+- Entitlement and storage guardrails are already in place.
 
 **Dependencies**
 
-- Milestone 0
-- Milestone 3
 - Milestone 4
 
 **Blockers**
 
-- Old trial semantics are still embedded in constants, models, and webhook behavior.
+- Current model routing is hardcoded.
+- Current prompt strategy is too flat for plan-aware model behavior.
+- Current chat UX is non-streaming.
 
 **PM / Architect outputs**
 
-1. Approve final plan copy after backend rules are stable.
-2. Approve yearly billing exposure for this release.
-3. Approve billing-history expectations for permanent Lite users.
+1. Approve model-per-plan policy.
+2. Approve streamed UX states and fallback behavior.
+3. Approve per-persona prompt evaluation criteria.
 
-**Senior implementation outputs**
+**Senior agent outputs**
 
-1. Make new accounts default to permanent Lite.
-2. Remove old trial copy and expiry logic everywhere.
-3. Update Stripe checkout mapping, webhook updates, and user plan persistence.
-4. Verify plan status rendering across app, billing, pricing, and upgrade surfaces.
-5. Extend tests for sign-up default plan, upgrade flow, and webhook idempotency.
+1. Introduce the central AI policy resolver.
+2. Build the prompt matrix by persona and model family.
+3. Implement streaming on the selected route contract.
+4. Update chat UI to render partial responses safely.
+5. End conversations cleanly when stop reasons are reached and present the correct next action.
 
 **Risks**
 
-- wrong plan state after checkout
-- stale pricing on public or private surfaces
-- hidden date-expiry checks breaking Lite users
+- streaming partial state causing duplicate or corrupt messages
+- prompt rewrites lowering output quality for some personas
+- tool or media routing becoming inconsistent under streaming
 
 **Success criteria**
 
-- New users land on Lite permanently.
-- Pro is 19 and Premium is 39 everywhere.
-- Billing and entitlement state match after checkout and webhook processing.
+- Streaming works reliably for normal chat flow.
+- Persona behavior is measurably more distinct and controlled.
+- Conversation-stop behavior is visible and understandable to users.
 
 **What not to do yet**
 
-- Do not update marketing first and backend later.
-- Do not leave trial-language remnants in any UI or support flow.
+- Do not expand provider count.
+- Do not add premium media features beyond what was frozen in Milestone 0.
 
 ---
 
-## Milestone 6 - AI Control Plane, Persona Prompting, And Streaming
+## Milestone 6 - Public Site, FAQ, And Legal Surface
 
 **Objective**
 
-Move from hardcoded model calls to tier-aware, persona-aware AI orchestration with streaming.
+Finish the public product narrative and legal pages without claiming things the product does not actually support.
 
 **Assumptions**
 
-- Requested GPT-5 model IDs must be verified before promise or implementation.
-- Persona prompts can be versioned without exposing authoring to end users.
+- Product rules, plan rules, and route map are already stable.
 
 **Dependencies**
 
-- Milestone 3
-- Milestone 4
-- Milestone 5
+- Milestone 3 for plan accuracy
+- Milestone 5 for real chat capability claims
 
 **Blockers**
 
-- Model routing and prompt strategy are currently scattered.
-- Streaming currently has no quota-aware lifecycle.
+- Required routes do not exist yet.
+- Existing FAQ copy still reflects obsolete trial behavior.
 
 **PM / Architect outputs**
 
-1. Approve model routing by tier and capability.
-2. Approve prompt versioning strategy by persona and model family.
-3. Approve streaming UX rules and failure handling.
+1. Approve homepage narrative and CTA hierarchy.
+2. Approve About page structure.
+3. Approve public FAQ topics and answer tone.
+4. Approve legal-content review workflow.
 
-**Senior implementation outputs**
+**Senior agent outputs**
 
-1. Create a central model registry by plan and capability.
-2. Version persona prompts by persona and model family.
-3. Improve system prompts for each persona and each allowed model tier.
-4. Add streaming responses for authenticated chat.
-5. Capture latency, token usage, and cost metrics per request, including streamed requests.
+1. Build `/about`, `/faqs`, `/privacy`, `/cookies`, and `/terms`.
+2. Update homepage beyond the Hero with product-value sections.
+3. Convert `/pricing` into canonical `/plans` behavior.
+4. Remove trial-era copy and unsupported claims.
+5. Keep all public claims aligned with actual product capabilities.
 
 **Risks**
 
-- model promises not matching runtime behavior
-- higher latency or cost from wrong tier routing
-- streaming creating state inconsistencies on partial failure
+- public pages overselling Premium or AI behavior
+- legal text being adapted poorly or published without review
+- duplicate pricing pages creating SEO and UX confusion
 
 **Success criteria**
 
-- Model selection is policy-driven.
-- Persona prompting is versioned and maintainable.
-- Streaming works without breaking quota enforcement or history persistence.
+- Required public routes exist.
+- Public plan and FAQ copy matches the product contract.
+- Legal content is real content and queued for review before production publish.
 
 **What not to do yet**
 
-- Do not add a second AI provider.
-- Do not promise unsupported premium media features.
+- Do not turn website management into a full CMS before admin controls and audit logs exist.
 
 ---
 
@@ -669,364 +728,243 @@ Move from hardcoded model calls to tier-aware, persona-aware AI orchestration wi
 
 **Objective**
 
-Build a real admin surface for operations, support, content, and release control.
+Build the minimum viable operational control plane the business actually needs.
 
 **Assumptions**
 
-- Admin remains a role on the user account, not a separate product.
-- Placeholder usage cards are acceptable only where data is not yet landed.
+- Usage ledger, settings model, audit log, and route boundaries already exist.
 
 **Dependencies**
 
-- Milestone 2
-- Milestone 3
-- Milestone 4
-- Milestone 5
+- Milestone 4 for usage data
+- Milestone 6 for website/page structures
 
 **Blockers**
 
-- No settings, website, usage, or audit models exist yet.
+- Current admin page is only a stats dashboard.
+- No mutable settings model exists.
+- No audit model exists.
 
 **PM / Architect outputs**
 
-1. Approve admin information architecture.
-2. Approve which admin actions are destructive, reversible, or soft-only.
-3. Approve placeholder rules for usage dashboards where real data is still missing.
+1. Approve admin navigation and permission scope.
+2. Approve which admin actions are allowed in v1.
+3. Approve placeholder-vs-real-data rules for usage views.
 
-**Senior implementation outputs**
+**Senior agent outputs**
 
-1. Build `/admin` overview with real operational summaries.
-2. Build `/admin/users` and `/admin/users/[userId]` with support-safe actions.
-3. Build `/admin/transactions` and `/admin/transactions/[transactionId]` with refund, flag, and audit workflows.
-4. Build `/admin/usage` with drill-downs for user, model, provider, and period.
-5. Build `/admin/settings` backed by durable settings storage.
-6. Build `/admin/website` backed by a public page model and Tiptap editor.
-7. Record admin actions in audit logs.
+1. Build Users list and user detail views.
+2. Build Transactions list and transaction detail views.
+3. Build Usage analytics view against the new ledger.
+4. Build Settings management for prices, limits, models, feature toggles, and theme settings.
+5. Build Website management using Tiptap-backed editing.
+6. Record every admin mutation in `AdminAuditLog`.
 
 **Risks**
 
-- powerful admin actions without auditability
-- user deletion creating billing or data integrity problems
-- fake transaction controls disconnected from Stripe reality
-- content editing blocked by Tiptap Pro procurement issues
+- admin pages mutating production state without auditability
+- placeholder usage data being mistaken for truth
+- website editing introducing broken public content without publish controls
 
 **Success criteria**
 
-- Admin can inspect users, entitlements, usage, and financial records.
-- Admin actions are auditable.
-- Public content can be managed without code edits.
-- Rich-text editing works through Tiptap on required admin fields.
+- Admin can perform required operational actions.
+- Admin changes are audited.
+- Admin pages do not bypass plan or ownership rules.
 
 **What not to do yet**
 
-- Do not implement hard delete for financially relevant users by default.
-- Do not expose raw internal settings without validation and role checks.
+- Do not add broad role systems beyond `client` and `admin` in this release.
+- Do not attempt generic low-governance CRUD across the whole database.
 
 ---
 
-## Milestone 8 - Product UX And Design Differentiation
+## Milestone 8 - Security, Reliability, And Observability Hardening
 
 **Objective**
 
-Deliver a persona-first product that does not feel like another generic chatbot shell.
+Close the operational gaps that would make launch fragile.
 
 **Assumptions**
 
-- Product behavior and stop rules are stable enough to design around.
+- Core features are already in place.
 
 **Dependencies**
 
-- Milestone 2 through Milestone 7
+- Milestone 7
 
 **Blockers**
 
-- Product behavior must be stable first.
+- No durable multi-instance rate limit exists.
+- Cost and provider visibility are still immature.
 
 **PM / Architect outputs**
 
-1. Approve the interaction thesis for what makes Cellesseon distinct.
-2. Approve where limits, upgrades, and support escalations appear in the UX.
-3. Approve which public pages are admin-editable versus fixed in code.
+1. Approve operational alert thresholds.
+2. Approve support escalation workflow.
+3. Approve acceptable fallback behavior for provider failures.
 
-**Senior implementation outputs**
+**Senior agent outputs**
 
-1. Make persona selection a first-class part of the journey.
-2. Improve chat affordances around streaming, limits, ended conversations, and new conversation creation.
-3. Keep plan differentiation clear without turning the product into billing noise.
-4. Refine public-page structure and content architecture.
-5. Improve responsive behavior and information hierarchy.
+1. Replace in-memory-only production protections where required.
+2. Add monitoring for request failures, blocked reasons, provider latency, and cost anomalies.
+3. Harden webhook observability and reconciliation.
+4. Add audit-friendly logs for billing, usage stops, and admin actions.
+5. Complete abuse-prevention review for uploads, downloads, and AI usage.
 
 **Risks**
 
-- visual redesign before product behavior stabilizes
-- novelty hurting usability
-- inconsistent UX between billing, chat, and admin surfaces
+- launch incidents without enough visibility to diagnose
+- silent billing or provider failures
+- abuse or runaway cost from weak rate and quota controls
 
 **Success criteria**
 
-- The chat experience feels persona-led, not generic.
-- Limit states and upgrade paths are clear.
-- Public and private experiences feel connected but correctly separated.
+- Key operational paths are observable.
+- Abuse and cost guardrails are active.
+- Support has enough information to investigate billing and quota issues.
 
 **What not to do yet**
 
-- Do not redesign everything before the underlying flows are stable.
-- Do not hide entitlement state from users.
+- Do not expand to additional providers or environments before observability is trusted.
 
 ---
 
-## Milestone 9 - Production Hardening And Release Control
+## Milestone 9 - Launch Readiness And Release Control
 
 **Objective**
 
-Make the app safe to operate in production.
+Ship only when the release is coherent, verifiable, and reversible.
 
 **Assumptions**
 
-- Launch quality requires both behavioral and operational verification.
+- All prior milestones are complete.
 
 **Dependencies**
 
-- Milestone 3 through Milestone 8
+- Milestones 0 through 8
 
 **Blockers**
 
-- Rate limiting is still in-memory.
-- Operational visibility is incomplete.
+- None should remain. Any unresolved contract ambiguity blocks launch.
 
 **PM / Architect outputs**
 
-1. Approve release gates and rollback conditions.
-2. Approve the minimum observability bar for launch.
-3. Approve abuse-response and billing-incident handling processes.
+1. Approve final release checklist.
+2. Approve rollback plan.
+3. Approve production support ownership for launch week.
 
-**Senior implementation outputs**
+**Senior agent outputs**
 
-1. Replace in-memory-only abuse controls with shared infrastructure.
-2. Add structured logs and failure monitoring for OpenAI, Stripe, Clerk, upload, and download paths.
-3. Add operational dashboards or at least queryable metrics sources.
-4. Expand automated coverage for route auth, plan enforcement, admin actions, streaming, and webhook flows.
-5. Run the full repository validation workflow before release.
+1. Run and pass the required validation workflow.
+2. Confirm migration and rollback steps.
+3. Confirm public copy and legal pages are the approved versions.
+4. Confirm admin, billing, usage stops, and streaming behavior in staging.
 
 **Risks**
 
-- AI cost rise without attribution
-- silent billing failures
-- admin actions with no audit trail
-- broken streaming or quota enforcement in production only
+- shipping with mismatched plan rules
+- broken redirects or protected-route leaks
+- billing and entitlements disagreeing in production
 
 **Success criteria**
 
-- The team can answer who used what, under which plan, with which model, at what estimated cost, and why a request failed or was blocked.
-- Shared abuse controls protect the platform.
-- Full quality gate passes before release.
+- Validation workflow passes end to end.
+- Release gates below are all green.
+- Rollback steps are documented and testable.
 
 **What not to do yet**
 
-- Do not launch on top of in-memory-only protections.
-- Do not add more feature surface before observability exists.
+- Do not merge new feature scope during launch stabilization.
 
 ---
 
-## 7. Stop-State Matrix
+## 8. Release Gates
 
-This matrix must become product behavior, not just documentation.
-
-| Stop reason | User message intent | Next action | Notes |
-| --- | --- | --- | --- |
-| Prompt limit reached | This conversation reached the prompt limit for your plan | Start new conversation or upgrade | Lite-specific cap must end the current conversation |
-| Media limit reached | You reached your media generation limit for the current usage window | Upgrade or wait for reset window | Message must state reset rules once approved |
-| Daily conversation limit reached | You reached your conversation limit for today | Upgrade or come back later | Lite-specific daily cap |
-| Conversation storage limit reached | This conversation reached the maximum allowed size | Start new conversation | Protects document growth |
-| User storage limit reached | Your account reached the current storage allowance | Upgrade or contact support | Protects platform storage budget |
-| Paid feature required | This feature requires a higher plan | Upgrade | Used for plan-differentiated premium capabilities |
-| Billing state invalid | Your billing state must be resolved before continuing | Contact support | Must not leak provider internals |
-| Support required | This account needs manual support review | Contact support | Rare operational path |
-
----
-
-## 8. Admin Information Architecture
-
-This is the recommended route map for admin delivery.
-
-| Route | Purpose |
-| --- | --- |
-| `/admin` | Overview: users, conversations, transactions, provider status, recent failures |
-| `/admin/users` | Searchable user list |
-| `/admin/users/[userId]` | User detail, plan, usage, conversations, account status actions |
-| `/admin/transactions` | Transaction list |
-| `/admin/transactions/[transactionId]` | Transaction detail, audit notes, refund or flag workflow |
-| `/admin/usage` | Aggregate reporting and filters |
-| `/admin/settings` | Product settings, limits, flags, pricing presentation, provider toggles |
-| `/admin/website` | Public pages and content list |
-| `/admin/website/[pageId]` | Page editor with Tiptap |
-
-### Admin action rules
-
-| Action | Required rule |
-| --- | --- |
-| Add user | Use Clerk-compatible create or invite path; do not bypass identity source of truth |
-| Suspend user | Soft action only; preserve financial and audit records |
-| Remove user | Default to soft-delete or deactivate; hard delete only via controlled process |
-| Change plan | Audit log required; reason required |
-| Refund transaction | Must reconcile Stripe state and entitlement state |
-| Edit public page | Revision trail required |
-| Change app settings | Validation and audit log required |
-
----
-
-## 9. Storage And Capacity Guardrails
-
-The product requires conversations to stop on application limits and on MongoDB storage pressure. This must be explicit policy, not accidental database failure.
-
-### Required guardrails
-
-1. Add an estimated byte counter per conversation.
-2. Add a per-user storage budget rule.
-3. Add a per-conversation storage budget rule.
-4. End a conversation when either business caps or storage caps are reached.
-5. Persist an `endedReason` value so support and admin can explain the stop.
-6. Prefer storing media as references instead of expanding embedded payloads.
-
-### Required calculation work before implementation
-
-The team must define:
-
-- actual MongoDB deployment tier and storage ceiling
-- acceptable storage budget reserved for the first 100 users
-- expected average text message size
-- expected metadata size per media action
-- expected retained conversations per user by plan
-
-Until those numbers exist, any storage-limit implementation is guesswork.
-
----
-
-## 10. Testing And Readiness Gates
-
-No milestone is complete until the related gate passes.
+Every gate must pass.
 
 ### Gate A - Contract Gate
 
-- tier matrix approved
-- model availability verified or corrected
+- Billing semantics frozen
+- Tier limits frozen
 - Premium extras frozen
-- stop messages approved
+- Model claims verified
 
-### Gate B - Policy Gate
+### Gate B - Architecture Gate
 
-- canonical entitlement contract approved
-- stop reasons approved
-- storage budget formula approved
-- required new models approved
+- Canonical entitlement resolver is live
+- Route/auth boundaries match target namespaces
+- Storage guardrails are enforced
 
-### Gate C - Boundary Gate
+### Gate C - Product Gate
 
-- route map migrated
-- proxy rules simplified
-- auth tests cover public, signed-in, and admin boundaries
+- Lite is permanent and account-required
+- All personas are available for all plans
+- Stop reasons and next actions work across chat flows
+- Streaming is stable enough for production
 
-### Gate D - Entitlement Gate
+### Gate D - Admin Gate
 
-- one canonical policy layer is in use
-- Lite no-expiry behavior verified
-- all personas available across plans
-- blocked reasons surfaced consistently
+- Users, transactions, usage, settings, and website admin areas exist
+- Admin actions are audited
+- Admin role enforcement works in proxy and server actions
 
-### Gate E - Usage Gate
+### Gate E - Public Gate
 
-- prompt, conversation, media, and storage caps enforced server-side
-- usage ledger queryable for admin needs
-- conversation end reasons persisted
+- Public pages exist and are accurate
+- Legal pages exist and are reviewed for publication readiness
+- No obsolete trial messaging remains
 
-### Gate F - Billing Gate
+### Gate F - Validation Gate
 
-- new user defaults verified
-- Pro and Premium prices corrected everywhere
-- webhook and checkout behavior tested end-to-end
+Run in this order and require all six to pass:
 
-### Gate G - Admin Gate
-
-- audit logs for privileged actions
-- user and transaction detail flows operational
-- usage and settings pages usable even if some cards are placeholder-backed
-- Tiptap admin editing working on required fields
-
-### Gate H - Release Gate
-
-- `npx prettier . --write`
-- `npm run lint`
-- `npx tsc --noEmit`
-- `npm run test`
-- `npm run test:e2e`
-- `npm run build`
-- rollback plan documented
+```bash
+npx prettier . --write
+npm run lint
+npx tsc --noEmit
+npm run test
+npm run test:e2e
+npm run build
+```
 
 ---
 
-## 11. Risk Register
+## 9. Immediate Execution Order
 
-| Risk | Severity | Why It Matters | Mitigation |
-| --- | --- | --- | --- |
-| Model mismatch | High | Product promises fail at runtime | Verify real model IDs before implementation |
-| Plan drift | High | UI, billing, and backend diverge | Canonical entitlement layer |
-| Conversation growth | High | Task documents become fragile | Counters, storage budget, message separation, usage ledger |
-| Premium overpromise | High | Billing disputes and trust damage | Freeze exact Premium extras before copy changes |
-| Admin overreach | High | Destructive actions without auditability | Soft actions first, audit logs, validation |
-| Route confusion | Medium | User flows and auth rules stay brittle | Normalize public, app, and admin namespaces |
-| Streaming regressions | Medium | Broken persistence and quota handling | Ship after entitlement and usage accounting are stable |
-| Tiptap procurement gap | Medium | Admin CMS work stalls on package access | Use core Tiptap first; treat Pro access as separate prerequisite |
+This is the correct first-pass order for the next serious work cycle.
 
----
-
-## 12. What To Defer Safely
-
-These items are not required to finish the requested product shape for the next serious release:
-
-1. multi-provider LLM routing
-2. recurring subscription redesign
-3. team or workspace features
-4. dynamic user-created personas
-5. advanced Tiptap collaboration features
-6. video generation unless explicitly re-approved after provider and storage review
+1. Freeze billing semantics, tier limits, Premium extras, and legal review path.
+2. Design and approve the canonical entitlement and stop-reason contract.
+3. Finalize the route map and auth boundary redesign.
+4. Align billing and plan lifecycle logic with the approved contract.
+5. Introduce the usage ledger, storage ledger, and guardrails.
+6. Build the AI policy layer and streaming chat path.
+7. Finish public pages and legal pages against the now-stable product contract.
+8. Build the admin control plane on top of the finished data foundations.
+9. Hardening, observability, and launch readiness.
 
 ---
 
-## 13. Recommended Delivery Order
+## 10. Explicitly Deferred From v1 Unless Re-approved
 
-Execute in this order:
+These items are not banned forever. They are excluded because they create disproportionate risk now.
 
-1. Milestone 0 - Product Contract Freeze
-2. Milestone 1 - Canonical Policy And Data Contract
-3. Milestone 2 - Route And Auth Boundary Redesign
-4. Milestone 3 - Entitlement Engine Rewrite
-5. Milestone 4 - Conversation, Storage, And Usage Accounting
-6. Milestone 5 - Pricing And Billing Alignment
-7. Milestone 6 - AI Control Plane, Persona Prompting, And Streaming
-8. Milestone 7 - Admin Control Plane
-9. Milestone 8 - Product UX And Design Differentiation
-10. Milestone 9 - Production Hardening And Release Control
-
-This order is strict where risk becomes expensive to reverse.
-
-Pricing changes before billing alignment are wrong.
-
-Streaming before usage accounting is wrong.
-
-Admin mutations before audit logging are wrong.
-
-Premium feature copy before provider and storage review is wrong.
+- Yearly billing and yearly pricing discounts
+- Multi-provider LLM routing
+- Team or workspace accounts
+- User-created custom personas
+- Premium video generation without verified provider and moderation design
+- Broad role systems beyond `client` and `admin`
+- CMS-like website complexity beyond the required public pages
 
 ---
 
-## 14. Immediate Next Actions
+## 11. What The Team Must Stop Doing
 
-If execution starts now, the first work packet should be:
-
-1. freeze the tier contract, premium extras, and Lite reset windows
-2. verify requested OpenAI model availability and cost
-3. approve the route namespace migration plan
-4. approve the canonical entitlement and stop-state contract
-5. define the storage budget rule for the first 100 users
-
-Anything started before those five items is likely to create rework.
+1. Stop changing plan copy before backend rules are settled.
+2. Stop encoding plan rules in UI components.
+3. Stop treating the current `Task` message array as if it is safe for growth.
+4. Stop treating admin as a cosmetic dashboard problem.
+5. Stop promising advanced Premium features before provider and storage readiness are proven.
+6. Stop allowing route structure to drift away from product boundaries.

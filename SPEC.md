@@ -421,36 +421,36 @@ No active security issues as of this revision.
 
 ### Active
 
-| ID         | Area     | Description                                                            | Severity |
-| ---------- | -------- | ---------------------------------------------------------------------- | -------- |
-| TD-API-01  | API      | In-memory rate limiter; does not survive restarts or work across instances | Medium |
-| TD-API-06  | API      | handleError utility re-throws with string concatenation, losing stack trace | Medium |
-| TD-AI-01   | OpenAI   | No response streaming (deferred v1)                                    | Low      |
-| TD-AI-03   | OpenAI   | No per-user token/cost tracking beyond Task.usage field                | Low      |
-| TD-AI-05   | OpenAI   | Audio base64 stored directly in message array, inflating document size | High     |
-| TD-AI-06   | OpenAI   | No retry/backoff for transient OpenAI failures                         | Medium   |
-| TD-DB-05   | Database | Task messages array unbounded growth (MongoDB 16MB limit risk)         | High     |
-| TD-DB-07   | Database | Audio base64 inflates Task document size (related to TD-AI-05)         | High     |
-| TD-FILE-01 | Files    | No S3 cleanup on user/task deletion                                    | Medium   |
-| TD-FILE-02 | Files    | Some chat flows send file as base64 in message body                    | Low      |
-| TD-PLAN-01 | Billing  | No recurring Stripe subscriptions (deferred v1)                        | Low      |
-| TD-PLAN-03 | Billing  | Yearly billing has no pricing discount                                 | Low      |
+| ID         | Area     | Description                                                                 | Severity |
+| ---------- | -------- | --------------------------------------------------------------------------- | -------- |
+| TD-API-01  | API      | In-memory rate limiter; does not survive restarts or work across instances  | Medium   |
+| TD-API-06  | API      | handleError utility re-throws with string concatenation, losing stack trace | Medium   |
+| TD-AI-01   | OpenAI   | No response streaming (deferred v1)                                         | Low      |
+| TD-AI-03   | OpenAI   | No per-user token/cost tracking beyond Task.usage field                     | Low      |
+| TD-AI-05   | OpenAI   | Audio base64 stored directly in message array, inflating document size      | High     |
+| TD-AI-06   | OpenAI   | No retry/backoff for transient OpenAI failures                              | Medium   |
+| TD-DB-05   | Database | Task messages array unbounded growth (MongoDB 16MB limit risk)              | High     |
+| TD-DB-07   | Database | Audio base64 inflates Task document size (related to TD-AI-05)              | High     |
+| TD-FILE-01 | Files    | No S3 cleanup on user/task deletion                                         | Medium   |
+| TD-FILE-02 | Files    | Some chat flows send file as base64 in message body                         | Low      |
+| TD-PLAN-01 | Billing  | No recurring Stripe subscriptions (deferred v1)                             | Low      |
+| TD-PLAN-03 | Billing  | Yearly billing has no pricing discount                                      | Low      |
 
 ### Resolved
 
-| ID           | Description                                              | Resolution                                            |
-| ------------ | -------------------------------------------------------- | ----------------------------------------------------- |
-| SEC-01       | getUserById no ownership check                           | Ownership enforced via authedUserId comparison        |
-| SEC-02       | getAllTransactions no ownership check                    | Ownership enforced via authedUserId comparison        |
-| SEC-03       | console.log in /api/openai                               | All console.log removed                               |
-| TD-API-03    | generateImage returns temporary OpenAI URLs              | Images persisted to S3                                |
-| TD-API-05    | console.log in generateImage, generateAudio, /api/openai | All removed                                           |
-| TD-PLAN-02   | Usage limits not enforced                                | Full limit system implemented                         |
-| TD-AI-02     | No OpenAI error classification                           | APIError classified with structured error types       |
-| TD-UI-04     | No error boundary components                             | error.tsx at app-level and chat route group level     |
-| TD-UI-05     | mapDateToLabel duplicated                                | Extracted to shared utility                           |
+| ID           | Description                                              | Resolution                                                      |
+| ------------ | -------------------------------------------------------- | --------------------------------------------------------------- |
+| SEC-01       | getUserById no ownership check                           | Ownership enforced via authedUserId comparison                  |
+| SEC-02       | getAllTransactions no ownership check                    | Ownership enforced via authedUserId comparison                  |
+| SEC-03       | console.log in /api/openai                               | All console.log removed                                         |
+| TD-API-03    | generateImage returns temporary OpenAI URLs              | Images persisted to S3                                          |
+| TD-API-05    | console.log in generateImage, generateAudio, /api/openai | All removed                                                     |
+| TD-PLAN-02   | Usage limits not enforced                                | Full limit system implemented                                   |
+| TD-AI-02     | No OpenAI error classification                           | APIError classified with structured error types                 |
+| TD-UI-04     | No error boundary components                             | error.tsx at app-level and chat route group level               |
+| TD-UI-05     | mapDateToLabel duplicated                                | Extracted to shared utility                                     |
 | TD-RENAME-01 | Rename "role" → "persona" across codebase                | All types, constants, components, models, tests, routes renamed |
-| TD-DB-08     | getUserById missing .lean() and .select()                | .lean() and .select() added to query                  |
-| TD-DB-09     | getAllTransactions missing .lean()                        | .lean() added to query chain                          |
-| TD-UI-02     | No loading skeleton for page transitions                 | Loading skeletons added for chat and account routes   |
-| TD-UI-06     | No conversation delete UI                                | Delete buttons added in sidebar and library page      |
+| TD-DB-08     | getUserById missing .lean() and .select()                | .lean() and .select() added to query                            |
+| TD-DB-09     | getAllTransactions missing .lean()                       | .lean() added to query chain                                    |
+| TD-UI-02     | No loading skeleton for page transitions                 | Loading skeletons added for chat and account routes             |
+| TD-UI-06     | No conversation delete UI                                | Delete buttons added in sidebar and library page                |
