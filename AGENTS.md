@@ -76,7 +76,7 @@ src/lib/actions/  — server actions (mutations only)
 src/lib/database/ — Mongoose models and connection
 src/lib/hooks/    — client hooks
 src/lib/utils/    — utilities + server-side query helpers
-src/constants/    — app constants (plans, openai, aws, assistant-roles)
+src/constants/    — app constants (plans, openai, aws, assistant-personas)
 src/types/        — shared TypeScript types
 src/proxy.tsx     — route protection (Next.js 16 proxy)
 public/           — static assets

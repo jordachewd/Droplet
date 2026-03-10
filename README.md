@@ -8,7 +8,7 @@ Smart AI assistant SaaS built with Next.js 16, React 19, TypeScript, Tailwind CS
 - **E2E:** 2 Playwright specs covering landing page and authenticated flows.
 - **Architecture:** Server Components first, Server Actions for mutations, Clerk proxy-based route protection (Next.js 16 convention).
 - **Product routing:** Public marketing on `/`, authenticated app experience under `/app`, admin dashboard at `/dashboard`.
-- **Assistant model:** 7 predefined AI roles (Strategist, Teacher, Developer, Creator, Best Friend, Boyfriend, Girlfriend) with role-bound system prompts and per-plan entitlements.
+- **Persona model:** 9 predefined AI personas (Strategist, Teacher, Developer, Creator, Wellness, Analyst, Best Friend, Boyfriend, Girlfriend) with persona-bound system prompts and per-plan entitlements.
 - **Conversation persistence:** Full CRUD with conversation history in sidebar, library page, and resume via `/app/c/[conversationId]`.
 - **Billing:** Three-tier plan system (Lite/Pro/Premium) via Stripe one-time payments.
 - **Usage limits:** Per-plan image and audio generation limits enforced with 30-day rolling counters.
@@ -34,17 +34,17 @@ src/
   app/
     globals.css            # Tailwind tokens, shared layers, global styles
     layout.tsx             # Root layout + Clerk + theme init
-    (public)/              # Marketing routes (/, /pricing, /roles)
-    (chat)/app/            # Authenticated chat routes (/app, /app/new, /app/library, /app/roles, /app/c/[id])
+    (public)/              # Marketing routes (/, /pricing, /personas)
+    (chat)/app/            # Authenticated chat routes (/app, /app/new, /app/library, /app/personas, /app/c/[id])
     (chat)/dashboard/      # Admin dashboard
     (account)/             # Profile + plans
     api/                   # Route handlers (openai, upload, download, aws, webhooks)
   components/
-    chat/                  # Chat UI (wrapper, input, body, sidebar, header, intro, role picker)
+    chat/                  # Chat UI (wrapper, input, body, sidebar, header, intro, persona picker)
     layout/                # App shell + theme provider
     sections/              # Landing/plans/profile sections
     shared/                # Reusable UI primitives
-  constants/               # Plans, OpenAI config, AWS config, assistant roles
+  constants/               # Plans, OpenAI config, AWS config, assistant personas
   lib/
     actions/               # Server actions (user, task, transaction)
     database/              # Mongoose models and connection

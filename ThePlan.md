@@ -1,3 +1,33 @@
+# Cellesseon — Architecture & Strategic Plan
+
+> This document captures the original CellesseonArchitect audit and strategic direction.
+> It has been updated to reflect current project state and approved terminology.
+>
+> **Canonical references:** See `SPEC.md` for product specification, `TODO.md` for actionable tasks, `AGENTS.md` for coding rules.
+>
+> **Terminology:** "Assistant roles" have been renamed to **personas** throughout this project. See `SPEC.md` §1.1 for the full terminology note.
+
+---
+
+## Current project status
+
+| Phase | Description | Status |
+|-------|-------------|--------|
+| Phase 0 | Product definition freeze | **DONE** — 9 personas defined, entitlement matrix locked, route architecture settled |
+| Phase 1 | Core architecture correction | **DONE** — persona constants, Task model, entitlements, system prompts |
+| Phase 2 | Entitlements and billing correctness | **DONE** — `resolveEntitlements()`, Stripe webhooks, usage counters |
+| Phase 3 | Chat engine hardening | **DONE** — persona-specific prompts, tool routing, rate limiting (in-memory) |
+| Phase 4 | UX and route architecture | **DONE** — route groups, persona-led UX, sidebar, library |
+| Phase 5 | Operational readiness | **DONE** — proxy protection, webhook verification, file validation, 139 tests |
+| Phase 6 | Landing page & marketing | **DONE** — hero, pricing, personas showcase, FAQ |
+| **Phase 7** | **Persona rename** | **CURRENT** — rename "role" → "persona" across all source files |
+| Phase 8 | Database optimization | NEXT — `.lean()`, `.select()`, index verification |
+| Phase 9+ | Production polish, resilience | PLANNED — see `TODO.md` |
+
+---
+
+## Original architect audit
+
 I reviewed the branch and this is the blunt read:
 
 The repo is a decent early-stage scaffold, not a finish-line SaaS. The foundations exist for auth, payments, chat persistence, uploads, and some testing, but the product model is still too generic, the route structure is only partially realized, and several current implementation choices will create rework if you keep piling features on top. The app already uses Next.js App Router, Clerk, Stripe, MongoDB/Mongoose, OpenAI, AWS S3 helpers, and has both unit and e2e tests present, so this is not vaporware. But the current assistant architecture is still “one generic assistant with image/audio hooks,” not “a role-based AI SaaS with clear product modes, entitlement logic, and durable operations.”
@@ -481,3 +511,26 @@ Not in v1:
 You do not need more features right now. You need product definition, assistant-role architecture, entitlement correctness, and a route/UX model that reflects the actual product. Build those first and the rest gets easier. Ignore them and you will spend months repainting wet cement.
 
 The next best move is to turn this into a concrete execution document with epics, tickets, acceptance criteria, and dependency order.
+
+---
+
+## Post-audit resolution
+
+The architect recommendations above have been reviewed, validated, and acted upon. Key outcomes:
+
+1. **Product definition (Phase 0):** Frozen. 9 personas defined (Strategist, Teacher, Developer, Creator, Wellness, Analyst, Best Friend, Boyfriend, Girlfriend). Entitlement matrix locked. Route architecture settled.
+2. **Core architecture (Phase 1):** Implemented. Persona constants, Task model with `assistantRoleId` (rename to `personaId` in Phase 7), `resolveEntitlements()`, persona-aware system prompts.
+3. **Entitlements and billing (Phase 2):** Implemented. Central entitlement resolver, Stripe webhook verification, per-plan usage counters.
+4. **Chat engine (Phase 3):** Implemented. Per-persona prompt assembly, tool routing by capability, in-memory rate limiting (persistent rate limiter deferred to Phase 12).
+5. **UX and routes (Phase 4):** Implemented. `/` is marketing, `/app` is product. Persona-led chat with `ChatRolePicker` (rename to `ChatPersonaPicker` in Phase 7).
+6. **Operational readiness (Phase 5):** Implemented. Proxy-based route protection, webhook signature verification, file validation, 31 test suites with 139 tests, 2 e2e specs.
+7. **Terminology rename (Phase 7):** Current priority — "assistant role" → "persona" across all source files. See `TODO.md` for the 26-task implementation plan.
+
+**Remaining gaps from the original audit** that are still tracked:
+- In-memory rate limiting → `TODO.md` Phase 12 (persistent rate limiter)
+- Cost/token tracking per request → `TODO.md` Phase 12
+- Streaming responses → `TODO.md` Phase 12
+- Admin surface → deferred beyond v1
+- Subscription state machine → `TODO.md` Phase 12
+
+All actionable work derived from this plan is now governed by `TODO.md`. All product specifications are in `SPEC.md`.

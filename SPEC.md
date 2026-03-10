@@ -8,103 +8,97 @@
 ## 1. Product Overview
 
 Cellesseon is a chatbot / AI assistant SaaS built on OpenAI models.
-Authenticated users interact with an AI assistant through predefined assistant roles that shape conversation tone and capabilities.
-Each conversation is bound to one assistant role. Roles control system prompt, tool availability, and behavioral boundaries.
+Authenticated users interact with an AI assistant through predefined **personas** that shape conversation tone and capabilities.
+Each conversation is bound to one persona. Personas control system prompt, tool availability, and behavioral boundaries.
 The product monetises through tiered subscription plans paid via Stripe.
+
+### Terminology
+
+- **Persona** (plural: **Personas**): A predefined AI assistant profile that controls system prompt, capabilities, and tone. Previously referred to as "assistant role" or "role." Not to be confused with `User.role` which refers to the user access level (`client` | `admin`).
 
 ### Core Value Proposition
 
 - Multi-modal AI assistant (text + image + audio generation)
-- 7 predefined assistant roles with distinct system prompts and capabilities
+- 9 predefined personas with distinct system prompts and capabilities
 - Conversation history persisted per user with resume capability
 - Three-tier subscription model (Lite / Pro / Premium) with per-plan entitlements
 - File upload and image download capabilities
 
 ### Approved v1 Release Scope
 
-- 7 predefined assistant roles (no dynamic role creation)
+- 9 predefined personas (no dynamic persona creation)
 - Text chat as primary mode
 - Image upload support
 - Image generation for paid tiers (with enforced usage limits)
 - Audio generation for paid tiers (with enforced usage limits)
-- Guest marketing site with role showcase
-- Authenticated `/app` experience with role-led UX
+- Guest marketing site with persona showcase
+- Authenticated `/app` experience with persona-led UX
 - Real conversation history (list, resume, delete)
 - Billing + entitlements that match product claims
 - Minimal admin dashboard with real operational data
 
 ### Deferred from v1
 
-- Relationship-role expansion without policy work
+- Relationship-persona expansion without policy work
 - Team/workspace features
 - Multi-provider LLM routing
 - Stripe subscription mode (auto-renewal)
-- Advanced admin CRUD (role management, user management)
+- Advanced admin CRUD (persona management, user management)
 - Response streaming
 
 ---
 
 ## 2. User Roles
 
-| Role          | Access                                                                                         |
-| ------------- | ---------------------------------------------------------------------------------------------- |
-| **Anonymous** | Landing page, pricing, roles showcase, sign-in/sign-up only                                    |
-| **Client**    | Chat (`/app`), conversation resume, library, new conversation, profile, plans, billing history |
-| **Admin**     | All client access + admin dashboard (`/dashboard`)                                             |
-| Role          | Access                                                                                         |
-| ------------- | ---------------------------------------------------------------------------------------------- |
-| **Anonymous** | Landing page, pricing, roles showcase, sign-in/sign-up only                                    |
-| **Client**    | Chat (`/app`), conversation resume, library, new conversation, profile, plans, billing history |
-| **Admin**     | All client access + admin dashboard (`/dashboard`)                                             |
+| Role          | Access                                                                                              |
+| ------------- | --------------------------------------------------------------------------------------------------- |
+| **Anonymous** | Landing page, pricing, personas showcase, sign-in/sign-up only                                      |
+| **Client**    | Chat (`/app`), conversation resume, library, new conversation, profile, plans, billing history       |
+| **Admin**     | All client access + admin dashboard (`/dashboard`)                                                  |
 
-Role is stored in `User.role` (Mongoose) and synced to Clerk `publicMetadata.role`.
+`User.role` is stored in Mongoose and synced to Clerk `publicMetadata.role`.
 Admin access is enforced at the proxy level (`src/proxy.tsx`) via Clerk session claims (`metadata.role === "admin"`).
+
+> **Note:** `User.role` refers to user access level (`client` / `admin`). It is unrelated to AI **personas**.
 
 ---
 
-## 3. Assistant Roles
+## 3. Personas
 
-7 predefined roles defined in `src/constants/assistant-roles.tsx`:
+9 predefined personas defined in `src/constants/assistant-personas.tsx`:
 
-| Role ID       | Label       | Category     | Image | Audio |
+| Persona ID    | Label       | Category     | Image | Audio |
 | ------------- | ----------- | ------------ | ----- | ----- |
 | `strategist`  | Strategist  | Productivity | Yes   | No    |
 | `teacher`     | Teacher     | Learning     | Yes   | Yes   |
 | `developer`   | Developer   | Productivity | Yes   | No    |
 | `creator`     | Creator     | Creative     | Yes   | Yes   |
-| `best-friend` | Best Friend | Companion    | No    | Yes   |
-| `boyfriend`   | Boyfriend   | Companion    | No    | Yes   |
-| `girlfriend`  | Girlfriend  | Companion    | No    | Yes   |
-| Role ID       | Label       | Category     | Image | Audio |
-| ------------- | ----------- | ------------ | ----- | ----- |
-| `strategist`  | Strategist  | Productivity | Yes   | No    |
-| `teacher`     | Teacher     | Learning     | Yes   | Yes   |
-| `developer`   | Developer   | Productivity | Yes   | No    |
-| `creator`     | Creator     | Creative     | Yes   | Yes   |
+| `wellness`    | Wellness    | Lifestyle    | No    | Yes   |
+| `analyst`     | Analyst     | Productivity | Yes   | No    |
 | `best-friend` | Best Friend | Companion    | No    | Yes   |
 | `boyfriend`   | Boyfriend   | Companion    | No    | Yes   |
 | `girlfriend`  | Girlfriend  | Companion    | No    | Yes   |
 
-Each role has: `id`, `label`, `tagline`, `description`, `category`, `icon`, `starterPrompts[]`, `systemPrompt`, `supportsImage`, `supportsAudio`.
+Each persona has: `id`, `label`, `tagline`, `description`, `category`, `icon`, `starterPrompts[]`, `systemPrompt`, `supportsImage`, `supportsAudio`.
 
-### Role Selection & Entitlements
+### New Personas (v1)
 
-- Lite plan: access to `strategist`, `teacher`, `developer`, `creator`, `best-friend` only.
-- Pro/Premium plan: access to all 7 roles.
-- Role selection UI: `ChatRolePicker` component in the chat interface.
-- Role is stored per task in `Task.assistantRoleId`.
-- System prompt is built per-role via `buildRoleAwareSystemPrompt()`.
+- **Wellness** — Lifestyle persona focused on mindfulness, stress management, healthy routines, and self-improvement. Audio-enabled for guided exercises.
+- **Analyst** — Productivity persona for data interpretation, report writing, market research, and critical thinking. Image-enabled for chart/data analysis.
+
+### Persona Selection & Entitlements
+
+- Lite plan: access to `strategist`, `teacher`, `developer`, `creator`, `best-friend`, `wellness`, `analyst` only.
+- Pro/Premium plan: access to all 9 personas.
+- Persona selection UI: `ChatPersonaPicker` component in the chat interface.
+- Persona is stored per task in `Task.personaId`.
+- System prompt is built per-persona via `buildPersonaAwareSystemPrompt()`.
 - Entitlements resolved via `resolveEntitlements()` in `src/lib/utils/resolve-entitlements.tsx`.
 
 ---
 
 ## 4. Subscription Plans
 
-| Plan        | Price | Duration          | Limits                                                         |
-| ----------- | ----- | ----------------- | -------------------------------------------------------------- |
-| **Lite**    | Free  | 3 days            | Limited messaging, file uploads, 3 image generations, no audio |
-| **Pro**     | $29   | Monthly or Yearly | Unlimited messaging/uploads, 20/mo image/audio                 |
-| **Premium** | $69   | Monthly or Yearly | Unlimited everything                                           |
 | Plan        | Price | Duration          | Limits                                                         |
 | ----------- | ----- | ----------------- | -------------------------------------------------------------- |
 | **Lite**    | Free  | 3 days            | Limited messaging, file uploads, 3 image generations, no audio |
@@ -169,18 +163,6 @@ Each role has: `id`, `label`, `tagline`, `description`, `category`, `icon`, `sta
 | lastName   | String          | No       | No     |                                 |
 | updatedAt  | Date            | No       | No     |                                 |
 | userimg    | String          | No       | No     |                                 |
-| Field      | Type            | Required | Index  | Notes                           |
-| ---------- | --------------- | -------- | ------ | ------------------------------- |
-| clerkId    | String          | Yes      | unique | Clerk user ID                   |
-| username   | String          | Yes      | unique |                                 |
-| email      | String          | Yes      | No     | Not currently queried by filter |
-| role       | String (enum)   | Yes      | No     | `"client"` or `"admin"`         |
-| registerAt | Date            | Yes      | No     |                                 |
-| plan       | Embedded subdoc | Yes      | No     | See Plan embedded schema        |
-| firstName  | String          | No       | No     |                                 |
-| lastName   | String          | No       | No     |                                 |
-| updatedAt  | Date            | No       | No     |                                 |
-| userimg    | String          | No       | No     |                                 |
 
 **Plan subdoc**: `{ id, name, amount, billing, startedOn, expiresOn, stripeId, imageGenerations, audioGenerations, usagePeriodStart }`
 
@@ -196,37 +178,18 @@ Each role has: `id`, `label`, `tagline`, `description`, `category`, `icon`, `sta
 | plan      | String (enum)       | Yes      | No     |                   |
 | billing   | String (enum)       | Yes      | No     |                   |
 | amount    | Number              | Yes      | No     |                   |
-| Field     | Type                | Required | Index  | Notes             |
-| --------- | ------------------- | -------- | ------ | ----------------- |
-| userId    | ObjectId (ref User) | Yes      | Yes    | Indexed           |
-| stripeId  | String              | Yes      | unique | Stripe session ID |
-| clerkId   | String              | Yes      | Yes    | Indexed           |
-| createdAt | Date                | Yes      | No     |                   |
-| expiresOn | Date                | Yes      | No     |                   |
-| plan      | String (enum)       | Yes      | No     |                   |
-| billing   | String (enum)       | Yes      | No     |                   |
-| amount    | Number              | Yes      | No     |                   |
 
 ### 6.3 Task
 
-| Field           | Type             | Required | Index | Notes                                  |
-| --------------- | ---------------- | -------- | ----- | -------------------------------------- |
-| userId          | String           | Yes      | Yes   | Indexed, compound index with updatedAt |
-| title           | String           | Yes      | No    |                                        |
-| messages        | [Message] subdoc | Yes      | No    | Array of messages                      |
-| assistantRoleId | String           | Yes      | Yes   | Indexed, defaults to "strategist"      |
-| usage           | Number           | Yes      | No    | Token usage counter                    |
-| createdAt       | Date             | No       | No    |                                        |
-| updatedAt       | Date             | No       | Yes   | Indexed descending                     |
-| Field           | Type             | Required | Index | Notes                                  |
-| --------------- | ---------------- | -------- | ----- | -------------------------------------- |
-| userId          | String           | Yes      | Yes   | Indexed, compound index with updatedAt |
-| title           | String           | Yes      | No    |                                        |
-| messages        | [Message] subdoc | Yes      | No    | Array of messages                      |
-| assistantRoleId | String           | Yes      | Yes   | Indexed, defaults to "strategist"      |
-| usage           | Number           | Yes      | No    | Token usage counter                    |
-| createdAt       | Date             | No       | No    |                                        |
-| updatedAt       | Date             | No       | Yes   | Indexed descending                     |
+| Field     | Type             | Required | Index | Notes                                  |
+| --------- | ---------------- | -------- | ----- | -------------------------------------- |
+| userId    | String           | Yes      | Yes   | Indexed, compound index with updatedAt |
+| title     | String           | Yes      | No    |                                        |
+| messages  | [Message] subdoc | Yes      | No    | Array of messages                      |
+| personaId | String           | Yes      | Yes   | Indexed, defaults to "strategist"      |
+| usage     | Number           | Yes      | No    | Token usage counter                    |
+| createdAt | Date             | No       | No    |                                        |
+| updatedAt | Date             | No       | Yes   | Indexed descending                     |
 
 Compound index: `{ userId: 1, updatedAt: -1 }`
 
@@ -234,6 +197,8 @@ Compound index: `{ userId: 1, updatedAt: -1 }`
 
 - **TD-DB-05**: Task stores entire message history as embedded array. Unbounded growth risk — MongoDB 16MB document limit.
 - **TD-DB-07**: Audio generation stores base64 data directly in `Task.messages[].content[].audio_url`, inflating document size.
+- **TD-DB-08**: `getUserById` does not use `.lean()` or `.select()` — fetches full Mongoose documents.
+- **TD-DB-09**: `getAllTransactions` does not use `.lean()` — returns full Mongoose documents.
 
 ---
 
@@ -244,7 +209,7 @@ Compound index: `{ userId: 1, updatedAt: -1 }`
 - Auth: Required (Clerk `auth()`)
 - Rate limiting: 20 requests / 60s per user (in-memory sliding window)
 - Plan expiration check: Blocks expired plans
-- Entitlement resolution: Checks plan-level role access and image/audio capabilities
+- Entitlement resolution: Checks plan-level persona access and image/audio capabilities
 - Usage limit enforcement: Validates image/audio generation counts against plan limits
 - Creates/updates Task documents
 - Calls OpenAI `gpt-4o` for chat, `dall-e-3` for images, `gpt-4o-audio-preview` for audio
@@ -300,20 +265,14 @@ Compound index: `{ userId: 1, updatedAt: -1 }`
 | `gpt-4o-mini`          | Title generation     |
 | `dall-e-3`             | Image generation     |
 | `gpt-4o-audio-preview` | Audio generation     |
-| Model                  | Purpose              |
-| ---------------------- | -------------------- |
-| `gpt-4o`               | Main chat completion |
-| `gpt-4o-mini`          | Title generation     |
-| `dall-e-3`             | Image generation     |
-| `gpt-4o-audio-preview` | Audio generation     |
 
 ### System Prompts
 
-Role-aware system prompts built via `buildRoleAwareSystemPrompt()`. Each assistant role has its own `systemPrompt` field.
+Persona-aware system prompts built via `buildPersonaAwareSystemPrompt()`. Each persona has its own `systemPrompt` field.
 
 ### Tool Calling
 
-Two tools: `getGeneratedImage` and `getGeneratedAudio`. Conditionally included based on plan entitlements and role capabilities.
+Two tools: `getGeneratedImage` and `getGeneratedAudio`. Conditionally included based on plan entitlements and persona capabilities.
 
 ### Error Classification (Implemented)
 
@@ -391,36 +350,21 @@ No active security issues as of this revision.
 
 ### Routing
 
-| Route                     | Type      | Description                              |
-| ------------------------- | --------- | ---------------------------------------- |
-| `/`                       | Public    | Landing page                             |
-| `/pricing`                | Public    | Pricing page                             |
-| `/roles`                  | Public    | Assistant roles showcase                 |
-| `/sign-in`                | Auth      | Clerk sign-in                            |
-| `/sign-up`                | Auth      | Clerk sign-up                            |
-| `/app`                    | Protected | Chat dashboard with role picker          |
-| `/app/new`                | Protected | Role selection to start new conversation |
-| `/app/library`            | Protected | Conversation history list                |
-| `/app/roles`              | Protected | In-app roles page                        |
-| `/app/c/[conversationId]` | Protected | Resume existing conversation             |
-| `/profile`                | Protected | User profile + billing                   |
-| `/plans`                  | Protected | Plan selection + checkout                |
-| `/dashboard`              | Admin     | Admin dashboard with live stats          |
-| Route                     | Type      | Description                              |
-| ------------------------- | --------- | ---------------------------------------- |
-| `/`                       | Public    | Landing page                             |
-| `/pricing`                | Public    | Pricing page                             |
-| `/roles`                  | Public    | Assistant roles showcase                 |
-| `/sign-in`                | Auth      | Clerk sign-in                            |
-| `/sign-up`                | Auth      | Clerk sign-up                            |
-| `/app`                    | Protected | Chat dashboard with role picker          |
-| `/app/new`                | Protected | Role selection to start new conversation |
-| `/app/library`            | Protected | Conversation history list                |
-| `/app/roles`              | Protected | In-app roles page                        |
-| `/app/c/[conversationId]` | Protected | Resume existing conversation             |
-| `/profile`                | Protected | User profile + billing                   |
-| `/plans`                  | Protected | Plan selection + checkout                |
-| `/dashboard`              | Admin     | Admin dashboard with live stats          |
+| Route                     | Type      | Description                                |
+| ------------------------- | --------- | ------------------------------------------ |
+| `/`                       | Public    | Landing page                               |
+| `/pricing`                | Public    | Pricing page                               |
+| `/personas`               | Public    | Personas showcase                          |
+| `/sign-in`                | Auth      | Clerk sign-in                              |
+| `/sign-up`                | Auth      | Clerk sign-up                              |
+| `/app`                    | Protected | Chat dashboard with persona picker         |
+| `/app/new`                | Protected | Persona selection to start new conversation |
+| `/app/library`            | Protected | Conversation history list                  |
+| `/app/personas`           | Protected | In-app personas page                       |
+| `/app/c/[conversationId]` | Protected | Resume existing conversation               |
+| `/profile`                | Protected | User profile + billing                     |
+| `/plans`                  | Protected | Plan selection + checkout                  |
+| `/dashboard`              | Admin     | Admin dashboard with live stats            |
 
 ### Design System
 
@@ -438,6 +382,7 @@ No active security issues as of this revision.
 
 - **TD-UI-02**: No loading skeleton for page transitions.
 - **TD-UI-06**: No conversation delete UI. `deleteTask` server action exists but no frontend calls it.
+- **TD-RENAME-01**: All code references to "assistant role" / "AssistantRole" / `assistantRoleId` must be renamed to "persona" / "Persona" / `personaId`. This includes types, constants, components, models, tests, and route paths (`/roles` -> `/personas`).
 
 ---
 
@@ -476,22 +421,25 @@ No active security issues as of this revision.
 
 ### Active
 
-| ID         | Area     | Description                                                                 | Severity |
-| ---------- | -------- | --------------------------------------------------------------------------- | -------- |
-| TD-API-01  | API      | In-memory rate limiter; does not survive restarts or work across instances  | Medium   |
-| TD-API-06  | API      | handleError utility re-throws with string concatenation, losing stack trace | Medium   |
-| TD-AI-01   | OpenAI   | No response streaming (deferred v1)                                         | Low      |
-| TD-AI-03   | OpenAI   | No per-user token/cost tracking beyond Task.usage field                     | Low      |
-| TD-AI-05   | OpenAI   | Audio base64 stored directly in message array, inflating document size      | High     |
-| TD-AI-06   | OpenAI   | No retry/backoff for transient OpenAI failures                              | Medium   |
-| TD-DB-05   | Database | Task messages array unbounded growth (MongoDB 16MB limit risk)              | High     |
-| TD-DB-07   | Database | Audio base64 inflates Task document size (related to TD-AI-05)              | High     |
-| TD-FILE-01 | Files    | No S3 cleanup on user/task deletion                                         | Medium   |
-| TD-FILE-02 | Files    | Some chat flows send file as base64 in message body                         | Low      |
-| TD-PLAN-01 | Billing  | No recurring Stripe subscriptions (deferred v1)                             | Low      |
-| TD-PLAN-03 | Billing  | Yearly billing has no pricing discount                                      | Low      |
-| TD-UI-02   | Frontend | No loading skeleton for page transitions                                    | Low      |
-| TD-UI-06   | Frontend | No conversation delete UI (server action exists)                            | High     |
+| ID           | Area     | Description                                                                        | Severity |
+| ------------ | -------- | ---------------------------------------------------------------------------------- | -------- |
+| TD-RENAME-01 | All      | Rename "role" → "persona" across types, constants, components, models, tests, routes | High     |
+| TD-API-01    | API      | In-memory rate limiter; does not survive restarts or work across instances          | Medium   |
+| TD-API-06    | API      | handleError utility re-throws with string concatenation, losing stack trace        | Medium   |
+| TD-AI-01     | OpenAI   | No response streaming (deferred v1)                                                | Low      |
+| TD-AI-03     | OpenAI   | No per-user token/cost tracking beyond Task.usage field                            | Low      |
+| TD-AI-05     | OpenAI   | Audio base64 stored directly in message array, inflating document size             | High     |
+| TD-AI-06     | OpenAI   | No retry/backoff for transient OpenAI failures                                     | Medium   |
+| TD-DB-05     | Database | Task messages array unbounded growth (MongoDB 16MB limit risk)                     | High     |
+| TD-DB-07     | Database | Audio base64 inflates Task document size (related to TD-AI-05)                     | High     |
+| TD-DB-08     | Database | getUserById missing .lean() and .select()                                          | Medium   |
+| TD-DB-09     | Database | getAllTransactions missing .lean()                                                 | Medium   |
+| TD-FILE-01   | Files    | No S3 cleanup on user/task deletion                                                | Medium   |
+| TD-FILE-02   | Files    | Some chat flows send file as base64 in message body                                | Low      |
+| TD-PLAN-01   | Billing  | No recurring Stripe subscriptions (deferred v1)                                    | Low      |
+| TD-PLAN-03   | Billing  | Yearly billing has no pricing discount                                             | Low      |
+| TD-UI-02     | Frontend | No loading skeleton for page transitions                                           | Low      |
+| TD-UI-06     | Frontend | No conversation delete UI (server action exists)                                   | High     |
 
 ### Resolved
 
