@@ -46,7 +46,7 @@ describe("getUserById", () => {
     expect(connectToDatabase).toHaveBeenCalledOnce();
     expect(User.findOne).toHaveBeenCalledWith({ clerkId: "clerk_user_1" });
     expect(selectMock).toHaveBeenCalledWith(
-      "clerkId username email role plan firstName lastName userimg",
+      "clerkId username email role plan firstName lastName userimg registerAt updatedAt",
     );
     expect(leanMock).toHaveBeenCalledOnce();
     expect(response).toEqual(

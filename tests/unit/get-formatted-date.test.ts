@@ -11,10 +11,8 @@ describe("getFormattedDate utilities", () => {
     expect(value).toContain("5 Mar 2026");
   });
 
-  it("throws when date is missing", () => {
-    expect(() => getFormattedDate("" as never)).toThrow(
-      "Date is undefined in getFormattedDate()!",
-    );
+  it('returns "N/A" when date is missing', () => {
+    expect(getFormattedDate("" as never)).toBe("N/A");
   });
 
   it("throws on invalid start and end dates for countdown", () => {

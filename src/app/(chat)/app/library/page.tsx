@@ -7,6 +7,7 @@ import PageHead from "@/components/layout/page-head";
 import { getRecentTasksByUserId } from "@/lib/utils/task-queries";
 import { mapDateToLabel } from "@/lib/utils/map-date-to-label";
 import { ConversationListItem } from "@/types/PersonaData.d";
+import LibraryDeleteButton from "@/components/chat/library-delete-button";
 
 export default async function LibraryPage() {
   const { userId } = await auth();
@@ -43,34 +44,49 @@ export default async function LibraryPage() {
             const persona = getPersona(conversation.personaId);
 
             return (
-              <Link
+              <article
                 key={conversation.id}
-                href={conversation.href}
                 className={classNames(
-                  "rounded-xl border p-4 transition-all duration-300",
-                  "border-lightBorders-400 bg-white/70 shadow-sm hover:-translate-y-0.5 hover:shadow-md",
+                  "flex items-start gap-3 rounded-xl border p-4 transition-all duration-300",
+                  "border-lightBorders-400 bg-white/70 shadow-sm",
                   "dark:border-darkBorders-500 dark:bg-jwdMarine-900/70",
                 )}
               >
-                <div className="mb-2 flex items-center justify-between gap-3">
-                  <h2 className="heading-6 truncate text-lg">
-                    {conversation.title}
-                  </h2>
-                  {conversation.isDemo && (
-                    <span className="rounded-full border border-dotted px-2 py-1 text-xxs uppercase">
-                      Demo
-                    </span>
+                <Link
+                  href={conversation.href}
+                  className={classNames(
+                    "min-w-0 flex-1 rounded-lg transition-all duration-300",
+                    "hover:-translate-y-0.5 hover:shadow-md",
                   )}
-                </div>
+                >
+                  <div className="mb-2 flex items-center gap-3">
+                    <h2 className="heading-6 truncate text-lg">
+                      {conversation.title}
+                    </h2>
+                    {conversation.isDemo && (
+                      <span className="rounded-full border border-dotted px-2 py-1 text-xxs uppercase">
+                        Demo
+                      </span>
+                    )}
+                  </div>
 
-                <div className="flex items-center justify-between text-sm opacity-80">
-                  <span className="inline-flex items-center gap-2">
-                    <i className={persona.icon}></i>
-                    {persona.label}
-                  </span>
-                  <span>{conversation.updatedAtLabel}</span>
-                </div>
-              </Link>
+                  <div className="flex items-center justify-between gap-3 text-sm opacity-80">
+                    <span className="inline-flex items-center gap-2">
+                      <i className={persona.icon}></i>
+                      {persona.label}
+                    </span>
+                    <span className="shrink-0">
+                      {conversation.updatedAtLabel}
+                    </span>
+                  </div>
+                </Link>
+
+                <LibraryDeleteButton
+                  conversationId={conversation.id}
+                  conversationTitle={conversation.title}
+                  isDemo={conversation.isDemo}
+                />
+              </article>
             );
           })}
         </div>
