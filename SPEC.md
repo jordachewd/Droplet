@@ -3,6 +3,7 @@
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
 > Last updated: 2026-03-10
+> Support contact: `office@jordachewd.com`
 
 ---
 
@@ -555,12 +556,8 @@ Server-side streaming via OpenAI SDK. Client renders partial responses increment
 
 | ID         | Area     | Description                                  | Severity |
 | ---------- | -------- | -------------------------------------------- | -------- |
-| TD-PLAN-04 | Billing  | Lite has 3-day expiry — remove               | Critical |
-| TD-PLAN-05 | Billing  | Prices $29/$69 — update to $19/$39           | Critical |
-| TD-PLAN-06 | Billing  | Lite restricts 2 personas — allow all 9      | Critical |
-| TD-PLAN-07 | Billing  | No daily conversation limit                  | Critical |
-| TD-PLAN-08 | Billing  | No per-conversation prompt limit             | Critical |
-| TD-PLAN-09 | Billing  | Plan descriptions outdated                   | Critical |
+| TD-PLAN-07 | Billing  | No daily conversation limit enforcement      | Critical |
+| TD-PLAN-08 | Billing  | No per-conversation prompt limit enforcement | Critical |
 | TD-AI-01   | OpenAI   | No streaming                                 | High     |
 | TD-AI-07   | OpenAI   | Models hardcoded — need plan-aware selection | High     |
 | TD-DB-05   | Database | Task messages unbounded (16MB risk)          | High     |
@@ -590,7 +587,9 @@ Server-side streaming via OpenAI SDK. Client renders partial responses increment
 | TD-FILE-02 | Files   | Inline base64 file in some flows         | Low      |
 | TD-UI-07   | UI      | Homepage needs more sections             | Medium   |
 | TD-UI-09   | UI      | Account pages at wrong routes            | Medium   |
-| TD-UI-11   | UI      | FAQ copy outdated                        | Medium   |
+| TD-UI-12   | UI      | Footer links non-functional (spans)      | Medium   |
+| TD-UI-13   | UI      | Header nav missing /about, /faqs links   | Medium   |
+| TD-DB-15   | Database| User deletion doesn't clean up Tasks     | Medium   |
 | TD-PLAN-01 | Billing | No recurring subscriptions (deferred v1) | Low      |
 
 ### Resolved
@@ -603,10 +602,16 @@ Server-side streaming via OpenAI SDK. Client renders partial responses increment
 | TD-API-03    | generateImage temporary URLs          | Persisted to S3    |
 | TD-API-05    | console.log in OpenAI utils           | Removed            |
 | TD-PLAN-02   | Usage limits not enforced             | Implemented        |
+| TD-PLAN-04   | Lite 3-day expiry                     | Removed — Lite now "Free forever" |
+| TD-PLAN-05   | Prices $29/$69                        | Updated to $19/$39 |
+| TD-PLAN-06   | Lite restricts 2 personas             | All 9 available in all plans |
+| TD-PLAN-09   | Plan descriptions outdated            | Updated with accurate limits |
+| TD-UI-11     | FAQ copy outdated (trial references)  | Rewritten for Droplet |
 | TD-AI-02     | No OpenAI error classification        | Implemented        |
 | TD-UI-04     | No error boundaries                   | Added              |
 | TD-UI-05     | mapDateToLabel duplicated             | Extracted          |
 | TD-RENAME-01 | "role" to "persona" rename            | Completed          |
+| TD-RENAME-02 | Cellesseon → Droplet rename           | Completed (3 legacy migration keys intentional) |
 | TD-DB-08     | getUserById missing .lean()/.select() | Added              |
 | TD-DB-09     | getAllTransactions missing .lean()    | Added              |
 | TD-UI-02     | No loading skeletons                  | Added              |

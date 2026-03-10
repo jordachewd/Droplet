@@ -7,229 +7,7 @@
 
 ---
 
-## Phase 13: Product Rule Reconciliation — CURRENT PRIORITY
-
-> Fix fundamental conflicts between code and approved product direction.
-> These must be completed before ANY other feature work.
-
----
-
-### 13.1 Remove Lite plan 3-day expiry
-
-**Files:** `src/constants/plans.tsx`, `src/lib/database/models/user.model.tsx`
-**Ref:** TD-PLAN-04
-
-**What to do:**
-
-- In `getExpiresOn()`, remove the `case "Lite"` branch that adds 3 days. Lite should return `null` or a far-future date (e.g., year 9999) to indicate no expiry.
-- In the Lite plan object, change `desc` from `"Free trial for 3 days"` to `"Free forever"`.
-- In the User model, update the `plan.expiresOn` default to match the new Lite behavior (no expiry).
-- In `src/app/api/openai/route.tsx`, ensure the plan expiry check skips Lite plans (Lite never expires).
-
-**Acceptance Criteria:**
-
-- [ ] `getExpiresOn("Lite")` returns a value indicating no expiry (null or far-future date)
-- [ ] Lite plan description says "Free forever", not "Free trial for 3 days"
-- [ ] New users created via Clerk webhook get Lite with no expiry
-- [ ] `/api/openai` route does NOT block Lite users for plan expiration
-- [ ] TypeScript compiles (`npx tsc --noEmit`)
-- [ ] All existing tests pass (`npm run test`)
-
----
-
-### 13.2 Update plan prices to $19/$39
-
-**Files:** `src/constants/plans.tsx`
-**Ref:** TD-PLAN-05
-
-**What to do:**
-
-- Change Pro plan `price` from `29` to `19`.
-- Change Premium plan `price` from `69` to `39`.
-- Update Pro `desc` to a better description (e.g., "Advanced AI for power users").
-- Update Premium `desc` to a better description (e.g., "Ultimate AI experience with premium media").
-
-**Acceptance Criteria:**
-
-- [ ] Pro plan price is `19` in `plans` array
-- [ ] Premium plan price is `39` in `plans` array
-- [ ] Plan descriptions are updated and professional
-- [ ] TypeScript compiles (`npx tsc --noEmit`)
-- [ ] All existing tests pass — update any plan price assertions in tests
-
----
-
-### 13.3 Allow all personas in all plans
-
-**Files:** `src/lib/utils/resolve-entitlements.tsx`
-**Ref:** TD-PLAN-06
-
-**What to do:**
-
-- In `resolveEntitlements()`, change the Lite case to return ALL 9 persona IDs (same as Pro/Premium) using `PERSONAS.map((p) => p.id)`.
-- Enable audio generation for Lite (`supportsAudioGeneration: true`). Media limits will be enforced by usage counters, not by disabling the capability.
-
-**Acceptance Criteria:**
-
-- [ ] `resolveEntitlements("Lite")` returns all 9 persona IDs
-- [ ] `resolveEntitlements("Lite")` returns `supportsAudioGeneration: true`
-- [ ] Lite users can select any persona including `boyfriend` and `girlfriend`
-- [ ] TypeScript compiles (`npx tsc --noEmit`)
-- [ ] All existing tests pass — update entitlement test assertions
-
----
-
-### 13.4 Update Lite plan inclusions and limits display
-
-**Files:** `src/constants/plans.tsx`
-**Ref:** TD-PLAN-09
-
-**What to do:**
-
-- Update Lite `inclusions` array to reflect actual limits:
-  - "AI chat assistant" (included)
-  - "All 9 personas" (included)
-  - "5 conversations per day" (included)
-  - "10 messages per conversation" (included)
-  - "3 media generations per month" (included)
-  - "File uploads (limited)" (included)
-  - "Email support" (not included)
-  - "Premium media features" (not included)
-- Remove the `icon: "bi bi-clock-history"` (no longer a trial). Use `"bi bi-lightning"` or similar.
-
-**Acceptance Criteria:**
-
-- [ ] Lite plan inclusions accurately reflect product rules
-- [ ] No "trial" or "3 days" language anywhere in plan data
-- [ ] Plan icon updated from clock/history icon
-- [ ] TypeScript compiles (`npx tsc --noEmit`)
-- [ ] All existing tests pass
-
----
-
-### 13.5 Update Pro plan inclusions display
-
-**Files:** `src/constants/plans.tsx`
-**Ref:** TD-PLAN-09
-
-**What to do:**
-
-- Update Pro `inclusions` array to reflect actual plan features:
-  - "Advanced AI model (gpt-5.2-pro)" (included)
-  - "All 9 personas" (included)
-  - "50 conversations per day" (included)
-  - "100 messages per conversation" (included)
-  - "50 image generations per month" (included)
-  - "50 audio generations per month" (included)
-  - "Unlimited file uploads" (included)
-  - "Email support" (included)
-  - "Premium media features" (not included)
-
-**Acceptance Criteria:**
-
-- [ ] Pro plan inclusions accurately reflect approved limits and features
-- [ ] TypeScript compiles (`npx tsc --noEmit`)
-- [ ] All existing tests pass
-
----
-
-### 13.6 Update Premium plan inclusions display
-
-**Files:** `src/constants/plans.tsx`
-**Ref:** TD-PLAN-09
-
-**What to do:**
-
-- Update Premium `inclusions` array to reflect actual plan features:
-  - "Best AI model (gpt-5.4-pro)" (included)
-  - "All 9 personas" (included)
-  - "Unlimited conversations" (included)
-  - "Unlimited messages" (included)
-  - "Unlimited image generations" (included)
-  - "Unlimited audio generations" (included)
-  - "Quality image generation (Premium)" (included)
-  - "Quality audio generation (Premium)" (included)
-  - "Video generation — 10/month (Premium)" (included)
-  - "Priority email support" (included)
-
-**Acceptance Criteria:**
-
-- [ ] Premium plan inclusions highlight 3 premium-only media features
-- [ ] TypeScript compiles (`npx tsc --noEmit`)
-- [ ] All existing tests pass
-
----
-
-### 13.7 Update PLAN_LIMITS constant for all tiers
-
-**Files:** `src/constants/plans.tsx`
-**Ref:** TD-PLAN-07, TD-PLAN-08
-
-**What to do:**
-
-- Expand `PLAN_LIMITS` to include all limit types:
-  ```ts
-  export const PLAN_LIMITS = {
-    Lite: {
-      images: 3,
-      audio: 3,
-      video: 0,
-      conversationsPerDay: 5,
-      promptsPerConversation: 10,
-    },
-    Pro: {
-      images: 50,
-      audio: 50,
-      video: 0,
-      conversationsPerDay: 50,
-      promptsPerConversation: 100,
-    },
-    Premium: {
-      images: -1,
-      audio: -1,
-      video: 10,
-      conversationsPerDay: -1,
-      promptsPerConversation: -1,
-    },
-  };
-  ```
-- Note: Lite `audio` changes from `0` to `3` (media is now combined image+audio with 3 total, but tracked separately here for clarity; enforcement logic handles combined cap).
-- Update `PlanLimits` type to include the new fields.
-
-**Acceptance Criteria:**
-
-- [ ] `PLAN_LIMITS` includes `conversationsPerDay` and `promptsPerConversation` for all plans
-- [ ] `PLAN_LIMITS` includes `video` for all plans (0 for Lite/Pro, 10 for Premium)
-- [ ] Lite audio limit updated from 0 to 3
-- [ ] `PlanLimits` type updated to match new shape
-- [ ] TypeScript compiles (`npx tsc --noEmit`)
-- [ ] All existing tests pass — update plan limit test assertions
-
----
-
-### 13.8 Update FAQ content to remove trial references
-
-**Files:** `src/constants/faqs.tsx`
-**Ref:** TD-UI-11
-
-**What to do:**
-
-- FAQ #1 (security): Keep as-is, the content is fine.
-- FAQ #2 (support contact): Replace placeholder `[email address to be added soon]` with `office@jordachewd.com`.
-- FAQ #6 (free trial): Rewrite to reflect that Lite is free forever. Change question to "Does Droplet have a free plan?" Answer: "Yes, every new account starts with our Lite plan which is free forever. You can upgrade to Pro or Premium anytime for additional features and higher limits."
-- Review all other FAQs and ensure no "trial" language exists.
-
-**Acceptance Criteria:**
-
-- [ ] No FAQ references "free trial" or "trial period"
-- [ ] Support email placeholder replaced with actual value
-- [ ] FAQ #6 reflects permanent free Lite plan
-- [ ] TypeScript compiles (`npx tsc --noEmit`)
-- [ ] All existing tests pass
-
----
-
-## Phase 14: Data Model Foundation
+## Phase 14: Data Model Foundation — CURRENT PRIORITY
 
 > Create the new database models required for usage tracking, admin, and content management.
 
@@ -848,6 +626,66 @@
 
 ---
 
+### 17.14 Update header navigation for new routes
+
+**Files:** `src/components/layout/header.tsx`
+
+**What to do:**
+
+- Change `/pricing` link to `/plans` (public pricing page).
+- Add `/about` link to navigation.
+- Add `/faqs` link to navigation.
+- Ensure all navigation links match the target route map.
+
+**Acceptance Criteria:**
+
+- [ ] Header nav links to `/plans` instead of `/pricing`
+- [ ] `/about` link present in navigation
+- [ ] `/faqs` link present in navigation
+- [ ] TypeScript compiles (`npx tsc --noEmit`)
+- [ ] All existing tests pass
+
+---
+
+### 17.15 Update footer links for legal pages
+
+**Files:** `src/components/layout/footer.tsx`
+
+**What to do:**
+
+- Convert "Privacy & Cookie Policy" `<span>` to a `<Link>` pointing to `/privacy`.
+- Convert "Terms & Conditions" `<span>` to a `<Link>` pointing to `/terms`.
+- Import `Link` from `next/link`.
+
+**Acceptance Criteria:**
+
+- [ ] Footer "Privacy & Cookie Policy" is a working link to `/privacy`
+- [ ] Footer "Terms & Conditions" is a working link to `/terms`
+- [ ] TypeScript compiles (`npx tsc --noEmit`)
+- [ ] All existing tests pass
+
+---
+
+### 17.16 Update E2E tests for new route structure
+
+**Files:** `tests/e2e/authenticated-flows.spec.ts`, `tests/e2e/pricing-public.spec.ts`
+
+**What to do:**
+
+- Update `authenticated-flows.spec.ts` to use `/app/profile` instead of `/profile`.
+- Update `authenticated-flows.spec.ts` to use `/app/plans` instead of `/plans`.
+- Update `authenticated-flows.spec.ts` to use `/admin` instead of `/dashboard`.
+- Update `pricing-public.spec.ts` to navigate to `/plans` instead of `/pricing` if changed.
+- Verify all E2E tests pass after route migration.
+
+**Acceptance Criteria:**
+
+- [ ] E2E tests use new route paths
+- [ ] All E2E tests pass (`npm run test:e2e`)
+- [ ] No references to old routes (`/profile`, `/pricing`, `/dashboard`) in test files
+
+---
+
 ## Phase 18: Public Pages
 
 > Create missing public pages. Not just another chatbot — distinctive product narrative.
@@ -1107,7 +945,28 @@
 
 ---
 
-### 20.3 Add S3 cleanup on task deletion
+### 20.3 Delete orphaned Task documents on user deletion
+
+**File:** `src/app/api/webhooks/clerk/route.tsx`
+**Ref:** TD-DB-15
+
+**What to do:**
+
+- In `user.deleted` handler, after deleting the User document and before S3 cleanup, delete all Task documents belonging to the deleted user.
+- Use `Task.deleteMany({ userId: clerkId })` to remove all conversations.
+- Log errors but do not fail the webhook response.
+
+**Acceptance Criteria:**
+
+- [ ] All Task documents for the deleted user are removed
+- [ ] Deletion happens before S3 cleanup (so S3 URLs can still be read from tasks if needed)
+- [ ] Errors logged but webhook succeeds
+- [ ] TypeScript compiles (`npx tsc --noEmit`)
+- [ ] All existing tests pass
+
+---
+
+### 20.4 Add S3 cleanup on task deletion
 
 **File:** `src/lib/actions/task.actions.tsx`
 **Ref:** TD-FILE-01
@@ -1128,7 +987,7 @@
 
 ---
 
-### 20.4 Refactor chat input to upload via /api/upload
+### 20.5 Refactor chat input to upload via /api/upload
 
 **File:** `src/components/chat/chat-input.tsx`
 **Ref:** TD-FILE-02
@@ -1149,7 +1008,7 @@
 
 ---
 
-### 20.5 Upload audio to S3 instead of base64 in messages
+### 20.6 Upload audio to S3 instead of base64 in messages
 
 **Files:** `src/lib/utils/openai/generateAudio.tsx`, potentially `src/app/api/openai/route.tsx`
 **Ref:** TD-AI-05, TD-DB-07
@@ -1329,6 +1188,17 @@
 ---
 
 ## Completed Phases
+
+### Phase 13: Product Rule Reconciliation — COMPLETED
+
+- [x] **13.1** Remove Lite plan 3-day expiry — Lite is now "Free forever" with far-future expiry
+- [x] **13.2** Update plan prices to $19 (Pro) / $39 (Premium)
+- [x] **13.3** Allow all 9 personas in all plans (removed Lite persona restrictions)
+- [x] **13.4** Update Lite plan inclusions and limits display
+- [x] **13.5** Update Pro plan inclusions display
+- [x] **13.6** Update Premium plan inclusions display (3 premium media features)
+- [x] **13.7** Update PLAN_LIMITS constant for all tiers (conversationsPerDay, promptsPerConversation, video)
+- [x] **13.8** Update FAQ content — remove trial references, add support email, rewrite free plan FAQ
 
 ### Phase 9: Production UX Polish — COMPLETED
 

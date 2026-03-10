@@ -3,6 +3,7 @@
 > See `SPEC.md` for the full application specification, data models, API surface, and known technical debt.
 > See `TODO.md` for prioritized, actionable development tasks.
 > See `ThePlan.md` for high-level strategic direction and milestone plan.
+> Support contact: `office@jordachewd.com`
 
 ## Critical Product Rules (Frozen)
 
@@ -16,6 +17,7 @@ These rules are **non-negotiable**. All agents must respect them in every implem
 6. **When limits are hit, conversation MUST end** with a stop reason and next-action instruction.
 7. **Users can only access their own data** — ownership enforcement on every query.
 8. **Admin routes under `/admin/*`** — protected by role at proxy AND server level.
+9. **App name is Droplet** — the rename from Cellesseon is complete. Three legacy localStorage migration keys (`cellesseon-theme-mode`, `cellesseon-sidebar-collapsed`) are intentional and must not be removed until a deprecation cycle has passed.
 
 ## Validation Workflow
 

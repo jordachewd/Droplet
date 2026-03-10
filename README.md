@@ -90,3 +90,7 @@ All six gates must pass before every commit.
 ## License
 
 Private — all rights reserved.
+
+## Support
+
+Contact: office@jordachewd.com
