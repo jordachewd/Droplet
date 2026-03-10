@@ -5,7 +5,9 @@ test("loads landing page for unauthenticated users", async ({ page }) => {
 
   await expect(page).toHaveTitle(/Droplet/i);
   await expect(
-    page.getByText("Simplify tasks and boost productivity"),
+    page.getByRole("heading", {
+      name: "A smarter way to chat, create, and get things done.",
+    }),
   ).toBeVisible();
   await expect(
     page.getByRole("link", { name: "Try it for free" }),

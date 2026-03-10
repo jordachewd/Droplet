@@ -28,5 +28,5 @@ test("shows the reconciled pricing and FAQ copy on the public pricing page", asy
     page.locator("details").filter({
       hasText: "Who should I reach out to for assistance or inquiries?",
     }),
-  ).toContainText("support@cellesseon.com");
+  ).toContainText("office@jordachewd.com");
 });

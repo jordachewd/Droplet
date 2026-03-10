@@ -15,7 +15,11 @@ function isDownloadRequest(downloadValue: string | null): boolean {
 }
 
 function sanitizeFileName(fileName: string): string {
-  return fileName.replace(/[\r\n"]/g, "_");
+  const sanitizedFileName = fileName
+    .replace(/[\\/\u0000-\u001f\u007f"]/g, "_")
+    .trim();
+
+  return sanitizedFileName || "downloaded-file";
 }
 
 function getFileNameFromUrl(rawUrl: string): string {
@@ -109,6 +113,9 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       req.nextUrl.searchParams.get("download"),
     );
     const requestedFileName = req.nextUrl.searchParams.get("filename");
+    const normalizedImageUrl = imageUrl
+      ? normalizePublicAssetUrl(imageUrl)
+      : null;
 
     if (!objectKeyParam && !imageUrl) {
       return new NextResponse("A file key or URL is required", { status: 400 });
@@ -117,9 +124,13 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const resolvedObjectKey =
       typeof objectKeyParam === "string" && objectKeyParam.trim()
         ? resolveS3ObjectKey(objectKeyParam)
-        : imageUrl
-          ? resolveS3ObjectKey(normalizePublicAssetUrl(imageUrl))
+        : normalizedImageUrl
+          ? resolveS3ObjectKey(normalizedImageUrl)
           : null;
+
+    if (objectKeyParam && !resolvedObjectKey && !normalizedImageUrl) {
+      return new NextResponse("Invalid file key", { status: 400 });
+    }
 
     if (resolvedObjectKey) {
       if (!isUserOwnedS3ObjectKey(userId, resolvedObjectKey)) {
@@ -146,9 +157,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       });
     }
 
-    const normalizedImageUrl = normalizePublicAssetUrl(imageUrl as string);
-
-    if (!isAllowedDownloadUrl(normalizedImageUrl)) {
+    if (!normalizedImageUrl || !isAllowedDownloadUrl(normalizedImageUrl)) {
       return new NextResponse("This URL is not allowed for download", {
         status: 400,
       });

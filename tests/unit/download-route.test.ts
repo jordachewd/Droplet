@@ -74,6 +74,18 @@ describe("GET /api/download", () => {
     expect(getFileFromAWS).not.toHaveBeenCalled();
   });
 
+  it("returns 400 when a key is provided but cannot be resolved", async () => {
+    const req = new NextRequest(
+      "http://localhost:3000/api/download?key=invalid-key-without-prefix",
+    );
+
+    const response = await GET(req);
+
+    expect(response.status).toBe(400);
+    await expect(response.text()).resolves.toContain("Invalid file key");
+    expect(getFileFromAWS).not.toHaveBeenCalled();
+  });
+
   it("streams owned S3 files through the app route", async () => {
     const req = new NextRequest(
       "http://localhost:3000/api/download?key=user_123%2Fimages%2Ffile.png",
@@ -157,6 +169,32 @@ describe("GET /api/download", () => {
     expect(response.headers.get("Content-Type")).toBe("image/png");
     expect(response.headers.get("Content-Disposition")).toContain(
       'attachment; filename="avatar.png"',
+    );
+  });
+
+  it("sanitizes user-provided download filenames before setting headers", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(createStreamResponseBody("image-bytes"), {
+          status: 200,
+          headers: {
+            "Content-Length": "11",
+            "Content-Type": "image/png",
+          },
+        }),
+      ),
+    );
+
+    const req = new NextRequest(
+      "http://localhost:3000/api/download?url=https://img.clerk.com/avatar.png&download=1&filename=folder/sub%5Cavatar%22%0A.png",
+    );
+
+    const response = await GET(req);
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("Content-Disposition")).toContain(
+      'attachment; filename="folder_sub_avatar__.png"',
     );
   });
 });

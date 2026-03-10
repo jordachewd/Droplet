@@ -6,7 +6,7 @@ describe("faqs", () => {
     const supportFaq = faqs.find((faq) => faq.id === 1);
     const freePlanFaq = faqs.find((faq) => faq.id === 6);
 
-    expect(supportFaq?.answer).toContain("support@cellesseon.com");
+    expect(supportFaq?.answer).toContain("office@jordachewd.com");
     expect(freePlanFaq).toEqual(
       expect.objectContaining({
         question: "Does Droplet have a free plan?",

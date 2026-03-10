@@ -67,6 +67,11 @@ tests/
 3. `npm install`
 4. `npm run dev`
 
+Environment notes:
+
+- `MONGODB_URL` and `MONGODB_DB_NAME` must both be set.
+- `NEXT_ALLOWED_DEV_ORIGINS` is an optional comma-separated list for local/LAN dev hosts. It defaults to `localhost,127.0.0.1`.
+
 ## Validation Workflow
 
 Run in this order:
