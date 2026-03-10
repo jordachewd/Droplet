@@ -12,7 +12,7 @@ export const faqs = [
     id: 1,
     question: "Who should I reach out to for assistance or inquiries?",
     answer:
-      "For any questions or support needs, please contact our customer support team at [email address to be added soon].",
+      "For any questions or support needs, please contact our customer support team at support@cellesseon.com.",
   },
   {
     id: 2,
@@ -43,9 +43,9 @@ export const faqs = [
   },
   {
     id: 6,
-    question: "Does Cellesseon offer a free trial?",
+    question: "Does Cellesseon have a free plan?",
     answer:
-      "Yes, Cellesseon offers a free trial period for new users. " +
-      "You can sign up and explore the features before committing to a subscription plan.",
+      "Yes, every new account starts with our Lite plan which is free forever. " +
+      "You can upgrade to Pro or Premium anytime for additional features and higher limits.",
   },
 ];

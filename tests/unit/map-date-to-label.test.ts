@@ -28,4 +28,12 @@ describe("mapDateToLabel", () => {
 
     expect(mapDateToLabel(date)).toBe("3 d ago");
   });
+
+  it("returns an empty label for invalid dates", () => {
+    expect(mapDateToLabel("not-a-date")).toBe("");
+  });
+
+  it("returns an empty label for empty inputs", () => {
+    expect(mapDateToLabel("")).toBe("");
+  });
 });

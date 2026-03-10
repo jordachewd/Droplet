@@ -17,11 +17,12 @@ export interface Entitlements {
 
 export function resolveEntitlements(planName?: PlanName | null): Entitlements {
   const normalizedPlan: PlanName = planName ?? "Lite";
+  const allowedPersonaIds = PERSONAS.map((persona) => persona.id);
 
   if (normalizedPlan === "Premium") {
     return {
       planName: normalizedPlan,
-      allowedPersonaIds: PERSONAS.map((persona) => persona.id),
+      allowedPersonaIds,
       supportsImageGeneration: true,
       supportsAudioGeneration: true,
       imageLimitReached: false,
@@ -32,7 +33,7 @@ export function resolveEntitlements(planName?: PlanName | null): Entitlements {
   if (normalizedPlan === "Pro") {
     return {
       planName: normalizedPlan,
-      allowedPersonaIds: PERSONAS.map((persona) => persona.id),
+      allowedPersonaIds,
       supportsImageGeneration: true,
       supportsAudioGeneration: true,
       imageLimitReached: false,
@@ -42,17 +43,9 @@ export function resolveEntitlements(planName?: PlanName | null): Entitlements {
 
   return {
     planName: "Lite",
-    allowedPersonaIds: [
-      "strategist",
-      "teacher",
-      "developer",
-      "creator",
-      "wellness",
-      "analyst",
-      "best-friend",
-    ],
+    allowedPersonaIds,
     supportsImageGeneration: true,
-    supportsAudioGeneration: false,
+    supportsAudioGeneration: true,
     imageLimitReached: false,
     audioLimitReached: false,
   };

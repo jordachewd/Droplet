@@ -1,5 +1,15 @@
 export function mapDateToLabel(isoDate: string): string {
-  const diffMs = Date.now() - new Date(isoDate).getTime();
+  if (!isoDate) {
+    return "";
+  }
+
+  const parsedDate = new Date(isoDate);
+
+  if (Number.isNaN(parsedDate.getTime())) {
+    return "";
+  }
+
+  const diffMs = Date.now() - parsedDate.getTime();
   const diffMinutes = Math.max(1, Math.floor(diffMs / 60000));
 
   if (diffMinutes < 60) {

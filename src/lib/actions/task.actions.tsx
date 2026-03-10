@@ -48,7 +48,7 @@ export async function updateTask(taskId: string, task: UpdateTaskParams) {
         $set: updateFields,
       },
       {
-        new: true,
+        returnDocument: "after",
         strict: true,
         upsert: false,
       },

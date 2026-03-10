@@ -22,7 +22,7 @@ describe("POST /api/upload", () => {
   beforeEach(() => {
     vi.mocked(auth).mockResolvedValue({ userId: "user_123" } as never);
     vi.mocked(uploadFileToAWS).mockResolvedValue(
-      "https://bucket.s3.region.amazonaws.com/user_123/uploads/uploaded_file_1700000000000.png",
+      "/api/download?key=user_123%2Fuploads%2Fuploaded_file_1700000000000.png",
     );
   });
 
@@ -83,6 +83,9 @@ describe("POST /api/upload", () => {
     expect(response.status).toBe(200);
     expect(payload.fileName).toBe("uploaded_file_1700000000000.png");
     expect(payload.fileUrl).toContain("uploaded_file_1700000000000.png");
+    expect(payload.objectKey).toBe(
+      "user_123/uploads/uploaded_file_1700000000000.png",
+    );
     expect(uploadFileToAWS).toHaveBeenCalledWith(
       expect.any(Buffer),
       "uploaded_file_1700000000000.png",

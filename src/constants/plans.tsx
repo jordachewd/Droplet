@@ -1,39 +1,61 @@
 import { BillingCycle, PlanName } from "@/types/PlanData.d";
 
-export type PlanLimits = Record<PlanName, { images: number; audio: number }>;
+const LITE_NEVER_EXPIRES_ON = "9999-12-31T23:59:59.999Z";
+
+export type PlanLimits = Record<
+  PlanName,
+  {
+    images: number;
+    audio: number;
+    video: number;
+    conversationsPerDay: number;
+    promptsPerConversation: number;
+  }
+>;
 
 export const PLAN_LIMITS: PlanLimits = {
-  Lite: { images: 3, audio: 0 },
-  Pro: { images: 20, audio: 20 },
-  Premium: { images: -1, audio: -1 },
+  Lite: {
+    images: 3,
+    audio: 3,
+    video: 0,
+    conversationsPerDay: 5,
+    promptsPerConversation: 10,
+  },
+  Pro: {
+    images: 50,
+    audio: 50,
+    video: 0,
+    conversationsPerDay: 50,
+    promptsPerConversation: 100,
+  },
+  Premium: {
+    images: -1,
+    audio: -1,
+    video: 10,
+    conversationsPerDay: -1,
+    promptsPerConversation: -1,
+  },
 };
 
 export function getExpiresOn(plan: PlanName, billing?: BillingCycle): Date {
   const currentDate = new Date();
-  let expiresOn: Date = new Date();
 
   switch (plan) {
     case "Lite":
-      expiresOn = new Date(currentDate.setDate(currentDate.getDate() + 3));
-      break;
+      return new Date(LITE_NEVER_EXPIRES_ON);
     case "Pro":
     case "Premium":
       switch (billing) {
         case "Monthly":
-          expiresOn = new Date(
-            currentDate.setMonth(currentDate.getMonth() + 1),
-          );
-          break;
+          return new Date(currentDate.setMonth(currentDate.getMonth() + 1));
         case "Yearly":
-          expiresOn = new Date(
+          return new Date(
             currentDate.setFullYear(currentDate.getFullYear() + 1),
           );
-          break;
       }
-      break;
   }
 
-  return expiresOn;
+  return new Date(currentDate);
 }
 
 export const plans = [
@@ -41,31 +63,31 @@ export const plans = [
     id: 0,
     price: 0,
     name: "Lite" as PlanName,
-    desc: "Free trial for 3 days",
-    icon: "bi bi-clock-history",
+    desc: "Free forever",
+    icon: "bi bi-lightning",
     inclusions: [
       {
-        label: "Full AI model",
+        label: "AI chat assistant",
         isIncluded: true,
       },
       {
-        label: "Messaging and file uploads (limited)",
+        label: "All 9 personas",
         isIncluded: true,
       },
       {
-        label: "Web browsing and data analysis (limited)",
+        label: "5 conversations per day",
         isIncluded: true,
       },
       {
-        label: "3 image and/or audio generation (limited)",
+        label: "10 messages per conversation",
         isIncluded: true,
       },
       {
-        label: "3 text to speach and/or voice inputs (limited)",
+        label: "3 media generations per month",
         isIncluded: true,
       },
       {
-        label: "Secure and private",
+        label: "File uploads (limited)",
         isIncluded: true,
       },
       {
@@ -73,40 +95,44 @@ export const plans = [
         isIncluded: false,
       },
       {
-        label: "Opportunities to test new features",
+        label: "Premium media features",
         isIncluded: false,
       },
     ],
   },
   {
     id: 1,
-    price: 29,
+    price: 19,
     name: "Pro" as PlanName,
-    desc: "Best for personal projects",
+    desc: "Advanced AI for power users",
     icon: "bi bi-stars",
     inclusions: [
       {
-        label: "Full AI model",
+        label: "Advanced AI model (gpt-5.2-pro)",
         isIncluded: true,
       },
       {
-        label: "Messaging and file uploads (unlimited)",
+        label: "All 9 personas",
         isIncluded: true,
       },
       {
-        label: "Web browsing and data analysis (unlimited)",
+        label: "50 conversations per day",
         isIncluded: true,
       },
       {
-        label: "20/Mo image and/or audio generation",
+        label: "100 messages per conversation",
         isIncluded: true,
       },
       {
-        label: "20/Mo text to speach and/or voice inputs",
+        label: "50 image generations per month",
         isIncluded: true,
       },
       {
-        label: "Secure and private",
+        label: "50 audio generations per month",
+        isIncluded: true,
+      },
+      {
+        label: "Unlimited file uploads",
         isIncluded: true,
       },
       {
@@ -114,48 +140,56 @@ export const plans = [
         isIncluded: true,
       },
       {
-        label: "Opportunities to test new features",
+        label: "Premium media features",
         isIncluded: false,
       },
     ],
   },
   {
     id: 2,
-    price: 69,
+    price: 39,
     name: "Premium" as PlanName,
-    desc: "Best for businesses",
+    desc: "Ultimate AI experience with premium media",
     icon: "bi bi-gem",
     inclusions: [
       {
-        label: "Single-provider OpenAI stack",
+        label: "Best AI model (gpt-5.4-pro)",
         isIncluded: true,
       },
       {
-        label: "Messaging and file uploads (unlimited)",
+        label: "All 9 personas",
         isIncluded: true,
       },
       {
-        label: "Web browsing and data analysis (unlimited)",
+        label: "Unlimited conversations",
         isIncluded: true,
       },
       {
-        label: "Image and audio generation (unlimited)",
+        label: "Unlimited messages",
         isIncluded: true,
       },
       {
-        label: "Text to speach and voice inputs (unlimited)",
+        label: "Unlimited image generations",
         isIncluded: true,
       },
       {
-        label: "Secure and private",
+        label: "Unlimited audio generations",
+        isIncluded: true,
+      },
+      {
+        label: "Quality image generation (Premium)",
+        isIncluded: true,
+      },
+      {
+        label: "Quality audio generation (Premium)",
+        isIncluded: true,
+      },
+      {
+        label: "Video generation - 10/month (Premium)",
         isIncluded: true,
       },
       {
         label: "Priority email support",
-        isIncluded: true,
-      },
-      {
-        label: "Opportunities to test new features",
         isIncluded: true,
       },
     ],

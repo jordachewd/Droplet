@@ -98,7 +98,12 @@ export async function POST(req: Request): Promise<NextResponse> {
 
     // Verify user plan is active before calling OpenAI
     const userData = (await getUserById(userId)) as UserData | null;
-    if (userData?.plan?.expiresOn) {
+    const planName = userData?.plan?.name;
+    const combinedMediaUsageCount =
+      (userData?.plan?.imageGenerations ?? 0) +
+      (userData?.plan?.audioGenerations ?? 0);
+
+    if (planName !== "Lite" && userData?.plan?.expiresOn) {
       const expiresOn = new Date(userData.plan.expiresOn);
       if (expiresOn < new Date()) {
         return NextResponse.json(
@@ -108,16 +113,18 @@ export async function POST(req: Request): Promise<NextResponse> {
       }
     }
 
-    const entitlements = resolveEntitlements(userData?.plan?.name);
+    const entitlements = resolveEntitlements(planName);
     const imageUsage = checkUsageLimit({
-      planName: userData?.plan?.name,
+      planName,
       currentCount: userData?.plan?.imageGenerations,
+      combinedCount: combinedMediaUsageCount,
       limitType: "images",
       usagePeriodStart: userData?.plan?.usagePeriodStart,
     });
     const audioUsage = checkUsageLimit({
-      planName: userData?.plan?.name,
+      planName,
       currentCount: userData?.plan?.audioGenerations,
+      combinedCount: combinedMediaUsageCount,
       limitType: "audio",
       usagePeriodStart: userData?.plan?.usagePeriodStart,
     });
@@ -156,7 +163,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
     const selectedPersona = resolvePersonaForPlan({
       personaId,
-      planName: userData?.plan?.name,
+      planName,
     });
 
     let taskId = providedTaskId;

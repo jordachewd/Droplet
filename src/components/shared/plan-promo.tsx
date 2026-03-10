@@ -1,7 +1,6 @@
 import classNames from "classnames";
 import { getPlanIcon } from "@/constants/plans";
 import { PlanName } from "@/types/PlanData.d";
-import PlanCountDown from "./plan-count-down";
 import Link from "next/link";
 import { getUserById } from "@/lib/actions/user.actions";
 import { UserData } from "@/types/UserData.d";
@@ -17,8 +16,8 @@ export default async function PlanPromo() {
 
   if (!userPlan) return null;
 
-  const { id, name, expiresOn, billing } = userPlan;
-  const isLite = Number(id) === 0;
+  const { id, name, billing } = userPlan;
+  const isLite = name === "Lite";
   const isPremium = Number(id) === 2 && billing === "Yearly";
   const isPremiumFull = isPremium && name === "Premium";
 
@@ -39,25 +38,15 @@ export default async function PlanPromo() {
 
       <div className="z-10 flex w-full flex-col gap-3 text-center">
         <div className="absolute right-0.5 top-0.5 z-10 flex items-center gap-1 font-medium">
-          {isLite && (
-            <span className="text-xxs font-semibold">Expires in:</span>
-          )}
           <span
             className={classNames(
               "rounded-[5px] px-1 py-1 text-2xs uppercase leading-none tracking-wider",
               "bg-lightAccent-900 text-lightAccent-300",
               "dark:bg-darkAccent-1000 dark:text-darkAccent-400",
-              { "min-w-[82px]": isLite },
+              { "min-w-[82px]": !isLite },
             )}
           >
-            {isLite ? (
-              <PlanCountDown
-                endDate={expiresOn as Date}
-                className="flex justify-center"
-              />
-            ) : (
-              "Your plan"
-            )}
+            {isLite ? "Free forever" : "Your plan"}
           </span>
         </div>
 

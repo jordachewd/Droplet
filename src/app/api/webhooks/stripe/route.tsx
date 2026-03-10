@@ -187,8 +187,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         { _id: existingUser._id, clerkId: theClerkId },
         newUserData,
         {
-          new: true,
+          returnDocument: "after",
           strict: true,
+          upsert: false,
         },
       );
 

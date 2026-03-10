@@ -8,6 +8,7 @@ export type UsageLimitType = "images" | "audio";
 interface CheckUsageLimitParams {
   planName?: PlanName | null;
   currentCount?: number | null;
+  combinedCount?: number | null;
   limitType: UsageLimitType;
   usagePeriodStart?: Date | string | null;
   now?: Date;
@@ -24,6 +25,7 @@ interface UsageLimitResult {
 export function checkUsageLimit({
   planName,
   currentCount,
+  combinedCount,
   limitType,
   usagePeriodStart,
   now = new Date(),
@@ -41,7 +43,10 @@ export function checkUsageLimit({
     };
   }
 
-  const currentUsageCount = currentCount ?? 0;
+  const currentUsageCount =
+    normalizedPlanName === "Lite" && combinedCount !== undefined
+      ? (combinedCount ?? 0)
+      : (currentCount ?? 0);
   const usageStartDate = usagePeriodStart ? new Date(usagePeriodStart) : null;
   const isUsageDateValid =
     usageStartDate !== null && !Number.isNaN(usageStartDate.getTime());

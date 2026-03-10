@@ -16,7 +16,7 @@ const proPlan: Plan = {
   name: "Pro",
   desc: "Pro",
   icon: "icon-pro",
-  price: 29,
+  price: 19,
   inclusions: [],
 };
 
@@ -25,7 +25,7 @@ const premiumPlan: Plan = {
   name: "Premium",
   desc: "Premium",
   icon: "icon-premium",
-  price: 69,
+  price: 39,
   inclusions: [],
 };
 
@@ -33,7 +33,7 @@ function buildUserPlan(overrides: Partial<PlanData> = {}): PlanData {
   return {
     id: "1",
     name: "Pro",
-    amount: 29,
+    amount: 19,
     billing: "Monthly",
     startedOn: new Date("2026-01-01T00:00:00.000Z"),
     expiresOn: new Date("2026-02-01T00:00:00.000Z"),
@@ -96,7 +96,7 @@ describe("getPlanStatus", () => {
       userPlan: buildUserPlan({
         id: "1",
         name: "Pro",
-        amount: 29,
+        amount: 19,
       }),
     });
 

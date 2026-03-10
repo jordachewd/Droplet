@@ -22,8 +22,22 @@ describe("checkUsageLimit", () => {
     });
 
     expect(result.allowed).toBe(true);
-    expect(result.limit).toBe(20);
-    expect(result.remaining).toBe(13);
+    expect(result.limit).toBe(50);
+    expect(result.remaining).toBe(43);
+  });
+
+  it("enforces the Lite combined media cap for audio requests", () => {
+    const result = checkUsageLimit({
+      planName: "Lite",
+      currentCount: 1,
+      combinedCount: 3,
+      limitType: "audio",
+    });
+
+    expect(result.allowed).toBe(false);
+    expect(result.limit).toBe(3);
+    expect(result.remaining).toBe(0);
+    expect(result.effectiveCount).toBe(3);
   });
 
   it("returns true for Premium unlimited usage", () => {

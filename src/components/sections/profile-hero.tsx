@@ -75,8 +75,14 @@ export default function ProfileHero({ userData }: HeroProps) {
           )}
 
           <div className="flex items-center gap-2">
-            <span className="font-semibold leading-none">Plan expires in:</span>
-            <PlanCountDown endDate={plan.expiresOn as Date} wrapped />
+            <span className="font-semibold leading-none">
+              {plan.name === "Lite" ? "Plan expires:" : "Plan expires in:"}
+            </span>
+            {plan.name === "Lite" ? (
+              <span className="text-xxs leading-none">Never</span>
+            ) : (
+              <PlanCountDown endDate={plan.expiresOn as Date} wrapped />
+            )}
           </div>
         </div>
 

@@ -28,7 +28,7 @@ Built with Next.js 16, React 19, TypeScript, Tailwind CSS v4.2, Clerk, Stripe, M
 - Stripe payments (one-time checkout)
 - MongoDB + Mongoose 9
 - OpenAI SDK 6
-- AWS S3 (file storage)
+- AWS S3 (private server-side file storage)
 - Tiptap (admin rich-text editing)
 - Vitest + Playwright (testing)
 

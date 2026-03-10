@@ -1,3 +1,5 @@
+"use client"
+
 import classNames from "classnames";
 import ToggleTheme from "@/components/shared/toggle-theme";
 import AvatarMenu from "@/components/shared/avatar-menu";

@@ -95,7 +95,10 @@ describe("POST /api/openai", () => {
 
   it("returns 403 when user plan has expired", async () => {
     vi.mocked(getUserById).mockResolvedValue({
-      plan: { expiresOn: new Date(Date.now() - 86400000) },
+      plan: {
+        name: "Pro",
+        expiresOn: new Date(Date.now() - 86400000),
+      },
     } as never);
     const req = buildRequest({
       messages: [{ role: "user", whois: "user", content: "hi" }],
@@ -106,6 +109,36 @@ describe("POST /api/openai", () => {
 
     expect(response.status).toBe(403);
     expect(payload.error).toContain("plan has expired");
+  });
+
+  it("does not block Lite users when a legacy expiresOn date is in the past", async () => {
+    vi.mocked(getUserById).mockResolvedValue({
+      clerkId: "user_123",
+      plan: {
+        name: "Lite",
+        expiresOn: new Date(Date.now() - 86400000),
+        imageGenerations: 0,
+        audioGenerations: 0,
+        usagePeriodStart: new Date(),
+      },
+    } as never);
+    const req = buildRequest({
+      taskId: "existing-task",
+      messages: [{ role: "user", whois: "user", content: "continue" }],
+    });
+
+    const response = await POST(req);
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.taskId).toBe("existing-task");
+    expect(generateResponse).toHaveBeenCalledWith(
+      expect.objectContaining({
+        entitlements: expect.objectContaining({
+          planName: "Lite",
+        }),
+      }),
+    );
   });
 
   it("creates a new task when no taskId is provided", async () => {
@@ -345,6 +378,40 @@ describe("POST /api/openai", () => {
     expect(response.status).toBe(403);
     expect(payload.error).toContain("Audio generation limit reached");
     expect(updateTask).not.toHaveBeenCalled();
+  });
+
+  it("passes the Lite combined media cap to response generation", async () => {
+    vi.mocked(getUserById).mockResolvedValue({
+      clerkId: "user_123",
+      plan: {
+        name: "Lite",
+        expiresOn: new Date(Date.now() + 86400000),
+        imageGenerations: 2,
+        audioGenerations: 1,
+        usagePeriodStart: new Date(),
+      },
+    } as never);
+
+    const req = buildRequest({
+      taskId: "existing-task",
+      personaId: "teacher",
+      messages: [{ role: "user", whois: "user", content: "generate audio" }],
+    });
+
+    const response = await POST(req);
+
+    expect(response.status).toBe(200);
+    expect(generateResponse).toHaveBeenCalledWith(
+      expect.objectContaining({
+        entitlements: expect.objectContaining({
+          planName: "Lite",
+          imageLimitReached: true,
+          audioLimitReached: true,
+          supportsImageGeneration: false,
+          supportsAudioGeneration: false,
+        }),
+      }),
+    );
   });
 
   it("increments image generation counter after a successful image response", async () => {
