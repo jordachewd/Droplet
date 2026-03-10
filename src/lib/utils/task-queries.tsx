@@ -1,4 +1,4 @@
-import { DEFAULT_ASSISTANT_ROLE_ID } from "@/constants/assistant-roles";
+import { DEFAULT_PERSONA_ID } from "@/constants/assistant-personas";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import Task from "@/lib/database/models/tasks.model";
 import { TaskHistoryItem } from "@/types/TaskData.d";
@@ -7,10 +7,10 @@ import { ContentItem, Message, MessageRole } from "@/types";
 type TaskRecord = {
   _id: unknown;
   title?: string;
-  assistantRoleId?: string;
-  usage?: number;
+  personaId?: string;
   updatedAt?: Date | string;
   messages?: unknown;
+  usage?: number;
 };
 
 const messageRoles: MessageRole[] = [
@@ -110,16 +110,14 @@ export async function getRecentTasksByUserId(
   const tasks = (await Task.find({ userId })
     .sort({ updatedAt: -1 })
     .limit(limit)
-    .select("_id title assistantRoleId usage updatedAt")
+    .select("_id title personaId updatedAt")
     .lean()) as TaskRecord[];
 
   return tasks.map((task) => ({
     _id: String(task._id),
     title: task.title || "Untitled conversation",
-    assistantRoleId:
-      (task.assistantRoleId as TaskHistoryItem["assistantRoleId"]) ||
-      DEFAULT_ASSISTANT_ROLE_ID,
-    usage: typeof task.usage === "number" ? task.usage : 0,
+    personaId:
+      (task.personaId as TaskHistoryItem["personaId"]) || DEFAULT_PERSONA_ID,
     updatedAt: new Date(task.updatedAt || Date.now()).toISOString(),
   }));
 }
@@ -134,7 +132,7 @@ export async function getTaskByIdForUser({
   await connectToDatabase();
 
   const task = await Task.findOne({ _id: taskId, userId })
-    .select("_id title assistantRoleId messages usage updatedAt")
+    .select("_id title personaId messages usage updatedAt")
     .lean();
 
   if (!task) {
@@ -144,9 +142,8 @@ export async function getTaskByIdForUser({
   return {
     _id: String(task._id),
     title: String(task.title || "Untitled conversation"),
-    assistantRoleId:
-      String(task.assistantRoleId || DEFAULT_ASSISTANT_ROLE_ID) ||
-      DEFAULT_ASSISTANT_ROLE_ID,
+    personaId:
+      String(task.personaId || DEFAULT_PERSONA_ID) || DEFAULT_PERSONA_ID,
     messages: toPlainMessages(task.messages),
     usage: typeof task.usage === "number" ? task.usage : 0,
     updatedAt: new Date(task.updatedAt || Date.now()).toISOString(),

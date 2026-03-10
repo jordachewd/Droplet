@@ -28,16 +28,27 @@ describe("getUserById", () => {
   });
 
   it("returns data when authenticated user reads their own profile", async () => {
-    vi.mocked(User.findOne).mockResolvedValue({
+    const leanMock = vi.fn().mockResolvedValue({
       clerkId: "clerk_user_1",
       username: "alice",
       email: "alice@example.com",
+    });
+    const selectMock = vi.fn().mockReturnValue({
+      lean: leanMock,
+    });
+
+    vi.mocked(User.findOne).mockReturnValue({
+      select: selectMock,
     } as never);
 
     const response = await getUserById("clerk_user_1");
 
     expect(connectToDatabase).toHaveBeenCalledOnce();
     expect(User.findOne).toHaveBeenCalledWith({ clerkId: "clerk_user_1" });
+    expect(selectMock).toHaveBeenCalledWith(
+      "clerkId username email role plan firstName lastName userimg",
+    );
+    expect(leanMock).toHaveBeenCalledOnce();
     expect(response).toEqual(
       expect.objectContaining({
         clerkId: "clerk_user_1",

@@ -5,7 +5,7 @@ interface ITask extends Document {
   userId: string;
   title: string;
   messages: Message[];
-  assistantRoleId: string;
+  personaId: string;
   createdAt?: Date;
   updatedAt?: Date;
   usage?: number;
@@ -43,7 +43,7 @@ const TaskSchema = new Schema<ITask>({
   userId: { type: String, required: true, index: true },
   title: { type: String, required: true },
   messages: { type: [MessageSchema], required: true },
-  assistantRoleId: {
+  personaId: {
     type: String,
     required: true,
     default: "strategist",

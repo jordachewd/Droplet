@@ -1,14 +1,14 @@
 import {
-  ASSISTANT_ROLES,
-  DEFAULT_ASSISTANT_ROLE_ID,
-  getAssistantRole,
-} from "@/constants/assistant-roles";
-import { AssistantRoleId } from "@/types/AssistantRoleData.d";
+  DEFAULT_PERSONA_ID,
+  PERSONAS,
+  getPersona,
+} from "@/constants/assistant-personas";
+import { PersonaId } from "@/types/PersonaData.d";
 import { PlanName } from "@/types/PlanData.d";
 
 export interface Entitlements {
   planName: PlanName;
-  allowedRoleIds: AssistantRoleId[];
+  allowedPersonaIds: PersonaId[];
   supportsImageGeneration: boolean;
   supportsAudioGeneration: boolean;
   imageLimitReached: boolean;
@@ -21,7 +21,7 @@ export function resolveEntitlements(planName?: PlanName | null): Entitlements {
   if (normalizedPlan === "Premium") {
     return {
       planName: normalizedPlan,
-      allowedRoleIds: ASSISTANT_ROLES.map((role) => role.id),
+      allowedPersonaIds: PERSONAS.map((persona) => persona.id),
       supportsImageGeneration: true,
       supportsAudioGeneration: true,
       imageLimitReached: false,
@@ -32,7 +32,7 @@ export function resolveEntitlements(planName?: PlanName | null): Entitlements {
   if (normalizedPlan === "Pro") {
     return {
       planName: normalizedPlan,
-      allowedRoleIds: ASSISTANT_ROLES.map((role) => role.id),
+      allowedPersonaIds: PERSONAS.map((persona) => persona.id),
       supportsImageGeneration: true,
       supportsAudioGeneration: true,
       imageLimitReached: false,
@@ -42,11 +42,13 @@ export function resolveEntitlements(planName?: PlanName | null): Entitlements {
 
   return {
     planName: "Lite",
-    allowedRoleIds: [
+    allowedPersonaIds: [
       "strategist",
       "teacher",
       "developer",
       "creator",
+      "wellness",
+      "analyst",
       "best-friend",
     ],
     supportsImageGeneration: true,
@@ -56,21 +58,21 @@ export function resolveEntitlements(planName?: PlanName | null): Entitlements {
   };
 }
 
-export function resolveAssistantRoleForPlan({
-  assistantRoleId,
+export function resolvePersonaForPlan({
+  personaId,
   planName,
 }: {
-  assistantRoleId?: string | null;
+  personaId?: string | null;
   planName?: PlanName | null;
 }) {
   const entitlements = resolveEntitlements(planName);
-  const selectedRole = getAssistantRole(assistantRoleId);
+  const selectedPersona = getPersona(personaId);
 
-  if (entitlements.allowedRoleIds.includes(selectedRole.id)) {
-    return selectedRole;
+  if (entitlements.allowedPersonaIds.includes(selectedPersona.id)) {
+    return selectedPersona;
   }
 
-  const fallbackRoleId =
-    entitlements.allowedRoleIds[0] ?? DEFAULT_ASSISTANT_ROLE_ID;
-  return getAssistantRole(fallbackRoleId);
+  const fallbackPersonaId =
+    entitlements.allowedPersonaIds[0] ?? DEFAULT_PERSONA_ID;
+  return getPersona(fallbackPersonaId);
 }

@@ -1,12 +1,9 @@
 import ChatSidebarShell from "@/components/chat/sidebar/chat-sidebar-shell";
 import { auth } from "@clerk/nextjs/server";
-import {
-  DEMO_CONVERSATIONS,
-  getAssistantRole,
-} from "@/constants/assistant-roles";
+import { DEMO_CONVERSATIONS, getPersona } from "@/constants/assistant-personas";
 import { getRecentTasksByUserId } from "@/lib/utils/task-queries";
 import { mapDateToLabel } from "@/lib/utils/map-date-to-label";
-import { ConversationListItem } from "@/types/AssistantRoleData.d";
+import { ConversationListItem } from "@/types/PersonaData.d";
 
 export default async function ChatSidebar() {
   const { userId } = await auth();
@@ -18,12 +15,12 @@ export default async function ChatSidebar() {
 
       if (taskHistory.length > 0) {
         history = taskHistory.map((task) => {
-          const role = getAssistantRole(task.assistantRoleId);
+          const persona = getPersona(task.personaId);
 
           return {
             id: task._id,
             title: task.title,
-            assistantRoleId: role.id,
+            personaId: persona.id,
             updatedAtLabel: mapDateToLabel(task.updatedAt),
             href: `/app/c/${task._id}`,
           };

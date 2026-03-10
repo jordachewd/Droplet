@@ -17,7 +17,7 @@ export async function createTask(task: CreateTaskInput) {
     const newTask = await Task.create({
       ...task,
       userId,
-      assistantRoleId: task.assistantRoleId || "strategist",
+      personaId: task.personaId || "strategist",
     });
 
     if (!newTask) {

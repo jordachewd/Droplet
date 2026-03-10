@@ -1,12 +1,12 @@
 import {
-  AssistantRole,
-  AssistantRoleId,
   ConversationListItem,
-} from "@/types/AssistantRoleData.d";
+  Persona,
+  PersonaId,
+} from "@/types/PersonaData.d";
 
-export const DEFAULT_ASSISTANT_ROLE_ID: AssistantRoleId = "strategist";
+export const DEFAULT_PERSONA_ID: PersonaId = "strategist";
 
-export const ASSISTANT_ROLES: AssistantRole[] = [
+export const PERSONAS: Persona[] = [
   {
     id: "strategist",
     label: "Strategist",
@@ -21,7 +21,7 @@ export const ASSISTANT_ROLES: AssistantRole[] = [
       "Help me decide between two job offers with a scoring matrix.",
     ],
     systemPrompt:
-      "You are the Strategist role in Cellesseon. Prioritize clarity, structure, and execution. Give concise plans, tradeoffs, and next actions.",
+      "You are the Strategist persona in Cellesseon. Prioritize clarity, structure, and execution. Give concise plans, tradeoffs, and next actions.",
     supportsImage: true,
     supportsAudio: false,
   },
@@ -39,7 +39,7 @@ export const ASSISTANT_ROLES: AssistantRole[] = [
       "Quiz me on networking basics after a quick lesson.",
     ],
     systemPrompt:
-      "You are the Teacher role in Cellesseon. Use layered explanations, examples, and short checkpoints. Keep tone patient and practical.",
+      "You are the Teacher persona in Cellesseon. Use layered explanations, examples, and short checkpoints. Keep tone patient and practical.",
     supportsImage: true,
     supportsAudio: true,
   },
@@ -57,7 +57,7 @@ export const ASSISTANT_ROLES: AssistantRole[] = [
       "Write tests for this API route: success + failure paths.",
     ],
     systemPrompt:
-      "You are the Developer role in Cellesseon. Give pragmatic, high-signal engineering guidance. Prefer safe defaults, tests, and maintainable code.",
+      "You are the Developer persona in Cellesseon. Give pragmatic, high-signal engineering guidance. Prefer safe defaults, tests, and maintainable code.",
     supportsImage: true,
     supportsAudio: false,
   },
@@ -75,9 +75,45 @@ export const ASSISTANT_ROLES: AssistantRole[] = [
       "Create a storytelling framework for a personal brand post.",
     ],
     systemPrompt:
-      "You are the Creator role in Cellesseon. Be imaginative but clear. Offer multiple options and improve ideas iteratively.",
+      "You are the Creator persona in Cellesseon. Be imaginative but clear. Offer multiple options and improve ideas iteratively.",
     supportsImage: true,
     supportsAudio: true,
+  },
+  {
+    id: "wellness",
+    label: "Wellness",
+    tagline: "Mindful routines and stress relief.",
+    description:
+      "Focused on mindfulness, stress management, healthy routines, and self-improvement guidance.",
+    category: "Lifestyle",
+    icon: "bi bi-flower1",
+    starterPrompts: [
+      "Help me manage stress this week with a realistic daily plan.",
+      "Build a simple morning routine that I can actually stick to.",
+      "Guide me through a short breathing exercise to reset.",
+    ],
+    systemPrompt:
+      "You are the Wellness persona in Cellesseon. Focus on mindfulness, healthy habits, stress relief, and practical self-improvement. Be calming, supportive, and evidence-informed. Never provide medical or clinical advice.",
+    supportsImage: false,
+    supportsAudio: true,
+  },
+  {
+    id: "analyst",
+    label: "Analyst",
+    tagline: "Data-driven insight and clarity.",
+    description:
+      "Focused on data interpretation, report writing, market research, and critical thinking.",
+    category: "Productivity",
+    icon: "bi bi-bar-chart-line",
+    starterPrompts: [
+      "Help me analyze this dataset and summarize the main findings.",
+      "Write an executive summary from these report notes.",
+      "Compare these market competitors and highlight the biggest gaps.",
+    ],
+    systemPrompt:
+      "You are the Analyst persona in Cellesseon. Provide structured, data-driven insights. Use tables, comparisons, and clear reasoning. Prioritize accuracy and actionable conclusions over speculation.",
+    supportsImage: true,
+    supportsAudio: false,
   },
   {
     id: "best-friend",
@@ -93,7 +129,7 @@ export const ASSISTANT_ROLES: AssistantRole[] = [
       "Give me a gentle plan to reset my routine this week.",
     ],
     systemPrompt:
-      "You are the Best Friend role in Cellesseon. Be supportive, kind, and honest. Avoid dependency framing and encourage healthy offline actions when appropriate.",
+      "You are the Best Friend persona in Cellesseon. Be supportive, kind, and honest. Avoid dependency framing and encourage healthy offline actions when appropriate.",
     supportsImage: false,
     supportsAudio: true,
   },
@@ -111,7 +147,7 @@ export const ASSISTANT_ROLES: AssistantRole[] = [
       "Help me plan a thoughtful surprise date idea.",
     ],
     systemPrompt:
-      "You are the Boyfriend role in Cellesseon for demo purposes. Keep tone warm and respectful. Avoid manipulative language and avoid dependency cues.",
+      "You are the Boyfriend persona in Cellesseon for demo purposes. Keep tone warm and respectful. Avoid manipulative language and avoid dependency cues.",
     supportsImage: false,
     supportsAudio: true,
   },
@@ -129,7 +165,7 @@ export const ASSISTANT_ROLES: AssistantRole[] = [
       "Give me confidence tips before an important conversation.",
     ],
     systemPrompt:
-      "You are the Girlfriend role in Cellesseon for demo purposes. Be caring and respectful while staying safe and non-dependent in tone.",
+      "You are the Girlfriend persona in Cellesseon for demo purposes. Be caring and respectful while staying safe and non-dependent in tone.",
     supportsImage: false,
     supportsAudio: true,
   },
@@ -139,74 +175,85 @@ export const DEMO_CONVERSATIONS: ConversationListItem[] = [
   {
     id: "demo-strategy-roadmap",
     title: "Q2 Launch Roadmap",
-    assistantRoleId: "strategist",
+    personaId: "strategist",
     updatedAtLabel: "5 min ago",
-    href: "/app?role=strategist",
+    href: "/app?persona=strategist",
     isDemo: true,
   },
   {
     id: "demo-teacher-calculus",
     title: "Derivatives Explained",
-    assistantRoleId: "teacher",
+    personaId: "teacher",
     updatedAtLabel: "24 min ago",
-    href: "/app?role=teacher",
+    href: "/app?persona=teacher",
     isDemo: true,
   },
   {
     id: "demo-dev-review",
     title: "API Error Review",
-    assistantRoleId: "developer",
+    personaId: "developer",
     updatedAtLabel: "1 h ago",
-    href: "/app?role=developer",
+    href: "/app?persona=developer",
     isDemo: true,
   },
   {
     id: "demo-creator-campaign",
     title: "Campaign Story Angles",
-    assistantRoleId: "creator",
+    personaId: "creator",
     updatedAtLabel: "2 h ago",
-    href: "/app?role=creator",
+    href: "/app?persona=creator",
+    isDemo: true,
+  },
+  {
+    id: "demo-wellness-reset",
+    title: "Morning Reset Routine",
+    personaId: "wellness",
+    updatedAtLabel: "3 h ago",
+    href: "/app?persona=wellness",
+    isDemo: true,
+  },
+  {
+    id: "demo-analyst-brief",
+    title: "Competitive Market Brief",
+    personaId: "analyst",
+    updatedAtLabel: "4 h ago",
+    href: "/app?persona=analyst",
     isDemo: true,
   },
 ];
 
-export const ASSISTANT_ROLE_MAP: Record<AssistantRoleId, AssistantRole> =
-  ASSISTANT_ROLES.reduce(
-    (accumulator, role) => {
-      accumulator[role.id] = role;
-      return accumulator;
-    },
-    {} as Record<AssistantRoleId, AssistantRole>,
-  );
+export const PERSONA_MAP: Record<PersonaId, Persona> = PERSONAS.reduce(
+  (accumulator, persona) => {
+    accumulator[persona.id] = persona;
+    return accumulator;
+  },
+  {} as Record<PersonaId, Persona>,
+);
 
-export function getAssistantRole(
-  assistantRoleId?: string | null,
-): AssistantRole {
-  if (!assistantRoleId) {
-    return ASSISTANT_ROLE_MAP[DEFAULT_ASSISTANT_ROLE_ID];
+export function getPersona(personaId?: string | null): Persona {
+  if (!personaId) {
+    return PERSONA_MAP[DEFAULT_PERSONA_ID];
   }
 
-  const roleKey = assistantRoleId as AssistantRoleId;
-  return (
-    ASSISTANT_ROLE_MAP[roleKey] ?? ASSISTANT_ROLE_MAP[DEFAULT_ASSISTANT_ROLE_ID]
-  );
+  const personaKey = personaId as PersonaId;
+  return PERSONA_MAP[personaKey] ?? PERSONA_MAP[DEFAULT_PERSONA_ID];
 }
 
-export function buildRoleAwareSystemPrompt(assistantRoleId?: string | null): {
+export function buildPersonaAwareSystemPrompt(personaId?: string | null): {
   role: "developer";
   content: string;
 }[] {
-  const selectedRole = getAssistantRole(assistantRoleId);
+  const selectedPersona = getPersona(personaId);
 
   return [
     {
       role: "developer",
       content:
-        "You are Cellesseon, a role-based AI assistant platform. Keep responses practical, accurate, and concise unless the user requests depth.",
+        "You are Cellesseon, a persona-based AI assistant platform. Keep responses practical, accurate, and concise unless the user requests depth.",
     },
     {
       role: "developer",
-      content: selectedRole.systemPrompt,
+      content: selectedPersona.systemPrompt,
     },
   ];
 }

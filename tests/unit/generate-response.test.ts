@@ -4,7 +4,7 @@ import { generateResponse } from "@/lib/utils/openai/generateResponse";
 import { openAiClient } from "@/constants/openai";
 import { generateImage } from "@/lib/utils/openai/generateImage";
 import { generateAudio } from "@/lib/utils/openai/generateAudio";
-import { AssistantRoleId } from "@/types/AssistantRoleData.d";
+import { PersonaId } from "@/types/PersonaData.d";
 
 vi.mock("@/constants/openai", () => ({
   openAiClient: {
@@ -27,12 +27,12 @@ vi.mock("@/lib/utils/openai/generateAudio", () => ({
 
 const defaultEntitlements = {
   planName: "Pro" as const,
-  allowedRoleIds: [
+  allowedPersonaIds: [
     "strategist",
     "teacher",
     "developer",
     "creator",
-  ] as AssistantRoleId[],
+  ] as PersonaId[],
   supportsImageGeneration: true,
   supportsAudioGeneration: true,
   imageLimitReached: false,
@@ -69,7 +69,7 @@ describe("generateResponse", () => {
       ],
       taskId: "task_1",
       userId: "clerk_1",
-      assistantRoleId: "strategist",
+      personaId: "strategist",
       entitlements: defaultEntitlements,
     });
 
@@ -126,7 +126,7 @@ describe("generateResponse", () => {
       ],
       taskId: "task_image",
       userId: "clerk_1",
-      assistantRoleId: "strategist",
+      personaId: "strategist",
       entitlements: defaultEntitlements,
     });
 
@@ -188,7 +188,7 @@ describe("generateResponse", () => {
       ],
       taskId: "task_audio",
       userId: "clerk_1",
-      assistantRoleId: "teacher",
+      personaId: "teacher",
       entitlements: defaultEntitlements,
     });
 
@@ -231,7 +231,7 @@ describe("generateResponse", () => {
       ],
       taskId: "task_blocked",
       userId: "clerk_1",
-      assistantRoleId: "strategist",
+      personaId: "strategist",
       entitlements: {
         ...defaultEntitlements,
         supportsImageGeneration: false,
@@ -259,7 +259,7 @@ describe("generateResponse", () => {
       ],
       taskId: "task_error",
       userId: "clerk_1",
-      assistantRoleId: "strategist",
+      personaId: "strategist",
       entitlements: defaultEntitlements,
     });
 

@@ -9,18 +9,18 @@ import ChatBody from "@/components/chat/chat-body";
 import ChatInput from "@/components/chat/chat-input";
 import AlertMessage, { AlertParams } from "@/components/shared/alert-message";
 import { filterAssistantMsg } from "@/lib/utils/openai/filterAssistantMsg";
-import ChatRolePicker from "@/components/chat/chat-role-picker";
-import { getAssistantRole } from "@/constants/assistant-roles";
-import { AssistantRoleId } from "@/types/AssistantRoleData.d";
+import ChatPersonaPicker from "@/components/chat/chat-persona-picker";
+import { getPersona } from "@/constants/assistant-personas";
+import { PersonaId } from "@/types/PersonaData.d";
 
 interface ChatWrapperProps {
-  initialRoleId?: string;
+  initialPersonaId?: string;
   initialTaskId?: string | null;
   initialMessages?: Message[];
 }
 
 export default function ChatWrapper({
-  initialRoleId,
+  initialPersonaId,
   initialTaskId = null,
   initialMessages = [],
 }: ChatWrapperProps) {
@@ -29,27 +29,27 @@ export default function ChatWrapper({
   const [startMsg, setStartMsg] = useState<string>("");
   const [dbTaskId, setDbTaskId] = useState<string | null>(initialTaskId);
   const [task, setTask] = useState<Message[]>(initialMessages);
-  const [selectedRoleId, setSelectedRoleId] = useState<AssistantRoleId>(
-    getAssistantRole(initialRoleId).id,
+  const [selectedPersonaId, setSelectedPersonaId] = useState<PersonaId>(
+    getPersona(initialPersonaId).id,
   );
   const nextAlertId = useRef<number>(0);
   const isNewTask = task.length === 0;
 
-  const selectedRole = useMemo(
-    () => getAssistantRole(selectedRoleId),
-    [selectedRoleId],
+  const selectedPersona = useMemo(
+    () => getPersona(selectedPersonaId),
+    [selectedPersonaId],
   );
 
   useEffect(() => {
-    setSelectedRoleId(getAssistantRole(initialRoleId).id);
-  }, [initialRoleId]);
+    setSelectedPersonaId(getPersona(initialPersonaId).id);
+  }, [initialPersonaId]);
 
-  function handleSelectRole(roleId: AssistantRoleId) {
-    if (roleId === selectedRoleId) {
+  function handleSelectPersona(personaId: PersonaId) {
+    if (personaId === selectedPersonaId) {
       return;
     }
 
-    setSelectedRoleId(roleId);
+    setSelectedPersonaId(personaId);
     setTask([]);
     setDbTaskId(null);
     setStartMsg("");
@@ -84,7 +84,7 @@ export default function ChatWrapper({
         body: JSON.stringify({
           messages: taskMessages,
           taskId: dbTaskId,
-          assistantRoleId: selectedRole.id,
+          personaId: selectedPersona.id,
         }),
       });
       const responseData = (await response.json().catch(() => null)) as {
@@ -144,14 +144,14 @@ export default function ChatWrapper({
       <ChatHeader
         setNewTask={handleResetConversation}
         isInUse={isLoading}
-        assistantRoleLabel={selectedRole.label}
+        personaLabel={selectedPersona.label}
         messageCount={task.length}
       />
 
       <section className="mt-14 flex w-full flex-col gap-3 px-3 pt-2 lg:px-5">
-        <ChatRolePicker
-          selectedRoleId={selectedRole.id}
-          onSelectRole={handleSelectRole}
+        <ChatPersonaPicker
+          selectedPersonaId={selectedPersona.id}
+          onSelectPersona={handleSelectPersona}
         />
       </section>
 
@@ -164,11 +164,11 @@ export default function ChatWrapper({
       >
         {isNewTask ? (
           <ChatIntro
-            role={selectedRole}
+            persona={selectedPersona}
             sendPrompt={(prompt) => setStartMsg(prompt)}
           />
         ) : (
-          <ChatBody messages={task} assistantRoleLabel={selectedRole.label} />
+          <ChatBody messages={task} personaLabel={selectedPersona.label} />
         )}
       </section>
 
@@ -176,7 +176,7 @@ export default function ChatWrapper({
         sendMessage={sendMessage}
         loading={isLoading}
         startPrompt={startMsg}
-        assistantRoleLabel={selectedRole.label}
+        personaLabel={selectedPersona.label}
       />
     </main>
   );

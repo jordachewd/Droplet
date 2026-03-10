@@ -10,13 +10,10 @@ import AudioPlayer from "@/components/shared/audio-player";
 
 interface ChatBodyProps {
   messages: Message[];
-  assistantRoleLabel?: string;
+  personaLabel?: string;
 }
 
-export default function ChatBody({
-  messages,
-  assistantRoleLabel,
-}: ChatBodyProps) {
+export default function ChatBody({ messages, personaLabel }: ChatBodyProps) {
   const parent = useRef<HTMLDivElement | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
@@ -33,7 +30,7 @@ export default function ChatBody({
     return messages.map((message, index) => {
       const { whois, content } = message;
       const isBot = whois !== "user";
-      const messageOwner = isBot ? assistantRoleLabel || "Assistant" : "You";
+      const messageOwner = isBot ? personaLabel || "Assistant" : "You";
 
       const articleClass = classNames(
         "ChatBodyMessage flex items-start gap-3",
@@ -112,7 +109,7 @@ export default function ChatBody({
         </article>
       );
     });
-  }, [assistantRoleLabel, messages]);
+  }, [personaLabel, messages]);
 
   const chatBodyClass = classNames(
     "ChatBody mx-auto flex w-full max-w-screen-lg flex-1 flex-col gap-4 px-4 pb-10 pt-6",

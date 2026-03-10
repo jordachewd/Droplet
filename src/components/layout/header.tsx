@@ -39,8 +39,8 @@ export default function Header() {
           <Logo />
 
           <nav className="hidden items-center gap-1 md:flex">
-            <Link className="btn btn-text btn-sm" href="/roles">
-              Roles
+            <Link className="btn btn-text btn-sm" href="/personas">
+              Personas
             </Link>
             <Link className="btn btn-text btn-sm" href="/pricing">
               Pricing

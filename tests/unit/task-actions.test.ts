@@ -47,7 +47,7 @@ describe("createTask", () => {
       userId: "auth_user_1",
       title: "Generated title",
       messages: [],
-      assistantRoleId: "strategist",
+      personaId: "strategist",
     });
   });
 

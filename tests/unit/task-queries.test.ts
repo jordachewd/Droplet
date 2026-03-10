@@ -24,7 +24,7 @@ describe("getTaskByIdForUser", () => {
     const lean = vi.fn().mockResolvedValue({
       _id: "task_1",
       title: "Conversation",
-      assistantRoleId: "strategist",
+      personaId: "strategist",
       messages: [
         {
           whois: "assistant",
@@ -61,7 +61,7 @@ describe("getTaskByIdForUser", () => {
     expect(result).toEqual({
       _id: "task_1",
       title: "Conversation",
-      assistantRoleId: "strategist",
+      personaId: "strategist",
       messages: [
         {
           whois: "assistant",

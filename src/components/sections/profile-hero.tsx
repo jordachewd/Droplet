@@ -13,6 +13,8 @@ interface HeroProps {
 export default function ProfileHero({ userData }: HeroProps) {
   const { username, firstName, lastName, email, registerAt, updatedAt, plan } =
     userData;
+  const formattedRegisterAt = getFormattedDate(registerAt);
+  const formattedUpdatedAt = getFormattedDate(updatedAt);
 
   const fullName = getFullName({
     firstName: firstName || "",
@@ -60,17 +62,13 @@ export default function ProfileHero({ userData }: HeroProps) {
         <div className="flex w-full flex-col justify-between gap-2 lg:max-w-[30%]">
           <div className="flex items-center gap-2">
             <span className="font-semibold leading-none">Member since:</span>
-            <span className="text-xxs leading-none">
-              {getFormattedDate(registerAt as Date)}
-            </span>
+            <span className="text-xxs leading-none">{formattedRegisterAt}</span>
           </div>
 
-          {userData.updatedAt && (
+          {updatedAt && (
             <div className="flex items-center gap-2">
               <span className="font-semibold leading-none">Last update:</span>
-              <span className="text-xxs leading-none">
-                {getFormattedDate(updatedAt as Date)}
-              </span>
+              <span className="text-xxs leading-none">{formattedUpdatedAt}</span>
             </div>
           )}
 

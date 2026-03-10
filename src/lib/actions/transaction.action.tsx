@@ -79,7 +79,9 @@ export async function getAllTransactions(userId: string) {
       sort: {
         createdAt: -1, //Sort by Date Added DESC
       },
-    }).exec();
+    })
+      .lean()
+      .exec();
 
     return serializeForClient(transactions);
   } catch (error) {

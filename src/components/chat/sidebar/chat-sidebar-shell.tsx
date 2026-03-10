@@ -5,7 +5,7 @@ import classNames from "classnames";
 import SidebarHead from "@/components/chat/sidebar/sidebar-head";
 import ChatSidebarNav from "@/components/chat/sidebar/chat-sidebar-nav";
 import ChatSidebarPromo from "@/components/chat/sidebar/chat-sidebar-promo";
-import { ConversationListItem } from "@/types/AssistantRoleData.d";
+import { ConversationListItem } from "@/types/PersonaData.d";
 import { usePathname } from "next/navigation";
 
 interface ChatSidebarShellProps {

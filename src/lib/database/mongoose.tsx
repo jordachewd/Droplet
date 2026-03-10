@@ -30,6 +30,8 @@ export const connectToDatabase = async (): Promise<Mongoose> => {
     mongoose.connect(MONGODB_URL, {
       dbName: "cellesseon",
       bufferCommands: false,
+      maxPoolSize: 10,
+      serverSelectionTimeoutMS: 5000,
     });
 
   cached.conn = await cached.promise;

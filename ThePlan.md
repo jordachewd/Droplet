@@ -11,18 +11,18 @@
 
 ## Current project status
 
-| Phase | Description | Status |
-|-------|-------------|--------|
-| Phase 0 | Product definition freeze | **DONE** — 9 personas defined, entitlement matrix locked, route architecture settled |
-| Phase 1 | Core architecture correction | **DONE** — persona constants, Task model, entitlements, system prompts |
-| Phase 2 | Entitlements and billing correctness | **DONE** — `resolveEntitlements()`, Stripe webhooks, usage counters |
-| Phase 3 | Chat engine hardening | **DONE** — persona-specific prompts, tool routing, rate limiting (in-memory) |
-| Phase 4 | UX and route architecture | **DONE** — route groups, persona-led UX, sidebar, library |
-| Phase 5 | Operational readiness | **DONE** — proxy protection, webhook verification, file validation, 139 tests |
-| Phase 6 | Landing page & marketing | **DONE** — hero, pricing, personas showcase, FAQ |
-| **Phase 7** | **Persona rename** | **CURRENT** — rename "role" → "persona" across all source files |
-| Phase 8 | Database optimization | NEXT — `.lean()`, `.select()`, index verification |
-| Phase 9+ | Production polish, resilience | PLANNED — see `TODO.md` |
+| Phase       | Description                          | Status                                                                               |
+| ----------- | ------------------------------------ | ------------------------------------------------------------------------------------ |
+| Phase 0     | Product definition freeze            | **DONE** — 9 personas defined, entitlement matrix locked, route architecture settled |
+| Phase 1     | Core architecture correction         | **DONE** — persona constants, Task model, entitlements, system prompts               |
+| Phase 2     | Entitlements and billing correctness | **DONE** — `resolveEntitlements()`, Stripe webhooks, usage counters                  |
+| Phase 3     | Chat engine hardening                | **DONE** — persona-specific prompts, tool routing, rate limiting (in-memory)         |
+| Phase 4     | UX and route architecture            | **DONE** — route groups, persona-led UX, sidebar, library                            |
+| Phase 5     | Operational readiness                | **DONE** — proxy protection, webhook verification, file validation, 139 tests        |
+| Phase 6     | Landing page & marketing             | **DONE** — hero, pricing, personas showcase, FAQ                                     |
+| **Phase 7** | **Persona rename**                   | **CURRENT** — rename "role" → "persona" across all source files                      |
+| Phase 8     | Database optimization                | NEXT — `.lean()`, `.select()`, index verification                                    |
+| Phase 9+    | Production polish, resilience        | PLANNED — see `TODO.md`                                                              |
 
 ---
 
@@ -527,6 +527,7 @@ The architect recommendations above have been reviewed, validated, and acted upo
 7. **Terminology rename (Phase 7):** Current priority — "assistant role" → "persona" across all source files. See `TODO.md` for the 26-task implementation plan.
 
 **Remaining gaps from the original audit** that are still tracked:
+
 - In-memory rate limiting → `TODO.md` Phase 12 (persistent rate limiter)
 - Cost/token tracking per request → `TODO.md` Phase 12
 - Streaming responses → `TODO.md` Phase 12

@@ -3,8 +3,8 @@
 import Link from "next/link";
 import classNames from "classnames";
 import { usePathname } from "next/navigation";
-import { ConversationListItem } from "@/types/AssistantRoleData.d";
-import { getAssistantRole } from "@/constants/assistant-roles";
+import { ConversationListItem } from "@/types/PersonaData.d";
+import { getPersona } from "@/constants/assistant-personas";
 
 interface ChatSidebarNavProps {
   isOpen: boolean;
@@ -30,7 +30,7 @@ const WORKSPACE_LINKS: NavLinkItem[] = [
 ];
 
 const DISCOVER_LINKS: NavLinkItem[] = [
-  { href: "/app/roles", label: "Roles", icon: "bi bi-grid-3x3-gap" },
+  { href: "/app/personas", label: "Personas", icon: "bi bi-grid-3x3-gap" },
   { href: "/plans", label: "Plans", icon: "bi bi-stars" },
   { href: "/profile", label: "Profile", icon: "bi bi-person" },
 ];
@@ -105,7 +105,7 @@ export default function ChatSidebarNav({
         <p className={headingClass}>Recent</p>
         <div className="flex flex-col gap-1">
           {historyItems.slice(0, 6).map((item) => {
-            const role = getAssistantRole(item.assistantRoleId);
+            const persona = getPersona(item.personaId);
             const isActive = pathname === item.href;
 
             return (
@@ -119,11 +119,11 @@ export default function ChatSidebarNav({
                   !isOpen && "lg:w-auto lg:justify-center lg:px-2",
                 )}
               >
-                <i className={classNames(role.icon, "text-sm")}></i>
+                <i className={classNames(persona.icon, "text-sm")}></i>
                 <div className={classNames("min-w-0", !isOpen && "lg:hidden")}>
                   <p className="truncate text-xs font-medium">{item.title}</p>
                   <p className="truncate text-xxs opacity-70">
-                    {role.label} · {item.updatedAtLabel}
+                    {persona.label} - {item.updatedAtLabel}
                   </p>
                 </div>
               </Link>

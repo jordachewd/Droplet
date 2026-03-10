@@ -34,7 +34,7 @@ export default async function ConversationPage({
       <ChatWrapper
         initialMessages={task.messages}
         initialTaskId={task._id}
-        initialRoleId={task.assistantRoleId}
+        initialPersonaId={task.personaId}
       />
     </PageWrapper>
   );

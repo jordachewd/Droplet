@@ -79,7 +79,11 @@ export async function getUserById(userId: string) {
 
     await connectToDatabase();
 
-    const user = await User.findOne({ clerkId: userId });
+    const user = await User.findOne({ clerkId: userId })
+      .select(
+        "clerkId username email role plan firstName lastName userimg registerAt updatedAt",
+      )
+      .lean();
 
     return serializeForClient(user);
   } catch (error) {

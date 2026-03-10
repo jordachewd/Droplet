@@ -9,7 +9,7 @@ import { getUserById } from "@/lib/actions/user.actions";
 import { UserData } from "@/types/UserData.d";
 import { enforceSlidingWindowRateLimit } from "@/lib/utils/rate-limit";
 import {
-  resolveAssistantRoleForPlan,
+  resolvePersonaForPlan,
   resolveEntitlements,
 } from "@/lib/utils/resolve-entitlements";
 import User from "@/lib/database/models/user.model";
@@ -62,7 +62,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     const {
       messages,
       taskId: providedTaskId,
-      assistantRoleId,
+      personaId,
     } = (await req.json()) as Messages;
     const { userId } = await auth();
 
@@ -154,22 +154,22 @@ export async function POST(req: Request): Promise<NextResponse> {
       audioLimitReached,
     };
 
-    const selectedRole = resolveAssistantRoleForPlan({
-      assistantRoleId,
+    const selectedPersona = resolvePersonaForPlan({
+      personaId,
       planName: userData?.plan?.name,
     });
 
     let taskId = providedTaskId;
 
     if (!taskId) {
-      const generatedTitle = await generateTitle(messages, selectedRole.id);
+      const generatedTitle = await generateTitle(messages, selectedPersona.id);
       const { title, usage } = JSON.parse(generatedTitle as string);
 
       const newTask = await createTask({
         title,
         messages,
         usage,
-        assistantRoleId: selectedRole.id,
+        personaId: selectedPersona.id,
       });
 
       if (!newTask) {
@@ -187,7 +187,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       messages,
       taskId,
       userId,
-      assistantRoleId: selectedRole.id,
+      personaId: selectedPersona.id,
       entitlements: resolvedEntitlements,
     });
     const aiPayload = JSON.parse(aiResponse as string) as OpenAIResponsePayload;
@@ -218,7 +218,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     await updateTask(taskId, {
       messages: [...messages, taskData],
       usage: taskUsage || 0,
-      assistantRoleId: selectedRole.id,
+      personaId: selectedPersona.id,
     } as UpdateTaskParams);
 
     const usageIncrementFields: Record<string, number> = {};
@@ -252,7 +252,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({
       taskData,
       taskId,
-      assistantRoleId: selectedRole.id,
+      personaId: selectedPersona.id,
     });
   } catch (error) {
     console.error("OpenAI route error:", error);

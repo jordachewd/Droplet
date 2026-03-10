@@ -1,15 +1,12 @@
 import Link from "next/link";
 import classNames from "classnames";
 import { auth } from "@clerk/nextjs/server";
-import {
-  DEMO_CONVERSATIONS,
-  getAssistantRole,
-} from "@/constants/assistant-roles";
+import { DEMO_CONVERSATIONS, getPersona } from "@/constants/assistant-personas";
 import PageWrapper from "@/components/layout/page-wrapper";
 import PageHead from "@/components/layout/page-head";
 import { getRecentTasksByUserId } from "@/lib/utils/task-queries";
 import { mapDateToLabel } from "@/lib/utils/map-date-to-label";
-import { ConversationListItem } from "@/types/AssistantRoleData.d";
+import { ConversationListItem } from "@/types/PersonaData.d";
 
 export default async function LibraryPage() {
   const { userId } = await auth();
@@ -23,7 +20,7 @@ export default async function LibraryPage() {
         conversations = taskHistory.map((task) => ({
           id: task._id,
           title: task.title,
-          assistantRoleId: task.assistantRoleId,
+          personaId: task.personaId,
           updatedAtLabel: mapDateToLabel(task.updatedAt),
           href: `/app/c/${task._id}`,
         }));
@@ -38,12 +35,12 @@ export default async function LibraryPage() {
       <section className="LibraryPage mx-auto flex w-full max-w-6xl flex-col gap-6 p-4">
         <PageHead
           title="Conversation Library"
-          subtitle="Recent sessions grouped by role. Demo items are shown when no saved conversations exist yet."
+          subtitle="Recent sessions grouped by persona. Demo items are shown when no saved conversations exist yet."
         />
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           {conversations.map((conversation) => {
-            const role = getAssistantRole(conversation.assistantRoleId);
+            const persona = getPersona(conversation.personaId);
 
             return (
               <Link
@@ -68,8 +65,8 @@ export default async function LibraryPage() {
 
                 <div className="flex items-center justify-between text-sm opacity-80">
                   <span className="inline-flex items-center gap-2">
-                    <i className={role.icon}></i>
-                    {role.label}
+                    <i className={persona.icon}></i>
+                    {persona.label}
                   </span>
                   <span>{conversation.updatedAtLabel}</span>
                 </div>

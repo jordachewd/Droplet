@@ -50,11 +50,11 @@ The product monetises through tiered subscription plans paid via Stripe.
 
 ## 2. User Roles
 
-| Role          | Access                                                                                              |
-| ------------- | --------------------------------------------------------------------------------------------------- |
-| **Anonymous** | Landing page, pricing, personas showcase, sign-in/sign-up only                                      |
-| **Client**    | Chat (`/app`), conversation resume, library, new conversation, profile, plans, billing history       |
-| **Admin**     | All client access + admin dashboard (`/dashboard`)                                                  |
+| Role          | Access                                                                                         |
+| ------------- | ---------------------------------------------------------------------------------------------- |
+| **Anonymous** | Landing page, pricing, personas showcase, sign-in/sign-up only                                 |
+| **Client**    | Chat (`/app`), conversation resume, library, new conversation, profile, plans, billing history |
+| **Admin**     | All client access + admin dashboard (`/dashboard`)                                             |
 
 `User.role` is stored in Mongoose and synced to Clerk `publicMetadata.role`.
 Admin access is enforced at the proxy level (`src/proxy.tsx`) via Clerk session claims (`metadata.role === "admin"`).
@@ -350,21 +350,21 @@ No active security issues as of this revision.
 
 ### Routing
 
-| Route                     | Type      | Description                                |
-| ------------------------- | --------- | ------------------------------------------ |
-| `/`                       | Public    | Landing page                               |
-| `/pricing`                | Public    | Pricing page                               |
-| `/personas`               | Public    | Personas showcase                          |
-| `/sign-in`                | Auth      | Clerk sign-in                              |
-| `/sign-up`                | Auth      | Clerk sign-up                              |
-| `/app`                    | Protected | Chat dashboard with persona picker         |
+| Route                     | Type      | Description                                 |
+| ------------------------- | --------- | ------------------------------------------- |
+| `/`                       | Public    | Landing page                                |
+| `/pricing`                | Public    | Pricing page                                |
+| `/personas`               | Public    | Personas showcase                           |
+| `/sign-in`                | Auth      | Clerk sign-in                               |
+| `/sign-up`                | Auth      | Clerk sign-up                               |
+| `/app`                    | Protected | Chat dashboard with persona picker          |
 | `/app/new`                | Protected | Persona selection to start new conversation |
-| `/app/library`            | Protected | Conversation history list                  |
-| `/app/personas`           | Protected | In-app personas page                       |
-| `/app/c/[conversationId]` | Protected | Resume existing conversation               |
-| `/profile`                | Protected | User profile + billing                     |
-| `/plans`                  | Protected | Plan selection + checkout                  |
-| `/dashboard`              | Admin     | Admin dashboard with live stats            |
+| `/app/library`            | Protected | Conversation history list                   |
+| `/app/personas`           | Protected | In-app personas page                        |
+| `/app/c/[conversationId]` | Protected | Resume existing conversation                |
+| `/profile`                | Protected | User profile + billing                      |
+| `/plans`                  | Protected | Plan selection + checkout                   |
+| `/dashboard`              | Admin     | Admin dashboard with live stats             |
 
 ### Design System
 
@@ -421,25 +421,25 @@ No active security issues as of this revision.
 
 ### Active
 
-| ID           | Area     | Description                                                                        | Severity |
-| ------------ | -------- | ---------------------------------------------------------------------------------- | -------- |
+| ID           | Area     | Description                                                                          | Severity |
+| ------------ | -------- | ------------------------------------------------------------------------------------ | -------- |
 | TD-RENAME-01 | All      | Rename "role" → "persona" across types, constants, components, models, tests, routes | High     |
-| TD-API-01    | API      | In-memory rate limiter; does not survive restarts or work across instances          | Medium   |
-| TD-API-06    | API      | handleError utility re-throws with string concatenation, losing stack trace        | Medium   |
-| TD-AI-01     | OpenAI   | No response streaming (deferred v1)                                                | Low      |
-| TD-AI-03     | OpenAI   | No per-user token/cost tracking beyond Task.usage field                            | Low      |
-| TD-AI-05     | OpenAI   | Audio base64 stored directly in message array, inflating document size             | High     |
-| TD-AI-06     | OpenAI   | No retry/backoff for transient OpenAI failures                                     | Medium   |
-| TD-DB-05     | Database | Task messages array unbounded growth (MongoDB 16MB limit risk)                     | High     |
-| TD-DB-07     | Database | Audio base64 inflates Task document size (related to TD-AI-05)                     | High     |
-| TD-DB-08     | Database | getUserById missing .lean() and .select()                                          | Medium   |
-| TD-DB-09     | Database | getAllTransactions missing .lean()                                                 | Medium   |
-| TD-FILE-01   | Files    | No S3 cleanup on user/task deletion                                                | Medium   |
-| TD-FILE-02   | Files    | Some chat flows send file as base64 in message body                                | Low      |
-| TD-PLAN-01   | Billing  | No recurring Stripe subscriptions (deferred v1)                                    | Low      |
-| TD-PLAN-03   | Billing  | Yearly billing has no pricing discount                                             | Low      |
-| TD-UI-02     | Frontend | No loading skeleton for page transitions                                           | Low      |
-| TD-UI-06     | Frontend | No conversation delete UI (server action exists)                                   | High     |
+| TD-API-01    | API      | In-memory rate limiter; does not survive restarts or work across instances           | Medium   |
+| TD-API-06    | API      | handleError utility re-throws with string concatenation, losing stack trace          | Medium   |
+| TD-AI-01     | OpenAI   | No response streaming (deferred v1)                                                  | Low      |
+| TD-AI-03     | OpenAI   | No per-user token/cost tracking beyond Task.usage field                              | Low      |
+| TD-AI-05     | OpenAI   | Audio base64 stored directly in message array, inflating document size               | High     |
+| TD-AI-06     | OpenAI   | No retry/backoff for transient OpenAI failures                                       | Medium   |
+| TD-DB-05     | Database | Task messages array unbounded growth (MongoDB 16MB limit risk)                       | High     |
+| TD-DB-07     | Database | Audio base64 inflates Task document size (related to TD-AI-05)                       | High     |
+| TD-DB-08     | Database | getUserById missing .lean() and .select()                                            | Medium   |
+| TD-DB-09     | Database | getAllTransactions missing .lean()                                                   | Medium   |
+| TD-FILE-01   | Files    | No S3 cleanup on user/task deletion                                                  | Medium   |
+| TD-FILE-02   | Files    | Some chat flows send file as base64 in message body                                  | Low      |
+| TD-PLAN-01   | Billing  | No recurring Stripe subscriptions (deferred v1)                                      | Low      |
+| TD-PLAN-03   | Billing  | Yearly billing has no pricing discount                                               | Low      |
+| TD-UI-02     | Frontend | No loading skeleton for page transitions                                             | Low      |
+| TD-UI-06     | Frontend | No conversation delete UI (server action exists)                                     | High     |
 
 ### Resolved
 

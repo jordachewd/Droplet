@@ -1,24 +1,27 @@
-export type AssistantRoleCategory =
+export type PersonaCategory =
   | "Productivity"
   | "Learning"
   | "Creative"
+  | "Lifestyle"
   | "Companion";
 
-export type AssistantRoleId =
+export type PersonaId =
   | "strategist"
   | "teacher"
   | "developer"
   | "creator"
+  | "wellness"
+  | "analyst"
   | "best-friend"
   | "boyfriend"
   | "girlfriend";
 
-export interface AssistantRole {
-  id: AssistantRoleId;
+export interface Persona {
+  id: PersonaId;
   label: string;
   tagline: string;
   description: string;
-  category: AssistantRoleCategory;
+  category: PersonaCategory;
   icon: string;
   starterPrompts: string[];
   systemPrompt: string;
@@ -29,7 +32,7 @@ export interface AssistantRole {
 export interface ConversationListItem {
   id: string;
   title: string;
-  assistantRoleId: AssistantRoleId;
+  personaId: PersonaId;
   updatedAtLabel: string;
   href: string;
   isDemo?: boolean;

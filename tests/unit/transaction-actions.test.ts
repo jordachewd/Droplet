@@ -35,8 +35,12 @@ describe("getAllTransactions", () => {
     const execMock = vi
       .fn()
       .mockResolvedValue([{ stripeId: "txn_1", clerkId: "clerk_user_1" }]);
-    vi.mocked(Transaction.find).mockReturnValue({
+    const leanMock = vi.fn().mockReturnValue({
       exec: execMock,
+    });
+
+    vi.mocked(Transaction.find).mockReturnValue({
+      lean: leanMock,
     } as never);
 
     const response = await getAllTransactions("clerk_user_1");
@@ -49,6 +53,8 @@ describe("getAllTransactions", () => {
         sort: { createdAt: -1 },
       },
     );
+    expect(leanMock).toHaveBeenCalledOnce();
+    expect(execMock).toHaveBeenCalledOnce();
     expect(response).toEqual([{ stripeId: "txn_1", clerkId: "clerk_user_1" }]);
   });
 

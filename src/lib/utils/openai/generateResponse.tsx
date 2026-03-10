@@ -1,7 +1,7 @@
 import {
-  buildRoleAwareSystemPrompt,
-  getAssistantRole,
-} from "@/constants/assistant-roles";
+  buildPersonaAwareSystemPrompt,
+  getPersona,
+} from "@/constants/assistant-personas";
 import { getChatTools, openAiClient } from "@/constants/openai";
 import { ContentItem, Message, MessageRole } from "@/types";
 import { generateImage } from "./generateImage";
@@ -17,7 +17,7 @@ interface GenerateResponseParams {
   messages: Message[];
   taskId: string;
   userId: string;
-  assistantRoleId?: string | null;
+  personaId?: string | null;
   entitlements: Entitlements;
 }
 
@@ -62,23 +62,23 @@ export async function generateResponse({
   messages,
   taskId,
   userId,
-  assistantRoleId,
+  personaId,
   entitlements,
 }: GenerateResponseParams) {
   try {
-    const selectedRole = getAssistantRole(assistantRoleId);
+    const selectedPersona = getPersona(personaId);
     const tools = getChatTools({
       supportsImageGeneration:
-        entitlements.supportsImageGeneration && selectedRole.supportsImage,
+        entitlements.supportsImageGeneration && selectedPersona.supportsImage,
       supportsAudioGeneration:
-        entitlements.supportsAudioGeneration && selectedRole.supportsAudio,
+        entitlements.supportsAudioGeneration && selectedPersona.supportsAudio,
     });
 
     const chatData = await openAiClient.chat.completions.create({
       model: "gpt-4o",
       temperature: 0.5,
       messages: [
-        ...buildRoleAwareSystemPrompt(selectedRole.id),
+        ...buildPersonaAwareSystemPrompt(selectedPersona.id),
         ...messages,
       ] as ChatCompletionMessageParam[],
       tools: tools.length > 0 ? (tools as ChatCompletionTool[]) : undefined,
@@ -105,15 +105,15 @@ export async function generateResponse({
       if (functionName === "getGeneratedImage") {
         if (
           !entitlements.supportsImageGeneration ||
-          !selectedRole.supportsImage
+          !selectedPersona.supportsImage
         ) {
           const isImageLimitReached =
-            entitlements.imageLimitReached && selectedRole.supportsImage;
+            entitlements.imageLimitReached && selectedPersona.supportsImage;
 
           return createBlockedResponsePayload({
             message: isImageLimitReached
               ? "Image generation limit reached for your current plan."
-              : "Image generation is not enabled for the current plan or role.",
+              : "Image generation is not enabled for the current plan or persona.",
             taskUsage: chatData.usage?.total_tokens ?? 0,
             blockedReason: isImageLimitReached
               ? "image_limit"
@@ -133,15 +133,15 @@ export async function generateResponse({
       if (functionName === "getGeneratedAudio") {
         if (
           !entitlements.supportsAudioGeneration ||
-          !selectedRole.supportsAudio
+          !selectedPersona.supportsAudio
         ) {
           const isAudioLimitReached =
-            entitlements.audioLimitReached && selectedRole.supportsAudio;
+            entitlements.audioLimitReached && selectedPersona.supportsAudio;
 
           return createBlockedResponsePayload({
             message: isAudioLimitReached
               ? "Audio generation limit reached for your current plan."
-              : "Audio generation is not enabled for the current plan or role.",
+              : "Audio generation is not enabled for the current plan or persona.",
             taskUsage: chatData.usage?.total_tokens ?? 0,
             blockedReason: isAudioLimitReached
               ? "audio_limit"

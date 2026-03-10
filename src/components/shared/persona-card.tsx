@@ -1,20 +1,20 @@
 import classNames from "classnames";
 import Link from "next/link";
-import { AssistantRole } from "@/types/AssistantRoleData.d";
+import { Persona } from "@/types/PersonaData.d";
 
-interface AssistantRoleCardProps {
-  role: AssistantRole;
+interface PersonaCardProps {
+  persona: Persona;
   href?: string;
   compact?: boolean;
 }
 
-export default function AssistantRoleCard({
-  role,
+export default function PersonaCard({
+  persona,
   href,
   compact = false,
-}: AssistantRoleCardProps) {
+}: PersonaCardProps) {
   const cardClass = classNames(
-    "AssistantRoleCard flex h-full flex-col rounded-xl border p-4 transition-all duration-300",
+    "PersonaCard flex h-full flex-col rounded-xl border p-4 transition-all duration-300",
     "border-lightBorders-400/70 bg-white/70 shadow-sm",
     "hover:-translate-y-1 hover:shadow-md",
     "dark:border-darkBorders-500 dark:bg-jwdMarine-900/70",
@@ -35,24 +35,24 @@ export default function AssistantRoleCard({
     <>
       <div className="flex items-center justify-between gap-3">
         <h3 className={titleClass}>
-          <i className={classNames(role.icon, "text-base")}></i>
-          <span>{role.label}</span>
+          <i className={classNames(persona.icon, "text-base")}></i>
+          <span>{persona.label}</span>
         </h3>
         <span className="rounded-full border border-dotted px-2 py-1 text-xs">
-          {role.category}
+          {persona.category}
         </span>
       </div>
 
-      <p className="text-sm font-medium opacity-80">{role.tagline}</p>
-      <p className={bodyClass}>{role.description}</p>
+      <p className="text-sm font-medium opacity-80">{persona.tagline}</p>
+      <p className={bodyClass}>{persona.description}</p>
 
       {!compact && (
         <ul className="mt-auto flex flex-wrap gap-2 pt-2">
           <li className="rounded-full bg-lightSecondary-200 px-2 py-1 text-xxs dark:bg-darkSecondary-500/40">
-            {role.supportsImage ? "Image-enabled" : "Text-first"}
+            {persona.supportsImage ? "Image-enabled" : "Text-first"}
           </li>
           <li className="rounded-full bg-lightSecondary-200 px-2 py-1 text-xxs dark:bg-darkSecondary-500/40">
-            {role.supportsAudio ? "Audio-enabled" : "Audio off"}
+            {persona.supportsAudio ? "Audio-enabled" : "Audio off"}
           </li>
         </ul>
       )}

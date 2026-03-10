@@ -121,13 +121,13 @@ describe("POST /api/openai", () => {
       title: "Generated title",
       messages: [{ role: "user", whois: "user", content: "new chat" }],
       usage: 7,
-      assistantRoleId: "strategist",
+      personaId: "strategist",
     });
     expect(generateResponse).toHaveBeenCalledWith({
       messages: [{ role: "user", whois: "user", content: "new chat" }],
       taskId: "task_123",
       userId: "user_123",
-      assistantRoleId: "strategist",
+      personaId: "strategist",
       entitlements: expect.objectContaining({
         planName: "Lite",
         imageLimitReached: false,
@@ -144,12 +144,12 @@ describe("POST /api/openai", () => {
         },
       ],
       usage: 11,
-      assistantRoleId: "strategist",
+      personaId: "strategist",
     });
 
     expect(payload.taskId).toBe("task_123");
     expect(payload.taskData.role).toBe("assistant");
-    expect(payload.assistantRoleId).toBe("strategist");
+    expect(payload.personaId).toBe("strategist");
   });
 
   it("reuses existing taskId and skips title/task creation", async () => {
@@ -167,7 +167,7 @@ describe("POST /api/openai", () => {
       messages: [{ role: "user", whois: "user", content: "continue" }],
       taskId: "existing-task",
       userId: "user_123",
-      assistantRoleId: "strategist",
+      personaId: "strategist",
       entitlements: expect.objectContaining({
         planName: "Lite",
       }),
@@ -335,7 +335,7 @@ describe("POST /api/openai", () => {
 
     const req = buildRequest({
       taskId: "existing-task",
-      assistantRoleId: "teacher",
+      personaId: "teacher",
       messages: [{ role: "user", whois: "user", content: "generate audio" }],
     });
 
@@ -406,7 +406,7 @@ describe("POST /api/openai", () => {
 
     const req = buildRequest({
       taskId: "existing-task",
-      assistantRoleId: "teacher",
+      personaId: "teacher",
       messages: [{ role: "user", whois: "user", content: "create audio" }],
     });
 
