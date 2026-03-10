@@ -7,106 +7,7 @@
 
 ---
 
-## Phase 9: Production UX Polish — CURRENT PRIORITY
-
----
-
-## Phase 9: Production UX Polish
-
-Conversation delete UI and loading feedback.
-
----
-
-### 9.1 Add conversation delete button to chat sidebar
-
-**File:** `src/components/chat/sidebar/chat-sidebar-shell.tsx` (or appropriate sidebar client component)
-**Ref:** TD-UI-06
-
-**What to do:**
-
-- Add a delete button (trash icon) to each conversation list item
-- On click, call `deleteTask(taskId)` and remove the item from the list
-- Add a confirmation step (e.g., `window.confirm`)
-- After successful deletion, if the current conversation was deleted, redirect to `/app`
-
-**Acceptance Criteria:**
-
-- [ ] Delete button visible on each conversation item in sidebar
-- [ ] Confirmation before deletion
-- [ ] Calls `deleteTask` with the task ID
-- [ ] Removes item from list on success
-- [ ] Redirects to `/app` if current conversation was deleted
-- [ ] CSS class `SidebarDeleteBtn` on the delete button
-- [ ] TypeScript compiles with no errors
-- [ ] All existing tests pass
-
----
-
-### 9.2 Add conversation delete button to library page
-
-**File:** `src/app/(chat)/app/library/page.tsx`
-**Ref:** TD-UI-06
-
-**What to do:**
-
-- Create a small `"use client"` wrapper component for the delete button (library page is Server Component)
-- Import `deleteTask` from `@/lib/actions/task.actions`
-- Add delete button per conversation item
-- After deletion, use `revalidatePath` or `router.refresh()` to update the list
-
-**Acceptance Criteria:**
-
-- [ ] Delete button visible on each conversation item in library
-- [ ] Confirmation before deletion
-- [ ] List updates after successful deletion
-- [ ] CSS class `LibraryDeleteBtn` on the delete button
-- [ ] TypeScript compiles with no errors
-- [ ] All existing tests pass
-
----
-
-### 9.3 Add loading skeleton for chat layout
-
-**File (new):** `src/app/(chat)/loading.tsx`
-**Ref:** TD-UI-02
-
-**What to do:**
-
-- Create a `loading.tsx` file for the `(chat)` route group
-- Show a simple loading skeleton (pulsing bars/blocks) matching the chat layout shape
-- Use Tailwind's `animate-pulse` utility
-- CSS class: `ChatLoadingSkeleton`
-
-**Acceptance Criteria:**
-
-- [ ] `loading.tsx` creates a skeleton UI matching chat layout
-- [ ] Uses `animate-pulse` for visual loading feedback
-- [ ] Has unique CSS class `ChatLoadingSkeleton`
-- [ ] TypeScript compiles with no errors
-
----
-
-### 9.4 Add loading skeleton for account layout
-
-**File (new):** `src/app/(account)/loading.tsx`
-**Ref:** TD-UI-02
-
-**What to do:**
-
-- Create a `loading.tsx` file for the `(account)` route group
-- Show a simple loading skeleton matching the profile/plans page shape
-- CSS class: `AccountLoadingSkeleton`
-
-**Acceptance Criteria:**
-
-- [ ] `loading.tsx` creates a skeleton UI
-- [ ] Uses `animate-pulse` for visual loading feedback
-- [ ] Has unique CSS class `AccountLoadingSkeleton`
-- [ ] TypeScript compiles with no errors
-
----
-
-## Phase 10: Error Handling & File Cleanup
+## Phase 10: Error Handling & File Cleanup — CURRENT PRIORITY
 
 ---
 
@@ -161,37 +62,41 @@ Conversation delete UI and loading feedback.
 
 **What to do:**
 
-- In `deleteTask`, before or after deleting the task from MongoDB, scan the task's messages for `image_url` entries containing S3 URLs
-- For each S3 URL, extract the key and delete via `deleteFileFromAWS`
-- Log errors but do not fail the deletion — task removal takes priority
-- The task must be fetched first (before deletion) to access its messages
+- In `deleteTask`, before deleting the task from MongoDB, fetch the task (with its messages) using `Task.findOne({ _id: taskId, userId })`
+- Scan the task's messages for any content items with `type: "image_url"` where the URL contains the S3 bucket hostname
+- For each matching S3 URL, extract the object key and delete via `deleteFileFromAWS`
+- Wrap S3 cleanup in try/catch — log errors but do not fail the deletion
+- Then proceed with the existing `Task.findOneAndDelete` call
 
 **Acceptance Criteria:**
 
-- [ ] Task messages scanned for S3 image URLs before/during deletion
-- [ ] S3 objects deleted for matching URLs
-- [ ] Task deletion succeeds even if S3 cleanup fails
-- [ ] TypeScript compiles with no errors
-- [ ] All existing tests pass
+- [ ] Task is fetched before deletion to read messages
+- [ ] Task messages scanned for content items with S3 image URLs
+- [ ] S3 objects deleted for matching URLs via `deleteFileFromAWS`
+- [ ] Task deletion succeeds even if S3 cleanup fails (try/catch around S3 ops)
+- [ ] TypeScript compiles with no errors (`npx tsc --noEmit`)
+- [ ] All existing tests pass (`npm run test`)
 
 ---
 
-### 10.4 Refactor chat input to use `/api/upload` instead of inline base64
+### 10.4 Refactor chat input to upload files via `/api/upload` instead of inline base64
 
 **File:** `src/components/chat/chat-input.tsx`
 **Ref:** TD-FILE-02
 
 **What to do:**
 
-- Identify any code paths where files are sent as base64 directly in the message body instead of going through `/api/upload`
-- Refactor those paths to upload via `/api/upload` first, then include the returned S3 URL in the message
-- Keep the existing `/api/upload` validation (type + size allowlists) as the single entry point for file handling
+- In `handleSubmit`, when `selectedFile` is present, upload the file via `fetch("/api/upload", ...)` using FormData before building the message content
+- Replace the inline base64 `data:image/jpeg;base64,...` URL with the returned S3 URL in the `image_url` content item
+- Handle upload failure gracefully — show user feedback and prevent message send if upload fails
+- Keep the local preview (`fileUrl` state) as-is — display concern only
 
 **Acceptance Criteria:**
 
 - [ ] All file attachments go through `/api/upload` before being sent in messages
-- [ ] No base64 file data is embedded directly in message content for upload flows
-- [ ] Existing file type and size validations still apply
+- [ ] No base64 file data is embedded directly in message content sent to `/api/openai`
+- [ ] Upload failures prevent message send and show user feedback
+- [ ] Existing file type and size validations still apply (enforced by `/api/upload`)
 - [ ] TypeScript compiles with no errors (`npx tsc --noEmit`)
 - [ ] All existing tests pass (`npm run test`)
 
@@ -203,7 +108,8 @@ Conversation delete UI and loading feedback.
 
 ### 11.1 Add test coverage configuration
 
-**File:** `vitest.config.ts` (or `vitest.config.mts`)
+**File:** `vitest.config.mts`
+**File:** `package.json` (add script)
 
 **What to do:**
 
@@ -229,17 +135,20 @@ Conversation delete UI and loading feedback.
 
 **What to do:**
 
-- Test `resolveEntitlements()` returns correct `allowedPersonaIds` for each plan
+- Test `resolveEntitlements()` returns correct `allowedPersonaIds` for each plan (Lite, Pro, Premium)
 - Test Lite excludes companion personas (boyfriend, girlfriend)
-- Test Pro/Premium includes all 9 personas
-- Test `resolvePersonaForPlan()` falls back correctly when persona is not in allowed list
+- Test Pro and Premium include all 9 personas
+- Test `resolvePersonaForPlan()` falls back correctly when a persona is not in the allowed list for the given plan
+- Test that the default plan resolves to "Lite" when `planName` is `null` or `undefined`
 
 **Acceptance Criteria:**
 
 - [ ] Tests cover Lite, Pro, Premium entitlement shapes
-- [ ] Tests verify persona ID allowlists
-- [ ] Tests verify fallback behavior
-- [ ] All tests pass
+- [ ] Tests verify persona ID allowlists for each plan
+- [ ] Tests verify Lite excludes `boyfriend` and `girlfriend`
+- [ ] Tests verify fallback behavior for `resolvePersonaForPlan`
+- [ ] Tests verify `null`/`undefined` plan defaults to Lite
+- [ ] All tests pass (`npm run test`)
 
 ---
 
@@ -259,6 +168,15 @@ Lower priority items for post-launch hardening. Not blocking v1.
 ---
 
 ## Completed Phases
+
+### Phase 9: Production UX Polish — COMPLETED
+
+- [x] **9.1** Add conversation delete button to chat sidebar — `SidebarDeleteBtn` in `chat-sidebar-nav.tsx`
+- [x] **9.2** Add conversation delete button to library page — `LibraryDeleteButton` client component
+- [x] **9.3** Add loading skeleton for chat layout — `(chat)/loading.tsx` with `ChatLoadingSkeleton`
+- [x] **9.4** Add loading skeleton for account layout — `(account)/loading.tsx` with `AccountLoadingSkeleton`
+
+**PM Decision (Phase 9):** Demo-item delete buttons remain **disabled** (not omitted). Disabled state with tooltip provides clear UX feedback that demo conversations cannot be deleted.
 
 ### Phase 7: Persona Rename — COMPLETED
 

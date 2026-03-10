@@ -380,15 +380,15 @@ No active security issues as of this revision.
 
 ### Frontend Technical Debt
 
-- **TD-UI-02**: No loading skeleton for page transitions.
-- **TD-UI-06**: No conversation delete UI. `deleteTask` server action exists but no frontend calls it.
+- ~~**TD-UI-02**: RESOLVED — Loading skeletons added for chat and account route groups (`(chat)/loading.tsx`, `(account)/loading.tsx`).~~
+- ~~**TD-UI-06**: RESOLVED — Conversation delete UI added in sidebar (`SidebarDeleteBtn`) and library page (`LibraryDeleteButton`). Demo items show disabled delete buttons with tooltip.~~
 - ~~**TD-RENAME-01**: RESOLVED — All "assistant role" references renamed to "persona" across types, constants, components, models, tests, and routes.~~
 
 ---
 
 ## 12. Testing
 
-- **Unit tests**: 31 suites, 139 tests (Vitest) — all passing
+- **Unit tests**: 33 suites, 143 tests (Vitest) — all passing
 - **E2E tests**: 2 Playwright specs (landing page + authenticated flows)
 - **Coverage**: Not configured
 - **Test coverage areas**: Server actions (user, task, transaction), API routes (openai, upload, download, aws, webhooks), utilities (rate-limit, serialize, plan-status, date-formatting, usage-limit, entitlements, map-date-to-label), OpenAI functions (generateResponse, generateTitle, filterAssistantMsg), components (ChatWrapper, ChatInput, CellesseonTheme, AlertMessage), proxy
@@ -435,8 +435,6 @@ No active security issues as of this revision.
 | TD-FILE-02 | Files    | Some chat flows send file as base64 in message body                    | Low      |
 | TD-PLAN-01 | Billing  | No recurring Stripe subscriptions (deferred v1)                        | Low      |
 | TD-PLAN-03 | Billing  | Yearly billing has no pricing discount                                 | Low      |
-| TD-UI-02   | Frontend | No loading skeleton for page transitions                               | Low      |
-| TD-UI-06   | Frontend | No conversation delete UI (server action exists)                       | High     |
 
 ### Resolved
 
@@ -454,3 +452,5 @@ No active security issues as of this revision.
 | TD-RENAME-01 | Rename "role" → "persona" across codebase                | All types, constants, components, models, tests, routes renamed |
 | TD-DB-08     | getUserById missing .lean() and .select()                | .lean() and .select() added to query                  |
 | TD-DB-09     | getAllTransactions missing .lean()                        | .lean() added to query chain                          |
+| TD-UI-02     | No loading skeleton for page transitions                 | Loading skeletons added for chat and account routes   |
+| TD-UI-06     | No conversation delete UI                                | Delete buttons added in sidebar and library page      |
