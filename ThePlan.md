@@ -20,9 +20,11 @@
 | Phase 4     | UX and route architecture            | **DONE** — route groups, persona-led UX, sidebar, library                            |
 | Phase 5     | Operational readiness                | **DONE** — proxy protection, webhook verification, file validation, 139 tests        |
 | Phase 6     | Landing page & marketing             | **DONE** — hero, pricing, personas showcase, FAQ                                     |
-| **Phase 7** | **Persona rename**                   | **CURRENT** — rename "role" → "persona" across all source files                      |
-| Phase 8     | Database optimization                | NEXT — `.lean()`, `.select()`, index verification                                    |
-| Phase 9+    | Production polish, resilience        | PLANNED — see `TODO.md`                                                              |
+| Phase 7     | Persona rename                       | **DONE** — "role" → "persona" across all source files, types, routes, tests          |
+| Phase 8     | Database optimization                | **DONE** — `.lean()`, `.select()`, index verification, connection pooling            |
+| **Phase 9** | **Production UX polish**             | **CURRENT** — conversation delete UI, loading skeletons                              |
+| Phase 10    | Error handling & file cleanup        | NEXT — handleError refactor, S3 cleanup, base64 upload fix                           |
+| Phase 11+   | Testing & resilience                 | PLANNED — see `TODO.md`                                                              |
 
 ---
 
