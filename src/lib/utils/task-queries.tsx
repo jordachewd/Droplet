@@ -3,6 +3,7 @@ import { connectToDatabase } from "@/lib/database/mongoose";
 import Task from "@/lib/database/models/tasks.model";
 import { TaskHistoryItem } from "@/types/TaskData.d";
 import { ContentItem, Message, MessageRole } from "@/types";
+import { isValidObjectId } from "mongoose";
 
 type TaskRecord = {
   _id: unknown;
@@ -129,6 +130,10 @@ export async function getTaskByIdForUser({
   taskId: string;
   userId: string;
 }) {
+  if (!isValidObjectId(taskId)) {
+    return null;
+  }
+
   await connectToDatabase();
 
   const task = await Task.findOne({ _id: taskId, userId })

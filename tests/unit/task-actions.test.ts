@@ -67,6 +67,8 @@ describe("createTask", () => {
 });
 
 describe("deleteTask", () => {
+  const taskId = "507f1f77bcf86cd799439011";
+
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(auth).mockResolvedValue({ userId: "auth_user_1" } as never);
@@ -78,11 +80,11 @@ describe("deleteTask", () => {
       _id: "task_1",
     } as never);
 
-    const result = await deleteTask("task_1");
+    const result = await deleteTask(taskId);
 
     expect(connectToDatabase).toHaveBeenCalledOnce();
     expect(Task.findOneAndDelete).toHaveBeenCalledWith({
-      _id: "task_1",
+      _id: taskId,
       userId: "auth_user_1",
     });
     expect(result).toEqual(
@@ -97,7 +99,7 @@ describe("deleteTask", () => {
   it("returns not found when task does not belong to the authenticated user", async () => {
     vi.mocked(Task.findOneAndDelete).mockResolvedValue(null as never);
 
-    const result = await deleteTask("task_1");
+    const result = await deleteTask(taskId);
 
     expect(result).toEqual(
       expect.objectContaining({
@@ -111,7 +113,7 @@ describe("deleteTask", () => {
   it("returns unauthorized when no authenticated user is present", async () => {
     vi.mocked(auth).mockResolvedValue({ userId: null } as never);
 
-    const result = await deleteTask("task_1");
+    const result = await deleteTask(taskId);
 
     expect(connectToDatabase).not.toHaveBeenCalled();
     expect(Task.findOneAndDelete).not.toHaveBeenCalled();
@@ -119,6 +121,20 @@ describe("deleteTask", () => {
       expect.objectContaining({
         message: "Unauthorized",
         status: 401,
+        source: "deleteTask",
+      }),
+    );
+  });
+
+  it("returns bad request when the task id is not a valid ObjectId", async () => {
+    const result = await deleteTask("task_1");
+
+    expect(connectToDatabase).not.toHaveBeenCalled();
+    expect(Task.findOneAndDelete).not.toHaveBeenCalled();
+    expect(result).toEqual(
+      expect.objectContaining({
+        message: "Invalid conversation identifier",
+        status: 400,
         source: "deleteTask",
       }),
     );

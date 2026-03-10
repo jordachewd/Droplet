@@ -15,6 +15,8 @@ vi.mock("@/lib/database/models/tasks.model", () => ({
 }));
 
 describe("getTaskByIdForUser", () => {
+  const taskId = "507f1f77bcf86cd799439011";
+
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(connectToDatabase).mockResolvedValue(undefined as never);
@@ -49,13 +51,13 @@ describe("getTaskByIdForUser", () => {
     vi.mocked(Task.findOne).mockReturnValue({ select } as never);
 
     const result = await getTaskByIdForUser({
-      taskId: "task_1",
+      taskId,
       userId: "user_1",
     });
 
     expect(connectToDatabase).toHaveBeenCalledOnce();
     expect(Task.findOne).toHaveBeenCalledWith({
-      _id: "task_1",
+      _id: taskId,
       userId: "user_1",
     });
     expect(result).toEqual({
@@ -72,5 +74,16 @@ describe("getTaskByIdForUser", () => {
       usage: 3,
       updatedAt: "2026-03-09T18:00:00.000Z",
     });
+  });
+
+  it("returns null without querying MongoDB when the task id is invalid", async () => {
+    const result = await getTaskByIdForUser({
+      taskId: "task_1",
+      userId: "user_1",
+    });
+
+    expect(connectToDatabase).not.toHaveBeenCalled();
+    expect(Task.findOne).not.toHaveBeenCalled();
+    expect(result).toBeNull();
   });
 });

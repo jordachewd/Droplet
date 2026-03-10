@@ -160,6 +160,16 @@ export default function ChatSidebarNav({
       <section className="ChatSidebarNavSection flex flex-col gap-1.5">
         <p className={headingClass}>Recent</p>
         <div className="flex flex-col gap-1">
+          {conversationItems.length === 0 && (
+            <p
+              className={classNames(
+                "px-2.5 py-2 text-xs opacity-65",
+                !isOpen && "lg:hidden",
+              )}
+            >
+              No saved conversations yet.
+            </p>
+          )}
           {conversationItems.slice(0, 6).map((item) => {
             const persona = getPersona(item.personaId);
             const isActive = pathname === item.href;

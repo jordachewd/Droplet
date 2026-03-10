@@ -1,5 +1,6 @@
 "use server";
 import { CreateTaskInput, UpdateTaskParams } from "@/types/TaskData.d";
+import { isValidObjectId } from "mongoose";
 import { connectToDatabase } from "../database/mongoose";
 import { handleError } from "@/lib/utils/handleError";
 import serializeForClient from "@/lib/utils/serialize-for-client";
@@ -76,6 +77,14 @@ export async function deleteTask(taskId: string) {
       });
     }
 
+    if (!isValidObjectId(taskId)) {
+      return serializeForClient({
+        message: "Invalid conversation identifier",
+        status: 400,
+        source: "deleteTask",
+      });
+    }
+
     await connectToDatabase();
 
     const deletedTask = await Task.findOneAndDelete({ _id: taskId, userId });
@@ -95,7 +104,7 @@ export async function deleteTask(taskId: string) {
     });
   } catch (error) {
     return serializeForClient({
-      message: error instanceof Error ? error.message : "Task deletion failed",
+      message: "Conversation deletion failed.",
       status: 500,
       source: "deleteTask",
     });
