@@ -1,16 +1,16 @@
 "use client";
 
 import {
-  CellesseonThemeContext,
+  DropletThemeContext,
   ThemeMode,
-} from "@/components/layout/cellesseon-theme";
+} from "@/components/layout/droplet-theme";
 import { useContext } from "react";
 
 export default function useThemeMode() {
-  const context = useContext(CellesseonThemeContext);
+  const context = useContext(DropletThemeContext);
 
   if (!context) {
-    throw new Error("useThemeMode must be used within CellesseonTheme");
+    throw new Error("useThemeMode must be used within DropletTheme");
   }
 
   const { mode, resolvedMode, setMode } = context;

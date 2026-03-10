@@ -13,6 +13,8 @@ interface HeroProps {
 export default function ProfileHero({ userData }: HeroProps) {
   const { username, firstName, lastName, email, registerAt, updatedAt, plan } =
     userData;
+  const formattedRegisterAt = getFormattedDate(registerAt);
+  const formattedUpdatedAt = getFormattedDate(updatedAt);
 
   const fullName = getFullName({
     firstName: firstName || "",
@@ -60,23 +62,27 @@ export default function ProfileHero({ userData }: HeroProps) {
         <div className="flex w-full flex-col justify-between gap-2 lg:max-w-[30%]">
           <div className="flex items-center gap-2">
             <span className="font-semibold leading-none">Member since:</span>
-            <span className="text-xxs leading-none">
-              {getFormattedDate(registerAt as Date)}
-            </span>
+            <span className="text-xxs leading-none">{formattedRegisterAt}</span>
           </div>
 
-          {userData.updatedAt && (
+          {updatedAt && (
             <div className="flex items-center gap-2">
               <span className="font-semibold leading-none">Last update:</span>
               <span className="text-xxs leading-none">
-                {getFormattedDate(updatedAt as Date)}
+                {formattedUpdatedAt}
               </span>
             </div>
           )}
 
           <div className="flex items-center gap-2">
-            <span className="font-semibold leading-none">Plan expires in:</span>
-            <PlanCountDown endDate={plan.expiresOn as Date} wrapped />
+            <span className="font-semibold leading-none">
+              {plan.name === "Lite" ? "Plan expires:" : "Plan expires in:"}
+            </span>
+            {plan.name === "Lite" ? (
+              <span className="text-xxs leading-none">Never</span>
+            ) : (
+              <PlanCountDown endDate={plan.expiresOn as Date} wrapped />
+            )}
           </div>
         </div>
 

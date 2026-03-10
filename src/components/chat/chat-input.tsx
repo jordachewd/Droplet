@@ -8,14 +8,14 @@ import { TooltipArrow } from "@/components/shared/tooltip-arrow";
 interface ChatInputProps {
   loading: boolean;
   startPrompt?: string;
-  assistantRoleLabel?: string;
+  personaLabel?: string;
   sendMessage: (message: Message) => void;
 }
 
 export default function ChatInput({
   loading,
   startPrompt,
-  assistantRoleLabel = "Assistant",
+  personaLabel = "AI",
   sendMessage,
 }: ChatInputProps) {
   const [prompt, setPrompt] = useState<string>(startPrompt || "");
@@ -147,7 +147,7 @@ export default function ChatInput({
             name="chatInput"
             value={prompt}
             disabled={loading}
-            placeholder="Ask Cellesseon..."
+            placeholder="Ask Droplet..."
             onChange={handlePromptChange}
             rows={2}
             className={textareaClass}
@@ -218,7 +218,7 @@ export default function ChatInput({
       </div>
 
       <div className="flex py-1 text-xxs font-light tracking-wide opacity-70">
-        {assistantRoleLabel} can still make mistakes. Verify important details.
+        {personaLabel} can still make mistakes. Verify important details.
       </div>
     </section>
   );

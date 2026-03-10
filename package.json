@@ -1,10 +1,10 @@
 {
-  "name": "cellesseon",
+  "name": "droplet",
   "version": "1.0.0",
   "private": true,
   "author": "JordacheWD",
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --webpack",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",

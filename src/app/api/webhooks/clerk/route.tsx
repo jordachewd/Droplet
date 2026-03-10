@@ -123,7 +123,7 @@ export async function POST(req: Request) {
 
     await connectToDatabase();
     const updatedUser = await User.findOneAndUpdate({ clerkId: id }, user, {
-      new: true,
+      returnDocument: "after",
       strict: true,
       upsert: false,
     });
@@ -159,5 +159,5 @@ export async function POST(req: Request) {
     });
   }
 
-  return new Response("Cellesseon | Clerk Webhook Response", { status: 200 });
+  return new Response("Droplet | Clerk Webhook Response", { status: 200 });
 }

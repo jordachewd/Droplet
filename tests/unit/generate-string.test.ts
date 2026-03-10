@@ -20,4 +20,10 @@ describe("generateString", () => {
 
     expect(valueA).not.toBe(valueB);
   });
+
+  it("uses only URL-safe alphanumeric characters", () => {
+    const value = generateString(64);
+
+    expect(value).toMatch(/^[A-Za-z0-9]+$/);
+  });
 });

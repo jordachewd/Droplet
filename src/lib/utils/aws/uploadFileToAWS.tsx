@@ -1,7 +1,11 @@
 import { awsS3Client } from "@/constants/aws";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
+import {
+  buildPrivateS3AssetUrl,
+  buildS3ObjectKey,
+} from "@/lib/utils/aws/s3-file-reference";
 
-// Function to upload images to AWS S3
+// Function to upload files to AWS S3
 export default async function uploadFileToAWS(
   file: Buffer,
   fileName: string,
@@ -10,17 +14,12 @@ export default async function uploadFileToAWS(
 ): Promise<string> {
   try {
     const bucketName = process.env.AWS_S3_BUCKET;
-    const region = process.env.AWS_S3_REGION;
 
     if (!bucketName) {
       throw new Error("AWS_S3_BUCKET environment variable is not defined");
     }
 
-    if (!region) {
-      throw new Error("AWS_S3_REGION environment variable is not defined");
-    }
-
-    const filePath = `${folder}/${fileName}`;
+    const filePath = buildS3ObjectKey(folder, fileName);
 
     const params = {
       Bucket: bucketName,
@@ -33,9 +32,7 @@ export default async function uploadFileToAWS(
 
     await awsS3Client.send(putObjectToAWS);
 
-    const fileUrl = `https://${bucketName}.s3.${region}.amazonaws.com/${filePath}`;
-
-    return fileUrl;
+    return buildPrivateS3AssetUrl(filePath);
   } catch (error) {
     console.error("AWS S3 Upload Error:", error);
     throw new Error("File upload failed");

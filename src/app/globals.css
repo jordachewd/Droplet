@@ -1,7 +1,7 @@
 @import "tailwindcss";
 @plugin 'tailwindcss-animated';
 
-@custom-variant dark (&:is([data-cellesseon-theme="dark"] *));
+@custom-variant dark (&:is([data-droplet-theme="dark"] *));
 
 @theme {
   --color-lightPrimary-100: #ffecef;
@@ -432,7 +432,7 @@ a {
     }
   }
 
-  .cellesseon-scrollbar {
+  .droplet-scrollbar {
     @apply [&::-webkit-scrollbar]:w-0.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:bg-lightBorders-500 [&::-webkit-scrollbar-thumb]:bg-lightSecondary-800 dark:[&::-webkit-scrollbar-track]:bg-darkBorders-500 dark:[&::-webkit-scrollbar-thumb]:bg-darkSecondary-500;
   }
 }

@@ -1,32 +1,32 @@
 "use client";
 
 import classNames from "classnames";
-import { ASSISTANT_ROLES } from "@/constants/assistant-roles";
-import { AssistantRoleId } from "@/types/AssistantRoleData.d";
+import { PERSONAS } from "@/constants/assistant-personas";
+import { PersonaId } from "@/types/PersonaData.d";
 
-interface ChatRolePickerProps {
-  selectedRoleId: AssistantRoleId;
-  onSelectRole: (roleId: AssistantRoleId) => void;
+interface ChatPersonaPickerProps {
+  selectedPersonaId: PersonaId;
+  onSelectPersona: (personaId: PersonaId) => void;
 }
 
-export default function ChatRolePicker({
-  selectedRoleId,
-  onSelectRole,
-}: ChatRolePickerProps) {
+export default function ChatPersonaPicker({
+  selectedPersonaId,
+  onSelectPersona,
+}: ChatPersonaPickerProps) {
   return (
-    <section className="ChatRolePicker flex w-full flex-col gap-2">
+    <section className="ChatPersonaPicker flex w-full flex-col gap-2">
       <p className="px-1 text-xxs font-semibold uppercase tracking-wide opacity-70">
-        Assistant Studio
+        Persona Studio
       </p>
-      <div className="cellesseon-scrollbar flex w-full items-center gap-2 overflow-x-auto pb-1">
-        {ASSISTANT_ROLES.map((role) => {
-          const isActive = role.id === selectedRoleId;
+      <div className="droplet-scrollbar flex w-full items-center gap-2 overflow-x-auto pb-1">
+        {PERSONAS.map((persona) => {
+          const isActive = persona.id === selectedPersonaId;
 
           return (
             <button
-              key={role.id}
+              key={persona.id}
               type="button"
-              onClick={() => onSelectRole(role.id)}
+              onClick={() => onSelectPersona(persona.id)}
               className={classNames(
                 "inline-flex min-w-max items-center gap-2 rounded-full border px-3 py-1.5 text-xs transition-all",
                 "border-lightBorders-500 bg-lightBackground-100 hover:bg-lightSecondary-200/90",
@@ -36,8 +36,8 @@ export default function ChatRolePicker({
               )}
               aria-pressed={isActive}
             >
-              <i className={role.icon}></i>
-              {role.label}
+              <i className={persona.icon}></i>
+              {persona.label}
             </button>
           );
         })}

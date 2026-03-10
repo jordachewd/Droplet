@@ -100,7 +100,7 @@ describe("POST /api/webhooks/stripe", () => {
       data: {
         object: {
           id: "cs_test_123",
-          amount_total: 2900,
+          amount_total: 1900,
           metadata: {
             userId: "mongo_user_1",
             clerkId: "clerk_user_1",
@@ -124,7 +124,7 @@ describe("POST /api/webhooks/stripe", () => {
         stripeId: "cs_test_123",
         userId: "mongo_user_1",
         clerkId: "clerk_user_1",
-        amount: 29,
+        amount: 19,
         plan: "Pro",
         billing: "Monthly",
       }),
@@ -139,13 +139,17 @@ describe("POST /api/webhooks/stripe", () => {
         plan: expect.objectContaining({
           name: "Pro",
           billing: "Monthly",
-          amount: 29,
+          amount: 19,
           stripeId: "cs_test_123",
+          imageGenerations: 0,
+          audioGenerations: 0,
+          usagePeriodStart: expect.any(Date),
         }),
       }),
       {
-        new: true,
+        returnDocument: "after",
         strict: true,
+        upsert: false,
       },
     );
     expect(payload.message).toBe("OK");
@@ -160,7 +164,7 @@ describe("POST /api/webhooks/stripe", () => {
       data: {
         object: {
           id: "cs_test_123",
-          amount_total: 2900,
+          amount_total: 1900,
           metadata: {
             userId: "mongo_user_1",
             clerkId: "clerk_user_1",
@@ -192,7 +196,7 @@ describe("POST /api/webhooks/stripe", () => {
       data: {
         object: {
           id: "cs_test_404",
-          amount_total: 2900,
+          amount_total: 1900,
           metadata: {
             userId: "mongo_user_404",
             clerkId: "clerk_user_404",
@@ -237,7 +241,7 @@ describe("POST /api/webhooks/stripe", () => {
       data: {
         object: {
           id: "cs_test_duplicate",
-          amount_total: 2900,
+          amount_total: 1900,
           metadata: {
             userId: "mongo_user_1",
             clerkId: "clerk_user_1",

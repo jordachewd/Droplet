@@ -38,7 +38,7 @@ describe("/api/aws route", () => {
     } as never);
     vi.mocked(generateString).mockReturnValue("rand123");
     vi.mocked(uploadFileToAWS).mockResolvedValue(
-      "https://bucket.s3.region.amazonaws.com/user_123/task_abc/task_abc_image_rand123.png",
+      "/api/download?key=user_123%2Ftask_abc%2Ftask_abc_image_rand123.png",
     );
     vi.mocked(deleteFileFromAWS).mockResolvedValue(undefined);
   });
@@ -80,6 +80,9 @@ describe("/api/aws route", () => {
       "user_123/task_abc",
     );
     expect(payload.fileUrl).toContain("task_abc_image_rand123.png");
+    expect(payload.objectKey).toBe(
+      "user_123/task_abc/task_abc_image_rand123.png",
+    );
   });
 
   it("returns 400 when upload payload exceeds 10MB", async () => {
@@ -135,9 +138,7 @@ describe("/api/aws route", () => {
     const payload = await response.json();
 
     expect(response.status).toBe(400);
-    expect(payload.message).toBe(
-      "Folder and fileName are required for deletion.",
-    );
+    expect(payload.message).toContain("required for deletion");
   });
 
   it("deletes image with user id path and returns success", async () => {
@@ -151,11 +152,10 @@ describe("/api/aws route", () => {
 
     expect(response.status).toBe(200);
     expect(deleteFileFromAWS).toHaveBeenCalledWith(
-      "user_123",
-      "file.png",
-      "task_abc",
+      "user_123/task_abc/file.png",
     );
     expect(payload.message).toBe("Image deleted successfully");
+    expect(payload.objectKey).toBe("user_123/task_abc/file.png");
   });
 
   it("returns 403 when delete folder does not belong to the authenticated user", async () => {
@@ -170,6 +170,19 @@ describe("/api/aws route", () => {
     expect(response.status).toBe(403);
     expect(payload.message).toContain("Forbidden");
     expect(deleteFileFromAWS).not.toHaveBeenCalled();
+  });
+
+  it("deletes image when a fileUrl resolves to an owned object key", async () => {
+    const response = await DELETE(
+      buildRequest("DELETE", {
+        fileUrl: "/api/download?key=user_123%2Fimages%2Ffile.png",
+      }),
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(deleteFileFromAWS).toHaveBeenCalledWith("user_123/images/file.png");
+    expect(payload.objectKey).toBe("user_123/images/file.png");
   });
 
   it("returns 500 when delete operation fails", async () => {

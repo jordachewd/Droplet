@@ -17,9 +17,7 @@ export default function SidebarHead({
   return (
     <div className="ChatSidebarHead flex w-full items-center gap-2 bg-lightPrimary-100 p-3 dark:bg-darkPrimary-1000">
       <Logo className={isDesktopCollapsed ? "lg:hidden" : ""} />
-      {isDesktopCollapsed && (
-        <Logo className="hidden lg:flex" width={26} height={26} />
-      )}
+      {isDesktopCollapsed && <Logo className="hidden lg:flex" size={26} />}
 
       <div className="ChatSidebarHeadToggle flex rounded-md p-1">
         <SidebarToggle

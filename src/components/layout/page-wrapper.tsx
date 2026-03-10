@@ -20,7 +20,7 @@ export default function PageWrapper({
   );
 
   const scrollWrapperClass = classNames(
-    "cellesseon-scrollbar relative z-10 mt-14 flex h-full w-full flex-1 flex-col gap-10",
+    "droplet-scrollbar relative z-10 mt-14 flex h-full w-full flex-1 flex-col gap-10",
     "overflow-y-auto pb-10",
   );
 

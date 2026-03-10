@@ -1,5 +1,6 @@
 "use server";
 import { CreateTaskInput, UpdateTaskParams } from "@/types/TaskData.d";
+import { isValidObjectId } from "mongoose";
 import { connectToDatabase } from "../database/mongoose";
 import { handleError } from "@/lib/utils/handleError";
 import serializeForClient from "@/lib/utils/serialize-for-client";
@@ -17,7 +18,7 @@ export async function createTask(task: CreateTaskInput) {
     const newTask = await Task.create({
       ...task,
       userId,
-      assistantRoleId: task.assistantRoleId || "strategist",
+      personaId: task.personaId || "strategist",
     });
 
     if (!newTask) {
@@ -48,7 +49,7 @@ export async function updateTask(taskId: string, task: UpdateTaskParams) {
         $set: updateFields,
       },
       {
-        new: true,
+        returnDocument: "after",
         strict: true,
         upsert: false,
       },
@@ -61,5 +62,51 @@ export async function updateTask(taskId: string, task: UpdateTaskParams) {
     return serializeForClient(updatedTask);
   } catch (error) {
     handleError({ error, source: "updateTask" });
+  }
+}
+
+// DELETE TASK
+export async function deleteTask(taskId: string) {
+  try {
+    const { userId } = await auth();
+    if (!userId) {
+      return serializeForClient({
+        message: "Unauthorized",
+        status: 401,
+        source: "deleteTask",
+      });
+    }
+
+    if (!isValidObjectId(taskId)) {
+      return serializeForClient({
+        message: "Invalid conversation identifier",
+        status: 400,
+        source: "deleteTask",
+      });
+    }
+
+    await connectToDatabase();
+
+    const deletedTask = await Task.findOneAndDelete({ _id: taskId, userId });
+
+    if (!deletedTask) {
+      return serializeForClient({
+        message: "Task not found or not owned by user",
+        status: 404,
+        source: "deleteTask",
+      });
+    }
+
+    return serializeForClient({
+      message: "Task deleted successfully",
+      status: 200,
+      source: "deleteTask",
+    });
+  } catch (error) {
+    return serializeForClient({
+      message: "Conversation deletion failed.",
+      status: 500,
+      source: "deleteTask",
+    });
   }
 }

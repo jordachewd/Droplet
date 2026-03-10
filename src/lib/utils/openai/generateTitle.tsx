@@ -3,20 +3,20 @@ import { openAiClient, titleSystemMsg } from "@/constants/openai";
 import { ChatCompletionMessageParam } from "openai/resources/chat/completions.mjs";
 import { handleError } from "../handleError";
 import { filterAssistantMsg } from "./filterAssistantMsg";
-import { getAssistantRole } from "@/constants/assistant-roles";
+import { getPersona } from "@/constants/assistant-personas";
 
 export async function generateTitle(
   messages: Message[],
-  assistantRoleId?: string | null,
+  personaId?: string | null,
 ) {
   try {
-    const role = getAssistantRole(assistantRoleId);
+    const persona = getPersona(personaId);
 
     const filteredMsgs = filterAssistantMsg([
       ...titleSystemMsg,
       {
         role: "developer",
-        content: `Conversation role context: ${role.label}. Generate a short title aligned with this role.`,
+        content: `Conversation persona context: ${persona.label}. Generate a short title aligned with this persona.`,
       },
       ...messages,
     ] as Message[]);

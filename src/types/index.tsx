@@ -15,7 +15,7 @@ export interface Message {
 
 export interface Messages {
   taskId: string | null;
-  assistantRoleId?: string | null;
+  personaId?: string | null;
   messages: Message[];
 }
 

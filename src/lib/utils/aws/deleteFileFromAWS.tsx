@@ -1,4 +1,5 @@
 import { awsS3Client } from "@/constants/aws";
+import { normalizeS3ObjectKey } from "@/lib/utils/aws/s3-file-reference";
 import {
   DeleteObjectCommand,
   waitUntilObjectNotExists,
@@ -6,12 +7,15 @@ import {
 
 // Function to delete single object from S3
 export default async function deleteFileFromAWS(
-  username: string,
-  fileName: string,
-  folder: string,
+  objectKey: string,
 ): Promise<void> {
-  const bucketName = process.env.AWS_S3_BUCKET as string;
-  const filePath = `${username}/${folder}/${fileName}`;
+  const bucketName = process.env.AWS_S3_BUCKET;
+
+  if (!bucketName) {
+    throw new Error("AWS_S3_BUCKET environment variable is not defined");
+  }
+
+  const filePath = normalizeS3ObjectKey(objectKey);
   const params = {
     Bucket: bucketName,
     Key: filePath,

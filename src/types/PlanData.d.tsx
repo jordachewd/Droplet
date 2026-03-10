@@ -25,6 +25,9 @@ export interface PlanData {
   expiresOn: Date;
   startedOn: Date;
   stripeId?: string;
+  imageGenerations?: number;
+  audioGenerations?: number;
+  usagePeriodStart?: Date;
 }
 
 export interface PlanStatus {

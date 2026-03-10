@@ -13,7 +13,6 @@ describe("uploadFileToAWS", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubEnv("AWS_S3_BUCKET", "bucket");
-    vi.stubEnv("AWS_S3_REGION", "region");
   });
 
   afterEach(() => {
@@ -21,7 +20,7 @@ describe("uploadFileToAWS", () => {
     vi.unstubAllEnvs();
   });
 
-  it("uploads the file and returns the public S3 URL", async () => {
+  it("uploads the file and returns the private app asset URL", async () => {
     vi.mocked(awsS3Client.send).mockResolvedValue({} as never);
 
     const fileUrl = await uploadFileToAWS(
@@ -32,8 +31,21 @@ describe("uploadFileToAWS", () => {
     );
 
     expect(awsS3Client.send).toHaveBeenCalledWith(expect.any(PutObjectCommand));
+    expect(fileUrl).toBe("/api/download?key=user_123%2Fuploads%2Fimage.png");
+  });
+
+  it("encodes unsafe characters in the returned app asset URL", async () => {
+    vi.mocked(awsS3Client.send).mockResolvedValue({} as never);
+
+    const fileUrl = await uploadFileToAWS(
+      Buffer.from("file-bytes"),
+      "image#v1+.png",
+      "image/png",
+      "user_123/uploads",
+    );
+
     expect(fileUrl).toBe(
-      "https://bucket.s3.region.amazonaws.com/user_123/uploads/image.png",
+      "/api/download?key=user_123%2Fuploads%2Fimage%23v1%2B.png",
     );
   });
 

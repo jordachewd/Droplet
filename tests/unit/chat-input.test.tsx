@@ -23,7 +23,7 @@ describe("ChatInput", () => {
       />,
     );
 
-    const input = screen.getByPlaceholderText("Ask Cellesseon...");
+    const input = screen.getByPlaceholderText("Ask Droplet...");
     expect((input as HTMLInputElement).value).toBe("Preset message");
   });
 
@@ -31,7 +31,7 @@ describe("ChatInput", () => {
     const onSend = vi.fn();
     render(<ChatInput loading={false} sendMessage={onSend} />);
 
-    const input = screen.getByPlaceholderText("Ask Cellesseon...");
+    const input = screen.getByPlaceholderText("Ask Droplet...");
     fireEvent.change(input, { target: { value: "Hello AI" } });
     fireEvent.keyDown(input, { key: "Enter", shiftKey: false });
 
@@ -50,7 +50,7 @@ describe("ChatInput", () => {
     const onSend = vi.fn();
     render(<ChatInput loading={false} sendMessage={onSend} />);
 
-    const input = screen.getByPlaceholderText("Ask Cellesseon...");
+    const input = screen.getByPlaceholderText("Ask Droplet...");
     fireEvent.keyDown(input, { key: "Enter", shiftKey: false });
 
     await waitFor(() => {

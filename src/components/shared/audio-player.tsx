@@ -1,51 +1,96 @@
 import classNames from "classnames";
 import { useState, useEffect } from "react";
+import { resolveStoredAssetUrl } from "@/lib/utils/aws/s3-file-reference";
 
 interface AudioPlayerProps {
   audioSrc: string | null;
+}
+
+function formatTime(seconds: number): string {
+  const safeSeconds = Number.isFinite(seconds) ? seconds : 0;
+  const minutes = Math.floor(safeSeconds / 60);
+  const secs = Math.floor(safeSeconds % 60);
+  return `${minutes}:${secs < 10 ? "0" : ""}${secs}`;
+}
+
+function isBase64AudioPayload(value: string): boolean {
+  const trimmedValue = value.trim();
+
+  if (
+    !trimmedValue ||
+    trimmedValue.startsWith("/") ||
+    trimmedValue.startsWith("blob:") ||
+    trimmedValue.startsWith("data:") ||
+    /^https?:\/\//i.test(trimmedValue)
+  ) {
+    return false;
+  }
+
+  return /^[A-Za-z0-9+/]+=*$/.test(trimmedValue.replace(/\s+/g, ""));
+}
+
+function createLegacyAudioBlobUrl(base64Audio: string): string {
+  const normalizedAudio = base64Audio.replace(/\s+/g, "");
+  const byteCharacters = atob(normalizedAudio);
+  const byteNumbers = new Uint8Array(byteCharacters.length);
+
+  for (let i = 0; i < byteCharacters.length; i++) {
+    byteNumbers[i] = byteCharacters.charCodeAt(i);
+  }
+
+  const blob = new Blob([byteNumbers], { type: "audio/wav" });
+  return URL.createObjectURL(blob);
 }
 
 export default function AudioPlayer({ audioSrc }: AudioPlayerProps) {
   const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [blobUrl, setBlobUrl] = useState<string | null>(null);
+  const [playbackUrl, setPlaybackUrl] = useState<string | null>(null);
   const [currentTime, setCurrentTime] = useState("0:00");
   const [duration, setDuration] = useState("0:00");
 
-  const formatTime = (seconds: number) => {
-    const minutes = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${minutes}:${secs < 10 ? "0" : ""}${secs}`;
-  };
-
   useEffect(() => {
-    if (audioSrc) {
-      try {
-        const byteCharacters = atob(audioSrc);
-        const byteNumbers = new Uint8Array(byteCharacters.length);
-        for (let i = 0; i < byteCharacters.length; i++) {
-          byteNumbers[i] = byteCharacters.charCodeAt(i);
+    setAudio(null);
+    setPlaybackUrl(null);
+    setIsPlaying(false);
+    setProgress(0);
+    setCurrentTime("0:00");
+    setDuration("0:00");
+
+    if (!audioSrc) {
+      return;
+    }
+
+    let generatedBlobUrl: string | null = null;
+
+    try {
+      const resolvedAudioSrc = isBase64AudioPayload(audioSrc)
+        ? (() => {
+            generatedBlobUrl = createLegacyAudioBlobUrl(audioSrc);
+            return generatedBlobUrl;
+          })()
+        : resolveStoredAssetUrl(audioSrc);
+
+      setPlaybackUrl(resolvedAudioSrc);
+
+      const audioElement = new Audio(resolvedAudioSrc);
+      setAudio(audioElement);
+
+      audioElement.onloadedmetadata = () => {
+        setDuration(formatTime(audioElement.duration));
+      };
+
+      return () => {
+        if (generatedBlobUrl) {
+          URL.revokeObjectURL(generatedBlobUrl);
         }
-        const blob = new Blob([byteNumbers], { type: "audio/wav" });
-        const url = URL.createObjectURL(blob);
-        setBlobUrl(url);
 
-        const audioElement = new Audio(url);
-        setAudio(audioElement);
-
-        audioElement.onloadedmetadata = () => {
-          setDuration(formatTime(audioElement.duration));
-        };
-
-        return () => {
-          URL.revokeObjectURL(url);
-          audioElement.pause();
-          setAudio(null);
-        };
-      } catch (error) {
-        console.error("Error processing audio:", error);
-      }
+        audioElement.pause();
+        audioElement.onloadedmetadata = null;
+      };
+    } catch (error) {
+      console.error("Error processing audio:", error);
     }
   }, [audioSrc]);
 
@@ -105,7 +150,7 @@ export default function AudioPlayer({ audioSrc }: AudioPlayerProps) {
           type="button"
           onClick={togglePlay}
           className="btn btn-sm btn-outlined"
-          disabled={!blobUrl}
+          disabled={!playbackUrl}
         >
           <i
             className={classNames(

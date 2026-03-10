@@ -1,373 +1,1252 @@
-﻿# Cellesseon — TODO
+﻿# Droplet — TODO
 
-> Prioritized, actionable development tasks. Each task is sized for 15-30 minutes.
-> Governed by **CellesseonPM2**. Do not add tasks without PM approval.
-> Ref: `SPEC.md` for full specification and technical debt identifiers.
-
----
-
-## Phase 1: Security & Data Integrity Fixes — COMPLETED
-
-All Phase 1 tasks verified and merged.
-
-- [x] **1.1** Fix `strict: false` in `updateUser` server action — `strict: true`, `upsert: false`, serialized 404 path
-- [x] **1.2** Fix `strict: false` in Clerk webhook `user.updated` handler — `strict: true`, `upsert: false`, 404 response
-- [x] **1.3** Fix `strict: false` in Stripe webhook `User.findOneAndUpdate` — `strict: true`
-- [x] **1.4** Add missing index on `Task.userId`
-- [x] **1.5** Add missing index on `Transaction.clerkId`
-- [x] **1.6** Add missing index on `Transaction.userId`
-- [x] **1.7** Add file ownership validation to `/api/aws` DELETE — 403 on cross-user folder
-- [x] **1.8** Add payload size validation to `/api/aws` POST — 10 MB decoded limit
-- [x] **1.9** Make `createUser` a non-exported helper — moved to `createUserFromWebhook` in Clerk webhook file
-
-**Validation:** lint ✓ | tsc ✓ | 24 suites, 106 tests ✓
+> Prioritized, actionable development tasks. Each task sized for 15–20 minutes.
+> Governed by **Droplet-PM**. Do not add tasks without PM approval.
+> Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules.
+> Implementation agent: **Codex Agent** (Senior Developer).
 
 ---
 
-## Phase 2: Core Feature Gaps (Next Priority)
+## Phase 14: Data Model Foundation — CURRENT PRIORITY
 
-These tasks complete missing functionality users would expect. Implement in order.
+> Create the new database models required for usage tracking, admin, and content management.
 
 ---
 
-### 2.1 Create `getUserTasks` server action
+### 14.1 Add conversation lifecycle fields to Task model
+
+**Files:** `src/lib/database/models/tasks.model.tsx`, `src/types/TaskData.d.tsx`
+**Ref:** TD-DB-10
+
+**What to do:**
+
+- Add to Task schema: `promptCount` (Number, default 0), `mediaCount` (Number, default 0), `estimatedBytes` (Number, default 0), `status` (String, enum `["active", "ended"]`, default `"active"`), `endedAt` (Date, optional), `endedReason` (String, optional), `endAction` (String, optional).
+- Update `TaskData.d.tsx` types to include the new fields.
+- Do NOT change any existing behavior — just add the fields with defaults so existing data is forward-compatible.
+
+**Acceptance Criteria:**
+
+- [ ] Task schema has all 7 new fields with correct types and defaults
+- [ ] Types in `TaskData.d.tsx` updated
+- [ ] Existing tasks remain valid (defaults handle missing data)
+- [ ] TypeScript compiles (`npx tsc --noEmit`)
+- [ ] All existing tests pass (`npm run test`)
+
+---
+
+### 14.2 Create UsageEvent model
+
+**Files (new):** `src/lib/database/models/usage-event.model.tsx`
+**Ref:** TD-DB-11
+
+**What to do:**
+
+- Create Mongoose model with fields per SPEC.md section 6.4.
+- Indexes on: `userId`, `taskId`, `personaId`, `model`, `requestType`, `createdAt`.
+- Add `strict: true` on the schema.
+- Export the model with standard pattern: `const UsageEvent = models.UsageEvent || model("UsageEvent", UsageEventSchema);`
+
+**Acceptance Criteria:**
+
+- [ ] Model file created at `src/lib/database/models/usage-event.model.tsx`
+- [ ] All fields from SPEC.md section 6.4 present with correct types
+- [ ] Required indexes added
+- [ ] Model follows existing model patterns in the codebase
+- [ ] TypeScript compiles (`npx tsc --noEmit`)
+
+---
+
+### 14.3 Create UsageEvent type definition
+
+**Files (new):** `src/types/UsageEventData.d.tsx`
+**Ref:** TD-DB-11
+
+**What to do:**
+
+- Define TypeScript types for `UsageEventData`, `CreateUsageEventParams`.
+- Types must match the UsageEvent model schema.
+
+**Acceptance Criteria:**
+
+- [ ] Type file created at `src/types/UsageEventData.d.tsx`
+- [ ] Types match model schema
+- [ ] TypeScript compiles (`npx tsc --noEmit`)
+
+---
+
+### 14.4 Create AppSetting model
+
+**Files (new):** `src/lib/database/models/app-setting.model.tsx`
+**Ref:** TD-DB-12
+
+**What to do:**
+
+- Create Mongoose model with fields per SPEC.md section 6.5.
+- Index on `key` (unique) and `category`.
+- `value` field type: `Schema.Types.Mixed`.
+- Export with standard pattern.
+
+**Acceptance Criteria:**
+
+- [ ] Model file created at `src/lib/database/models/app-setting.model.tsx`
+- [ ] All fields from SPEC.md section 6.5 present
+- [ ] `key` has unique index, `category` has index
+- [ ] TypeScript compiles (`npx tsc --noEmit`)
+
+---
+
+### 14.5 Create PublicPage model
+
+**Files (new):** `src/lib/database/models/public-page.model.tsx`
+**Ref:** TD-DB-13
+
+**What to do:**
+
+- Create Mongoose model with fields per SPEC.md section 6.6.
+- Index on `slug` (unique).
+- Export with standard pattern.
+
+**Acceptance Criteria:**
+
+- [ ] Model file created at `src/lib/database/models/public-page.model.tsx`
+- [ ] All fields from SPEC.md section 6.6 present
+- [ ] `slug` has unique index
+- [ ] TypeScript compiles (`npx tsc --noEmit`)
+
+---
+
+### 14.6 Create AdminAuditLog model
+
+**Files (new):** `src/lib/database/models/admin-audit-log.model.tsx`
+**Ref:** TD-DB-14
+
+**What to do:**
+
+- Create Mongoose model with fields per SPEC.md section 6.7.
+- Indexes on `adminId`, `action`, `createdAt`.
+- Export with standard pattern.
+
+**Acceptance Criteria:**
+
+- [ ] Model file created at `src/lib/database/models/admin-audit-log.model.tsx`
+- [ ] All fields from SPEC.md section 6.7 present
+- [ ] Required indexes added
+- [ ] TypeScript compiles (`npx tsc --noEmit`)
+
+---
+
+## Phase 15: Entitlement Engine & Usage Enforcement
+
+> Build the canonical entitlement resolver and usage enforcement system.
+
+---
+
+### 15.1 Build daily conversation limit check utility
+
+**Files (new):** `src/lib/utils/check-daily-conversations.ts`
+**Ref:** TD-PLAN-07
+
+**What to do:**
+
+- Create utility function `checkDailyConversationLimit(userId: string, planName: PlanName)`.
+- Query `Task.countDocuments({ userId, createdAt: { $gte: startOfToday } })` to get today's conversation count.
+- Compare against `PLAN_LIMITS[planName].conversationsPerDay`.
+- Return `{ allowed: boolean, limit: number, used: number, remaining: number }`.
+- Handle unlimited plans (`-1`) by always returning `allowed: true`.
+
+**Acceptance Criteria:**
+
+- [ ] Function correctly counts today's conversations for the user
+- [ ] Returns `allowed: false` when daily limit is reached
+- [ ] Unlimited plans (`-1`) always return `allowed: true`
+- [ ] TypeScript compiles (`npx tsc --noEmit`)
+
+---
+
+### 15.2 Add prompt count tracking to conversation flow
+
+**Files:** `src/app/api/openai/route.tsx`, `src/lib/actions/task.actions.tsx`
+**Ref:** TD-PLAN-08
+
+**What to do:**
+
+- In the `/api/openai` route, after resolving the task, check `task.promptCount` against `PLAN_LIMITS[planName].promptsPerConversation`.
+- If limit reached, return a structured response with `stopReason: "prompt_limit_reached"` and appropriate `endAction`.
+- When creating or updating a task with a new user message, increment `promptCount` with `$inc: { promptCount: 1 }`.
+- In `createTask`, initialize `promptCount: 1` (the first user message).
+- In `updateTask`, add `$inc: { promptCount: 1 }` when the update includes a user message.
+
+**Acceptance Criteria:**
+
+- [ ] `promptCount` is incremented on every user message
+- [ ] `/api/openai` checks prompt count against plan limit before processing
+- [ ] Conversation is stopped with `prompt_limit_reached` reason when limit hit
+- [ ] User receives a clear message about the limit with next-action instruction
+- [ ] Unlimited plans (`-1`) bypass the check
+- [ ] TypeScript compiles (`npx tsc --noEmit`)
+- [ ] All existing tests pass
+
+---
+
+### 15.3 Integrate daily conversation limit into /api/openai
+
+**Files:** `src/app/api/openai/route.tsx`
+**Ref:** TD-PLAN-07
+
+**What to do:**
+
+- Import `checkDailyConversationLimit` from the new utility.
+- When creating a NEW conversation (no `taskId` in request), call `checkDailyConversationLimit(userId, planName)`.
+- If `allowed === false`, return a structured response with `stopReason: "daily_conversation_limit_reached"` and `endAction: "upgrade_plan"` or `"contact_support"`.
+- Return appropriate HTTP status and user-friendly message.
+
+**Acceptance Criteria:**
+
+- [ ] New conversation creation is blocked when daily limit reached
+- [ ] Existing conversations are NOT blocked by daily limit (only new ones)
+- [ ] Response includes stop reason and next action
+- [ ] Unlimited plans bypass the check
+- [ ] TypeScript compiles (`npx tsc --noEmit`)
+- [ ] All existing tests pass
+
+---
+
+### 15.4 Add conversation stop handling to chat UI
+
+**Files:** `src/components/chat/chat-wrapper.tsx`
+**Ref:** TD-PLAN-07, TD-PLAN-08
+
+**What to do:**
+
+- When the `/api/openai` response contains a `stopReason`, render a conversation-end message in the chat.
+- The message should display the stop reason in user-friendly language and the next action as a clickable link/button:
+  - `start_new_conversation` → link to `/app/new`
+  - `upgrade_plan` → link to `/app/plans` (or `/plans` until route migration)
+  - `contact_support` → display support email
+- Disable the chat input when the conversation is in `ended` status.
+- Show a distinct visual state for ended conversations.
+
+**Acceptance Criteria:**
+
+- [ ] Stop reason messages render in chat when conversation ends
+- [ ] Next-action links are clickable and go to correct routes
+- [ ] Chat input is disabled for ended conversations
+- [ ] Visual distinction between active and ended conversations
+- [ ] TypeScript compiles (`npx tsc --noEmit`)
+
+---
+
+### 15.5 Add message count / document size guard for Task
+
+**Files:** `src/app/api/openai/route.tsx`
+**Ref:** TD-DB-05
+
+**What to do:**
+
+- Before adding a new message to a Task, estimate the current document size.
+- Use a conservative formula: count messages \* average message size estimate, or use `JSON.stringify(messages).length` as a rough byte estimate.
+- If estimated size exceeds 12MB (leaving buffer before the 16MB MongoDB limit), stop the conversation with `stopReason: "conversation_storage_limit_reached"`.
+- Update `Task.estimatedBytes` after each message addition.
+
+**Acceptance Criteria:**
+
+- [ ] Document size is estimated before adding messages
+- [ ] Conversation stops when size approaches MongoDB document limit
+- [ ] `estimatedBytes` field is updated on Task document
+- [ ] Stop reason is `conversation_storage_limit_reached`
+- [ ] TypeScript compiles (`npx tsc --noEmit`)
+- [ ] All existing tests pass
+
+---
+
+## Phase 16: AI Model Policy Layer
+
+> Make AI model selection plan-aware instead of hardcoded.
+
+---
+
+### 16.1 Create AI model policy resolver
+
+**Files (new):** `src/lib/utils/ai-model-policy.ts`
+**Ref:** TD-AI-07
+
+**What to do:**
+
+- Create a `resolveModelForPlan(planName: PlanName, requestType: "chat" | "title" | "image" | "audio" | "video")` function.
+- Return the appropriate model ID based on plan and request type:
+  - Lite chat: `"gpt-4o-mini"` (cheapest)
+  - Pro chat: `"gpt-5.2-pro"`
+  - Premium chat: `"gpt-5.4-pro"`
+  - Title generation: `"gpt-4o-mini"` (all plans)
+  - Image: `"dall-e-3"` (all plans, quality variant for Premium TBD)
+  - Audio: `"gpt-4o-audio-preview"` (all plans, quality variant for Premium TBD)
+  - Video: Premium only, provider TBD — return placeholder model ID
+- Export a `MODEL_POLICY` constant that maps all plan+type combinations.
+
+**Acceptance Criteria:**
+
+- [ ] Function returns correct model for every plan + request type combination
+- [ ] Lite gets cheapest model, Pro gets `gpt-5.2-pro`, Premium gets `gpt-5.4-pro`
+- [ ] Video returns model only for Premium, returns `null` for other plans
+- [ ] TypeScript compiles (`npx tsc --noEmit`)
+
+---
+
+### 16.2 Wire model policy into generateResponse
+
+**Files:** `src/lib/utils/openai/generateResponse.tsx`
+**Ref:** TD-AI-07
+
+**What to do:**
+
+- Import `resolveModelForPlan` from the new policy resolver.
+- Replace the hardcoded `model: "gpt-4o"` with `model: resolveModelForPlan(planName, "chat")`.
+- The `planName` must be passed through from the `/api/openai` route (add it to `generateResponse` params if not already there).
+
+**Acceptance Criteria:**
+
+- [ ] `generateResponse` uses plan-appropriate model instead of hardcoded `gpt-4o`
+- [ ] Model is resolved at call time from the policy resolver
+- [ ] TypeScript compiles (`npx tsc --noEmit`)
+- [ ] All existing tests pass (update mocks as needed)
+
+---
+
+### 16.3 Wire model policy into generateTitle, generateImage, generateAudio
+
+**Files:** `src/lib/utils/openai/generateTitle.tsx`, `src/lib/utils/openai/generateImage.tsx`, `src/lib/utils/openai/generateAudio.tsx`
+**Ref:** TD-AI-07
+
+**What to do:**
+
+- Import `resolveModelForPlan` in each file.
+- Replace hardcoded model strings with calls to the policy resolver.
+- Pass `planName` through from the calling context (add parameter if needed).
+
+**Acceptance Criteria:**
+
+- [ ] All 3 files use `resolveModelForPlan` instead of hardcoded strings
+- [ ] Model selection is plan-aware for all generation types
+- [ ] TypeScript compiles (`npx tsc --noEmit`)
+- [ ] All existing tests pass (update mocks as needed)
+
+---
+
+## Phase 17: Route Restructure
+
+> Align route structure with target architecture. Move account pages under /app, admin under /admin.
+
+---
+
+### 17.1 Create /admin route group and layout
+
+**Files (new):** `src/app/(admin)/layout.tsx`, `src/app/(admin)/admin/page.tsx`
+**Ref:** TD-AUTH-02
+
+**What to do:**
+
+- Create a new `(admin)` route group with its own layout.
+- Admin layout should include admin-specific navigation sidebar with links to: Dashboard, Users, Transactions, Usage, Settings, Website.
+- Create the admin dashboard page at `/admin` — server component with auth check and basic stats (migrate from current `/dashboard` page).
+- Admin layout must verify `sessionClaims.metadata.role === "admin"` server-side.
+
+**Acceptance Criteria:**
+
+- [ ] `/admin` route renders with admin layout and navigation
+- [ ] Admin dashboard shows same stats as current `/dashboard`
+- [ ] Server-side admin role check present
+- [ ] TypeScript compiles (`npx tsc --noEmit`)
+
+---
+
+### 17.2 Create /admin/users list page
+
+**Files (new):** `src/app/(admin)/admin/users/page.tsx`
+**Ref:** TD-UI-10
+
+**What to do:**
+
+- Create server component that queries all users from MongoDB.
+- Display user list with: username, email, role, plan name, registration date.
+- Each row links to `/admin/users/[userId]`.
+- Use `.lean()` and `.select()` for the query.
+- Include search/filter capability (at minimum: search by username or email).
+
+**Acceptance Criteria:**
+
+- [ ] `/admin/users` renders a list of all users
+- [ ] Each user row shows key info and links to detail page
+- [ ] Query uses `.lean()` and `.select()`
+- [ ] Admin role verified server-side
+- [ ] TypeScript compiles (`npx tsc --noEmit`)
+
+---
+
+### 17.3 Create /admin/users/[userId] detail page
+
+**Files (new):** `src/app/(admin)/admin/users/[userId]/page.tsx`
+**Ref:** TD-UI-10
+
+**What to do:**
+
+- Create server component that fetches user by ID.
+- Display: full user info, current plan details, usage stats (conversation count, media generation counts).
+- Admin action buttons: suspend (set role to suspended or add suspended flag), remove (delete user + S3 cleanup).
+- Each admin action must log to `AdminAuditLog`.
+- Each admin action must be a server action with admin role verification.
+
+**Acceptance Criteria:**
+
+- [ ] User detail page renders with full user info
+- [ ] Usage stats displayed (conversations, media counts)
+- [ ] Admin actions (suspend, remove) are functional
+- [ ] Admin actions log to AdminAuditLog
+- [ ] Admin role verified in server actions
+- [ ] TypeScript compiles (`npx tsc --noEmit`)
+
+---
+
+### 17.4 Create /admin/transactions list page
+
+**Files (new):** `src/app/(admin)/admin/transactions/page.tsx`
+**Ref:** TD-UI-10
+
+**What to do:**
+
+- Create server component querying all transactions.
+- Display: user info, plan, amount, billing cycle, date, status.
+- Each row links to `/admin/transactions/[transactionId]`.
+- Use `.lean()` and `.select()`.
+
+**Acceptance Criteria:**
+
+- [ ] `/admin/transactions` lists all transactions
+- [ ] Each row links to detail page
+- [ ] Query optimized with `.lean()` and `.select()`
+- [ ] Admin role verified
+- [ ] TypeScript compiles (`npx tsc --noEmit`)
+
+---
+
+### 17.5 Create /admin/transactions/[transactionId] detail page
+
+**Files (new):** `src/app/(admin)/admin/transactions/[transactionId]/page.tsx`
+**Ref:** TD-UI-10
+
+**What to do:**
+
+- Display full transaction details.
+- Show associated user info.
+- Admin actions as applicable (view only for now — real Stripe operations can be added later).
+- Admin actions log to AdminAuditLog.
+
+**Acceptance Criteria:**
+
+- [ ] Transaction detail page renders with full info
+- [ ] Associated user info displayed
+- [ ] Admin role verified
+- [ ] TypeScript compiles (`npx tsc --noEmit`)
+
+---
+
+### 17.6 Create /admin/usage page
+
+**Files (new):** `src/app/(admin)/admin/usage/page.tsx`
+**Ref:** TD-UI-10
+
+**What to do:**
+
+- Create server component that queries `UsageEvent` collection.
+- Display usage data: by user (top users), by model, by request type, by time period.
+- Show cost estimates (placeholder values acceptable where real cost data not yet available).
+- Include provider breakdown (OpenAI, AWS).
+
+**Acceptance Criteria:**
+
+- [ ] `/admin/usage` renders usage analytics
+- [ ] Data shown by user, model, type, time period
+- [ ] Cost estimates shown (placeholder acceptable)
+- [ ] Admin role verified
+- [ ] TypeScript compiles (`npx tsc --noEmit`)
+
+---
+
+### 17.7 Create /admin/settings page
+
+**Files (new):** `src/app/(admin)/admin/settings/page.tsx`
+**Ref:** TD-UI-10
+
+**What to do:**
+
+- Create page with settings sections:
+  - **AI Models**: Selector to choose AI model for each plan tier.
+  - **Pricing**: Change price and description for each plan.
+  - **Limits**: Adjust limits for each plan (conversations/day, prompts/conversation, media counts).
+  - **Theme**: Toggle default theme (dark/light).
+- Read settings from `AppSetting` model. Write changes via server actions.
+- Each change logs to AdminAuditLog.
+
+**Acceptance Criteria:**
+
+- [ ] Settings page renders all 4 sections
+- [ ] Settings can be read and updated
+- [ ] Changes persist to AppSetting model
+- [ ] Changes logged to AdminAuditLog
+- [ ] Admin role verified in all server actions
+- [ ] TypeScript compiles (`npx tsc --noEmit`)
+
+---
+
+### 17.8 Create /admin/website management page
+
+**Files (new):** `src/app/(admin)/admin/website/page.tsx`
+**Ref:** TD-UI-10
+
+**What to do:**
+
+- List all `PublicPage` documents with: title, slug, published status, sort order.
+- Add button to create new page.
+- Each row: edit link → `/admin/website/[pageId]`, publish/unpublish toggle, delete button, drag-to-reorder (or sort order input).
+- All mutations via server actions with admin role check and audit logging.
+
+**Acceptance Criteria:**
+
+- [ ] `/admin/website` lists all public pages
+- [ ] Add, publish/unpublish, delete, and sort actions work
+- [ ] All mutations logged to AdminAuditLog
+- [ ] Admin role verified
+- [ ] TypeScript compiles (`npx tsc --noEmit`)
+
+---
+
+### 17.9 Create /admin/website/[pageId] editor page
+
+**Files (new):** `src/app/(admin)/admin/website/[pageId]/page.tsx`
+**Ref:** TD-UI-10
+
+**What to do:**
+
+- Install Tiptap packages: `@tiptap/react`, `@tiptap/starter-kit`, `@tiptap/pm`.
+- Create a client component `TiptapEditor` wrapping Tiptap with `immediatelyRender: false`.
+- Page loads `PublicPage` document by ID, renders form with title field and Tiptap editor for content.
+- Save button persists changes via server action.
+- Audit log entry on save.
+
+**Acceptance Criteria:**
+
+- [ ] Tiptap packages installed
+- [ ] Tiptap editor renders and produces HTML content
+- [ ] Page content can be loaded and saved
+- [ ] Admin role verified
+- [ ] Audit log entry created on save
+- [ ] TypeScript compiles (`npx tsc --noEmit`)
+
+---
+
+### 17.10 Move /profile to /app/profile
+
+**Files:** `src/app/(account)/profile/page.tsx` → move to `src/app/(chat)/app/profile/page.tsx`
+**Ref:** TD-UI-09
+
+**What to do:**
+
+- Move the profile page from `(account)/profile/` to `(chat)/app/profile/`.
+- Update any navigation links pointing to `/profile` → `/app/profile`.
+- Add user profile content: personal details (from Clerk), current plan info, purchase history (from transactions), upgrade plan link.
+
+**Acceptance Criteria:**
+
+- [ ] `/app/profile` renders the profile page
+- [ ] Old `/profile` route no longer exists or redirects
+- [ ] Navigation links updated
+- [ ] User can see: personal details, current plan, purchase history
+- [ ] User can access upgrade link
+- [ ] TypeScript compiles (`npx tsc --noEmit`)
+
+---
+
+### 17.11 Move /plans to /app/plans and /pricing to /plans
+
+**Files:** Route restructure for plans/pricing pages
+**Ref:** TD-UI-09
+
+**What to do:**
+
+- Rename current `/pricing` (public) route to `/plans` (public pricing page).
+- Move current `/plans` (authenticated checkout) to `/app/plans`.
+- Update all navigation links accordingly.
+- Ensure `/plans` is public (no auth required) and `/app/plans` is protected.
+
+**Acceptance Criteria:**
+
+- [ ] `/plans` is the public pricing page (no auth required)
+- [ ] `/app/plans` is the authenticated plan selection + checkout page
+- [ ] Navigation links updated throughout the app
+- [ ] TypeScript compiles (`npx tsc --noEmit`)
+
+---
+
+### 17.12 Update proxy for new route structure
+
+**Files:** `src/proxy.tsx`
+**Ref:** TD-AUTH-01, TD-AUTH-02
+
+**What to do:**
+
+- Update `isProtectedRoute` to: `["/app(.*)"]`.
+- Update `isAdminRoute` to: `["/admin(.*)"]`.
+- Remove old routes: `/profile(.*)`, `/plans(.*)`, `/dashboard/:path*`.
+
+**Acceptance Criteria:**
+
+- [ ] Proxy protects `/app(.*)` and `/admin(.*)`
+- [ ] Old route matchers removed
+- [ ] Anonymous users redirected from `/app/*` to `/sign-in`
+- [ ] Non-admin users redirected from `/admin/*` to `/403`
+- [ ] TypeScript compiles (`npx tsc --noEmit`)
+- [ ] All existing tests pass — update proxy test assertions
+
+---
+
+### 17.13 Remove old /dashboard route
+
+**Files:** `src/app/(chat)/dashboard/page.tsx`
+
+**What to do:**
+
+- Delete the old dashboard page after `/admin` route is confirmed working.
+- Remove any navigation links to `/dashboard`.
+
+**Acceptance Criteria:**
+
+- [ ] Old `/dashboard` page deleted
+- [ ] No navigation links point to `/dashboard`
+- [ ] `/admin` is the only admin entry point
+- [ ] TypeScript compiles (`npx tsc --noEmit`)
+
+---
+
+### 17.14 Update header navigation for new routes
+
+**Files:** `src/components/layout/header.tsx`
+
+**What to do:**
+
+- Change `/pricing` link to `/plans` (public pricing page).
+- Add `/about` link to navigation.
+- Add `/faqs` link to navigation.
+- Ensure all navigation links match the target route map.
+
+**Acceptance Criteria:**
+
+- [ ] Header nav links to `/plans` instead of `/pricing`
+- [ ] `/about` link present in navigation
+- [ ] `/faqs` link present in navigation
+- [ ] TypeScript compiles (`npx tsc --noEmit`)
+- [ ] All existing tests pass
+
+---
+
+### 17.15 Update footer links for legal pages
+
+**Files:** `src/components/layout/footer.tsx`
+
+**What to do:**
+
+- Convert "Privacy & Cookie Policy" `<span>` to a `<Link>` pointing to `/privacy`.
+- Convert "Terms & Conditions" `<span>` to a `<Link>` pointing to `/terms`.
+- Import `Link` from `next/link`.
+
+**Acceptance Criteria:**
+
+- [ ] Footer "Privacy & Cookie Policy" is a working link to `/privacy`
+- [ ] Footer "Terms & Conditions" is a working link to `/terms`
+- [ ] TypeScript compiles (`npx tsc --noEmit`)
+- [ ] All existing tests pass
+
+---
+
+### 17.16 Update E2E tests for new route structure
+
+**Files:** `tests/e2e/authenticated-flows.spec.ts`, `tests/e2e/pricing-public.spec.ts`
+
+**What to do:**
+
+- Update `authenticated-flows.spec.ts` to use `/app/profile` instead of `/profile`.
+- Update `authenticated-flows.spec.ts` to use `/app/plans` instead of `/plans`.
+- Update `authenticated-flows.spec.ts` to use `/admin` instead of `/dashboard`.
+- Update `pricing-public.spec.ts` to navigate to `/plans` instead of `/pricing` if changed.
+- Verify all E2E tests pass after route migration.
+
+**Acceptance Criteria:**
+
+- [ ] E2E tests use new route paths
+- [ ] All E2E tests pass (`npm run test:e2e`)
+- [ ] No references to old routes (`/profile`, `/pricing`, `/dashboard`) in test files
+
+---
+
+## Phase 18: Public Pages
+
+> Create missing public pages. Not just another chatbot — distinctive product narrative.
+
+---
+
+### 18.1 Create /about page
+
+**Files (new):** `src/app/(public)/about/page.tsx`
+**Ref:** TD-UI-08
+
+**What to do:**
+
+- Create server component with stacked sections explaining how Droplet works.
+- Sections: (1) What is Droplet — persona-driven AI assistant, (2) How it works — choose persona, start chatting, (3) Personas — overview of 9 personas, (4) Media generation — images, audio, video, (5) Plans overview — link to `/plans`.
+- Each section: heading + descriptive text + image placeholder (use CSS placeholder or public image).
+- Reuse `PageWrapper` and `PageHead` layout components.
+
+**Acceptance Criteria:**
+
+- [ ] `/about` renders with multiple stacked content sections
+- [ ] Sections explain personas, features, and media capabilities
+- [ ] Reuses existing layout components
+- [ ] Page is public (no auth required)
+- [ ] TypeScript compiles (`npx tsc --noEmit`)
+
+---
+
+### 18.2 Create /faqs page
+
+**Files (new):** `src/app/(public)/faqs/page.tsx`
+**Ref:** TD-UI-08
+
+**What to do:**
+
+- Create page that renders the FAQ accordion.
+- Reuse existing `FaqsSection` component (currently used in `/pricing` page).
+- Wrap in `PageWrapper` with `PageHead`.
+
+**Acceptance Criteria:**
+
+- [ ] `/faqs` renders the FAQ accordion
+- [ ] Reuses existing `FaqsSection` component
+- [ ] Page is public
+- [ ] TypeScript compiles (`npx tsc --noEmit`)
+
+---
+
+### 18.3 Create /privacy page
+
+**Files (new):** `src/app/(public)/privacy/page.tsx`
+**Ref:** TD-UI-08
+
+**What to do:**
+
+- Create page with real Privacy & Cookie Policy content.
+- Content must be adapted for Droplet's purpose (AI chatbot SaaS collecting user data, using OpenAI API, Clerk auth, Stripe payments, AWS S3 storage).
+- Cover: data collection, usage, storage, third-party sharing, cookies, user rights, contact info.
+- Use structured sections with headings.
+- Add disclaimer: "This policy is provided for informational purposes. Legal review recommended before production publication."
+
+**Acceptance Criteria:**
+
+- [ ] `/privacy` renders real privacy policy content
+- [ ] Content covers all relevant data handling topics
+- [ ] Adapted for Droplet context (AI, OpenAI, Clerk, Stripe, S3)
+- [ ] Includes review disclaimer
+- [ ] Page is public
+- [ ] TypeScript compiles (`npx tsc --noEmit`)
+
+---
+
+### 18.4 Create /cookies page
+
+**Files (new):** `src/app/(public)/cookies/page.tsx`
+**Ref:** TD-UI-08
+
+**What to do:**
+
+- Create page with real Cookie Policy content.
+- Document cookies used: Clerk session cookies, theme preference, analytics (if any).
+- Explain cookie categories: essential, functional, optional.
+- Add same review disclaimer as privacy page.
+
+**Acceptance Criteria:**
+
+- [ ] `/cookies` renders real cookie policy content
+- [ ] Content documents actual cookies used
+- [ ] Includes review disclaimer
+- [ ] Page is public
+- [ ] TypeScript compiles (`npx tsc --noEmit`)
+
+---
+
+### 18.5 Create /terms page
+
+**Files (new):** `src/app/(public)/terms/page.tsx`
+**Ref:** TD-UI-08
+
+**What to do:**
+
+- Create page with real Terms & Conditions content.
+- Cover: service description, user responsibilities, AI-generated content disclaimer, payment terms, refund policy, account termination, limitation of liability, governing law.
+- Adapted for Droplet SaaS context.
+- Add review disclaimer.
+
+**Acceptance Criteria:**
+
+- [ ] `/terms` renders real terms & conditions content
+- [ ] Content covers standard SaaS legal topics
+- [ ] AI content disclaimer included
+- [ ] Payment terms match approved plan structure
+- [ ] Includes review disclaimer
+- [ ] Page is public
+- [ ] TypeScript compiles (`npx tsc --noEmit`)
+
+---
+
+### 18.6 Enhance homepage with product sections
+
+**Files:** `src/components/sections/landing-page.tsx` or `src/app/(public)/page.tsx`
+**Ref:** TD-UI-07
+
+**What to do:**
+
+- After the existing Hero section, add 3-4 additional sections:
+  - **Feature showcase**: Highlight key capabilities (persona-driven chat, media generation, streaming responses).
+  - **How it works**: 3-step visual (choose persona → start chatting → get results).
+  - **Social proof / CTA**: Strong call-to-action to sign up or explore plans.
+- Each section should have compelling heading, descriptive text, and visual element.
+- Maintain existing design system (Tailwind, fonts, theme tokens).
+
+**Acceptance Criteria:**
+
+- [ ] Homepage has 3-4 sections beyond the Hero
+- [ ] Sections include feature showcase, how-it-works, and CTA
+- [ ] Design consistent with existing theme/system
+- [ ] TypeScript compiles (`npx tsc --noEmit`)
+
+---
+
+### 18.7 Rename /pricing to /plans (public page)
+
+**Files:** `src/app/(public)/pricing/page.tsx` → `src/app/(public)/plans/page.tsx`
+
+**What to do:**
+
+- Rename the route directory from `pricing` to `plans`.
+- Update the page title/heading from "Pricing" to "Plans" or "Choose Your Plan".
+- Update any links in header/footer navigation from `/pricing` to `/plans`.
+
+**Acceptance Criteria:**
+
+- [ ] `/plans` is the public pricing page
+- [ ] `/pricing` no longer exists
+- [ ] Navigation links updated
+- [ ] TypeScript compiles (`npx tsc --noEmit`)
+
+---
+
+## Phase 19: Streaming Implementation
+
+> Add streaming responses for chat UX.
+
+---
+
+### 19.1 Create streaming API route
+
+**Files (new):** `src/app/api/openai/stream/route.tsx` or modify existing route
+**Ref:** TD-AI-01
+
+**What to do:**
+
+- Implement streaming using OpenAI SDK's `openai.chat.completions.stream(...)`.
+- Return a `ReadableStream` or use the Next.js `StreamingTextResponse` pattern.
+- Include all existing auth, rate limiting, plan expiry, and entitlement checks.
+- Emit usage event after stream completes.
+- Handle tool calls (image/audio generation) after stream completion.
+
+**Acceptance Criteria:**
+
+- [ ] Streaming endpoint returns partial responses via SSE/ReadableStream
+- [ ] All auth and limit checks remain in place
+- [ ] Tool calls dispatched after stream completion
+- [ ] Usage event emitted after completion
+- [ ] Error handling works for streaming failures
+- [ ] TypeScript compiles (`npx tsc --noEmit`)
+
+---
+
+### 19.2 Update chat UI to render streamed responses
+
+**Files:** `src/components/chat/chat-wrapper.tsx`, `src/components/chat/chat-body.tsx`
+**Ref:** TD-AI-01
+
+**What to do:**
+
+- Update `ChatWrapper` to consume streaming responses using `ReadableStream` reader or EventSource.
+- Render partial text incrementally in `ChatBody` as chunks arrive.
+- Replace "Thinking..." with actual incremental text display.
+- Handle stream completion, errors, and tool-call follow-ups.
+- Maintain existing UI/UX patterns (markdown rendering, code blocks, etc.).
+
+**Acceptance Criteria:**
+
+- [ ] Chat renders text incrementally as stream chunks arrive
+- [ ] "Thinking..." replaced with real progressive rendering
+- [ ] Message finalization works correctly after stream completion
+- [ ] Error states handled gracefully
+- [ ] Existing markdown rendering still works
+- [ ] TypeScript compiles (`npx tsc --noEmit`)
+
+---
+
+## Phase 20: Error Handling & File Cleanup (from old Phase 10)
+
+---
+
+### 20.1 Refactor handleError to preserve stack traces
+
+**File:** `src/lib/utils/handleError.tsx`
+**Ref:** TD-API-06
+
+**What to do:**
+
+- Use `new Error(message, { cause: error })` pattern to preserve original stack trace.
+- Keep the `source` annotation for debugging context.
+
+**Acceptance Criteria:**
+
+- [ ] Original error preserved as `cause` on thrown error
+- [ ] Source string still in error message
+- [ ] Stack trace accessible via `error.cause`
+- [ ] TypeScript compiles (`npx tsc --noEmit`)
+- [ ] All existing tests pass
+
+---
+
+### 20.2 Add S3 cleanup on user deletion in Clerk webhook
+
+**File:** `src/app/api/webhooks/clerk/route.tsx`
+**Ref:** TD-FILE-01
+
+**What to do:**
+
+- In `user.deleted` handler, after MongoDB deletion, list and delete all S3 objects under `{clerkId}/` prefix.
+- Use batch deletion (ListObjectsV2 + DeleteObjects).
+- Log errors but do not fail the webhook response.
+
+**Acceptance Criteria:**
+
+- [ ] S3 objects cleaned up on user deletion
+- [ ] Uses batch deletion
+- [ ] Errors logged but webhook succeeds
+- [ ] TypeScript compiles (`npx tsc --noEmit`)
+- [ ] All existing tests pass
+
+---
+
+### 20.3 Delete orphaned Task documents on user deletion
+
+**File:** `src/app/api/webhooks/clerk/route.tsx`
+**Ref:** TD-DB-15
+
+**What to do:**
+
+- In `user.deleted` handler, after deleting the User document and before S3 cleanup, delete all Task documents belonging to the deleted user.
+- Use `Task.deleteMany({ userId: clerkId })` to remove all conversations.
+- Log errors but do not fail the webhook response.
+
+**Acceptance Criteria:**
+
+- [ ] All Task documents for the deleted user are removed
+- [ ] Deletion happens before S3 cleanup (so S3 URLs can still be read from tasks if needed)
+- [ ] Errors logged but webhook succeeds
+- [ ] TypeScript compiles (`npx tsc --noEmit`)
+- [ ] All existing tests pass
+
+---
+
+### 20.4 Add S3 cleanup on task deletion
 
 **File:** `src/lib/actions/task.actions.tsx`
-**Ref:** TD-DB-06, TD-UI-01
+**Ref:** TD-FILE-01
 
-Create a server action that retrieves a paginated list of the authenticated user's tasks (id, title, updatedAt only — no messages).
+**What to do:**
 
-**Acceptance Criteria:**
-- [ ] Auth check before DB access
-- [ ] Returns `{ _id, title, updatedAt }` fields only (projection)
-- [ ] Sorted by `updatedAt` descending
-- [ ] Returns serialized result via `serializeForClient`
-- [ ] Unit test covering authenticated + unauthenticated paths
-- [ ] TypeScript compiles with no errors
-
----
-
-### 2.2 Create `getTaskById` server action
-
-**File:** `src/lib/actions/task.actions.tsx`
-**Ref:** TD-DB-06, TD-UI-01
-**Depends on:** 2.1
-
-Create a server action that retrieves a single task by ID, verifying the authenticated user owns it.
+- In `deleteTask`, scan task messages for S3 image URLs before deletion.
+- Delete matching S3 objects via `deleteFileFromAWS`.
+- Wrap in try/catch — log errors but do not fail deletion.
 
 **Acceptance Criteria:**
-- [ ] Auth check before DB access
-- [ ] Filters by both `_id` and `userId` to enforce ownership
-- [ ] Returns serialized task document
-- [ ] Returns null/error if task not found or user does not own it
-- [ ] Unit test
-- [ ] TypeScript compiles with no errors
+
+- [ ] Task messages scanned for S3 URLs before deletion
+- [ ] S3 objects deleted for matching URLs
+- [ ] Task deletion succeeds even if S3 cleanup fails
+- [ ] TypeScript compiles (`npx tsc --noEmit`)
+- [ ] All existing tests pass
 
 ---
 
-### 2.3 Create `deleteTask` server action
+### 20.5 Refactor chat input to upload via /api/upload
 
-**File:** `src/lib/actions/task.actions.tsx`
-**Depends on:** 2.1
+**File:** `src/components/chat/chat-input.tsx`
+**Ref:** TD-FILE-02
 
-Create a server action that deletes a task by ID, verifying ownership.
+**What to do:**
+
+- Upload files via `/api/upload` FormData before building message content.
+- Replace inline base64 URLs with S3 URLs in message content.
+- Handle upload failure gracefully.
 
 **Acceptance Criteria:**
-- [ ] Auth check before DB access
-- [ ] Filters by both `_id` and `userId`
-- [ ] Returns success/failure response
-- [ ] Unit test
-- [ ] TypeScript compiles with no errors
+
+- [ ] All file attachments go through `/api/upload`
+- [ ] No base64 in message content sent to `/api/openai`
+- [ ] Upload failures prevent message send with user feedback
+- [ ] TypeScript compiles (`npx tsc --noEmit`)
+- [ ] All existing tests pass
 
 ---
 
-### 2.4 Add conversation history list to ChatSidebar
+### 20.6 Upload audio to S3 instead of base64 in messages
 
-**File:** `src/components/chat/chat-sidebar.tsx`
-**Ref:** TD-UI-01
-**Depends on:** 2.1, 2.5
+**Files:** `src/lib/utils/openai/generateAudio.tsx`, potentially `src/app/api/openai/route.tsx`
+**Ref:** TD-AI-05, TD-DB-07
 
-Replace the static "New Task" link with a dynamic list of previous conversations. Receive task list as a prop from the parent Server Component.
+**What to do:**
+
+- After audio generation, upload the audio data to S3 under `{userId}/audio/`.
+- Store the S3 URL in the message content instead of the base64 data.
+- Update audio player component to use URL instead of base64 data URI.
 
 **Acceptance Criteria:**
-- [ ] Sidebar displays list of tasks (title + relative date)
-- [ ] Each task links to resume that conversation
-- [ ] "New Task" button remains at top
-- [ ] Empty state shown when no tasks exist
-- [ ] Receives `tasks` as a prop (data fetched in parent Server Component)
-- [ ] TypeScript compiles with no errors
+
+- [ ] Audio data uploaded to S3 after generation
+- [ ] Message content stores S3 URL, not base64
+- [ ] Audio player renders from S3 URL
+- [ ] TypeScript compiles (`npx tsc --noEmit`)
+- [ ] All existing tests pass
 
 ---
 
-### 2.5 Pass user task list to ChatSidebar from page.tsx
+## Phase 21: Prompt Improvement
 
-**File:** `src/app/page.tsx`
-**Ref:** TD-UI-01
-**Depends on:** 2.1
+> Improve and adapt prompts per persona and per model.
 
-Fetch user tasks server-side using `getUserTasks` and pass them to `ChatSidebar`.
+---
+
+### 21.1 Create prompt versioning and management system
+
+**Files (new):** `src/constants/persona-prompts.ts`
+**Ref:** TD-AI-09
+
+**What to do:**
+
+- Create a prompt configuration file that defines system prompts per persona, per model family.
+- Structure: `{ [personaId]: { [modelFamily]: { systemPrompt, temperature, maxTokens } } }`.
+- The current `systemPrompt` field on persona objects becomes the default/fallback.
+- Add prompt version identifier.
 
 **Acceptance Criteria:**
-- [ ] `page.tsx` calls `getUserTasks` for authenticated users
-- [ ] Task list passed as prop to `ChatSidebar`
-- [ ] TypeScript compiles with no errors
+
+- [ ] Prompt configuration file created
+- [ ] Prompts organized by persona and model family
+- [ ] Version identifier present
+- [ ] TypeScript compiles (`npx tsc --noEmit`)
 
 ---
 
-### 2.6 Add conversation resume capability to ChatWrapper
+### 21.2 Improve persona-specific prompts
 
-**File:** `src/components/chat/chat-wrapper.tsx`
-**Ref:** TD-UI-01
-**Depends on:** 2.2
+**Files:** `src/constants/assistant-personas.tsx` and/or the new prompt config
+**Ref:** TD-AI-09
 
-Enable `ChatWrapper` to accept an initial task (messages + taskId) and resume an existing conversation.
+**What to do:**
+
+- Review and improve each persona's system prompt for:
+  - Distinct personality and tone
+  - Clear domain expertise boundaries
+  - Safety constraints (especially companion personas)
+  - Answer formatting preferences
+  - Model-aware instructions (simpler prompts for cheaper models, richer for premium)
 
 **Acceptance Criteria:**
-- [ ] Accepts optional `initialTask` and `initialTaskId` props
-- [ ] When provided, initializes state with existing messages
-- [ ] Subsequent messages continue updating the same task
-- [ ] TypeScript compiles with no errors
+
+- [ ] All 9 personas have improved, distinct prompts
+- [ ] Safety constraints defined for companion personas
+- [ ] Prompts vary by model tier where appropriate
+- [ ] TypeScript compiles (`npx tsc --noEmit`)
 
 ---
 
-## Phase 3: Image Persistence Fix
+## Phase 22: Testing & Hardening
 
 ---
 
-### 3.1 Fix `generateImage` to persist images to S3
+### 22.1 Add test coverage configuration
 
-**File:** `src/lib/utils/openai/generateImage.tsx`
-**Ref:** TD-API-03
-**Depends on:** Phase 1 completed
+**File:** `vitest.config.mts`, `package.json`
 
-Uncomment and fix the AWS upload code. Replace the axios-based approach with a direct call to `uploadFileToAWS`. Return the S3 URL instead of the temporary OpenAI URL.
+**What to do:**
+
+- Add `coverage` config with `v8` provider and 70/60/70/70 thresholds.
+- Add `test:coverage` script.
 
 **Acceptance Criteria:**
-- [ ] Generated images uploaded to S3 via `uploadFileToAWS`
-- [ ] S3 URL stored in message content instead of temporary OpenAI URL
-- [ ] Remove all commented-out axios code and import
-- [ ] TypeScript compiles with no errors
+
+- [ ] Coverage config in Vitest config
+- [ ] `npm run test:coverage` works
+- [ ] All existing tests pass
 
 ---
 
-### 3.2 Remove `console.log` statements from generateImage and generateAudio
+### 22.2 Add unit tests for updated entitlements
 
-**Files:** `src/lib/utils/openai/generateImage.tsx`, `src/lib/utils/openai/generateAudio.tsx`
+**File (new):** `tests/unit/resolve-entitlements.test.ts`
+
+**What to do:**
+
+- Test all plans return all 9 persona IDs.
+- Test Lite has audio generation enabled.
+- Test fallback behavior for `resolvePersonaForPlan`.
 
 **Acceptance Criteria:**
-- [ ] All `console.log` calls removed from both files
-- [ ] `console.error` for actual errors remains
-- [ ] TypeScript compiles with no errors
+
+- [ ] Tests verify all plans allow all 9 personas
+- [ ] Tests verify Lite audio generation enabled
+- [ ] All tests pass
 
 ---
 
-## Phase 4: Plan Enforcement
+### 22.3 Add unit tests for daily conversation limit
 
----
+**File (new):** `tests/unit/check-daily-conversations.test.ts`
 
-### 4.1 Add usage tracking fields to User plan schema
+**What to do:**
 
-**File:** `src/lib/database/models/user.model.tsx`
-**Ref:** TD-PLAN-02
-
-Add `imageGenerations` and `audioGenerations` counter fields to the plan subdocument. Add `usagePeriodStart` date field.
+- Test limit enforcement for each plan tier.
+- Test unlimited plans bypass check.
+- Test date boundary behavior.
 
 **Acceptance Criteria:**
-- [ ] Plan subdoc includes `imageGenerations: { type: Number, default: 0 }`
-- [ ] Plan subdoc includes `audioGenerations: { type: Number, default: 0 }`
-- [ ] Plan subdoc includes `usagePeriodStart: { type: Date, default: Date.now }`
-- [ ] Update `PlanData` type in `src/types/PlanData.d.tsx`
-- [ ] TypeScript compiles with no errors
+
+- [ ] Tests cover all plan tiers
+- [ ] Tests verify unlimited plan bypass
+- [ ] All tests pass
 
 ---
 
-### 4.2 Define plan limits constant
+### 22.4 Add unit tests for AI model policy
 
-**File:** `src/constants/plans.tsx`
-**Ref:** TD-PLAN-02
+**File (new):** `tests/unit/ai-model-policy.test.ts`
 
-Add a constant mapping plan names to their resource limits.
+**What to do:**
+
+- Test model resolution for each plan + request type combination.
+- Test video returns null for non-Premium plans.
 
 **Acceptance Criteria:**
-- [ ] `PLAN_LIMITS` constant: `{ Lite: { images: 3, audio: 3 }, Pro: { images: 20, audio: 20 }, Premium: { images: -1, audio: -1 } }`
-- [ ] Exported and typed
-- [ ] TypeScript compiles with no errors
+
+- [ ] Tests cover all plan + type combinations
+- [ ] Tests verify video restriction
+- [ ] All tests pass
 
 ---
 
-### 4.3 Add plan limit enforcement to `/api/openai` route
+### 22.5 Implement retry/backoff for OpenAI failures
 
-**File:** `src/app/api/openai/route.tsx`
-**Ref:** TD-PLAN-02
-**Depends on:** 4.1, 4.2
+**Files:** `src/lib/utils/openai/generateResponse.tsx`
+**Ref:** TD-AI-06
 
-Before calling `generateResponse`, check user's plan limits for image/audio generation. After successful generation, increment the counter.
+**What to do:**
+
+- Add exponential backoff for transient OpenAI errors (429, 500, 502, 503).
+- Max 3 retries with increasing delay.
+- Log retries server-side.
 
 **Acceptance Criteria:**
-- [ ] Check user's current usage vs limit before OpenAI call
-- [ ] Return 403 with descriptive message if limit exceeded
-- [ ] After successful generation, increment counter via `User.findOneAndUpdate` with `strict: true`
-- [ ] Counter resets handled based on `usagePeriodStart`
-- [ ] Unit test for limit checking logic
-- [ ] TypeScript compiles with no errors
+
+- [ ] Transient errors trigger retry with backoff
+- [ ] Max 3 retries
+- [ ] Non-retryable errors fail immediately
+- [ ] TypeScript compiles (`npx tsc --noEmit`)
+- [ ] All existing tests pass
 
 ---
 
-## Phase 5: Error Handling & Resilience
+## Phase 23: Resilience & Deferred Items
+
+> Lower priority. Not blocking v1 launch but important for production hardening.
+
+- [ ] **23.1** Replace in-memory rate limiter with persistent store — Ref: TD-API-01
+- [ ] **23.2** Implement Stripe subscription mode (auto-renewal) — Ref: TD-PLAN-01
+- [ ] **23.3** Add video generation support for Premium — Ref: TD-AI-08
+- [ ] **23.4** Add per-user token/cost tracking via UsageEvent aggregation — Ref: TD-AI-03
+- [ ] **23.5** Update UsageEvent emission in all OpenAI util functions
+- [ ] **23.6** Add admin audit log emission in all admin server actions
 
 ---
 
-### 5.1 Add OpenAI error classification to `generateResponse`
+## Completed Phases
 
-**File:** `src/lib/utils/openai/generateResponse.tsx`
-**Ref:** TD-AI-02
+### Phase 13: Product Rule Reconciliation — COMPLETED
 
-Catch OpenAI-specific errors and return structured error types instead of generic throws.
+- [x] **13.1** Remove Lite plan 3-day expiry — Lite is now "Free forever" with far-future expiry
+- [x] **13.2** Update plan prices to $19 (Pro) / $39 (Premium)
+- [x] **13.3** Allow all 9 personas in all plans (removed Lite persona restrictions)
+- [x] **13.4** Update Lite plan inclusions and limits display
+- [x] **13.5** Update Pro plan inclusions display
+- [x] **13.6** Update Premium plan inclusions display (3 premium media features)
+- [x] **13.7** Update PLAN_LIMITS constant for all tiers (conversationsPerDay, promptsPerConversation, video)
+- [x] **13.8** Update FAQ content — remove trial references, add support email, rewrite free plan FAQ
 
-**Acceptance Criteria:**
-- [ ] Catch `OpenAI.APIError` and inspect status code
-- [ ] Return distinguishable error types: `rate_limit`, `timeout`, `service_error`, `unknown`
-- [ ] `/api/openai` route maps these to appropriate HTTP status codes (429, 504, 502)
-- [ ] TypeScript compiles with no errors
+### Phase 9: Production UX Polish — COMPLETED
 
----
+- [x] **9.1** Add conversation delete button to chat sidebar
+- [x] **9.2** Add conversation delete button to library page
+- [x] **9.3** Add loading skeleton for chat layout
+- [x] **9.4** Add loading skeleton for account layout
 
-### 5.2 Add React error boundary component
+### Phase 7: Persona Rename — COMPLETED
 
-**File:** `src/components/shared/error-boundary.tsx` (new)
-**Ref:** TD-UI-04
+- [x] **7.1–7.26** Full persona rename from "assistant role" to "persona" across all files
 
-**Acceptance Criteria:**
-- [ ] Client component using React error boundary pattern
-- [ ] Accepts `fallback` prop for custom error UI
-- [ ] Default fallback shows "Something went wrong" with retry button
-- [ ] Unit test
-- [ ] TypeScript compiles with no errors
+### Phase 8: Database Optimization — COMPLETED
 
----
+- [x] **8.1** `.lean()` and `.select()` on getUserById
+- [x] **8.2** `.lean()` on getAllTransactions
+- [x] **8.3** Optimize task-queries with `.lean()` and `.select()`
+- [x] **8.4** Index on Task.personaId
+- [x] **8.5** Mongoose connection pooling review
 
-### 5.3 Add Next.js `error.tsx` for app-level error handling
+### Phase 1: Security & Data Integrity — COMPLETED
 
-**File:** `src/app/error.tsx` (new)
+- [x] **1.1–1.9** strict:true fixes, index additions, ownership validation, createUser non-export
 
-**Acceptance Criteria:**
-- [ ] `"use client"` component
-- [ ] Shows generic error message with "Try again" button
-- [ ] Calls `reset()` on retry
-- [ ] Does not leak error details to the user
-- [ ] TypeScript compiles with no errors
+### Phase 2: Security Fixes (Ownership) — COMPLETED
 
----
+- [x] **2.1–2.5** Ownership enforcement, console.log removal
 
-## Phase 6: Admin Dashboard
+### Phase 3: Core Feature Gaps — COMPLETED
 
----
+- [x] **3.1–3.5** deleteTask, mapDateToLabel, generateImage S3, error.tsx, .env example
 
-### 6.1 Create admin `getUsers` server action
+### Phase 4: Plan Enforcement (Usage Limits) — COMPLETED
 
-**File:** `src/lib/actions/user.actions.tsx`
-**Ref:** TD-UI-03
+- [x] **4.1–4.6** Usage tracking fields, plan limits, usage check, enforcement, reset
 
-**Acceptance Criteria:**
-- [ ] Auth check: verify `userId` exists AND user role is `"admin"`
-- [ ] Returns paginated user list (limit/skip)
-- [ ] Does not expose sensitive fields (`plan.stripeId` excluded)
-- [ ] Unit test
-- [ ] TypeScript compiles with no errors
+### Phase 5: Error Handling — COMPLETED
 
----
+- [x] **5.1–5.2** OpenAI error classification, chat error boundary
 
-### 6.2 Replace admin dashboard placeholder with user list
+### Phase 6: Testing — COMPLETED
 
-**File:** `src/app/(admin)/dashboard/page.tsx`
-**Ref:** TD-UI-03
-**Depends on:** 6.1
+- [x] **6.1–6.5** generateResponse, generateTitle, deleteTask, getUserById tests
 
-**Acceptance Criteria:**
-- [ ] Calls `getUsers` server-side
-- [ ] Displays user table: username, email, role, plan name, registerAt
-- [ ] Server Component (no `"use client"`)
-- [ ] Remove all placeholder text
-- [ ] TypeScript compiles with no errors
+### Phase 10–12: (Superseded by Phases 13–23 above)
 
----
+Old Phase 10-12 tasks have been incorporated into the new phase structure:
 
-## Phase 7: Testing Improvements
-
----
-
-### 7.1 Add unit tests for `generateResponse` (happy path)
-
-**File:** `tests/unit/generate-response.test.ts` (new)
-
-**Acceptance Criteria:**
-- [ ] Mock `openAiClient.chat.completions.create`
-- [ ] Test text response path (no tool call)
-- [ ] Assert returned JSON has `taskData` and `taskUsage`
-- [ ] Test passes
-
----
-
-### 7.2 Add unit tests for `generateResponse` (tool call paths)
-
-**File:** `tests/unit/generate-response.test.ts`
-**Depends on:** 7.1
-
-**Acceptance Criteria:**
-- [ ] Mock tool call response for `getGeneratedImage`
-- [ ] Mock tool call response for `getGeneratedAudio`
-- [ ] Assert correct function is dispatched
-- [ ] Tests pass
-
----
-
-### 7.3 Add unit tests for `generateTitle`
-
-**File:** `tests/unit/generate-title.test.ts` (new)
-
-**Acceptance Criteria:**
-- [ ] Mock `openAiClient.chat.completions.create`
-- [ ] Test that title and usage are returned
-- [ ] Test error case when API returns empty choices
-- [ ] Tests pass
-
----
-
-### 7.4 Add unit test for `getUserTasks` server action
-
-**File:** `tests/unit/task-actions.test.ts`
-**Depends on:** 2.1
-
-**Acceptance Criteria:**
-- [ ] Mock auth and database
-- [ ] Test authenticated user gets their tasks
-- [ ] Test unauthenticated user throws
-- [ ] Tests pass
-
----
-
-### 7.5 Add unit test for `deleteTask` server action
-
-**File:** `tests/unit/task-actions.test.ts`
-**Depends on:** 2.3
-
-**Acceptance Criteria:**
-- [ ] Mock auth and database
-- [ ] Test owner can delete their task
-- [ ] Test non-owner cannot delete
-- [ ] Tests pass
-
----
-
-## Phase 8: Production Readiness (Deferred)
-
-These tasks are important but should be tackled after Phases 2-7 are complete.
-
-- [ ] **8.1** Add `.env.local.example` file
-- [ ] **8.2** Implement response streaming for OpenAI chat — Ref: TD-AI-01
-- [ ] **8.3** Replace in-memory rate limiter with persistent store — Ref: TD-API-01
-- [ ] **8.4** Add S3 cleanup on user deletion — Ref: TD-FILE-01
-- [ ] **8.5** Add S3 cleanup on task deletion — Ref: TD-FILE-01
-- [ ] **8.6** Implement Stripe subscription mode — Ref: TD-PLAN-01
-- [ ] **8.7** Add test coverage configuration
-- [ ] **8.8** Define yearly billing pricing — Ref: TD-PLAN-03
+- 10.1 → 20.1, 10.2 → 20.2, 10.3 → 20.3, 10.4 → 20.4
+- 11.1 → 22.1, 11.2 → 22.2
+- 12.x → 23.x (deferred items)

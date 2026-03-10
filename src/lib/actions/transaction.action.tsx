@@ -71,6 +71,7 @@ export async function getAllTransactions(userId: string) {
   try {
     const { userId: authedUserId } = await auth();
     if (!authedUserId) throw new Error("Unauthorized");
+    if (authedUserId !== userId) throw new Error("Forbidden");
 
     await connectToDatabase();
 
@@ -78,7 +79,9 @@ export async function getAllTransactions(userId: string) {
       sort: {
         createdAt: -1, //Sort by Date Added DESC
       },
-    }).exec();
+    })
+      .lean()
+      .exec();
 
     return serializeForClient(transactions);
   } catch (error) {

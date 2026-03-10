@@ -54,8 +54,15 @@ const UserSchema = new Schema<IUser>({
       default: "Monthly",
     },
     startedOn: { type: Date, required: true, default: Date.now },
-    expiresOn: { type: Date, required: true, default: getExpiresOn("Lite") },
+    expiresOn: {
+      type: Date,
+      required: true,
+      default: () => getExpiresOn("Lite"),
+    },
     stripeId: { type: String },
+    imageGenerations: { type: Number, default: 0 },
+    audioGenerations: { type: Number, default: 0 },
+    usagePeriodStart: { type: Date, default: Date.now },
   },
   firstName: {
     type: String,

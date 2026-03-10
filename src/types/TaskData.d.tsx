@@ -1,12 +1,12 @@
 // ====== Task Data Types
 import { Message } from "@/types";
-import { AssistantRoleId } from "@/types/AssistantRoleData.d";
+import { PersonaId } from "@/types/PersonaData.d";
 
 export interface CreateTaskInput {
   usage?: number;
   title: string;
   messages: Message[];
-  assistantRoleId?: AssistantRoleId;
+  personaId?: PersonaId;
   createdAt?: Date;
 }
 
@@ -17,13 +17,12 @@ export interface CreateTaskParams extends CreateTaskInput {
 export interface UpdateTaskParams {
   messages: Message[];
   usage?: number;
-  assistantRoleId?: AssistantRoleId;
+  personaId?: PersonaId;
 }
 
 export interface TaskHistoryItem {
   _id: string;
   title: string;
-  assistantRoleId: AssistantRoleId;
-  usage: number;
+  personaId: PersonaId;
   updatedAt: string;
 }

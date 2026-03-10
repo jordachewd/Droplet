@@ -3,9 +3,11 @@ import { expect, test } from "@playwright/test";
 test("loads landing page for unauthenticated users", async ({ page }) => {
   await page.goto("/");
 
-  await expect(page).toHaveTitle(/Cellesseon/i);
+  await expect(page).toHaveTitle(/Droplet/i);
   await expect(
-    page.getByText("Simplify tasks and boost productivity"),
+    page.getByRole("heading", {
+      name: "A smarter way to chat, create, and get things done.",
+    }),
   ).toBeVisible();
   await expect(
     page.getByRole("link", { name: "Try it for free" }),
@@ -21,14 +23,14 @@ test("toggles dark mode and persists it after reload", async ({ page }) => {
   await darkModeButton.click();
 
   await expect(page.locator("html")).toHaveAttribute(
-    "data-cellesseon-theme",
+    "data-droplet-theme",
     "dark",
   );
 
   await page.reload();
 
   await expect(page.locator("html")).toHaveAttribute(
-    "data-cellesseon-theme",
+    "data-droplet-theme",
     "dark",
   );
 });

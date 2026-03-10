@@ -3,14 +3,14 @@
 import { useUser } from "@clerk/nextjs";
 import classNames from "classnames";
 import LoadingBubbles from "@/components/shared/loading-bubbles";
-import type { AssistantRole } from "@/types/AssistantRoleData.d";
+import type { Persona } from "@/types/PersonaData.d";
 
 interface ChatIntroProps {
-  role: AssistantRole;
+  persona: Persona;
   sendPrompt: (prompt: string) => void;
 }
 
-export default function ChatIntro({ role, sendPrompt }: ChatIntroProps) {
+export default function ChatIntro({ persona, sendPrompt }: ChatIntroProps) {
   const { user, isLoaded } = useUser();
 
   function handleSendPrompt(prompt: string) {
@@ -44,14 +44,14 @@ export default function ChatIntro({ role, sendPrompt }: ChatIntroProps) {
           Hello {user?.firstName || "there"}, welcome to your chat dashboard.
         </h1>
         <p className="body-2 opacity-85">
-          Active role: <strong>{role.label}</strong> · {role.tagline}
+          Active persona: <strong>{persona.label}</strong> - {persona.tagline}
         </p>
       </div>
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-        {role.starterPrompts.map((prompt, index) => (
+        {persona.starterPrompts.map((prompt, index) => (
           <button
-            key={`${role.id}-${index}`}
+            key={`${persona.id}-${index}`}
             type="button"
             onClick={() => handleSendPrompt(prompt)}
             className={introPromptButtonClass}

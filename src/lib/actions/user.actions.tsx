@@ -17,7 +17,7 @@ export async function updateUser(clerkId: string, user: UpdateUserParams) {
     await connectToDatabase();
 
     const updatedUser = await User.findOneAndUpdate({ clerkId }, user, {
-      new: true,
+      returnDocument: "after",
       strict: true,
       upsert: false,
     });
@@ -75,10 +75,15 @@ export async function getUserById(userId: string) {
   try {
     const { userId: authedUserId } = await auth();
     if (!authedUserId) throw new Error("Unauthorized");
+    if (authedUserId !== userId) throw new Error("Forbidden");
 
     await connectToDatabase();
 
-    const user = await User.findOne({ clerkId: userId });
+    const user = await User.findOne({ clerkId: userId })
+      .select(
+        "clerkId username email role plan firstName lastName userimg registerAt updatedAt",
+      )
+      .lean();
 
     return serializeForClient(user);
   } catch (error) {
