@@ -1,5 +1,11 @@
 import deleteFileFromAWS from "@/lib/utils/aws/deleteFileFromAWS";
 import uploadFileToAWS from "@/lib/utils/aws/uploadFileToAWS";
+import {
+  buildS3ObjectKey,
+  isUserOwnedS3ObjectKey,
+  normalizeS3ObjectKey,
+  resolveS3ObjectKey,
+} from "@/lib/utils/aws/s3-file-reference";
 import { generateString } from "@/lib/utils/generateString";
 import { currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
@@ -7,7 +13,38 @@ import { NextResponse } from "next/server";
 const MAX_BASE64_IMAGE_SIZE_BYTES = 10 * 1024 * 1024;
 
 function normalizeFolderPath(folder: string): string {
-  return folder.trim().replace(/^\/+|\/+$/g, "");
+  return normalizeS3ObjectKey(folder).replace(/\/+$/g, "");
+}
+
+function resolveDeleteObjectKey(
+  payload: Record<string, unknown>,
+): string | null {
+  const objectKeyCandidate =
+    typeof payload.objectKey === "string"
+      ? payload.objectKey
+      : typeof payload.key === "string"
+        ? payload.key
+        : typeof payload.fileUrl === "string"
+          ? payload.fileUrl
+          : null;
+
+  if (typeof objectKeyCandidate === "string" && objectKeyCandidate.trim()) {
+    return resolveS3ObjectKey(objectKeyCandidate);
+  }
+
+  if (
+    typeof payload.folder === "string" &&
+    typeof payload.fileName === "string" &&
+    payload.folder.trim() &&
+    payload.fileName.trim()
+  ) {
+    return buildS3ObjectKey(
+      normalizeFolderPath(payload.folder),
+      payload.fileName.trim(),
+    );
+  }
+
+  return null;
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
@@ -49,6 +86,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     const fileName = `${taskId}_image_${generateString()}.png`;
     const mimeType = "image/png";
     const folder = `${user.id}/${taskId}`;
+    const objectKey = buildS3ObjectKey(folder, fileName);
 
     const fileUrl = await uploadFileToAWS(buffer, fileName, mimeType, folder);
 
@@ -56,7 +94,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       throw new Error("uploadFileToAWS returned undefined");
     }
 
-    return NextResponse.json({ fileUrl }, { status: 200 });
+    return NextResponse.json({ fileUrl, objectKey }, { status: 200 });
   } catch (error: unknown) {
     console.error("AWS API Error:", error);
 
@@ -78,45 +116,34 @@ export async function DELETE(req: Request): Promise<NextResponse> {
       );
     }
 
-    const { folder, fileName } = await req.json();
+    const payload = (await req.json()) as Record<string, unknown>;
+    const objectKey = resolveDeleteObjectKey(payload);
 
-    if (
-      typeof folder !== "string" ||
-      typeof fileName !== "string" ||
-      !folder.trim() ||
-      !fileName.trim()
-    ) {
+    if (!objectKey) {
       return NextResponse.json(
-        { message: "Folder and fileName are required for deletion." },
+        {
+          message:
+            "objectKey, fileUrl, or folder and fileName are required for deletion.",
+        },
         { status: 400 },
       );
     }
 
-    const normalizedFolder = normalizeFolderPath(folder);
-    const userOwnedPrefix = `${user.id}/`;
-
-    if (!normalizedFolder.startsWith(userOwnedPrefix)) {
+    if (!isUserOwnedS3ObjectKey(user.id, objectKey)) {
       return NextResponse.json(
         {
-          message:
-            "Forbidden: folder does not belong to the authenticated user.",
+          message: "Forbidden: file does not belong to the authenticated user.",
         },
         { status: 403 },
       );
     }
 
-    const userScopedFolder = normalizedFolder.slice(userOwnedPrefix.length);
+    await deleteFileFromAWS(objectKey);
 
-    if (!userScopedFolder) {
-      return NextResponse.json(
-        { message: "Invalid folder path." },
-        { status: 400 },
-      );
-    }
-
-    await deleteFileFromAWS(user.id, fileName, userScopedFolder);
-
-    return NextResponse.json({ message: "Image deleted successfully" });
+    return NextResponse.json({
+      message: "Image deleted successfully",
+      objectKey,
+    });
   } catch (error) {
     console.error("AWS delete error:", error);
 

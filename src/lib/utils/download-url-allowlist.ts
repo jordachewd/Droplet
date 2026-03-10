@@ -5,6 +5,17 @@ const DEFAULT_ALLOWED_DOWNLOAD_HOSTS = [
 
 const DOWNLOAD_ALLOWLIST_ENV_KEY = "DOWNLOAD_URL_ALLOWLIST";
 
+function getAwsBucketHost(): string[] {
+  const bucketName = process.env.AWS_S3_BUCKET?.trim().toLowerCase();
+  const region = process.env.AWS_S3_REGION?.trim().toLowerCase();
+
+  if (!bucketName || !region) {
+    return [];
+  }
+
+  return [`${bucketName}.s3.${region}.amazonaws.com`];
+}
+
 function parseAllowedHostsFromEnv(rawValue?: string): string[] {
   if (!rawValue) {
     return [];
@@ -21,6 +32,7 @@ export function getAllowedDownloadHosts(): Set<string> {
 
   return new Set([
     ...DEFAULT_ALLOWED_DOWNLOAD_HOSTS,
+    ...getAwsBucketHost(),
     ...parseAllowedHostsFromEnv(envValue),
   ]);
 }

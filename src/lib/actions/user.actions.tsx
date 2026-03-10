@@ -17,7 +17,7 @@ export async function updateUser(clerkId: string, user: UpdateUserParams) {
     await connectToDatabase();
 
     const updatedUser = await User.findOneAndUpdate({ clerkId }, user, {
-      new: true,
+      returnDocument: "after",
       strict: true,
       upsert: false,
     });

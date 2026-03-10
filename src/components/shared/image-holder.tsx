@@ -2,6 +2,7 @@ import classNames from "classnames";
 import LoadingBubbles from "./loading-bubbles";
 import { useState } from "react";
 import Image from "next/image";
+import { resolveStoredAssetUrl } from "@/lib/utils/aws/s3-file-reference";
 
 interface ImageHolderProps {
   src: string;
@@ -20,13 +21,21 @@ export default function ImageHolder({
 }: ImageHolderProps) {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
+  const resolvedImageUrl = resolveStoredAssetUrl(imageUrl);
+  const downloadUrl = resolveStoredAssetUrl(imageUrl, {
+    download: true,
+    filename: imageName,
+  });
 
   const handleDownload = async () => {
     setIsDownloading(true);
     try {
-      const response = await fetch(
-        `/api/download?url=${encodeURIComponent(imageUrl)}`,
-      );
+      const response = await fetch(downloadUrl);
+
+      if (!response.ok) {
+        throw new Error(`Download failed with status ${response.status}`);
+      }
+
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -79,11 +88,13 @@ export default function ImageHolder({
 
       <Image
         priority
-        src={imageUrl}
+        unoptimized
+        src={resolvedImageUrl}
         width={width}
         height={height}
         loading="eager"
         onLoad={() => setIsLoading(false)}
+        onError={() => setIsLoading(false)}
         alt={imageName}
         className={imageClass}
         sizes={`(max-width: 768px) 100vw, (max-width: 1200px) 50vw, ${width}px`}

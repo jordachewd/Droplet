@@ -17,6 +17,7 @@ import {
   validateUploadFile,
 } from "@/lib/utils/upload-file-validation";
 import uploadFileToAWS from "@/lib/utils/aws/uploadFileToAWS";
+import { buildS3ObjectKey } from "@/lib/utils/aws/s3-file-reference";
 import { auth } from "@clerk/nextjs/server";
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
@@ -57,6 +58,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     const buffer = Buffer.from(await safeFile.arrayBuffer());
     const folder = `${userId}/uploads`;
+    const objectKey = buildS3ObjectKey(folder, fileName);
     const fileUrl = await uploadFileToAWS(
       buffer,
       fileName,
@@ -64,7 +66,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       folder,
     );
 
-    return NextResponse.json({ fileName, fileUrl });
+    return NextResponse.json({ fileName, fileUrl, objectKey });
   } catch {
     return NextResponse.json(
       { message: "Failed to upload file." },

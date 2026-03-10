@@ -113,11 +113,11 @@ Prompts must be versioned and kept separate from request handlers.
 
 ## 4. Subscription Plans
 
-| Plan        | Price | Duration        | AI Model         | Limits                                                                                                                   |
-| ----------- | ----- | --------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| **Lite**    | Free  | **Permanent**   | Cheapest approved| 5 conversations/day, 10 user prompts/conversation, 3 media generations/month, no video                                  |
-| **Pro**     | $19   | Monthly         | `gpt-5.2-pro`   | 50 conversations/day, 100 prompts/conversation, 50 image + 50 audio generations/month, no video                         |
-| **Premium** | $39   | Monthly         | `gpt-5.4-pro`   | Unlimited conversations, unlimited prompts, unlimited image + audio generations, 10 video generations/month              |
+| Plan        | Price | Duration      | AI Model          | Limits                                                                                                      |
+| ----------- | ----- | ------------- | ----------------- | ----------------------------------------------------------------------------------------------------------- |
+| **Lite**    | Free  | **Permanent** | Cheapest approved | 5 conversations/day, 10 user prompts/conversation, 3 media generations/month, no video                      |
+| **Pro**     | $19   | Monthly       | `gpt-5.2-pro`     | 50 conversations/day, 100 prompts/conversation, 50 image + 50 audio generations/month, no video             |
+| **Premium** | $39   | Monthly       | `gpt-5.4-pro`     | Unlimited conversations, unlimited prompts, unlimited image + audio generations, 10 video generations/month |
 
 ### Plan Rules
 
@@ -130,32 +130,32 @@ Prompts must be versioned and kept separate from request handlers.
 
 ### Lite Plan Limits (Detailed)
 
-| Limit                      | Value   | Reset Window |
-| -------------------------- | ------- | ------------ |
-| Conversations per day      | 5       | 24 hours     |
-| User prompts per conversation | 10   | Per conversation |
-| Media generations (image + audio combined) | 3 | 30-day rolling window |
-| Video generation           | 0       | N/A          |
+| Limit                                      | Value | Reset Window          |
+| ------------------------------------------ | ----- | --------------------- |
+| Conversations per day                      | 5     | 24 hours              |
+| User prompts per conversation              | 10    | Per conversation      |
+| Media generations (image + audio combined) | 3     | 30-day rolling window |
+| Video generation                           | 0     | N/A                   |
 
 ### Pro Plan Limits (Detailed)
 
-| Limit                      | Value   | Reset Window |
-| -------------------------- | ------- | ------------ |
-| Conversations per day      | 50      | 24 hours     |
-| User prompts per conversation | 100  | Per conversation |
-| Image generations          | 50      | 30-day rolling window |
-| Audio generations          | 50      | 30-day rolling window |
-| Video generation           | 0       | N/A          |
+| Limit                         | Value | Reset Window          |
+| ----------------------------- | ----- | --------------------- |
+| Conversations per day         | 50    | 24 hours              |
+| User prompts per conversation | 100   | Per conversation      |
+| Image generations             | 50    | 30-day rolling window |
+| Audio generations             | 50    | 30-day rolling window |
+| Video generation              | 0     | N/A                   |
 
 ### Premium Plan Limits (Detailed)
 
-| Limit                      | Value     | Reset Window |
-| -------------------------- | --------- | ------------ |
-| Conversations per day      | Unlimited | N/A          |
-| User prompts per conversation | Unlimited | N/A       |
-| Image generations          | Unlimited | N/A          |
-| Audio generations          | Unlimited | N/A          |
-| Video generations          | 10        | 30-day rolling window |
+| Limit                         | Value     | Reset Window          |
+| ----------------------------- | --------- | --------------------- |
+| Conversations per day         | Unlimited | N/A                   |
+| User prompts per conversation | Unlimited | N/A                   |
+| Image generations             | Unlimited | N/A                   |
+| Audio generations             | Unlimited | N/A                   |
+| Video generations             | 10        | 30-day rolling window |
 
 ### Plan Lifecycle
 
@@ -177,13 +177,13 @@ Prompts must be versioned and kept separate from request handlers.
 
 ### Conversation Stop Reasons
 
-| Reason Code                          | Message to User                                              | Next Action            |
-| ------------------------------------ | ------------------------------------------------------------ | ---------------------- |
+| Reason Code                          | Message to User                                              | Next Action                                |
+| ------------------------------------ | ------------------------------------------------------------ | ------------------------------------------ |
 | `prompt_limit_reached`               | "You've reached the message limit for this conversation."    | `start_new_conversation` or `upgrade_plan` |
-| `media_limit_reached`                | "You've reached your media generation limit."                | `upgrade_plan` or `contact_support` |
-| `daily_conversation_limit_reached`   | "You've reached the daily conversation limit for your plan." | `upgrade_plan` or `contact_support` |
-| `conversation_storage_limit_reached` | "This conversation has reached its storage limit."           | `start_new_conversation` |
-| `billing_state_invalid`              | "Your plan has expired."                                     | `upgrade_plan`         |
+| `media_limit_reached`                | "You've reached your media generation limit."                | `upgrade_plan` or `contact_support`        |
+| `daily_conversation_limit_reached`   | "You've reached the daily conversation limit for your plan." | `upgrade_plan` or `contact_support`        |
+| `conversation_storage_limit_reached` | "This conversation has reached its storage limit."           | `start_new_conversation`                   |
+| `billing_state_invalid`              | "Your plan has expired."                                     | `upgrade_plan`                             |
 
 ### Plan Technical Debt
 
@@ -248,22 +248,22 @@ Prompts must be versioned and kept separate from request handlers.
 
 ### 6.3 Task
 
-| Field         | Type             | Required | Index | Notes                                  |
-| ------------- | ---------------- | -------- | ----- | -------------------------------------- |
-| userId        | String           | Yes      | Yes   | Indexed, compound index with updatedAt |
-| title         | String           | Yes      | No    |                                        |
-| messages      | [Message] subdoc | Yes      | No    | Array of messages                      |
-| personaId     | String           | Yes      | Yes   | Indexed, defaults to "strategist"      |
-| usage         | Number           | Yes      | No    | Token usage counter                    |
-| promptCount   | Number           | Yes      | No    | **NEW** — user prompt counter          |
-| mediaCount    | Number           | Yes      | No    | **NEW** — media generation counter     |
-| estimatedBytes| Number           | Yes      | No    | **NEW** — conversation size estimate   |
-| status        | String (enum)    | Yes      | No    | **NEW** — `active` / `ended`           |
-| endedAt       | Date             | No       | No    | **NEW** — when conversation stopped    |
-| endedReason   | String           | No       | No    | **NEW** — stop reason code             |
-| endAction     | String           | No       | No    | **NEW** — next action for user         |
-| createdAt     | Date             | No       | No    |                                        |
-| updatedAt     | Date             | No       | Yes   | Indexed descending                     |
+| Field          | Type             | Required | Index | Notes                                  |
+| -------------- | ---------------- | -------- | ----- | -------------------------------------- |
+| userId         | String           | Yes      | Yes   | Indexed, compound index with updatedAt |
+| title          | String           | Yes      | No    |                                        |
+| messages       | [Message] subdoc | Yes      | No    | Array of messages                      |
+| personaId      | String           | Yes      | Yes   | Indexed, defaults to "strategist"      |
+| usage          | Number           | Yes      | No    | Token usage counter                    |
+| promptCount    | Number           | Yes      | No    | **NEW** — user prompt counter          |
+| mediaCount     | Number           | Yes      | No    | **NEW** — media generation counter     |
+| estimatedBytes | Number           | Yes      | No    | **NEW** — conversation size estimate   |
+| status         | String (enum)    | Yes      | No    | **NEW** — `active` / `ended`           |
+| endedAt        | Date             | No       | No    | **NEW** — when conversation stopped    |
+| endedReason    | String           | No       | No    | **NEW** — stop reason code             |
+| endAction      | String           | No       | No    | **NEW** — next action for user         |
+| createdAt      | Date             | No       | No    |                                        |
+| updatedAt      | Date             | No       | Yes   | Indexed descending                     |
 
 Compound index: `{ userId: 1, updatedAt: -1 }`
 
@@ -289,13 +289,13 @@ Purpose: Request-level usage logging for cost tracking and admin analytics.
 
 ### 6.5 AppSetting (NEW — Required)
 
-| Field     | Type   | Required | Index  | Notes                                          |
-| --------- | ------ | -------- | ------ | ---------------------------------------------- |
-| key       | String | Yes      | unique | Setting identifier                             |
-| value     | Mixed  | Yes      | No     | Setting value (JSON-compatible)                |
+| Field     | Type   | Required | Index  | Notes                                                |
+| --------- | ------ | -------- | ------ | ---------------------------------------------------- |
+| key       | String | Yes      | unique | Setting identifier                                   |
+| value     | Mixed  | Yes      | No     | Setting value (JSON-compatible)                      |
 | category  | String | Yes      | Yes    | `plans` / `models` / `theme` / `limits` / `features` |
-| updatedAt | Date   | Yes      | No     |                                                |
-| updatedBy | String | Yes      | No     | Admin clerkId who last changed                 |
+| updatedAt | Date   | Yes      | No     |                                                      |
+| updatedBy | String | Yes      | No     | Admin clerkId who last changed                       |
 
 ### 6.6 PublicPage (NEW — Required)
 
@@ -393,17 +393,17 @@ Purpose: Request-level usage logging for cost tracking and admin analytics.
 
 ### Models (Target)
 
-| Model             | Plan    | Purpose              |
-| ----------------- | ------- | -------------------- |
-| Cheapest approved | Lite    | Chat completion      |
-| `gpt-5.2-pro`    | Pro     | Chat completion      |
-| `gpt-5.4-pro`    | Premium | Chat completion      |
-| `gpt-4o-mini`    | All     | Title generation     |
-| Provider TBD     | All     | Image generation     |
-| Provider TBD     | Premium | Quality image gen    |
-| Provider TBD     | All     | Audio generation     |
-| Provider TBD     | Premium | Quality audio gen    |
-| Provider TBD     | Premium | Video generation     |
+| Model             | Plan    | Purpose           |
+| ----------------- | ------- | ----------------- |
+| Cheapest approved | Lite    | Chat completion   |
+| `gpt-5.2-pro`     | Pro     | Chat completion   |
+| `gpt-5.4-pro`     | Premium | Chat completion   |
+| `gpt-4o-mini`     | All     | Title generation  |
+| Provider TBD      | All     | Image generation  |
+| Provider TBD      | Premium | Quality image gen |
+| Provider TBD      | All     | Audio generation  |
+| Provider TBD      | Premium | Quality audio gen |
+| Provider TBD      | Premium | Video generation  |
 
 ### Current Models (Hardcoded)
 
@@ -461,33 +461,33 @@ Server-side streaming via OpenAI SDK. Client renders partial responses increment
 
 ### Route Map (Target)
 
-| Route                                 | Type      | Description                                    |
-| ------------------------------------- | --------- | ---------------------------------------------- |
-| `/`                                   | Public    | Landing (Hero + product sections + CTAs)       |
-| `/about`                              | Public    | How app works (stacked sections)               |
-| `/plans`                              | Public    | Pricing (plan cards)                           |
-| `/faqs`                               | Public    | FAQ accordion                                  |
-| `/personas`                           | Public    | Personas showcase                              |
-| `/privacy`                            | Public    | Privacy & Cookie Policy                        |
-| `/cookies`                            | Public    | Cookie Policy                                  |
-| `/terms`                              | Public    | Terms & Conditions                             |
-| `/sign-in`, `/sign-up`               | Auth      | Clerk auth                                     |
-| `/app`                                | Protected | Chat dashboard                                |
-| `/app/new`                            | Protected | New conversation                               |
-| `/app/library`                        | Protected | Conversation history                           |
-| `/app/personas`                       | Protected | In-app personas                                |
-| `/app/c/[conversationId]`             | Protected | Resume conversation                            |
-| `/app/profile`                        | Protected | User profile + plan + history                  |
-| `/app/plans`                          | Protected | Plan upgrade + checkout                        |
-| `/admin`                              | Admin     | Dashboard overview                             |
-| `/admin/users`                        | Admin     | User management list                           |
-| `/admin/users/[userId]`               | Admin     | User detail + actions                          |
-| `/admin/transactions`                 | Admin     | Transaction management                         |
-| `/admin/transactions/[transactionId]` | Admin     | Transaction detail                             |
-| `/admin/usage`                        | Admin     | Usage analytics                                |
-| `/admin/settings`                     | Admin     | App settings                                   |
-| `/admin/website`                      | Admin     | Content management                             |
-| `/admin/website/[pageId]`             | Admin     | Page editor (Tiptap)                           |
+| Route                                 | Type      | Description                              |
+| ------------------------------------- | --------- | ---------------------------------------- |
+| `/`                                   | Public    | Landing (Hero + product sections + CTAs) |
+| `/about`                              | Public    | How app works (stacked sections)         |
+| `/plans`                              | Public    | Pricing (plan cards)                     |
+| `/faqs`                               | Public    | FAQ accordion                            |
+| `/personas`                           | Public    | Personas showcase                        |
+| `/privacy`                            | Public    | Privacy & Cookie Policy                  |
+| `/cookies`                            | Public    | Cookie Policy                            |
+| `/terms`                              | Public    | Terms & Conditions                       |
+| `/sign-in`, `/sign-up`                | Auth      | Clerk auth                               |
+| `/app`                                | Protected | Chat dashboard                           |
+| `/app/new`                            | Protected | New conversation                         |
+| `/app/library`                        | Protected | Conversation history                     |
+| `/app/personas`                       | Protected | In-app personas                          |
+| `/app/c/[conversationId]`             | Protected | Resume conversation                      |
+| `/app/profile`                        | Protected | User profile + plan + history            |
+| `/app/plans`                          | Protected | Plan upgrade + checkout                  |
+| `/admin`                              | Admin     | Dashboard overview                       |
+| `/admin/users`                        | Admin     | User management list                     |
+| `/admin/users/[userId]`               | Admin     | User detail + actions                    |
+| `/admin/transactions`                 | Admin     | Transaction management                   |
+| `/admin/transactions/[transactionId]` | Admin     | Transaction detail                       |
+| `/admin/usage`                        | Admin     | Usage analytics                          |
+| `/admin/settings`                     | Admin     | App settings                             |
+| `/admin/website`                      | Admin     | Content management                       |
+| `/admin/website/[pageId]`             | Admin     | Page editor (Tiptap)                     |
 
 ### Public Pages Content
 
@@ -553,61 +553,61 @@ Server-side streaming via OpenAI SDK. Client renders partial responses increment
 
 ### Active — Critical (Must Fix Before v1)
 
-| ID         | Area     | Description                                          | Severity |
-| ---------- | -------- | ---------------------------------------------------- | -------- |
-| TD-PLAN-04 | Billing  | Lite has 3-day expiry — remove                       | Critical |
-| TD-PLAN-05 | Billing  | Prices $29/$69 — update to $19/$39                   | Critical |
-| TD-PLAN-06 | Billing  | Lite restricts 2 personas — allow all 9              | Critical |
-| TD-PLAN-07 | Billing  | No daily conversation limit                          | Critical |
-| TD-PLAN-08 | Billing  | No per-conversation prompt limit                     | Critical |
-| TD-PLAN-09 | Billing  | Plan descriptions outdated                           | Critical |
-| TD-AI-01   | OpenAI   | No streaming                                         | High     |
-| TD-AI-07   | OpenAI   | Models hardcoded — need plan-aware selection          | High     |
-| TD-DB-05   | Database | Task messages unbounded (16MB risk)                  | High     |
-| TD-DB-07   | Database | Audio base64 inflates docs                           | High     |
-| TD-DB-10   | Database | Task missing lifecycle fields                        | High     |
-| TD-DB-11   | Database | UsageEvent model missing                             | High     |
-| TD-DB-12   | Database | AppSetting model missing                             | High     |
-| TD-DB-13   | Database | PublicPage model missing                             | High     |
-| TD-DB-14   | Database | AdminAuditLog model missing                          | High     |
-| TD-AUTH-01 | Auth     | Proxy protects old routes                            | High     |
-| TD-AUTH-02 | Auth     | Admin at /dashboard not /admin                       | High     |
-| TD-UI-08   | UI       | Missing 5 public pages                               | High     |
-| TD-UI-10   | UI       | Admin has no operational capability                  | High     |
+| ID         | Area     | Description                                  | Severity |
+| ---------- | -------- | -------------------------------------------- | -------- |
+| TD-PLAN-04 | Billing  | Lite has 3-day expiry — remove               | Critical |
+| TD-PLAN-05 | Billing  | Prices $29/$69 — update to $19/$39           | Critical |
+| TD-PLAN-06 | Billing  | Lite restricts 2 personas — allow all 9      | Critical |
+| TD-PLAN-07 | Billing  | No daily conversation limit                  | Critical |
+| TD-PLAN-08 | Billing  | No per-conversation prompt limit             | Critical |
+| TD-PLAN-09 | Billing  | Plan descriptions outdated                   | Critical |
+| TD-AI-01   | OpenAI   | No streaming                                 | High     |
+| TD-AI-07   | OpenAI   | Models hardcoded — need plan-aware selection | High     |
+| TD-DB-05   | Database | Task messages unbounded (16MB risk)          | High     |
+| TD-DB-07   | Database | Audio base64 inflates docs                   | High     |
+| TD-DB-10   | Database | Task missing lifecycle fields                | High     |
+| TD-DB-11   | Database | UsageEvent model missing                     | High     |
+| TD-DB-12   | Database | AppSetting model missing                     | High     |
+| TD-DB-13   | Database | PublicPage model missing                     | High     |
+| TD-DB-14   | Database | AdminAuditLog model missing                  | High     |
+| TD-AUTH-01 | Auth     | Proxy protects old routes                    | High     |
+| TD-AUTH-02 | Auth     | Admin at /dashboard not /admin               | High     |
+| TD-UI-08   | UI       | Missing 5 public pages                       | High     |
+| TD-UI-10   | UI       | Admin has no operational capability          | High     |
 
 ### Active — Medium/Low Priority
 
-| ID         | Area     | Description                                          | Severity |
-| ---------- | -------- | ---------------------------------------------------- | -------- |
-| TD-API-01  | API      | In-memory rate limiter                               | Medium   |
-| TD-API-06  | API      | handleError loses stack traces                       | Medium   |
-| TD-AI-03   | OpenAI   | No per-user cost tracking                            | Medium   |
-| TD-AI-05   | OpenAI   | Audio base64 in messages                             | High     |
-| TD-AI-06   | OpenAI   | No retry/backoff                                     | Medium   |
-| TD-AI-08   | OpenAI   | No video generation (Premium)                        | Medium   |
-| TD-AI-09   | OpenAI   | Prompts not optimized                                | Medium   |
-| TD-FILE-01 | Files    | No S3 cleanup on deletion                            | Medium   |
-| TD-FILE-02 | Files    | Inline base64 file in some flows                     | Low      |
-| TD-UI-07   | UI       | Homepage needs more sections                         | Medium   |
-| TD-UI-09   | UI       | Account pages at wrong routes                        | Medium   |
-| TD-UI-11   | UI       | FAQ copy outdated                                    | Medium   |
-| TD-PLAN-01 | Billing  | No recurring subscriptions (deferred v1)             | Low      |
+| ID         | Area    | Description                              | Severity |
+| ---------- | ------- | ---------------------------------------- | -------- |
+| TD-API-01  | API     | In-memory rate limiter                   | Medium   |
+| TD-API-06  | API     | handleError loses stack traces           | Medium   |
+| TD-AI-03   | OpenAI  | No per-user cost tracking                | Medium   |
+| TD-AI-05   | OpenAI  | Audio base64 in messages                 | High     |
+| TD-AI-06   | OpenAI  | No retry/backoff                         | Medium   |
+| TD-AI-08   | OpenAI  | No video generation (Premium)            | Medium   |
+| TD-AI-09   | OpenAI  | Prompts not optimized                    | Medium   |
+| TD-FILE-01 | Files   | No S3 cleanup on deletion                | Medium   |
+| TD-FILE-02 | Files   | Inline base64 file in some flows         | Low      |
+| TD-UI-07   | UI      | Homepage needs more sections             | Medium   |
+| TD-UI-09   | UI      | Account pages at wrong routes            | Medium   |
+| TD-UI-11   | UI      | FAQ copy outdated                        | Medium   |
+| TD-PLAN-01 | Billing | No recurring subscriptions (deferred v1) | Low      |
 
 ### Resolved
 
-| ID           | Description                               | Resolution                       |
-| ------------ | ----------------------------------------- | -------------------------------- |
-| SEC-01       | getUserById no ownership check            | Ownership enforced               |
-| SEC-02       | getAllTransactions no ownership check      | Ownership enforced               |
-| SEC-03       | console.log in /api/openai                | Removed                          |
-| TD-API-03    | generateImage temporary URLs              | Persisted to S3                  |
-| TD-API-05    | console.log in OpenAI utils               | Removed                          |
-| TD-PLAN-02   | Usage limits not enforced                 | Implemented                      |
-| TD-AI-02     | No OpenAI error classification            | Implemented                      |
-| TD-UI-04     | No error boundaries                       | Added                            |
-| TD-UI-05     | mapDateToLabel duplicated                 | Extracted                        |
-| TD-RENAME-01 | "role" to "persona" rename                | Completed                        |
-| TD-DB-08     | getUserById missing .lean()/.select()     | Added                            |
-| TD-DB-09     | getAllTransactions missing .lean()         | Added                            |
-| TD-UI-02     | No loading skeletons                      | Added                            |
-| TD-UI-06     | No conversation delete UI                 | Added                            |
+| ID           | Description                           | Resolution         |
+| ------------ | ------------------------------------- | ------------------ |
+| SEC-01       | getUserById no ownership check        | Ownership enforced |
+| SEC-02       | getAllTransactions no ownership check | Ownership enforced |
+| SEC-03       | console.log in /api/openai            | Removed            |
+| TD-API-03    | generateImage temporary URLs          | Persisted to S3    |
+| TD-API-05    | console.log in OpenAI utils           | Removed            |
+| TD-PLAN-02   | Usage limits not enforced             | Implemented        |
+| TD-AI-02     | No OpenAI error classification        | Implemented        |
+| TD-UI-04     | No error boundaries                   | Added              |
+| TD-UI-05     | mapDateToLabel duplicated             | Extracted          |
+| TD-RENAME-01 | "role" to "persona" rename            | Completed          |
+| TD-DB-08     | getUserById missing .lean()/.select() | Added              |
+| TD-DB-09     | getAllTransactions missing .lean()    | Added              |
+| TD-UI-02     | No loading skeletons                  | Added              |
+| TD-UI-06     | No conversation delete UI             | Added              |

@@ -170,9 +170,27 @@
 - Expand `PLAN_LIMITS` to include all limit types:
   ```ts
   export const PLAN_LIMITS = {
-    Lite: { images: 3, audio: 3, video: 0, conversationsPerDay: 5, promptsPerConversation: 10 },
-    Pro: { images: 50, audio: 50, video: 0, conversationsPerDay: 50, promptsPerConversation: 100 },
-    Premium: { images: -1, audio: -1, video: 10, conversationsPerDay: -1, promptsPerConversation: -1 },
+    Lite: {
+      images: 3,
+      audio: 3,
+      video: 0,
+      conversationsPerDay: 5,
+      promptsPerConversation: 10,
+    },
+    Pro: {
+      images: 50,
+      audio: 50,
+      video: 0,
+      conversationsPerDay: 50,
+      promptsPerConversation: 100,
+    },
+    Premium: {
+      images: -1,
+      audio: -1,
+      video: 10,
+      conversationsPerDay: -1,
+      promptsPerConversation: -1,
+    },
   };
   ```
 - Note: Lite `audio` changes from `0` to `3` (media is now combined image+audio with 3 total, but tracked separately here for clarity; enforcement logic handles combined cap).
@@ -448,7 +466,7 @@
 **What to do:**
 
 - Before adding a new message to a Task, estimate the current document size.
-- Use a conservative formula: count messages * average message size estimate, or use `JSON.stringify(messages).length` as a rough byte estimate.
+- Use a conservative formula: count messages \* average message size estimate, or use `JSON.stringify(messages).length` as a rough byte estimate.
 - If estimated size exceeds 12MB (leaving buffer before the 16MB MongoDB limit), stop the conversation with `stopReason: "conversation_storage_limit_reached"`.
 - Update `Task.estimatedBytes` after each message addition.
 
@@ -1358,6 +1376,7 @@
 ### Phase 10–12: (Superseded by Phases 13–23 above)
 
 Old Phase 10-12 tasks have been incorporated into the new phase structure:
+
 - 10.1 → 20.1, 10.2 → 20.2, 10.3 → 20.3, 10.4 → 20.4
 - 11.1 → 22.1, 11.2 → 22.2
 - 12.x → 23.x (deferred items)

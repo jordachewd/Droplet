@@ -123,7 +123,7 @@ export async function POST(req: Request) {
 
     await connectToDatabase();
     const updatedUser = await User.findOneAndUpdate({ clerkId: id }, user, {
-      new: true,
+      returnDocument: "after",
       strict: true,
       upsert: false,
     });

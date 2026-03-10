@@ -147,8 +147,9 @@ describe("POST /api/webhooks/stripe", () => {
         }),
       }),
       {
-        new: true,
+        returnDocument: "after",
         strict: true,
+        upsert: false,
       },
     );
     expect(payload.message).toBe("OK");

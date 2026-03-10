@@ -203,7 +203,7 @@ describe("POST /api/webhooks/clerk", () => {
         userimg: "https://cdn.example.com/u2.png",
       }),
       expect.objectContaining({
-        new: true,
+        returnDocument: "after",
         strict: true,
         upsert: false,
       }),
