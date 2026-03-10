@@ -1,539 +1,606 @@
-# Cellesseon — Architecture & Strategic Plan
+# Cellesseon — Completion Plan
 
-> This document captures the original CellesseonArchitect audit and strategic direction.
-> It has been updated to reflect current project state and approved terminology.
+> Purpose: replace drifted planning with one execution document based on the current repository state and the requested target product.
 >
-> **Canonical references:** See `SPEC.md` for product specification, `TODO.md` for actionable tasks, `AGENTS.md` for coding rules.
->
-> **Terminology:** "Assistant roles" have been renamed to **personas** throughout this project. See `SPEC.md` §1.1 for the full terminology note.
+> Constraint: this plan is sequencing guidance, not marketing copy. If a capability is not verified, it is treated as unconfirmed.
 
 ---
 
-## Current project status
+## 1. Verified Current State
 
-| Phase       | Description                          | Status                                                                               |
-| ----------- | ------------------------------------ | ------------------------------------------------------------------------------------ |
-| Phase 0     | Product definition freeze            | **DONE** — 9 personas defined, entitlement matrix locked, route architecture settled |
-| Phase 1     | Core architecture correction         | **DONE** — persona constants, Task model, entitlements, system prompts               |
-| Phase 2     | Entitlements and billing correctness | **DONE** — `resolveEntitlements()`, Stripe webhooks, usage counters                  |
-| Phase 3     | Chat engine hardening                | **DONE** — persona-specific prompts, tool routing, rate limiting (in-memory)         |
-| Phase 4     | UX and route architecture            | **DONE** — route groups, persona-led UX, sidebar, library                            |
-| Phase 5     | Operational readiness                | **DONE** — proxy protection, webhook verification, file validation, 139 tests        |
-| Phase 6     | Landing page & marketing             | **DONE** — hero, pricing, personas showcase, FAQ                                     |
-| Phase 7     | Persona rename                       | **DONE** — "role" → "persona" across all source files, types, routes, tests          |
-| Phase 8     | Database optimization                | **DONE** — `.lean()`, `.select()`, index verification, connection pooling            |
-| **Phase 9** | **Production UX polish**             | **CURRENT** — conversation delete UI, loading skeletons                              |
-| Phase 10    | Error handling & file cleanup        | NEXT — handleError refactor, S3 cleanup, base64 upload fix                           |
-| Phase 11+   | Testing & resilience                 | PLANNED — see `TODO.md`                                                              |
+This is what is true in the codebase now and must be treated as the starting point:
 
----
+| Area            | Verified State                                                                                       | Why It Matters                                                        |
+| --------------- | ---------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| Lite plan       | Lite still expires after 3 days in plan logic and user defaults                                      | The requested permanent free Lite plan is not implemented yet         |
+| Pricing         | Pro is 29 and Premium is 69 in plan constants                                                        | Requested commercial model is not reflected in code                   |
+| Public Lite     | Public AI chat does not exist yet; the OpenAI route requires auth                                    | Anonymous trial usage cannot be shipped by tweaking copy alone        |
+| Models          | Chat, title, image, and audio models are hardcoded globally                                          | There is no plan-aware model routing policy yet                       |
+| Personas        | Persona catalog exists and is wired into prompting                                                   | Persona product direction is partially in place                       |
+| Conversations   | Conversations are stored in one Task document with embedded messages                                 | Limits, history growth, analytics, and asset lifecycle remain fragile |
+| Rate limiting   | Request limiting is in-memory                                                                        | It is not durable across instances or restarts                        |
+| Route structure | Public and app routes are split by groups, but account and admin remain separate top-level semantics | Route cleanup is still needed to make product boundaries obvious      |
+| Admin           | Dashboard is a minimal stats page                                                                    | There is no real operational surface yet                              |
+| Demo flows      | Demo conversations exist only as placeholders inside authenticated app surfaces                      | This is not the same as a public Lite product                         |
 
-## Original architect audit
+### Immediate consequences
 
-I reviewed the branch and this is the blunt read:
-
-The repo is a decent early-stage scaffold, not a finish-line SaaS. The foundations exist for auth, payments, chat persistence, uploads, and some testing, but the product model is still too generic, the route structure is only partially realized, and several current implementation choices will create rework if you keep piling features on top. The app already uses Next.js App Router, Clerk, Stripe, MongoDB/Mongoose, OpenAI, AWS S3 helpers, and has both unit and e2e tests present, so this is not vaporware. But the current assistant architecture is still “one generic assistant with image/audio hooks,” not “a role-based AI SaaS with clear product modes, entitlement logic, and durable operations.”
-
-## What the codebase currently is
-
-At a structural level, the app already has route groups for account, admin, and auth, plus API routes for OpenAI, uploads/downloads, AWS file operations, and webhooks. The main page conditionally renders either the app shell for signed-in users or the landing page for guests, which is the right broad split. Protected routing is enforced in middleware/proxy for `/profile`, `/plans`, and `/dashboard`, and admin access is separated. ([GitHub][2])
-
-The current user-facing product shape is:
-
-- guest landing page
-- signed-in chat app on `/`
-- plans page
-- profile page
-- placeholder admin dashboard
-
-That is workable, but it is not yet a product architecture for “multiple predefined AI roles with differentiated UX and entitlements.” The data model for chat tasks only stores `userId`, `title`, `messages`, and `usage`; there is no first-class concept for assistant persona, conversation mode, model policy, safety tier, or feature capability set. That missing domain model is the biggest product/architecture gap.
-
-## What is solid enough to keep
-
-A few things are worth preserving rather than rewriting for sport:
-
-The app already has a coherent stack choice and simple server boundaries: route handlers for external interfaces, server actions for DB operations, and Mongoose models for persistence. That is fine for this stage.
-
-Stripe webhook handling includes basic signature verification and idempotency by checking existing transactions before insert. That is one of the few places where operational thinking is already visible.
-
-File download has an allowlist guard, upload validates file types, and auth is enforced on the sensitive API routes reviewed. That is better than the usual cowboy circus.
-
-The repository has more test coverage than many projects at this maturity: unit tests exist for proxy, plans, OpenAI route, Stripe webhook, upload/download, chat input/wrapper, and some e2e coverage exists for landing page and authenticated flows. Coverage quality is unknown from filenames alone, but the presence is real.
-
-## What is weak and will hurt later
-
-### 1. The assistant domain is not modeled yet
-
-Your main goal is role-based assistants: mathematician, teacher, best friend, boyfriend, girlfriend, etc. Right now the assistant instruction is a single generic developer prompt, and OpenAI tools are globally available from that one prompt. There is no persisted assistant profile selection per conversation and no persona taxonomy. That means role UX, role safety rules, model behavior, and entitlement rules are all currently implicit or absent. This is the first thing to fix, not a later polish item.
-
-### 2. Current plan enforcement is fragile
-
-The OpenAI route checks whether a plan is expired, but it does not appear to enforce feature entitlements, per-feature quotas, model access, role access, or monthly usage ceilings. The static plans config promises things like image/audio generation counts and unlimited capabilities, but I did not see a real entitlement engine behind those claims. Right now the pricing page is ahead of the implementation. That is how support debt breeds in the dark.
-
-### 3. Rate limiting is not production-grade
-
-The OpenAI route uses an in-memory sliding-window `Map` on the app server. That only works reliably on a single instance and resets on deploy/restart. In a multi-instance or serverless setup, it is fake protection. Good enough for dev, not for launch.
-
-### 4. Chat persistence is too thin for a SaaS product
-
-Tasks store full messages and a usage number, but there are no indexes shown for task retrieval patterns, no archive/delete semantics, no conversation metadata, no role metadata, no message status, no token/cost breakdown, and no audit trail for generated files. The sidebar literally advertises “History,” but the current code I reviewed does not show a proper history retrieval product surface.
-
-### 5. The admin surface is placeholder material
-
-The dashboard page is mostly lorem ipsum and a list of imagined management areas. That means there is currently no true operational UI for users, subscriptions, usage, incidents, or abuse handling. Do not pretend this exists yet. It does not.
-
-### 6. UI direction exists, but the product UX is still generic
-
-The landing page is a standard hero/plans/FAQ structure, and the signed-in experience is still a conventional chat shell with sidebar, intro, body, and input. There is some custom theme work and visual differentiation in tokens/styles, but the information architecture is still “normal chatbot with a pretty coat.” You said the main drive is to look different while staying functional. That vision is not yet expressed as a system.
-
-## The hard decisions you should make before more implementation
-
-You need these decisions locked before feature expansion:
-
-1. **Product mode**
-   Decide whether Cellesseon is:
-
-- one assistant with swappable roles, or
-- a collection of named assistants, or
-- a workspace where each conversation is bound to a role profile.
-
-My recommendation: **each conversation is bound to one assistant profile**, and assistant profiles are managed centrally. That gives you predictable prompting, safer boundaries, better UX, and cleaner analytics.
-
-2. **Role catalog policy**
-   Do not launch with “boyfriend/girlfriend/best friend” mixed casually into the same system as productivity roles unless you define moderation, tone limits, emotional dependency boundaries, and age gating. Relationship-style AI is not just “another prompt preset.” It is a policy and trust problem wearing a perfume bottle. This requires explicit product rules, not vibes.
-
-3. **Entitlement model**
-   Before polishing billing, define a capability matrix:
-
-- allowed models
-- max context/messages
-- file upload types and limits
-- image generation allowance
-- audio generation allowance
-- web/data tools
-- conversation history retention
-- number of saved assistant roles
-- admin/internal flags
-
-4. **Conversation data model**
-   Split “task” into:
-
-- `conversation`
-- `message`
-- `assistantProfile`
-- `usageLedger`
-- `asset`
-- `subscriptionSnapshot` or entitlement snapshot
-
-Right now `Task` is doing too much and describing too little.
+1. Do not treat current docs as authoritative over the code.
+2. Do not start UI cleanup before commercial rules and access boundaries are frozen.
+3. Do not make the existing authenticated OpenAI route public. Anonymous Lite must be isolated behind stricter policy.
+4. Do not sell Premium media promises before exact capabilities, cost limits, moderation, and storage flows are defined.
 
 ---
 
-# Recommended completion plan
+## 2. Target Product Freeze
 
-## Phase 0 — Product definition freeze
+These are the product rules that should be treated as the target state for implementation planning.
 
-**Objective:** remove ambiguity before more UI and backend sprawl.
+### 2.1 Commercial model
 
-**Must be true before implementation begins**
+| Tier                | Access             | Price | Model Policy                                                                         | Core Limits                                                                                                                       |
+| ------------------- | ------------------ | ----- | ------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
+| Anonymous Lite Demo | Public             | Free  | Cheapest verified OpenAI text model available at implementation time                 | Max 3 demo conversations, max 10 user prompts per conversation, max 3 media actions total, hard stop with upgrade/sign-up message |
+| Authenticated Lite  | Default on sign-up | Free  | Same cheapest verified text model as public Lite unless cost review proves otherwise | Same numeric limits as Lite Demo, persisted to account, no 3-day expiry                                                           |
+| Pro                 | Paid only          | 19    | `gpt-5-mini` if verified available in the account used by this app                   | Higher limits, paid-only access, stronger file/chat experience                                                                    |
+| Premium             | Paid only          | 39    | `gpt-5.2-pro` only if verified available and economically acceptable                 | Best model tier plus exact Premium extras frozen before checkout and copy changes                                                 |
 
-- You have a first release definition.
-- You know exactly which assistant roles are in v1.
-- You know which features belong to guest users, free users, and paid users.
-- You know what “different from normal chatbot” means in concrete UI behavior.
+### 2.2 Non-negotiable clarifications
+
+1. Model IDs must be verified in the actual OpenAI account before implementation starts. If `gpt-5-mini` or `gpt-5.2-pro` are unavailable, the commercial promise must be adjusted before code is changed.
+2. Anonymous Lite and authenticated Lite should share the same numeric limits, but not the same trust model. Anonymous Lite should be browser or device scoped and treated as disposable. Authenticated Lite should be account scoped and persisted.
+3. All personas can be exposed in Lite for testing only if relationship-style personas keep explicit dependency-avoidance and safety boundaries.
+4. Premium must not claim video generation until provider support, cost ceilings, moderation, storage, and UX handling are approved.
+
+### 2.3 Recommended final route map
+
+Use product semantics, not implementation history.
+
+| Route Group       | Target Routes                                                                                                  | Notes                                              |
+| ----------------- | -------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| Public            | `/`, `/pricing`, `/personas`, `/lite`, `/sign-in`, `/sign-up`                                                  | `/lite` becomes the explicit public demo surface   |
+| Authenticated App | `/app`, `/app/new`, `/app/c/[conversationId]`, `/app/library`, `/app/personas`, `/app/account`, `/app/billing` | Collapse current account semantics into app space  |
+| Admin             | `/admin`                                                                                                       | Prefer one clear admin namespace over `/dashboard` |
+
+Routes to retire after migration:
+
+- `/plans`
+- `/profile`
+- `/dashboard`
+
+---
+
+## 3. Planning Principles
+
+This sequence is mandatory because it protects the team from rework:
+
+1. Freeze plan rules before billing or pricing updates.
+2. Freeze route and auth boundaries before building public Lite.
+3. Freeze entitlement and usage accounting before model expansion.
+4. Freeze Premium feature claims before changing copy or checkout metadata.
+5. Harden the data model before adding heavier media features.
+
+---
+
+## 4. Milestone Plan
+
+## Milestone 0 — Product And Commerce Freeze
+
+**Objective**
+
+Lock the exact rules for Lite, Pro, and Premium so implementation stops chasing moving targets.
 
 **Assumptions**
 
-- v1 should stay single-tenant.
-- OpenAI remains the only model provider for now.
-- MongoDB remains the primary app database.
+- Stripe remains the billing provider.
+- OpenAI remains the only AI provider for the current delivery plan.
+- Lite must remain free with no expiry.
 
 **Blockers**
 
-- No assistant role taxonomy.
-- No entitlement matrix.
-- No route-level product spec.
+- Premium extras are not frozen.
+- Target model IDs are not verified.
+- Public Lite trust model is not written down.
 
 **Dependencies**
 
-- none
+- None.
 
 **Risks**
 
-- Building UI before behavior is frozen.
-- Adding role types that trigger safety or policy complexity without product rules.
+- Pricing and entitlement drift across UI, webhook metadata, user defaults, and enforcement.
+- Selling Premium features that do not exist.
+- Shipping the wrong model-cost structure.
 
 **Recommended order**
 
-1. Define v1 assistant roles.
-2. Define subscription/entitlement matrix.
-3. Define conversation lifecycle.
-4. Define guest vs signed-in vs paid route experience.
-5. Define what gets deferred.
+1. Freeze the final tier matrix.
+2. Verify model availability and approximate cost envelopes.
+3. Freeze the three Premium extras by exact user-facing behavior.
+4. Define anonymous Lite versus authenticated Lite scope.
+5. Define hard stop messaging for all limit exhaustion cases.
 
 **Success criteria**
 
-- One written product spec covering role catalog, route map, entitlements, conversation model, and moderation boundaries.
+- One canonical entitlement matrix exists for all tiers.
+- Lite has no time-based expiry in the approved product rules.
+- Pro and Premium prices are locked at 19 and 39.
+- Premium feature claims are implementation-ready, not aspirational.
 
 **What not to do yet**
 
-- Do not add more Stripe polish.
-- Do not redesign the whole UI.
-- Do not add new AI tools.
+- Do not update Stripe product metadata.
+- Do not update pricing copy everywhere.
+- Do not start public Lite coding.
 
-## Phase 1 — Core architecture correction
+---
 
-**Objective:** replace generic chat/task assumptions with a durable product model.
+## Milestone 1 — Access And Route Boundary Redesign
 
-**Build first**
+**Objective**
 
-- `assistant_profiles` concept
-- `conversations` model
-- `messages` model or embedded structure with metadata
-- `usage_ledger`
-- `assets`
-- `entitlements`
+Make route intent obvious and make auth coverage explicit.
 
-**Recommended schema direction**
+**Assumptions**
 
-- `AssistantProfile`: id, slug, label, description, category, systemPrompt, safetyPolicyRef, capabilities, visibility, sortOrder, active
-- `Conversation`: userId, assistantProfileId, title, status, lastMessageAt, archivedAt
-- `Message`: conversationId, role, contentParts, model, tokensIn, tokensOut, toolCalls, errorState, createdAt
-- `UsageLedger`: userId, conversationId, featureType, model, units, costEstimate, periodKey
-- `Asset`: userId, conversationId, kind, storageKey, mimeType, size, createdAt
+- Marketing and product should not share the same route semantics.
+- Private areas should sit under one protected namespace.
 
 **Blockers**
 
-- Need v1 assistant role definitions first.
+- Final route map not approved.
 
 **Dependencies**
 
-- Phase 0 completed.
+- Milestone 0.
 
 **Risks**
 
-- Migration pain from existing `Task` documents.
-- Overengineering. Keep it small.
+- Broken navigation and redirect loops.
+- Partial auth protection after route moves.
+- Confusion between public Lite and authenticated app flows.
+
+**Recommended order**
+
+1. Approve the target route map.
+2. Move account routes under `/app` semantics.
+3. Move admin to `/admin` semantics.
+4. Update proxy rules so protected coverage is simple: `/app(.*)` and `/admin(.*)`.
+5. Replace public CTAs that currently point to protected routes without context.
 
 **Success criteria**
 
-- Every conversation is bound to an assistant profile.
-- Usage and entitlement checks no longer depend on vague plan text.
-- Role selection is persisted.
+- Public routes are public by design.
+- Authenticated routes are protected by one obvious rule set.
+- No user-facing navigation depends on legacy route names.
 
 **What not to do yet**
 
-- Do not build role marketplace/admin CRUD beyond a minimal seed system.
+- Do not refactor every page component during the route move.
+- Do not widen auth exemptions on existing API routes.
 
-## Phase 2 — Entitlements and billing correctness
+---
 
-**Objective:** make plans real.
+## Milestone 2 — Entitlement Engine Rewrite
 
-**Build**
+**Objective**
 
-- Central entitlement resolver: `resolveEntitlements(user, subscription, periodUsage)`
-- Stripe product/price mapping by config, not hardcoded plan assumptions
-- Webhook event ledger for idempotency and replay
-- Billing state transitions: active, trialing, grace, expired, canceled
-- Usage caps by feature, not just request count
+Create one source of truth for plan access, limits, persona eligibility, and model policy.
 
-**Current blocker**
+**Assumptions**
 
-- Static plan descriptions currently overpromise more than the backend proves. ([GitHub][13])
+- Entitlements should be resolved server-side.
+- Anonymous Lite and authenticated Lite need different identity scopes but the same numeric cap policy.
+
+**Blockers**
+
+- No canonical matrix currently enforced beyond partial persona and media rules.
 
 **Dependencies**
 
-- assistant capabilities defined
-- usage ledger exists
+- Milestone 0.
 
 **Risks**
 
-- Selling features you cannot enforce
-- support cases around expired plans and upgrades/downgrades
-- quota disputes without audit trail
+- Plan text and backend behavior diverge again.
+- Upgrade flow appears to work while enforcement stays wrong.
+- Abuse control remains weak for anonymous users.
+
+**Recommended order**
+
+1. Define a formal entitlement object for actor type, plan, personas, models, message caps, conversation caps, media caps, and persistence rights.
+2. Split anonymous Lite resolution from authenticated account resolution.
+3. Remove time-based Lite expiration logic from defaults and checks.
+4. Ensure every chat and media operation reads the same entitlement resolver.
+5. Define upgrade prompts and blocked-state payloads centrally.
 
 **Success criteria**
 
-- Every feature call checks entitlement centrally.
-- Stripe webhook updates subscription state idempotently.
-- User-visible plan data matches enforced backend logic.
+- Every product limit is resolved in one server-side policy layer.
+- Lite no longer expires by date.
+- Persona access, model access, and quota checks are all centralized.
 
 **What not to do yet**
 
-- Do not add more plan tiers.
-- Do not add yearly promos or coupon complexity.
+- Do not change checkout logic until entitlements are final.
+- Do not hardcode limits in UI components.
 
-## Phase 3 — Chat engine hardening
+---
 
-**Objective:** make the assistant reliable, governable, and cheaper.
+## Milestone 3 — Conversation And Usage Data Correction
 
-**Build**
+**Objective**
 
-- Role-specific prompt assembly pipeline
-- model routing policy by role and entitlement
-- structured outputs where titles/metadata/tool args matter
-- retry/error policy
-- response streaming
-- server-side message validation
-- durable rate limiting with Redis/Upstash or equivalent
-- cost logging per request
+Make conversation persistence, quota tracking, and analytics durable enough for a real SaaS.
 
-**Current issues**
+**Assumptions**
 
-- generic prompt
-- in-memory rate limit
-- no durable cost governance
-- no clear per-role safety logic ([GitHub][8])
+- The current Task document can remain transitional, but it should not be the long-term product boundary.
+
+**Blockers**
+
+- Message growth and media storage are still embedded in conversation documents.
 
 **Dependencies**
 
-- assistant profiles
-- entitlements
-- usage ledger
+- Milestone 2.
 
 **Risks**
 
-- runaway costs
-- inconsistent role behavior
-- abuse via expensive tools
+- Anonymous and Lite quotas become hard to enforce cleanly.
+- Large conversations and media inflate document size.
+- Cost and abuse analysis remain weak.
+
+**Recommended order**
+
+1. Define the transitional or final conversation schema strategy.
+2. Add explicit counters for user prompts per conversation, conversations created per period, and media actions.
+3. Separate usage accounting from UI history retrieval.
+4. Plan how anonymous Lite sessions are tracked: cookie-backed session key, signed token, or similar bounded mechanism.
+5. Define retention rules for anonymous Lite conversations versus account conversations.
 
 **Success criteria**
 
-- predictable behavior per role
-- per-request token and cost visibility
-- rate limiting works across instances
-- user receives clear errors and quota messages
+- The system can enforce `3 conversations max` and `10 user prompts per conversation` without UI-only checks.
+- Usage is attributable to either anonymous session or authenticated user.
+- History and quota tracking no longer depend on parsing message arrays ad hoc.
 
 **What not to do yet**
 
-- Do not add extra model providers.
-- Do not add tool sprawl.
+- Do not redesign the entire database if a staged migration is faster and safe.
+- Do not add advanced analytics before usage accounting is trustworthy.
 
-## Phase 4 — UX and route architecture
+---
 
-**Objective:** turn the app into a product, not a pile of pages.
+## Milestone 4 — Public Lite Architecture
 
-### Recommended route structure
+**Objective**
 
-**Public**
+Ship a real public Lite experience without weakening the authenticated app.
 
-- `/` landing page
-- `/pricing`
-- `/roles`
-- `/about` or `/how-it-works`
-- `/sign-in`, `/sign-up`
+**Assumptions**
 
-**App**
+- Anonymous usage is intentionally limited and disposable.
+- Public Lite should act as a funnel, not as an unbounded free product.
 
-- `/app` assistant home / conversation launcher
-- `/app/new` start by selecting role
-- `/app/c/[conversationId]`
-- `/app/library` saved conversations
-- `/app/roles` browse/select roles
-- `/app/settings`
-- `/app/billing`
+**Blockers**
 
-**Admin**
-
-- `/admin`
-- `/admin/users`
-- `/admin/subscriptions`
-- `/admin/usage`
-- `/admin/assistant-profiles`
-- `/admin/events`
-
-Move authenticated app usage off `/`. Root should sell the product. Logged-in users can still be redirected from `/` to `/app` when appropriate, but the architecture should stop mixing “marketing homepage” and “main app shell” as the same semantic route.
-
-### Recommended user flow
-
-**Guest**
-
-- lands on branded story-driven home
-- sees role categories and example outcomes
-- can inspect pricing and capabilities
-- can try limited demo interactions or preview conversations
-- signs up to continue
-
-**Signed-in free/trial user**
-
-- enters role selection first
-- starts first conversation from a role card, not blank chat
-- sees capability hints and remaining limits
-- can access history and billing clearly
-
-**Paid user**
-
-- gets saved role favorites
-- full history
-- richer upload/tool capabilities
-- priority models or faster mode if applicable
-
-### UI/UX direction to differentiate
-
-Do not try to be “different” by vandalizing usability. The clever graveyard is full of apps that looked unique and felt annoying.
-
-A better differentiator:
-
-- make role selection the primary interaction, not a small dropdown
-- use “conversation studios” or “modes” instead of a bare chat list
-- show assistant identity, specialties, boundaries, and sample prompts before entering chat
-- make each role visually distinct through layout motifs, not random decoration
-- use contextual side panels for reasoning aids, file context, generated assets, citations, or steps
-- allow a “result canvas” beside the dialogue for roles like teacher, strategist, writer, mathematician
-
-This gives you a distinctive interface without breaking the universal truth that humans still need somewhere obvious to type and read.
-
-**Success criteria**
-
-- app routes clearly separate marketing, app, settings, and admin
-- first-run user flow starts with role selection
-- the chat UI is role-led, not generic-shell-first
-
-**What not to do yet**
-
-- Do not redesign every component before route architecture is settled.
-
-## Phase 5 — Operational readiness
-
-**Objective:** make it launchable.
-
-**Build**
-
-- structured logging
-- request correlation IDs
-- error reporting
-- usage dashboards
-- admin views for failed webhooks and high-cost users
-- environment validation on boot
-- secrets governance
-- backup and restore checklist
-- incident runbooks
-- moderation and abuse workflow
-
-**Current reality**
-
-- There is some validation/test discipline in the repo, but not enough visible operational plumbing from the reviewed code to call it hardened.
+- No anonymous chat endpoint exists.
+- Current main CTA sends users into a protected area.
 
 **Dependencies**
 
-- stable data model
-- stable entitlement logic
+- Milestones 1, 2, and 3.
 
 **Risks**
 
-- silent failures
-- support blindness
-- billing disputes
-- production debugging misery
+- Abuse if the authenticated AI endpoint is simply made public.
+- Confusing overlap between demo conversations and real account conversations.
+- Cost leakage from anonymous traffic.
+
+**Recommended order**
+
+1. Create a dedicated public Lite chat path, preferably `/lite`.
+2. Implement a dedicated Lite request boundary: separate endpoint or explicit actor branch with stricter rate and quota policy.
+3. Enforce the public Lite caps server-side.
+4. Provide clear limit-reached responses that end the conversation and route users toward sign-up or upgrade.
+5. Make all personas selectable in Lite only within the frozen safety boundaries.
 
 **Success criteria**
 
-- you can answer: who used what, when, at what cost, under which plan, and why it failed.
+- Anonymous users can start and use Lite without auth.
+- Anonymous users cannot exceed 3 demo conversations.
+- No conversation accepts more than 10 user prompts.
+- Limit exhaustion is communicated clearly and the conversation stops.
 
 **What not to do yet**
 
-- Do not chase scale theatrics before you have observability.
+- Do not reuse authenticated history UI for anonymous Lite.
+- Do not promise persistence for public Lite conversations.
 
 ---
 
-# Priority backlog, ranked by risk reduction
+## Milestone 5 — Signed-In Lite And Billing Alignment
 
-## P0 — Do immediately
+**Objective**
 
-- Define v1 assistant roles and ban vague role creep.
-- Create assistant profile domain model.
-- Replace `Task` as the core product concept with conversation-centered modeling.
-- Build entitlement resolver and connect it to OpenAI/file/image/audio actions.
-- Move rate limiting to shared infrastructure.
-- Redesign route architecture so `/` is marketing and `/app` is product.
-- Kill placeholder admin page and replace with a minimal real admin surface.
+Make newly created accounts land on permanent Lite with the same core caps and a clean upgrade path.
 
-## P1 — Next
+**Assumptions**
 
-- Conversation history retrieval, archive, rename, delete.
-- Streaming responses.
-- Better upload asset lifecycle and message attachments.
-- Usage/cost tracking per conversation and per feature.
-- Real subscription state machine.
+- New users should not receive expiring trial logic.
+- Paid plans remain the only route to Pro and Premium.
 
-## P2 — Later
+**Blockers**
 
-- More assistant roles.
-- More media tools.
-- team/business features
-- advanced analytics
-- multi-model/provider support
+- User defaults and webhook logic still reflect the old commercial model.
 
----
+**Dependencies**
 
-# Specific implementation notes from the current code
+- Milestones 0 and 2.
 
-The `Task` schema should gain indexes immediately if it remains in use temporarily, at least on `userId`, `updatedAt`, and maybe `(userId, updatedAt desc)`. Right now I do not see explicit index strategy in the reviewed model.
+**Risks**
 
-The transaction schema uses `userId` as an ObjectId ref, while webhook metadata passes a plain user id value and also stores `clerkId`. That mismatch deserves review so you do not end up with sloppy joins and inconsistent semantics.
+- Users receive the wrong plan on creation.
+- Upgrade state does not match Stripe checkout metadata.
+- Old 3-day assumptions remain in hidden UI or validation paths.
 
-The OpenAI prompt strategy is too centralized and too generic for role-based assistants. Split it into:
+**Recommended order**
 
-- platform safety preamble
-- role prompt
-- feature/tool policy
-- conversation state/context builder
+1. Change account creation defaults to permanent Lite.
+2. Remove all date-expiration checks that only exist for Lite trial logic.
+3. Update checkout metadata, price mapping, plan descriptions, and renewal/reset behavior for Pro and Premium.
+4. Ensure upgrade, downgrade, and billing history semantics still make sense after Lite stops expiring.
+5. Sweep all UI copy and FAQs only after backend rules are correct.
 
-The sidebar advertises history/new task, but the app should evolve toward conversations grouped by role, recency, and pinned items, not just “tasks.” That wording is already fighting your future product.
+**Success criteria**
 
-The admin route protection is present, but there is no real admin product behind it yet. That is fine, but stop counting it as a feature until it exists. ([GitHub][16])
+- Every new account starts on Lite with no 3-day expiry.
+- Pro and Premium are paid-only and priced at 19 and 39.
+- Billing webhooks and user plan state match the new commercial rules.
+
+**What not to do yet**
+
+- Do not change marketing text first.
+- Do not keep “trial” language anywhere once defaults change.
 
 ---
 
-# Recommended v1 release definition
+## Milestone 6 — AI Control Plane And Model Routing
 
-A sane v1 would be:
+**Objective**
 
-- 6 to 8 predefined assistant roles only
-- text chat first
-- image upload support
-- image generation only for paid tiers
-- no audio generation in v1 unless it is already reliable end-to-end
-- guest marketing site with role showcase
-- authenticated `/app` experience
-- real conversation history
-- billing + entitlements that actually match product claims
-- minimal admin for users, subscriptions, usage, and assistant profile management
+Replace hardcoded global model choices with plan-aware routing, cost control, and explicit capability checks.
 
-Not in v1:
+**Assumptions**
 
-- relationship-role sprawl without policy work
-- advanced team features
-- multi-provider LLM routing
-- overly custom “artsy” chat interactions that reduce clarity
-- fake admin sections
+- Pro and Premium need distinct model policy.
+- Lite must remain cost-governed.
 
-## Bottom line
+**Blockers**
 
-You do not need more features right now. You need product definition, assistant-role architecture, entitlement correctness, and a route/UX model that reflects the actual product. Build those first and the rest gets easier. Ignore them and you will spend months repainting wet cement.
+- Current chat, title, image, and audio model selection is global.
 
-The next best move is to turn this into a concrete execution document with epics, tickets, acceptance criteria, and dependency order.
+**Dependencies**
+
+- Milestones 0, 2, and 5.
+
+**Risks**
+
+- Cost spikes from wrong routing.
+- Model promises cannot be trusted.
+- Premium becomes an expensive label without differentiated behavior.
+
+**Recommended order**
+
+1. Define model routing policy by actor type and plan.
+2. Verify exact OpenAI model IDs before coding.
+3. Route Lite to the cheapest verified text path.
+4. Route Pro to `gpt-5-mini` if verified.
+5. Route Premium to `gpt-5.2-pro` only if verified and affordable.
+6. Apply the same policy to title generation, media generation, and any tool calls where needed.
+7. Add per-request cost and usage logging before broad rollout.
+
+**Success criteria**
+
+- Model selection is policy-driven, not scattered constants.
+- Lite, Pro, and Premium behavior differs exactly as defined.
+- Cost visibility exists before traffic scale increases.
+
+**What not to do yet**
+
+- Do not add a second AI provider.
+- Do not add streaming before routing and cost accounting are correct.
 
 ---
 
-## Post-audit resolution
+## Milestone 7 — Premium Feature Definition And Media Pipeline
 
-The architect recommendations above have been reviewed, validated, and acted upon. Key outcomes:
+**Objective**
 
-1. **Product definition (Phase 0):** Frozen. 9 personas defined (Strategist, Teacher, Developer, Creator, Wellness, Analyst, Best Friend, Boyfriend, Girlfriend). Entitlement matrix locked. Route architecture settled.
-2. **Core architecture (Phase 1):** Implemented. Persona constants, Task model with `assistantRoleId` (rename to `personaId` in Phase 7), `resolveEntitlements()`, persona-aware system prompts.
-3. **Entitlements and billing (Phase 2):** Implemented. Central entitlement resolver, Stripe webhook verification, per-plan usage counters.
-4. **Chat engine (Phase 3):** Implemented. Per-persona prompt assembly, tool routing by capability, in-memory rate limiting (persistent rate limiter deferred to Phase 12).
-5. **UX and routes (Phase 4):** Implemented. `/` is marketing, `/app` is product. Persona-led chat with `ChatRolePicker` (rename to `ChatPersonaPicker` in Phase 7).
-6. **Operational readiness (Phase 5):** Implemented. Proxy-based route protection, webhook signature verification, file validation, 31 test suites with 139 tests, 2 e2e specs.
-7. **Terminology rename (Phase 7):** Current priority — "assistant role" → "persona" across all source files. See `TODO.md` for the 26-task implementation plan.
+Turn Premium extras into real, enforceable features instead of vague plan bullets.
 
-**Remaining gaps from the original audit** that are still tracked:
+**Assumptions**
 
-- In-memory rate limiting → `TODO.md` Phase 12 (persistent rate limiter)
-- Cost/token tracking per request → `TODO.md` Phase 12
-- Streaming responses → `TODO.md` Phase 12
-- Admin surface → deferred beyond v1
-- Subscription state machine → `TODO.md` Phase 12
+- Premium should include three exact extras.
 
-All actionable work derived from this plan is now governed by `TODO.md`. All product specifications are in `SPEC.md`.
+**Blockers**
+
+- “Quality media generation” is not specific enough to ship.
+- Video is not currently implemented.
+
+**Dependencies**
+
+- Milestones 0, 2, 3, and 6.
+
+**Risks**
+
+- Premium description overpromises.
+- Media storage and moderation costs are underestimated.
+- UX becomes inconsistent across text, image, audio, and future video outputs.
+
+**Recommended order**
+
+1. Freeze the three Premium extras by exact acceptance criteria.
+2. Define allowed media types, size limits, quality settings, and monthly caps.
+3. Define storage lifecycle and cleanup rules for generated assets.
+4. Add moderation and abuse protections for richer media capabilities.
+5. Update plan descriptions only when each Premium extra has an approved implementation path.
+
+**Success criteria**
+
+- Premium extras are named, scoped, and enforceable.
+- No media capability exists without cost and retention rules.
+- Premium copy maps to actual backend capability.
+
+**What not to do yet**
+
+- Do not promise video generation if it is still undefined.
+- Do not mark features “unlimited” without explicit cost approval.
+
+---
+
+## Milestone 8 — Distinctive Product UX
+
+**Objective**
+
+Deliver a chat product that looks and behaves differently from standard chatbot clones without harming usability.
+
+**Assumptions**
+
+- Persona identity should be a first-class UI concept.
+- The interface should still remain legible, fast, and practical.
+
+**Blockers**
+
+- Final route structure and product rules must be stable first.
+
+**Dependencies**
+
+- Milestones 1 through 7.
+
+**Risks**
+
+- Visual novelty without product value.
+- Rework if UI is built before Lite and paid behaviors are stable.
+- Accessibility regressions from overly experimental layout choices.
+
+**Recommended order**
+
+1. Define the interaction thesis: what makes Cellesseon feel different.
+2. Make persona selection the entry point, not a secondary control.
+3. Differentiate chat by adding a side result canvas, persona context panel, or mode-specific workspace where useful.
+4. Surface remaining limits, current plan, and upgrade prompts inside the experience without turning the UI into billing noise.
+5. Only then execute the visual redesign system-wide.
+
+**Success criteria**
+
+- The chat experience is recognizably not a generic left-sidebar chatbot clone.
+- Persona identity changes both presentation and workflow, not only the prompt.
+- Limit states and upgrade paths are visible without being intrusive.
+
+**What not to do yet**
+
+- Do not redesign everything before the information architecture is final.
+- Do not chase novelty that makes typing, reading, or history management worse.
+
+---
+
+## Milestone 9 — Operational Hardening And Release Gate
+
+**Objective**
+
+Make the product safe to launch and support.
+
+**Assumptions**
+
+- Launch quality depends more on correctness and visibility than on feature count.
+
+**Blockers**
+
+- Persistent rate limiting, cost visibility, anonymous abuse controls, and operational dashboards are still incomplete.
+
+**Dependencies**
+
+- Milestones 2 through 8.
+
+**Risks**
+
+- Anonymous abuse.
+- Silent billing or webhook failures.
+- High AI cost without traceability.
+- Support load from unclear plan behavior.
+
+**Recommended order**
+
+1. Replace in-memory rate limiting with shared infrastructure.
+2. Add structured request and usage logging.
+3. Add visibility for quota exhaustion, webhook failures, and model cost spikes.
+4. Add explicit tests for anonymous Lite, signed-in Lite defaults, paid upgrade paths, and auth boundaries.
+5. Run the full validation gate before release.
+
+**Success criteria**
+
+- The team can answer who used what, under which plan, and why it was blocked or failed.
+- Anonymous Lite abuse is rate-limited and observable.
+- Full validation passes: formatting, lint, type-check, unit tests, e2e tests, and production build.
+
+**What not to do yet**
+
+- Do not launch public Lite on top of in-memory-only abuse control.
+- Do not add more personas before the first public release is stable.
+
+---
+
+## 5. Risk Register
+
+| Risk                         | Severity | Why It Is Dangerous                                         | Mitigation                                                    |
+| ---------------------------- | -------- | ----------------------------------------------------------- | ------------------------------------------------------------- |
+| Model availability mismatch  | High     | Pricing and plan promises fail at runtime                   | Verify exact model IDs before implementation                  |
+| Public Lite abuse            | High     | Anonymous traffic can burn cost fast                        | Separate Lite boundary, shared rate limit, hard quotas        |
+| Plan drift across code paths | High     | Users receive wrong access or pricing                       | Central entitlement resolver and plan mapping                 |
+| Embedded message growth      | High     | Conversation documents will bloat over time                 | Add usage counters and staged data correction                 |
+| Premium overpromise          | High     | Trust and billing disputes                                  | Freeze exact extras before copy and checkout updates          |
+| Route confusion              | Medium   | Users and developers both hit wrong surfaces                | Normalize around public, app, and admin namespaces            |
+| Relationship-persona safety  | Medium   | Companion personas can create trust and moderation problems | Keep explicit dependency-avoidance guardrails and review copy |
+
+---
+
+## 6. What To Defer Safely
+
+These are not completion blockers for the requested product shape:
+
+1. Multi-provider LLM routing.
+2. Team or workspace features.
+3. Streaming responses, if cost control and limits are not ready yet.
+4. Rich admin CRUD beyond operational stats and failure visibility.
+5. Advanced analytics beyond what is needed for entitlements, abuse control, and billing support.
+
+---
+
+## 7. Recommended Delivery Order
+
+If the goal is to finish the SaaS with the least avoidable rework, the order should be:
+
+1. Milestone 0 — Product And Commerce Freeze
+2. Milestone 1 — Access And Route Boundary Redesign
+3. Milestone 2 — Entitlement Engine Rewrite
+4. Milestone 3 — Conversation And Usage Data Correction
+5. Milestone 4 — Public Lite Architecture
+6. Milestone 5 — Signed-In Lite And Billing Alignment
+7. Milestone 6 — AI Control Plane And Model Routing
+8. Milestone 7 — Premium Feature Definition And Media Pipeline
+9. Milestone 8 — Distinctive Product UX
+10. Milestone 9 — Operational Hardening And Release Gate
+
+This order is strict where risk is irreversible. Billing, routing, and public Lite should not move ahead of entitlement and access design.
+
+---
+
+## 8. Bottom Line
+
+Cellesseon is not blocked by lack of features. It is blocked by policy drift, unclear access boundaries, and incomplete entitlement architecture.
+
+The app already has usable persona foundations, a functioning chat stack, auth, billing primitives, and conversation history scaffolding. What it does not have yet is a trustworthy product contract across public Lite, signed-in Lite, Pro, Premium, routes, models, and media claims.
+
+Finish that contract first. Everything else becomes cheaper after that.
