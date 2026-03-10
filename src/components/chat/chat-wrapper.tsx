@@ -55,13 +55,6 @@ export default function ChatWrapper({
     setStartMsg("");
   }
 
-  function handleResetConversation() {
-    setTask([]);
-    setDbTaskId(null);
-    setStartMsg("");
-    setAlert(null);
-  }
-
   const sendMessage = async (prompt: Message) => {
     if (!prompt) return;
     setIsLoading(true);
@@ -142,8 +135,6 @@ export default function ChatWrapper({
       {alert && <AlertMessage message={alert} />}
 
       <ChatHeader
-        setNewTask={handleResetConversation}
-        isInUse={isLoading}
         personaLabel={selectedPersona.label}
         messageCount={task.length}
       />
@@ -158,7 +149,7 @@ export default function ChatWrapper({
       <section
         id="ChatWrapperContent"
         className={classNames(
-          "cellesseon-scrollbar relative z-10 flex w-full flex-1 flex-col overflow-y-auto pb-4",
+          "droplet-scrollbar relative z-10 flex w-full flex-1 flex-col overflow-y-auto pb-4",
           isNewTask && "items-center justify-center px-4",
         )}
       >

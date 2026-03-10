@@ -1,5 +1,5 @@
 import { ClerkProvider } from "@clerk/nextjs";
-import CellesseonTheme from "@/components/layout/cellesseon-theme";
+import DropletTheme from "@/components/layout/droplet-theme";
 import type { Metadata, Viewport } from "next";
 import { Albert_Sans, Dosis } from "next/font/google";
 import Script from "next/script";
@@ -8,8 +8,8 @@ import "@/app/globals.css";
 import MainWrapper from "@/components/layout/main-wrapper";
 
 export const metadata: Metadata = {
-  title: "Cellesseon",
-  description: "Cellesseon Smart Assistent",
+  title: "Droplet",
+  description: "Droplet Smart Assistant",
 };
 
 export const viewport: Viewport = {
@@ -61,23 +61,24 @@ export default function RootLayout({
             {`
               (() => {
                 try {
-                  const storageKey = "cellesseon-theme-mode";
-                  const savedMode = localStorage.getItem(storageKey) || "system";
+                  const storageKey = "droplet-theme-mode";
+                  const legacyStorageKey = "cellesseon-theme-mode";
+                  const savedMode = localStorage.getItem(storageKey) || localStorage.getItem(legacyStorageKey) || "system";
                   const mode = savedMode === "light" || savedMode === "dark" ? savedMode : "system";
                   const resolvedMode = mode === "system"
                     ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
                     : mode;
-                  document.documentElement.setAttribute("data-cellesseon-theme", resolvedMode);
+                  document.documentElement.setAttribute("data-droplet-theme", resolvedMode);
                 } catch {
-                  document.documentElement.setAttribute("data-cellesseon-theme", "light");
+                  document.documentElement.setAttribute("data-droplet-theme", "light");
                 }
               })();
             `}
           </Script>
 
-          <CellesseonTheme>
+          <DropletTheme>
             <MainWrapper>{children}</MainWrapper>
-          </CellesseonTheme>
+          </DropletTheme>
         </ClerkProvider>
       </body>
     </html>

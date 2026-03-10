@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
 import { fireEvent, render, screen } from "@testing-library/react";
-import CellesseonTheme from "@/components/layout/cellesseon-theme";
+import DropletTheme from "@/components/layout/droplet-theme";
 import useThemeMode from "@/lib/hooks/use-theme-mode";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -19,14 +19,14 @@ function ThemeProbe() {
   );
 }
 
-describe("CellesseonTheme", () => {
+describe("DropletTheme", () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
   beforeEach(() => {
     localStorage.clear();
-    document.documentElement.removeAttribute("data-cellesseon-theme");
+    document.documentElement.removeAttribute("data-droplet-theme");
 
     Object.defineProperty(window, "matchMedia", {
       writable: true,
@@ -45,30 +45,30 @@ describe("CellesseonTheme", () => {
 
   it("defaults to system mode and resolves to light mode", async () => {
     render(
-      <CellesseonTheme>
+      <DropletTheme>
         <ThemeProbe />
-      </CellesseonTheme>,
+      </DropletTheme>,
     );
 
     expect((await screen.findByTestId("mode")).textContent).toBe("system");
     expect((await screen.findByTestId("resolved-mode")).textContent).toBe(
       "light",
     );
-    expect(document.documentElement.dataset.cellesseonTheme).toBe("light");
+    expect(document.documentElement.dataset.dropletTheme).toBe("light");
   });
 
   it("persists selected mode and updates html dataset", async () => {
     render(
-      <CellesseonTheme>
+      <DropletTheme>
         <ThemeProbe />
-      </CellesseonTheme>,
+      </DropletTheme>,
     );
 
     fireEvent.click(await screen.findByRole("button", { name: "Set dark" }));
 
     expect((await screen.findByTestId("mode")).textContent).toBe("dark");
-    expect(localStorage.getItem("cellesseon-theme-mode")).toBe("dark");
-    expect(document.documentElement.dataset.cellesseonTheme).toBe("dark");
+    expect(localStorage.getItem("droplet-theme-mode")).toBe("dark");
+    expect(document.documentElement.dataset.dropletTheme).toBe("dark");
   });
 
   it("keeps working when browser storage access is blocked", async () => {
@@ -84,16 +84,16 @@ describe("CellesseonTheme", () => {
       });
 
     render(
-      <CellesseonTheme>
+      <DropletTheme>
         <ThemeProbe />
-      </CellesseonTheme>,
+      </DropletTheme>,
     );
 
     fireEvent.click(await screen.findByRole("button", { name: "Set dark" }));
 
     expect((await screen.findByTestId("mode")).textContent).toBe("dark");
-    expect(document.documentElement.dataset.cellesseonTheme).toBe("dark");
-    expect(getItemSpy).toHaveBeenCalledWith("cellesseon-theme-mode");
-    expect(setItemSpy).toHaveBeenCalledWith("cellesseon-theme-mode", "dark");
+    expect(document.documentElement.dataset.dropletTheme).toBe("dark");
+    expect(getItemSpy).toHaveBeenCalledWith("droplet-theme-mode");
+    expect(setItemSpy).toHaveBeenCalledWith("droplet-theme-mode", "dark");
   });
 });

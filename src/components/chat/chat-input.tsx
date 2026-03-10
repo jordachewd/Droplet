@@ -147,7 +147,7 @@ export default function ChatInput({
             name="chatInput"
             value={prompt}
             disabled={loading}
-            placeholder="Ask Cellesseon..."
+            placeholder="Ask Droplet..."
             onChange={handlePromptChange}
             rows={2}
             className={textareaClass}

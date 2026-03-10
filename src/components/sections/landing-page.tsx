@@ -29,12 +29,14 @@ export default function LandingPage() {
         <div className="mx-auto mt-12 flex max-w-screen-2xl flex-col items-center justify-between lg:mt-0 lg:flex-row lg:gap-5">
           <div className="flex w-full flex-col items-center gap-12 text-center lg:w-1/2 lg:items-start lg:text-left">
             <h1 className="heading-2 leading-tight">
-              Simplify tasks and boost productivity
+              A smarter way to chat, create, and get things done.
             </h1>
 
             <p className="heading-6 max-w-2xl">
-              Spark creativity, organize plans, and learn something new every
-              day
+              Unlock all personas across text conversations, image, and audio
+              generation.
+              <br />
+              Upgrade when you want higher limits and Premium video generation.
             </p>
 
             <Link
@@ -47,10 +49,10 @@ export default function LandingPage() {
 
           <div className={heroImageWrapperClass}>
             <Image
-              src="/images/lp-hero-image.png"
+              src="/images/droplet-hero-860x860.png"
               alt="hero"
-              width={700}
-              height={700}
+              width={860}
+              height={860}
               priority
               className="z-10"
             />

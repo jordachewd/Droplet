@@ -1,14 +1,14 @@
-﻿# Cellesseon — Application Specification
+﻿# Droplet — Application Specification
 
-> Canonical product and system specification for the Cellesseon AI assistant SaaS.
-> This document is governed by **CellesseonPM2** and must reflect approved direction only.
+> Canonical product and system specification for the Droplet AI assistant SaaS.
+> This document is governed by **Droplet-PM** and must reflect approved direction only.
 > Last updated: 2026-03-10
 
 ---
 
 ## 1. Product Overview
 
-Cellesseon is an AI assistant SaaS built on OpenAI models.
+Droplet is an AI assistant SaaS built on OpenAI models.
 Users **must create an account** to use the app — there is no anonymous/guest chat access.
 Authenticated users interact with an AI assistant through predefined **personas** that shape conversation tone and capabilities.
 Each conversation is bound to one persona. Personas control system prompt, tool availability, and behavioral boundaries.
@@ -495,13 +495,13 @@ Server-side streaming via OpenAI SDK. Client renders partial responses increment
 - **`/about`**: How app works. Stacked sections with text + image.
 - **`/plans`**: Plan cards (public pricing).
 - **`/faqs`**: FAQ accordion.
-- **`/privacy`**, **`/cookies`**, **`/terms`**: Real legal content, adapted for Cellesseon.
+- **`/privacy`**, **`/cookies`**, **`/terms`**: Real legal content, adapted for Droplet.
 
 ### Design System
 
 - Tailwind CSS v4.2 with custom design tokens
 - Custom fonts: Dosis + Albert Sans
-- Dark/light themes via `data-cellesseon-theme` attribute
+- Dark/light themes via `data-Droplet-theme` attribute
 - Bootstrap Icons
 
 ---

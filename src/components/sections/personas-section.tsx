@@ -13,7 +13,7 @@ export default function PersonasSection({
     <section className="PersonasSection mx-auto flex w-full max-w-6xl flex-col gap-6 p-4">
       <PageHead
         title={isAppMode ? "AI Personas" : "Choose Your AI Persona"}
-        subtitle="Explore the Cellesseon persona catalog. Each persona shapes the assistant's tone, guidance, and tool availability."
+        subtitle="Explore the Droplet persona catalog. Each persona shapes the assistant's tone, guidance, and tool availability."
       />
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">

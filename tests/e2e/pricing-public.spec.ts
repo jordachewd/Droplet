@@ -14,7 +14,7 @@ test("shows the reconciled pricing and FAQ copy on the public pricing page", asy
 
   await page
     .locator("summary")
-    .filter({ hasText: "Does Cellesseon have a free plan?" })
+    .filter({ hasText: "Does Droplet have a free plan?" })
     .click({ force: true });
   await page
     .locator("summary")
@@ -23,9 +23,7 @@ test("shows the reconciled pricing and FAQ copy on the public pricing page", asy
     })
     .click({ force: true });
 
-  await expect(
-    page.getByText("Does Cellesseon have a free plan?"),
-  ).toBeVisible();
+  await expect(page.getByText("Does Droplet have a free plan?")).toBeVisible();
   await expect(
     page.locator("details").filter({
       hasText: "Who should I reach out to for assistance or inquiries?",

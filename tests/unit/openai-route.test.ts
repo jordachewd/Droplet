@@ -314,6 +314,7 @@ describe("POST /api/openai", () => {
     vi.mocked(generateResponse).mockResolvedValue(
       JSON.stringify({
         blockedReason: "image_limit",
+        taskUsage: 5,
         taskData: {
           whois: "assistant",
           role: "assistant",
@@ -337,7 +338,35 @@ describe("POST /api/openai", () => {
 
     expect(response.status).toBe(403);
     expect(payload.error).toContain("Image generation limit reached");
-    expect(updateTask).not.toHaveBeenCalled();
+    expect(payload.taskId).toBe("existing-task");
+    expect(payload.personaId).toBe("strategist");
+    expect(payload.taskData).toEqual({
+      whois: "assistant",
+      role: "assistant",
+      content: [
+        {
+          type: "text",
+          text: "Image generation limit reached for your current plan.",
+        },
+      ],
+    });
+    expect(updateTask).toHaveBeenCalledWith("existing-task", {
+      messages: [
+        { role: "user", whois: "user", content: "generate image" },
+        {
+          whois: "assistant",
+          role: "assistant",
+          content: [
+            {
+              type: "text",
+              text: "Image generation limit reached for your current plan.",
+            },
+          ],
+        },
+      ],
+      usage: 5,
+      personaId: "strategist",
+    });
   });
 
   it("returns 403 when audio generation is blocked by usage limit", async () => {
@@ -353,6 +382,7 @@ describe("POST /api/openai", () => {
     vi.mocked(generateResponse).mockResolvedValue(
       JSON.stringify({
         blockedReason: "audio_limit",
+        taskUsage: 6,
         taskData: {
           whois: "assistant",
           role: "assistant",
@@ -377,7 +407,35 @@ describe("POST /api/openai", () => {
 
     expect(response.status).toBe(403);
     expect(payload.error).toContain("Audio generation limit reached");
-    expect(updateTask).not.toHaveBeenCalled();
+    expect(payload.taskId).toBe("existing-task");
+    expect(payload.personaId).toBe("teacher");
+    expect(payload.taskData).toEqual({
+      whois: "assistant",
+      role: "assistant",
+      content: [
+        {
+          type: "text",
+          text: "Audio generation limit reached for your current plan.",
+        },
+      ],
+    });
+    expect(updateTask).toHaveBeenCalledWith("existing-task", {
+      messages: [
+        { role: "user", whois: "user", content: "generate audio" },
+        {
+          whois: "assistant",
+          role: "assistant",
+          content: [
+            {
+              type: "text",
+              text: "Audio generation limit reached for your current plan.",
+            },
+          ],
+        },
+      ],
+      usage: 6,
+      personaId: "teacher",
+    });
   });
 
   it("passes the Lite combined media cap to response generation", async () => {

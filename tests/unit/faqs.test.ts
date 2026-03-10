@@ -9,7 +9,7 @@ describe("faqs", () => {
     expect(supportFaq?.answer).toContain("support@cellesseon.com");
     expect(freePlanFaq).toEqual(
       expect.objectContaining({
-        question: "Does Cellesseon have a free plan?",
+        question: "Does Droplet have a free plan?",
         answer:
           "Yes, every new account starts with our Lite plan which is free forever. " +
           "You can upgrade to Pro or Premium anytime for additional features and higher limits.",

@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Authentication",
-  description: "Authentication pages for Cellesseon",
+  description: "Authentication pages for Droplet",
 };
 
 export default async function Layout({

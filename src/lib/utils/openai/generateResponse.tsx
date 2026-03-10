@@ -152,6 +152,8 @@ export async function generateResponse({
         return await generateAudio({
           messages: Array.isArray(parsedArgs) ? parsedArgs : [parsedArgs],
           role: message.role as MessageRole,
+          taskId,
+          userId,
         });
       }
     }

@@ -192,7 +192,17 @@ describe("generateResponse", () => {
       entitlements: defaultEntitlements,
     });
 
-    expect(generateAudio).toHaveBeenCalledOnce();
+    expect(generateAudio).toHaveBeenCalledWith({
+      messages: [
+        {
+          role: "user",
+          content: "Read this text out loud.",
+        },
+      ],
+      role: "assistant",
+      taskId: "task_audio",
+      userId: "clerk_1",
+    });
     const payload = JSON.parse(result as string);
     expect(payload.generatedAudio).toBe(true);
   });

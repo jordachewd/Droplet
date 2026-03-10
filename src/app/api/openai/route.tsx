@@ -57,6 +57,30 @@ function getBlockedMessage(taskData?: OpenAIResponsePayload["taskData"]) {
   return message ?? "Generation limit reached for your current plan.";
 }
 
+async function persistTaskAssistantMessage({
+  taskId,
+  messages,
+  taskData,
+  taskUsage,
+  personaId,
+}: {
+  taskId: string;
+  messages: Messages["messages"];
+  taskData: OpenAIResponsePayload["taskData"];
+  taskUsage?: number;
+  personaId: string;
+}): Promise<void> {
+  if (!taskData) {
+    return;
+  }
+
+  await updateTask(taskId, {
+    messages: [...messages, taskData],
+    usage: taskUsage ?? 0,
+    personaId,
+  } as UpdateTaskParams);
+}
+
 export async function POST(req: Request): Promise<NextResponse> {
   try {
     const {
@@ -206,27 +230,42 @@ export async function POST(req: Request): Promise<NextResponse> {
       );
     }
 
+    const { taskData, taskUsage, generatedImage, generatedAudio } = aiPayload;
+
     if (
       aiPayload.blockedReason &&
       LIMIT_BLOCKED_REASONS.has(aiPayload.blockedReason)
     ) {
+      await persistTaskAssistantMessage({
+        taskId,
+        messages,
+        taskData,
+        taskUsage,
+        personaId: selectedPersona.id,
+      });
+
       return NextResponse.json(
-        { error: getBlockedMessage(aiPayload.taskData) },
+        {
+          error: getBlockedMessage(taskData),
+          taskData,
+          taskId,
+          personaId: selectedPersona.id,
+        },
         { status: 403 },
       );
     }
-
-    const { taskData, taskUsage, generatedImage, generatedAudio } = aiPayload;
 
     if (!taskData) {
       throw new Error("AI response payload is missing task data.");
     }
 
-    await updateTask(taskId, {
-      messages: [...messages, taskData],
-      usage: taskUsage || 0,
+    await persistTaskAssistantMessage({
+      taskId,
+      messages,
+      taskData,
+      taskUsage,
       personaId: selectedPersona.id,
-    } as UpdateTaskParams);
+    });
 
     const usageIncrementFields: Record<string, number> = {};
     if (generatedImage) {

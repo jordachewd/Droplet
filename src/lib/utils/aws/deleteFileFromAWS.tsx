@@ -9,7 +9,12 @@ import {
 export default async function deleteFileFromAWS(
   objectKey: string,
 ): Promise<void> {
-  const bucketName = process.env.AWS_S3_BUCKET as string;
+  const bucketName = process.env.AWS_S3_BUCKET;
+
+  if (!bucketName) {
+    throw new Error("AWS_S3_BUCKET environment variable is not defined");
+  }
+
   const filePath = normalizeS3ObjectKey(objectKey);
   const params = {
     Bucket: bucketName,

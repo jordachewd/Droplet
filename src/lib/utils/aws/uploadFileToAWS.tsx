@@ -5,7 +5,7 @@ import {
   buildS3ObjectKey,
 } from "@/lib/utils/aws/s3-file-reference";
 
-// Function to upload images to AWS S3
+// Function to upload files to AWS S3
 export default async function uploadFileToAWS(
   file: Buffer,
   fileName: string,

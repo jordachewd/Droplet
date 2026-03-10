@@ -1,4 +1,4 @@
-﻿# Cellesseon
+﻿# Droplet
 
 Smart AI assistant SaaS with multiple predefined personas. Users choose a persona (Strategist, Teacher, Developer, Creator, Wellness, Analyst, Best Friend, Boyfriend, Girlfriend) and the AI adapts its personality, expertise, and tone accordingly.
 

@@ -18,7 +18,7 @@ export default function ChatPersonaPicker({
       <p className="px-1 text-xxs font-semibold uppercase tracking-wide opacity-70">
         Persona Studio
       </p>
-      <div className="cellesseon-scrollbar flex w-full items-center gap-2 overflow-x-auto pb-1">
+      <div className="droplet-scrollbar flex w-full items-center gap-2 overflow-x-auto pb-1">
         {PERSONAS.map((persona) => {
           const isActive = persona.id === selectedPersonaId;
 

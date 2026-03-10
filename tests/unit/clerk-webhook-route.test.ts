@@ -273,7 +273,7 @@ describe("POST /api/webhooks/clerk", () => {
 
     expect(response.status).toBe(200);
     await expect(response.text()).resolves.toContain(
-      "Cellesseon | Clerk Webhook Response",
+      "Droplet | Clerk Webhook Response",
     );
   });
 });

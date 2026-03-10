@@ -1,7 +1,7 @@
-﻿# Cellesseon — TODO
+﻿# Droplet — TODO
 
 > Prioritized, actionable development tasks. Each task sized for 15–20 minutes.
-> Governed by **CellesseonPM2**. Do not add tasks without PM approval.
+> Governed by **Droplet-PM**. Do not add tasks without PM approval.
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules.
 > Implementation agent: **Codex Agent** (Senior Developer).
 
@@ -215,8 +215,8 @@
 **What to do:**
 
 - FAQ #1 (security): Keep as-is, the content is fine.
-- FAQ #2 (support contact): Replace placeholder `[email address to be added soon]` with `support@cellesseon.com`.
-- FAQ #6 (free trial): Rewrite to reflect that Lite is free forever. Change question to "Does Cellesseon have a free plan?" Answer: "Yes, every new account starts with our Lite plan which is free forever. You can upgrade to Pro or Premium anytime for additional features and higher limits."
+- FAQ #2 (support contact): Replace placeholder `[email address to be added soon]` with `office@jordachewd.com`.
+- FAQ #6 (free trial): Rewrite to reflect that Lite is free forever. Change question to "Does Droplet have a free plan?" Answer: "Yes, every new account starts with our Lite plan which is free forever. You can upgrade to Pro or Premium anytime for additional features and higher limits."
 - Review all other FAQs and ensure no "trial" language exists.
 
 **Acceptance Criteria:**
@@ -861,8 +861,8 @@
 
 **What to do:**
 
-- Create server component with stacked sections explaining how Cellesseon works.
-- Sections: (1) What is Cellesseon — persona-driven AI assistant, (2) How it works — choose persona, start chatting, (3) Personas — overview of 9 personas, (4) Media generation — images, audio, video, (5) Plans overview — link to `/plans`.
+- Create server component with stacked sections explaining how Droplet works.
+- Sections: (1) What is Droplet — persona-driven AI assistant, (2) How it works — choose persona, start chatting, (3) Personas — overview of 9 personas, (4) Media generation — images, audio, video, (5) Plans overview — link to `/plans`.
 - Each section: heading + descriptive text + image placeholder (use CSS placeholder or public image).
 - Reuse `PageWrapper` and `PageHead` layout components.
 
@@ -904,7 +904,7 @@
 **What to do:**
 
 - Create page with real Privacy & Cookie Policy content.
-- Content must be adapted for Cellesseon's purpose (AI chatbot SaaS collecting user data, using OpenAI API, Clerk auth, Stripe payments, AWS S3 storage).
+- Content must be adapted for Droplet's purpose (AI chatbot SaaS collecting user data, using OpenAI API, Clerk auth, Stripe payments, AWS S3 storage).
 - Cover: data collection, usage, storage, third-party sharing, cookies, user rights, contact info.
 - Use structured sections with headings.
 - Add disclaimer: "This policy is provided for informational purposes. Legal review recommended before production publication."
@@ -913,7 +913,7 @@
 
 - [ ] `/privacy` renders real privacy policy content
 - [ ] Content covers all relevant data handling topics
-- [ ] Adapted for Cellesseon context (AI, OpenAI, Clerk, Stripe, S3)
+- [ ] Adapted for Droplet context (AI, OpenAI, Clerk, Stripe, S3)
 - [ ] Includes review disclaimer
 - [ ] Page is public
 - [ ] TypeScript compiles (`npx tsc --noEmit`)
@@ -951,7 +951,7 @@
 
 - Create page with real Terms & Conditions content.
 - Cover: service description, user responsibilities, AI-generated content disclaimer, payment terms, refund policy, account termination, limitation of liability, governing law.
-- Adapted for Cellesseon SaaS context.
+- Adapted for Droplet SaaS context.
 - Add review disclaimer.
 
 **Acceptance Criteria:**

@@ -1,6 +1,6 @@
 import { normalizePublicAssetUrl } from "@/lib/utils/normalize-public-asset-url";
 
-const INTERNAL_APP_ORIGIN = "https://cellesseon.local";
+const URL_PARSE_BASE_ORIGIN = "https://example.invalid";
 export const PRIVATE_ASSET_ROUTE_PATH = "/api/download";
 
 function safeDecodeURIComponent(value: string): string {
@@ -70,7 +70,7 @@ export function resolveS3ObjectKey(rawValue: string): string | null {
   }
 
   try {
-    const parsedUrl = new URL(trimmedValue, INTERNAL_APP_ORIGIN);
+    const parsedUrl = new URL(trimmedValue, URL_PARSE_BASE_ORIGIN);
 
     if (parsedUrl.pathname === PRIVATE_ASSET_ROUTE_PATH) {
       const key = parsedUrl.searchParams.get("key");
@@ -89,7 +89,7 @@ export function resolveS3ObjectKey(rawValue: string): string | null {
     }
 
     if (
-      parsedUrl.origin === INTERNAL_APP_ORIGIN &&
+      parsedUrl.origin === URL_PARSE_BASE_ORIGIN &&
       trimmedValue.startsWith("/")
     ) {
       return isRawS3ObjectKeyCandidate(trimmedValue)

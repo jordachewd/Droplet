@@ -17,6 +17,8 @@ export default function ChatSidebarShell({
   historyItems,
   hasAuthUser,
 }: ChatSidebarShellProps) {
+  const sidebarStorageKey = "droplet-sidebar-collapsed";
+  const legacySidebarStorageKey = "cellesseon-sidebar-collapsed";
   const [isDesktopViewport, setIsDesktopViewport] = useState<boolean>(false);
   const [desktopCollapsed, setDesktopCollapsed] = useState<boolean>(false);
   const [mobileOpen, setMobileOpen] = useState<boolean>(false);
@@ -25,23 +27,20 @@ export default function ChatSidebarShell({
 
   useEffect(() => {
     try {
-      const collapsedFromStorage = localStorage.getItem(
-        "cellesseon-sidebar-collapsed",
-      );
+      const collapsedFromStorage =
+        localStorage.getItem(sidebarStorageKey) ??
+        localStorage.getItem(legacySidebarStorageKey);
       setDesktopCollapsed(collapsedFromStorage === "true");
     } catch {
       setDesktopCollapsed(false);
     }
-  }, []);
+  }, [legacySidebarStorageKey, sidebarStorageKey]);
 
   useEffect(() => {
     try {
-      localStorage.setItem(
-        "cellesseon-sidebar-collapsed",
-        String(desktopCollapsed),
-      );
+      localStorage.setItem(sidebarStorageKey, String(desktopCollapsed));
     } catch {}
-  }, [desktopCollapsed]);
+  }, [desktopCollapsed, sidebarStorageKey]);
 
   useEffect(() => {
     const desktopQuery = window.matchMedia("(min-width: 1024px)");
@@ -97,7 +96,7 @@ export default function ChatSidebarShell({
   );
 
   const navWrapperClass = classNames(
-    "cellesseon-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto",
+    "droplet-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto",
     !isSidebarOpen && "lg:items-center",
   );
 

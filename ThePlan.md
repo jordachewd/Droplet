@@ -1,4 +1,4 @@
-# Cellesseon - Completion Plan
+# Droplet - Completion Plan
 
 > Purpose: one execution document for finishing the SaaS without avoidable rework.
 >
@@ -10,7 +10,7 @@
 
 ## 1. Executive Judgment
 
-Cellesseon is not blocked by visual polish.
+Droplet is not blocked by visual polish.
 
 It is blocked by product-rule drift, route fragmentation, incomplete entitlement logic, weak usage accounting, missing storage guardrails, and the absence of a real admin control plane.
 
@@ -52,7 +52,7 @@ The points below are verified from the current codebase.
 | Streaming            | No streaming route or client implementation exists                                                            | Chat UX target is incomplete                                                    | repository search under `src/**`                                                                           |
 | Public pages         | `/`, `/pricing`, `/personas` exist; `/about`, `/faqs`, privacy, cookie, and terms pages do not                | Requested public-information surface is incomplete                              | `src/app/(public)/**`                                                                                      |
 | FAQ copy             | FAQ content still references a free trial                                                                     | Product messaging is already inconsistent                                       | `src/constants/faqs.tsx`                                                                                   |
-| Theme control        | Theme exists as app-level light/dark switching, but no admin management surface exists                        | Requested settings control is absent                                            | `src/app/layout.tsx`, `src/components/layout/cellesseon-theme.tsx`                                         |
+| Theme control        | Theme exists as app-level light/dark switching, but no admin management surface exists                        | Requested settings control is absent                                            | `src/app/layout.tsx`, `src/components/layout/droplet-theme.tsx`                                            |
 | Tiptap               | Not installed                                                                                                 | Admin rich-text editing work has not started                                    | `package.json`                                                                                             |
 
 ### Practical conclusions

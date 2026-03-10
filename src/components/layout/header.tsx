@@ -36,7 +36,7 @@ export default function Header() {
     >
       <div className="mx-auto flex w-full max-w-screen-2xl items-center justify-between gap-4 py-3">
         <div className="flex items-center gap-4">
-          <Logo />
+          <Logo size={26} />
 
           <nav className="hidden items-center gap-1 md:flex">
             <Link className="btn btn-text btn-sm" href="/personas">

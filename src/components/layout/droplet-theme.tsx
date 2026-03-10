@@ -22,9 +22,11 @@ interface ThemeContextValue {
   setMode: (nextMode: ThemeMode) => void;
 }
 
-const STORAGE_KEY = "cellesseon-theme-mode";
+const STORAGE_KEY = "droplet-theme-mode";
+const LEGACY_STORAGE_KEY = "cellesseon-theme-mode";
+const THEME_ATTRIBUTE = "data-droplet-theme";
 
-export const CellesseonThemeContext = createContext<ThemeContextValue | null>(
+export const DropletThemeContext = createContext<ThemeContextValue | null>(
   null,
 );
 
@@ -33,7 +35,9 @@ const getSystemMode = (): ResolvedThemeMode =>
 
 const getStoredMode = (): ThemeMode => {
   try {
-    const storedThemeMode = window.localStorage.getItem(STORAGE_KEY);
+    const storedThemeMode =
+      window.localStorage.getItem(STORAGE_KEY) ??
+      window.localStorage.getItem(LEGACY_STORAGE_KEY);
 
     if (
       storedThemeMode === "light" ||
@@ -57,18 +61,15 @@ const persistMode = (nextMode: ThemeMode) => {
   }
 };
 
-export default function CellesseonTheme({ children }: ThemeProps) {
+export default function DropletTheme({ children }: ThemeProps) {
   const [mode, setModeState] = useState<ThemeMode>("system");
   const [resolvedMode, setResolvedMode] = useState<ResolvedThemeMode>("light");
 
   const applyTheme = useCallback((targetMode: ThemeMode) => {
     const nextResolvedMode =
       targetMode === "system" ? getSystemMode() : targetMode;
-    document.documentElement.classList.add("CellesseonTheme");
-    document.documentElement.setAttribute(
-      "data-cellesseon-theme",
-      nextResolvedMode,
-    );
+    document.documentElement.classList.add("DropletTheme");
+    document.documentElement.setAttribute(THEME_ATTRIBUTE, nextResolvedMode);
     setResolvedMode(nextResolvedMode);
   }, []);
 
@@ -108,8 +109,8 @@ export default function CellesseonTheme({ children }: ThemeProps) {
   );
 
   return (
-    <CellesseonThemeContext.Provider value={contextValue}>
+    <DropletThemeContext.Provider value={contextValue}>
       {children}
-    </CellesseonThemeContext.Provider>
+    </DropletThemeContext.Provider>
   );
 }

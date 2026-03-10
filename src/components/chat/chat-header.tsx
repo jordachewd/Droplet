@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import classNames from "classnames";
 import ToggleTheme from "@/components/shared/toggle-theme";
@@ -6,8 +6,6 @@ import AvatarMenu from "@/components/shared/avatar-menu";
 
 interface ChatHeaderProps {
   className?: string;
-  isInUse?: boolean;
-  setNewTask?: () => void;
   personaLabel?: string;
   messageCount?: number;
 }
