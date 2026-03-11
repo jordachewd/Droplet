@@ -14,13 +14,31 @@ vi.mock("@/components/chat/chat-intro", () => ({
 }));
 
 vi.mock("@/components/chat/chat-body", () => ({
-  default: () => <div data-testid="chat-body" />,
+  default: ({
+    conversationEnded,
+    endState,
+  }: {
+    conversationEnded?: boolean;
+    endState?: { stopReason: string; endAction: string } | null;
+  }) => (
+    <div data-testid="chat-body">
+      {conversationEnded ? "ended" : "active"}
+      {endState ? `:${endState.stopReason}:${endState.endAction}` : ""}
+    </div>
+  ),
 }));
 
 vi.mock("@/components/chat/chat-input", () => ({
-  default: ({ sendMessage }: { sendMessage: (prompt: Message) => void }) => (
+  default: ({
+    sendMessage,
+    disabled,
+  }: {
+    sendMessage: (prompt: Message) => void;
+    disabled?: boolean;
+  }) => (
     <button
       type="button"
+      disabled={disabled}
       onClick={() =>
         sendMessage({
           whois: "user",
@@ -78,5 +96,49 @@ describe("ChatWrapper", () => {
     expect(screen.getByRole("alert").textContent).toContain(
       "Your plan has expired. Please upgrade to continue.",
     );
+  });
+
+  it("renders stop payloads and disables input when the conversation is ended", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          taskData: {
+            whois: "assistant",
+            role: "assistant",
+            content: [{ type: "text", text: "Stop here." }],
+          },
+          stopReason: "prompt_limit_reached",
+          endAction: "start_new_conversation",
+          taskStatus: "ended",
+          acceptedPrompt: false,
+        }),
+        {
+          status: 403,
+          statusText: "Forbidden",
+          headers: { "Content-Type": "application/json" },
+        },
+      ),
+    );
+
+    render(
+      <ChatWrapper
+        initialMessages={[{ role: "user", whois: "user", content: "prior" }]}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Send message" }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("chat-body").textContent).toContain(
+        "ended:prompt_limit_reached:start_new_conversation",
+      );
+    });
+
+    expect(
+      screen
+        .getByRole("button", { name: "Send message" })
+        .hasAttribute("disabled"),
+    ).toBe(true);
+    expect(screen.queryByRole("alert")).toBeNull();
   });
 });

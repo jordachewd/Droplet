@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-10
+> Last updated: 2026-03-11
 > Support contact: `office@jordachewd.com`
 
 ---
@@ -256,19 +256,19 @@ Prompts must be versioned and kept separate from request handlers.
 | messages       | [Message] subdoc | Yes      | No    | Array of messages                      |
 | personaId      | String           | Yes      | Yes   | Indexed, defaults to "strategist"      |
 | usage          | Number           | Yes      | No    | Token usage counter                    |
-| promptCount    | Number           | Yes      | No    | **NEW** — user prompt counter          |
-| mediaCount     | Number           | Yes      | No    | **NEW** — media generation counter     |
-| estimatedBytes | Number           | Yes      | No    | **NEW** — conversation size estimate   |
-| status         | String (enum)    | Yes      | No    | **NEW** — `active` / `ended`           |
-| endedAt        | Date             | No       | No    | **NEW** — when conversation stopped    |
-| endedReason    | String           | No       | No    | **NEW** — stop reason code             |
-| endAction      | String           | No       | No    | **NEW** — next action for user         |
+| promptCount    | Number           | Yes      | No    | User prompt counter (default 0)        |
+| mediaCount     | Number           | Yes      | No    | Media generation counter (default 0)   |
+| estimatedBytes | Number           | Yes      | No    | Conversation size estimate (default 0) |
+| status         | String (enum)    | Yes      | No    | `active` / `ended` (default `active`)  |
+| endedAt        | Date             | No       | No    | When conversation stopped              |
+| endedReason    | String           | No       | No    | Stop reason code                       |
+| endAction      | String           | No       | No    | Next action for user                   |
 | createdAt      | Date             | No       | No    |                                        |
 | updatedAt      | Date             | No       | Yes   | Indexed descending                     |
 
 Compound index: `{ userId: 1, updatedAt: -1 }`
 
-### 6.4 UsageEvent (NEW — Required)
+### 6.4 UsageEvent
 
 Purpose: Request-level usage logging for cost tracking and admin analytics.
 
@@ -288,7 +288,7 @@ Purpose: Request-level usage logging for cost tracking and admin analytics.
 | blockedReason | String  | No       | No    | Reason code if blocked                         |
 | createdAt     | Date    | Yes      | Yes   | Indexed for time-range queries                 |
 
-### 6.5 AppSetting (NEW — Required)
+### 6.5 AppSetting
 
 | Field     | Type   | Required | Index  | Notes                                                |
 | --------- | ------ | -------- | ------ | ---------------------------------------------------- |
@@ -298,7 +298,7 @@ Purpose: Request-level usage logging for cost tracking and admin analytics.
 | updatedAt | Date   | Yes      | No     |                                                      |
 | updatedBy | String | Yes      | No     | Admin clerkId who last changed                       |
 
-### 6.6 PublicPage (NEW — Required)
+### 6.6 PublicPage
 
 | Field       | Type    | Required | Index  | Notes                        |
 | ----------- | ------- | -------- | ------ | ---------------------------- |
@@ -311,7 +311,7 @@ Purpose: Request-level usage logging for cost tracking and admin analytics.
 | updatedAt   | Date    | Yes      | No     |                              |
 | updatedBy   | String  | Yes      | No     | Admin clerkId                |
 
-### 6.7 AdminAuditLog (NEW — Required)
+### 6.7 AdminAuditLog
 
 | Field      | Type   | Required | Index | Notes                          |
 | ---------- | ------ | -------- | ----- | ------------------------------ |
@@ -325,12 +325,6 @@ Purpose: Request-level usage logging for cost tracking and admin analytics.
 ### Data Model Technical Debt
 
 - **TD-DB-05**: Task messages array unbounded (16MB risk). Must add size guard.
-- **TD-DB-07**: Audio base64 inflates Task docs. Must upload to S3 instead.
-- **TD-DB-10**: Task missing lifecycle fields — must add.
-- **TD-DB-11**: UsageEvent model does not exist — must create.
-- **TD-DB-12**: AppSetting model does not exist — must create.
-- **TD-DB-13**: PublicPage model does not exist — must create.
-- **TD-DB-14**: AdminAuditLog model does not exist — must create.
 
 ---
 
@@ -422,7 +416,6 @@ Server-side streaming via OpenAI SDK. Client renders partial responses increment
 
 - **TD-AI-01**: No streaming — must implement.
 - **TD-AI-03**: No per-user cost tracking — must implement via UsageEvent.
-- **TD-AI-05**: Audio base64 in messages — must upload to S3.
 - **TD-AI-06**: No retry/backoff for transient failures.
 - **TD-AI-07**: Models hardcoded — must be plan-aware.
 - **TD-AI-08**: No video generation (Premium feature).
@@ -522,8 +515,8 @@ Server-side streaming via OpenAI SDK. Client renders partial responses increment
 
 ## 13. Testing
 
-- **Unit tests**: 33 suites, 143 tests (Vitest)
-- **E2E tests**: 2 Playwright specs
+- **Unit tests**: 41 suites, 184 tests (Vitest)
+- **E2E tests**: 3 Playwright specs
 - **Coverage**: Not configured (planned)
 
 ---
@@ -561,12 +554,6 @@ Server-side streaming via OpenAI SDK. Client renders partial responses increment
 | TD-AI-01   | OpenAI   | No streaming                                 | High     |
 | TD-AI-07   | OpenAI   | Models hardcoded — need plan-aware selection | High     |
 | TD-DB-05   | Database | Task messages unbounded (16MB risk)          | High     |
-| TD-DB-07   | Database | Audio base64 inflates docs                   | High     |
-| TD-DB-10   | Database | Task missing lifecycle fields                | High     |
-| TD-DB-11   | Database | UsageEvent model missing                     | High     |
-| TD-DB-12   | Database | AppSetting model missing                     | High     |
-| TD-DB-13   | Database | PublicPage model missing                     | High     |
-| TD-DB-14   | Database | AdminAuditLog model missing                  | High     |
 | TD-AUTH-01 | Auth     | Proxy protects old routes                    | High     |
 | TD-AUTH-02 | Auth     | Admin at /dashboard not /admin               | High     |
 | TD-UI-08   | UI       | Missing 5 public pages                       | High     |
@@ -574,45 +561,54 @@ Server-side streaming via OpenAI SDK. Client renders partial responses increment
 
 ### Active — Medium/Low Priority
 
-| ID         | Area    | Description                              | Severity |
-| ---------- | ------- | ---------------------------------------- | -------- |
-| TD-API-01  | API     | In-memory rate limiter                   | Medium   |
-| TD-API-06  | API     | handleError loses stack traces           | Medium   |
-| TD-AI-03   | OpenAI  | No per-user cost tracking                | Medium   |
-| TD-AI-05   | OpenAI  | Audio base64 in messages                 | High     |
-| TD-AI-06   | OpenAI  | No retry/backoff                         | Medium   |
-| TD-AI-08   | OpenAI  | No video generation (Premium)            | Medium   |
-| TD-AI-09   | OpenAI  | Prompts not optimized                    | Medium   |
-| TD-FILE-01 | Files   | No S3 cleanup on deletion                | Medium   |
-| TD-FILE-02 | Files   | Inline base64 file in some flows         | Low      |
-| TD-UI-07   | UI      | Homepage needs more sections             | Medium   |
-| TD-UI-09   | UI      | Account pages at wrong routes            | Medium   |
-| TD-UI-12   | UI      | Footer links non-functional (spans)      | Medium   |
-| TD-UI-13   | UI      | Header nav missing /about, /faqs links   | Medium   |
-| TD-DB-15   | Database| User deletion doesn't clean up Tasks     | Medium   |
-| TD-PLAN-01 | Billing | No recurring subscriptions (deferred v1) | Low      |
+| ID         | Area     | Description                                       | Severity |
+| ---------- | -------- | ------------------------------------------------- | -------- |
+| TD-API-01  | API      | In-memory rate limiter                            | Medium   |
+| TD-API-06  | API      | handleError loses stack traces                    | Medium   |
+| TD-AI-03   | OpenAI   | No per-user cost tracking                         | Medium   |
+| TD-AI-06   | OpenAI   | No retry/backoff                                  | Medium   |
+| TD-AI-08   | OpenAI   | No video generation (Premium)                     | Medium   |
+| TD-AI-09   | OpenAI   | Prompts not optimized                             | Medium   |
+| TD-FILE-01 | Files    | No S3 cleanup on deletion                         | Medium   |
+| TD-FILE-02 | Files    | Inline base64 file in some flows                  | Low      |
+| TD-UI-07   | UI       | Homepage needs more sections                      | Medium   |
+| TD-UI-09   | UI       | Account pages at wrong routes                     | Medium   |
+| TD-UI-12   | UI       | Footer links non-functional (spans)               | Medium   |
+| TD-UI-13   | UI       | Header nav missing /about, /faqs links            | Medium   |
+| TD-DB-15   | Database | User deletion doesn't clean up Tasks              | Medium   |
+| TD-PLAN-01 | Billing  | No recurring subscriptions (deferred v1)          | Low      |
+| TD-BILL-01 | Billing  | Stripe redirect URLs hardcode old routes          | Medium   |
+| TD-ACT-01  | Actions  | deleteAllTransactions has no audit trail          | Medium   |
+| TD-LOG-01  | Logging  | console.error in production routes                | Low      |
 
 ### Resolved
 
-| ID           | Description                           | Resolution         |
-| ------------ | ------------------------------------- | ------------------ |
-| SEC-01       | getUserById no ownership check        | Ownership enforced |
-| SEC-02       | getAllTransactions no ownership check | Ownership enforced |
-| SEC-03       | console.log in /api/openai            | Removed            |
-| TD-API-03    | generateImage temporary URLs          | Persisted to S3    |
-| TD-API-05    | console.log in OpenAI utils           | Removed            |
-| TD-PLAN-02   | Usage limits not enforced             | Implemented        |
-| TD-PLAN-04   | Lite 3-day expiry                     | Removed — Lite now "Free forever" |
-| TD-PLAN-05   | Prices $29/$69                        | Updated to $19/$39 |
-| TD-PLAN-06   | Lite restricts 2 personas             | All 9 available in all plans |
-| TD-PLAN-09   | Plan descriptions outdated            | Updated with accurate limits |
-| TD-UI-11     | FAQ copy outdated (trial references)  | Rewritten for Droplet |
-| TD-AI-02     | No OpenAI error classification        | Implemented        |
-| TD-UI-04     | No error boundaries                   | Added              |
-| TD-UI-05     | mapDateToLabel duplicated             | Extracted          |
-| TD-RENAME-01 | "role" to "persona" rename            | Completed          |
+| ID           | Description                           | Resolution                                      |
+| ------------ | ------------------------------------- | ----------------------------------------------- |
+| SEC-01       | getUserById no ownership check        | Ownership enforced                              |
+| SEC-02       | getAllTransactions no ownership check | Ownership enforced                              |
+| SEC-03       | console.log in /api/openai            | Removed                                         |
+| TD-API-03    | generateImage temporary URLs          | Persisted to S3                                 |
+| TD-API-05    | console.log in OpenAI utils           | Removed                                         |
+| TD-PLAN-02   | Usage limits not enforced             | Implemented                                     |
+| TD-PLAN-04   | Lite 3-day expiry                     | Removed — Lite now "Free forever"               |
+| TD-PLAN-05   | Prices $29/$69                        | Updated to $19/$39                              |
+| TD-PLAN-06   | Lite restricts 2 personas             | All 9 available in all plans                    |
+| TD-PLAN-09   | Plan descriptions outdated            | Updated with accurate limits                    |
+| TD-UI-11     | FAQ copy outdated (trial references)  | Rewritten for Droplet                           |
+| TD-AI-02     | No OpenAI error classification        | Implemented                                     |
+| TD-AI-05     | Audio base64 in messages              | Audio now uploaded to S3                         |
+| TD-UI-04     | No error boundaries                   | Added                                           |
+| TD-UI-05     | mapDateToLabel duplicated             | Extracted                                       |
+| TD-RENAME-01 | "role" to "persona" rename            | Completed                                       |
 | TD-RENAME-02 | Cellesseon → Droplet rename           | Completed (3 legacy migration keys intentional) |
-| TD-DB-08     | getUserById missing .lean()/.select() | Added              |
-| TD-DB-09     | getAllTransactions missing .lean()    | Added              |
-| TD-UI-02     | No loading skeletons                  | Added              |
-| TD-UI-06     | No conversation delete UI             | Added              |
+| TD-DB-07     | Audio base64 inflates Task docs       | Audio uploads to S3, stores URL                 |
+| TD-DB-08     | getUserById missing .lean()/.select() | Added                                           |
+| TD-DB-09     | getAllTransactions missing .lean()    | Added                                           |
+| TD-DB-10     | Task missing lifecycle fields         | Added in Phase 14                               |
+| TD-DB-11     | UsageEvent model missing              | Created in Phase 14                             |
+| TD-DB-12     | AppSetting model missing              | Created in Phase 14                             |
+| TD-DB-13     | PublicPage model missing              | Created in Phase 14                             |
+| TD-DB-14     | AdminAuditLog model missing           | Created in Phase 14                             |
+| TD-UI-02     | No loading skeletons                  | Added                                           |
+| TD-UI-06     | No conversation delete UI             | Added                                           |

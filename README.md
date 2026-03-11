@@ -7,16 +7,21 @@ Built with Next.js 16, React 19, TypeScript, Tailwind CSS v4.2, Clerk, Stripe, M
 ## Features
 
 - **9 AI Personas** — each with distinct personality, system prompt, and domain expertise
-- **Multi-modal AI** — text chat, image generation, audio generation, video generation (Premium)
-- **Streaming responses** — real-time incremental chat rendering
+- **Multi-modal AI** — text chat, image generation, audio generation
 - **Conversation history** — persist, resume, and manage conversations
 - **Three subscription tiers:**
   - **Lite** (Free forever) — 5 conversations/day, 10 messages/conversation, 3 media generations/month
-  - **Pro** ($19/month) — advanced AI model (gpt-5.2-pro), 50 conversations/day, 100 messages/conversation, 50 image + 50 audio generations/month
-  - **Premium** ($39/month) — best AI model (gpt-5.4-pro), unlimited conversations and messages, unlimited image/audio, 10 video generations/month, premium media quality
+  - **Pro** ($19/month) — advanced AI model, 50 conversations/day, 100 messages/conversation, 50 image + 50 audio generations/month
+  - **Premium** ($39/month) — best AI model, unlimited conversations and messages, unlimited image/audio, 10 video generations/month, premium media quality
 - **All personas available in all plans**
-- **Admin dashboard** — user management, transaction oversight, usage analytics, app settings, website content management
 - **Secure by design** — Clerk auth, webhook signature verification, ownership enforcement, SSRF protection
+
+### Planned (In Development)
+
+- **Streaming responses** — real-time incremental chat rendering
+- **Video generation** — Premium plan exclusive
+- **Admin dashboard** — user management, transaction oversight, usage analytics, app settings, website content management
+- **Public pages** — About, FAQs, Privacy Policy, Cookie Policy, Terms & Conditions
 
 ## Tech Stack
 
@@ -29,7 +34,6 @@ Built with Next.js 16, React 19, TypeScript, Tailwind CSS v4.2, Clerk, Stripe, M
 - MongoDB + Mongoose 9
 - OpenAI SDK 6
 - AWS S3 (private server-side file storage)
-- Tiptap (admin rich-text editing)
 - Vitest + Playwright (testing)
 
 ## Project Structure

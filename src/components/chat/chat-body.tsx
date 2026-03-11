@@ -1,4 +1,5 @@
 import classNames from "classnames";
+import Link from "next/link";
 import { Message } from "@/types";
 import { useEffect, useMemo, useRef } from "react";
 import autoAnimate from "@formkit/auto-animate";
@@ -7,13 +8,70 @@ import remarkGfm from "remark-gfm";
 import LoadingBubbles from "@/components/shared/loading-bubbles";
 import ImageHolder from "@/components/shared/image-holder";
 import AudioPlayer from "@/components/shared/audio-player";
+import { TaskEndAction, TaskEndedReason } from "@/types/TaskData.d";
 
 interface ChatBodyProps {
   messages: Message[];
   personaLabel?: string;
+  conversationEnded?: boolean;
+  endState?: {
+    stopReason: TaskEndedReason;
+    endAction: TaskEndAction;
+  } | null;
 }
 
-export default function ChatBody({ messages, personaLabel }: ChatBodyProps) {
+const SUPPORT_EMAIL = "office@jordachewd.com";
+
+const stopReasonTitles: Record<TaskEndedReason, string> = {
+  prompt_limit_reached:
+    "You've reached the message limit for this conversation.",
+  media_limit_reached: "You've reached your media generation limit.",
+  daily_conversation_limit_reached:
+    "You've reached the daily conversation limit for your plan.",
+  conversation_storage_limit_reached:
+    "This conversation has reached its storage limit.",
+  billing_state_invalid: "Your plan has expired.",
+};
+
+function renderAction(endAction: TaskEndAction) {
+  if (endAction === "start_new_conversation") {
+    return (
+      <Link
+        href="/app/new"
+        className="inline-flex items-center rounded-full border border-emerald-500/60 bg-emerald-500 px-3 py-1.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+      >
+        Start a new conversation
+      </Link>
+    );
+  }
+
+  if (endAction === "upgrade_plan") {
+    return (
+      <Link
+        href="/app/plans"
+        className="inline-flex items-center rounded-full border border-sky-500/60 bg-sky-600 px-3 py-1.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+      >
+        Upgrade your plan
+      </Link>
+    );
+  }
+
+  return (
+    <a
+      href={`mailto:${SUPPORT_EMAIL}`}
+      className="inline-flex items-center rounded-full border border-amber-500/60 px-3 py-1.5 text-sm font-semibold text-amber-900 transition-colors hover:bg-amber-100 dark:text-amber-100 dark:hover:bg-amber-500/10"
+    >
+      Contact support
+    </a>
+  );
+}
+
+export default function ChatBody({
+  messages,
+  personaLabel,
+  conversationEnded = false,
+  endState = null,
+}: ChatBodyProps) {
   const parent = useRef<HTMLDivElement | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
@@ -114,12 +172,36 @@ export default function ChatBody({ messages, personaLabel }: ChatBodyProps) {
   const chatBodyClass = classNames(
     "ChatBody mx-auto flex w-full max-w-screen-lg flex-1 flex-col gap-4 px-4 pb-10 pt-6",
     "lg:px-0",
+    conversationEnded &&
+      "rounded-2xl border border-amber-400/45 bg-amber-50/40 dark:border-amber-400/30 dark:bg-amber-500/5",
   );
 
   return (
     <>
       <div className={chatBodyClass} ref={parent}>
         {listMessages}
+
+        {endState && (
+          <aside className="ChatBodyEndNotice mt-2 rounded-2xl border border-dashed border-amber-500/60 bg-amber-100/85 p-4 text-sm text-amber-950 shadow-sm dark:bg-amber-500/10 dark:text-amber-50">
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-1">
+                <span className="text-xxs font-semibold uppercase tracking-[0.18em] opacity-75">
+                  Conversation Ended
+                </span>
+                <p className="font-medium">
+                  {stopReasonTitles[endState.stopReason]}
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3">
+                {renderAction(endState.endAction)}
+                {endState.endAction === "contact_support" && (
+                  <span className="text-xs opacity-80">{SUPPORT_EMAIL}</span>
+                )}
+              </div>
+            </div>
+          </aside>
+        )}
       </div>
       <div className="flex h-2 w-full" ref={bottomRef}></div>
     </>

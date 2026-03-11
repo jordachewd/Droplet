@@ -143,7 +143,7 @@ tests/e2e/          — Playwright E2E tests
 | Use `strict: true` in Mongoose updates          | Allow arbitrary fields via `strict: false`  |
 | Use `.lean()` + `.select()` for reads           | Fetch full Mongoose documents for display   |
 | Validate resource ownership before operations   | Allow cross-user data access                |
-| Remove `console.log` before merge               | Leave debug logging in production code      |
+| Remove `console.log` / `console.error` before merge | Leave debug logging in production code      |
 | Use central plan/limit/model policy resolvers   | Hardcode plan rules in components or routes |
 | Log admin mutations to AdminAuditLog            | Allow admin changes without audit trail     |
 | Upload media to S3, store URLs in MongoDB       | Store base64/binary in MongoDB documents    |

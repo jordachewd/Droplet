@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { auth } from "@clerk/nextjs/server";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import Task from "@/lib/database/models/tasks.model";
-import { createTask, deleteTask } from "@/lib/actions/task.actions";
+import { createTask, deleteTask, updateTask } from "@/lib/actions/task.actions";
 
 vi.mock("@clerk/nextjs/server", () => ({
   auth: vi.fn(),
@@ -48,7 +48,33 @@ describe("createTask", () => {
       title: "Generated title",
       messages: [],
       personaId: "strategist",
+      promptCount: 0,
+      estimatedBytes: 0,
     });
+  });
+
+  it("initializes promptCount and estimatedBytes from the first user message", async () => {
+    vi.mocked(Task.create).mockResolvedValue({
+      _id: "task_1",
+    } as never);
+
+    await createTask({
+      title: "Generated title",
+      messages: [
+        {
+          role: "user",
+          whois: "user",
+          content: [{ type: "text", text: "hello there" }],
+        },
+      ],
+    });
+
+    expect(Task.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        promptCount: 1,
+        estimatedBytes: expect.any(Number),
+      }),
+    );
   });
 
   it("rejects unauthenticated task creation attempts", async () => {
@@ -63,6 +89,87 @@ describe("createTask", () => {
 
     expect(connectToDatabase).not.toHaveBeenCalled();
     expect(Task.create).not.toHaveBeenCalled();
+  });
+});
+
+describe("updateTask", () => {
+  const taskId = "507f1f77bcf86cd799439011";
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(auth).mockResolvedValue({ userId: "auth_user_1" } as never);
+    vi.mocked(connectToDatabase).mockResolvedValue(undefined as never);
+  });
+
+  it("increments promptCount only when a prompt increment is supplied", async () => {
+    vi.mocked(Task.findOneAndUpdate).mockResolvedValue({
+      _id: taskId,
+    } as never);
+
+    await updateTask(taskId, {
+      messages: [
+        {
+          role: "user",
+          whois: "user",
+          content: [{ type: "text", text: "hello" }],
+        },
+        {
+          role: "assistant",
+          whois: "assistant",
+          content: [{ type: "text", text: "hi" }],
+        },
+      ],
+      usage: 9,
+      promptCountIncrement: 1,
+      personaId: "strategist",
+    });
+
+    expect(Task.findOneAndUpdate).toHaveBeenCalledWith(
+      { _id: taskId, userId: "auth_user_1" },
+      expect.objectContaining({
+        $inc: {
+          usage: 9,
+          promptCount: 1,
+        },
+        $set: expect.objectContaining({
+          personaId: "strategist",
+          estimatedBytes: expect.any(Number),
+        }),
+      }),
+      {
+        returnDocument: "after",
+        strict: true,
+        upsert: false,
+      },
+    );
+  });
+
+  it("avoids an empty $inc update when usage and prompt increments are omitted", async () => {
+    vi.mocked(Task.findOneAndUpdate).mockResolvedValue({
+      _id: taskId,
+    } as never);
+
+    await updateTask(taskId, {
+      messages: [],
+      personaId: "strategist",
+      estimatedBytes: 0,
+    });
+
+    expect(Task.findOneAndUpdate).toHaveBeenCalledWith(
+      { _id: taskId, userId: "auth_user_1" },
+      {
+        $set: expect.objectContaining({
+          messages: [],
+          personaId: "strategist",
+          estimatedBytes: 0,
+        }),
+      },
+      {
+        returnDocument: "after",
+        strict: true,
+        upsert: false,
+      },
+    );
   });
 });
 

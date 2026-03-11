@@ -12,28 +12,58 @@ import { filterAssistantMsg } from "@/lib/utils/openai/filterAssistantMsg";
 import ChatPersonaPicker from "@/components/chat/chat-persona-picker";
 import { getPersona } from "@/constants/assistant-personas";
 import { PersonaId } from "@/types/PersonaData.d";
+import { TaskEndAction, TaskEndedReason, TaskStatus } from "@/types/TaskData.d";
 
 interface ChatWrapperProps {
   initialPersonaId?: string;
   initialTaskId?: string | null;
   initialMessages?: Message[];
+  initialTaskStatus?: TaskStatus;
+  initialEndedReason?: TaskEndedReason;
+  initialEndAction?: TaskEndAction;
+}
+
+interface ChatApiResponse {
+  taskData?: Message;
+  taskId?: string;
+  error?: string;
+  stopReason?: TaskEndedReason;
+  endAction?: TaskEndAction;
+  taskStatus?: TaskStatus;
+  acceptedPrompt?: boolean;
 }
 
 export default function ChatWrapper({
   initialPersonaId,
   initialTaskId = null,
   initialMessages = [],
+  initialTaskStatus = "active",
+  initialEndedReason,
+  initialEndAction,
 }: ChatWrapperProps) {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [alert, setAlert] = useState<AlertParams | null>(null);
   const [startMsg, setStartMsg] = useState<string>("");
   const [dbTaskId, setDbTaskId] = useState<string | null>(initialTaskId);
   const [task, setTask] = useState<Message[]>(initialMessages);
+  const [taskStatus, setTaskStatus] = useState<TaskStatus>(initialTaskStatus);
+  const [endState, setEndState] = useState<{
+    stopReason: TaskEndedReason;
+    endAction: TaskEndAction;
+  } | null>(
+    initialTaskStatus === "ended" && initialEndedReason && initialEndAction
+      ? {
+          stopReason: initialEndedReason,
+          endAction: initialEndAction,
+        }
+      : null,
+  );
   const [selectedPersonaId, setSelectedPersonaId] = useState<PersonaId>(
     getPersona(initialPersonaId).id,
   );
   const nextAlertId = useRef<number>(0);
-  const isNewTask = task.length === 0;
+  const isConversationEnded = taskStatus === "ended";
+  const isNewTask = task.length === 0 && !isConversationEnded;
 
   const selectedPersona = useMemo(
     () => getPersona(selectedPersonaId),
@@ -53,10 +83,50 @@ export default function ChatWrapper({
     setTask([]);
     setDbTaskId(null);
     setStartMsg("");
+    setTaskStatus("active");
+    setEndState(null);
+  }
+
+  function syncMessagesWithResponse({
+    taskData,
+    acceptedPrompt = true,
+  }: {
+    taskData?: Message;
+    acceptedPrompt?: boolean;
+  }) {
+    setTask((prev) => {
+      const withoutTemp = prev.slice(0, -1);
+      const baseMessages = acceptedPrompt
+        ? withoutTemp
+        : withoutTemp.slice(0, -1);
+
+      return taskData ? [...baseMessages, taskData] : baseMessages;
+    });
+  }
+
+  function handleConversationStop(responseData: ChatApiResponse) {
+    syncMessagesWithResponse({
+      taskData: responseData.taskData,
+      acceptedPrompt: responseData.acceptedPrompt,
+    });
+    setTaskStatus("ended");
+
+    if (responseData.stopReason && responseData.endAction) {
+      setEndState({
+        stopReason: responseData.stopReason,
+        endAction: responseData.endAction,
+      });
+    }
+
+    if (responseData.taskId) {
+      setDbTaskId(responseData.taskId);
+    }
+
+    setIsLoading(false);
   }
 
   const sendMessage = async (prompt: Message) => {
-    if (!prompt) return;
+    if (!prompt || isConversationEnded) return;
     setIsLoading(true);
     setStartMsg("");
 
@@ -80,11 +150,14 @@ export default function ChatWrapper({
           personaId: selectedPersona.id,
         }),
       });
-      const responseData = (await response.json().catch(() => null)) as {
-        taskData?: Message;
-        taskId?: string;
-        error?: string;
-      } | null;
+      const responseData = (await response
+        .json()
+        .catch(() => null)) as ChatApiResponse | null;
+
+      if (responseData?.stopReason && responseData?.endAction) {
+        handleConversationStop(responseData);
+        return;
+      }
 
       if (!response.ok) {
         const title = response.statusText || "Request failed";
@@ -103,9 +176,7 @@ export default function ChatWrapper({
 
       const { taskData, taskId, error } = responseData;
 
-      if (taskData) {
-        setTask((prev) => [...prev.slice(0, -1), taskData]);
-      }
+      syncMessagesWithResponse({ taskData, acceptedPrompt: true });
 
       if (taskId) {
         setDbTaskId(taskId);
@@ -137,6 +208,7 @@ export default function ChatWrapper({
       <ChatHeader
         personaLabel={selectedPersona.label}
         messageCount={task.length}
+        conversationStatus={taskStatus}
       />
 
       <section className="mt-14 flex w-full flex-col gap-3 px-3 pt-2 lg:px-5">
@@ -159,13 +231,19 @@ export default function ChatWrapper({
             sendPrompt={(prompt) => setStartMsg(prompt)}
           />
         ) : (
-          <ChatBody messages={task} personaLabel={selectedPersona.label} />
+          <ChatBody
+            messages={task}
+            personaLabel={selectedPersona.label}
+            conversationEnded={isConversationEnded}
+            endState={endState}
+          />
         )}
       </section>
 
       <ChatInput
         sendMessage={sendMessage}
         loading={isLoading}
+        disabled={isConversationEnded}
         startPrompt={startMsg}
         personaLabel={selectedPersona.label}
       />

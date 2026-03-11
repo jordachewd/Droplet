@@ -7,6 +7,7 @@ import { TooltipArrow } from "@/components/shared/tooltip-arrow";
 
 interface ChatInputProps {
   loading: boolean;
+  disabled?: boolean;
   startPrompt?: string;
   personaLabel?: string;
   sendMessage: (message: Message) => void;
@@ -14,6 +15,7 @@ interface ChatInputProps {
 
 export default function ChatInput({
   loading,
+  disabled = false,
   startPrompt,
   personaLabel = "AI",
   sendMessage,
@@ -24,7 +26,7 @@ export default function ChatInput({
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const hasPrompt = prompt.trim() !== "";
-  const canSend = (hasPrompt || Boolean(selectedFile)) && !loading;
+  const canSend = (hasPrompt || Boolean(selectedFile)) && !loading && !disabled;
 
   const convertToBase64 = async (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -59,7 +61,7 @@ export default function ChatInput({
   }
 
   function handleOpenFilePicker() {
-    if (loading) return;
+    if (loading || disabled) return;
     fileInputRef.current?.click();
   }
 
@@ -120,6 +122,8 @@ export default function ChatInput({
     "flex w-full max-w-screen-lg items-end gap-2 rounded-xl border p-2 shadow-md",
     "border-lightBorders-500 bg-white/90 backdrop-blur",
     "dark:border-darkBorders-500 dark:bg-jwdMarine-900/90",
+    disabled &&
+      "border-amber-400 bg-amber-50/90 dark:border-amber-400/50 dark:bg-amber-500/10",
   );
 
   const promptWrapperClass = classNames(
@@ -146,8 +150,10 @@ export default function ChatInput({
             id="chatInput"
             name="chatInput"
             value={prompt}
-            disabled={loading}
-            placeholder="Ask Droplet..."
+            disabled={loading || disabled}
+            placeholder={
+              disabled ? "This conversation has ended." : "Ask Droplet..."
+            }
             onChange={handlePromptChange}
             rows={2}
             className={textareaClass}
@@ -178,11 +184,11 @@ export default function ChatInput({
               <button
                 type="button"
                 className={classNames("icon-btn text-base", {
-                  "cursor-not-allowed opacity-50": loading,
+                  "cursor-not-allowed opacity-50": loading || disabled,
                 })}
                 onClick={handleOpenFilePicker}
                 aria-label="Attach media"
-                disabled={loading}
+                disabled={loading || disabled}
               >
                 <i className="bi bi-cloud-upload text-base"></i>
               </button>
@@ -211,14 +217,16 @@ export default function ChatInput({
             id="addFile"
             type="file"
             accept="image/*"
-            disabled={loading}
+            disabled={loading || disabled}
             onChange={handleImageChange}
           />
         </div>
       </div>
 
       <div className="flex py-1 text-xxs font-light tracking-wide opacity-70">
-        {personaLabel} can still make mistakes. Verify important details.
+        {disabled
+          ? "This conversation is read-only. Use the action above to continue."
+          : `${personaLabel} can still make mistakes. Verify important details.`}
       </div>
     </section>
   );

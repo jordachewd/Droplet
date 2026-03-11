@@ -1,11 +1,24 @@
 "use server";
 import { CreateTaskInput, UpdateTaskParams } from "@/types/TaskData.d";
+import { Message } from "@/types";
 import { isValidObjectId } from "mongoose";
 import { connectToDatabase } from "../database/mongoose";
 import { handleError } from "@/lib/utils/handleError";
 import serializeForClient from "@/lib/utils/serialize-for-client";
 import Task from "../database/models/tasks.model";
 import { auth } from "@clerk/nextjs/server";
+
+function countUserMessages(messages: Message[]): number {
+  return messages.filter((message) => message.role === "user").length;
+}
+
+function estimateMessageBytes(messages: Message[]): number {
+  if (messages.length === 0) {
+    return 0;
+  }
+
+  return Buffer.byteLength(JSON.stringify(messages), "utf8");
+}
 
 // CREATE TASK
 export async function createTask(task: CreateTaskInput) {
@@ -19,6 +32,14 @@ export async function createTask(task: CreateTaskInput) {
       ...task,
       userId,
       personaId: task.personaId || "strategist",
+      promptCount:
+        typeof task.promptCount === "number"
+          ? task.promptCount
+          : countUserMessages(task.messages),
+      estimatedBytes:
+        typeof task.estimatedBytes === "number"
+          ? task.estimatedBytes
+          : estimateMessageBytes(task.messages),
     });
 
     if (!newTask) {
@@ -40,14 +61,38 @@ export async function updateTask(taskId: string, task: UpdateTaskParams) {
     await connectToDatabase();
 
     const updateFields = { ...task, updatedAt: new Date() };
+    if (typeof updateFields.estimatedBytes !== "number") {
+      updateFields.estimatedBytes = estimateMessageBytes(updateFields.messages);
+    }
+
+    const incFields: Record<string, number> = {};
+
+    if (typeof task.usage === "number" && task.usage !== 0) {
+      incFields.usage = task.usage;
+    }
+    if (
+      typeof task.promptCountIncrement === "number" &&
+      task.promptCountIncrement !== 0
+    ) {
+      incFields.promptCount = task.promptCountIncrement;
+    }
+
     delete updateFields.usage;
+    delete updateFields.promptCountIncrement;
+
+    const updateDocument =
+      Object.keys(incFields).length > 0
+        ? {
+            $inc: incFields,
+            $set: updateFields,
+          }
+        : {
+            $set: updateFields,
+          };
 
     const updatedTask = await Task.findOneAndUpdate(
       { _id: taskId, userId },
-      {
-        $inc: { usage: task.usage },
-        $set: updateFields,
-      },
+      updateDocument,
       {
         returnDocument: "after",
         strict: true,
@@ -102,7 +147,7 @@ export async function deleteTask(taskId: string) {
       status: 200,
       source: "deleteTask",
     });
-  } catch (error) {
+  } catch {
     return serializeForClient({
       message: "Conversation deletion failed.",
       status: 500,

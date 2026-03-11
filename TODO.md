@@ -7,137 +7,16 @@
 
 ---
 
-## Phase 14: Data Model Foundation — CURRENT PRIORITY
+## Phase 14: Data Model Foundation — COMPLETED
 
-> Create the new database models required for usage tracking, admin, and content management.
-
----
-
-### 14.1 Add conversation lifecycle fields to Task model
-
-**Files:** `src/lib/database/models/tasks.model.tsx`, `src/types/TaskData.d.tsx`
-**Ref:** TD-DB-10
-
-**What to do:**
-
-- Add to Task schema: `promptCount` (Number, default 0), `mediaCount` (Number, default 0), `estimatedBytes` (Number, default 0), `status` (String, enum `["active", "ended"]`, default `"active"`), `endedAt` (Date, optional), `endedReason` (String, optional), `endAction` (String, optional).
-- Update `TaskData.d.tsx` types to include the new fields.
-- Do NOT change any existing behavior — just add the fields with defaults so existing data is forward-compatible.
-
-**Acceptance Criteria:**
-
-- [ ] Task schema has all 7 new fields with correct types and defaults
-- [ ] Types in `TaskData.d.tsx` updated
-- [ ] Existing tasks remain valid (defaults handle missing data)
-- [ ] TypeScript compiles (`npx tsc --noEmit`)
-- [ ] All existing tests pass (`npm run test`)
+> All 6 sub-tasks verified complete. Task lifecycle fields added. UsageEvent, AppSetting, PublicPage, AdminAuditLog models created. 184 tests passing. See Completed Phases at bottom.
 
 ---
 
-### 14.2 Create UsageEvent model
-
-**Files (new):** `src/lib/database/models/usage-event.model.tsx`
-**Ref:** TD-DB-11
-
-**What to do:**
-
-- Create Mongoose model with fields per SPEC.md section 6.4.
-- Indexes on: `userId`, `taskId`, `personaId`, `model`, `requestType`, `createdAt`.
-- Add `strict: true` on the schema.
-- Export the model with standard pattern: `const UsageEvent = models.UsageEvent || model("UsageEvent", UsageEventSchema);`
-
-**Acceptance Criteria:**
-
-- [ ] Model file created at `src/lib/database/models/usage-event.model.tsx`
-- [ ] All fields from SPEC.md section 6.4 present with correct types
-- [ ] Required indexes added
-- [ ] Model follows existing model patterns in the codebase
-- [ ] TypeScript compiles (`npx tsc --noEmit`)
-
----
-
-### 14.3 Create UsageEvent type definition
-
-**Files (new):** `src/types/UsageEventData.d.tsx`
-**Ref:** TD-DB-11
-
-**What to do:**
-
-- Define TypeScript types for `UsageEventData`, `CreateUsageEventParams`.
-- Types must match the UsageEvent model schema.
-
-**Acceptance Criteria:**
-
-- [ ] Type file created at `src/types/UsageEventData.d.tsx`
-- [ ] Types match model schema
-- [ ] TypeScript compiles (`npx tsc --noEmit`)
-
----
-
-### 14.4 Create AppSetting model
-
-**Files (new):** `src/lib/database/models/app-setting.model.tsx`
-**Ref:** TD-DB-12
-
-**What to do:**
-
-- Create Mongoose model with fields per SPEC.md section 6.5.
-- Index on `key` (unique) and `category`.
-- `value` field type: `Schema.Types.Mixed`.
-- Export with standard pattern.
-
-**Acceptance Criteria:**
-
-- [ ] Model file created at `src/lib/database/models/app-setting.model.tsx`
-- [ ] All fields from SPEC.md section 6.5 present
-- [ ] `key` has unique index, `category` has index
-- [ ] TypeScript compiles (`npx tsc --noEmit`)
-
----
-
-### 14.5 Create PublicPage model
-
-**Files (new):** `src/lib/database/models/public-page.model.tsx`
-**Ref:** TD-DB-13
-
-**What to do:**
-
-- Create Mongoose model with fields per SPEC.md section 6.6.
-- Index on `slug` (unique).
-- Export with standard pattern.
-
-**Acceptance Criteria:**
-
-- [ ] Model file created at `src/lib/database/models/public-page.model.tsx`
-- [ ] All fields from SPEC.md section 6.6 present
-- [ ] `slug` has unique index
-- [ ] TypeScript compiles (`npx tsc --noEmit`)
-
----
-
-### 14.6 Create AdminAuditLog model
-
-**Files (new):** `src/lib/database/models/admin-audit-log.model.tsx`
-**Ref:** TD-DB-14
-
-**What to do:**
-
-- Create Mongoose model with fields per SPEC.md section 6.7.
-- Indexes on `adminId`, `action`, `createdAt`.
-- Export with standard pattern.
-
-**Acceptance Criteria:**
-
-- [ ] Model file created at `src/lib/database/models/admin-audit-log.model.tsx`
-- [ ] All fields from SPEC.md section 6.7 present
-- [ ] Required indexes added
-- [ ] TypeScript compiles (`npx tsc --noEmit`)
-
----
-
-## Phase 15: Entitlement Engine & Usage Enforcement
+## Phase 15: Entitlement Engine & Usage Enforcement — CURRENT PRIORITY
 
 > Build the canonical entitlement resolver and usage enforcement system.
+> **This is the #1 gap between data structures and a working product.** Fields and models exist but nothing is wired.
 
 ---
 
@@ -608,7 +487,26 @@
 
 ---
 
-### 17.13 Remove old /dashboard route
+### 17.13 Update Stripe checkout redirect URLs
+
+**Files:** `src/lib/actions/transaction.action.tsx`
+**Ref:** TD-BILL-01
+
+**What to do:**
+
+- Change `success_url` from `${BASEURL}/profile` to `${BASEURL}/app/profile`.
+- Change `cancel_url` from `${BASEURL}/plans` to `${BASEURL}/app/plans`.
+
+**Acceptance Criteria:**
+
+- [ ] `success_url` points to `/app/profile`
+- [ ] `cancel_url` points to `/app/plans`
+- [ ] TypeScript compiles (`npx tsc --noEmit`)
+- [ ] All existing tests pass
+
+---
+
+### 17.14 Remove old /dashboard route
 
 **Files:** `src/app/(chat)/dashboard/page.tsx`
 
@@ -626,7 +524,7 @@
 
 ---
 
-### 17.14 Update header navigation for new routes
+### 17.15 Update header navigation for new routes
 
 **Files:** `src/components/layout/header.tsx`
 
@@ -647,7 +545,7 @@
 
 ---
 
-### 17.15 Update footer links for legal pages
+### 17.16 Update footer links for legal pages
 
 **Files:** `src/components/layout/footer.tsx`
 
@@ -666,7 +564,7 @@
 
 ---
 
-### 17.16 Update E2E tests for new route structure
+### 17.17 Update E2E tests for new route structure
 
 **Files:** `tests/e2e/authenticated-flows.spec.ts`, `tests/e2e/pricing-public.spec.ts`
 
@@ -1011,7 +909,6 @@
 ### 20.6 Upload audio to S3 instead of base64 in messages
 
 **Files:** `src/lib/utils/openai/generateAudio.tsx`, potentially `src/app/api/openai/route.tsx`
-**Ref:** TD-AI-05, TD-DB-07
 
 **What to do:**
 
@@ -1024,6 +921,46 @@
 - [ ] Audio data uploaded to S3 after generation
 - [ ] Message content stores S3 URL, not base64
 - [ ] Audio player renders from S3 URL
+- [ ] TypeScript compiles (`npx tsc --noEmit`)
+- [ ] All existing tests pass
+
+---
+
+### 20.7 Audit or remove deleteAllTransactions action
+
+**Files:** `src/lib/actions/transaction.action.tsx`
+**Ref:** TD-ACT-01
+
+**What to do:**
+
+- Evaluate whether `deleteAllTransactions` is needed. If yes, add admin role check and AdminAuditLog entry. If no, remove the exported server action.
+- If kept: restrict to admin role, add audit trail, require confirmation parameter.
+- If deleted: remove the function and any references.
+
+**Acceptance Criteria:**
+
+- [ ] Action either removed or protected with admin role check + audit log
+- [ ] No unaudited bulk deletion path exists
+- [ ] TypeScript compiles (`npx tsc --noEmit`)
+- [ ] All existing tests pass
+
+---
+
+### 20.8 Remove console.error from production routes
+
+**Files:** `src/app/api/openai/route.tsx`, `src/app/(chat)/app/library/page.tsx`
+**Ref:** TD-LOG-01
+
+**What to do:**
+
+- Replace `console.error` calls with structured server-side error handling.
+- Use the project's `handleError` utility or silent error recovery where appropriate.
+- Do not expose error details to clients.
+
+**Acceptance Criteria:**
+
+- [ ] No `console.error` in production code paths
+- [ ] Errors still handled gracefully (not swallowed)
 - [ ] TypeScript compiles (`npx tsc --noEmit`)
 - [ ] All existing tests pass
 
@@ -1188,6 +1125,17 @@
 ---
 
 ## Completed Phases
+
+### Phase 14: Data Model Foundation — COMPLETED
+
+- [x] **14.1** Add conversation lifecycle fields to Task model (promptCount, mediaCount, estimatedBytes, status, endedAt, endedReason, endAction)
+- [x] **14.2** Create UsageEvent model with all SPEC.md 6.4 fields and indexes
+- [x] **14.3** Create UsageEvent type definition (UsageEventData, CreateUsageEventParams)
+- [x] **14.4** Create AppSetting model with key (unique), value (Mixed), category (indexed)
+- [x] **14.5** Create PublicPage model with slug (unique), content, sortOrder, isPublished
+- [x] **14.6** Create AdminAuditLog model with adminId, action, targetType, targetId (all indexed)
+
+All 6 tasks verified. 41 test suites, 184 tests passing. Lint, typecheck, build all green.
 
 ### Phase 13: Product Rule Reconciliation — COMPLETED
 

@@ -1,8 +1,15 @@
 import { DEFAULT_PERSONA_ID } from "@/constants/assistant-personas";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import Task from "@/lib/database/models/tasks.model";
-import { TaskHistoryItem } from "@/types/TaskData.d";
+import {
+  TaskConversation,
+  TaskEndAction,
+  TaskEndedReason,
+  TaskHistoryItem,
+  TaskStatus,
+} from "@/types/TaskData.d";
 import { ContentItem, Message, MessageRole } from "@/types";
+import { PersonaId } from "@/types/PersonaData.d";
 import { isValidObjectId } from "mongoose";
 
 type TaskRecord = {
@@ -12,6 +19,13 @@ type TaskRecord = {
   updatedAt?: Date | string;
   messages?: unknown;
   usage?: number;
+  promptCount?: number;
+  mediaCount?: number;
+  estimatedBytes?: number;
+  status?: TaskStatus;
+  endedAt?: Date | string;
+  endedReason?: TaskEndedReason;
+  endAction?: TaskEndAction;
 };
 
 const messageRoles: MessageRole[] = [
@@ -129,7 +143,7 @@ export async function getTaskByIdForUser({
 }: {
   taskId: string;
   userId: string;
-}) {
+}): Promise<TaskConversation | null> {
   if (!isValidObjectId(taskId)) {
     return null;
   }
@@ -137,20 +151,31 @@ export async function getTaskByIdForUser({
   await connectToDatabase();
 
   const task = await Task.findOne({ _id: taskId, userId })
-    .select("_id title personaId messages usage updatedAt")
+    .select(
+      "_id title personaId messages usage promptCount mediaCount estimatedBytes status endedAt endedReason endAction updatedAt",
+    )
     .lean();
 
   if (!task) {
     return null;
   }
 
+  const personaId = String(task.personaId || DEFAULT_PERSONA_ID) as PersonaId;
+
   return {
     _id: String(task._id),
     title: String(task.title || "Untitled conversation"),
-    personaId:
-      String(task.personaId || DEFAULT_PERSONA_ID) || DEFAULT_PERSONA_ID,
+    personaId,
     messages: toPlainMessages(task.messages),
     usage: typeof task.usage === "number" ? task.usage : 0,
+    promptCount: typeof task.promptCount === "number" ? task.promptCount : 0,
+    mediaCount: typeof task.mediaCount === "number" ? task.mediaCount : 0,
+    estimatedBytes:
+      typeof task.estimatedBytes === "number" ? task.estimatedBytes : 0,
+    status: task.status === "ended" ? "ended" : "active",
+    endedAt: task.endedAt ? new Date(task.endedAt).toISOString() : undefined,
+    endedReason: task.endedReason,
+    endAction: task.endAction,
     updatedAt: new Date(task.updatedAt || Date.now()).toISOString(),
   };
 }

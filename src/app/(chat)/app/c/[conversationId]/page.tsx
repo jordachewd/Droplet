@@ -35,6 +35,9 @@ export default async function ConversationPage({
         initialMessages={task.messages}
         initialTaskId={task._id}
         initialPersonaId={task.personaId}
+        initialTaskStatus={task.status}
+        initialEndedReason={task.endedReason}
+        initialEndAction={task.endAction}
       />
     </PageWrapper>
   );

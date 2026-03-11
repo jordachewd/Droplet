@@ -108,7 +108,7 @@ export const plans = [
     icon: "bi bi-stars",
     inclusions: [
       {
-        label: "Advanced AI model (gpt-5.2-pro)",
+        label: "Advanced AI model",
         isIncluded: true,
       },
       {
@@ -153,7 +153,7 @@ export const plans = [
     icon: "bi bi-gem",
     inclusions: [
       {
-        label: "Best AI model (gpt-5.4-pro)",
+        label: "Best AI model",
         isIncluded: true,
       },
       {

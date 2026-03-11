@@ -44,6 +44,13 @@ describe("getTaskByIdForUser", () => {
         },
       ],
       usage: 3,
+      promptCount: 2,
+      mediaCount: 1,
+      estimatedBytes: 420,
+      status: "ended",
+      endedAt: new Date("2026-03-09T19:00:00.000Z"),
+      endedReason: "prompt_limit_reached",
+      endAction: "start_new_conversation",
       updatedAt: new Date("2026-03-09T18:00:00.000Z"),
     });
     const select = vi.fn().mockReturnValue({ lean });
@@ -72,6 +79,13 @@ describe("getTaskByIdForUser", () => {
         },
       ],
       usage: 3,
+      promptCount: 2,
+      mediaCount: 1,
+      estimatedBytes: 420,
+      status: "ended",
+      endedAt: "2026-03-09T19:00:00.000Z",
+      endedReason: "prompt_limit_reached",
+      endAction: "start_new_conversation",
       updatedAt: "2026-03-09T18:00:00.000Z",
     });
   });
