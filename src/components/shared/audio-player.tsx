@@ -89,9 +89,7 @@ export default function AudioPlayer({ audioSrc }: AudioPlayerProps) {
         audioElement.pause();
         audioElement.onloadedmetadata = null;
       };
-    } catch (error) {
-      console.error("Error processing audio:", error);
-    }
+    } catch {}
   }, [audioSrc]);
 
   useEffect(() => {
@@ -123,12 +121,14 @@ export default function AudioPlayer({ audioSrc }: AudioPlayerProps) {
     if (audio) {
       if (isPlaying) {
         audio.pause();
+        setIsPlaying(false);
       } else {
         audio
           .play()
-          .catch((error) => console.error("Error playing audio:", error));
+          .then(() => setIsPlaying(true))
+          .catch(() => setIsPlaying(false));
+        return;
       }
-      setIsPlaying(!isPlaying);
     }
   };
 

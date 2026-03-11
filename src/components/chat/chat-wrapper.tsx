@@ -186,9 +186,8 @@ export default function ChatWrapper({
         showAlert("Error", error);
         return;
       }
-    } catch (error) {
-      console.error(error);
-      setTask((prev) => prev.slice(0, -1));
+    } catch {
+      showAlert("Error", "Unable to send your message right now.");
     }
 
     setIsLoading(false);

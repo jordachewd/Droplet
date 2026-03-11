@@ -95,9 +95,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     }
 
     return NextResponse.json({ fileUrl, objectKey }, { status: 200 });
-  } catch (error: unknown) {
-    console.error("AWS API Error:", error);
-
+  } catch {
     return NextResponse.json(
       { message: "File upload failed" },
       { status: 500 },
@@ -144,9 +142,7 @@ export async function DELETE(req: Request): Promise<NextResponse> {
       message: "Image deleted successfully",
       objectKey,
     });
-  } catch (error) {
-    console.error("AWS delete error:", error);
-
+  } catch {
     return NextResponse.json(
       { message: "File deletion failed" },
       { status: 500 },

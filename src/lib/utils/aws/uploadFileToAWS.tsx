@@ -33,8 +33,7 @@ export default async function uploadFileToAWS(
     await awsS3Client.send(putObjectToAWS);
 
     return buildPrivateS3AssetUrl(filePath);
-  } catch (error) {
-    console.error("AWS S3 Upload Error:", error);
+  } catch {
     throw new Error("File upload failed");
   }
 }

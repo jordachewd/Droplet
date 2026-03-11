@@ -1,0 +1,371 @@
+import type { Metadata } from "next";
+import classNames from "classnames";
+import Link from "next/link";
+import PageHead from "@/components/layout/page-head";
+import { PERSONAS } from "@/constants/assistant-personas";
+
+export const metadata: Metadata = {
+  title: "About | Droplet",
+  description:
+    "Learn how Droplet combines persona-led AI guidance, media workflows, and plan-based access for focused conversations.",
+};
+
+type AboutVisualType = "identity" | "workflow" | "personas" | "media" | "plans";
+
+interface AboutSection {
+  eyebrow: string;
+  title: string;
+  paragraphs: string[];
+  visualType: AboutVisualType;
+}
+
+const aboutSections: AboutSection[] = [
+  {
+    eyebrow: "Persona-led guidance",
+    title: "Droplet is an AI workspace shaped by specialist personas.",
+    paragraphs: [
+      "Each conversation starts with a persona that sets the assistant's tone, boundaries, and style of help. Instead of a generic chatbot, you begin with a role that already knows how to think about planning, learning, creative work, analysis, or companionship.",
+      "That structure keeps the product grounded: the Strategist plans, the Teacher explains, the Developer debugs, and the companion personas stay supportive without blurring safety boundaries.",
+    ],
+    visualType: "identity",
+  },
+  {
+    eyebrow: "How the flow works",
+    title:
+      "Pick a persona, start a conversation, and keep momentum in one place.",
+    paragraphs: [
+      "Droplet is built around account-based conversations. You choose a persona, send a prompt, and continue the thread with saved context instead of starting over every time.",
+      "The app keeps each conversation tied to the persona you selected, so follow-up prompts stay coherent and the conversation history remains easy to revisit from your library.",
+    ],
+    visualType: "workflow",
+  },
+  {
+    eyebrow: "Nine personas",
+    title: "The full catalog is available across all plans.",
+    paragraphs: [
+      "Lite, Pro, and Premium all include access to every approved persona. Plan upgrades change limits and media capacity, not who you are allowed to talk to.",
+      "The current catalog covers Productivity, Learning, Creative, Lifestyle, and Companion use cases so users can move between practical execution, reflection, and content work without switching products.",
+    ],
+    visualType: "personas",
+  },
+  {
+    eyebrow: "Media workflows",
+    title:
+      "Text is the core experience, with media tools layered in where they help.",
+    paragraphs: [
+      "Droplet supports text conversations first, then extends into media workflows such as image and audio generation when the selected persona and the user's plan allow it.",
+      "Premium is the top-tier plan for the most advanced media workflows, including the plan area reserved for video generation, while Lite and Pro keep the focus on day-to-day chat plus capped media usage.",
+    ],
+    visualType: "media",
+  },
+  {
+    eyebrow: "Plans and limits",
+    title:
+      "Choose the limits that match how often you want to rely on Droplet.",
+    paragraphs: [
+      "New accounts start on Lite, which is free forever and designed for everyday testing, light productivity, and occasional media use. Pro and Premium increase conversation capacity, prompt limits, and media headroom.",
+      "If you want the full plan breakdown, pricing, and current entitlements, the plans page is the canonical public reference.",
+    ],
+    visualType: "plans",
+  },
+];
+
+const personaCategories = Object.entries(
+  PERSONAS.reduce<Record<string, number>>((accumulator, persona) => {
+    accumulator[persona.category] = (accumulator[persona.category] ?? 0) + 1;
+    return accumulator;
+  }, {}),
+);
+
+function renderAboutVisual(visualType: AboutVisualType) {
+  const visualClassName = classNames(
+    "rounded-[2rem] border p-6 shadow-sm",
+    "border-lightBorders-400/80 bg-white/80",
+    "dark:border-darkBorders-500 dark:bg-jwdMarine-900/85",
+  );
+
+  if (visualType === "identity") {
+    return (
+      <div className={visualClassName}>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <article className="rounded-2xl bg-lightPrimary-100 p-4 dark:bg-darkPrimary-900/70">
+            <p className="text-xxs font-semibold uppercase tracking-[0.28em] opacity-70">
+              Personas
+            </p>
+            <p className="heading-4 mt-3">9</p>
+            <p className="body-2 mt-2 text-sm">
+              Guided conversation styles with distinct prompts and boundaries.
+            </p>
+          </article>
+          <article className="rounded-2xl bg-lightSecondary-100 p-4 dark:bg-darkSecondary-900/45">
+            <p className="text-xxs font-semibold uppercase tracking-[0.28em] opacity-70">
+              Plans
+            </p>
+            <p className="heading-4 mt-3">3</p>
+            <p className="body-2 mt-2 text-sm">
+              Lite, Pro, and Premium with shared persona access.
+            </p>
+          </article>
+          <article className="rounded-2xl bg-lightAccent-100 p-4 dark:bg-darkAccent-1000/80">
+            <p className="text-xxs font-semibold uppercase tracking-[0.28em] opacity-70">
+              Modes
+            </p>
+            <p className="heading-4 mt-3">Text + Media</p>
+            <p className="body-2 mt-2 text-sm">
+              Conversations stay central while media tools extend the workflow.
+            </p>
+          </article>
+        </div>
+      </div>
+    );
+  }
+
+  if (visualType === "workflow") {
+    const steps = [
+      {
+        step: "01",
+        title: "Choose a persona",
+        text: "Start with the role that matches the job to be done.",
+      },
+      {
+        step: "02",
+        title: "Send the prompt",
+        text: "Keep the conversation grounded in one thread and one persona.",
+      },
+      {
+        step: "03",
+        title: "Reuse the output",
+        text: "Return to the conversation later from your saved library.",
+      },
+    ];
+
+    return (
+      <div className={visualClassName}>
+        <div className="flex flex-col gap-4">
+          {steps.map((step) => (
+            <article
+              key={step.step}
+              className={classNames(
+                "rounded-2xl border px-4 py-4",
+                "border-lightBorders-300 bg-lightBackground-200/80",
+                "dark:border-darkBorders-500 dark:bg-jwdMarine-1000/70",
+              )}
+            >
+              <div className="flex items-start gap-4">
+                <span className="heading-5 min-w-12 opacity-60">
+                  {step.step}
+                </span>
+                <div>
+                  <h3 className="heading-6">{step.title}</h3>
+                  <p className="body-2 mt-2 text-sm">{step.text}</p>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (visualType === "personas") {
+    return (
+      <div className={visualClassName}>
+        <div className="grid gap-4 sm:grid-cols-[0.9fr_1.1fr]">
+          <div className="rounded-2xl bg-lightBackground-200/85 p-4 dark:bg-jwdMarine-1000/70">
+            <p className="text-xxs font-semibold uppercase tracking-[0.28em] opacity-70">
+              Categories
+            </p>
+            <div className="mt-4 flex flex-col gap-3">
+              {personaCategories.map(([category, count]) => (
+                <div
+                  key={category}
+                  className="flex items-center justify-between"
+                >
+                  <span className="body-2 text-sm">{category}</span>
+                  <span className="rounded-full bg-lightSecondary-200 px-3 py-1 text-xs font-semibold dark:bg-darkSecondary-900/50">
+                    {count}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="rounded-2xl bg-lightPrimary-100/75 p-4 dark:bg-darkPrimary-900/70">
+            <p className="text-xxs font-semibold uppercase tracking-[0.28em] opacity-70">
+              Current catalog
+            </p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {PERSONAS.map((persona) => (
+                <span
+                  key={persona.id}
+                  className={classNames(
+                    "rounded-full px-3 py-1.5 text-xs font-semibold shadow-sm",
+                    "bg-white/90 text-lightText-500",
+                    "dark:bg-jwdMarine-1000 dark:text-darkText-500",
+                  )}
+                >
+                  {persona.label}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (visualType === "media") {
+    const mediaCards = [
+      {
+        label: "Image",
+        detail: "Visual generation and upload-aware chat workflows.",
+      },
+      {
+        label: "Audio",
+        detail: "Speech-oriented responses and generated audio outputs.",
+      },
+      {
+        label: "Premium",
+        detail:
+          "Reserved for the highest-capacity media workflows, including video.",
+      },
+    ];
+
+    return (
+      <div className={visualClassName}>
+        <div className="grid gap-4 sm:grid-cols-3">
+          {mediaCards.map((card) => (
+            <article
+              key={card.label}
+              className={classNames(
+                "rounded-2xl border px-4 py-5",
+                "border-lightBorders-300 bg-lightBackground-200/85",
+                "dark:border-darkBorders-500 dark:bg-jwdMarine-1000/70",
+              )}
+            >
+              <p className="text-xxs font-semibold uppercase tracking-[0.28em] opacity-70">
+                {card.label}
+              </p>
+              <p className="body-2 mt-3 text-sm">{card.detail}</p>
+            </article>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={visualClassName}>
+      <div className="grid gap-4 sm:grid-cols-3">
+        <article className="rounded-2xl bg-lightBackground-200/90 p-4 dark:bg-jwdMarine-1000/70">
+          <p className="text-xxs font-semibold uppercase tracking-[0.28em] opacity-70">
+            Lite
+          </p>
+          <p className="heading-5 mt-3">Free forever</p>
+          <p className="body-2 mt-2 text-sm">
+            All personas with capped daily conversations and media usage.
+          </p>
+        </article>
+        <article className="rounded-2xl bg-lightSecondary-100/85 p-4 dark:bg-darkSecondary-900/45">
+          <p className="text-xxs font-semibold uppercase tracking-[0.28em] opacity-70">
+            Pro
+          </p>
+          <p className="heading-5 mt-3">$19</p>
+          <p className="body-2 mt-2 text-sm">
+            Higher prompt and conversation ceilings for regular work.
+          </p>
+        </article>
+        <article className="rounded-2xl bg-lightAccent-100/85 p-4 dark:bg-darkAccent-1000/80">
+          <p className="text-xxs font-semibold uppercase tracking-[0.28em] opacity-70">
+            Premium
+          </p>
+          <p className="heading-5 mt-3">$39</p>
+          <p className="body-2 mt-2 text-sm">
+            Highest-capacity tier for advanced media and premium workflows.
+          </p>
+        </article>
+      </div>
+    </div>
+  );
+}
+
+export default function AboutPage() {
+  return (
+    <section className="AboutPage mx-auto flex w-full max-w-7xl flex-col gap-10 px-4 pb-16 pt-24 sm:px-6 lg:px-8">
+      <div
+        className={classNames(
+          "rounded-[2rem] border px-6 py-10 shadow-sm",
+          "border-lightBorders-400/80 bg-white/72 backdrop-blur-sm",
+          "dark:border-darkBorders-500 dark:bg-jwdMarine-900/80",
+        )}
+      >
+        <PageHead
+          title="About Droplet"
+          subtitle="A persona-driven AI assistant built for structured conversations, practical output, and media-aware workflows."
+        />
+      </div>
+
+      {aboutSections.map((section, index) => (
+        <article
+          key={section.title}
+          className={classNames(
+            "grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)] lg:items-center",
+            index % 2 === 1 && "lg:[&>*:first-child]:order-2",
+          )}
+        >
+          <div
+            className={classNames(
+              "rounded-[2rem] border px-6 py-7 shadow-sm",
+              "border-lightBorders-400/80 bg-white/76",
+              "dark:border-darkBorders-500 dark:bg-jwdMarine-900/82",
+            )}
+          >
+            <p className="text-xxs font-semibold uppercase tracking-[0.3em] opacity-65">
+              {section.eyebrow}
+            </p>
+            <h2 className="heading-4 mt-3 leading-tight">{section.title}</h2>
+            <div className="mt-4 flex flex-col gap-4">
+              {section.paragraphs.map((paragraph) => (
+                <p key={paragraph} className="body-2 text-sm md:text-base">
+                  {paragraph}
+                </p>
+              ))}
+            </div>
+          </div>
+
+          {renderAboutVisual(section.visualType)}
+        </article>
+      ))}
+
+      <section
+        className={classNames(
+          "rounded-[2rem] border px-6 py-8 shadow-sm",
+          "border-lightBorders-400/80 bg-linear-135 from-lightSecondary-100 via-white to-lightAccent-100",
+          "dark:border-darkBorders-500 dark:bg-linear-135 dark:from-darkPrimary-1000 dark:via-jwdMarine-1000 dark:to-darkSecondary-900/55",
+        )}
+      >
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+          <div className="max-w-2xl">
+            <h2 className="heading-4 leading-tight">
+              Want the full breakdown of pricing and plan limits?
+            </h2>
+            <p className="body-2 mt-3 text-sm md:text-base">
+              Compare Lite, Pro, and Premium on the public plans page, or jump
+              straight into the persona catalog before creating an account.
+            </p>
+          </div>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Link className="btn btn-lg btn-contained uppercase" href="/plans">
+              View plans
+            </Link>
+            <Link
+              className="btn btn-lg btn-outlined uppercase"
+              href="/personas"
+            >
+              Explore personas
+            </Link>
+          </div>
+        </div>
+      </section>
+    </section>
+  );
+}

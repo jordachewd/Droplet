@@ -39,11 +39,17 @@ export default function Header() {
           <Logo size={26} />
 
           <nav className="hidden items-center gap-1 md:flex">
+            <Link className="btn btn-text btn-sm" href="/about">
+              About
+            </Link>
             <Link className="btn btn-text btn-sm" href="/personas">
               Personas
             </Link>
             <Link className="btn btn-text btn-sm" href="/plans">
               Plans
+            </Link>
+            <Link className="btn btn-text btn-sm" href="/faqs">
+              FAQs
             </Link>
             {isSignedIn && (
               <Link className="btn btn-text btn-sm" href="/app">

@@ -49,13 +49,8 @@ describe("uploadFileToAWS", () => {
     );
   });
 
-  it("logs the original AWS error and throws a generic message", async () => {
-    const sdkError = new Error("S3 unavailable");
-    const consoleErrorSpy = vi
-      .spyOn(console, "error")
-      .mockImplementation(() => undefined);
-
-    vi.mocked(awsS3Client.send).mockRejectedValue(sdkError);
+  it("throws a generic message when the AWS upload fails", async () => {
+    vi.mocked(awsS3Client.send).mockRejectedValue(new Error("S3 unavailable"));
 
     await expect(
       uploadFileToAWS(
@@ -65,10 +60,5 @@ describe("uploadFileToAWS", () => {
         "user_123/uploads",
       ),
     ).rejects.toThrow("File upload failed");
-
-    expect(consoleErrorSpy).toHaveBeenCalledWith(
-      "AWS S3 Upload Error:",
-      sdkError,
-    );
   });
 });

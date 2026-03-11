@@ -141,4 +141,18 @@ describe("ChatWrapper", () => {
     ).toBe(true);
     expect(screen.queryByRole("alert")).toBeNull();
   });
+
+  it("shows a generic alert when the chat request fails before a response returns", async () => {
+    vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("Network down"));
+
+    render(<ChatWrapper />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Send message" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert").textContent).toContain(
+        "Unable to send your message right now.",
+      );
+    });
+  });
 });

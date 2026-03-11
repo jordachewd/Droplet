@@ -45,10 +45,11 @@ export default function ImageHolder({
       a.click();
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error("Download failed:", error);
+    } catch {
+      // Ignore download failures and leave the current image rendered.
+    } finally {
+      setIsDownloading(false);
     }
-    setIsDownloading(false);
   };
 
   const imageHolderClass = classNames(

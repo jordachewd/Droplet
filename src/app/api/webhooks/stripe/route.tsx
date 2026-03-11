@@ -30,14 +30,7 @@ async function createTransaction(transaction: CreateTransactionParams) {
     const newTransaction = await Transaction.create(transaction);
 
     return serializeForClient(newTransaction);
-  } catch (error) {
-    console.error("Stripe webhook failed to create transaction", {
-      stripeId: transaction.stripeId,
-      clerkId: transaction.clerkId,
-      userId: transaction.userId,
-      error,
-    });
-
+  } catch {
     return null;
   }
 }
@@ -96,10 +89,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       !ALLOWED_PLAN_NAMES.includes(thePlanName as PlanName) ||
       !ALLOWED_BILLING_CYCLES.includes(theBillingCycle as BillingCycle)
     ) {
-      console.error("Stripe webhook missing required checkout metadata", {
-        stripeId: id,
-      });
-
       return NextResponse.json(
         {
           message: "Webhook error",
@@ -144,15 +133,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     });
 
     if (!existingUser) {
-      console.error(
-        "Stripe webhook could not match checkout session to a user",
-        {
-          stripeId: id,
-          clerkId: theClerkId,
-          userId: theUserId,
-        },
-      );
-
       return NextResponse.json(
         {
           message: "Webhook error",
@@ -194,12 +174,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
 
       if (!updatedUser) {
-        console.error("Stripe webhook failed to update user plan", {
-          stripeId: id,
-          clerkId: theClerkId,
-          userId: theUserId,
-        });
-
         return NextResponse.json(
           {
             message: "Webhook error",

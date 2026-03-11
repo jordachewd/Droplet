@@ -1,6 +1,7 @@
 import lightLogo from "../../../public/images/jwd_light.png";
 import classNames from "classnames";
 import Image from "next/image";
+import Link from "next/link";
 
 export default function Footer() {
   const footerClass = classNames(
@@ -35,8 +36,8 @@ export default function Footer() {
           </div>
         </div>
         <div className="flex items-center gap-4 text-xs opacity-60">
-          <span>Privacy & Cookie Policy</span>
-          <span>Terms & Conditions</span>
+          <Link href="/privacy">Privacy &amp; Cookie Policy</Link>
+          <Link href="/terms">Terms &amp; Conditions</Link>
         </div>
       </div>
     </section>

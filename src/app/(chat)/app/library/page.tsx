@@ -28,9 +28,7 @@ export default async function LibraryPage() {
       updatedAtLabel: mapDateToLabel(task.updatedAt),
       href: `/app/c/${task._id}`,
     }));
-  } catch (error) {
-    console.error("Library conversations load failed:", error);
-  }
+  } catch {}
 
   return (
     <PageWrapper id="LibraryPage" scrollable>
