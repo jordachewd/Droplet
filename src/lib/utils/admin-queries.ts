@@ -1,5 +1,5 @@
 import { plans, PLAN_LIMITS } from "@/constants/plans";
-import { resolveModelForPlan } from "@/lib/utils/ai-model-policy";
+import { MODEL_POLICY_MATRIX } from "@/lib/utils/ai-model-policy";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import AppSetting from "@/lib/database/models/app-setting.model";
 import PublicPage from "@/lib/database/models/public-page.model";
@@ -470,29 +470,7 @@ export async function getAdminSettingsSnapshot() {
   return {
     settingsByKey,
     defaults: {
-      models: {
-        Lite: {
-          chat: resolveModelForPlan("Lite", "chat"),
-          title: resolveModelForPlan("Lite", "title"),
-          image: resolveModelForPlan("Lite", "image"),
-          audio: resolveModelForPlan("Lite", "audio"),
-          video: resolveModelForPlan("Lite", "video"),
-        },
-        Pro: {
-          chat: resolveModelForPlan("Pro", "chat"),
-          title: resolveModelForPlan("Pro", "title"),
-          image: resolveModelForPlan("Pro", "image"),
-          audio: resolveModelForPlan("Pro", "audio"),
-          video: resolveModelForPlan("Pro", "video"),
-        },
-        Premium: {
-          chat: resolveModelForPlan("Premium", "chat"),
-          title: resolveModelForPlan("Premium", "title"),
-          image: resolveModelForPlan("Premium", "image"),
-          audio: resolveModelForPlan("Premium", "audio"),
-          video: resolveModelForPlan("Premium", "video"),
-        },
-      },
+      models: MODEL_POLICY_MATRIX,
       pricing: plans.map((plan) => ({
         name: plan.name,
         price: plan.price,

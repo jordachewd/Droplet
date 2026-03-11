@@ -14,7 +14,7 @@ These rules are **non-negotiable**. All agents must respect them in every implem
 2. **Lite is permanent and free** — no 3-day trial, no expiry. Default plan on account creation.
 3. **All 9 personas available in all plans** — no persona restrictions per plan.
 4. **Prices: Pro = $19, Premium = $39** — enforce everywhere.
-5. **Lite limits: 5 conversations/day, 10 prompts/conversation, 3 media generations/month.**
+5. **Lite limits: 5 conversations/day, 10 prompts/conversation, 3 image generations/month.** Audio and video blocked for Lite.
 6. **When limits are hit, conversation MUST end** with a stop reason and next-action instruction.
 7. **Users can only access their own data** — ownership enforcement on every query.
 8. **Admin routes under `/admin/*`** — protected by role at proxy AND server level.
@@ -48,7 +48,7 @@ All six gates must pass.
 
 ## Route Boundaries
 
-> Route restructure is **complete** (Phase 17). Proxy protects `/app(.*)` and `/admin(.*)` only. Profile and plans are under `/app/*`. Admin is at `/admin/*`. The `(account)` route group has been deleted (Phase 17-C). Public pages (about, faqs, privacy, cookies, terms) are live (Phase 18).
+> Route restructure is **complete** (Phase 17). Proxy protects `/app(.*)` and `/admin(.*)` only. Profile and plans are under `/app/*`. Admin is at `/admin/*`. The `(account)` route group has been deleted (Phase 17-C). Public pages (about, faqs, privacy, cookies, terms) are live (Phase 18). Orphan directories (`/dashboard`, `/pricing`) removed (Phase 20).
 
 | Area   | Namespace                                                                       | Protection                           |
 | ------ | ------------------------------------------------------------------------------- | ------------------------------------ |
@@ -81,9 +81,9 @@ All six gates must pass.
 
 - **Zero trust**: protect all routes unless explicitly public. Verify auth in every server action and API route before DB writes.
 - **Admin double-check**: admin routes must verify `role === "admin"` at both proxy AND server-action/page level.
-- **Webhooks**: verify signatures (Svix for Clerk, `stripe.webhooks.constructEvent` for Stripe) before processing. Ensure idempotency — check for duplicate event IDs before creating records.
+- **Webhooks**: verify signatures (Svix for Clerk, `stripe.webhooks.constructEvent` for Stripe) before processing. Ensure idempotency — check for duplicate event IDs before creating records. Webhook handlers must not throw on replayed or missing documents.
 - **Secrets**: never commit; use `.env.local`. Only `NEXT_PUBLIC_*` values reach the browser.
-- **Error responses**: generic messages to clients; detailed logs server-side only. Never leak provider error messages (OpenAI, AWS, Stripe).
+- **Error responses**: generic messages to clients; detailed logs server-side only. Never leak provider error messages (OpenAI, AWS, Stripe). Use `new Error(message, { cause: originalError })` to preserve stack traces when rethrowing.
 - **Uploads**: validate type and size at the boundary. Use allowlists, not blocklists.
 - **Downloads**: validate and allowlist URLs before proxying (SSRF prevention).
 - **No `Math.random()`** for security-sensitive values — use `crypto`.
@@ -93,11 +93,16 @@ All six gates must pass.
 
 ## AI / OpenAI Rules
 
-- **No hardcoded model names** in OpenAI utility functions — use the AI model policy resolver (`ai-model-policy.ts`).
+- **No hardcoded model names** in OpenAI utility functions — use the AI model policy resolver (`resolveModelPolicy()` in `ai-model-policy.ts`).
+- **Frontend must never send the final model ID** — the backend resolves model from plan + feature + task class + cost state.
+- **Titles permanently pinned to cheapest model** (`gpt-4.1-nano`) — never use flagship models for this utility task.
+- **Premium access means eligibility, not automatic flagship cost** — Premium chat defaults to `gpt-4.1`; `gpt-5.4` only for complex reasoning with explicit request.
+- **Retries should downgrade model tier** — never retry on the same or higher-tier model.
 - **No binary/base64 in MongoDB** — upload media (audio, images) to S3 and store URLs only.
 - **Log every AI request** to `UsageEvent` model for cost tracking and admin analytics.
 - **Enforce all limits** before making OpenAI calls: daily conversations, prompt count, media generations, document size.
 - **Stop conversations cleanly** when limits are hit — record stop reason and end action on the Task.
+- **Audio mode differentiation** — TTS-only fallback (`gpt-4o-mini-tts`) must NOT be used for `audio_in_out` requests.
 
 ## Testing Rules
 

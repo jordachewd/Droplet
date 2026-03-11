@@ -220,8 +220,11 @@ describe("POST /api/openai", () => {
         userId: "user_123",
         personaId: "strategist",
         planName: "Lite",
+        taskClass: "standard",
+        budgetState: "normal",
         entitlements: expect.objectContaining({
           planName: "Lite",
+          supportsAudioGeneration: false,
         }),
       }),
     );
@@ -282,6 +285,8 @@ describe("POST /api/openai", () => {
         taskId: NEW_TASK_ID,
         userId: "user_123",
         personaId: "strategist",
+        taskClass: "standard",
+        budgetState: "normal",
       }),
     );
     expect(generateResponse).not.toHaveBeenCalled();
@@ -322,8 +327,11 @@ describe("POST /api/openai", () => {
         userId: "user_123",
         personaId: "teacher",
         planName: "Lite",
+        taskClass: "standard",
+        budgetState: "normal",
         entitlements: expect.objectContaining({
           planName: "Lite",
+          supportsAudioGeneration: false,
         }),
       }),
     );

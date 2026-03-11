@@ -115,7 +115,7 @@ describe("POST /api/openai phase16", () => {
         usage: 7,
         requestMetric: {
           requestType: "title",
-          model: "gpt-4o-mini",
+          model: "gpt-4.1-nano",
           tokensIn: 5,
           tokensOut: 2,
           latencyMs: 12,
@@ -184,16 +184,21 @@ describe("POST /api/openai phase16", () => {
       "Lite",
       "strategist",
     );
-    expect(generateResponse).toHaveBeenCalledWith({
-      messages: [{ role: "user", whois: "user", content: "new chat" }],
-      taskId: NEW_TASK_ID,
-      userId: "user_123",
-      personaId: "strategist",
-      planName: "Lite",
-      entitlements: expect.objectContaining({
+    expect(generateResponse).toHaveBeenCalledWith(
+      expect.objectContaining({
+        messages: [{ role: "user", whois: "user", content: "new chat" }],
+        taskId: NEW_TASK_ID,
+        userId: "user_123",
+        personaId: "strategist",
         planName: "Lite",
+        taskClass: "standard",
+        budgetState: "normal",
+        entitlements: expect.objectContaining({
+          planName: "Lite",
+          supportsAudioGeneration: false,
+        }),
       }),
-    });
+    );
     expect(emitUsageEvents).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({
@@ -273,7 +278,7 @@ describe("POST /api/openai phase16", () => {
           },
           {
             requestType: "image",
-            model: "dall-e-3",
+            model: "gpt-image-1-mini",
             blocked: true,
             blockedReason: "media_limit_reached",
             latencyMs: 0,

@@ -6,7 +6,7 @@ import {
 } from "@/lib/utils/resolve-entitlements";
 
 describe("resolveEntitlements", () => {
-  it("allows all personas and audio generation for Lite", () => {
+  it("allows all personas and blocks audio generation for Lite", () => {
     const entitlements = resolveEntitlements("Lite");
 
     expect(entitlements.allowedPersonaIds).toEqual(
@@ -14,7 +14,7 @@ describe("resolveEntitlements", () => {
     );
     expect(entitlements.allowedPersonaIds).toContain("boyfriend");
     expect(entitlements.allowedPersonaIds).toContain("girlfriend");
-    expect(entitlements.supportsAudioGeneration).toBe(true);
+    expect(entitlements.supportsAudioGeneration).toBe(false);
   });
 
   it("preserves companion persona selections for Lite users", () => {

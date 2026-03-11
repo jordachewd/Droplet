@@ -33,7 +33,12 @@ import { PLAN_LIMITS } from "@/constants/plans";
 import { SUPPORT_EMAIL } from "@/constants/support";
 import { PlanName } from "@/types/PlanData.d";
 import { PersonaId } from "@/types/PersonaData.d";
-import { resolveModelForPlan } from "@/lib/utils/ai-model-policy";
+import {
+  BudgetState,
+  TaskClass,
+  normalizePlanTier,
+  resolveModelPolicy,
+} from "@/lib/utils/ai-model-policy";
 import {
   AIRequestMetric,
   emitUsageEvents,
@@ -42,6 +47,8 @@ import {
 const OPENAI_RATE_LIMIT_MAX_REQUESTS = 20;
 const OPENAI_RATE_LIMIT_WINDOW_MS = 60_000;
 const TASK_STORAGE_WARNING_BYTES = 12 * 1024 * 1024;
+const DEFAULT_CHAT_TASK_CLASS: TaskClass = "standard";
+const DEFAULT_CHAT_BUDGET_STATE: BudgetState = "normal";
 const STREAM_HEADERS = {
   "Content-Type": "text/event-stream; charset=utf-8",
   "Cache-Control": "no-store, no-transform",
@@ -52,6 +59,7 @@ const OPENAI_ERROR_STATUS_MAP: Record<OpenAIErrorType, number> = {
   rate_limit: 429,
   timeout: 504,
   service_error: 502,
+  policy_blocked: 403,
   unknown: 500,
 };
 
@@ -60,6 +68,8 @@ const OPENAI_ERROR_MESSAGES: Record<OpenAIErrorType, string> = {
   timeout: "The AI service timed out. Please try again.",
   service_error:
     "The AI service is temporarily unavailable. Please try again shortly.",
+  policy_blocked:
+    "This request is not available for your current plan or request context.",
   unknown: "An error occurred while processing your request.",
 };
 
@@ -223,9 +233,14 @@ function emitBlockedChatUsageEvent({
   planName?: PlanName | null;
   stopReason: TaskEndedReason;
 }) {
-  const model = resolveModelForPlan(planName ?? "Lite", "chat");
+  const policy = resolveModelPolicy({
+    plan: normalizePlanTier(planName ?? "Lite"),
+    feature: "chat",
+    taskClass: DEFAULT_CHAT_TASK_CLASS,
+    budgetState: DEFAULT_CHAT_BUDGET_STATE,
+  });
 
-  if (!model) {
+  if (policy.hardBlocked || policy.model === "blocked") {
     return;
   }
 
@@ -236,7 +251,7 @@ function emitBlockedChatUsageEvent({
     metrics: [
       {
         requestType: "chat",
-        model,
+        model: policy.model,
         blocked: true,
         blockedReason: stopReason,
         latencyMs: 0,
@@ -361,7 +376,8 @@ async function finalizeAIResponse({
     return {
       status: OPENAI_ERROR_STATUS_MAP[aiPayload.errorType],
       payload: {
-        error: OPENAI_ERROR_MESSAGES[aiPayload.errorType],
+        error:
+          aiPayload.errorMessage ?? OPENAI_ERROR_MESSAGES[aiPayload.errorType],
       },
     };
   }
@@ -539,9 +555,6 @@ export async function POST(req: Request): Promise<Response> {
 
     const userData = (await getUserById(userId)) as UserData | null;
     const planName = userData?.plan?.name ?? "Lite";
-    const combinedMediaUsageCount =
-      (userData?.plan?.imageGenerations ?? 0) +
-      (userData?.plan?.audioGenerations ?? 0);
     const persistedTask = providedTaskId
       ? await getTaskByIdForUser({
           taskId: providedTaskId,
@@ -650,14 +663,12 @@ export async function POST(req: Request): Promise<Response> {
     const imageUsage = checkUsageLimit({
       planName,
       currentCount: userData?.plan?.imageGenerations,
-      combinedCount: combinedMediaUsageCount,
       limitType: "images",
       usagePeriodStart: userData?.plan?.usagePeriodStart,
     });
     const audioUsage = checkUsageLimit({
       planName,
       currentCount: userData?.plan?.audioGenerations,
-      combinedCount: combinedMediaUsageCount,
       limitType: "audio",
       usagePeriodStart: userData?.plan?.usagePeriodStart,
     });
@@ -905,6 +916,8 @@ export async function POST(req: Request): Promise<Response> {
               personaId: selectedPersona.id,
               planName,
               entitlements: resolvedEntitlements,
+              taskClass: DEFAULT_CHAT_TASK_CLASS,
+              budgetState: DEFAULT_CHAT_BUDGET_STATE,
               abortSignal: req.signal,
               onContentChunk: (delta, snapshot) => {
                 writeStreamEvent(controller, {
@@ -961,6 +974,8 @@ export async function POST(req: Request): Promise<Response> {
       personaId: selectedPersona.id,
       planName,
       entitlements: resolvedEntitlements,
+      taskClass: DEFAULT_CHAT_TASK_CLASS,
+      budgetState: DEFAULT_CHAT_BUDGET_STATE,
     });
     const aiPayload = JSON.parse(aiResponse as string) as OpenAIResponsePayload;
 

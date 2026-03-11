@@ -61,7 +61,7 @@ describe("generateAudio phase16", () => {
       role: "assistant",
       taskId: "task_audio",
       userId: "user_123",
-      planName: "Lite",
+      planName: "Pro",
     });
     const payload = JSON.parse(result as string);
 
@@ -71,13 +71,13 @@ describe("generateAudio phase16", () => {
       "audio/wav",
       "user_123/audio",
     );
-    expect(payload.model).toBe("gpt-4o-audio-preview");
+    expect(payload.model).toBe("gpt-audio-mini");
     expect(payload.taskUsage).toBe(14);
     expect(payload.generatedAudio).toBe(true);
     expect(payload.requestMetric).toEqual(
       expect.objectContaining({
         requestType: "audio",
-        model: "gpt-4o-audio-preview",
+        model: "gpt-audio-mini",
         tokensIn: 10,
         tokensOut: 4,
       }),

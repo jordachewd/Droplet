@@ -5,7 +5,10 @@ import { handleError } from "../handleError";
 import sharp from "sharp";
 import uploadFileToAWS from "@/lib/utils/aws/uploadFileToAWS";
 import { generateString } from "@/lib/utils/generateString";
-import { resolveModelForPlan } from "@/lib/utils/ai-model-policy";
+import {
+  normalizePlanTier,
+  resolveModelPolicy,
+} from "@/lib/utils/ai-model-policy";
 import { AIRequestMetric } from "@/lib/utils/usage-event-utils";
 
 interface GenerateImageParams {
@@ -16,17 +19,33 @@ interface GenerateImageParams {
   planName: PlanName;
 }
 
-async function convertToPng(imageUrl: string): Promise<Buffer | undefined> {
+async function convertToPng(imageBuffer: Buffer): Promise<Buffer | undefined> {
   try {
-    const response = await fetch(imageUrl);
-    if (!response.ok) throw new Error("Failed to fetch image");
-
-    const arrayBuffer = await response.arrayBuffer();
-    const imageBuffer = Buffer.from(arrayBuffer);
     return sharp(imageBuffer).png().toBuffer();
   } catch (error) {
     handleError({ error, source: "convertToPng" });
   }
+}
+
+async function getGeneratedImageBuffer(imageData: {
+  b64_json?: string;
+  url?: string;
+}): Promise<Buffer | undefined> {
+  if (typeof imageData.b64_json === "string" && imageData.b64_json.length > 0) {
+    return Buffer.from(imageData.b64_json, "base64");
+  }
+
+  if (typeof imageData.url === "string" && imageData.url.length > 0) {
+    const response = await fetch(imageData.url);
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch generated image.");
+    }
+
+    return Buffer.from(await response.arrayBuffer());
+  }
+
+  return undefined;
 }
 
 export async function generateImage({
@@ -37,20 +56,27 @@ export async function generateImage({
   planName,
 }: GenerateImageParams) {
   try {
-    const model = resolveModelForPlan(planName, "image");
+    const policy = resolveModelPolicy({
+      plan: normalizePlanTier(planName),
+      feature: "image_generation",
+      taskClass: "final",
+    });
 
-    if (!model) {
-      throw new Error("No image model configured for the current plan.");
+    if (policy.hardBlocked) {
+      throw new Error(
+        policy.notes ?? "Image generation is blocked for the current request.",
+      );
     }
 
     const startTime = Date.now();
     const response = await openAiClient.images.generate({
-      model,
+      model: policy.model,
       prompt,
+      response_format: "b64_json",
     });
     const requestMetric: AIRequestMetric = {
       requestType: "image",
-      model,
+      model: policy.model,
       latencyMs: Date.now() - startTime,
     };
 
@@ -59,16 +85,18 @@ export async function generateImage({
     }
 
     const respData = response.data[0];
-    const imageUrl = respData.url;
+    const rawImageBuffer = await getGeneratedImageBuffer(respData);
 
-    if (!imageUrl) {
-      throw new Error("Image URL is undefined");
+    if (!rawImageBuffer) {
+      throw new Error(
+        "The image generation API returned no usable image data.",
+      );
     }
 
-    const imgBuffer = await convertToPng(imageUrl);
+    const imgBuffer = await convertToPng(rawImageBuffer);
 
     if (!imgBuffer) {
-      throw new Error("Failed to convert image to PNG");
+      throw new Error("Failed to convert the generated image to PNG.");
     }
 
     const fileName = `${taskId}_image_${generateString()}.png`;
@@ -97,7 +125,7 @@ export async function generateImage({
     return JSON.stringify({
       taskData,
       generatedImage: true,
-      model,
+      model: policy.model,
       requestMetric,
     });
   } catch (error) {

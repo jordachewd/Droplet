@@ -8,24 +8,27 @@ Built with Next.js 16, React 19, TypeScript, Tailwind CSS v4.2, Clerk, Stripe, M
 
 - **9 AI Personas** — each with distinct personality, system prompt, and domain expertise
 - **Multi-modal AI** — text chat, image generation, audio generation
-- **Plan-aware AI model selection** — cheapest model for Lite, gpt-5.2-pro for Pro, gpt-5.4-pro for Premium via central policy resolver
+- **Plan-aware AI model selection** — comprehensive model policy matrix: `gpt-4o-mini` for Lite, `gpt-4.1` for Pro, `gpt-4.1`/`gpt-5.4` for Premium via `resolveModelPolicy()` with task classes, fallbacks, downgrade triggers, token limits, and audio mode differentiation
 - **Streaming responses** — real-time incremental chat rendering via SSE with progressive text display
+- **Retry/backoff resilience** — automatic retry with exponential backoff (1s/2s/4s) for transient OpenAI errors, model tier downgrade on retry, SDK auto-retry disabled for deterministic behavior
+- **Persona prompt system** — versioned, server-only prompt matrix with per-persona, per-model-family system prompts, temperature/max-token tuning, and companion safety rules
 - **Usage event logging** — per-request cost tracking, latency measurement, and blocked-request recording
+- **File uploads via S3** — all attachments uploaded to AWS S3 via `/api/upload`, no inline base64 in messages
 - **Conversation history** — persist, resume, and manage conversations
 - **Three subscription tiers:**
-  - **Lite** (Free forever) — 5 conversations/day, 10 messages/conversation, 3 media generations/month
-  - **Pro** ($19/month) — advanced AI model, 50 conversations/day, 100 messages/conversation, 50 image + 50 audio generations/month
-  - **Premium** ($39/month) — best AI model, unlimited conversations and messages, unlimited image/audio, 10 video generations/month, premium media quality
+  - **Lite** (Free forever) — 5 conversations/day, 10 messages/conversation, 3 image generations/month, no audio, no video
+  - **Pro** ($19/month) — `gpt-4.1` chat model, 50 conversations/day, 100 messages/conversation, 50 image + 50 audio generations/month
+  - **Premium** ($39/month) — `gpt-4.1`/`gpt-5.4` chat models, unlimited conversations and messages, unlimited image/audio, 10 video generations/month, premium audio quality
 - **All personas available in all plans**
 - **Admin dashboard** — user management, transaction oversight, usage analytics, app settings (AI models, pricing, limits, theme), website content management with Tiptap editor
 - **Public marketing site** — About, FAQs, Privacy Policy, Cookie Policy, Terms & Conditions, plus enhanced homepage with feature showcase, workflow, persona spotlight, and CTAs
-- **Secure by design** — Clerk auth, webhook signature verification, ownership enforcement, SSRF protection, double-layer admin role protection (proxy + server-side)
+- **Secure by design** — Clerk auth, webhook signature verification with idempotency, ownership enforcement, SSRF protection, double-layer admin role protection (proxy + server-side), error cause chain preservation
 
 ### Planned (In Development)
 
-- **Video generation** — Premium plan exclusive
-- **Prompt optimization** — per-persona, per-model prompt tuning
-- **Retry/backoff** — resilient OpenAI request handling
+- **Video generation** — Premium plan exclusive (`sora-2-pro` / `sora-2`)
+- **Stripe subscriptions** — auto-renewal billing (currently one-time payments)
+- **Task complexity classification** — server-side heuristic for automatic `gpt-5.4` routing on complex Premium requests
 
 ## Tech Stack
 

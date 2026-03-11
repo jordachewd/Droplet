@@ -5,6 +5,77 @@
 
 ---
 
+## Phase 22: Prompt System & OpenAI Resilience — COMPLETED
+
+- [x] **22.1** Implement retry/backoff for OpenAI failures (`withOpenAIRetry()` wrapper with exponential backoff 1s/2s/4s, transient-only retries for 429/500/502/503, immediate failure for 400/401/403, `maxRetries: 0` on SDK requests, model downgrade via `retryAttempt` parameter)
+- [x] **22.2** Create prompt versioning and management system (`src/constants/persona-prompts.ts` with `import "server-only"`, `PROMPT_VERSION = "1.0"`, model-family resolution, temperature/max-token settings per persona)
+- [x] **22.3** Improve persona-specific prompts (all 9 personas with distinct prompts, `COMPANION_SAFETY_RULES` for companion personas, `WELLNESS_SAFETY_RULES` for wellness, model-family-aware prompt adaptation)
+
+Resolved: TD-AI-06 (fully), TD-AI-09 (partially — chat prompts optimized, media prompts pending). Both streaming and non-streaming chat paths use retry. Streaming only retries before first content chunk emitted. Vitest server-only alias added for test coverage. 51 test suites, 229 tests passing, 79 E2E tests passing. All 6 validation gates green.
+
+**Files changed:** `src/lib/utils/openai/generateResponse.tsx`, `src/constants/persona-prompts.ts` (new), `src/constants/assistant-personas.tsx`, `vitest.config.mts`, `tests/unit/openai-retry.test.ts` (new), `tests/unit/persona-prompts.test.ts` (new), `tests/unit/ai-model-policy.test.ts`, `tests/e2e/landing-page.spec.ts`
+
+**Known residual items (non-blocking):**
+- Dead `chatSystemMsg` export in `openai.tsx` — superseded by `persona-prompts.ts` (TD-AI-14)
+- Hardcoded TTS model-name branch in `generateAudio.tsx` (TD-AI-15)
+- Image/audio generation not persona-aware (TD-AI-09 partial)
+
+---
+
+## Phase 21-C: Post-Policy Cleanup — COMPLETED
+
+- [x] **21-C.1** Remove dead `combinedCount` parameter from `check-usage-limit.ts`, callers in `route.tsx`, and tests
+- [x] **21-C.2** Fix video matrix/resolver dual source of truth — matrix `final.model` now `sora-2` with notes documenting `explicitPremium` override
+
+Resolved: TD-AI-11 (fully), TD-AI-12 (fully). All tests passing. All 6 validation gates green.
+
+**Files changed:** `src/lib/utils/check-usage-limit.ts`, `src/app/api/openai/route.tsx`, `src/lib/utils/ai-model-policy.ts`, `tests/unit/check-usage-limit.test.ts`
+
+---
+
+## Phase 21: Model Policy Overhaul — COMPLETED
+
+- [x] **21.1** Fix Premium video generation claim ("Video generation - Coming soon (Premium)")
+- [x] **21.2** Implement model policy types and `MODEL_POLICY_MATRIX` constant (all 3 plans × 5 features × task classes)
+- [x] **21.3** Implement `resolveModelPolicy()` resolver with downgrade logic, hard blocking, audio mode differentiation
+- [x] **21.4** Update Lite plan limits — block audio generation (image-only media, `supportsAudioGeneration: false`)
+- [x] **21.5** Migrate `generateTitle` to new model policy (`gpt-4.1-nano` pinned, token caps enforced)
+- [x] **21.6** Migrate `generateImage` to new model policy (`gpt-image-1-mini` / `gpt-image-1.5`)
+- [x] **21.7** Migrate `generateAudio` to new model policy (Lite blocked, Pro `gpt-audio-mini`, Premium `gpt-audio-1.5`)
+- [x] **21.8** Migrate `generateResponse` (chat) to new model policy with context compaction via `message-policy.ts`
+- [x] **21.9** Migrate `/api/openai` route to new model policy (defaults: `taskClass: "standard"`, `budgetState: "normal"`)
+- [x] **21.10** Update cost estimation and `MODEL_PRICING` for new model IDs (deprecated model entries removed)
+- [x] **21.11** Rewrite `ai-model-policy.test.ts` — 10 test cases covering all plan × feature combinations, downgrade triggers, hard blocking, Premium routing, audio mode
+- [x] **21.12** Update plan constants and admin settings snapshot for new model structure
+
+Resolved: TD-AI-10 (fully), TD-AI-08 (partially — video now shows "Coming soon"). 49 test suites, 220 tests passing, 79 E2E tests passing. All 6 validation gates green. PM-verified: typecheck, lint, and unit tests independently confirmed.
+
+**Files changed:** `src/lib/utils/ai-model-policy.ts`, `src/lib/utils/openai/generateTitle.tsx`, `src/lib/utils/openai/generateImage.tsx`, `src/lib/utils/openai/generateAudio.tsx`, `src/lib/utils/openai/generateResponse.tsx`, `src/lib/utils/openai/message-policy.ts` (new), `src/app/api/openai/route.tsx`, `src/constants/plans.tsx`, `src/lib/utils/resolve-entitlements.tsx`, `src/lib/utils/check-usage-limit.ts`, `src/lib/utils/admin-queries.ts`, `tests/unit/ai-model-policy.test.ts`, `tests/unit/plans.test.ts`, `tests/unit/resolve-entitlements.test.ts`, `tests/unit/check-usage-limit.test.ts`
+
+**Known residual items (non-blocking):**
+- Dead `combinedCount` parameter in `check-usage-limit.ts` and callers (TD-AI-11)
+- Video matrix/resolver dual source of truth (TD-AI-12)
+- 5 model pricing placeholders pending OpenAI confirmation (TD-AI-13)
+
+---
+
+## Phase 20: Error Handling, File Cleanup & Webhook Hardening — COMPLETED
+
+- [x] **20.1** Refactor handleError to preserve stack traces (`new Error(message, { cause: error })` pattern)
+- [x] **20.4** Add S3 cleanup on task deletion (scan messages for S3 URLs, best-effort delete, per-key try/catch)
+- [x] **20.5** Refactor chat input to upload via `/api/upload` (FormData upload, blob preview, upload failure blocks send)
+- [x] **20.6** Remove `deleteAllTransactions` action (function deleted entirely)
+- [x] **20.8** Add idempotency check to Clerk webhook handlers (duplicate `user.created` check, graceful miss for `user.updated`/`user.deleted`)
+- [x] **20.9** Remove yearly billing UI toggle (monthly-only pricing display, no yearly toggle/badge)
+- [x] **20.10** Extract SUPPORT_EMAIL to shared constant (`src/constants/support.ts`, consumed by 7 files)
+- [x] **20.11** Clean up orphan directories (`src/app/(chat)/dashboard/`, `src/app/(public)/pricing/` removed)
+
+Resolved: TD-API-06, TD-FILE-01 (fully), TD-FILE-02, TD-ACT-01, TD-WEBHOOK-02. Tasks 20.2, 20.3, 20.7 completed in Phase 19 delivery (see below). 49 test suites, 215 tests passing, 79 E2E tests passing. All 6 validation gates green.
+
+**Files changed:** `src/lib/utils/handleError.tsx`, `src/lib/actions/task.actions.tsx`, `src/components/chat/chat-input.tsx`, `src/app/api/webhooks/clerk/route.tsx`, `src/lib/actions/transaction.action.tsx`, `src/components/sections/plans-section.tsx`, `src/components/shared/plan-card.tsx`, `src/lib/utils/getPlanStatus.tsx`, `src/components/shared/plan-promo.tsx`, `src/constants/support.ts`, `tests/unit/chat-input.test.tsx`, `tests/unit/task-actions.test.ts`, `tests/unit/clerk-webhook-route.test.ts`, `tests/e2e/plans-public.spec.ts`, `tests/e2e/pricing-public.spec.ts`
+
+---
+
 ## Phase 19: Streaming Implementation — COMPLETED
 
 - [x] **19.1** Create streaming API route (`generateStreamingResponse()` in `generateResponse.tsx`, SSE branch in `/api/openai` with `meta`, `chunk`, `final`, `error` events)

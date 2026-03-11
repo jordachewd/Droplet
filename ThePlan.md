@@ -89,9 +89,9 @@ This section defines the intended v1 target state.
 
 | Tier    | Access              | Price | Model policy                                                                                                    | Required baseline limits                                                                                                                                 |
 | ------- | ------------------- | ----- | --------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Lite    | Auth required, free | 0     | Cheapest approved text + media stack at implementation time                                                     | 5 conversations per day, 10 user prompts per conversation, 3 media generations per approved reset window, hard conversation stop on quota or storage hit |
-| Pro     | Paid only           | 19    | `gpt-5.2-pro` only if verified available and cost-approved; otherwise approved fallback with explicit plan note | Higher ceilings than Lite, paid-only reliability and quality improvements                                                                                |
-| Premium | Paid only           | 39    | `gpt-5.4-pro` only if verified available and cost-approved; otherwise approved fallback with explicit plan note | Highest ceilings plus 3 explicitly defined Premium-only features                                                                                         |
+| Lite    | Auth required, free | 0     | `gpt-4o-mini` (chat), `gpt-image-1-mini` (image). Audio/video blocked.                                                     | 5 conversations per day, 10 user prompts per conversation, 3 media generations per approved reset window, hard conversation stop on quota or storage hit |
+| Pro     | Paid only           | 19    | `gpt-4.1` (chat), `gpt-image-1.5` (image), `gpt-audio-mini` (audio). Video blocked. | Higher ceilings than Lite, paid-only reliability and quality improvements                                                                                |
+| Premium | Paid only           | 39    | `gpt-4.1`/`gpt-5.4` (chat), `gpt-image-1.5` (image), `gpt-audio-1.5` (audio), `sora-2`/`sora-2-pro` (video). | Highest ceilings plus 3 explicitly defined Premium-only features                                                                                         |
 
 ### 3.3 Public surface required for release
 
@@ -270,17 +270,29 @@ Non-negotiable storage rule:
 
 ### 5.6 AI policy model
 
-Create one AI policy layer that resolves:
+The AI model policy has been approved and is fully documented in **SPEC.md Section 8**. Key decisions:
 
-- text model by plan
-- title model by plan
-- image model by plan
-- audio model by plan
-- prompt template version by persona and model family
-- output mode where reliability matters: free text vs structured output
-- estimated cost and latency expectations per request
+**Model Policy Matrix (approved):**
 
-Do not keep model names hardcoded across separate utilities.
+| Feature | Plan | Default Model | Fallback Model |
+|---------|------|---------------|----------------|
+| Title generation | All | `gpt-4.1-nano` | `gpt-4o-mini` |
+| Chat | Lite | `gpt-4o-mini` | `gpt-4.1-nano` |
+| Chat | Pro | `gpt-4.1` | `gpt-4o-mini` |
+| Chat | Premium | `gpt-4.1` (default) / `gpt-5.4` (complex) | `gpt-4.1` |
+| Image | Lite | `gpt-image-1-mini` | none |
+| Image | Pro/Premium | `gpt-image-1.5` | `gpt-image-1-mini` |
+| Audio | Lite | blocked | — |
+| Audio | Pro | `gpt-audio-mini` | `gpt-4o-mini-tts` (TTS only) |
+| Audio | Premium | `gpt-audio-1.5` | `gpt-audio-mini` |
+| Video | Lite/Pro | blocked | — |
+| Video | Premium | `sora-2-pro` (final) / `sora-2` (preview) | `sora-2` |
+
+**Architecture:** `resolveModelPolicy()` in `src/lib/utils/ai-model-policy.ts`. Supports task classes (utility/simple/standard/complex/preview/final), downgrade triggers (budget, latency, retry), and audio mode differentiation (TTS vs audio_in_out).
+
+**Hard rules:** Frontend never sends model ID. Titles pinned to cheapest model. Premium defaults to `gpt-4.1` for routine chat; `gpt-5.4` only for complex reasoning with explicit request. Retries downgrade tier.
+
+See SPEC.md Section 8 for full matrix, token limits, and resolver type definitions.
 
 ### 5.7 Prompt architecture
 
@@ -352,6 +364,8 @@ This sequence is mandatory.
 
 ## Milestone 0 - Product Contract Freeze
 
+> **Status: COMPLETED** — Delivered by Phase 13.
+
 **Objective**
 
 Freeze the commercial, legal, entitlement, and storage contract so implementation stops moving against a changing target.
@@ -412,6 +426,8 @@ Freeze the commercial, legal, entitlement, and storage contract so implementatio
 
 ## Milestone 1 - Canonical Policy And Data Contract
 
+> **Status: COMPLETED** — Delivered by Phases 14 + 16.
+
 **Objective**
 
 Define the entitlement engine, conversation-stop contract, usage ledger, and storage ledger that everything else depends on.
@@ -466,6 +482,8 @@ Define the entitlement engine, conversation-stop contract, usage ledger, and sto
 
 ## Milestone 2 - Route And Auth Boundary Repair
 
+> **Status: COMPLETED** — Delivered by Phase 17.
+
 **Objective**
 
 Make product boundaries obvious, enforceable, and maintainable.
@@ -518,6 +536,8 @@ Make product boundaries obvious, enforceable, and maintainable.
 
 ## Milestone 3 - Plan, Billing, And User Lifecycle Alignment
 
+> **Status: COMPLETED** — Delivered by Phase 13.
+
 **Objective**
 
 Make plan state, billing state, and user-facing plan copy tell the same truth.
@@ -569,6 +589,8 @@ Make plan state, billing state, and user-facing plan copy tell the same truth.
 
 ## Milestone 4 - Usage Ledger And Storage Guardrails
 
+> **Status: COMPLETED** — Delivered by Phases 15 + 16.
+
 **Objective**
 
 Move from fragile counters to reliable usage accounting and conversation-stop enforcement.
@@ -619,6 +641,8 @@ Move from fragile counters to reliable usage accounting and conversation-stop en
 ---
 
 ## Milestone 5 - Chat Lifecycle, Prompt Quality, And Streaming
+
+> **Status: MOSTLY COMPLETE** — Streaming (Phase 19) and model policy (Phase 16) done. Prompt quality pending (Phase 22).
 
 **Objective**
 
@@ -673,6 +697,8 @@ Finish the core assistant experience: clean conversation lifecycle, persona-awar
 
 ## Milestone 6 - Public Site, FAQ, And Legal Surface
 
+> **Status: COMPLETED** — Delivered by Phase 18.
+
 **Objective**
 
 Finish the public product narrative and legal pages without claiming things the product does not actually support.
@@ -725,6 +751,8 @@ Finish the public product narrative and legal pages without claiming things the 
 ---
 
 ## Milestone 7 - Admin Control Plane
+
+> **Status: COMPLETED** — Delivered by Phase 17.
 
 **Objective**
 

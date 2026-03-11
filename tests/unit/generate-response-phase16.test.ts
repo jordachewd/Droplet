@@ -81,8 +81,10 @@ describe("generateResponse phase16", () => {
       vi.mocked(openAiClient.chat.completions.create),
     ).toHaveBeenCalledWith(
       expect.objectContaining({
-        model: "gpt-5.2-pro",
+        model: "gpt-4.1",
+        max_completion_tokens: 1_100,
       }),
+      { maxRetries: 0 },
     );
     expect(payload.taskData.content[0].text).toContain("concise plan");
     expect(payload.taskUsage).toBe(24);
@@ -90,7 +92,7 @@ describe("generateResponse phase16", () => {
       expect.arrayContaining([
         expect.objectContaining({
           requestType: "chat",
-          model: "gpt-5.2-pro",
+          model: "gpt-4.1",
           tokensIn: 18,
           tokensOut: 6,
         }),
@@ -136,7 +138,7 @@ describe("generateResponse phase16", () => {
         generatedImage: true,
         requestMetric: {
           requestType: "image",
-          model: "dall-e-3",
+          model: "gpt-image-1.5",
           latencyMs: 42,
         },
       }),
@@ -208,7 +210,7 @@ describe("generateResponse phase16", () => {
         generatedAudio: true,
         requestMetric: {
           requestType: "audio",
-          model: "gpt-4o-audio-preview",
+          model: "gpt-audio-mini",
           latencyMs: 18,
         },
       }),
@@ -241,6 +243,7 @@ describe("generateResponse phase16", () => {
       taskId: "task_audio",
       userId: "clerk_1",
       planName: "Pro",
+      audioMode: "tts",
     });
     expect(payload.generatedAudio).toBe(true);
     expect(payload.requestMetrics).toHaveLength(2);
@@ -305,9 +308,9 @@ describe("generateResponse phase16", () => {
     );
   });
 
-  it("classifies OpenAI 429 errors as rate_limit", async () => {
+  it("fails immediately for non-retryable OpenAI 401 errors", async () => {
     vi.mocked(openAiClient.chat.completions.create).mockRejectedValue(
-      new APIError(429, {}, "Too many requests", new Headers()),
+      new APIError(401, {}, "Unauthorized", new Headers()),
     );
 
     const result = await generateResponse({
@@ -326,6 +329,7 @@ describe("generateResponse phase16", () => {
     });
     const payload = JSON.parse(result as string);
 
-    expect(payload.errorType).toBe("rate_limit");
+    expect(payload.errorType).toBe("unknown");
+    expect(openAiClient.chat.completions.create).toHaveBeenCalledTimes(1);
   });
 });

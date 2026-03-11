@@ -1,7 +1,8 @@
+import { getPersona } from "@/constants/assistant-personas";
 import {
   buildPersonaAwareSystemPrompt,
-  getPersona,
-} from "@/constants/assistant-personas";
+  resolvePersonaPromptConfig,
+} from "@/constants/persona-prompts";
 import { getChatTools, openAiClient } from "@/constants/openai";
 import { PlanName } from "@/types/PlanData.d";
 import { ContentItem, Message, MessageRole } from "@/types";
@@ -13,8 +14,15 @@ import {
 } from "openai/resources/chat/completions.mjs";
 import { Entitlements } from "@/lib/utils/resolve-entitlements";
 import { APIError } from "openai";
-import { resolveModelForPlan } from "@/lib/utils/ai-model-policy";
+import {
+  BudgetState,
+  TaskClass,
+  normalizePlanTier,
+  resolveModelPolicy,
+  type ResolvedModelPolicy,
+} from "@/lib/utils/ai-model-policy";
 import { AIRequestMetric } from "@/lib/utils/usage-event-utils";
+import { compactMessagesToTokenLimit } from "./message-policy";
 
 interface GenerateResponseParams {
   messages: Message[];
@@ -23,6 +31,11 @@ interface GenerateResponseParams {
   personaId?: string | null;
   planName: PlanName;
   entitlements: Entitlements;
+  taskClass?: TaskClass;
+  budgetState?: BudgetState;
+  retryAttempt?: number;
+  highLatency?: boolean;
+  explicitPremium?: boolean;
 }
 
 interface GenerateStreamingResponseParams extends GenerateResponseParams {
@@ -34,6 +47,7 @@ export type OpenAIErrorType =
   | "rate_limit"
   | "timeout"
   | "service_error"
+  | "policy_blocked"
   | "unknown";
 
 type BlockedReason =
@@ -48,7 +62,19 @@ export interface OpenAIResponsePayload {
   generatedAudio?: boolean;
   blockedReason?: BlockedReason;
   errorType?: OpenAIErrorType;
+  errorMessage?: string;
   requestMetrics?: AIRequestMetric[];
+}
+
+const MAX_OPENAI_RETRIES = 3;
+const OPENAI_RETRY_DELAYS_MS = [1_000, 2_000, 4_000] as const;
+
+function getOpenAIErrorStatus(error: unknown): number | null {
+  if (!(error instanceof APIError)) {
+    return null;
+  }
+
+  return error.status ?? null;
 }
 
 function createBlockedResponsePayload({
@@ -79,24 +105,125 @@ function createBlockedResponsePayload({
   };
 }
 
+function createPolicyBlockedPayload({
+  policy,
+  requestMetrics,
+}: {
+  policy: ResolvedModelPolicy;
+  requestMetrics: AIRequestMetric[];
+}): OpenAIResponsePayload {
+  return {
+    errorType: "policy_blocked",
+    errorMessage:
+      policy.notes ??
+      "This request is blocked for your current plan or context.",
+    requestMetrics,
+  };
+}
+
 function classifyOpenAIError(error: unknown): OpenAIErrorType {
-  if (error instanceof APIError) {
-    const status = error.status ?? 0;
+  const status = getOpenAIErrorStatus(error);
 
-    if (status === 429) {
-      return "rate_limit";
-    }
+  if (status === 429) {
+    return "rate_limit";
+  }
 
-    if (status === 408 || status === 504) {
-      return "timeout";
-    }
+  if (status === 408 || status === 504) {
+    return "timeout";
+  }
 
-    if ([500, 502, 503].includes(status)) {
-      return "service_error";
-    }
+  if ([500, 502, 503].includes(status ?? 0)) {
+    return "service_error";
   }
 
   return "unknown";
+}
+
+function isRetryableOpenAIError(error: unknown): boolean {
+  const status = getOpenAIErrorStatus(error);
+
+  if (status === null || [400, 401, 403].includes(status)) {
+    return false;
+  }
+
+  return [429, 500, 502, 503].includes(status);
+}
+
+async function waitForRetry(delayMs: number): Promise<void> {
+  await new Promise((resolve) => {
+    setTimeout(resolve, delayMs);
+  });
+}
+
+function logOpenAIRetry({
+  error,
+  operation,
+  retryNumber,
+  delayMs,
+  nextModel,
+}: {
+  error: unknown;
+  operation: "chat" | "stream";
+  retryNumber: number;
+  delayMs: number;
+  nextModel: string;
+}) {
+  const status = getOpenAIErrorStatus(error);
+  const normalizedStatus = status === null ? "unknown" : String(status);
+
+  process.stderr.write(
+    `[openai-retry] ${operation} retry ${retryNumber}/${MAX_OPENAI_RETRIES} in ${delayMs}ms after status ${normalizedStatus}; next model=${nextModel}\n`,
+  );
+}
+
+async function withOpenAIRetry<T>({
+  baseRetryAttempt = 0,
+  operation,
+  resolveNextModel,
+  shouldRetry,
+  execute,
+}: {
+  baseRetryAttempt?: number;
+  operation: "chat" | "stream";
+  resolveNextModel: (nextRetryAttempt: number) => string;
+  shouldRetry?: (error: unknown) => boolean;
+  execute: (retryAttempt: number) => Promise<T>;
+}): Promise<T> {
+  let lastError: unknown;
+
+  for (let retryIndex = 0; retryIndex <= MAX_OPENAI_RETRIES; retryIndex += 1) {
+    const currentRetryAttempt = baseRetryAttempt + retryIndex;
+
+    try {
+      return await execute(currentRetryAttempt);
+    } catch (error) {
+      lastError = error;
+
+      const canRetry =
+        retryIndex < MAX_OPENAI_RETRIES &&
+        isRetryableOpenAIError(error) &&
+        (shouldRetry?.(error) ?? true);
+
+      if (!canRetry) {
+        throw error;
+      }
+
+      const delayMs = OPENAI_RETRY_DELAYS_MS[retryIndex];
+      const nextRetryAttempt = currentRetryAttempt + 1;
+
+      logOpenAIRetry({
+        error,
+        operation,
+        retryNumber: retryIndex + 1,
+        delayMs,
+        nextModel: resolveNextModel(nextRetryAttempt),
+      });
+
+      await waitForRetry(delayMs);
+    }
+  }
+
+  throw lastError ?? new Error("OpenAI request failed.");
 }
 
 function serializeToolCalls(
@@ -124,6 +251,97 @@ function serializeToolCalls(
     return {
       type: toolCall.type,
     };
+  });
+}
+
+function resolveFeaturePolicy({
+  planName,
+  feature,
+  taskClass,
+  budgetState,
+  retryAttempt,
+  highLatency,
+  explicitPremium,
+}: {
+  planName: PlanName;
+  feature: "chat" | "image_generation";
+  taskClass: TaskClass;
+  budgetState?: BudgetState;
+  retryAttempt?: number;
+  highLatency?: boolean;
+  explicitPremium?: boolean;
+}): ResolvedModelPolicy;
+function resolveFeaturePolicy({
+  planName,
+  feature,
+  taskClass,
+  budgetState,
+  retryAttempt,
+  highLatency,
+  explicitPremium,
+  audioMode,
+}: {
+  planName: PlanName;
+  feature: "audio_generation";
+  taskClass: TaskClass;
+  budgetState?: BudgetState;
+  retryAttempt?: number;
+  highLatency?: boolean;
+  explicitPremium?: boolean;
+  audioMode: "tts" | "audio_in_out";
+}): ResolvedModelPolicy;
+function resolveFeaturePolicy({
+  planName,
+  feature,
+  taskClass,
+  budgetState,
+  retryAttempt,
+  highLatency,
+  explicitPremium,
+  audioMode,
+}: {
+  planName: PlanName;
+  feature: "chat" | "image_generation" | "audio_generation";
+  taskClass: TaskClass;
+  budgetState?: BudgetState;
+  retryAttempt?: number;
+  highLatency?: boolean;
+  explicitPremium?: boolean;
+  audioMode?: "tts" | "audio_in_out";
+}): ResolvedModelPolicy {
+  return resolveModelPolicy({
+    plan: normalizePlanTier(planName),
+    feature,
+    taskClass,
+    budgetState,
+    retryAttempt,
+    highLatency,
+    explicitPremium,
+    audioMode,
+  });
+}
+
+function maybeAddBlockedMetric({
+  requestMetrics,
+  policy,
+  requestType,
+  blockedReason,
+}: {
+  requestMetrics: AIRequestMetric[];
+  policy: ResolvedModelPolicy;
+  requestType: AIRequestMetric["requestType"];
+  blockedReason: BlockedReason;
+}) {
+  if (policy.hardBlocked || policy.model === "blocked") {
+    return;
+  }
+
+  requestMetrics.push({
+    requestType,
+    model: policy.model,
+    blocked: true,
+    blockedReason,
+    latencyMs: 0,
   });
 }
 
@@ -171,25 +389,27 @@ async function buildOpenAIResponsePayload({
     })();
 
     if (functionName === "getGeneratedImage") {
-      const imageModel = resolveModelForPlan(planName, "image");
+      const imagePolicy = resolveFeaturePolicy({
+        planName,
+        feature: "image_generation",
+        taskClass: "final",
+      });
 
       if (
         !entitlements.supportsImageGeneration ||
-        !selectedPersona.supportsImage
+        !selectedPersona.supportsImage ||
+        imagePolicy.hardBlocked
       ) {
         const blockedReason: BlockedReason = entitlements.imageLimitReached
           ? "media_limit_reached"
           : "image_disabled";
 
-        if (imageModel) {
-          requestMetrics.push({
-            requestType: "image",
-            model: imageModel,
-            blocked: true,
-            blockedReason,
-            latencyMs: 0,
-          });
-        }
+        maybeAddBlockedMetric({
+          requestMetrics,
+          policy: imagePolicy,
+          requestType: "image",
+          blockedReason,
+        });
 
         return createBlockedResponsePayload({
           message:
@@ -228,25 +448,28 @@ async function buildOpenAIResponsePayload({
     }
 
     if (functionName === "getGeneratedAudio") {
-      const audioModel = resolveModelForPlan(planName, "audio");
+      const audioPolicy = resolveFeaturePolicy({
+        planName,
+        feature: "audio_generation",
+        taskClass: "final",
+        audioMode: "tts",
+      });
 
       if (
         !entitlements.supportsAudioGeneration ||
-        !selectedPersona.supportsAudio
+        !selectedPersona.supportsAudio ||
+        audioPolicy.hardBlocked
       ) {
         const blockedReason: BlockedReason = entitlements.audioLimitReached
           ? "media_limit_reached"
           : "audio_disabled";
 
-        if (audioModel) {
-          requestMetrics.push({
-            requestType: "audio",
-            model: audioModel,
-            blocked: true,
-            blockedReason,
-            latencyMs: 0,
-          });
-        }
+        maybeAddBlockedMetric({
+          requestMetrics,
+          policy: audioPolicy,
+          requestType: "audio",
+          blockedReason,
+        });
 
         return createBlockedResponsePayload({
           message:
@@ -265,6 +488,7 @@ async function buildOpenAIResponsePayload({
         taskId,
         userId,
         planName,
+        audioMode: "tts",
       });
       const audioPayload = JSON.parse(audioResponse as string) as {
         taskData?: Message;
@@ -303,6 +527,49 @@ async function buildOpenAIResponsePayload({
   };
 }
 
+function buildChatCompletionRequestSettings({
+  personaId,
+  model,
+  messages,
+  maxInputTokens,
+  maxOutputTokens,
+}: {
+  personaId: string;
+  model: string;
+  messages: Message[];
+  maxInputTokens?: number;
+  maxOutputTokens?: number;
+}): {
+  messages: ChatCompletionMessageParam[];
+  temperature: number;
+  maxCompletionTokens?: number;
+} {
+  const promptConfig = resolvePersonaPromptConfig({
+    personaId,
+    model,
+  });
+  const preparedMessages = compactMessagesToTokenLimit(
+    [
+      ...buildPersonaAwareSystemPrompt(personaId, {
+        model,
+      }),
+      ...messages,
+    ] as Message[],
+    maxInputTokens,
+  );
+  const maxCompletionTokens =
+    typeof maxOutputTokens === "number" &&
+    typeof promptConfig.maxTokens === "number"
+      ? Math.min(maxOutputTokens, promptConfig.maxTokens)
+      : (maxOutputTokens ?? promptConfig.maxTokens);
+
+  return {
+    messages: preparedMessages as ChatCompletionMessageParam[],
+    temperature: promptConfig.temperature,
+    maxCompletionTokens,
+  };
+}
+
 async function runChatCompletion({
   messages,
   taskId,
@@ -310,35 +577,61 @@ async function runChatCompletion({
   personaId,
   planName,
   entitlements,
+  taskClass = "standard",
+  budgetState = "normal",
+  retryAttempt = 0,
+  highLatency = false,
+  explicitPremium = false,
   requestMetrics,
 }: GenerateResponseParams & {
   requestMetrics: AIRequestMetric[];
 }): Promise<OpenAIResponsePayload> {
   const selectedPersona = getPersona(personaId);
-  const chatModel = resolveModelForPlan(planName, "chat");
+  const chatPolicy = resolveFeaturePolicy({
+    planName,
+    feature: "chat",
+    taskClass,
+    budgetState,
+    retryAttempt,
+    highLatency,
+    explicitPremium,
+  });
 
-  if (!chatModel) {
-    throw new Error("No chat model configured for the current plan.");
+  if (chatPolicy.hardBlocked) {
+    return createPolicyBlockedPayload({
+      policy: chatPolicy,
+      requestMetrics,
+    });
   }
 
   const tools = getChatTools({
     supportsImageGeneration: selectedPersona.supportsImage,
     supportsAudioGeneration: selectedPersona.supportsAudio,
   });
-  const chatStartTime = Date.now();
-  const chatData = await openAiClient.chat.completions.create({
-    model: chatModel,
-    temperature: 0.5,
-    messages: [
-      ...buildPersonaAwareSystemPrompt(selectedPersona.id),
-      ...messages,
-    ] as ChatCompletionMessageParam[],
-    tools: tools.length > 0 ? (tools as ChatCompletionTool[]) : undefined,
+  const chatRequestSettings = buildChatCompletionRequestSettings({
+    personaId: selectedPersona.id,
+    model: chatPolicy.model,
+    messages,
+    maxInputTokens: chatPolicy.maxInputTokens,
+    maxOutputTokens: chatPolicy.maxOutputTokens,
   });
+  const chatStartTime = Date.now();
+  const chatData = await openAiClient.chat.completions.create(
+    {
+      model: chatPolicy.model,
+      temperature: chatRequestSettings.temperature,
+      max_completion_tokens: chatRequestSettings.maxCompletionTokens,
+      messages: chatRequestSettings.messages,
+      tools: tools.length > 0 ? (tools as ChatCompletionTool[]) : undefined,
+    },
+    {
+      maxRetries: 0,
+    },
+  );
 
   requestMetrics.push({
     requestType: "chat",
-    model: chatModel,
+    model: chatPolicy.model,
     tokensIn: chatData.usage?.prompt_tokens,
     tokensOut: chatData.usage?.completion_tokens,
     latencyMs: Date.now() - chatStartTime,
@@ -367,6 +660,107 @@ async function runChatCompletion({
   });
 }
 
+async function runStreamingChatCompletion({
+  messages,
+  taskId,
+  userId,
+  personaId,
+  planName,
+  entitlements,
+  taskClass = "standard",
+  budgetState = "normal",
+  retryAttempt = 0,
+  highLatency = false,
+  explicitPremium = false,
+  abortSignal,
+  onContentChunk,
+  requestMetrics,
+}: GenerateStreamingResponseParams & {
+  requestMetrics: AIRequestMetric[];
+}): Promise<OpenAIResponsePayload> {
+  const selectedPersona = getPersona(personaId);
+  const chatPolicy = resolveFeaturePolicy({
+    planName,
+    feature: "chat",
+    taskClass,
+    budgetState,
+    retryAttempt,
+    highLatency,
+    explicitPremium,
+  });
+
+  if (chatPolicy.hardBlocked) {
+    return createPolicyBlockedPayload({
+      policy: chatPolicy,
+      requestMetrics,
+    });
+  }
+
+  const tools = getChatTools({
+    supportsImageGeneration: selectedPersona.supportsImage,
+    supportsAudioGeneration: selectedPersona.supportsAudio,
+  });
+  const chatRequestSettings = buildChatCompletionRequestSettings({
+    personaId: selectedPersona.id,
+    model: chatPolicy.model,
+    messages,
+    maxInputTokens: chatPolicy.maxInputTokens,
+    maxOutputTokens: chatPolicy.maxOutputTokens,
+  });
+  const chatStartTime = Date.now();
+  const chatStream = openAiClient.chat.completions.stream(
+    {
+      model: chatPolicy.model,
+      temperature: chatRequestSettings.temperature,
+      max_completion_tokens: chatRequestSettings.maxCompletionTokens,
+      messages: chatRequestSettings.messages,
+      tools: tools.length > 0 ? (tools as ChatCompletionTool[]) : undefined,
+    },
+    {
+      maxRetries: 0,
+      signal: abortSignal,
+    },
+  );
+
+  chatStream.on("content", (delta: string, snapshot: string) => {
+    if (delta.length > 0) {
+      onContentChunk?.(delta, snapshot);
+    }
+  });
+
+  const chatData = await chatStream.finalChatCompletion();
+  const totalUsage = chatData.usage ?? (await chatStream.totalUsage());
+
+  requestMetrics.push({
+    requestType: "chat",
+    model: chatPolicy.model,
+    tokensIn: totalUsage.prompt_tokens,
+    tokensOut: totalUsage.completion_tokens,
+    latencyMs: Date.now() - chatStartTime,
+  });
+
+  if (!chatData?.choices?.length) {
+    throw new Error("No valid response from Chat Completion API.");
+  }
+
+  const { message } = chatData.choices[0];
+
+  return await buildOpenAIResponsePayload({
+    message: {
+      role: message.role as MessageRole,
+      content: typeof message.content === "string" ? message.content : null,
+      tool_calls: serializeToolCalls(message.tool_calls),
+    },
+    taskUsage: totalUsage.total_tokens,
+    requestMetrics,
+    taskId,
+    userId,
+    planName,
+    entitlements,
+    selectedPersonaId: selectedPersona.id,
+  });
+}
+
 export async function generateResponse({
   messages,
   taskId,
@@ -374,18 +768,43 @@ export async function generateResponse({
   personaId,
   planName,
   entitlements,
+  taskClass = "standard",
+  budgetState = "normal",
+  retryAttempt = 0,
+  highLatency = false,
+  explicitPremium = false,
 }: GenerateResponseParams) {
   const requestMetrics: AIRequestMetric[] = [];
 
   try {
-    const payload = await runChatCompletion({
-      messages,
-      taskId,
-      userId,
-      personaId,
-      planName,
-      entitlements,
-      requestMetrics,
+    const payload = await withOpenAIRetry({
+      baseRetryAttempt: retryAttempt,
+      operation: "chat",
+      resolveNextModel: (nextRetryAttempt) =>
+        resolveFeaturePolicy({
+          planName,
+          feature: "chat",
+          taskClass,
+          budgetState,
+          retryAttempt: nextRetryAttempt,
+          highLatency,
+          explicitPremium,
+        }).model,
+      execute: (resolvedRetryAttempt) =>
+        runChatCompletion({
+          messages,
+          taskId,
+          userId,
+          personaId,
+          planName,
+          entitlements,
+          taskClass,
+          budgetState,
+          retryAttempt: resolvedRetryAttempt,
+          highLatency,
+          explicitPremium,
+          requestMetrics,
+        }),
     });
 
     return JSON.stringify(payload);
@@ -404,73 +823,52 @@ export async function generateStreamingResponse({
   personaId,
   planName,
   entitlements,
+  taskClass = "standard",
+  budgetState = "normal",
+  retryAttempt = 0,
+  highLatency = false,
+  explicitPremium = false,
   abortSignal,
   onContentChunk,
 }: GenerateStreamingResponseParams): Promise<OpenAIResponsePayload> {
   const requestMetrics: AIRequestMetric[] = [];
+  let didEmitContent = false;
 
   try {
-    const selectedPersona = getPersona(personaId);
-    const chatModel = resolveModelForPlan(planName, "chat");
-
-    if (!chatModel) {
-      throw new Error("No chat model configured for the current plan.");
-    }
-
-    const tools = getChatTools({
-      supportsImageGeneration: selectedPersona.supportsImage,
-      supportsAudioGeneration: selectedPersona.supportsAudio,
-    });
-    const chatStartTime = Date.now();
-    const chatStream = openAiClient.chat.completions.stream(
-      {
-        model: chatModel,
-        temperature: 0.5,
-        messages: [
-          ...buildPersonaAwareSystemPrompt(selectedPersona.id),
-          ...messages,
-        ] as ChatCompletionMessageParam[],
-        tools: tools.length > 0 ? (tools as ChatCompletionTool[]) : undefined,
-      },
-      abortSignal ? { signal: abortSignal } : undefined,
-    );
-
-    chatStream.on("content", (delta: string, snapshot: string) => {
-      if (delta.length > 0) {
-        onContentChunk?.(delta, snapshot);
-      }
-    });
-
-    const chatData = await chatStream.finalChatCompletion();
-    const totalUsage = chatData.usage ?? (await chatStream.totalUsage());
-
-    requestMetrics.push({
-      requestType: "chat",
-      model: chatModel,
-      tokensIn: totalUsage.prompt_tokens,
-      tokensOut: totalUsage.completion_tokens,
-      latencyMs: Date.now() - chatStartTime,
-    });
-
-    if (!chatData?.choices?.length) {
-      throw new Error("No valid response from Chat Completion API.");
-    }
-
-    const { message } = chatData.choices[0];
-
-    return await buildOpenAIResponsePayload({
-      message: {
-        role: message.role as MessageRole,
-        content: typeof message.content === "string" ? message.content : null,
-        tool_calls: serializeToolCalls(message.tool_calls),
-      },
-      taskUsage: totalUsage.total_tokens,
-      requestMetrics,
-      taskId,
-      userId,
-      planName,
-      entitlements,
-      selectedPersonaId: selectedPersona.id,
+    return await withOpenAIRetry({
+      baseRetryAttempt: retryAttempt,
+      operation: "stream",
+      resolveNextModel: (nextRetryAttempt) =>
+        resolveFeaturePolicy({
+          planName,
+          feature: "chat",
+          taskClass,
+          budgetState,
+          retryAttempt: nextRetryAttempt,
+          highLatency,
+          explicitPremium,
+        }).model,
+      shouldRetry: () => !didEmitContent,
+      execute: (resolvedRetryAttempt) =>
+        runStreamingChatCompletion({
+          messages,
+          taskId,
+          userId,
+          personaId,
+          planName,
+          entitlements,
+          taskClass,
+          budgetState,
+          retryAttempt: resolvedRetryAttempt,
+          highLatency,
+          explicitPremium,
+          abortSignal,
+          onContentChunk: (delta, snapshot) => {
+            didEmitContent = true;
+            onContentChunk?.(delta, snapshot);
+          },
+          requestMetrics,
+        }),
     });
   } catch (error) {
     return {

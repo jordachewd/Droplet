@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-11
+> Last updated: 2026-03-11 (Phase 22 complete, Retry/Backoff + Persona Prompt System implemented)
 
 ---
 
@@ -96,35 +96,43 @@ Each persona has: `id`, `label`, `tagline`, `description`, `category`, `icon`, `
 - System prompt is built per-persona via `buildPersonaAwareSystemPrompt()`.
 - Entitlements resolved via `resolveEntitlements()` in `src/lib/utils/resolve-entitlements.tsx`.
 
-### Prompt Architecture (Target)
+### Prompt Architecture (Implemented — Phase 22)
 
-Prompt design must evolve from isolated persona strings to a managed matrix:
+Prompt system implemented in `src/constants/persona-prompts.ts` (server-only, versioned).
 
-- **Persona identity**: unique personality, tone, domain expertise
-- **Plan tier**: model-aware prompt adaptation (cheaper models need more explicit instructions)
-- **Model family/version**: adapt prompt style to model capabilities
-- **Content modality**: chat, image, audio — each with modality-specific instructions
-- **Safety constraints**: per-persona behavioral boundaries
+Current implementation covers:
+
+- **Persona identity**: unique personality, tone, domain expertise — all 9 personas have distinct prompts
+- **Plan tier**: model-family-aware prompt adaptation (nano/mini/standard/reasoning model families)
+- **Model family resolution**: `resolvePromptModelFamily()` maps model IDs to prompt families
+- **Temperature/max-token settings**: per-persona, per-model-family configuration
+- **Safety constraints**: `COMPANION_SAFETY_RULES` for companion personas (boyfriend, girlfriend, best-friend), `WELLNESS_SAFETY_RULES` for wellness
 - **Answer style and formatting**: persona-specific output formatting rules
+- **Version identifier**: `PROMPT_VERSION = "1.0"`
+- **Fallback chain**: model-family prompt → persona default `systemPrompt` in assistant-personas.tsx
 
-Prompts must be versioned and kept separate from request handlers.
+Prompts are versioned and separated from request handlers. `buildPersonaAwareSystemPrompt()` resolves prompts from the new config first, falling back to persona defaults.
+
+**Remaining gap**: Image and audio generation requests are not yet persona-aware — they do not receive persona-specific prompt context. Chat prompts are fully persona-aware.
 
 ---
 
 ## 4. Subscription Plans
 
-| Plan        | Price | Duration      | AI Model          | Limits                                                                                                      |
-| ----------- | ----- | ------------- | ----------------- | ----------------------------------------------------------------------------------------------------------- |
-| **Lite**    | Free  | **Permanent** | Cheapest approved | 5 conversations/day, 10 user prompts/conversation, 3 media generations/month, no video                      |
-| **Pro**     | $19   | Monthly       | `gpt-5.2-pro`     | 50 conversations/day, 100 prompts/conversation, 50 image + 50 audio generations/month, no video             |
-| **Premium** | $39   | Monthly       | `gpt-5.4-pro`     | Unlimited conversations, unlimited prompts, unlimited image + audio generations, 10 video generations/month |
+| Plan        | Price | Duration      | Chat Model (default)             | Limits                                                                                                       |
+| ----------- | ----- | ------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| **Lite**    | Free  | **Permanent** | `gpt-4o-mini`                    | 5 conversations/day, 10 prompts/conversation, 3 image generations/month, no audio, no video                  |
+| **Pro**     | $19   | Monthly       | `gpt-4.1`                        | 50 conversations/day, 100 prompts/conversation, 50 image + 50 audio generations/month, no video              |
+| **Premium** | $39   | Monthly       | `gpt-4.1` / `gpt-5.4` (complex) | Unlimited conversations, unlimited prompts, unlimited image + audio generations, 10 video generations/month  |
+
+> Full model policy (all features × plans × task classes) in **Section 8**.
 
 ### Plan Rules
 
 1. **Lite is permanent and free.** There is no 3-day trial. There is no expiry. New users receive Lite by default upon account creation.
 2. **All personas are available in all plans.** There are no persona restrictions per plan.
 3. **Pro and Premium are paid-only.** Activated via Stripe Checkout one-time payment.
-4. **Premium has 3 exclusive media features:** quality image generation, quality audio generation, and video generation.
+4. **Premium advantages over Pro:** premium audio quality (`gpt-audio-1.5`), `gpt-5.4` for complex reasoning, video generation, and unlimited image/audio quotas. See Section 8 for full model policy.
 5. When any limit is reached, the server **must end the conversation** with an exact stop reason and exact next-action instruction.
 6. After a forced stop, the user is told one of: start a new conversation (if resources remain), upgrade plan (if applicable), or contact support.
 
@@ -134,8 +142,9 @@ Prompts must be versioned and kept separate from request handlers.
 | ------------------------------------------ | ----- | --------------------- |
 | Conversations per day                      | 5     | 24 hours              |
 | User prompts per conversation              | 10    | Per conversation      |
-| Media generations (image + audio combined) | 3     | 30-day rolling window |
-| Video generation                           | 0     | N/A                   |
+| Image generations                          | 3     | 30-day rolling window            |
+| Audio generation                           | 0     | N/A (blocked — Pro/Premium only) |
+| Video generation                           | 0     | N/A (blocked — Premium only)     |
 
 ### Pro Plan Limits (Detailed)
 
@@ -362,8 +371,9 @@ Purpose: Request-level usage logging for cost tracking and admin analytics.
 
 ### 7.5 POST /api/webhooks/clerk
 
-- Auth: Svix signature verification
+- Auth: Svix signature verification (raw request body)
 - Handles: `user.created`, `user.updated`, `user.deleted`
+- **Idempotency**: `user.created` checks for existing user before insert (safe for Clerk event replay). `user.updated` and `user.deleted` handle missing documents gracefully (return 200, no throw).
 - On `user.deleted`: deletes User, Transaction, and Task documents; cleans up S3 objects under user prefix
 - Each cleanup step has independent error handling — partial failure does not break webhook response
 
@@ -376,42 +386,143 @@ Purpose: Request-level usage logging for cost tracking and admin analytics.
 
 ### API Technical Debt
 
-- **TD-API-01**: In-memory rate limiter.
-- **TD-API-06**: handleError loses stack traces.
+- **TD-API-01**: In-memory rate limiter (does not survive restarts or horizontal scaling).
+- ~~**TD-API-06**: handleError loses stack traces~~ — **Resolved** in Phase 20 via `{ cause: error }` pattern.
 - ~~**TD-API-07**: No streaming implementation~~ — **Resolved** in Phase 19.
 
 ---
 
-## 8. OpenAI Integration
+## 8. OpenAI Integration & Model Policy
 
-### Models (Target)
+### 8.1 Model Policy Architecture
 
-| Model             | Plan    | Purpose           |
-| ----------------- | ------- | ----------------- |
-| Cheapest approved | Lite    | Chat completion   |
-| `gpt-5.2-pro`     | Pro     | Chat completion   |
-| `gpt-5.4-pro`     | Premium | Chat completion   |
-| `gpt-4o-mini`     | All     | Title generation  |
-| Provider TBD      | All     | Image generation  |
-| Provider TBD      | Premium | Quality image gen |
-| Provider TBD      | All     | Audio generation  |
-| Provider TBD      | Premium | Quality audio gen |
-| Provider TBD      | Premium | Video generation  |
+The model policy system controls which OpenAI model is used for every AI request. Three governing principles:
 
-### Current Models
+1. **Plan sets the maximum allowed tier** — not the exact model. The plan defines the model ceiling.
+2. **Feature type sets the default** — utility tasks (titles) always use the cheapest model regardless of plan.
+3. **Backend decides the final model** — budget state, latency, retry attempts, and task class trigger automatic downgrades. The frontend must never send the final model ID.
 
-Resolved via `ai-model-policy.ts` — no hardcoded model names. Policy maps plan × request type → model ID:
+Central resolver: `resolveModelPolicy()` in `src/lib/utils/ai-model-policy.ts`. **Implementation complete (Phase 21).** All OpenAI utilities (`generateTitle`, `generateImage`, `generateAudio`, `generateResponse`) consume the resolver — no hardcoded model names. Message token management via `compactMessagesToTokenLimit()` in `src/lib/utils/openai/message-policy.ts`.
 
-- Lite chat: `gpt-4o-mini` | Pro chat: `gpt-5.2-pro` | Premium chat: `gpt-5.4-pro`
-- Title: `gpt-4o-mini` (all plans) | Image: `dall-e-3` (all plans) | Audio: `gpt-4o-audio-preview` (all plans)
-- Video: Premium only (placeholder ID), `null` for Lite/Pro
-- Cost estimation via `estimateModelCostCents()` and `MODEL_PRICING` constant.
+### 8.2 Model Policy Matrix
 
-### AI Policy Model
+| Feature          | Plan    | Default Model      | Fallback Model      | Cost-Control Notes                                                                                  |
+| ---------------- | ------- | ------------------ | ------------------- | --------------------------------------------------------------------------------------------------- |
+| Title generation | All     | `gpt-4.1-nano`     | `gpt-4o-mini`       | Hard cap: 1,200 input tokens, 20 output tokens. Always cheapest model regardless of plan.           |
+| Chat             | Lite    | `gpt-4o-mini`      | `gpt-4.1-nano`      | Strict context compaction; max output tokens per reply; no expensive tools; block retries beyond one.|
+| Chat             | Pro     | `gpt-4.1`          | `gpt-4o-mini`       | Degrade to fallback on soft budget, high latency, simple tasks, or retries.                         |
+| Chat             | Premium | `gpt-4.1`          | `gpt-4.1`           | Default `gpt-4.1` for routine chat. `gpt-5.4` only for complex reasoning with `explicitPremium`.    |
+| Image            | Lite    | `gpt-image-1-mini` | *(none)*             | One model only. Limit size, count, concurrency. Monthly quota enforced.                             |
+| Image            | Pro     | `gpt-image-1.5`    | `gpt-image-1-mini`  | Downgrade for retries, previews, or users beyond soft budget.                                       |
+| Image            | Premium | `gpt-image-1.5`    | `gpt-image-1-mini`  | Same model tiers as Pro; Premium gets unlimited quota.                                              |
+| Audio            | Lite    | *(blocked)*         | —                   | Audio not available on Lite.                                                                        |
+| Audio            | Pro     | `gpt-audio-mini`   | `gpt-4o-mini-tts`   | TTS-only fallback. Do NOT use TTS fallback for `audio_in_out` mode.                                 |
+| Audio            | Premium | `gpt-audio-1.5`    | `gpt-audio-mini`    | Downgrade for retries, previews, long-form beyond soft budget.                                      |
+| Video            | Lite    | *(blocked)*         | —                   | Video not available on Lite.                                                                        |
+| Video            | Pro     | *(blocked)*         | —                   | Video not available on Pro.                                                                         |
+| Video            | Premium | `sora-2-pro`       | `sora-2`            | `sora-2` for previews/drafts. `sora-2-pro` only for final renders with `explicitPremium`.           |
 
-Central resolver implemented in `src/lib/utils/ai-model-policy.ts`. `resolveModelForPlan(planName, requestType)` used by all OpenAI utilities.
+### 8.3 Task Classes
 
-### Streaming (Implemented)
+Each AI request is classified into a task class that affects model selection and token limits.
+
+| Task Class | Purpose                    | Default For                            |
+| ---------- | -------------------------- | -------------------------------------- |
+| `utility`  | Metadata, always cheapest  | `title_generation`                     |
+| `simple`   | Basic/general questions    | —                                      |
+| `standard` | Normal conversation turns  | `chat`                                 |
+| `complex`  | Deep reasoning, analysis   | —                                      |
+| `preview`  | Draft/preview generation   | `video_generation`                     |
+| `final`    | Final quality render       | `image_generation`, `audio_generation` |
+
+### 8.4 Token Limits by Plan and Task Class
+
+| Feature | Plan    | Task Class | Max Input Tokens | Max Output Tokens |
+| ------- | ------- | ---------- | ---------------- | ----------------- |
+| Title   | All     | utility    | 1,200            | 20                |
+| Chat    | Lite    | simple     | 8,000            | 600               |
+| Chat    | Lite    | standard   | 12,000           | 900               |
+| Chat    | Lite    | complex    | 14,000           | 1,200             |
+| Chat    | Pro     | simple     | 12,000           | 700               |
+| Chat    | Pro     | standard   | 24,000           | 1,400             |
+| Chat    | Pro     | complex    | 32,000           | 2,000             |
+| Chat    | Premium | simple     | 16,000           | 900               |
+| Chat    | Premium | standard   | 32,000           | 1,800             |
+| Chat    | Premium | complex    | 48,000           | 2,800             |
+
+### 8.5 Downgrade Triggers
+
+The resolver downgrades to the fallback model when any condition is met:
+
+1. **Hard limit reached** (`hard_limit_reached`) — block the request entirely.
+2. **Soft limit reached** (`soft_limit_reached`) — use fallback model.
+3. **High latency** — use fallback model.
+4. **Retry attempt** (`retryAttempt > 0`) — use fallback model.
+5. **Audio mode mismatch** — do not use TTS-only fallback (`gpt-4o-mini-tts`) for `audio_in_out` requests.
+
+Retries should almost always go down a tier, not sideways or up.
+
+### 8.6 Audio Mode Differentiation
+
+Audio features must be split internally:
+
+- **TTS mode** (`tts`): plain text-to-speech. Cheaper model path (e.g., `gpt-4o-mini-tts`).
+- **Audio in/out mode** (`audio_in_out`): rich audio conversation. Uses full audio model.
+
+TTS fallbacks must NOT be used for `audio_in_out` requests. The resolver must check `audioMode` before allowing TTS fallback.
+
+### 8.7 Hard Non-Negotiables
+
+1. Frontend must never send the final model ID as authority.
+2. Backend resolves model from plan + feature + task class + cost state.
+3. Titles are permanently pinned to `gpt-4.1-nano`.
+4. Premium access means eligibility, not "every request gets the most expensive model."
+5. Retries should go down a tier, not sideways or up.
+6. `gpt-5.4` is reserved for complex/premium-explicit requests only — Premium chat defaults to `gpt-4.1`.
+
+### 8.8 Resolver Types (Reference)
+
+```typescript
+type PlanTier = "lite" | "pro" | "premium";
+
+type FeatureType =
+  | "title_generation"
+  | "chat"
+  | "image_generation"
+  | "audio_generation"
+  | "video_generation";
+
+type TaskClass = "utility" | "simple" | "standard" | "complex" | "preview" | "final";
+type AudioMode = "tts" | "audio_in_out";
+type BudgetState = "normal" | "soft_limit_reached" | "hard_limit_reached";
+
+type ResolveModelInput = {
+  plan: PlanTier;
+  feature: FeatureType;
+  taskClass?: TaskClass;
+  budgetState?: BudgetState;
+  retryAttempt?: number;
+  highLatency?: boolean;
+  explicitPremium?: boolean;
+  audioMode?: AudioMode;
+};
+
+type ResolvedModelPolicy = {
+  model: string;
+  fallbackModel?: string;
+  feature: FeatureType;
+  plan: PlanTier;
+  taskClass: TaskClass;
+  maxInputTokens?: number;
+  maxOutputTokens?: number;
+  wasDowngraded: boolean;
+  downgradeReasons: string[];
+  hardBlocked: boolean;
+  notes?: string;
+};
+```
+
+### 8.9 Streaming (Implemented)
 
 Server-side streaming via `generateStreamingResponse()` in `src/lib/utils/openai/generateResponse.tsx`.
 Route streams via SSE events (`meta`, `chunk`, `final`, `error`) in `/api/openai`.
@@ -422,19 +533,25 @@ All auth/limit checks execute before streaming begins. Final task persistence an
 
 - ~~**TD-AI-01**: No streaming~~ — **Resolved** in Phase 19 via `generateStreamingResponse()` + SSE events.
 - ~~**TD-AI-03**: No per-user cost tracking~~ — **Resolved** in Phase 16 via `UsageEvent` + `usage-event-utils.ts`.
-- **TD-AI-06**: No retry/backoff for transient failures.
+- ~~**TD-AI-06**: No retry/backoff for transient failures~~ — **Resolved** in Phase 22 via `withOpenAIRetry()` in `generateResponse.tsx`. Exponential backoff (1s/2s/4s), transient-only retries (429/500/502/503), model downgrade via `retryAttempt` parameter, SDK auto-retry disabled (`maxRetries: 0`).
 - ~~**TD-AI-07**: Models hardcoded~~ — **Resolved** in Phase 16 via `ai-model-policy.ts`.
-- **TD-AI-08**: No video generation (Premium feature).
-- **TD-AI-09**: Prompts not optimized per persona/model.
+- **TD-AI-08**: No video generation (Premium). UI now shows "Coming soon" — implementation deferred.
+- ~~**TD-AI-09**: Prompts not optimized per persona/model~~ — **Partially resolved** in Phase 22 via `persona-prompts.ts`. Chat prompts are now per-persona, per-model-family with safety constraints. Image/audio generation prompts remain non-persona-aware.
+- ~~**TD-AI-10**: Model policy overhaul~~ — **Resolved** in Phase 21 via `MODEL_POLICY_MATRIX` + `resolveModelPolicy()` in `ai-model-policy.ts`.
+- ~~**TD-AI-11**: Dead `combinedCount` parameter~~ — **Resolved** in Phase 21-C. Removed from interface, function body, and all callers.
+- ~~**TD-AI-12**: Video matrix/resolver dual source of truth~~ — **Resolved** in Phase 21-C. Matrix `final.model` now `sora-2` with notes documenting `explicitPremium` override.
+- **TD-AI-13**: 5 model pricing entries in `ai-model-policy.ts` are placeholders pending OpenAI confirmation (`gpt-audio-mini`, `gpt-audio-1.5`, `gpt-4o-mini-tts`, `sora-2`, `sora-2-pro`).
+- **TD-AI-14**: Dead `chatSystemMsg` export in `src/constants/openai.tsx` — superseded by `CHAT_PLATFORM_PROMPT` in `persona-prompts.ts`. Never imported.
+- **TD-AI-15**: Hardcoded TTS model-name branch in `generateAudio.tsx` (`policy.model === "gpt-4o-mini-tts"`) — should be a policy flag (e.g., `isTtsOnly`) to avoid coupling code paths to specific model names.
 
 ---
 
 ## 9. File Handling
 
-### Technical Debt
+All file handling technical debt has been resolved.
 
-- ~~**TD-FILE-01**: No S3 cleanup on user/task deletion~~ — **Partially resolved**: Clerk webhook `user.deleted` now cleans up S3 objects (Phase 19). Admin `removeUserByAdminAction` already works. **Remaining**: `deleteTask` action does not clean up S3 objects for deleted conversations.
-- **TD-FILE-02**: Some flows send file as inline base64 (chat-input.tsx). Must refactor to upload via `/api/upload`.
+- ~~**TD-FILE-01**: No S3 cleanup on user/task deletion~~ — **Fully resolved** in Phase 20. `deleteTask` now scans messages for S3 asset URLs and deletes objects (best-effort). Clerk webhook `user.deleted` cleans S3 prefix (Phase 19). Admin `removeUserByAdminAction` cleans S3 prefix (Phase 17).
+- ~~**TD-FILE-02**: Inline base64 in chat-input.tsx~~ — **Resolved** in Phase 20. Chat input now uploads via `/api/upload` FormData. S3 URLs used in message content. Blob previews for local display only.
 
 ---
 
@@ -521,9 +638,9 @@ All auth/limit checks execute before streaming begins. Final task persistence an
 
 ## 13. Testing
 
-- **Unit tests**: 49+ suites, 210+ tests (Vitest) — includes streaming, webhook, and chat-wrapper tests
-- **E2E tests**: 7 Playwright specs, 77 tests (11 test functions × 7 browser projects)
-- **Coverage**: Not configured (planned)
+- **Unit tests**: 51 suites, 229 tests (Vitest) — includes streaming, webhook, chat-wrapper, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, and persona prompt tests
+- **E2E tests**: Playwright specs, 79 tests across browser projects
+- **Coverage**: Not configured (planned Phase 23)
 - **Gap**: No dedicated E2E spec for streamed chunk-by-chunk rendering (manually verified via Playwright MCP)
 
 ---
@@ -558,22 +675,19 @@ All critical-severity technical debt resolved. Remaining items are medium or low
 
 ### Active — Medium Priority
 
-| ID            | Area     | Description                                              | Severity |
-| ------------- | -------- | -------------------------------------------------------- | -------- |
-| TD-API-01     | API      | In-memory rate limiter                                   | Medium   |
-| TD-API-06     | API      | handleError loses stack traces                           | Medium   |
-| TD-AI-06      | OpenAI   | No retry/backoff                                         | Medium   |
-| TD-AI-08      | OpenAI   | No video generation (Premium)                            | Medium   |
-| TD-AI-09      | OpenAI   | Prompts not optimized                                    | Medium   |
-| TD-FILE-01    | Files    | S3 cleanup on task deletion not implemented (Clerk webhook resolved) | Medium |
-| TD-FILE-02    | Files    | Inline base64 in chat-input.tsx (violates no-binary rule) | Medium  |
-| TD-ACT-01     | Actions  | deleteAllTransactions has no audit trail                 | Medium   |
-| TD-WEBHOOK-02 | Webhooks | Clerk webhook has no idempotency check for event replay  | Medium   |
+| ID        | Area   | Description                                                                 | Severity |
+| --------- | ------ | --------------------------------------------------------------------------- | -------- |
+| TD-API-01 | API    | In-memory rate limiter (does not survive restarts or horizontal scaling)     | Medium   |
+| TD-AI-08  | OpenAI | No video generation (Premium) — UI shows "Coming soon", implementation deferred | Medium   |
 
 ### Active — Low Priority
 
 | ID            | Area    | Description                                              | Severity |
 | ------------- | ------- | -------------------------------------------------------- | -------- |
+| TD-AI-09  | OpenAI | Image/audio generation prompts not persona-aware (chat prompts done Phase 22) | Low   |
+| TD-AI-13  | OpenAI | 5 model pricing entries are placeholders pending OpenAI confirmation         | Low      |
+| TD-AI-14  | OpenAI | Dead `chatSystemMsg` export in `openai.tsx` — superseded by `persona-prompts.ts` | Low   |
+| TD-AI-15  | OpenAI | Hardcoded TTS model-name branch in `generateAudio.tsx` — should use policy flag | Low   |
 | TD-PLAN-01    | Billing | No recurring subscriptions (deferred v1)                 | Low      |
 
 ### Resolved
@@ -593,6 +707,11 @@ All critical-severity technical debt resolved. Remaining items are medium or low
 | TD-UI-11     | FAQ copy outdated (trial references)  | Rewritten for Droplet                                                         |
 | TD-AI-02     | No OpenAI error classification        | Implemented                                                                   |
 | TD-AI-05     | Audio base64 in messages              | Audio now uploaded to S3                                                      |
+| TD-API-06    | handleError loses stack traces        | Resolved in Phase 20 via `{ cause: error }` pattern                           |
+| TD-FILE-01   | S3 cleanup on task deletion           | Fully resolved in Phase 20: deleteTask + Clerk webhook + admin remove         |
+| TD-FILE-02   | Inline base64 in chat-input.tsx       | Resolved in Phase 20 via `/api/upload` FormData                               |
+| TD-ACT-01    | deleteAllTransactions unaudited       | Resolved in Phase 20: function removed entirely                               |
+| TD-WEBHOOK-02| Clerk webhook no idempotency          | Resolved in Phase 20: duplicate check + graceful miss handling                |
 | TD-UI-04     | No error boundaries                   | Added                                                                         |
 | TD-UI-05     | mapDateToLabel duplicated             | Extracted                                                                     |
 | TD-RENAME-01 | "role" to "persona" rename            | Completed                                                                     |
@@ -607,6 +726,9 @@ All critical-severity technical debt resolved. Remaining items are medium or low
 | TD-DB-14     | AdminAuditLog model missing           | Created in Phase 14                                                           |
 | TD-UI-02     | No loading skeletons                  | Added                                                                         |
 | TD-UI-06     | No conversation delete UI             | Added                                                                         |
+| TD-AI-06     | No retry/backoff for transient failures | Resolved in Phase 22 via `withOpenAIRetry()` — exponential backoff, model downgrade |
+| TD-AI-11     | Dead combinedCount parameter            | Resolved in Phase 21-C — removed from interface, body, and callers            |
+| TD-AI-12     | Video matrix/resolver dual source of truth | Resolved in Phase 21-C — matrix now shows `sora-2` with notes              |
 | TD-PLAN-07   | No daily conversation limit           | Implemented in Phase 15 via `checkDailyConversationLimit` + route enforcement |
 | TD-PLAN-08   | No per-conversation prompt limit      | Implemented in Phase 15 via `Task.promptCount` + route enforcement            |
 | TD-DB-05     | Task messages unbounded (16MB risk)   | Implemented in Phase 15 via `estimatedBytes` tracking + 12MB threshold guard  |
@@ -626,3 +748,4 @@ All critical-severity technical debt resolved. Remaining items are medium or low
 | TD-API-07    | No streaming implementation              | Resolved in Phase 19 — streaming branch in `/api/openai` route             |
 | TD-DB-15     | Clerk user.deleted doesn't clean Tasks   | Resolved in Phase 19 — `Task.deleteMany` in Clerk webhook handler          |
 | TD-WEBHOOK-01| Clerk user.deleted orphans S3 objects    | Resolved in Phase 19 — `deleteS3Prefix` in Clerk webhook handler           |
+| TD-AI-10     | Model policy flat resolver              | Resolved in Phase 21 — `MODEL_POLICY_MATRIX` + `resolveModelPolicy()` with task classes, fallbacks, downgrade triggers, token limits, audio mode |

@@ -45,7 +45,7 @@ export function resolveEntitlements(planName?: PlanName | null): Entitlements {
     planName: "Lite",
     allowedPersonaIds,
     supportsImageGeneration: true,
-    supportsAudioGeneration: true,
+    supportsAudioGeneration: false,
     imageLimitReached: false,
     audioLimitReached: false,
   };

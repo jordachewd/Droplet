@@ -93,9 +93,13 @@ describe("generateStreamingResponse", () => {
 
     expect(openAiClient.chat.completions.stream).toHaveBeenCalledWith(
       expect.objectContaining({
-        model: "gpt-5.2-pro",
+        model: "gpt-4.1",
+        max_completion_tokens: 1_100,
       }),
-      undefined,
+      {
+        maxRetries: 0,
+        signal: undefined,
+      },
     );
     expect(onContentChunk).toHaveBeenCalledWith("Hello", "Hello");
     expect(payload.taskData?.content).toEqual([
@@ -106,7 +110,7 @@ describe("generateStreamingResponse", () => {
       expect.arrayContaining([
         expect.objectContaining({
           requestType: "chat",
-          model: "gpt-5.2-pro",
+          model: "gpt-4.1",
           tokensIn: 9,
           tokensOut: 4,
         }),
