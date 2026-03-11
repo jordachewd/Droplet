@@ -18,6 +18,13 @@ async function createUserFromWebhook(user: CreateUserParams) {
   return newUser ? serializeForClient(newUser) : null;
 }
 
+async function findUserByClerkId(clerkId: string) {
+  await connectToDatabase();
+
+  const existingUser = await User.findOne({ clerkId });
+  return existingUser ? serializeForClient(existingUser) : null;
+}
+
 function logUserDeletedCleanupFailure(step: string) {
   process.stderr.write(
     `[clerk-webhook] user.deleted ${step} cleanup failed.\n`,
@@ -47,8 +54,7 @@ export async function POST(req: Request) {
   }
 
   // Get the body
-  const payload = await req.json();
-  const body = JSON.stringify(payload);
+  const body = await req.text();
 
   // Create a new Svix instance with your secret.
   const wh = new Webhook(WEBHOOK_SECRET);
@@ -92,9 +98,10 @@ export async function POST(req: Request) {
       registerAt: new Date(created_at),
     };
 
-    const newUser = await createUserFromWebhook(user);
+    const existingUser = await findUserByClerkId(id);
+    const syncedUser = existingUser ?? (await createUserFromWebhook(user));
 
-    if (!newUser) {
+    if (!syncedUser) {
       return NextResponse.json(
         {
           message: "Webhook error",
@@ -108,13 +115,13 @@ export async function POST(req: Request) {
     const client = await clerkClient();
     await client.users.updateUserMetadata(id, {
       publicMetadata: {
-        userId: newUser._id,
-        role: newUser.role,
+        userId: syncedUser._id,
+        role: syncedUser.role,
         userImg: image_url,
       },
     });
 
-    return NextResponse.json({ message: "OK", user: newUser });
+    return NextResponse.json({ message: "OK", user: syncedUser });
   }
 
   // UPDATE USER
@@ -136,13 +143,7 @@ export async function POST(req: Request) {
     });
 
     if (!updatedUser) {
-      return NextResponse.json(
-        {
-          message: "Webhook error",
-          error: "User not found",
-        },
-        { status: 404 },
-      );
+      return NextResponse.json({ message: "OK", user: null });
     }
 
     return NextResponse.json({ message: "OK", user: updatedUser });

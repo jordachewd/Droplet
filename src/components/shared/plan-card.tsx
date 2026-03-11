@@ -6,30 +6,16 @@ import Checkout from "@/components/shared/checkout-form";
 
 interface PlanCardProps {
   plan: Plan;
-  yearly: boolean;
   userData?: UserData | null;
-  save?: number;
 }
 
-export default function PlanCard({
-  plan,
-  yearly,
-  userData,
-  save = 0,
-}: PlanCardProps) {
+export default function PlanCard({ plan, userData }: PlanCardProps) {
   const hasUserData = userData && Object.keys(userData).length > 0;
-
-  const planFee =
-    plan.price === 0
-      ? plan.price
-      : yearly
-        ? Math.round(plan.price * 12 * (1 - save))
-        : plan.price;
+  const planFee = plan.price;
 
   const planStatus = getPlanStatus({
     plan,
     planFee,
-    yearly,
     userPlan: userData?.plan as PlanData,
   });
 
@@ -81,17 +67,12 @@ export default function PlanCard({
             </span>
 
             {plan.price !== 0 && (
-              <span className="flex self-end text-sm opacity-80">
-                {yearly ? "/Yr" : "/Mo"}
-              </span>
+              <span className="flex self-end text-sm opacity-80">/Mo</span>
             )}
           </p>
         </div>
         <div className="flex w-full items-center justify-between pl-0.5 text-xs opacity-70">
           <span className="flex">{plan.desc}</span>
-          {yearly && plan.price !== 0 && (
-            <span className="flex line-through">${plan.price * 12} /Yr</span>
-          )}
         </div>
       </div>
       <div className="flex w-full flex-col gap-2.5">
@@ -116,7 +97,7 @@ export default function PlanCard({
           <Checkout
             plan={{
               id: plan.id,
-              billing: yearly ? "Yearly" : "Monthly",
+              billing: "Monthly",
               name: plan.name,
               price: planFee,
             }}

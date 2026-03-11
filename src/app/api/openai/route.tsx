@@ -30,6 +30,7 @@ import { checkDailyConversationLimit } from "@/lib/utils/check-daily-conversatio
 import { getTaskByIdForUser } from "@/lib/utils/task-queries";
 import { filterAssistantMsg } from "@/lib/utils/openai/filterAssistantMsg";
 import { PLAN_LIMITS } from "@/constants/plans";
+import { SUPPORT_EMAIL } from "@/constants/support";
 import { PlanName } from "@/types/PlanData.d";
 import { PersonaId } from "@/types/PersonaData.d";
 import { resolveModelForPlan } from "@/lib/utils/ai-model-policy";
@@ -41,7 +42,6 @@ import {
 const OPENAI_RATE_LIMIT_MAX_REQUESTS = 20;
 const OPENAI_RATE_LIMIT_WINDOW_MS = 60_000;
 const TASK_STORAGE_WARNING_BYTES = 12 * 1024 * 1024;
-const SUPPORT_EMAIL = "office@jordachewd.com";
 const STREAM_HEADERS = {
   "Content-Type": "text/event-stream; charset=utf-8",
   "Cache-Control": "no-store, no-transform",

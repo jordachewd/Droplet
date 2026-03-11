@@ -3,6 +3,7 @@ import { auth } from "@clerk/nextjs/server";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import Task from "@/lib/database/models/tasks.model";
 import { createTask, deleteTask, updateTask } from "@/lib/actions/task.actions";
+import deleteFileFromAWS from "@/lib/utils/aws/deleteFileFromAWS";
 
 vi.mock("@clerk/nextjs/server", () => ({
   auth: vi.fn(),
@@ -15,9 +16,14 @@ vi.mock("@/lib/database/mongoose", () => ({
 vi.mock("@/lib/database/models/tasks.model", () => ({
   default: {
     create: vi.fn(),
+    findOne: vi.fn(),
     findOneAndUpdate: vi.fn(),
     findOneAndDelete: vi.fn(),
   },
+}));
+
+vi.mock("@/lib/utils/aws/deleteFileFromAWS", () => ({
+  default: vi.fn(),
 }));
 
 describe("createTask", () => {
@@ -180,9 +186,34 @@ describe("deleteTask", () => {
     vi.clearAllMocks();
     vi.mocked(auth).mockResolvedValue({ userId: "auth_user_1" } as never);
     vi.mocked(connectToDatabase).mockResolvedValue(undefined as never);
+    vi.mocked(Task.findOne).mockResolvedValue({
+      _id: taskId,
+      messages: [],
+    } as never);
   });
 
-  it("deletes a task when requested by the owner", async () => {
+  it("deletes a task when requested by the owner and cleans up owned S3 assets", async () => {
+    vi.mocked(Task.findOne).mockResolvedValue({
+      _id: taskId,
+      messages: [
+        {
+          role: "user",
+          whois: "user",
+          content: [
+            {
+              type: "image_url",
+              image_url: {
+                url: "/api/download?key=auth_user_1%2Fuploads%2Fphoto.png",
+              },
+            },
+            {
+              type: "audio_url",
+              audio_url: "/api/download?key=auth_user_1%2Faudio%2Fclip.mp3",
+            },
+          ],
+        },
+      ],
+    } as never);
     vi.mocked(Task.findOneAndDelete).mockResolvedValue({
       _id: "task_1",
     } as never);
@@ -190,10 +221,23 @@ describe("deleteTask", () => {
     const result = await deleteTask(taskId);
 
     expect(connectToDatabase).toHaveBeenCalledOnce();
+    expect(Task.findOne).toHaveBeenCalledWith({
+      _id: taskId,
+      userId: "auth_user_1",
+    });
     expect(Task.findOneAndDelete).toHaveBeenCalledWith({
       _id: taskId,
       userId: "auth_user_1",
     });
+    expect(deleteFileFromAWS).toHaveBeenCalledTimes(2);
+    expect(deleteFileFromAWS).toHaveBeenNthCalledWith(
+      1,
+      "auth_user_1/uploads/photo.png",
+    );
+    expect(deleteFileFromAWS).toHaveBeenNthCalledWith(
+      2,
+      "auth_user_1/audio/clip.mp3",
+    );
     expect(result).toEqual(
       expect.objectContaining({
         message: "Task deleted successfully",
@@ -204,10 +248,11 @@ describe("deleteTask", () => {
   });
 
   it("returns not found when task does not belong to the authenticated user", async () => {
-    vi.mocked(Task.findOneAndDelete).mockResolvedValue(null as never);
+    vi.mocked(Task.findOne).mockResolvedValue(null as never);
 
     const result = await deleteTask(taskId);
 
+    expect(Task.findOneAndDelete).not.toHaveBeenCalled();
     expect(result).toEqual(
       expect.objectContaining({
         message: "Task not found or not owned by user",
@@ -223,6 +268,7 @@ describe("deleteTask", () => {
     const result = await deleteTask(taskId);
 
     expect(connectToDatabase).not.toHaveBeenCalled();
+    expect(Task.findOne).not.toHaveBeenCalled();
     expect(Task.findOneAndDelete).not.toHaveBeenCalled();
     expect(result).toEqual(
       expect.objectContaining({
@@ -237,11 +283,53 @@ describe("deleteTask", () => {
     const result = await deleteTask("task_1");
 
     expect(connectToDatabase).not.toHaveBeenCalled();
+    expect(Task.findOne).not.toHaveBeenCalled();
     expect(Task.findOneAndDelete).not.toHaveBeenCalled();
     expect(result).toEqual(
       expect.objectContaining({
         message: "Invalid conversation identifier",
         status: 400,
+        source: "deleteTask",
+      }),
+    );
+  });
+
+  it("still deletes the task when S3 cleanup fails", async () => {
+    vi.mocked(Task.findOne).mockResolvedValue({
+      _id: taskId,
+      messages: [
+        {
+          role: "user",
+          whois: "user",
+          content: [
+            {
+              type: "image_url",
+              image_url: {
+                url: "/api/download?key=auth_user_1%2Fuploads%2Fphoto.png",
+              },
+            },
+          ],
+        },
+      ],
+    } as never);
+    vi.mocked(Task.findOneAndDelete).mockResolvedValue({
+      _id: "task_1",
+    } as never);
+    vi.mocked(deleteFileFromAWS).mockRejectedValue(new Error("S3 unavailable"));
+
+    const result = await deleteTask(taskId);
+
+    expect(Task.findOneAndDelete).toHaveBeenCalledWith({
+      _id: taskId,
+      userId: "auth_user_1",
+    });
+    expect(deleteFileFromAWS).toHaveBeenCalledWith(
+      "auth_user_1/uploads/photo.png",
+    );
+    expect(result).toEqual(
+      expect.objectContaining({
+        message: "Task deleted successfully",
+        status: 200,
         source: "deleteTask",
       }),
     );

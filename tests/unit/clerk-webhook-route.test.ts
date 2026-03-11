@@ -199,6 +199,47 @@ describe("POST /api/webhooks/clerk", () => {
     expect(payload.user._id).toBe("mongo_user_1");
   });
 
+  it("treats replayed user.created events as idempotent", async () => {
+    const updateUserMetadataMock = vi.fn();
+    vi.mocked(clerkClient).mockResolvedValue({
+      users: {
+        updateUserMetadata: updateUserMetadataMock,
+      },
+    } as never);
+
+    verifyMock.mockReturnValue({
+      type: "user.created",
+      data: {
+        id: "clerk_user_1",
+        email_addresses: [{ email_address: "clerk-user@example.com" }],
+        created_at: "2026-01-01T00:00:00.000Z",
+        first_name: "Ada",
+        last_name: "Lovelace",
+        username: "adal",
+        image_url: "https://cdn.example.com/u1.png",
+      },
+    });
+    vi.mocked(User.findOne).mockResolvedValue({
+      _id: "mongo_user_existing",
+      clerkId: "clerk_user_1",
+      role: "client",
+    } as never);
+
+    const response = await POST(buildRequest({ event: "user.created" }));
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(User.create).not.toHaveBeenCalled();
+    expect(updateUserMetadataMock).toHaveBeenCalledWith("clerk_user_1", {
+      publicMetadata: {
+        userId: "mongo_user_existing",
+        role: "client",
+        userImg: "https://cdn.example.com/u1.png",
+      },
+    });
+    expect(payload.user._id).toBe("mongo_user_existing");
+  });
+
   it("updates an existing user for user.updated", async () => {
     verifyMock.mockReturnValue({
       type: "user.updated",
@@ -235,7 +276,7 @@ describe("POST /api/webhooks/clerk", () => {
     expect(payload.message).toBe("OK");
   });
 
-  it("returns 404 for user.updated when no matching user exists", async () => {
+  it("returns 200 for replayed user.updated when no matching user exists", async () => {
     verifyMock.mockReturnValue({
       type: "user.updated",
       data: {
@@ -251,9 +292,9 @@ describe("POST /api/webhooks/clerk", () => {
     const response = await POST(buildRequest({ event: "user.updated" }));
     const payload = await response.json();
 
-    expect(response.status).toBe(404);
-    expect(payload.message).toBe("Webhook error");
-    expect(payload.error).toBe("User not found");
+    expect(response.status).toBe(200);
+    expect(payload.message).toBe("OK");
+    expect(payload.user).toBeNull();
   });
 
   it("deletes user, tasks, and S3 assets for user.deleted", async () => {
@@ -295,6 +336,29 @@ describe("POST /api/webhooks/clerk", () => {
     expect(payload.deletedTransactions.deletedCount).toBe(3);
     expect(payload.deletedTasks.deletedCount).toBe(8);
     expect(payload.deletedObjectsCount).toBe(5);
+  });
+
+  it("returns 200 for replayed user.deleted when the user no longer exists", async () => {
+    verifyMock.mockReturnValue({
+      type: "user.deleted",
+      data: {
+        id: "clerk_user_1",
+      },
+    });
+    vi.mocked(User.findOne).mockResolvedValue(null as never);
+
+    const response = await POST(buildRequest({ event: "user.deleted" }));
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(User.findByIdAndDelete).not.toHaveBeenCalled();
+    expect(Transaction.deleteMany).toHaveBeenCalledWith({
+      clerkId: "clerk_user_1",
+    });
+    expect(Task.deleteMany).toHaveBeenCalledWith({
+      userId: "clerk_user_1",
+    });
+    expect(payload.deletedUser).toBeNull();
   });
 
   it("returns 200 and still attempts S3 cleanup when task deletion fails", async () => {

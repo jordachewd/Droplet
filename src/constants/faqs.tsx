@@ -1,3 +1,5 @@
+import { SUPPORT_EMAIL } from "@/constants/support";
+
 export const faqs = [
   {
     id: 0,
@@ -11,15 +13,14 @@ export const faqs = [
   {
     id: 1,
     question: "Who should I reach out to for assistance or inquiries?",
-    answer:
-      "For any questions or support needs, please contact our customer support team at office@jordachewd.com.",
+    answer: `For any questions or support needs, please contact our customer support team at ${SUPPORT_EMAIL}.`,
   },
   {
     id: 2,
     question: "What is the process to cancel my subscription?",
     answer:
       "Droplet currently treats paid plans as one-time purchases for the active access period rather than auto-renewing subscriptions. " +
-      "If you need billing help or a manual review, contact office@jordachewd.com.",
+      `If you need billing help or a manual review, contact ${SUPPORT_EMAIL}.`,
   },
   {
     id: 3,

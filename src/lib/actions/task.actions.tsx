@@ -7,6 +7,11 @@ import { handleError } from "@/lib/utils/handleError";
 import serializeForClient from "@/lib/utils/serialize-for-client";
 import Task from "../database/models/tasks.model";
 import { auth } from "@clerk/nextjs/server";
+import deleteFileFromAWS from "@/lib/utils/aws/deleteFileFromAWS";
+import {
+  isUserOwnedS3ObjectKey,
+  resolveS3ObjectKey,
+} from "@/lib/utils/aws/s3-file-reference";
 
 function countUserMessages(messages: Message[]): number {
   return messages.filter((message) => message.role === "user").length;
@@ -18,6 +23,41 @@ function estimateMessageBytes(messages: Message[]): number {
   }
 
   return Buffer.byteLength(JSON.stringify(messages), "utf8");
+}
+
+function collectOwnedTaskAssetObjectKeys(
+  messages: Message[],
+  userId: string,
+): string[] {
+  const objectKeys = new Set<string>();
+
+  for (const message of messages) {
+    if (!Array.isArray(message.content)) {
+      continue;
+    }
+
+    for (const contentItem of message.content) {
+      const rawValues = [contentItem.image_url?.url, contentItem.audio_url];
+
+      for (const rawValue of rawValues) {
+        if (!rawValue) {
+          continue;
+        }
+
+        const objectKey = resolveS3ObjectKey(rawValue);
+
+        if (objectKey && isUserOwnedS3ObjectKey(userId, objectKey)) {
+          objectKeys.add(objectKey);
+        }
+      }
+    }
+  }
+
+  return [...objectKeys];
+}
+
+function logTaskAssetCleanupFailure() {
+  process.stderr.write("[task.actions] deleteTask S3 cleanup failed.\n");
 }
 
 // CREATE TASK
@@ -132,6 +172,21 @@ export async function deleteTask(taskId: string) {
 
     await connectToDatabase();
 
+    const taskToDelete = await Task.findOne({ _id: taskId, userId });
+
+    if (!taskToDelete) {
+      return serializeForClient({
+        message: "Task not found or not owned by user",
+        status: 404,
+        source: "deleteTask",
+      });
+    }
+
+    const ownedAssetObjectKeys = collectOwnedTaskAssetObjectKeys(
+      taskToDelete.messages ?? [],
+      userId,
+    );
+
     const deletedTask = await Task.findOneAndDelete({ _id: taskId, userId });
 
     if (!deletedTask) {
@@ -140,6 +195,14 @@ export async function deleteTask(taskId: string) {
         status: 404,
         source: "deleteTask",
       });
+    }
+
+    for (const objectKey of ownedAssetObjectKeys) {
+      try {
+        await deleteFileFromAWS(objectKey);
+      } catch {
+        logTaskAssetCleanupFailure();
+      }
     }
 
     return serializeForClient({

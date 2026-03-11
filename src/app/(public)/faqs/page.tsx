@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import classNames from "classnames";
 import Link from "next/link";
 import FaqsSection from "@/components/sections/faqs-section";
+import { SUPPORT_EMAIL } from "@/constants/support";
 
 export const metadata: Metadata = {
   title: "FAQs | Droplet",
@@ -40,7 +41,7 @@ export default function FaqsPage() {
           </Link>
           <Link
             className="btn btn-lg btn-outlined uppercase"
-            href="mailto:office@jordachewd.com"
+            href={`mailto:${SUPPORT_EMAIL}`}
           >
             Contact support
           </Link>
