@@ -29,13 +29,16 @@ describe("generateTitle", () => {
       usage: { total_tokens: 19 },
     } as never);
 
-    const response = await generateTitle([
-      {
-        role: "user",
-        whois: "user",
-        content: [{ type: "text", text: "Plan my week" }],
-      },
-    ]);
+    const response = await generateTitle(
+      [
+        {
+          role: "user",
+          whois: "user",
+          content: [{ type: "text", text: "Plan my week" }],
+        },
+      ],
+      "Lite",
+    );
 
     expect(response).toBeTruthy();
     const payload = JSON.parse(response as string);
@@ -49,13 +52,16 @@ describe("generateTitle", () => {
     } as never);
 
     await expect(
-      generateTitle([
-        {
-          role: "user",
-          whois: "user",
-          content: [{ type: "text", text: "Plan my week" }],
-        },
-      ]),
+      generateTitle(
+        [
+          {
+            role: "user",
+            whois: "user",
+            content: [{ type: "text", text: "Plan my week" }],
+          },
+        ],
+        "Lite",
+      ),
     ).rejects.toThrow(
       "No data returned from Title Generator API. | generateTitle",
     );

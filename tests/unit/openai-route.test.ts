@@ -196,15 +196,18 @@ describe("POST /api/openai", () => {
       promptCount: 1,
       estimatedBytes: expect.any(Number),
     });
-    expect(generateResponse).toHaveBeenCalledWith({
-      messages: [{ role: "user", whois: "user", content: "new chat" }],
-      taskId: NEW_TASK_ID,
-      userId: "user_123",
-      personaId: "strategist",
-      entitlements: expect.objectContaining({
+    expect(generateResponse).toHaveBeenCalledWith(
+      expect.objectContaining({
+        messages: [{ role: "user", whois: "user", content: "new chat" }],
+        taskId: NEW_TASK_ID,
+        userId: "user_123",
+        personaId: "strategist",
         planName: "Lite",
+        entitlements: expect.objectContaining({
+          planName: "Lite",
+        }),
       }),
-    });
+    );
     expect(updateTask).toHaveBeenCalledWith(
       NEW_TASK_ID,
       expect.objectContaining({
@@ -241,22 +244,25 @@ describe("POST /api/openai", () => {
     });
     expect(generateTitle).not.toHaveBeenCalled();
     expect(createTask).not.toHaveBeenCalled();
-    expect(generateResponse).toHaveBeenCalledWith({
-      messages: [
-        {
-          role: "user",
-          whois: "user",
-          content: [{ type: "text", text: "Earlier prompt" }],
-        },
-        { role: "user", whois: "user", content: "continue" },
-      ],
-      taskId: EXISTING_TASK_ID,
-      userId: "user_123",
-      personaId: "teacher",
-      entitlements: expect.objectContaining({
+    expect(generateResponse).toHaveBeenCalledWith(
+      expect.objectContaining({
+        messages: [
+          {
+            role: "user",
+            whois: "user",
+            content: [{ type: "text", text: "Earlier prompt" }],
+          },
+          { role: "user", whois: "user", content: "continue" },
+        ],
+        taskId: EXISTING_TASK_ID,
+        userId: "user_123",
+        personaId: "teacher",
         planName: "Lite",
+        entitlements: expect.objectContaining({
+          planName: "Lite",
+        }),
       }),
-    });
+    );
     expect(updateTask).toHaveBeenCalledWith(
       EXISTING_TASK_ID,
       expect.objectContaining({
@@ -400,7 +406,7 @@ describe("POST /api/openai", () => {
   it("ends the conversation when media generation is blocked by plan limits", async () => {
     vi.mocked(generateResponse).mockResolvedValue(
       JSON.stringify({
-        blockedReason: "image_limit",
+        blockedReason: "media_limit_reached",
         taskUsage: 5,
         taskData: {
           whois: "assistant",

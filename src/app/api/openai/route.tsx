@@ -26,12 +26,16 @@ import { filterAssistantMsg } from "@/lib/utils/openai/filterAssistantMsg";
 import { PLAN_LIMITS } from "@/constants/plans";
 import { PlanName } from "@/types/PlanData.d";
 import { PersonaId } from "@/types/PersonaData.d";
+import { resolveModelForPlan } from "@/lib/utils/ai-model-policy";
+import {
+  AIRequestMetric,
+  emitUsageEvents,
+} from "@/lib/utils/usage-event-utils";
 
 const OPENAI_RATE_LIMIT_MAX_REQUESTS = 20;
 const OPENAI_RATE_LIMIT_WINDOW_MS = 60_000;
 const TASK_STORAGE_WARNING_BYTES = 12 * 1024 * 1024;
 const SUPPORT_EMAIL = "office@jordachewd.com";
-const LIMIT_BLOCKED_REASONS = new Set(["image_limit", "audio_limit"]);
 
 const OPENAI_ERROR_STATUS_MAP: Record<OpenAIErrorType, number> = {
   rate_limit: 429,
@@ -72,6 +76,13 @@ interface OpenAIResponsePayload {
   generatedAudio?: boolean;
   blockedReason?: string;
   errorType?: OpenAIErrorType;
+  requestMetrics?: AIRequestMetric[];
+}
+
+interface TitleResponsePayload {
+  title: string;
+  usage: number;
+  requestMetric?: AIRequestMetric;
 }
 
 interface ConversationStopPayload {
@@ -145,6 +156,45 @@ function getPlanBoundEndAction(planName?: PlanName | null): TaskEndAction {
   return PLAN_LIMITS[normalizedPlanName].conversationsPerDay === -1
     ? "contact_support"
     : "upgrade_plan";
+}
+
+function createUsageTaskId(taskId?: string): string {
+  return taskId ?? `request_${crypto.randomUUID()}`;
+}
+
+function emitBlockedChatUsageEvent({
+  userId,
+  taskId,
+  personaId,
+  planName,
+  stopReason,
+}: {
+  userId: string;
+  taskId?: string;
+  personaId: PersonaId;
+  planName?: PlanName | null;
+  stopReason: TaskEndedReason;
+}) {
+  const model = resolveModelForPlan(planName ?? "Lite", "chat");
+
+  if (!model) {
+    return;
+  }
+
+  emitUsageEvents({
+    userId,
+    taskId: createUsageTaskId(taskId),
+    personaId,
+    metrics: [
+      {
+        requestType: "chat",
+        model,
+        blocked: true,
+        blockedReason: stopReason,
+        latencyMs: 0,
+      },
+    ],
+  });
 }
 
 async function resolvePromptLimitEndAction({
@@ -276,21 +326,10 @@ export async function POST(req: Request): Promise<NextResponse> {
     }
 
     const userData = (await getUserById(userId)) as UserData | null;
-    const planName = userData?.plan?.name;
+    const planName = userData?.plan?.name ?? "Lite";
     const combinedMediaUsageCount =
       (userData?.plan?.imageGenerations ?? 0) +
       (userData?.plan?.audioGenerations ?? 0);
-
-    if (planName !== "Lite" && userData?.plan?.expiresOn) {
-      const expiresOn = new Date(userData.plan.expiresOn);
-      if (expiresOn < new Date()) {
-        return NextResponse.json(
-          { error: "Your plan has expired. Please upgrade to continue." },
-          { status: 403 },
-        );
-      }
-    }
-
     const persistedTask = providedTaskId
       ? await getTaskByIdForUser({
           taskId: providedTaskId,
@@ -330,6 +369,69 @@ export async function POST(req: Request): Promise<NextResponse> {
         }),
         { status: 409 },
       );
+    }
+
+    if (planName !== "Lite" && userData?.plan?.expiresOn) {
+      const expiresOn = new Date(userData.plan.expiresOn);
+
+      if (expiresOn < new Date()) {
+        const stopReason: TaskEndedReason = "billing_state_invalid";
+        const endAction: TaskEndAction = "upgrade_plan";
+
+        if (persistedTask) {
+          const taskData = await persistConversationStop({
+            taskId: persistedTask._id,
+            personaId: selectedPersona.id,
+            currentMessages: persistedTask.messages,
+            stopReason,
+            endAction,
+            estimatedBytes: persistedTask.estimatedBytes,
+          });
+
+          emitBlockedChatUsageEvent({
+            userId,
+            taskId: persistedTask._id,
+            personaId: selectedPersona.id,
+            planName,
+            stopReason,
+          });
+
+          return NextResponse.json(
+            createStopResponsePayload({
+              taskData,
+              taskId: persistedTask._id,
+              personaId: selectedPersona.id,
+              stopReason,
+              endAction,
+              acceptedPrompt: false,
+            }),
+            { status: 403 },
+          );
+        }
+
+        const taskData = createStopTaskData({
+          stopReason,
+          endAction,
+        });
+
+        emitBlockedChatUsageEvent({
+          userId,
+          personaId: selectedPersona.id,
+          planName,
+          stopReason,
+        });
+
+        return NextResponse.json(
+          createStopResponsePayload({
+            taskData,
+            personaId: selectedPersona.id,
+            stopReason,
+            endAction,
+            acceptedPrompt: false,
+          }),
+          { status: 403 },
+        );
+      }
     }
 
     const entitlements = resolveEntitlements(planName);
@@ -394,6 +496,13 @@ export async function POST(req: Request): Promise<NextResponse> {
           endAction,
         });
 
+        emitBlockedChatUsageEvent({
+          userId,
+          personaId: selectedPersona.id,
+          planName,
+          stopReason,
+        });
+
         return NextResponse.json(
           createStopResponsePayload({
             taskData,
@@ -420,9 +529,8 @@ export async function POST(req: Request): Promise<NextResponse> {
 
     if (
       persistedTask &&
-      PLAN_LIMITS[planName ?? "Lite"].promptsPerConversation !== -1 &&
-      persistedTask.promptCount >=
-        PLAN_LIMITS[planName ?? "Lite"].promptsPerConversation
+      PLAN_LIMITS[planName].promptsPerConversation !== -1 &&
+      persistedTask.promptCount >= PLAN_LIMITS[planName].promptsPerConversation
     ) {
       const stopReason: TaskEndedReason = "prompt_limit_reached";
       const endAction = await resolvePromptLimitEndAction({
@@ -436,6 +544,14 @@ export async function POST(req: Request): Promise<NextResponse> {
         stopReason,
         endAction,
         estimatedBytes: persistedTask.estimatedBytes,
+      });
+
+      emitBlockedChatUsageEvent({
+        userId,
+        taskId: persistedTask._id,
+        personaId: selectedPersona.id,
+        planName,
+        stopReason,
       });
 
       return NextResponse.json(
@@ -465,6 +581,14 @@ export async function POST(req: Request): Promise<NextResponse> {
           estimatedBytes: persistedTask.estimatedBytes,
         });
 
+        emitBlockedChatUsageEvent({
+          userId,
+          taskId: persistedTask._id,
+          personaId: selectedPersona.id,
+          planName,
+          stopReason,
+        });
+
         return NextResponse.json(
           createStopResponsePayload({
             taskData,
@@ -481,6 +605,13 @@ export async function POST(req: Request): Promise<NextResponse> {
       const taskData = createStopTaskData({
         stopReason,
         endAction,
+      });
+
+      emitBlockedChatUsageEvent({
+        userId,
+        personaId: selectedPersona.id,
+        planName,
+        stopReason,
       });
 
       return NextResponse.json(
@@ -501,9 +632,14 @@ export async function POST(req: Request): Promise<NextResponse> {
     if (!taskId) {
       const generatedTitle = await generateTitle(
         promptPayloadMessages,
+        planName,
         selectedPersona.id,
       );
-      const { title, usage } = JSON.parse(generatedTitle as string);
+      const {
+        title,
+        usage,
+        requestMetric: titleRequestMetric,
+      } = JSON.parse(generatedTitle as string) as TitleResponsePayload;
 
       const newTask = await createTask({
         title,
@@ -518,7 +654,22 @@ export async function POST(req: Request): Promise<NextResponse> {
         throw new Error("Task creation failed.");
       }
 
-      taskId = newTask._id;
+      const createdTaskId = newTask._id;
+
+      if (!createdTaskId) {
+        throw new Error("Created task is missing an identifier.");
+      }
+
+      taskId = createdTaskId;
+
+      if (titleRequestMetric) {
+        emitUsageEvents({
+          userId,
+          taskId: createdTaskId,
+          personaId: selectedPersona.id,
+          metrics: [titleRequestMetric],
+        });
+      }
     }
 
     if (!taskId) {
@@ -530,9 +681,19 @@ export async function POST(req: Request): Promise<NextResponse> {
       taskId,
       userId,
       personaId: selectedPersona.id,
+      planName,
       entitlements: resolvedEntitlements,
     });
     const aiPayload = JSON.parse(aiResponse as string) as OpenAIResponsePayload;
+
+    if (aiPayload.requestMetrics?.length) {
+      emitUsageEvents({
+        userId,
+        taskId,
+        personaId: selectedPersona.id,
+        metrics: aiPayload.requestMetrics,
+      });
+    }
 
     if (aiPayload.errorType) {
       return NextResponse.json(
@@ -543,10 +704,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
     const { taskData, taskUsage, generatedImage, generatedAudio } = aiPayload;
 
-    if (
-      aiPayload.blockedReason &&
-      LIMIT_BLOCKED_REASONS.has(aiPayload.blockedReason)
-    ) {
+    if (aiPayload.blockedReason === "media_limit_reached") {
       const stopReason: TaskEndedReason = "media_limit_reached";
       const endAction = getPlanBoundEndAction(planName);
       const taskDataToPersist = await persistConversationStop({
@@ -595,6 +753,14 @@ export async function POST(req: Request): Promise<NextResponse> {
         endAction,
         promptCountIncrement: isNewConversation ? 0 : 1,
         estimatedBytes: estimatedBytesWithIncomingPrompt,
+      });
+
+      emitBlockedChatUsageEvent({
+        userId,
+        taskId,
+        personaId: selectedPersona.id,
+        planName,
+        stopReason,
       });
 
       return NextResponse.json(
@@ -652,9 +818,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       personaId: selectedPersona.id,
       acceptedPrompt: true,
     });
-  } catch (error) {
-    console.error("OpenAI route error:", error);
-
+  } catch {
     return NextResponse.json(
       { error: OPENAI_ERROR_MESSAGES.unknown },
       { status: OPENAI_ERROR_STATUS_MAP.unknown },

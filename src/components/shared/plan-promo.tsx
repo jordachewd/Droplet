@@ -64,7 +64,7 @@ export default async function PlanPromo() {
             </div>
             <Link
               className="btn btn-sm btn-contained self-center"
-              href="/plans"
+              href="/app/plans"
             >
               Upgrade now
             </Link>

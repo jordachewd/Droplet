@@ -543,15 +543,15 @@ Server-side streaming via OpenAI SDK. Client renders partial responses increment
 
 ### Active — Critical (Must Fix Before v1)
 
-| ID         | Area     | Description                                  | Severity |
-| ---------- | -------- | -------------------------------------------- | -------- |
-| TD-AI-01   | OpenAI   | No streaming                                 | High     |
-| TD-AI-07   | OpenAI   | Models hardcoded — need plan-aware selection | High     |
-| TD-AI-03   | OpenAI   | No per-user cost tracking (UsageEvent)       | High     |
-| TD-AUTH-01 | Auth     | Proxy protects old routes                    | High     |
-| TD-AUTH-02 | Auth     | Admin at /dashboard not /admin               | High     |
-| TD-UI-08   | UI       | Missing 5 public pages                       | High     |
-| TD-UI-10   | UI       | Admin has no operational capability          | High     |
+| ID         | Area   | Description                                  | Severity |
+| ---------- | ------ | -------------------------------------------- | -------- |
+| TD-AI-01   | OpenAI | No streaming                                 | High     |
+| TD-AI-07   | OpenAI | Models hardcoded — need plan-aware selection | High     |
+| TD-AI-03   | OpenAI | No per-user cost tracking (UsageEvent)       | High     |
+| TD-AUTH-01 | Auth   | Proxy protects old routes                    | High     |
+| TD-AUTH-02 | Auth   | Admin at /dashboard not /admin               | High     |
+| TD-UI-08   | UI     | Missing 5 public pages                       | High     |
+| TD-UI-10   | UI     | Admin has no operational capability          | High     |
 
 ### Active — Medium/Low Priority
 
@@ -576,35 +576,35 @@ Server-side streaming via OpenAI SDK. Client renders partial responses increment
 
 ### Resolved
 
-| ID           | Description                           | Resolution                                      |
-| ------------ | ------------------------------------- | ----------------------------------------------- |
-| SEC-01       | getUserById no ownership check        | Ownership enforced                              |
-| SEC-02       | getAllTransactions no ownership check | Ownership enforced                              |
-| SEC-03       | console.log in /api/openai            | Removed                                         |
-| TD-API-03    | generateImage temporary URLs          | Persisted to S3                                 |
-| TD-API-05    | console.log in OpenAI utils           | Removed                                         |
-| TD-PLAN-02   | Usage limits not enforced             | Implemented                                     |
-| TD-PLAN-04   | Lite 3-day expiry                     | Removed — Lite now "Free forever"               |
-| TD-PLAN-05   | Prices $29/$69                        | Updated to $19/$39                              |
-| TD-PLAN-06   | Lite restricts 2 personas             | All 9 available in all plans                    |
-| TD-PLAN-09   | Plan descriptions outdated            | Updated with accurate limits                    |
-| TD-UI-11     | FAQ copy outdated (trial references)  | Rewritten for Droplet                           |
-| TD-AI-02     | No OpenAI error classification        | Implemented                                     |
-| TD-AI-05     | Audio base64 in messages              | Audio now uploaded to S3                        |
-| TD-UI-04     | No error boundaries                   | Added                                           |
-| TD-UI-05     | mapDateToLabel duplicated             | Extracted                                       |
-| TD-RENAME-01 | "role" to "persona" rename            | Completed                                       |
-| TD-RENAME-02 | Cellesseon → Droplet rename           | Completed (3 legacy migration keys intentional) |
-| TD-DB-07     | Audio base64 inflates Task docs       | Audio uploads to S3, stores URL                 |
-| TD-DB-08     | getUserById missing .lean()/.select() | Added                                           |
-| TD-DB-09     | getAllTransactions missing .lean()    | Added                                           |
-| TD-DB-10     | Task missing lifecycle fields         | Added in Phase 14                               |
-| TD-DB-11     | UsageEvent model missing              | Created in Phase 14                             |
-| TD-DB-12     | AppSetting model missing              | Created in Phase 14                             |
-| TD-DB-13     | PublicPage model missing              | Created in Phase 14                             |
-| TD-DB-14     | AdminAuditLog model missing           | Created in Phase 14                             |
-| TD-UI-02     | No loading skeletons                  | Added                                           |
-| TD-UI-06     | No conversation delete UI             | Added                                           |
+| ID           | Description                           | Resolution                                                                    |
+| ------------ | ------------------------------------- | ----------------------------------------------------------------------------- |
+| SEC-01       | getUserById no ownership check        | Ownership enforced                                                            |
+| SEC-02       | getAllTransactions no ownership check | Ownership enforced                                                            |
+| SEC-03       | console.log in /api/openai            | Removed                                                                       |
+| TD-API-03    | generateImage temporary URLs          | Persisted to S3                                                               |
+| TD-API-05    | console.log in OpenAI utils           | Removed                                                                       |
+| TD-PLAN-02   | Usage limits not enforced             | Implemented                                                                   |
+| TD-PLAN-04   | Lite 3-day expiry                     | Removed — Lite now "Free forever"                                             |
+| TD-PLAN-05   | Prices $29/$69                        | Updated to $19/$39                                                            |
+| TD-PLAN-06   | Lite restricts 2 personas             | All 9 available in all plans                                                  |
+| TD-PLAN-09   | Plan descriptions outdated            | Updated with accurate limits                                                  |
+| TD-UI-11     | FAQ copy outdated (trial references)  | Rewritten for Droplet                                                         |
+| TD-AI-02     | No OpenAI error classification        | Implemented                                                                   |
+| TD-AI-05     | Audio base64 in messages              | Audio now uploaded to S3                                                      |
+| TD-UI-04     | No error boundaries                   | Added                                                                         |
+| TD-UI-05     | mapDateToLabel duplicated             | Extracted                                                                     |
+| TD-RENAME-01 | "role" to "persona" rename            | Completed                                                                     |
+| TD-RENAME-02 | Cellesseon → Droplet rename           | Completed (3 legacy migration keys intentional)                               |
+| TD-DB-07     | Audio base64 inflates Task docs       | Audio uploads to S3, stores URL                                               |
+| TD-DB-08     | getUserById missing .lean()/.select() | Added                                                                         |
+| TD-DB-09     | getAllTransactions missing .lean()    | Added                                                                         |
+| TD-DB-10     | Task missing lifecycle fields         | Added in Phase 14                                                             |
+| TD-DB-11     | UsageEvent model missing              | Created in Phase 14                                                           |
+| TD-DB-12     | AppSetting model missing              | Created in Phase 14                                                           |
+| TD-DB-13     | PublicPage model missing              | Created in Phase 14                                                           |
+| TD-DB-14     | AdminAuditLog model missing           | Created in Phase 14                                                           |
+| TD-UI-02     | No loading skeletons                  | Added                                                                         |
+| TD-UI-06     | No conversation delete UI             | Added                                                                         |
 | TD-PLAN-07   | No daily conversation limit           | Implemented in Phase 15 via `checkDailyConversationLimit` + route enforcement |
-| TD-PLAN-08   | No per-conversation prompt limit      | Implemented in Phase 15 via `Task.promptCount` + route enforcement |
-| TD-DB-05     | Task messages unbounded (16MB risk)   | Implemented in Phase 15 via `estimatedBytes` tracking + 12MB threshold guard |
+| TD-PLAN-08   | No per-conversation prompt limit      | Implemented in Phase 15 via `Task.promptCount` + route enforcement            |
+| TD-DB-05     | Task messages unbounded (16MB risk)   | Implemented in Phase 15 via `estimatedBytes` tracking + 12MB threshold guard  |

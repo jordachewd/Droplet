@@ -199,7 +199,7 @@ setup("authenticate E2E user and persist storage state", async ({ page }) => {
     },
   });
 
-  await page.goto("/profile");
+  await page.goto("/app/profile");
   await expect(page.getByRole("heading", { name: "Profile" })).toBeVisible();
 
   mkdirSync(path.dirname(authFile), { recursive: true });

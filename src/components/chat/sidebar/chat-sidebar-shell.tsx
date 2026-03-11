@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import classNames from "classnames";
 import SidebarHead from "@/components/chat/sidebar/sidebar-head";
-import ChatSidebarNav from "@/components/chat/sidebar/chat-sidebar-nav";
+import ChatSidebarNavV2 from "@/components/chat/sidebar/chat-sidebar-nav-v2";
 import ChatSidebarPromo from "@/components/chat/sidebar/chat-sidebar-promo";
 import { ConversationListItem } from "@/types/PersonaData.d";
 import { usePathname } from "next/navigation";
@@ -142,7 +142,10 @@ export default function ChatSidebarShell({
         />
 
         <div className={navWrapperClass}>
-          <ChatSidebarNav isOpen={isSidebarOpen} historyItems={historyItems} />
+          <ChatSidebarNavV2
+            isOpen={isSidebarOpen}
+            historyItems={historyItems}
+          />
         </div>
 
         <ChatSidebarPromo isOpen={isSidebarOpen} />

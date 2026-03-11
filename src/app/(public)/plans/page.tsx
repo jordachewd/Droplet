@@ -3,7 +3,7 @@ import Header from "@/components/layout/header";
 import Plans from "@/components/sections/plans-section";
 import Faqs from "@/components/sections/faqs-section";
 
-export default function PricingPage() {
+export default function PlansPage() {
   return (
     <>
       <Header />

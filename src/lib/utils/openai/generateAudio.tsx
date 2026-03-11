@@ -1,9 +1,12 @@
 import { openAiClient } from "@/constants/openai";
+import { PlanName } from "@/types/PlanData.d";
 import { Message, MessageRole } from "@/types";
 import { ChatCompletionMessageParam } from "openai/resources/chat/completions.mjs";
 import { handleError } from "../handleError";
 import uploadFileToAWS from "@/lib/utils/aws/uploadFileToAWS";
 import { generateString } from "@/lib/utils/generateString";
+import { resolveModelForPlan } from "@/lib/utils/ai-model-policy";
+import { AIRequestMetric } from "@/lib/utils/usage-event-utils";
 
 const GENERATED_AUDIO_FORMAT = "wav";
 const GENERATED_AUDIO_CONTENT_TYPE = "audio/wav";
@@ -13,6 +16,7 @@ interface GenerateAudioParams {
   role: MessageRole;
   taskId: string;
   userId: string;
+  planName: PlanName;
 }
 
 function decodeGeneratedAudio(rawAudioData: string): Buffer {
@@ -36,14 +40,29 @@ export async function generateAudio({
   role,
   taskId,
   userId,
+  planName,
 }: GenerateAudioParams) {
   try {
+    const model = resolveModelForPlan(planName, "audio");
+
+    if (!model) {
+      throw new Error("No audio model configured for the current plan.");
+    }
+
+    const startTime = Date.now();
     const response = await openAiClient.chat.completions.create({
-      model: "gpt-4o-audio-preview",
+      model,
       modalities: ["text", "audio"],
       audio: { voice: "alloy", format: GENERATED_AUDIO_FORMAT },
       messages: [...messages] as ChatCompletionMessageParam[],
     });
+    const requestMetric: AIRequestMetric = {
+      requestType: "audio",
+      model,
+      tokensIn: response.usage?.prompt_tokens,
+      tokensOut: response.usage?.completion_tokens,
+      latencyMs: Date.now() - startTime,
+    };
 
     if (!response || !response.choices?.length) {
       throw new Error("No response or empty choices from Audio Generator API.");
@@ -79,7 +98,13 @@ export async function generateAudio({
       ],
     };
 
-    return JSON.stringify({ taskData, taskUsage, generatedAudio: true });
+    return JSON.stringify({
+      taskData,
+      taskUsage,
+      generatedAudio: true,
+      model,
+      requestMetric,
+    });
   } catch (error) {
     handleError({ error, source: "generateAudio" });
   }

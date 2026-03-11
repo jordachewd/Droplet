@@ -15,19 +15,19 @@ test.describe("authenticated user flows", () => {
   test.use({ storageState: authFile });
 
   test("opens profile and plans pages after sign-in", async ({ page }) => {
-    await page.goto("/profile");
+    await page.goto("/app/profile");
     await expect(page.getByRole("heading", { name: "Profile" })).toBeVisible();
 
-    await page.goto("/plans");
+    await page.goto("/app/plans");
     await expect(
       page.getByRole("heading", { name: /your plan/i }),
     ).toBeVisible();
   });
 
-  test("redirects non-admin users from dashboard to forbidden screen", async ({
+  test("redirects non-admin users from admin to forbidden screen", async ({
     page,
   }) => {
-    await page.goto("/dashboard");
+    await page.goto("/admin");
     await expect(page).toHaveURL(/\/403$/);
     await expect(
       page.getByRole("heading", { name: "Forbidden" }),

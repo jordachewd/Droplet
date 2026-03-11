@@ -51,8 +51,8 @@ export default function LandingPage() {
             <Image
               src="/images/droplet-hero-860x860.png"
               alt="hero"
-              width={860}
-              height={860}
+              width={700}
+              height={700}
               priority
               className="z-10"
             />

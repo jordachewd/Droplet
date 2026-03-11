@@ -42,8 +42,8 @@ export default function Header() {
             <Link className="btn btn-text btn-sm" href="/personas">
               Personas
             </Link>
-            <Link className="btn btn-text btn-sm" href="/pricing">
-              Pricing
+            <Link className="btn btn-text btn-sm" href="/plans">
+              Plans
             </Link>
             {isSignedIn && (
               <Link className="btn btn-text btn-sm" href="/app">

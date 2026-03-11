@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 test("shows the reconciled pricing and FAQ copy on the public pricing page", async ({
   page,
 }) => {
-  await page.goto("/pricing");
+  await page.goto("/plans");
 
   await expect(
     page.getByText("Free forever", { exact: true }).first(),
