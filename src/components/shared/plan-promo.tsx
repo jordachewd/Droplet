@@ -16,10 +16,9 @@ export default async function PlanPromo() {
 
   if (!userPlan) return null;
 
-  const { id, name, billing } = userPlan;
+  const { name } = userPlan;
   const isLite = name === "Lite";
-  const isPremium = Number(id) === 2 && billing === "Yearly";
-  const isPremiumFull = isPremium && name === "Premium";
+  const isPremiumFull = name === "Premium";
 
   const promoCardClass = classNames(
     "PlanPromo relative flex w-full flex-col items-center gap-1 overflow-hidden rounded-lg p-4 shadow-md",

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import classNames from "classnames";
 import Link from "next/link";
 import PageHead from "@/components/layout/page-head";
+import { SUPPORT_EMAIL } from "@/constants/support";
 
 export const metadata: Metadata = {
   title: "Cookie Policy | Droplet",
@@ -84,7 +85,7 @@ export default function CookiesPage() {
           </Link>
           <Link
             className="btn btn-lg btn-outlined uppercase"
-            href="mailto:office@jordachewd.com"
+            href={`mailto:${SUPPORT_EMAIL}`}
           >
             Ask a question
           </Link>

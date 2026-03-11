@@ -45,7 +45,6 @@ describe("getPlanStatus", () => {
   it("marks Pro as popular for users without a paid plan", () => {
     const status = getPlanStatus({
       plan: proPlan,
-      yearly: false,
       planFee: proPlan.price,
       userPlan: buildUserPlan({
         id: "0",
@@ -65,7 +64,6 @@ describe("getPlanStatus", () => {
   it("marks Pro as current for matching user plan and billing cycle", () => {
     const status = getPlanStatus({
       plan: proPlan,
-      yearly: false,
       planFee: proPlan.price,
       userPlan: buildUserPlan(),
     });
@@ -77,21 +75,19 @@ describe("getPlanStatus", () => {
     });
   });
 
-  it("does not mark Pro as current for billing mismatch", () => {
+  it("still marks Pro as current for existing yearly records", () => {
     const status = getPlanStatus({
       plan: proPlan,
-      yearly: true,
       planFee: proPlan.price,
-      userPlan: buildUserPlan({ billing: "Monthly" }),
+      userPlan: buildUserPlan({ billing: "Yearly", amount: 228 }),
     });
 
-    expect(status.isCurrent).toBe(false);
+    expect(status.isCurrent).toBe(true);
   });
 
   it("marks Premium as popular for paid users below Premium tier", () => {
     const status = getPlanStatus({
       plan: premiumPlan,
-      yearly: false,
       planFee: premiumPlan.price,
       userPlan: buildUserPlan({
         id: "1",
@@ -110,7 +106,6 @@ describe("getPlanStatus", () => {
   it("marks Lite as current only when Lite is active", () => {
     const liteStatus = getPlanStatus({
       plan: litePlan,
-      yearly: false,
       planFee: litePlan.price,
       userPlan: buildUserPlan({
         id: "0",
@@ -121,7 +116,6 @@ describe("getPlanStatus", () => {
 
     const paidStatus = getPlanStatus({
       plan: litePlan,
-      yearly: false,
       planFee: litePlan.price,
       userPlan: buildUserPlan({
         id: "1",

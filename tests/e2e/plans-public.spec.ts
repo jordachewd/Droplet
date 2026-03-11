@@ -13,6 +13,9 @@ test("shows the reconciled pricing and FAQ copy on the public plans page", async
   await expect(
     page.locator(".PlanCard").getByText("All 9 personas"),
   ).toHaveCount(3);
+  await expect(page.getByLabel("Toggle yearly billing")).toHaveCount(0);
+  await expect(page.getByText("Save 40%", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("Yearly", { exact: true })).toHaveCount(0);
 
   await page
     .locator("summary")

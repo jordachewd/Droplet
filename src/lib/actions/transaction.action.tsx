@@ -88,19 +88,3 @@ export async function getAllTransactions(userId: string) {
     handleError({ error, source: "getAllTransactions" });
   }
 }
-
-export async function deleteAllTransactions(userId: string) {
-  try {
-    const { userId: authedUserId } = await auth();
-    if (!authedUserId) throw new Error("Unauthorized");
-    if (authedUserId !== userId) throw new Error("Forbidden");
-
-    await connectToDatabase();
-
-    await Transaction.deleteMany({ clerkId: userId });
-
-    return { message: "All transactions deleted successfully" };
-  } catch (error) {
-    handleError({ error, source: "deleteAllTransactions" });
-  }
-}

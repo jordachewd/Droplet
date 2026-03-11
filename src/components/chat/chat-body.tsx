@@ -9,6 +9,7 @@ import LoadingBubbles from "@/components/shared/loading-bubbles";
 import ImageHolder from "@/components/shared/image-holder";
 import AudioPlayer from "@/components/shared/audio-player";
 import { TaskEndAction, TaskEndedReason } from "@/types/TaskData.d";
+import { SUPPORT_EMAIL } from "@/constants/support";
 
 interface ChatBodyProps {
   messages: Message[];
@@ -19,8 +20,6 @@ interface ChatBodyProps {
     endAction: TaskEndAction;
   } | null;
 }
-
-const SUPPORT_EMAIL = "office@jordachewd.com";
 
 const stopReasonTitles: Record<TaskEndedReason, string> = {
   prompt_limit_reached:

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import classNames from "classnames";
 import Link from "next/link";
 import PageHead from "@/components/layout/page-head";
+import { SUPPORT_EMAIL } from "@/constants/support";
 
 export const metadata: Metadata = {
   title: "Privacy Policy | Droplet",
@@ -52,7 +53,7 @@ const privacySections = [
     title: "User rights and contact",
     paragraphs: [
       "Users should have a way to request access, correction, deletion, or export of data subject to legal, billing, fraud-prevention, and security constraints. Exact response timelines and jurisdiction-specific rights should be finalized before production use.",
-      "For privacy inquiries, support requests, or escalation related to account data, contact `office@jordachewd.com` unless and until Droplet publishes a different official privacy contact.",
+      `For privacy inquiries, support requests, or escalation related to account data, contact \`${SUPPORT_EMAIL}\` unless and until Droplet publishes a different official privacy contact.`,
     ],
   },
 ];

@@ -13,6 +13,12 @@ interface ChatInputProps {
   sendMessage: (message: Message) => void;
 }
 
+interface UploadRouteResponse {
+  fileUrl?: string;
+  error?: string;
+  message?: string;
+}
+
 export default function ChatInput({
   loading,
   disabled = false,
@@ -22,31 +28,30 @@ export default function ChatInput({
 }: ChatInputProps) {
   const [prompt, setPrompt] = useState<string>(startPrompt || "");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [fileUrl, setFileUrl] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const hasPrompt = prompt.trim() !== "";
-  const canSend = (hasPrompt || Boolean(selectedFile)) && !loading && !disabled;
-
-  const convertToBase64 = async (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => {
-        const base64String = (reader.result as string).split(",")[1];
-        resolve(base64String);
-      };
-      reader.onerror = (error) => reject(error);
-    });
-  };
+  const canSend =
+    (hasPrompt || Boolean(selectedFile)) &&
+    !loading &&
+    !disabled &&
+    !isUploading;
 
   useEffect(() => {
     if (!selectedFile) {
-      setFileUrl(null);
+      setPreviewUrl(null);
       return;
     }
 
-    convertToBase64(selectedFile).then((url) => setFileUrl(url));
+    const objectUrl = URL.createObjectURL(selectedFile);
+    setPreviewUrl(objectUrl);
+
+    return () => {
+      URL.revokeObjectURL(objectUrl);
+    };
   }, [selectedFile]);
 
   useEffect(() => {
@@ -57,16 +62,41 @@ export default function ChatInput({
 
   function handleImageChange(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0] || null;
+    setUploadError(null);
     setSelectedFile(file);
   }
 
   function handleOpenFilePicker() {
-    if (loading || disabled) return;
+    if (loading || disabled || isUploading) return;
     fileInputRef.current?.click();
   }
 
   function handlePromptChange(event: ChangeEvent<HTMLTextAreaElement>) {
     setPrompt(event.target.value);
+  }
+
+  async function uploadSelectedFile(file: File): Promise<string> {
+    const formData = new FormData();
+    formData.set("file", file);
+
+    const response = await fetch("/api/upload", {
+      method: "POST",
+      body: formData,
+    });
+
+    const payload = (await response
+      .json()
+      .catch(() => null)) as UploadRouteResponse | null;
+    const responseMessage =
+      payload?.error ||
+      payload?.message ||
+      "Failed to upload the selected file.";
+
+    if (!response.ok || !payload?.fileUrl) {
+      throw new Error(responseMessage);
+    }
+
+    return payload.fileUrl;
   }
 
   async function handleSubmit() {
@@ -79,11 +109,29 @@ export default function ChatInput({
       },
     ];
 
+    setUploadError(null);
+    let uploadedFileUrl: string | null = null;
+
     if (selectedFile) {
-      const base64Image = await convertToBase64(selectedFile);
+      try {
+        setIsUploading(true);
+        uploadedFileUrl = await uploadSelectedFile(selectedFile);
+      } catch (error) {
+        setUploadError(
+          error instanceof Error
+            ? error.message
+            : "Failed to upload the selected file.",
+        );
+        return;
+      } finally {
+        setIsUploading(false);
+      }
+    }
+
+    if (uploadedFileUrl) {
       content.push({
         type: "image_url",
-        image_url: { url: `data:image/jpeg;base64,${base64Image}` },
+        image_url: { url: uploadedFileUrl },
       });
     }
 
@@ -96,6 +144,11 @@ export default function ChatInput({
     sendMessage(message);
     setPrompt("");
     setSelectedFile(null);
+    setUploadError(null);
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   }
 
   function handlePromptKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
@@ -107,6 +160,11 @@ export default function ChatInput({
 
   function handleRemoveFile() {
     setSelectedFile(null);
+    setUploadError(null);
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   }
 
   function handleSendButtonClick() {
@@ -184,16 +242,17 @@ export default function ChatInput({
               <button
                 type="button"
                 className={classNames("icon-btn text-base", {
-                  "cursor-not-allowed opacity-50": loading || disabled,
+                  "cursor-not-allowed opacity-50":
+                    loading || disabled || isUploading,
                 })}
                 onClick={handleOpenFilePicker}
                 aria-label="Attach media"
-                disabled={loading || disabled}
+                disabled={loading || disabled || isUploading}
               >
                 <i className="bi bi-cloud-upload text-base"></i>
               </button>
             </TooltipArrow>
-          ) : fileUrl ? (
+          ) : previewUrl ? (
             <button
               type="button"
               className="relative flex cursor-pointer"
@@ -207,7 +266,7 @@ export default function ChatInput({
                 height={40}
                 className="max-h-[40px] max-w-[40px] rounded-sm"
                 alt="Selected image"
-                src={`data:image/jpeg;base64,${fileUrl}`}
+                src={previewUrl}
               />
             </button>
           ) : null}
@@ -223,10 +282,22 @@ export default function ChatInput({
         </div>
       </div>
 
-      <div className="flex py-1 text-xxs font-light tracking-wide opacity-70">
-        {disabled
-          ? "This conversation is read-only. Use the action above to continue."
-          : `${personaLabel} can still make mistakes. Verify important details.`}
+      <div className="flex flex-col items-center gap-1 py-1 text-xxs font-light tracking-wide">
+        {uploadError && (
+          <p
+            role="alert"
+            className="font-medium text-rose-600 dark:text-rose-300"
+          >
+            {uploadError}
+          </p>
+        )}
+        <div className="opacity-70">
+          {disabled
+            ? "This conversation is read-only. Use the action above to continue."
+            : isUploading
+              ? "Uploading your attachment..."
+              : `${personaLabel} can still make mistakes. Verify important details.`}
+        </div>
       </div>
     </section>
   );
