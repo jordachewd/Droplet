@@ -46,9 +46,9 @@ All six gates must pass.
 7. **Central policy — no scattered plan logic** — plan limits, model selection, and entitlements must be resolved through central utilities (`resolve-entitlements.tsx`, `ai-model-policy.ts`, `PLAN_LIMITS`). Never hardcode plan rules in UI components, routes, or action files.
 8. **Admin audit trail** — every admin mutation must log to `AdminAuditLog` model.
 
-## Route Boundaries (Target)
+## Route Boundaries
 
-> **Current state**: Routes are fragmented. `/plans` and `/profile` are under `(account)` group (not `/app`). Admin is at `/dashboard` (not `/admin`). No `(admin)` route group exists yet. Phase 17 resolves this. Do not create admin features until Phase 17 route restructure is complete.
+> Route restructure is **complete** (Phase 17). Proxy protects `/app(.*)` and `/admin(.*)` only. Profile and plans are under `/app/*`. Admin is at `/admin/*`. The `(account)` route group is dead code pending deletion.
 
 | Area   | Namespace                                                                       | Protection                           |
 | ------ | ------------------------------------------------------------------------------- | ------------------------------------ |

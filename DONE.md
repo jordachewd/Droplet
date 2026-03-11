@@ -106,6 +106,42 @@ All 6 tasks verified. 41 test suites, 184 tests passing. Lint, typecheck, build 
 
 ---
 
+## Phase 16: AI Model Policy & Usage Logging — COMPLETED
+
+- [x] **16.1** Create AI model policy resolver (`ai-model-policy.ts` with `resolveModelForPlan`, `MODEL_POLICY`, `estimateModelCostCents`)
+- [x] **16.2** Wire model policy into `generateResponse` (plan-aware chat model selection)
+- [x] **16.3** Wire model policy into `generateTitle`, `generateImage`, `generateAudio` (all plan-aware)
+- [x] **16.4** Emit UsageEvent for every AI request in `/api/openai` (fire-and-forget, blocked events with reason, `usage-event-utils.ts`)
+- [x] **16.5** Add unit tests for AI model policy resolver (`ai-model-policy.test.ts`)
+
+Resolved: TD-AI-07 (hardcoded models), TD-AI-03 (no usage logging). 48 test suites, 204 tests passing, 65 E2E tests passing. All gates green.
+
+---
+
+## Phase 17: Route Restructure & Admin Control Plane — COMPLETED
+
+- [x] **17.1** Create `/admin` route group and layout (admin sidebar, dashboard with stats, `requireAdminPageAccess()`)
+- [x] **17.2** Create `/admin/users` list page (search, role filter, plan display)
+- [x] **17.3** Create `/admin/users/[userId]` detail page (suspend, reinstate, remove actions, audit logged)
+- [x] **17.4** Create `/admin/transactions` list page (with user join, optimized queries)
+- [x] **17.5** Create `/admin/transactions/[transactionId]` detail page
+- [x] **17.6** Create `/admin/usage` page (by user, model, type, day, provider, cost estimates)
+- [x] **17.7** Create `/admin/settings` page (AI models, pricing, limits, theme — read/write via AppSetting)
+- [x] **17.8** Create `/admin/website` management page (CRUD for public pages, publish/unpublish, sort)
+- [x] **17.9** Create `/admin/website/[pageId]` editor page (Tiptap rich-text editor integrated)
+- [x] **17.10** Move `/profile` to `/app/profile` (with plan info, purchase history, upgrade link)
+- [x] **17.11** Move `/plans` to `/app/plans` and rename `/pricing` to `/plans` (public)
+- [x] **17.12** Update proxy for new route structure (now: `/app(.*)`, `/admin(.*)` only)
+- [x] **17.13** Update Stripe checkout redirect URLs (`success_url` → `/app/profile`, `cancel_url` → `/app/plans`)
+- [x] **17.14** Remove old `/dashboard` route
+- [x] **17.17** Update E2E tests for new route structure
+
+**Deferred to Phase 18:** 17.15 (header nav for `/about`, `/faqs`) and 17.16 (footer links for `/privacy`, `/terms`) — blocked by public page routes not existing yet.
+
+Resolved: TD-AUTH-01, TD-AUTH-02, TD-UI-09, TD-UI-10, TD-BILL-01. Admin infrastructure: `admin-auth.ts`, `admin-audit.ts`, `admin-queries.ts`, `admin.actions.tsx`, `admin-sidebar.tsx`, `admin-layout-shell.tsx`, `tiptap-editor.tsx`. Tiptap packages installed. 48 test suites, 204 tests, 65 E2E tests passing. All gates green.
+
+---
+
 ## Phase 10–12: (Superseded)
 
 Old Phase 10-12 tasks have been incorporated into the new phase structure:

@@ -190,7 +190,6 @@ Prompts must be versioned and kept separate from request handlers.
 ### Plan Technical Debt
 
 - **TD-PLAN-01**: No recurring subscriptions (deferred v1).
-- **TD-PLAN-01**: No recurring subscriptions (deferred v1).
 
 ---
 
@@ -206,8 +205,8 @@ Prompts must be versioned and kept separate from request handlers.
 
 ### Auth Technical Debt
 
-- **TD-AUTH-01**: Proxy still protects `/profile(.*)`, `/plans(.*)`, `/dashboard/:path*` separately — **must update** after route restructure.
-- **TD-AUTH-02**: Admin route is `/dashboard` — **must move to `/admin`**.
+- ~~**TD-AUTH-01**: Proxy protects old routes~~ — **Resolved** in Phase 17. Proxy now protects `/app(.*)` and `/admin(.*)` only.
+- ~~**TD-AUTH-02**: Admin at `/dashboard`~~ — **Resolved** in Phase 17. Admin is at `/admin`.
 
 ---
 
@@ -219,7 +218,7 @@ Prompts must be versioned and kept separate from request handlers.
 | ---------- | --------------- | -------- | ------ | ------------------------------- |
 | clerkId    | String          | Yes      | unique | Clerk user ID                   |
 | username   | String          | Yes      | unique |                                 |
-| email      | String          | Yes      | No     | Not currently queried by filter |
+| email      | String          | Yes      | Yes    | Indexed for admin search        |
 | role       | String (enum)   | Yes      | No     | `"client"` or `"admin"`         |
 | registerAt | Date            | Yes      | No     |                                 |
 | plan       | Embedded subdoc | Yes      | No     | See Plan embedded schema        |
@@ -227,6 +226,7 @@ Prompts must be versioned and kept separate from request handlers.
 | lastName   | String          | No       | No     |                                 |
 | updatedAt  | Date            | No       | No     |                                 |
 | userimg    | String          | No       | No     |                                 |
+| suspended  | Boolean         | No       | No     | Admin-controlled suspension     |
 
 **Plan subdoc**: `{ id, name, amount, billing, startedOn, expiresOn, stripeId, imageGenerations, audioGenerations, usagePeriodStart }`
 
@@ -396,13 +396,18 @@ Purpose: Request-level usage logging for cost tracking and admin analytics.
 | Provider TBD      | Premium | Quality audio gen |
 | Provider TBD      | Premium | Video generation  |
 
-### Current Models (Hardcoded)
+### Current Models
 
-`gpt-4o`, `gpt-4o-mini`, `dall-e-3`, `gpt-4o-audio-preview`
+Resolved via `ai-model-policy.ts` — no hardcoded model names. Policy maps plan × request type → model ID:
 
-### AI Policy Model (Target)
+- Lite chat: `gpt-4o-mini` | Pro chat: `gpt-5.2-pro` | Premium chat: `gpt-5.4-pro`
+- Title: `gpt-4o-mini` (all plans) | Image: `dall-e-3` (all plans) | Audio: `gpt-4o-audio-preview` (all plans)
+- Video: Premium only (placeholder ID), `null` for Lite/Pro
+- Cost estimation via `estimateModelCostCents()` and `MODEL_PRICING` constant.
 
-Central resolver for model selection by plan, persona, and modality. No hardcoded model names.
+### AI Policy Model
+
+Central resolver implemented in `src/lib/utils/ai-model-policy.ts`. `resolveModelForPlan(planName, requestType)` used by all OpenAI utilities.
 
 ### Streaming (Target)
 
@@ -411,9 +416,9 @@ Server-side streaming via OpenAI SDK. Client renders partial responses increment
 ### OpenAI Technical Debt
 
 - **TD-AI-01**: No streaming — must implement.
-- **TD-AI-03**: No per-user cost tracking — must implement via UsageEvent.
+- ~~**TD-AI-03**: No per-user cost tracking~~ — **Resolved** in Phase 16 via `UsageEvent` + `usage-event-utils.ts`.
 - **TD-AI-06**: No retry/backoff for transient failures.
-- **TD-AI-07**: Models hardcoded — must be plan-aware.
+- ~~**TD-AI-07**: Models hardcoded~~ — **Resolved** in Phase 16 via `ai-model-policy.ts`.
 - **TD-AI-08**: No video generation (Premium feature).
 - **TD-AI-09**: Prompts not optimized per persona/model.
 
@@ -511,8 +516,8 @@ Server-side streaming via OpenAI SDK. Client renders partial responses increment
 
 ## 13. Testing
 
-- **Unit tests**: 46 suites, 188 tests (Vitest)
-- **E2E tests**: 3 Playwright specs, 58 tests
+- **Unit tests**: 48 suites, 204 tests (Vitest)
+- **E2E tests**: 5 Playwright specs, 65 tests
 - **Coverage**: Not configured (planned)
 
 ---
@@ -543,15 +548,10 @@ Server-side streaming via OpenAI SDK. Client renders partial responses increment
 
 ### Active — Critical (Must Fix Before v1)
 
-| ID         | Area   | Description                                  | Severity |
-| ---------- | ------ | -------------------------------------------- | -------- |
-| TD-AI-01   | OpenAI | No streaming                                 | High     |
-| TD-AI-07   | OpenAI | Models hardcoded — need plan-aware selection | High     |
-| TD-AI-03   | OpenAI | No per-user cost tracking (UsageEvent)       | High     |
-| TD-AUTH-01 | Auth   | Proxy protects old routes                    | High     |
-| TD-AUTH-02 | Auth   | Admin at /dashboard not /admin               | High     |
-| TD-UI-08   | UI     | Missing 5 public pages                       | High     |
-| TD-UI-10   | UI     | Admin has no operational capability          | High     |
+| ID       | Area   | Description              | Severity |
+| -------- | ------ | ------------------------ | -------- |
+| TD-AI-01 | OpenAI | No streaming             | High     |
+| TD-UI-08 | UI     | Missing 5 public pages   | High     |
 
 ### Active — Medium/Low Priority
 
@@ -565,14 +565,12 @@ Server-side streaming via OpenAI SDK. Client renders partial responses increment
 | TD-FILE-01 | Files    | No S3 cleanup on deletion                | Medium   |
 | TD-FILE-02 | Files    | Inline base64 file in some flows         | Low      |
 | TD-UI-07   | UI       | Homepage needs more sections             | Medium   |
-| TD-UI-09   | UI       | Account pages at wrong routes            | Medium   |
 | TD-UI-12   | UI       | Footer links non-functional (spans)      | Medium   |
 | TD-UI-13   | UI       | Header nav missing /about, /faqs links   | Medium   |
 | TD-DB-15   | Database | User deletion doesn't clean up Tasks     | Medium   |
 | TD-PLAN-01 | Billing  | No recurring subscriptions (deferred v1) | Low      |
-| TD-BILL-01 | Billing  | Stripe redirect URLs hardcode old routes | Medium   |
 | TD-ACT-01  | Actions  | deleteAllTransactions has no audit trail | Medium   |
-| TD-LOG-01  | Logging  | console.error in production routes       | Low      |
+| TD-LOG-01  | Logging  | console.error in production code (15)    | Medium   |
 
 ### Resolved
 
@@ -608,3 +606,10 @@ Server-side streaming via OpenAI SDK. Client renders partial responses increment
 | TD-PLAN-07   | No daily conversation limit           | Implemented in Phase 15 via `checkDailyConversationLimit` + route enforcement |
 | TD-PLAN-08   | No per-conversation prompt limit      | Implemented in Phase 15 via `Task.promptCount` + route enforcement            |
 | TD-DB-05     | Task messages unbounded (16MB risk)   | Implemented in Phase 15 via `estimatedBytes` tracking + 12MB threshold guard  |
+| TD-AI-07     | Models hardcoded                      | Resolved in Phase 16 via `ai-model-policy.ts` + `resolveModelForPlan()`       |
+| TD-AI-03     | No per-user cost tracking             | Resolved in Phase 16 via `UsageEvent` + `usage-event-utils.ts`                |
+| TD-AUTH-01   | Proxy protects old routes             | Resolved in Phase 17 — proxy now protects `/app(.*)` and `/admin(.*)` only    |
+| TD-AUTH-02   | Admin at /dashboard not /admin        | Resolved in Phase 17 — admin is at `/admin` with full control plane           |
+| TD-UI-09     | Account pages at wrong routes         | Resolved in Phase 17 — profile/plans under `/app/*`                           |
+| TD-UI-10     | Admin has no operational capability   | Resolved in Phase 17 — 9 admin routes with full CRUD, audit, Tiptap          |
+| TD-BILL-01   | Stripe redirect URLs hardcode old routes | Resolved in Phase 17 — redirects point to `/app/profile` and `/app/plans`  |
