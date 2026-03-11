@@ -14,7 +14,7 @@ These rules are **non-negotiable**. All agents must respect them in every implem
 2. **Lite is permanent and free** — no 3-day trial, no expiry. Default plan on account creation.
 3. **All 9 personas available in all plans** — no persona restrictions per plan.
 4. **Prices: Pro = $19, Premium = $39** — enforce everywhere.
-5. **Lite limits: 5 conversations/day, 10 prompts/conversation, 3 media generations/month.**
+5. **Lite limits: 5 conversations/day, 10 prompts/conversation, 3 image generations/month.** Audio and video blocked for Lite.
 6. **When limits are hit, conversation MUST end** with a stop reason and next-action instruction.
 7. **Users can only access their own data** — ownership enforcement on every query.
 8. **Admin routes under `/admin/*`** — protected by role at proxy AND server level.

@@ -5,6 +5,32 @@
 
 ---
 
+## Phase 21: Model Policy Overhaul — COMPLETED
+
+- [x] **21.1** Fix Premium video generation claim ("Video generation - Coming soon (Premium)")
+- [x] **21.2** Implement model policy types and `MODEL_POLICY_MATRIX` constant (all 3 plans × 5 features × task classes)
+- [x] **21.3** Implement `resolveModelPolicy()` resolver with downgrade logic, hard blocking, audio mode differentiation
+- [x] **21.4** Update Lite plan limits — block audio generation (image-only media, `supportsAudioGeneration: false`)
+- [x] **21.5** Migrate `generateTitle` to new model policy (`gpt-4.1-nano` pinned, token caps enforced)
+- [x] **21.6** Migrate `generateImage` to new model policy (`gpt-image-1-mini` / `gpt-image-1.5`)
+- [x] **21.7** Migrate `generateAudio` to new model policy (Lite blocked, Pro `gpt-audio-mini`, Premium `gpt-audio-1.5`)
+- [x] **21.8** Migrate `generateResponse` (chat) to new model policy with context compaction via `message-policy.ts`
+- [x] **21.9** Migrate `/api/openai` route to new model policy (defaults: `taskClass: "standard"`, `budgetState: "normal"`)
+- [x] **21.10** Update cost estimation and `MODEL_PRICING` for new model IDs (deprecated model entries removed)
+- [x] **21.11** Rewrite `ai-model-policy.test.ts` — 10 test cases covering all plan × feature combinations, downgrade triggers, hard blocking, Premium routing, audio mode
+- [x] **21.12** Update plan constants and admin settings snapshot for new model structure
+
+Resolved: TD-AI-10 (fully), TD-AI-08 (partially — video now shows "Coming soon"). 49 test suites, 220 tests passing, 79 E2E tests passing. All 6 validation gates green. PM-verified: typecheck, lint, and unit tests independently confirmed.
+
+**Files changed:** `src/lib/utils/ai-model-policy.ts`, `src/lib/utils/openai/generateTitle.tsx`, `src/lib/utils/openai/generateImage.tsx`, `src/lib/utils/openai/generateAudio.tsx`, `src/lib/utils/openai/generateResponse.tsx`, `src/lib/utils/openai/message-policy.ts` (new), `src/app/api/openai/route.tsx`, `src/constants/plans.tsx`, `src/lib/utils/resolve-entitlements.tsx`, `src/lib/utils/check-usage-limit.ts`, `src/lib/utils/admin-queries.ts`, `tests/unit/ai-model-policy.test.ts`, `tests/unit/plans.test.ts`, `tests/unit/resolve-entitlements.test.ts`, `tests/unit/check-usage-limit.test.ts`
+
+**Known residual items (non-blocking):**
+- Dead `combinedCount` parameter in `check-usage-limit.ts` and callers (TD-AI-11)
+- Video matrix/resolver dual source of truth (TD-AI-12)
+- 5 model pricing placeholders pending OpenAI confirmation (TD-AI-13)
+
+---
+
 ## Phase 20: Error Handling, File Cleanup & Webhook Hardening — COMPLETED
 
 - [x] **20.1** Refactor handleError to preserve stack traces (`new Error(message, { cause: error })` pattern)

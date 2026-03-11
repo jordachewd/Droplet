@@ -7,334 +7,68 @@
 
 ---
 
-## Phase 21: Model Policy Overhaul — CURRENT PRIORITY
+## Phase 21-C: Post-Policy Cleanup — CURRENT PRIORITY
 
-> Replace flat `resolveModelForPlan(planName, requestType)` with comprehensive `resolveModelPolicy()`.
-> Implements the approved Model Policy Matrix from SPEC.md Section 8.
-> Ref: TD-AI-10, TD-AI-08, SPEC.md Section 8
-> Depends on: Phase 20 (complete)
+> Minor cleanup items discovered during Phase 21 PM review.
+> Quick wins that clear dead code before the next feature phase.
+> Depends on: Phase 21 (complete)
 
 ---
 
-### 21.1 Fix Premium video generation claim in plan inclusions
+### 21-C.1 Remove dead `combinedCount` parameter from check-usage-limit
 
-**File:** `src/constants/plans.tsx`
-**Ref:** TD-AI-08
+**Files:** `src/lib/utils/check-usage-limit.ts`, `src/app/api/openai/route.tsx`, `tests/unit/check-usage-limit.test.ts`
+**Ref:** TD-AI-11
 
 **What to do:**
 
-- The Premium plan inclusions currently display "Video generation - 10/month (Premium)" but no video generation implementation exists.
-- Change the label to "Video generation - Coming soon (Premium)" or equivalent.
-- Do NOT remove the entry — video generation is planned for Phase 24.
-- Do NOT change `PLAN_LIMITS.Premium.video` (keep the limit constant for future use).
+- Remove `combinedCount` from the `CheckUsageLimitParams` interface in `check-usage-limit.ts`.
+- Remove the `void combinedCount;` line inside the function body.
+- Remove computation/passing of `combinedCount` / `combinedMediaUsageCount` from callers in `route.tsx`.
+- Update any test calls that pass `combinedCount`.
 
 **Acceptance criteria:**
 
-- [ ] Premium plan inclusions label shows "Coming soon" instead of implying availability
-- [ ] No functional changes to plan limits or model policy
+- [ ] `combinedCount` removed from `CheckUsageLimitParams` interface
+- [ ] `void combinedCount;` line removed from function body
+- [ ] No caller computes or passes `combinedCount`
 - [ ] `npx tsc --noEmit` passes
-- [ ] `npm run build` passes
-- [ ] E2E plans tests still pass
+- [ ] All existing tests pass (49 suites, 220+ tests)
 
 ---
 
-### 21.2 Implement model policy types and PlanPolicyMatrix constant
+### 21-C.2 Fix video matrix/resolver dual source of truth
 
 **File:** `src/lib/utils/ai-model-policy.ts`
-**Ref:** SPEC.md Section 8.2, 8.3, 8.4, 8.8
+**Ref:** TD-AI-12
 
 **What to do:**
 
-- Define the new type system: `PlanTier`, `FeatureType`, `TaskClass`, `AudioMode`, `BudgetState`, `ResolveModelInput`, `ModelPolicyRule`, `FeaturePolicyConfig`, `PlanPolicyMatrix`, `ResolvedModelPolicy`.
-- Implement the full `MODEL_POLICY_MATRIX` constant with all plans × features × task classes as defined in SPEC.md Section 8.2.
-- Include token limits per task class from SPEC.md Section 8.4.
-- Mark audio and video as `hardBlocked` for Lite. Mark video as `hardBlocked` for Pro.
-- Keep the old `resolveModelForPlan()` function temporarily as a backward-compatible wrapper (removed in 21.8).
-- Export both old and new types.
+- In `MODEL_POLICY_MATRIX.premium.video_generation`, change the `final` task class entry to `model: "sora-2"` (matching actual runtime behavior where `sora-2-pro` is only used when `explicitPremium === true`).
+- Add a `notes` field: `"sora-2-pro requires explicitPremium — see resolver override"`.
+- This makes the matrix truthful about default behavior. The resolver override for `explicitPremium` remains unchanged.
 
 **Acceptance criteria:**
 
-- [ ] All types from SPEC.md Section 8.8 are defined and exported
-- [ ] `MODEL_POLICY_MATRIX` covers all 3 plans × 5 features × applicable task classes
-- [ ] Token limits match SPEC.md Section 8.4 exactly
-- [ ] Lite audio/video are `hardBlocked: true`
-- [ ] Pro video is `hardBlocked: true`
-- [ ] Old `resolveModelForPlan()` still works (backward compatible)
-- [ ] `npx tsc --noEmit` passes
+- [ ] Matrix `final.model` is `sora-2` (not `sora-2-pro`)
+- [ ] Matrix `final.notes` documents the `explicitPremium` override
+- [ ] Resolver override for `sora-2-pro` on `explicitPremium` unchanged
 - [ ] All existing tests pass
-
----
-
-### 21.3 Implement resolveModelPolicy() resolver
-
-**File:** `src/lib/utils/ai-model-policy.ts`
-**Ref:** SPEC.md Section 8.5, 8.6, 8.7
-
-**What to do:**
-
-- Implement `resolveModelPolicy(input: ResolveModelInput): ResolvedModelPolicy` function.
-- Resolution rules:
-  - Title generation always returns cheapest model (`gpt-4.1-nano`) regardless of plan or context.
-  - Hard limit reached blocks request entirely (`hardBlocked: true`).
-  - Soft limit, high latency, and retry attempts trigger fallback model (if available).
-  - Premium chat returns `gpt-5.4` only when `taskClass === "complex"` AND `explicitPremium === true`; otherwise `gpt-4.1`.
-  - Video generation: `sora-2-pro` only for `taskClass === "final"` AND `explicitPremium === true`; otherwise `sora-2`.
-  - Audio fallback to TTS model blocked when `audioMode === "audio_in_out"`.
-- Track downgrade reasons in `downgradeReasons` array.
-- Return `wasDowngraded: true` when fallback was used.
-
-**Acceptance criteria:**
-
-- [ ] Function resolves correct model for all plan × feature × task class combinations
-- [ ] Downgrade triggers work: soft limit, high latency, retry
-- [ ] Hard limit blocks request
-- [ ] Premium chat uses `gpt-5.4` only for complex + explicit premium
-- [ ] Video uses `sora-2-pro` only for final + explicit premium
-- [ ] TTS fallback blocked for `audio_in_out` mode
-- [ ] `npx tsc --noEmit` passes
-- [ ] All existing tests pass
-
----
-
-### 21.4 Update Lite plan limits — block audio generation
-
-**Files:** `src/constants/plans.tsx`, `src/lib/utils/resolve-entitlements.tsx`, `src/lib/utils/check-usage-limit.ts`
-**Ref:** SPEC.md Section 4, Section 8.2
-
-**What to do:**
-
-- Update `PLAN_LIMITS.Lite`: change media generations from combined image+audio to image-only (3 images/month). Set audio limit to 0.
-- Update Lite plan inclusions in `plans.tsx`: audio generation should show as "Not available" or equivalent.
-- Update `resolve-entitlements.tsx`: Lite `supportsAudioGeneration` should return `false`.
-- Update `check-usage-limit.ts`: remove Lite combined image+audio logic; Lite now checks image-only.
-- Do NOT change Pro or Premium limits.
-
-**Acceptance criteria:**
-
-- [ ] Lite plan has image-only media limit (3/month)
-- [ ] Lite plan audio is blocked (not available)
-- [ ] Lite plan inclusions display reflects blocked audio
-- [ ] `resolve-entitlements.tsx` returns `supportsAudioGeneration: false` for Lite
-- [ ] `check-usage-limit.ts` handles Lite image-only correctly
-- [ ] Pro and Premium limits unchanged
-- [ ] `npx tsc --noEmit` passes
-- [ ] All existing tests pass
-
----
-
-### 21.5 Migrate generateTitle to new model policy
-
-**File:** `src/lib/utils/openai/generateTitle.tsx`
-**Ref:** SPEC.md Section 8.2
-
-**What to do:**
-
-- Replace `resolveModelForPlan(planName, "title")` with `resolveModelPolicy({ plan, feature: "title_generation", taskClass: "utility" })`.
-- Use `policy.model` for the model name.
-- Use `policy.maxInputTokens` and `policy.maxOutputTokens` from the resolver to cap input/output.
-- Handle `policy.hardBlocked` (should never happen for titles, but guard defensively).
-- Update the returned `AIRequestMetric` to use the resolved model name.
-
-**Acceptance criteria:**
-
-- [ ] Title generation uses `resolveModelPolicy()` instead of old resolver
-- [ ] Token limits from policy are enforced
-- [ ] Returned metric uses correct resolved model name
-- [ ] Title generation uses `gpt-4.1-nano` (fallback `gpt-4o-mini`)
-- [ ] `npx tsc --noEmit` passes
-- [ ] All existing tests pass
-
----
-
-### 21.6 Migrate generateImage to new model policy
-
-**File:** `src/lib/utils/openai/generateImage.tsx`
-**Ref:** SPEC.md Section 8.2
-
-**What to do:**
-
-- Replace `resolveModelForPlan(planName, "image")` with `resolveModelPolicy({ plan, feature: "image_generation", taskClass: "final" })`.
-- Update the OpenAI API call to use the resolved model (`gpt-image-1-mini` for Lite, `gpt-image-1.5` for Pro/Premium).
-- Handle `policy.hardBlocked` (return appropriate error).
-- Verify the new image model names work with the OpenAI SDK image generation API. Check OpenAI SDK docs and adapt the API call if needed (DALL-E 3 call pattern may differ from GPT Image models).
-- Update the returned `AIRequestMetric` to use the resolved model name.
-
-**Acceptance criteria:**
-
-- [ ] Image generation uses `resolveModelPolicy()` instead of old resolver
-- [ ] Lite uses `gpt-image-1-mini`, Pro/Premium use `gpt-image-1.5`
-- [ ] API call works with new model names
-- [ ] Returned metric uses correct model name
-- [ ] `npx tsc --noEmit` passes
-- [ ] All existing tests pass
-
----
-
-### 21.7 Migrate generateAudio to new model policy
-
-**File:** `src/lib/utils/openai/generateAudio.tsx`
-**Ref:** SPEC.md Section 8.2, 8.6
-
-**What to do:**
-
-- Replace `resolveModelForPlan(planName, "audio")` with `resolveModelPolicy({ plan, feature: "audio_generation", taskClass: "final", audioMode })`.
-- Lite audio is `hardBlocked` — return appropriate error.
-- Pro uses `gpt-audio-mini` (fallback `gpt-4o-mini-tts` for TTS only).
-- Premium uses `gpt-audio-1.5` (fallback `gpt-audio-mini`).
-- Handle `policy.hardBlocked` (return appropriate error).
-- Pass `audioMode` parameter to resolver. Accept `audioMode` as function parameter.
-- Update the returned `AIRequestMetric` to use the resolved model name.
-
-**Acceptance criteria:**
-
-- [ ] Audio generation uses `resolveModelPolicy()` instead of old resolver
-- [ ] Lite audio requests are blocked
-- [ ] Pro uses `gpt-audio-mini`, Premium uses `gpt-audio-1.5`
-- [ ] Audio mode passed to resolver
-- [ ] API call works with new model names
-- [ ] `npx tsc --noEmit` passes
-- [ ] All existing tests pass
-
----
-
-### 21.8 Migrate generateResponse (chat) to new model policy
-
-**File:** `src/lib/utils/openai/generateResponse.tsx`
-**Ref:** SPEC.md Section 8.2, 8.4
-
-**What to do:**
-
-- Replace `resolveModelForPlan(planName, "chat")` with `resolveModelPolicy({ plan, feature: "chat", taskClass, budgetState, retryAttempt, highLatency, explicitPremium })`.
-- Accept `taskClass` parameter (default to `"standard"`).
-- Use `policy.maxInputTokens` and `policy.maxOutputTokens` for context compaction and output limiting.
-- Handle `policy.hardBlocked`.
-- For streaming: pass policy context to `generateStreamingResponse()` as well.
-- Premium chat: ensure `gpt-5.4` only used when `explicitPremium && taskClass === "complex"`.
-- Update the returned `AIRequestMetric`.
-- Remove old `resolveModelForPlan()` backward-compatible wrapper (all consumers now migrated).
-
-**Acceptance criteria:**
-
-- [ ] Chat uses `resolveModelPolicy()` with full context
-- [ ] Token limits from policy applied to context and output
-- [ ] Lite: `gpt-4o-mini`, Pro: `gpt-4.1`, Premium: `gpt-4.1` (default) / `gpt-5.4` (complex+explicit)
-- [ ] Old `resolveModelForPlan()` removed
-- [ ] Streaming works with new policy
-- [ ] `npx tsc --noEmit` passes
-- [ ] All existing tests pass
-
----
-
-### 21.9 Migrate /api/openai route to new model policy
-
-**File:** `src/app/api/openai/route.tsx`
-**Ref:** SPEC.md Section 8
-
-**What to do:**
-
-- Update all `resolveModelForPlan()` calls to `resolveModelPolicy()`.
-- Pass appropriate context: plan, feature, task class, budget state.
-- Handle `policy.hardBlocked` responses: return 403 with appropriate error message.
-- Update blocked-event usage emission to use new resolver types.
-- Ensure the route never exposes model IDs to the client beyond what the policy returns.
-- Remove any remaining imports of old resolver function.
-
-**Acceptance criteria:**
-
-- [ ] Route uses `resolveModelPolicy()` exclusively
-- [ ] Hard-blocked features return 403
-- [ ] Usage events use new model names
-- [ ] No old resolver imports remain
-- [ ] `npx tsc --noEmit` passes
-- [ ] All existing tests pass
-
----
-
-### 21.10 Update cost estimation and MODEL_PRICING for new models
-
-**Files:** `src/lib/utils/ai-model-policy.ts`, `src/lib/utils/usage-event-utils.ts`
-**Ref:** SPEC.md Section 8.2
-
-**What to do:**
-
-- Update `MODEL_PRICING` constant with pricing entries for all new model IDs: `gpt-4.1-nano`, `gpt-4.1`, `gpt-5.4`, `gpt-image-1-mini`, `gpt-image-1.5`, `gpt-audio-mini`, `gpt-audio-1.5`, `gpt-4o-mini-tts`, `sora-2`, `sora-2-pro`.
-- Remove pricing entries for deprecated model IDs: `gpt-5.2-pro`, `gpt-5.4-pro`, `dall-e-3`, `gpt-4o-audio-preview`, `premium-video-placeholder`.
-- Keep `gpt-4o-mini` pricing (still used as chat and fallback model).
-- Use placeholder pricing where actual OpenAI pricing is not yet confirmed — mark with `// TODO: verify actual pricing` comments.
-
-**Acceptance criteria:**
-
-- [ ] All new model IDs have pricing entries
-- [ ] Deprecated model IDs removed
-- [ ] `estimateModelCostCents()` works with all new model names
-- [ ] Placeholder pricing clearly marked
-- [ ] `npx tsc --noEmit` passes
-- [ ] All existing tests pass
-
----
-
-### 21.11 Rewrite ai-model-policy unit tests
-
-**File:** `tests/unit/ai-model-policy.test.ts`
-**Ref:** SPEC.md Section 8
-
-**What to do:**
-
-- Rewrite all tests for the new `resolveModelPolicy()` function.
-- Test all plan × feature combinations from the Model Policy Matrix (Section 8.2).
-- Test downgrade triggers: soft limit, high latency, retry attempt.
-- Test hard blocking: Lite audio, Lite video, Pro video, hard limit reached.
-- Test Premium chat routing: standard → `gpt-4.1`, complex + explicit → `gpt-5.4`.
-- Test Premium video routing: preview → `sora-2`, final + explicit → `sora-2-pro`.
-- Test audio mode: TTS fallback blocked for `audio_in_out`.
-- Test title generation always returns `gpt-4.1-nano` regardless of plan or context.
-- Test `wasDowngraded` and `downgradeReasons` population.
-
-**Acceptance criteria:**
-
-- [ ] All plan × feature combinations tested
-- [ ] All downgrade triggers tested
-- [ ] All hard-block scenarios tested
-- [ ] Premium chat and video routing tested
-- [ ] Audio mode differentiation tested
-- [ ] Title pinning tested
-- [ ] All tests pass
 - [ ] `npx tsc --noEmit` passes
 
 ---
 
-### 21.12 Update plan constants and marketing copy for new models
-
-**Files:** `src/constants/plans.tsx`, `src/lib/utils/admin-queries.ts`
-**Ref:** SPEC.md Section 4, Section 8.2
-
-**What to do:**
-
-- Update plan descriptions in `plans.tsx` to reflect new model names where model names appear in marketing copy. Do NOT put specific model IDs in user-facing plan descriptions — use descriptive labels ("Advanced AI model", "Best AI model").
-- Update admin settings snapshot in `admin-queries.ts` to reflect new model structure from `MODEL_POLICY_MATRIX`.
-- Remove any remaining references to `gpt-5.2-pro`, `gpt-5.4-pro`, `dall-e-3`, `gpt-4o-audio-preview` in constants.
-
-**Acceptance criteria:**
-
-- [ ] No references to deprecated model names in constants
-- [ ] Plan descriptions use descriptive labels (not raw model IDs)
-- [ ] Admin settings snapshot reflects new model policy structure
-- [ ] `npx tsc --noEmit` passes
-- [ ] `npm run build` passes
-
----
-
-## Phase 22: Prompt System & OpenAI Resilience
+## Phase 22: Prompt System & OpenAI Resilience — NEXT
 
 > Prompt quality improvement and OpenAI error resilience.
 > Ref: TD-AI-09, TD-AI-06
-> Depends on: Phase 21 (model policy overhaul must be complete)
+> Depends on: Phase 21-C (cleanup must be complete)
 
 ---
 
 ### 22.1 Implement retry/backoff for OpenAI failures
 
-**Files:** `src/lib/utils/openai/generateResponse.tsx`
+**File:** `src/lib/utils/openai/generateResponse.tsx`
 **Ref:** TD-AI-06, SPEC.md Section 8.5
 
 **What to do:**
@@ -347,10 +81,10 @@
 
 **Acceptance criteria:**
 
-- [ ] Transient errors trigger retry with exponential backoff
-- [ ] Max 3 retries
+- [ ] Transient errors (429, 500, 502, 503) trigger retry with exponential backoff
+- [ ] Max 3 retries with increasing delays
 - [ ] Retries use fallback model via `retryAttempt` parameter
-- [ ] Non-retryable errors fail immediately
+- [ ] Non-retryable errors (400, 401, 403) fail immediately
 - [ ] Retry logging uses `process.stderr.write()`
 - [ ] `npx tsc --noEmit` passes
 - [ ] All existing tests pass
@@ -359,7 +93,7 @@
 
 ### 22.2 Create prompt versioning and management system
 
-**Files (new):** `src/constants/persona-prompts.ts`
+**File (new):** `src/constants/persona-prompts.ts`
 **Ref:** TD-AI-09
 
 **What to do:**
@@ -376,7 +110,7 @@
 - [ ] Prompts organized by persona and model family
 - [ ] Version identifier present
 - [ ] `buildPersonaAwareSystemPrompt` uses new config when available
-- [ ] Fallback to default systemPrompt works
+- [ ] Fallback to default `systemPrompt` works
 - [ ] `npx tsc --noEmit` passes
 - [ ] All existing tests pass
 
@@ -437,27 +171,7 @@
 
 ---
 
-### 23.2 Add unit tests for updated entitlements
-
-**File (new):** `tests/unit/resolve-entitlements.test.ts`
-
-**What to do:**
-
-- Test all plans return all 9 persona IDs.
-- Test Lite has audio generation **disabled** (new rule per SPEC.md Section 4).
-- Test Pro/Premium have audio generation enabled.
-- Test fallback behavior for `resolvePersonaForPlan`.
-
-**Acceptance criteria:**
-
-- [ ] Tests verify all plans allow all 9 personas
-- [ ] Tests verify Lite audio generation blocked
-- [ ] Tests verify Pro/Premium audio enabled
-- [ ] All tests pass
-
----
-
-### 23.3 Add unit tests for chat-body stop-state rendering
+### 23.2 Add unit tests for chat-body stop-state rendering
 
 **File (new):** `tests/unit/chat-body.test.tsx`
 
@@ -477,7 +191,7 @@
 
 ---
 
-### 23.4 Expand streaming test coverage
+### 23.3 Expand streaming test coverage
 
 **File:** `tests/unit/generate-streaming-response.test.ts`
 
@@ -492,6 +206,28 @@
 - [ ] Tool call routing tested after stream completion
 - [ ] Abort signal test (request cancelled mid-stream)
 - [ ] Empty/null response handled
+- [ ] All tests pass
+
+---
+
+### 23.4 Add retry/backoff unit tests
+
+**File (new):** `tests/unit/openai-retry.test.ts`
+
+**What to do:**
+
+- Test that transient errors (429, 500, 502, 503) trigger retries.
+- Test that non-retryable errors (400, 401, 403) fail immediately without retry.
+- Test that retry attempts pass incremented `retryAttempt` to `resolveModelPolicy()`.
+- Test that max retries (3) are respected.
+- Test backoff timing (1s, 2s, 4s pattern).
+
+**Acceptance criteria:**
+
+- [ ] Transient error retry behavior verified
+- [ ] Non-retryable error immediate failure verified
+- [ ] `retryAttempt` parameter escalation verified
+- [ ] Max retry limit verified
 - [ ] All tests pass
 
 ---
@@ -543,6 +279,7 @@
 - [ ] Plan auto-renews on successful payment
 - [ ] Plan downgrades on failed payment
 - [ ] `npx tsc --noEmit` passes
+- [ ] All existing tests pass
 
 ---
 
@@ -566,6 +303,7 @@
 - [ ] Video stored in S3, URL in message
 - [ ] Plan inclusions show video as available (remove "Coming soon")
 - [ ] `npx tsc --noEmit` passes
+- [ ] All existing tests pass
 
 ---
 
@@ -582,6 +320,7 @@
 
 - [ ] Every admin mutation has an audit log entry
 - [ ] `npx tsc --noEmit` passes
+- [ ] All existing tests pass
 
 ---
 
@@ -602,5 +341,28 @@
 
 ---
 
+### 24.6 Design server-side task complexity classification
+
+**Ref:** ThePlan.md Section 5.6, SPEC.md Section 8.3
+
+**What to do:**
+
+- Currently chat requests default to `taskClass: "standard"` and `explicitPremium: false` because the request contract doesn't carry richer signals.
+- Design and implement a server-side heuristic to classify incoming messages as `simple`, `standard`, or `complex` based on: message length, conversation history depth, presence of technical/analytical keywords, explicit user request for deep analysis.
+- This enables Premium users to reach `gpt-5.4` for genuinely complex requests without requiring a client-side toggle.
+- **Important:** The classification must happen server-side. The frontend must NOT send `taskClass` or `explicitPremium` as trusted input.
+
+**Acceptance criteria:**
+
+- [ ] Server-side classifier function exists (e.g., `classifyTaskComplexity()`)
+- [ ] Classification based on message content, conversation depth, and explicit cues
+- [ ] `resolveModelPolicy()` receives classified `taskClass` from classifier
+- [ ] Premium users can reach `gpt-5.4` for genuinely complex requests
+- [ ] Frontend does not send `taskClass` or `explicitPremium`
+- [ ] `npx tsc --noEmit` passes
+- [ ] Unit tests for classifier function
+
+---
+
 > **Completed phases** are archived in [`DONE.md`](DONE.md).
-> Phases 1–9, 13–20 are complete. Phase 10–12 superseded (see DONE.md for mapping).
+> Phases 1–9, 13–21 are complete. Phase 10–12 superseded (see DONE.md for mapping).

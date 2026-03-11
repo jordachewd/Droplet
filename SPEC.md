@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-11 (Phase 20 complete, Model Policy Matrix approved, TD audit synced)
+> Last updated: 2026-03-11 (Phase 21 complete, Model Policy Matrix implemented, TD audit synced)
 
 ---
 
@@ -396,7 +396,7 @@ The model policy system controls which OpenAI model is used for every AI request
 2. **Feature type sets the default** — utility tasks (titles) always use the cheapest model regardless of plan.
 3. **Backend decides the final model** — budget state, latency, retry attempts, and task class trigger automatic downgrades. The frontend must never send the final model ID.
 
-Central resolver: `resolveModelPolicy()` in `src/lib/utils/ai-model-policy.ts`. All OpenAI utilities consume the resolver — no hardcoded model names.
+Central resolver: `resolveModelPolicy()` in `src/lib/utils/ai-model-policy.ts`. **Implementation complete (Phase 21).** All OpenAI utilities (`generateTitle`, `generateImage`, `generateAudio`, `generateResponse`) consume the resolver — no hardcoded model names. Message token management via `compactMessagesToTokenLimit()` in `src/lib/utils/openai/message-policy.ts`.
 
 ### 8.2 Model Policy Matrix
 
@@ -529,9 +529,12 @@ All auth/limit checks execute before streaming begins. Final task persistence an
 - ~~**TD-AI-03**: No per-user cost tracking~~ — **Resolved** in Phase 16 via `UsageEvent` + `usage-event-utils.ts`.
 - **TD-AI-06**: No retry/backoff for transient failures.
 - ~~**TD-AI-07**: Models hardcoded~~ — **Resolved** in Phase 16 via `ai-model-policy.ts`.
-- **TD-AI-08**: No video generation (Premium feature). UI claims feature but no implementation exists.
+- **TD-AI-08**: No video generation (Premium). UI now shows "Coming soon" — implementation deferred to Phase 24.
 - **TD-AI-09**: Prompts not optimized per persona/model.
-- **TD-AI-10**: Current model policy uses flat `resolveModelForPlan(planName, requestType)` — must be replaced with comprehensive `resolveModelPolicy()` supporting task classes, fallbacks, downgrade triggers, token limits, and audio mode differentiation per Section 8.2 matrix.
+- ~~**TD-AI-10**: Model policy overhaul~~ — **Resolved** in Phase 21 via `MODEL_POLICY_MATRIX` + `resolveModelPolicy()` in `ai-model-policy.ts`.
+- **TD-AI-11**: Dead `combinedCount` parameter in `check-usage-limit.ts` — accepted but voided. Callers still compute and pass it. Minor dead code to clean up.
+- **TD-AI-12**: `MODEL_POLICY_MATRIX` premium video `final.model` is `sora-2-pro` but resolver overrides to `sora-2` unless `explicitPremium` is true — dual source of truth; matrix definition is misleading.
+- **TD-AI-13**: 5 model pricing entries in `ai-model-policy.ts` are placeholders pending OpenAI confirmation (`gpt-audio-mini`, `gpt-audio-1.5`, `gpt-4o-mini-tts`, `sora-2`, `sora-2-pro`).
 
 ---
 
@@ -627,9 +630,9 @@ All file handling technical debt has been resolved.
 
 ## 13. Testing
 
-- **Unit tests**: 49 suites, 215+ tests (Vitest) — includes streaming, webhook, chat-wrapper, upload flow, S3 cleanup, and idempotency tests
+- **Unit tests**: 49 suites, 220 tests (Vitest) — includes streaming, webhook, chat-wrapper, upload flow, S3 cleanup, idempotency, and model policy tests
 - **E2E tests**: Playwright specs, 79 tests across browser projects
-- **Coverage**: Not configured (planned Phase 22)
+- **Coverage**: Not configured (planned Phase 23)
 - **Gap**: No dedicated E2E spec for streamed chunk-by-chunk rendering (manually verified via Playwright MCP)
 
 ---
@@ -668,9 +671,11 @@ All critical-severity technical debt resolved. Remaining items are medium or low
 | --------- | ------ | --------------------------------------------------------------------------- | -------- |
 | TD-API-01 | API    | In-memory rate limiter (does not survive restarts or horizontal scaling)     | Medium   |
 | TD-AI-06  | OpenAI | No retry/backoff for transient failures                                     | Medium   |
-| TD-AI-08  | OpenAI | No video generation (Premium) — UI claims feature exists but it does not    | Medium   |
+| TD-AI-08  | OpenAI | No video generation (Premium) — UI shows "Coming soon", implementation deferred to Phase 24 | Medium   |
 | TD-AI-09  | OpenAI | Prompts not optimized per persona/model                                     | Medium   |
-| TD-AI-10  | OpenAI | Model policy needs overhaul: flat `resolveModelForPlan` → comprehensive `resolveModelPolicy` with task classes, fallbacks, downgrade triggers, token limits, audio mode differentiation | Medium   |
+| TD-AI-11  | OpenAI | Dead `combinedCount` parameter in `check-usage-limit.ts` and callers        | Low      |
+| TD-AI-12  | OpenAI | Video matrix/resolver dual source of truth (matrix vs override)             | Low      |
+| TD-AI-13  | OpenAI | 5 model pricing entries are placeholders pending OpenAI confirmation         | Low      |
 
 ### Active — Low Priority
 
@@ -733,3 +738,4 @@ All critical-severity technical debt resolved. Remaining items are medium or low
 | TD-API-07    | No streaming implementation              | Resolved in Phase 19 — streaming branch in `/api/openai` route             |
 | TD-DB-15     | Clerk user.deleted doesn't clean Tasks   | Resolved in Phase 19 — `Task.deleteMany` in Clerk webhook handler          |
 | TD-WEBHOOK-01| Clerk user.deleted orphans S3 objects    | Resolved in Phase 19 — `deleteS3Prefix` in Clerk webhook handler           |
+| TD-AI-10     | Model policy flat resolver              | Resolved in Phase 21 — `MODEL_POLICY_MATRIX` + `resolveModelPolicy()` with task classes, fallbacks, downgrade triggers, token limits, audio mode |

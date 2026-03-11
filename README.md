@@ -8,7 +8,7 @@ Built with Next.js 16, React 19, TypeScript, Tailwind CSS v4.2, Clerk, Stripe, M
 
 - **9 AI Personas** — each with distinct personality, system prompt, and domain expertise
 - **Multi-modal AI** — text chat, image generation, audio generation
-- **Plan-aware AI model selection** — `gpt-4o-mini` for Lite, `gpt-4.1` for Pro, `gpt-4.1`/`gpt-5.4` for Premium via central model policy resolver with task classes, fallbacks, and downgrade support
+- **Plan-aware AI model selection** — comprehensive model policy matrix: `gpt-4o-mini` for Lite, `gpt-4.1` for Pro, `gpt-4.1`/`gpt-5.4` for Premium via `resolveModelPolicy()` with task classes, fallbacks, downgrade triggers, token limits, and audio mode differentiation
 - **Streaming responses** — real-time incremental chat rendering via SSE with progressive text display
 - **Usage event logging** — per-request cost tracking, latency measurement, and blocked-request recording
 - **File uploads via S3** — all attachments uploaded to AWS S3 via `/api/upload`, no inline base64 in messages
@@ -24,9 +24,8 @@ Built with Next.js 16, React 19, TypeScript, Tailwind CSS v4.2, Clerk, Stripe, M
 
 ### Planned (In Development)
 
-- **Model policy overhaul** — comprehensive plan × feature × task class model resolver with fallback/downgrade support
 - **Video generation** — Premium plan exclusive (`sora-2-pro` / `sora-2`)
-- **Prompt optimization** — per-persona, per-model prompt tuning
+- **Prompt optimization** — per-persona, per-model prompt tuning with versioning
 - **Retry/backoff** — resilient OpenAI request handling with automatic model tier downgrade
 
 ## Tech Stack
