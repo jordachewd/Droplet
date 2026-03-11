@@ -17,14 +17,14 @@ Built with Next.js 16, React 19, TypeScript, Tailwind CSS v4.2, Clerk, Stripe, M
   - **Premium** ($39/month) — best AI model, unlimited conversations and messages, unlimited image/audio, 10 video generations/month, premium media quality
 - **All personas available in all plans**
 - **Admin dashboard** — user management, transaction oversight, usage analytics, app settings (AI models, pricing, limits, theme), website content management with Tiptap editor
+- **Public marketing site** — About, FAQs, Privacy Policy, Cookie Policy, Terms & Conditions, plus enhanced homepage with feature showcase, workflow, persona spotlight, and CTAs
 - **Secure by design** — Clerk auth, webhook signature verification, ownership enforcement, SSRF protection, double-layer admin role protection (proxy + server-side)
 
 ### Planned (In Development)
 
 - **Streaming responses** — real-time incremental chat rendering
 - **Video generation** — Premium plan exclusive
-- **Public pages** — About, FAQs, Privacy Policy, Cookie Policy, Terms & Conditions
-- **Homepage enhancement** — product sections, how-it-works, and conversion CTAs
+- **Prompt optimization** — per-persona, per-model prompt tuning
 
 ## Tech Stack
 

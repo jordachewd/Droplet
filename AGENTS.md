@@ -48,7 +48,7 @@ All six gates must pass.
 
 ## Route Boundaries
 
-> Route restructure is **complete** (Phase 17). Proxy protects `/app(.*)` and `/admin(.*)` only. Profile and plans are under `/app/*`. Admin is at `/admin/*`. The `(account)` route group is dead code pending deletion.
+> Route restructure is **complete** (Phase 17). Proxy protects `/app(.*)` and `/admin(.*)` only. Profile and plans are under `/app/*`. Admin is at `/admin/*`. The `(account)` route group has been deleted (Phase 17-C). Public pages (about, faqs, privacy, cookies, terms) are live (Phase 18).
 
 | Area   | Namespace                                                                       | Protection                           |
 | ------ | ------------------------------------------------------------------------------- | ------------------------------------ |

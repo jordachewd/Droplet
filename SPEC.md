@@ -516,8 +516,8 @@ Server-side streaming via OpenAI SDK. Client renders partial responses increment
 
 ## 13. Testing
 
-- **Unit tests**: 48 suites, 204 tests (Vitest)
-- **E2E tests**: 5 Playwright specs, 65 tests
+- **Unit tests**: 48 suites, 205 tests (Vitest)
+- **E2E tests**: 7 Playwright specs, 77 tests (11 test functions × 7 browser projects)
 - **Coverage**: Not configured (planned)
 
 ---
@@ -548,29 +548,31 @@ Server-side streaming via OpenAI SDK. Client renders partial responses increment
 
 ### Active — Critical (Must Fix Before v1)
 
-| ID       | Area   | Description              | Severity |
-| -------- | ------ | ------------------------ | -------- |
-| TD-AI-01 | OpenAI | No streaming             | High     |
-| TD-UI-08 | UI     | Missing 5 public pages   | High     |
+| ID            | Area     | Description                                              | Severity |
+| ------------- | -------- | -------------------------------------------------------- | -------- |
+| TD-AI-01      | OpenAI   | No streaming                                             | High     |
 
-### Active — Medium/Low Priority
+### Active — Medium Priority
 
-| ID         | Area     | Description                              | Severity |
-| ---------- | -------- | ---------------------------------------- | -------- |
-| TD-API-01  | API      | In-memory rate limiter                   | Medium   |
-| TD-API-06  | API      | handleError loses stack traces           | Medium   |
-| TD-AI-06   | OpenAI   | No retry/backoff                         | Medium   |
-| TD-AI-08   | OpenAI   | No video generation (Premium)            | Medium   |
-| TD-AI-09   | OpenAI   | Prompts not optimized                    | Medium   |
-| TD-FILE-01 | Files    | No S3 cleanup on deletion                | Medium   |
-| TD-FILE-02 | Files    | Inline base64 file in some flows         | Low      |
-| TD-UI-07   | UI       | Homepage needs more sections             | Medium   |
-| TD-UI-12   | UI       | Footer links non-functional (spans)      | Medium   |
-| TD-UI-13   | UI       | Header nav missing /about, /faqs links   | Medium   |
-| TD-DB-15   | Database | User deletion doesn't clean up Tasks     | Medium   |
-| TD-PLAN-01 | Billing  | No recurring subscriptions (deferred v1) | Low      |
-| TD-ACT-01  | Actions  | deleteAllTransactions has no audit trail | Medium   |
-| TD-LOG-01  | Logging  | console.error in production code (15)    | Medium   |
+| ID            | Area     | Description                                              | Severity |
+| ------------- | -------- | -------------------------------------------------------- | -------- |
+| TD-API-01     | API      | In-memory rate limiter                                   | Medium   |
+| TD-API-06     | API      | handleError loses stack traces                           | Medium   |
+| TD-AI-06      | OpenAI   | No retry/backoff                                         | Medium   |
+| TD-AI-08      | OpenAI   | No video generation (Premium)                            | Medium   |
+| TD-AI-09      | OpenAI   | Prompts not optimized                                    | Medium   |
+| TD-FILE-01    | Files    | S3 cleanup incomplete (admin works, Clerk webhook does not) | Medium |
+| TD-FILE-02    | Files    | Inline base64 in chat-input.tsx (violates no-binary rule) | Medium  |
+| TD-DB-15      | Database | Clerk webhook user.deleted doesn't clean up Tasks        | Medium   |
+| TD-ACT-01     | Actions  | deleteAllTransactions has no audit trail                 | Medium   |
+| TD-WEBHOOK-01 | Webhooks | Clerk user.deleted webhook orphans S3 objects            | Medium   |
+| TD-WEBHOOK-02 | Webhooks | Clerk webhook has no idempotency check for event replay  | Low      |
+
+### Active — Low Priority
+
+| ID            | Area    | Description                                              | Severity |
+| ------------- | ------- | -------------------------------------------------------- | -------- |
+| TD-PLAN-01    | Billing | No recurring subscriptions (deferred v1)                 | Low      |
 
 ### Resolved
 
@@ -613,3 +615,8 @@ Server-side streaming via OpenAI SDK. Client renders partial responses increment
 | TD-UI-09     | Account pages at wrong routes         | Resolved in Phase 17 — profile/plans under `/app/*`                           |
 | TD-UI-10     | Admin has no operational capability   | Resolved in Phase 17 — 9 admin routes with full CRUD, audit, Tiptap          |
 | TD-BILL-01   | Stripe redirect URLs hardcode old routes | Resolved in Phase 17 — redirects point to `/app/profile` and `/app/plans`  |
+| TD-UI-08     | Missing 5 public pages                   | Resolved in Phase 18 — /about, /faqs, /privacy, /cookies, /terms created   |
+| TD-UI-07     | Homepage needs more sections             | Resolved in Phase 18 — 7 sections: Hero, Features, Workflow, Personas, CTA, Plans, FAQs |
+| TD-UI-12     | Footer links non-functional (spans)      | Resolved in Phase 18 — `<Link>` to `/privacy` and `/terms`                 |
+| TD-UI-13     | Header nav missing /about, /faqs links   | Resolved in Phase 18 — Header has About, Personas, Plans, FAQs links       |
+| TD-LOG-01    | console.error in production code (15)    | Resolved in Phase 17-C — zero console.error/log/warn in `src/`             |

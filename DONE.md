@@ -142,6 +142,31 @@ Resolved: TD-AUTH-01, TD-AUTH-02, TD-UI-09, TD-UI-10, TD-BILL-01. Admin infrastr
 
 ---
 
+## Phase 17-C: Pre-Phase-18 Cleanup — COMPLETED
+
+- [x] **17-C.1** Delete orphaned `(account)` route group (`src/app/(account)/` directory removed)
+- [x] **17-C.2** Remove all `console.error` calls from production source code (15 instances across webhooks, API routes, chat components)
+
+Resolved: TD-LOG-01. Zero `console.error` / `console.log` / `console.warn` in `src/`. 48 test suites, 205 tests passing, 77 E2E tests passing. All gates green.
+
+---
+
+## Phase 18: Public Pages & Navigation — COMPLETED
+
+- [x] **18.1** Create `/about` page (5 content sections: persona-led guidance, workflow, nine personas, media, plans & limits)
+- [x] **18.2** Create `/faqs` page (FaqsSection reuse + "Still need help?" CTA)
+- [x] **18.3** Create `/privacy` page (6-section privacy policy with legal review disclaimer)
+- [x] **18.4** Create `/cookies` page (3 cookie categories + managing preferences guidance)
+- [x] **18.5** Create `/terms` page (6 sections: service, accounts, AI disclaimer, payment, refunds, liability)
+- [x] **18.6** Enhance homepage with product sections (7 sections: Hero, Features, Workflow, Persona Spotlight, CTA, Plans, FAQs)
+- [x] **18.7** Update header navigation for public pages (`/about`, `/personas`, `/plans`, `/faqs` links)
+- [x] **18.8** Update footer links for legal pages (`<Link>` to `/privacy` and `/terms`)
+- [x] **18.9** Run full validation gate (all 6 steps pass)
+
+Resolved: TD-UI-08 (5 public pages), TD-UI-07 (homepage sections), TD-UI-12 (footer links), TD-UI-13 (header nav). Legal pages include disclaimer for pre-production legal review. 48 test suites, 205 tests passing, 77 E2E tests passing. All gates green.
+
+---
+
 ## Phase 10–12: (Superseded)
 
 Old Phase 10-12 tasks have been incorporated into the new phase structure:

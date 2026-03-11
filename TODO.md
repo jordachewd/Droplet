@@ -7,274 +7,9 @@
 
 ---
 
-## Phase 17-C: Pre-Phase-18 Cleanup — CURRENT PRIORITY
+## Phase 19: Streaming Implementation — CURRENT PRIORITY
 
-> Remove dead code and production violations before starting new feature work.
-> These are small, fast tasks that must be completed before Phase 18.
-
----
-
-### 17-C.1 Delete orphaned `(account)` route group
-
-**Files to delete:** `src/app/(account)/layout.tsx`, `src/app/(account)/loading.tsx`
-
-**What to do:**
-
-- Delete the entire `src/app/(account)/` directory.
-- This route group has no pages — layout and loading files are dead code.
-- Verify no imports reference these files.
-
-**Acceptance criteria:**
-
-- [ ] `src/app/(account)/` directory deleted
-- [ ] No import errors — `npx tsc --noEmit` passes
-- [ ] `npm run build` passes
-- [ ] No navigation or routing regressions
-
----
-
-### 17-C.2 Remove `console.error` from production source code
-
-**Files:** Multiple (see list below)
-**Ref:** TD-LOG-01, AGENTS.md Do/Don't table
-
-**What to do:**
-
-- Remove all `console.error` calls from production source code.
-- Known locations (15 instances):
-  - `src/app/api/webhooks/stripe/route.tsx` (4)
-  - `src/app/(chat)/app/library/page.tsx` (1)
-  - `src/app/api/aws/route.tsx` (2)
-  - `src/lib/utils/aws/uploadFileToAWS.tsx` (1)
-  - `src/app/api/download/route.tsx` (1)
-  - `src/app/api/webhooks/clerk/route.tsx` (1)
-  - `src/components/chat/audio-player.tsx` (2)
-  - `src/components/chat/image-holder.tsx` (1)
-  - `src/components/chat/sidebar/chat-sidebar.tsx` (1)
-  - `src/components/chat/chat-wrapper.tsx` (1)
-- Replace with: `handleError()` utility call for server-side errors, silent catch for client-side errors, or remove entirely if the catch block already handles the error.
-- Do NOT swallow errors silently in API routes — ensure the response still returns proper status codes.
-- Do NOT leak error details to clients.
-
-**Acceptance criteria:**
-
-- [ ] Zero `console.error` calls in `src/` directory (verify via grep)
-- [ ] Errors still handled gracefully (proper HTTP status codes, user-facing generic messages)
-- [ ] `npx tsc --noEmit` passes
-- [ ] `npm run test` passes
-- [ ] `npm run build` passes
-
----
-
-## Phase 18: Public Pages & Navigation — NEXT PRIORITY
-
-> Create the 5 missing public pages and complete header/footer navigation.
-> The main drive is to not just have another chatbot — distinctive product narrative.
-> Ref: TD-UI-08, TD-UI-12, TD-UI-13
-
----
-
-### 18.1 Create `/about` page
-
-**Files (new):** `src/app/(public)/about/page.tsx`
-**Ref:** TD-UI-08
-
-**What to do:**
-
-- Create server component with stacked sections explaining how Droplet works.
-- Sections: (1) What is Droplet — persona-driven AI assistant, (2) How it works — choose persona, start chatting, (3) Personas overview — the 9 personas and their categories, (4) Media generation — images, audio, video capabilities, (5) Plans overview — link to `/plans`.
-- Each section: heading + descriptive text + image placeholder (CSS placeholder or public image).
-- Reuse `PageWrapper` and `PageHead` layout components if they exist.
-
-**Acceptance criteria:**
-
-- [ ] `/about` renders with 4-5 stacked content sections
-- [ ] Sections explain personas, features, and media capabilities
-- [ ] Page is public (no auth required)
-- [ ] Responsive layout
-- [ ] `npx tsc --noEmit` passes
-- [ ] `npm run build` passes
-
----
-
-### 18.2 Create `/faqs` page
-
-**Files (new):** `src/app/(public)/faqs/page.tsx`
-**Ref:** TD-UI-08
-
-**What to do:**
-
-- Create page that renders the FAQ accordion.
-- Reuse existing `FaqsSection` component (currently used on the plans page).
-- Wrap in appropriate page layout.
-
-**Acceptance criteria:**
-
-- [ ] `/faqs` renders the FAQ accordion
-- [ ] Reuses existing `FaqsSection` component
-- [ ] Page is public
-- [ ] `npx tsc --noEmit` passes
-- [ ] `npm run build` passes
-
----
-
-### 18.3 Create `/privacy` page
-
-**Files (new):** `src/app/(public)/privacy/page.tsx`
-**Ref:** TD-UI-08
-
-**What to do:**
-
-- Create page with real Privacy & Cookie Policy content.
-- Content adapted for Droplet's context: AI chatbot SaaS collecting user data, using OpenAI API, Clerk auth, Stripe payments, AWS S3 storage.
-- Cover: data collection, usage, storage, third-party sharing (OpenAI, Clerk, Stripe, AWS), cookies, user rights, contact info.
-- Use structured sections with headings.
-- Add disclaimer: "This policy is provided for informational purposes. Legal review recommended before production publication."
-
-**Acceptance criteria:**
-
-- [ ] `/privacy` renders real privacy policy content
-- [ ] Content covers data collection, usage, storage, third-party sharing, cookies, user rights
-- [ ] Adapted for Droplet context (OpenAI, Clerk, Stripe, S3)
-- [ ] Includes legal review disclaimer
-- [ ] Page is public
-- [ ] `npx tsc --noEmit` passes
-
----
-
-### 18.4 Create `/cookies` page
-
-**Files (new):** `src/app/(public)/cookies/page.tsx`
-**Ref:** TD-UI-08
-
-**What to do:**
-
-- Create page with real Cookie Policy content.
-- Document cookies used: Clerk session cookies, theme preference (`cellesseon-theme-mode` legacy key), sidebar collapsed preference (`cellesseon-sidebar-collapsed` legacy key).
-- Explain cookie categories: essential (auth), functional (theme/sidebar), optional (analytics if any).
-- Add same legal review disclaimer as privacy page.
-
-**Acceptance criteria:**
-
-- [ ] `/cookies` renders real cookie policy content
-- [ ] Documents actual cookies used by Droplet
-- [ ] Includes legal review disclaimer
-- [ ] Page is public
-- [ ] `npx tsc --noEmit` passes
-
----
-
-### 18.5 Create `/terms` page
-
-**Files (new):** `src/app/(public)/terms/page.tsx`
-**Ref:** TD-UI-08
-
-**What to do:**
-
-- Create page with real Terms & Conditions content.
-- Cover: service description, user responsibilities, AI-generated content disclaimer, payment terms ($19 Pro / $39 Premium), refund policy, account termination, limitation of liability, governing law.
-- Adapted for Droplet SaaS context.
-- Add legal review disclaimer.
-
-**Acceptance criteria:**
-
-- [ ] `/terms` renders real terms & conditions content
-- [ ] Covers standard SaaS legal topics
-- [ ] AI-generated content disclaimer included
-- [ ] Payment terms match approved pricing ($19/$39)
-- [ ] Includes legal review disclaimer
-- [ ] Page is public
-- [ ] `npx tsc --noEmit` passes
-
----
-
-### 18.6 Enhance homepage with product sections
-
-**Files:** `src/components/sections/landing-page.tsx` or `src/app/(public)/page.tsx`
-**Ref:** TD-UI-07
-
-**What to do:**
-
-- After the existing Hero section, add 3-4 additional sections:
-  - **Feature showcase**: Key capabilities — persona-driven chat, media generation, streaming responses.
-  - **How it works**: 3-step visual — choose persona → start chatting → get results.
-  - **Social proof / CTA**: Strong call-to-action to sign up or explore plans.
-- Each section: compelling heading, descriptive text, and visual element.
-- Maintain existing design system (Tailwind, fonts, theme tokens).
-
-**Acceptance criteria:**
-
-- [ ] Homepage has 3-4 sections beyond the Hero
-- [ ] Sections include feature showcase, how-it-works, and CTA
-- [ ] Design consistent with existing theme/system
-- [ ] `npx tsc --noEmit` passes
-- [ ] `npm run build` passes
-
----
-
-### 18.7 Update header navigation for public pages
-
-**Files:** `src/components/layout/header.tsx`
-**Ref:** TD-UI-13, formerly Phase 17.15
-
-**What to do:**
-
-- Add `/about` link to navigation.
-- Add `/faqs` link to navigation.
-- Verify `/plans` link exists (should already be there from Phase 17).
-- Ensure all navigation links match the target route map.
-
-**Acceptance criteria:**
-
-- [ ] Header nav includes `/about` link
-- [ ] Header nav includes `/faqs` link
-- [ ] Header nav includes `/plans` link
-- [ ] `npx tsc --noEmit` passes
-- [ ] All E2E tests pass (`npm run test:e2e`)
-
----
-
-### 18.8 Update footer links for legal pages
-
-**Files:** `src/components/layout/footer.tsx`
-**Ref:** TD-UI-12, formerly Phase 17.16
-
-**What to do:**
-
-- Convert "Privacy & Cookie Policy" `<span>` to `<Link>` pointing to `/privacy`.
-- Convert "Terms & Conditions" `<span>` to `<Link>` pointing to `/terms`.
-- Import `Link` from `next/link`.
-
-**Acceptance criteria:**
-
-- [ ] Footer "Privacy & Cookie Policy" is a working `<Link>` to `/privacy`
-- [ ] Footer "Terms & Conditions" is a working `<Link>` to `/terms`
-- [ ] `npx tsc --noEmit` passes
-- [ ] All E2E tests pass (`npm run test:e2e`)
-
----
-
-### 18.9 Run full validation gate
-
-**What to do:**
-
-- Run the full 6-step validation workflow.
-- Fix any failures.
-
-**Acceptance criteria:**
-
-- [ ] `npx prettier . --write` — no errors
-- [ ] `npm run lint` — no errors
-- [ ] `npx tsc --noEmit` — no errors
-- [ ] `npm run test` — all tests pass
-- [ ] `npm run test:e2e` — all tests pass
-- [ ] `npm run build` — no errors
-
----
-
-## Phase 19: Streaming Implementation
-
-> Add streaming responses for real-time chat UX.
+> Add streaming responses for real-time chat UX. This is the highest-priority remaining critical tech debt (TD-AI-01).
 > Ref: TD-AI-01
 
 ---
@@ -327,7 +62,10 @@
 
 ---
 
-## Phase 20: Error Handling & File Cleanup
+## Phase 20: Error Handling, File Cleanup & Webhook Hardening
+
+> Fix error handling, S3 lifecycle gaps, inline base64, audit gaps, and Clerk webhook deficiencies.
+> Ref: TD-API-06, TD-FILE-01, TD-FILE-02, TD-DB-15, TD-ACT-01, TD-WEBHOOK-01, TD-WEBHOOK-02
 
 ---
 
@@ -446,6 +184,74 @@
 - [ ] Action either removed or protected with admin role check + audit log
 - [ ] No unaudited bulk deletion path exists
 - [ ] `npx tsc --noEmit` passes
+
+---
+
+### 20.7 Add Task and S3 cleanup to Clerk webhook `user.deleted` handler
+
+**File:** `src/app/api/webhooks/clerk/route.tsx`
+**Ref:** TD-WEBHOOK-01, TD-FILE-01, TD-DB-15
+
+**What to do:**
+
+- In the `user.deleted` handler, after deleting the User and Transaction documents, add:
+  1. `Task.deleteMany({ userId: clerkId })` to remove all orphaned conversations.
+  2. S3 batch deletion for all objects under the `{clerkId}/` prefix (use `ListObjectsV2` + `DeleteObjects`).
+- The admin action `removeUserByAdminAction` already does this correctly — port the same logic.
+- Wrap each cleanup step in try/catch — log errors but do not fail the webhook response.
+- **This is a privacy-critical fix**: without it, self-service Clerk account deletion orphans user data.
+
+**Acceptance criteria:**
+
+- [ ] `user.deleted` handler deletes all Tasks for the user
+- [ ] `user.deleted` handler deletes all S3 objects under user prefix
+- [ ] Each cleanup step has independent error handling
+- [ ] Webhook response still returns 200 even if cleanup partially fails
+- [ ] `npx tsc --noEmit` passes
+- [ ] `npm run test` passes
+
+---
+
+### 20.8 Add idempotency check to Clerk webhook handlers
+
+**File:** `src/app/api/webhooks/clerk/route.tsx`
+**Ref:** TD-WEBHOOK-02
+
+**What to do:**
+
+- For `user.created`: Before creating a User document, check if a User with that `clerkId` already exists. If yes, skip creation (Clerk may replay events).
+- For `user.updated` and `user.deleted`: These are naturally idempotent (update/delete operations), but ensure they do not throw on missing documents.
+- The Stripe webhook already has idempotency via `Transaction.stripeId` check — follow the same pattern.
+
+**Acceptance criteria:**
+
+- [ ] Duplicate `user.created` events do not throw or create duplicate Users
+- [ ] `user.updated` on non-existent user does not throw
+- [ ] `user.deleted` on non-existent user does not throw
+- [ ] `npx tsc --noEmit` passes
+- [ ] `npm run test` passes
+
+---
+
+### 20.9 Remove yearly billing UI toggle
+
+**Files:** `src/components/sections/plans-section.tsx`, `src/components/shared/plan-card.tsx`
+**Ref:** ThePlan.md — yearly billing deferred from v1
+
+**What to do:**
+
+- Remove the monthly/yearly toggle from the plans UI.
+- Remove yearly pricing display and any yearly billing constants.
+- Keep only monthly pricing as the single billing option.
+- This aligns with ThePlan.md which explicitly defers yearly billing from v1.
+
+**Acceptance criteria:**
+
+- [ ] No monthly/yearly toggle visible on plans page
+- [ ] Only monthly pricing displayed
+- [ ] No yearly billing constants or logic remain in plans UI
+- [ ] `npx tsc --noEmit` passes
+- [ ] `npm run build` passes
 
 ---
 
