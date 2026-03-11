@@ -69,14 +69,16 @@ export default function LandingPage() {
 
   return (
     <section
-      className="LandingPage relative z-10 -mt-16 mb-10 flex w-full flex-1 flex-col items-center gap-10"
+      className="LandingPage relative z-10 -mt-16 mb-10 flex w-full flex-1 flex-col items-center gap-20"
       id="LandingPageWrapper"
     >
       <div className={heroSectionClass}>
-        <div className="mx-auto mt-12 flex max-w-screen-2xl flex-col items-center justify-between lg:mt-0 lg:flex-row lg:gap-5">
+        <div className="mx-auto mt-12 flex max-w-screen-2xl flex-col items-center justify-between lg:mt-0 lg:flex-row lg:gap-8">
           <div className="flex w-full flex-col items-center gap-12 text-center lg:w-1/2 lg:items-start lg:text-left">
             <h1 className="heading-2 leading-tight">
-              A smarter way to chat, create, and get things done.
+              Chat, create,
+              <br />
+              and get things done.
             </h1>
 
             <p className="heading-6 max-w-2xl">
@@ -109,7 +111,7 @@ export default function LandingPage() {
         </div>
       </div>
 
-      <section className="LandingPageFeatures mx-auto grid w-full max-w-6xl gap-4 px-4 sm:px-6 lg:grid-cols-3 lg:px-0">
+      <section className="LandingPageFeatures mx-auto grid w-full max-w-screen-2xl gap-4 px-4 sm:px-6 lg:grid-cols-3 lg:px-0">
         {featureCards.map((card) => (
           <article
             key={card.title}
@@ -130,7 +132,7 @@ export default function LandingPage() {
         ))}
       </section>
 
-      <section className="LandingPageWorkflow mx-auto grid w-full max-w-6xl gap-6 px-4 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:px-0">
+      <section className="LandingPageWorkflow mx-auto grid w-full max-w-screen-2xl gap-6 px-4 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:px-0">
         <div
           className={classNames(
             "rounded-[2rem] border px-6 py-8 shadow-sm",
@@ -217,7 +219,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className="LandingPagePersonas mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 sm:px-6 lg:px-0">
+      <section className="LandingPagePersonas mx-auto flex w-full max-w-screen-2xl flex-col gap-6 px-4 sm:px-6 lg:px-0">
         <div className="flex flex-col gap-3 text-center">
           <p className="text-xxs font-semibold uppercase tracking-[0.3em] opacity-65">
             Persona spotlight
@@ -264,7 +266,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className="LandingPageCta mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-0">
+      <section className="LandingPageCta mx-auto w-full max-w-screen-2xl px-4 sm:px-6 lg:px-0">
         <div
           className={classNames(
             "rounded-[2rem] border px-6 py-8 shadow-sm",

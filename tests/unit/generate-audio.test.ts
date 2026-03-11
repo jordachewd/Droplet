@@ -59,7 +59,7 @@ describe("generateAudio", () => {
       role: "assistant",
       taskId: "task_audio",
       userId: "user_123",
-      planName: "Lite",
+      planName: "Pro",
     });
 
     expect(uploadFileToAWS).toHaveBeenCalledWith(

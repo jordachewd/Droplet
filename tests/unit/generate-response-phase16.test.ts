@@ -81,7 +81,8 @@ describe("generateResponse phase16", () => {
       vi.mocked(openAiClient.chat.completions.create),
     ).toHaveBeenCalledWith(
       expect.objectContaining({
-        model: "gpt-5.2-pro",
+        model: "gpt-4.1",
+        max_completion_tokens: 1_400,
       }),
     );
     expect(payload.taskData.content[0].text).toContain("concise plan");
@@ -90,7 +91,7 @@ describe("generateResponse phase16", () => {
       expect.arrayContaining([
         expect.objectContaining({
           requestType: "chat",
-          model: "gpt-5.2-pro",
+          model: "gpt-4.1",
           tokensIn: 18,
           tokensOut: 6,
         }),
@@ -136,7 +137,7 @@ describe("generateResponse phase16", () => {
         generatedImage: true,
         requestMetric: {
           requestType: "image",
-          model: "dall-e-3",
+          model: "gpt-image-1.5",
           latencyMs: 42,
         },
       }),
@@ -208,7 +209,7 @@ describe("generateResponse phase16", () => {
         generatedAudio: true,
         requestMetric: {
           requestType: "audio",
-          model: "gpt-4o-audio-preview",
+          model: "gpt-audio-mini",
           latencyMs: 18,
         },
       }),
@@ -241,6 +242,7 @@ describe("generateResponse phase16", () => {
       taskId: "task_audio",
       userId: "clerk_1",
       planName: "Pro",
+      audioMode: "tts",
     });
     expect(payload.generatedAudio).toBe(true);
     expect(payload.requestMetrics).toHaveLength(2);

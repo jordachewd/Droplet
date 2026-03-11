@@ -43,11 +43,11 @@ describe("generateTitle phase16", () => {
 
     expect(payload.title).toBe("Weekly Product Plan");
     expect(payload.usage).toBe(19);
-    expect(payload.model).toBe("gpt-4o-mini");
+    expect(payload.model).toBe("gpt-4.1-nano");
     expect(payload.requestMetric).toEqual(
       expect.objectContaining({
         requestType: "title",
-        model: "gpt-4o-mini",
+        model: "gpt-4.1-nano",
         tokensIn: 12,
         tokensOut: 7,
       }),

@@ -13,8 +13,15 @@ import {
 } from "openai/resources/chat/completions.mjs";
 import { Entitlements } from "@/lib/utils/resolve-entitlements";
 import { APIError } from "openai";
-import { resolveModelForPlan } from "@/lib/utils/ai-model-policy";
+import {
+  BudgetState,
+  TaskClass,
+  normalizePlanTier,
+  resolveModelPolicy,
+  type ResolvedModelPolicy,
+} from "@/lib/utils/ai-model-policy";
 import { AIRequestMetric } from "@/lib/utils/usage-event-utils";
+import { compactMessagesToTokenLimit } from "./message-policy";
 
 interface GenerateResponseParams {
   messages: Message[];
@@ -23,6 +30,11 @@ interface GenerateResponseParams {
   personaId?: string | null;
   planName: PlanName;
   entitlements: Entitlements;
+  taskClass?: TaskClass;
+  budgetState?: BudgetState;
+  retryAttempt?: number;
+  highLatency?: boolean;
+  explicitPremium?: boolean;
 }
 
 interface GenerateStreamingResponseParams extends GenerateResponseParams {
@@ -34,6 +46,7 @@ export type OpenAIErrorType =
   | "rate_limit"
   | "timeout"
   | "service_error"
+  | "policy_blocked"
   | "unknown";
 
 type BlockedReason =
@@ -48,6 +61,7 @@ export interface OpenAIResponsePayload {
   generatedAudio?: boolean;
   blockedReason?: BlockedReason;
   errorType?: OpenAIErrorType;
+  errorMessage?: string;
   requestMetrics?: AIRequestMetric[];
 }
 
@@ -75,6 +89,22 @@ function createBlockedResponsePayload({
     },
     taskUsage,
     blockedReason,
+    requestMetrics,
+  };
+}
+
+function createPolicyBlockedPayload({
+  policy,
+  requestMetrics,
+}: {
+  policy: ResolvedModelPolicy;
+  requestMetrics: AIRequestMetric[];
+}): OpenAIResponsePayload {
+  return {
+    errorType: "policy_blocked",
+    errorMessage:
+      policy.notes ??
+      "This request is blocked for your current plan or context.",
     requestMetrics,
   };
 }
@@ -127,6 +157,97 @@ function serializeToolCalls(
   });
 }
 
+function resolveFeaturePolicy({
+  planName,
+  feature,
+  taskClass,
+  budgetState,
+  retryAttempt,
+  highLatency,
+  explicitPremium,
+}: {
+  planName: PlanName;
+  feature: "chat" | "image_generation";
+  taskClass: TaskClass;
+  budgetState?: BudgetState;
+  retryAttempt?: number;
+  highLatency?: boolean;
+  explicitPremium?: boolean;
+}): ResolvedModelPolicy;
+function resolveFeaturePolicy({
+  planName,
+  feature,
+  taskClass,
+  budgetState,
+  retryAttempt,
+  highLatency,
+  explicitPremium,
+  audioMode,
+}: {
+  planName: PlanName;
+  feature: "audio_generation";
+  taskClass: TaskClass;
+  budgetState?: BudgetState;
+  retryAttempt?: number;
+  highLatency?: boolean;
+  explicitPremium?: boolean;
+  audioMode: "tts" | "audio_in_out";
+}): ResolvedModelPolicy;
+function resolveFeaturePolicy({
+  planName,
+  feature,
+  taskClass,
+  budgetState,
+  retryAttempt,
+  highLatency,
+  explicitPremium,
+  audioMode,
+}: {
+  planName: PlanName;
+  feature: "chat" | "image_generation" | "audio_generation";
+  taskClass: TaskClass;
+  budgetState?: BudgetState;
+  retryAttempt?: number;
+  highLatency?: boolean;
+  explicitPremium?: boolean;
+  audioMode?: "tts" | "audio_in_out";
+}): ResolvedModelPolicy {
+  return resolveModelPolicy({
+    plan: normalizePlanTier(planName),
+    feature,
+    taskClass,
+    budgetState,
+    retryAttempt,
+    highLatency,
+    explicitPremium,
+    audioMode,
+  });
+}
+
+function maybeAddBlockedMetric({
+  requestMetrics,
+  policy,
+  requestType,
+  blockedReason,
+}: {
+  requestMetrics: AIRequestMetric[];
+  policy: ResolvedModelPolicy;
+  requestType: AIRequestMetric["requestType"];
+  blockedReason: BlockedReason;
+}) {
+  if (policy.hardBlocked || policy.model === "blocked") {
+    return;
+  }
+
+  requestMetrics.push({
+    requestType,
+    model: policy.model,
+    blocked: true,
+    blockedReason,
+    latencyMs: 0,
+  });
+}
+
 async function buildOpenAIResponsePayload({
   message,
   taskUsage,
@@ -171,25 +292,27 @@ async function buildOpenAIResponsePayload({
     })();
 
     if (functionName === "getGeneratedImage") {
-      const imageModel = resolveModelForPlan(planName, "image");
+      const imagePolicy = resolveFeaturePolicy({
+        planName,
+        feature: "image_generation",
+        taskClass: "final",
+      });
 
       if (
         !entitlements.supportsImageGeneration ||
-        !selectedPersona.supportsImage
+        !selectedPersona.supportsImage ||
+        imagePolicy.hardBlocked
       ) {
         const blockedReason: BlockedReason = entitlements.imageLimitReached
           ? "media_limit_reached"
           : "image_disabled";
 
-        if (imageModel) {
-          requestMetrics.push({
-            requestType: "image",
-            model: imageModel,
-            blocked: true,
-            blockedReason,
-            latencyMs: 0,
-          });
-        }
+        maybeAddBlockedMetric({
+          requestMetrics,
+          policy: imagePolicy,
+          requestType: "image",
+          blockedReason,
+        });
 
         return createBlockedResponsePayload({
           message:
@@ -228,25 +351,28 @@ async function buildOpenAIResponsePayload({
     }
 
     if (functionName === "getGeneratedAudio") {
-      const audioModel = resolveModelForPlan(planName, "audio");
+      const audioPolicy = resolveFeaturePolicy({
+        planName,
+        feature: "audio_generation",
+        taskClass: "final",
+        audioMode: "tts",
+      });
 
       if (
         !entitlements.supportsAudioGeneration ||
-        !selectedPersona.supportsAudio
+        !selectedPersona.supportsAudio ||
+        audioPolicy.hardBlocked
       ) {
         const blockedReason: BlockedReason = entitlements.audioLimitReached
           ? "media_limit_reached"
           : "audio_disabled";
 
-        if (audioModel) {
-          requestMetrics.push({
-            requestType: "audio",
-            model: audioModel,
-            blocked: true,
-            blockedReason,
-            latencyMs: 0,
-          });
-        }
+        maybeAddBlockedMetric({
+          requestMetrics,
+          policy: audioPolicy,
+          requestType: "audio",
+          blockedReason,
+        });
 
         return createBlockedResponsePayload({
           message:
@@ -265,6 +391,7 @@ async function buildOpenAIResponsePayload({
         taskId,
         userId,
         planName,
+        audioMode: "tts",
       });
       const audioPayload = JSON.parse(audioResponse as string) as {
         taskData?: Message;
@@ -303,6 +430,23 @@ async function buildOpenAIResponsePayload({
   };
 }
 
+function buildChatCompletionMessages({
+  personaId,
+  messages,
+  maxInputTokens,
+}: {
+  personaId: string;
+  messages: Message[];
+  maxInputTokens?: number;
+}): ChatCompletionMessageParam[] {
+  const preparedMessages = compactMessagesToTokenLimit(
+    [...buildPersonaAwareSystemPrompt(personaId), ...messages] as Message[],
+    maxInputTokens,
+  );
+
+  return preparedMessages as ChatCompletionMessageParam[];
+}
+
 async function runChatCompletion({
   messages,
   taskId,
@@ -310,15 +454,31 @@ async function runChatCompletion({
   personaId,
   planName,
   entitlements,
+  taskClass = "standard",
+  budgetState = "normal",
+  retryAttempt = 0,
+  highLatency = false,
+  explicitPremium = false,
   requestMetrics,
 }: GenerateResponseParams & {
   requestMetrics: AIRequestMetric[];
 }): Promise<OpenAIResponsePayload> {
   const selectedPersona = getPersona(personaId);
-  const chatModel = resolveModelForPlan(planName, "chat");
+  const chatPolicy = resolveFeaturePolicy({
+    planName,
+    feature: "chat",
+    taskClass,
+    budgetState,
+    retryAttempt,
+    highLatency,
+    explicitPremium,
+  });
 
-  if (!chatModel) {
-    throw new Error("No chat model configured for the current plan.");
+  if (chatPolicy.hardBlocked) {
+    return createPolicyBlockedPayload({
+      policy: chatPolicy,
+      requestMetrics,
+    });
   }
 
   const tools = getChatTools({
@@ -327,18 +487,20 @@ async function runChatCompletion({
   });
   const chatStartTime = Date.now();
   const chatData = await openAiClient.chat.completions.create({
-    model: chatModel,
+    model: chatPolicy.model,
     temperature: 0.5,
-    messages: [
-      ...buildPersonaAwareSystemPrompt(selectedPersona.id),
-      ...messages,
-    ] as ChatCompletionMessageParam[],
+    max_completion_tokens: chatPolicy.maxOutputTokens,
+    messages: buildChatCompletionMessages({
+      personaId: selectedPersona.id,
+      messages,
+      maxInputTokens: chatPolicy.maxInputTokens,
+    }),
     tools: tools.length > 0 ? (tools as ChatCompletionTool[]) : undefined,
   });
 
   requestMetrics.push({
     requestType: "chat",
-    model: chatModel,
+    model: chatPolicy.model,
     tokensIn: chatData.usage?.prompt_tokens,
     tokensOut: chatData.usage?.completion_tokens,
     latencyMs: Date.now() - chatStartTime,
@@ -374,6 +536,11 @@ export async function generateResponse({
   personaId,
   planName,
   entitlements,
+  taskClass = "standard",
+  budgetState = "normal",
+  retryAttempt = 0,
+  highLatency = false,
+  explicitPremium = false,
 }: GenerateResponseParams) {
   const requestMetrics: AIRequestMetric[] = [];
 
@@ -385,6 +552,11 @@ export async function generateResponse({
       personaId,
       planName,
       entitlements,
+      taskClass,
+      budgetState,
+      retryAttempt,
+      highLatency,
+      explicitPremium,
       requestMetrics,
     });
 
@@ -404,6 +576,11 @@ export async function generateStreamingResponse({
   personaId,
   planName,
   entitlements,
+  taskClass = "standard",
+  budgetState = "normal",
+  retryAttempt = 0,
+  highLatency = false,
+  explicitPremium = false,
   abortSignal,
   onContentChunk,
 }: GenerateStreamingResponseParams): Promise<OpenAIResponsePayload> {
@@ -411,10 +588,21 @@ export async function generateStreamingResponse({
 
   try {
     const selectedPersona = getPersona(personaId);
-    const chatModel = resolveModelForPlan(planName, "chat");
+    const chatPolicy = resolveFeaturePolicy({
+      planName,
+      feature: "chat",
+      taskClass,
+      budgetState,
+      retryAttempt,
+      highLatency,
+      explicitPremium,
+    });
 
-    if (!chatModel) {
-      throw new Error("No chat model configured for the current plan.");
+    if (chatPolicy.hardBlocked) {
+      return createPolicyBlockedPayload({
+        policy: chatPolicy,
+        requestMetrics,
+      });
     }
 
     const tools = getChatTools({
@@ -424,12 +612,14 @@ export async function generateStreamingResponse({
     const chatStartTime = Date.now();
     const chatStream = openAiClient.chat.completions.stream(
       {
-        model: chatModel,
+        model: chatPolicy.model,
         temperature: 0.5,
-        messages: [
-          ...buildPersonaAwareSystemPrompt(selectedPersona.id),
-          ...messages,
-        ] as ChatCompletionMessageParam[],
+        max_completion_tokens: chatPolicy.maxOutputTokens,
+        messages: buildChatCompletionMessages({
+          personaId: selectedPersona.id,
+          messages,
+          maxInputTokens: chatPolicy.maxInputTokens,
+        }),
         tools: tools.length > 0 ? (tools as ChatCompletionTool[]) : undefined,
       },
       abortSignal ? { signal: abortSignal } : undefined,
@@ -446,7 +636,7 @@ export async function generateStreamingResponse({
 
     requestMetrics.push({
       requestType: "chat",
-      model: chatModel,
+      model: chatPolicy.model,
       tokensIn: totalUsage.prompt_tokens,
       tokensOut: totalUsage.completion_tokens,
       latencyMs: Date.now() - chatStartTime,

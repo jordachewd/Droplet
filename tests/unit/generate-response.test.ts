@@ -75,6 +75,12 @@ describe("generateResponse", () => {
     });
 
     const payload = JSON.parse(result as string);
+    expect(openAiClient.chat.completions.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        model: "gpt-4.1",
+        max_completion_tokens: 1_400,
+      }),
+    );
     expect(payload.taskData).toBeTruthy();
     expect(payload.taskData.content[0].text).toContain("concise plan");
     expect(payload.taskUsage).toBe(24);
@@ -207,6 +213,7 @@ describe("generateResponse", () => {
       taskId: "task_audio",
       userId: "clerk_1",
       planName: "Pro",
+      audioMode: "tts",
     });
     const payload = JSON.parse(result as string);
     expect(payload.generatedAudio).toBe(true);

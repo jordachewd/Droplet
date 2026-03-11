@@ -30,6 +30,8 @@ export function checkUsageLimit({
   usagePeriodStart,
   now = new Date(),
 }: CheckUsageLimitParams): UsageLimitResult {
+  void combinedCount;
+
   const normalizedPlanName: PlanName = planName ?? "Lite";
   const limit = PLAN_LIMITS[normalizedPlanName][limitType];
 
@@ -43,10 +45,7 @@ export function checkUsageLimit({
     };
   }
 
-  const currentUsageCount =
-    normalizedPlanName === "Lite" && combinedCount !== undefined
-      ? (combinedCount ?? 0)
-      : (currentCount ?? 0);
+  const currentUsageCount = currentCount ?? 0;
   const usageStartDate = usagePeriodStart ? new Date(usagePeriodStart) : null;
   const isUsageDateValid =
     usageStartDate !== null && !Number.isNaN(usageStartDate.getTime());
