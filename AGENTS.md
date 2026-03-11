@@ -1,9 +1,9 @@
 # Repository Guidelines
 
-> See `SPEC.md` for the full application specification, data models, API surface, and known technical debt.
-> See `TODO.md` for prioritized, actionable development tasks.
-> See `ThePlan.md` for high-level strategic direction and milestone plan.
-> Support contact: `office@jordachewd.com`
+> Read `ThePlan.md` for high-level strategic direction and milestone plan.
+> Read `SPEC.md` for the full application specification, data models, API surface, and known technical debt.
+> Read `TODO.md` for prioritized, actionable development tasks.
+> Read `DONE.md` for completed development phases (archive).
 
 ## Critical Product Rules (Frozen)
 
@@ -130,22 +130,22 @@ tests/e2e/          — Playwright E2E tests
 
 ## Do / Don't
 
-| Do                                              | Don't                                       |
-| ----------------------------------------------- | ------------------------------------------- |
-| Read data in Server Components                  | Initial-fetch with `useEffect` + `fetch`    |
-| Auth-check in every server action and API route | Trust request origin                        |
-| Return generic error messages to UI             | Leak `error.message` to clients             |
-| Use `@/*` path alias                            | Use relative `../../` paths                 |
-| Return proper HTTP status codes for errors      | Return HTTP 200 with error in body          |
-| Keep commits focused (one logical change)       | Mix unrelated feature/refactor/docs         |
-| Update `README.md` when relevant                | Put secrets in `README.md`                  |
-| Index fields used in query filters              | Leave frequently-queried fields unindexed   |
-| Use `strict: true` in Mongoose updates          | Allow arbitrary fields via `strict: false`  |
-| Use `.lean()` + `.select()` for reads           | Fetch full Mongoose documents for display   |
-| Validate resource ownership before operations   | Allow cross-user data access                |
+| Do                                                  | Don't                                       |
+| --------------------------------------------------- | ------------------------------------------- |
+| Read data in Server Components                      | Initial-fetch with `useEffect` + `fetch`    |
+| Auth-check in every server action and API route     | Trust request origin                        |
+| Return generic error messages to UI                 | Leak `error.message` to clients             |
+| Use `@/*` path alias                                | Use relative `../../` paths                 |
+| Return proper HTTP status codes for errors          | Return HTTP 200 with error in body          |
+| Keep commits focused (one logical change)           | Mix unrelated feature/refactor/docs         |
+| Update `README.md` when relevant                    | Put secrets in `README.md`                  |
+| Index fields used in query filters                  | Leave frequently-queried fields unindexed   |
+| Use `strict: true` in Mongoose updates              | Allow arbitrary fields via `strict: false`  |
+| Use `.lean()` + `.select()` for reads               | Fetch full Mongoose documents for display   |
+| Validate resource ownership before operations       | Allow cross-user data access                |
 | Remove `console.log` / `console.error` before merge | Leave debug logging in production code      |
-| Use central plan/limit/model policy resolvers   | Hardcode plan rules in components or routes |
-| Log admin mutations to AdminAuditLog            | Allow admin changes without audit trail     |
-| Upload media to S3, store URLs in MongoDB       | Store base64/binary in MongoDB documents    |
-| Check ALL limits before OpenAI calls            | Skip limit checks for any plan tier         |
-| End conversations with stop reason on limit hit | Silently fail or ignore quota violations    |
+| Use central plan/limit/model policy resolvers       | Hardcode plan rules in components or routes |
+| Log admin mutations to AdminAuditLog                | Allow admin changes without audit trail     |
+| Upload media to S3, store URLs in MongoDB           | Store base64/binary in MongoDB documents    |
+| Check ALL limits before OpenAI calls                | Skip limit checks for any plan tier         |
+| End conversations with stop reason on limit hit     | Silently fail or ignore quota violations    |

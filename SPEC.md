@@ -3,7 +3,6 @@
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
 > Last updated: 2026-03-11
-> Support contact: `office@jordachewd.com`
 
 ---
 
@@ -561,25 +560,25 @@ Server-side streaming via OpenAI SDK. Client renders partial responses increment
 
 ### Active — Medium/Low Priority
 
-| ID         | Area     | Description                                       | Severity |
-| ---------- | -------- | ------------------------------------------------- | -------- |
-| TD-API-01  | API      | In-memory rate limiter                            | Medium   |
-| TD-API-06  | API      | handleError loses stack traces                    | Medium   |
-| TD-AI-03   | OpenAI   | No per-user cost tracking                         | Medium   |
-| TD-AI-06   | OpenAI   | No retry/backoff                                  | Medium   |
-| TD-AI-08   | OpenAI   | No video generation (Premium)                     | Medium   |
-| TD-AI-09   | OpenAI   | Prompts not optimized                             | Medium   |
-| TD-FILE-01 | Files    | No S3 cleanup on deletion                         | Medium   |
-| TD-FILE-02 | Files    | Inline base64 file in some flows                  | Low      |
-| TD-UI-07   | UI       | Homepage needs more sections                      | Medium   |
-| TD-UI-09   | UI       | Account pages at wrong routes                     | Medium   |
-| TD-UI-12   | UI       | Footer links non-functional (spans)               | Medium   |
-| TD-UI-13   | UI       | Header nav missing /about, /faqs links            | Medium   |
-| TD-DB-15   | Database | User deletion doesn't clean up Tasks              | Medium   |
-| TD-PLAN-01 | Billing  | No recurring subscriptions (deferred v1)          | Low      |
-| TD-BILL-01 | Billing  | Stripe redirect URLs hardcode old routes          | Medium   |
-| TD-ACT-01  | Actions  | deleteAllTransactions has no audit trail          | Medium   |
-| TD-LOG-01  | Logging  | console.error in production routes                | Low      |
+| ID         | Area     | Description                              | Severity |
+| ---------- | -------- | ---------------------------------------- | -------- |
+| TD-API-01  | API      | In-memory rate limiter                   | Medium   |
+| TD-API-06  | API      | handleError loses stack traces           | Medium   |
+| TD-AI-03   | OpenAI   | No per-user cost tracking                | Medium   |
+| TD-AI-06   | OpenAI   | No retry/backoff                         | Medium   |
+| TD-AI-08   | OpenAI   | No video generation (Premium)            | Medium   |
+| TD-AI-09   | OpenAI   | Prompts not optimized                    | Medium   |
+| TD-FILE-01 | Files    | No S3 cleanup on deletion                | Medium   |
+| TD-FILE-02 | Files    | Inline base64 file in some flows         | Low      |
+| TD-UI-07   | UI       | Homepage needs more sections             | Medium   |
+| TD-UI-09   | UI       | Account pages at wrong routes            | Medium   |
+| TD-UI-12   | UI       | Footer links non-functional (spans)      | Medium   |
+| TD-UI-13   | UI       | Header nav missing /about, /faqs links   | Medium   |
+| TD-DB-15   | Database | User deletion doesn't clean up Tasks     | Medium   |
+| TD-PLAN-01 | Billing  | No recurring subscriptions (deferred v1) | Low      |
+| TD-BILL-01 | Billing  | Stripe redirect URLs hardcode old routes | Medium   |
+| TD-ACT-01  | Actions  | deleteAllTransactions has no audit trail | Medium   |
+| TD-LOG-01  | Logging  | console.error in production routes       | Low      |
 
 ### Resolved
 
@@ -597,7 +596,7 @@ Server-side streaming via OpenAI SDK. Client renders partial responses increment
 | TD-PLAN-09   | Plan descriptions outdated            | Updated with accurate limits                    |
 | TD-UI-11     | FAQ copy outdated (trial references)  | Rewritten for Droplet                           |
 | TD-AI-02     | No OpenAI error classification        | Implemented                                     |
-| TD-AI-05     | Audio base64 in messages              | Audio now uploaded to S3                         |
+| TD-AI-05     | Audio base64 in messages              | Audio now uploaded to S3                        |
 | TD-UI-04     | No error boundaries                   | Added                                           |
 | TD-UI-05     | mapDateToLabel duplicated             | Extracted                                       |
 | TD-RENAME-01 | "role" to "persona" rename            | Completed                                       |
