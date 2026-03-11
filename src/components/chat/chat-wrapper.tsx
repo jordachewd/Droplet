@@ -26,12 +26,33 @@ interface ChatWrapperProps {
 interface ChatApiResponse {
   taskData?: Message;
   taskId?: string;
+  personaId?: PersonaId;
   error?: string;
   stopReason?: TaskEndedReason;
   endAction?: TaskEndAction;
   taskStatus?: TaskStatus;
   acceptedPrompt?: boolean;
 }
+
+type ChatStreamEvent =
+  | {
+      type: "meta";
+      taskId: string;
+      personaId: PersonaId;
+    }
+  | {
+      type: "chunk";
+      delta: string;
+      snapshot: string;
+    }
+  | {
+      type: "final";
+      payload: ChatApiResponse;
+    }
+  | {
+      type: "error";
+      error: string;
+    };
 
 export default function ChatWrapper({
   initialPersonaId,
@@ -125,8 +146,128 @@ export default function ChatWrapper({
     setIsLoading(false);
   }
 
+  function syncStreamingMessage(snapshot: string) {
+    const streamingTaskData: Message = {
+      whois: "assistant",
+      role: "assistant",
+      content: [{ type: "text", text: snapshot }],
+    };
+
+    setTask((prev) => {
+      if (prev.length === 0) {
+        return [streamingTaskData];
+      }
+
+      const updatedMessages = [...prev];
+      updatedMessages[updatedMessages.length - 1] = streamingTaskData;
+
+      return updatedMessages;
+    });
+  }
+
+  function parseStreamEvent(rawEvent: string): ChatStreamEvent | null {
+    const dataLine = rawEvent
+      .split("\n")
+      .find((line) => line.startsWith("data: "));
+
+    if (!dataLine) {
+      return null;
+    }
+
+    try {
+      return JSON.parse(dataLine.slice(6)) as ChatStreamEvent;
+    } catch {
+      return null;
+    }
+  }
+
+  async function consumeStreamingResponse(response: Response) {
+    if (!response.body) {
+      showAlert("Error", "Invalid server response.");
+      return;
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let finalEventReceived = false;
+
+    const handleEvent = (event: ChatStreamEvent | null) => {
+      if (!event) {
+        return;
+      }
+
+      if (event.type === "meta") {
+        setDbTaskId(event.taskId);
+        return;
+      }
+
+      if (event.type === "chunk") {
+        syncStreamingMessage(event.snapshot);
+        return;
+      }
+
+      if (event.type === "error") {
+        showAlert("Error", event.error);
+        finalEventReceived = true;
+        return;
+      }
+
+      finalEventReceived = true;
+
+      if (event.payload.stopReason && event.payload.endAction) {
+        handleConversationStop(event.payload);
+        return;
+      }
+
+      syncMessagesWithResponse({
+        taskData: event.payload.taskData,
+        acceptedPrompt: event.payload.acceptedPrompt,
+      });
+
+      if (event.payload.taskId) {
+        setDbTaskId(event.payload.taskId);
+      }
+
+      if (event.payload.personaId) {
+        setSelectedPersonaId(event.payload.personaId);
+      }
+
+      if (event.payload.error) {
+        showAlert("Error", event.payload.error);
+        return;
+      }
+
+      setIsLoading(false);
+    };
+
+    while (true) {
+      const { value, done } = await reader.read();
+      buffer += decoder.decode(value ?? new Uint8Array(), { stream: !done });
+
+      const rawEvents = buffer.split("\n\n");
+      buffer = rawEvents.pop() ?? "";
+
+      for (const rawEvent of rawEvents) {
+        handleEvent(parseStreamEvent(rawEvent));
+      }
+
+      if (done) {
+        break;
+      }
+    }
+
+    if (buffer.trim()) {
+      handleEvent(parseStreamEvent(buffer));
+    }
+
+    if (!finalEventReceived) {
+      showAlert("Error", "The response stream ended unexpectedly.");
+    }
+  }
+
   const sendMessage = async (prompt: Message) => {
-    if (!prompt || isConversationEnded) return;
+    if (!prompt || isConversationEnded || isLoading) return;
     setIsLoading(true);
     setStartMsg("");
 
@@ -143,13 +284,24 @@ export default function ChatWrapper({
 
       const response = await fetch("/api/openai", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "text/event-stream",
+          "x-droplet-stream": "1",
+        },
         body: JSON.stringify({
           messages: taskMessages,
           taskId: dbTaskId,
           personaId: selectedPersona.id,
         }),
       });
+      const responseContentType = response.headers.get("Content-Type") ?? "";
+
+      if (response.ok && responseContentType.includes("text/event-stream")) {
+        await consumeStreamingResponse(response);
+        return;
+      }
+
       const responseData = (await response
         .json()
         .catch(() => null)) as ChatApiResponse | null;

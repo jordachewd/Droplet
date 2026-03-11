@@ -15,15 +15,28 @@ vi.mock("@/components/chat/chat-intro", () => ({
 
 vi.mock("@/components/chat/chat-body", () => ({
   default: ({
+    messages,
     conversationEnded,
     endState,
   }: {
+    messages?: Message[];
     conversationEnded?: boolean;
     endState?: { stopReason: string; endAction: string } | null;
   }) => (
     <div data-testid="chat-body">
       {conversationEnded ? "ended" : "active"}
       {endState ? `:${endState.stopReason}:${endState.endAction}` : ""}
+      <div data-testid="chat-body-messages">
+        {messages
+          ?.map((message) =>
+            Array.isArray(message.content)
+              ? message.content
+                  .map((item) => item.text ?? item.image_url?.url ?? "")
+                  .join(" ")
+              : message.content,
+          )
+          .join(" | ")}
+      </div>
     </div>
   ),
 }));
@@ -154,5 +167,53 @@ describe("ChatWrapper", () => {
         "Unable to send your message right now.",
       );
     });
+  });
+
+  it("renders streamed assistant text incrementally and finalizes the response", async () => {
+    const stream = new ReadableStream({
+      start(controller: ReadableStreamDefaultController<Uint8Array>) {
+        controller.enqueue(
+          new TextEncoder().encode(
+            'data: {"type":"meta","taskId":"task_stream","personaId":"strategist"}\n\n',
+          ),
+        );
+        controller.enqueue(
+          new TextEncoder().encode(
+            'data: {"type":"chunk","delta":"Hello","snapshot":"Hello"}\n\n',
+          ),
+        );
+        controller.enqueue(
+          new TextEncoder().encode(
+            'data: {"type":"final","payload":{"taskData":{"whois":"assistant","role":"assistant","content":[{"type":"text","text":"Hello from stream"}]},"taskId":"task_stream","personaId":"strategist","acceptedPrompt":true}}\n\n',
+          ),
+        );
+        controller.close();
+      },
+    });
+
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(stream, {
+        status: 200,
+        headers: { "Content-Type": "text/event-stream" },
+      }),
+    );
+
+    render(<ChatWrapper />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Send message" }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("chat-body-messages").textContent).toContain(
+        "Hello",
+      );
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("chat-body-messages").textContent).toContain(
+        "Hello from stream",
+      );
+    });
+
+    expect(screen.queryByRole("alert")).toBeNull();
   });
 });

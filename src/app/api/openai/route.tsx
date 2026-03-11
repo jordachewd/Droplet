@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { Message, Messages } from "@/types";
-import { generateResponse } from "@/lib/utils/openai/generateResponse";
+import {
+  generateResponse,
+  generateStreamingResponse,
+} from "@/lib/utils/openai/generateResponse";
 import { generateTitle } from "@/lib/utils/openai/generateTitle";
 import {
   TaskEndAction,
@@ -19,7 +22,10 @@ import {
 } from "@/lib/utils/resolve-entitlements";
 import User from "@/lib/database/models/user.model";
 import { checkUsageLimit } from "@/lib/utils/check-usage-limit";
-import type { OpenAIErrorType } from "@/lib/utils/openai/generateResponse";
+import type {
+  OpenAIErrorType,
+  OpenAIResponsePayload,
+} from "@/lib/utils/openai/generateResponse";
 import { checkDailyConversationLimit } from "@/lib/utils/check-daily-conversations";
 import { getTaskByIdForUser } from "@/lib/utils/task-queries";
 import { filterAssistantMsg } from "@/lib/utils/openai/filterAssistantMsg";
@@ -36,6 +42,11 @@ const OPENAI_RATE_LIMIT_MAX_REQUESTS = 20;
 const OPENAI_RATE_LIMIT_WINDOW_MS = 60_000;
 const TASK_STORAGE_WARNING_BYTES = 12 * 1024 * 1024;
 const SUPPORT_EMAIL = "office@jordachewd.com";
+const STREAM_HEADERS = {
+  "Content-Type": "text/event-stream; charset=utf-8",
+  "Cache-Control": "no-store, no-transform",
+} as const;
+const streamEncoder = new TextEncoder();
 
 const OPENAI_ERROR_STATUS_MAP: Record<OpenAIErrorType, number> = {
   rate_limit: 429,
@@ -69,14 +80,15 @@ const END_ACTION_INSTRUCTIONS: Record<TaskEndAction, string> = {
   contact_support: `Contact support at ${SUPPORT_EMAIL}.`,
 };
 
-interface OpenAIResponsePayload {
+interface ChatApiResponse {
   taskData?: Message;
-  taskUsage?: number;
-  generatedImage?: boolean;
-  generatedAudio?: boolean;
-  blockedReason?: string;
-  errorType?: OpenAIErrorType;
-  requestMetrics?: AIRequestMetric[];
+  taskId?: string;
+  personaId?: PersonaId;
+  error?: string;
+  stopReason?: TaskEndedReason;
+  endAction?: TaskEndAction;
+  taskStatus?: TaskStatus;
+  acceptedPrompt?: boolean;
 }
 
 interface TitleResponsePayload {
@@ -85,10 +97,30 @@ interface TitleResponsePayload {
   requestMetric?: AIRequestMetric;
 }
 
+type OpenAIStreamEvent =
+  | {
+      type: "meta";
+      taskId: string;
+      personaId: PersonaId;
+    }
+  | {
+      type: "chunk";
+      delta: string;
+      snapshot: string;
+    }
+  | {
+      type: "final";
+      payload: ChatApiResponse;
+    }
+  | {
+      type: "error";
+      error: string;
+    };
+
 interface ConversationStopPayload {
   taskData: Message;
   taskId?: string;
-  personaId: string;
+  personaId: PersonaId;
   error: string;
   stopReason: TaskEndedReason;
   endAction: TaskEndAction;
@@ -133,7 +165,7 @@ function createStopResponsePayload({
 }: {
   taskData: Message;
   taskId?: string;
-  personaId: string;
+  personaId: PersonaId;
   stopReason: TaskEndedReason;
   endAction: TaskEndAction;
   acceptedPrompt: boolean;
@@ -160,6 +192,22 @@ function getPlanBoundEndAction(planName?: PlanName | null): TaskEndAction {
 
 function createUsageTaskId(taskId?: string): string {
   return taskId ?? `request_${crypto.randomUUID()}`;
+}
+
+function shouldStreamResponse(req: Request): boolean {
+  return (
+    req.headers.get("x-droplet-stream") === "1" ||
+    req.headers.get("accept")?.includes("text/event-stream") === true
+  );
+}
+
+function writeStreamEvent(
+  controller: ReadableStreamDefaultController<Uint8Array>,
+  event: OpenAIStreamEvent,
+) {
+  controller.enqueue(
+    streamEncoder.encode(`data: ${JSON.stringify(event)}\n\n`),
+  );
 }
 
 function emitBlockedChatUsageEvent({
@@ -276,8 +324,172 @@ async function persistConversationStop({
   return stopTaskData;
 }
 
-export async function POST(req: Request): Promise<NextResponse> {
+async function finalizeAIResponse({
+  aiPayload,
+  taskId,
+  userId,
+  planName,
+  selectedPersonaId,
+  storedMessagesWithIncomingPrompt,
+  estimatedBytesWithIncomingPrompt,
+  isNewConversation,
+  userData,
+}: {
+  aiPayload: OpenAIResponsePayload;
+  taskId: string;
+  userId: string;
+  planName: PlanName;
+  selectedPersonaId: PersonaId;
+  storedMessagesWithIncomingPrompt: Message[];
+  estimatedBytesWithIncomingPrompt: number;
+  isNewConversation: boolean;
+  userData: UserData | null;
+}): Promise<{
+  status: number;
+  payload: ChatApiResponse;
+}> {
+  if (aiPayload.requestMetrics?.length) {
+    emitUsageEvents({
+      userId,
+      taskId,
+      personaId: selectedPersonaId,
+      metrics: aiPayload.requestMetrics,
+    });
+  }
+
+  if (aiPayload.errorType) {
+    return {
+      status: OPENAI_ERROR_STATUS_MAP[aiPayload.errorType],
+      payload: {
+        error: OPENAI_ERROR_MESSAGES[aiPayload.errorType],
+      },
+    };
+  }
+
+  const { taskData, taskUsage, generatedImage, generatedAudio } = aiPayload;
+
+  if (aiPayload.blockedReason === "media_limit_reached") {
+    const stopReason: TaskEndedReason = "media_limit_reached";
+    const endAction = getPlanBoundEndAction(planName);
+    const taskDataToPersist = await persistConversationStop({
+      taskId,
+      personaId: selectedPersonaId,
+      currentMessages: storedMessagesWithIncomingPrompt,
+      stopReason,
+      endAction,
+      promptCountIncrement: isNewConversation ? 0 : 1,
+      estimatedBytes: estimatedBytesWithIncomingPrompt,
+    });
+
+    return {
+      status: 403,
+      payload: createStopResponsePayload({
+        taskData: taskDataToPersist,
+        taskId,
+        personaId: selectedPersonaId,
+        stopReason,
+        endAction,
+        acceptedPrompt: true,
+      }),
+    };
+  }
+
+  if (!taskData) {
+    throw new Error("AI response payload is missing task data.");
+  }
+
+  const storedMessagesWithAssistant = [
+    ...storedMessagesWithIncomingPrompt,
+    taskData,
+  ];
+  const estimatedBytesWithAssistant = estimateConversationBytes(
+    storedMessagesWithAssistant,
+  );
+
+  if (estimatedBytesWithAssistant > TASK_STORAGE_WARNING_BYTES) {
+    const stopReason: TaskEndedReason = "conversation_storage_limit_reached";
+    const endAction: TaskEndAction = "start_new_conversation";
+    const taskDataToPersist = await persistConversationStop({
+      taskId,
+      personaId: selectedPersonaId,
+      currentMessages: storedMessagesWithIncomingPrompt,
+      stopReason,
+      endAction,
+      promptCountIncrement: isNewConversation ? 0 : 1,
+      estimatedBytes: estimatedBytesWithIncomingPrompt,
+    });
+
+    emitBlockedChatUsageEvent({
+      userId,
+      taskId,
+      personaId: selectedPersonaId,
+      planName,
+      stopReason,
+    });
+
+    return {
+      status: 403,
+      payload: createStopResponsePayload({
+        taskData: taskDataToPersist,
+        taskId,
+        personaId: selectedPersonaId,
+        stopReason,
+        endAction,
+        acceptedPrompt: true,
+      }),
+    };
+  }
+
+  await updateTask(taskId, {
+    messages: storedMessagesWithAssistant,
+    usage: taskUsage ?? 0,
+    personaId: selectedPersonaId,
+    promptCountIncrement: isNewConversation ? 0 : 1,
+    estimatedBytes: estimatedBytesWithAssistant,
+  });
+
+  const usageIncrementFields: Record<string, number> = {};
+  if (generatedImage) {
+    usageIncrementFields["plan.imageGenerations"] = 1;
+  }
+  if (generatedAudio) {
+    usageIncrementFields["plan.audioGenerations"] = 1;
+  }
+
+  if (Object.keys(usageIncrementFields).length > 0) {
+    const counterUpdate: {
+      $inc: Record<string, number>;
+      $set?: Record<string, Date>;
+    } = {
+      $inc: usageIncrementFields,
+    };
+
+    if (!userData?.plan?.usagePeriodStart) {
+      counterUpdate.$set = {
+        "plan.usagePeriodStart": new Date(),
+      };
+    }
+
+    await User.findOneAndUpdate({ clerkId: userId }, counterUpdate, {
+      strict: true,
+      upsert: false,
+    });
+  }
+
+  return {
+    status: 200,
+    payload: {
+      taskData,
+      taskId,
+      personaId: selectedPersonaId,
+      acceptedPrompt: true,
+    },
+  };
+}
+
+export async function POST(req: Request): Promise<Response> {
   try {
+    const streamingResponseRequested = shouldStreamResponse(req);
     const {
       messages: requestMessages,
       taskId: providedTaskId,
@@ -676,6 +888,72 @@ export async function POST(req: Request): Promise<NextResponse> {
       throw new Error("Task ID is undefined.");
     }
 
+    if (streamingResponseRequested) {
+      const stream = new ReadableStream<Uint8Array>({
+        async start(controller) {
+          try {
+            writeStreamEvent(controller, {
+              type: "meta",
+              taskId,
+              personaId: selectedPersona.id,
+            });
+
+            const aiPayload = await generateStreamingResponse({
+              messages: promptPayloadMessages,
+              taskId,
+              userId,
+              personaId: selectedPersona.id,
+              planName,
+              entitlements: resolvedEntitlements,
+              abortSignal: req.signal,
+              onContentChunk: (delta, snapshot) => {
+                writeStreamEvent(controller, {
+                  type: "chunk",
+                  delta,
+                  snapshot,
+                });
+              },
+            });
+
+            const finalResult = await finalizeAIResponse({
+              aiPayload,
+              taskId,
+              userId,
+              planName,
+              selectedPersonaId: selectedPersona.id,
+              storedMessagesWithIncomingPrompt,
+              estimatedBytesWithIncomingPrompt,
+              isNewConversation,
+              userData,
+            });
+
+            if (finalResult.payload.error && !finalResult.payload.taskData) {
+              writeStreamEvent(controller, {
+                type: "error",
+                error: finalResult.payload.error,
+              });
+            } else {
+              writeStreamEvent(controller, {
+                type: "final",
+                payload: finalResult.payload,
+              });
+            }
+          } catch {
+            writeStreamEvent(controller, {
+              type: "error",
+              error: OPENAI_ERROR_MESSAGES.unknown,
+            });
+          } finally {
+            controller.close();
+          }
+        },
+      });
+
+      return new Response(stream, {
+        headers: STREAM_HEADERS,
+      });
+    }
+
     const aiResponse = await generateResponse({
       messages: promptPayloadMessages,
       taskId,
@@ -686,137 +964,20 @@ export async function POST(req: Request): Promise<NextResponse> {
     });
     const aiPayload = JSON.parse(aiResponse as string) as OpenAIResponsePayload;
 
-    if (aiPayload.requestMetrics?.length) {
-      emitUsageEvents({
-        userId,
-        taskId,
-        personaId: selectedPersona.id,
-        metrics: aiPayload.requestMetrics,
-      });
-    }
-
-    if (aiPayload.errorType) {
-      return NextResponse.json(
-        { error: OPENAI_ERROR_MESSAGES[aiPayload.errorType] },
-        { status: OPENAI_ERROR_STATUS_MAP[aiPayload.errorType] },
-      );
-    }
-
-    const { taskData, taskUsage, generatedImage, generatedAudio } = aiPayload;
-
-    if (aiPayload.blockedReason === "media_limit_reached") {
-      const stopReason: TaskEndedReason = "media_limit_reached";
-      const endAction = getPlanBoundEndAction(planName);
-      const taskDataToPersist = await persistConversationStop({
-        taskId,
-        personaId: selectedPersona.id,
-        currentMessages: storedMessagesWithIncomingPrompt,
-        stopReason,
-        endAction,
-        promptCountIncrement: isNewConversation ? 0 : 1,
-        estimatedBytes: estimatedBytesWithIncomingPrompt,
-      });
-
-      return NextResponse.json(
-        createStopResponsePayload({
-          taskData: taskDataToPersist,
-          taskId,
-          personaId: selectedPersona.id,
-          stopReason,
-          endAction,
-          acceptedPrompt: true,
-        }),
-        { status: 403 },
-      );
-    }
-
-    if (!taskData) {
-      throw new Error("AI response payload is missing task data.");
-    }
-
-    const storedMessagesWithAssistant = [
-      ...storedMessagesWithIncomingPrompt,
-      taskData,
-    ];
-    const estimatedBytesWithAssistant = estimateConversationBytes(
-      storedMessagesWithAssistant,
-    );
-
-    if (estimatedBytesWithAssistant > TASK_STORAGE_WARNING_BYTES) {
-      const stopReason: TaskEndedReason = "conversation_storage_limit_reached";
-      const endAction: TaskEndAction = "start_new_conversation";
-      const taskDataToPersist = await persistConversationStop({
-        taskId,
-        personaId: selectedPersona.id,
-        currentMessages: storedMessagesWithIncomingPrompt,
-        stopReason,
-        endAction,
-        promptCountIncrement: isNewConversation ? 0 : 1,
-        estimatedBytes: estimatedBytesWithIncomingPrompt,
-      });
-
-      emitBlockedChatUsageEvent({
-        userId,
-        taskId,
-        personaId: selectedPersona.id,
-        planName,
-        stopReason,
-      });
-
-      return NextResponse.json(
-        createStopResponsePayload({
-          taskData: taskDataToPersist,
-          taskId,
-          personaId: selectedPersona.id,
-          stopReason,
-          endAction,
-          acceptedPrompt: true,
-        }),
-        { status: 403 },
-      );
-    }
-
-    await updateTask(taskId, {
-      messages: storedMessagesWithAssistant,
-      usage: taskUsage ?? 0,
-      personaId: selectedPersona.id,
-      promptCountIncrement: isNewConversation ? 0 : 1,
-      estimatedBytes: estimatedBytesWithAssistant,
+    const finalResult = await finalizeAIResponse({
+      aiPayload,
+      taskId,
+      userId,
+      planName,
+      selectedPersonaId: selectedPersona.id,
+      storedMessagesWithIncomingPrompt,
+      estimatedBytesWithIncomingPrompt,
+      isNewConversation,
+      userData,
     });
 
-    const usageIncrementFields: Record<string, number> = {};
-    if (generatedImage) {
-      usageIncrementFields["plan.imageGenerations"] = 1;
-    }
-    if (generatedAudio) {
-      usageIncrementFields["plan.audioGenerations"] = 1;
-    }
-
-    if (Object.keys(usageIncrementFields).length > 0) {
-      const counterUpdate: {
-        $inc: Record<string, number>;
-        $set?: Record<string, Date>;
-      } = {
-        $inc: usageIncrementFields,
-      };
-
-      if (!userData?.plan?.usagePeriodStart) {
-        counterUpdate.$set = {
-          "plan.usagePeriodStart": new Date(),
-        };
-      }
-
-      await User.findOneAndUpdate({ clerkId: userId }, counterUpdate, {
-        strict: true,
-        upsert: false,
-      });
-    }
-
-    return NextResponse.json({
-      taskData,
-      taskId,
-      personaId: selectedPersona.id,
-      acceptedPrompt: true,
+    return NextResponse.json(finalResult.payload, {
+      status: finalResult.status,
     });
   } catch {
     return NextResponse.json(

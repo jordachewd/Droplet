@@ -1,6 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { POST } from "@/app/api/openai/route";
-import { generateResponse } from "@/lib/utils/openai/generateResponse";
+import {
+  generateResponse,
+  generateStreamingResponse,
+} from "@/lib/utils/openai/generateResponse";
 import { generateTitle } from "@/lib/utils/openai/generateTitle";
 import { createTask, updateTask } from "@/lib/actions/task.actions";
 import { getUserById } from "@/lib/actions/user.actions";
@@ -12,6 +15,7 @@ import { emitUsageEvents } from "@/lib/utils/usage-event-utils";
 
 vi.mock("@/lib/utils/openai/generateResponse", () => ({
   generateResponse: vi.fn(),
+  generateStreamingResponse: vi.fn(),
 }));
 
 vi.mock("@/lib/utils/openai/generateTitle", () => ({
@@ -140,6 +144,25 @@ describe("POST /api/openai phase16", () => {
         ],
       }),
     );
+    vi.mocked(generateStreamingResponse).mockResolvedValue({
+      taskData: {
+        whois: "assistant",
+        role: "assistant",
+        content: [{ type: "text", text: "Hello from AI" }],
+      },
+      taskUsage: 11,
+      generatedImage: false,
+      generatedAudio: false,
+      requestMetrics: [
+        {
+          requestType: "chat",
+          model: "gpt-4o-mini",
+          tokensIn: 8,
+          tokensOut: 3,
+          latencyMs: 24,
+        },
+      ],
+    } as never);
     vi.mocked(updateTask).mockResolvedValue({} as never);
     vi.mocked(User.findOneAndUpdate).mockResolvedValue({} as never);
   });

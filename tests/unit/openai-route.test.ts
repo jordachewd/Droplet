@@ -1,6 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { POST } from "@/app/api/openai/route";
-import { generateResponse } from "@/lib/utils/openai/generateResponse";
+import {
+  generateResponse,
+  generateStreamingResponse,
+} from "@/lib/utils/openai/generateResponse";
 import { generateTitle } from "@/lib/utils/openai/generateTitle";
 import { createTask, updateTask } from "@/lib/actions/task.actions";
 import { getUserById } from "@/lib/actions/user.actions";
@@ -11,6 +14,7 @@ import { getTaskByIdForUser } from "@/lib/utils/task-queries";
 
 vi.mock("@/lib/utils/openai/generateResponse", () => ({
   generateResponse: vi.fn(),
+  generateStreamingResponse: vi.fn(),
 }));
 
 vi.mock("@/lib/utils/openai/generateTitle", () => ({
@@ -47,10 +51,13 @@ vi.mock("@/lib/utils/task-queries", () => ({
 const EXISTING_TASK_ID = "507f1f77bcf86cd799439011";
 const NEW_TASK_ID = "507f1f77bcf86cd799439012";
 
-function buildRequest(payload: unknown): Request {
+function buildRequest(
+  payload: unknown,
+  headers: Record<string, string> = {},
+): Request {
   return new Request("http://localhost:3000/api/openai", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...headers },
     body: JSON.stringify(payload),
   });
 }
@@ -116,6 +123,16 @@ describe("POST /api/openai", () => {
         generatedAudio: false,
       }),
     );
+    vi.mocked(generateStreamingResponse).mockResolvedValue({
+      taskData: {
+        whois: "assistant",
+        role: "assistant",
+        content: [{ type: "text", text: "Hello from AI" }],
+      },
+      taskUsage: 11,
+      generatedImage: false,
+      generatedAudio: false,
+    } as never);
     vi.mocked(updateTask).mockResolvedValue({} as never);
     vi.mocked(User.findOneAndUpdate).mockResolvedValue({} as never);
   });
@@ -226,6 +243,53 @@ describe("POST /api/openai", () => {
     );
     expect(payload.taskId).toBe(NEW_TASK_ID);
     expect(payload.personaId).toBe("strategist");
+  });
+
+  it("streams chunk and final events when the client requests a streaming response", async () => {
+    vi.mocked(generateStreamingResponse).mockImplementation(
+      async ({ onContentChunk }) => {
+        onContentChunk?.("Hello", "Hello");
+
+        return {
+          taskData: {
+            whois: "assistant",
+            role: "assistant",
+            content: [{ type: "text", text: "Hello from AI" }],
+          },
+          taskUsage: 11,
+          generatedImage: false,
+          generatedAudio: false,
+        };
+      },
+    );
+
+    const response = await POST(
+      buildRequest(
+        {
+          messages: [{ role: "user", whois: "user", content: "new chat" }],
+        },
+        {
+          Accept: "text/event-stream",
+          "x-droplet-stream": "1",
+        },
+      ),
+    );
+    const payload = await response.text();
+
+    expect(response.headers.get("Content-Type")).toContain("text/event-stream");
+    expect(generateStreamingResponse).toHaveBeenCalledWith(
+      expect.objectContaining({
+        taskId: NEW_TASK_ID,
+        userId: "user_123",
+        personaId: "strategist",
+      }),
+    );
+    expect(generateResponse).not.toHaveBeenCalled();
+    expect(payload).toContain('"type":"meta"');
+    expect(payload).toContain('"type":"chunk"');
+    expect(payload).toContain('"snapshot":"Hello"');
+    expect(payload).toContain('"type":"final"');
+    expect(payload).toContain('"taskId":"507f1f77bcf86cd799439012"');
   });
 
   it("uses the persisted task state and persona for existing conversations", async () => {
