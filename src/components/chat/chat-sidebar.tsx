@@ -24,9 +24,7 @@ export default async function ChatSidebar() {
           href: `/app/c/${task._id}`,
         };
       });
-    } catch (error) {
-      console.error("Chat sidebar history load failed:", error);
-    }
+    } catch {}
   }
 
   return (

@@ -18,15 +18,15 @@ export const faqs = [
     id: 2,
     question: "What is the process to cancel my subscription?",
     answer:
-      "You can cancel your subscription anytime through your account settings. " +
-      "For further information, please refer to Droplet's Refund Policy.",
+      "Droplet currently treats paid plans as one-time purchases for the active access period rather than auto-renewing subscriptions. " +
+      "If you need billing help or a manual review, contact office@jordachewd.com.",
   },
   {
     id: 3,
     question: "What subscription plans does Droplet offer?",
     answer:
-      "Droplet provides various subscription plans to meet your requirements. " +
-      "You can opt for either monthly or yearly plans based on your preference.",
+      "Droplet offers Lite for free forever, Pro for $19, and Premium for $39. " +
+      "All plans include all 9 personas, while the paid tiers raise usage and media limits.",
   },
   {
     id: 4,
@@ -38,7 +38,7 @@ export const faqs = [
     id: 5,
     question: "How do I update my account information?",
     answer:
-      "To update your account information, navigate to the account settings section and make the necessary changes.",
+      "Sign in to Droplet and open your profile area under /app/profile to review your current account details and plan information.",
   },
   {
     id: 6,

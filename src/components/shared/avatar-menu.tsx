@@ -103,7 +103,7 @@ export default function AvatarMenu() {
         <div id="my-account" className={accountMenuClass}>
           {publicMetadata.role === "admin" && (
             <Link
-              href="/dashboard"
+              href="/admin"
               className={accountMenuLinkClass}
               onClick={handleCloseUserMenu}
             >
@@ -113,7 +113,7 @@ export default function AvatarMenu() {
           )}
 
           <Link
-            href="/plans"
+            href="/app/plans"
             className={accountMenuLinkClass}
             onClick={handleCloseUserMenu}
           >
@@ -122,7 +122,7 @@ export default function AvatarMenu() {
           </Link>
 
           <Link
-            href="/profile"
+            href="/app/profile"
             className={accountMenuLinkClass}
             onClick={handleCloseUserMenu}
           >

@@ -187,7 +187,6 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       }),
     });
   } catch (error) {
-    console.error("Error fetching image:", error);
     const errorName =
       typeof error === "object" && error !== null && "name" in error
         ? String(error.name)

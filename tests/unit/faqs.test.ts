@@ -17,12 +17,13 @@ describe("faqs", () => {
     );
   });
 
-  it("removes trial language from every FAQ entry", () => {
+  it("removes obsolete trial and yearly billing language from every FAQ entry", () => {
     const allFaqCopy = faqs
       .flatMap((faq) => [faq.question, faq.answer])
       .join(" ")
       .toLowerCase();
 
     expect(allFaqCopy).not.toContain("trial");
+    expect(allFaqCopy).not.toContain("yearly");
   });
 });

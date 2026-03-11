@@ -70,6 +70,7 @@ describe("generateResponse", () => {
       taskId: "task_1",
       userId: "clerk_1",
       personaId: "strategist",
+      planName: "Pro",
       entitlements: defaultEntitlements,
     });
 
@@ -127,6 +128,7 @@ describe("generateResponse", () => {
       taskId: "task_image",
       userId: "clerk_1",
       personaId: "strategist",
+      planName: "Pro",
       entitlements: defaultEntitlements,
     });
 
@@ -135,6 +137,7 @@ describe("generateResponse", () => {
       role: "assistant",
       taskId: "task_image",
       userId: "clerk_1",
+      planName: "Pro",
     });
     const payload = JSON.parse(result as string);
     expect(payload.generatedImage).toBe(true);
@@ -189,6 +192,7 @@ describe("generateResponse", () => {
       taskId: "task_audio",
       userId: "clerk_1",
       personaId: "teacher",
+      planName: "Pro",
       entitlements: defaultEntitlements,
     });
 
@@ -202,6 +206,7 @@ describe("generateResponse", () => {
       role: "assistant",
       taskId: "task_audio",
       userId: "clerk_1",
+      planName: "Pro",
     });
     const payload = JSON.parse(result as string);
     expect(payload.generatedAudio).toBe(true);
@@ -242,6 +247,7 @@ describe("generateResponse", () => {
       taskId: "task_blocked",
       userId: "clerk_1",
       personaId: "strategist",
+      planName: "Pro",
       entitlements: {
         ...defaultEntitlements,
         supportsImageGeneration: false,
@@ -270,6 +276,7 @@ describe("generateResponse", () => {
       taskId: "task_error",
       userId: "clerk_1",
       personaId: "strategist",
+      planName: "Pro",
       entitlements: defaultEntitlements,
     });
 

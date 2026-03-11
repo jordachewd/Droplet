@@ -3,14 +3,16 @@ import { expect, test } from "@playwright/test";
 test("shows the reconciled pricing and FAQ copy on the public pricing page", async ({
   page,
 }) => {
-  await page.goto("/pricing");
+  await page.goto("/plans");
 
   await expect(
     page.getByText("Free forever", { exact: true }).first(),
   ).toBeVisible();
-  await expect(page.getByText("$19")).toBeVisible();
-  await expect(page.getByText("$39")).toBeVisible();
-  await expect(page.getByText("All 9 personas")).toHaveCount(3);
+  await expect(page.getByText("$19", { exact: true }).first()).toBeVisible();
+  await expect(page.getByText("$39", { exact: true }).first()).toBeVisible();
+  await expect(
+    page.locator(".PlanCard").getByText("All 9 personas"),
+  ).toHaveCount(3);
 
   await page
     .locator("summary")

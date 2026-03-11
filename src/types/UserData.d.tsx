@@ -31,6 +31,7 @@ export interface UpdateUserParams {
   lastName?: string | undefined;
   updatedAt: Date;
   plan?: PlanData;
+  suspended?: boolean;
 }
 
 /* When pull user from DataBase */
@@ -45,6 +46,7 @@ export interface UserData {
   lastName?: string;
   updatedAt?: Date;
   userimg?: string;
+  suspended?: boolean;
   plan: PlanData;
   __v: number;
 }

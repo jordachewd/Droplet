@@ -1,15 +1,19 @@
 import { openAiClient } from "@/constants/openai";
+import { PlanName } from "@/types/PlanData.d";
 import { ContentItem, Message, MessageRole } from "@/types";
 import { handleError } from "../handleError";
 import sharp from "sharp";
 import uploadFileToAWS from "@/lib/utils/aws/uploadFileToAWS";
 import { generateString } from "@/lib/utils/generateString";
+import { resolveModelForPlan } from "@/lib/utils/ai-model-policy";
+import { AIRequestMetric } from "@/lib/utils/usage-event-utils";
 
 interface GenerateImageParams {
   prompt: string;
   role: MessageRole;
   taskId: string;
   userId: string;
+  planName: PlanName;
 }
 
 async function convertToPng(imageUrl: string): Promise<Buffer | undefined> {
@@ -30,12 +34,25 @@ export async function generateImage({
   role,
   taskId,
   userId,
+  planName,
 }: GenerateImageParams) {
   try {
+    const model = resolveModelForPlan(planName, "image");
+
+    if (!model) {
+      throw new Error("No image model configured for the current plan.");
+    }
+
+    const startTime = Date.now();
     const response = await openAiClient.images.generate({
-      model: "dall-e-3",
+      model,
       prompt,
     });
+    const requestMetric: AIRequestMetric = {
+      requestType: "image",
+      model,
+      latencyMs: Date.now() - startTime,
+    };
 
     if (!response || !response.data?.length) {
       throw new Error("The Image Generator API did not return any images.");
@@ -44,7 +61,6 @@ export async function generateImage({
     const respData = response.data[0];
     const imageUrl = respData.url;
 
-    // Convert image to PNG
     if (!imageUrl) {
       throw new Error("Image URL is undefined");
     }
@@ -78,7 +94,12 @@ export async function generateImage({
       ] as ContentItem[],
     };
 
-    return JSON.stringify({ taskData, generatedImage: true });
+    return JSON.stringify({
+      taskData,
+      generatedImage: true,
+      model,
+      requestMetric,
+    });
   } catch (error) {
     handleError({ error, source: "generateImage" });
   }

@@ -5,8 +5,10 @@ import { NextResponse } from "next/server";
 import { Webhook } from "svix";
 import { CreateUserParams, UpdateUserParams } from "@/types/UserData.d";
 import { connectToDatabase } from "@/lib/database/mongoose";
+import Task from "@/lib/database/models/tasks.model";
 import User from "@/lib/database/models/user.model";
 import Transaction from "@/lib/database/models/transaction.model";
+import deleteS3Prefix from "@/lib/utils/aws/delete-s3-prefix";
 import serializeForClient from "@/lib/utils/serialize-for-client";
 
 async function createUserFromWebhook(user: CreateUserParams) {
@@ -14,6 +16,12 @@ async function createUserFromWebhook(user: CreateUserParams) {
   const newUser = await User.create(user);
 
   return newUser ? serializeForClient(newUser) : null;
+}
+
+function logUserDeletedCleanupFailure(step: string) {
+  process.stderr.write(
+    `[clerk-webhook] user.deleted ${step} cleanup failed.\n`,
+  );
 }
 
 export async function POST(req: Request) {
@@ -54,8 +62,7 @@ export async function POST(req: Request) {
       "svix-timestamp": svix_timestamp,
       "svix-signature": svix_signature,
     }) as WebhookEvent;
-  } catch (err) {
-    console.error("Error verifying webhook:", err);
+  } catch {
     return new Response("Error occured", {
       status: 400,
     });
@@ -146,16 +153,45 @@ export async function POST(req: Request) {
     const { id } = evt.data;
 
     await connectToDatabase();
-    const userToDelete = await User.findOne({ clerkId: id! });
-    const deletedUser = userToDelete
-      ? await User.findByIdAndDelete(userToDelete._id)
-      : null;
-    const deletedTransactions = await Transaction.deleteMany({ clerkId: id! });
+    const clerkId = id!;
+    let deletedUser: unknown = null;
+    let deletedTransactions: { deletedCount?: number } | null = null;
+    let deletedTasks: { deletedCount?: number } | null = null;
+    let deletedObjectsCount = 0;
+
+    try {
+      const userToDelete = await User.findOne({ clerkId });
+      deletedUser = userToDelete
+        ? await User.findByIdAndDelete(userToDelete._id)
+        : null;
+    } catch {
+      logUserDeletedCleanupFailure("user");
+    }
+
+    try {
+      deletedTransactions = await Transaction.deleteMany({ clerkId });
+    } catch {
+      logUserDeletedCleanupFailure("transaction");
+    }
+
+    try {
+      deletedTasks = await Task.deleteMany({ userId: clerkId });
+    } catch {
+      logUserDeletedCleanupFailure("task");
+    }
+
+    try {
+      deletedObjectsCount = await deleteS3Prefix(`${clerkId}/`);
+    } catch {
+      logUserDeletedCleanupFailure("s3");
+    }
 
     return NextResponse.json({
       message: "OK",
       deletedUser,
       deletedTransactions,
+      deletedTasks,
+      deletedObjectsCount,
     });
   }
 

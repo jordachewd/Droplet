@@ -32,12 +32,6 @@ vi.mock("@clerk/nextjs/server", () => ({
       const pathname = req.nextUrl.pathname;
 
       return patterns.some((pattern) => {
-        if (pattern === "/dashboard/:path*") {
-          return (
-            pathname === "/dashboard" || pathname.startsWith("/dashboard/")
-          );
-        }
-
         if (pattern === "/") {
           return pathname === "/";
         }
@@ -106,8 +100,8 @@ describe("proxy route protection", () => {
     expect(response).toBeUndefined();
   });
 
-  it("redirects unauthenticated users from protected routes to /sign-in", async () => {
-    const request = new NextRequest("http://localhost:3000/profile");
+  it("redirects unauthenticated users from /app routes to /sign-in", async () => {
+    const request = new NextRequest("http://localhost:3000/app/profile");
     const response = await proxy(request, {} as never);
 
     expect(response?.status).toBe(307);
@@ -116,8 +110,8 @@ describe("proxy route protection", () => {
     );
   });
 
-  it("redirects unauthenticated users from /app routes", async () => {
-    const request = new NextRequest("http://localhost:3000/app/new");
+  it("redirects unauthenticated users from /admin routes to /sign-in", async () => {
+    const request = new NextRequest("http://localhost:3000/admin");
     const response = await proxy(request, {} as never);
 
     expect(response?.status).toBe(307);
@@ -126,22 +120,22 @@ describe("proxy route protection", () => {
     );
   });
 
-  it("redirects non-admin users away from /dashboard", async () => {
+  it("redirects non-admin users away from /admin", async () => {
     authState.userId = "user_123";
     authState.role = "user";
 
-    const request = new NextRequest("http://localhost:3000/dashboard");
+    const request = new NextRequest("http://localhost:3000/admin");
     const response = await proxy(request, {} as never);
 
     expect(response?.status).toBe(307);
     expect(response?.headers.get("location")).toBe("http://localhost:3000/403");
   });
 
-  it("allows admin users to access /dashboard", async () => {
+  it("allows admin users to access /admin", async () => {
     authState.userId = "user_123";
     authState.role = "admin";
 
-    const request = new NextRequest("http://localhost:3000/dashboard");
+    const request = new NextRequest("http://localhost:3000/admin");
     const response = await proxy(request, {} as never);
 
     expect(response).toBeUndefined();

@@ -1,13 +1,16 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { POST } from "@/app/api/webhooks/clerk/route";
 import { clerkClient } from "@clerk/nextjs/server";
 import { headers } from "next/headers";
 import { connectToDatabase } from "@/lib/database/mongoose";
+import Task from "@/lib/database/models/tasks.model";
 import User from "@/lib/database/models/user.model";
 import Transaction from "@/lib/database/models/transaction.model";
+import deleteS3Prefix from "@/lib/utils/aws/delete-s3-prefix";
 
 const verifyMock = vi.hoisted(() => vi.fn());
 const webhookCtorMock = vi.hoisted(() => vi.fn());
+const stderrWriteMock = vi.hoisted(() => vi.fn(() => true));
 
 vi.mock("svix", () => ({
   Webhook: class MockWebhook {
@@ -46,6 +49,16 @@ vi.mock("@/lib/database/models/transaction.model", () => ({
   },
 }));
 
+vi.mock("@/lib/database/models/tasks.model", () => ({
+  default: {
+    deleteMany: vi.fn(),
+  },
+}));
+
+vi.mock("@/lib/utils/aws/delete-s3-prefix", () => ({
+  default: vi.fn(),
+}));
+
 function buildRequest(payload: unknown): Request {
   return new Request("http://localhost:3000/api/webhooks/clerk", {
     method: "POST",
@@ -77,6 +90,9 @@ function mockSvixHeaders({
 describe("POST /api/webhooks/clerk", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.spyOn(process.stderr, "write").mockImplementation(
+      stderrWriteMock as never,
+    );
     process.env.CLERK_WEBHOOK_SECRET = "whsec_clerk_test";
     mockSvixHeaders({});
     vi.mocked(connectToDatabase).mockResolvedValue(undefined as never);
@@ -90,11 +106,19 @@ describe("POST /api/webhooks/clerk", () => {
     vi.mocked(Transaction.deleteMany).mockResolvedValue({
       deletedCount: 0,
     } as never);
+    vi.mocked(Task.deleteMany).mockResolvedValue({
+      deletedCount: 0,
+    } as never);
+    vi.mocked(deleteS3Prefix).mockResolvedValue(0);
     vi.mocked(clerkClient).mockResolvedValue({
       users: {
         updateUserMetadata: vi.fn(),
       },
     } as never);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it("throws when CLERK_WEBHOOK_SECRET is missing", async () => {
@@ -232,7 +256,7 @@ describe("POST /api/webhooks/clerk", () => {
     expect(payload.error).toBe("User not found");
   });
 
-  it("deletes user and linked transactions for user.deleted", async () => {
+  it("deletes user, tasks, and S3 assets for user.deleted", async () => {
     verifyMock.mockReturnValue({
       type: "user.deleted",
       data: {
@@ -248,6 +272,10 @@ describe("POST /api/webhooks/clerk", () => {
     vi.mocked(Transaction.deleteMany).mockResolvedValue({
       deletedCount: 3,
     } as never);
+    vi.mocked(Task.deleteMany).mockResolvedValue({
+      deletedCount: 8,
+    } as never);
+    vi.mocked(deleteS3Prefix).mockResolvedValue(5);
 
     const response = await POST(buildRequest({ event: "user.deleted" }));
     const payload = await response.json();
@@ -259,8 +287,76 @@ describe("POST /api/webhooks/clerk", () => {
     expect(Transaction.deleteMany).toHaveBeenCalledWith({
       clerkId: "clerk_user_1",
     });
+    expect(Task.deleteMany).toHaveBeenCalledWith({
+      userId: "clerk_user_1",
+    });
+    expect(deleteS3Prefix).toHaveBeenCalledWith("clerk_user_1/");
     expect(payload.message).toBe("OK");
     expect(payload.deletedTransactions.deletedCount).toBe(3);
+    expect(payload.deletedTasks.deletedCount).toBe(8);
+    expect(payload.deletedObjectsCount).toBe(5);
+  });
+
+  it("returns 200 and still attempts S3 cleanup when task deletion fails", async () => {
+    verifyMock.mockReturnValue({
+      type: "user.deleted",
+      data: {
+        id: "clerk_user_1",
+      },
+    });
+    vi.mocked(Task.deleteMany).mockRejectedValue(
+      new Error("Task cleanup failed"),
+    );
+    vi.mocked(deleteS3Prefix).mockResolvedValue(4);
+
+    const response = await POST(buildRequest({ event: "user.deleted" }));
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(Transaction.deleteMany).toHaveBeenCalledWith({
+      clerkId: "clerk_user_1",
+    });
+    expect(Task.deleteMany).toHaveBeenCalledWith({
+      userId: "clerk_user_1",
+    });
+    expect(deleteS3Prefix).toHaveBeenCalledWith("clerk_user_1/");
+    expect(payload.message).toBe("OK");
+    expect(payload.deletedTasks).toBeNull();
+    expect(payload.deletedObjectsCount).toBe(4);
+    expect(stderrWriteMock).toHaveBeenCalledWith(
+      "[clerk-webhook] user.deleted task cleanup failed.\n",
+    );
+  });
+
+  it("returns 200 when S3 cleanup fails after task deletion succeeds", async () => {
+    verifyMock.mockReturnValue({
+      type: "user.deleted",
+      data: {
+        id: "clerk_user_1",
+      },
+    });
+    vi.mocked(Task.deleteMany).mockResolvedValue({
+      deletedCount: 2,
+    } as never);
+    vi.mocked(deleteS3Prefix).mockRejectedValue(new Error("S3 cleanup failed"));
+
+    const response = await POST(buildRequest({ event: "user.deleted" }));
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(Transaction.deleteMany).toHaveBeenCalledWith({
+      clerkId: "clerk_user_1",
+    });
+    expect(Task.deleteMany).toHaveBeenCalledWith({
+      userId: "clerk_user_1",
+    });
+    expect(deleteS3Prefix).toHaveBeenCalledWith("clerk_user_1/");
+    expect(payload.message).toBe("OK");
+    expect(payload.deletedTasks.deletedCount).toBe(2);
+    expect(payload.deletedObjectsCount).toBe(0);
+    expect(stderrWriteMock).toHaveBeenCalledWith(
+      "[clerk-webhook] user.deleted s3 cleanup failed.\n",
+    );
   });
 
   it("returns 200 fallback response for unhandled event types", async () => {

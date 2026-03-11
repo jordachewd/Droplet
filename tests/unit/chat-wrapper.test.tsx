@@ -14,13 +14,44 @@ vi.mock("@/components/chat/chat-intro", () => ({
 }));
 
 vi.mock("@/components/chat/chat-body", () => ({
-  default: () => <div data-testid="chat-body" />,
+  default: ({
+    messages,
+    conversationEnded,
+    endState,
+  }: {
+    messages?: Message[];
+    conversationEnded?: boolean;
+    endState?: { stopReason: string; endAction: string } | null;
+  }) => (
+    <div data-testid="chat-body">
+      {conversationEnded ? "ended" : "active"}
+      {endState ? `:${endState.stopReason}:${endState.endAction}` : ""}
+      <div data-testid="chat-body-messages">
+        {messages
+          ?.map((message) =>
+            Array.isArray(message.content)
+              ? message.content
+                  .map((item) => item.text ?? item.image_url?.url ?? "")
+                  .join(" ")
+              : message.content,
+          )
+          .join(" | ")}
+      </div>
+    </div>
+  ),
 }));
 
 vi.mock("@/components/chat/chat-input", () => ({
-  default: ({ sendMessage }: { sendMessage: (prompt: Message) => void }) => (
+  default: ({
+    sendMessage,
+    disabled,
+  }: {
+    sendMessage: (prompt: Message) => void;
+    disabled?: boolean;
+  }) => (
     <button
       type="button"
+      disabled={disabled}
       onClick={() =>
         sendMessage({
           whois: "user",
@@ -78,5 +109,111 @@ describe("ChatWrapper", () => {
     expect(screen.getByRole("alert").textContent).toContain(
       "Your plan has expired. Please upgrade to continue.",
     );
+  });
+
+  it("renders stop payloads and disables input when the conversation is ended", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          taskData: {
+            whois: "assistant",
+            role: "assistant",
+            content: [{ type: "text", text: "Stop here." }],
+          },
+          stopReason: "prompt_limit_reached",
+          endAction: "start_new_conversation",
+          taskStatus: "ended",
+          acceptedPrompt: false,
+        }),
+        {
+          status: 403,
+          statusText: "Forbidden",
+          headers: { "Content-Type": "application/json" },
+        },
+      ),
+    );
+
+    render(
+      <ChatWrapper
+        initialMessages={[{ role: "user", whois: "user", content: "prior" }]}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Send message" }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("chat-body").textContent).toContain(
+        "ended:prompt_limit_reached:start_new_conversation",
+      );
+    });
+
+    expect(
+      screen
+        .getByRole("button", { name: "Send message" })
+        .hasAttribute("disabled"),
+    ).toBe(true);
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+
+  it("shows a generic alert when the chat request fails before a response returns", async () => {
+    vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("Network down"));
+
+    render(<ChatWrapper />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Send message" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert").textContent).toContain(
+        "Unable to send your message right now.",
+      );
+    });
+  });
+
+  it("renders streamed assistant text incrementally and finalizes the response", async () => {
+    const stream = new ReadableStream({
+      start(controller: ReadableStreamDefaultController<Uint8Array>) {
+        controller.enqueue(
+          new TextEncoder().encode(
+            'data: {"type":"meta","taskId":"task_stream","personaId":"strategist"}\n\n',
+          ),
+        );
+        controller.enqueue(
+          new TextEncoder().encode(
+            'data: {"type":"chunk","delta":"Hello","snapshot":"Hello"}\n\n',
+          ),
+        );
+        controller.enqueue(
+          new TextEncoder().encode(
+            'data: {"type":"final","payload":{"taskData":{"whois":"assistant","role":"assistant","content":[{"type":"text","text":"Hello from stream"}]},"taskId":"task_stream","personaId":"strategist","acceptedPrompt":true}}\n\n',
+          ),
+        );
+        controller.close();
+      },
+    });
+
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(stream, {
+        status: 200,
+        headers: { "Content-Type": "text/event-stream" },
+      }),
+    );
+
+    render(<ChatWrapper />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Send message" }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("chat-body-messages").textContent).toContain(
+        "Hello",
+      );
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("chat-body-messages").textContent).toContain(
+        "Hello from stream",
+      );
+    });
+
+    expect(screen.queryByRole("alert")).toBeNull();
   });
 });

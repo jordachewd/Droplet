@@ -26,7 +26,7 @@ export default function ChatSidebarPromo({ isOpen }: ChatSidebarPromoProps) {
         </p>
         <Link
           className="btn btn-sm btn-contained w-full justify-center"
-          href="/plans"
+          href="/app/plans"
         >
           Manage Plan
         </Link>

@@ -8,6 +8,7 @@ interface IUser extends Document {
   username: string;
   email: string;
   role: UserRoles;
+  suspended?: boolean;
   registerAt: Date;
   plan: PlanData;
   firstName?: string;
@@ -30,12 +31,17 @@ const UserSchema = new Schema<IUser>({
   email: {
     type: String,
     required: true,
+    index: true,
   },
   role: {
     type: String,
     required: true,
     enum: ["client", "admin"],
     default: "client",
+  },
+  suspended: {
+    type: Boolean,
+    default: false,
   },
   registerAt: { type: Date, default: Date.now, required: true },
   plan: {

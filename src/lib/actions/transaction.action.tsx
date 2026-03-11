@@ -60,8 +60,8 @@ export async function checkoutPlan(transaction: CheckoutTransactionParams) {
       billing: planBilling,
       planId: String(planId),
     },
-    success_url: `${BASEURL}/profile`,
-    cancel_url: `${BASEURL}/plans`,
+    success_url: `${BASEURL}/app/profile`,
+    cancel_url: `${BASEURL}/app/plans`,
   });
 
   redirect(session.url!);
@@ -77,7 +77,7 @@ export async function getAllTransactions(userId: string) {
 
     const transactions = await Transaction.find({ clerkId: userId }, null, {
       sort: {
-        createdAt: -1, //Sort by Date Added DESC
+        createdAt: -1,
       },
     })
       .lean()

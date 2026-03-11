@@ -1,8 +1,16 @@
 import { NextResponse } from "next/server";
-import { Messages } from "@/types";
-import { generateResponse } from "@/lib/utils/openai/generateResponse";
+import { Message, Messages } from "@/types";
+import {
+  generateResponse,
+  generateStreamingResponse,
+} from "@/lib/utils/openai/generateResponse";
 import { generateTitle } from "@/lib/utils/openai/generateTitle";
-import { UpdateTaskParams } from "@/types/TaskData.d";
+import {
+  TaskEndAction,
+  TaskEndedReason,
+  TaskStatus,
+  UpdateTaskParams,
+} from "@/types/TaskData.d";
 import { createTask, updateTask } from "@/lib/actions/task.actions";
 import { auth } from "@clerk/nextjs/server";
 import { getUserById } from "@/lib/actions/user.actions";
@@ -14,11 +22,31 @@ import {
 } from "@/lib/utils/resolve-entitlements";
 import User from "@/lib/database/models/user.model";
 import { checkUsageLimit } from "@/lib/utils/check-usage-limit";
-import type { OpenAIErrorType } from "@/lib/utils/openai/generateResponse";
+import type {
+  OpenAIErrorType,
+  OpenAIResponsePayload,
+} from "@/lib/utils/openai/generateResponse";
+import { checkDailyConversationLimit } from "@/lib/utils/check-daily-conversations";
+import { getTaskByIdForUser } from "@/lib/utils/task-queries";
+import { filterAssistantMsg } from "@/lib/utils/openai/filterAssistantMsg";
+import { PLAN_LIMITS } from "@/constants/plans";
+import { PlanName } from "@/types/PlanData.d";
+import { PersonaId } from "@/types/PersonaData.d";
+import { resolveModelForPlan } from "@/lib/utils/ai-model-policy";
+import {
+  AIRequestMetric,
+  emitUsageEvents,
+} from "@/lib/utils/usage-event-utils";
 
 const OPENAI_RATE_LIMIT_MAX_REQUESTS = 20;
 const OPENAI_RATE_LIMIT_WINDOW_MS = 60_000;
-const LIMIT_BLOCKED_REASONS = new Set(["image_limit", "audio_limit"]);
+const TASK_STORAGE_WARNING_BYTES = 12 * 1024 * 1024;
+const SUPPORT_EMAIL = "office@jordachewd.com";
+const STREAM_HEADERS = {
+  "Content-Type": "text/event-stream; charset=utf-8",
+  "Cache-Control": "no-store, no-transform",
+} as const;
+const streamEncoder = new TextEncoder();
 
 const OPENAI_ERROR_STATUS_MAP: Record<OpenAIErrorType, number> = {
   rate_limit: 429,
@@ -35,56 +63,435 @@ const OPENAI_ERROR_MESSAGES: Record<OpenAIErrorType, string> = {
   unknown: "An error occurred while processing your request.",
 };
 
-interface OpenAIResponsePayload {
-  taskData?: Messages["messages"][number];
-  taskUsage?: number;
-  generatedImage?: boolean;
-  generatedAudio?: boolean;
-  blockedReason?: string;
-  errorType?: OpenAIErrorType;
+const STOP_REASON_MESSAGES: Record<TaskEndedReason, string> = {
+  prompt_limit_reached:
+    "You've reached the message limit for this conversation.",
+  media_limit_reached: "You've reached your media generation limit.",
+  daily_conversation_limit_reached:
+    "You've reached the daily conversation limit for your plan.",
+  conversation_storage_limit_reached:
+    "This conversation has reached its storage limit.",
+  billing_state_invalid: "Your plan has expired.",
+};
+
+const END_ACTION_INSTRUCTIONS: Record<TaskEndAction, string> = {
+  start_new_conversation: "Start a new conversation to continue.",
+  upgrade_plan: "Upgrade your plan to continue.",
+  contact_support: `Contact support at ${SUPPORT_EMAIL}.`,
+};
+
+interface ChatApiResponse {
+  taskData?: Message;
+  taskId?: string;
+  personaId?: PersonaId;
+  error?: string;
+  stopReason?: TaskEndedReason;
+  endAction?: TaskEndAction;
+  taskStatus?: TaskStatus;
+  acceptedPrompt?: boolean;
 }
 
-function getBlockedMessage(taskData?: OpenAIResponsePayload["taskData"]) {
-  if (!taskData || !Array.isArray(taskData.content)) {
-    return "Generation limit reached for your current plan.";
+interface TitleResponsePayload {
+  title: string;
+  usage: number;
+  requestMetric?: AIRequestMetric;
+}
+
+type OpenAIStreamEvent =
+  | {
+      type: "meta";
+      taskId: string;
+      personaId: PersonaId;
+    }
+  | {
+      type: "chunk";
+      delta: string;
+      snapshot: string;
+    }
+  | {
+      type: "final";
+      payload: ChatApiResponse;
+    }
+  | {
+      type: "error";
+      error: string;
+    };
+
+interface ConversationStopPayload {
+  taskData: Message;
+  taskId?: string;
+  personaId: PersonaId;
+  error: string;
+  stopReason: TaskEndedReason;
+  endAction: TaskEndAction;
+  taskStatus: TaskStatus;
+  acceptedPrompt: boolean;
+}
+
+function estimateConversationBytes(messages: Message[]): number {
+  if (messages.length === 0) {
+    return 0;
   }
 
-  const message = taskData.content.find(
-    (contentItem) =>
-      contentItem.type === "text" && typeof contentItem.text === "string",
-  )?.text;
-
-  return message ?? "Generation limit reached for your current plan.";
+  return Buffer.byteLength(JSON.stringify(messages), "utf8");
 }
 
-async function persistTaskAssistantMessage({
-  taskId,
-  messages,
-  taskData,
-  taskUsage,
-  personaId,
+function createStopTaskData({
+  stopReason,
+  endAction,
 }: {
-  taskId: string;
-  messages: Messages["messages"];
-  taskData: OpenAIResponsePayload["taskData"];
-  taskUsage?: number;
-  personaId: string;
-}): Promise<void> {
-  if (!taskData) {
+  stopReason: TaskEndedReason;
+  endAction: TaskEndAction;
+}): Message {
+  return {
+    whois: "assistant",
+    role: "assistant",
+    content: [
+      {
+        type: "text",
+        text: `${STOP_REASON_MESSAGES[stopReason]} ${END_ACTION_INSTRUCTIONS[endAction]}`,
+      },
+    ],
+  };
+}
+
+function createStopResponsePayload({
+  taskData,
+  taskId,
+  personaId,
+  stopReason,
+  endAction,
+  acceptedPrompt,
+}: {
+  taskData: Message;
+  taskId?: string;
+  personaId: PersonaId;
+  stopReason: TaskEndedReason;
+  endAction: TaskEndAction;
+  acceptedPrompt: boolean;
+}): ConversationStopPayload {
+  return {
+    taskData,
+    taskId,
+    personaId,
+    error: STOP_REASON_MESSAGES[stopReason],
+    stopReason,
+    endAction,
+    taskStatus: "ended",
+    acceptedPrompt,
+  };
+}
+
+function getPlanBoundEndAction(planName?: PlanName | null): TaskEndAction {
+  const normalizedPlanName: PlanName = planName ?? "Lite";
+
+  return PLAN_LIMITS[normalizedPlanName].conversationsPerDay === -1
+    ? "contact_support"
+    : "upgrade_plan";
+}
+
+function createUsageTaskId(taskId?: string): string {
+  return taskId ?? `request_${crypto.randomUUID()}`;
+}
+
+function shouldStreamResponse(req: Request): boolean {
+  return (
+    req.headers.get("x-droplet-stream") === "1" ||
+    req.headers.get("accept")?.includes("text/event-stream") === true
+  );
+}
+
+function writeStreamEvent(
+  controller: ReadableStreamDefaultController<Uint8Array>,
+  event: OpenAIStreamEvent,
+) {
+  controller.enqueue(
+    streamEncoder.encode(`data: ${JSON.stringify(event)}\n\n`),
+  );
+}
+
+function emitBlockedChatUsageEvent({
+  userId,
+  taskId,
+  personaId,
+  planName,
+  stopReason,
+}: {
+  userId: string;
+  taskId?: string;
+  personaId: PersonaId;
+  planName?: PlanName | null;
+  stopReason: TaskEndedReason;
+}) {
+  const model = resolveModelForPlan(planName ?? "Lite", "chat");
+
+  if (!model) {
     return;
   }
 
-  await updateTask(taskId, {
-    messages: [...messages, taskData],
-    usage: taskUsage ?? 0,
+  emitUsageEvents({
+    userId,
+    taskId: createUsageTaskId(taskId),
     personaId,
-  } as UpdateTaskParams);
+    metrics: [
+      {
+        requestType: "chat",
+        model,
+        blocked: true,
+        blockedReason: stopReason,
+        latencyMs: 0,
+      },
+    ],
+  });
 }
 
-export async function POST(req: Request): Promise<NextResponse> {
+async function resolvePromptLimitEndAction({
+  userId,
+  planName,
+}: {
+  userId: string;
+  planName?: PlanName | null;
+}): Promise<TaskEndAction> {
+  const normalizedPlanName: PlanName = planName ?? "Lite";
+
+  if (PLAN_LIMITS[normalizedPlanName].promptsPerConversation === -1) {
+    return "contact_support";
+  }
+
+  const dailyConversationLimit = await checkDailyConversationLimit(
+    userId,
+    normalizedPlanName,
+  );
+
+  return dailyConversationLimit.remaining > 0
+    ? "start_new_conversation"
+    : "upgrade_plan";
+}
+
+function getLatestUserMessage(messages: Messages["messages"]): Message | null {
+  const latestMessage = messages.at(-1);
+
+  if (!latestMessage || latestMessage.role !== "user") {
+    return null;
+  }
+
+  return latestMessage;
+}
+
+async function persistConversationStop({
+  taskId,
+  personaId,
+  currentMessages,
+  stopReason,
+  endAction,
+  promptCountIncrement = 0,
+  estimatedBytes,
+}: {
+  taskId: string;
+  personaId: PersonaId;
+  currentMessages: Message[];
+  stopReason: TaskEndedReason;
+  endAction: TaskEndAction;
+  promptCountIncrement?: number;
+  estimatedBytes?: number;
+}): Promise<Message> {
+  const stopTaskData = createStopTaskData({ stopReason, endAction });
+  const messagesWithStop = [...currentMessages, stopTaskData];
+  const estimatedBytesWithStop = estimateConversationBytes(messagesWithStop);
+  const canPersistStopMessage =
+    estimatedBytesWithStop <= TASK_STORAGE_WARNING_BYTES;
+
+  const updatePayload: UpdateTaskParams = {
+    messages: canPersistStopMessage ? messagesWithStop : currentMessages,
+    personaId,
+    promptCountIncrement,
+    estimatedBytes:
+      typeof estimatedBytes === "number"
+        ? estimatedBytes
+        : estimateConversationBytes(currentMessages),
+    status: "ended",
+    endedAt: new Date(),
+    endedReason: stopReason,
+    endAction,
+  };
+
+  if (canPersistStopMessage) {
+    updatePayload.estimatedBytes = estimatedBytesWithStop;
+  }
+
+  await updateTask(taskId, updatePayload);
+
+  return stopTaskData;
+}
+
+async function finalizeAIResponse({
+  aiPayload,
+  taskId,
+  userId,
+  planName,
+  selectedPersonaId,
+  storedMessagesWithIncomingPrompt,
+  estimatedBytesWithIncomingPrompt,
+  isNewConversation,
+  userData,
+}: {
+  aiPayload: OpenAIResponsePayload;
+  taskId: string;
+  userId: string;
+  planName: PlanName;
+  selectedPersonaId: PersonaId;
+  storedMessagesWithIncomingPrompt: Message[];
+  estimatedBytesWithIncomingPrompt: number;
+  isNewConversation: boolean;
+  userData: UserData | null;
+}): Promise<{
+  status: number;
+  payload: ChatApiResponse;
+}> {
+  if (aiPayload.requestMetrics?.length) {
+    emitUsageEvents({
+      userId,
+      taskId,
+      personaId: selectedPersonaId,
+      metrics: aiPayload.requestMetrics,
+    });
+  }
+
+  if (aiPayload.errorType) {
+    return {
+      status: OPENAI_ERROR_STATUS_MAP[aiPayload.errorType],
+      payload: {
+        error: OPENAI_ERROR_MESSAGES[aiPayload.errorType],
+      },
+    };
+  }
+
+  const { taskData, taskUsage, generatedImage, generatedAudio } = aiPayload;
+
+  if (aiPayload.blockedReason === "media_limit_reached") {
+    const stopReason: TaskEndedReason = "media_limit_reached";
+    const endAction = getPlanBoundEndAction(planName);
+    const taskDataToPersist = await persistConversationStop({
+      taskId,
+      personaId: selectedPersonaId,
+      currentMessages: storedMessagesWithIncomingPrompt,
+      stopReason,
+      endAction,
+      promptCountIncrement: isNewConversation ? 0 : 1,
+      estimatedBytes: estimatedBytesWithIncomingPrompt,
+    });
+
+    return {
+      status: 403,
+      payload: createStopResponsePayload({
+        taskData: taskDataToPersist,
+        taskId,
+        personaId: selectedPersonaId,
+        stopReason,
+        endAction,
+        acceptedPrompt: true,
+      }),
+    };
+  }
+
+  if (!taskData) {
+    throw new Error("AI response payload is missing task data.");
+  }
+
+  const storedMessagesWithAssistant = [
+    ...storedMessagesWithIncomingPrompt,
+    taskData,
+  ];
+  const estimatedBytesWithAssistant = estimateConversationBytes(
+    storedMessagesWithAssistant,
+  );
+
+  if (estimatedBytesWithAssistant > TASK_STORAGE_WARNING_BYTES) {
+    const stopReason: TaskEndedReason = "conversation_storage_limit_reached";
+    const endAction: TaskEndAction = "start_new_conversation";
+    const taskDataToPersist = await persistConversationStop({
+      taskId,
+      personaId: selectedPersonaId,
+      currentMessages: storedMessagesWithIncomingPrompt,
+      stopReason,
+      endAction,
+      promptCountIncrement: isNewConversation ? 0 : 1,
+      estimatedBytes: estimatedBytesWithIncomingPrompt,
+    });
+
+    emitBlockedChatUsageEvent({
+      userId,
+      taskId,
+      personaId: selectedPersonaId,
+      planName,
+      stopReason,
+    });
+
+    return {
+      status: 403,
+      payload: createStopResponsePayload({
+        taskData: taskDataToPersist,
+        taskId,
+        personaId: selectedPersonaId,
+        stopReason,
+        endAction,
+        acceptedPrompt: true,
+      }),
+    };
+  }
+
+  await updateTask(taskId, {
+    messages: storedMessagesWithAssistant,
+    usage: taskUsage ?? 0,
+    personaId: selectedPersonaId,
+    promptCountIncrement: isNewConversation ? 0 : 1,
+    estimatedBytes: estimatedBytesWithAssistant,
+  });
+
+  const usageIncrementFields: Record<string, number> = {};
+  if (generatedImage) {
+    usageIncrementFields["plan.imageGenerations"] = 1;
+  }
+  if (generatedAudio) {
+    usageIncrementFields["plan.audioGenerations"] = 1;
+  }
+
+  if (Object.keys(usageIncrementFields).length > 0) {
+    const counterUpdate: {
+      $inc: Record<string, number>;
+      $set?: Record<string, Date>;
+    } = {
+      $inc: usageIncrementFields,
+    };
+
+    if (!userData?.plan?.usagePeriodStart) {
+      counterUpdate.$set = {
+        "plan.usagePeriodStart": new Date(),
+      };
+    }
+
+    await User.findOneAndUpdate({ clerkId: userId }, counterUpdate, {
+      strict: true,
+      upsert: false,
+    });
+  }
+
+  return {
+    status: 200,
+    payload: {
+      taskData,
+      taskId,
+      personaId: selectedPersonaId,
+      acceptedPrompt: true,
+    },
+  };
+}
+
+export async function POST(req: Request): Promise<Response> {
   try {
+    const streamingResponseRequested = shouldStreamResponse(req);
     const {
-      messages,
+      messages: requestMessages,
       taskId: providedTaskId,
       personaId,
     } = (await req.json()) as Messages;
@@ -94,6 +501,16 @@ export async function POST(req: Request): Promise<NextResponse> {
       return NextResponse.json(
         { error: "Authentication required." },
         { status: 401 },
+      );
+    }
+
+    const latestUserMessage = getLatestUserMessage(requestMessages);
+    if (!latestUserMessage) {
+      return NextResponse.json(
+        {
+          error: "A user message is required to continue the conversation.",
+        },
+        { status: 400 },
       );
     }
 
@@ -120,18 +537,110 @@ export async function POST(req: Request): Promise<NextResponse> {
       );
     }
 
-    // Verify user plan is active before calling OpenAI
     const userData = (await getUserById(userId)) as UserData | null;
-    const planName = userData?.plan?.name;
+    const planName = userData?.plan?.name ?? "Lite";
     const combinedMediaUsageCount =
       (userData?.plan?.imageGenerations ?? 0) +
       (userData?.plan?.audioGenerations ?? 0);
+    const persistedTask = providedTaskId
+      ? await getTaskByIdForUser({
+          taskId: providedTaskId,
+          userId,
+        })
+      : null;
+
+    if (providedTaskId && !persistedTask) {
+      return NextResponse.json(
+        { error: "Conversation not found." },
+        { status: 404 },
+      );
+    }
+
+    const selectedPersona = resolvePersonaForPlan({
+      personaId: persistedTask?.personaId ?? personaId,
+      planName,
+    });
+
+    if (persistedTask?.status === "ended") {
+      const stopReason =
+        persistedTask.endedReason ?? "conversation_storage_limit_reached";
+      const endAction = persistedTask.endAction ?? "start_new_conversation";
+      const taskData = createStopTaskData({
+        stopReason,
+        endAction,
+      });
+
+      return NextResponse.json(
+        createStopResponsePayload({
+          taskData,
+          taskId: persistedTask._id,
+          personaId: persistedTask.personaId,
+          stopReason,
+          endAction,
+          acceptedPrompt: false,
+        }),
+        { status: 409 },
+      );
+    }
 
     if (planName !== "Lite" && userData?.plan?.expiresOn) {
       const expiresOn = new Date(userData.plan.expiresOn);
+
       if (expiresOn < new Date()) {
+        const stopReason: TaskEndedReason = "billing_state_invalid";
+        const endAction: TaskEndAction = "upgrade_plan";
+
+        if (persistedTask) {
+          const taskData = await persistConversationStop({
+            taskId: persistedTask._id,
+            personaId: selectedPersona.id,
+            currentMessages: persistedTask.messages,
+            stopReason,
+            endAction,
+            estimatedBytes: persistedTask.estimatedBytes,
+          });
+
+          emitBlockedChatUsageEvent({
+            userId,
+            taskId: persistedTask._id,
+            personaId: selectedPersona.id,
+            planName,
+            stopReason,
+          });
+
+          return NextResponse.json(
+            createStopResponsePayload({
+              taskData,
+              taskId: persistedTask._id,
+              personaId: selectedPersona.id,
+              stopReason,
+              endAction,
+              acceptedPrompt: false,
+            }),
+            { status: 403 },
+          );
+        }
+
+        const taskData = createStopTaskData({
+          stopReason,
+          endAction,
+        });
+
+        emitBlockedChatUsageEvent({
+          userId,
+          personaId: selectedPersona.id,
+          planName,
+          stopReason,
+        });
+
         return NextResponse.json(
-          { error: "Your plan has expired. Please upgrade to continue." },
+          createStopResponsePayload({
+            taskData,
+            personaId: selectedPersona.id,
+            stopReason,
+            endAction,
+            acceptedPrompt: false,
+          }),
           { status: 403 },
         );
       }
@@ -185,124 +694,292 @@ export async function POST(req: Request): Promise<NextResponse> {
       audioLimitReached,
     };
 
-    const selectedPersona = resolvePersonaForPlan({
-      personaId,
-      planName,
-    });
+    if (!providedTaskId) {
+      const dailyConversationLimit = await checkDailyConversationLimit(
+        userId,
+        planName,
+      );
+
+      if (!dailyConversationLimit.allowed) {
+        const stopReason: TaskEndedReason = "daily_conversation_limit_reached";
+        const endAction = getPlanBoundEndAction(planName);
+        const taskData = createStopTaskData({
+          stopReason,
+          endAction,
+        });
+
+        emitBlockedChatUsageEvent({
+          userId,
+          personaId: selectedPersona.id,
+          planName,
+          stopReason,
+        });
+
+        return NextResponse.json(
+          createStopResponsePayload({
+            taskData,
+            personaId: selectedPersona.id,
+            stopReason,
+            endAction,
+            acceptedPrompt: false,
+          }),
+          { status: 403 },
+        );
+      }
+    }
+
+    const storedMessagesBeforePrompt = persistedTask?.messages ?? [];
+    const storedMessagesWithIncomingPrompt = providedTaskId
+      ? [...storedMessagesBeforePrompt, latestUserMessage]
+      : requestMessages;
+    const promptPayloadMessages = providedTaskId
+      ? filterAssistantMsg(storedMessagesWithIncomingPrompt)
+      : filterAssistantMsg(requestMessages);
+    const estimatedBytesWithIncomingPrompt = estimateConversationBytes(
+      storedMessagesWithIncomingPrompt,
+    );
+
+    if (
+      persistedTask &&
+      PLAN_LIMITS[planName].promptsPerConversation !== -1 &&
+      persistedTask.promptCount >= PLAN_LIMITS[planName].promptsPerConversation
+    ) {
+      const stopReason: TaskEndedReason = "prompt_limit_reached";
+      const endAction = await resolvePromptLimitEndAction({
+        userId,
+        planName,
+      });
+      const taskData = await persistConversationStop({
+        taskId: persistedTask._id,
+        personaId: selectedPersona.id,
+        currentMessages: persistedTask.messages,
+        stopReason,
+        endAction,
+        estimatedBytes: persistedTask.estimatedBytes,
+      });
+
+      emitBlockedChatUsageEvent({
+        userId,
+        taskId: persistedTask._id,
+        personaId: selectedPersona.id,
+        planName,
+        stopReason,
+      });
+
+      return NextResponse.json(
+        createStopResponsePayload({
+          taskData,
+          taskId: persistedTask._id,
+          personaId: selectedPersona.id,
+          stopReason,
+          endAction,
+          acceptedPrompt: false,
+        }),
+        { status: 403 },
+      );
+    }
+
+    if (estimatedBytesWithIncomingPrompt > TASK_STORAGE_WARNING_BYTES) {
+      const stopReason: TaskEndedReason = "conversation_storage_limit_reached";
+      const endAction: TaskEndAction = "start_new_conversation";
+
+      if (persistedTask) {
+        const taskData = await persistConversationStop({
+          taskId: persistedTask._id,
+          personaId: selectedPersona.id,
+          currentMessages: persistedTask.messages,
+          stopReason,
+          endAction,
+          estimatedBytes: persistedTask.estimatedBytes,
+        });
+
+        emitBlockedChatUsageEvent({
+          userId,
+          taskId: persistedTask._id,
+          personaId: selectedPersona.id,
+          planName,
+          stopReason,
+        });
+
+        return NextResponse.json(
+          createStopResponsePayload({
+            taskData,
+            taskId: persistedTask._id,
+            personaId: selectedPersona.id,
+            stopReason,
+            endAction,
+            acceptedPrompt: false,
+          }),
+          { status: 403 },
+        );
+      }
+
+      const taskData = createStopTaskData({
+        stopReason,
+        endAction,
+      });
+
+      emitBlockedChatUsageEvent({
+        userId,
+        personaId: selectedPersona.id,
+        planName,
+        stopReason,
+      });
+
+      return NextResponse.json(
+        createStopResponsePayload({
+          taskData,
+          personaId: selectedPersona.id,
+          stopReason,
+          endAction,
+          acceptedPrompt: false,
+        }),
+        { status: 403 },
+      );
+    }
 
     let taskId = providedTaskId;
+    const isNewConversation = !taskId;
 
     if (!taskId) {
-      const generatedTitle = await generateTitle(messages, selectedPersona.id);
-      const { title, usage } = JSON.parse(generatedTitle as string);
+      const generatedTitle = await generateTitle(
+        promptPayloadMessages,
+        planName,
+        selectedPersona.id,
+      );
+      const {
+        title,
+        usage,
+        requestMetric: titleRequestMetric,
+      } = JSON.parse(generatedTitle as string) as TitleResponsePayload;
 
       const newTask = await createTask({
         title,
-        messages,
+        messages: storedMessagesWithIncomingPrompt,
         usage,
         personaId: selectedPersona.id,
+        promptCount: 1,
+        estimatedBytes: estimatedBytesWithIncomingPrompt,
       });
 
       if (!newTask) {
         throw new Error("Task creation failed.");
       }
 
-      taskId = newTask._id;
+      const createdTaskId = newTask._id;
+
+      if (!createdTaskId) {
+        throw new Error("Created task is missing an identifier.");
+      }
+
+      taskId = createdTaskId;
+
+      if (titleRequestMetric) {
+        emitUsageEvents({
+          userId,
+          taskId: createdTaskId,
+          personaId: selectedPersona.id,
+          metrics: [titleRequestMetric],
+        });
+      }
     }
 
     if (!taskId) {
       throw new Error("Task ID is undefined.");
     }
 
+    if (streamingResponseRequested) {
+      const stream = new ReadableStream<Uint8Array>({
+        async start(controller) {
+          try {
+            writeStreamEvent(controller, {
+              type: "meta",
+              taskId,
+              personaId: selectedPersona.id,
+            });
+
+            const aiPayload = await generateStreamingResponse({
+              messages: promptPayloadMessages,
+              taskId,
+              userId,
+              personaId: selectedPersona.id,
+              planName,
+              entitlements: resolvedEntitlements,
+              abortSignal: req.signal,
+              onContentChunk: (delta, snapshot) => {
+                writeStreamEvent(controller, {
+                  type: "chunk",
+                  delta,
+                  snapshot,
+                });
+              },
+            });
+
+            const finalResult = await finalizeAIResponse({
+              aiPayload,
+              taskId,
+              userId,
+              planName,
+              selectedPersonaId: selectedPersona.id,
+              storedMessagesWithIncomingPrompt,
+              estimatedBytesWithIncomingPrompt,
+              isNewConversation,
+              userData,
+            });
+
+            if (finalResult.payload.error && !finalResult.payload.taskData) {
+              writeStreamEvent(controller, {
+                type: "error",
+                error: finalResult.payload.error,
+              });
+            } else {
+              writeStreamEvent(controller, {
+                type: "final",
+                payload: finalResult.payload,
+              });
+            }
+          } catch {
+            writeStreamEvent(controller, {
+              type: "error",
+              error: OPENAI_ERROR_MESSAGES.unknown,
+            });
+          } finally {
+            controller.close();
+          }
+        },
+      });
+
+      return new Response(stream, {
+        headers: STREAM_HEADERS,
+      });
+    }
+
     const aiResponse = await generateResponse({
-      messages,
+      messages: promptPayloadMessages,
       taskId,
       userId,
       personaId: selectedPersona.id,
+      planName,
       entitlements: resolvedEntitlements,
     });
     const aiPayload = JSON.parse(aiResponse as string) as OpenAIResponsePayload;
 
-    if (aiPayload.errorType) {
-      return NextResponse.json(
-        { error: OPENAI_ERROR_MESSAGES[aiPayload.errorType] },
-        { status: OPENAI_ERROR_STATUS_MAP[aiPayload.errorType] },
-      );
-    }
-
-    const { taskData, taskUsage, generatedImage, generatedAudio } = aiPayload;
-
-    if (
-      aiPayload.blockedReason &&
-      LIMIT_BLOCKED_REASONS.has(aiPayload.blockedReason)
-    ) {
-      await persistTaskAssistantMessage({
-        taskId,
-        messages,
-        taskData,
-        taskUsage,
-        personaId: selectedPersona.id,
-      });
-
-      return NextResponse.json(
-        {
-          error: getBlockedMessage(taskData),
-          taskData,
-          taskId,
-          personaId: selectedPersona.id,
-        },
-        { status: 403 },
-      );
-    }
-
-    if (!taskData) {
-      throw new Error("AI response payload is missing task data.");
-    }
-
-    await persistTaskAssistantMessage({
+    const finalResult = await finalizeAIResponse({
+      aiPayload,
       taskId,
-      messages,
-      taskData,
-      taskUsage,
-      personaId: selectedPersona.id,
+      userId,
+      planName,
+      selectedPersonaId: selectedPersona.id,
+      storedMessagesWithIncomingPrompt,
+      estimatedBytesWithIncomingPrompt,
+      isNewConversation,
+      userData,
     });
 
-    const usageIncrementFields: Record<string, number> = {};
-    if (generatedImage) {
-      usageIncrementFields["plan.imageGenerations"] = 1;
-    }
-    if (generatedAudio) {
-      usageIncrementFields["plan.audioGenerations"] = 1;
-    }
-
-    if (Object.keys(usageIncrementFields).length > 0) {
-      const counterUpdate: {
-        $inc: Record<string, number>;
-        $set?: Record<string, Date>;
-      } = {
-        $inc: usageIncrementFields,
-      };
-
-      if (!userData?.plan?.usagePeriodStart) {
-        counterUpdate.$set = {
-          "plan.usagePeriodStart": new Date(),
-        };
-      }
-
-      await User.findOneAndUpdate({ clerkId: userId }, counterUpdate, {
-        strict: true,
-        upsert: false,
-      });
-    }
-
-    return NextResponse.json({
-      taskData,
-      taskId,
-      personaId: selectedPersona.id,
+    return NextResponse.json(finalResult.payload, {
+      status: finalResult.status,
     });
-  } catch (error) {
-    console.error("OpenAI route error:", error);
-
+  } catch {
     return NextResponse.json(
       { error: OPENAI_ERROR_MESSAGES.unknown },
       { status: OPENAI_ERROR_STATUS_MAP.unknown },
