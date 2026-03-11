@@ -7,65 +7,11 @@
 
 ---
 
-## Phase 19: Streaming Implementation — CURRENT PRIORITY
-
-> Add streaming responses for real-time chat UX. This is the highest-priority remaining critical tech debt (TD-AI-01).
-> Ref: TD-AI-01
-
----
-
-### 19.1 Create streaming API route
-
-**Files:** `src/app/api/openai/route.tsx` (modify) or `src/app/api/openai/stream/route.tsx` (new)
-**Ref:** TD-AI-01
-
-**What to do:**
-
-- Implement streaming using OpenAI SDK's `openai.chat.completions.stream(...)`.
-- Return a `ReadableStream` or use the Next.js streaming response pattern.
-- Include all existing auth, rate limiting, plan expiry, and entitlement checks.
-- Emit usage event after stream completes.
-- Handle tool calls (image/audio generation) after stream completion.
-
-**Acceptance criteria:**
-
-- [ ] Streaming endpoint returns partial responses via SSE/ReadableStream
-- [ ] All auth and limit checks remain in place
-- [ ] Tool calls dispatched after stream completion
-- [ ] Usage event emitted after completion
-- [ ] Error handling works for streaming failures
-- [ ] `npx tsc --noEmit` passes
-
----
-
-### 19.2 Update chat UI to render streamed responses
-
-**Files:** `src/components/chat/chat-wrapper.tsx`, `src/components/chat/chat-body.tsx`
-**Ref:** TD-AI-01
-
-**What to do:**
-
-- Update `ChatWrapper` to consume streaming responses using `ReadableStream` reader or EventSource.
-- Render partial text incrementally in `ChatBody` as chunks arrive.
-- Replace "Thinking..." indicator with actual incremental text display.
-- Handle stream completion, errors, and tool-call follow-ups.
-- Maintain existing markdown rendering, code blocks, etc.
-
-**Acceptance criteria:**
-
-- [ ] Chat renders text incrementally as stream chunks arrive
-- [ ] "Thinking..." replaced with real progressive rendering
-- [ ] Message finalization works correctly after stream completion
-- [ ] Error states handled gracefully
-- [ ] Existing features (markdown, code blocks) still work
-- [ ] `npx tsc --noEmit` passes
-
----
-
-## Phase 20: Error Handling, File Cleanup & Webhook Hardening
+## Phase 20: Error Handling, File Cleanup & Webhook Hardening — CURRENT PRIORITY
 
 > Fix error handling, S3 lifecycle gaps, inline base64, audit gaps, and Clerk webhook deficiencies.
-> Ref: TD-API-06, TD-FILE-01, TD-FILE-02, TD-DB-15, TD-ACT-01, TD-WEBHOOK-01, TD-WEBHOOK-02
+> Ref: TD-API-06, TD-FILE-01, TD-FILE-02, TD-ACT-01, TD-WEBHOOK-02
+> Tasks 20.2, 20.3, 20.7 completed in Phase 19 delivery — see DONE.md.
 
 ---
 
@@ -89,46 +35,6 @@
 
 ---
 
-### 20.2 Add S3 cleanup on user deletion in Clerk webhook
-
-**File:** `src/app/api/webhooks/clerk/route.tsx`
-**Ref:** TD-FILE-01
-
-**What to do:**
-
-- In `user.deleted` handler, after MongoDB deletion, list and delete all S3 objects under `{clerkId}/` prefix.
-- Use batch deletion (`ListObjectsV2` + `DeleteObjects`).
-- Log errors but do not fail the webhook response.
-
-**Acceptance criteria:**
-
-- [ ] S3 objects cleaned up on user deletion
-- [ ] Uses batch deletion
-- [ ] Errors logged but webhook succeeds
-- [ ] `npx tsc --noEmit` passes
-
----
-
-### 20.3 Delete orphaned Task documents on user deletion
-
-**File:** `src/app/api/webhooks/clerk/route.tsx`
-**Ref:** TD-DB-15
-
-**What to do:**
-
-- In `user.deleted` handler, after deleting the User document and before S3 cleanup, delete all Task documents belonging to the deleted user.
-- Use `Task.deleteMany({ userId: clerkId })`.
-- Log errors but do not fail the webhook response.
-
-**Acceptance criteria:**
-
-- [ ] All Task documents for deleted user are removed
-- [ ] Deletion happens before S3 cleanup
-- [ ] Errors logged but webhook succeeds
-- [ ] `npx tsc --noEmit` passes
-
----
-
 ### 20.4 Add S3 cleanup on task deletion
 
 **File:** `src/lib/actions/task.actions.tsx`
@@ -149,7 +55,7 @@
 
 ---
 
-### 20.5 Refactor chat input to upload via /api/upload
+### 20.5 Refactor chat input to upload via /api/upload — AGENTS.md VIOLATION FIX
 
 **File:** `src/components/chat/chat-input.tsx`
 **Ref:** TD-FILE-02
@@ -159,6 +65,7 @@
 - Upload files via `/api/upload` FormData before building message content.
 - Replace inline base64 URLs with S3 URLs in message content.
 - Handle upload failure gracefully.
+- **This is the only remaining AGENTS.md rule violation** (no binary/base64 in MongoDB).
 
 **Acceptance criteria:**
 
@@ -187,31 +94,6 @@
 
 ---
 
-### 20.7 Add Task and S3 cleanup to Clerk webhook `user.deleted` handler
-
-**File:** `src/app/api/webhooks/clerk/route.tsx`
-**Ref:** TD-WEBHOOK-01, TD-FILE-01, TD-DB-15
-
-**What to do:**
-
-- In the `user.deleted` handler, after deleting the User and Transaction documents, add:
-  1. `Task.deleteMany({ userId: clerkId })` to remove all orphaned conversations.
-  2. S3 batch deletion for all objects under the `{clerkId}/` prefix (use `ListObjectsV2` + `DeleteObjects`).
-- The admin action `removeUserByAdminAction` already does this correctly — port the same logic.
-- Wrap each cleanup step in try/catch — log errors but do not fail the webhook response.
-- **This is a privacy-critical fix**: without it, self-service Clerk account deletion orphans user data.
-
-**Acceptance criteria:**
-
-- [ ] `user.deleted` handler deletes all Tasks for the user
-- [ ] `user.deleted` handler deletes all S3 objects under user prefix
-- [ ] Each cleanup step has independent error handling
-- [ ] Webhook response still returns 200 even if cleanup partially fails
-- [ ] `npx tsc --noEmit` passes
-- [ ] `npm run test` passes
-
----
-
 ### 20.8 Add idempotency check to Clerk webhook handlers
 
 **File:** `src/app/api/webhooks/clerk/route.tsx`
@@ -219,7 +101,7 @@
 
 **What to do:**
 
-- For `user.created`: Before creating a User document, check if a User with that `clerkId` already exists. If yes, skip creation (Clerk may replay events).
+- For `user.created`: Before creating a User document, check if a User with that `clerkId` already exists. If yes, skip creation (Clerk may replay events). Without this, event replay will cause HTTP 500 due to `unique` constraint violation.
 - For `user.updated` and `user.deleted`: These are naturally idempotent (update/delete operations), but ensure they do not throw on missing documents.
 - The Stripe webhook already has idempotency via `Transaction.stripeId` check — follow the same pattern.
 
@@ -251,6 +133,40 @@
 - [ ] Only monthly pricing displayed
 - [ ] No yearly billing constants or logic remain in plans UI
 - [ ] `npx tsc --noEmit` passes
+- [ ] `npm run build` passes
+
+---
+
+### 20.10 Extract SUPPORT_EMAIL to shared constant
+
+**Files:** `src/app/api/openai/route.tsx`, `src/components/chat/chat-body.tsx`, new `src/constants/support.ts`
+
+**What to do:**
+
+- Create a `SUPPORT_EMAIL` constant in `src/constants/support.ts`.
+- Replace the duplicated `SUPPORT_EMAIL` strings in `route.tsx` and `chat-body.tsx` with the shared import.
+
+**Acceptance criteria:**
+
+- [ ] Single source of truth for support email
+- [ ] Both files import from shared constant
+- [ ] `npx tsc --noEmit` passes
+
+---
+
+### 20.11 Clean up orphan directories
+
+**Files:** `src/app/(chat)/dashboard/`, `src/app/(public)/pricing/`
+
+**What to do:**
+
+- Remove empty orphan directories left over from Phase 17 route restructure.
+- Verify no imports or references point to these paths.
+
+**Acceptance criteria:**
+
+- [ ] Orphan directories removed
+- [ ] No broken imports
 - [ ] `npm run build` passes
 
 ---
@@ -385,6 +301,25 @@
 
 ---
 
+### 22.5 Expand streaming test coverage
+
+**File:** `tests/unit/generate-streaming-response.test.ts`
+
+**What to do:**
+
+- Current test file has only 1 test case. The streaming helper is a critical path.
+- Add tests for: error path (OpenAI failure during stream), tool call handling after stream, abort signal propagation, empty response handling.
+
+**Acceptance criteria:**
+
+- [ ] Error path tested (OpenAI API error during stream)
+- [ ] Tool call routing tested after stream completion
+- [ ] Abort signal test (request cancelled mid-stream)
+- [ ] Empty/null response handled
+- [ ] All tests pass
+
+---
+
 ## Phase 23: Resilience & Deferred Items
 
 > Lower priority. Not blocking v1 launch but important for production hardening.
@@ -393,8 +328,9 @@
 - [ ] **23.2** Implement Stripe subscription mode (auto-renewal) — Ref: TD-PLAN-01
 - [ ] **23.3** Add video generation support for Premium — Ref: TD-AI-08
 - [ ] **23.4** Verify all admin server actions emit audit log entries
+- [ ] **23.5** Add `X-Accel-Buffering: no` to streaming response headers for reverse proxy compatibility
 
 ---
 
 > **Completed phases** are archived in [`DONE.md`](DONE.md).
-> Phases 1–9, 13–17 are complete. Phase 10–12 superseded (see DONE.md for mapping).
+> Phases 1–9, 13–19 are complete. Phase 10–12 superseded (see DONE.md for mapping).

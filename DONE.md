@@ -5,7 +5,30 @@
 
 ---
 
-## Phase 15: Entitlement Engine & Usage Enforcement — COMPLETED
+## Phase 19: Streaming Implementation — COMPLETED
+
+- [x] **19.1** Create streaming API route (`generateStreamingResponse()` in `generateResponse.tsx`, SSE branch in `/api/openai` with `meta`, `chunk`, `final`, `error` events)
+- [x] **19.2** Update chat UI to render streamed responses (`chat-wrapper.tsx` consumes SSE via `ReadableStream.getReader()`, progressive text rendering, JSON fallback for non-streaming clients)
+
+Resolved: TD-AI-01, TD-API-07. Streaming works end-to-end. All auth/limit checks preserved before stream. Legacy non-streaming path intact. Final task persistence and usage event emission happen after stream completion. Manually verified via Playwright MCP browser session. All gates green.
+
+**Files changed:** `src/app/api/openai/route.tsx`, `src/lib/utils/openai/generateResponse.tsx`, `src/components/chat/chat-wrapper.tsx`, `tests/unit/generate-streaming-response.test.ts`, `tests/unit/openai-route.test.ts`, `tests/unit/chat-wrapper.test.tsx`
+
+---
+
+## Phase 20 (Partial): Webhook Privacy Fix — COMPLETED
+
+- [x] **20.7** Add Task and S3 cleanup to Clerk webhook `user.deleted` handler (Task.deleteMany + deleteS3Prefix with isolated error handling per cleanup step)
+
+Tasks 20.2 (S3 cleanup on user deletion) and 20.3 (orphaned Task deletion) were merged into 20.7 delivery — all three resolved together.
+
+Resolved: TD-DB-15, TD-WEBHOOK-01, TD-FILE-01 (Clerk webhook portion). Each cleanup step has independent try/catch; webhook always returns 200 even on partial failure. `process.stderr.write()` for error logging (AGENTS.md compliant).
+
+**Files changed:** `src/app/api/webhooks/clerk/route.tsx`, `src/lib/utils/aws/delete-s3-prefix.ts`, `tests/unit/clerk-webhook-route.test.ts`
+
+---
+
+## Phase 18: Public Pages & Navigation — COMPLETED
 
 - [x] **15.1** Build daily conversation limit check utility (`checkDailyConversationLimit` in `check-daily-conversations.ts`)
 - [x] **15.2** Add prompt count tracking to conversation flow (`promptCount` init/increment via `$inc` in `task.actions.tsx`)

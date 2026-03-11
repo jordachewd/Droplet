@@ -9,6 +9,7 @@ Built with Next.js 16, React 19, TypeScript, Tailwind CSS v4.2, Clerk, Stripe, M
 - **9 AI Personas** — each with distinct personality, system prompt, and domain expertise
 - **Multi-modal AI** — text chat, image generation, audio generation
 - **Plan-aware AI model selection** — cheapest model for Lite, gpt-5.2-pro for Pro, gpt-5.4-pro for Premium via central policy resolver
+- **Streaming responses** — real-time incremental chat rendering via SSE with progressive text display
 - **Usage event logging** — per-request cost tracking, latency measurement, and blocked-request recording
 - **Conversation history** — persist, resume, and manage conversations
 - **Three subscription tiers:**
@@ -22,9 +23,9 @@ Built with Next.js 16, React 19, TypeScript, Tailwind CSS v4.2, Clerk, Stripe, M
 
 ### Planned (In Development)
 
-- **Streaming responses** — real-time incremental chat rendering
 - **Video generation** — Premium plan exclusive
 - **Prompt optimization** — per-persona, per-model prompt tuning
+- **Retry/backoff** — resilient OpenAI request handling
 
 ## Tech Stack
 

@@ -339,7 +339,8 @@ Purpose: Request-level usage logging for cost tracking and admin analytics.
 - Uses tool calling for media generation dispatch
 - Emits `UsageEvent` for every request
 - Error classification: Maps OpenAI APIError to structured types
-- **Target**: Streaming responses via SSE
+- **Implemented**: Streaming responses via SSE (`text/event-stream`) with `meta`, `chunk`, `final`, `error` events
+- Non-streaming JSON fallback preserved for backward compatibility
 
 ### 7.2 POST /api/upload
 
@@ -363,7 +364,8 @@ Purpose: Request-level usage logging for cost tracking and admin analytics.
 
 - Auth: Svix signature verification
 - Handles: `user.created`, `user.updated`, `user.deleted`
-- On `user.deleted`: cleans up S3 objects under user prefix
+- On `user.deleted`: deletes User, Transaction, and Task documents; cleans up S3 objects under user prefix
+- Each cleanup step has independent error handling — partial failure does not break webhook response
 
 ### 7.6 POST /api/webhooks/stripe
 
@@ -376,7 +378,7 @@ Purpose: Request-level usage logging for cost tracking and admin analytics.
 
 - **TD-API-01**: In-memory rate limiter.
 - **TD-API-06**: handleError loses stack traces.
-- **TD-API-07**: No streaming implementation.
+- ~~**TD-API-07**: No streaming implementation~~ — **Resolved** in Phase 19.
 
 ---
 
@@ -409,13 +411,16 @@ Resolved via `ai-model-policy.ts` — no hardcoded model names. Policy maps plan
 
 Central resolver implemented in `src/lib/utils/ai-model-policy.ts`. `resolveModelForPlan(planName, requestType)` used by all OpenAI utilities.
 
-### Streaming (Target)
+### Streaming (Implemented)
 
-Server-side streaming via OpenAI SDK. Client renders partial responses incrementally.
+Server-side streaming via `generateStreamingResponse()` in `src/lib/utils/openai/generateResponse.tsx`.
+Route streams via SSE events (`meta`, `chunk`, `final`, `error`) in `/api/openai`.
+Client consumes via `ReadableStream.getReader()` in `chat-wrapper.tsx` with JSON fallback for non-streaming clients.
+All auth/limit checks execute before streaming begins. Final task persistence and usage event emission happen after stream completion.
 
 ### OpenAI Technical Debt
 
-- **TD-AI-01**: No streaming — must implement.
+- ~~**TD-AI-01**: No streaming~~ — **Resolved** in Phase 19 via `generateStreamingResponse()` + SSE events.
 - ~~**TD-AI-03**: No per-user cost tracking~~ — **Resolved** in Phase 16 via `UsageEvent` + `usage-event-utils.ts`.
 - **TD-AI-06**: No retry/backoff for transient failures.
 - ~~**TD-AI-07**: Models hardcoded~~ — **Resolved** in Phase 16 via `ai-model-policy.ts`.
@@ -428,8 +433,8 @@ Server-side streaming via OpenAI SDK. Client renders partial responses increment
 
 ### Technical Debt
 
-- **TD-FILE-01**: No S3 cleanup on user/task deletion.
-- **TD-FILE-02**: Some flows send file as inline base64.
+- ~~**TD-FILE-01**: No S3 cleanup on user/task deletion~~ — **Partially resolved**: Clerk webhook `user.deleted` now cleans up S3 objects (Phase 19). Admin `removeUserByAdminAction` already works. **Remaining**: `deleteTask` action does not clean up S3 objects for deleted conversations.
+- **TD-FILE-02**: Some flows send file as inline base64 (chat-input.tsx). Must refactor to upload via `/api/upload`.
 
 ---
 
@@ -516,9 +521,10 @@ Server-side streaming via OpenAI SDK. Client renders partial responses increment
 
 ## 13. Testing
 
-- **Unit tests**: 48 suites, 205 tests (Vitest)
+- **Unit tests**: 49+ suites, 210+ tests (Vitest) — includes streaming, webhook, and chat-wrapper tests
 - **E2E tests**: 7 Playwright specs, 77 tests (11 test functions × 7 browser projects)
 - **Coverage**: Not configured (planned)
+- **Gap**: No dedicated E2E spec for streamed chunk-by-chunk rendering (manually verified via Playwright MCP)
 
 ---
 
@@ -546,11 +552,9 @@ Server-side streaming via OpenAI SDK. Client renders partial responses increment
 
 ## 15. Technical Debt Summary
 
-### Active — Critical (Must Fix Before v1)
+### Active — No Critical TDs Remaining
 
-| ID            | Area     | Description                                              | Severity |
-| ------------- | -------- | -------------------------------------------------------- | -------- |
-| TD-AI-01      | OpenAI   | No streaming                                             | High     |
+All critical-severity technical debt resolved. Remaining items are medium or low priority.
 
 ### Active — Medium Priority
 
@@ -561,12 +565,10 @@ Server-side streaming via OpenAI SDK. Client renders partial responses increment
 | TD-AI-06      | OpenAI   | No retry/backoff                                         | Medium   |
 | TD-AI-08      | OpenAI   | No video generation (Premium)                            | Medium   |
 | TD-AI-09      | OpenAI   | Prompts not optimized                                    | Medium   |
-| TD-FILE-01    | Files    | S3 cleanup incomplete (admin works, Clerk webhook does not) | Medium |
+| TD-FILE-01    | Files    | S3 cleanup on task deletion not implemented (Clerk webhook resolved) | Medium |
 | TD-FILE-02    | Files    | Inline base64 in chat-input.tsx (violates no-binary rule) | Medium  |
-| TD-DB-15      | Database | Clerk webhook user.deleted doesn't clean up Tasks        | Medium   |
 | TD-ACT-01     | Actions  | deleteAllTransactions has no audit trail                 | Medium   |
-| TD-WEBHOOK-01 | Webhooks | Clerk user.deleted webhook orphans S3 objects            | Medium   |
-| TD-WEBHOOK-02 | Webhooks | Clerk webhook has no idempotency check for event replay  | Low      |
+| TD-WEBHOOK-02 | Webhooks | Clerk webhook has no idempotency check for event replay  | Medium   |
 
 ### Active — Low Priority
 
@@ -620,3 +622,7 @@ Server-side streaming via OpenAI SDK. Client renders partial responses increment
 | TD-UI-12     | Footer links non-functional (spans)      | Resolved in Phase 18 — `<Link>` to `/privacy` and `/terms`                 |
 | TD-UI-13     | Header nav missing /about, /faqs links   | Resolved in Phase 18 — Header has About, Personas, Plans, FAQs links       |
 | TD-LOG-01    | console.error in production code (15)    | Resolved in Phase 17-C — zero console.error/log/warn in `src/`             |
+| TD-AI-01     | No streaming                             | Resolved in Phase 19 — `generateStreamingResponse()` + SSE events          |
+| TD-API-07    | No streaming implementation              | Resolved in Phase 19 — streaming branch in `/api/openai` route             |
+| TD-DB-15     | Clerk user.deleted doesn't clean Tasks   | Resolved in Phase 19 — `Task.deleteMany` in Clerk webhook handler          |
+| TD-WEBHOOK-01| Clerk user.deleted orphans S3 objects    | Resolved in Phase 19 — `deleteS3Prefix` in Clerk webhook handler           |
