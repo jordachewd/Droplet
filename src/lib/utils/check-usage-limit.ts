@@ -8,7 +8,6 @@ export type UsageLimitType = "images" | "audio";
 interface CheckUsageLimitParams {
   planName?: PlanName | null;
   currentCount?: number | null;
-  combinedCount?: number | null;
   limitType: UsageLimitType;
   usagePeriodStart?: Date | string | null;
   now?: Date;
@@ -25,13 +24,10 @@ interface UsageLimitResult {
 export function checkUsageLimit({
   planName,
   currentCount,
-  combinedCount,
   limitType,
   usagePeriodStart,
   now = new Date(),
 }: CheckUsageLimitParams): UsageLimitResult {
-  void combinedCount;
-
   const normalizedPlanName: PlanName = planName ?? "Lite";
   const limit = PLAN_LIMITS[normalizedPlanName][limitType];
 

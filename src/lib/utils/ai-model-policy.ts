@@ -310,10 +310,9 @@ export const MODEL_POLICY_MATRIX = {
           notes: "Preview and draft video renders use sora-2.",
         },
         final: {
-          model: "sora-2-pro",
+          model: "sora-2",
           fallbackModel: "sora-2",
-          notes:
-            "Use sora-2-pro only for final renders with explicit premium intent.",
+          notes: "sora-2-pro requires explicitPremium — see resolver override.",
         },
       },
     },

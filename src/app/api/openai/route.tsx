@@ -555,9 +555,6 @@ export async function POST(req: Request): Promise<Response> {
 
     const userData = (await getUserById(userId)) as UserData | null;
     const planName = userData?.plan?.name ?? "Lite";
-    const combinedMediaUsageCount =
-      (userData?.plan?.imageGenerations ?? 0) +
-      (userData?.plan?.audioGenerations ?? 0);
     const persistedTask = providedTaskId
       ? await getTaskByIdForUser({
           taskId: providedTaskId,
@@ -666,14 +663,12 @@ export async function POST(req: Request): Promise<Response> {
     const imageUsage = checkUsageLimit({
       planName,
       currentCount: userData?.plan?.imageGenerations,
-      combinedCount: combinedMediaUsageCount,
       limitType: "images",
       usagePeriodStart: userData?.plan?.usagePeriodStart,
     });
     const audioUsage = checkUsageLimit({
       planName,
       currentCount: userData?.plan?.audioGenerations,
-      combinedCount: combinedMediaUsageCount,
       limitType: "audio",
       usagePeriodStart: userData?.plan?.usagePeriodStart,
     });

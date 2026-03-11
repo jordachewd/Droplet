@@ -248,6 +248,12 @@ describe("ai-model-policy", () => {
 
   it("routes premium video to sora-2 by default and sora-2-pro only for explicit final renders", () => {
     expect(
+      MODEL_POLICY_MATRIX.premium.video_generation.taskClasses.final,
+    ).toMatchObject({
+      model: "sora-2",
+      notes: expect.stringContaining("explicitPremium"),
+    });
+    expect(
       resolveModelPolicy({
         plan: "premium",
         feature: "video_generation",

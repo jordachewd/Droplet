@@ -78,8 +78,9 @@ describe("generateResponse", () => {
     expect(openAiClient.chat.completions.create).toHaveBeenCalledWith(
       expect.objectContaining({
         model: "gpt-4.1",
-        max_completion_tokens: 1_400,
+        max_completion_tokens: 1_100,
       }),
+      { maxRetries: 0 },
     );
     expect(payload.taskData).toBeTruthy();
     expect(payload.taskData.content[0].text).toContain("concise plan");
@@ -267,9 +268,9 @@ describe("generateResponse", () => {
     expect(payload.taskData.content[0].text).toContain("not enabled");
   });
 
-  it("classifies OpenAI 429 errors as rate_limit", async () => {
+  it("fails immediately for non-retryable OpenAI 400 errors", async () => {
     vi.mocked(openAiClient.chat.completions.create).mockRejectedValue(
-      new APIError(429, {}, "Too many requests", new Headers()),
+      new APIError(400, {}, "Bad request", new Headers()),
     );
 
     const result = await generateResponse({
@@ -288,6 +289,7 @@ describe("generateResponse", () => {
     });
 
     const payload = JSON.parse(result as string);
-    expect(payload.errorType).toBe("rate_limit");
+    expect(payload.errorType).toBe("unknown");
+    expect(openAiClient.chat.completions.create).toHaveBeenCalledTimes(1);
   });
 });

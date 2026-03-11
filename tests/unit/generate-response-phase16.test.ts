@@ -82,8 +82,9 @@ describe("generateResponse phase16", () => {
     ).toHaveBeenCalledWith(
       expect.objectContaining({
         model: "gpt-4.1",
-        max_completion_tokens: 1_400,
+        max_completion_tokens: 1_100,
       }),
+      { maxRetries: 0 },
     );
     expect(payload.taskData.content[0].text).toContain("concise plan");
     expect(payload.taskUsage).toBe(24);
@@ -307,9 +308,9 @@ describe("generateResponse phase16", () => {
     );
   });
 
-  it("classifies OpenAI 429 errors as rate_limit", async () => {
+  it("fails immediately for non-retryable OpenAI 401 errors", async () => {
     vi.mocked(openAiClient.chat.completions.create).mockRejectedValue(
-      new APIError(429, {}, "Too many requests", new Headers()),
+      new APIError(401, {}, "Unauthorized", new Headers()),
     );
 
     const result = await generateResponse({
@@ -328,6 +329,7 @@ describe("generateResponse phase16", () => {
     });
     const payload = JSON.parse(result as string);
 
-    expect(payload.errorType).toBe("rate_limit");
+    expect(payload.errorType).toBe("unknown");
+    expect(openAiClient.chat.completions.create).toHaveBeenCalledTimes(1);
   });
 });

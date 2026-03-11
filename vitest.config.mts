@@ -10,6 +10,10 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": resolve(process.cwd(), "src"),
+      "server-only": resolve(
+        process.cwd(),
+        "tests/unit/test-support/server-only.ts",
+      ),
     },
   },
 });
