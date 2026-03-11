@@ -5,6 +5,20 @@
 
 ---
 
+## Phase 15: Entitlement Engine & Usage Enforcement — COMPLETED
+
+- [x] **15.1** Build daily conversation limit check utility (`checkDailyConversationLimit` in `check-daily-conversations.ts`)
+- [x] **15.2** Add prompt count tracking to conversation flow (`promptCount` init/increment via `$inc` in `task.actions.tsx`)
+- [x] **15.3** Integrate daily conversation limit into `/api/openai` (new conversations only, unlimited plans bypass)
+- [x] **15.4** Add conversation stop handling to chat UI (stop reason messages, action links, input disabled for ended conversations)
+- [x] **15.5** Add message count / document size guard for Task (`estimatedBytes` tracking, 12MB threshold, pre/post-response checks)
+
+Resolved: TD-PLAN-07, TD-PLAN-08, TD-DB-05. 46 test suites, 188 tests passing, 58 E2E tests passing. Lint, typecheck, build all green.
+
+**Remaining gap**: UsageEvent emission not implemented (TD-AI-03) — elevated to Phase 16.
+
+---
+
 ## Phase 14: Data Model Foundation — COMPLETED
 
 - [x] **14.1** Add conversation lifecycle fields to Task model (promptCount, mediaCount, estimatedBytes, status, endedAt, endedReason, endAction)

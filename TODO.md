@@ -7,134 +7,14 @@
 
 ---
 
-## Phase 15: Entitlement Engine & Usage Enforcement — CURRENT PRIORITY
-
-> Build the canonical entitlement resolver and usage enforcement system.
-> **This is the #1 gap between data structures and a working product.** Fields and models exist but nothing is wired.
+> **Known issue**: `/plans` and `/profile` pages appear broken when navigating from the admin/dashboard area. This is NOT a bug — it is caused by route fragmentation (TD-AUTH-01, TD-UI-09). These pages exist at `(account)/plans` and `(account)/profile`, outside the `/app` namespace. Sidebar and nav link to `/plans` and `/profile` instead of `/app/plans` and `/app/profile`. The admin panel itself is a single stats page at `(chat)/dashboard`, not a real admin layout. **Phase 17 resolves this completely.**
 
 ---
 
-### 15.1 Build daily conversation limit check utility
+## Phase 16: AI Model Policy & Usage Logging — CURRENT PRIORITY
 
-**Files (new):** `src/lib/utils/check-daily-conversations.ts`
-**Ref:** TD-PLAN-07
-
-**What to do:**
-
-- Create utility function `checkDailyConversationLimit(userId: string, planName: PlanName)`.
-- Query `Task.countDocuments({ userId, createdAt: { $gte: startOfToday } })` to get today's conversation count.
-- Compare against `PLAN_LIMITS[planName].conversationsPerDay`.
-- Return `{ allowed: boolean, limit: number, used: number, remaining: number }`.
-- Handle unlimited plans (`-1`) by always returning `allowed: true`.
-
-**Acceptance Criteria:**
-
-- [ ] Function correctly counts today's conversations for the user
-- [ ] Returns `allowed: false` when daily limit is reached
-- [ ] Unlimited plans (`-1`) always return `allowed: true`
-- [ ] TypeScript compiles (`npx tsc --noEmit`)
-
----
-
-### 15.2 Add prompt count tracking to conversation flow
-
-**Files:** `src/app/api/openai/route.tsx`, `src/lib/actions/task.actions.tsx`
-**Ref:** TD-PLAN-08
-
-**What to do:**
-
-- In the `/api/openai` route, after resolving the task, check `task.promptCount` against `PLAN_LIMITS[planName].promptsPerConversation`.
-- If limit reached, return a structured response with `stopReason: "prompt_limit_reached"` and appropriate `endAction`.
-- When creating or updating a task with a new user message, increment `promptCount` with `$inc: { promptCount: 1 }`.
-- In `createTask`, initialize `promptCount: 1` (the first user message).
-- In `updateTask`, add `$inc: { promptCount: 1 }` when the update includes a user message.
-
-**Acceptance Criteria:**
-
-- [ ] `promptCount` is incremented on every user message
-- [ ] `/api/openai` checks prompt count against plan limit before processing
-- [ ] Conversation is stopped with `prompt_limit_reached` reason when limit hit
-- [ ] User receives a clear message about the limit with next-action instruction
-- [ ] Unlimited plans (`-1`) bypass the check
-- [ ] TypeScript compiles (`npx tsc --noEmit`)
-- [ ] All existing tests pass
-
----
-
-### 15.3 Integrate daily conversation limit into /api/openai
-
-**Files:** `src/app/api/openai/route.tsx`
-**Ref:** TD-PLAN-07
-
-**What to do:**
-
-- Import `checkDailyConversationLimit` from the new utility.
-- When creating a NEW conversation (no `taskId` in request), call `checkDailyConversationLimit(userId, planName)`.
-- If `allowed === false`, return a structured response with `stopReason: "daily_conversation_limit_reached"` and `endAction: "upgrade_plan"` or `"contact_support"`.
-- Return appropriate HTTP status and user-friendly message.
-
-**Acceptance Criteria:**
-
-- [ ] New conversation creation is blocked when daily limit reached
-- [ ] Existing conversations are NOT blocked by daily limit (only new ones)
-- [ ] Response includes stop reason and next action
-- [ ] Unlimited plans bypass the check
-- [ ] TypeScript compiles (`npx tsc --noEmit`)
-- [ ] All existing tests pass
-
----
-
-### 15.4 Add conversation stop handling to chat UI
-
-**Files:** `src/components/chat/chat-wrapper.tsx`
-**Ref:** TD-PLAN-07, TD-PLAN-08
-
-**What to do:**
-
-- When the `/api/openai` response contains a `stopReason`, render a conversation-end message in the chat.
-- The message should display the stop reason in user-friendly language and the next action as a clickable link/button:
-  - `start_new_conversation` → link to `/app/new`
-  - `upgrade_plan` → link to `/app/plans` (or `/plans` until route migration)
-  - `contact_support` → display support email
-- Disable the chat input when the conversation is in `ended` status.
-- Show a distinct visual state for ended conversations.
-
-**Acceptance Criteria:**
-
-- [ ] Stop reason messages render in chat when conversation ends
-- [ ] Next-action links are clickable and go to correct routes
-- [ ] Chat input is disabled for ended conversations
-- [ ] Visual distinction between active and ended conversations
-- [ ] TypeScript compiles (`npx tsc --noEmit`)
-
----
-
-### 15.5 Add message count / document size guard for Task
-
-**Files:** `src/app/api/openai/route.tsx`
-**Ref:** TD-DB-05
-
-**What to do:**
-
-- Before adding a new message to a Task, estimate the current document size.
-- Use a conservative formula: count messages \* average message size estimate, or use `JSON.stringify(messages).length` as a rough byte estimate.
-- If estimated size exceeds 12MB (leaving buffer before the 16MB MongoDB limit), stop the conversation with `stopReason: "conversation_storage_limit_reached"`.
-- Update `Task.estimatedBytes` after each message addition.
-
-**Acceptance Criteria:**
-
-- [ ] Document size is estimated before adding messages
-- [ ] Conversation stops when size approaches MongoDB document limit
-- [ ] `estimatedBytes` field is updated on Task document
-- [ ] Stop reason is `conversation_storage_limit_reached`
-- [ ] TypeScript compiles (`npx tsc --noEmit`)
-- [ ] All existing tests pass
-
----
-
-## Phase 16: AI Model Policy Layer
-
-> Make AI model selection plan-aware instead of hardcoded.
+> Make AI model selection plan-aware instead of hardcoded. Add UsageEvent logging to every AI request.
+> **TD-AI-07 and TD-AI-03 are the highest-priority technical debts remaining.** Models are hardcoded, and no request-level usage logging exists. Both must be resolved before admin analytics or cost governance can work.
 
 ---
 
@@ -202,6 +82,50 @@
 - [ ] Model selection is plan-aware for all generation types
 - [ ] TypeScript compiles (`npx tsc --noEmit`)
 - [ ] All existing tests pass (update mocks as needed)
+
+---
+
+### 16.4 Emit UsageEvent for every AI request in /api/openai
+
+**Files:** `src/app/api/openai/route.tsx`
+**Ref:** TD-AI-03, SPEC.md Section 7.1
+
+**What to do:**
+
+- Import the `UsageEvent` model (created in Phase 14.2).
+- After every AI call (chat, title, image, audio), create a `UsageEvent` document with: `userId`, `taskId`, `personaId`, `model` (from policy resolver), `provider: "openai"`, `requestType` (chat/title/image/audio), `tokensIn`, `tokensOut` (from response usage if available), `estimatedCost` (calculate from token counts and model-specific rates), `latencyMs` (measure start-to-end for the AI call), `blocked: false`, `createdAt`.
+- When a request is blocked by a limit check, create a `UsageEvent` with `blocked: true` and `blockedReason` set to the stop reason code.
+- Use `UsageEvent.create()` — do NOT await it in the critical path. Use fire-and-forget pattern (`UsageEvent.create(...).catch(err => /* log silently */)`) to avoid slowing responses.
+
+**Acceptance Criteria:**
+
+- [ ] Every successful AI call creates a `UsageEvent` document
+- [ ] Every blocked request creates a `UsageEvent` with `blocked: true` and `blockedReason`
+- [ ] Fields match SPEC.md Section 6.4 schema
+- [ ] `latencyMs` measured for AI calls
+- [ ] `estimatedCost` calculated (even if approximate)
+- [ ] Event creation does not block the response
+- [ ] TypeScript compiles (`npx tsc --noEmit`)
+- [ ] All existing tests pass (mock `UsageEvent.create` in tests)
+
+---
+
+### 16.5 Add unit tests for AI model policy resolver
+
+**File (new):** `tests/unit/ai-model-policy.test.ts`
+
+**What to do:**
+
+- Test `resolveModelForPlan` returns correct model for every plan + request type combination.
+- Test Lite gets cheapest model, Pro gets `gpt-5.2-pro`, Premium gets `gpt-5.4-pro`.
+- Test video returns model only for Premium, returns `null` for other plans.
+- Test title generation uses `gpt-4o-mini` for all plans.
+
+**Acceptance Criteria:**
+
+- [ ] Tests cover all plan + request type combinations
+- [ ] Tests verify video restriction
+- [ ] All tests pass (`npm run test`)
 
 ---
 
@@ -1049,25 +973,29 @@
 
 ---
 
-### 22.3 Add unit tests for daily conversation limit
+### 22.3 Add unit tests for chat-body stop-state rendering
 
-**File (new):** `tests/unit/check-daily-conversations.test.ts`
+**File (new):** `tests/unit/chat-body.test.tsx`
 
 **What to do:**
 
-- Test limit enforcement for each plan tier.
-- Test unlimited plans bypass check.
-- Test date boundary behavior.
+- Test that `ChatBodyEndNotice` renders correct stop reason titles for each reason code.
+- Test that action links point to correct routes (`/app/new`, `/app/plans`, `mailto:`).
+- Test that the amber visual styling is applied for ended conversations.
+- Test `billing_state_invalid` stop reason rendering.
 
 **Acceptance Criteria:**
 
-- [ ] Tests cover all plan tiers
-- [ ] Tests verify unlimited plan bypass
+- [ ] Tests cover all stop reason titles
+- [ ] Tests verify action link routes
+- [ ] Tests verify visual distinction
 - [ ] All tests pass
 
 ---
 
 ### 22.4 Add unit tests for AI model policy
+
+> **Note:** If tests were already created in Phase 16.5, skip this task.
 
 **File (new):** `tests/unit/ai-model-policy.test.ts`
 
@@ -1112,11 +1040,9 @@
 - [ ] **23.1** Replace in-memory rate limiter with persistent store — Ref: TD-API-01
 - [ ] **23.2** Implement Stripe subscription mode (auto-renewal) — Ref: TD-PLAN-01
 - [ ] **23.3** Add video generation support for Premium — Ref: TD-AI-08
-- [ ] **23.4** Add per-user token/cost tracking via UsageEvent aggregation — Ref: TD-AI-03
-- [ ] **23.5** Update UsageEvent emission in all OpenAI util functions
-- [ ] **23.6** Add admin audit log emission in all admin server actions
+- [ ] **23.4** Add admin audit log emission in all admin server actions
 
 ---
 
 > **Completed phases** are archived in [`DONE.md`](DONE.md).
-> Phases 1–9, 13, 14 are complete. Phase 10–12 superseded (see DONE.md for mapping).
+> Phases 1–9, 13, 14, 15 are complete. Phase 10–12 superseded (see DONE.md for mapping).

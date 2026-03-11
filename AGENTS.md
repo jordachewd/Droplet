@@ -2,6 +2,7 @@
 
 > Read `ThePlan.md` for high-level strategic direction and milestone plan.
 > Read `SPEC.md` for the full application specification, data models, API surface, and known technical debt.
+> **Canonical spec file is `SPEC.md`** (not `SPECS.md`). Some agent config files reference `SPECS.md` — this is a naming error. Always use `SPEC.md`.
 > Read `TODO.md` for prioritized, actionable development tasks.
 > Read `DONE.md` for completed development phases (archive).
 
@@ -46,6 +47,8 @@ All six gates must pass.
 8. **Admin audit trail** — every admin mutation must log to `AdminAuditLog` model.
 
 ## Route Boundaries (Target)
+
+> **Current state**: Routes are fragmented. `/plans` and `/profile` are under `(account)` group (not `/app`). Admin is at `/dashboard` (not `/admin`). No `(admin)` route group exists yet. Phase 17 resolves this. Do not create admin features until Phase 17 route restructure is complete.
 
 | Area   | Namespace                                                                       | Protection                           |
 | ------ | ------------------------------------------------------------------------------- | ------------------------------------ |

@@ -168,12 +168,14 @@ Prompts must be versioned and kept separate from request handlers.
 ### Usage Limit Enforcement
 
 - Plan limits stored as constants in `PLAN_LIMITS`.
-- Daily conversation count tracked via `UsageEvent` model queries.
-- Per-conversation prompt count tracked on `Task.promptCount` field.
+- Daily conversation count tracked via `Task.countDocuments` queries on `createdAt` (uses compound index `{userId, createdAt}`).
+- Per-conversation prompt count tracked on `Task.promptCount` field (initialized on creation, incremented via `$inc`).
+- Conversation storage tracked via `Task.estimatedBytes` field (12MB threshold, 4MB buffer before MongoDB 16MB limit).
 - Media generation counters on User model plan subdoc.
-- `checkUsageLimit()` utility validates against plan limits.
-- `/api/openai` route checks all limits before making OpenAI calls.
-- When any limit is hit: conversation is stopped, stop reason is recorded, user receives next-action message.
+- `checkDailyConversationLimit()` utility validates daily quota per plan.
+- `/api/openai` route checks all limits before making OpenAI calls: daily limit (new conversations only), prompt limit, storage limit, media limit.
+- When any limit is hit: conversation is stopped with `taskStatus: "ended"`, stop reason is recorded on Task, user receives next-action message.
+- Unlimited plans (`-1` values in `PLAN_LIMITS`) always bypass limit checks.
 
 ### Conversation Stop Reasons
 
@@ -187,12 +189,7 @@ Prompts must be versioned and kept separate from request handlers.
 
 ### Plan Technical Debt
 
-- **TD-PLAN-04**: Lite still has 3-day expiry in code — **must be removed**.
-- **TD-PLAN-05**: Prices still $29/$69 in code — **must update to $19/$39**.
-- **TD-PLAN-06**: Lite restricts 2 companion personas — **must allow all 9**.
-- **TD-PLAN-07**: No daily conversation limit enforcement — **must implement**.
-- **TD-PLAN-08**: No per-conversation prompt limit — **must implement**.
-- **TD-PLAN-09**: Plan descriptions outdated (trial language, old features) — **must update**.
+- **TD-PLAN-01**: No recurring subscriptions (deferred v1).
 - **TD-PLAN-01**: No recurring subscriptions (deferred v1).
 
 ---
@@ -514,8 +511,8 @@ Server-side streaming via OpenAI SDK. Client renders partial responses increment
 
 ## 13. Testing
 
-- **Unit tests**: 41 suites, 184 tests (Vitest)
-- **E2E tests**: 3 Playwright specs
+- **Unit tests**: 46 suites, 188 tests (Vitest)
+- **E2E tests**: 3 Playwright specs, 58 tests
 - **Coverage**: Not configured (planned)
 
 ---
@@ -548,11 +545,9 @@ Server-side streaming via OpenAI SDK. Client renders partial responses increment
 
 | ID         | Area     | Description                                  | Severity |
 | ---------- | -------- | -------------------------------------------- | -------- |
-| TD-PLAN-07 | Billing  | No daily conversation limit enforcement      | Critical |
-| TD-PLAN-08 | Billing  | No per-conversation prompt limit enforcement | Critical |
 | TD-AI-01   | OpenAI   | No streaming                                 | High     |
 | TD-AI-07   | OpenAI   | Models hardcoded — need plan-aware selection | High     |
-| TD-DB-05   | Database | Task messages unbounded (16MB risk)          | High     |
+| TD-AI-03   | OpenAI   | No per-user cost tracking (UsageEvent)       | High     |
 | TD-AUTH-01 | Auth     | Proxy protects old routes                    | High     |
 | TD-AUTH-02 | Auth     | Admin at /dashboard not /admin               | High     |
 | TD-UI-08   | UI       | Missing 5 public pages                       | High     |
@@ -564,7 +559,6 @@ Server-side streaming via OpenAI SDK. Client renders partial responses increment
 | ---------- | -------- | ---------------------------------------- | -------- |
 | TD-API-01  | API      | In-memory rate limiter                   | Medium   |
 | TD-API-06  | API      | handleError loses stack traces           | Medium   |
-| TD-AI-03   | OpenAI   | No per-user cost tracking                | Medium   |
 | TD-AI-06   | OpenAI   | No retry/backoff                         | Medium   |
 | TD-AI-08   | OpenAI   | No video generation (Premium)            | Medium   |
 | TD-AI-09   | OpenAI   | Prompts not optimized                    | Medium   |
@@ -611,3 +605,6 @@ Server-side streaming via OpenAI SDK. Client renders partial responses increment
 | TD-DB-14     | AdminAuditLog model missing           | Created in Phase 14                             |
 | TD-UI-02     | No loading skeletons                  | Added                                           |
 | TD-UI-06     | No conversation delete UI             | Added                                           |
+| TD-PLAN-07   | No daily conversation limit           | Implemented in Phase 15 via `checkDailyConversationLimit` + route enforcement |
+| TD-PLAN-08   | No per-conversation prompt limit      | Implemented in Phase 15 via `Task.promptCount` + route enforcement |
+| TD-DB-05     | Task messages unbounded (16MB risk)   | Implemented in Phase 15 via `estimatedBytes` tracking + 12MB threshold guard |

@@ -22,6 +22,8 @@ Built with Next.js 16, React 19, TypeScript, Tailwind CSS v4.2, Clerk, Stripe, M
 - **Video generation** — Premium plan exclusive
 - **Admin dashboard** — user management, transaction oversight, usage analytics, app settings, website content management
 - **Public pages** — About, FAQs, Privacy Policy, Cookie Policy, Terms & Conditions
+- **AI model policy** — plan-aware model selection (cheapest for Lite, gpt-5.2-pro for Pro, gpt-5.4-pro for Premium)
+- **Usage event logging** — per-request cost tracking and admin analytics
 
 ## Tech Stack
 
@@ -94,7 +96,3 @@ All six gates must pass before every commit.
 ## License
 
 Private — all rights reserved.
-
-## Support
-
-Contact: office@jordachewd.com
