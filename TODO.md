@@ -7,178 +7,37 @@
 
 ---
 
-## Phase 20: Error Handling, File Cleanup & Webhook Hardening — CURRENT PRIORITY
+## Phase 21: Prompt Improvement & Product Cleanup — CURRENT PRIORITY
 
-> Fix error handling, S3 lifecycle gaps, inline base64, audit gaps, and Clerk webhook deficiencies.
-> Ref: TD-API-06, TD-FILE-01, TD-FILE-02, TD-ACT-01, TD-WEBHOOK-02
-> Tasks 20.2, 20.3, 20.7 completed in Phase 19 delivery — see DONE.md.
-
----
-
-### 20.1 Refactor handleError to preserve stack traces
-
-**File:** `src/lib/utils/handleError.tsx`
-**Ref:** TD-API-06
-
-**What to do:**
-
-- Use `new Error(message, { cause: error })` pattern to preserve original stack trace.
-- Keep the `source` annotation for debugging context.
-
-**Acceptance criteria:**
-
-- [ ] Original error preserved as `cause` on thrown error
-- [ ] Source string still in error message
-- [ ] Stack trace accessible via `error.cause`
-- [ ] `npx tsc --noEmit` passes
-- [ ] All existing tests pass
+> Complete the remaining Milestone 5 gap (prompt quality) and fix the video generation UI claim.
+> Ref: TD-AI-09, TD-AI-08
+> Depends on: Phase 20 (complete)
 
 ---
 
-### 20.4 Add S3 cleanup on task deletion
+### 21.1 Fix Premium video generation claim in plan inclusions
 
-**File:** `src/lib/actions/task.actions.tsx`
-**Ref:** TD-FILE-01
-
-**What to do:**
-
-- In `deleteTask`, scan task messages for S3 image URLs before deletion.
-- Delete matching S3 objects via `deleteFileFromAWS`.
-- Wrap in try/catch — log errors but do not fail deletion.
-
-**Acceptance criteria:**
-
-- [ ] Task messages scanned for S3 URLs before deletion
-- [ ] S3 objects deleted for matching URLs
-- [ ] Task deletion succeeds even if S3 cleanup fails
-- [ ] `npx tsc --noEmit` passes
-
----
-
-### 20.5 Refactor chat input to upload via /api/upload — AGENTS.md VIOLATION FIX
-
-**File:** `src/components/chat/chat-input.tsx`
-**Ref:** TD-FILE-02
+**File:** `src/constants/plans.tsx`
+**Ref:** TD-AI-08
 
 **What to do:**
 
-- Upload files via `/api/upload` FormData before building message content.
-- Replace inline base64 URLs with S3 URLs in message content.
-- Handle upload failure gracefully.
-- **This is the only remaining AGENTS.md rule violation** (no binary/base64 in MongoDB).
+- The Premium plan inclusions currently display "Video generation - 10/month (Premium)" but no video generation implementation exists.
+- Change the label to "Video generation - Coming soon (Premium)" or equivalent.
+- Do NOT remove the entry — video generation is planned for Phase 23.
+- Do NOT change `PLAN_LIMITS.Premium.video` (keep the limit constant for future use).
 
 **Acceptance criteria:**
 
-- [ ] All file attachments go through `/api/upload`
-- [ ] No base64 in message content sent to `/api/openai`
-- [ ] Upload failures prevent message send with user feedback
-- [ ] `npx tsc --noEmit` passes
-
----
-
-### 20.6 Audit or remove `deleteAllTransactions` action
-
-**Files:** `src/lib/actions/transaction.action.tsx`
-**Ref:** TD-ACT-01
-
-**What to do:**
-
-- Evaluate whether `deleteAllTransactions` is needed. If yes: add admin role check, `AdminAuditLog` entry, require confirmation parameter. If no: delete the function and any references.
-- No unaudited bulk deletion path may exist.
-
-**Acceptance criteria:**
-
-- [ ] Action either removed or protected with admin role check + audit log
-- [ ] No unaudited bulk deletion path exists
-- [ ] `npx tsc --noEmit` passes
-
----
-
-### 20.8 Add idempotency check to Clerk webhook handlers
-
-**File:** `src/app/api/webhooks/clerk/route.tsx`
-**Ref:** TD-WEBHOOK-02
-
-**What to do:**
-
-- For `user.created`: Before creating a User document, check if a User with that `clerkId` already exists. If yes, skip creation (Clerk may replay events). Without this, event replay will cause HTTP 500 due to `unique` constraint violation.
-- For `user.updated` and `user.deleted`: These are naturally idempotent (update/delete operations), but ensure they do not throw on missing documents.
-- The Stripe webhook already has idempotency via `Transaction.stripeId` check — follow the same pattern.
-
-**Acceptance criteria:**
-
-- [ ] Duplicate `user.created` events do not throw or create duplicate Users
-- [ ] `user.updated` on non-existent user does not throw
-- [ ] `user.deleted` on non-existent user does not throw
-- [ ] `npx tsc --noEmit` passes
-- [ ] `npm run test` passes
-
----
-
-### 20.9 Remove yearly billing UI toggle
-
-**Files:** `src/components/sections/plans-section.tsx`, `src/components/shared/plan-card.tsx`
-**Ref:** ThePlan.md — yearly billing deferred from v1
-
-**What to do:**
-
-- Remove the monthly/yearly toggle from the plans UI.
-- Remove yearly pricing display and any yearly billing constants.
-- Keep only monthly pricing as the single billing option.
-- This aligns with ThePlan.md which explicitly defers yearly billing from v1.
-
-**Acceptance criteria:**
-
-- [ ] No monthly/yearly toggle visible on plans page
-- [ ] Only monthly pricing displayed
-- [ ] No yearly billing constants or logic remain in plans UI
+- [ ] Premium plan inclusions label shows "Coming soon" instead of implying availability
+- [ ] No functional changes to plan limits or model policy
 - [ ] `npx tsc --noEmit` passes
 - [ ] `npm run build` passes
+- [ ] E2E plans tests still pass
 
 ---
 
-### 20.10 Extract SUPPORT_EMAIL to shared constant
-
-**Files:** `src/app/api/openai/route.tsx`, `src/components/chat/chat-body.tsx`, new `src/constants/support.ts`
-
-**What to do:**
-
-- Create a `SUPPORT_EMAIL` constant in `src/constants/support.ts`.
-- Replace the duplicated `SUPPORT_EMAIL` strings in `route.tsx` and `chat-body.tsx` with the shared import.
-
-**Acceptance criteria:**
-
-- [ ] Single source of truth for support email
-- [ ] Both files import from shared constant
-- [ ] `npx tsc --noEmit` passes
-
----
-
-### 20.11 Clean up orphan directories
-
-**Files:** `src/app/(chat)/dashboard/`, `src/app/(public)/pricing/`
-
-**What to do:**
-
-- Remove empty orphan directories left over from Phase 17 route restructure.
-- Verify no imports or references point to these paths.
-
-**Acceptance criteria:**
-
-- [ ] Orphan directories removed
-- [ ] No broken imports
-- [ ] `npm run build` passes
-
----
-
-## Phase 21: Prompt Improvement
-
-> Improve and adapt prompts per persona and per model.
-> Ref: TD-AI-09
-
----
-
-### 21.1 Create prompt versioning and management system
+### 21.2 Create prompt versioning and management system
 
 **Files (new):** `src/constants/persona-prompts.ts`
 **Ref:** TD-AI-09
@@ -188,20 +47,24 @@
 - Create a prompt configuration file that defines system prompts per persona, per model family.
 - Structure: `{ [personaId]: { [modelFamily]: { systemPrompt, temperature, maxTokens } } }`.
 - Current `systemPrompt` field on persona objects becomes the default/fallback.
-- Add prompt version identifier.
+- Add prompt version identifier (e.g., `PROMPT_VERSION = "1.0"`).
+- Update `buildPersonaAwareSystemPrompt()` (or its caller) to check the new config first, falling back to the persona's default `systemPrompt`.
 
 **Acceptance criteria:**
 
-- [ ] Prompt configuration file created
+- [ ] Prompt configuration file created with all 9 personas
 - [ ] Prompts organized by persona and model family
 - [ ] Version identifier present
+- [ ] `buildPersonaAwareSystemPrompt` uses new config when available
+- [ ] Fallback to default systemPrompt works
 - [ ] `npx tsc --noEmit` passes
+- [ ] All existing tests pass
 
 ---
 
-### 21.2 Improve persona-specific prompts
+### 21.3 Improve persona-specific prompts
 
-**Files:** `src/constants/assistant-personas.tsx` and/or the new prompt config
+**Files:** `src/constants/persona-prompts.ts`, `src/constants/assistant-personas.tsx`
 **Ref:** TD-AI-09
 
 **What to do:**
@@ -212,6 +75,13 @@
   - Safety constraints (especially companion personas: boyfriend, girlfriend, best-friend)
   - Answer formatting preferences
   - Model-aware instructions (simpler prompts for cheaper models, richer for premium)
+- Companion personas MUST include:
+  - No romantic/sexual content generation
+  - No medical/legal/financial advice
+  - Clear boundary when user requests exceed persona scope
+- Productivity personas (Strategist, Developer, Analyst) should emphasize:
+  - Structured, actionable output
+  - Domain-appropriate formatting (code blocks for Developer, lists for Strategist)
 
 **Acceptance criteria:**
 
@@ -219,26 +89,30 @@
 - [ ] Safety constraints defined for companion personas
 - [ ] Prompts vary by model tier where appropriate
 - [ ] `npx tsc --noEmit` passes
+- [ ] All existing tests pass
 
 ---
 
 ## Phase 22: Testing & Hardening
 
+> Improve test coverage and add resilience for production.
+> Ref: TD-AI-06
+
 ---
 
 ### 22.1 Add test coverage configuration
 
-**File:** `vitest.config.mts`, `package.json`
+**Files:** `vitest.config.mts`, `package.json`
 
 **What to do:**
 
-- Add `coverage` config with `v8` provider and 70/60/70/70 thresholds.
-- Add `test:coverage` script.
+- Add `coverage` config with `v8` provider and 70/60/70/70 thresholds (statements/branches/functions/lines).
+- Add `test:coverage` script to `package.json`.
 
 **Acceptance criteria:**
 
 - [ ] Coverage config in Vitest config
-- [ ] `npm run test:coverage` works
+- [ ] `npm run test:coverage` works and reports coverage
 - [ ] All existing tests pass
 
 ---
@@ -289,15 +163,18 @@
 **What to do:**
 
 - Add exponential backoff for transient OpenAI errors (429, 500, 502, 503).
-- Max 3 retries with increasing delay.
-- Log retries server-side (NOT `console.error`).
+- Max 3 retries with increasing delay (e.g., 1s, 2s, 4s).
+- Log retries server-side via `process.stderr.write()` (NOT `console.error`).
+- Non-retryable errors (400, 401, 403) must fail immediately without retry.
 
 **Acceptance criteria:**
 
-- [ ] Transient errors trigger retry with backoff
+- [ ] Transient errors trigger retry with exponential backoff
 - [ ] Max 3 retries
 - [ ] Non-retryable errors fail immediately
+- [ ] Retry logging uses `process.stderr.write()`
 - [ ] `npx tsc --noEmit` passes
+- [ ] All existing tests pass
 
 ---
 
@@ -307,7 +184,7 @@
 
 **What to do:**
 
-- Current test file has only 1 test case. The streaming helper is a critical path.
+- Current test file has limited coverage. The streaming helper is a critical path.
 - Add tests for: error path (OpenAI failure during stream), tool call handling after stream, abort signal propagation, empty response handling.
 
 **Acceptance criteria:**
@@ -323,14 +200,109 @@
 ## Phase 23: Resilience & Deferred Items
 
 > Lower priority. Not blocking v1 launch but important for production hardening.
+> Maps to ThePlan.md Milestone 8 (Security & Observability Hardening).
 
-- [ ] **23.1** Replace in-memory rate limiter with persistent store — Ref: TD-API-01
-- [ ] **23.2** Implement Stripe subscription mode (auto-renewal) — Ref: TD-PLAN-01
-- [ ] **23.3** Add video generation support for Premium — Ref: TD-AI-08
-- [ ] **23.4** Verify all admin server actions emit audit log entries
-- [ ] **23.5** Add `X-Accel-Buffering: no` to streaming response headers for reverse proxy compatibility
+---
+
+### 23.1 Replace in-memory rate limiter with persistent store
+
+**Files:** `src/lib/utils/rate-limit.ts`, `src/app/api/openai/route.tsx`
+**Ref:** TD-API-01
+
+**What to do:**
+
+- Replace the current in-memory sliding window rate limiter with a persistent store (Redis or MongoDB-backed).
+- Must survive process restarts and work across multiple instances.
+- Keep the same API surface (`enforceSlidingWindowRateLimit`).
+
+**Acceptance criteria:**
+
+- [ ] Rate limiter uses persistent storage
+- [ ] Survives process restarts
+- [ ] Works across multiple instances
+- [ ] Same API surface preserved
+- [ ] `npx tsc --noEmit` passes
+- [ ] All existing tests pass
+
+---
+
+### 23.2 Implement Stripe subscription mode (auto-renewal)
+
+**Ref:** TD-PLAN-01
+
+**What to do:**
+
+- Migrate from one-time Stripe Checkout payments to subscription mode.
+- Handle `invoice.paid`, `customer.subscription.updated`, `customer.subscription.deleted` webhooks.
+- Update plan lifecycle to auto-renew instead of expiring.
+- This is a significant change — requires careful Stripe webhook testing.
+
+**Acceptance criteria:**
+
+- [ ] Stripe sessions use `mode: "subscription"`
+- [ ] Subscription lifecycle webhooks handled
+- [ ] Plan auto-renews on successful payment
+- [ ] Plan downgrades on failed payment
+- [ ] `npx tsc --noEmit` passes
+
+---
+
+### 23.3 Add video generation support for Premium
+
+**Ref:** TD-AI-08
+
+**What to do:**
+
+- Implement video generation for Premium plan users.
+- Requires: verified provider, cost ceiling, moderation workflow, S3 storage lifecycle.
+- Update `ai-model-policy.ts` with real video model ID.
+- Update `generateVideo` utility (or create new).
+- Wire into `/api/openai` tool calling flow.
+- Remove "Coming soon" label from Premium plan inclusions.
+
+**Acceptance criteria:**
+
+- [ ] Video generation works for Premium users
+- [ ] Other plans correctly blocked from video
+- [ ] Usage event logged for video requests
+- [ ] Video stored in S3, URL in message
+- [ ] Plan inclusions show video as available (remove "Coming soon")
+- [ ] `npx tsc --noEmit` passes
+
+---
+
+### 23.4 Verify all admin server actions emit audit log entries
+
+**Files:** `src/lib/actions/admin.actions.tsx`
+
+**What to do:**
+
+- Audit every exported admin action to confirm `createAdminAuditLogEntry()` is called.
+- Add missing audit log calls if any are found.
+
+**Acceptance criteria:**
+
+- [ ] Every admin mutation has an audit log entry
+- [ ] `npx tsc --noEmit` passes
+
+---
+
+### 23.5 Add `X-Accel-Buffering: no` to streaming response headers
+
+**File:** `src/app/api/openai/route.tsx`
+
+**What to do:**
+
+- Add `X-Accel-Buffering: no` header to streaming SSE responses.
+- This prevents reverse proxies (nginx) from buffering streamed chunks.
+
+**Acceptance criteria:**
+
+- [ ] Header present on streaming responses
+- [ ] Non-streaming responses unaffected
+- [ ] `npx tsc --noEmit` passes
 
 ---
 
 > **Completed phases** are archived in [`DONE.md`](DONE.md).
-> Phases 1–9, 13–19 are complete. Phase 10–12 superseded (see DONE.md for mapping).
+> Phases 1–9, 13–20 are complete. Phase 10–12 superseded (see DONE.md for mapping).

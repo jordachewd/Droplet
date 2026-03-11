@@ -5,6 +5,23 @@
 
 ---
 
+## Phase 20: Error Handling, File Cleanup & Webhook Hardening — COMPLETED
+
+- [x] **20.1** Refactor handleError to preserve stack traces (`new Error(message, { cause: error })` pattern)
+- [x] **20.4** Add S3 cleanup on task deletion (scan messages for S3 URLs, best-effort delete, per-key try/catch)
+- [x] **20.5** Refactor chat input to upload via `/api/upload` (FormData upload, blob preview, upload failure blocks send)
+- [x] **20.6** Remove `deleteAllTransactions` action (function deleted entirely)
+- [x] **20.8** Add idempotency check to Clerk webhook handlers (duplicate `user.created` check, graceful miss for `user.updated`/`user.deleted`)
+- [x] **20.9** Remove yearly billing UI toggle (monthly-only pricing display, no yearly toggle/badge)
+- [x] **20.10** Extract SUPPORT_EMAIL to shared constant (`src/constants/support.ts`, consumed by 7 files)
+- [x] **20.11** Clean up orphan directories (`src/app/(chat)/dashboard/`, `src/app/(public)/pricing/` removed)
+
+Resolved: TD-API-06, TD-FILE-01 (fully), TD-FILE-02, TD-ACT-01, TD-WEBHOOK-02. Tasks 20.2, 20.3, 20.7 completed in Phase 19 delivery (see below). 49 test suites, 215 tests passing, 79 E2E tests passing. All 6 validation gates green.
+
+**Files changed:** `src/lib/utils/handleError.tsx`, `src/lib/actions/task.actions.tsx`, `src/components/chat/chat-input.tsx`, `src/app/api/webhooks/clerk/route.tsx`, `src/lib/actions/transaction.action.tsx`, `src/components/sections/plans-section.tsx`, `src/components/shared/plan-card.tsx`, `src/lib/utils/getPlanStatus.tsx`, `src/components/shared/plan-promo.tsx`, `src/constants/support.ts`, `tests/unit/chat-input.test.tsx`, `tests/unit/task-actions.test.ts`, `tests/unit/clerk-webhook-route.test.ts`, `tests/e2e/plans-public.spec.ts`, `tests/e2e/pricing-public.spec.ts`
+
+---
+
 ## Phase 19: Streaming Implementation — COMPLETED
 
 - [x] **19.1** Create streaming API route (`generateStreamingResponse()` in `generateResponse.tsx`, SSE branch in `/api/openai` with `meta`, `chunk`, `final`, `error` events)

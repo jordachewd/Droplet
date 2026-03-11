@@ -48,7 +48,7 @@ All six gates must pass.
 
 ## Route Boundaries
 
-> Route restructure is **complete** (Phase 17). Proxy protects `/app(.*)` and `/admin(.*)` only. Profile and plans are under `/app/*`. Admin is at `/admin/*`. The `(account)` route group has been deleted (Phase 17-C). Public pages (about, faqs, privacy, cookies, terms) are live (Phase 18).
+> Route restructure is **complete** (Phase 17). Proxy protects `/app(.*)` and `/admin(.*)` only. Profile and plans are under `/app/*`. Admin is at `/admin/*`. The `(account)` route group has been deleted (Phase 17-C). Public pages (about, faqs, privacy, cookies, terms) are live (Phase 18). Orphan directories (`/dashboard`, `/pricing`) removed (Phase 20).
 
 | Area   | Namespace                                                                       | Protection                           |
 | ------ | ------------------------------------------------------------------------------- | ------------------------------------ |
@@ -81,9 +81,9 @@ All six gates must pass.
 
 - **Zero trust**: protect all routes unless explicitly public. Verify auth in every server action and API route before DB writes.
 - **Admin double-check**: admin routes must verify `role === "admin"` at both proxy AND server-action/page level.
-- **Webhooks**: verify signatures (Svix for Clerk, `stripe.webhooks.constructEvent` for Stripe) before processing. Ensure idempotency — check for duplicate event IDs before creating records.
+- **Webhooks**: verify signatures (Svix for Clerk, `stripe.webhooks.constructEvent` for Stripe) before processing. Ensure idempotency — check for duplicate event IDs before creating records. Webhook handlers must not throw on replayed or missing documents.
 - **Secrets**: never commit; use `.env.local`. Only `NEXT_PUBLIC_*` values reach the browser.
-- **Error responses**: generic messages to clients; detailed logs server-side only. Never leak provider error messages (OpenAI, AWS, Stripe).
+- **Error responses**: generic messages to clients; detailed logs server-side only. Never leak provider error messages (OpenAI, AWS, Stripe). Use `new Error(message, { cause: originalError })` to preserve stack traces when rethrowing.
 - **Uploads**: validate type and size at the boundary. Use allowlists, not blocklists.
 - **Downloads**: validate and allowlist URLs before proxying (SSRF prevention).
 - **No `Math.random()`** for security-sensitive values — use `crypto`.

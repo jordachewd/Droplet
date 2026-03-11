@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-11
+> Last updated: 2026-03-11 (Phase 20 complete, TD audit synced)
 
 ---
 
@@ -362,8 +362,9 @@ Purpose: Request-level usage logging for cost tracking and admin analytics.
 
 ### 7.5 POST /api/webhooks/clerk
 
-- Auth: Svix signature verification
+- Auth: Svix signature verification (raw request body)
 - Handles: `user.created`, `user.updated`, `user.deleted`
+- **Idempotency**: `user.created` checks for existing user before insert (safe for Clerk event replay). `user.updated` and `user.deleted` handle missing documents gracefully (return 200, no throw).
 - On `user.deleted`: deletes User, Transaction, and Task documents; cleans up S3 objects under user prefix
 - Each cleanup step has independent error handling — partial failure does not break webhook response
 
@@ -376,8 +377,8 @@ Purpose: Request-level usage logging for cost tracking and admin analytics.
 
 ### API Technical Debt
 
-- **TD-API-01**: In-memory rate limiter.
-- **TD-API-06**: handleError loses stack traces.
+- **TD-API-01**: In-memory rate limiter (does not survive restarts or horizontal scaling).
+- ~~**TD-API-06**: handleError loses stack traces~~ — **Resolved** in Phase 20 via `{ cause: error }` pattern.
 - ~~**TD-API-07**: No streaming implementation~~ — **Resolved** in Phase 19.
 
 ---
@@ -424,17 +425,23 @@ All auth/limit checks execute before streaming begins. Final task persistence an
 - ~~**TD-AI-03**: No per-user cost tracking~~ — **Resolved** in Phase 16 via `UsageEvent` + `usage-event-utils.ts`.
 - **TD-AI-06**: No retry/backoff for transient failures.
 - ~~**TD-AI-07**: Models hardcoded~~ — **Resolved** in Phase 16 via `ai-model-policy.ts`.
-- **TD-AI-08**: No video generation (Premium feature).
+- **TD-AI-08**: No video generation (Premium feature). UI claims feature in plan inclusions but no implementation exists.
 - **TD-AI-09**: Prompts not optimized per persona/model.
+
+### API Technical Debt
+
+- **TD-API-01**: In-memory rate limiter (does not survive restarts or horizontal scaling).
+- ~~**TD-API-06**: handleError loses stack traces~~ — **Resolved** in Phase 20 via `new Error(message, { cause: error })` pattern.
+- ~~**TD-API-07**: No streaming implementation~~ — **Resolved** in Phase 19.
 
 ---
 
 ## 9. File Handling
 
-### Technical Debt
+All file handling technical debt has been resolved.
 
-- ~~**TD-FILE-01**: No S3 cleanup on user/task deletion~~ — **Partially resolved**: Clerk webhook `user.deleted` now cleans up S3 objects (Phase 19). Admin `removeUserByAdminAction` already works. **Remaining**: `deleteTask` action does not clean up S3 objects for deleted conversations.
-- **TD-FILE-02**: Some flows send file as inline base64 (chat-input.tsx). Must refactor to upload via `/api/upload`.
+- ~~**TD-FILE-01**: No S3 cleanup on user/task deletion~~ — **Fully resolved** in Phase 20. `deleteTask` now scans messages for S3 asset URLs and deletes objects (best-effort). Clerk webhook `user.deleted` cleans S3 prefix (Phase 19). Admin `removeUserByAdminAction` cleans S3 prefix (Phase 17).
+- ~~**TD-FILE-02**: Inline base64 in chat-input.tsx~~ — **Resolved** in Phase 20. Chat input now uploads via `/api/upload` FormData. S3 URLs used in message content. Blob previews for local display only.
 
 ---
 
@@ -521,9 +528,9 @@ All auth/limit checks execute before streaming begins. Final task persistence an
 
 ## 13. Testing
 
-- **Unit tests**: 49+ suites, 210+ tests (Vitest) — includes streaming, webhook, and chat-wrapper tests
-- **E2E tests**: 7 Playwright specs, 77 tests (11 test functions × 7 browser projects)
-- **Coverage**: Not configured (planned)
+- **Unit tests**: 49 suites, 215+ tests (Vitest) — includes streaming, webhook, chat-wrapper, upload flow, S3 cleanup, and idempotency tests
+- **E2E tests**: Playwright specs, 79 tests across browser projects
+- **Coverage**: Not configured (planned Phase 22)
 - **Gap**: No dedicated E2E spec for streamed chunk-by-chunk rendering (manually verified via Playwright MCP)
 
 ---
@@ -558,17 +565,12 @@ All critical-severity technical debt resolved. Remaining items are medium or low
 
 ### Active — Medium Priority
 
-| ID            | Area     | Description                                              | Severity |
-| ------------- | -------- | -------------------------------------------------------- | -------- |
-| TD-API-01     | API      | In-memory rate limiter                                   | Medium   |
-| TD-API-06     | API      | handleError loses stack traces                           | Medium   |
-| TD-AI-06      | OpenAI   | No retry/backoff                                         | Medium   |
-| TD-AI-08      | OpenAI   | No video generation (Premium)                            | Medium   |
-| TD-AI-09      | OpenAI   | Prompts not optimized                                    | Medium   |
-| TD-FILE-01    | Files    | S3 cleanup on task deletion not implemented (Clerk webhook resolved) | Medium |
-| TD-FILE-02    | Files    | Inline base64 in chat-input.tsx (violates no-binary rule) | Medium  |
-| TD-ACT-01     | Actions  | deleteAllTransactions has no audit trail                 | Medium   |
-| TD-WEBHOOK-02 | Webhooks | Clerk webhook has no idempotency check for event replay  | Medium   |
+| ID        | Area   | Description                                                                 | Severity |
+| --------- | ------ | --------------------------------------------------------------------------- | -------- |
+| TD-API-01 | API    | In-memory rate limiter (does not survive restarts or horizontal scaling)     | Medium   |
+| TD-AI-06  | OpenAI | No retry/backoff for transient failures                                     | Medium   |
+| TD-AI-08  | OpenAI | No video generation (Premium) — UI claims feature exists but it does not    | Medium   |
+| TD-AI-09  | OpenAI | Prompts not optimized per persona/model                                     | Medium   |
 
 ### Active — Low Priority
 
@@ -593,6 +595,11 @@ All critical-severity technical debt resolved. Remaining items are medium or low
 | TD-UI-11     | FAQ copy outdated (trial references)  | Rewritten for Droplet                                                         |
 | TD-AI-02     | No OpenAI error classification        | Implemented                                                                   |
 | TD-AI-05     | Audio base64 in messages              | Audio now uploaded to S3                                                      |
+| TD-API-06    | handleError loses stack traces        | Resolved in Phase 20 via `{ cause: error }` pattern                           |
+| TD-FILE-01   | S3 cleanup on task deletion           | Fully resolved in Phase 20: deleteTask + Clerk webhook + admin remove         |
+| TD-FILE-02   | Inline base64 in chat-input.tsx       | Resolved in Phase 20 via `/api/upload` FormData                               |
+| TD-ACT-01    | deleteAllTransactions unaudited       | Resolved in Phase 20: function removed entirely                               |
+| TD-WEBHOOK-02| Clerk webhook no idempotency          | Resolved in Phase 20: duplicate check + graceful miss handling                |
 | TD-UI-04     | No error boundaries                   | Added                                                                         |
 | TD-UI-05     | mapDateToLabel duplicated             | Extracted                                                                     |
 | TD-RENAME-01 | "role" to "persona" rename            | Completed                                                                     |

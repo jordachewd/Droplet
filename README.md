@@ -11,6 +11,7 @@ Built with Next.js 16, React 19, TypeScript, Tailwind CSS v4.2, Clerk, Stripe, M
 - **Plan-aware AI model selection** — cheapest model for Lite, gpt-5.2-pro for Pro, gpt-5.4-pro for Premium via central policy resolver
 - **Streaming responses** — real-time incremental chat rendering via SSE with progressive text display
 - **Usage event logging** — per-request cost tracking, latency measurement, and blocked-request recording
+- **File uploads via S3** — all attachments uploaded to AWS S3 via `/api/upload`, no inline base64 in messages
 - **Conversation history** — persist, resume, and manage conversations
 - **Three subscription tiers:**
   - **Lite** (Free forever) — 5 conversations/day, 10 messages/conversation, 3 media generations/month
@@ -19,7 +20,7 @@ Built with Next.js 16, React 19, TypeScript, Tailwind CSS v4.2, Clerk, Stripe, M
 - **All personas available in all plans**
 - **Admin dashboard** — user management, transaction oversight, usage analytics, app settings (AI models, pricing, limits, theme), website content management with Tiptap editor
 - **Public marketing site** — About, FAQs, Privacy Policy, Cookie Policy, Terms & Conditions, plus enhanced homepage with feature showcase, workflow, persona spotlight, and CTAs
-- **Secure by design** — Clerk auth, webhook signature verification, ownership enforcement, SSRF protection, double-layer admin role protection (proxy + server-side)
+- **Secure by design** — Clerk auth, webhook signature verification with idempotency, ownership enforcement, SSRF protection, double-layer admin role protection (proxy + server-side), error cause chain preservation
 
 ### Planned (In Development)
 
