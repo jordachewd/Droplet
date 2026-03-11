@@ -93,11 +93,16 @@ All six gates must pass.
 
 ## AI / OpenAI Rules
 
-- **No hardcoded model names** in OpenAI utility functions — use the AI model policy resolver (`ai-model-policy.ts`).
+- **No hardcoded model names** in OpenAI utility functions — use the AI model policy resolver (`resolveModelPolicy()` in `ai-model-policy.ts`).
+- **Frontend must never send the final model ID** — the backend resolves model from plan + feature + task class + cost state.
+- **Titles permanently pinned to cheapest model** (`gpt-4.1-nano`) — never use flagship models for this utility task.
+- **Premium access means eligibility, not automatic flagship cost** — Premium chat defaults to `gpt-4.1`; `gpt-5.4` only for complex reasoning with explicit request.
+- **Retries should downgrade model tier** — never retry on the same or higher-tier model.
 - **No binary/base64 in MongoDB** — upload media (audio, images) to S3 and store URLs only.
 - **Log every AI request** to `UsageEvent` model for cost tracking and admin analytics.
 - **Enforce all limits** before making OpenAI calls: daily conversations, prompt count, media generations, document size.
 - **Stop conversations cleanly** when limits are hit — record stop reason and end action on the Task.
+- **Audio mode differentiation** — TTS-only fallback (`gpt-4o-mini-tts`) must NOT be used for `audio_in_out` requests.
 
 ## Testing Rules
 

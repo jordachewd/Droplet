@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-11 (Phase 20 complete, TD audit synced)
+> Last updated: 2026-03-11 (Phase 20 complete, Model Policy Matrix approved, TD audit synced)
 
 ---
 
@@ -113,18 +113,20 @@ Prompts must be versioned and kept separate from request handlers.
 
 ## 4. Subscription Plans
 
-| Plan        | Price | Duration      | AI Model          | Limits                                                                                                      |
-| ----------- | ----- | ------------- | ----------------- | ----------------------------------------------------------------------------------------------------------- |
-| **Lite**    | Free  | **Permanent** | Cheapest approved | 5 conversations/day, 10 user prompts/conversation, 3 media generations/month, no video                      |
-| **Pro**     | $19   | Monthly       | `gpt-5.2-pro`     | 50 conversations/day, 100 prompts/conversation, 50 image + 50 audio generations/month, no video             |
-| **Premium** | $39   | Monthly       | `gpt-5.4-pro`     | Unlimited conversations, unlimited prompts, unlimited image + audio generations, 10 video generations/month |
+| Plan        | Price | Duration      | Chat Model (default)             | Limits                                                                                                       |
+| ----------- | ----- | ------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| **Lite**    | Free  | **Permanent** | `gpt-4o-mini`                    | 5 conversations/day, 10 prompts/conversation, 3 image generations/month, no audio, no video                  |
+| **Pro**     | $19   | Monthly       | `gpt-4.1`                        | 50 conversations/day, 100 prompts/conversation, 50 image + 50 audio generations/month, no video              |
+| **Premium** | $39   | Monthly       | `gpt-4.1` / `gpt-5.4` (complex) | Unlimited conversations, unlimited prompts, unlimited image + audio generations, 10 video generations/month  |
+
+> Full model policy (all features × plans × task classes) in **Section 8**.
 
 ### Plan Rules
 
 1. **Lite is permanent and free.** There is no 3-day trial. There is no expiry. New users receive Lite by default upon account creation.
 2. **All personas are available in all plans.** There are no persona restrictions per plan.
 3. **Pro and Premium are paid-only.** Activated via Stripe Checkout one-time payment.
-4. **Premium has 3 exclusive media features:** quality image generation, quality audio generation, and video generation.
+4. **Premium advantages over Pro:** premium audio quality (`gpt-audio-1.5`), `gpt-5.4` for complex reasoning, video generation, and unlimited image/audio quotas. See Section 8 for full model policy.
 5. When any limit is reached, the server **must end the conversation** with an exact stop reason and exact next-action instruction.
 6. After a forced stop, the user is told one of: start a new conversation (if resources remain), upgrade plan (if applicable), or contact support.
 
@@ -134,8 +136,9 @@ Prompts must be versioned and kept separate from request handlers.
 | ------------------------------------------ | ----- | --------------------- |
 | Conversations per day                      | 5     | 24 hours              |
 | User prompts per conversation              | 10    | Per conversation      |
-| Media generations (image + audio combined) | 3     | 30-day rolling window |
-| Video generation                           | 0     | N/A                   |
+| Image generations                          | 3     | 30-day rolling window            |
+| Audio generation                           | 0     | N/A (blocked — Pro/Premium only) |
+| Video generation                           | 0     | N/A (blocked — Premium only)     |
 
 ### Pro Plan Limits (Detailed)
 
@@ -383,36 +386,137 @@ Purpose: Request-level usage logging for cost tracking and admin analytics.
 
 ---
 
-## 8. OpenAI Integration
+## 8. OpenAI Integration & Model Policy
 
-### Models (Target)
+### 8.1 Model Policy Architecture
 
-| Model             | Plan    | Purpose           |
-| ----------------- | ------- | ----------------- |
-| Cheapest approved | Lite    | Chat completion   |
-| `gpt-5.2-pro`     | Pro     | Chat completion   |
-| `gpt-5.4-pro`     | Premium | Chat completion   |
-| `gpt-4o-mini`     | All     | Title generation  |
-| Provider TBD      | All     | Image generation  |
-| Provider TBD      | Premium | Quality image gen |
-| Provider TBD      | All     | Audio generation  |
-| Provider TBD      | Premium | Quality audio gen |
-| Provider TBD      | Premium | Video generation  |
+The model policy system controls which OpenAI model is used for every AI request. Three governing principles:
 
-### Current Models
+1. **Plan sets the maximum allowed tier** — not the exact model. The plan defines the model ceiling.
+2. **Feature type sets the default** — utility tasks (titles) always use the cheapest model regardless of plan.
+3. **Backend decides the final model** — budget state, latency, retry attempts, and task class trigger automatic downgrades. The frontend must never send the final model ID.
 
-Resolved via `ai-model-policy.ts` — no hardcoded model names. Policy maps plan × request type → model ID:
+Central resolver: `resolveModelPolicy()` in `src/lib/utils/ai-model-policy.ts`. All OpenAI utilities consume the resolver — no hardcoded model names.
 
-- Lite chat: `gpt-4o-mini` | Pro chat: `gpt-5.2-pro` | Premium chat: `gpt-5.4-pro`
-- Title: `gpt-4o-mini` (all plans) | Image: `dall-e-3` (all plans) | Audio: `gpt-4o-audio-preview` (all plans)
-- Video: Premium only (placeholder ID), `null` for Lite/Pro
-- Cost estimation via `estimateModelCostCents()` and `MODEL_PRICING` constant.
+### 8.2 Model Policy Matrix
 
-### AI Policy Model
+| Feature          | Plan    | Default Model      | Fallback Model      | Cost-Control Notes                                                                                  |
+| ---------------- | ------- | ------------------ | ------------------- | --------------------------------------------------------------------------------------------------- |
+| Title generation | All     | `gpt-4.1-nano`     | `gpt-4o-mini`       | Hard cap: 1,200 input tokens, 20 output tokens. Always cheapest model regardless of plan.           |
+| Chat             | Lite    | `gpt-4o-mini`      | `gpt-4.1-nano`      | Strict context compaction; max output tokens per reply; no expensive tools; block retries beyond one.|
+| Chat             | Pro     | `gpt-4.1`          | `gpt-4o-mini`       | Degrade to fallback on soft budget, high latency, simple tasks, or retries.                         |
+| Chat             | Premium | `gpt-4.1`          | `gpt-4.1`           | Default `gpt-4.1` for routine chat. `gpt-5.4` only for complex reasoning with `explicitPremium`.    |
+| Image            | Lite    | `gpt-image-1-mini` | *(none)*             | One model only. Limit size, count, concurrency. Monthly quota enforced.                             |
+| Image            | Pro     | `gpt-image-1.5`    | `gpt-image-1-mini`  | Downgrade for retries, previews, or users beyond soft budget.                                       |
+| Image            | Premium | `gpt-image-1.5`    | `gpt-image-1-mini`  | Same model tiers as Pro; Premium gets unlimited quota.                                              |
+| Audio            | Lite    | *(blocked)*         | —                   | Audio not available on Lite.                                                                        |
+| Audio            | Pro     | `gpt-audio-mini`   | `gpt-4o-mini-tts`   | TTS-only fallback. Do NOT use TTS fallback for `audio_in_out` mode.                                 |
+| Audio            | Premium | `gpt-audio-1.5`    | `gpt-audio-mini`    | Downgrade for retries, previews, long-form beyond soft budget.                                      |
+| Video            | Lite    | *(blocked)*         | —                   | Video not available on Lite.                                                                        |
+| Video            | Pro     | *(blocked)*         | —                   | Video not available on Pro.                                                                         |
+| Video            | Premium | `sora-2-pro`       | `sora-2`            | `sora-2` for previews/drafts. `sora-2-pro` only for final renders with `explicitPremium`.           |
 
-Central resolver implemented in `src/lib/utils/ai-model-policy.ts`. `resolveModelForPlan(planName, requestType)` used by all OpenAI utilities.
+### 8.3 Task Classes
 
-### Streaming (Implemented)
+Each AI request is classified into a task class that affects model selection and token limits.
+
+| Task Class | Purpose                    | Default For                            |
+| ---------- | -------------------------- | -------------------------------------- |
+| `utility`  | Metadata, always cheapest  | `title_generation`                     |
+| `simple`   | Basic/general questions    | —                                      |
+| `standard` | Normal conversation turns  | `chat`                                 |
+| `complex`  | Deep reasoning, analysis   | —                                      |
+| `preview`  | Draft/preview generation   | `video_generation`                     |
+| `final`    | Final quality render       | `image_generation`, `audio_generation` |
+
+### 8.4 Token Limits by Plan and Task Class
+
+| Feature | Plan    | Task Class | Max Input Tokens | Max Output Tokens |
+| ------- | ------- | ---------- | ---------------- | ----------------- |
+| Title   | All     | utility    | 1,200            | 20                |
+| Chat    | Lite    | simple     | 8,000            | 600               |
+| Chat    | Lite    | standard   | 12,000           | 900               |
+| Chat    | Lite    | complex    | 14,000           | 1,200             |
+| Chat    | Pro     | simple     | 12,000           | 700               |
+| Chat    | Pro     | standard   | 24,000           | 1,400             |
+| Chat    | Pro     | complex    | 32,000           | 2,000             |
+| Chat    | Premium | simple     | 16,000           | 900               |
+| Chat    | Premium | standard   | 32,000           | 1,800             |
+| Chat    | Premium | complex    | 48,000           | 2,800             |
+
+### 8.5 Downgrade Triggers
+
+The resolver downgrades to the fallback model when any condition is met:
+
+1. **Hard limit reached** (`hard_limit_reached`) — block the request entirely.
+2. **Soft limit reached** (`soft_limit_reached`) — use fallback model.
+3. **High latency** — use fallback model.
+4. **Retry attempt** (`retryAttempt > 0`) — use fallback model.
+5. **Audio mode mismatch** — do not use TTS-only fallback (`gpt-4o-mini-tts`) for `audio_in_out` requests.
+
+Retries should almost always go down a tier, not sideways or up.
+
+### 8.6 Audio Mode Differentiation
+
+Audio features must be split internally:
+
+- **TTS mode** (`tts`): plain text-to-speech. Cheaper model path (e.g., `gpt-4o-mini-tts`).
+- **Audio in/out mode** (`audio_in_out`): rich audio conversation. Uses full audio model.
+
+TTS fallbacks must NOT be used for `audio_in_out` requests. The resolver must check `audioMode` before allowing TTS fallback.
+
+### 8.7 Hard Non-Negotiables
+
+1. Frontend must never send the final model ID as authority.
+2. Backend resolves model from plan + feature + task class + cost state.
+3. Titles are permanently pinned to `gpt-4.1-nano`.
+4. Premium access means eligibility, not "every request gets the most expensive model."
+5. Retries should go down a tier, not sideways or up.
+6. `gpt-5.4` is reserved for complex/premium-explicit requests only — Premium chat defaults to `gpt-4.1`.
+
+### 8.8 Resolver Types (Reference)
+
+```typescript
+type PlanTier = "lite" | "pro" | "premium";
+
+type FeatureType =
+  | "title_generation"
+  | "chat"
+  | "image_generation"
+  | "audio_generation"
+  | "video_generation";
+
+type TaskClass = "utility" | "simple" | "standard" | "complex" | "preview" | "final";
+type AudioMode = "tts" | "audio_in_out";
+type BudgetState = "normal" | "soft_limit_reached" | "hard_limit_reached";
+
+type ResolveModelInput = {
+  plan: PlanTier;
+  feature: FeatureType;
+  taskClass?: TaskClass;
+  budgetState?: BudgetState;
+  retryAttempt?: number;
+  highLatency?: boolean;
+  explicitPremium?: boolean;
+  audioMode?: AudioMode;
+};
+
+type ResolvedModelPolicy = {
+  model: string;
+  fallbackModel?: string;
+  feature: FeatureType;
+  plan: PlanTier;
+  taskClass: TaskClass;
+  maxInputTokens?: number;
+  maxOutputTokens?: number;
+  wasDowngraded: boolean;
+  downgradeReasons: string[];
+  hardBlocked: boolean;
+  notes?: string;
+};
+```
+
+### 8.9 Streaming (Implemented)
 
 Server-side streaming via `generateStreamingResponse()` in `src/lib/utils/openai/generateResponse.tsx`.
 Route streams via SSE events (`meta`, `chunk`, `final`, `error`) in `/api/openai`.
@@ -425,14 +529,9 @@ All auth/limit checks execute before streaming begins. Final task persistence an
 - ~~**TD-AI-03**: No per-user cost tracking~~ — **Resolved** in Phase 16 via `UsageEvent` + `usage-event-utils.ts`.
 - **TD-AI-06**: No retry/backoff for transient failures.
 - ~~**TD-AI-07**: Models hardcoded~~ — **Resolved** in Phase 16 via `ai-model-policy.ts`.
-- **TD-AI-08**: No video generation (Premium feature). UI claims feature in plan inclusions but no implementation exists.
+- **TD-AI-08**: No video generation (Premium feature). UI claims feature but no implementation exists.
 - **TD-AI-09**: Prompts not optimized per persona/model.
-
-### API Technical Debt
-
-- **TD-API-01**: In-memory rate limiter (does not survive restarts or horizontal scaling).
-- ~~**TD-API-06**: handleError loses stack traces~~ — **Resolved** in Phase 20 via `new Error(message, { cause: error })` pattern.
-- ~~**TD-API-07**: No streaming implementation~~ — **Resolved** in Phase 19.
+- **TD-AI-10**: Current model policy uses flat `resolveModelForPlan(planName, requestType)` — must be replaced with comprehensive `resolveModelPolicy()` supporting task classes, fallbacks, downgrade triggers, token limits, and audio mode differentiation per Section 8.2 matrix.
 
 ---
 
@@ -571,6 +670,7 @@ All critical-severity technical debt resolved. Remaining items are medium or low
 | TD-AI-06  | OpenAI | No retry/backoff for transient failures                                     | Medium   |
 | TD-AI-08  | OpenAI | No video generation (Premium) — UI claims feature exists but it does not    | Medium   |
 | TD-AI-09  | OpenAI | Prompts not optimized per persona/model                                     | Medium   |
+| TD-AI-10  | OpenAI | Model policy needs overhaul: flat `resolveModelForPlan` → comprehensive `resolveModelPolicy` with task classes, fallbacks, downgrade triggers, token limits, audio mode differentiation | Medium   |
 
 ### Active — Low Priority
 
