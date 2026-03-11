@@ -5,6 +5,34 @@
 
 ---
 
+## Phase 22: Prompt System & OpenAI Resilience — COMPLETED
+
+- [x] **22.1** Implement retry/backoff for OpenAI failures (`withOpenAIRetry()` wrapper with exponential backoff 1s/2s/4s, transient-only retries for 429/500/502/503, immediate failure for 400/401/403, `maxRetries: 0` on SDK requests, model downgrade via `retryAttempt` parameter)
+- [x] **22.2** Create prompt versioning and management system (`src/constants/persona-prompts.ts` with `import "server-only"`, `PROMPT_VERSION = "1.0"`, model-family resolution, temperature/max-token settings per persona)
+- [x] **22.3** Improve persona-specific prompts (all 9 personas with distinct prompts, `COMPANION_SAFETY_RULES` for companion personas, `WELLNESS_SAFETY_RULES` for wellness, model-family-aware prompt adaptation)
+
+Resolved: TD-AI-06 (fully), TD-AI-09 (partially — chat prompts optimized, media prompts pending). Both streaming and non-streaming chat paths use retry. Streaming only retries before first content chunk emitted. Vitest server-only alias added for test coverage. 51 test suites, 229 tests passing, 79 E2E tests passing. All 6 validation gates green.
+
+**Files changed:** `src/lib/utils/openai/generateResponse.tsx`, `src/constants/persona-prompts.ts` (new), `src/constants/assistant-personas.tsx`, `vitest.config.mts`, `tests/unit/openai-retry.test.ts` (new), `tests/unit/persona-prompts.test.ts` (new), `tests/unit/ai-model-policy.test.ts`, `tests/e2e/landing-page.spec.ts`
+
+**Known residual items (non-blocking):**
+- Dead `chatSystemMsg` export in `openai.tsx` — superseded by `persona-prompts.ts` (TD-AI-14)
+- Hardcoded TTS model-name branch in `generateAudio.tsx` (TD-AI-15)
+- Image/audio generation not persona-aware (TD-AI-09 partial)
+
+---
+
+## Phase 21-C: Post-Policy Cleanup — COMPLETED
+
+- [x] **21-C.1** Remove dead `combinedCount` parameter from `check-usage-limit.ts`, callers in `route.tsx`, and tests
+- [x] **21-C.2** Fix video matrix/resolver dual source of truth — matrix `final.model` now `sora-2` with notes documenting `explicitPremium` override
+
+Resolved: TD-AI-11 (fully), TD-AI-12 (fully). All tests passing. All 6 validation gates green.
+
+**Files changed:** `src/lib/utils/check-usage-limit.ts`, `src/app/api/openai/route.tsx`, `src/lib/utils/ai-model-policy.ts`, `tests/unit/check-usage-limit.test.ts`
+
+---
+
 ## Phase 21: Model Policy Overhaul — COMPLETED
 
 - [x] **21.1** Fix Premium video generation claim ("Video generation - Coming soon (Premium)")

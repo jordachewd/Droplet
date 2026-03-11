@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-11 (Phase 21 complete, Model Policy Matrix implemented, TD audit synced)
+> Last updated: 2026-03-11 (Phase 22 complete, Retry/Backoff + Persona Prompt System implemented)
 
 ---
 
@@ -96,18 +96,24 @@ Each persona has: `id`, `label`, `tagline`, `description`, `category`, `icon`, `
 - System prompt is built per-persona via `buildPersonaAwareSystemPrompt()`.
 - Entitlements resolved via `resolveEntitlements()` in `src/lib/utils/resolve-entitlements.tsx`.
 
-### Prompt Architecture (Target)
+### Prompt Architecture (Implemented — Phase 22)
 
-Prompt design must evolve from isolated persona strings to a managed matrix:
+Prompt system implemented in `src/constants/persona-prompts.ts` (server-only, versioned).
 
-- **Persona identity**: unique personality, tone, domain expertise
-- **Plan tier**: model-aware prompt adaptation (cheaper models need more explicit instructions)
-- **Model family/version**: adapt prompt style to model capabilities
-- **Content modality**: chat, image, audio — each with modality-specific instructions
-- **Safety constraints**: per-persona behavioral boundaries
+Current implementation covers:
+
+- **Persona identity**: unique personality, tone, domain expertise — all 9 personas have distinct prompts
+- **Plan tier**: model-family-aware prompt adaptation (nano/mini/standard/reasoning model families)
+- **Model family resolution**: `resolvePromptModelFamily()` maps model IDs to prompt families
+- **Temperature/max-token settings**: per-persona, per-model-family configuration
+- **Safety constraints**: `COMPANION_SAFETY_RULES` for companion personas (boyfriend, girlfriend, best-friend), `WELLNESS_SAFETY_RULES` for wellness
 - **Answer style and formatting**: persona-specific output formatting rules
+- **Version identifier**: `PROMPT_VERSION = "1.0"`
+- **Fallback chain**: model-family prompt → persona default `systemPrompt` in assistant-personas.tsx
 
-Prompts must be versioned and kept separate from request handlers.
+Prompts are versioned and separated from request handlers. `buildPersonaAwareSystemPrompt()` resolves prompts from the new config first, falling back to persona defaults.
+
+**Remaining gap**: Image and audio generation requests are not yet persona-aware — they do not receive persona-specific prompt context. Chat prompts are fully persona-aware.
 
 ---
 
@@ -527,14 +533,16 @@ All auth/limit checks execute before streaming begins. Final task persistence an
 
 - ~~**TD-AI-01**: No streaming~~ — **Resolved** in Phase 19 via `generateStreamingResponse()` + SSE events.
 - ~~**TD-AI-03**: No per-user cost tracking~~ — **Resolved** in Phase 16 via `UsageEvent` + `usage-event-utils.ts`.
-- **TD-AI-06**: No retry/backoff for transient failures.
+- ~~**TD-AI-06**: No retry/backoff for transient failures~~ — **Resolved** in Phase 22 via `withOpenAIRetry()` in `generateResponse.tsx`. Exponential backoff (1s/2s/4s), transient-only retries (429/500/502/503), model downgrade via `retryAttempt` parameter, SDK auto-retry disabled (`maxRetries: 0`).
 - ~~**TD-AI-07**: Models hardcoded~~ — **Resolved** in Phase 16 via `ai-model-policy.ts`.
-- **TD-AI-08**: No video generation (Premium). UI now shows "Coming soon" — implementation deferred to Phase 24.
-- **TD-AI-09**: Prompts not optimized per persona/model.
+- **TD-AI-08**: No video generation (Premium). UI now shows "Coming soon" — implementation deferred.
+- ~~**TD-AI-09**: Prompts not optimized per persona/model~~ — **Partially resolved** in Phase 22 via `persona-prompts.ts`. Chat prompts are now per-persona, per-model-family with safety constraints. Image/audio generation prompts remain non-persona-aware.
 - ~~**TD-AI-10**: Model policy overhaul~~ — **Resolved** in Phase 21 via `MODEL_POLICY_MATRIX` + `resolveModelPolicy()` in `ai-model-policy.ts`.
-- **TD-AI-11**: Dead `combinedCount` parameter in `check-usage-limit.ts` — accepted but voided. Callers still compute and pass it. Minor dead code to clean up.
-- **TD-AI-12**: `MODEL_POLICY_MATRIX` premium video `final.model` is `sora-2-pro` but resolver overrides to `sora-2` unless `explicitPremium` is true — dual source of truth; matrix definition is misleading.
+- ~~**TD-AI-11**: Dead `combinedCount` parameter~~ — **Resolved** in Phase 21-C. Removed from interface, function body, and all callers.
+- ~~**TD-AI-12**: Video matrix/resolver dual source of truth~~ — **Resolved** in Phase 21-C. Matrix `final.model` now `sora-2` with notes documenting `explicitPremium` override.
 - **TD-AI-13**: 5 model pricing entries in `ai-model-policy.ts` are placeholders pending OpenAI confirmation (`gpt-audio-mini`, `gpt-audio-1.5`, `gpt-4o-mini-tts`, `sora-2`, `sora-2-pro`).
+- **TD-AI-14**: Dead `chatSystemMsg` export in `src/constants/openai.tsx` — superseded by `CHAT_PLATFORM_PROMPT` in `persona-prompts.ts`. Never imported.
+- **TD-AI-15**: Hardcoded TTS model-name branch in `generateAudio.tsx` (`policy.model === "gpt-4o-mini-tts"`) — should be a policy flag (e.g., `isTtsOnly`) to avoid coupling code paths to specific model names.
 
 ---
 
@@ -630,7 +638,7 @@ All file handling technical debt has been resolved.
 
 ## 13. Testing
 
-- **Unit tests**: 49 suites, 220 tests (Vitest) — includes streaming, webhook, chat-wrapper, upload flow, S3 cleanup, idempotency, and model policy tests
+- **Unit tests**: 51 suites, 229 tests (Vitest) — includes streaming, webhook, chat-wrapper, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, and persona prompt tests
 - **E2E tests**: Playwright specs, 79 tests across browser projects
 - **Coverage**: Not configured (planned Phase 23)
 - **Gap**: No dedicated E2E spec for streamed chunk-by-chunk rendering (manually verified via Playwright MCP)
@@ -670,17 +678,16 @@ All critical-severity technical debt resolved. Remaining items are medium or low
 | ID        | Area   | Description                                                                 | Severity |
 | --------- | ------ | --------------------------------------------------------------------------- | -------- |
 | TD-API-01 | API    | In-memory rate limiter (does not survive restarts or horizontal scaling)     | Medium   |
-| TD-AI-06  | OpenAI | No retry/backoff for transient failures                                     | Medium   |
-| TD-AI-08  | OpenAI | No video generation (Premium) — UI shows "Coming soon", implementation deferred to Phase 24 | Medium   |
-| TD-AI-09  | OpenAI | Prompts not optimized per persona/model                                     | Medium   |
-| TD-AI-11  | OpenAI | Dead `combinedCount` parameter in `check-usage-limit.ts` and callers        | Low      |
-| TD-AI-12  | OpenAI | Video matrix/resolver dual source of truth (matrix vs override)             | Low      |
-| TD-AI-13  | OpenAI | 5 model pricing entries are placeholders pending OpenAI confirmation         | Low      |
+| TD-AI-08  | OpenAI | No video generation (Premium) — UI shows "Coming soon", implementation deferred | Medium   |
 
 ### Active — Low Priority
 
 | ID            | Area    | Description                                              | Severity |
 | ------------- | ------- | -------------------------------------------------------- | -------- |
+| TD-AI-09  | OpenAI | Image/audio generation prompts not persona-aware (chat prompts done Phase 22) | Low   |
+| TD-AI-13  | OpenAI | 5 model pricing entries are placeholders pending OpenAI confirmation         | Low      |
+| TD-AI-14  | OpenAI | Dead `chatSystemMsg` export in `openai.tsx` — superseded by `persona-prompts.ts` | Low   |
+| TD-AI-15  | OpenAI | Hardcoded TTS model-name branch in `generateAudio.tsx` — should use policy flag | Low   |
 | TD-PLAN-01    | Billing | No recurring subscriptions (deferred v1)                 | Low      |
 
 ### Resolved
@@ -719,6 +726,9 @@ All critical-severity technical debt resolved. Remaining items are medium or low
 | TD-DB-14     | AdminAuditLog model missing           | Created in Phase 14                                                           |
 | TD-UI-02     | No loading skeletons                  | Added                                                                         |
 | TD-UI-06     | No conversation delete UI             | Added                                                                         |
+| TD-AI-06     | No retry/backoff for transient failures | Resolved in Phase 22 via `withOpenAIRetry()` — exponential backoff, model downgrade |
+| TD-AI-11     | Dead combinedCount parameter            | Resolved in Phase 21-C — removed from interface, body, and callers            |
+| TD-AI-12     | Video matrix/resolver dual source of truth | Resolved in Phase 21-C — matrix now shows `sora-2` with notes              |
 | TD-PLAN-07   | No daily conversation limit           | Implemented in Phase 15 via `checkDailyConversationLimit` + route enforcement |
 | TD-PLAN-08   | No per-conversation prompt limit      | Implemented in Phase 15 via `Task.promptCount` + route enforcement            |
 | TD-DB-05     | Task messages unbounded (16MB risk)   | Implemented in Phase 15 via `estimatedBytes` tracking + 12MB threshold guard  |

@@ -10,6 +10,8 @@ Built with Next.js 16, React 19, TypeScript, Tailwind CSS v4.2, Clerk, Stripe, M
 - **Multi-modal AI** — text chat, image generation, audio generation
 - **Plan-aware AI model selection** — comprehensive model policy matrix: `gpt-4o-mini` for Lite, `gpt-4.1` for Pro, `gpt-4.1`/`gpt-5.4` for Premium via `resolveModelPolicy()` with task classes, fallbacks, downgrade triggers, token limits, and audio mode differentiation
 - **Streaming responses** — real-time incremental chat rendering via SSE with progressive text display
+- **Retry/backoff resilience** — automatic retry with exponential backoff (1s/2s/4s) for transient OpenAI errors, model tier downgrade on retry, SDK auto-retry disabled for deterministic behavior
+- **Persona prompt system** — versioned, server-only prompt matrix with per-persona, per-model-family system prompts, temperature/max-token tuning, and companion safety rules
 - **Usage event logging** — per-request cost tracking, latency measurement, and blocked-request recording
 - **File uploads via S3** — all attachments uploaded to AWS S3 via `/api/upload`, no inline base64 in messages
 - **Conversation history** — persist, resume, and manage conversations
@@ -25,8 +27,8 @@ Built with Next.js 16, React 19, TypeScript, Tailwind CSS v4.2, Clerk, Stripe, M
 ### Planned (In Development)
 
 - **Video generation** — Premium plan exclusive (`sora-2-pro` / `sora-2`)
-- **Prompt optimization** — per-persona, per-model prompt tuning with versioning
-- **Retry/backoff** — resilient OpenAI request handling with automatic model tier downgrade
+- **Stripe subscriptions** — auto-renewal billing (currently one-time payments)
+- **Task complexity classification** — server-side heuristic for automatic `gpt-5.4` routing on complex Premium requests
 
 ## Tech Stack
 
