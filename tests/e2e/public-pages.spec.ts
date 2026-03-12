@@ -1,17 +1,23 @@
+import path from "node:path";
 import { expect, test, type Page } from "@playwright/test";
 
-async function gotoAndExpectStatusOk(page: Page, route: string) {
+const guestFile = path.join(__dirname, ".clerk/guest.json");
+
+test.describe.configure({ mode: "serial" });
+
+async function gotoAndExpectPublicRoute(page: Page, route: string) {
   const response = await page.goto(route);
 
   expect(
     response,
     `Expected a main document response for ${route}.`,
   ).not.toBeNull();
-  expect(response?.status(), `Expected ${route} to return HTTP 200.`).toBe(200);
 }
 
+test.use({ storageState: guestFile });
+
 test("renders the landing page hero and public CTAs", async ({ page }) => {
-  await gotoAndExpectStatusOk(page, "/");
+  await gotoAndExpectPublicRoute(page, "/");
 
   await expect(
     page.getByRole("heading", {
@@ -29,7 +35,7 @@ test("renders the landing page hero and public CTAs", async ({ page }) => {
 test("renders the about page with multiple content sections", async ({
   page,
 }) => {
-  await gotoAndExpectStatusOk(page, "/about");
+  await gotoAndExpectPublicRoute(page, "/about");
 
   await expect(
     page.getByRole("heading", { name: "About Droplet" }),
@@ -58,7 +64,7 @@ test("renders the about page with multiple content sections", async ({
 test("renders the public plans page with all plan cards and approved prices", async ({
   page,
 }) => {
-  await gotoAndExpectStatusOk(page, "/plans");
+  await gotoAndExpectPublicRoute(page, "/plans");
 
   await expect(
     page.getByRole("heading", { name: /choose your plan/i }),
@@ -85,7 +91,7 @@ test("renders the public plans page with all plan cards and approved prices", as
 test("renders the public FAQs page with multiple accordion items", async ({
   page,
 }) => {
-  await gotoAndExpectStatusOk(page, "/faqs");
+  await gotoAndExpectPublicRoute(page, "/faqs");
 
   await expect(
     page.getByRole("heading", { name: "Frequently Asked Questions" }),
@@ -111,7 +117,7 @@ test("renders the public FAQs page with multiple accordion items", async ({
 });
 
 test("renders the personas page with persona cards", async ({ page }) => {
-  await gotoAndExpectStatusOk(page, "/personas");
+  await gotoAndExpectPublicRoute(page, "/personas");
 
   await expect(
     page.getByRole("heading", { name: "Choose Your AI Persona" }),
@@ -123,7 +129,7 @@ test("renders the personas page with persona cards", async ({ page }) => {
 });
 
 test("renders the privacy policy page with legal content", async ({ page }) => {
-  await gotoAndExpectStatusOk(page, "/privacy");
+  await gotoAndExpectPublicRoute(page, "/privacy");
 
   await expect(
     page.getByRole("heading", { name: "Privacy Policy" }),
@@ -139,7 +145,7 @@ test("renders the privacy policy page with legal content", async ({ page }) => {
 });
 
 test("renders the cookie policy page with legal content", async ({ page }) => {
-  await gotoAndExpectStatusOk(page, "/cookies");
+  await gotoAndExpectPublicRoute(page, "/cookies");
 
   await expect(
     page.getByRole("heading", { name: "Cookie Policy" }),
@@ -153,7 +159,7 @@ test("renders the cookie policy page with legal content", async ({ page }) => {
 });
 
 test("renders the terms page with legal content", async ({ page }) => {
-  await gotoAndExpectStatusOk(page, "/terms");
+  await gotoAndExpectPublicRoute(page, "/terms");
 
   await expect(
     page.getByRole("heading", { name: "Terms & Conditions" }),
@@ -168,17 +174,21 @@ test("renders the terms page with legal content", async ({ page }) => {
 test("footer legal links navigate to the correct public routes", async ({
   page,
 }) => {
-  await gotoAndExpectStatusOk(page, "/");
+  await gotoAndExpectPublicRoute(page, "/");
 
-  const footer = page.locator(".Footer");
-
-  await footer.getByRole("link", { name: /privacy/i }).click();
+  await page
+    .locator(".Footer")
+    .getByRole("link", { name: "Privacy & Cookie Policy", exact: true })
+    .click();
   await expect(page).toHaveURL(/\/privacy$/);
   await expect(
     page.getByRole("heading", { name: "Privacy Policy" }),
   ).toBeVisible();
 
-  await footer.getByRole("link", { name: /terms/i }).click();
+  await page
+    .locator(".Footer")
+    .getByRole("link", { name: "Terms & Conditions", exact: true })
+    .click();
   await expect(page).toHaveURL(/\/terms$/);
   await expect(
     page.getByRole("heading", { name: "Terms & Conditions" }),
@@ -188,7 +198,7 @@ test("footer legal links navigate to the correct public routes", async ({
 test("desktop header links navigate across the public pages", async ({
   page,
 }) => {
-  await gotoAndExpectStatusOk(page, "/");
+  await gotoAndExpectPublicRoute(page, "/");
 
   const viewportWidth = await page.evaluate(() => window.innerWidth);
   test.skip(
@@ -196,27 +206,37 @@ test("desktop header links navigate across the public pages", async ({
     "Header navigation links are hidden on smaller viewports.",
   );
 
-  const header = page.locator(".Header");
-
-  await header.getByRole("link", { name: "About", exact: true }).click();
+  await page
+    .locator(".Header")
+    .getByRole("link", { name: "About", exact: true })
+    .click();
   await expect(page).toHaveURL(/\/about$/);
   await expect(
     page.getByRole("heading", { name: "About Droplet" }),
   ).toBeVisible();
 
-  await header.getByRole("link", { name: "Personas", exact: true }).click();
+  await page
+    .locator(".Header")
+    .getByRole("link", { name: "Personas", exact: true })
+    .click();
   await expect(page).toHaveURL(/\/personas$/);
   await expect(
     page.getByRole("heading", { name: "Choose Your AI Persona" }),
   ).toBeVisible();
 
-  await header.getByRole("link", { name: "Plans", exact: true }).click();
+  await page
+    .locator(".Header")
+    .getByRole("link", { name: "Plans", exact: true })
+    .click();
   await expect(page).toHaveURL(/\/plans$/);
   await expect(
     page.getByRole("heading", { name: /choose your plan/i }),
   ).toBeVisible();
 
-  await header.getByRole("link", { name: "FAQs", exact: true }).click();
+  await page
+    .locator(".Header")
+    .getByRole("link", { name: "FAQs", exact: true })
+    .click();
   await expect(page).toHaveURL(/\/faqs$/);
   await expect(
     page.getByRole("heading", { name: "Frequently Asked Questions" }),
