@@ -6,8 +6,10 @@
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
 > **STATUS: HF-3 critical fix required — image/audio generation broken due to placeholder model IDs.**
+> **Additional critical fixes queued: HF-5 (auth reliability — webhook over-fetch + self-heal race).**
 > All milestones 0–8 implementation mostly complete. HF-1, HF-2 complete. Phases 1–25.5.3 complete (see DONE.md).
 > Image and audio generation are 100% broken and must be fixed before any other work proceeds.
+> After HF-3: HF-5 (critical auth/signup reliability), then HF-4 (Stripe redirect), then HF-6/HF-7 (model policy + compaction).
 
 ---
 
@@ -132,6 +134,148 @@
 - [ ] Fix verified on both local and production environments
 - [ ] No regression to other Stripe or auth flows
 - [ ] If code changes required: `npx tsc --noEmit` passes, all tests pass
+
+---
+
+## HF-5: CRITICAL — Auth Reliability: Webhook Over-Fetch & Self-Heal Race
+
+> Two independent bugs on the user-creation critical path combine to degrade signup
+> and chat reliability. During Clerk API degradation, valid signups fail (HF-5.1).
+> During webhook/self-heal race conditions, authenticated users get false 503s (HF-5.2).
+> Both confirmed by Architect and Engineer. No blockers — ready to implement.
+> Ref: AGENTS.md Security Rules (self-healing user sync). SPEC.md Section 2.
+
+---
+
+### HF-5.1 Remove unnecessary Clerk API call for missing username in webhook
+
+**File:** `src/app/api/webhooks/clerk/route.tsx`
+
+**What to do:**
+
+- In `resolveUserCreatedParams()`, change the condition `if (!webhookEmail || !webhookUsername)` to `if (!webhookEmail)`.
+- The username fallback is already handled locally by `generateFallbackUsername()` — no Clerk backend call is needed for it.
+- When `fallbackClerkUser` is null (because we skip the fetch), the username chain `webhookUsername ?? toNonEmptyString(fallbackClerkUser?.username) ?? generateFallbackUsername(...)` correctly falls through to local generation.
+- Verify `firstName`, `lastName`, and `userimg` tolerate empty strings when `fallbackClerkUser` is null (they already default to `""`).
+
+**Acceptance criteria:**
+
+- [ ] Condition changed to `if (!webhookEmail)` only
+- [ ] Webhook with email but no username succeeds WITHOUT calling `client.users.getUser()`
+- [ ] Webhook with no email still calls `client.users.getUser()` as fallback
+- [ ] `generateFallbackUsername()` produces valid usernames when webhook fields are missing
+- [ ] Existing clerk-webhook unit tests updated and passing
+- [ ] New test: webhook payload with email but no username → verify `getUser` NOT called
+- [ ] `npx tsc --noEmit` passes
+
+---
+
+### HF-5.2 Fix self-heal duplicate-key race returning false 503
+
+**File:** `src/lib/utils/ensure-user-synced.ts`
+
+**What to do:**
+
+1. Wrap `User.create()` in a targeted try/catch for MongoDB error code `11000` (duplicate key).
+2. On `11000`, refetch the existing user with `User.findOne({ clerkId })` using the same `.select().lean()` projection as the happy path. Return the refetched user.
+3. Wrap `client.users.updateUserMetadata()` in its own try/catch. Log a warning on failure but still return the successfully created (or refetched) user record. Metadata sync is non-critical — the next webhook or login event will reconcile it.
+4. Keep the outer try/catch for truly unexpected errors (network failures, DB connection errors).
+5. The consuming code in `src/app/api/openai/route.tsx` (line ~568) does NOT need changes — it already handles null correctly. This fix reduces false nulls.
+
+**Acceptance criteria:**
+
+- [ ] Duplicate key (11000) error caught specifically after `User.create()`
+- [ ] Refetch uses same `.select().lean()` projection as the initial `findOne`
+- [ ] `updateUserMetadata()` failure does NOT cause null return
+- [ ] A code comment documents why metadata sync is non-fatal
+- [ ] New unit test: `User.create()` throws 11000 → verify user returned (not null)
+- [ ] New unit test: `updateUserMetadata()` throws → verify user still returned
+- [ ] `npx tsc --noEmit` passes
+- [ ] All existing tests pass
+
+---
+
+## HF-6: HIGH — Premium Chat Retries Never Downgrade Model Tier
+
+> All 3 Premium chat task classes set `fallbackModel` equal to `model` (`gpt-4.1`).
+> The resolver only downgrades when `fallbackModel !== model`, so the retry path is dead code
+> for Premium chat. Violates AGENTS.md rule: "Retries should downgrade model tier."
+> Pro plan correctly uses `gpt-4o-mini` as fallback — issue is isolated to Premium.
+> Confirmed by Architect and Engineer. Depends on: HF-3 resolved (model IDs must be valid first).
+> Ref: AGENTS.md AI/OpenAI Rules. SPEC.md Section 8.
+
+---
+
+### HF-6.1 Set distinct fallback models for Premium chat task classes
+
+**File:** `src/lib/utils/ai-model-policy.ts`
+
+**What to do:**
+
+- Change Premium chat `simple` fallbackModel from `"gpt-4.1"` to `"gpt-4o-mini"`.
+- Change Premium chat `standard` fallbackModel from `"gpt-4.1"` to `"gpt-4o-mini"`.
+- Change Premium chat `complex` fallbackModel from `"gpt-4.1"` to `"gpt-4.1-mini"` (complex warrants a smaller quality drop than simple/standard).
+- Verify `gpt-4.1-mini` is a valid model ID. If not, use `gpt-4o-mini` and document the gap.
+- When `gpt-5.4` is later wired as the primary complex model, its fallback should be `gpt-4.1`.
+- Update the `notes` field on each rule to reflect the new downgrade behavior.
+
+**PM Decision (recorded):** Complex Premium chat falls to `gpt-4.1-mini` (not `gpt-4o-mini`), preserving reasonable quality on retry. Simple/standard fall to `gpt-4o-mini`, matching Pro behavior.
+
+**Acceptance criteria:**
+
+- [ ] All 3 Premium chat `fallbackModel` values differ from their `model` values
+- [ ] Existing unit test assertions updated (e.g., `ai-model-policy.test.ts` line ~85)
+- [ ] New test: Premium chat with `retryAttempt: 1` → verify model resolves to fallbackModel
+- [ ] New test: Premium chat with `highLatency: true` → verify downgrade fires
+- [ ] `npx tsc --noEmit` passes
+- [ ] All tests pass
+
+---
+
+## HF-7: MEDIUM — Context Compaction Ignores Non-Text Token Cost
+
+> `estimateMessageTokens()` returns 0 for images/audio. Non-text content items always retained
+> with zero cost in compaction. Image-heavy conversations pass through unchanged and can blow
+> the provider context window, defeating the purpose of the compaction layer.
+> Confirmed by Architect and Engineer. Needs design decisions before implementation.
+> Depends on: HF-3 resolved. Ref: SPEC.md Section 8.
+
+---
+
+### HF-7.1 Add non-text token cost estimation to message compaction
+
+**File:** `src/lib/utils/openai/message-policy.ts`
+
+**What to do:**
+
+1. In `estimateMessageTokens()`, assign heuristic token costs to non-text content items:
+   - `image_url`: 300 tokens (midpoint between low-detail 85 and high-detail 1105; detail level is not available in the content item type).
+   - `input_audio`: 500 tokens per audio segment (conservative flat estimate; duration not stored).
+   - Document these heuristics as approximate with a code comment.
+2. In `trimMessageToTokenLimit()`, allow non-text items to be evicted when `remainingTokens <= 0` — currently they are pushed unconditionally.
+3. In `compactMessagesToTokenLimit()`, include non-text token cost in `messageTokens` budget check. Evict entire older messages with non-text content when budget is exceeded.
+4. **Critical constraint:** Never strip non-text items from the MOST RECENT user message (the one being responded to). The user expects a response to what they just sent.
+
+**PM Decisions (recorded):**
+
+- Heuristic image cost: 300 tokens per image item.
+- Heuristic audio cost: 500 tokens per audio item.
+- Eviction is acceptable for older non-text items. Recent user message is protected.
+- These are conservative estimates — over-counting is safer than under-counting.
+
+**Acceptance criteria:**
+
+- [ ] `estimateMessageTokens()` returns non-zero for messages with image/audio content
+- [ ] Non-text items in older messages are evicted when token budget is exceeded
+- [ ] Most recent user message retains all non-text items regardless of budget
+- [ ] Heuristic costs documented in code comments
+- [ ] New test file: `tests/unit/message-policy.test.ts`
+- [ ] Test: image-only message returns ~300 tokens per image
+- [ ] Test: compaction with image-heavy conversation evicts older images
+- [ ] Test: most recent user message images preserved even over budget
+- [ ] Test: text-only compaction behavior unchanged (regression)
+- [ ] `npx tsc --noEmit` passes
+- [ ] All tests pass
 
 ---
 

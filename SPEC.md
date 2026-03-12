@@ -35,7 +35,7 @@ The product monetises through tiered subscription plans paid via Stripe.
 - Image upload support
 - Image generation (all tiers, with enforced usage limits)
 - Audio generation (all tiers, with enforced usage limits)
-- Video generation (Premium only)
+- Video generation (Premium only — **coming soon**, implementation deferred)
 - Account-required access — no anonymous usage
 - Authenticated `/app` experience with persona-led UX
 - Real conversation history (list, resume, delete)
@@ -119,11 +119,11 @@ Prompts are versioned and separated from request handlers. `buildPersonaAwareSys
 
 ## 4. Subscription Plans
 
-| Plan        | Price | Duration      | Chat Model (default)            | Limits                                                                                                      |
-| ----------- | ----- | ------------- | ------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| **Lite**    | Free  | **Permanent** | `gpt-4o-mini`                   | 5 conversations/day, 10 prompts/conversation, 3 image generations/month, no audio, no video                 |
-| **Pro**     | $19   | Monthly       | `gpt-4.1`                       | 50 conversations/day, 100 prompts/conversation, 50 image + 50 audio generations/month, no video             |
-| **Premium** | $39   | Monthly       | `gpt-4.1` / `gpt-5.4` (complex) | Unlimited conversations, unlimited prompts, unlimited image + audio generations, 10 video generations/month |
+| Plan        | Price | Duration      | Chat Model (default)            | Limits                                                                                             |
+| ----------- | ----- | ------------- | ------------------------------- | -------------------------------------------------------------------------------------------------- |
+| **Lite**    | Free  | **Permanent** | `gpt-4o-mini`                   | 5 conversations/day, 10 prompts/conversation, 3 image generations/month, no audio, no video        |
+| **Pro**     | $19   | Monthly       | `gpt-4.1`                       | 50 conversations/day, 100 prompts/conversation, 50 image + 50 audio generations/month, no video    |
+| **Premium** | $39   | Monthly       | `gpt-4.1` / `gpt-5.4` (complex) | Unlimited conversations, unlimited prompts, unlimited image + audio generations, video coming soon |
 
 > Full model policy (all features × plans × task classes) in **Section 8**.
 
@@ -158,13 +158,13 @@ Prompts are versioned and separated from request handlers. `buildPersonaAwareSys
 
 ### Premium Plan Limits (Detailed)
 
-| Limit                         | Value     | Reset Window          |
-| ----------------------------- | --------- | --------------------- |
-| Conversations per day         | Unlimited | N/A                   |
-| User prompts per conversation | Unlimited | N/A                   |
-| Image generations             | Unlimited | N/A                   |
-| Audio generations             | Unlimited | N/A                   |
-| Video generations             | 10        | 30-day rolling window |
+| Limit                         | Value            | Reset Window          |
+| ----------------------------- | ---------------- | --------------------- |
+| Conversations per day         | Unlimited        | N/A                   |
+| User prompts per conversation | Unlimited        | N/A                   |
+| Image generations             | Unlimited        | N/A                   |
+| Audio generations             | Unlimited        | N/A                   |
+| Video generations             | 10 (coming soon) | 30-day rolling window |
 
 ### Plan Lifecycle
 

@@ -49,18 +49,18 @@ All 9 personas are available on every plan.
 
 ## Plans & Pricing
 
-|                               | Lite         | Pro       | Premium   |
-| ----------------------------- | ------------ | --------- | --------- |
-| **Price**                     | Free forever | $19/month | $39/month |
-| **Conversations/Day**         | 5            | 50        | Unlimited |
-| **Messages/Conversation**     | 10           | 100       | Unlimited |
-| **Image Generation**          | 3/month      | 50/month  | Unlimited |
-| **Audio Generation**          | —            | 50/month  | Unlimited |
-| **Video Generation**          | —            | —         | 10/month  |
-| **All 9 Personas**            | ✓            | ✓         | ✓         |
-| **Streaming Responses**       | ✓            | ✓         | ✓         |
-| **Premium Audio Quality**     | —            | —         | ✓         |
-| **Advanced AI for Reasoning** | —            | —         | ✓         |
+|                               | Lite         | Pro       | Premium     |
+| ----------------------------- | ------------ | --------- | ----------- |
+| **Price**                     | Free forever | $19/month | $39/month   |
+| **Conversations/Day**         | 5            | 50        | Unlimited   |
+| **Messages/Conversation**     | 10           | 100       | Unlimited   |
+| **Image Generation**          | 3/month      | 50/month  | Unlimited   |
+| **Audio Generation**          | —            | 50/month  | Unlimited   |
+| **Video Generation**          | —            | —         | Coming soon |
+| **All 9 Personas**            | ✓            | ✓         | ✓           |
+| **Streaming Responses**       | ✓            | ✓         | ✓           |
+| **Premium Audio Quality**     | —            | —         | ✓           |
+| **Advanced AI for Reasoning** | —            | —         | ✓           |
 
 Create a free account and start chatting today. Upgrade anytime.
 
