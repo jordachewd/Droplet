@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-14 (HF-1 complete, Phase 25.5.3 complete — pre-Phase-26 verification in progress)
+> Last updated: 2026-03-12 (HF-2 complete, image/audio model IDs identified as broken — HF-3 in progress)
 
 ---
 
@@ -216,8 +216,8 @@ Prompts are versioned and separated from request handlers. `buildPersonaAwareSys
 
 - ~~**TD-AUTH-01**: Proxy protects old routes~~ — **Resolved** in Phase 17. Proxy now protects `/app(.*)` and `/admin(.*)` only.
 - ~~**TD-AUTH-02**: Admin at `/dashboard`~~ — **Resolved** in Phase 17. Admin is at `/admin`.
-- **TD-AUTH-03**: Missing MongoDB user self-healing — when Clerk webhook fails or delays, `/app/profile` and `/app/plans` show permanent loading spinner instead of actionable error. **Critical.** Tracked as HF-2.
-- **TD-AUTH-04**: `/api/openai` silently degrades to Lite plan when MongoDB user record is missing — paid Pro/Premium users get Lite limits with no error feedback. **High.** Tracked as HF-2.
+- ~~**TD-AUTH-03**: Missing MongoDB user self-healing~~ — **Resolved** in HF-2. `ensureUserSynced()` utility created and wired into `/app/profile`, `/app/plans`, `/api/openai`. Returns HTTP 503 on failure instead of silent degradation.
+- ~~**TD-AUTH-04**: `/api/openai` silently degrades to Lite plan~~ — **Resolved** in HF-2. Route attempts self-healing, returns HTTP 503 if self-healing fails.
 
 ### Self-Healing User Sync Requirement
 
@@ -707,10 +707,16 @@ All file handling technical debt has been resolved.
 
 ### Active — Critical Priority
 
-| ID         | Area | Description                                                                                                           | Severity |
-| ---------- | ---- | --------------------------------------------------------------------------------------------------------------------- | -------- |
-| TD-AUTH-03 | Auth | Missing MongoDB user self-healing — `/app/profile` and `/app/plans` show permanent loading when webhook fails         | Critical |
-| TD-AUTH-04 | Auth | `/api/openai` silently degrades to Lite for missing user records — paid users get wrong limits with no error feedback | Critical |
+| ID       | Area   | Description                                                                                                                                                                           | Severity |
+| -------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| TD-AI-16 | OpenAI | Image generation model IDs (`gpt-image-1-mini`, `gpt-image-1.5`) in `MODEL_POLICY_MATRIX` are placeholder names not recognized by the OpenAI API — all image generation requests fail | Critical |
+| TD-AI-17 | OpenAI | Audio generation model IDs (`gpt-audio-mini`, `gpt-audio-1.5`, `gpt-4o-mini-tts`) are placeholders — audio generation fails for Pro/Premium                                           | Critical |
+
+### Active — High Priority
+
+| ID         | Area    | Description                                                                                                                                                           | Severity |
+| ---------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| TD-BILL-02 | Billing | Stripe checkout success redirects user to `/sign-in` instead of `/app/profile` — likely caused by Clerk session expiry during external checkout flow. Tracked as HF-4 | High     |
 
 ### Active — Medium Priority
 
@@ -789,3 +795,5 @@ All file handling technical debt has been resolved.
 | TD-AI-15      | Hardcoded TTS model-name branch             | Resolved in Phase 23.2 — `isTtsOnly` policy flag via `MODEL_CAPABILITIES` map                                                                    |
 | TD-API-01     | In-memory rate limiter                      | Resolved in Phase 25.3 — MongoDB-backed `RateLimitEntry` with TTL index, atomic sliding window                                                   |
 | TD-CODE-01    | Relative import violations                  | Resolved in Phase 24.4 — all 15 relative imports replaced with `@/*` alias across 10 files                                                       |
+| TD-AUTH-03    | Missing MongoDB user self-healing           | Resolved in HF-2 — `ensureUserSynced()` in `ensure-user-synced.ts`, wired into `/app/profile`, `/app/plans`, `/api/openai`                       |
+| TD-AUTH-04    | `/api/openai` silently degrades to Lite     | Resolved in HF-2 — returns HTTP 503 on self-healing failure instead of silent Lite degradation                                                   |

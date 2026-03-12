@@ -5,165 +5,133 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: HF-2 critical fix in progress — self-healing for missing MongoDB user records.**
-> All milestones 0–8 implementation complete. HF-1 complete. Phases 1–25.5.3 complete (see DONE.md).
-> Stop before Phase 26 (Deferred Features) — all routes and features require full operational verification first.
+> **STATUS: HF-3 critical fix required — image/audio generation broken due to placeholder model IDs.**
+> All milestones 0–8 implementation mostly complete. HF-1, HF-2 complete. Phases 1–25.5.3 complete (see DONE.md).
+> Image and audio generation are 100% broken and must be fixed before any other work proceeds.
 
 ---
 
-## HF-2: Critical — Missing MongoDB User Self-Healing — TOP PRIORITY
+## HF-3: CRITICAL — Fix Image & Audio Generation Model IDs — TOP PRIORITY
 
-> When Clerk webhook fails, delays, or is misconfigured, authenticated users have no MongoDB record.
-> `/app/profile` and `/app/plans` show permanent loading spinner. `/api/openai` silently degrades to Lite.
-> This is the #1 blocker. Must be fixed before any other work proceeds.
+> Image generation fails for ALL plans. Audio generation fails for Pro/Premium.
+> Root cause: `MODEL_POLICY_MATRIX` in `ai-model-policy.ts` uses invented model IDs
+> (`gpt-image-1-mini`, `gpt-image-1.5`, `gpt-audio-mini`, `gpt-audio-1.5`, `gpt-4o-mini-tts`)
+> that are not recognized by the OpenAI API. Every image/audio request returns an invalid-model error.
 >
-> **Root cause**: The Clerk webhook code is correct (verified HF-1). The failure occurs when:
-> (a) Clerk Dashboard webhook URL, signing secret, or subscribed events are misconfigured, or
-> (b) the app runs locally without a tunnel (ngrok/Cloudflare) registered in Clerk Dashboard.
->
-> **Code fix**: Pages and API routes must handle the "authenticated but no MongoDB user" scenario gracefully.
-> Ref: SPEC.md Section 5 (Self-Healing User Sync Requirement). AGENTS.md Security Rules.
+> This is the #1 blocker. Chat works because its model IDs (`gpt-4o-mini`, `gpt-4.1`) are valid.
+> Ref: SPEC.md TD-AI-16, TD-AI-17. AGENTS.md AI/OpenAI Rules.
 
 ---
 
-### HF-2.1 Create self-healing user sync utility
+### HF-3.1 Replace image generation model IDs with real OpenAI models
 
-**File (new):** `src/lib/utils/ensure-user-synced.ts`
+**File:** `src/lib/utils/ai-model-policy.ts`
 
 **What to do:**
 
-- Create an async server-only function `ensureUserSynced(clerkUserId: string)` that:
-  1. Queries MongoDB for existing user by `clerkId`.
-  2. If user exists, returns the serialized user data.
-  3. If user does NOT exist, fetches user data from Clerk via `clerkClient().users.getUser(clerkUserId)`.
-  4. Creates the MongoDB user record with Lite plan defaults (reuse the same plan initialization logic from the webhook `user.created` handler).
-  5. Sets Clerk `publicMetadata` (userId, role, userImg) — same as the webhook handler does.
-  6. Returns the newly created serialized user data.
-- Import `"server-only"` at the top.
-- Use the same plan defaults as the webhook handler: Lite, permanent, free.
-- Handle creation failure gracefully — return `null`, log to stderr.
-- Do NOT duplicate webhook logic: extract shared helpers if needed (e.g., move `resolveUserCreatedParams` to a shared utility or import from the webhook module).
+- Check the OpenAI API documentation for currently available image generation models.
+- Replace `gpt-image-1-mini` with the correct real OpenAI image model for cost-optimized generation (e.g., `dall-e-2` or the cheaper tier of whatever is currently available).
+- Replace `gpt-image-1.5` with the correct real OpenAI image model for high-quality generation (e.g., `dall-e-3` or the higher tier of whatever is currently available).
+- Update fallback model references to use valid IDs.
+- Update the `MODEL_PRICING` entries for the new image model IDs with real per-request costs.
+- Update the `MODEL_CAPABILITIES` map if image models have entries there.
+- Verify the calling code in `generateImage.tsx` is compatible with the chosen model's API (some models use `response_format: "b64_json"`, others return URLs).
 
 **Acceptance criteria:**
 
-- [ ] Utility creates MongoDB user from Clerk data when user record is missing
-- [ ] User gets Lite plan defaults on self-healing creation
-- [ ] Clerk `publicMetadata` is set correctly (userId, role, userImg)
-- [ ] Returns existing user without modification if already exists
-- [ ] Does not throw on failure — returns `null`
-- [ ] Unit test covers: existing user returns directly, missing user creates and returns, creation failure returns null
+- [ ] Image model IDs in `MODEL_POLICY_MATRIX` are real, verified OpenAI API identifiers
+- [ ] Lite uses cheaper image model, Pro/Premium use higher-quality model
+- [ ] `MODEL_PRICING` updated with correct per-request costs for new model IDs
+- [ ] `generateImage.tsx` API call is compatible with chosen model's response format
 - [ ] `npx tsc --noEmit` passes
-- [ ] All tests pass
+- [ ] Unit tests updated and passing (`ai-model-policy.test.ts`, any image-related tests)
+- [ ] Image generation works end-to-end for Lite, Pro, and Premium plans
 
 ---
 
-### HF-2.2 Fix /app/profile to handle missing MongoDB user
+### HF-3.2 Replace audio generation model IDs with real OpenAI models
 
-**File:** `src/app/(chat)/app/profile/page.tsx`
+**File:** `src/lib/utils/ai-model-policy.ts`
 
 **What to do:**
 
-- Replace `getUserById(userId)` with `ensureUserSynced(userId)` from HF-2.1.
-- If `ensureUserSynced` returns `null`, show a clear error state instead of `<LoadingBubbles />`:
-  - Message: "We're having trouble loading your account. Please try refreshing the page or contact support."
-  - Include support email link (`SUPPORT_EMAIL` from `@/constants/support`) and a refresh/retry link.
-- If it returns user data, render normally (existing behavior unchanged).
+- Check the OpenAI API documentation for currently available audio/TTS models.
+- Replace `gpt-audio-mini` with the correct real OpenAI audio model for Pro tier.
+- Replace `gpt-audio-1.5` with the correct real OpenAI audio model for Premium tier.
+- Replace `gpt-4o-mini-tts` with the correct real OpenAI TTS-only model for fallback.
+- Maintain audio mode differentiation: TTS-only path (`audio.speech.create`) vs audio_in_out path (`chat.completions.create` with audio modality).
+- Update `MODEL_PRICING` entries with real costs.
+- Update the `MODEL_CAPABILITIES` map entries for the new audio model IDs (especially `isTtsOnly` flags).
+- Verify compatibility with `generateAudio.tsx` calling code for both TTS and audio_in_out paths.
 
 **Acceptance criteria:**
 
-- [ ] `/app/profile` renders user data when MongoDB user exists (no behavior change)
-- [ ] `/app/profile` self-heals when MongoDB user is missing (creates it on-demand)
-- [ ] `/app/profile` shows error message (not loading spinner) when self-healing fails
-- [ ] Error message includes support contact and retry guidance
+- [ ] Audio model IDs in `MODEL_POLICY_MATRIX` are real, verified OpenAI API identifiers
+- [ ] TTS-only fallback model is correct and flagged properly in `MODEL_CAPABILITIES`
+- [ ] Audio_in_out models support the `modalities: ["text", "audio"]` API parameter
+- [ ] `MODEL_PRICING` updated with correct costs
 - [ ] `npx tsc --noEmit` passes
-- [ ] All tests pass
+- [ ] Unit tests updated and passing
+- [ ] Audio generation works end-to-end for Pro and Premium plans
+- [ ] Lite correctly blocks audio (existing behavior preserved)
 
 ---
 
-### HF-2.3 Fix /app/plans to handle missing MongoDB user
+### HF-3.3 Update SPEC.md and plan copy for corrected model names
 
-**File:** `src/app/(chat)/app/plans/page.tsx`
+**Files:** `SPEC.md`, `src/constants/plans.tsx`
 
 **What to do:**
 
-- Replace `getUserById(userId)` with `ensureUserSynced(userId)` from HF-2.1.
-- Same error handling pattern as HF-2.2.
-- If `ensureUserSynced` returns `null`, show error state instead of `<LoadingBubbles />`.
-- If it returns user data, render normally.
+- Update SPEC.md Section 8.2 (Model Policy Matrix) with the corrected model IDs from HF-3.1 and HF-3.2.
+- Update model references in Section 4 (plan tier contract) if they mention specific model names.
+- Resolve TD-AI-16 and TD-AI-17 in the tech debt table.
+- Review `src/constants/plans.tsx` plan feature descriptions — ensure no placeholder model names appear in user-facing text. Keep descriptions generic where possible (e.g., "AI image generation" not model-name-specific).
+- Update `README.md` only if it references specific model names in a way that's now wrong.
 
 **Acceptance criteria:**
 
-- [ ] `/app/plans` renders plan data when MongoDB user exists (no behavior change)
-- [ ] `/app/plans` self-heals when MongoDB user is missing
-- [ ] `/app/plans` shows error message when self-healing fails
+- [ ] SPEC.md model references match real implementation
+- [ ] TD-AI-16 and TD-AI-17 marked as resolved
+- [ ] No placeholder model names in user-facing plan text
 - [ ] `npx tsc --noEmit` passes
-- [ ] All tests pass
 
 ---
 
-### HF-2.4 Fix /api/openai to reject when user record is missing
+## HF-4: HIGH — Stripe Checkout Returns to /sign-in Instead of /app/profile
 
-**File:** `src/app/api/openai/route.tsx`
+> After completing Stripe payment, user lands on `/sign-in` instead of `/app/profile`.
+> Code is correct — `success_url` is `${BASEURL}/app/profile` (verified in `transaction.action.tsx`).
+> Likely cause: Clerk auth session expires while user is on Stripe's external checkout domain.
+> When user returns, the proxy sees no active session and redirects `/app/profile` → `/sign-in`.
+> Ref: SPEC.md TD-BILL-02.
+
+---
+
+### HF-4.1 Investigate and fix Stripe checkout return URL issue
 
 **What to do:**
 
-- After `getUserById(userId)` returns `null`, attempt `ensureUserSynced(userId)` to self-heal.
-- If self-healing succeeds, continue normally with the correct plan data.
-- If self-healing fails, return HTTP 503 with `{ message: "Account not yet provisioned. Please try again in a moment." }`.
-- Do NOT silently fall back to Lite — a paid Pro/Premium user must never be downgraded without feedback.
+1. **Verify production env:** Confirm `NEXT_PUBLIC_API_BASE_URL` in production `.env` matches the deployed domain exactly (correct protocol, no trailing slash, correct domain).
+2. **Test locally:** Complete the full checkout flow: click upgrade → complete Stripe test payment → verify landing page.
+3. **Investigate session expiry:** Check if Clerk session expires during Stripe checkout:
+   - Open browser DevTools Network tab before clicking upgrade.
+   - Complete payment on Stripe.
+   - After redirect back, check the Network tab for the redirect chain (is `/app/profile` returning 302 → `/sign-in`?).
+   - Check Clerk session cookie expiration settings in Clerk Dashboard.
+4. **If session expiry is the cause**, consider fixes:
+   - Option A: Redirect `success_url` to a public intermediary route (e.g., `/checkout-success?session_id={CHECKOUT_SESSION_ID}`) that verifies payment status and redirects to `/app/profile` after ensuring re-authentication.
+   - Option B: Adjust Clerk session duration/inactivity settings to survive the checkout window.
+   - Option C: Use Stripe's `{CHECKOUT_SESSION_ID}` template in `success_url` and add a public `/checkout-complete` page that fetches session status and redirects appropriately.
+5. **If env config is the cause**, fix the env var and verify.
 
 **Acceptance criteria:**
 
-- [ ] Route attempts self-healing when user record is missing
-- [ ] Route uses correct plan data after successful self-healing
-- [ ] Route returns 503 (not silent Lite degradation) when self-healing fails
-- [ ] Existing behavior unchanged when user record exists
-- [ ] Unit test covers: missing user → self-heal succeeds → uses correct plan; missing user → self-heal fails → 503
-- [ ] `npx tsc --noEmit` passes
-- [ ] All tests pass
-
----
-
-### HF-2.5 Remove dead svix dependency
-
-**File:** `package.json`
-
-**What to do:**
-
-- Run `npm uninstall svix` to remove from `dependencies` and update `package-lock.json`.
-- Verify zero imports of `svix` in source code (already confirmed).
-- Run full 6-gate validation.
-
-**Acceptance criteria:**
-
-- [ ] `svix` removed from `package.json` dependencies
-- [ ] `package-lock.json` updated
-- [ ] Zero imports of `svix` in `src/`
-- [ ] `npm run test` passes
-- [ ] `npx tsc --noEmit` passes
-- [ ] `npm run build` passes
-
----
-
-### HF-2.6 Verify Clerk Dashboard webhook configuration
-
-**What to do (operational — not a code task):**
-
-- Log into Clerk Dashboard → Webhooks section.
-- Verify the webhook endpoint URL is `https://<deployed-domain>/api/webhooks/clerk` (not localhost).
-- Verify the signing secret shown in Clerk Dashboard matches the `CLERK_WEBHOOK_SIGNING_SECRET` value in `.env.local` exactly.
-- Verify `user.created`, `user.updated`, `user.deleted` are checked as subscribed events.
-- Check the "Attempts" tab for delivery logs — look for HTTP status codes and response bodies.
-- If developing locally, confirm a tunnel (ngrok/Cloudflare Tunnel) is running and the tunnel URL is registered in Clerk Dashboard.
-- Trigger a test event from Clerk Dashboard and verify it appears in MongoDB.
-
-**Acceptance criteria:**
-
-- [ ] Webhook endpoint URL is correct and reachable
-- [ ] Signing secret matches `.env.local`
-- [ ] All 3 event types are subscribed (`user.created`, `user.updated`, `user.deleted`)
-- [ ] Test event successfully creates/updates user in MongoDB
-- [ ] Clerk "Attempts" tab shows 200 responses
+- [ ] Root cause identified and documented
+- [ ] After successful Stripe payment, user lands on `/app/profile` (not `/sign-in`)
+- [ ] Fix verified on both local and production environments
+- [ ] No regression to other Stripe or auth flows
+- [ ] If code changes required: `npx tsc --noEmit` passes, all tests pass
 
 ---
 
@@ -171,7 +139,7 @@
 
 > Expand E2E test coverage to verify all routes and features before deferred feature work.
 > Ref: ThePlan.md Milestone 9 (Launch Readiness). AGENTS.md testing rules.
-> Depends on: HF-2 complete. Phases 25.5.1–25.5.3 complete (see DONE.md).
+> Depends on: HF-3 and HF-4 resolved. Phases 25.5.1–25.5.3 complete (see DONE.md).
 
 ---
 
@@ -462,10 +430,11 @@
 
 - Implement video generation for Premium plan users.
 - Requires: verified provider support, cost ceiling, moderation workflow, S3 storage lifecycle.
-- Use `resolveModelPolicy({ plan: "premium", feature: "video_generation", taskClass })` for model selection — `sora-2` for previews, `sora-2-pro` for final renders.
+- Use `resolveModelPolicy({ plan: "premium", feature: "video_generation", taskClass })` for model selection.
 - Wire into `/api/openai` tool calling flow.
 - Remove "Coming soon" label from Premium plan inclusions.
 - Video stored in S3 with URL reference in messages.
+- Verify video model IDs are real OpenAI API identifiers before implementation.
 
 **Acceptance criteria:**
 
@@ -480,4 +449,4 @@
 ---
 
 > **Completed phases** are archived in [`DONE.md`](DONE.md).
-> HF-1, Phases 1–25.5.3 complete. Phase 10–12 superseded (see DONE.md for mapping).
+> HF-1, HF-2, Phases 1–25.5.3 complete. Phase 10–12 superseded (see DONE.md for mapping).

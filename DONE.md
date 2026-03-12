@@ -2,7 +2,22 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: HF-1 complete, Phases 1–25.5.3 complete. HF-2 in progress.
+> Last updated: HF-2 complete, Phases 1–25.5.3 complete. HF-3 in progress.
+
+---
+
+## HF-2: Critical — Missing MongoDB User Self-Healing — COMPLETED
+
+- [x] **HF-2.1** Create self-healing user sync utility — `ensureUserSynced()` in `src/lib/utils/ensure-user-synced.ts`. Queries MongoDB for user by `clerkId`, falls back to Clerk API if missing, creates MongoDB record with Lite plan defaults, sets Clerk `publicMetadata`. Returns serialized user data or `null` on failure.
+- [x] **HF-2.2** Fix `/app/profile` to handle missing MongoDB user — replaced `getUserById` with `ensureUserSynced`, error state with support contact and retry guidance instead of permanent loading spinner.
+- [x] **HF-2.3** Fix `/app/plans` to handle missing MongoDB user — same self-healing pattern as HF-2.2.
+- [x] **HF-2.4** Fix `/api/openai` to reject when user record is missing — attempts self-heal, returns HTTP 503 on failure instead of silent Lite degradation.
+- [x] **HF-2.5** Remove dead svix dependency — `svix` uninstalled from `package.json`, zero imports confirmed in `src/`.
+- [x] **HF-2.6** Verify Clerk Dashboard webhook configuration — webhook endpoint, signing secret, and event subscriptions confirmed working on both local and production.
+
+Resolved: TD-AUTH-03, TD-AUTH-04. Self-healing user sync operational. Clerk issue confirmed fixed on local and production environments.
+
+**Files changed:** `src/lib/utils/ensure-user-synced.ts` (new), `src/app/(chat)/app/profile/page.tsx`, `src/app/(chat)/app/plans/page.tsx`, `src/app/api/openai/route.tsx`, `package.json`
 
 ---
 
