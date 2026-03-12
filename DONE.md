@@ -2,6 +2,7 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
+> Last updated: HF-1 complete, Phases 1–25.5.3 complete. HF-2 in progress.
 
 ---
 

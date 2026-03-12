@@ -3,24 +3,175 @@
 > Prioritized, actionable development tasks. Each task max ~30 minutes.
 > Governed by **Droplet-PM**. Do not add tasks without PM approval.
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
-> Implementation agent: **Codex Agent** (Senior Developer).
+> Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: Pre-Phase 26 — comprehensive verification and E2E expansion before deferred features.**
+> **STATUS: HF-2 critical fix in progress — self-healing for missing MongoDB user records.**
 > All milestones 0–8 implementation complete. HF-1 complete. Phases 1–25.5.3 complete (see DONE.md).
+> Stop before Phase 26 (Deferred Features) — all routes and features require full operational verification first.
 
 ---
 
-## Phase 25.5: Comprehensive E2E Test Expansion — CURRENT PRIORITY
+## HF-2: Critical — Missing MongoDB User Self-Healing — TOP PRIORITY
+
+> When Clerk webhook fails, delays, or is misconfigured, authenticated users have no MongoDB record.
+> `/app/profile` and `/app/plans` show permanent loading spinner. `/api/openai` silently degrades to Lite.
+> This is the #1 blocker. Must be fixed before any other work proceeds.
+>
+> **Root cause**: The Clerk webhook code is correct (verified HF-1). The failure occurs when:
+> (a) Clerk Dashboard webhook URL, signing secret, or subscribed events are misconfigured, or
+> (b) the app runs locally without a tunnel (ngrok/Cloudflare) registered in Clerk Dashboard.
+>
+> **Code fix**: Pages and API routes must handle the "authenticated but no MongoDB user" scenario gracefully.
+> Ref: SPEC.md Section 5 (Self-Healing User Sync Requirement). AGENTS.md Security Rules.
+
+---
+
+### HF-2.1 Create self-healing user sync utility
+
+**File (new):** `src/lib/utils/ensure-user-synced.ts`
+
+**What to do:**
+
+- Create an async server-only function `ensureUserSynced(clerkUserId: string)` that:
+  1. Queries MongoDB for existing user by `clerkId`.
+  2. If user exists, returns the serialized user data.
+  3. If user does NOT exist, fetches user data from Clerk via `clerkClient().users.getUser(clerkUserId)`.
+  4. Creates the MongoDB user record with Lite plan defaults (reuse the same plan initialization logic from the webhook `user.created` handler).
+  5. Sets Clerk `publicMetadata` (userId, role, userImg) — same as the webhook handler does.
+  6. Returns the newly created serialized user data.
+- Import `"server-only"` at the top.
+- Use the same plan defaults as the webhook handler: Lite, permanent, free.
+- Handle creation failure gracefully — return `null`, log to stderr.
+- Do NOT duplicate webhook logic: extract shared helpers if needed (e.g., move `resolveUserCreatedParams` to a shared utility or import from the webhook module).
+
+**Acceptance criteria:**
+
+- [ ] Utility creates MongoDB user from Clerk data when user record is missing
+- [ ] User gets Lite plan defaults on self-healing creation
+- [ ] Clerk `publicMetadata` is set correctly (userId, role, userImg)
+- [ ] Returns existing user without modification if already exists
+- [ ] Does not throw on failure — returns `null`
+- [ ] Unit test covers: existing user returns directly, missing user creates and returns, creation failure returns null
+- [ ] `npx tsc --noEmit` passes
+- [ ] All tests pass
+
+---
+
+### HF-2.2 Fix /app/profile to handle missing MongoDB user
+
+**File:** `src/app/(chat)/app/profile/page.tsx`
+
+**What to do:**
+
+- Replace `getUserById(userId)` with `ensureUserSynced(userId)` from HF-2.1.
+- If `ensureUserSynced` returns `null`, show a clear error state instead of `<LoadingBubbles />`:
+  - Message: "We're having trouble loading your account. Please try refreshing the page or contact support."
+  - Include support email link (`SUPPORT_EMAIL` from `@/constants/support`) and a refresh/retry link.
+- If it returns user data, render normally (existing behavior unchanged).
+
+**Acceptance criteria:**
+
+- [ ] `/app/profile` renders user data when MongoDB user exists (no behavior change)
+- [ ] `/app/profile` self-heals when MongoDB user is missing (creates it on-demand)
+- [ ] `/app/profile` shows error message (not loading spinner) when self-healing fails
+- [ ] Error message includes support contact and retry guidance
+- [ ] `npx tsc --noEmit` passes
+- [ ] All tests pass
+
+---
+
+### HF-2.3 Fix /app/plans to handle missing MongoDB user
+
+**File:** `src/app/(chat)/app/plans/page.tsx`
+
+**What to do:**
+
+- Replace `getUserById(userId)` with `ensureUserSynced(userId)` from HF-2.1.
+- Same error handling pattern as HF-2.2.
+- If `ensureUserSynced` returns `null`, show error state instead of `<LoadingBubbles />`.
+- If it returns user data, render normally.
+
+**Acceptance criteria:**
+
+- [ ] `/app/plans` renders plan data when MongoDB user exists (no behavior change)
+- [ ] `/app/plans` self-heals when MongoDB user is missing
+- [ ] `/app/plans` shows error message when self-healing fails
+- [ ] `npx tsc --noEmit` passes
+- [ ] All tests pass
+
+---
+
+### HF-2.4 Fix /api/openai to reject when user record is missing
+
+**File:** `src/app/api/openai/route.tsx`
+
+**What to do:**
+
+- After `getUserById(userId)` returns `null`, attempt `ensureUserSynced(userId)` to self-heal.
+- If self-healing succeeds, continue normally with the correct plan data.
+- If self-healing fails, return HTTP 503 with `{ message: "Account not yet provisioned. Please try again in a moment." }`.
+- Do NOT silently fall back to Lite — a paid Pro/Premium user must never be downgraded without feedback.
+
+**Acceptance criteria:**
+
+- [ ] Route attempts self-healing when user record is missing
+- [ ] Route uses correct plan data after successful self-healing
+- [ ] Route returns 503 (not silent Lite degradation) when self-healing fails
+- [ ] Existing behavior unchanged when user record exists
+- [ ] Unit test covers: missing user → self-heal succeeds → uses correct plan; missing user → self-heal fails → 503
+- [ ] `npx tsc --noEmit` passes
+- [ ] All tests pass
+
+---
+
+### HF-2.5 Remove dead svix dependency
+
+**File:** `package.json`
+
+**What to do:**
+
+- Run `npm uninstall svix` to remove from `dependencies` and update `package-lock.json`.
+- Verify zero imports of `svix` in source code (already confirmed).
+- Run full 6-gate validation.
+
+**Acceptance criteria:**
+
+- [ ] `svix` removed from `package.json` dependencies
+- [ ] `package-lock.json` updated
+- [ ] Zero imports of `svix` in `src/`
+- [ ] `npm run test` passes
+- [ ] `npx tsc --noEmit` passes
+- [ ] `npm run build` passes
+
+---
+
+### HF-2.6 Verify Clerk Dashboard webhook configuration
+
+**What to do (operational — not a code task):**
+
+- Log into Clerk Dashboard → Webhooks section.
+- Verify the webhook endpoint URL is `https://<deployed-domain>/api/webhooks/clerk` (not localhost).
+- Verify the signing secret shown in Clerk Dashboard matches the `CLERK_WEBHOOK_SIGNING_SECRET` value in `.env.local` exactly.
+- Verify `user.created`, `user.updated`, `user.deleted` are checked as subscribed events.
+- Check the "Attempts" tab for delivery logs — look for HTTP status codes and response bodies.
+- If developing locally, confirm a tunnel (ngrok/Cloudflare Tunnel) is running and the tunnel URL is registered in Clerk Dashboard.
+- Trigger a test event from Clerk Dashboard and verify it appears in MongoDB.
+
+**Acceptance criteria:**
+
+- [ ] Webhook endpoint URL is correct and reachable
+- [ ] Signing secret matches `.env.local`
+- [ ] All 3 event types are subscribed (`user.created`, `user.updated`, `user.deleted`)
+- [ ] Test event successfully creates/updates user in MongoDB
+- [ ] Clerk "Attempts" tab shows 200 responses
+
+---
+
+## Phase 25.5: Comprehensive E2E Test Expansion
 
 > Expand E2E test coverage to verify all routes and features before deferred feature work.
 > Ref: ThePlan.md Milestone 9 (Launch Readiness). AGENTS.md testing rules.
-> Depends on: Phase 25.4 (complete). Phases 25.5.1–25.5.3 complete (see DONE.md).
-
----
-
-### 25.5.1, 25.5.2 & 25.5.3 — COMPLETE
-
-Moved to `DONE.md`.
+> Depends on: HF-2 complete. Phases 25.5.1–25.5.3 complete (see DONE.md).
 
 ---
 
@@ -249,26 +400,6 @@ Moved to `DONE.md`.
 
 ---
 
-### 25.7.4 Remove dead `svix` dependency
-
-**File:** `package.json`
-
-**What to do:**
-
-- Remove `svix` from `dependencies` in `package.json` — it has zero imports in source code since the migration to `verifyWebhook()` from `@clerk/nextjs/webhooks` (HF-1).
-- Run `npm install` to update `package-lock.json`.
-- Run full 6-gate validation to confirm nothing breaks.
-
-**Acceptance criteria:**
-
-- [ ] `svix` removed from `package.json`
-- [ ] `package-lock.json` updated
-- [ ] `npm run test` passes
-- [ ] `npx tsc --noEmit` passes
-- [ ] `npm run build` passes
-
----
-
 ## Phase 26: Deferred Features — FUTURE (Not Yet Approved)
 
 > Lower priority items deferred from v1 core.
@@ -349,4 +480,4 @@ Moved to `DONE.md`.
 ---
 
 > **Completed phases** are archived in [`DONE.md`](DONE.md).
-> Phases 1–25.4 are complete. Phase 10–12 superseded (see DONE.md for mapping).
+> HF-1, Phases 1–25.5.3 complete. Phase 10–12 superseded (see DONE.md for mapping).

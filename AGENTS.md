@@ -90,6 +90,7 @@ All six gates must pass.
 - **API routes** must return proper HTTP status codes (4xx/5xx for errors). Never return HTTP 200 with an error body.
 - **Server actions** exported as `"use server"` must have auth checks. If an action is only called from a trusted server context (e.g., webhook handler), do not export it — keep it as a private helper.
 - **Ownership enforcement**: all data access must verify that the authenticated user owns the resource (filter by both `_id` and `userId`/`clerkId`).
+- **Self-healing user sync**: when an authenticated user (valid Clerk session) has no MongoDB User record, server components and API routes must attempt on-demand user creation via Clerk API — never show permanent loading state or silently degrade entitlements. API routes must return HTTP 503 if self-healing fails.
 
 ## AI / OpenAI Rules
 
