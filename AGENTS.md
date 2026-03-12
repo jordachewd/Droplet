@@ -157,3 +157,10 @@ tests/e2e/          — Playwright E2E tests
 | Upload media to S3, store URLs in MongoDB           | Store base64/binary in MongoDB documents    |
 | Check ALL limits before OpenAI calls                | Skip limit checks for any plan tier         |
 | End conversations with stop reason on limit hit     | Silently fail or ignore quota violations    |
+
+
+## Updated Documentation
+- Context7 MCP
+- Clerk MCP
+- Playwright MCP
+- Deepwiki MCP
