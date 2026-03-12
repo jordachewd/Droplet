@@ -24,7 +24,7 @@ Built with Next.js 16, React 19, TypeScript, Tailwind CSS v4.2, Clerk, Stripe, M
 - **Admin dashboard** — user management, transaction oversight, usage analytics, app settings (AI models, pricing, limits, theme), website content management with Tiptap editor, full audit trail
 - **Public marketing site** — About, FAQs, Privacy Policy, Cookie Policy, Terms & Conditions, plus enhanced homepage with feature showcase, workflow, persona spotlight, and CTAs
 - **Secure by design** — Clerk auth, webhook signature verification with idempotency, ownership enforcement, SSRF protection, double-layer admin role protection (proxy + server-side), error cause chain preservation, persistent MongoDB-backed rate limiting
-- **Test coverage** — 53 Vitest unit test suites (248 tests), Playwright E2E tests (133 tests across 5 spec files), v8 coverage enforced at 70/60/70/70 thresholds
+- **Test coverage** — 53 Vitest unit test suites (248 tests), 6 Playwright E2E spec files across 7 browser projects, v8 coverage enforced at 70/60/70/70 thresholds
 
 ### Planned (In Development)
 

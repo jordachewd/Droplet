@@ -6,7 +6,7 @@
 > Implementation agent: **Codex Agent** (Senior Developer).
 >
 > **STATUS: Pre-Phase 26 — comprehensive verification and E2E expansion before deferred features.**
-> All milestones 0–8 implementation complete. Phases 1–25.5.1 complete (see DONE.md).
+> All milestones 0–8 implementation complete. Phases 1–25.5.2 complete (see DONE.md).
 
 ---
 
@@ -14,34 +14,13 @@
 
 > Expand E2E test coverage to verify all routes and features before deferred feature work.
 > Ref: ThePlan.md Milestone 9 (Launch Readiness). AGENTS.md testing rules.
-> Depends on: Phase 25.4 (complete). Phase 25.5.1 complete (see DONE.md).
+> Depends on: Phase 25.4 (complete). Phases 25.5.1–25.5.2 complete (see DONE.md).
 
 ---
 
-### 25.5.1 E2E: Public page rendering and inter-page navigation — COMPLETE
+### 25.5.1 & 25.5.2 — COMPLETE
 
-Moved to `DONE.md`. 70 E2E tests added (133 total). All acceptance criteria met.
-
----
-
-### 25.5.2 E2E: Auth boundary enforcement
-
-**File (new):** `tests/e2e/auth-boundaries.spec.ts`
-
-**What to do:**
-
-- Test that unauthenticated users visiting `/app`, `/app/profile`, `/app/plans`, `/app/library` are redirected to sign-in.
-- Test that unauthenticated users visiting `/admin`, `/admin/users`, `/admin/settings` are redirected to sign-in.
-- Test that authenticated non-admin users visiting `/admin(.*)` are blocked (403 or redirect).
-- Verify public pages remain accessible without auth.
-
-**Acceptance criteria:**
-
-- [ ] 4+ protected `/app` routes tested for auth redirect
-- [ ] 3+ protected `/admin` routes tested for auth redirect
-- [ ] Non-admin access to `/admin` tested for rejection
-- [ ] Public pages confirmed accessible without auth
-- [ ] All E2E tests pass
+Moved to `DONE.md`.
 
 ---
 

@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-12 (Phase 25.5.1 complete — public page E2E coverage added, pre-Phase-26 verification in progress)
+> Last updated: 2026-03-12 (Phase 25.5.2 complete — auth-boundary E2E coverage added, pre-Phase-26 verification in progress)
 
 ---
 
@@ -659,7 +659,7 @@ All file handling technical debt has been resolved.
 ## 13. Testing
 
 - **Unit tests**: 53 suites, 248 tests (Vitest) — includes streaming, webhook, chat-wrapper, chat-body stop-state, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, persona prompt, rate limiting, task complexity classification, and OpenAI route tests
-- **E2E tests**: 5 Playwright spec files, 133 tests across browser projects (70 added in Phase 25.5.1 for public page coverage)
+- **E2E tests**: 6 Playwright spec files across browser projects (auth-boundaries added in Phase 25.5.2, 70 public-page tests added in Phase 25.5.1)
 - **Coverage**: Configured (Phase 24.1) — v8 provider, thresholds: 70% statements / 60% branches / 70% functions / 70% lines. Current: 82/71/88/82.
 - **Gap**: No dedicated E2E spec for streamed chunk-by-chunk rendering (manually verified via Playwright MCP)
 
