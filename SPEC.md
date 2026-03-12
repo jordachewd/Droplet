@@ -705,12 +705,12 @@ All file handling technical debt has been resolved.
 
 ## 15. Technical Debt Summary
 
-### Active — Critical Priority
+### ~~Active — Critical Priority~~ (Resolved)
 
-| ID       | Area   | Description                                                                                                                                                                           | Severity |
-| -------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| TD-AI-16 | OpenAI | Image generation model IDs (`gpt-image-1-mini`, `gpt-image-1.5`) in `MODEL_POLICY_MATRIX` are placeholder names not recognized by the OpenAI API — all image generation requests fail | Critical |
-| TD-AI-17 | OpenAI | Audio generation model IDs (`gpt-audio-mini`, `gpt-audio-1.5`, `gpt-4o-mini-tts`) are placeholders — audio generation fails for Pro/Premium                                           | Critical |
+| ID       | Area   | Description                                                                              | Status   |
+| -------- | ------ | ---------------------------------------------------------------------------------------- | -------- |
+| TD-AI-16 | OpenAI | ~~Image model IDs are placeholders~~ — **CLOSED: model IDs verified real (OpenAI docs)** | Resolved |
+| TD-AI-17 | OpenAI | ~~Audio model IDs are placeholders~~ — **CLOSED: model IDs verified real (OpenAI docs)** | Resolved |
 
 ### Active — High Priority
 

@@ -5,98 +5,10 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: HF-3 critical fix required — image/audio generation broken due to placeholder model IDs.**
-> **Additional critical fixes queued: HF-5 (auth reliability — webhook over-fetch + self-heal race).**
-> All milestones 0–8 implementation mostly complete. HF-1, HF-2 complete. Phases 1–25.5.3 complete (see DONE.md).
-> Image and audio generation are 100% broken and must be fixed before any other work proceeds.
-> After HF-3: HF-5 (critical auth/signup reliability), then HF-4 (Stripe redirect), then HF-6/HF-7 (model policy + compaction).
-
----
-
-## HF-3: CRITICAL — Fix Image & Audio Generation Model IDs — TOP PRIORITY
-
-> Image generation fails for ALL plans. Audio generation fails for Pro/Premium.
-> Root cause: `MODEL_POLICY_MATRIX` in `ai-model-policy.ts` uses invented model IDs
-> (`gpt-image-1-mini`, `gpt-image-1.5`, `gpt-audio-mini`, `gpt-audio-1.5`, `gpt-4o-mini-tts`)
-> that are not recognized by the OpenAI API. Every image/audio request returns an invalid-model error.
->
-> This is the #1 blocker. Chat works because its model IDs (`gpt-4o-mini`, `gpt-4.1`) are valid.
-> Ref: SPEC.md TD-AI-16, TD-AI-17. AGENTS.md AI/OpenAI Rules.
-
----
-
-### HF-3.1 Replace image generation model IDs with real OpenAI models
-
-**File:** `src/lib/utils/ai-model-policy.ts`
-
-**What to do:**
-
-- Check the OpenAI API documentation for currently available image generation models.
-- Replace `gpt-image-1-mini` with the correct real OpenAI image model for cost-optimized generation (e.g., `dall-e-2` or the cheaper tier of whatever is currently available).
-- Replace `gpt-image-1.5` with the correct real OpenAI image model for high-quality generation (e.g., `dall-e-3` or the higher tier of whatever is currently available).
-- Update fallback model references to use valid IDs.
-- Update the `MODEL_PRICING` entries for the new image model IDs with real per-request costs.
-- Update the `MODEL_CAPABILITIES` map if image models have entries there.
-- Verify the calling code in `generateImage.tsx` is compatible with the chosen model's API (some models use `response_format: "b64_json"`, others return URLs).
-
-**Acceptance criteria:**
-
-- [ ] Image model IDs in `MODEL_POLICY_MATRIX` are real, verified OpenAI API identifiers
-- [ ] Lite uses cheaper image model, Pro/Premium use higher-quality model
-- [ ] `MODEL_PRICING` updated with correct per-request costs for new model IDs
-- [ ] `generateImage.tsx` API call is compatible with chosen model's response format
-- [ ] `npx tsc --noEmit` passes
-- [ ] Unit tests updated and passing (`ai-model-policy.test.ts`, any image-related tests)
-- [ ] Image generation works end-to-end for Lite, Pro, and Premium plans
-
----
-
-### HF-3.2 Replace audio generation model IDs with real OpenAI models
-
-**File:** `src/lib/utils/ai-model-policy.ts`
-
-**What to do:**
-
-- Check the OpenAI API documentation for currently available audio/TTS models.
-- Replace `gpt-audio-mini` with the correct real OpenAI audio model for Pro tier.
-- Replace `gpt-audio-1.5` with the correct real OpenAI audio model for Premium tier.
-- Replace `gpt-4o-mini-tts` with the correct real OpenAI TTS-only model for fallback.
-- Maintain audio mode differentiation: TTS-only path (`audio.speech.create`) vs audio_in_out path (`chat.completions.create` with audio modality).
-- Update `MODEL_PRICING` entries with real costs.
-- Update the `MODEL_CAPABILITIES` map entries for the new audio model IDs (especially `isTtsOnly` flags).
-- Verify compatibility with `generateAudio.tsx` calling code for both TTS and audio_in_out paths.
-
-**Acceptance criteria:**
-
-- [ ] Audio model IDs in `MODEL_POLICY_MATRIX` are real, verified OpenAI API identifiers
-- [ ] TTS-only fallback model is correct and flagged properly in `MODEL_CAPABILITIES`
-- [ ] Audio_in_out models support the `modalities: ["text", "audio"]` API parameter
-- [ ] `MODEL_PRICING` updated with correct costs
-- [ ] `npx tsc --noEmit` passes
-- [ ] Unit tests updated and passing
-- [ ] Audio generation works end-to-end for Pro and Premium plans
-- [ ] Lite correctly blocks audio (existing behavior preserved)
-
----
-
-### HF-3.3 Update SPEC.md and plan copy for corrected model names
-
-**Files:** `SPEC.md`, `src/constants/plans.tsx`
-
-**What to do:**
-
-- Update SPEC.md Section 8.2 (Model Policy Matrix) with the corrected model IDs from HF-3.1 and HF-3.2.
-- Update model references in Section 4 (plan tier contract) if they mention specific model names.
-- Resolve TD-AI-16 and TD-AI-17 in the tech debt table.
-- Review `src/constants/plans.tsx` plan feature descriptions — ensure no placeholder model names appear in user-facing text. Keep descriptions generic where possible (e.g., "AI image generation" not model-name-specific).
-- Update `README.md` only if it references specific model names in a way that's now wrong.
-
-**Acceptance criteria:**
-
-- [ ] SPEC.md model references match real implementation
-- [ ] TD-AI-16 and TD-AI-17 marked as resolved
-- [ ] No placeholder model names in user-facing plan text
-- [ ] `npx tsc --noEmit` passes
+> **STATUS: HF-5 critical fix next — auth reliability (webhook over-fetch + self-heal race).**
+> All milestones 0–8 implementation mostly complete. HF-1, HF-2 complete. HF-3 closed (invalid — model IDs verified real).
+> Phases 1–25.5.3 complete (see DONE.md).
+> Priority order: HF-5 (critical auth) → HF-4 (Stripe redirect) → HF-6 (Premium retry) → HF-7 (compaction) → Phase 25.5+.
 
 ---
 
@@ -201,7 +113,7 @@
 > The resolver only downgrades when `fallbackModel !== model`, so the retry path is dead code
 > for Premium chat. Violates AGENTS.md rule: "Retries should downgrade model tier."
 > Pro plan correctly uses `gpt-4o-mini` as fallback — issue is isolated to Premium.
-> Confirmed by Architect and Engineer. Depends on: HF-3 resolved (model IDs must be valid first).
+> Confirmed by Architect and Engineer. Depends on: HF-5 resolved first.
 > Ref: AGENTS.md AI/OpenAI Rules. SPEC.md Section 8.
 
 ---
@@ -238,7 +150,7 @@
 > with zero cost in compaction. Image-heavy conversations pass through unchanged and can blow
 > the provider context window, defeating the purpose of the compaction layer.
 > Confirmed by Architect and Engineer. Needs design decisions before implementation.
-> Depends on: HF-3 resolved. Ref: SPEC.md Section 8.
+> Depends on: HF-5 resolved first. Ref: SPEC.md Section 8.
 
 ---
 

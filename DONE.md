@@ -2,7 +2,27 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: HF-2 complete, Phases 1–25.5.3 complete. HF-3 in progress.
+> Last updated: HF-3 closed (invalid). HF-1, HF-2 complete. Phases 1–25.5.3 complete.
+
+---
+
+## HF-3: CLOSED (Invalid) — Model IDs Verified Real
+
+HF-3 was predicated on the claim that `gpt-image-1-mini`, `gpt-image-1.5`, `gpt-audio-mini`, `gpt-audio-1.5`, and `gpt-4o-mini-tts` were "invented" model IDs not recognized by the OpenAI API.
+
+**Verification result (March 2026):** All 5 model IDs are real, officially documented OpenAI models confirmed by:
+
+- OpenAI official model catalog at `developers.openai.com/api/docs/models/all/`
+- OpenAI image generation guide explicitly listing `gpt-image-1.5`, `gpt-image-1`, `gpt-image-1-mini`
+- OpenAI audio docs listing `gpt-audio-1.5`, `gpt-audio-mini`, `gpt-4o-mini-tts`
+- User confirmation that all models are configured in their OpenAI dashboard
+- Independent verification by Droplet-Architect and Droplet-Engineer agents
+
+The API calling code in `generateImage.tsx` and `generateAudio.tsx` is compatible with these models.
+
+**Closed tasks:** HF-3.1 (image model IDs), HF-3.2 (audio model IDs), HF-3.3 (re-scoped — TD-AI-16 and TD-AI-17 removed from SPEC.md tech debt).
+
+**Remaining concern:** `MODEL_PRICING` values for audio models have TODO comments noting unverified pricing — this is a low-priority accuracy issue (TD-AI-13), not a functional blocker.
 
 ---
 
