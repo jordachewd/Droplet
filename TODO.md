@@ -6,7 +6,7 @@
 > Implementation agent: **Codex Agent** (Senior Developer).
 >
 > **STATUS: Pre-Phase 26 — comprehensive verification and E2E expansion before deferred features.**
-> All milestones 0–8 implementation complete. Phases 1–25.4 complete (see DONE.md).
+> All milestones 0–8 implementation complete. Phases 1–25.5.1 complete (see DONE.md).
 
 ---
 
@@ -14,35 +14,13 @@
 
 > Expand E2E test coverage to verify all routes and features before deferred feature work.
 > Ref: ThePlan.md Milestone 9 (Launch Readiness). AGENTS.md testing rules.
-> Depends on: Phase 25.4 (complete).
+> Depends on: Phase 25.4 (complete). Phase 25.5.1 complete (see DONE.md).
 
 ---
 
-### 25.5.1 E2E: Public page rendering and inter-page navigation
+### 25.5.1 E2E: Public page rendering and inter-page navigation — COMPLETE
 
-**File (new):** `tests/e2e/public-pages.spec.ts`
-
-**What to do:**
-
-- Write E2E tests that verify all 8 public routes return 200 and render key content:
-  - `/` — Hero section visible, CTA buttons present
-  - `/about` — page heading and at least 3 content sections visible
-  - `/plans` — 3 plan cards visible with correct prices ($0, $19, $39)
-  - `/faqs` — at least 3 FAQ accordion items visible
-  - `/personas` — persona cards visible
-  - `/privacy` — privacy policy heading and content present
-  - `/cookies` — cookie policy heading and content present
-  - `/terms` — terms heading and content present
-- Test footer links (Privacy, Terms) navigate correctly.
-- Test header navigation links work (About, Personas, Plans, FAQs).
-
-**Acceptance criteria:**
-
-- [ ] All 8 public routes tested for 200 status and key content
-- [ ] Footer link navigation verified (Privacy → /privacy, Terms → /terms)
-- [ ] Header navigation verified (each link navigates to correct route)
-- [ ] All E2E tests pass
-- [ ] No test relies on external services
+Moved to `DONE.md`. 70 E2E tests added (133 total). All acceptance criteria met.
 
 ---
 

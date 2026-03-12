@@ -5,6 +5,14 @@
 
 ---
 
+## Phase 25.5.1: Public Page E2E Coverage — COMPLETED
+
+- [x] **25.5.1** E2E: Public page rendering and inter-page navigation — 70 E2E tests added to `tests/e2e/public-pages.spec.ts`. All 8 public routes verified for HTTP 200 + key content rendering. Footer legal-link navigation (Privacy, Terms) verified. Desktop header navigation (About, Personas, Plans, FAQs) verified with intentional mobile skip (links hidden below md breakpoint). Lite price asserted as "Free" (correct zero-price representation). Full E2E suite: 133 passed, 2 skipped. All 6 validation gates green.
+
+**Files changed:** `tests/e2e/public-pages.spec.ts`
+
+---
+
 ## Phase 25: Production Hardening — COMPLETED
 
 - [x] **25.1** Add `X-Accel-Buffering: no` to streaming responses — SSE-compatible header added to `STREAM_HEADERS` constant in `/api/openai` route. Only applied to streaming SSE responses; non-streaming JSON responses unaffected.
