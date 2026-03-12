@@ -7,43 +7,11 @@
 
 ---
 
-## Phase 23: Post-Phase-22 Cleanup — CURRENT PRIORITY
-
-> Quick cleanup items discovered during Phase 22 PM audit.
-> Clears dead code before testing hardening.
-> Depends on: Phase 22 (complete)
-> Phase 23.1 completed — see `DONE.md`.
-
----
-
-### 23.2 Abstract TTS routing to policy flag
-
-**Files:** `src/lib/utils/ai-model-policy.ts`, `src/lib/utils/openai/generateAudio.tsx`
-**Ref:** TD-AI-15
-
-**What to do:**
-
-- Add an `isTtsOnly: boolean` field to the `ResolvedModelPolicy` type.
-- Set `isTtsOnly: true` in `resolveModelPolicy()` when the resolved model is a TTS-only model (currently `gpt-4o-mini-tts`).
-- In `generateAudio.tsx`, replace the hardcoded `if (policy.model === "gpt-4o-mini-tts")` branch with `if (policy.isTtsOnly)`.
-- Update existing `ai-model-policy.test.ts` to verify `isTtsOnly` is set correctly for audio fallback scenarios.
-
-**Acceptance criteria:**
-
-- [ ] `isTtsOnly` field added to `ResolvedModelPolicy` type
-- [ ] Resolver sets `isTtsOnly` based on model capabilities, not model name string
-- [ ] `generateAudio.tsx` uses `policy.isTtsOnly` instead of string comparison
-- [ ] Existing audio tests pass unchanged
-- [ ] `npx tsc --noEmit` passes
-- [ ] All existing tests pass
-
----
-
-## Phase 24: Testing Hardening
+## Phase 24: Testing Hardening — CURRENT PRIORITY
 
 > Improve test coverage for reliability before production hardening.
 > Ref: ThePlan.md Milestone 8 prerequisites.
-> Depends on: Phase 23
+> Depends on: Phase 23 (complete)
 
 ---
 
@@ -282,4 +250,4 @@
 ---
 
 > **Completed phases** are archived in [`DONE.md`](DONE.md).
-> Phases 1–9, 13–22 are complete. Phase 10–12 superseded (see DONE.md for mapping).
+> Phases 1–9, 13–23 are complete. Phase 10–12 superseded (see DONE.md for mapping).

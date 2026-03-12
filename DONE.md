@@ -5,13 +5,15 @@
 
 ---
 
-## Phase 23.1: Remove Dead `chatSystemMsg` Constant — COMPLETED
+## Phase 23: Post-Phase-22 Cleanup — COMPLETED
 
 - [x] **23.1** Remove dead `chatSystemMsg` constant from `src/constants/openai.tsx` (confirmed zero usages, removed export, behavior-neutral)
+- [x] **23.2** Abstract TTS routing to policy flag — `isTtsOnly: boolean` added to `ResolvedModelPolicy`, `MODEL_CAPABILITIES` map drives resolution centrally, `generateAudio.tsx` uses `policy.isTtsOnly` instead of string comparison
 
-Resolved: TD-AI-14 (fully). 51 test suites, 229 tests passing, 79 E2E tests passing. All 6 validation gates green.
+Resolved: TD-AI-14 (Phase 23.1), TD-AI-15 (Phase 23.2). 51 test suites, 229 tests passing, 79 E2E tests passing. All 6 validation gates green.
 
-**Files changed:** `src/constants/openai.tsx`
+**Files changed (23.1):** `src/constants/openai.tsx`
+**Files changed (23.2):** `src/lib/utils/ai-model-policy.ts`, `src/lib/utils/openai/generateAudio.tsx`, `tests/unit/ai-model-policy.test.ts`
 
 ---
 

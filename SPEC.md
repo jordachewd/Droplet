@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-12 (Phase 23.1 complete, dead chatSystemMsg removed — TD-AI-14 resolved)
+> Last updated: 2026-03-12 (Phase 23.2 complete — TTS routing abstracted to `isTtsOnly` policy flag, TD-AI-15 resolved)
 
 ---
 
@@ -524,6 +524,7 @@ type ResolvedModelPolicy = {
   wasDowngraded: boolean;
   downgradeReasons: string[];
   hardBlocked: boolean;
+  isTtsOnly: boolean;
   notes?: string;
 };
 ```
@@ -548,7 +549,7 @@ All auth/limit checks execute before streaming begins. Final task persistence an
 - ~~**TD-AI-12**: Video matrix/resolver dual source of truth~~ — **Resolved** in Phase 21-C. Matrix `final.model` now `sora-2` with notes documenting `explicitPremium` override.
 - **TD-AI-13**: 5 model pricing entries in `ai-model-policy.ts` are placeholders pending OpenAI confirmation (`gpt-audio-mini`, `gpt-audio-1.5`, `gpt-4o-mini-tts`, `sora-2`, `sora-2-pro`).
 - ~~**TD-AI-14**: Dead `chatSystemMsg` export in `openai.tsx`~~ — **Resolved** in Phase 23.1. Constant removed, zero remaining usages.
-- **TD-AI-15**: Hardcoded TTS model-name branch in `generateAudio.tsx` (`policy.model === "gpt-4o-mini-tts"`) — should be a policy flag (e.g., `isTtsOnly`) to avoid coupling code paths to specific model names.
+- ~~**TD-AI-15**: Hardcoded TTS model-name branch in `generateAudio.tsx`~~ — **Resolved** in Phase 23.2 via `isTtsOnly` policy flag. `MODEL_CAPABILITIES` map drives resolution centrally; `generateAudio.tsx` uses `policy.isTtsOnly` instead of string comparison.
 
 ---
 
@@ -688,12 +689,12 @@ All critical-severity technical debt resolved. Remaining items are medium or low
 
 ### Active — Low Priority
 
-| ID         | Area    | Description                                                                     | Severity |
-| ---------- | ------- | ------------------------------------------------------------------------------- | -------- |
-| TD-AI-09   | OpenAI  | Image/audio generation prompts not persona-aware (chat prompts done Phase 22)   | Low      |
-| TD-AI-13   | OpenAI  | 5 model pricing entries are placeholders pending OpenAI confirmation            | Low      |
-| TD-AI-15   | OpenAI  | Hardcoded TTS model-name branch in `generateAudio.tsx` — should use policy flag | Low      |
-| TD-PLAN-01 | Billing | No recurring subscriptions (deferred v1)                                        | Low      |
+| ID       | Area   | Description                                                                   | Severity |
+| -------- | ------ | ----------------------------------------------------------------------------- | -------- |
+| TD-AI-09 | OpenAI | Image/audio generation prompts not persona-aware (chat prompts done Phase 22) | Low      |
+| TD-AI-13 | OpenAI | 5 model pricing entries are placeholders pending OpenAI confirmation          | Low      |
+
+| TD-PLAN-01 | Billing | No recurring subscriptions (deferred v1) | Low |
 
 ### Resolved
 
@@ -755,3 +756,4 @@ All critical-severity technical debt resolved. Remaining items are medium or low
 | TD-DB-15      | Clerk user.deleted doesn't clean Tasks      | Resolved in Phase 19 — `Task.deleteMany` in Clerk webhook handler                                                                                |
 | TD-WEBHOOK-01 | Clerk user.deleted orphans S3 objects       | Resolved in Phase 19 — `deleteS3Prefix` in Clerk webhook handler                                                                                 |
 | TD-AI-10      | Model policy flat resolver                  | Resolved in Phase 21 — `MODEL_POLICY_MATRIX` + `resolveModelPolicy()` with task classes, fallbacks, downgrade triggers, token limits, audio mode |
+| TD-AI-15      | Hardcoded TTS model-name branch             | Resolved in Phase 23.2 — `isTtsOnly` policy flag via `MODEL_CAPABILITIES` map                                                                    |
