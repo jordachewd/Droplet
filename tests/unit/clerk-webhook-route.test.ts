@@ -11,6 +11,8 @@ import deleteS3Prefix from "@/lib/utils/aws/delete-s3-prefix";
 const verifyMock = vi.hoisted(() => vi.fn());
 const webhookCtorMock = vi.hoisted(() => vi.fn());
 const stderrWriteMock = vi.hoisted(() => vi.fn(() => true));
+const getUserMock = vi.hoisted(() => vi.fn());
+const updateUserMetadataMock = vi.hoisted(() => vi.fn());
 
 vi.mock("svix", () => ({
   Webhook: class MockWebhook {
@@ -110,9 +112,18 @@ describe("POST /api/webhooks/clerk", () => {
       deletedCount: 0,
     } as never);
     vi.mocked(deleteS3Prefix).mockResolvedValue(0);
+    getUserMock.mockResolvedValue({
+      emailAddresses: [],
+      primaryEmailAddressId: null,
+      username: null,
+      firstName: null,
+      lastName: null,
+      imageUrl: "",
+    } as never);
     vi.mocked(clerkClient).mockResolvedValue({
       users: {
-        updateUserMetadata: vi.fn(),
+        getUser: getUserMock,
+        updateUserMetadata: updateUserMetadataMock,
       },
     } as never);
   });
@@ -152,13 +163,6 @@ describe("POST /api/webhooks/clerk", () => {
   });
 
   it("creates a user and updates clerk metadata for user.created", async () => {
-    const updateUserMetadataMock = vi.fn();
-    vi.mocked(clerkClient).mockResolvedValue({
-      users: {
-        updateUserMetadata: updateUserMetadataMock,
-      },
-    } as never);
-
     verifyMock.mockReturnValue({
       type: "user.created",
       data: {
@@ -188,6 +192,7 @@ describe("POST /api/webhooks/clerk", () => {
         email: "clerk-user@example.com",
       }),
     );
+    expect(getUserMock).not.toHaveBeenCalled();
     expect(updateUserMetadataMock).toHaveBeenCalledWith("clerk_user_1", {
       publicMetadata: {
         userId: "mongo_user_1",
@@ -200,13 +205,6 @@ describe("POST /api/webhooks/clerk", () => {
   });
 
   it("treats replayed user.created events as idempotent", async () => {
-    const updateUserMetadataMock = vi.fn();
-    vi.mocked(clerkClient).mockResolvedValue({
-      users: {
-        updateUserMetadata: updateUserMetadataMock,
-      },
-    } as never);
-
     verifyMock.mockReturnValue({
       type: "user.created",
       data: {
@@ -240,14 +238,145 @@ describe("POST /api/webhooks/clerk", () => {
     expect(payload.user._id).toBe("mongo_user_existing");
   });
 
+  it("resolves the primary email and generates a fallback username when Clerk omits username", async () => {
+    verifyMock.mockReturnValue({
+      type: "user.created",
+      data: {
+        id: "user_abc12345",
+        email_addresses: [
+          {
+            id: "email_secondary",
+            email_address: "secondary@example.com",
+          },
+          {
+            id: "email_primary",
+            email_address: "primary@example.com",
+          },
+        ],
+        primary_email_address_id: "email_primary",
+        created_at: "2026-01-01T00:00:00.000Z",
+        first_name: "Ada",
+        last_name: "Lovelace",
+        username: null,
+        image_url: "https://cdn.example.com/u1.png",
+      },
+    });
+
+    const response = await POST(buildRequest({ event: "user.created" }));
+
+    expect(response.status).toBe(200);
+    expect(getUserMock).toHaveBeenCalledWith("user_abc12345");
+    expect(User.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        clerkId: "user_abc12345",
+        email: "primary@example.com",
+        username: "primary-abc12345",
+      }),
+    );
+  });
+
+  it("falls back to Clerk backend user data when the webhook payload omits email addresses", async () => {
+    verifyMock.mockReturnValue({
+      type: "user.created",
+      data: {
+        id: "user_backend_1",
+        email_addresses: [],
+        primary_email_address_id: null,
+        created_at: "2026-01-01T00:00:00.000Z",
+        first_name: null,
+        last_name: null,
+        username: null,
+        image_url: null,
+      },
+    });
+    getUserMock.mockResolvedValue({
+      emailAddresses: [
+        {
+          id: "backend_primary",
+          emailAddress: "backend@example.com",
+        },
+      ],
+      primaryEmailAddressId: "backend_primary",
+      username: "backend-user",
+      firstName: "Grace",
+      lastName: "Hopper",
+      imageUrl: "https://cdn.example.com/backend.png",
+    } as never);
+
+    const response = await POST(buildRequest({ event: "user.created" }));
+
+    expect(response.status).toBe(200);
+    expect(getUserMock).toHaveBeenCalledWith("user_backend_1");
+    expect(User.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        clerkId: "user_backend_1",
+        email: "backend@example.com",
+        username: "backend-user",
+        firstName: "Grace",
+        lastName: "Hopper",
+        userimg: "https://cdn.example.com/backend.png",
+      }),
+    );
+    expect(updateUserMetadataMock).toHaveBeenCalledWith("user_backend_1", {
+      publicMetadata: {
+        userId: "mongo_user_1",
+        role: "client",
+        userImg: "https://cdn.example.com/backend.png",
+      },
+    });
+  });
+
+  it("returns 500 with a generic error when user.created processing fails", async () => {
+    verifyMock.mockReturnValue({
+      type: "user.created",
+      data: {
+        id: "clerk_user_1",
+        email_addresses: [{ email_address: "clerk-user@example.com" }],
+        created_at: "2026-01-01T00:00:00.000Z",
+        first_name: "Ada",
+        last_name: "Lovelace",
+        username: "adal",
+        image_url: "https://cdn.example.com/u1.png",
+      },
+    });
+    vi.mocked(connectToDatabase).mockRejectedValueOnce(
+      new Error("Atlas unavailable"),
+    );
+
+    const response = await POST(buildRequest({ event: "user.created" }));
+    const payload = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(payload).toEqual({
+      message: "Webhook error",
+      error: "Failed to process Clerk webhook",
+    });
+    expect(User.create).not.toHaveBeenCalled();
+    expect(stderrWriteMock).toHaveBeenCalledWith(
+      "[clerk-webhook] user.created processing failed.\n",
+    );
+  });
+
   it("updates an existing user for user.updated", async () => {
     verifyMock.mockReturnValue({
       type: "user.updated",
       data: {
         id: "clerk_user_1",
         updated_at: "2026-02-01T00:00:00.000Z",
+        email_addresses: [
+          {
+            id: "secondary_email",
+            email_address: "ada.secondary@example.com",
+          },
+          {
+            id: "primary_email",
+            email_address: "ada.byron@example.com",
+          },
+        ],
+        primary_email_address_id: "primary_email",
         first_name: "Ada",
         last_name: "Byron",
+        username: "ada-byron",
         image_url: "https://cdn.example.com/u2.png",
       },
     });
@@ -263,8 +392,10 @@ describe("POST /api/webhooks/clerk", () => {
     expect(User.findOneAndUpdate).toHaveBeenCalledWith(
       { clerkId: "clerk_user_1" },
       expect.objectContaining({
+        email: "ada.byron@example.com",
         firstName: "Ada",
         lastName: "Byron",
+        username: "ada-byron",
         userimg: "https://cdn.example.com/u2.png",
       }),
       expect.objectContaining({
