@@ -1,3 +1,6 @@
+import { connectToDatabase } from "@/lib/database/mongoose";
+import RateLimitEntry from "@/lib/database/models/rate-limit-entry.model";
+
 type SlidingWindowRateLimitOptions = {
   key: string;
   limit: number;
@@ -12,68 +15,110 @@ type SlidingWindowRateLimitResult = {
   retryAfterMs: number;
 };
 
-type RateLimitStore = Map<string, number[]>;
-
-const globalRateLimitStore = globalThis as typeof globalThis & {
-  __rateLimitStore?: RateLimitStore;
-};
-
-const rateLimitStore: RateLimitStore =
-  globalRateLimitStore.__rateLimitStore ??
-  (globalRateLimitStore.__rateLimitStore = new Map<string, number[]>());
-
-function pruneExpiredRateLimitEntries(windowStart: number): void {
-  for (const [storedKey, timestamps] of rateLimitStore.entries()) {
-    const recentTimestamps = timestamps.filter(
-      (timestamp) => timestamp > windowStart,
-    );
-
-    if (recentTimestamps.length === 0) {
-      rateLimitStore.delete(storedKey);
-      continue;
-    }
-
-    if (recentTimestamps.length !== timestamps.length) {
-      rateLimitStore.set(storedKey, recentTimestamps);
-    }
-  }
+interface StoredRateLimitRequest {
+  requestId?: string | null;
+  timestamp?: Date | string | null;
 }
 
-export function enforceSlidingWindowRateLimit({
+interface StoredRateLimitEntry {
+  requests?: StoredRateLimitRequest[] | null;
+}
+
+function normalizeStoredRequestTimestamps(
+  requests?: StoredRateLimitRequest[] | null,
+): { requestId: string; timestampMs: number }[] {
+  if (!Array.isArray(requests)) {
+    return [];
+  }
+
+  return requests
+    .map((request) => {
+      const requestId = request.requestId ?? "";
+      const timestamp =
+        request.timestamp instanceof Date
+          ? request.timestamp.getTime()
+          : typeof request.timestamp === "string"
+            ? new Date(request.timestamp).getTime()
+            : Number.NaN;
+
+      return {
+        requestId,
+        timestampMs: timestamp,
+      };
+    })
+    .filter(
+      (request): request is { requestId: string; timestampMs: number } =>
+        request.requestId.length > 0 && Number.isFinite(request.timestampMs),
+    )
+    .sort((left, right) => left.timestampMs - right.timestampMs);
+}
+
+export async function enforceSlidingWindowRateLimit({
   key,
   limit,
   windowMs,
-}: SlidingWindowRateLimitOptions): SlidingWindowRateLimitResult {
+}: SlidingWindowRateLimitOptions): Promise<SlidingWindowRateLimitResult> {
+  await connectToDatabase();
+
   const now = Date.now();
-  const windowStart = now - windowMs;
-  pruneExpiredRateLimitEntries(windowStart);
-  const recentRequests = [...(rateLimitStore.get(key) ?? [])];
-
-  if (recentRequests.length >= limit) {
-    const oldestRequest = recentRequests[0];
-    const resetAt = oldestRequest + windowMs;
-
-    rateLimitStore.set(key, recentRequests);
-
-    return {
-      success: false,
-      limit,
-      remaining: 0,
-      resetAt,
-      retryAfterMs: Math.max(resetAt - now, 0),
-    };
-  }
-
-  recentRequests.push(now);
-  rateLimitStore.set(key, recentRequests);
-
-  const resetAt = recentRequests[0] + windowMs;
+  const nowDate = new Date(now);
+  const windowStartDate = new Date(now - windowMs);
+  const requestId = crypto.randomUUID();
+  const entry = (await RateLimitEntry.collection.findOneAndUpdate(
+    { key },
+    [
+      {
+        $set: {
+          key,
+          createdAt: { $ifNull: ["$createdAt", nowDate] },
+          updatedAt: nowDate,
+          recentRequests: {
+            $filter: {
+              input: { $ifNull: ["$requests", []] },
+              as: "request",
+              cond: { $gt: ["$$request.timestamp", windowStartDate] },
+            },
+          },
+        },
+      },
+      {
+        $set: {
+          requests: {
+            $cond: [
+              { $lt: [{ $size: "$recentRequests" }, limit] },
+              {
+                $concatArrays: [
+                  "$recentRequests",
+                  [{ requestId, timestamp: nowDate }],
+                ],
+              },
+              "$recentRequests",
+            ],
+          },
+          expireAt: new Date(now + windowMs),
+        },
+      },
+      {
+        $unset: "recentRequests",
+      },
+    ],
+    {
+      upsert: true,
+      returnDocument: "after",
+    },
+  )) as StoredRateLimitEntry | null;
+  const recentRequests = normalizeStoredRequestTimestamps(entry?.requests);
+  const oldestRequestTimestamp = recentRequests[0]?.timestampMs ?? now;
+  const resetAt = oldestRequestTimestamp + windowMs;
+  const wasAccepted = recentRequests.some(
+    (request) => request.requestId === requestId,
+  );
 
   return {
-    success: true,
+    success: wasAccepted,
     limit,
-    remaining: Math.max(limit - recentRequests.length, 0),
+    remaining: wasAccepted ? Math.max(limit - recentRequests.length, 0) : 0,
     resetAt,
-    retryAfterMs: 0,
+    retryAfterMs: wasAccepted ? 0 : Math.max(resetAt - now, 0),
   };
 }

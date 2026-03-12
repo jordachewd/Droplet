@@ -3,9 +3,9 @@ import { plans } from "@/constants/plans";
 import { useUser } from "@clerk/nextjs";
 import { Plan } from "@/types/PlanData.d";
 import { UserData } from "@/types/UserData.d";
-import PageHead from "../layout/page-head";
+import PageHead from "@/components/layout/page-head";
 import PlanCard from "@/components/shared/plan-card";
-import LoadingBubbles from "../shared/loading-bubbles";
+import LoadingBubbles from "@/components/shared/loading-bubbles";
 import Link from "next/link";
 
 interface PlansProps {

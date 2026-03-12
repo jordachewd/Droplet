@@ -1,7 +1,7 @@
 import { openAiClient } from "@/constants/openai";
 import { PlanName } from "@/types/PlanData.d";
 import { ContentItem, Message, MessageRole } from "@/types";
-import { handleError } from "../handleError";
+import { handleError } from "@/lib/utils/handleError";
 import sharp from "sharp";
 import uploadFileToAWS from "@/lib/utils/aws/uploadFileToAWS";
 import { generateString } from "@/lib/utils/generateString";

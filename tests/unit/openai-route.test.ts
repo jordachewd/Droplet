@@ -11,6 +11,7 @@ import { auth } from "@clerk/nextjs/server";
 import User from "@/lib/database/models/user.model";
 import { checkDailyConversationLimit } from "@/lib/utils/check-daily-conversations";
 import { getTaskByIdForUser } from "@/lib/utils/task-queries";
+import { enforceSlidingWindowRateLimit } from "@/lib/utils/rate-limit";
 
 vi.mock("@/lib/utils/openai/generateResponse", () => ({
   generateResponse: vi.fn(),
@@ -46,6 +47,10 @@ vi.mock("@/lib/utils/check-daily-conversations", () => ({
 
 vi.mock("@/lib/utils/task-queries", () => ({
   getTaskByIdForUser: vi.fn(),
+}));
+
+vi.mock("@/lib/utils/rate-limit", () => ({
+  enforceSlidingWindowRateLimit: vi.fn(),
 }));
 
 const EXISTING_TASK_ID = "507f1f77bcf86cd799439011";
@@ -103,6 +108,13 @@ describe("POST /api/openai", () => {
       limit: 5,
       used: 0,
       remaining: 5,
+    });
+    vi.mocked(enforceSlidingWindowRateLimit).mockResolvedValue({
+      success: true,
+      limit: 20,
+      remaining: 19,
+      resetAt: Date.now() + 60_000,
+      retryAfterMs: 0,
     });
     vi.mocked(getTaskByIdForUser).mockResolvedValue(
       createExistingTask() as never,
@@ -280,6 +292,7 @@ describe("POST /api/openai", () => {
     const payload = await response.text();
 
     expect(response.headers.get("Content-Type")).toContain("text/event-stream");
+    expect(response.headers.get("X-Accel-Buffering")).toBe("no");
     expect(generateStreamingResponse).toHaveBeenCalledWith(
       expect.objectContaining({
         taskId: NEW_TASK_ID,
@@ -295,6 +308,63 @@ describe("POST /api/openai", () => {
     expect(payload).toContain('"snapshot":"Hello"');
     expect(payload).toContain('"type":"final"');
     expect(payload).toContain('"taskId":"507f1f77bcf86cd799439012"');
+  });
+
+  it("emits an SSE error event when streaming response generation fails", async () => {
+    vi.mocked(generateStreamingResponse).mockResolvedValue({
+      errorType: "rate_limit",
+    } as never);
+
+    const response = await POST(
+      buildRequest(
+        {
+          messages: [{ role: "user", whois: "user", content: "new chat" }],
+        },
+        {
+          Accept: "text/event-stream",
+          "x-droplet-stream": "1",
+        },
+      ),
+    );
+    const payload = await response.text();
+
+    expect(response.status).toBe(200);
+    expect(payload).toContain('"type":"error"');
+    expect(payload).not.toContain('"type":"final"');
+  });
+
+  it("classifies explicitly deep Premium requests as complex and sets server-side premium intent", async () => {
+    vi.mocked(getUserById).mockResolvedValue({
+      clerkId: "user_123",
+      plan: {
+        name: "Premium",
+        expiresOn: new Date(Date.now() + 86_400_000),
+        imageGenerations: 0,
+        audioGenerations: 0,
+        usagePeriodStart: new Date(),
+      },
+    } as never);
+
+    await POST(
+      buildRequest({
+        messages: [
+          {
+            role: "user",
+            whois: "user",
+            content:
+              "Please do a deep analysis of this production database migration and explain the trade-offs step by step.",
+          },
+        ],
+      }),
+    );
+
+    expect(generateResponse).toHaveBeenCalledWith(
+      expect.objectContaining({
+        planName: "Premium",
+        taskClass: "complex",
+        explicitPremium: true,
+      }),
+    );
   });
 
   it("uses the persisted task state and persona for existing conversations", async () => {

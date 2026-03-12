@@ -12,6 +12,7 @@ import User from "@/lib/database/models/user.model";
 import { checkDailyConversationLimit } from "@/lib/utils/check-daily-conversations";
 import { getTaskByIdForUser } from "@/lib/utils/task-queries";
 import { emitUsageEvents } from "@/lib/utils/usage-event-utils";
+import { enforceSlidingWindowRateLimit } from "@/lib/utils/rate-limit";
 
 vi.mock("@/lib/utils/openai/generateResponse", () => ({
   generateResponse: vi.fn(),
@@ -51,6 +52,10 @@ vi.mock("@/lib/utils/task-queries", () => ({
 
 vi.mock("@/lib/utils/usage-event-utils", () => ({
   emitUsageEvents: vi.fn(),
+}));
+
+vi.mock("@/lib/utils/rate-limit", () => ({
+  enforceSlidingWindowRateLimit: vi.fn(),
 }));
 
 const EXISTING_TASK_ID = "507f1f77bcf86cd799439011";
@@ -105,6 +110,13 @@ describe("POST /api/openai phase16", () => {
       limit: 5,
       used: 0,
       remaining: 5,
+    });
+    vi.mocked(enforceSlidingWindowRateLimit).mockResolvedValue({
+      success: true,
+      limit: 20,
+      remaining: 19,
+      resetAt: Date.now() + 60_000,
+      retryAfterMs: 0,
     });
     vi.mocked(getTaskByIdForUser).mockResolvedValue(
       createExistingTask() as never,

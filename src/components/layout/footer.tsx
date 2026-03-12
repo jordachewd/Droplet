@@ -1,4 +1,3 @@
-import lightLogo from "../../../public/images/jwd_light.png";
 import classNames from "classnames";
 import Image from "next/image";
 import Link from "next/link";
@@ -21,7 +20,7 @@ export default function Footer() {
         <div className="flex items-center gap-4 text-xs opacity-60">
           <div className="flex border-r border-black/25 pr-4 dark:border-white/10">
             <Image
-              src={lightLogo}
+              src="/images/jwd_light.png"
               alt="JWD"
               width={32}
               height={32}

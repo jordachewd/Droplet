@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useUser } from "@clerk/nextjs";
 import ToggleTheme from "@/components/shared/toggle-theme";
 import AvatarMenu from "@/components/shared/avatar-menu";
-import Logo from "../shared/app-logo";
+import Logo from "@/components/shared/app-logo";
 
 export default function Header() {
   const [scrolled, setScrolled] = useState<boolean>(false);

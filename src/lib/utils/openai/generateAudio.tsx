@@ -2,7 +2,7 @@ import { openAiClient } from "@/constants/openai";
 import { PlanName } from "@/types/PlanData.d";
 import { Message, MessageRole } from "@/types";
 import { ChatCompletionMessageParam } from "openai/resources/chat/completions.mjs";
-import { handleError } from "../handleError";
+import { handleError } from "@/lib/utils/handleError";
 import uploadFileToAWS from "@/lib/utils/aws/uploadFileToAWS";
 import { generateString } from "@/lib/utils/generateString";
 import {
