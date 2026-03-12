@@ -382,11 +382,12 @@ Purpose: Request-level usage logging for cost tracking and admin analytics.
 
 ### 7.5 POST /api/webhooks/clerk
 
-- Auth: Svix signature verification (raw request body)
+- Auth: `verifyWebhook()` from `@clerk/nextjs/webhooks` using Clerk's signing secret
 - Handles: `user.created`, `user.updated`, `user.deleted`
 - **Idempotency**: `user.created` checks for existing user before insert (safe for Clerk event replay). `user.updated` and `user.deleted` handle missing documents gracefully (return 200, no throw).
 - On `user.deleted`: deletes User, Transaction, and Task documents; cleans up S3 objects under user prefix
 - Each cleanup step has independent error handling — partial failure does not break webhook response
+- Verification failures are logged server-side and return a generic 400 response to Clerk
 
 ### 7.6 POST /api/webhooks/stripe
 
@@ -674,7 +675,7 @@ All file handling technical debt has been resolved.
 | `NEXT_PUBLIC_API_BASE_URL`          | App base URL                                                                            |
 | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk public key                                                                        |
 | `CLERK_SECRET_KEY`                  | Clerk secret                                                                            |
-| `CLERK_WEBHOOK_SECRET`              | Webhook verification                                                                    |
+| `CLERK_WEBHOOK_SIGNING_SECRET`      | Clerk webhook signing secret used by `verifyWebhook()`                                  |
 | `OPENAI_ORG`                        | OpenAI organization                                                                     |
 | `OPENAI_PRJ`                        | OpenAI project                                                                          |
 | `OPENAI_KEY`                        | OpenAI API key                                                                          |
@@ -686,6 +687,8 @@ All file handling technical debt has been resolved.
 | `AWS_S3_SECRET_KEY`                 | S3 secret key                                                                           |
 | `DOWNLOAD_URL_ALLOWLIST`            | Allowed download hosts (opt.)                                                           |
 | `NEXT_ALLOWED_DEV_ORIGINS`          | Comma-separated dev origins for local/LAN dev (opt., defaults to `localhost,127.0.0.1`) |
+
+`NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, and `CLERK_WEBHOOK_SIGNING_SECRET` must all come from the same Clerk instance.
 
 ---
 

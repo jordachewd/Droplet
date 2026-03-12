@@ -1,8 +1,7 @@
+import type { UserJSON } from "@clerk/backend";
 import { clerkClient } from "@clerk/nextjs/server";
-import { WebhookEvent } from "@clerk/nextjs/server";
-import { headers } from "next/headers";
-import { NextResponse } from "next/server";
-import { Webhook } from "svix";
+import { type WebhookEvent, verifyWebhook } from "@clerk/nextjs/webhooks";
+import { NextResponse, type NextRequest } from "next/server";
 import { CreateUserParams, UpdateUserParams } from "@/types/UserData.d";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import Task from "@/lib/database/models/tasks.model";
@@ -10,35 +9,6 @@ import User from "@/lib/database/models/user.model";
 import Transaction from "@/lib/database/models/transaction.model";
 import deleteS3Prefix from "@/lib/utils/aws/delete-s3-prefix";
 import serializeForClient from "@/lib/utils/serialize-for-client";
-
-type ClerkWebhookEmailAddress = {
-  id?: string | null;
-  email_address?: string | null;
-};
-
-type ClerkWebhookUserBase = {
-  id?: string | null;
-  email_addresses?: ClerkWebhookEmailAddress[] | null;
-  primary_email_address_id?: string | null;
-  first_name?: string | null;
-  last_name?: string | null;
-  username?: string | null;
-  image_url?: string | null;
-};
-
-type ClerkWebhookUserCreatedData = ClerkWebhookUserBase & {
-  id: string;
-  created_at: number | string | Date;
-};
-
-type ClerkWebhookUserUpdatedData = ClerkWebhookUserBase & {
-  id: string;
-  updated_at: number | string | Date;
-};
-
-type ClerkWebhookUserDeletedData = {
-  id?: string | null;
-};
 
 type ClerkBackendEmailAddress = {
   id: string;
@@ -95,14 +65,21 @@ function logWebhookProcessingFailure(eventType: string) {
   process.stderr.write(`[clerk-webhook] ${eventType} processing failed.\n`);
 }
 
+function logWebhookVerificationFailure() {
+  process.stderr.write("[clerk-webhook] Verification failed.\n");
+}
+
 function toNonEmptyString(value?: string | null): string | null {
   const normalizedValue = value?.trim();
   return normalizedValue ? normalizedValue : null;
 }
 
 function resolveWebhookPrimaryEmailAddress(
-  emailAddresses?: ClerkWebhookEmailAddress[] | null,
-  primaryEmailAddressId?: string | null,
+  emailAddresses: UserJSON["email_addresses"] | null | undefined,
+  primaryEmailAddressId:
+    | UserJSON["primary_email_address_id"]
+    | null
+    | undefined,
 ): string | null {
   if (!emailAddresses?.length) {
     return null;
@@ -176,7 +153,7 @@ function generateFallbackUsername({
 }
 
 async function resolveUserCreatedParams(
-  clerkUserData: ClerkWebhookUserCreatedData,
+  clerkUserData: UserJSON,
 ): Promise<CreateUserParams | null> {
   const webhookEmail = resolveWebhookPrimaryEmailAddress(
     clerkUserData.email_addresses,
@@ -230,45 +207,23 @@ async function resolveUserCreatedParams(
   };
 }
 
-export async function POST(req: Request) {
-  const WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET;
+export async function POST(req: NextRequest) {
+  const signingSecret = process.env.CLERK_WEBHOOK_SIGNING_SECRET;
 
-  if (!WEBHOOK_SECRET) {
+  if (!signingSecret) {
     throw new Error(
-      "Please add WEBHOOK_SECRET from Clerk Dashboard to .env or .env.local",
+      "Please add CLERK_WEBHOOK_SIGNING_SECRET from Clerk Dashboard to .env or .env.local",
     );
   }
 
-  // Get the headers
-  const headerPayload = await headers();
-  const svix_id = headerPayload.get("svix-id");
-  const svix_timestamp = headerPayload.get("svix-timestamp");
-  const svix_signature = headerPayload.get("svix-signature");
-
-  // If there are no headers, error out
-  if (!svix_id || !svix_timestamp || !svix_signature) {
-    return new Response("Error occured -- no svix headers", {
-      status: 400,
-    });
-  }
-
-  // Get the body
-  const body = await req.text();
-
-  // Create a new Svix instance with your secret.
-  const wh = new Webhook(WEBHOOK_SECRET);
-
   let evt: WebhookEvent;
 
-  // Verify the payload with the headers
   try {
-    evt = wh.verify(body, {
-      "svix-id": svix_id,
-      "svix-timestamp": svix_timestamp,
-      "svix-signature": svix_signature,
-    }) as WebhookEvent;
+    evt = await verifyWebhook(req, { signingSecret });
   } catch {
-    return new Response("Error occured", {
+    logWebhookVerificationFailure();
+
+    return new Response("Webhook verification failed", {
       status: 400,
     });
   }
@@ -277,8 +232,8 @@ export async function POST(req: Request) {
 
   try {
     // CREATE USER
-    if (eventType === "user.created") {
-      const clerkUserData = evt.data as ClerkWebhookUserCreatedData;
+    if (evt.type === "user.created") {
+      const clerkUserData = evt.data;
       const { id, image_url } = clerkUserData;
 
       if (!id) {
@@ -335,8 +290,8 @@ export async function POST(req: Request) {
     }
 
     // UPDATE USER
-    if (eventType === "user.updated") {
-      const clerkUserData = evt.data as ClerkWebhookUserUpdatedData;
+    if (evt.type === "user.updated") {
+      const clerkUserData = evt.data;
       const {
         id,
         updated_at,
@@ -393,8 +348,8 @@ export async function POST(req: Request) {
     }
 
     // DELETE USER
-    if (eventType === "user.deleted") {
-      const { id } = evt.data as ClerkWebhookUserDeletedData;
+    if (evt.type === "user.deleted") {
+      const { id } = evt.data;
 
       if (!id) {
         return NextResponse.json(
