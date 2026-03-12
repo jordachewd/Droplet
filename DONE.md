@@ -5,6 +5,16 @@
 
 ---
 
+## Phase 23.1: Remove Dead `chatSystemMsg` Constant — COMPLETED
+
+- [x] **23.1** Remove dead `chatSystemMsg` constant from `src/constants/openai.tsx` (confirmed zero usages, removed export, behavior-neutral)
+
+Resolved: TD-AI-14 (fully). 51 test suites, 229 tests passing, 79 E2E tests passing. All 6 validation gates green.
+
+**Files changed:** `src/constants/openai.tsx`
+
+---
+
 ## Phase 22: Prompt System & OpenAI Resilience — COMPLETED
 
 - [x] **22.1** Implement retry/backoff for OpenAI failures (`withOpenAIRetry()` wrapper with exponential backoff 1s/2s/4s, transient-only retries for 429/500/502/503, immediate failure for 400/401/403, `maxRetries: 0` on SDK requests, model downgrade via `retryAttempt` parameter)
@@ -16,7 +26,8 @@ Resolved: TD-AI-06 (fully), TD-AI-09 (partially — chat prompts optimized, medi
 **Files changed:** `src/lib/utils/openai/generateResponse.tsx`, `src/constants/persona-prompts.ts` (new), `src/constants/assistant-personas.tsx`, `vitest.config.mts`, `tests/unit/openai-retry.test.ts` (new), `tests/unit/persona-prompts.test.ts` (new), `tests/unit/ai-model-policy.test.ts`, `tests/e2e/landing-page.spec.ts`
 
 **Known residual items (non-blocking):**
-- Dead `chatSystemMsg` export in `openai.tsx` — superseded by `persona-prompts.ts` (TD-AI-14)
+
+- ~~Dead `chatSystemMsg` export in `openai.tsx`~~ — **Resolved** in Phase 23.1 (TD-AI-14)
 - Hardcoded TTS model-name branch in `generateAudio.tsx` (TD-AI-15)
 - Image/audio generation not persona-aware (TD-AI-09 partial)
 
@@ -53,6 +64,7 @@ Resolved: TD-AI-10 (fully), TD-AI-08 (partially — video now shows "Coming soon
 **Files changed:** `src/lib/utils/ai-model-policy.ts`, `src/lib/utils/openai/generateTitle.tsx`, `src/lib/utils/openai/generateImage.tsx`, `src/lib/utils/openai/generateAudio.tsx`, `src/lib/utils/openai/generateResponse.tsx`, `src/lib/utils/openai/message-policy.ts` (new), `src/app/api/openai/route.tsx`, `src/constants/plans.tsx`, `src/lib/utils/resolve-entitlements.tsx`, `src/lib/utils/check-usage-limit.ts`, `src/lib/utils/admin-queries.ts`, `tests/unit/ai-model-policy.test.ts`, `tests/unit/plans.test.ts`, `tests/unit/resolve-entitlements.test.ts`, `tests/unit/check-usage-limit.test.ts`
 
 **Known residual items (non-blocking):**
+
 - Dead `combinedCount` parameter in `check-usage-limit.ts` and callers (TD-AI-11)
 - Video matrix/resolver dual source of truth (TD-AI-12)
 - 5 model pricing placeholders pending OpenAI confirmation (TD-AI-13)

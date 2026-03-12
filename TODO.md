@@ -12,27 +12,7 @@
 > Quick cleanup items discovered during Phase 22 PM audit.
 > Clears dead code before testing hardening.
 > Depends on: Phase 22 (complete)
-
----
-
-### 23.1 Remove dead `chatSystemMsg` constant
-
-**File:** `src/constants/openai.tsx`
-**Ref:** TD-AI-14
-
-**What to do:**
-
-- Find the `chatSystemMsg` export in `openai.tsx`.
-- Confirm it is not imported anywhere in the codebase (grep for `chatSystemMsg`).
-- Remove the constant and its export entirely.
-- If the file becomes empty or only has unrelated exports, keep the file but remove only the dead code.
-
-**Acceptance criteria:**
-
-- [ ] `chatSystemMsg` constant removed from `openai.tsx`
-- [ ] Zero imports of `chatSystemMsg` across the codebase
-- [ ] `npx tsc --noEmit` passes
-- [ ] All existing tests pass (51 suites, 229 tests)
+> Phase 23.1 completed — see `DONE.md`.
 
 ---
 

@@ -120,7 +120,7 @@ All six gates must pass.
 src/app/
   (public)/         — public marketing/legal pages (/, /about, /plans, /faqs, /personas, /privacy, /cookies, /terms)
   (auth)/           — Clerk sign-in/sign-up
-  (chat)/app/       — authenticated chat routes (/app, /app/new, /app/library, /app/c/[id], /app/profile, /app/plans)
+  (chat)/app/       — authenticated chat routes (/app, /app/new, /app/library, /app/c/[conversationId], /app/personas, /app/profile, /app/plans)
   (admin)/admin/    — admin routes (/admin, /admin/users, /admin/transactions, /admin/usage, /admin/settings, /admin/website)
   api/              — API route handlers
 src/components/     — UI components by domain (chat, layout, sections, shared)

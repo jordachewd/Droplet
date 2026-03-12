@@ -50,7 +50,7 @@ src/
   app/
     (public)/              # Marketing + legal pages (/, /about, /plans, /faqs, /personas, /privacy, /cookies, /terms)
     (auth)/                # Clerk sign-in/sign-up
-    (chat)/app/            # Authenticated chat routes (/app, /app/new, /app/library, /app/c/[id], /app/profile, /app/plans)
+    (chat)/app/            # Authenticated chat routes (/app, /app/new, /app/library, /app/c/[conversationId], /app/personas, /app/profile, /app/plans)
     (admin)/admin/         # Admin routes (/admin, /admin/users, /admin/transactions, /admin/usage, /admin/settings, /admin/website)
     api/                   # Route handlers (openai, upload, download, aws, webhooks)
   components/
