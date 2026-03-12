@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-12 (Phase 25.5.2 complete — auth-boundary E2E coverage added, pre-Phase-26 verification in progress)
+> Last updated: 2026-03-14 (HF-1 complete, Phase 25.5.3 complete — pre-Phase-26 verification in progress)
 
 ---
 
@@ -210,7 +210,7 @@ Prompts are versioned and separated from request handlers. `buildPersonaAwareSys
 - **Admin routes**: `/admin(.*)` — requires `sessionClaims.metadata.role === "admin"`
 - **Server actions**: Must verify `auth()` before DB operations. Ownership enforcement on all read/write operations.
 - **API routes**: Must verify `auth()` before processing.
-- **Webhooks**: Exempt from auth — verified via Svix (Clerk) and `stripe.webhooks.constructEvent` (Stripe).
+- **Webhooks**: Exempt from auth — verified via `verifyWebhook()` from `@clerk/nextjs/webhooks` (Clerk) and `stripe.webhooks.constructEvent` (Stripe).
 
 ### Auth Technical Debt
 
@@ -660,7 +660,7 @@ All file handling technical debt has been resolved.
 ## 13. Testing
 
 - **Unit tests**: 53 suites, 248 tests (Vitest) — includes streaming, webhook, chat-wrapper, chat-body stop-state, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, persona prompt, rate limiting, task complexity classification, and OpenAI route tests
-- **E2E tests**: 6 Playwright spec files across browser projects (auth-boundaries added in Phase 25.5.2, 70 public-page tests added in Phase 25.5.1)
+- **E2E tests**: 7 Playwright spec files across browser projects (chat-app-shell added in Phase 25.5.3, auth-boundaries added in Phase 25.5.2, 70 public-page tests added in Phase 25.5.1)
 - **Coverage**: Configured (Phase 24.1) — v8 provider, thresholds: 70% statements / 60% branches / 70% functions / 70% lines. Current: 82/71/88/82.
 - **Gap**: No dedicated E2E spec for streamed chunk-by-chunk rendering (manually verified via Playwright MCP)
 

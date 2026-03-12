@@ -5,6 +5,22 @@
 
 ---
 
+## HF-1: Clerk Webhook Fix — COMPLETED
+
+- [x] **HF-1** Fix Clerk webhook to restore user sync — migrated from raw `svix` verification to `verifyWebhook()` from `@clerk/nextjs/webhooks`. Env var renamed from `CLERK_WEBHOOK_SECRET` to `CLERK_WEBHOOK_SIGNING_SECRET` (Clerk canonical name). Signing secret passed explicitly via `signingSecret` parameter. Diagnostic logging added via `logWebhookVerificationFailure()` using `process.stderr.write()`. Unit tests migrated (13 tests) to mock `verifyWebhook` instead of raw Svix `Webhook`. SPEC.md env var table updated. `svix` package now dead dependency in `package.json` (zero imports in source — cleanup tracked as 25.7.4).
+
+**Files changed:** `src/app/api/webhooks/clerk/route.tsx`, `tests/unit/clerk-webhook-route.test.ts`, `SPEC.md`
+
+---
+
+## Phase 25.5.3: Authenticated App Shell E2E — COMPLETED
+
+- [x] **25.5.3** E2E: Authenticated app shell and navigation — `tests/e2e/chat-app-shell.spec.ts` covering `/app` shell rendering with sidebar and main content, sidebar navigation to 5 routes (New Chat, Library, Personas, Profile, Plans), each page renders expected content, persona picker with 9 PersonaCard components visible on `/app/new`. Uses parameterized `SidebarDestination` array for DRY route assertions. Auth handled via stored Clerk session with fallback sign-in.
+
+**Files changed:** `tests/e2e/chat-app-shell.spec.ts` (new)
+
+---
+
 ## Phase 25.5.2: Auth Boundary E2E Coverage — COMPLETED
 
 - [x] **25.5.2** E2E: Auth boundary enforcement — dedicated `tests/e2e/auth-boundaries.spec.ts` covering unauthenticated `/app/*` redirect to sign-in, unauthenticated `/admin/*` redirect to sign-in, authenticated non-admin `/admin/*` blocked (403), and public-route accessibility confirmed. Removed duplicate auth-boundary assertions from `authenticated-flows.spec.ts` and `landing-page.spec.ts`. Updated `global.setup.ts` for guest storageState persistence. Stabilized `public-pages.spec.ts` with serial execution and locator reacquisition. Updated `playwright.config.ts` to `127.0.0.1`. Gates 1–5 passed; Gate 6 (full E2E) blocked by MongoDB Atlas connectivity (not a code issue).

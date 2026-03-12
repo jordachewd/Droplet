@@ -6,94 +6,7 @@
 > Implementation agent: **Codex Agent** (Senior Developer).
 >
 > **STATUS: Pre-Phase 26 — comprehensive verification and E2E expansion before deferred features.**
-> All milestones 0–8 implementation complete. Phases 1–25.5.2 complete (see DONE.md).
-
----
-
-## PRIORITY HOTFIX: Clerk Webhook Failure — User Sync Broken
-
-> **Blocking issue.** Clerk webhooks (`user.created`, `user.updated`, `user.deleted`) fail silently. Users appear in Clerk Dashboard but never reach MongoDB. All `/app/*` pages that depend on the local user record crash.
-> **Must be fixed before any other work proceeds.**
-
----
-
-### HF-1 Fix Clerk webhook to restore user sync
-
-**File:** `src/app/api/webhooks/clerk/route.tsx`
-**Ref:** Clerk webhook sync docs (https://clerk.com/docs/guides/development/webhooks/syncing), `verifyWebhook()` reference (https://clerk.com/docs/reference/backend/verify-webhook), Clerk env vars (https://clerk.com/docs/guides/development/clerk-environment-variables).
-
-**Root causes (verified against current Clerk docs, March 2026):**
-
-1. **Environment variable name mismatch.** Current Clerk docs define the canonical webhook env var as `CLERK_WEBHOOK_SIGNING_SECRET`. Droplet's code reads `process.env.CLERK_WEBHOOK_SECRET` (line 234 of route.tsx). SPEC.md also documents the old name. If `.env.local` or production env uses one name and the code expects the other, verification fails on every request. Additionally, `verifyWebhook()` auto-reads `CLERK_WEBHOOK_SIGNING_SECRET` — using it avoids this mismatch entirely.
-
-2. **Production deployment using Clerk development instance.** The SE report confirmed the production sign-in page shows Clerk "Development mode" badge. This means the deployed app uses `pk_test_*` / `sk_test_*` keys. If the webhook endpoint is configured in the production Clerk instance but the app runs on development keys (or vice versa), the webhook signing secret won't match and every verification will fail with a 400.
-
-3. **Outdated manual Svix verification.** Droplet uses raw `new Webhook(secret).verify(body, headers)` from the `svix` package. Current Clerk docs (March 2026) recommend `verifyWebhook()` from `@clerk/nextjs/webhooks` (available since `@clerk/nextjs` v7+, which Droplet is on at 7.0.4). `verifyWebhook()` handles body reading, header extraction, and secret resolution internally — eliminates the entire class of body-consumption and header-mismatch bugs.
-
-4. **Zero diagnostic logging on verification failure.** The catch block at verification (around line 270) returns `new Response("Error occured", { status: 400 })` with no server-side log. When verification fails, there is no trace in server logs to diagnose why.
-
-**What to do:**
-
-1. **Verify environment configuration (do this first, before any code change):**
-   - Confirm `.env.local` has the webhook signing secret value copied from the Clerk Dashboard → Webhooks → your endpoint → Signing Secret.
-   - Decide: either rename the env var to `CLERK_WEBHOOK_SIGNING_SECRET` (Clerk's canonical name) everywhere (code + `.env.local` + SPEC.md), or pass it explicitly to `verifyWebhook({ signingSecret: process.env.CLERK_WEBHOOK_SECRET })`.
-   - Confirm the Clerk Dashboard webhook endpoint URL matches the actual deployed URL (`/api/webhooks/clerk`).
-   - Confirm the Clerk Dashboard has subscriptions enabled for `user.created`, `user.updated`, `user.deleted`.
-
-2. **Verify Clerk instance alignment:**
-   - If the production deployment shows "Development mode", the `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` is a `pk_test_*` key. Either switch production to use production Clerk keys (`pk_live_*`, `sk_live_*`), or ensure the webhook endpoint + signing secret are configured in the **development** instance Dashboard (not the production one).
-   - Both the webhook signing secret AND the Clerk API keys must come from the **same** Clerk instance.
-
-3. **Migrate from raw Svix to `verifyWebhook()`:**
-   - Replace the entire manual verification block (headers extraction, `new Webhook()`, `.verify()`) with:
-     ```typescript
-     import { verifyWebhook } from "@clerk/nextjs/webhooks";
-
-     export async function POST(req: Request) {
-       try {
-         const evt = await verifyWebhook(req);
-         // ... handle evt.type as before
-       } catch {
-         process.stderr.write("[clerk-webhook] Verification failed.\n");
-         return new Response("Webhook verification failed", { status: 400 });
-       }
-     }
-     ```
-   - If using the non-canonical env var name, pass it explicitly: `await verifyWebhook(req, { signingSecret: process.env.CLERK_WEBHOOK_SECRET })`.
-   - Remove the `svix` import — it's no longer needed if `verifyWebhook()` is used.
-   - Remove the manual `headers()` extraction for `svix-id`, `svix-timestamp`, `svix-signature`.
-   - Remove the `ClerkWebhookEmailAddress`, `ClerkWebhookUserBase`, and related manual types if `verifyWebhook()` returns properly typed `WebhookEvent`.
-
-4. **Add diagnostic logging on verification failure:**
-   - In the catch block of `verifyWebhook()`, write to `process.stderr` so failed webhooks leave a trace in server logs. Do NOT log the error object to the client response.
-
-5. **Update unit tests:**
-   - Migrate `tests/unit/clerk-webhook-route.test.ts` to mock `verifyWebhook` instead of raw `Webhook` from `svix`.
-   - Keep all existing test scenarios (duplicate user, missing user delete, signature failure, etc.).
-
-6. **Update SPEC.md:**
-   - Change the env var table entry from `CLERK_WEBHOOK_SECRET` to `CLERK_WEBHOOK_SIGNING_SECRET` (or document both if keeping the old name with explicit pass-through).
-
-7. **Test the fix:**
-   - Run `npm run test` — all unit tests must pass.
-   - Run `npx tsc --noEmit` — no type errors.
-   - Use Clerk Dashboard → Webhooks → Testing tab → Send Example for `user.created` to verify the endpoint responds 200 and the user appears in MongoDB.
-   - Create a real user via sign-up and confirm the user record appears in MongoDB.
-
-**Acceptance criteria:**
-
-- [ ] Clerk webhook successfully creates user in MongoDB on `user.created`
-- [ ] Clerk webhook successfully updates user in MongoDB on `user.updated`
-- [ ] Clerk webhook successfully deletes user and related data on `user.deleted`
-- [ ] `verifyWebhook()` from `@clerk/nextjs/webhooks` used instead of raw Svix
-- [ ] Env var name aligned with Clerk's canonical `CLERK_WEBHOOK_SIGNING_SECRET` (or explicitly passed)
-- [ ] Clerk instance keys (publishable + secret + webhook signing secret) all from the same instance
-- [ ] Server-side diagnostic log on verification failure
-- [ ] SPEC.md env var table updated
-- [ ] Unit tests updated and passing
-- [ ] `npx tsc --noEmit` passes
-- [ ] `npm run test` passes
-- [ ] Clerk Dashboard test webhook returns 200
+> All milestones 0–8 implementation complete. HF-1 complete. Phases 1–25.5.3 complete (see DONE.md).
 
 ---
 
@@ -101,34 +14,13 @@
 
 > Expand E2E test coverage to verify all routes and features before deferred feature work.
 > Ref: ThePlan.md Milestone 9 (Launch Readiness). AGENTS.md testing rules.
-> Depends on: Phase 25.4 (complete). Phases 25.5.1–25.5.2 complete (see DONE.md).
+> Depends on: Phase 25.4 (complete). Phases 25.5.1–25.5.3 complete (see DONE.md).
 
 ---
 
-### 25.5.1 & 25.5.2 — COMPLETE
+### 25.5.1, 25.5.2 & 25.5.3 — COMPLETE
 
 Moved to `DONE.md`.
-
----
-
-### 25.5.3 E2E: Authenticated app shell and navigation
-
-**File (new):** `tests/e2e/chat-app-shell.spec.ts`
-
-**What to do:**
-
-- Test that authenticated user sees `/app` with sidebar and main content area.
-- Test sidebar links: New Chat, Library, Personas, Profile, Plans.
-- Test navigation from sidebar to each route renders correct page.
-- Test persona picker is visible on new conversation page.
-
-**Acceptance criteria:**
-
-- [ ] `/app` renders with sidebar and main content
-- [ ] Sidebar navigation links to 5 routes verified
-- [ ] Each navigated page renders expected content
-- [ ] Persona picker visible on `/app/new`
-- [ ] All E2E tests pass
 
 ---
 
@@ -354,6 +246,28 @@ Moved to `DONE.md`.
 - [ ] Audit log entries contain required fields
 - [ ] Test verifies the relationship between action and log
 - [ ] All tests pass
+
+---
+
+### 25.7.4 Remove dead `svix` dependency
+
+**File:** `package.json`
+
+**What to do:**
+
+- Remove `svix` from `dependencies` in `package.json` — it has zero imports in source code since the migration to `verifyWebhook()` from `@clerk/nextjs/webhooks` (HF-1).
+- Run `npm install` to update `package-lock.json`.
+- Run full 6-gate validation to confirm nothing breaks.
+
+**Acceptance criteria:**
+
+- [ ] `svix` removed from `package.json`
+- [ ] `package-lock.json` updated
+- [ ] `npm run test` passes
+- [ ] `npx tsc --noEmit` passes
+- [ ] `npm run build` passes
+
+---
 
 ## Phase 26: Deferred Features — FUTURE (Not Yet Approved)
 
