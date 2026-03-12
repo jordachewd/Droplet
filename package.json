@@ -29,7 +29,6 @@
     "remark-gfm": "^4.0.0",
     "sharp": "^0.34.5",
     "stripe": "^20.4.0",
-    "svix": "^1.45.1",
     "tailwindcss-animated": "^2.0.0"
   },
   "devDependencies": {

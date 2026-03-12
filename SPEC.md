@@ -216,6 +216,17 @@ Prompts are versioned and separated from request handlers. `buildPersonaAwareSys
 
 - ~~**TD-AUTH-01**: Proxy protects old routes~~ — **Resolved** in Phase 17. Proxy now protects `/app(.*)` and `/admin(.*)` only.
 - ~~**TD-AUTH-02**: Admin at `/dashboard`~~ — **Resolved** in Phase 17. Admin is at `/admin`.
+- **TD-AUTH-03**: Missing MongoDB user self-healing — when Clerk webhook fails or delays, `/app/profile` and `/app/plans` show permanent loading spinner instead of actionable error. **Critical.** Tracked as HF-2.
+- **TD-AUTH-04**: `/api/openai` silently degrades to Lite plan when MongoDB user record is missing — paid Pro/Premium users get Lite limits with no error feedback. **High.** Tracked as HF-2.
+
+### Self-Healing User Sync Requirement
+
+When an authenticated user (valid Clerk session) has no corresponding MongoDB User record, server components and API routes must not silently fail or show permanent loading states. The required behavior is:
+
+1. Attempt to create the MongoDB user record on-demand using Clerk API data (self-healing).
+2. If self-healing succeeds, continue normally with the newly created user.
+3. If self-healing fails, show a clear error message with retry guidance and support contact — never a permanent loading spinner.
+4. API routes must return HTTP 503 ("Account not yet provisioned") instead of silently degrading to Lite.
 
 ---
 
@@ -659,7 +670,7 @@ All file handling technical debt has been resolved.
 
 ## 13. Testing
 
-- **Unit tests**: 53 suites, 248 tests (Vitest) — includes streaming, webhook, chat-wrapper, chat-body stop-state, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, persona prompt, rate limiting, task complexity classification, and OpenAI route tests
+- **Unit tests**: 53 suites, 250 tests (Vitest) — includes streaming, webhook, chat-wrapper, chat-body stop-state, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, persona prompt, rate limiting, task complexity classification, and OpenAI route tests
 - **E2E tests**: 7 Playwright spec files across browser projects (chat-app-shell added in Phase 25.5.3, auth-boundaries added in Phase 25.5.2, 70 public-page tests added in Phase 25.5.1)
 - **Coverage**: Configured (Phase 24.1) — v8 provider, thresholds: 70% statements / 60% branches / 70% functions / 70% lines. Current: 82/71/88/82.
 - **Gap**: No dedicated E2E spec for streamed chunk-by-chunk rendering (manually verified via Playwright MCP)
@@ -694,9 +705,12 @@ All file handling technical debt has been resolved.
 
 ## 15. Technical Debt Summary
 
-### Active — No Critical TDs Remaining
+### Active — Critical Priority
 
-All critical-severity technical debt resolved. Remaining items are medium or low priority.
+| ID         | Area | Description                                                                                                           | Severity |
+| ---------- | ---- | --------------------------------------------------------------------------------------------------------------------- | -------- |
+| TD-AUTH-03 | Auth | Missing MongoDB user self-healing — `/app/profile` and `/app/plans` show permanent loading when webhook fails         | Critical |
+| TD-AUTH-04 | Auth | `/api/openai` silently degrades to Lite for missing user records — paid users get wrong limits with no error feedback | Critical |
 
 ### Active — Medium Priority
 

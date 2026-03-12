@@ -7,6 +7,7 @@ import {
 import { generateTitle } from "@/lib/utils/openai/generateTitle";
 import { createTask, updateTask } from "@/lib/actions/task.actions";
 import { getUserById } from "@/lib/actions/user.actions";
+import { ensureUserSynced } from "@/lib/utils/ensure-user-synced";
 import { auth } from "@clerk/nextjs/server";
 import User from "@/lib/database/models/user.model";
 import { checkDailyConversationLimit } from "@/lib/utils/check-daily-conversations";
@@ -51,6 +52,10 @@ vi.mock("@/lib/utils/task-queries", () => ({
 
 vi.mock("@/lib/utils/rate-limit", () => ({
   enforceSlidingWindowRateLimit: vi.fn(),
+}));
+
+vi.mock("@/lib/utils/ensure-user-synced", () => ({
+  ensureUserSynced: vi.fn(),
 }));
 
 const EXISTING_TASK_ID = "507f1f77bcf86cd799439011";
@@ -669,5 +674,50 @@ describe("POST /api/openai", () => {
     expect(response.status).toBe(500);
     expect(payload.error).toBeTypeOf("string");
     expect(updateTask).not.toHaveBeenCalled();
+  });
+
+  it("self-heals when getUserById returns null and ensureUserSynced succeeds", async () => {
+    vi.mocked(getUserById).mockResolvedValue(null as never);
+    vi.mocked(ensureUserSynced).mockResolvedValue({
+      clerkId: "user_123",
+      plan: {
+        name: "Pro",
+        expiresOn: new Date(Date.now() + 86_400_000),
+        imageGenerations: 0,
+        audioGenerations: 0,
+        usagePeriodStart: new Date(),
+      },
+    } as never);
+    vi.mocked(getTaskByIdForUser).mockResolvedValue(null as never);
+    vi.mocked(createTask).mockResolvedValue({
+      _id: NEW_TASK_ID,
+    } as never);
+
+    const response = await POST(
+      buildRequest({
+        messages: [{ role: "user", whois: "user", content: "hello" }],
+        personaId: "teacher",
+      }),
+    );
+
+    expect(response.status).not.toBe(503);
+    expect(ensureUserSynced).toHaveBeenCalledWith("user_123");
+  });
+
+  it("returns 503 when getUserById returns null and ensureUserSynced also fails", async () => {
+    vi.mocked(getUserById).mockResolvedValue(null as never);
+    vi.mocked(ensureUserSynced).mockResolvedValue(null);
+
+    const response = await POST(
+      buildRequest({
+        messages: [{ role: "user", whois: "user", content: "hello" }],
+        personaId: "teacher",
+      }),
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(503);
+    expect(payload.error).toContain("Account not yet provisioned");
+    expect(ensureUserSynced).toHaveBeenCalledWith("user_123");
   });
 });
