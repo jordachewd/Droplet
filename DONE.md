@@ -8,10 +8,12 @@
 ## Phase 24: Testing Hardening (Partial) — COMPLETED
 
 - [x] **24.1** Add test coverage configuration — `v8` provider in `vitest.config.mts`, thresholds 70/60/70/70 (statements/branches/functions/lines), `test:coverage` script in `package.json`, `@vitest/coverage-v8` dependency added. Coverage run result: 82% statements, 71% branches, 88% functions, 82% lines — all above thresholds.
+- [x] **24.2** Add unit tests for chat-body stop-state rendering — 9 tests covering all 5 stop reasons, 3 action link targets (`/app/new`, `/app/plans`, `mailto:`), and amber ended-state styling. Parameterized coverage using jsdom environment. Next.js `Link` mocked to plain anchors for stable route assertions.
 
-51 test suites, 229 tests passing, 79 E2E tests passing. All 6 validation gates green.
+52 test suites, 238 tests passing, 79 E2E tests passing. All 6 validation gates green.
 
-**Files changed:** `vitest.config.mts`, `package.json`, `package-lock.json`
+**Files changed (24.1):** `vitest.config.mts`, `package.json`, `package-lock.json`
+**Files changed (24.2):** `tests/unit/chat-body.test.tsx` (new)
 
 ---
 

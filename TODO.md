@@ -4,6 +4,9 @@
 > Governed by **Droplet-PM**. Do not add tasks without PM approval.
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Codex Agent** (Senior Developer).
+>
+> **STATUS: Pre-Phase 26 Freeze — completing hardening before deferred features.**
+> All milestones 0–7 complete. Phase 24.1–24.2 complete. Remaining: 24.3–24.4, 25.1–25.4.
 
 ---
 
@@ -11,27 +14,7 @@
 
 > Improve test coverage for reliability before production hardening.
 > Ref: ThePlan.md Milestone 8 prerequisites.
-> Depends on: Phase 23 (complete). Phase 24.1 complete (see DONE.md).
-
----
-
-### 24.2 Add unit tests for chat-body stop-state rendering
-
-**File (new):** `tests/unit/chat-body.test.tsx`
-
-**What to do:**
-
-- Test `ChatBodyEndNotice` renders correct stop reason titles for each reason code (`prompt_limit_reached`, `media_limit_reached`, `daily_conversation_limit_reached`, `conversation_storage_limit_reached`, `billing_state_invalid`).
-- Test action links point to correct routes (`/app/new`, `/app/plans`, `mailto:` support).
-- Test amber visual styling applied for ended conversations.
-
-**Acceptance criteria:**
-
-- [ ] Tests cover all 5 stop reason titles
-- [ ] Tests verify action link routes
-- [ ] Tests verify visual styling distinction
-- [ ] `npx tsc --noEmit` passes
-- [ ] All tests pass
+> Depends on: Phase 23 (complete). Phases 24.1–24.2 complete (see DONE.md).
 
 ---
 

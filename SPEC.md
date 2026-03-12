@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-12 (Phase 23.2 complete — TTS routing abstracted to `isTtsOnly` policy flag, TD-AI-15 resolved)
+> Last updated: 2026-03-12 (Phase 24.2 complete — ChatBody stop-state unit tests added, pre-Phase-26 freeze audit passed)
 
 ---
 
@@ -645,7 +645,7 @@ All file handling technical debt has been resolved.
 
 ## 13. Testing
 
-- **Unit tests**: 51 suites, 229 tests (Vitest) — includes streaming, webhook, chat-wrapper, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, and persona prompt tests
+- **Unit tests**: 52 suites, 238 tests (Vitest) — includes streaming, webhook, chat-wrapper, chat-body stop-state, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, and persona prompt tests
 - **E2E tests**: Playwright specs, 79 tests across browser projects
 - **Coverage**: Configured (Phase 24.1) — v8 provider, thresholds: 70% statements / 60% branches / 70% functions / 70% lines. Current: 82/71/88/82.
 - **Gap**: No dedicated E2E spec for streamed chunk-by-chunk rendering (manually verified via Playwright MCP)
