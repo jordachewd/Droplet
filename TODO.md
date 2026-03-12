@@ -5,160 +5,317 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Codex Agent** (Senior Developer).
 >
-> **STATUS: Pre-Phase 26 Freeze — completing hardening before deferred features.**
-> All milestones 0–7 complete. Phase 24.1–24.2 complete. Remaining: 24.3–24.4, 25.1–25.4.
+> **STATUS: Pre-Phase 26 — comprehensive verification and E2E expansion before deferred features.**
+> All milestones 0–8 implementation complete. Phases 1–25.4 complete (see DONE.md).
 
 ---
 
-## Phase 24: Testing Hardening — CURRENT PRIORITY
+## Phase 25.5: Comprehensive E2E Test Expansion — CURRENT PRIORITY
 
-> Improve test coverage for reliability before production hardening.
-> Ref: ThePlan.md Milestone 8 prerequisites.
-> Depends on: Phase 23 (complete). Phases 24.1–24.2 complete (see DONE.md).
+> Expand E2E test coverage to verify all routes and features before deferred feature work.
+> Ref: ThePlan.md Milestone 9 (Launch Readiness). AGENTS.md testing rules.
+> Depends on: Phase 25.4 (complete).
 
 ---
 
-### 24.3 Expand streaming test coverage
+### 25.5.1 E2E: Public page rendering and inter-page navigation
 
-**File:** `tests/unit/generate-streaming-response.test.ts`
+**File (new):** `tests/e2e/public-pages.spec.ts`
 
 **What to do:**
 
-- Add tests for: OpenAI failure during stream (error event), tool call handling after stream, abort signal propagation (request cancelled mid-stream), empty response handling.
+- Write E2E tests that verify all 8 public routes return 200 and render key content:
+  - `/` — Hero section visible, CTA buttons present
+  - `/about` — page heading and at least 3 content sections visible
+  - `/plans` — 3 plan cards visible with correct prices ($0, $19, $39)
+  - `/faqs` — at least 3 FAQ accordion items visible
+  - `/personas` — persona cards visible
+  - `/privacy` — privacy policy heading and content present
+  - `/cookies` — cookie policy heading and content present
+  - `/terms` — terms heading and content present
+- Test footer links (Privacy, Terms) navigate correctly.
+- Test header navigation links work (About, Personas, Plans, FAQs).
 
 **Acceptance criteria:**
 
-- [ ] Error path tested (OpenAI API error during stream emits `error` SSE event)
-- [ ] Tool call routing tested after stream completion
-- [ ] Abort signal test (request cancelled mid-stream)
-- [ ] Empty/null response handled
+- [ ] All 8 public routes tested for 200 status and key content
+- [ ] Footer link navigation verified (Privacy → /privacy, Terms → /terms)
+- [ ] Header navigation verified (each link navigates to correct route)
+- [ ] All E2E tests pass
+- [ ] No test relies on external services
+
+---
+
+### 25.5.2 E2E: Auth boundary enforcement
+
+**File (new):** `tests/e2e/auth-boundaries.spec.ts`
+
+**What to do:**
+
+- Test that unauthenticated users visiting `/app`, `/app/profile`, `/app/plans`, `/app/library` are redirected to sign-in.
+- Test that unauthenticated users visiting `/admin`, `/admin/users`, `/admin/settings` are redirected to sign-in.
+- Test that authenticated non-admin users visiting `/admin(.*)` are blocked (403 or redirect).
+- Verify public pages remain accessible without auth.
+
+**Acceptance criteria:**
+
+- [ ] 4+ protected `/app` routes tested for auth redirect
+- [ ] 3+ protected `/admin` routes tested for auth redirect
+- [ ] Non-admin access to `/admin` tested for rejection
+- [ ] Public pages confirmed accessible without auth
+- [ ] All E2E tests pass
+
+---
+
+### 25.5.3 E2E: Authenticated app shell and navigation
+
+**File (new):** `tests/e2e/chat-app-shell.spec.ts`
+
+**What to do:**
+
+- Test that authenticated user sees `/app` with sidebar and main content area.
+- Test sidebar links: New Chat, Library, Personas, Profile, Plans.
+- Test navigation from sidebar to each route renders correct page.
+- Test persona picker is visible on new conversation page.
+
+**Acceptance criteria:**
+
+- [ ] `/app` renders with sidebar and main content
+- [ ] Sidebar navigation links to 5 routes verified
+- [ ] Each navigated page renders expected content
+- [ ] Persona picker visible on `/app/new`
+- [ ] All E2E tests pass
+
+---
+
+### 25.5.4 E2E: Conversation lifecycle
+
+**File (new):** `tests/e2e/conversation-lifecycle.spec.ts`
+
+**What to do:**
+
+- Test new conversation creation flow (select persona → send message → conversation created).
+- Test conversation appears in library (`/app/library`).
+- Test conversation resume via `/app/c/[conversationId]` shows previous messages.
+- Test conversation delete from library removes it from list.
+
+**Acceptance criteria:**
+
+- [ ] New conversation creation tested (persona + first message)
+- [ ] Conversation listed in library after creation
+- [ ] Conversation resume shows message history
+- [ ] Conversation delete removes from library
+- [ ] All E2E tests pass
+
+---
+
+### 25.5.5 E2E: User profile and plan pages
+
+**File (new):** `tests/e2e/user-profile.spec.ts`
+
+**What to do:**
+
+- Test `/app/profile` displays user info (name, email, current plan).
+- Test plan badge shows correct tier name.
+- Test `/app/plans` displays all 3 plan cards with correct prices and features.
+- Test upgrade button or checkout link is present for higher plans.
+
+**Acceptance criteria:**
+
+- [ ] `/app/profile` renders user info and plan details
+- [ ] Current plan tier correctly displayed
+- [ ] `/app/plans` shows 3 plan cards ($0/$19/$39)
+- [ ] Upgrade CTA present for non-Premium users
+- [ ] All E2E tests pass
+
+---
+
+### 25.5.6 E2E: Admin dashboard and user management
+
+**File (new):** `tests/e2e/admin-users.spec.ts`
+
+**What to do:**
+
+- Test `/admin` dashboard loads with overview stats (total users, transactions, usage).
+- Test `/admin/users` list page renders with user rows.
+- Test clicking a user navigates to `/admin/users/[userId]` detail page.
+- Test suspend/reinstate action buttons are present on user detail page.
+
+**Acceptance criteria:**
+
+- [ ] `/admin` dashboard renders with stats cards
+- [ ] `/admin/users` list renders with user data
+- [ ] User detail page accessible and renders user info
+- [ ] Admin action buttons visible on detail page
+- [ ] All E2E tests pass
+
+---
+
+### 25.5.7 E2E: Admin transactions, usage, settings, and website
+
+**File (new):** `tests/e2e/admin-features.spec.ts`
+
+**What to do:**
+
+- Test `/admin/transactions` list page renders.
+- Test `/admin/usage` analytics page renders with data sections.
+- Test `/admin/settings` page loads with current settings (model, pricing, limits).
+- Test `/admin/website` page lists public pages with actions.
+- Test `/admin/website/[pageId]` editor loads Tiptap editor component.
+
+**Acceptance criteria:**
+
+- [ ] Transactions list page renders
+- [ ] Usage analytics page renders with data sections
+- [ ] Settings page loads with editable fields
+- [ ] Website management page lists pages
+- [ ] Page editor renders Tiptap component
+- [ ] All E2E tests pass
+
+---
+
+## Phase 25.6: Unit Test Gap Coverage
+
+> Fill remaining unit test gaps for critical business logic.
+> Ref: SPEC.md Sections 4, 7, 8.
+> Depends on: Phase 25.5.
+
+---
+
+### 25.6.1 Unit: Conversation stop enforcement edge cases
+
+**File (new or extend):** `tests/unit/conversation-stop.test.ts`
+
+**What to do:**
+
+- Test all 5 stop reasons trigger the correct `endedReason` and `endAction` on Task.
+- Test that `prompt_limit_reached` is set when prompt count equals plan limit.
+- Test that `daily_conversation_limit_reached` fires when conversation count equals daily limit.
+- Test that `conversation_storage_limit_reached` fires at 12MB threshold.
+- Test that unlimited plans (`-1` limits) bypass all checks.
+- Test that `media_limit_reached` fires when image/audio count equals plan quota.
+
+**Acceptance criteria:**
+
+- [ ] All 5 stop reasons have dedicated test cases
+- [ ] Unlimited plan bypass verified
+- [ ] Correct `endAction` for each stop reason verified
 - [ ] All tests pass
 
 ---
 
-### 24.4 Fix relative import violations
+### 25.6.2 Unit: Webhook idempotency edge cases
 
-**Files:** `src/components/sections/profile-hero.tsx`, `src/components/sections/profile-billing.tsx`, `src/components/sections/plans-section.tsx`, `src/components/layout/footer.tsx`, `src/components/layout/header.tsx`, `src/lib/actions/user.actions.tsx`, `src/lib/actions/task.actions.tsx`, `src/lib/utils/openai/generateTitle.tsx`, `src/lib/utils/openai/generateAudio.tsx`, `src/lib/utils/openai/generateImage.tsx`
-**Ref:** TD-CODE-01, AGENTS.md coding standards
-
-**What to do:**
-
-- Replace all 15 relative import paths (`../`, `../../`, `../../../`) with `@/*` path alias imports across the 10 files listed above.
-- Do not change any behavior — import alias only.
-
-**Acceptance criteria:**
-
-- [ ] Zero relative `../` imports remain in the listed files
-- [ ] All imports use `@/*` alias per AGENTS.md
-- [ ] `npx tsc --noEmit` passes
-- [ ] `npm run lint` passes
-- [ ] All tests pass
-- [ ] `npm run build` passes
-
----
-
-## Phase 25: Production Hardening
-
-> Close operational gaps before launch.
-> Ref: ThePlan.md Milestone 8.
-> Depends on: Phase 24
-
----
-
-### 25.1 Add `X-Accel-Buffering: no` to streaming responses
-
-**File:** `src/app/api/openai/route.tsx`
+**File (extend):** `tests/unit/clerk-webhook-route.test.ts`, `tests/unit/stripe-webhook.test.ts`
 
 **What to do:**
 
-- Add `"X-Accel-Buffering": "no"` header to the streaming SSE `Response` constructor.
-- Only add to streaming responses, not non-streaming JSON responses.
+- Test Clerk `user.created` with duplicate clerkId returns 200 without creating duplicate User.
+- Test Clerk `user.deleted` with non-existent user returns 200 without throwing.
+- Test Stripe `checkout.session.completed` with duplicate `stripeId` returns 200 without creating duplicate Transaction.
+- Test Stripe webhook with invalid signature returns 400.
 
 **Acceptance criteria:**
 
-- [ ] `X-Accel-Buffering: no` header present on streaming responses
-- [ ] Non-streaming responses unaffected
-- [ ] `npx tsc --noEmit` passes
+- [ ] Clerk duplicate user.created handled gracefully
+- [ ] Clerk missing user.deleted handled gracefully
+- [ ] Stripe duplicate transaction handled with idempotency
+- [ ] Invalid webhook signatures rejected
 - [ ] All tests pass
 
 ---
 
-### 25.2 Verify all admin server actions emit audit log entries
+### 25.6.3 Unit: Entitlement resolver full coverage
 
-**Files:** `src/lib/actions/admin.actions.tsx`
+**File (extend):** `tests/unit/resolve-entitlements.test.ts`
 
 **What to do:**
 
-- Audit every exported admin action function.
-- Confirm each calls `createAdminAuditLogEntry()` after mutation.
-- Add missing audit log calls if any are found.
-- Document which actions were already correct and which were fixed.
+- Test all plan × media feature combinations (Lite/Pro/Premium × image/audio/video).
+- Test expired paid plan reverts to Lite entitlements.
+- Test suspended user gets blocked entitlements.
+- Test all 9 personas accessible for all plan tiers.
 
 **Acceptance criteria:**
 
-- [ ] Every exported admin mutation action has a `createAdminAuditLogEntry()` call
-- [ ] No admin state change can happen without audit trail
-- [ ] `npx tsc --noEmit` passes
+- [ ] 9+ plan × feature combinations tested
+- [ ] Expired plan behavior verified
+- [ ] Suspended user behavior verified
+- [ ] All 9 personas accessible across all plans verified
 - [ ] All tests pass
 
 ---
 
-### 25.3 Replace in-memory rate limiter with persistent store
+## Phase 25.7: Operational Verification & Cleanup
 
-**Files:** `src/lib/utils/rate-limit.ts`, `src/app/api/openai/route.tsx`
-**Ref:** TD-API-01
-
-**What to do:**
-
-- Replace the current in-memory sliding window rate limiter with a MongoDB-backed implementation.
-- Use a `RateLimitEntry` collection with TTL index for automatic cleanup.
-- Keep the same API surface (`enforceSlidingWindowRateLimit`).
-- Must survive process restarts and work across multiple instances.
-- Add a unit test for the new implementation.
-
-**Acceptance criteria:**
-
-- [ ] Rate limiter uses MongoDB storage
-- [ ] Survives process restarts
-- [ ] Works across multiple instances
-- [ ] Same API surface preserved (`enforceSlidingWindowRateLimit`)
-- [ ] TTL index on entries for automatic cleanup
-- [ ] `npx tsc --noEmit` passes
-- [ ] All tests pass
+> Final verification before Phase 26.
+> Ref: ThePlan.md Release Gates A–F.
+> Depends on: Phase 25.6.
 
 ---
 
-### 25.4 Design server-side task complexity classification
-
-**Files (new):** `src/lib/utils/openai/classify-task-complexity.ts`, `tests/unit/classify-task-complexity.test.ts`
-**Ref:** SPEC.md Section 8.3, ThePlan.md Section 5.6
+### 25.7.1 Verify all release gates and run full validation
 
 **What to do:**
 
-- Create a server-side `classifyTaskComplexity()` function.
-- Classification based on: message length, conversation history depth, presence of analytical/technical keywords, explicit user request for deep analysis.
-- Returns `TaskClass` (`simple`, `standard`, `complex`).
-- Wire into `/api/openai` route so `resolveModelPolicy()` receives classified `taskClass` instead of always `"standard"`.
-- **Important:** Classification must happen server-side. Frontend must NOT send `taskClass`.
+- Run the complete 6-gate validation workflow (prettier, lint, tsc, test, test:e2e, build).
+- Walk through ThePlan.md Release Gates A through F:
+  - Gate A (Contract): billing semantics, limits frozen, Premium extras defined, model claims verified.
+  - Gate B (Architecture): entitlement resolver live, route/auth boundaries correct, storage guardrails enforced.
+  - Gate C (Product): Lite permanent + auth-required, all personas available, stop reasons work, streaming stable.
+  - Gate D (Admin): all admin areas exist, actions audited, role enforcement works.
+  - Gate E (Public): public pages exist and accurate, legal pages exist, no obsolete trial messaging.
+  - Gate F (Validation): all 6 validation commands pass.
+- Document any gate failures as follow-up tasks.
 
 **Acceptance criteria:**
 
-- [ ] `classifyTaskComplexity()` function exists
-- [ ] Classifies messages as `simple`, `standard`, or `complex`
-- [ ] `/api/openai` route uses classifier output for `resolveModelPolicy()`
-- [ ] Frontend does not send `taskClass` or `explicitPremium`
-- [ ] Premium users can reach `gpt-5.4` for genuinely complex requests
-- [ ] Unit tests for classifier function
-- [ ] `npx tsc --noEmit` passes
-- [ ] All tests pass
+- [ ] All 6 validation commands pass
+- [ ] Gates A–F evaluated with pass/fail documented
+- [ ] Any gate failures logged as actionable follow-ups
+- [ ] No critical blockers remain
 
 ---
 
-## Phase 26: Deferred Features
+### 25.7.2 Clean up test output noise
+
+**What to do:**
+
+- Investigate and fix the stderr warning about a `priority` prop in test output (likely Next.js `<Image>` component).
+- Investigate and suppress the S3 cleanup stderr log noise in tests (expected behavior but noisy).
+- Ensure clean test output with zero unexpected warnings.
+
+**Acceptance criteria:**
+
+- [ ] `priority` prop warning resolved or suppressed in tests
+- [ ] S3 cleanup log noise addressed in test environment
+- [ ] `npm run test` output is clean (only pass/fail, no unexpected stderr)
+- [ ] All tests still pass
+
+---
+
+### 25.7.3 Verify admin audit trail completeness
+
+**File (new):** `tests/unit/admin-audit-trail.test.ts`
+
+**What to do:**
+
+- Create integration-style unit test that verifies all 8 admin action functions produce `AdminAuditLog` entries.
+- Test that each audit log entry contains: `adminId`, `action`, `targetType`, `targetId`.
+- Verify no admin mutation can execute without producing an audit entry.
+
+**Acceptance criteria:**
+
+- [ ] All 8 admin actions produce audit log entries
+- [ ] Audit log entries contain required fields
+- [ ] Test verifies the relationship between action and log
+- [ ] All tests pass
+
+## Phase 26: Deferred Features — FUTURE (Not Yet Approved)
 
 > Lower priority items deferred from v1 core.
-> Only proceed after Phase 25 is complete and stable.
-> Depends on: Phase 25
+> Do NOT begin until Phase 25.7 is complete and PM-approved.
+> Depends on: Phase 25.7 verification complete.
 
 ---
 
@@ -234,4 +391,4 @@
 ---
 
 > **Completed phases** are archived in [`DONE.md`](DONE.md).
-> Phases 1–9, 13–23 are complete. Phase 10–12 superseded (see DONE.md for mapping).
+> Phases 1–25.4 are complete. Phase 10–12 superseded (see DONE.md for mapping).

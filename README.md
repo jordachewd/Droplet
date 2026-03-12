@@ -10,7 +10,7 @@ Built with Next.js 16, React 19, TypeScript, Tailwind CSS v4.2, Clerk, Stripe, M
 - **All personas available in all plans** — no persona restrictions per tier
 - **Multi-modal AI** — text chat, image generation, audio generation (video generation planned for Premium)
 - **Streaming responses** — real-time incremental chat rendering via SSE with progressive text display
-- **Plan-aware AI model selection** — comprehensive model policy matrix: `gpt-4o-mini` for Lite, `gpt-4.1` for Pro, `gpt-4.1`/`gpt-5.4` for Premium via `resolveModelPolicy()` with task classes, fallbacks, downgrade triggers, token limits, and audio mode differentiation
+- **Plan-aware AI model selection** — comprehensive model policy matrix: `gpt-4o-mini` for Lite, `gpt-4.1` for Pro, `gpt-4.1`/`gpt-5.4` for Premium via `resolveModelPolicy()` with task classes, fallbacks, downgrade triggers, token limits, audio mode differentiation, and server-side task complexity classification
 - **Retry/backoff resilience** — automatic retry with exponential backoff (1s/2s/4s) for transient OpenAI errors, model tier downgrade on retry, SDK auto-retry disabled for deterministic behavior
 - **Persona prompt system** — versioned, server-only prompt matrix with per-persona, per-model-family system prompts, temperature/max-token tuning, and companion safety rules
 - **Usage event logging** — per-request cost tracking, latency measurement, and blocked-request recording
@@ -23,16 +23,14 @@ Built with Next.js 16, React 19, TypeScript, Tailwind CSS v4.2, Clerk, Stripe, M
   - **Premium** ($39/month) — `gpt-4.1`/`gpt-5.4` chat models, unlimited conversations and messages, unlimited image/audio, 10 video generations/month, premium audio quality
 - **Admin dashboard** — user management, transaction oversight, usage analytics, app settings (AI models, pricing, limits, theme), website content management with Tiptap editor, full audit trail
 - **Public marketing site** — About, FAQs, Privacy Policy, Cookie Policy, Terms & Conditions, plus enhanced homepage with feature showcase, workflow, persona spotlight, and CTAs
-- **Secure by design** — Clerk auth, webhook signature verification with idempotency, ownership enforcement, SSRF protection, double-layer admin role protection (proxy + server-side), error cause chain preservation
-- **Test coverage** — 52 Vitest unit test suites (238 tests), Playwright E2E tests (79 tests), v8 coverage enforced at 70/60/70/70 thresholds
+- **Secure by design** — Clerk auth, webhook signature verification with idempotency, ownership enforcement, SSRF protection, double-layer admin role protection (proxy + server-side), error cause chain preservation, persistent MongoDB-backed rate limiting
+- **Test coverage** — 53 Vitest unit test suites (248 tests), Playwright E2E tests (79 tests), v8 coverage enforced at 70/60/70/70 thresholds
 
 ### Planned (In Development)
 
 - **Video generation** — Premium plan exclusive (`sora-2-pro` / `sora-2`)
 - **Stripe subscriptions** — auto-renewal billing (currently one-time payments)
-- **Task complexity classification** — server-side heuristic for automatic `gpt-5.4` routing on complex Premium requests
 - **Persona-aware media prompts** — image and audio generation with persona-specific style/tone context
-- **Persistent rate limiting** — MongoDB-backed rate limiter for multi-instance deployment
 
 ## Tech Stack
 

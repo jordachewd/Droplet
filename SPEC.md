@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-12 (Phase 24.2 complete — ChatBody stop-state unit tests added, pre-Phase-26 freeze audit passed)
+> Last updated: 2026-03-12 (Phase 25.4 complete — all production hardening done, pre-Phase-26 freeze verified)
 
 ---
 
@@ -327,9 +327,19 @@ Purpose: Request-level usage logging for cost tracking and admin analytics.
 | details    | Mixed  | No       | No    | Additional context             |
 | createdAt  | Date   | Yes      | Yes   | Indexed for time-range queries |
 
+### 6.8 RateLimitEntry
+
+| Field     | Type     | Required | Index  | Notes                          |
+| --------- | -------- | -------- | ------ | ------------------------------ |
+| key       | String   | Yes      | unique | User/route identifier          |
+| requests  | [Object] | Yes      | No     | Sliding window request entries |
+| expireAt  | Date     | Yes      | TTL    | TTL index for auto-cleanup     |
+| createdAt | Date     | Yes      | No     | Mongoose timestamps            |
+| updatedAt | Date     | Yes      | No     | Mongoose timestamps            |
+
 ### Data Model Technical Debt
 
-- **TD-DB-05**: Task messages array unbounded (16MB risk). Must add size guard.
+- ~~**TD-DB-05**: Task messages array unbounded (16MB risk)~~ — **Resolved** in Phase 15 via `estimatedBytes` tracking with 12MB threshold guard.
 
 ---
 
@@ -338,13 +348,14 @@ Purpose: Request-level usage logging for cost tracking and admin analytics.
 ### 7.1 POST /api/openai
 
 - Auth: Required (Clerk `auth()`)
-- Rate limiting: 20 requests / 60s per user (in-memory sliding window)
+- Rate limiting: 20 requests / 60s per user (MongoDB-backed persistent sliding window via `RateLimitEntry` with TTL index)
 - Plan expiration check: Blocks expired paid plans; Lite never expires
 - Entitlement resolution: Checks plan-level persona access and media capabilities
 - Usage limit enforcement: All limits checked before OpenAI calls
 - Conversation stop enforcement: Ends conversation with stop reason on limit hit
 - Creates/updates Task documents
 - Calls plan-appropriate AI models
+- Server-side task complexity classification via `classifyTaskComplexity()` for automatic model routing
 - Uses tool calling for media generation dispatch
 - Emits `UsageEvent` for every request
 - Error classification: Maps OpenAI APIError to structured types
@@ -386,7 +397,7 @@ Purpose: Request-level usage logging for cost tracking and admin analytics.
 
 ### API Technical Debt
 
-- **TD-API-01**: In-memory rate limiter (does not survive restarts or horizontal scaling).
+- ~~**TD-API-01**: In-memory rate limiter~~ — **Resolved** in Phase 25.3 via MongoDB-backed `RateLimitEntry` with TTL index, atomic sliding window.
 - ~~**TD-API-06**: handleError loses stack traces~~ — **Resolved** in Phase 20 via `{ cause: error }` pattern.
 - ~~**TD-API-07**: No streaming implementation~~ — **Resolved** in Phase 19.
 
@@ -434,6 +445,8 @@ Each AI request is classified into a task class that affects model selection and
 | `complex`  | Deep reasoning, analysis  | —                                      |
 | `preview`  | Draft/preview generation  | `video_generation`                     |
 | `final`    | Final quality render      | `image_generation`, `audio_generation` |
+
+**Implementation (Phase 25.4):** Chat requests are classified server-side by `classifyTaskComplexity()` in `src/lib/utils/openai/classify-task-complexity.ts`. The classifier uses heuristics: message length, conversation history depth, analytical/technical keyword presence, and explicit deep-analysis intent (regex pattern). Returns `ChatTaskClass` (`simple` | `standard` | `complex`). The `/api/openai` route passes the classified `taskClass` to `resolveModelPolicy()`. Frontend does not send `taskClass` — all classification is backend-only.
 
 ### 8.4 Token Limits by Plan and Task Class
 
@@ -645,7 +658,7 @@ All file handling technical debt has been resolved.
 
 ## 13. Testing
 
-- **Unit tests**: 52 suites, 238 tests (Vitest) — includes streaming, webhook, chat-wrapper, chat-body stop-state, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, and persona prompt tests
+- **Unit tests**: 53 suites, 248 tests (Vitest) — includes streaming, webhook, chat-wrapper, chat-body stop-state, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, persona prompt, rate limiting, task complexity classification, and OpenAI route tests
 - **E2E tests**: Playwright specs, 79 tests across browser projects
 - **Coverage**: Configured (Phase 24.1) — v8 provider, thresholds: 70% statements / 60% branches / 70% functions / 70% lines. Current: 82/71/88/82.
 - **Gap**: No dedicated E2E spec for streamed chunk-by-chunk rendering (manually verified via Playwright MCP)
@@ -684,10 +697,9 @@ All critical-severity technical debt resolved. Remaining items are medium or low
 
 ### Active — Medium Priority
 
-| ID        | Area   | Description                                                                     | Severity |
-| --------- | ------ | ------------------------------------------------------------------------------- | -------- |
-| TD-API-01 | API    | In-memory rate limiter (does not survive restarts or horizontal scaling)        | Medium   |
-| TD-AI-08  | OpenAI | No video generation (Premium) — UI shows "Coming soon", implementation deferred | Medium   |
+| ID       | Area   | Description                                                                     | Severity |
+| -------- | ------ | ------------------------------------------------------------------------------- | -------- |
+| TD-AI-08 | OpenAI | No video generation (Premium) — UI shows "Coming soon", implementation deferred | Medium   |
 
 ### Active — Low Priority
 
@@ -696,7 +708,6 @@ All critical-severity technical debt resolved. Remaining items are medium or low
 | TD-AI-09   | OpenAI  | Image/audio generation prompts not persona-aware (chat prompts done Phase 22) | Low      |
 | TD-AI-13   | OpenAI  | 5 model pricing entries are placeholders pending OpenAI confirmation          | Low      |
 | TD-PLAN-01 | Billing | No recurring subscriptions (deferred v1)                                      | Low      |
-| TD-CODE-01 | Code    | 15 relative import violations across 7 files (should use `@/*` alias)         | Low      |
 
 ### Resolved
 
@@ -759,3 +770,5 @@ All critical-severity technical debt resolved. Remaining items are medium or low
 | TD-WEBHOOK-01 | Clerk user.deleted orphans S3 objects       | Resolved in Phase 19 — `deleteS3Prefix` in Clerk webhook handler                                                                                 |
 | TD-AI-10      | Model policy flat resolver                  | Resolved in Phase 21 — `MODEL_POLICY_MATRIX` + `resolveModelPolicy()` with task classes, fallbacks, downgrade triggers, token limits, audio mode |
 | TD-AI-15      | Hardcoded TTS model-name branch             | Resolved in Phase 23.2 — `isTtsOnly` policy flag via `MODEL_CAPABILITIES` map                                                                    |
+| TD-API-01     | In-memory rate limiter                      | Resolved in Phase 25.3 — MongoDB-backed `RateLimitEntry` with TTL index, atomic sliding window                                                   |
+| TD-CODE-01    | Relative import violations                  | Resolved in Phase 24.4 — all 15 relative imports replaced with `@/*` alias across 10 files                                                       |

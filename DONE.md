@@ -5,15 +5,35 @@
 
 ---
 
-## Phase 24: Testing Hardening (Partial) — COMPLETED
+## Phase 25: Production Hardening — COMPLETED
+
+- [x] **25.1** Add `X-Accel-Buffering: no` to streaming responses — SSE-compatible header added to `STREAM_HEADERS` constant in `/api/openai` route. Only applied to streaming SSE responses; non-streaming JSON responses unaffected.
+- [x] **25.2** Verify all admin server actions emit audit log entries — all 8 exported admin mutation actions confirmed to call `createAdminAuditLogEntry()` after mutation. Each also calls `requireAdminActionAccess()` for auth. No code changes required; verification-only task.
+- [x] **25.3** Replace in-memory rate limiter with persistent store — `RateLimitEntry` model with TTL index for automatic cleanup, MongoDB-backed atomic sliding window in `rate-limit.ts` using aggregation pipeline, `crypto.randomUUID()` for request IDs. Survives process restarts, works across multiple instances.
+- [x] **25.4** Design server-side task complexity classification — `classifyTaskComplexity()` in `classify-task-complexity.ts` with heuristic classification (`simple`/`standard`/`complex`), explicit deep-analysis intent detection via regex pattern, wired into `/api/openai` route for `resolveModelPolicy()`. Frontend does not send `taskClass` or `explicitPremium`.
+
+Resolved: TD-API-01 (persistent rate limiter replaces in-memory), TD-CODE-01 (zero relative imports across `src/`). 53 test suites, 248 tests passing, 79 E2E tests passing. All 6 validation gates green.
+
+**Files changed (25.1):** `src/app/api/openai/route.tsx`
+**Files changed (25.2):** None (verification only)
+**Files changed (25.3):** `src/lib/database/models/rate-limit-entry.model.tsx` (new), `src/lib/utils/rate-limit.ts`, `src/app/api/openai/route.tsx`, `tests/unit/rate-limit.test.ts` (new)
+**Files changed (25.4):** `src/lib/utils/openai/classify-task-complexity.ts` (new), `tests/unit/classify-task-complexity.test.ts` (new), `src/app/api/openai/route.tsx`, `tests/unit/openai-route.test.ts`
+
+---
+
+## Phase 24: Testing Hardening — COMPLETED
 
 - [x] **24.1** Add test coverage configuration — `v8` provider in `vitest.config.mts`, thresholds 70/60/70/70 (statements/branches/functions/lines), `test:coverage` script in `package.json`, `@vitest/coverage-v8` dependency added. Coverage run result: 82% statements, 71% branches, 88% functions, 82% lines — all above thresholds.
 - [x] **24.2** Add unit tests for chat-body stop-state rendering — 9 tests covering all 5 stop reasons, 3 action link targets (`/app/new`, `/app/plans`, `mailto:`), and amber ended-state styling. Parameterized coverage using jsdom environment. Next.js `Link` mocked to plain anchors for stable route assertions.
+- [x] **24.3** Expand streaming test coverage — 5 test cases: happy path, error during stream (503 → `service_error`), tool call handling (image generation routing), abort signal propagation (AbortController mid-stream), empty/null response normalization. All scenarios verified in `generate-streaming-response.test.ts`.
+- [x] **24.4** Fix relative import violations — replaced all 15 relative `../` import paths with `@/*` alias imports across 10 files (profile-hero, profile-billing, plans-section, footer, header, user.actions, task.actions, generateTitle, generateAudio, generateImage). Zero relative imports remain in `src/`.
 
-52 test suites, 238 tests passing, 79 E2E tests passing. All 6 validation gates green.
+53 test suites, 248 tests passing, 79 E2E tests passing. All 6 validation gates green.
 
 **Files changed (24.1):** `vitest.config.mts`, `package.json`, `package-lock.json`
 **Files changed (24.2):** `tests/unit/chat-body.test.tsx` (new)
+**Files changed (24.3):** `tests/unit/generate-streaming-response.test.ts`
+**Files changed (24.4):** `src/components/sections/profile-hero.tsx`, `src/components/sections/profile-billing.tsx`, `src/components/sections/plans-section.tsx`, `src/components/layout/footer.tsx`, `src/components/layout/header.tsx`, `src/lib/actions/user.actions.tsx`, `src/lib/actions/task.actions.tsx`, `src/lib/utils/openai/generateTitle.tsx`, `src/lib/utils/openai/generateAudio.tsx`, `src/lib/utils/openai/generateImage.tsx`
 
 ---
 
