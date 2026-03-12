@@ -5,6 +5,16 @@
 
 ---
 
+## Phase 24: Testing Hardening (Partial) — COMPLETED
+
+- [x] **24.1** Add test coverage configuration — `v8` provider in `vitest.config.mts`, thresholds 70/60/70/70 (statements/branches/functions/lines), `test:coverage` script in `package.json`, `@vitest/coverage-v8` dependency added. Coverage run result: 82% statements, 71% branches, 88% functions, 82% lines — all above thresholds.
+
+51 test suites, 229 tests passing, 79 E2E tests passing. All 6 validation gates green.
+
+**Files changed:** `vitest.config.mts`, `package.json`, `package-lock.json`
+
+---
+
 ## Phase 23: Post-Phase-22 Cleanup — COMPLETED
 
 - [x] **23.1** Remove dead `chatSystemMsg` constant from `src/constants/openai.tsx` (confirmed zero usages, removed export, behavior-neutral)

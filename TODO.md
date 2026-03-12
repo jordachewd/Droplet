@@ -11,27 +11,7 @@
 
 > Improve test coverage for reliability before production hardening.
 > Ref: ThePlan.md Milestone 8 prerequisites.
-> Depends on: Phase 23 (complete)
-
----
-
-### 24.1 Add test coverage configuration
-
-**Files:** `vitest.config.mts`, `package.json`
-
-**What to do:**
-
-- Add `coverage` config to `vitest.config.mts` with `v8` provider.
-- Set thresholds: 70% statements, 60% branches, 70% functions, 70% lines.
-- Add `"test:coverage": "vitest run --coverage"` script to `package.json`.
-
-**Acceptance criteria:**
-
-- [ ] Coverage config in `vitest.config.mts` with `v8` provider
-- [ ] Thresholds: 70/60/70/70 (statements/branches/functions/lines)
-- [ ] `npm run test:coverage` runs and reports coverage
-- [ ] All existing tests pass
-- [ ] `npx tsc --noEmit` passes
+> Depends on: Phase 23 (complete). Phase 24.1 complete (see DONE.md).
 
 ---
 
@@ -70,6 +50,27 @@
 - [ ] Abort signal test (request cancelled mid-stream)
 - [ ] Empty/null response handled
 - [ ] All tests pass
+
+---
+
+### 24.4 Fix relative import violations
+
+**Files:** `src/components/sections/profile-hero.tsx`, `src/components/sections/profile-billing.tsx`, `src/components/sections/plans-section.tsx`, `src/components/layout/footer.tsx`, `src/components/layout/header.tsx`, `src/lib/actions/user.actions.tsx`, `src/lib/actions/task.actions.tsx`, `src/lib/utils/openai/generateTitle.tsx`, `src/lib/utils/openai/generateAudio.tsx`, `src/lib/utils/openai/generateImage.tsx`
+**Ref:** TD-CODE-01, AGENTS.md coding standards
+
+**What to do:**
+
+- Replace all 15 relative import paths (`../`, `../../`, `../../../`) with `@/*` path alias imports across the 10 files listed above.
+- Do not change any behavior — import alias only.
+
+**Acceptance criteria:**
+
+- [ ] Zero relative `../` imports remain in the listed files
+- [ ] All imports use `@/*` alias per AGENTS.md
+- [ ] `npx tsc --noEmit` passes
+- [ ] `npm run lint` passes
+- [ ] All tests pass
+- [ ] `npm run build` passes
 
 ---
 

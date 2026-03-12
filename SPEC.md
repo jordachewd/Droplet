@@ -647,30 +647,32 @@ All file handling technical debt has been resolved.
 
 - **Unit tests**: 51 suites, 229 tests (Vitest) — includes streaming, webhook, chat-wrapper, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, and persona prompt tests
 - **E2E tests**: Playwright specs, 79 tests across browser projects
-- **Coverage**: Not configured (planned Phase 24)
+- **Coverage**: Configured (Phase 24.1) — v8 provider, thresholds: 70% statements / 60% branches / 70% functions / 70% lines. Current: 82/71/88/82.
 - **Gap**: No dedicated E2E spec for streamed chunk-by-chunk rendering (manually verified via Playwright MCP)
 
 ---
 
 ## 14. Environment Variables
 
-| Variable                            | Purpose                       |
-| ----------------------------------- | ----------------------------- |
-| `MONGODB_URL`                       | MongoDB connection string     |
-| `NEXT_PUBLIC_API_BASE_URL`          | App base URL                  |
-| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk public key              |
-| `CLERK_SECRET_KEY`                  | Clerk secret                  |
-| `CLERK_WEBHOOK_SECRET`              | Webhook verification          |
-| `OPENAI_ORG`                        | OpenAI organization           |
-| `OPENAI_PRJ`                        | OpenAI project                |
-| `OPENAI_KEY`                        | OpenAI API key                |
-| `STRIPE_SECRET_KEY`                 | Stripe secret                 |
-| `STRIPE_WEBHOOK_SECRET`             | Stripe webhook verification   |
-| `AWS_S3_REGION`                     | S3 region                     |
-| `AWS_S3_BUCKET`                     | S3 bucket name                |
-| `AWS_S3_ACCESS_ID`                  | S3 access key                 |
-| `AWS_S3_SECRET_KEY`                 | S3 secret key                 |
-| `DOWNLOAD_URL_ALLOWLIST`            | Allowed download hosts (opt.) |
+| Variable                            | Purpose                                                                                 |
+| ----------------------------------- | --------------------------------------------------------------------------------------- |
+| `MONGODB_URL`                       | MongoDB connection string                                                               |
+| `MONGODB_DB_NAME`                   | MongoDB database name                                                                   |
+| `NEXT_PUBLIC_API_BASE_URL`          | App base URL                                                                            |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk public key                                                                        |
+| `CLERK_SECRET_KEY`                  | Clerk secret                                                                            |
+| `CLERK_WEBHOOK_SECRET`              | Webhook verification                                                                    |
+| `OPENAI_ORG`                        | OpenAI organization                                                                     |
+| `OPENAI_PRJ`                        | OpenAI project                                                                          |
+| `OPENAI_KEY`                        | OpenAI API key                                                                          |
+| `STRIPE_SECRET_KEY`                 | Stripe secret                                                                           |
+| `STRIPE_WEBHOOK_SECRET`             | Stripe webhook verification                                                             |
+| `AWS_S3_REGION`                     | S3 region                                                                               |
+| `AWS_S3_BUCKET`                     | S3 bucket name                                                                          |
+| `AWS_S3_ACCESS_ID`                  | S3 access key                                                                           |
+| `AWS_S3_SECRET_KEY`                 | S3 secret key                                                                           |
+| `DOWNLOAD_URL_ALLOWLIST`            | Allowed download hosts (opt.)                                                           |
+| `NEXT_ALLOWED_DEV_ORIGINS`          | Comma-separated dev origins for local/LAN dev (opt., defaults to `localhost,127.0.0.1`) |
 
 ---
 
@@ -689,12 +691,12 @@ All critical-severity technical debt resolved. Remaining items are medium or low
 
 ### Active — Low Priority
 
-| ID       | Area   | Description                                                                   | Severity |
-| -------- | ------ | ----------------------------------------------------------------------------- | -------- |
-| TD-AI-09 | OpenAI | Image/audio generation prompts not persona-aware (chat prompts done Phase 22) | Low      |
-| TD-AI-13 | OpenAI | 5 model pricing entries are placeholders pending OpenAI confirmation          | Low      |
-
-| TD-PLAN-01 | Billing | No recurring subscriptions (deferred v1) | Low |
+| ID         | Area    | Description                                                                   | Severity |
+| ---------- | ------- | ----------------------------------------------------------------------------- | -------- |
+| TD-AI-09   | OpenAI  | Image/audio generation prompts not persona-aware (chat prompts done Phase 22) | Low      |
+| TD-AI-13   | OpenAI  | 5 model pricing entries are placeholders pending OpenAI confirmation          | Low      |
+| TD-PLAN-01 | Billing | No recurring subscriptions (deferred v1)                                      | Low      |
+| TD-CODE-01 | Code    | 15 relative import violations across 7 files (should use `@/*` alias)         | Low      |
 
 ### Resolved
 
