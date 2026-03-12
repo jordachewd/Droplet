@@ -14,6 +14,7 @@ import {
 import { createTask, updateTask } from "@/lib/actions/task.actions";
 import { auth } from "@clerk/nextjs/server";
 import { getUserById } from "@/lib/actions/user.actions";
+import { ensureUserSynced } from "@/lib/utils/ensure-user-synced";
 import { UserData } from "@/types/UserData.d";
 import { enforceSlidingWindowRateLimit } from "@/lib/utils/rate-limit";
 import {
@@ -558,8 +559,22 @@ export async function POST(req: Request): Promise<Response> {
       );
     }
 
-    const userData = (await getUserById(userId)) as UserData | null;
-    const planName = userData?.plan?.name ?? "Lite";
+    let userData = (await getUserById(userId)) as UserData | null;
+
+    if (!userData) {
+      userData = await ensureUserSynced(userId);
+    }
+
+    if (!userData) {
+      return NextResponse.json(
+        {
+          error: "Account not yet provisioned. Please try again in a moment.",
+        },
+        { status: 503 },
+      );
+    }
+
+    const planName = userData.plan?.name ?? "Lite";
     const persistedTask = providedTaskId
       ? await getTaskByIdForUser({
           taskId: providedTaskId,

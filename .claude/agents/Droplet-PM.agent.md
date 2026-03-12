@@ -344,7 +344,7 @@ Contains:
 
 When asked to supervise, audit, or update project direction, do this in order:
 
-### 1. Verify 
+### 1. Verify
 
 Determine:
 

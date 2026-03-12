@@ -207,6 +207,7 @@ setup("authenticate E2E user and persist storage state", async ({ page }) => {
 
   await ensureE2ETestUser();
 
+  await setupClerkTestingToken({ page });
   await page.goto("/");
   await clerk.signIn({
     page,
