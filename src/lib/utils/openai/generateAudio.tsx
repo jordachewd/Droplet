@@ -69,7 +69,7 @@ export async function generateAudio({
     let taskUsage: number | undefined;
     let requestMetric: AIRequestMetric;
 
-    if (policy.model === "gpt-4o-mini-tts") {
+    if (policy.isTtsOnly) {
       const speechInput = buildTextToSpeechInput(messages);
 
       if (!speechInput) {
