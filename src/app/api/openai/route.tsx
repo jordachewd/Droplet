@@ -26,6 +26,10 @@ import type {
   OpenAIErrorType,
   OpenAIResponsePayload,
 } from "@/lib/utils/openai/generateResponse";
+import {
+  classifyTaskComplexity,
+  isExplicitDeepAnalysisRequest,
+} from "@/lib/utils/openai/classify-task-complexity";
 import { checkDailyConversationLimit } from "@/lib/utils/check-daily-conversations";
 import { getTaskByIdForUser } from "@/lib/utils/task-queries";
 import { filterAssistantMsg } from "@/lib/utils/openai/filterAssistantMsg";
@@ -52,6 +56,7 @@ const DEFAULT_CHAT_BUDGET_STATE: BudgetState = "normal";
 const STREAM_HEADERS = {
   "Content-Type": "text/event-stream; charset=utf-8",
   "Cache-Control": "no-store, no-transform",
+  "X-Accel-Buffering": "no",
 } as const;
 const streamEncoder = new TextEncoder();
 
@@ -530,7 +535,7 @@ export async function POST(req: Request): Promise<Response> {
       );
     }
 
-    const rateLimit = enforceSlidingWindowRateLimit({
+    const rateLimit = await enforceSlidingWindowRateLimit({
       key: `openai:${userId}`,
       limit: OPENAI_RATE_LIMIT_MAX_REQUESTS,
       windowMs: OPENAI_RATE_LIMIT_WINDOW_MS,
@@ -899,6 +904,14 @@ export async function POST(req: Request): Promise<Response> {
       throw new Error("Task ID is undefined.");
     }
 
+    const chatTaskClass = classifyTaskComplexity({
+      messages: promptPayloadMessages,
+      latestUserMessage,
+    });
+    const explicitPremiumRequested =
+      chatTaskClass === "complex" &&
+      isExplicitDeepAnalysisRequest(latestUserMessage);
+
     if (streamingResponseRequested) {
       const stream = new ReadableStream<Uint8Array>({
         async start(controller) {
@@ -916,8 +929,9 @@ export async function POST(req: Request): Promise<Response> {
               personaId: selectedPersona.id,
               planName,
               entitlements: resolvedEntitlements,
-              taskClass: DEFAULT_CHAT_TASK_CLASS,
+              taskClass: chatTaskClass,
               budgetState: DEFAULT_CHAT_BUDGET_STATE,
+              explicitPremium: explicitPremiumRequested,
               abortSignal: req.signal,
               onContentChunk: (delta, snapshot) => {
                 writeStreamEvent(controller, {
@@ -974,8 +988,9 @@ export async function POST(req: Request): Promise<Response> {
       personaId: selectedPersona.id,
       planName,
       entitlements: resolvedEntitlements,
-      taskClass: DEFAULT_CHAT_TASK_CLASS,
+      taskClass: chatTaskClass,
       budgetState: DEFAULT_CHAT_BUDGET_STATE,
+      explicitPremium: explicitPremiumRequested,
     });
     const aiPayload = JSON.parse(aiResponse as string) as OpenAIResponsePayload;
 

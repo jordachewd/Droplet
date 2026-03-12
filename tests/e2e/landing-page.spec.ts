@@ -1,4 +1,9 @@
+import path from "node:path";
 import { expect, test } from "@playwright/test";
+
+const guestFile = path.join(__dirname, ".clerk/guest.json");
+
+test.use({ storageState: guestFile });
 
 test("loads landing page for unauthenticated users", async ({ page }) => {
   await page.goto("/");
@@ -57,17 +62,6 @@ test("toggles dark mode and persists it after reload", async ({ page }) => {
     "data-droplet-theme",
     "dark",
   );
-});
-
-test("redirects unauthenticated users from private routes to sign-in", async ({
-  page,
-}) => {
-  const privateRoutes = ["/app", "/app/profile", "/app/plans", "/admin"];
-
-  for (const route of privateRoutes) {
-    await page.goto(route);
-    await expect(page).toHaveURL(/\/sign-in/);
-  }
 });
 
 test("renders custom 404 page for unknown routes", async ({ page }) => {

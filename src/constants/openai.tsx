@@ -6,15 +6,6 @@ export const openAiClient = new OpenAI({
   apiKey: process.env.OPENAI_KEY!,
 });
 
-/** System message for initializing the AI's behavior and tone */
-export const chatSystemMsg = [
-  {
-    role: "developer",
-    content:
-      "You are a helpful and precise assistant. Provide practical, truthful, and safe answers. Keep responses concise unless the user asks for depth.",
-  },
-];
-
 /** Tools available for chat interactions */
 export const imageGenerationTool = {
   type: "function",

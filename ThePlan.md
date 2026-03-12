@@ -87,10 +87,10 @@ This section defines the intended v1 target state.
 
 ### 3.2 Tier contract
 
-| Tier    | Access              | Price | Model policy                                                                                                    | Required baseline limits                                                                                                                                 |
-| ------- | ------------------- | ----- | --------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Lite    | Auth required, free | 0     | `gpt-4o-mini` (chat), `gpt-image-1-mini` (image). Audio/video blocked.                                                     | 5 conversations per day, 10 user prompts per conversation, 3 media generations per approved reset window, hard conversation stop on quota or storage hit |
-| Pro     | Paid only           | 19    | `gpt-4.1` (chat), `gpt-image-1.5` (image), `gpt-audio-mini` (audio). Video blocked. | Higher ceilings than Lite, paid-only reliability and quality improvements                                                                                |
+| Tier    | Access              | Price | Model policy                                                                                                 | Required baseline limits                                                                                                                                 |
+| ------- | ------------------- | ----- | ------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Lite    | Auth required, free | 0     | `gpt-4o-mini` (chat), `gpt-image-1-mini` (image). Audio/video blocked.                                       | 5 conversations per day, 10 user prompts per conversation, 3 media generations per approved reset window, hard conversation stop on quota or storage hit |
+| Pro     | Paid only           | 19    | `gpt-4.1` (chat), `gpt-image-1.5` (image), `gpt-audio-mini` (audio). Video blocked.                          | Higher ceilings than Lite, paid-only reliability and quality improvements                                                                                |
 | Premium | Paid only           | 39    | `gpt-4.1`/`gpt-5.4` (chat), `gpt-image-1.5` (image), `gpt-audio-1.5` (audio), `sora-2`/`sora-2-pro` (video). | Highest ceilings plus 3 explicitly defined Premium-only features                                                                                         |
 
 ### 3.3 Public surface required for release
@@ -274,19 +274,19 @@ The AI model policy has been approved and is fully documented in **SPEC.md Secti
 
 **Model Policy Matrix (approved):**
 
-| Feature | Plan | Default Model | Fallback Model |
-|---------|------|---------------|----------------|
-| Title generation | All | `gpt-4.1-nano` | `gpt-4o-mini` |
-| Chat | Lite | `gpt-4o-mini` | `gpt-4.1-nano` |
-| Chat | Pro | `gpt-4.1` | `gpt-4o-mini` |
-| Chat | Premium | `gpt-4.1` (default) / `gpt-5.4` (complex) | `gpt-4.1` |
-| Image | Lite | `gpt-image-1-mini` | none |
-| Image | Pro/Premium | `gpt-image-1.5` | `gpt-image-1-mini` |
-| Audio | Lite | blocked | — |
-| Audio | Pro | `gpt-audio-mini` | `gpt-4o-mini-tts` (TTS only) |
-| Audio | Premium | `gpt-audio-1.5` | `gpt-audio-mini` |
-| Video | Lite/Pro | blocked | — |
-| Video | Premium | `sora-2-pro` (final) / `sora-2` (preview) | `sora-2` |
+| Feature          | Plan        | Default Model                             | Fallback Model               |
+| ---------------- | ----------- | ----------------------------------------- | ---------------------------- |
+| Title generation | All         | `gpt-4.1-nano`                            | `gpt-4o-mini`                |
+| Chat             | Lite        | `gpt-4o-mini`                             | `gpt-4.1-nano`               |
+| Chat             | Pro         | `gpt-4.1`                                 | `gpt-4o-mini`                |
+| Chat             | Premium     | `gpt-4.1` (default) / `gpt-5.4` (complex) | `gpt-4.1`                    |
+| Image            | Lite        | `gpt-image-1-mini`                        | none                         |
+| Image            | Pro/Premium | `gpt-image-1.5`                           | `gpt-image-1-mini`           |
+| Audio            | Lite        | blocked                                   | —                            |
+| Audio            | Pro         | `gpt-audio-mini`                          | `gpt-4o-mini-tts` (TTS only) |
+| Audio            | Premium     | `gpt-audio-1.5`                           | `gpt-audio-mini`             |
+| Video            | Lite/Pro    | blocked                                   | —                            |
+| Video            | Premium     | `sora-2-pro` (final) / `sora-2` (preview) | `sora-2`                     |
 
 **Architecture:** `resolveModelPolicy()` in `src/lib/utils/ai-model-policy.ts`. Supports task classes (utility/simple/standard/complex/preview/final), downgrade triggers (budget, latency, retry), and audio mode differentiation (TTS vs audio_in_out).
 

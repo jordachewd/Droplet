@@ -1,7 +1,7 @@
 import getFormattedDate from "@/lib/utils/getFormattedDate";
 import classNames from "classnames";
 import { Transaction } from "@/types/TransactionData.d";
-import { TooltipArrow } from "../shared/tooltip-arrow";
+import { TooltipArrow } from "@/components/shared/tooltip-arrow";
 
 interface BillingProps {
   stripeId: string | null;

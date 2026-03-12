@@ -3,7 +3,7 @@ import { openAiClient, titleSystemMsg } from "@/constants/openai";
 import { PlanName } from "@/types/PlanData.d";
 import { Message } from "@/types";
 import { ChatCompletionMessageParam } from "openai/resources/chat/completions.mjs";
-import { handleError } from "../handleError";
+import { handleError } from "@/lib/utils/handleError";
 import { filterAssistantMsg } from "./filterAssistantMsg";
 import {
   normalizePlanTier,

@@ -1,33 +1,24 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { POST } from "@/app/api/webhooks/clerk/route";
 import { clerkClient } from "@clerk/nextjs/server";
-import { headers } from "next/headers";
+import { NextRequest } from "next/server";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import Task from "@/lib/database/models/tasks.model";
 import User from "@/lib/database/models/user.model";
 import Transaction from "@/lib/database/models/transaction.model";
 import deleteS3Prefix from "@/lib/utils/aws/delete-s3-prefix";
 
-const verifyMock = vi.hoisted(() => vi.fn());
-const webhookCtorMock = vi.hoisted(() => vi.fn());
+const verifyWebhookMock = vi.hoisted(() => vi.fn());
 const stderrWriteMock = vi.hoisted(() => vi.fn(() => true));
+const getUserMock = vi.hoisted(() => vi.fn());
+const updateUserMetadataMock = vi.hoisted(() => vi.fn());
 
-vi.mock("svix", () => ({
-  Webhook: class MockWebhook {
-    constructor(secret: string) {
-      webhookCtorMock(secret);
-    }
-
-    verify = verifyMock;
-  },
+vi.mock("@clerk/nextjs/webhooks", () => ({
+  verifyWebhook: verifyWebhookMock,
 }));
 
 vi.mock("@clerk/nextjs/server", () => ({
   clerkClient: vi.fn(),
-}));
-
-vi.mock("next/headers", () => ({
-  headers: vi.fn(),
 }));
 
 vi.mock("@/lib/database/mongoose", () => ({
@@ -59,42 +50,29 @@ vi.mock("@/lib/utils/aws/delete-s3-prefix", () => ({
   default: vi.fn(),
 }));
 
-function buildRequest(payload: unknown): Request {
-  return new Request("http://localhost:3000/api/webhooks/clerk", {
+function buildRequest(payload: unknown): NextRequest {
+  return new NextRequest("http://localhost:3000/api/webhooks/clerk", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      "svix-id": "msg_1",
+      "svix-timestamp": "1730000000",
+      "svix-signature": "v1,signature",
     },
     body: JSON.stringify(payload),
   });
 }
 
-function mockSvixHeaders({
-  id = "msg_1",
-  timestamp = "1730000000",
-  signature = "v1,signature",
-}: {
-  id?: string | null;
-  timestamp?: string | null;
-  signature?: string | null;
-}) {
-  const mockedHeaders = new Headers();
-
-  if (id) mockedHeaders.set("svix-id", id);
-  if (timestamp) mockedHeaders.set("svix-timestamp", timestamp);
-  if (signature) mockedHeaders.set("svix-signature", signature);
-
-  vi.mocked(headers).mockResolvedValue(mockedHeaders as never);
-}
-
 describe("POST /api/webhooks/clerk", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    verifyWebhookMock.mockReset();
+    getUserMock.mockReset();
+    updateUserMetadataMock.mockReset();
     vi.spyOn(process.stderr, "write").mockImplementation(
       stderrWriteMock as never,
     );
-    process.env.CLERK_WEBHOOK_SECRET = "whsec_clerk_test";
-    mockSvixHeaders({});
+    process.env.CLERK_WEBHOOK_SIGNING_SECRET = "whsec_clerk_signing_test";
     vi.mocked(connectToDatabase).mockResolvedValue(undefined as never);
     vi.mocked(User.create).mockResolvedValue({
       _id: "mongo_user_1",
@@ -110,9 +88,18 @@ describe("POST /api/webhooks/clerk", () => {
       deletedCount: 0,
     } as never);
     vi.mocked(deleteS3Prefix).mockResolvedValue(0);
+    getUserMock.mockResolvedValue({
+      emailAddresses: [],
+      primaryEmailAddressId: null,
+      username: null,
+      firstName: null,
+      lastName: null,
+      imageUrl: "",
+    } as never);
     vi.mocked(clerkClient).mockResolvedValue({
       users: {
-        updateUserMetadata: vi.fn(),
+        getUser: getUserMock,
+        updateUserMetadata: updateUserMetadataMock,
       },
     } as never);
   });
@@ -121,45 +108,29 @@ describe("POST /api/webhooks/clerk", () => {
     vi.restoreAllMocks();
   });
 
-  it("throws when CLERK_WEBHOOK_SECRET is missing", async () => {
-    delete process.env.CLERK_WEBHOOK_SECRET;
+  it("throws when the Clerk webhook signing secret is missing", async () => {
+    delete process.env.CLERK_WEBHOOK_SIGNING_SECRET;
 
     await expect(POST(buildRequest({}))).rejects.toThrow(
-      "Please add WEBHOOK_SECRET from Clerk Dashboard to .env or .env.local",
+      "Please add CLERK_WEBHOOK_SIGNING_SECRET from Clerk Dashboard to .env or .env.local",
     );
   });
 
-  it("returns 400 when svix headers are missing", async () => {
-    mockSvixHeaders({ id: null, timestamp: null, signature: null });
-
-    const response = await POST(buildRequest({}));
-
-    expect(response.status).toBe(400);
-    await expect(response.text()).resolves.toContain("no svix headers");
-    expect(webhookCtorMock).not.toHaveBeenCalled();
-  });
-
   it("returns 400 when signature verification fails", async () => {
-    verifyMock.mockImplementation(() => {
-      throw new Error("Invalid signature");
-    });
+    verifyWebhookMock.mockRejectedValue(new Error("Invalid signature"));
 
     const response = await POST(buildRequest({ any: "payload" }));
 
     expect(response.status).toBe(400);
-    await expect(response.text()).resolves.toBe("Error occured");
+    await expect(response.text()).resolves.toBe("Webhook verification failed");
+    expect(stderrWriteMock).toHaveBeenCalledWith(
+      "[clerk-webhook] Verification failed.\n",
+    );
     expect(User.create).not.toHaveBeenCalled();
   });
 
   it("creates a user and updates clerk metadata for user.created", async () => {
-    const updateUserMetadataMock = vi.fn();
-    vi.mocked(clerkClient).mockResolvedValue({
-      users: {
-        updateUserMetadata: updateUserMetadataMock,
-      },
-    } as never);
-
-    verifyMock.mockReturnValue({
+    verifyWebhookMock.mockResolvedValue({
       type: "user.created",
       data: {
         id: "clerk_user_1",
@@ -180,7 +151,9 @@ describe("POST /api/webhooks/clerk", () => {
     const payload = await response.json();
 
     expect(response.status).toBe(200);
-    expect(webhookCtorMock).toHaveBeenCalledWith("whsec_clerk_test");
+    expect(verifyWebhookMock).toHaveBeenCalledWith(expect.any(Request), {
+      signingSecret: "whsec_clerk_signing_test",
+    });
     expect(User.create).toHaveBeenCalledWith(
       expect.objectContaining({
         clerkId: "clerk_user_1",
@@ -188,6 +161,7 @@ describe("POST /api/webhooks/clerk", () => {
         email: "clerk-user@example.com",
       }),
     );
+    expect(getUserMock).not.toHaveBeenCalled();
     expect(updateUserMetadataMock).toHaveBeenCalledWith("clerk_user_1", {
       publicMetadata: {
         userId: "mongo_user_1",
@@ -200,14 +174,7 @@ describe("POST /api/webhooks/clerk", () => {
   });
 
   it("treats replayed user.created events as idempotent", async () => {
-    const updateUserMetadataMock = vi.fn();
-    vi.mocked(clerkClient).mockResolvedValue({
-      users: {
-        updateUserMetadata: updateUserMetadataMock,
-      },
-    } as never);
-
-    verifyMock.mockReturnValue({
+    verifyWebhookMock.mockResolvedValue({
       type: "user.created",
       data: {
         id: "clerk_user_1",
@@ -240,14 +207,145 @@ describe("POST /api/webhooks/clerk", () => {
     expect(payload.user._id).toBe("mongo_user_existing");
   });
 
+  it("resolves the primary email and generates a fallback username when Clerk omits username", async () => {
+    verifyWebhookMock.mockResolvedValue({
+      type: "user.created",
+      data: {
+        id: "user_abc12345",
+        email_addresses: [
+          {
+            id: "email_secondary",
+            email_address: "secondary@example.com",
+          },
+          {
+            id: "email_primary",
+            email_address: "primary@example.com",
+          },
+        ],
+        primary_email_address_id: "email_primary",
+        created_at: "2026-01-01T00:00:00.000Z",
+        first_name: "Ada",
+        last_name: "Lovelace",
+        username: null,
+        image_url: "https://cdn.example.com/u1.png",
+      },
+    });
+
+    const response = await POST(buildRequest({ event: "user.created" }));
+
+    expect(response.status).toBe(200);
+    expect(getUserMock).toHaveBeenCalledWith("user_abc12345");
+    expect(User.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        clerkId: "user_abc12345",
+        email: "primary@example.com",
+        username: "primary-abc12345",
+      }),
+    );
+  });
+
+  it("falls back to Clerk backend user data when the webhook payload omits email addresses", async () => {
+    verifyWebhookMock.mockResolvedValue({
+      type: "user.created",
+      data: {
+        id: "user_backend_1",
+        email_addresses: [],
+        primary_email_address_id: null,
+        created_at: "2026-01-01T00:00:00.000Z",
+        first_name: null,
+        last_name: null,
+        username: null,
+        image_url: null,
+      },
+    });
+    getUserMock.mockResolvedValue({
+      emailAddresses: [
+        {
+          id: "backend_primary",
+          emailAddress: "backend@example.com",
+        },
+      ],
+      primaryEmailAddressId: "backend_primary",
+      username: "backend-user",
+      firstName: "Grace",
+      lastName: "Hopper",
+      imageUrl: "https://cdn.example.com/backend.png",
+    } as never);
+
+    const response = await POST(buildRequest({ event: "user.created" }));
+
+    expect(response.status).toBe(200);
+    expect(getUserMock).toHaveBeenCalledWith("user_backend_1");
+    expect(User.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        clerkId: "user_backend_1",
+        email: "backend@example.com",
+        username: "backend-user",
+        firstName: "Grace",
+        lastName: "Hopper",
+        userimg: "https://cdn.example.com/backend.png",
+      }),
+    );
+    expect(updateUserMetadataMock).toHaveBeenCalledWith("user_backend_1", {
+      publicMetadata: {
+        userId: "mongo_user_1",
+        role: "client",
+        userImg: "https://cdn.example.com/backend.png",
+      },
+    });
+  });
+
+  it("returns 500 with a generic error when user.created processing fails", async () => {
+    verifyWebhookMock.mockResolvedValue({
+      type: "user.created",
+      data: {
+        id: "clerk_user_1",
+        email_addresses: [{ email_address: "clerk-user@example.com" }],
+        created_at: "2026-01-01T00:00:00.000Z",
+        first_name: "Ada",
+        last_name: "Lovelace",
+        username: "adal",
+        image_url: "https://cdn.example.com/u1.png",
+      },
+    });
+    vi.mocked(connectToDatabase).mockRejectedValueOnce(
+      new Error("Atlas unavailable"),
+    );
+
+    const response = await POST(buildRequest({ event: "user.created" }));
+    const payload = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(payload).toEqual({
+      message: "Webhook error",
+      error: "Failed to process Clerk webhook",
+    });
+    expect(User.create).not.toHaveBeenCalled();
+    expect(stderrWriteMock).toHaveBeenCalledWith(
+      "[clerk-webhook] user.created processing failed.\n",
+    );
+  });
+
   it("updates an existing user for user.updated", async () => {
-    verifyMock.mockReturnValue({
+    verifyWebhookMock.mockResolvedValue({
       type: "user.updated",
       data: {
         id: "clerk_user_1",
         updated_at: "2026-02-01T00:00:00.000Z",
+        email_addresses: [
+          {
+            id: "secondary_email",
+            email_address: "ada.secondary@example.com",
+          },
+          {
+            id: "primary_email",
+            email_address: "ada.byron@example.com",
+          },
+        ],
+        primary_email_address_id: "primary_email",
         first_name: "Ada",
         last_name: "Byron",
+        username: "ada-byron",
         image_url: "https://cdn.example.com/u2.png",
       },
     });
@@ -263,8 +361,10 @@ describe("POST /api/webhooks/clerk", () => {
     expect(User.findOneAndUpdate).toHaveBeenCalledWith(
       { clerkId: "clerk_user_1" },
       expect.objectContaining({
+        email: "ada.byron@example.com",
         firstName: "Ada",
         lastName: "Byron",
+        username: "ada-byron",
         userimg: "https://cdn.example.com/u2.png",
       }),
       expect.objectContaining({
@@ -277,7 +377,7 @@ describe("POST /api/webhooks/clerk", () => {
   });
 
   it("returns 200 for replayed user.updated when no matching user exists", async () => {
-    verifyMock.mockReturnValue({
+    verifyWebhookMock.mockResolvedValue({
       type: "user.updated",
       data: {
         id: "missing_user",
@@ -298,7 +398,7 @@ describe("POST /api/webhooks/clerk", () => {
   });
 
   it("deletes user, tasks, and S3 assets for user.deleted", async () => {
-    verifyMock.mockReturnValue({
+    verifyWebhookMock.mockResolvedValue({
       type: "user.deleted",
       data: {
         id: "clerk_user_1",
@@ -339,7 +439,7 @@ describe("POST /api/webhooks/clerk", () => {
   });
 
   it("returns 200 for replayed user.deleted when the user no longer exists", async () => {
-    verifyMock.mockReturnValue({
+    verifyWebhookMock.mockResolvedValue({
       type: "user.deleted",
       data: {
         id: "clerk_user_1",
@@ -362,7 +462,7 @@ describe("POST /api/webhooks/clerk", () => {
   });
 
   it("returns 200 and still attempts S3 cleanup when task deletion fails", async () => {
-    verifyMock.mockReturnValue({
+    verifyWebhookMock.mockResolvedValue({
       type: "user.deleted",
       data: {
         id: "clerk_user_1",
@@ -393,7 +493,7 @@ describe("POST /api/webhooks/clerk", () => {
   });
 
   it("returns 200 when S3 cleanup fails after task deletion succeeds", async () => {
-    verifyMock.mockReturnValue({
+    verifyWebhookMock.mockResolvedValue({
       type: "user.deleted",
       data: {
         id: "clerk_user_1",
@@ -424,7 +524,7 @@ describe("POST /api/webhooks/clerk", () => {
   });
 
   it("returns 200 fallback response for unhandled event types", async () => {
-    verifyMock.mockReturnValue({
+    verifyWebhookMock.mockResolvedValue({
       type: "session.created",
       data: {},
     });

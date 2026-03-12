@@ -2,10 +2,10 @@
 import { auth } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 import { UpdateUserParams } from "@/types/UserData.d";
-import User from "../database/models/user.model";
-import { connectToDatabase } from "../database/mongoose";
-import { handleError } from "../utils/handleError";
-import serializeForClient from "../utils/serialize-for-client";
+import User from "@/lib/database/models/user.model";
+import { connectToDatabase } from "@/lib/database/mongoose";
+import { handleError } from "@/lib/utils/handleError";
+import serializeForClient from "@/lib/utils/serialize-for-client";
 
 // UPDATE
 export async function updateUser(clerkId: string, user: UpdateUserParams) {

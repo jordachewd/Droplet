@@ -1,4 +1,9 @@
+import path from "node:path";
 import { expect, test } from "@playwright/test";
+
+const guestFile = path.join(__dirname, ".clerk/guest.json");
+
+test.use({ storageState: guestFile });
 
 test("shows the reconciled pricing and FAQ copy on the public plans page", async ({
   page,

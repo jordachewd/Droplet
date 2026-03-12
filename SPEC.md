@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-11 (Phase 22 complete, Retry/Backoff + Persona Prompt System implemented)
+> Last updated: 2026-03-14 (HF-1 complete, Phase 25.5.3 complete — pre-Phase-26 verification in progress)
 
 ---
 
@@ -119,11 +119,11 @@ Prompts are versioned and separated from request handlers. `buildPersonaAwareSys
 
 ## 4. Subscription Plans
 
-| Plan        | Price | Duration      | Chat Model (default)             | Limits                                                                                                       |
-| ----------- | ----- | ------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| **Lite**    | Free  | **Permanent** | `gpt-4o-mini`                    | 5 conversations/day, 10 prompts/conversation, 3 image generations/month, no audio, no video                  |
-| **Pro**     | $19   | Monthly       | `gpt-4.1`                        | 50 conversations/day, 100 prompts/conversation, 50 image + 50 audio generations/month, no video              |
-| **Premium** | $39   | Monthly       | `gpt-4.1` / `gpt-5.4` (complex) | Unlimited conversations, unlimited prompts, unlimited image + audio generations, 10 video generations/month  |
+| Plan        | Price | Duration      | Chat Model (default)            | Limits                                                                                                      |
+| ----------- | ----- | ------------- | ------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| **Lite**    | Free  | **Permanent** | `gpt-4o-mini`                   | 5 conversations/day, 10 prompts/conversation, 3 image generations/month, no audio, no video                 |
+| **Pro**     | $19   | Monthly       | `gpt-4.1`                       | 50 conversations/day, 100 prompts/conversation, 50 image + 50 audio generations/month, no video             |
+| **Premium** | $39   | Monthly       | `gpt-4.1` / `gpt-5.4` (complex) | Unlimited conversations, unlimited prompts, unlimited image + audio generations, 10 video generations/month |
 
 > Full model policy (all features × plans × task classes) in **Section 8**.
 
@@ -138,13 +138,13 @@ Prompts are versioned and separated from request handlers. `buildPersonaAwareSys
 
 ### Lite Plan Limits (Detailed)
 
-| Limit                                      | Value | Reset Window          |
-| ------------------------------------------ | ----- | --------------------- |
-| Conversations per day                      | 5     | 24 hours              |
-| User prompts per conversation              | 10    | Per conversation      |
-| Image generations                          | 3     | 30-day rolling window            |
-| Audio generation                           | 0     | N/A (blocked — Pro/Premium only) |
-| Video generation                           | 0     | N/A (blocked — Premium only)     |
+| Limit                         | Value | Reset Window                     |
+| ----------------------------- | ----- | -------------------------------- |
+| Conversations per day         | 5     | 24 hours                         |
+| User prompts per conversation | 10    | Per conversation                 |
+| Image generations             | 3     | 30-day rolling window            |
+| Audio generation              | 0     | N/A (blocked — Pro/Premium only) |
+| Video generation              | 0     | N/A (blocked — Premium only)     |
 
 ### Pro Plan Limits (Detailed)
 
@@ -210,7 +210,7 @@ Prompts are versioned and separated from request handlers. `buildPersonaAwareSys
 - **Admin routes**: `/admin(.*)` — requires `sessionClaims.metadata.role === "admin"`
 - **Server actions**: Must verify `auth()` before DB operations. Ownership enforcement on all read/write operations.
 - **API routes**: Must verify `auth()` before processing.
-- **Webhooks**: Exempt from auth — verified via Svix (Clerk) and `stripe.webhooks.constructEvent` (Stripe).
+- **Webhooks**: Exempt from auth — verified via `verifyWebhook()` from `@clerk/nextjs/webhooks` (Clerk) and `stripe.webhooks.constructEvent` (Stripe).
 
 ### Auth Technical Debt
 
@@ -223,19 +223,19 @@ Prompts are versioned and separated from request handlers. `buildPersonaAwareSys
 
 ### 6.1 User
 
-| Field      | Type            | Required | Index  | Notes                           |
-| ---------- | --------------- | -------- | ------ | ------------------------------- |
-| clerkId    | String          | Yes      | unique | Clerk user ID                   |
-| username   | String          | Yes      | unique |                                 |
-| email      | String          | Yes      | Yes    | Indexed for admin search        |
-| role       | String (enum)   | Yes      | No     | `"client"` or `"admin"`         |
-| registerAt | Date            | Yes      | No     |                                 |
-| plan       | Embedded subdoc | Yes      | No     | See Plan embedded schema        |
-| firstName  | String          | No       | No     |                                 |
-| lastName   | String          | No       | No     |                                 |
-| updatedAt  | Date            | No       | No     |                                 |
-| userimg    | String          | No       | No     |                                 |
-| suspended  | Boolean         | No       | No     | Admin-controlled suspension     |
+| Field      | Type            | Required | Index  | Notes                       |
+| ---------- | --------------- | -------- | ------ | --------------------------- |
+| clerkId    | String          | Yes      | unique | Clerk user ID               |
+| username   | String          | Yes      | unique |                             |
+| email      | String          | Yes      | Yes    | Indexed for admin search    |
+| role       | String (enum)   | Yes      | No     | `"client"` or `"admin"`     |
+| registerAt | Date            | Yes      | No     |                             |
+| plan       | Embedded subdoc | Yes      | No     | See Plan embedded schema    |
+| firstName  | String          | No       | No     |                             |
+| lastName   | String          | No       | No     |                             |
+| updatedAt  | Date            | No       | No     |                             |
+| userimg    | String          | No       | No     |                             |
+| suspended  | Boolean         | No       | No     | Admin-controlled suspension |
 
 **Plan subdoc**: `{ id, name, amount, billing, startedOn, expiresOn, stripeId, imageGenerations, audioGenerations, usagePeriodStart }`
 
@@ -327,9 +327,19 @@ Purpose: Request-level usage logging for cost tracking and admin analytics.
 | details    | Mixed  | No       | No    | Additional context             |
 | createdAt  | Date   | Yes      | Yes   | Indexed for time-range queries |
 
+### 6.8 RateLimitEntry
+
+| Field     | Type     | Required | Index  | Notes                          |
+| --------- | -------- | -------- | ------ | ------------------------------ |
+| key       | String   | Yes      | unique | User/route identifier          |
+| requests  | [Object] | Yes      | No     | Sliding window request entries |
+| expireAt  | Date     | Yes      | TTL    | TTL index for auto-cleanup     |
+| createdAt | Date     | Yes      | No     | Mongoose timestamps            |
+| updatedAt | Date     | Yes      | No     | Mongoose timestamps            |
+
 ### Data Model Technical Debt
 
-- **TD-DB-05**: Task messages array unbounded (16MB risk). Must add size guard.
+- ~~**TD-DB-05**: Task messages array unbounded (16MB risk)~~ — **Resolved** in Phase 15 via `estimatedBytes` tracking with 12MB threshold guard.
 
 ---
 
@@ -338,13 +348,14 @@ Purpose: Request-level usage logging for cost tracking and admin analytics.
 ### 7.1 POST /api/openai
 
 - Auth: Required (Clerk `auth()`)
-- Rate limiting: 20 requests / 60s per user (in-memory sliding window)
+- Rate limiting: 20 requests / 60s per user (MongoDB-backed persistent sliding window via `RateLimitEntry` with TTL index)
 - Plan expiration check: Blocks expired paid plans; Lite never expires
 - Entitlement resolution: Checks plan-level persona access and media capabilities
 - Usage limit enforcement: All limits checked before OpenAI calls
 - Conversation stop enforcement: Ends conversation with stop reason on limit hit
 - Creates/updates Task documents
 - Calls plan-appropriate AI models
+- Server-side task complexity classification via `classifyTaskComplexity()` for automatic model routing
 - Uses tool calling for media generation dispatch
 - Emits `UsageEvent` for every request
 - Error classification: Maps OpenAI APIError to structured types
@@ -371,11 +382,12 @@ Purpose: Request-level usage logging for cost tracking and admin analytics.
 
 ### 7.5 POST /api/webhooks/clerk
 
-- Auth: Svix signature verification (raw request body)
+- Auth: `verifyWebhook()` from `@clerk/nextjs/webhooks` using Clerk's signing secret
 - Handles: `user.created`, `user.updated`, `user.deleted`
 - **Idempotency**: `user.created` checks for existing user before insert (safe for Clerk event replay). `user.updated` and `user.deleted` handle missing documents gracefully (return 200, no throw).
 - On `user.deleted`: deletes User, Transaction, and Task documents; cleans up S3 objects under user prefix
 - Each cleanup step has independent error handling — partial failure does not break webhook response
+- Verification failures are logged server-side and return a generic 400 response to Clerk
 
 ### 7.6 POST /api/webhooks/stripe
 
@@ -386,7 +398,7 @@ Purpose: Request-level usage logging for cost tracking and admin analytics.
 
 ### API Technical Debt
 
-- **TD-API-01**: In-memory rate limiter (does not survive restarts or horizontal scaling).
+- ~~**TD-API-01**: In-memory rate limiter~~ — **Resolved** in Phase 25.3 via MongoDB-backed `RateLimitEntry` with TTL index, atomic sliding window.
 - ~~**TD-API-06**: handleError loses stack traces~~ — **Resolved** in Phase 20 via `{ cause: error }` pattern.
 - ~~**TD-API-07**: No streaming implementation~~ — **Resolved** in Phase 19.
 
@@ -406,34 +418,36 @@ Central resolver: `resolveModelPolicy()` in `src/lib/utils/ai-model-policy.ts`. 
 
 ### 8.2 Model Policy Matrix
 
-| Feature          | Plan    | Default Model      | Fallback Model      | Cost-Control Notes                                                                                  |
-| ---------------- | ------- | ------------------ | ------------------- | --------------------------------------------------------------------------------------------------- |
-| Title generation | All     | `gpt-4.1-nano`     | `gpt-4o-mini`       | Hard cap: 1,200 input tokens, 20 output tokens. Always cheapest model regardless of plan.           |
-| Chat             | Lite    | `gpt-4o-mini`      | `gpt-4.1-nano`      | Strict context compaction; max output tokens per reply; no expensive tools; block retries beyond one.|
-| Chat             | Pro     | `gpt-4.1`          | `gpt-4o-mini`       | Degrade to fallback on soft budget, high latency, simple tasks, or retries.                         |
-| Chat             | Premium | `gpt-4.1`          | `gpt-4.1`           | Default `gpt-4.1` for routine chat. `gpt-5.4` only for complex reasoning with `explicitPremium`.    |
-| Image            | Lite    | `gpt-image-1-mini` | *(none)*             | One model only. Limit size, count, concurrency. Monthly quota enforced.                             |
-| Image            | Pro     | `gpt-image-1.5`    | `gpt-image-1-mini`  | Downgrade for retries, previews, or users beyond soft budget.                                       |
-| Image            | Premium | `gpt-image-1.5`    | `gpt-image-1-mini`  | Same model tiers as Pro; Premium gets unlimited quota.                                              |
-| Audio            | Lite    | *(blocked)*         | —                   | Audio not available on Lite.                                                                        |
-| Audio            | Pro     | `gpt-audio-mini`   | `gpt-4o-mini-tts`   | TTS-only fallback. Do NOT use TTS fallback for `audio_in_out` mode.                                 |
-| Audio            | Premium | `gpt-audio-1.5`    | `gpt-audio-mini`    | Downgrade for retries, previews, long-form beyond soft budget.                                      |
-| Video            | Lite    | *(blocked)*         | —                   | Video not available on Lite.                                                                        |
-| Video            | Pro     | *(blocked)*         | —                   | Video not available on Pro.                                                                         |
-| Video            | Premium | `sora-2-pro`       | `sora-2`            | `sora-2` for previews/drafts. `sora-2-pro` only for final renders with `explicitPremium`.           |
+| Feature          | Plan    | Default Model      | Fallback Model     | Cost-Control Notes                                                                                    |
+| ---------------- | ------- | ------------------ | ------------------ | ----------------------------------------------------------------------------------------------------- |
+| Title generation | All     | `gpt-4.1-nano`     | `gpt-4o-mini`      | Hard cap: 1,200 input tokens, 20 output tokens. Always cheapest model regardless of plan.             |
+| Chat             | Lite    | `gpt-4o-mini`      | `gpt-4.1-nano`     | Strict context compaction; max output tokens per reply; no expensive tools; block retries beyond one. |
+| Chat             | Pro     | `gpt-4.1`          | `gpt-4o-mini`      | Degrade to fallback on soft budget, high latency, simple tasks, or retries.                           |
+| Chat             | Premium | `gpt-4.1`          | `gpt-4.1`          | Default `gpt-4.1` for routine chat. `gpt-5.4` only for complex reasoning with `explicitPremium`.      |
+| Image            | Lite    | `gpt-image-1-mini` | _(none)_           | One model only. Limit size, count, concurrency. Monthly quota enforced.                               |
+| Image            | Pro     | `gpt-image-1.5`    | `gpt-image-1-mini` | Downgrade for retries, previews, or users beyond soft budget.                                         |
+| Image            | Premium | `gpt-image-1.5`    | `gpt-image-1-mini` | Same model tiers as Pro; Premium gets unlimited quota.                                                |
+| Audio            | Lite    | _(blocked)_        | —                  | Audio not available on Lite.                                                                          |
+| Audio            | Pro     | `gpt-audio-mini`   | `gpt-4o-mini-tts`  | TTS-only fallback. Do NOT use TTS fallback for `audio_in_out` mode.                                   |
+| Audio            | Premium | `gpt-audio-1.5`    | `gpt-audio-mini`   | Downgrade for retries, previews, long-form beyond soft budget.                                        |
+| Video            | Lite    | _(blocked)_        | —                  | Video not available on Lite.                                                                          |
+| Video            | Pro     | _(blocked)_        | —                  | Video not available on Pro.                                                                           |
+| Video            | Premium | `sora-2-pro`       | `sora-2`           | `sora-2` for previews/drafts. `sora-2-pro` only for final renders with `explicitPremium`.             |
 
 ### 8.3 Task Classes
 
 Each AI request is classified into a task class that affects model selection and token limits.
 
-| Task Class | Purpose                    | Default For                            |
-| ---------- | -------------------------- | -------------------------------------- |
-| `utility`  | Metadata, always cheapest  | `title_generation`                     |
-| `simple`   | Basic/general questions    | —                                      |
-| `standard` | Normal conversation turns  | `chat`                                 |
-| `complex`  | Deep reasoning, analysis   | —                                      |
-| `preview`  | Draft/preview generation   | `video_generation`                     |
-| `final`    | Final quality render       | `image_generation`, `audio_generation` |
+| Task Class | Purpose                   | Default For                            |
+| ---------- | ------------------------- | -------------------------------------- |
+| `utility`  | Metadata, always cheapest | `title_generation`                     |
+| `simple`   | Basic/general questions   | —                                      |
+| `standard` | Normal conversation turns | `chat`                                 |
+| `complex`  | Deep reasoning, analysis  | —                                      |
+| `preview`  | Draft/preview generation  | `video_generation`                     |
+| `final`    | Final quality render      | `image_generation`, `audio_generation` |
+
+**Implementation (Phase 25.4):** Chat requests are classified server-side by `classifyTaskComplexity()` in `src/lib/utils/openai/classify-task-complexity.ts`. The classifier uses heuristics: message length, conversation history depth, analytical/technical keyword presence, and explicit deep-analysis intent (regex pattern). Returns `ChatTaskClass` (`simple` | `standard` | `complex`). The `/api/openai` route passes the classified `taskClass` to `resolveModelPolicy()`. Frontend does not send `taskClass` — all classification is backend-only.
 
 ### 8.4 Token Limits by Plan and Task Class
 
@@ -492,7 +506,13 @@ type FeatureType =
   | "audio_generation"
   | "video_generation";
 
-type TaskClass = "utility" | "simple" | "standard" | "complex" | "preview" | "final";
+type TaskClass =
+  | "utility"
+  | "simple"
+  | "standard"
+  | "complex"
+  | "preview"
+  | "final";
 type AudioMode = "tts" | "audio_in_out";
 type BudgetState = "normal" | "soft_limit_reached" | "hard_limit_reached";
 
@@ -518,6 +538,7 @@ type ResolvedModelPolicy = {
   wasDowngraded: boolean;
   downgradeReasons: string[];
   hardBlocked: boolean;
+  isTtsOnly: boolean;
   notes?: string;
 };
 ```
@@ -541,8 +562,8 @@ All auth/limit checks execute before streaming begins. Final task persistence an
 - ~~**TD-AI-11**: Dead `combinedCount` parameter~~ — **Resolved** in Phase 21-C. Removed from interface, function body, and all callers.
 - ~~**TD-AI-12**: Video matrix/resolver dual source of truth~~ — **Resolved** in Phase 21-C. Matrix `final.model` now `sora-2` with notes documenting `explicitPremium` override.
 - **TD-AI-13**: 5 model pricing entries in `ai-model-policy.ts` are placeholders pending OpenAI confirmation (`gpt-audio-mini`, `gpt-audio-1.5`, `gpt-4o-mini-tts`, `sora-2`, `sora-2-pro`).
-- **TD-AI-14**: Dead `chatSystemMsg` export in `src/constants/openai.tsx` — superseded by `CHAT_PLATFORM_PROMPT` in `persona-prompts.ts`. Never imported.
-- **TD-AI-15**: Hardcoded TTS model-name branch in `generateAudio.tsx` (`policy.model === "gpt-4o-mini-tts"`) — should be a policy flag (e.g., `isTtsOnly`) to avoid coupling code paths to specific model names.
+- ~~**TD-AI-14**: Dead `chatSystemMsg` export in `openai.tsx`~~ — **Resolved** in Phase 23.1. Constant removed, zero remaining usages.
+- ~~**TD-AI-15**: Hardcoded TTS model-name branch in `generateAudio.tsx`~~ — **Resolved** in Phase 23.2 via `isTtsOnly` policy flag. `MODEL_CAPABILITIES` map drives resolution centrally; `generateAudio.tsx` uses `policy.isTtsOnly` instead of string comparison.
 
 ---
 
@@ -638,32 +659,36 @@ All file handling technical debt has been resolved.
 
 ## 13. Testing
 
-- **Unit tests**: 51 suites, 229 tests (Vitest) — includes streaming, webhook, chat-wrapper, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, and persona prompt tests
-- **E2E tests**: Playwright specs, 79 tests across browser projects
-- **Coverage**: Not configured (planned Phase 23)
+- **Unit tests**: 53 suites, 248 tests (Vitest) — includes streaming, webhook, chat-wrapper, chat-body stop-state, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, persona prompt, rate limiting, task complexity classification, and OpenAI route tests
+- **E2E tests**: 7 Playwright spec files across browser projects (chat-app-shell added in Phase 25.5.3, auth-boundaries added in Phase 25.5.2, 70 public-page tests added in Phase 25.5.1)
+- **Coverage**: Configured (Phase 24.1) — v8 provider, thresholds: 70% statements / 60% branches / 70% functions / 70% lines. Current: 82/71/88/82.
 - **Gap**: No dedicated E2E spec for streamed chunk-by-chunk rendering (manually verified via Playwright MCP)
 
 ---
 
 ## 14. Environment Variables
 
-| Variable                            | Purpose                       |
-| ----------------------------------- | ----------------------------- |
-| `MONGODB_URL`                       | MongoDB connection string     |
-| `NEXT_PUBLIC_API_BASE_URL`          | App base URL                  |
-| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk public key              |
-| `CLERK_SECRET_KEY`                  | Clerk secret                  |
-| `CLERK_WEBHOOK_SECRET`              | Webhook verification          |
-| `OPENAI_ORG`                        | OpenAI organization           |
-| `OPENAI_PRJ`                        | OpenAI project                |
-| `OPENAI_KEY`                        | OpenAI API key                |
-| `STRIPE_SECRET_KEY`                 | Stripe secret                 |
-| `STRIPE_WEBHOOK_SECRET`             | Stripe webhook verification   |
-| `AWS_S3_REGION`                     | S3 region                     |
-| `AWS_S3_BUCKET`                     | S3 bucket name                |
-| `AWS_S3_ACCESS_ID`                  | S3 access key                 |
-| `AWS_S3_SECRET_KEY`                 | S3 secret key                 |
-| `DOWNLOAD_URL_ALLOWLIST`            | Allowed download hosts (opt.) |
+| Variable                            | Purpose                                                                                 |
+| ----------------------------------- | --------------------------------------------------------------------------------------- |
+| `MONGODB_URL`                       | MongoDB connection string                                                               |
+| `MONGODB_DB_NAME`                   | MongoDB database name                                                                   |
+| `NEXT_PUBLIC_API_BASE_URL`          | App base URL                                                                            |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk public key                                                                        |
+| `CLERK_SECRET_KEY`                  | Clerk secret                                                                            |
+| `CLERK_WEBHOOK_SIGNING_SECRET`      | Clerk webhook signing secret used by `verifyWebhook()`                                  |
+| `OPENAI_ORG`                        | OpenAI organization                                                                     |
+| `OPENAI_PRJ`                        | OpenAI project                                                                          |
+| `OPENAI_KEY`                        | OpenAI API key                                                                          |
+| `STRIPE_SECRET_KEY`                 | Stripe secret                                                                           |
+| `STRIPE_WEBHOOK_SECRET`             | Stripe webhook verification                                                             |
+| `AWS_S3_REGION`                     | S3 region                                                                               |
+| `AWS_S3_BUCKET`                     | S3 bucket name                                                                          |
+| `AWS_S3_ACCESS_ID`                  | S3 access key                                                                           |
+| `AWS_S3_SECRET_KEY`                 | S3 secret key                                                                           |
+| `DOWNLOAD_URL_ALLOWLIST`            | Allowed download hosts (opt.)                                                           |
+| `NEXT_ALLOWED_DEV_ORIGINS`          | Comma-separated dev origins for local/LAN dev (opt., defaults to `localhost,127.0.0.1`) |
+
+`NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, and `CLERK_WEBHOOK_SIGNING_SECRET` must all come from the same Clerk instance.
 
 ---
 
@@ -675,77 +700,78 @@ All critical-severity technical debt resolved. Remaining items are medium or low
 
 ### Active — Medium Priority
 
-| ID        | Area   | Description                                                                 | Severity |
-| --------- | ------ | --------------------------------------------------------------------------- | -------- |
-| TD-API-01 | API    | In-memory rate limiter (does not survive restarts or horizontal scaling)     | Medium   |
-| TD-AI-08  | OpenAI | No video generation (Premium) — UI shows "Coming soon", implementation deferred | Medium   |
+| ID       | Area   | Description                                                                     | Severity |
+| -------- | ------ | ------------------------------------------------------------------------------- | -------- |
+| TD-AI-08 | OpenAI | No video generation (Premium) — UI shows "Coming soon", implementation deferred | Medium   |
 
 ### Active — Low Priority
 
-| ID            | Area    | Description                                              | Severity |
-| ------------- | ------- | -------------------------------------------------------- | -------- |
-| TD-AI-09  | OpenAI | Image/audio generation prompts not persona-aware (chat prompts done Phase 22) | Low   |
-| TD-AI-13  | OpenAI | 5 model pricing entries are placeholders pending OpenAI confirmation         | Low      |
-| TD-AI-14  | OpenAI | Dead `chatSystemMsg` export in `openai.tsx` — superseded by `persona-prompts.ts` | Low   |
-| TD-AI-15  | OpenAI | Hardcoded TTS model-name branch in `generateAudio.tsx` — should use policy flag | Low   |
-| TD-PLAN-01    | Billing | No recurring subscriptions (deferred v1)                 | Low      |
+| ID         | Area    | Description                                                                   | Severity |
+| ---------- | ------- | ----------------------------------------------------------------------------- | -------- |
+| TD-AI-09   | OpenAI  | Image/audio generation prompts not persona-aware (chat prompts done Phase 22) | Low      |
+| TD-AI-13   | OpenAI  | 5 model pricing entries are placeholders pending OpenAI confirmation          | Low      |
+| TD-PLAN-01 | Billing | No recurring subscriptions (deferred v1)                                      | Low      |
 
 ### Resolved
 
-| ID           | Description                           | Resolution                                                                    |
-| ------------ | ------------------------------------- | ----------------------------------------------------------------------------- |
-| SEC-01       | getUserById no ownership check        | Ownership enforced                                                            |
-| SEC-02       | getAllTransactions no ownership check | Ownership enforced                                                            |
-| SEC-03       | console.log in /api/openai            | Removed                                                                       |
-| TD-API-03    | generateImage temporary URLs          | Persisted to S3                                                               |
-| TD-API-05    | console.log in OpenAI utils           | Removed                                                                       |
-| TD-PLAN-02   | Usage limits not enforced             | Implemented                                                                   |
-| TD-PLAN-04   | Lite 3-day expiry                     | Removed — Lite now "Free forever"                                             |
-| TD-PLAN-05   | Prices $29/$69                        | Updated to $19/$39                                                            |
-| TD-PLAN-06   | Lite restricts 2 personas             | All 9 available in all plans                                                  |
-| TD-PLAN-09   | Plan descriptions outdated            | Updated with accurate limits                                                  |
-| TD-UI-11     | FAQ copy outdated (trial references)  | Rewritten for Droplet                                                         |
-| TD-AI-02     | No OpenAI error classification        | Implemented                                                                   |
-| TD-AI-05     | Audio base64 in messages              | Audio now uploaded to S3                                                      |
-| TD-API-06    | handleError loses stack traces        | Resolved in Phase 20 via `{ cause: error }` pattern                           |
-| TD-FILE-01   | S3 cleanup on task deletion           | Fully resolved in Phase 20: deleteTask + Clerk webhook + admin remove         |
-| TD-FILE-02   | Inline base64 in chat-input.tsx       | Resolved in Phase 20 via `/api/upload` FormData                               |
-| TD-ACT-01    | deleteAllTransactions unaudited       | Resolved in Phase 20: function removed entirely                               |
-| TD-WEBHOOK-02| Clerk webhook no idempotency          | Resolved in Phase 20: duplicate check + graceful miss handling                |
-| TD-UI-04     | No error boundaries                   | Added                                                                         |
-| TD-UI-05     | mapDateToLabel duplicated             | Extracted                                                                     |
-| TD-RENAME-01 | "role" to "persona" rename            | Completed                                                                     |
-| TD-RENAME-02 | Cellesseon → Droplet rename           | Completed (3 legacy migration keys intentional)                               |
-| TD-DB-07     | Audio base64 inflates Task docs       | Audio uploads to S3, stores URL                                               |
-| TD-DB-08     | getUserById missing .lean()/.select() | Added                                                                         |
-| TD-DB-09     | getAllTransactions missing .lean()    | Added                                                                         |
-| TD-DB-10     | Task missing lifecycle fields         | Added in Phase 14                                                             |
-| TD-DB-11     | UsageEvent model missing              | Created in Phase 14                                                           |
-| TD-DB-12     | AppSetting model missing              | Created in Phase 14                                                           |
-| TD-DB-13     | PublicPage model missing              | Created in Phase 14                                                           |
-| TD-DB-14     | AdminAuditLog model missing           | Created in Phase 14                                                           |
-| TD-UI-02     | No loading skeletons                  | Added                                                                         |
-| TD-UI-06     | No conversation delete UI             | Added                                                                         |
-| TD-AI-06     | No retry/backoff for transient failures | Resolved in Phase 22 via `withOpenAIRetry()` — exponential backoff, model downgrade |
-| TD-AI-11     | Dead combinedCount parameter            | Resolved in Phase 21-C — removed from interface, body, and callers            |
-| TD-AI-12     | Video matrix/resolver dual source of truth | Resolved in Phase 21-C — matrix now shows `sora-2` with notes              |
-| TD-PLAN-07   | No daily conversation limit           | Implemented in Phase 15 via `checkDailyConversationLimit` + route enforcement |
-| TD-PLAN-08   | No per-conversation prompt limit      | Implemented in Phase 15 via `Task.promptCount` + route enforcement            |
-| TD-DB-05     | Task messages unbounded (16MB risk)   | Implemented in Phase 15 via `estimatedBytes` tracking + 12MB threshold guard  |
-| TD-AI-07     | Models hardcoded                      | Resolved in Phase 16 via `ai-model-policy.ts` + `resolveModelForPlan()`       |
-| TD-AI-03     | No per-user cost tracking             | Resolved in Phase 16 via `UsageEvent` + `usage-event-utils.ts`                |
-| TD-AUTH-01   | Proxy protects old routes             | Resolved in Phase 17 — proxy now protects `/app(.*)` and `/admin(.*)` only    |
-| TD-AUTH-02   | Admin at /dashboard not /admin        | Resolved in Phase 17 — admin is at `/admin` with full control plane           |
-| TD-UI-09     | Account pages at wrong routes         | Resolved in Phase 17 — profile/plans under `/app/*`                           |
-| TD-UI-10     | Admin has no operational capability   | Resolved in Phase 17 — 9 admin routes with full CRUD, audit, Tiptap          |
-| TD-BILL-01   | Stripe redirect URLs hardcode old routes | Resolved in Phase 17 — redirects point to `/app/profile` and `/app/plans`  |
-| TD-UI-08     | Missing 5 public pages                   | Resolved in Phase 18 — /about, /faqs, /privacy, /cookies, /terms created   |
-| TD-UI-07     | Homepage needs more sections             | Resolved in Phase 18 — 7 sections: Hero, Features, Workflow, Personas, CTA, Plans, FAQs |
-| TD-UI-12     | Footer links non-functional (spans)      | Resolved in Phase 18 — `<Link>` to `/privacy` and `/terms`                 |
-| TD-UI-13     | Header nav missing /about, /faqs links   | Resolved in Phase 18 — Header has About, Personas, Plans, FAQs links       |
-| TD-LOG-01    | console.error in production code (15)    | Resolved in Phase 17-C — zero console.error/log/warn in `src/`             |
-| TD-AI-01     | No streaming                             | Resolved in Phase 19 — `generateStreamingResponse()` + SSE events          |
-| TD-API-07    | No streaming implementation              | Resolved in Phase 19 — streaming branch in `/api/openai` route             |
-| TD-DB-15     | Clerk user.deleted doesn't clean Tasks   | Resolved in Phase 19 — `Task.deleteMany` in Clerk webhook handler          |
-| TD-WEBHOOK-01| Clerk user.deleted orphans S3 objects    | Resolved in Phase 19 — `deleteS3Prefix` in Clerk webhook handler           |
-| TD-AI-10     | Model policy flat resolver              | Resolved in Phase 21 — `MODEL_POLICY_MATRIX` + `resolveModelPolicy()` with task classes, fallbacks, downgrade triggers, token limits, audio mode |
+| ID            | Description                                 | Resolution                                                                                                                                       |
+| ------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| SEC-01        | getUserById no ownership check              | Ownership enforced                                                                                                                               |
+| SEC-02        | getAllTransactions no ownership check       | Ownership enforced                                                                                                                               |
+| SEC-03        | console.log in /api/openai                  | Removed                                                                                                                                          |
+| TD-API-03     | generateImage temporary URLs                | Persisted to S3                                                                                                                                  |
+| TD-API-05     | console.log in OpenAI utils                 | Removed                                                                                                                                          |
+| TD-PLAN-02    | Usage limits not enforced                   | Implemented                                                                                                                                      |
+| TD-PLAN-04    | Lite 3-day expiry                           | Removed — Lite now "Free forever"                                                                                                                |
+| TD-PLAN-05    | Prices $29/$69                              | Updated to $19/$39                                                                                                                               |
+| TD-PLAN-06    | Lite restricts 2 personas                   | All 9 available in all plans                                                                                                                     |
+| TD-PLAN-09    | Plan descriptions outdated                  | Updated with accurate limits                                                                                                                     |
+| TD-UI-11      | FAQ copy outdated (trial references)        | Rewritten for Droplet                                                                                                                            |
+| TD-AI-02      | No OpenAI error classification              | Implemented                                                                                                                                      |
+| TD-AI-05      | Audio base64 in messages                    | Audio now uploaded to S3                                                                                                                         |
+| TD-API-06     | handleError loses stack traces              | Resolved in Phase 20 via `{ cause: error }` pattern                                                                                              |
+| TD-FILE-01    | S3 cleanup on task deletion                 | Fully resolved in Phase 20: deleteTask + Clerk webhook + admin remove                                                                            |
+| TD-FILE-02    | Inline base64 in chat-input.tsx             | Resolved in Phase 20 via `/api/upload` FormData                                                                                                  |
+| TD-ACT-01     | deleteAllTransactions unaudited             | Resolved in Phase 20: function removed entirely                                                                                                  |
+| TD-WEBHOOK-02 | Clerk webhook no idempotency                | Resolved in Phase 20: duplicate check + graceful miss handling                                                                                   |
+| TD-UI-04      | No error boundaries                         | Added                                                                                                                                            |
+| TD-UI-05      | mapDateToLabel duplicated                   | Extracted                                                                                                                                        |
+| TD-RENAME-01  | "role" to "persona" rename                  | Completed                                                                                                                                        |
+| TD-RENAME-02  | Cellesseon → Droplet rename                 | Completed (3 legacy migration keys intentional)                                                                                                  |
+| TD-DB-07      | Audio base64 inflates Task docs             | Audio uploads to S3, stores URL                                                                                                                  |
+| TD-DB-08      | getUserById missing .lean()/.select()       | Added                                                                                                                                            |
+| TD-DB-09      | getAllTransactions missing .lean()          | Added                                                                                                                                            |
+| TD-DB-10      | Task missing lifecycle fields               | Added in Phase 14                                                                                                                                |
+| TD-DB-11      | UsageEvent model missing                    | Created in Phase 14                                                                                                                              |
+| TD-DB-12      | AppSetting model missing                    | Created in Phase 14                                                                                                                              |
+| TD-DB-13      | PublicPage model missing                    | Created in Phase 14                                                                                                                              |
+| TD-DB-14      | AdminAuditLog model missing                 | Created in Phase 14                                                                                                                              |
+| TD-UI-02      | No loading skeletons                        | Added                                                                                                                                            |
+| TD-UI-06      | No conversation delete UI                   | Added                                                                                                                                            |
+| TD-AI-06      | No retry/backoff for transient failures     | Resolved in Phase 22 via `withOpenAIRetry()` — exponential backoff, model downgrade                                                              |
+| TD-AI-14      | Dead `chatSystemMsg` export in `openai.tsx` | Resolved in Phase 23.1 — constant removed, zero usages confirmed                                                                                 |
+| TD-AI-11      | Dead combinedCount parameter                | Resolved in Phase 21-C — removed from interface, body, and callers                                                                               |
+| TD-AI-12      | Video matrix/resolver dual source of truth  | Resolved in Phase 21-C — matrix now shows `sora-2` with notes                                                                                    |
+| TD-PLAN-07    | No daily conversation limit                 | Implemented in Phase 15 via `checkDailyConversationLimit` + route enforcement                                                                    |
+| TD-PLAN-08    | No per-conversation prompt limit            | Implemented in Phase 15 via `Task.promptCount` + route enforcement                                                                               |
+| TD-DB-05      | Task messages unbounded (16MB risk)         | Implemented in Phase 15 via `estimatedBytes` tracking + 12MB threshold guard                                                                     |
+| TD-AI-07      | Models hardcoded                            | Resolved in Phase 16 via `ai-model-policy.ts` + `resolveModelForPlan()`                                                                          |
+| TD-AI-03      | No per-user cost tracking                   | Resolved in Phase 16 via `UsageEvent` + `usage-event-utils.ts`                                                                                   |
+| TD-AUTH-01    | Proxy protects old routes                   | Resolved in Phase 17 — proxy now protects `/app(.*)` and `/admin(.*)` only                                                                       |
+| TD-AUTH-02    | Admin at /dashboard not /admin              | Resolved in Phase 17 — admin is at `/admin` with full control plane                                                                              |
+| TD-UI-09      | Account pages at wrong routes               | Resolved in Phase 17 — profile/plans under `/app/*`                                                                                              |
+| TD-UI-10      | Admin has no operational capability         | Resolved in Phase 17 — 9 admin routes with full CRUD, audit, Tiptap                                                                              |
+| TD-BILL-01    | Stripe redirect URLs hardcode old routes    | Resolved in Phase 17 — redirects point to `/app/profile` and `/app/plans`                                                                        |
+| TD-UI-08      | Missing 5 public pages                      | Resolved in Phase 18 — /about, /faqs, /privacy, /cookies, /terms created                                                                         |
+| TD-UI-07      | Homepage needs more sections                | Resolved in Phase 18 — 7 sections: Hero, Features, Workflow, Personas, CTA, Plans, FAQs                                                          |
+| TD-UI-12      | Footer links non-functional (spans)         | Resolved in Phase 18 — `<Link>` to `/privacy` and `/terms`                                                                                       |
+| TD-UI-13      | Header nav missing /about, /faqs links      | Resolved in Phase 18 — Header has About, Personas, Plans, FAQs links                                                                             |
+| TD-LOG-01     | console.error in production code (15)       | Resolved in Phase 17-C — zero console.error/log/warn in `src/`                                                                                   |
+| TD-AI-01      | No streaming                                | Resolved in Phase 19 — `generateStreamingResponse()` + SSE events                                                                                |
+| TD-API-07     | No streaming implementation                 | Resolved in Phase 19 — streaming branch in `/api/openai` route                                                                                   |
+| TD-DB-15      | Clerk user.deleted doesn't clean Tasks      | Resolved in Phase 19 — `Task.deleteMany` in Clerk webhook handler                                                                                |
+| TD-WEBHOOK-01 | Clerk user.deleted orphans S3 objects       | Resolved in Phase 19 — `deleteS3Prefix` in Clerk webhook handler                                                                                 |
+| TD-AI-10      | Model policy flat resolver                  | Resolved in Phase 21 — `MODEL_POLICY_MATRIX` + `resolveModelPolicy()` with task classes, fallbacks, downgrade triggers, token limits, audio mode |
+| TD-AI-15      | Hardcoded TTS model-name branch             | Resolved in Phase 23.2 — `isTtsOnly` policy flag via `MODEL_CAPABILITIES` map                                                                    |
+| TD-API-01     | In-memory rate limiter                      | Resolved in Phase 25.3 — MongoDB-backed `RateLimitEntry` with TTL index, atomic sliding window                                                   |
+| TD-CODE-01    | Relative import violations                  | Resolved in Phase 24.4 — all 15 relative imports replaced with `@/*` alias across 10 files                                                       |

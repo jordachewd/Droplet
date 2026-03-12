@@ -5,6 +5,82 @@
 
 ---
 
+## HF-1: Clerk Webhook Fix — COMPLETED
+
+- [x] **HF-1** Fix Clerk webhook to restore user sync — migrated from raw `svix` verification to `verifyWebhook()` from `@clerk/nextjs/webhooks`. Env var renamed from `CLERK_WEBHOOK_SECRET` to `CLERK_WEBHOOK_SIGNING_SECRET` (Clerk canonical name). Signing secret passed explicitly via `signingSecret` parameter. Diagnostic logging added via `logWebhookVerificationFailure()` using `process.stderr.write()`. Unit tests migrated (13 tests) to mock `verifyWebhook` instead of raw Svix `Webhook`. SPEC.md env var table updated. `svix` package now dead dependency in `package.json` (zero imports in source — cleanup tracked as 25.7.4).
+
+**Files changed:** `src/app/api/webhooks/clerk/route.tsx`, `tests/unit/clerk-webhook-route.test.ts`, `SPEC.md`
+
+---
+
+## Phase 25.5.3: Authenticated App Shell E2E — COMPLETED
+
+- [x] **25.5.3** E2E: Authenticated app shell and navigation — `tests/e2e/chat-app-shell.spec.ts` covering `/app` shell rendering with sidebar and main content, sidebar navigation to 5 routes (New Chat, Library, Personas, Profile, Plans), each page renders expected content, persona picker with 9 PersonaCard components visible on `/app/new`. Uses parameterized `SidebarDestination` array for DRY route assertions. Auth handled via stored Clerk session with fallback sign-in.
+
+**Files changed:** `tests/e2e/chat-app-shell.spec.ts` (new)
+
+---
+
+## Phase 25.5.2: Auth Boundary E2E Coverage — COMPLETED
+
+- [x] **25.5.2** E2E: Auth boundary enforcement — dedicated `tests/e2e/auth-boundaries.spec.ts` covering unauthenticated `/app/*` redirect to sign-in, unauthenticated `/admin/*` redirect to sign-in, authenticated non-admin `/admin/*` blocked (403), and public-route accessibility confirmed. Removed duplicate auth-boundary assertions from `authenticated-flows.spec.ts` and `landing-page.spec.ts`. Updated `global.setup.ts` for guest storageState persistence. Stabilized `public-pages.spec.ts` with serial execution and locator reacquisition. Updated `playwright.config.ts` to `127.0.0.1`. Gates 1–5 passed; Gate 6 (full E2E) blocked by MongoDB Atlas connectivity (not a code issue).
+
+**Files changed:** `playwright.config.ts`, `tests/e2e/auth-boundaries.spec.ts` (new), `tests/e2e/authenticated-flows.spec.ts`, `tests/e2e/global.setup.ts`, `tests/e2e/landing-page.spec.ts`, `tests/e2e/plans-public.spec.ts`, `tests/e2e/pricing-public.spec.ts`, `tests/e2e/public-pages.spec.ts`
+
+---
+
+## Phase 25.5.1: Public Page E2E Coverage — COMPLETED
+
+- [x] **25.5.1** E2E: Public page rendering and inter-page navigation — 70 E2E tests added to `tests/e2e/public-pages.spec.ts`. All 8 public routes verified for HTTP 200 + key content rendering. Footer legal-link navigation (Privacy, Terms) verified. Desktop header navigation (About, Personas, Plans, FAQs) verified with intentional mobile skip (links hidden below md breakpoint). Lite price asserted as "Free" (correct zero-price representation). Full E2E suite: 133 passed, 2 skipped. All 6 validation gates green.
+
+**Files changed:** `tests/e2e/public-pages.spec.ts`
+
+---
+
+## Phase 25: Production Hardening — COMPLETED
+
+- [x] **25.1** Add `X-Accel-Buffering: no` to streaming responses — SSE-compatible header added to `STREAM_HEADERS` constant in `/api/openai` route. Only applied to streaming SSE responses; non-streaming JSON responses unaffected.
+- [x] **25.2** Verify all admin server actions emit audit log entries — all 8 exported admin mutation actions confirmed to call `createAdminAuditLogEntry()` after mutation. Each also calls `requireAdminActionAccess()` for auth. No code changes required; verification-only task.
+- [x] **25.3** Replace in-memory rate limiter with persistent store — `RateLimitEntry` model with TTL index for automatic cleanup, MongoDB-backed atomic sliding window in `rate-limit.ts` using aggregation pipeline, `crypto.randomUUID()` for request IDs. Survives process restarts, works across multiple instances.
+- [x] **25.4** Design server-side task complexity classification — `classifyTaskComplexity()` in `classify-task-complexity.ts` with heuristic classification (`simple`/`standard`/`complex`), explicit deep-analysis intent detection via regex pattern, wired into `/api/openai` route for `resolveModelPolicy()`. Frontend does not send `taskClass` or `explicitPremium`.
+
+Resolved: TD-API-01 (persistent rate limiter replaces in-memory), TD-CODE-01 (zero relative imports across `src/`). 53 test suites, 248 tests passing, 79 E2E tests passing. All 6 validation gates green.
+
+**Files changed (25.1):** `src/app/api/openai/route.tsx`
+**Files changed (25.2):** None (verification only)
+**Files changed (25.3):** `src/lib/database/models/rate-limit-entry.model.tsx` (new), `src/lib/utils/rate-limit.ts`, `src/app/api/openai/route.tsx`, `tests/unit/rate-limit.test.ts` (new)
+**Files changed (25.4):** `src/lib/utils/openai/classify-task-complexity.ts` (new), `tests/unit/classify-task-complexity.test.ts` (new), `src/app/api/openai/route.tsx`, `tests/unit/openai-route.test.ts`
+
+---
+
+## Phase 24: Testing Hardening — COMPLETED
+
+- [x] **24.1** Add test coverage configuration — `v8` provider in `vitest.config.mts`, thresholds 70/60/70/70 (statements/branches/functions/lines), `test:coverage` script in `package.json`, `@vitest/coverage-v8` dependency added. Coverage run result: 82% statements, 71% branches, 88% functions, 82% lines — all above thresholds.
+- [x] **24.2** Add unit tests for chat-body stop-state rendering — 9 tests covering all 5 stop reasons, 3 action link targets (`/app/new`, `/app/plans`, `mailto:`), and amber ended-state styling. Parameterized coverage using jsdom environment. Next.js `Link` mocked to plain anchors for stable route assertions.
+- [x] **24.3** Expand streaming test coverage — 5 test cases: happy path, error during stream (503 → `service_error`), tool call handling (image generation routing), abort signal propagation (AbortController mid-stream), empty/null response normalization. All scenarios verified in `generate-streaming-response.test.ts`.
+- [x] **24.4** Fix relative import violations — replaced all 15 relative `../` import paths with `@/*` alias imports across 10 files (profile-hero, profile-billing, plans-section, footer, header, user.actions, task.actions, generateTitle, generateAudio, generateImage). Zero relative imports remain in `src/`.
+
+53 test suites, 248 tests passing, 79 E2E tests passing. All 6 validation gates green.
+
+**Files changed (24.1):** `vitest.config.mts`, `package.json`, `package-lock.json`
+**Files changed (24.2):** `tests/unit/chat-body.test.tsx` (new)
+**Files changed (24.3):** `tests/unit/generate-streaming-response.test.ts`
+**Files changed (24.4):** `src/components/sections/profile-hero.tsx`, `src/components/sections/profile-billing.tsx`, `src/components/sections/plans-section.tsx`, `src/components/layout/footer.tsx`, `src/components/layout/header.tsx`, `src/lib/actions/user.actions.tsx`, `src/lib/actions/task.actions.tsx`, `src/lib/utils/openai/generateTitle.tsx`, `src/lib/utils/openai/generateAudio.tsx`, `src/lib/utils/openai/generateImage.tsx`
+
+---
+
+## Phase 23: Post-Phase-22 Cleanup — COMPLETED
+
+- [x] **23.1** Remove dead `chatSystemMsg` constant from `src/constants/openai.tsx` (confirmed zero usages, removed export, behavior-neutral)
+- [x] **23.2** Abstract TTS routing to policy flag — `isTtsOnly: boolean` added to `ResolvedModelPolicy`, `MODEL_CAPABILITIES` map drives resolution centrally, `generateAudio.tsx` uses `policy.isTtsOnly` instead of string comparison
+
+Resolved: TD-AI-14 (Phase 23.1), TD-AI-15 (Phase 23.2). 51 test suites, 229 tests passing, 79 E2E tests passing. All 6 validation gates green.
+
+**Files changed (23.1):** `src/constants/openai.tsx`
+**Files changed (23.2):** `src/lib/utils/ai-model-policy.ts`, `src/lib/utils/openai/generateAudio.tsx`, `tests/unit/ai-model-policy.test.ts`
+
+---
+
 ## Phase 22: Prompt System & OpenAI Resilience — COMPLETED
 
 - [x] **22.1** Implement retry/backoff for OpenAI failures (`withOpenAIRetry()` wrapper with exponential backoff 1s/2s/4s, transient-only retries for 429/500/502/503, immediate failure for 400/401/403, `maxRetries: 0` on SDK requests, model downgrade via `retryAttempt` parameter)
@@ -16,7 +92,8 @@ Resolved: TD-AI-06 (fully), TD-AI-09 (partially — chat prompts optimized, medi
 **Files changed:** `src/lib/utils/openai/generateResponse.tsx`, `src/constants/persona-prompts.ts` (new), `src/constants/assistant-personas.tsx`, `vitest.config.mts`, `tests/unit/openai-retry.test.ts` (new), `tests/unit/persona-prompts.test.ts` (new), `tests/unit/ai-model-policy.test.ts`, `tests/e2e/landing-page.spec.ts`
 
 **Known residual items (non-blocking):**
-- Dead `chatSystemMsg` export in `openai.tsx` — superseded by `persona-prompts.ts` (TD-AI-14)
+
+- ~~Dead `chatSystemMsg` export in `openai.tsx`~~ — **Resolved** in Phase 23.1 (TD-AI-14)
 - Hardcoded TTS model-name branch in `generateAudio.tsx` (TD-AI-15)
 - Image/audio generation not persona-aware (TD-AI-09 partial)
 
@@ -53,6 +130,7 @@ Resolved: TD-AI-10 (fully), TD-AI-08 (partially — video now shows "Coming soon
 **Files changed:** `src/lib/utils/ai-model-policy.ts`, `src/lib/utils/openai/generateTitle.tsx`, `src/lib/utils/openai/generateImage.tsx`, `src/lib/utils/openai/generateAudio.tsx`, `src/lib/utils/openai/generateResponse.tsx`, `src/lib/utils/openai/message-policy.ts` (new), `src/app/api/openai/route.tsx`, `src/constants/plans.tsx`, `src/lib/utils/resolve-entitlements.tsx`, `src/lib/utils/check-usage-limit.ts`, `src/lib/utils/admin-queries.ts`, `tests/unit/ai-model-policy.test.ts`, `tests/unit/plans.test.ts`, `tests/unit/resolve-entitlements.test.ts`, `tests/unit/check-usage-limit.test.ts`
 
 **Known residual items (non-blocking):**
+
 - Dead `combinedCount` parameter in `check-usage-limit.ts` and callers (TD-AI-11)
 - Video matrix/resolver dual source of truth (TD-AI-12)
 - 5 model pricing placeholders pending OpenAI confirmation (TD-AI-13)

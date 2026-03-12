@@ -81,7 +81,7 @@ All six gates must pass.
 
 - **Zero trust**: protect all routes unless explicitly public. Verify auth in every server action and API route before DB writes.
 - **Admin double-check**: admin routes must verify `role === "admin"` at both proxy AND server-action/page level.
-- **Webhooks**: verify signatures (Svix for Clerk, `stripe.webhooks.constructEvent` for Stripe) before processing. Ensure idempotency — check for duplicate event IDs before creating records. Webhook handlers must not throw on replayed or missing documents.
+- **Webhooks**: verify via `verifyWebhook()` from `@clerk/nextjs/webhooks` (Clerk) and `stripe.webhooks.constructEvent` (Stripe) before processing. Ensure idempotency — check for duplicate event IDs before creating records. Webhook handlers must not throw on replayed or missing documents.
 - **Secrets**: never commit; use `.env.local`. Only `NEXT_PUBLIC_*` values reach the browser.
 - **Error responses**: generic messages to clients; detailed logs server-side only. Never leak provider error messages (OpenAI, AWS, Stripe). Use `new Error(message, { cause: originalError })` to preserve stack traces when rethrowing.
 - **Uploads**: validate type and size at the boundary. Use allowlists, not blocklists.
@@ -120,7 +120,7 @@ All six gates must pass.
 src/app/
   (public)/         — public marketing/legal pages (/, /about, /plans, /faqs, /personas, /privacy, /cookies, /terms)
   (auth)/           — Clerk sign-in/sign-up
-  (chat)/app/       — authenticated chat routes (/app, /app/new, /app/library, /app/c/[id], /app/profile, /app/plans)
+  (chat)/app/       — authenticated chat routes (/app, /app/new, /app/library, /app/c/[conversationId], /app/personas, /app/profile, /app/plans)
   (admin)/admin/    — admin routes (/admin, /admin/users, /admin/transactions, /admin/usage, /admin/settings, /admin/website)
   api/              — API route handlers
 src/components/     — UI components by domain (chat, layout, sections, shared)
@@ -157,3 +157,10 @@ tests/e2e/          — Playwright E2E tests
 | Upload media to S3, store URLs in MongoDB           | Store base64/binary in MongoDB documents    |
 | Check ALL limits before OpenAI calls                | Skip limit checks for any plan tier         |
 | End conversations with stop reason on limit hit     | Silently fail or ignore quota violations    |
+
+## Updated Documentation
+
+- Context7 MCP
+- Clerk MCP
+- Playwright MCP
+- Deepwiki MCP

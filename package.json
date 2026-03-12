@@ -10,6 +10,7 @@
     "lint": "eslint .",
     "knip": "knip",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
     "test:e2e": "playwright test"
   },
@@ -42,6 +43,7 @@
     "@types/react": "^19.0.7",
     "@types/react-dom": "^19.0.3",
     "@typescript-eslint/parser": "^8.21.0",
+    "@vitest/coverage-v8": "^4.0.18",
     "eslint": "^10.0.2",
     "eslint-config-next": "^16.0.8",
     "jsdom": "^28.1.0",

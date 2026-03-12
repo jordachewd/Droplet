@@ -6,6 +6,10 @@ interface TokenPricing {
   flatUsd?: number;
 }
 
+interface ModelCapability {
+  isTtsOnly?: boolean;
+}
+
 export type PlanTier = "lite" | "pro" | "premium";
 
 export type FeatureType =
@@ -62,6 +66,7 @@ export type PlanPolicyMatrix = Record<
 export interface ResolvedModelPolicy {
   model: string;
   fallbackModel?: string;
+  isTtsOnly: boolean;
   feature: FeatureType;
   plan: PlanTier;
   taskClass: TaskClass;
@@ -367,12 +372,26 @@ export const MODEL_PRICING: Record<string, TokenPricing> = {
   },
 };
 
+const MODEL_CAPABILITIES: Record<string, ModelCapability> = {
+  "gpt-4o-mini-tts": {
+    isTtsOnly: true,
+  },
+};
+
 function joinNotes(...notes: Array<string | undefined>): string | undefined {
   const filteredNotes = notes.filter(
     (note): note is string => typeof note === "string" && note.length > 0,
   );
 
   return filteredNotes.length > 0 ? filteredNotes.join(" ") : undefined;
+}
+
+function isTtsOnlyModel(model?: string): boolean {
+  if (!model) {
+    return false;
+  }
+
+  return MODEL_CAPABILITIES[model]?.isTtsOnly === true;
 }
 
 function getFeaturePolicyConfig(
@@ -444,6 +463,7 @@ function createResolvedPolicy({
   return {
     model,
     fallbackModel,
+    isTtsOnly: isTtsOnlyModel(model),
     feature,
     plan,
     taskClass,
@@ -586,7 +606,7 @@ export function resolveModelPolicy(
     const ttsFallbackBlocked =
       input.feature === "audio_generation" &&
       input.audioMode === "audio_in_out" &&
-      fallbackModel === "gpt-4o-mini-tts";
+      isTtsOnlyModel(fallbackModel);
 
     if (ttsFallbackBlocked) {
       notes = joinNotes(

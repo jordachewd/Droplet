@@ -2,7 +2,11 @@ import { mkdirSync } from "node:fs";
 import path from "node:path";
 import { createClerkClient } from "@clerk/backend";
 import mongoose from "mongoose";
-import { clerk, clerkSetup } from "@clerk/testing/playwright";
+import {
+  clerk,
+  clerkSetup,
+  setupClerkTestingToken,
+} from "@clerk/testing/playwright";
 import { expect, test as setup } from "@playwright/test";
 import { getEnvValue } from "./utils/dotenv-local";
 import {
@@ -12,6 +16,7 @@ import {
 } from "./utils/e2e-test-user";
 
 const authFile = path.join(__dirname, ".clerk/user.json");
+const guestFile = path.join(__dirname, ".clerk/guest.json");
 const clerkSetupError =
   "Set CLERK_SECRET_KEY or CLERK_TESTING_TOKEN in .env.local for Clerk Playwright auth helpers.";
 const mongoSetupError =
@@ -182,6 +187,19 @@ setup("configure Clerk Playwright helpers", async () => {
   }
 
   await clerkSetup();
+});
+
+setup("persist guest storage state", async ({ page }) => {
+  await setupClerkTestingToken({ page });
+  await page.goto("/");
+  await expect(
+    page.getByRole("heading", {
+      name: "Chat, create, and get things done.",
+    }),
+  ).toBeVisible();
+
+  mkdirSync(path.dirname(guestFile), { recursive: true });
+  await page.context().storageState({ path: guestFile });
 });
 
 setup("authenticate E2E user and persist storage state", async ({ page }) => {

@@ -2,10 +2,10 @@
 import { CreateTaskInput, UpdateTaskParams } from "@/types/TaskData.d";
 import { Message } from "@/types";
 import { isValidObjectId } from "mongoose";
-import { connectToDatabase } from "../database/mongoose";
+import { connectToDatabase } from "@/lib/database/mongoose";
 import { handleError } from "@/lib/utils/handleError";
 import serializeForClient from "@/lib/utils/serialize-for-client";
-import Task from "../database/models/tasks.model";
+import Task from "@/lib/database/models/tasks.model";
 import { auth } from "@clerk/nextjs/server";
 import deleteFileFromAWS from "@/lib/utils/aws/deleteFileFromAWS";
 import {

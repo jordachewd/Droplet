@@ -302,6 +302,7 @@ describe("ai-model-policy", () => {
     ).toMatchObject({
       model: "gpt-4o-mini-tts",
       fallbackModel: "gpt-4o-mini-tts",
+      isTtsOnly: true,
       wasDowngraded: true,
       downgradeReasons: ["soft_limit_reached"],
     });
@@ -316,6 +317,7 @@ describe("ai-model-policy", () => {
     expect(fullAudioPolicy).toMatchObject({
       model: "gpt-audio-mini",
       fallbackModel: "gpt-4o-mini-tts",
+      isTtsOnly: false,
       wasDowngraded: false,
       downgradeReasons: [],
     });

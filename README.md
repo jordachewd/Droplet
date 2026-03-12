@@ -6,29 +6,31 @@ Built with Next.js 16, React 19, TypeScript, Tailwind CSS v4.2, Clerk, Stripe, M
 
 ## Features
 
-- **9 AI Personas** — each with distinct personality, system prompt, and domain expertise
-- **Multi-modal AI** — text chat, image generation, audio generation
-- **Plan-aware AI model selection** — comprehensive model policy matrix: `gpt-4o-mini` for Lite, `gpt-4.1` for Pro, `gpt-4.1`/`gpt-5.4` for Premium via `resolveModelPolicy()` with task classes, fallbacks, downgrade triggers, token limits, and audio mode differentiation
+- **9 AI Personas** — each with distinct personality, system prompt, and domain expertise (Strategist, Teacher, Developer, Creator, Wellness, Analyst, Best Friend, Boyfriend, Girlfriend)
+- **All personas available in all plans** — no persona restrictions per tier
+- **Multi-modal AI** — text chat, image generation, audio generation (video generation planned for Premium)
 - **Streaming responses** — real-time incremental chat rendering via SSE with progressive text display
+- **Plan-aware AI model selection** — comprehensive model policy matrix: `gpt-4o-mini` for Lite, `gpt-4.1` for Pro, `gpt-4.1`/`gpt-5.4` for Premium via `resolveModelPolicy()` with task classes, fallbacks, downgrade triggers, token limits, audio mode differentiation, and server-side task complexity classification
 - **Retry/backoff resilience** — automatic retry with exponential backoff (1s/2s/4s) for transient OpenAI errors, model tier downgrade on retry, SDK auto-retry disabled for deterministic behavior
 - **Persona prompt system** — versioned, server-only prompt matrix with per-persona, per-model-family system prompts, temperature/max-token tuning, and companion safety rules
 - **Usage event logging** — per-request cost tracking, latency measurement, and blocked-request recording
+- **Conversation lifecycle** — prompt count tracking, media count tracking, storage size guard (12MB threshold), stop reason enforcement with next-action instructions
 - **File uploads via S3** — all attachments uploaded to AWS S3 via `/api/upload`, no inline base64 in messages
 - **Conversation history** — persist, resume, and manage conversations
 - **Three subscription tiers:**
   - **Lite** (Free forever) — 5 conversations/day, 10 messages/conversation, 3 image generations/month, no audio, no video
   - **Pro** ($19/month) — `gpt-4.1` chat model, 50 conversations/day, 100 messages/conversation, 50 image + 50 audio generations/month
   - **Premium** ($39/month) — `gpt-4.1`/`gpt-5.4` chat models, unlimited conversations and messages, unlimited image/audio, 10 video generations/month, premium audio quality
-- **All personas available in all plans**
-- **Admin dashboard** — user management, transaction oversight, usage analytics, app settings (AI models, pricing, limits, theme), website content management with Tiptap editor
+- **Admin dashboard** — user management, transaction oversight, usage analytics, app settings (AI models, pricing, limits, theme), website content management with Tiptap editor, full audit trail
 - **Public marketing site** — About, FAQs, Privacy Policy, Cookie Policy, Terms & Conditions, plus enhanced homepage with feature showcase, workflow, persona spotlight, and CTAs
-- **Secure by design** — Clerk auth, webhook signature verification with idempotency, ownership enforcement, SSRF protection, double-layer admin role protection (proxy + server-side), error cause chain preservation
+- **Secure by design** — Clerk auth, webhook signature verification with idempotency, ownership enforcement, SSRF protection, double-layer admin role protection (proxy + server-side), error cause chain preservation, persistent MongoDB-backed rate limiting
+- **Test coverage** — 53 Vitest unit test suites (248 tests), 7 Playwright E2E spec files, v8 coverage enforced at 70/60/70/70 thresholds
 
 ### Planned (In Development)
 
 - **Video generation** — Premium plan exclusive (`sora-2-pro` / `sora-2`)
 - **Stripe subscriptions** — auto-renewal billing (currently one-time payments)
-- **Task complexity classification** — server-side heuristic for automatic `gpt-5.4` routing on complex Premium requests
+- **Persona-aware media prompts** — image and audio generation with persona-specific style/tone context
 
 ## Tech Stack
 
@@ -50,7 +52,7 @@ src/
   app/
     (public)/              # Marketing + legal pages (/, /about, /plans, /faqs, /personas, /privacy, /cookies, /terms)
     (auth)/                # Clerk sign-in/sign-up
-    (chat)/app/            # Authenticated chat routes (/app, /app/new, /app/library, /app/c/[id], /app/profile, /app/plans)
+    (chat)/app/            # Authenticated chat routes (/app, /app/new, /app/library, /app/c/[conversationId], /app/personas, /app/profile, /app/plans)
     (admin)/admin/         # Admin routes (/admin, /admin/users, /admin/transactions, /admin/usage, /admin/settings, /admin/website)
     api/                   # Route handlers (openai, upload, download, aws, webhooks)
   components/

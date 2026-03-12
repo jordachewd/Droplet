@@ -26,6 +26,7 @@ export interface CreateUserParams {
 /* Used by Clerk Webhook ("user.updated") */
 export interface UpdateUserParams {
   email?: string;
+  username?: string;
   userimg?: string;
   firstName?: string | undefined;
   lastName?: string | undefined;

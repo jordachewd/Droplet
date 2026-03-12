@@ -23,16 +23,6 @@ test.describe("authenticated user flows", () => {
       page.getByRole("heading", { name: /your plan/i }),
     ).toBeVisible();
   });
-
-  test("redirects non-admin users from admin to forbidden screen", async ({
-    page,
-  }) => {
-    await page.goto("/admin");
-    await expect(page).toHaveURL(/\/403$/);
-    await expect(
-      page.getByRole("heading", { name: "Forbidden" }),
-    ).toBeVisible();
-  });
 });
 
 test.describe("authenticated logout flow", () => {
