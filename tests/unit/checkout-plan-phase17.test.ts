@@ -70,7 +70,8 @@ describe("checkoutPlan phase17", () => {
 
     expect(createSessionMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        success_url: "http://localhost:3000/app/profile",
+        success_url:
+          "http://localhost:3000/checkout-success?session_id={CHECKOUT_SESSION_ID}",
         cancel_url: "http://localhost:3000/app/plans",
       }),
     );
