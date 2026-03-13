@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-13 (HF-4 complete. HF-8.1 complete. Phase 25.6 complete. HF-8.2 and HF-9 pending.)
+> Last updated: 2026-03-13 (PM deep audit complete. HF-4/HF-8.1/Phase 25.6 verified complete. HF-8.2 and HF-9 pending. Resolved tech debt purged.)
 
 ---
 
@@ -212,13 +212,6 @@ Prompts are versioned and separated from request handlers. `buildPersonaAwareSys
 - **API routes**: Must verify `auth()` before processing.
 - **Webhooks**: Exempt from auth — verified via `verifyWebhook()` from `@clerk/nextjs/webhooks` (Clerk) and `stripe.webhooks.constructEvent` (Stripe).
 
-### Auth Technical Debt
-
-- ~~**TD-AUTH-01**: Proxy protects old routes~~ — **Resolved** in Phase 17. Proxy now protects `/app(.*)` and `/admin(.*)` only.
-- ~~**TD-AUTH-02**: Admin at `/dashboard`~~ — **Resolved** in Phase 17. Admin is at `/admin`.
-- ~~**TD-AUTH-03**: Missing MongoDB user self-healing~~ — **Resolved** in HF-2. `ensureUserSynced()` utility created and wired into `/app/profile`, `/app/plans`, `/api/openai`. Returns HTTP 503 on failure instead of silent degradation.
-- ~~**TD-AUTH-04**: `/api/openai` silently degrades to Lite plan~~ — **Resolved** in HF-2. Route attempts self-healing, returns HTTP 503 if self-healing fails.
-
 ### Self-Healing User Sync Requirement
 
 When an authenticated user (valid Clerk session) has no corresponding MongoDB User record, server components and API routes must not silently fail or show permanent loading states. The required behavior is:
@@ -348,10 +341,6 @@ Purpose: Request-level usage logging for cost tracking and admin analytics.
 | createdAt | Date     | Yes      | No     | Mongoose timestamps            |
 | updatedAt | Date     | Yes      | No     | Mongoose timestamps            |
 
-### Data Model Technical Debt
-
-- ~~**TD-DB-05**: Task messages array unbounded (16MB risk)~~ — **Resolved** in Phase 15 via `estimatedBytes` tracking with 12MB threshold guard.
-
 ---
 
 ## 7. API Routes
@@ -406,12 +395,6 @@ Purpose: Request-level usage logging for cost tracking and admin analytics.
 - Handles: `checkout.session.completed`
 - Idempotency check on `Transaction.stripeId`
 - Resets usage counters on plan renewal
-
-### API Technical Debt
-
-- ~~**TD-API-01**: In-memory rate limiter~~ — **Resolved** in Phase 25.3 via MongoDB-backed `RateLimitEntry` with TTL index, atomic sliding window.
-- ~~**TD-API-06**: handleError loses stack traces~~ — **Resolved** in Phase 20 via `{ cause: error }` pattern.
-- ~~**TD-API-07**: No streaming implementation~~ — **Resolved** in Phase 19.
 
 ---
 
@@ -563,27 +546,16 @@ All auth/limit checks execute before streaming begins. Final task persistence an
 
 ### OpenAI Technical Debt
 
-- ~~**TD-AI-01**: No streaming~~ — **Resolved** in Phase 19 via `generateStreamingResponse()` + SSE events.
-- ~~**TD-AI-03**: No per-user cost tracking~~ — **Resolved** in Phase 16 via `UsageEvent` + `usage-event-utils.ts`.
-- ~~**TD-AI-06**: No retry/backoff for transient failures~~ — **Resolved** in Phase 22 via `withOpenAIRetry()` in `generateResponse.tsx`. Exponential backoff (1s/2s/4s), transient-only retries (429/500/502/503), model downgrade via `retryAttempt` parameter, SDK auto-retry disabled (`maxRetries: 0`).
-- ~~**TD-AI-07**: Models hardcoded~~ — **Resolved** in Phase 16 via `ai-model-policy.ts`.
 - **TD-AI-08**: No video generation (Premium). UI now shows "Coming soon" — implementation deferred.
-- ~~**TD-AI-09**: Prompts not optimized per persona/model~~ — **Partially resolved** in Phase 22 via `persona-prompts.ts`. Chat prompts are now per-persona, per-model-family with safety constraints. Image/audio generation prompts remain non-persona-aware.
-- ~~**TD-AI-10**: Model policy overhaul~~ — **Resolved** in Phase 21 via `MODEL_POLICY_MATRIX` + `resolveModelPolicy()` in `ai-model-policy.ts`.
-- ~~**TD-AI-11**: Dead `combinedCount` parameter~~ — **Resolved** in Phase 21-C. Removed from interface, function body, and all callers.
-- ~~**TD-AI-12**: Video matrix/resolver dual source of truth~~ — **Resolved** in Phase 21-C. Matrix `final.model` now `sora-2` with notes documenting `explicitPremium` override.
+- **TD-AI-09**: Image/audio generation prompts not yet persona-aware. Chat prompts are fully persona-aware (Phase 22). Tracked as Phase 26.1.
 - **TD-AI-13**: 5 model pricing entries in `ai-model-policy.ts` are placeholders pending OpenAI confirmation (`gpt-audio-mini`, `gpt-audio-1.5`, `gpt-4o-mini-tts`, `sora-2`, `sora-2-pro`).
-- ~~**TD-AI-14**: Dead `chatSystemMsg` export in `openai.tsx`~~ — **Resolved** in Phase 23.1. Constant removed, zero remaining usages.
-- ~~**TD-AI-15**: Hardcoded TTS model-name branch in `generateAudio.tsx`~~ — **Resolved** in Phase 23.2 via `isTtsOnly` policy flag. `MODEL_CAPABILITIES` map drives resolution centrally; `generateAudio.tsx` uses `policy.isTtsOnly` instead of string comparison.
+- **TD-AI-18** (advisory): OpenAI route `errorMessage` forwarding pattern at L370-376 is safe today but fragile — if any future code sets `aiPayload.errorMessage` to a raw OpenAI error, it will leak to clients. Consider always using generic constants.
 
 ---
 
 ## 9. File Handling
 
-All file handling technical debt has been resolved.
-
-- ~~**TD-FILE-01**: No S3 cleanup on user/task deletion~~ — **Fully resolved** in Phase 20. `deleteTask` now scans messages for S3 asset URLs and deletes objects (best-effort). Clerk webhook `user.deleted` cleans S3 prefix (Phase 19). Admin `removeUserByAdminAction` cleans S3 prefix (Phase 17).
-- ~~**TD-FILE-02**: Inline base64 in chat-input.tsx~~ — **Resolved** in Phase 20. Chat input now uploads via `/api/upload` FormData. S3 URLs used in message content. Blob previews for local display only.
+All file handling technical debt has been resolved. S3 cleanup on task/user deletion, FormData uploads, and blob previews are all operational.
 
 ---
 

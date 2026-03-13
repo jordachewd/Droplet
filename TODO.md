@@ -8,7 +8,8 @@
 > **STATUS: HF-8.2 and HF-9 are the remaining pre-25.7 fixes.**
 > All milestones 0–8 complete. HF-1 through HF-8.1 complete. Phase 25.6 complete (see DONE.md).
 > Phases 1–25.6 complete (see DONE.md).
-> Two new issues discovered during PM deep audit (2026-03-13): HF-8.2 (eventType leak), HF-9 (chat-input error leak).
+> Two issues discovered during PM deep audit (2026-03-13): HF-8.2 (eventType leak), HF-9 (chat-input error leak).
+> Both issues re-confirmed by Droplet-Architect audit (2026-03-13) with exact line numbers and reproduction steps.
 > Priority order: HF-8.2 → HF-9 → Phase 25.7 → Phase 26.
 > **All non-fix work is ON HOLD until HF-8.2 and HF-9 are resolved.**
 
