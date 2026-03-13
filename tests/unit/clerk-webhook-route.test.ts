@@ -207,7 +207,7 @@ describe("POST /api/webhooks/clerk", () => {
     expect(payload.user._id).toBe("mongo_user_existing");
   });
 
-  it("resolves the primary email and generates a fallback username when Clerk omits username", async () => {
+  it("resolves the primary email and generates a fallback username locally when Clerk omits username", async () => {
     verifyWebhookMock.mockResolvedValue({
       type: "user.created",
       data: {
@@ -234,12 +234,40 @@ describe("POST /api/webhooks/clerk", () => {
     const response = await POST(buildRequest({ event: "user.created" }));
 
     expect(response.status).toBe(200);
-    expect(getUserMock).toHaveBeenCalledWith("user_abc12345");
+    expect(getUserMock).not.toHaveBeenCalled();
     expect(User.create).toHaveBeenCalledWith(
       expect.objectContaining({
         clerkId: "user_abc12345",
         email: "primary@example.com",
         username: "primary-abc12345",
+      }),
+    );
+  });
+
+  it("does not call Clerk getUser when webhook includes email but omits username", async () => {
+    verifyWebhookMock.mockResolvedValue({
+      type: "user.created",
+      data: {
+        id: "user_email_only_1",
+        email_addresses: [{ email_address: "email-only@example.com" }],
+        primary_email_address_id: null,
+        created_at: "2026-01-01T00:00:00.000Z",
+        first_name: "",
+        last_name: "",
+        username: "   ",
+        image_url: "https://cdn.example.com/u1.png",
+      },
+    });
+
+    const response = await POST(buildRequest({ event: "user.created" }));
+
+    expect(response.status).toBe(200);
+    expect(getUserMock).not.toHaveBeenCalled();
+    expect(User.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        clerkId: "user_email_only_1",
+        email: "email-only@example.com",
+        username: expect.stringMatching(/^email-only-/),
       }),
     );
   });

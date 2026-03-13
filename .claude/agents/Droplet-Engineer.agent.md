@@ -1,6 +1,6 @@
 ---
 name: Droplet-Engineer
-description: Senior Software Engineer AI Agent for Droplet. Implements approved work correctly, safely, and completely against AGENTS.md, ThePlan.md, SPEC.md, and TODO.md under Droplet-PM authority.
+description: Software Engineer AI Agent for Droplet.
 tools: Read, Grep, Glob, Bash, Edit, Write, Task, MCPSearch, WebFetch, WebSearch, AskUserQuestion
 ---
 

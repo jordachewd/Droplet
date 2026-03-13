@@ -5,6 +5,28 @@ import User from "@/lib/database/models/user.model";
 import serializeForClient from "@/lib/utils/serialize-for-client";
 import type { UserData } from "@/types/UserData.d";
 
+const USER_SYNC_PROJECTION =
+  "clerkId username email role plan firstName lastName userimg registerAt updatedAt";
+
+function isMongoDuplicateKeyError(error: unknown): error is { code: number } {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    (error as { code?: number }).code === 11000
+  );
+}
+
+async function findSyncedUserByClerkId(
+  clerkUserId: string,
+): Promise<UserData | null> {
+  const user = await User.findOne({ clerkId: clerkUserId })
+    .select(USER_SYNC_PROJECTION)
+    .lean();
+
+  return user ? (serializeForClient(user) as UserData) : null;
+}
+
 /**
  * Ensures a MongoDB user record exists for the given Clerk user ID.
  * If the record is missing (e.g. webhook delay/failure), self-heals
@@ -19,14 +41,9 @@ export async function ensureUserSynced(
   try {
     await connectToDatabase();
 
-    const existingUser = await User.findOne({ clerkId: clerkUserId })
-      .select(
-        "clerkId username email role plan firstName lastName userimg registerAt updatedAt",
-      )
-      .lean();
-
+    const existingUser = await findSyncedUserByClerkId(clerkUserId);
     if (existingUser) {
-      return serializeForClient(existingUser) as UserData;
+      return existingUser;
     }
 
     // Self-heal: fetch from Clerk and create MongoDB record
@@ -50,29 +67,52 @@ export async function ensureUserSynced(
         lastName: clerkUser.lastName,
       });
 
-    const newUser = await User.create({
-      clerkId: clerkUserId,
-      username,
-      email,
-      firstName: clerkUser.firstName ?? "",
-      lastName: clerkUser.lastName ?? "",
-      userimg: clerkUser.imageUrl ?? "",
-      registerAt: new Date(clerkUser.createdAt),
-    });
+    let newUserId: string | null = null;
+    let newUserRole = "client";
 
-    // Set Clerk publicMetadata to match webhook behavior
-    await client.users.updateUserMetadata(clerkUserId, {
-      publicMetadata: {
-        userId: newUser._id.toString(),
-        role: newUser.role,
-        userImg: clerkUser.imageUrl ?? "",
-      },
-    });
+    try {
+      const newUser = await User.create({
+        clerkId: clerkUserId,
+        username,
+        email,
+        firstName: clerkUser.firstName ?? "",
+        lastName: clerkUser.lastName ?? "",
+        userimg: clerkUser.imageUrl ?? "",
+        registerAt: new Date(clerkUser.createdAt),
+      });
 
-    const created = await User.findById(newUser._id)
-      .select(
-        "clerkId username email role plan firstName lastName userimg registerAt updatedAt",
-      )
+      newUserId = newUser._id.toString();
+      newUserRole = newUser.role;
+    } catch (error) {
+      if (isMongoDuplicateKeyError(error)) {
+        const raceWinnerUser = await findSyncedUserByClerkId(clerkUserId);
+        return raceWinnerUser;
+      }
+
+      throw error;
+    }
+
+    if (!newUserId) {
+      return null;
+    }
+
+    try {
+      // Metadata sync is non-fatal; webhook or future sign-ins can reconcile.
+      await client.users.updateUserMetadata(clerkUserId, {
+        publicMetadata: {
+          userId: newUserId,
+          role: newUserRole,
+          userImg: clerkUser.imageUrl ?? "",
+        },
+      });
+    } catch {
+      process.stderr.write(
+        `[ensure-user-synced] Metadata sync failed for ${clerkUserId}; continuing with MongoDB user.\n`,
+      );
+    }
+
+    const created = await User.findById(newUserId)
+      .select(USER_SYNC_PROJECTION)
       .lean();
 
     return created ? (serializeForClient(created) as UserData) : null;

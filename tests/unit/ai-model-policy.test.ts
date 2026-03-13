@@ -82,7 +82,7 @@ describe("ai-model-policy", () => {
       }),
     ).toMatchObject({
       model: "gpt-4.1",
-      fallbackModel: "gpt-4.1",
+      fallbackModel: "gpt-4o-mini",
       taskClass: "standard",
       maxInputTokens: 32_000,
       maxOutputTokens: 1_800,
@@ -229,7 +229,7 @@ describe("ai-model-policy", () => {
       }),
     ).toMatchObject({
       model: "gpt-4.1",
-      fallbackModel: "gpt-4.1",
+      fallbackModel: "gpt-4.1-mini",
       wasDowngraded: false,
     });
     expect(
@@ -243,6 +243,52 @@ describe("ai-model-policy", () => {
       model: "gpt-5.4",
       fallbackModel: "gpt-4.1",
       wasDowngraded: false,
+    });
+  });
+
+  it("downgrades premium chat to fallback models on retry attempts", () => {
+    expect(
+      resolveModelPolicy({
+        plan: "premium",
+        feature: "chat",
+        taskClass: "standard",
+        retryAttempt: 1,
+      }),
+    ).toMatchObject({
+      model: "gpt-4o-mini",
+      fallbackModel: "gpt-4o-mini",
+      wasDowngraded: true,
+      downgradeReasons: ["retry_attempt"],
+    });
+
+    expect(
+      resolveModelPolicy({
+        plan: "premium",
+        feature: "chat",
+        taskClass: "complex",
+        retryAttempt: 1,
+      }),
+    ).toMatchObject({
+      model: "gpt-4.1-mini",
+      fallbackModel: "gpt-4.1-mini",
+      wasDowngraded: true,
+      downgradeReasons: ["retry_attempt"],
+    });
+  });
+
+  it("downgrades premium chat to fallback models under high latency", () => {
+    expect(
+      resolveModelPolicy({
+        plan: "premium",
+        feature: "chat",
+        taskClass: "simple",
+        highLatency: true,
+      }),
+    ).toMatchObject({
+      model: "gpt-4o-mini",
+      fallbackModel: "gpt-4o-mini",
+      wasDowngraded: true,
+      downgradeReasons: ["high_latency"],
     });
   });
 

@@ -1,6 +1,6 @@
 ---
 name: Droplet-PM
-description: Core authority Project Manager Supervisor AI Agent for Droplet. Governs delivery strategy, bug triage, architecture oversight, documentation, prioritization, and execution sequencing across all agents.
+description: Project Manager Supervisor AI Agent for Droplet.
 tools: Read, Grep, Glob, Bash, Edit, Task, AskUserQuestion, Write, WebSearch, MCPSearch, WebFetch
 ---
 

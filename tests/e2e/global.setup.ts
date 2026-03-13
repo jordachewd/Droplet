@@ -11,11 +11,15 @@ import { expect, test as setup } from "@playwright/test";
 import { getEnvValue } from "./utils/dotenv-local";
 import {
   getE2ETestUser,
+  getE2EAdminUser,
+  missingAdminCredentialsError,
   missingCredentialsError,
+  requireE2EAdminUser,
   requireE2ETestUser,
 } from "./utils/e2e-test-user";
 
 const authFile = path.join(__dirname, ".clerk/user.json");
+const adminAuthFile = path.join(__dirname, ".clerk/admin.json");
 const guestFile = path.join(__dirname, ".clerk/guest.json");
 const clerkSetupError =
   "Set CLERK_SECRET_KEY or CLERK_TESTING_TOKEN in .env.local for Clerk Playwright auth helpers.";
@@ -23,6 +27,7 @@ const mongoSetupError =
   "Set MONGODB_URL and MONGODB_DB_NAME in .env.local for E2E database setup.";
 
 const e2eTestUser = getE2ETestUser();
+const e2eAdminUser = getE2EAdminUser();
 
 async function ensureE2EAppUser(params: {
   clerkId: string;
@@ -30,6 +35,7 @@ async function ensureE2EAppUser(params: {
   firstName?: string | null;
   imageUrl?: string;
   lastName?: string | null;
+  role: "client" | "admin";
   username?: string | null;
 }): Promise<string> {
   const mongoUrl = process.env.MONGODB_URL ?? getEnvValue("MONGODB_URL");
@@ -78,7 +84,7 @@ async function ensureE2EAppUser(params: {
           email: resolvedEmail,
           firstName: params.firstName ?? "E2E",
           lastName: params.lastName ?? "User",
-          role: "client",
+          role: params.role,
           updatedAt: now,
           userimg: params.imageUrl,
           username: resolvedUsername,
@@ -116,7 +122,17 @@ async function ensureE2EAppUser(params: {
   }
 }
 
-async function ensureE2ETestUser(): Promise<void> {
+async function ensureE2EUserWithRole({
+  credentials,
+  role,
+  firstName,
+  lastName,
+}: {
+  credentials: ReturnType<typeof requireE2ETestUser>;
+  role: "client" | "admin";
+  firstName: string;
+  lastName: string;
+}): Promise<void> {
   const secretKey =
     process.env.CLERK_SECRET_KEY ?? getEnvValue("CLERK_SECRET_KEY");
 
@@ -124,7 +140,7 @@ async function ensureE2ETestUser(): Promise<void> {
     throw new Error(clerkSetupError);
   }
 
-  const { email, password, username } = requireE2ETestUser();
+  const { email, password, username } = credentials;
   const clerkClient = createClerkClient({ secretKey });
   const [emailMatches, usernameMatches] = await Promise.all([
     email ? clerkClient.users.getUserList({ emailAddress: [email] }) : null,
@@ -140,6 +156,8 @@ async function ensureE2ETestUser(): Promise<void> {
   const clerkUser = existingUser
     ? await clerkClient.users.updateUser(existingUser.id, {
         ...(username ? { username } : {}),
+        firstName,
+        lastName,
         password,
         skipLegalChecks: true,
         skipPasswordChecks: true,
@@ -147,8 +165,8 @@ async function ensureE2ETestUser(): Promise<void> {
     : await clerkClient.users.createUser({
         ...(email ? { emailAddress: [email] } : {}),
         ...(username ? { username } : {}),
-        firstName: "E2E",
-        lastName: "User",
+        firstName,
+        lastName,
         password,
         skipLegalChecks: true,
         skipPasswordChecks: true,
@@ -160,12 +178,13 @@ async function ensureE2ETestUser(): Promise<void> {
     firstName: clerkUser.firstName,
     imageUrl: clerkUser.imageUrl,
     lastName: clerkUser.lastName,
+    role,
     username: username ?? clerkUser.username,
   });
 
   await clerkClient.users.updateUserMetadata(clerkUser.id, {
     publicMetadata: {
-      role: "client",
+      role,
       userId: appUserId,
       ...(clerkUser.imageUrl ? { userImg: clerkUser.imageUrl } : {}),
     },
@@ -205,7 +224,12 @@ setup("persist guest storage state", async ({ page }) => {
 setup("authenticate E2E user and persist storage state", async ({ page }) => {
   const { identifier, password } = requireE2ETestUser();
 
-  await ensureE2ETestUser();
+  await ensureE2EUserWithRole({
+    credentials: requireE2ETestUser(),
+    role: "client",
+    firstName: "E2E",
+    lastName: "User",
+  });
 
   await setupClerkTestingToken({ page });
   await page.goto("/");
@@ -224,3 +248,38 @@ setup("authenticate E2E user and persist storage state", async ({ page }) => {
   mkdirSync(path.dirname(authFile), { recursive: true });
   await page.context().storageState({ path: authFile });
 });
+
+setup(
+  "authenticate E2E admin user and persist storage state",
+  async ({ page }) => {
+    setup.skip(!e2eAdminUser, missingAdminCredentialsError);
+
+    const { identifier, password } = requireE2EAdminUser();
+
+    await ensureE2EUserWithRole({
+      credentials: requireE2EAdminUser(),
+      role: "admin",
+      firstName: "E2E",
+      lastName: "Admin",
+    });
+
+    await setupClerkTestingToken({ page });
+    await page.goto("/");
+    await clerk.signIn({
+      page,
+      signInParams: {
+        strategy: "password",
+        identifier,
+        password,
+      },
+    });
+
+    await page.goto("/admin");
+    await expect(
+      page.getByRole("heading", { name: "Admin Dashboard" }),
+    ).toBeVisible();
+
+    mkdirSync(path.dirname(adminAuthFile), { recursive: true });
+    await page.context().storageState({ path: adminAuthFile });
+  },
+);
