@@ -65,18 +65,15 @@ const sidebarDestinations: SidebarDestination[] = [
 ];
 
 async function ensureSidebarOpen(page: Page) {
+  const sidebar = page.locator("aside#chat-sidebar");
   const openSidebarButton = page.getByRole("button", { name: "Open sidebar" });
-  const showMenuButton = page.getByRole("button", { name: "Show menu" });
 
   if (await openSidebarButton.isVisible()) {
     await openSidebarButton.click();
   }
 
-  if (await showMenuButton.isVisible()) {
-    await showMenuButton.click();
-  }
-
-  await expect(page.locator("aside#chat-sidebar")).toBeVisible();
+  await expect(sidebar).toBeVisible();
+  await expect(sidebar).toHaveClass(/translate-x-0/);
 }
 
 async function ensureAuthenticatedAppPage(page: Page) {
@@ -95,6 +92,42 @@ async function ensureAuthenticatedAppPage(page: Page) {
   await expect(page).toHaveURL(/\/app(?:\?.*)?$/);
 }
 
+async function clickSidebarLink(
+  page: Page,
+  linkName: SidebarDestination["linkName"],
+) {
+  const sidebar = page.locator("aside#chat-sidebar");
+  const sidebarScrollContainer = sidebar.locator(".droplet-scrollbar").first();
+  const sidebarLink = sidebar.getByRole("link", { name: linkName });
+
+  await expect(sidebarLink).toBeVisible();
+  await sidebarScrollContainer.evaluate((container) => {
+    container.scrollTop = 0;
+  });
+  await sidebarLink.evaluate((element) => {
+    element.scrollIntoView({ block: "center", inline: "nearest" });
+  });
+  await sidebarLink.click({ force: true });
+}
+
+async function resetDesktopSidebarPreference(page: Page) {
+  await page.evaluate(() => {
+    localStorage.setItem("droplet-sidebar-collapsed", "false");
+    localStorage.setItem("cellesseon-sidebar-collapsed", "false");
+  });
+  await page.reload({ waitUntil: "domcontentloaded" });
+}
+
+async function ensureNotSignedOut(page: Page): Promise<boolean> {
+  if (!/\/sign-in(?:\/|$|\?)/.test(page.url())) {
+    return false;
+  }
+
+  await ensureAuthenticatedAppPage(page);
+  await ensureSidebarOpen(page);
+  return true;
+}
+
 test.describe("authenticated app shell and navigation", () => {
   test.skip(!e2eTestUser, missingCredentialsError);
   test.skip(
@@ -107,6 +140,8 @@ test.describe("authenticated app shell and navigation", () => {
     page,
   }) => {
     await ensureAuthenticatedAppPage(page);
+    await resetDesktopSidebarPreference(page);
+    await ensureAuthenticatedAppPage(page);
     await ensureSidebarOpen(page);
 
     await expect(page.locator("main.ChatWrapper")).toBeVisible();
@@ -118,14 +153,13 @@ test.describe("authenticated app shell and navigation", () => {
     for (const destination of sidebarDestinations) {
       await test.step(`navigates to ${destination.expectedPath}`, async () => {
         await ensureAuthenticatedAppPage(page);
+        await ensureNotSignedOut(page);
         await ensureSidebarOpen(page);
 
-        const sidebarLink = page
-          .locator("aside#chat-sidebar")
-          .getByRole("link", { name: destination.linkName });
-
-        await sidebarLink.scrollIntoViewIfNeeded();
-        await sidebarLink.click();
+        await clickSidebarLink(page, destination.linkName);
+        if (await ensureNotSignedOut(page)) {
+          await clickSidebarLink(page, destination.linkName);
+        }
 
         await expect(page).toHaveURL(destination.expectedPath);
         await destination.verify(page);

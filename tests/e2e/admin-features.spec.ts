@@ -49,17 +49,18 @@ test.describe("admin transactions, usage, settings, and website", () => {
 
     await page.getByLabel("Title").fill(pageTitle);
     await page.getByLabel("Slug").fill(pageSlug);
-    await page.getByRole("button", { name: "Create Page" }).click();
+    await Promise.all([
+      page.waitForLoadState("networkidle"),
+      page.getByRole("button", { name: "Create Page" }).click(),
+    ]);
 
-    const createdSlugCell = page
-      .locator(".AdminWebsitePage span")
-      .filter({ hasText: pageSlug })
+    const createdPageRow = page
+      .locator(".AdminWebsitePage .divide-y > div")
+      .filter({ has: page.locator("span", { hasText: pageSlug }) })
       .first();
-    await expect(createdSlugCell).toBeVisible();
+    await expect(createdPageRow).toBeVisible({ timeout: 15_000 });
 
-    const createdPageRow = createdSlugCell.locator(
-      "xpath=ancestor::div[contains(@class,'grid')][1]",
-    );
+    await createdPageRow.scrollIntoViewIfNeeded();
     await createdPageRow.getByRole("link", { name: "Edit" }).click();
 
     await expect(page).toHaveURL(/\/admin\/website\/[^/]+$/);

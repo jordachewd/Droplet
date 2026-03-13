@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { auth } from "@clerk/nextjs/server";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import Task from "@/lib/database/models/tasks.model";
@@ -181,6 +181,7 @@ describe("updateTask", () => {
 
 describe("deleteTask", () => {
   const taskId = "507f1f77bcf86cd799439011";
+  let stderrWriteSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -190,6 +191,13 @@ describe("deleteTask", () => {
       _id: taskId,
       messages: [],
     } as never);
+    stderrWriteSpy = vi
+      .spyOn(process.stderr, "write")
+      .mockImplementation(() => true);
+  });
+
+  afterEach(() => {
+    stderrWriteSpy.mockRestore();
   });
 
   it("deletes a task when requested by the owner and cleans up owned S3 assets", async () => {
@@ -325,6 +333,9 @@ describe("deleteTask", () => {
     });
     expect(deleteFileFromAWS).toHaveBeenCalledWith(
       "auth_user_1/uploads/photo.png",
+    );
+    expect(stderrWriteSpy).toHaveBeenCalledWith(
+      "[task.actions] deleteTask S3 cleanup failed.\n",
     );
     expect(result).toEqual(
       expect.objectContaining({
