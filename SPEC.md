@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-12 (HF-2 complete, image/audio model IDs identified as broken — HF-3 in progress)
+> Last updated: 2026-03-13 (HF-5, HF-6, HF-7 complete. HF-3 closed (invalid). Phase 25.5 E2E expansion complete. HF-4 Stripe redirect fix pending.)
 
 ---
 
@@ -429,21 +429,21 @@ Central resolver: `resolveModelPolicy()` in `src/lib/utils/ai-model-policy.ts`. 
 
 ### 8.2 Model Policy Matrix
 
-| Feature          | Plan    | Default Model      | Fallback Model     | Cost-Control Notes                                                                                    |
-| ---------------- | ------- | ------------------ | ------------------ | ----------------------------------------------------------------------------------------------------- |
-| Title generation | All     | `gpt-4.1-nano`     | `gpt-4o-mini`      | Hard cap: 1,200 input tokens, 20 output tokens. Always cheapest model regardless of plan.             |
-| Chat             | Lite    | `gpt-4o-mini`      | `gpt-4.1-nano`     | Strict context compaction; max output tokens per reply; no expensive tools; block retries beyond one. |
-| Chat             | Pro     | `gpt-4.1`          | `gpt-4o-mini`      | Degrade to fallback on soft budget, high latency, simple tasks, or retries.                           |
-| Chat             | Premium | `gpt-4.1`          | `gpt-4.1`          | Default `gpt-4.1` for routine chat. `gpt-5.4` only for complex reasoning with `explicitPremium`.      |
-| Image            | Lite    | `gpt-image-1-mini` | _(none)_           | One model only. Limit size, count, concurrency. Monthly quota enforced.                               |
-| Image            | Pro     | `gpt-image-1.5`    | `gpt-image-1-mini` | Downgrade for retries, previews, or users beyond soft budget.                                         |
-| Image            | Premium | `gpt-image-1.5`    | `gpt-image-1-mini` | Same model tiers as Pro; Premium gets unlimited quota.                                                |
-| Audio            | Lite    | _(blocked)_        | —                  | Audio not available on Lite.                                                                          |
-| Audio            | Pro     | `gpt-audio-mini`   | `gpt-4o-mini-tts`  | TTS-only fallback. Do NOT use TTS fallback for `audio_in_out` mode.                                   |
-| Audio            | Premium | `gpt-audio-1.5`    | `gpt-audio-mini`   | Downgrade for retries, previews, long-form beyond soft budget.                                        |
-| Video            | Lite    | _(blocked)_        | —                  | Video not available on Lite.                                                                          |
-| Video            | Pro     | _(blocked)_        | —                  | Video not available on Pro.                                                                           |
-| Video            | Premium | `sora-2-pro`       | `sora-2`           | `sora-2` for previews/drafts. `sora-2-pro` only for final renders with `explicitPremium`.             |
+| Feature          | Plan    | Default Model      | Fallback Model                 | Cost-Control Notes                                                                                                                                             |
+| ---------------- | ------- | ------------------ | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Title generation | All     | `gpt-4.1-nano`     | `gpt-4o-mini`                  | Hard cap: 1,200 input tokens, 20 output tokens. Always cheapest model regardless of plan.                                                                      |
+| Chat             | Lite    | `gpt-4o-mini`      | `gpt-4.1-nano`                 | Strict context compaction; max output tokens per reply; no expensive tools; block retries beyond one.                                                          |
+| Chat             | Pro     | `gpt-4.1`          | `gpt-4o-mini`                  | Degrade to fallback on soft budget, high latency, simple tasks, or retries.                                                                                    |
+| Chat             | Premium | `gpt-4.1`          | `gpt-4o-mini` / `gpt-4.1-mini` | Default `gpt-4.1` for routine chat. `gpt-5.4` only for complex with `explicitPremium`. Simple/standard fall to `gpt-4o-mini`; complex falls to `gpt-4.1-mini`. |
+| Image            | Lite    | `gpt-image-1-mini` | _(none)_                       | One model only. Limit size, count, concurrency. Monthly quota enforced.                                                                                        |
+| Image            | Pro     | `gpt-image-1.5`    | `gpt-image-1-mini`             | Downgrade for retries, previews, or users beyond soft budget.                                                                                                  |
+| Image            | Premium | `gpt-image-1.5`    | `gpt-image-1-mini`             | Same model tiers as Pro; Premium gets unlimited quota.                                                                                                         |
+| Audio            | Lite    | _(blocked)_        | —                              | Audio not available on Lite.                                                                                                                                   |
+| Audio            | Pro     | `gpt-audio-mini`   | `gpt-4o-mini-tts`              | TTS-only fallback. Do NOT use TTS fallback for `audio_in_out` mode.                                                                                            |
+| Audio            | Premium | `gpt-audio-1.5`    | `gpt-audio-mini`               | Downgrade for retries, previews, long-form beyond soft budget.                                                                                                 |
+| Video            | Lite    | _(blocked)_        | —                              | Video not available on Lite.                                                                                                                                   |
+| Video            | Pro     | _(blocked)_        | —                              | Video not available on Pro.                                                                                                                                    |
+| Video            | Premium | `sora-2-pro`       | `sora-2`                       | `sora-2` for previews/drafts. `sora-2-pro` only for final renders with `explicitPremium`.                                                                      |
 
 ### 8.3 Task Classes
 

@@ -5,285 +5,102 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: HF-5 critical fix next — auth reliability (webhook over-fetch + self-heal race).**
-> All milestones 0–8 implementation mostly complete. HF-1, HF-2 complete. HF-3 closed (invalid — model IDs verified real).
-> Phases 1–25.5.3 complete (see DONE.md).
-> Priority order: HF-5 (critical auth) → HF-4 (Stripe redirect) → HF-6 (Premium retry) → HF-7 (compaction) → Phase 25.5+.
+> **STATUS: HF-4 is the sole remaining launch blocker — Stripe checkout redirect fix.**
+> All milestones 0–8 complete. HF-1, HF-2, HF-3, HF-5, HF-6, HF-7 complete (see DONE.md).
+> Phases 1–25.5 complete (see DONE.md).
+> Priority order: HF-4 (Stripe redirect — LAUNCH BLOCKER) → HF-8 (Stripe webhook sanitization) → Phase 25.6 → Phase 25.7 → Phase 26.
+> **All non-HF-4 work is ON HOLD until HF-4 is resolved.**
 
 ---
 
-## HF-4: HIGH — Stripe Checkout Returns to /sign-in Instead of /app/profile
+## HF-4: CRITICAL (LAUNCH BLOCKER) — Stripe Checkout Returns to /sign-in Instead of /app/profile
 
 > After completing Stripe payment, user lands on `/sign-in` instead of `/app/profile`.
 > Code is correct — `success_url` is `${BASEURL}/app/profile` (verified in `transaction.action.tsx`).
-> Likely cause: Clerk auth session expires while user is on Stripe's external checkout domain.
+> Root cause confirmed: Clerk auth session expires while user is on Stripe's external checkout domain.
 > When user returns, the proxy sees no active session and redirects `/app/profile` → `/sign-in`.
+> **Investigation complete (HF-4.1). Implementation approved by PM and Architect.**
 > Ref: SPEC.md TD-BILL-02.
 
 ---
 
-### HF-4.1 Investigate and fix Stripe checkout return URL issue
+### HF-4.1 ~~Investigate and~~ fix Stripe checkout return URL issue
+
+**Root cause (confirmed):** Clerk session cookie expires or fails to rehydrate while user is on Stripe's external domain. On return, the proxy (`/app(.*)` matcher) sees no active session and redirects to `/sign-in`.
+
+**Approved fix (PM + Architect):** Create a public intermediary route with Stripe session verification.
 
 **What to do:**
 
-1. **Verify production env:** Confirm `NEXT_PUBLIC_API_BASE_URL` in production `.env` matches the deployed domain exactly (correct protocol, no trailing slash, correct domain).
-2. **Test locally:** Complete the full checkout flow: click upgrade → complete Stripe test payment → verify landing page.
-3. **Investigate session expiry:** Check if Clerk session expires during Stripe checkout:
-   - Open browser DevTools Network tab before clicking upgrade.
-   - Complete payment on Stripe.
-   - After redirect back, check the Network tab for the redirect chain (is `/app/profile` returning 302 → `/sign-in`?).
-   - Check Clerk session cookie expiration settings in Clerk Dashboard.
-4. **If session expiry is the cause**, consider fixes:
-   - Option A: Redirect `success_url` to a public intermediary route (e.g., `/checkout-success?session_id={CHECKOUT_SESSION_ID}`) that verifies payment status and redirects to `/app/profile` after ensuring re-authentication.
-   - Option B: Adjust Clerk session duration/inactivity settings to survive the checkout window.
-   - Option C: Use Stripe's `{CHECKOUT_SESSION_ID}` template in `success_url` and add a public `/checkout-complete` page that fetches session status and redirects appropriately.
-5. **If env config is the cause**, fix the env var and verify.
+1. **Create public route** at `src/app/(public)/checkout-success/page.tsx` (outside `(chat)` group, so proxy does NOT intercept).
+2. **Accept query parameter** `session_id` from Stripe template variable.
+3. **Server-side verification** — call `stripe.checkout.sessions.retrieve(sessionId)` to verify `payment_status === 'paid'`.
+4. **Validate input** — `session_id` must be a non-empty string of reasonable length (max 255 chars). Reject empty/missing with generic error.
+5. **If payment verified**: render success confirmation UI with link to `/app/profile` (standard Next.js `<Link>`).
+6. **If payment NOT verified or session_id invalid**: render generic error with link to `/app/plans`.
+7. **Do NOT modify user data** on this page — that remains the Stripe webhook's responsibility. This page is purely confirmation UI.
+8. **Update `success_url`** in `src/lib/actions/transaction.action.tsx` from `${BASEURL}/app/profile` to `${BASEURL}/checkout-success?session_id={CHECKOUT_SESSION_ID}` (Stripe template variable).
+9. **Update header/nav** — no navigation link to this page (it's only reached via Stripe redirect).
+10. **Update E2E tests** — the checkout redirect assertion (if any) must point to `/checkout-success`.
+
+**Rejected alternatives:**
+
+- Option B (longer Clerk session duration) — REJECTED. Global setting, creates security tradeoff, doesn't guarantee survival across slow checkouts.
+- Direct redirect to `/sign-in` with post-login redirect — REJECTED. Bad UX, user already authenticated.
 
 **Acceptance criteria:**
 
-- [ ] Root cause identified and documented
-- [ ] After successful Stripe payment, user lands on `/app/profile` (not `/sign-in`)
-- [ ] Fix verified on both local and production environments
-- [ ] No regression to other Stripe or auth flows
-- [ ] If code changes required: `npx tsc --noEmit` passes, all tests pass
-
----
-
-## HF-5: CRITICAL — Auth Reliability: Webhook Over-Fetch & Self-Heal Race
-
-> Two independent bugs on the user-creation critical path combine to degrade signup
-> and chat reliability. During Clerk API degradation, valid signups fail (HF-5.1).
-> During webhook/self-heal race conditions, authenticated users get false 503s (HF-5.2).
-> Both confirmed by Architect and Engineer. No blockers — ready to implement.
-> Ref: AGENTS.md Security Rules (self-healing user sync). SPEC.md Section 2.
-
----
-
-### HF-5.1 Remove unnecessary Clerk API call for missing username in webhook
-
-**File:** `src/app/api/webhooks/clerk/route.tsx`
-
-**What to do:**
-
-- In `resolveUserCreatedParams()`, change the condition `if (!webhookEmail || !webhookUsername)` to `if (!webhookEmail)`.
-- The username fallback is already handled locally by `generateFallbackUsername()` — no Clerk backend call is needed for it.
-- When `fallbackClerkUser` is null (because we skip the fetch), the username chain `webhookUsername ?? toNonEmptyString(fallbackClerkUser?.username) ?? generateFallbackUsername(...)` correctly falls through to local generation.
-- Verify `firstName`, `lastName`, and `userimg` tolerate empty strings when `fallbackClerkUser` is null (they already default to `""`).
-
-**Acceptance criteria:**
-
-- [ ] Condition changed to `if (!webhookEmail)` only
-- [ ] Webhook with email but no username succeeds WITHOUT calling `client.users.getUser()`
-- [ ] Webhook with no email still calls `client.users.getUser()` as fallback
-- [ ] `generateFallbackUsername()` produces valid usernames when webhook fields are missing
-- [ ] Existing clerk-webhook unit tests updated and passing
-- [ ] New test: webhook payload with email but no username → verify `getUser` NOT called
-- [ ] `npx tsc --noEmit` passes
-
----
-
-### HF-5.2 Fix self-heal duplicate-key race returning false 503
-
-**File:** `src/lib/utils/ensure-user-synced.ts`
-
-**What to do:**
-
-1. Wrap `User.create()` in a targeted try/catch for MongoDB error code `11000` (duplicate key).
-2. On `11000`, refetch the existing user with `User.findOne({ clerkId })` using the same `.select().lean()` projection as the happy path. Return the refetched user.
-3. Wrap `client.users.updateUserMetadata()` in its own try/catch. Log a warning on failure but still return the successfully created (or refetched) user record. Metadata sync is non-critical — the next webhook or login event will reconcile it.
-4. Keep the outer try/catch for truly unexpected errors (network failures, DB connection errors).
-5. The consuming code in `src/app/api/openai/route.tsx` (line ~568) does NOT need changes — it already handles null correctly. This fix reduces false nulls.
-
-**Acceptance criteria:**
-
-- [ ] Duplicate key (11000) error caught specifically after `User.create()`
-- [ ] Refetch uses same `.select().lean()` projection as the initial `findOne`
-- [ ] `updateUserMetadata()` failure does NOT cause null return
-- [ ] A code comment documents why metadata sync is non-fatal
-- [ ] New unit test: `User.create()` throws 11000 → verify user returned (not null)
-- [ ] New unit test: `updateUserMetadata()` throws → verify user still returned
-- [ ] `npx tsc --noEmit` passes
-- [ ] All existing tests pass
-
----
-
-## HF-6: HIGH — Premium Chat Retries Never Downgrade Model Tier
-
-> All 3 Premium chat task classes set `fallbackModel` equal to `model` (`gpt-4.1`).
-> The resolver only downgrades when `fallbackModel !== model`, so the retry path is dead code
-> for Premium chat. Violates AGENTS.md rule: "Retries should downgrade model tier."
-> Pro plan correctly uses `gpt-4o-mini` as fallback — issue is isolated to Premium.
-> Confirmed by Architect and Engineer. Depends on: HF-5 resolved first.
-> Ref: AGENTS.md AI/OpenAI Rules. SPEC.md Section 8.
-
----
-
-### HF-6.1 Set distinct fallback models for Premium chat task classes
-
-**File:** `src/lib/utils/ai-model-policy.ts`
-
-**What to do:**
-
-- Change Premium chat `simple` fallbackModel from `"gpt-4.1"` to `"gpt-4o-mini"`.
-- Change Premium chat `standard` fallbackModel from `"gpt-4.1"` to `"gpt-4o-mini"`.
-- Change Premium chat `complex` fallbackModel from `"gpt-4.1"` to `"gpt-4.1-mini"` (complex warrants a smaller quality drop than simple/standard).
-- Verify `gpt-4.1-mini` is a valid model ID. If not, use `gpt-4o-mini` and document the gap.
-- When `gpt-5.4` is later wired as the primary complex model, its fallback should be `gpt-4.1`.
-- Update the `notes` field on each rule to reflect the new downgrade behavior.
-
-**PM Decision (recorded):** Complex Premium chat falls to `gpt-4.1-mini` (not `gpt-4o-mini`), preserving reasonable quality on retry. Simple/standard fall to `gpt-4o-mini`, matching Pro behavior.
-
-**Acceptance criteria:**
-
-- [ ] All 3 Premium chat `fallbackModel` values differ from their `model` values
-- [ ] Existing unit test assertions updated (e.g., `ai-model-policy.test.ts` line ~85)
-- [ ] New test: Premium chat with `retryAttempt: 1` → verify model resolves to fallbackModel
-- [ ] New test: Premium chat with `highLatency: true` → verify downgrade fires
+- [ ] Public route `/checkout-success` exists outside protected route groups
+- [ ] Route validates `session_id` param (non-empty, max 255 chars)
+- [ ] Route calls `stripe.checkout.sessions.retrieve()` server-side
+- [ ] Verified payment shows success UI + link to `/app/profile`
+- [ ] Unverified/invalid shows error UI + link to `/app/plans`
+- [ ] No user data modification on this page (webhook handles that)
+- [ ] `success_url` in `transaction.action.tsx` updated to use `{CHECKOUT_SESSION_ID}` template
+- [ ] Generic error messages only — no Stripe session data leaked to client
 - [ ] `npx tsc --noEmit` passes
 - [ ] All tests pass
 
 ---
 
-## HF-7: MEDIUM — Context Compaction Ignores Non-Text Token Cost
+---
 
-> `estimateMessageTokens()` returns 0 for images/audio. Non-text content items always retained
-> with zero cost in compaction. Image-heavy conversations pass through unchanged and can blow
-> the provider context window, defeating the purpose of the compaction layer.
-> Confirmed by Architect and Engineer. Needs design decisions before implementation.
-> Depends on: HF-5 resolved first. Ref: SPEC.md Section 8.
+## HF-8: MEDIUM — Stripe Webhook Leaks Detailed Error Messages
+
+> Discovered during PM deep audit (2026-03-13).
+> Stripe webhook route returns detailed internal error strings in JSON responses.
+> While the consumer is Stripe (not a browser), this violates AGENTS.md: "generic messages to clients; detailed logs server-side only."
+> Also returns `serializeForClient(newTransaction)` data in success response — unnecessary data exposure.
+> Depends on: HF-4 resolved first.
+> Ref: AGENTS.md Security Rules.
 
 ---
 
-### HF-7.1 Add non-text token cost estimation to message compaction
+### HF-8.1 Sanitize Stripe webhook error responses
 
-**File:** `src/lib/utils/openai/message-policy.ts`
+**File:** `src/app/api/webhooks/stripe/route.tsx`
 
 **What to do:**
 
-1. In `estimateMessageTokens()`, assign heuristic token costs to non-text content items:
-   - `image_url`: 300 tokens (midpoint between low-detail 85 and high-detail 1105; detail level is not available in the content item type).
-   - `input_audio`: 500 tokens per audio segment (conservative flat estimate; duration not stored).
-   - Document these heuristics as approximate with a code comment.
-2. In `trimMessageToTokenLimit()`, allow non-text items to be evicted when `remainingTokens <= 0` — currently they are pushed unconditionally.
-3. In `compactMessagesToTokenLimit()`, include non-text token cost in `messageTokens` budget check. Evict entire older messages with non-text content when budget is exceeded.
-4. **Critical constraint:** Never strip non-text items from the MOST RECENT user message (the one being responded to). The user expects a response to what they just sent.
-
-**PM Decisions (recorded):**
-
-- Heuristic image cost: 300 tokens per image item.
-- Heuristic audio cost: 500 tokens per audio item.
-- Eviction is acceptable for older non-text items. Recent user message is protected.
-- These are conservative estimates — over-counting is safer than under-counting.
+1. Replace all detailed `error:` strings (e.g., `"Checkout session metadata is invalid"`, `"Missing stripe-signature header"`, `"Missing STRIPE_WEBHOOK_SECRET"`) with a generic `error: "Webhook processing failed"`.
+2. Log the detailed error messages server-side via `process.stderr.write()` before returning the generic response.
+3. Remove `newTransaction` and `updatedUser` from the success response body. Return only `{ message: "OK" }`.
+4. Remove `newTransaction` from the failure response body at line ~192.
+5. Keep HTTP status codes as-is (400/500 for errors, 200 for success).
 
 **Acceptance criteria:**
 
-- [ ] `estimateMessageTokens()` returns non-zero for messages with image/audio content
-- [ ] Non-text items in older messages are evicted when token budget is exceeded
-- [ ] Most recent user message retains all non-text items regardless of budget
-- [ ] Heuristic costs documented in code comments
-- [ ] New test file: `tests/unit/message-policy.test.ts`
-- [ ] Test: image-only message returns ~300 tokens per image
-- [ ] Test: compaction with image-heavy conversation evicts older images
-- [ ] Test: most recent user message images preserved even over budget
-- [ ] Test: text-only compaction behavior unchanged (regression)
+- [ ] All webhook error responses return generic messages only
+- [ ] Detailed errors logged server-side via `process.stderr.write()`
+- [ ] Success response body contains only `{ message: "OK" }` — no transaction/user data
+- [ ] HTTP status codes preserved (400/500 for errors, 200 for success)
+- [ ] Existing Stripe webhook unit tests updated
 - [ ] `npx tsc --noEmit` passes
 - [ ] All tests pass
 
 ---
 
-## Phase 25.5: Comprehensive E2E Test Expansion
-
-> Expand E2E test coverage to verify all routes and features before deferred feature work.
-> Ref: ThePlan.md Milestone 9 (Launch Readiness). AGENTS.md testing rules.
-> Depends on: HF-3 and HF-4 resolved. Phases 25.5.1–25.5.3 complete (see DONE.md).
-
----
-
-### 25.5.4 E2E: Conversation lifecycle
-
-**File (new):** `tests/e2e/conversation-lifecycle.spec.ts`
-
-**What to do:**
-
-- Test new conversation creation flow (select persona → send message → conversation created).
-- Test conversation appears in library (`/app/library`).
-- Test conversation resume via `/app/c/[conversationId]` shows previous messages.
-- Test conversation delete from library removes it from list.
-
-**Acceptance criteria:**
-
-- [ ] New conversation creation tested (persona + first message)
-- [ ] Conversation listed in library after creation
-- [ ] Conversation resume shows message history
-- [ ] Conversation delete removes from library
-- [ ] All E2E tests pass
-
----
-
-### 25.5.5 E2E: User profile and plan pages
-
-**File (new):** `tests/e2e/user-profile.spec.ts`
-
-**What to do:**
-
-- Test `/app/profile` displays user info (name, email, current plan).
-- Test plan badge shows correct tier name.
-- Test `/app/plans` displays all 3 plan cards with correct prices and features.
-- Test upgrade button or checkout link is present for higher plans.
-
-**Acceptance criteria:**
-
-- [ ] `/app/profile` renders user info and plan details
-- [ ] Current plan tier correctly displayed
-- [ ] `/app/plans` shows 3 plan cards ($0/$19/$39)
-- [ ] Upgrade CTA present for non-Premium users
-- [ ] All E2E tests pass
-
----
-
-### 25.5.6 E2E: Admin dashboard and user management
-
-**File (new):** `tests/e2e/admin-users.spec.ts`
-
-**What to do:**
-
-- Test `/admin` dashboard loads with overview stats (total users, transactions, usage).
-- Test `/admin/users` list page renders with user rows.
-- Test clicking a user navigates to `/admin/users/[userId]` detail page.
-- Test suspend/reinstate action buttons are present on user detail page.
-
-**Acceptance criteria:**
-
-- [ ] `/admin` dashboard renders with stats cards
-- [ ] `/admin/users` list renders with user data
-- [ ] User detail page accessible and renders user info
-- [ ] Admin action buttons visible on detail page
-- [ ] All E2E tests pass
-
----
-
-### 25.5.7 E2E: Admin transactions, usage, settings, and website
-
-**File (new):** `tests/e2e/admin-features.spec.ts`
-
-**What to do:**
-
-- Test `/admin/transactions` list page renders.
-- Test `/admin/usage` analytics page renders with data sections.
-- Test `/admin/settings` page loads with current settings (model, pricing, limits).
-- Test `/admin/website` page lists public pages with actions.
-- Test `/admin/website/[pageId]` editor loads Tiptap editor component.
-
-**Acceptance criteria:**
-
-- [ ] Transactions list page renders
-- [ ] Usage analytics page renders with data sections
-- [ ] Settings page loads with editable fields
-- [ ] Website management page lists pages
-- [ ] Page editor renders Tiptap component
-- [ ] All E2E tests pass
-
----
+## Phase 25.6: Unit Test Gap Coverage
 
 ## Phase 25.6: Unit Test Gap Coverage
 
