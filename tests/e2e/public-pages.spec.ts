@@ -88,6 +88,17 @@ test("renders the public plans page with all plan cards and approved prices", as
   await expect(premiumCard).toContainText("$39");
 });
 
+test("renders checkout-success as a public route with generic fallback messaging", async ({
+  page,
+}) => {
+  await gotoAndExpectPublicRoute(page, "/checkout-success");
+
+  await expect(
+    page.getByRole("heading", { name: "Payment confirmation unavailable" }),
+  ).toBeVisible();
+  await expect(page.getByRole("link", { name: "Back to plans" })).toBeVisible();
+});
+
 test("renders the public FAQs page with multiple accordion items", async ({
   page,
 }) => {

@@ -7,7 +7,7 @@
  *
  * Returns:
  * - A JSON response indicating the result of the webhook processing.
- * - In case of a successful "checkout.session.completed" event, it returns the created transaction and updated user data.
+ * - In case of a successful "checkout.session.completed" event, it returns a generic success response.
  * - In case of an error, it returns a JSON response with an error message.
  */
 
@@ -24,6 +24,21 @@ import stripe from "stripe";
 
 const ALLOWED_PLAN_NAMES: readonly PlanName[] = ["Lite", "Pro", "Premium"];
 const ALLOWED_BILLING_CYCLES: readonly BillingCycle[] = ["Monthly", "Yearly"];
+const WEBHOOK_FAILURE_MESSAGE = "Webhook processing failed";
+
+function logStripeWebhookError(message: string) {
+  process.stderr.write(`[stripe-webhook] ${message}\n`);
+}
+
+function createWebhookErrorResponse(status: 400 | 500) {
+  return NextResponse.json(
+    {
+      message: "Webhook error",
+      error: WEBHOOK_FAILURE_MESSAGE,
+    },
+    { status },
+  );
+}
 
 async function createTransaction(transaction: CreateTransactionParams) {
   try {
@@ -31,6 +46,7 @@ async function createTransaction(transaction: CreateTransactionParams) {
 
     return serializeForClient(newTransaction);
   } catch {
+    logStripeWebhookError("Failed to create transaction.");
     return null;
   }
 }
@@ -41,17 +57,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
   if (!sig) {
-    return NextResponse.json(
-      { message: "Webhook error", error: "Missing stripe-signature header" },
-      { status: 400 },
-    );
+    logStripeWebhookError("Missing stripe-signature header.");
+    return createWebhookErrorResponse(400);
   }
 
   if (!endpointSecret) {
-    return NextResponse.json(
-      { message: "Webhook error", error: "Missing STRIPE_WEBHOOK_SECRET" },
-      { status: 500 },
-    );
+    logStripeWebhookError("Missing STRIPE_WEBHOOK_SECRET.");
+    return createWebhookErrorResponse(500);
   }
 
   let event;
@@ -59,13 +71,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     event = stripe.webhooks.constructEvent(body, sig, endpointSecret);
   } catch {
-    return NextResponse.json(
-      {
-        message: "Webhook error",
-        error: "Invalid webhook signature",
-      },
-      { status: 400 },
-    );
+    logStripeWebhookError("Invalid webhook signature.");
+    return createWebhookErrorResponse(400);
   }
 
   // Get the ID and type
@@ -89,13 +96,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       !ALLOWED_PLAN_NAMES.includes(thePlanName as PlanName) ||
       !ALLOWED_BILLING_CYCLES.includes(theBillingCycle as BillingCycle)
     ) {
-      return NextResponse.json(
-        {
-          message: "Webhook error",
-          error: "Checkout session metadata is invalid",
-        },
-        { status: 400 },
-      );
+      logStripeWebhookError("Checkout session metadata is invalid.");
+      return createWebhookErrorResponse(400);
     }
 
     const normalizedPlanName = thePlanName as PlanName;
@@ -133,13 +135,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     });
 
     if (!existingUser) {
-      return NextResponse.json(
-        {
-          message: "Webhook error",
-          error: "Checkout session could not be matched to a user",
-        },
-        { status: 400 },
-      );
+      logStripeWebhookError("Checkout session could not be matched to a user.");
+      return createWebhookErrorResponse(400);
     }
 
     // Create transaction in database
@@ -174,24 +171,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
 
       if (!updatedUser) {
-        return NextResponse.json(
-          {
-            message: "Webhook error",
-            error: "Failed to update the checkout user",
-          },
-          { status: 500 },
-        );
+        logStripeWebhookError("Failed to update the checkout user.");
+        return createWebhookErrorResponse(500);
       }
 
-      return NextResponse.json({ message: "OK", newTransaction, updatedUser });
+      return NextResponse.json({ message: "OK" });
     } else {
-      return NextResponse.json(
-        {
-          message: "STRIPE: Transaction failed!",
-          newTransaction,
-        },
-        { status: 500 },
-      );
+      logStripeWebhookError("Transaction creation returned null.");
+      return createWebhookErrorResponse(500);
     }
   }
 

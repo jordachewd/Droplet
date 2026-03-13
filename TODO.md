@@ -5,261 +5,102 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: HF-2 critical fix in progress — self-healing for missing MongoDB user records.**
-> All milestones 0–8 implementation complete. HF-1 complete. Phases 1–25.5.3 complete (see DONE.md).
-> Stop before Phase 26 (Deferred Features) — all routes and features require full operational verification first.
+> **STATUS: HF-4 is the sole remaining launch blocker — Stripe checkout redirect fix.**
+> All milestones 0–8 complete. HF-1, HF-2, HF-3, HF-5, HF-6, HF-7 complete (see DONE.md).
+> Phases 1–25.5 complete (see DONE.md).
+> Priority order: HF-4 (Stripe redirect — LAUNCH BLOCKER) → HF-8 (Stripe webhook sanitization) → Phase 25.6 → Phase 25.7 → Phase 26.
+> **All non-HF-4 work is ON HOLD until HF-4 is resolved.**
 
 ---
 
-## HF-2: Critical — Missing MongoDB User Self-Healing — TOP PRIORITY
+## HF-4: CRITICAL (LAUNCH BLOCKER) — Stripe Checkout Returns to /sign-in Instead of /app/profile
 
-> When Clerk webhook fails, delays, or is misconfigured, authenticated users have no MongoDB record.
-> `/app/profile` and `/app/plans` show permanent loading spinner. `/api/openai` silently degrades to Lite.
-> This is the #1 blocker. Must be fixed before any other work proceeds.
->
-> **Root cause**: The Clerk webhook code is correct (verified HF-1). The failure occurs when:
-> (a) Clerk Dashboard webhook URL, signing secret, or subscribed events are misconfigured, or
-> (b) the app runs locally without a tunnel (ngrok/Cloudflare) registered in Clerk Dashboard.
->
-> **Code fix**: Pages and API routes must handle the "authenticated but no MongoDB user" scenario gracefully.
-> Ref: SPEC.md Section 5 (Self-Healing User Sync Requirement). AGENTS.md Security Rules.
+> After completing Stripe payment, user lands on `/sign-in` instead of `/app/profile`.
+> Code is correct — `success_url` is `${BASEURL}/app/profile` (verified in `transaction.action.tsx`).
+> Root cause confirmed: Clerk auth session expires while user is on Stripe's external checkout domain.
+> When user returns, the proxy sees no active session and redirects `/app/profile` → `/sign-in`.
+> **Investigation complete (HF-4.1). Implementation approved by PM and Architect.**
+> Ref: SPEC.md TD-BILL-02.
 
 ---
 
-### HF-2.1 Create self-healing user sync utility
+### HF-4.1 ~~Investigate and~~ fix Stripe checkout return URL issue
 
-**File (new):** `src/lib/utils/ensure-user-synced.ts`
+**Root cause (confirmed):** Clerk session cookie expires or fails to rehydrate while user is on Stripe's external domain. On return, the proxy (`/app(.*)` matcher) sees no active session and redirects to `/sign-in`.
+
+**Approved fix (PM + Architect):** Create a public intermediary route with Stripe session verification.
 
 **What to do:**
 
-- Create an async server-only function `ensureUserSynced(clerkUserId: string)` that:
-  1. Queries MongoDB for existing user by `clerkId`.
-  2. If user exists, returns the serialized user data.
-  3. If user does NOT exist, fetches user data from Clerk via `clerkClient().users.getUser(clerkUserId)`.
-  4. Creates the MongoDB user record with Lite plan defaults (reuse the same plan initialization logic from the webhook `user.created` handler).
-  5. Sets Clerk `publicMetadata` (userId, role, userImg) — same as the webhook handler does.
-  6. Returns the newly created serialized user data.
-- Import `"server-only"` at the top.
-- Use the same plan defaults as the webhook handler: Lite, permanent, free.
-- Handle creation failure gracefully — return `null`, log to stderr.
-- Do NOT duplicate webhook logic: extract shared helpers if needed (e.g., move `resolveUserCreatedParams` to a shared utility or import from the webhook module).
+1. **Create public route** at `src/app/(public)/checkout-success/page.tsx` (outside `(chat)` group, so proxy does NOT intercept).
+2. **Accept query parameter** `session_id` from Stripe template variable.
+3. **Server-side verification** — call `stripe.checkout.sessions.retrieve(sessionId)` to verify `payment_status === 'paid'`.
+4. **Validate input** — `session_id` must be a non-empty string of reasonable length (max 255 chars). Reject empty/missing with generic error.
+5. **If payment verified**: render success confirmation UI with link to `/app/profile` (standard Next.js `<Link>`).
+6. **If payment NOT verified or session_id invalid**: render generic error with link to `/app/plans`.
+7. **Do NOT modify user data** on this page — that remains the Stripe webhook's responsibility. This page is purely confirmation UI.
+8. **Update `success_url`** in `src/lib/actions/transaction.action.tsx` from `${BASEURL}/app/profile` to `${BASEURL}/checkout-success?session_id={CHECKOUT_SESSION_ID}` (Stripe template variable).
+9. **Update header/nav** — no navigation link to this page (it's only reached via Stripe redirect).
+10. **Update E2E tests** — the checkout redirect assertion (if any) must point to `/checkout-success`.
+
+**Rejected alternatives:**
+
+- Option B (longer Clerk session duration) — REJECTED. Global setting, creates security tradeoff, doesn't guarantee survival across slow checkouts.
+- Direct redirect to `/sign-in` with post-login redirect — REJECTED. Bad UX, user already authenticated.
 
 **Acceptance criteria:**
 
-- [ ] Utility creates MongoDB user from Clerk data when user record is missing
-- [ ] User gets Lite plan defaults on self-healing creation
-- [ ] Clerk `publicMetadata` is set correctly (userId, role, userImg)
-- [ ] Returns existing user without modification if already exists
-- [ ] Does not throw on failure — returns `null`
-- [ ] Unit test covers: existing user returns directly, missing user creates and returns, creation failure returns null
+- [ ] Public route `/checkout-success` exists outside protected route groups
+- [ ] Route validates `session_id` param (non-empty, max 255 chars)
+- [ ] Route calls `stripe.checkout.sessions.retrieve()` server-side
+- [ ] Verified payment shows success UI + link to `/app/profile`
+- [ ] Unverified/invalid shows error UI + link to `/app/plans`
+- [ ] No user data modification on this page (webhook handles that)
+- [ ] `success_url` in `transaction.action.tsx` updated to use `{CHECKOUT_SESSION_ID}` template
+- [ ] Generic error messages only — no Stripe session data leaked to client
 - [ ] `npx tsc --noEmit` passes
 - [ ] All tests pass
 
 ---
 
-### HF-2.2 Fix /app/profile to handle missing MongoDB user
+---
 
-**File:** `src/app/(chat)/app/profile/page.tsx`
+## HF-8: MEDIUM — Stripe Webhook Leaks Detailed Error Messages
+
+> Discovered during PM deep audit (2026-03-13).
+> Stripe webhook route returns detailed internal error strings in JSON responses.
+> While the consumer is Stripe (not a browser), this violates AGENTS.md: "generic messages to clients; detailed logs server-side only."
+> Also returns `serializeForClient(newTransaction)` data in success response — unnecessary data exposure.
+> Depends on: HF-4 resolved first.
+> Ref: AGENTS.md Security Rules.
+
+---
+
+### HF-8.1 Sanitize Stripe webhook error responses
+
+**File:** `src/app/api/webhooks/stripe/route.tsx`
 
 **What to do:**
 
-- Replace `getUserById(userId)` with `ensureUserSynced(userId)` from HF-2.1.
-- If `ensureUserSynced` returns `null`, show a clear error state instead of `<LoadingBubbles />`:
-  - Message: "We're having trouble loading your account. Please try refreshing the page or contact support."
-  - Include support email link (`SUPPORT_EMAIL` from `@/constants/support`) and a refresh/retry link.
-- If it returns user data, render normally (existing behavior unchanged).
+1. Replace all detailed `error:` strings (e.g., `"Checkout session metadata is invalid"`, `"Missing stripe-signature header"`, `"Missing STRIPE_WEBHOOK_SECRET"`) with a generic `error: "Webhook processing failed"`.
+2. Log the detailed error messages server-side via `process.stderr.write()` before returning the generic response.
+3. Remove `newTransaction` and `updatedUser` from the success response body. Return only `{ message: "OK" }`.
+4. Remove `newTransaction` from the failure response body at line ~192.
+5. Keep HTTP status codes as-is (400/500 for errors, 200 for success).
 
 **Acceptance criteria:**
 
-- [ ] `/app/profile` renders user data when MongoDB user exists (no behavior change)
-- [ ] `/app/profile` self-heals when MongoDB user is missing (creates it on-demand)
-- [ ] `/app/profile` shows error message (not loading spinner) when self-healing fails
-- [ ] Error message includes support contact and retry guidance
+- [ ] All webhook error responses return generic messages only
+- [ ] Detailed errors logged server-side via `process.stderr.write()`
+- [ ] Success response body contains only `{ message: "OK" }` — no transaction/user data
+- [ ] HTTP status codes preserved (400/500 for errors, 200 for success)
+- [ ] Existing Stripe webhook unit tests updated
 - [ ] `npx tsc --noEmit` passes
 - [ ] All tests pass
 
 ---
 
-### HF-2.3 Fix /app/plans to handle missing MongoDB user
-
-**File:** `src/app/(chat)/app/plans/page.tsx`
-
-**What to do:**
-
-- Replace `getUserById(userId)` with `ensureUserSynced(userId)` from HF-2.1.
-- Same error handling pattern as HF-2.2.
-- If `ensureUserSynced` returns `null`, show error state instead of `<LoadingBubbles />`.
-- If it returns user data, render normally.
-
-**Acceptance criteria:**
-
-- [ ] `/app/plans` renders plan data when MongoDB user exists (no behavior change)
-- [ ] `/app/plans` self-heals when MongoDB user is missing
-- [ ] `/app/plans` shows error message when self-healing fails
-- [ ] `npx tsc --noEmit` passes
-- [ ] All tests pass
-
----
-
-### HF-2.4 Fix /api/openai to reject when user record is missing
-
-**File:** `src/app/api/openai/route.tsx`
-
-**What to do:**
-
-- After `getUserById(userId)` returns `null`, attempt `ensureUserSynced(userId)` to self-heal.
-- If self-healing succeeds, continue normally with the correct plan data.
-- If self-healing fails, return HTTP 503 with `{ message: "Account not yet provisioned. Please try again in a moment." }`.
-- Do NOT silently fall back to Lite — a paid Pro/Premium user must never be downgraded without feedback.
-
-**Acceptance criteria:**
-
-- [ ] Route attempts self-healing when user record is missing
-- [ ] Route uses correct plan data after successful self-healing
-- [ ] Route returns 503 (not silent Lite degradation) when self-healing fails
-- [ ] Existing behavior unchanged when user record exists
-- [ ] Unit test covers: missing user → self-heal succeeds → uses correct plan; missing user → self-heal fails → 503
-- [ ] `npx tsc --noEmit` passes
-- [ ] All tests pass
-
----
-
-### HF-2.5 Remove dead svix dependency
-
-**File:** `package.json`
-
-**What to do:**
-
-- Run `npm uninstall svix` to remove from `dependencies` and update `package-lock.json`.
-- Verify zero imports of `svix` in source code (already confirmed).
-- Run full 6-gate validation.
-
-**Acceptance criteria:**
-
-- [ ] `svix` removed from `package.json` dependencies
-- [ ] `package-lock.json` updated
-- [ ] Zero imports of `svix` in `src/`
-- [ ] `npm run test` passes
-- [ ] `npx tsc --noEmit` passes
-- [ ] `npm run build` passes
-
----
-
-### HF-2.6 Verify Clerk Dashboard webhook configuration
-
-**What to do (operational — not a code task):**
-
-- Log into Clerk Dashboard → Webhooks section.
-- Verify the webhook endpoint URL is `https://<deployed-domain>/api/webhooks/clerk` (not localhost).
-- Verify the signing secret shown in Clerk Dashboard matches the `CLERK_WEBHOOK_SIGNING_SECRET` value in `.env.local` exactly.
-- Verify `user.created`, `user.updated`, `user.deleted` are checked as subscribed events.
-- Check the "Attempts" tab for delivery logs — look for HTTP status codes and response bodies.
-- If developing locally, confirm a tunnel (ngrok/Cloudflare Tunnel) is running and the tunnel URL is registered in Clerk Dashboard.
-- Trigger a test event from Clerk Dashboard and verify it appears in MongoDB.
-
-**Acceptance criteria:**
-
-- [ ] Webhook endpoint URL is correct and reachable
-- [ ] Signing secret matches `.env.local`
-- [ ] All 3 event types are subscribed (`user.created`, `user.updated`, `user.deleted`)
-- [ ] Test event successfully creates/updates user in MongoDB
-- [ ] Clerk "Attempts" tab shows 200 responses
-
----
-
-## Phase 25.5: Comprehensive E2E Test Expansion
-
-> Expand E2E test coverage to verify all routes and features before deferred feature work.
-> Ref: ThePlan.md Milestone 9 (Launch Readiness). AGENTS.md testing rules.
-> Depends on: HF-2 complete. Phases 25.5.1–25.5.3 complete (see DONE.md).
-
----
-
-### 25.5.4 E2E: Conversation lifecycle
-
-**File (new):** `tests/e2e/conversation-lifecycle.spec.ts`
-
-**What to do:**
-
-- Test new conversation creation flow (select persona → send message → conversation created).
-- Test conversation appears in library (`/app/library`).
-- Test conversation resume via `/app/c/[conversationId]` shows previous messages.
-- Test conversation delete from library removes it from list.
-
-**Acceptance criteria:**
-
-- [ ] New conversation creation tested (persona + first message)
-- [ ] Conversation listed in library after creation
-- [ ] Conversation resume shows message history
-- [ ] Conversation delete removes from library
-- [ ] All E2E tests pass
-
----
-
-### 25.5.5 E2E: User profile and plan pages
-
-**File (new):** `tests/e2e/user-profile.spec.ts`
-
-**What to do:**
-
-- Test `/app/profile` displays user info (name, email, current plan).
-- Test plan badge shows correct tier name.
-- Test `/app/plans` displays all 3 plan cards with correct prices and features.
-- Test upgrade button or checkout link is present for higher plans.
-
-**Acceptance criteria:**
-
-- [ ] `/app/profile` renders user info and plan details
-- [ ] Current plan tier correctly displayed
-- [ ] `/app/plans` shows 3 plan cards ($0/$19/$39)
-- [ ] Upgrade CTA present for non-Premium users
-- [ ] All E2E tests pass
-
----
-
-### 25.5.6 E2E: Admin dashboard and user management
-
-**File (new):** `tests/e2e/admin-users.spec.ts`
-
-**What to do:**
-
-- Test `/admin` dashboard loads with overview stats (total users, transactions, usage).
-- Test `/admin/users` list page renders with user rows.
-- Test clicking a user navigates to `/admin/users/[userId]` detail page.
-- Test suspend/reinstate action buttons are present on user detail page.
-
-**Acceptance criteria:**
-
-- [ ] `/admin` dashboard renders with stats cards
-- [ ] `/admin/users` list renders with user data
-- [ ] User detail page accessible and renders user info
-- [ ] Admin action buttons visible on detail page
-- [ ] All E2E tests pass
-
----
-
-### 25.5.7 E2E: Admin transactions, usage, settings, and website
-
-**File (new):** `tests/e2e/admin-features.spec.ts`
-
-**What to do:**
-
-- Test `/admin/transactions` list page renders.
-- Test `/admin/usage` analytics page renders with data sections.
-- Test `/admin/settings` page loads with current settings (model, pricing, limits).
-- Test `/admin/website` page lists public pages with actions.
-- Test `/admin/website/[pageId]` editor loads Tiptap editor component.
-
-**Acceptance criteria:**
-
-- [ ] Transactions list page renders
-- [ ] Usage analytics page renders with data sections
-- [ ] Settings page loads with editable fields
-- [ ] Website management page lists pages
-- [ ] Page editor renders Tiptap component
-- [ ] All E2E tests pass
-
----
+## Phase 25.6: Unit Test Gap Coverage
 
 ## Phase 25.6: Unit Test Gap Coverage
 
@@ -462,10 +303,11 @@
 
 - Implement video generation for Premium plan users.
 - Requires: verified provider support, cost ceiling, moderation workflow, S3 storage lifecycle.
-- Use `resolveModelPolicy({ plan: "premium", feature: "video_generation", taskClass })` for model selection — `sora-2` for previews, `sora-2-pro` for final renders.
+- Use `resolveModelPolicy({ plan: "premium", feature: "video_generation", taskClass })` for model selection.
 - Wire into `/api/openai` tool calling flow.
 - Remove "Coming soon" label from Premium plan inclusions.
 - Video stored in S3 with URL reference in messages.
+- Verify video model IDs are real OpenAI API identifiers before implementation.
 
 **Acceptance criteria:**
 
@@ -480,4 +322,4 @@
 ---
 
 > **Completed phases** are archived in [`DONE.md`](DONE.md).
-> HF-1, Phases 1–25.5.3 complete. Phase 10–12 superseded (see DONE.md for mapping).
+> HF-1, HF-2, Phases 1–25.5.3 complete. Phase 10–12 superseded (see DONE.md for mapping).

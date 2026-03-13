@@ -9,11 +9,21 @@ type E2ETestUser = {
 
 const missingCredentialsError =
   "Set E2E_TEST_USERNAME or E2E_TEST_EMAIL and E2E_TEST_PASSWORD in .env.local.";
+const missingAdminCredentialsError =
+  "Set E2E_ADMIN_USERNAME or E2E_ADMIN_EMAIL and E2E_ADMIN_PASSWORD in .env.local.";
 
-export function getE2ETestUser(): E2ETestUser | null {
-  const username = getEnvValue("E2E_TEST_USERNAME");
-  const email = getEnvValue("E2E_TEST_EMAIL");
-  const password = getEnvValue("E2E_TEST_PASSWORD");
+function resolveE2EUserFromEnv({
+  usernameKey,
+  emailKey,
+  passwordKey,
+}: {
+  usernameKey: string;
+  emailKey: string;
+  passwordKey: string;
+}): E2ETestUser | null {
+  const username = getEnvValue(usernameKey);
+  const email = getEnvValue(emailKey);
+  const password = getEnvValue(passwordKey);
   const identifier = email || username;
 
   if (!identifier || !password) {
@@ -21,6 +31,22 @@ export function getE2ETestUser(): E2ETestUser | null {
   }
 
   return { email, identifier, password, username };
+}
+
+export function getE2ETestUser(): E2ETestUser | null {
+  return resolveE2EUserFromEnv({
+    usernameKey: "E2E_TEST_USERNAME",
+    emailKey: "E2E_TEST_EMAIL",
+    passwordKey: "E2E_TEST_PASSWORD",
+  });
+}
+
+export function getE2EAdminUser(): E2ETestUser | null {
+  return resolveE2EUserFromEnv({
+    usernameKey: "E2E_ADMIN_USERNAME",
+    emailKey: "E2E_ADMIN_EMAIL",
+    passwordKey: "E2E_ADMIN_PASSWORD",
+  });
 }
 
 export function requireE2ETestUser(): E2ETestUser {
@@ -33,4 +59,14 @@ export function requireE2ETestUser(): E2ETestUser {
   return user;
 }
 
-export { missingCredentialsError };
+export function requireE2EAdminUser(): E2ETestUser {
+  const user = getE2EAdminUser();
+
+  if (!user) {
+    throw new Error(missingAdminCredentialsError);
+  }
+
+  return user;
+}
+
+export { missingAdminCredentialsError, missingCredentialsError };

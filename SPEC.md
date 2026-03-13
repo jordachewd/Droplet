@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-14 (HF-1 complete, Phase 25.5.3 complete — pre-Phase-26 verification in progress)
+> Last updated: 2026-03-13 (HF-5, HF-6, HF-7 complete. HF-3 closed (invalid). Phase 25.5 E2E expansion complete. HF-4 Stripe redirect fix pending.)
 
 ---
 
@@ -35,7 +35,7 @@ The product monetises through tiered subscription plans paid via Stripe.
 - Image upload support
 - Image generation (all tiers, with enforced usage limits)
 - Audio generation (all tiers, with enforced usage limits)
-- Video generation (Premium only)
+- Video generation (Premium only — **coming soon**, implementation deferred)
 - Account-required access — no anonymous usage
 - Authenticated `/app` experience with persona-led UX
 - Real conversation history (list, resume, delete)
@@ -119,11 +119,11 @@ Prompts are versioned and separated from request handlers. `buildPersonaAwareSys
 
 ## 4. Subscription Plans
 
-| Plan        | Price | Duration      | Chat Model (default)            | Limits                                                                                                      |
-| ----------- | ----- | ------------- | ------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| **Lite**    | Free  | **Permanent** | `gpt-4o-mini`                   | 5 conversations/day, 10 prompts/conversation, 3 image generations/month, no audio, no video                 |
-| **Pro**     | $19   | Monthly       | `gpt-4.1`                       | 50 conversations/day, 100 prompts/conversation, 50 image + 50 audio generations/month, no video             |
-| **Premium** | $39   | Monthly       | `gpt-4.1` / `gpt-5.4` (complex) | Unlimited conversations, unlimited prompts, unlimited image + audio generations, 10 video generations/month |
+| Plan        | Price | Duration      | Chat Model (default)            | Limits                                                                                             |
+| ----------- | ----- | ------------- | ------------------------------- | -------------------------------------------------------------------------------------------------- |
+| **Lite**    | Free  | **Permanent** | `gpt-4o-mini`                   | 5 conversations/day, 10 prompts/conversation, 3 image generations/month, no audio, no video        |
+| **Pro**     | $19   | Monthly       | `gpt-4.1`                       | 50 conversations/day, 100 prompts/conversation, 50 image + 50 audio generations/month, no video    |
+| **Premium** | $39   | Monthly       | `gpt-4.1` / `gpt-5.4` (complex) | Unlimited conversations, unlimited prompts, unlimited image + audio generations, video coming soon |
 
 > Full model policy (all features × plans × task classes) in **Section 8**.
 
@@ -158,13 +158,13 @@ Prompts are versioned and separated from request handlers. `buildPersonaAwareSys
 
 ### Premium Plan Limits (Detailed)
 
-| Limit                         | Value     | Reset Window          |
-| ----------------------------- | --------- | --------------------- |
-| Conversations per day         | Unlimited | N/A                   |
-| User prompts per conversation | Unlimited | N/A                   |
-| Image generations             | Unlimited | N/A                   |
-| Audio generations             | Unlimited | N/A                   |
-| Video generations             | 10        | 30-day rolling window |
+| Limit                         | Value            | Reset Window          |
+| ----------------------------- | ---------------- | --------------------- |
+| Conversations per day         | Unlimited        | N/A                   |
+| User prompts per conversation | Unlimited        | N/A                   |
+| Image generations             | Unlimited        | N/A                   |
+| Audio generations             | Unlimited        | N/A                   |
+| Video generations             | 10 (coming soon) | 30-day rolling window |
 
 ### Plan Lifecycle
 
@@ -216,8 +216,8 @@ Prompts are versioned and separated from request handlers. `buildPersonaAwareSys
 
 - ~~**TD-AUTH-01**: Proxy protects old routes~~ — **Resolved** in Phase 17. Proxy now protects `/app(.*)` and `/admin(.*)` only.
 - ~~**TD-AUTH-02**: Admin at `/dashboard`~~ — **Resolved** in Phase 17. Admin is at `/admin`.
-- **TD-AUTH-03**: Missing MongoDB user self-healing — when Clerk webhook fails or delays, `/app/profile` and `/app/plans` show permanent loading spinner instead of actionable error. **Critical.** Tracked as HF-2.
-- **TD-AUTH-04**: `/api/openai` silently degrades to Lite plan when MongoDB user record is missing — paid Pro/Premium users get Lite limits with no error feedback. **High.** Tracked as HF-2.
+- ~~**TD-AUTH-03**: Missing MongoDB user self-healing~~ — **Resolved** in HF-2. `ensureUserSynced()` utility created and wired into `/app/profile`, `/app/plans`, `/api/openai`. Returns HTTP 503 on failure instead of silent degradation.
+- ~~**TD-AUTH-04**: `/api/openai` silently degrades to Lite plan~~ — **Resolved** in HF-2. Route attempts self-healing, returns HTTP 503 if self-healing fails.
 
 ### Self-Healing User Sync Requirement
 
@@ -429,21 +429,21 @@ Central resolver: `resolveModelPolicy()` in `src/lib/utils/ai-model-policy.ts`. 
 
 ### 8.2 Model Policy Matrix
 
-| Feature          | Plan    | Default Model      | Fallback Model     | Cost-Control Notes                                                                                    |
-| ---------------- | ------- | ------------------ | ------------------ | ----------------------------------------------------------------------------------------------------- |
-| Title generation | All     | `gpt-4.1-nano`     | `gpt-4o-mini`      | Hard cap: 1,200 input tokens, 20 output tokens. Always cheapest model regardless of plan.             |
-| Chat             | Lite    | `gpt-4o-mini`      | `gpt-4.1-nano`     | Strict context compaction; max output tokens per reply; no expensive tools; block retries beyond one. |
-| Chat             | Pro     | `gpt-4.1`          | `gpt-4o-mini`      | Degrade to fallback on soft budget, high latency, simple tasks, or retries.                           |
-| Chat             | Premium | `gpt-4.1`          | `gpt-4.1`          | Default `gpt-4.1` for routine chat. `gpt-5.4` only for complex reasoning with `explicitPremium`.      |
-| Image            | Lite    | `gpt-image-1-mini` | _(none)_           | One model only. Limit size, count, concurrency. Monthly quota enforced.                               |
-| Image            | Pro     | `gpt-image-1.5`    | `gpt-image-1-mini` | Downgrade for retries, previews, or users beyond soft budget.                                         |
-| Image            | Premium | `gpt-image-1.5`    | `gpt-image-1-mini` | Same model tiers as Pro; Premium gets unlimited quota.                                                |
-| Audio            | Lite    | _(blocked)_        | —                  | Audio not available on Lite.                                                                          |
-| Audio            | Pro     | `gpt-audio-mini`   | `gpt-4o-mini-tts`  | TTS-only fallback. Do NOT use TTS fallback for `audio_in_out` mode.                                   |
-| Audio            | Premium | `gpt-audio-1.5`    | `gpt-audio-mini`   | Downgrade for retries, previews, long-form beyond soft budget.                                        |
-| Video            | Lite    | _(blocked)_        | —                  | Video not available on Lite.                                                                          |
-| Video            | Pro     | _(blocked)_        | —                  | Video not available on Pro.                                                                           |
-| Video            | Premium | `sora-2-pro`       | `sora-2`           | `sora-2` for previews/drafts. `sora-2-pro` only for final renders with `explicitPremium`.             |
+| Feature          | Plan    | Default Model      | Fallback Model                 | Cost-Control Notes                                                                                                                                             |
+| ---------------- | ------- | ------------------ | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Title generation | All     | `gpt-4.1-nano`     | `gpt-4o-mini`                  | Hard cap: 1,200 input tokens, 20 output tokens. Always cheapest model regardless of plan.                                                                      |
+| Chat             | Lite    | `gpt-4o-mini`      | `gpt-4.1-nano`                 | Strict context compaction; max output tokens per reply; no expensive tools; block retries beyond one.                                                          |
+| Chat             | Pro     | `gpt-4.1`          | `gpt-4o-mini`                  | Degrade to fallback on soft budget, high latency, simple tasks, or retries.                                                                                    |
+| Chat             | Premium | `gpt-4.1`          | `gpt-4o-mini` / `gpt-4.1-mini` | Default `gpt-4.1` for routine chat. `gpt-5.4` only for complex with `explicitPremium`. Simple/standard fall to `gpt-4o-mini`; complex falls to `gpt-4.1-mini`. |
+| Image            | Lite    | `gpt-image-1-mini` | _(none)_                       | One model only. Limit size, count, concurrency. Monthly quota enforced.                                                                                        |
+| Image            | Pro     | `gpt-image-1.5`    | `gpt-image-1-mini`             | Downgrade for retries, previews, or users beyond soft budget.                                                                                                  |
+| Image            | Premium | `gpt-image-1.5`    | `gpt-image-1-mini`             | Same model tiers as Pro; Premium gets unlimited quota.                                                                                                         |
+| Audio            | Lite    | _(blocked)_        | —                              | Audio not available on Lite.                                                                                                                                   |
+| Audio            | Pro     | `gpt-audio-mini`   | `gpt-4o-mini-tts`              | TTS-only fallback. Do NOT use TTS fallback for `audio_in_out` mode.                                                                                            |
+| Audio            | Premium | `gpt-audio-1.5`    | `gpt-audio-mini`               | Downgrade for retries, previews, long-form beyond soft budget.                                                                                                 |
+| Video            | Lite    | _(blocked)_        | —                              | Video not available on Lite.                                                                                                                                   |
+| Video            | Pro     | _(blocked)_        | —                              | Video not available on Pro.                                                                                                                                    |
+| Video            | Premium | `sora-2-pro`       | `sora-2`                       | `sora-2` for previews/drafts. `sora-2-pro` only for final renders with `explicitPremium`.                                                                      |
 
 ### 8.3 Task Classes
 
@@ -705,12 +705,18 @@ All file handling technical debt has been resolved.
 
 ## 15. Technical Debt Summary
 
-### Active — Critical Priority
+### ~~Active — Critical Priority~~ (Resolved)
 
-| ID         | Area | Description                                                                                                           | Severity |
-| ---------- | ---- | --------------------------------------------------------------------------------------------------------------------- | -------- |
-| TD-AUTH-03 | Auth | Missing MongoDB user self-healing — `/app/profile` and `/app/plans` show permanent loading when webhook fails         | Critical |
-| TD-AUTH-04 | Auth | `/api/openai` silently degrades to Lite for missing user records — paid users get wrong limits with no error feedback | Critical |
+| ID       | Area   | Description                                                                              | Status   |
+| -------- | ------ | ---------------------------------------------------------------------------------------- | -------- |
+| TD-AI-16 | OpenAI | ~~Image model IDs are placeholders~~ — **CLOSED: model IDs verified real (OpenAI docs)** | Resolved |
+| TD-AI-17 | OpenAI | ~~Audio model IDs are placeholders~~ — **CLOSED: model IDs verified real (OpenAI docs)** | Resolved |
+
+### Active — High Priority
+
+| ID         | Area    | Description                                                                                                                                                           | Severity |
+| ---------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| TD-BILL-02 | Billing | Stripe checkout success redirects user to `/sign-in` instead of `/app/profile` — likely caused by Clerk session expiry during external checkout flow. Tracked as HF-4 | High     |
 
 ### Active — Medium Priority
 
@@ -789,3 +795,5 @@ All file handling technical debt has been resolved.
 | TD-AI-15      | Hardcoded TTS model-name branch             | Resolved in Phase 23.2 — `isTtsOnly` policy flag via `MODEL_CAPABILITIES` map                                                                    |
 | TD-API-01     | In-memory rate limiter                      | Resolved in Phase 25.3 — MongoDB-backed `RateLimitEntry` with TTL index, atomic sliding window                                                   |
 | TD-CODE-01    | Relative import violations                  | Resolved in Phase 24.4 — all 15 relative imports replaced with `@/*` alias across 10 files                                                       |
+| TD-AUTH-03    | Missing MongoDB user self-healing           | Resolved in HF-2 — `ensureUserSynced()` in `ensure-user-synced.ts`, wired into `/app/profile`, `/app/plans`, `/api/openai`                       |
+| TD-AUTH-04    | `/api/openai` silently degrades to Lite     | Resolved in HF-2 — returns HTTP 503 on self-healing failure instead of silent Lite degradation                                                   |

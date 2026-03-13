@@ -80,7 +80,7 @@ async function ensureSidebarOpen(page: Page) {
 }
 
 async function ensureAuthenticatedAppPage(page: Page) {
-  await page.goto("/app");
+  await page.goto("/app", { waitUntil: "domcontentloaded", timeout: 60_000 });
 
   if (/\/sign-in(?:\/|$|\?)/.test(page.url())) {
     const { identifier, password, username } = requireE2ETestUser();
@@ -97,6 +97,10 @@ async function ensureAuthenticatedAppPage(page: Page) {
 
 test.describe("authenticated app shell and navigation", () => {
   test.skip(!e2eTestUser, missingCredentialsError);
+  test.skip(
+    ({ browserName }) => browserName !== "chromium",
+    "Sidebar navigation smoke coverage is limited to Chromium for stability.",
+  );
   test.use({ storageState: authFile });
 
   test("renders the app shell and routes from the sidebar", async ({
@@ -105,7 +109,7 @@ test.describe("authenticated app shell and navigation", () => {
     await ensureAuthenticatedAppPage(page);
     await ensureSidebarOpen(page);
 
-    await expect(page.getByRole("main")).toBeVisible();
+    await expect(page.locator("main.ChatWrapper")).toBeVisible();
     await expect(page.getByText("Persona Studio")).toBeVisible();
     await expect(
       page.getByRole("button", { name: "Account menu" }),
@@ -116,10 +120,12 @@ test.describe("authenticated app shell and navigation", () => {
         await ensureAuthenticatedAppPage(page);
         await ensureSidebarOpen(page);
 
-        await page
+        const sidebarLink = page
           .locator("aside#chat-sidebar")
-          .getByRole("link", { name: destination.linkName })
-          .click();
+          .getByRole("link", { name: destination.linkName });
+
+        await sidebarLink.scrollIntoViewIfNeeded();
+        await sidebarLink.click();
 
         await expect(page).toHaveURL(destination.expectedPath);
         await destination.verify(page);

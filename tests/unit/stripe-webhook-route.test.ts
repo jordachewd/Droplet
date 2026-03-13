@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 import { getExpiresOn } from "@/constants/plans";
 import { connectToDatabase } from "@/lib/database/mongoose";
@@ -7,6 +7,7 @@ import User from "@/lib/database/models/user.model";
 import { POST } from "@/app/api/webhooks/stripe/route";
 
 const constructEventMock = vi.hoisted(() => vi.fn());
+const stderrWriteMock = vi.hoisted(() => vi.fn(() => true));
 
 vi.mock("stripe", () => ({
   default: {
@@ -55,6 +56,9 @@ function buildRequest(body: string, signature?: string): NextRequest {
 describe("POST /api/webhooks/stripe", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.spyOn(process.stderr, "write").mockImplementation(
+      stderrWriteMock as never,
+    );
     process.env.STRIPE_WEBHOOK_SECRET = "whsec_test";
     vi.mocked(connectToDatabase).mockResolvedValue(undefined as never);
     vi.mocked(Transaction.findOne).mockResolvedValue(null);
@@ -69,13 +73,36 @@ describe("POST /api/webhooks/stripe", () => {
     } as never);
   });
 
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("returns 400 when stripe-signature header is missing", async () => {
     const response = await POST(buildRequest("{}"));
     const payload = await response.json();
 
     expect(response.status).toBe(400);
     expect(payload.message).toBe("Webhook error");
-    expect(payload.error).toContain("Missing stripe-signature header");
+    expect(payload.error).toBe("Webhook processing failed");
+    expect(stderrWriteMock).toHaveBeenCalledWith(
+      "[stripe-webhook] Missing stripe-signature header.\n",
+    );
+  });
+
+  it("returns 500 when STRIPE_WEBHOOK_SECRET is missing", async () => {
+    delete process.env.STRIPE_WEBHOOK_SECRET;
+
+    const response = await POST(buildRequest("{}", "sig_123"));
+    const payload = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(payload).toEqual({
+      message: "Webhook error",
+      error: "Webhook processing failed",
+    });
+    expect(stderrWriteMock).toHaveBeenCalledWith(
+      "[stripe-webhook] Missing STRIPE_WEBHOOK_SECRET.\n",
+    );
   });
 
   it("returns 400 when webhook signature verification fails", async () => {
@@ -88,7 +115,41 @@ describe("POST /api/webhooks/stripe", () => {
 
     expect(response.status).toBe(400);
     expect(payload.message).toBe("Webhook error");
-    expect(payload.error).toBe("Invalid webhook signature");
+    expect(payload.error).toBe("Webhook processing failed");
+    expect(stderrWriteMock).toHaveBeenCalledWith(
+      "[stripe-webhook] Invalid webhook signature.\n",
+    );
+  });
+
+  it("returns 400 when checkout metadata is invalid", async () => {
+    constructEventMock.mockReturnValue({
+      type: "checkout.session.completed",
+      data: {
+        object: {
+          id: "cs_test_123",
+          amount_total: 1900,
+          metadata: {
+            userId: "mongo_user_1",
+            clerkId: "clerk_user_1",
+            planId: "1",
+            plan: "INVALID",
+            billing: "Monthly",
+          },
+        },
+      },
+    });
+
+    const response = await POST(buildRequest('{"valid":"payload"}', "sig_123"));
+    const payload = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(payload).toEqual({
+      message: "Webhook error",
+      error: "Webhook processing failed",
+    });
+    expect(stderrWriteMock).toHaveBeenCalledWith(
+      "[stripe-webhook] Checkout session metadata is invalid.\n",
+    );
   });
 
   it("persists transaction and updates user plan on checkout completion", async () => {
@@ -152,7 +213,7 @@ describe("POST /api/webhooks/stripe", () => {
         upsert: false,
       },
     );
-    expect(payload.message).toBe("OK");
+    expect(payload).toEqual({ message: "OK" });
   });
 
   it("returns 500 when transaction creation fails", async () => {
@@ -183,8 +244,50 @@ describe("POST /api/webhooks/stripe", () => {
     const payload = await response.json();
 
     expect(response.status).toBe(500);
-    expect(payload.message).toBe("STRIPE: Transaction failed!");
+    expect(payload.message).toBe("Webhook error");
+    expect(payload.error).toBe("Webhook processing failed");
     expect(User.findOneAndUpdate).not.toHaveBeenCalled();
+    expect(stderrWriteMock).toHaveBeenCalledWith(
+      "[stripe-webhook] Failed to create transaction.\n",
+    );
+    expect(stderrWriteMock).toHaveBeenCalledWith(
+      "[stripe-webhook] Transaction creation returned null.\n",
+    );
+  });
+
+  it("returns 500 when user update fails after transaction creation", async () => {
+    vi.mocked(getExpiresOn).mockReturnValue(
+      new Date("2026-04-05T10:00:00.000Z"),
+    );
+    constructEventMock.mockReturnValue({
+      type: "checkout.session.completed",
+      data: {
+        object: {
+          id: "cs_test_123",
+          amount_total: 1900,
+          metadata: {
+            userId: "mongo_user_1",
+            clerkId: "clerk_user_1",
+            planId: "1",
+            plan: "Pro",
+            billing: "Monthly",
+          },
+        },
+      },
+    });
+    vi.mocked(User.findOneAndUpdate).mockResolvedValue(null as never);
+
+    const response = await POST(buildRequest('{"valid":"payload"}', "sig_123"));
+    const payload = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(payload).toEqual({
+      message: "Webhook error",
+      error: "Webhook processing failed",
+    });
+    expect(stderrWriteMock).toHaveBeenCalledWith(
+      "[stripe-webhook] Failed to update the checkout user.\n",
+    );
   });
 
   it("returns 400 when checkout metadata cannot be matched to a user", async () => {
@@ -214,9 +317,12 @@ describe("POST /api/webhooks/stripe", () => {
 
     expect(response.status).toBe(400);
     expect(payload.message).toBe("Webhook error");
-    expect(payload.error).toContain("could not be matched");
+    expect(payload.error).toBe("Webhook processing failed");
     expect(Transaction.create).not.toHaveBeenCalled();
     expect(User.findOneAndUpdate).not.toHaveBeenCalled();
+    expect(stderrWriteMock).toHaveBeenCalledWith(
+      "[stripe-webhook] Checkout session could not be matched to a user.\n",
+    );
   });
 
   it("returns a handled response for non-checkout webhook events", async () => {
