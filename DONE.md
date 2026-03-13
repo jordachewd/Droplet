@@ -2,11 +2,41 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-13 — HF-8.2, HF-9.1, HF-9.2 complete. Phase 25.7.1 PM-verified. Phases 1–25.6 complete.
+> Last updated: 2026-03-13 — Phase 25.7 COMPLETE (all subtasks PM-verified). Starter prompts expanded (6 per persona). Phases 1–25.7 complete.
 
 ---
 
-## Phase 25.7.1: Release Gate Verification — PM VERIFIED
+## Starter Prompts Expansion — COMPLETED (2026-03-13)
+
+- [x] All 9 personas updated from 3 to 6 starter prompts each in `src/constants/assistant-personas.tsx`.
+- [x] Prompts cover diverse use cases per persona domain.
+- [x] `npx tsc --noEmit` clean. All 297 unit tests pass.
+
+**Files changed:** `src/constants/assistant-personas.tsx`
+
+---
+
+## Phase 25.7: Operational Verification & Cleanup — COMPLETE
+
+### 25.7.2 Clean up test output noise — COMPLETED
+
+- [x] **25.7.2** `priority` prop warning fixed via `MockNextImageProps` sanitization in `chat-input.test.tsx` (line 8). S3 cleanup stderr noise addressed via `process.stderr.write` spy lifecycle in `task-actions.test.ts` (line 182). All tests pass, clean output.
+
+**Files changed:** `tests/unit/chat-input.test.tsx`, `tests/unit/task-actions.test.ts`
+
+### 25.7.3 Verify admin audit trail completeness — COMPLETED
+
+- [x] **25.7.3** New file `tests/unit/admin-audit-trail.test.ts` covers all 8 admin actions: `toggleUserSuspensionAction`, `removeUserByAdminAction`, `updateAdminSettingAction`, `createPublicPageAction`, `togglePublicPagePublishedAction`, `deletePublicPageAction`, `updatePublicPageSortOrderAction`, `savePublicPageAction`. Each action verified to emit audit entry with `adminId`, `action`, `targetType`, `targetId`.
+
+**Files changed:** `tests/unit/admin-audit-trail.test.ts` (new)
+
+### 25.7.4 Stabilize flaky E2E tests — COMPLETED
+
+- [x] **25.7.4** `admin-features.spec.ts` stabilized: post-submit network-idle wait, robust row locator with timeout, row scroll before Edit click. `chat-app-shell.spec.ts` stabilized: sidebar-link helper with container scroll + `force: true` click, desktop sidebar preference reset, signed-out recovery path. Full E2E suite: 185 passed, 8 skipped, 0 failures. 3 consecutive runs verified on both affected specs.
+
+**Files changed:** `tests/e2e/admin-features.spec.ts`, `tests/e2e/chat-app-shell.spec.ts`
+
+### 25.7.1 Release Gate Verification — PM VERIFIED
 
 > PM ran full 6-gate validation (2026-03-13). Droplet-Architect independently verified all 3 hotfixes.
 
@@ -19,7 +49,7 @@
 - [x] Gate E (Public): PASS — 8 public pages live + checkout-success, legal pages have review disclaimer, no trial messaging.
 - [x] Gate F (Validation): CONDITIONAL PASS — 2 flaky E2E tests tracked as 25.7.4.
 
-**Remaining before Phase 26:** 25.7.2 (test noise), 25.7.3 (admin audit test), 25.7.4 (flaky E2E stabilization).
+**Phase 25.7 now fully complete** — 25.7.2, 25.7.3, 25.7.4 all delivered and PM-verified.
 
 ---
 
