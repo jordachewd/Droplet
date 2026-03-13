@@ -5,171 +5,69 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: HF-4 is the sole remaining launch blocker — Stripe checkout redirect fix.**
-> All milestones 0–8 complete. HF-1, HF-2, HF-3, HF-5, HF-6, HF-7 complete (see DONE.md).
-> Phases 1–25.5 complete (see DONE.md).
-> Priority order: HF-4 (Stripe redirect — LAUNCH BLOCKER) → HF-8 (Stripe webhook sanitization) → Phase 25.6 → Phase 25.7 → Phase 26.
-> **All non-HF-4 work is ON HOLD until HF-4 is resolved.**
+> **STATUS: HF-8.2 and HF-9 are the remaining pre-25.7 fixes.**
+> All milestones 0–8 complete. HF-1 through HF-8.1 complete. Phase 25.6 complete (see DONE.md).
+> Phases 1–25.6 complete (see DONE.md).
+> Two new issues discovered during PM deep audit (2026-03-13): HF-8.2 (eventType leak), HF-9 (chat-input error leak).
+> Priority order: HF-8.2 → HF-9 → Phase 25.7 → Phase 26.
+> **All non-fix work is ON HOLD until HF-8.2 and HF-9 are resolved.**
 
 ---
 
-## HF-4: CRITICAL (LAUNCH BLOCKER) — Stripe Checkout Returns to /sign-in Instead of /app/profile
-
-> After completing Stripe payment, user lands on `/sign-in` instead of `/app/profile`.
-> Code is correct — `success_url` is `${BASEURL}/app/profile` (verified in `transaction.action.tsx`).
-> Root cause confirmed: Clerk auth session expires while user is on Stripe's external checkout domain.
-> When user returns, the proxy sees no active session and redirects `/app/profile` → `/sign-in`.
-> **Investigation complete (HF-4.1). Implementation approved by PM and Architect.**
-> Ref: SPEC.md TD-BILL-02.
-
----
-
-### HF-4.1 ~~Investigate and~~ fix Stripe checkout return URL issue
-
-**Root cause (confirmed):** Clerk session cookie expires or fails to rehydrate while user is on Stripe's external domain. On return, the proxy (`/app(.*)` matcher) sees no active session and redirects to `/sign-in`.
-
-**Approved fix (PM + Architect):** Create a public intermediary route with Stripe session verification.
-
-**What to do:**
-
-1. **Create public route** at `src/app/(public)/checkout-success/page.tsx` (outside `(chat)` group, so proxy does NOT intercept).
-2. **Accept query parameter** `session_id` from Stripe template variable.
-3. **Server-side verification** — call `stripe.checkout.sessions.retrieve(sessionId)` to verify `payment_status === 'paid'`.
-4. **Validate input** — `session_id` must be a non-empty string of reasonable length (max 255 chars). Reject empty/missing with generic error.
-5. **If payment verified**: render success confirmation UI with link to `/app/profile` (standard Next.js `<Link>`).
-6. **If payment NOT verified or session_id invalid**: render generic error with link to `/app/plans`.
-7. **Do NOT modify user data** on this page — that remains the Stripe webhook's responsibility. This page is purely confirmation UI.
-8. **Update `success_url`** in `src/lib/actions/transaction.action.tsx` from `${BASEURL}/app/profile` to `${BASEURL}/checkout-success?session_id={CHECKOUT_SESSION_ID}` (Stripe template variable).
-9. **Update header/nav** — no navigation link to this page (it's only reached via Stripe redirect).
-10. **Update E2E tests** — the checkout redirect assertion (if any) must point to `/checkout-success`.
-
-**Rejected alternatives:**
-
-- Option B (longer Clerk session duration) — REJECTED. Global setting, creates security tradeoff, doesn't guarantee survival across slow checkouts.
-- Direct redirect to `/sign-in` with post-login redirect — REJECTED. Bad UX, user already authenticated.
-
-**Acceptance criteria:**
-
-- [ ] Public route `/checkout-success` exists outside protected route groups
-- [ ] Route validates `session_id` param (non-empty, max 255 chars)
-- [ ] Route calls `stripe.checkout.sessions.retrieve()` server-side
-- [ ] Verified payment shows success UI + link to `/app/profile`
-- [ ] Unverified/invalid shows error UI + link to `/app/plans`
-- [ ] No user data modification on this page (webhook handles that)
-- [ ] `success_url` in `transaction.action.tsx` updated to use `{CHECKOUT_SESSION_ID}` template
-- [ ] Generic error messages only — no Stripe session data leaked to client
-- [ ] `npx tsc --noEmit` passes
-- [ ] All tests pass
-
----
-
----
-
-## HF-8: MEDIUM — Stripe Webhook Leaks Detailed Error Messages
+## HF-8.2: HIGH — Stripe Webhook Leaks Event Type Name in Unhandled Response
 
 > Discovered during PM deep audit (2026-03-13).
-> Stripe webhook route returns detailed internal error strings in JSON responses.
+> HF-8.1 sanitized all error responses but missed the unhandled-event fallback at the end of the handler.
+> The response includes `STRIPE: Unhandled event type: ${eventType}` — leaks internal Stripe event type names.
 > While the consumer is Stripe (not a browser), this violates AGENTS.md: "generic messages to clients; detailed logs server-side only."
-> Also returns `serializeForClient(newTransaction)` data in success response — unnecessary data exposure.
-> Depends on: HF-4 resolved first.
-> Ref: AGENTS.md Security Rules.
+> Ref: AGENTS.md Security Rules. SPEC.md Section 10.
 
 ---
 
-### HF-8.1 Sanitize Stripe webhook error responses
+### HF-8.2 Fix unhandled event type leak in Stripe webhook
 
 **File:** `src/app/api/webhooks/stripe/route.tsx`
 
 **What to do:**
 
-1. Replace all detailed `error:` strings (e.g., `"Checkout session metadata is invalid"`, `"Missing stripe-signature header"`, `"Missing STRIPE_WEBHOOK_SECRET"`) with a generic `error: "Webhook processing failed"`.
-2. Log the detailed error messages server-side via `process.stderr.write()` before returning the generic response.
-3. Remove `newTransaction` and `updatedUser` from the success response body. Return only `{ message: "OK" }`.
-4. Remove `newTransaction` from the failure response body at line ~192.
-5. Keep HTTP status codes as-is (400/500 for errors, 200 for success).
+1. Replace the unhandled event response message from `` `STRIPE: Unhandled event type: ${eventType}` `` to a generic `"Unhandled event"`.
+2. Log the actual event type server-side via `logStripeWebhookError()` before returning the generic response.
+3. Keep HTTP status code as 200.
 
 **Acceptance criteria:**
 
-- [ ] All webhook error responses return generic messages only
-- [ ] Detailed errors logged server-side via `process.stderr.write()`
-- [ ] Success response body contains only `{ message: "OK" }` — no transaction/user data
-- [ ] HTTP status codes preserved (400/500 for errors, 200 for success)
-- [ ] Existing Stripe webhook unit tests updated
+- [ ] Unhandled event response body does not contain the event type name
+- [ ] Event type logged server-side via `logStripeWebhookError()`
+- [ ] HTTP status code remains 200
+- [ ] Existing Stripe webhook unit tests updated if they assert on this message
 - [ ] `npx tsc --noEmit` passes
 - [ ] All tests pass
 
 ---
 
-## Phase 25.6: Unit Test Gap Coverage
+## HF-9: MEDIUM — Chat Input Leaks Upload Error Details to Client
 
-## Phase 25.6: Unit Test Gap Coverage
-
-> Fill remaining unit test gaps for critical business logic.
-> Ref: SPEC.md Sections 4, 7, 8.
-> Depends on: Phase 25.5.
-
----
-
-### 25.6.1 Unit: Conversation stop enforcement edge cases
-
-**File (new or extend):** `tests/unit/conversation-stop.test.ts`
-
-**What to do:**
-
-- Test all 5 stop reasons trigger the correct `endedReason` and `endAction` on Task.
-- Test that `prompt_limit_reached` is set when prompt count equals plan limit.
-- Test that `daily_conversation_limit_reached` fires when conversation count equals daily limit.
-- Test that `conversation_storage_limit_reached` fires at 12MB threshold.
-- Test that unlimited plans (`-1` limits) bypass all checks.
-- Test that `media_limit_reached` fires when image/audio count equals plan quota.
-
-**Acceptance criteria:**
-
-- [ ] All 5 stop reasons have dedicated test cases
-- [ ] Unlimited plan bypass verified
-- [ ] Correct `endAction` for each stop reason verified
-- [ ] All tests pass
+> Discovered during PM deep audit (2026-03-13).
+> File upload errors in `chat-input.tsx` expose `error.message` to the client UI.
+> This can leak AWS error details, network error strings, or validation internals.
+> Ref: AGENTS.md Security Rules: "Return generic error messages to UI."
 
 ---
 
-### 25.6.2 Unit: Webhook idempotency edge cases
+### HF-9.1 Sanitize upload error message in chat-input
 
-**File (extend):** `tests/unit/clerk-webhook-route.test.ts`, `tests/unit/stripe-webhook.test.ts`
-
-**What to do:**
-
-- Test Clerk `user.created` with duplicate clerkId returns 200 without creating duplicate User.
-- Test Clerk `user.deleted` with non-existent user returns 200 without throwing.
-- Test Stripe `checkout.session.completed` with duplicate `stripeId` returns 200 without creating duplicate Transaction.
-- Test Stripe webhook with invalid signature returns 400.
-
-**Acceptance criteria:**
-
-- [ ] Clerk duplicate user.created handled gracefully
-- [ ] Clerk missing user.deleted handled gracefully
-- [ ] Stripe duplicate transaction handled with idempotency
-- [ ] Invalid webhook signatures rejected
-- [ ] All tests pass
-
----
-
-### 25.6.3 Unit: Entitlement resolver full coverage
-
-**File (extend):** `tests/unit/resolve-entitlements.test.ts`
+**File:** `src/components/chat/chat-input.tsx`
 
 **What to do:**
 
-- Test all plan × media feature combinations (Lite/Pro/Premium × image/audio/video).
-- Test expired paid plan reverts to Lite entitlements.
-- Test suspended user gets blocked entitlements.
-- Test all 9 personas accessible for all plan tiers.
+1. Replace the upload error handler that conditionally uses `error.message` with a fixed generic message.
+2. Change: `error instanceof Error ? error.message : "Failed to upload the selected file."` → always use `"Failed to upload file. Please try again."`
 
 **Acceptance criteria:**
 
-- [ ] 9+ plan × feature combinations tested
-- [ ] Expired plan behavior verified
-- [ ] Suspended user behavior verified
-- [ ] All 9 personas accessible across all plans verified
+- [ ] Upload error message is always a generic string (no `error.message` exposed)
+- [ ] Upload still functions correctly for valid files
+- [ ] `npx tsc --noEmit` passes
 - [ ] All tests pass
 
 ---

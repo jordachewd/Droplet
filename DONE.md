@@ -2,7 +2,41 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: HF-5, HF-6, HF-7 complete. Phase 25.5 E2E expansion complete (25.5.1–25.5.7). Phases 1–25.5 complete.
+> Last updated: 2026-03-13 — HF-4, HF-8.1, Phase 25.6 complete. Phases 1–25.6 complete.
+
+---
+
+## Phase 25.6: Unit Test Gap Coverage — COMPLETED
+
+- [x] **25.6.1** Unit: Conversation stop enforcement edge cases — `tests/unit/conversation-stop.test.ts`. All 5 stop reasons tested (`prompt_limit_reached`, `daily_conversation_limit_reached`, `conversation_storage_limit_reached`, `media_limit_reached`, `billing_state_invalid`) with correct `endedReason` and `endAction`. Unlimited plan bypass verified. Premium bypass verified.
+- [x] **25.6.2** Unit: Webhook idempotency edge cases — verified coverage across `clerk-webhook-route.test.ts` and `stripe-webhook-route.test.ts`. Clerk duplicate `user.created` idempotency, Clerk `user.deleted` with non-existent user, Stripe duplicate `stripeId` idempotency, invalid signature rejection — all covered.
+- [x] **25.6.3** Unit: Entitlement resolver full coverage — `resolve-entitlements.test.ts` extended. All plan × feature combinations (Lite/Pro/Premium × image/audio/video), expired paid plan revert to Lite, suspended user blocking, all 9 personas accessible across all plans — all verified.
+
+Additional: `checkout-success-page.test.tsx` (new, 5 tests) covering success path, missing session_id, oversized session_id, unverified payment, missing Stripe secret. `public-pages.spec.ts` updated with checkout-success E2E assertion.
+
+57 test files, 287 tests passing. All 6 validation gates green.
+
+**Files changed:** `tests/unit/conversation-stop.test.ts` (new), `tests/unit/checkout-success-page.test.tsx` (new), `tests/unit/stripe-webhook-route.test.ts`, `tests/unit/resolve-entitlements.test.ts`, `tests/e2e/public-pages.spec.ts`
+
+---
+
+## HF-8.1: Stripe Webhook Error Response Sanitization — COMPLETED
+
+- [x] **HF-8.1** Sanitize Stripe webhook error responses — all detailed error strings replaced with generic `WEBHOOK_FAILURE_MESSAGE` constant (`"Webhook processing failed"`). `logStripeWebhookError()` helper writes details to `process.stderr` only. `createWebhookErrorResponse()` helper returns generic JSON bodies. Success response returns `{ message: "OK" }` only — no transaction/user data. Tests updated (9 test cases covering all error paths and generic message assertions).
+
+**Residual:** Unhandled event fallback still leaks `eventType` in response — tracked as HF-8.2.
+
+**Files changed:** `src/app/api/webhooks/stripe/route.tsx`, `tests/unit/stripe-webhook-route.test.ts`
+
+---
+
+## HF-4: CRITICAL — Stripe Checkout Return URL Fix — COMPLETED
+
+- [x] **HF-4.1** Fix Stripe checkout return URL issue — public intermediary route created at `src/app/(public)/checkout-success/page.tsx`. Server-side Stripe session verification via `stripe.checkout.sessions.retrieve()`. Input validation (non-empty, max 255 chars). Success UI with link to `/app/profile`, error UI with link to `/app/plans`. `success_url` in `transaction.action.tsx` updated to `${BASEURL}/checkout-success?session_id={CHECKOUT_SESSION_ID}`. No user data modification on this page (webhook responsibility). Generic error messages only. Unit tests added (`checkout-success-page.test.tsx`, 5 tests). E2E coverage added (`public-pages.spec.ts`).
+
+Resolved: TD-BILL-02. Stripe checkout now returns to a public route that does not require an active Clerk session. Clerk session expiry during external checkout no longer causes a redirect loop.
+
+**Files changed:** `src/app/(public)/checkout-success/page.tsx` (new), `src/lib/actions/transaction.action.tsx`, `tests/unit/checkout-success-page.test.tsx` (new), `tests/e2e/public-pages.spec.ts`
 
 ---
 

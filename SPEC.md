@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-13 (HF-5, HF-6, HF-7 complete. HF-3 closed (invalid). Phase 25.5 E2E expansion complete. HF-4 Stripe redirect fix pending.)
+> Last updated: 2026-03-13 (HF-4 complete. HF-8.1 complete. Phase 25.6 complete. HF-8.2 and HF-9 pending.)
 
 ---
 
@@ -670,8 +670,8 @@ All file handling technical debt has been resolved.
 
 ## 13. Testing
 
-- **Unit tests**: 53 suites, 250 tests (Vitest) — includes streaming, webhook, chat-wrapper, chat-body stop-state, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, persona prompt, rate limiting, task complexity classification, and OpenAI route tests
-- **E2E tests**: 7 Playwright spec files across browser projects (chat-app-shell added in Phase 25.5.3, auth-boundaries added in Phase 25.5.2, 70 public-page tests added in Phase 25.5.1)
+- **Unit tests**: 57 suites, 287 tests (Vitest) — includes streaming, webhook, chat-wrapper, chat-body stop-state, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, persona prompt, rate limiting, task complexity classification, conversation stop enforcement, entitlement resolver full coverage, checkout-success page, and OpenAI route tests
+- **E2E tests**: 8 Playwright spec files across browser projects (chat-app-shell, auth-boundaries, public-pages with 70+ tests, conversation-lifecycle, user-profile, admin-users, admin-features)
 - **Coverage**: Configured (Phase 24.1) — v8 provider, thresholds: 70% statements / 60% branches / 70% functions / 70% lines. Current: 82/71/88/82.
 - **Gap**: No dedicated E2E spec for streamed chunk-by-chunk rendering (manually verified via Playwright MCP)
 
@@ -714,9 +714,10 @@ All file handling technical debt has been resolved.
 
 ### Active — High Priority
 
-| ID         | Area    | Description                                                                                                                                                           | Severity |
-| ---------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| TD-BILL-02 | Billing | Stripe checkout success redirects user to `/sign-in` instead of `/app/profile` — likely caused by Clerk session expiry during external checkout flow. Tracked as HF-4 | High     |
+| ID        | Area     | Description                                                                                                                                               | Severity |
+| --------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| TD-SEC-01 | Security | Stripe webhook unhandled-event response leaks `eventType` name in response body. HF-8.1 sanitized errors but missed this fallback path. Tracked as HF-8.2 | High     |
+| TD-SEC-02 | Security | Chat input file upload error handler exposes `error.message` to client UI — can leak AWS/network error details. Tracked as HF-9                           | Medium   |
 
 ### Active — Medium Priority
 
@@ -782,6 +783,7 @@ All file handling technical debt has been resolved.
 | TD-UI-09      | Account pages at wrong routes               | Resolved in Phase 17 — profile/plans under `/app/*`                                                                                              |
 | TD-UI-10      | Admin has no operational capability         | Resolved in Phase 17 — 9 admin routes with full CRUD, audit, Tiptap                                                                              |
 | TD-BILL-01    | Stripe redirect URLs hardcode old routes    | Resolved in Phase 17 — redirects point to `/app/profile` and `/app/plans`                                                                        |
+| TD-BILL-02    | Stripe checkout redirect to /sign-in        | Resolved in HF-4 — public `/checkout-success` intermediary route with Stripe session verification, `success_url` updated                         |
 | TD-UI-08      | Missing 5 public pages                      | Resolved in Phase 18 — /about, /faqs, /privacy, /cookies, /terms created                                                                         |
 | TD-UI-07      | Homepage needs more sections                | Resolved in Phase 18 — 7 sections: Hero, Features, Workflow, Personas, CTA, Plans, FAQs                                                          |
 | TD-UI-12      | Footer links non-functional (spans)         | Resolved in Phase 18 — `<Link>` to `/privacy` and `/terms`                                                                                       |
