@@ -180,7 +180,7 @@ describe("ChatInput", () => {
     await waitFor(() => {
       expect(onSend).not.toHaveBeenCalled();
       expect(screen.getByRole("alert").textContent).toContain(
-        "Failed to upload file.",
+        "Failed to upload file. Please try again.",
       );
     });
   });

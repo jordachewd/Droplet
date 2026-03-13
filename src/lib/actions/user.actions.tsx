@@ -36,7 +36,7 @@ export async function updateUser(clerkId: string, user: UpdateUserParams) {
       status: 200,
     });
   } catch (error) {
-    return serializeForClient(error);
+    handleError({ error, source: "updateUser" });
   }
 }
 

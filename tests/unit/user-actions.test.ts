@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { auth } from "@clerk/nextjs/server";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import User from "@/lib/database/models/user.model";
-import { getUserById } from "@/lib/actions/user.actions";
+import { getUserById, updateUser } from "@/lib/actions/user.actions";
 
 vi.mock("@clerk/nextjs/server", () => ({
   auth: vi.fn(),
@@ -75,5 +75,23 @@ describe("getUserById", () => {
 
     expect(connectToDatabase).not.toHaveBeenCalled();
     expect(User.findOne).not.toHaveBeenCalled();
+  });
+});
+
+describe("updateUser", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(auth).mockResolvedValue({ userId: "clerk_user_1" } as never);
+    vi.mocked(connectToDatabase).mockResolvedValue(undefined as never);
+  });
+
+  it("throws handled errors with source metadata when update fails", async () => {
+    vi.mocked(User.findOneAndUpdate).mockRejectedValue(new Error("db failed"));
+
+    await expect(
+      updateUser("clerk_user_1", {
+        updatedAt: new Date("2026-03-13T00:00:00Z"),
+      }),
+    ).rejects.toThrow("db failed | updateUser");
   });
 });
