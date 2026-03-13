@@ -335,7 +335,10 @@ describe("POST /api/webhooks/stripe", () => {
     const payload = await response.json();
 
     expect(response.status).toBe(200);
-    expect(payload.message).toContain("Unhandled event type: customer.created");
+    expect(payload.message).toBe("Unhandled event");
+    expect(stderrWriteMock).toHaveBeenCalledWith(
+      "[stripe-webhook] Unhandled Stripe event type: customer.created\n",
+    );
   });
 
   it("returns 200 without creating duplicate transaction for replayed webhook", async () => {

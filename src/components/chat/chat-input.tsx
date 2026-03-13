@@ -116,12 +116,8 @@ export default function ChatInput({
       try {
         setIsUploading(true);
         uploadedFileUrl = await uploadSelectedFile(selectedFile);
-      } catch (error) {
-        setUploadError(
-          error instanceof Error
-            ? error.message
-            : "Failed to upload the selected file.",
-        );
+      } catch {
+        setUploadError("Failed to upload file. Please try again.");
         return;
       } finally {
         setIsUploading(false);

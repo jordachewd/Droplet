@@ -182,8 +182,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
   }
 
-  return NextResponse.json(
-    { message: `STRIPE: Unhandled event type: ${eventType}` },
-    { status: 200 },
-  );
+  logStripeWebhookError(`Unhandled Stripe event type: ${eventType}`);
+
+  return NextResponse.json({ message: "Unhandled event" }, { status: 200 });
 }
