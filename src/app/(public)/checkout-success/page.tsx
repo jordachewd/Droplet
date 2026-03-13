@@ -65,7 +65,10 @@ export default async function CheckoutSuccessPage({
             We could not verify your checkout session. Please return to plans
             and try again.
           </p>
-          <Link className="btn btn-contained mt-7 inline-flex uppercase" href="/app/plans">
+          <Link
+            className="btn btn-contained mt-7 inline-flex uppercase"
+            href="/app/plans"
+          >
             Back to plans
           </Link>
         </div>
@@ -102,7 +105,10 @@ export default async function CheckoutSuccessPage({
           We could not verify your payment. Please return to plans and try
           again.
         </p>
-        <Link className="btn btn-contained mt-7 inline-flex uppercase" href="/app/plans">
+        <Link
+          className="btn btn-contained mt-7 inline-flex uppercase"
+          href="/app/plans"
+        >
           Back to plans
         </Link>
       </div>

@@ -15,9 +15,68 @@ export interface Entitlements {
   audioLimitReached: boolean;
 }
 
-export function resolveEntitlements(planName?: PlanName | null): Entitlements {
+interface ResolveEntitlementOptions {
+  expiresOn?: Date | string | null;
+  isSuspended?: boolean;
+  now?: Date;
+}
+
+function isPaidPlanExpired({
+  planName,
+  expiresOn,
+  now,
+}: {
+  planName: PlanName;
+  expiresOn?: Date | string | null;
+  now: Date;
+}): boolean {
+  if (planName === "Lite" || !expiresOn) {
+    return false;
+  }
+
+  const expiryDate = new Date(expiresOn);
+  if (Number.isNaN(expiryDate.getTime())) {
+    return false;
+  }
+
+  return expiryDate < now;
+}
+
+export function resolveEntitlements(
+  planName?: PlanName | null,
+  options: ResolveEntitlementOptions = {},
+): Entitlements {
   const normalizedPlan: PlanName = planName ?? "Lite";
+  const now = options.now ?? new Date();
   const allowedPersonaIds = PERSONAS.map((persona) => persona.id);
+
+  if (options.isSuspended) {
+    return {
+      planName: normalizedPlan,
+      allowedPersonaIds: [],
+      supportsImageGeneration: false,
+      supportsAudioGeneration: false,
+      imageLimitReached: true,
+      audioLimitReached: true,
+    };
+  }
+
+  if (
+    isPaidPlanExpired({
+      planName: normalizedPlan,
+      expiresOn: options.expiresOn,
+      now,
+    })
+  ) {
+    return {
+      planName: "Lite",
+      allowedPersonaIds,
+      supportsImageGeneration: true,
+      supportsAudioGeneration: false,
+      imageLimitReached: false,
+      audioLimitReached: false,
+    };
+  }
 
   if (normalizedPlan === "Premium") {
     return {
