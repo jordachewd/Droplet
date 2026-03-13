@@ -30,7 +30,7 @@ Every response is shaped by the persona you choose, giving you a truly personali
 | **Boyfriend**   | Warm, caring, and attentive conversation         |
 | **Girlfriend**  | Supportive, fun, and engaging conversation       |
 
-All 9 personas are available on every plan.
+All 9 personas are available on every plan — no restrictions.
 
 ---
 
@@ -43,7 +43,7 @@ All 9 personas are available on every plan.
 - **Video Generation** — create video content (Premium, coming soon)
 - **Conversation History** — save, resume, and manage your chats
 - **File Uploads** — share images with your AI assistant
-- **Secure & Private** — your data stays yours
+- **Secure & Private** — your data stays yours, always
 
 ---
 
@@ -62,7 +62,7 @@ All 9 personas are available on every plan.
 | **Premium Audio Quality**     | —            | —         | ✓           |
 | **Advanced AI for Reasoning** | —            | —         | ✓           |
 
-Create a free account and start chatting today. Upgrade anytime.
+Create a free account and start chatting today. Upgrade anytime — no commitment.
 
 ---
 

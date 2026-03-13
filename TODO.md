@@ -5,13 +5,14 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: HF-8.2 and HF-9 are the remaining pre-25.7 fixes.**
+> **STATUS: HF-8.2, HF-9.1, and HF-9.2 are the remaining pre-25.7 fixes.**
 > All milestones 0–8 complete. HF-1 through HF-8.1 complete. Phase 25.6 complete (see DONE.md).
 > Phases 1–25.6 complete (see DONE.md).
 > Two issues discovered during PM deep audit (2026-03-13): HF-8.2 (eventType leak), HF-9 (chat-input error leak).
 > Both issues re-confirmed by Droplet-Architect audit (2026-03-13) with exact line numbers and reproduction steps.
-> Priority order: HF-8.2 → HF-9 → Phase 25.7 → Phase 26.
-> **All non-fix work is ON HOLD until HF-8.2 and HF-9 are resolved.**
+> Third issue (HF-9.2) discovered during PM+Engineer deep audit (2026-03-13): updateUser error handling inconsistency.
+> Priority order: HF-8.2 → HF-9.1 → HF-9.2 → Phase 25.7 → Phase 26.
+> **All non-fix work is ON HOLD until HF-8.2, HF-9.1, and HF-9.2 are resolved.**
 
 ---
 
@@ -68,6 +69,35 @@
 
 - [ ] Upload error message is always a generic string (no `error.message` exposed)
 - [ ] Upload still functions correctly for valid files
+- [ ] `npx tsc --noEmit` passes
+- [ ] All tests pass
+
+---
+
+## HF-9.2: LOW — updateUser Error Handling Inconsistency
+
+> Discovered during PM+Engineer deep audit (2026-03-13).
+> `updateUser` in `user.actions.tsx` catches errors and passes the raw error object to `serializeForClient(error)`.
+> While standard `Error` properties (`message`, `stack`) are non-enumerable and typically serialize to `{}`,
+> Mongoose validation errors may have enumerable properties that could leak internal schema details.
+> All other server actions use `handleError()` (which rethrows) — this is a pattern inconsistency.
+> Ref: AGENTS.md Security Rules. SPEC.md Section 10.
+
+---
+
+### HF-9.2 Fix error handling in updateUser
+
+**File:** `src/lib/actions/user.actions.tsx`
+
+**What to do:**
+
+1. Replace the catch block `return serializeForClient(error)` with `handleError(error)` to be consistent with all other server actions.
+2. Alternatively, return a generic error response: `return serializeForClient({ message: "User update failed.", status: 500, source: "updateUser" })`.
+
+**Acceptance criteria:**
+
+- [ ] `updateUser` catch block does not pass raw error objects to the client
+- [ ] Error handling pattern is consistent with other server actions
 - [ ] `npx tsc --noEmit` passes
 - [ ] All tests pass
 

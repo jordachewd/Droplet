@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-13 (PM deep audit complete. HF-4/HF-8.1/Phase 25.6 verified complete. HF-8.2 and HF-9 pending. Resolved tech debt purged.)
+> Last updated: 2026-03-13 (PM deep audit #2 complete. HF-4/HF-8.1/Phase 25.6 verified complete. HF-8.2, HF-9.1, HF-9.2 pending. Resolved tech debt purged.)
 
 ---
 
@@ -699,11 +699,12 @@ All file handling technical debt has been resolved. S3 cleanup on task/user dele
 
 ### Active — Low Priority
 
-| ID         | Area    | Description                                                                   | Severity |
-| ---------- | ------- | ----------------------------------------------------------------------------- | -------- |
-| TD-AI-09   | OpenAI  | Image/audio generation prompts not persona-aware (chat prompts done Phase 22) | Low      |
-| TD-AI-13   | OpenAI  | 5 model pricing entries are placeholders pending OpenAI confirmation          | Low      |
-| TD-PLAN-01 | Billing | No recurring subscriptions (deferred v1)                                      | Low      |
+| ID         | Area     | Description                                                                                                  | Severity |
+| ---------- | -------- | ------------------------------------------------------------------------------------------------------------ | -------- |
+| TD-SEC-03  | Security | `updateUser` catch block passes raw error to `serializeForClient(error)` — inconsistent with `handleError()` pattern. Tracked as HF-9.2 | Low      |
+| TD-AI-09   | OpenAI   | Image/audio generation prompts not persona-aware (chat prompts done Phase 22)                                | Low      |
+| TD-AI-13   | OpenAI   | 5 model pricing entries are placeholders pending OpenAI confirmation                                         | Low      |
+| TD-PLAN-01 | Billing  | No recurring subscriptions (deferred v1)                                                                     | Low      |
 
 ### Resolved
 
