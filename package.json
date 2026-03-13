@@ -4,6 +4,7 @@
   "private": true,
   "author": "JordacheWD",
   "scripts": {
+    "codex": "dotenv -f .env.codex -- codex",
     "dev": "next dev --webpack",
     "build": "next build",
     "start": "next start",
@@ -34,6 +35,7 @@
   "devDependencies": {
     "@clerk/nextjs": "^7.0.1",
     "@clerk/testing": "^2.0.1",
+    "@mikegarde/dotenv-cli": "^0.6.1",
     "@playwright/test": "^1.58.2",
     "@tailwindcss/postcss": "^4.2.1",
     "@testing-library/dom": "^10.4.1",

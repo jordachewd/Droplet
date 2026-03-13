@@ -60,7 +60,7 @@ export async function checkoutPlan(transaction: CheckoutTransactionParams) {
       billing: planBilling,
       planId: String(planId),
     },
-    success_url: `${BASEURL}/app/profile`,
+    success_url: `${BASEURL}/checkout-success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${BASEURL}/app/plans`,
   });
 

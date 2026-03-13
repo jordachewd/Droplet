@@ -162,7 +162,7 @@ async function resolveUserCreatedParams(
   const webhookUsername = toNonEmptyString(clerkUserData.username);
   let fallbackClerkUser: ClerkBackendUserRecord | null = null;
 
-  if (!webhookEmail || !webhookUsername) {
+  if (!webhookEmail) {
     const client = await clerkClient();
     fallbackClerkUser = (await client.users.getUser(
       clerkUserData.id,

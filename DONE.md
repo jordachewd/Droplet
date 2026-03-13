@@ -2,7 +2,83 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: HF-1 complete, Phases 1–25.5.3 complete. HF-2 in progress.
+> Last updated: HF-5, HF-6, HF-7 complete. Phase 25.5 E2E expansion complete (25.5.1–25.5.7). Phases 1–25.5 complete.
+
+---
+
+## HF-7: MEDIUM — Context Compaction Non-Text Token Cost — COMPLETED
+
+- [x] **HF-7.1** Add non-text token cost estimation to message compaction — `estimateContentItemTokens()` in `message-policy.ts` assigns heuristic costs: 300 tokens per `image_url`, 500 tokens per `input_audio`. Non-text items in older messages are evicted when token budget is exceeded. Most recent user message retains all non-text items regardless of budget. Tests added in `message-policy.test.ts` (4 tests covering image/audio estimation, eviction, preservation).
+
+**Files changed:** `src/lib/utils/openai/message-policy.ts`, `tests/unit/message-policy.test.ts`
+
+---
+
+## HF-6: HIGH — Premium Chat Retry Model Downgrade — COMPLETED
+
+- [x] **HF-6.1** Set distinct fallback models for Premium chat task classes — Premium chat simple/standard fallback changed from `gpt-4.1` to `gpt-4o-mini`; complex fallback changed from `gpt-4.1` to `gpt-4.1-mini`. All 3 Premium chat `fallbackModel` values now differ from their `model` values. Tests updated in `ai-model-policy.test.ts`.
+
+Resolved: AGENTS.md rule "Retries should downgrade model tier" now enforced for Premium chat.
+
+**Files changed:** `src/lib/utils/ai-model-policy.ts`, `tests/unit/ai-model-policy.test.ts`
+
+---
+
+## HF-5: CRITICAL — Auth Reliability: Webhook Over-Fetch & Self-Heal Race — COMPLETED
+
+- [x] **HF-5.1** Remove unnecessary Clerk API call for missing username in webhook — condition in `resolveUserCreatedParams()` changed from `if (!webhookEmail || !webhookUsername)` to `if (!webhookEmail)` only. Webhook with email but no username now succeeds without calling `client.users.getUser()`. Tests updated in `clerk-webhook-route.test.ts` to assert no unnecessary `getUser` call when email exists.
+- [x] **HF-5.2** Fix self-heal duplicate-key race returning false 503 — `User.create()` wrapped in try/catch for MongoDB error code 11000 (duplicate key). On 11000, refetches existing user via `findSyncedUserByClerkId()`. `client.users.updateUserMetadata()` wrapped in non-fatal try/catch with stderr warning. Tests added in `ensure-user-synced.test.ts` (10 tests covering race recovery and metadata failure scenarios).
+
+**Files changed:** `src/app/api/webhooks/clerk/route.tsx`, `src/lib/utils/ensure-user-synced.ts`, `tests/unit/clerk-webhook-route.test.ts`, `tests/unit/ensure-user-synced.test.ts`
+
+---
+
+## Phase 25.5.4–25.5.7: E2E Test Expansion — COMPLETED
+
+- [x] **25.5.4** E2E: Conversation lifecycle — `tests/e2e/conversation-lifecycle.spec.ts` (212 lines). Full create→list→resume→delete cycle with MongoDB seeding, `/api/openai` mocking, proper cleanup. Skips non-Chromium.
+- [x] **25.5.5** E2E: User profile and plan pages — `tests/e2e/user-profile.spec.ts` (62 lines). Profile rendering, plan badge, plan catalog with $19/$39 price assertions, upgrade CTA.
+- [x] **25.5.6** E2E: Admin dashboard and user management — `tests/e2e/admin-users.spec.ts` (41 lines). Dashboard→users list→user detail navigation with action button presence assertions.
+- [x] **25.5.7** E2E: Admin features — `tests/e2e/admin-features.spec.ts` (77 lines). Transactions, usage, settings, and website management pages. CMS page creation and Tiptap editor rendering.
+- [x] Admin credential helpers added to `e2e-test-user.ts`. Admin storage setup added to `global.setup.ts`. Flake hardening in `chat-app-shell.spec.ts` (`scrollIntoViewIfNeeded()` before click).
+
+Full E2E suite: 178 passed, 8 skipped, 0 failed. 55 unit test suites, 268 unit tests passed. All 6 validation gates green.
+
+**Files changed:** `tests/e2e/conversation-lifecycle.spec.ts` (new), `tests/e2e/user-profile.spec.ts` (new), `tests/e2e/admin-users.spec.ts` (new), `tests/e2e/admin-features.spec.ts` (new), `tests/e2e/utils/e2e-test-user.ts`, `tests/e2e/global.setup.ts`, `tests/e2e/chat-app-shell.spec.ts`
+
+---
+
+## HF-3: CLOSED (Invalid) — Model IDs Verified Real
+
+HF-3 was predicated on the claim that `gpt-image-1-mini`, `gpt-image-1.5`, `gpt-audio-mini`, `gpt-audio-1.5`, and `gpt-4o-mini-tts` were "invented" model IDs not recognized by the OpenAI API.
+
+**Verification result (March 2026):** All 5 model IDs are real, officially documented OpenAI models confirmed by:
+
+- OpenAI official model catalog at `developers.openai.com/api/docs/models/all/`
+- OpenAI image generation guide explicitly listing `gpt-image-1.5`, `gpt-image-1`, `gpt-image-1-mini`
+- OpenAI audio docs listing `gpt-audio-1.5`, `gpt-audio-mini`, `gpt-4o-mini-tts`
+- User confirmation that all models are configured in their OpenAI dashboard
+- Independent verification by Droplet-Architect and Droplet-Engineer agents
+
+The API calling code in `generateImage.tsx` and `generateAudio.tsx` is compatible with these models.
+
+**Closed tasks:** HF-3.1 (image model IDs), HF-3.2 (audio model IDs), HF-3.3 (re-scoped — TD-AI-16 and TD-AI-17 removed from SPEC.md tech debt).
+
+**Remaining concern:** `MODEL_PRICING` values for audio models have TODO comments noting unverified pricing — this is a low-priority accuracy issue (TD-AI-13), not a functional blocker.
+
+---
+
+## HF-2: Critical — Missing MongoDB User Self-Healing — COMPLETED
+
+- [x] **HF-2.1** Create self-healing user sync utility — `ensureUserSynced()` in `src/lib/utils/ensure-user-synced.ts`. Queries MongoDB for user by `clerkId`, falls back to Clerk API if missing, creates MongoDB record with Lite plan defaults, sets Clerk `publicMetadata`. Returns serialized user data or `null` on failure.
+- [x] **HF-2.2** Fix `/app/profile` to handle missing MongoDB user — replaced `getUserById` with `ensureUserSynced`, error state with support contact and retry guidance instead of permanent loading spinner.
+- [x] **HF-2.3** Fix `/app/plans` to handle missing MongoDB user — same self-healing pattern as HF-2.2.
+- [x] **HF-2.4** Fix `/api/openai` to reject when user record is missing — attempts self-heal, returns HTTP 503 on failure instead of silent Lite degradation.
+- [x] **HF-2.5** Remove dead svix dependency — `svix` uninstalled from `package.json`, zero imports confirmed in `src/`.
+- [x] **HF-2.6** Verify Clerk Dashboard webhook configuration — webhook endpoint, signing secret, and event subscriptions confirmed working on both local and production.
+
+Resolved: TD-AUTH-03, TD-AUTH-04. Self-healing user sync operational. Clerk issue confirmed fixed on local and production environments.
+
+**Files changed:** `src/lib/utils/ensure-user-synced.ts` (new), `src/app/(chat)/app/profile/page.tsx`, `src/app/(chat)/app/plans/page.tsx`, `src/app/api/openai/route.tsx`, `package.json`
 
 ---
 

@@ -164,6 +164,63 @@ describe("ensureUserSynced", () => {
     expect(result).toBeNull();
   });
 
+  it("returns the refetched user when User.create races on duplicate key (11000)", async () => {
+    const firstSelectMock = vi.fn().mockReturnValue({
+      lean: vi.fn().mockResolvedValue(null),
+    });
+    const secondSelectMock = vi.fn().mockReturnValue({
+      lean: vi.fn().mockResolvedValue(MOCK_EXISTING_USER),
+    });
+
+    mockUserFindOne
+      .mockReturnValueOnce({ select: firstSelectMock })
+      .mockReturnValueOnce({ select: secondSelectMock });
+    mockUserCreate.mockRejectedValue(
+      Object.assign(new Error("Duplicate key"), { code: 11000 }),
+    );
+
+    const result = await ensureUserSynced(CLERK_USER_ID);
+
+    expect(result).toEqual(MOCK_EXISTING_USER);
+    expect(mockUserFindOne).toHaveBeenCalledTimes(2);
+    expect(mockUserFindById).not.toHaveBeenCalled();
+  });
+
+  it("returns the created user even when Clerk metadata sync fails", async () => {
+    const stderrWriteSpy = vi
+      .spyOn(process.stderr, "write")
+      .mockImplementation(() => true);
+
+    mockFindOneChain(null);
+    const createdUser = {
+      _id: "new_mongo_id",
+      clerkId: CLERK_USER_ID,
+      role: "client",
+      plan: { name: "Lite", id: 0 },
+    };
+    mockUserCreate.mockResolvedValue(createdUser);
+    mockUpdateUserMetadata.mockRejectedValue(new Error("Clerk metadata error"));
+    mockFindByIdChain({
+      ...createdUser,
+      username: "alice",
+      email: "alice@example.com",
+      firstName: "Alice",
+      lastName: "Smith",
+      userimg: "https://img.clerk.com/alice.jpg",
+      registerAt: "2026-01-01T00:00:00.000Z",
+    });
+
+    const result = await ensureUserSynced(CLERK_USER_ID);
+
+    expect(result).toBeTruthy();
+    expect(result?.clerkId).toBe(CLERK_USER_ID);
+    expect(mockUpdateUserMetadata).toHaveBeenCalledTimes(1);
+    expect(stderrWriteSpy).toHaveBeenCalledWith(
+      `[ensure-user-synced] Metadata sync failed for ${CLERK_USER_ID}; continuing with MongoDB user.\n`,
+    );
+    stderrWriteSpy.mockRestore();
+  });
+
   it("returns null when Clerk user has no email addresses", async () => {
     mockFindOneChain(null);
     mockGetUser.mockResolvedValue({

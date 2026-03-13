@@ -262,25 +262,27 @@ export const MODEL_POLICY_MATRIX = {
       taskClasses: {
         simple: createChatRule({
           model: "gpt-4.1",
-          fallbackModel: "gpt-4.1",
+          fallbackModel: "gpt-4o-mini",
           maxInputTokens: 16_000,
           maxOutputTokens: 900,
-          notes: "Premium routine chat defaults to gpt-4.1.",
+          notes:
+            "Premium simple chat defaults to gpt-4.1 and downgrades to gpt-4o-mini on retry/latency/budget pressure.",
         }),
         standard: createChatRule({
           model: "gpt-4.1",
-          fallbackModel: "gpt-4.1",
+          fallbackModel: "gpt-4o-mini",
           maxInputTokens: 32_000,
           maxOutputTokens: 1_800,
-          notes: "Premium routine chat defaults to gpt-4.1.",
+          notes:
+            "Premium standard chat defaults to gpt-4.1 and downgrades to gpt-4o-mini on retry/latency/budget pressure.",
         }),
         complex: createChatRule({
           model: "gpt-4.1",
-          fallbackModel: "gpt-4.1",
+          fallbackModel: "gpt-4.1-mini",
           maxInputTokens: 48_000,
           maxOutputTokens: 2_800,
           notes:
-            "Use gpt-5.4 only when the request is both complex and explicitly premium.",
+            "Premium complex chat defaults to gpt-4.1, downgrades to gpt-4.1-mini, and only upgrades to gpt-5.4 when explicitly requested.",
         }),
       },
     },
