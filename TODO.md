@@ -7,8 +7,9 @@
 >
 > **STATUS: Phase 25.7 COMPLETE (PM-verified 2026-03-13). All milestones 0–8 complete. Phases 1–25.7 complete.**
 > **TWO CRITICAL BUGS FOUND: (1) Limits race condition allows plan limit bypass. (2) Image/audio generation crashes on any provider/upload error.**
-> **All Phase 26+ deferred work is ON HOLD until Phase 27 (critical/medium bug fixes) is complete.**
-> **Priority order: 27.1 (CRITICAL) → 27.2 (CRITICAL) → 27.3 → 27.4 → 27.5 → 27.6 → Phase 26.**
+> **PRODUCT RULE CHANGE: All features (image, audio, video) now available in all plans and all personas (Rule 10). Frozen Rule 5 updated.**
+> **All Phase 26+ deferred work is ON HOLD until Phase 27 (critical/medium bug fixes + rule change) is complete.**
+> **Priority order: 27.1 (CRITICAL) → 27.2 (CRITICAL) → 27.3 (HIGH) → 27.4 → 27.5 → 27.6 → 27.7 → Phase 26.**
 > **COMPLETED THIS SESSION: 6 starter prompts per persona (all 9 personas updated). No TODO entry needed — already done.**
 
 ---
@@ -93,7 +94,53 @@
 
 ---
 
-### 27.3 Admin settings page — replace editors with proper form controls
+### 27.3 HIGH — Enable universal feature access (all features × all plans × all personas)
+
+**Files:** `src/constants/plans.tsx`, `src/constants/assistant-personas.tsx`, `src/lib/utils/resolve-entitlements.tsx`, `src/lib/utils/ai-model-policy.ts`, `src/lib/utils/openai/generateResponse.tsx`, plan card components
+**Ref:** TD-FEAT-01 (new), AGENTS.md Rules 5 & 10
+
+**Product rule change (PM-approved, frozen rule override):** All features (image, audio, video) must be available in ALL plans and ALL personas — differentiated by plan limits (quantity) and persona purpose (prompt context). No feature is plan-exclusive or persona-exclusive.
+
+**New limits matrix:**
+
+| Feature                 | Lite | Pro | Premium   |
+| ----------------------- | ---- | --- | --------- |
+| Image generations/month | 3    | 50  | Unlimited |
+| Audio generations/month | 3    | 50  | Unlimited |
+| Video generations/month | 1    | 10  | 10        |
+
+**What to do:**
+
+1. **`src/constants/plans.tsx`** — Update `PLAN_LIMITS`:
+   - Lite: `audio: 0 → 3`, `video: 0 → 1`
+   - Pro: `video: 0 → 10`
+   - Update plan card descriptions: remove "no audio", "no video" text. Replace with actual limits.
+2. **`src/constants/assistant-personas.tsx`** — Set `supportsImage: true` and `supportsAudio: true` for ALL 9 personas. Currently 5 personas block image, 4 block audio.
+3. **`src/lib/utils/resolve-entitlements.tsx`** — Lite plan: change `supportsAudioGeneration: false` → `true`. Add video entitlement checks (`supportsVideoGeneration`) gated by `checkUsageLimit` for all plans.
+4. **`src/lib/utils/ai-model-policy.ts`** — Remove `createBlockedRule("Audio generation is not available on Lite.")`. Remove `createBlockedRule("Video generation is not available on Lite.")`. Remove `createBlockedRule("Video generation is not available on Pro.")`. Add Lite audio model policy (use `gpt-4o-mini-tts` for TTS, block `audio_in_out`). Add Lite/Pro video model policy (use `sora-2`, same model as Premium — video is still "coming soon" but policy must be defined).
+5. **`src/lib/utils/openai/generateResponse.tsx`** — Adjust persona capability checks: remove `!selectedPersona.supportsAudio` and `!selectedPersona.supportsImage` blocking conditions. Features are now plan-gated only, not persona-gated.
+6. **Plan card components** — Update inclusion text: Lite should list "3 images, 3 audio, 1 video /month". Pro should list "50 images, 50 audio, 10 video /month".
+7. Update unit tests: new entitlement combos (Lite+audio, Lite+video, Pro+video), persona feature universality.
+
+**Acceptance criteria:**
+
+- [ ] `PLAN_LIMITS` reflects new limits: Lite audio=3, Lite video=1, Pro video=10
+- [ ] All 9 personas have `supportsImage: true` and `supportsAudio: true`
+- [ ] `resolveEntitlements("lite")` returns `supportsAudioGeneration: true`
+- [ ] Model policy: Lite audio resolves to `gpt-4o-mini-tts` (not blocked)
+- [ ] Model policy: Lite/Pro video resolves to `sora-2` (not blocked)
+- [ ] Persona checks in `generateResponse.tsx` no longer block features per persona
+- [ ] Plan card UI reflects accurate feature limits for all 3 plans
+- [ ] No feature is blocked for any plan — all are limited by quantity
+- [ ] No feature is blocked for any persona — all are available
+- [ ] Unit tests for Lite audio entitlement, Lite video entitlement, Pro video entitlement
+- [ ] Unit tests for persona feature universality (all personas × all features)
+- [ ] `npx tsc --noEmit` passes
+- [ ] All existing tests pass
+
+---
+
+### 27.4 Admin settings page — replace editors with proper form controls
 
 **Files:** `src/app/(admin)/admin/settings/page.tsx`, potentially new client components
 **Ref:** TD-ADMIN-01
@@ -120,7 +167,7 @@
 
 ---
 
-### 27.4 Admin settings — propagate pricing & limits to plan cards
+### 27.5 Admin settings — propagate pricing & limits to plan cards
 
 **Files:** `src/constants/plans.tsx`, `src/lib/utils/resolve-entitlements.tsx`, `src/lib/utils/check-usage-limit.ts`, `src/lib/utils/admin-queries.ts`, plan card components
 **Ref:** TD-ADMIN-02
@@ -146,7 +193,7 @@
 
 ---
 
-### 27.5 Unify all /app/\* pages under shared layout
+### 27.6 Unify all /app/\* pages under shared layout
 
 **Files:** `src/app/(chat)/layout.tsx` (new or modified), `src/app/(chat)/app/` page files
 **Ref:** TD-UI-14
@@ -173,7 +220,7 @@
 
 ---
 
-### 27.6 User profile — add edit capabilities and account deletion
+### 27.7 User profile — add edit capabilities and account deletion
 
 **Files:** `src/app/(chat)/app/profile/page.tsx`, `src/components/sections/profile-hero.tsx`, `src/lib/actions/user.actions.tsx`
 **Ref:** TD-UI-15, TD-ACT-02
@@ -210,7 +257,7 @@
 
 ## Phase 26: Deferred Features — ON HOLD
 
-> **ON HOLD until Phase 27 (all subtasks) is PM-approved complete.**
+> **ON HOLD until Phase 27 (all subtasks 27.1–27.7) is PM-approved complete.**
 > Lower priority items deferred from v1 core.
 > Depends on: Phase 27 complete.
 

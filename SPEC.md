@@ -35,7 +35,7 @@ The product monetises through tiered subscription plans paid via Stripe.
 - Image upload support
 - Image generation (all tiers, with enforced usage limits)
 - Audio generation (all tiers, with enforced usage limits)
-- Video generation (Premium only — **coming soon**, implementation deferred)
+- Video generation (all tiers, with enforced usage limits — **coming soon**, implementation deferred)
 - Account-required access — no anonymous usage
 - Authenticated `/app` experience with persona-led UX
 - Real conversation history (list, resume, delete)
@@ -76,15 +76,17 @@ Admin access is enforced at the proxy level (`src/proxy.tsx`) via Clerk session 
 
 | Persona ID    | Label       | Category     | Image | Audio |
 | ------------- | ----------- | ------------ | ----- | ----- |
-| `strategist`  | Strategist  | Productivity | Yes   | No    |
+| `strategist`  | Strategist  | Productivity | Yes   | Yes   |
 | `teacher`     | Teacher     | Learning     | Yes   | Yes   |
-| `developer`   | Developer   | Productivity | Yes   | No    |
+| `developer`   | Developer   | Productivity | Yes   | Yes   |
 | `creator`     | Creator     | Creative     | Yes   | Yes   |
-| `wellness`    | Wellness    | Lifestyle    | No    | Yes   |
-| `analyst`     | Analyst     | Productivity | Yes   | No    |
-| `best-friend` | Best Friend | Companion    | No    | Yes   |
-| `boyfriend`   | Boyfriend   | Companion    | No    | Yes   |
-| `girlfriend`  | Girlfriend  | Companion    | No    | Yes   |
+| `wellness`    | Wellness    | Lifestyle    | Yes   | Yes   |
+| `analyst`     | Analyst     | Productivity | Yes   | Yes   |
+| `best-friend` | Best Friend | Companion    | Yes   | Yes   |
+| `boyfriend`   | Boyfriend   | Companion    | Yes   | Yes   |
+| `girlfriend`  | Girlfriend  | Companion    | Yes   | Yes   |
+
+> **Rule 10:** All features (image, audio, video) are available for all personas — differentiated by persona purpose (prompt context), not blocked per persona. All plans provide all features — differentiated by plan limits (quantity).
 
 Each persona has: `id`, `label`, `tagline`, `description`, `category`, `icon`, `starterPrompts[]`, `systemPrompt`, `supportsImage`, `supportsAudio`.
 
@@ -119,11 +121,11 @@ Prompts are versioned and separated from request handlers. `buildPersonaAwareSys
 
 ## 4. Subscription Plans
 
-| Plan        | Price | Duration      | Chat Model (default)            | Limits                                                                                             |
-| ----------- | ----- | ------------- | ------------------------------- | -------------------------------------------------------------------------------------------------- |
-| **Lite**    | Free  | **Permanent** | `gpt-4o-mini`                   | 5 conversations/day, 10 prompts/conversation, 3 image generations/month, no audio, no video        |
-| **Pro**     | $19   | Monthly       | `gpt-4.1`                       | 50 conversations/day, 100 prompts/conversation, 50 image + 50 audio generations/month, no video    |
-| **Premium** | $39   | Monthly       | `gpt-4.1` / `gpt-5.4` (complex) | Unlimited conversations, unlimited prompts, unlimited image + audio generations, video coming soon |
+| Plan        | Price | Duration      | Chat Model (default)            | Limits                                                                                            |
+| ----------- | ----- | ------------- | ------------------------------- | ------------------------------------------------------------------------------------------------- |
+| **Lite**    | Free  | **Permanent** | `gpt-4o-mini`                   | 5 conversations/day, 10 prompts/conversation, 3 image/month, 3 audio/month, 1 video/month         |
+| **Pro**     | $19   | Monthly       | `gpt-4.1`                       | 50 conversations/day, 100 prompts/conversation, 50 image/month, 50 audio/month, 10 video/month    |
+| **Premium** | $39   | Monthly       | `gpt-4.1` / `gpt-5.4` (complex) | Unlimited conversations, unlimited prompts, unlimited image + audio, 10 video/month (coming soon) |
 
 > Full model policy (all features × plans × task classes) in **Section 8**.
 
@@ -132,19 +134,19 @@ Prompts are versioned and separated from request handlers. `buildPersonaAwareSys
 1. **Lite is permanent and free.** There is no 3-day trial. There is no expiry. New users receive Lite by default upon account creation.
 2. **All personas are available in all plans.** There are no persona restrictions per plan.
 3. **Pro and Premium are paid-only.** Activated via Stripe Checkout one-time payment.
-4. **Premium advantages over Pro:** premium audio quality (`gpt-audio-1.5`), `gpt-5.4` for complex reasoning, video generation, and unlimited image/audio quotas. See Section 8 for full model policy.
+4. **Premium advantages over Pro:** premium audio quality (`gpt-audio-1.5`), `gpt-5.4` for complex reasoning, unlimited image/audio quotas, and higher video quota. See Section 8 for full model policy.
 5. When any limit is reached, the server **must end the conversation** with an exact stop reason and exact next-action instruction.
 6. After a forced stop, the user is told one of: start a new conversation (if resources remain), upgrade plan (if applicable), or contact support.
 
 ### Lite Plan Limits (Detailed)
 
-| Limit                         | Value | Reset Window                     |
-| ----------------------------- | ----- | -------------------------------- |
-| Conversations per day         | 5     | 24 hours                         |
-| User prompts per conversation | 10    | Per conversation                 |
-| Image generations             | 3     | 30-day rolling window            |
-| Audio generation              | 0     | N/A (blocked — Pro/Premium only) |
-| Video generation              | 0     | N/A (blocked — Premium only)     |
+| Limit                         | Value | Reset Window          |
+| ----------------------------- | ----- | --------------------- |
+| Conversations per day         | 5     | 24 hours              |
+| User prompts per conversation | 10    | Per conversation      |
+| Image generations             | 3     | 30-day rolling window |
+| Audio generations             | 3     | 30-day rolling window |
+| Video generations             | 1     | 30-day rolling window |
 
 ### Pro Plan Limits (Detailed)
 
@@ -154,7 +156,7 @@ Prompts are versioned and separated from request handlers. `buildPersonaAwareSys
 | User prompts per conversation | 100   | Per conversation      |
 | Image generations             | 50    | 30-day rolling window |
 | Audio generations             | 50    | 30-day rolling window |
-| Video generation              | 0     | N/A                   |
+| Video generations             | 10    | 30-day rolling window |
 
 ### Premium Plan Limits (Detailed)
 
