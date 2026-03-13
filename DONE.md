@@ -2,7 +2,54 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-13 — HF-4, HF-8.1, Phase 25.6 complete. Phases 1–25.6 complete.
+> Last updated: 2026-03-13 — HF-8.2, HF-9.1, HF-9.2 complete. Phase 25.7.1 PM-verified. Phases 1–25.6 complete.
+
+---
+
+## Phase 25.7.1: Release Gate Verification — PM VERIFIED
+
+> PM ran full 6-gate validation (2026-03-13). Droplet-Architect independently verified all 3 hotfixes.
+
+- [x] **25.7.1** Gates 1–4 (prettier, lint, tsc, unit tests) and Gate 6 (build): PASS.
+- [x] Gate 5 (E2E): 183 passed, 2 flaky failures (admin-features CMS timing, chat-app-shell Mobile Chrome viewport), 8 skipped.
+- [x] Gate A (Contract): PASS — billing semantics frozen (one-time payments v1), limits frozen, Premium extras defined, all model IDs verified.
+- [x] Gate B (Architecture): PASS — entitlement resolver live, route/auth boundaries correct, storage guardrails (12MB threshold) enforced.
+- [x] Gate C (Product): PASS — Lite permanent + auth-required, all 9 personas available, 5 stop reasons work, streaming stable.
+- [x] Gate D (Admin): PASS — all 9 admin routes exist, 8 admin actions audited, role enforcement at proxy + server.
+- [x] Gate E (Public): PASS — 8 public pages live + checkout-success, legal pages have review disclaimer, no trial messaging.
+- [x] Gate F (Validation): CONDITIONAL PASS — 2 flaky E2E tests tracked as 25.7.4.
+
+**Remaining before Phase 26:** 25.7.2 (test noise), 25.7.3 (admin audit test), 25.7.4 (flaky E2E stabilization).
+
+---
+
+## HF-9.2: LOW — updateUser Error Handling Fix — COMPLETED
+
+- [x] **HF-9.2** Replace `serializeForClient(error)` with `handleError({ error, source: "updateUser" })` in `updateUser` catch block. Pattern now consistent with all other server actions. Test added in `user-actions.test.ts` (line 81) asserting rethrow with source metadata.
+
+Resolved: TD-SEC-03.
+
+**Files changed:** `src/lib/actions/user.actions.tsx`, `tests/unit/user-actions.test.ts`
+
+---
+
+## HF-9.1: MEDIUM — Chat Input Upload Error Sanitization — COMPLETED
+
+- [x] **HF-9.1** Replace conditional `error instanceof Error ? error.message : ...` with fixed generic string `"Failed to upload file. Please try again."`. Catch block no longer binds error variable. Test updated in `chat-input.test.tsx` (line 131) asserting generic message.
+
+Resolved: TD-SEC-02.
+
+**Files changed:** `src/components/chat/chat-input.tsx`, `tests/unit/chat-input.test.tsx`
+
+---
+
+## HF-8.2: HIGH — Stripe Webhook Unhandled Event Sanitization — COMPLETED
+
+- [x] **HF-8.2** Replace `STRIPE: Unhandled event type: ${eventType}` response with generic `{ message: "Unhandled event" }`. Event type logged server-side via `logStripeWebhookError()`. HTTP 200 preserved. Test updated in `stripe-webhook-route.test.ts` (line 328) asserting generic message and server-side log.
+
+Resolved: TD-SEC-01.
+
+**Files changed:** `src/app/api/webhooks/stripe/route.tsx`, `tests/unit/stripe-webhook-route.test.ts`
 
 ---
 

@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-13 (PM deep audit #2 complete. HF-4/HF-8.1/Phase 25.6 verified complete. HF-8.2, HF-9.1, HF-9.2 pending. Resolved tech debt purged.)
+> Last updated: 2026-03-13 (PM deep audit #3 complete. HF-8.2, HF-9.1, HF-9.2 verified complete. Phase 25.7.1 PM-verified. All resolved tech debt purged.)
 
 ---
 
@@ -642,8 +642,8 @@ All file handling technical debt has been resolved. S3 cleanup on task/user dele
 
 ## 13. Testing
 
-- **Unit tests**: 57 suites, 287 tests (Vitest) — includes streaming, webhook, chat-wrapper, chat-body stop-state, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, persona prompt, rate limiting, task complexity classification, conversation stop enforcement, entitlement resolver full coverage, checkout-success page, and OpenAI route tests
-- **E2E tests**: 8 Playwright spec files across browser projects (chat-app-shell, auth-boundaries, public-pages with 70+ tests, conversation-lifecycle, user-profile, admin-users, admin-features)
+- **Unit tests**: 57 suites, 288 tests (Vitest) — includes streaming, webhook, chat-wrapper, chat-body stop-state, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, persona prompt, rate limiting, task complexity classification, conversation stop enforcement, entitlement resolver full coverage, checkout-success page, and OpenAI route tests
+- **E2E tests**: 11 Playwright spec files across browser projects (chat-app-shell, auth-boundaries, public-pages with 70+ tests, conversation-lifecycle, user-profile, admin-users, admin-features, landing-page, plans-public, pricing-public, authenticated-flows). 193 total, 183 passed, 2 flaky, 8 skipped.
 - **Coverage**: Configured (Phase 24.1) — v8 provider, thresholds: 70% statements / 60% branches / 70% functions / 70% lines. Current: 82/71/88/82.
 - **Gap**: No dedicated E2E spec for streamed chunk-by-chunk rendering (manually verified via Playwright MCP)
 
@@ -686,25 +686,18 @@ All file handling technical debt has been resolved. S3 cleanup on task/user dele
 
 ### Active — High Priority
 
-| ID        | Area     | Description                                                                                                                                               | Severity |
-| --------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| TD-SEC-01 | Security | Stripe webhook unhandled-event response leaks `eventType` name in response body. HF-8.1 sanitized errors but missed this fallback path. Tracked as HF-8.2 | High     |
-| TD-SEC-02 | Security | Chat input file upload error handler exposes `error.message` to client UI — can leak AWS/network error details. Tracked as HF-9                           | Medium   |
-
-### Active — Medium Priority
-
 | ID       | Area   | Description                                                                     | Severity |
 | -------- | ------ | ------------------------------------------------------------------------------- | -------- |
 | TD-AI-08 | OpenAI | No video generation (Premium) — UI shows "Coming soon", implementation deferred | Medium   |
 
 ### Active — Low Priority
 
-| ID         | Area     | Description                                                                                                  | Severity |
-| ---------- | -------- | ------------------------------------------------------------------------------------------------------------ | -------- |
+| ID         | Area     | Description                                                                                                                             | Severity |
+| ---------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------- | -------- |
 | TD-SEC-03  | Security | `updateUser` catch block passes raw error to `serializeForClient(error)` — inconsistent with `handleError()` pattern. Tracked as HF-9.2 | Low      |
-| TD-AI-09   | OpenAI   | Image/audio generation prompts not persona-aware (chat prompts done Phase 22)                                | Low      |
-| TD-AI-13   | OpenAI   | 5 model pricing entries are placeholders pending OpenAI confirmation                                         | Low      |
-| TD-PLAN-01 | Billing  | No recurring subscriptions (deferred v1)                                                                     | Low      |
+| TD-AI-09   | OpenAI   | Image/audio generation prompts not persona-aware (chat prompts done Phase 22)                                                           | Low      |
+| TD-AI-13   | OpenAI   | 5 model pricing entries are placeholders pending OpenAI confirmation                                                                    | Low      |
+| TD-PLAN-01 | Billing  | No recurring subscriptions (deferred v1)                                                                                                | Low      |
 
 ### Resolved
 
@@ -770,5 +763,8 @@ All file handling technical debt has been resolved. S3 cleanup on task/user dele
 | TD-AI-15      | Hardcoded TTS model-name branch             | Resolved in Phase 23.2 — `isTtsOnly` policy flag via `MODEL_CAPABILITIES` map                                                                    |
 | TD-API-01     | In-memory rate limiter                      | Resolved in Phase 25.3 — MongoDB-backed `RateLimitEntry` with TTL index, atomic sliding window                                                   |
 | TD-CODE-01    | Relative import violations                  | Resolved in Phase 24.4 — all 15 relative imports replaced with `@/*` alias across 10 files                                                       |
+| TD-SEC-01     | Stripe webhook event type leak              | Resolved in HF-8.2 — generic `"Unhandled event"` response, event type logged server-side only                                                    |
+| TD-SEC-02     | Chat input upload error leak                | Resolved in HF-9.1 — fixed generic message `"Failed to upload file. Please try again."`, no `error.message` exposed                              |
+| TD-SEC-03     | updateUser error handling inconsistency     | Resolved in HF-9.2 — `handleError({ error, source: "updateUser" })` pattern, consistent with all other server actions                            |
 | TD-AUTH-03    | Missing MongoDB user self-healing           | Resolved in HF-2 — `ensureUserSynced()` in `ensure-user-synced.ts`, wired into `/app/profile`, `/app/plans`, `/api/openai`                       |
 | TD-AUTH-04    | `/api/openai` silently degrades to Lite     | Resolved in HF-2 — returns HTTP 503 on self-healing failure instead of silent Lite degradation                                                   |

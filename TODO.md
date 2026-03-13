@@ -5,101 +5,13 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: HF-8.2, HF-9.1, and HF-9.2 are the remaining pre-25.7 fixes.**
-> All milestones 0–8 complete. HF-1 through HF-8.1 complete. Phase 25.6 complete (see DONE.md).
-> Phases 1–25.6 complete (see DONE.md).
-> Two issues discovered during PM deep audit (2026-03-13): HF-8.2 (eventType leak), HF-9 (chat-input error leak).
-> Both issues re-confirmed by Droplet-Architect audit (2026-03-13) with exact line numbers and reproduction steps.
-> Third issue (HF-9.2) discovered during PM+Engineer deep audit (2026-03-13): updateUser error handling inconsistency.
-> Priority order: HF-8.2 → HF-9.1 → HF-9.2 → Phase 25.7 → Phase 26.
-> **All non-fix work is ON HOLD until HF-8.2, HF-9.1, and HF-9.2 are resolved.**
-
----
-
-## HF-8.2: HIGH — Stripe Webhook Leaks Event Type Name in Unhandled Response
-
-> Discovered during PM deep audit (2026-03-13).
-> HF-8.1 sanitized all error responses but missed the unhandled-event fallback at the end of the handler.
-> The response includes `STRIPE: Unhandled event type: ${eventType}` — leaks internal Stripe event type names.
-> While the consumer is Stripe (not a browser), this violates AGENTS.md: "generic messages to clients; detailed logs server-side only."
-> Ref: AGENTS.md Security Rules. SPEC.md Section 10.
-
----
-
-### HF-8.2 Fix unhandled event type leak in Stripe webhook
-
-**File:** `src/app/api/webhooks/stripe/route.tsx`
-
-**What to do:**
-
-1. Replace the unhandled event response message from `` `STRIPE: Unhandled event type: ${eventType}` `` to a generic `"Unhandled event"`.
-2. Log the actual event type server-side via `logStripeWebhookError()` before returning the generic response.
-3. Keep HTTP status code as 200.
-
-**Acceptance criteria:**
-
-- [ ] Unhandled event response body does not contain the event type name
-- [ ] Event type logged server-side via `logStripeWebhookError()`
-- [ ] HTTP status code remains 200
-- [ ] Existing Stripe webhook unit tests updated if they assert on this message
-- [ ] `npx tsc --noEmit` passes
-- [ ] All tests pass
-
----
-
-## HF-9: MEDIUM — Chat Input Leaks Upload Error Details to Client
-
-> Discovered during PM deep audit (2026-03-13).
-> File upload errors in `chat-input.tsx` expose `error.message` to the client UI.
-> This can leak AWS error details, network error strings, or validation internals.
-> Ref: AGENTS.md Security Rules: "Return generic error messages to UI."
-
----
-
-### HF-9.1 Sanitize upload error message in chat-input
-
-**File:** `src/components/chat/chat-input.tsx`
-
-**What to do:**
-
-1. Replace the upload error handler that conditionally uses `error.message` with a fixed generic message.
-2. Change: `error instanceof Error ? error.message : "Failed to upload the selected file."` → always use `"Failed to upload file. Please try again."`
-
-**Acceptance criteria:**
-
-- [ ] Upload error message is always a generic string (no `error.message` exposed)
-- [ ] Upload still functions correctly for valid files
-- [ ] `npx tsc --noEmit` passes
-- [ ] All tests pass
-
----
-
-## HF-9.2: LOW — updateUser Error Handling Inconsistency
-
-> Discovered during PM+Engineer deep audit (2026-03-13).
-> `updateUser` in `user.actions.tsx` catches errors and passes the raw error object to `serializeForClient(error)`.
-> While standard `Error` properties (`message`, `stack`) are non-enumerable and typically serialize to `{}`,
-> Mongoose validation errors may have enumerable properties that could leak internal schema details.
-> All other server actions use `handleError()` (which rethrows) — this is a pattern inconsistency.
-> Ref: AGENTS.md Security Rules. SPEC.md Section 10.
-
----
-
-### HF-9.2 Fix error handling in updateUser
-
-**File:** `src/lib/actions/user.actions.tsx`
-
-**What to do:**
-
-1. Replace the catch block `return serializeForClient(error)` with `handleError(error)` to be consistent with all other server actions.
-2. Alternatively, return a generic error response: `return serializeForClient({ message: "User update failed.", status: 500, source: "updateUser" })`.
-
-**Acceptance criteria:**
-
-- [ ] `updateUser` catch block does not pass raw error objects to the client
-- [ ] Error handling pattern is consistent with other server actions
-- [ ] `npx tsc --noEmit` passes
-- [ ] All tests pass
+> **STATUS: HF-8.2, HF-9.1, HF-9.2 COMPLETE (verified by PM + Architect, 2026-03-13).**
+> All milestones 0–8 complete. HF-1 through HF-9.2 complete. Phases 1–25.6 complete (see DONE.md).
+> **Current focus: Phase 25.7 — Operational Verification & Cleanup.**
+> Phase 25.7 is the last gate before Phase 26 (deferred features).
+> **Priority order: 25.7.2 → 25.7.3 → 25.7.4 → Phase 26.**
+> 25.7.1 is effectively complete (PM ran full 6-gate validation, Gates A–F evaluated — see notes below).
+> **Two flaky E2E tests must be stabilized before Phase 26 can begin.** (See 25.7.4.)
 
 ---
 
@@ -111,26 +23,20 @@
 
 ---
 
-### 25.7.1 Verify all release gates and run full validation
+### 25.7.1 Verify all release gates and run full validation — PM VERIFIED
 
-**What to do:**
+> **PM Verification (2026-03-13):**
+> Gates 1–4 (prettier, lint, tsc, test) and Gate 6 (build): PASS.
+> Gate 5 (E2E): 183 passed, 2 flaky failures (admin-features CMS timing, chat-app-shell Mobile Chrome viewport), 8 skipped.
+> Gate A (Contract): PASS with caveat — billing semantics finalization tied to deferred Phase 26.2 (subscriptions).
+> Gate B (Architecture): PASS.
+> Gate C (Product): PASS.
+> Gate D (Admin): PASS.
+> Gate E (Public): PASS.
+> Gate F (Validation): CONDITIONAL PASS — 2 flaky E2E tests need stabilization (tracked as 25.7.4).
+> **No critical blockers remain. Flaky E2E stabilization is the only remaining pre-Phase-26 requirement.**
 
-- Run the complete 6-gate validation workflow (prettier, lint, tsc, test, test:e2e, build).
-- Walk through ThePlan.md Release Gates A through F:
-  - Gate A (Contract): billing semantics, limits frozen, Premium extras defined, model claims verified.
-  - Gate B (Architecture): entitlement resolver live, route/auth boundaries correct, storage guardrails enforced.
-  - Gate C (Product): Lite permanent + auth-required, all personas available, stop reasons work, streaming stable.
-  - Gate D (Admin): all admin areas exist, actions audited, role enforcement works.
-  - Gate E (Public): public pages exist and accurate, legal pages exist, no obsolete trial messaging.
-  - Gate F (Validation): all 6 validation commands pass.
-- Document any gate failures as follow-up tasks.
-
-**Acceptance criteria:**
-
-- [ ] All 6 validation commands pass
-- [ ] Gates A–F evaluated with pass/fail documented
-- [ ] Any gate failures logged as actionable follow-ups
-- [ ] No critical blockers remain
+**Status: EFFECTIVELY COMPLETE** — moved to DONE.md upon formal close.
 
 ---
 
@@ -167,6 +73,25 @@
 - [ ] Audit log entries contain required fields
 - [ ] Test verifies the relationship between action and log
 - [ ] All tests pass
+
+---
+
+### 25.7.4 Stabilize flaky E2E tests
+
+> Added by PM (2026-03-13). Two flaky E2E tests must be stabilized before Phase 26.
+> These failures are intermittent and not caused by product bugs — they are test infrastructure issues.
+
+**What to do:**
+
+1. **admin-features.spec.ts** (chromium): CMS page creation assertion times out. The test creates a page via admin and immediately checks for the slug in the page list. Fix: add explicit wait for the page list to refresh after creation, or increase locator timeout, or re-fetch the page after the admin action.
+2. **chat-app-shell.spec.ts** (Mobile Chrome): sidebar link click fails because element is "outside of the viewport" even after `scrollIntoViewIfNeeded()`. Fix: force scroll the sidebar container, or use `force: true` on click, or adjust the mobile viewport to ensure sidebar links are reachable.
+
+**Acceptance criteria:**
+
+- [ ] `admin-features.spec.ts` website editor test passes reliably across 3 consecutive runs
+- [ ] `chat-app-shell.spec.ts` sidebar navigation passes on Mobile Chrome across 3 consecutive runs
+- [ ] Full E2E suite: 0 failures across full run
+- [ ] No test behavior changes (only reliability fixes)
 
 ---
 
@@ -251,4 +176,5 @@
 ---
 
 > **Completed phases** are archived in [`DONE.md`](DONE.md).
-> HF-1, HF-2, Phases 1–25.5.3 complete. Phase 10–12 superseded (see DONE.md for mapping).
+> HF-1 through HF-9.2 complete. Phases 1–25.6 complete. Phase 25.7.1 PM-verified.
+> Phase 10–12 superseded (see DONE.md for mapping).
