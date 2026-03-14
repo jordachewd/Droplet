@@ -84,16 +84,6 @@ const PLAN_NAME_TO_TIER: Record<PlanName, PlanTier> = {
   Premium: "premium",
 };
 
-const BLOCKED_MODEL_SENTINEL = "blocked";
-
-function createBlockedRule(notes: string): ModelPolicyRule {
-  return {
-    model: BLOCKED_MODEL_SENTINEL,
-    hardBlocked: true,
-    notes,
-  };
-}
-
 function createChatRule({
   model,
   fallbackModel,
@@ -174,16 +164,27 @@ export const MODEL_POLICY_MATRIX = {
     audio_generation: {
       defaultTaskClass: "final",
       taskClasses: {
-        final: createBlockedRule("Audio generation is not available on Lite."),
+        final: {
+          model: "gpt-4o-mini-tts",
+          fallbackModel: "gpt-4o-mini-tts",
+          notes:
+            "Lite audio generation is TTS-only; audio_in_out requests are blocked.",
+        },
       },
     },
     video_generation: {
       defaultTaskClass: "preview",
       taskClasses: {
-        preview: createBlockedRule(
-          "Video generation is not available on Lite.",
-        ),
-        final: createBlockedRule("Video generation is not available on Lite."),
+        preview: {
+          model: "sora-2",
+          fallbackModel: "sora-2",
+          notes: "Lite video previews use sora-2.",
+        },
+        final: {
+          model: "sora-2",
+          fallbackModel: "sora-2",
+          notes: "Lite final video renders use sora-2.",
+        },
       },
     },
   },
@@ -245,8 +246,16 @@ export const MODEL_POLICY_MATRIX = {
     video_generation: {
       defaultTaskClass: "preview",
       taskClasses: {
-        preview: createBlockedRule("Video generation is not available on Pro."),
-        final: createBlockedRule("Video generation is not available on Pro."),
+        preview: {
+          model: "sora-2",
+          fallbackModel: "sora-2",
+          notes: "Pro video previews use sora-2.",
+        },
+        final: {
+          model: "sora-2",
+          fallbackModel: "sora-2",
+          notes: "Pro final video renders use sora-2.",
+        },
       },
     },
   },
@@ -544,6 +553,28 @@ export function resolveModelPolicy(
       wasDowngraded: false,
       downgradeReasons,
       notes,
+    });
+  }
+
+  if (
+    input.feature === "audio_generation" &&
+    plan === "lite" &&
+    input.audioMode === "audio_in_out"
+  ) {
+    return createResolvedPolicy({
+      plan,
+      feature: input.feature,
+      taskClass,
+      rule,
+      hardBlocked: true,
+      model,
+      fallbackModel,
+      wasDowngraded: false,
+      downgradeReasons: [],
+      notes: joinNotes(
+        notes,
+        "Lite audio_in_out requests are blocked; Lite supports TTS only.",
+      ),
     });
   }
 

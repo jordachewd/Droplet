@@ -2,7 +2,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { POST } from "@/app/api/openai/route";
 import { generateResponse } from "@/lib/utils/openai/generateResponse";
 import { generateTitle } from "@/lib/utils/openai/generateTitle";
-import { createTask, updateTask } from "@/lib/actions/task.actions";
+import {
+  createTask,
+  deleteTask,
+  incrementPromptCountIfBelowLimit,
+  updateTask,
+} from "@/lib/actions/task.actions";
 import { getUserById } from "@/lib/actions/user.actions";
 import { auth } from "@clerk/nextjs/server";
 import User from "@/lib/database/models/user.model";
@@ -22,6 +27,8 @@ vi.mock("@/lib/utils/openai/generateTitle", () => ({
 
 vi.mock("@/lib/actions/task.actions", () => ({
   createTask: vi.fn(),
+  deleteTask: vi.fn(),
+  incrementPromptCountIfBelowLimit: vi.fn(),
   updateTask: vi.fn(),
 }));
 
@@ -123,6 +130,8 @@ describe("conversation stop enforcement", () => {
       JSON.stringify({ title: "Generated title", usage: 7 }),
     );
     vi.mocked(createTask).mockResolvedValue({ _id: NEW_TASK_ID } as never);
+    vi.mocked(incrementPromptCountIfBelowLimit).mockResolvedValue(true);
+    vi.mocked(deleteTask).mockResolvedValue({ status: 200 } as never);
     vi.mocked(generateResponse).mockResolvedValue(
       JSON.stringify({
         taskData: {
@@ -144,11 +153,7 @@ describe("conversation stop enforcement", () => {
   });
 
   it("sets prompt_limit_reached with start_new_conversation when prompt count equals plan limit", async () => {
-    vi.mocked(getTaskByIdForUser).mockResolvedValue(
-      createExistingTask({
-        promptCount: 10,
-      }) as never,
-    );
+    vi.mocked(incrementPromptCountIfBelowLimit).mockResolvedValue(false);
     vi.mocked(checkDailyConversationLimit).mockResolvedValue({
       allowed: true,
       limit: 5,
@@ -167,6 +172,10 @@ describe("conversation stop enforcement", () => {
     expect(response.status).toBe(403);
     expect(payload.stopReason).toBe("prompt_limit_reached");
     expect(payload.endAction).toBe("start_new_conversation");
+    expect(incrementPromptCountIfBelowLimit).toHaveBeenCalledWith({
+      taskId: EXISTING_TASK_ID,
+      limit: 10,
+    });
     expect(updateTask).toHaveBeenCalledWith(
       EXISTING_TASK_ID,
       expect.objectContaining({
@@ -195,7 +204,8 @@ describe("conversation stop enforcement", () => {
     expect(response.status).toBe(403);
     expect(payload.stopReason).toBe("daily_conversation_limit_reached");
     expect(payload.endAction).toBe("upgrade_plan");
-    expect(createTask).not.toHaveBeenCalled();
+    expect(createTask).toHaveBeenCalledOnce();
+    expect(deleteTask).toHaveBeenCalledWith(NEW_TASK_ID);
     expect(generateResponse).not.toHaveBeenCalled();
   });
 

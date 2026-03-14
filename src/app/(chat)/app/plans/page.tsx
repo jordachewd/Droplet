@@ -1,5 +1,5 @@
 import Faqs from "@/components/sections/faqs-section";
-import RouteGroupLayout from "@/components/layout/route-group-layout";
+import PageWrapper from "@/components/layout/page-wrapper";
 import Plans from "@/components/sections/plans-section";
 import { ensureUserSynced } from "@/lib/utils/ensure-user-synced";
 import { SUPPORT_EMAIL } from "@/constants/support";
@@ -10,10 +10,10 @@ export default async function AppPlansPage() {
   const userData = userId ? await ensureUserSynced(userId) : null;
 
   return userData ? (
-    <RouteGroupLayout>
+    <PageWrapper id="AppPlansPage" scrollable>
       <Plans userData={userData} hasLoader />
       <Faqs />
-    </RouteGroupLayout>
+    </PageWrapper>
   ) : (
     <div className="AppPlansPage flex h-dvh items-center justify-center">
       <div className="mx-auto max-w-md rounded-lg border border-red-200 bg-red-50 p-6 text-center dark:border-red-800 dark:bg-red-950">

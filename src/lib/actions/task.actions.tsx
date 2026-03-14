@@ -110,15 +110,8 @@ export async function updateTask(taskId: string, task: UpdateTaskParams) {
     if (typeof task.usage === "number" && task.usage !== 0) {
       incFields.usage = task.usage;
     }
-    if (
-      typeof task.promptCountIncrement === "number" &&
-      task.promptCountIncrement !== 0
-    ) {
-      incFields.promptCount = task.promptCountIncrement;
-    }
 
     delete updateFields.usage;
-    delete updateFields.promptCountIncrement;
 
     const updateDocument =
       Object.keys(incFields).length > 0
@@ -147,6 +140,44 @@ export async function updateTask(taskId: string, task: UpdateTaskParams) {
     return serializeForClient(updatedTask);
   } catch (error) {
     handleError({ error, source: "updateTask" });
+  }
+}
+
+// ATOMIC PROMPT SLOT CLAIM
+export async function incrementPromptCountIfBelowLimit({
+  taskId,
+  limit,
+}: {
+  taskId: string;
+  limit: number;
+}): Promise<boolean> {
+  try {
+    const { userId } = await auth();
+    if (!userId) throw new Error("Unauthorized");
+
+    await connectToDatabase();
+
+    const updatedTask = await Task.findOneAndUpdate(
+      {
+        _id: taskId,
+        userId,
+        promptCount: { $lt: limit },
+      },
+      {
+        $inc: { promptCount: 1 },
+        $set: { updatedAt: new Date() },
+      },
+      {
+        returnDocument: "after",
+        strict: true,
+        upsert: false,
+      },
+    );
+
+    return Boolean(updatedTask);
+  } catch (error) {
+    handleError({ error, source: "incrementPromptCountIfBelowLimit" });
+    return false;
   }
 }
 

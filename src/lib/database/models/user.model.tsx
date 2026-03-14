@@ -68,6 +68,7 @@ const UserSchema = new Schema<IUser>({
     stripeId: { type: String },
     imageGenerations: { type: Number, default: 0 },
     audioGenerations: { type: Number, default: 0 },
+    videoGenerations: { type: Number, default: 0 },
     usagePeriodStart: { type: Date, default: Date.now },
   },
   firstName: {

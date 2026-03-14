@@ -5,11 +5,20 @@ import type { ImgHTMLAttributes } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import ChatInput from "@/components/chat/chat-input";
 
+type MockNextImageProps = ImgHTMLAttributes<HTMLImageElement> & {
+  priority?: boolean;
+};
+
 vi.mock("next/image", () => ({
-  default: (props: ImgHTMLAttributes<HTMLImageElement>) => (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img alt={props.alt || ""} {...props} />
-  ),
+  default: (props: MockNextImageProps) => {
+    const sanitizedProps = { ...props };
+    delete sanitizedProps.priority;
+
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img alt={sanitizedProps.alt || ""} {...sanitizedProps} />
+    );
+  },
 }));
 
 const fetchMock = vi.fn();

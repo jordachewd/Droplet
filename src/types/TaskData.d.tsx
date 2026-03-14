@@ -41,7 +41,6 @@ export interface UpdateTaskParams {
   usage?: number;
   personaId?: PersonaId;
   promptCount?: number;
-  promptCountIncrement?: number;
   mediaCount?: number;
   estimatedBytes?: number;
   status?: TaskStatus;

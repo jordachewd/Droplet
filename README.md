@@ -39,8 +39,8 @@ All 9 personas are available on every plan — no restrictions.
 - **9 AI Personas** — each with a distinct personality, tone, and expertise
 - **Real-time Streaming** — watch responses appear as they're generated
 - **Image Generation** — create images through conversation
-- **Audio Generation** — generate audio content (Pro and Premium)
-- **Video Generation** — create video content (Premium, coming soon)
+- **Audio Generation** — generate audio content through conversation
+- **Video Generation** — create video content (coming soon)
 - **Conversation History** — save, resume, and manage your chats
 - **File Uploads** — share images with your AI assistant
 - **Secure & Private** — your data stays yours, always
@@ -49,18 +49,18 @@ All 9 personas are available on every plan — no restrictions.
 
 ## Plans & Pricing
 
-|                               | Lite         | Pro       | Premium     |
-| ----------------------------- | ------------ | --------- | ----------- |
-| **Price**                     | Free forever | $19/month | $39/month   |
-| **Conversations/Day**         | 5            | 50        | Unlimited   |
-| **Messages/Conversation**     | 10           | 100       | Unlimited   |
-| **Image Generation**          | 3/month      | 50/month  | Unlimited   |
-| **Audio Generation**          | —            | 50/month  | Unlimited   |
-| **Video Generation**          | —            | —         | Coming soon |
-| **All 9 Personas**            | ✓            | ✓         | ✓           |
-| **Streaming Responses**       | ✓            | ✓         | ✓           |
-| **Premium Audio Quality**     | —            | —         | ✓           |
-| **Advanced AI for Reasoning** | —            | —         | ✓           |
+|                               | Lite         | Pro       | Premium                |
+| ----------------------------- | ------------ | --------- | ---------------------- |
+| **Price**                     | Free forever | $19/month | $39/month              |
+| **Conversations/Day**         | 5            | 50        | Unlimited              |
+| **Messages/Conversation**     | 10           | 100       | Unlimited              |
+| **Image Generation**          | 3/month      | 50/month  | Unlimited              |
+| **Audio Generation**          | 3/month      | 50/month  | Unlimited              |
+| **Video Generation**          | 1/month      | 10/month  | 10/month (coming soon) |
+| **All 9 Personas**            | ✓            | ✓         | ✓                      |
+| **Streaming Responses**       | ✓            | ✓         | ✓                      |
+| **Premium Audio Quality**     | —            | —         | ✓                      |
+| **Advanced AI for Reasoning** | —            | —         | ✓                      |
 
 Create a free account and start chatting today. Upgrade anytime — no commitment.
 

@@ -27,6 +27,7 @@ export interface PlanData {
   stripeId?: string;
   imageGenerations?: number;
   audioGenerations?: number;
+  videoGenerations?: number;
   usagePeriodStart?: Date;
 }
 

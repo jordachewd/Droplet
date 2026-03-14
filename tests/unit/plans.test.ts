@@ -52,15 +52,15 @@ describe("plans constants", () => {
   it("defines the approved limits for every plan", () => {
     expect(PLAN_LIMITS.Lite).toEqual({
       images: 3,
-      audio: 0,
-      video: 0,
+      audio: 3,
+      video: 1,
       conversationsPerDay: 5,
       promptsPerConversation: 10,
     });
     expect(PLAN_LIMITS.Pro).toEqual({
       images: 50,
       audio: 50,
-      video: 0,
+      video: 10,
       conversationsPerDay: 50,
       promptsPerConversation: 100,
     });
@@ -99,8 +99,12 @@ describe("plans constants", () => {
               isIncluded: true,
             }),
             expect.objectContaining({
-              label: "Audio generation (not available)",
-              isIncluded: false,
+              label: "3 audio generations per month",
+              isIncluded: true,
+            }),
+            expect.objectContaining({
+              label: "1 video generation per month (coming soon)",
+              isIncluded: true,
             }),
           ]),
         }),
@@ -108,6 +112,12 @@ describe("plans constants", () => {
           name: "Pro",
           price: 19,
           desc: "Advanced AI for power users",
+          inclusions: expect.arrayContaining([
+            expect.objectContaining({
+              label: "10 video generations per month (coming soon)",
+              isIncluded: true,
+            }),
+          ]),
         }),
         expect.objectContaining({
           name: "Premium",
@@ -123,8 +133,8 @@ describe("plans constants", () => {
               isIncluded: true,
             }),
             expect.objectContaining({
-              label: "Video generation - Coming soon (Premium)",
-              isIncluded: false,
+              label: "10 video generations per month (coming soon)",
+              isIncluded: true,
             }),
           ]),
         }),

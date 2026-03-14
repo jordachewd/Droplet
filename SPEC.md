@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-13 (PM deep audit #3 complete. HF-8.2, HF-9.1, HF-9.2 verified complete. Phase 25.7.1 PM-verified. All resolved tech debt purged.)
+> Last updated: 2026-03-14 (PM deep audit #6 complete. Three-agent independent audit. Phase 27.6 verified complete. New findings: TD-SEC-04, TD-BILL-03, TD-OBS-01 added. TD-UI-14 moved to Resolved.)
 
 ---
 
@@ -35,7 +35,7 @@ The product monetises through tiered subscription plans paid via Stripe.
 - Image upload support
 - Image generation (all tiers, with enforced usage limits)
 - Audio generation (all tiers, with enforced usage limits)
-- Video generation (Premium only — **coming soon**, implementation deferred)
+- Video generation (all tiers, with enforced usage limits — **coming soon**, implementation deferred)
 - Account-required access — no anonymous usage
 - Authenticated `/app` experience with persona-led UX
 - Real conversation history (list, resume, delete)
@@ -76,15 +76,17 @@ Admin access is enforced at the proxy level (`src/proxy.tsx`) via Clerk session 
 
 | Persona ID    | Label       | Category     | Image | Audio |
 | ------------- | ----------- | ------------ | ----- | ----- |
-| `strategist`  | Strategist  | Productivity | Yes   | No    |
+| `strategist`  | Strategist  | Productivity | Yes   | Yes   |
 | `teacher`     | Teacher     | Learning     | Yes   | Yes   |
-| `developer`   | Developer   | Productivity | Yes   | No    |
+| `developer`   | Developer   | Productivity | Yes   | Yes   |
 | `creator`     | Creator     | Creative     | Yes   | Yes   |
-| `wellness`    | Wellness    | Lifestyle    | No    | Yes   |
-| `analyst`     | Analyst     | Productivity | Yes   | No    |
-| `best-friend` | Best Friend | Companion    | No    | Yes   |
-| `boyfriend`   | Boyfriend   | Companion    | No    | Yes   |
-| `girlfriend`  | Girlfriend  | Companion    | No    | Yes   |
+| `wellness`    | Wellness    | Lifestyle    | Yes   | Yes   |
+| `analyst`     | Analyst     | Productivity | Yes   | Yes   |
+| `best-friend` | Best Friend | Companion    | Yes   | Yes   |
+| `boyfriend`   | Boyfriend   | Companion    | Yes   | Yes   |
+| `girlfriend`  | Girlfriend  | Companion    | Yes   | Yes   |
+
+> **Rule 10:** All features (image, audio, video) are available for all personas — differentiated by persona purpose (prompt context), not blocked per persona. All plans provide all features — differentiated by plan limits (quantity).
 
 Each persona has: `id`, `label`, `tagline`, `description`, `category`, `icon`, `starterPrompts[]`, `systemPrompt`, `supportsImage`, `supportsAudio`.
 
@@ -119,11 +121,11 @@ Prompts are versioned and separated from request handlers. `buildPersonaAwareSys
 
 ## 4. Subscription Plans
 
-| Plan        | Price | Duration      | Chat Model (default)            | Limits                                                                                             |
-| ----------- | ----- | ------------- | ------------------------------- | -------------------------------------------------------------------------------------------------- |
-| **Lite**    | Free  | **Permanent** | `gpt-4o-mini`                   | 5 conversations/day, 10 prompts/conversation, 3 image generations/month, no audio, no video        |
-| **Pro**     | $19   | Monthly       | `gpt-4.1`                       | 50 conversations/day, 100 prompts/conversation, 50 image + 50 audio generations/month, no video    |
-| **Premium** | $39   | Monthly       | `gpt-4.1` / `gpt-5.4` (complex) | Unlimited conversations, unlimited prompts, unlimited image + audio generations, video coming soon |
+| Plan        | Price | Duration      | Chat Model (default)            | Limits                                                                                            |
+| ----------- | ----- | ------------- | ------------------------------- | ------------------------------------------------------------------------------------------------- |
+| **Lite**    | Free  | **Permanent** | `gpt-4o-mini`                   | 5 conversations/day, 10 prompts/conversation, 3 image/month, 3 audio/month, 1 video/month         |
+| **Pro**     | $19   | Monthly       | `gpt-4.1`                       | 50 conversations/day, 100 prompts/conversation, 50 image/month, 50 audio/month, 10 video/month    |
+| **Premium** | $39   | Monthly       | `gpt-4.1` / `gpt-5.4` (complex) | Unlimited conversations, unlimited prompts, unlimited image + audio, 10 video/month (coming soon) |
 
 > Full model policy (all features × plans × task classes) in **Section 8**.
 
@@ -132,19 +134,19 @@ Prompts are versioned and separated from request handlers. `buildPersonaAwareSys
 1. **Lite is permanent and free.** There is no 3-day trial. There is no expiry. New users receive Lite by default upon account creation.
 2. **All personas are available in all plans.** There are no persona restrictions per plan.
 3. **Pro and Premium are paid-only.** Activated via Stripe Checkout one-time payment.
-4. **Premium advantages over Pro:** premium audio quality (`gpt-audio-1.5`), `gpt-5.4` for complex reasoning, video generation, and unlimited image/audio quotas. See Section 8 for full model policy.
+4. **Premium advantages over Pro:** premium audio quality (`gpt-audio-1.5`), `gpt-5.4` for complex reasoning, unlimited image/audio quotas, and higher video quota. See Section 8 for full model policy.
 5. When any limit is reached, the server **must end the conversation** with an exact stop reason and exact next-action instruction.
 6. After a forced stop, the user is told one of: start a new conversation (if resources remain), upgrade plan (if applicable), or contact support.
 
 ### Lite Plan Limits (Detailed)
 
-| Limit                         | Value | Reset Window                     |
-| ----------------------------- | ----- | -------------------------------- |
-| Conversations per day         | 5     | 24 hours                         |
-| User prompts per conversation | 10    | Per conversation                 |
-| Image generations             | 3     | 30-day rolling window            |
-| Audio generation              | 0     | N/A (blocked — Pro/Premium only) |
-| Video generation              | 0     | N/A (blocked — Premium only)     |
+| Limit                         | Value | Reset Window          |
+| ----------------------------- | ----- | --------------------- |
+| Conversations per day         | 5     | 24 hours              |
+| User prompts per conversation | 10    | Per conversation      |
+| Image generations             | 3     | 30-day rolling window |
+| Audio generations             | 3     | 30-day rolling window |
+| Video generations             | 1     | 30-day rolling window |
 
 ### Pro Plan Limits (Detailed)
 
@@ -154,7 +156,7 @@ Prompts are versioned and separated from request handlers. `buildPersonaAwareSys
 | User prompts per conversation | 100   | Per conversation      |
 | Image generations             | 50    | 30-day rolling window |
 | Audio generations             | 50    | 30-day rolling window |
-| Video generation              | 0     | N/A                   |
+| Video generations             | 10    | 30-day rolling window |
 
 ### Premium Plan Limits (Detailed)
 
@@ -421,11 +423,11 @@ Central resolver: `resolveModelPolicy()` in `src/lib/utils/ai-model-policy.ts`. 
 | Image            | Lite    | `gpt-image-1-mini` | _(none)_                       | One model only. Limit size, count, concurrency. Monthly quota enforced.                                                                                        |
 | Image            | Pro     | `gpt-image-1.5`    | `gpt-image-1-mini`             | Downgrade for retries, previews, or users beyond soft budget.                                                                                                  |
 | Image            | Premium | `gpt-image-1.5`    | `gpt-image-1-mini`             | Same model tiers as Pro; Premium gets unlimited quota.                                                                                                         |
-| Audio            | Lite    | _(blocked)_        | —                              | Audio not available on Lite.                                                                                                                                   |
+| Audio            | Lite    | `gpt-4o-mini-tts`  | _(none)_                       | TTS only (no `audio_in_out`). Monthly quota: 3. Cheapest audio model for budget tier.                                                                          |
 | Audio            | Pro     | `gpt-audio-mini`   | `gpt-4o-mini-tts`              | TTS-only fallback. Do NOT use TTS fallback for `audio_in_out` mode.                                                                                            |
 | Audio            | Premium | `gpt-audio-1.5`    | `gpt-audio-mini`               | Downgrade for retries, previews, long-form beyond soft budget.                                                                                                 |
-| Video            | Lite    | _(blocked)_        | —                              | Video not available on Lite.                                                                                                                                   |
-| Video            | Pro     | _(blocked)_        | —                              | Video not available on Pro.                                                                                                                                    |
+| Video            | Lite    | `sora-2`           | _(none)_                       | Coming soon. Monthly quota: 1. Budget tier — differentiated by quantity only.                                                                                  |
+| Video            | Pro     | `sora-2`           | _(none)_                       | Coming soon. Monthly quota: 10. Differentiated by quantity only.                                                                                               |
 | Video            | Premium | `sora-2-pro`       | `sora-2`                       | `sora-2` for previews/drafts. `sora-2-pro` only for final renders with `explicitPremium`.                                                                      |
 
 ### 8.3 Task Classes
@@ -642,8 +644,8 @@ All file handling technical debt has been resolved. S3 cleanup on task/user dele
 
 ## 13. Testing
 
-- **Unit tests**: 57 suites, 288 tests (Vitest) — includes streaming, webhook, chat-wrapper, chat-body stop-state, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, persona prompt, rate limiting, task complexity classification, conversation stop enforcement, entitlement resolver full coverage, checkout-success page, and OpenAI route tests
-- **E2E tests**: 11 Playwright spec files across browser projects (chat-app-shell, auth-boundaries, public-pages with 70+ tests, conversation-lifecycle, user-profile, admin-users, admin-features, landing-page, plans-public, pricing-public, authenticated-flows). 193 total, 183 passed, 2 flaky, 8 skipped.
+- **Unit tests**: 59 suites, 306 tests (Vitest) — includes streaming, webhook, chat-wrapper, chat-body stop-state, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, persona prompt, rate limiting, task complexity classification, conversation stop enforcement, entitlement resolver full coverage, checkout-success page, admin audit trail, OpenAI route tests, atomic prompt limit, daily conversation limit, media error handling, and universal feature access tests
+- **E2E tests**: 11 Playwright spec files across browser projects (chat-app-shell, auth-boundaries, public-pages with 70+ tests, conversation-lifecycle, user-profile, admin-users, admin-features, landing-page, plans-public, pricing-public, authenticated-flows). 193 total, 185 passed, 0 flaky, 8 skipped.
 - **Coverage**: Configured (Phase 24.1) — v8 provider, thresholds: 70% statements / 60% branches / 70% functions / 70% lines. Current: 82/71/88/82.
 - **Gap**: No dedicated E2E spec for streamed chunk-by-chunk rendering (manually verified via Playwright MCP)
 
@@ -686,18 +688,27 @@ All file handling technical debt has been resolved. S3 cleanup on task/user dele
 
 ### Active — High Priority
 
-| ID       | Area   | Description                                                                     | Severity |
-| -------- | ------ | ------------------------------------------------------------------------------- | -------- |
-| TD-AI-08 | OpenAI | No video generation (Premium) — UI shows "Coming soon", implementation deferred | Medium   |
+| ID          | Area          | Description                                                                                                                         | Severity |
+| ----------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| TD-ADMIN-01 | Admin         | Settings page uses JSON textarea editors instead of proper form controls (dropdowns, number inputs, radios)                         | Medium   |
+| TD-ADMIN-02 | Admin         | Admin settings values saved to AppSetting but never consumed — pricing, limits, model config are inert (hardcoded in `PLAN_LIMITS`) | Medium   |
+| TD-SEC-04   | Security      | Clerk webhook response bodies leak user data (PII) — `user.created`, `user.updated`, `user.deleted` all return internal documents   | High     |
+| TD-BILL-03  | Billing       | Stripe webhook `checkout.session.completed` does not reset `videoGenerations: 0` on plan upgrade                                    | High     |
+| TD-OBS-01   | Observability | `UsageEvent.create().catch(() => {})` silently swallows DB write failures — zero observability on usage event loss                  | Medium   |
+| TD-UI-15    | UI            | Profile page is display-only — no edit for name/email/avatar, no account self-deletion UI                                           | Medium   |
+| TD-ACT-02   | Actions       | `deleteUser()` server action only removes MongoDB User record — does not clean up Tasks, Transactions, or S3 assets                 | Medium   |
+| TD-ADMIN-01 | Admin         | Settings page uses JSON textarea editors instead of proper form controls (dropdowns, number inputs, radios)                         | Medium   |
+| TD-ADMIN-02 | Admin         | Admin settings values saved to AppSetting but never consumed — pricing, limits, model config are inert (hardcoded in `PLAN_LIMITS`) | Medium   |
+| TD-AI-08    | OpenAI        | No video generation (Premium) — UI shows "Coming soon", implementation deferred                                                     | Medium   |
 
 ### Active — Low Priority
 
-| ID         | Area     | Description                                                                                                                             | Severity |
-| ---------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| TD-SEC-03  | Security | `updateUser` catch block passes raw error to `serializeForClient(error)` — inconsistent with `handleError()` pattern. Tracked as HF-9.2 | Low      |
-| TD-AI-09   | OpenAI   | Image/audio generation prompts not persona-aware (chat prompts done Phase 22)                                                           | Low      |
-| TD-AI-13   | OpenAI   | 5 model pricing entries are placeholders pending OpenAI confirmation                                                                    | Low      |
-| TD-PLAN-01 | Billing  | No recurring subscriptions (deferred v1)                                                                                                | Low      |
+| ID         | Area    | Description                                                                   | Severity |
+| ---------- | ------- | ----------------------------------------------------------------------------- | -------- |
+| TD-AI-09   | OpenAI  | Image/audio generation prompts not persona-aware (chat prompts done Phase 22) | Low      |
+| TD-AI-13   | OpenAI  | 5 model pricing entries are placeholders pending OpenAI confirmation          | Low      |
+| TD-PLAN-01 | Billing | No recurring subscriptions (deferred v1)                                      | Low      |
+| TD-AI-18   | OpenAI  | errorMessage forwarding pattern in /api/openai is safe but fragile (advisory) | Low      |
 
 ### Resolved
 
@@ -768,3 +779,9 @@ All file handling technical debt has been resolved. S3 cleanup on task/user dele
 | TD-SEC-03     | updateUser error handling inconsistency     | Resolved in HF-9.2 — `handleError({ error, source: "updateUser" })` pattern, consistent with all other server actions                            |
 | TD-AUTH-03    | Missing MongoDB user self-healing           | Resolved in HF-2 — `ensureUserSynced()` in `ensure-user-synced.ts`, wired into `/app/profile`, `/app/plans`, `/api/openai`                       |
 | TD-AUTH-04    | `/api/openai` silently degrades to Lite     | Resolved in HF-2 — returns HTTP 503 on self-healing failure instead of silent Lite degradation                                                   |
+| TD-SEC-03     | `updateUser` error handling inconsistency   | Resolved in HF-9.2 — `handleError({ error, source: "updateUser" })` pattern, consistent with all other server actions                            |
+| TD-LIMIT-01   | Prompt limit race condition                 | Resolved in Phase 27.1 — atomic `findOneAndUpdate` with `$lt` condition, no read-check-write race                                                |
+| TD-LIMIT-02   | Daily conversation limit race condition     | Resolved in Phase 27.1 — compensating delete pattern after `createTask`, UTC timezone fix                                                        |
+| TD-AI-19      | Image/audio generation unhandled exceptions | Resolved in Phase 27.2 — try-catch at call sites in `buildOpenAIResponsePayload()`, graceful error payloads                                      |
+| TD-FEAT-01    | Rule 10 violation (features blocked)        | Resolved in Phase 27.3 — all 6 blocking layers opened, all features available in all plans and all personas                                      |
+| TD-UI-14      | Layout inconsistency across /app/\* pages   | Resolved in Phase 27.6 — shared `(chat)/layout.tsx` provides ChatSidebar + main content to all `/app/*` routes                                   |

@@ -2,11 +2,106 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-13 — HF-8.2, HF-9.1, HF-9.2 complete. Phase 25.7.1 PM-verified. Phases 1–25.6 complete.
+> Last updated: 2026-03-14 — Phase 27.6 COMPLETE (three-agent cross-verified PM audit #6). Phases 1–25.7 + 27.1–27.3 + 27.6 complete.
 
 ---
 
-## Phase 25.7.1: Release Gate Verification — PM VERIFIED
+## Phase 27.6 — Unify all /app/\* pages under shared layout — COMPLETED (2026-03-14)
+
+- [x] Shared `(chat)/layout.tsx` created — provides `ChatSidebar` + main content section for all `/app/*` routes.
+- [x] All 7 `/app/*` pages confirmed under shared layout: `/app`, `/app/new`, `/app/library`, `/app/personas`, `/app/c/[conversationId]`, `/app/profile`, `/app/plans`.
+- [x] Sidebar visible and functional on all pages (desktop) — verified via Playwright MCP browser session.
+- [x] Mobile responsive: open sidebar button appears, sidebar opens and collapses correctly.
+- [x] `/app/plans` and `/app/profile` switched from `RouteGroupLayout` to `PageWrapper` content wrapper under shared shell.
+- [x] Redundant per-page sidebar/header duplication removed from `/app` and `/app/c/[conversationId]`.
+- [x] Three-agent cross-verification: PM audit #6 independently confirmed by Architect and Engineer.
+
+Resolved: TD-UI-14.
+
+**Files changed:** `src/app/(chat)/layout.tsx`, `src/app/(chat)/app/page.tsx`, `src/app/(chat)/app/c/[conversationId]/page.tsx`, `src/app/(chat)/app/plans/page.tsx`, `src/app/(chat)/app/profile/page.tsx`, `src/components/sections/plans-section.tsx`, `tests/e2e/conversation-lifecycle.spec.ts`
+
+---
+
+## Phase 27.1 CRITICAL — Fix limits enforcement race condition — COMPLETED (2026-03-14)
+
+- [x] Atomic prompt slot claim via `incrementPromptCountIfBelowLimit` using `findOneAndUpdate` with `{ promptCount: { $lt: limit } }` — single atomic MongoDB operation, no race window.
+- [x] `promptCountIncrement` removed from `finalizeAIResponse` and `UpdateTaskParams` interface.
+- [x] Daily conversation limit compensating pattern — after `createTask`, immediately checks `checkDailyConversationLimit`. If over limit, deletes the just-created task and returns 403.
+- [x] UTC timezone fix — `getStartOfDay()` now uses `setUTCHours(0, 0, 0, 0)` instead of local timezone.
+- [x] Unit tests for atomic prompt limit, daily limit boundary, UTC correctness.
+- [x] Three-agent cross-verification: PM, Architect, Engineer all independently confirmed.
+
+Resolved: TD-LIMIT-01, TD-LIMIT-02.
+
+**Files changed:** `src/app/api/openai/route.tsx`, `src/lib/actions/task.actions.tsx`, `src/lib/utils/check-daily-conversations.ts`, `src/types/TaskData.d.tsx`, `tests/unit/openai-route.test.ts`, `tests/unit/task-actions.test.ts`, `tests/unit/check-daily-conversations.test.ts`
+
+---
+
+## Phase 27.2 CRITICAL — Fix image/audio generation unhandled exceptions — COMPLETED (2026-03-14)
+
+- [x] `generateImage()` call in `buildOpenAIResponsePayload()` wrapped in try-catch — returns `{ errorType: "service_error", errorMessage: "Image generation failed. Please try again." }` instead of crashing.
+- [x] `generateAudio()` call in `buildOpenAIResponsePayload()` wrapped in identical try-catch pattern.
+- [x] Error payloads structured consistently with existing error response format.
+- [x] Conversation not corrupted on media generation failure.
+- [x] Unit tests for both failure paths.
+- [x] Three-agent cross-verification: PM, Architect, Engineer all independently confirmed.
+
+Resolved: TD-AI-19.
+
+**Files changed:** `src/lib/utils/openai/generateResponse.tsx`, `tests/unit/generate-response.test.ts`
+
+---
+
+## Phase 27.3 CRITICAL — Enable universal feature access (all features × all plans × all personas) — COMPLETED (2026-03-14)
+
+- [x] `PLAN_LIMITS` updated: Lite audio=3, video=1; Pro video=10.
+- [x] All 9 personas set to `supportsImage: true` and `supportsAudio: true`.
+- [x] `resolveEntitlements("Lite")` now returns `supportsAudioGeneration: true`, `supportsVideoGeneration: true`.
+- [x] All `createBlockedRule` calls removed from `ai-model-policy.ts` — Lite audio resolves to `gpt-4o-mini-tts` (TTS only, `audio_in_out` blocked), Lite/Pro video resolves to `sora-2`.
+- [x] Persona blocking removed from `generateResponse.tsx` — features now plan-gated only.
+- [x] Plan card descriptions updated: Lite shows "3 audio/month", "1 video/month (coming soon)".
+- [x] `videoGenerations` field added to User model plan subdoc and `PlanData.d.tsx`.
+- [x] README.md pricing matrix aligned.
+- [x] Unit tests for Lite audio/video entitlement, Pro video entitlement, persona feature universality.
+- [x] Three-agent cross-verification: PM, Architect, Engineer all independently confirmed.
+
+Resolved: TD-FEAT-01.
+
+**Files changed:** `src/constants/plans.tsx`, `src/constants/assistant-personas.tsx`, `src/lib/utils/resolve-entitlements.tsx`, `src/lib/utils/ai-model-policy.ts`, `src/lib/utils/openai/generateResponse.tsx`, `src/lib/utils/check-usage-limit.ts`, `src/lib/database/models/user.model.tsx`, `src/types/PlanData.d.tsx`, `README.md`, `tests/unit/ai-model-policy.test.ts`, `tests/unit/conversation-stop.test.ts`, `tests/unit/generate-response.test.ts`, `tests/unit/assistant-personas.test.ts`
+
+---
+
+## Starter Prompts Expansion — COMPLETED (2026-03-13)
+
+- [x] All 9 personas updated from 3 to 6 starter prompts each in `src/constants/assistant-personas.tsx`.
+- [x] Prompts cover diverse use cases per persona domain.
+- [x] `npx tsc --noEmit` clean. All 297 unit tests pass.
+
+**Files changed:** `src/constants/assistant-personas.tsx`
+
+---
+
+## Phase 25.7: Operational Verification & Cleanup — COMPLETE
+
+### 25.7.2 Clean up test output noise — COMPLETED
+
+- [x] **25.7.2** `priority` prop warning fixed via `MockNextImageProps` sanitization in `chat-input.test.tsx` (line 8). S3 cleanup stderr noise addressed via `process.stderr.write` spy lifecycle in `task-actions.test.ts` (line 182). All tests pass, clean output.
+
+**Files changed:** `tests/unit/chat-input.test.tsx`, `tests/unit/task-actions.test.ts`
+
+### 25.7.3 Verify admin audit trail completeness — COMPLETED
+
+- [x] **25.7.3** New file `tests/unit/admin-audit-trail.test.ts` covers all 8 admin actions: `toggleUserSuspensionAction`, `removeUserByAdminAction`, `updateAdminSettingAction`, `createPublicPageAction`, `togglePublicPagePublishedAction`, `deletePublicPageAction`, `updatePublicPageSortOrderAction`, `savePublicPageAction`. Each action verified to emit audit entry with `adminId`, `action`, `targetType`, `targetId`.
+
+**Files changed:** `tests/unit/admin-audit-trail.test.ts` (new)
+
+### 25.7.4 Stabilize flaky E2E tests — COMPLETED
+
+- [x] **25.7.4** `admin-features.spec.ts` stabilized: post-submit network-idle wait, robust row locator with timeout, row scroll before Edit click. `chat-app-shell.spec.ts` stabilized: sidebar-link helper with container scroll + `force: true` click, desktop sidebar preference reset, signed-out recovery path. Full E2E suite: 185 passed, 8 skipped, 0 failures. 3 consecutive runs verified on both affected specs.
+
+**Files changed:** `tests/e2e/admin-features.spec.ts`, `tests/e2e/chat-app-shell.spec.ts`
+
+### 25.7.1 Release Gate Verification — PM VERIFIED
 
 > PM ran full 6-gate validation (2026-03-13). Droplet-Architect independently verified all 3 hotfixes.
 
@@ -19,7 +114,7 @@
 - [x] Gate E (Public): PASS — 8 public pages live + checkout-success, legal pages have review disclaimer, no trial messaging.
 - [x] Gate F (Validation): CONDITIONAL PASS — 2 flaky E2E tests tracked as 25.7.4.
 
-**Remaining before Phase 26:** 25.7.2 (test noise), 25.7.3 (admin audit test), 25.7.4 (flaky E2E stabilization).
+**Phase 25.7 now fully complete** — 25.7.2, 25.7.3, 25.7.4 all delivered and PM-verified.
 
 ---
 

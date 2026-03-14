@@ -1,8 +1,13 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { auth } from "@clerk/nextjs/server";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import Task from "@/lib/database/models/tasks.model";
-import { createTask, deleteTask, updateTask } from "@/lib/actions/task.actions";
+import {
+  createTask,
+  deleteTask,
+  incrementPromptCountIfBelowLimit,
+  updateTask,
+} from "@/lib/actions/task.actions";
 import deleteFileFromAWS from "@/lib/utils/aws/deleteFileFromAWS";
 
 vi.mock("@clerk/nextjs/server", () => ({
@@ -107,7 +112,7 @@ describe("updateTask", () => {
     vi.mocked(connectToDatabase).mockResolvedValue(undefined as never);
   });
 
-  it("increments promptCount only when a prompt increment is supplied", async () => {
+  it("increments usage when usage is supplied", async () => {
     vi.mocked(Task.findOneAndUpdate).mockResolvedValue({
       _id: taskId,
     } as never);
@@ -126,7 +131,6 @@ describe("updateTask", () => {
         },
       ],
       usage: 9,
-      promptCountIncrement: 1,
       personaId: "strategist",
     });
 
@@ -135,7 +139,6 @@ describe("updateTask", () => {
       expect.objectContaining({
         $inc: {
           usage: 9,
-          promptCount: 1,
         },
         $set: expect.objectContaining({
           personaId: "strategist",
@@ -179,8 +182,59 @@ describe("updateTask", () => {
   });
 });
 
+describe("incrementPromptCountIfBelowLimit", () => {
+  const taskId = "507f1f77bcf86cd799439011";
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(auth).mockResolvedValue({ userId: "auth_user_1" } as never);
+    vi.mocked(connectToDatabase).mockResolvedValue(undefined as never);
+  });
+
+  it("claims a prompt slot atomically when current count is below the limit", async () => {
+    vi.mocked(Task.findOneAndUpdate).mockResolvedValue({
+      _id: taskId,
+    } as never);
+
+    const result = await incrementPromptCountIfBelowLimit({
+      taskId,
+      limit: 10,
+    });
+
+    expect(result).toBe(true);
+    expect(Task.findOneAndUpdate).toHaveBeenCalledWith(
+      {
+        _id: taskId,
+        userId: "auth_user_1",
+        promptCount: { $lt: 10 },
+      },
+      {
+        $inc: { promptCount: 1 },
+        $set: { updatedAt: expect.any(Date) },
+      },
+      {
+        returnDocument: "after",
+        strict: true,
+        upsert: false,
+      },
+    );
+  });
+
+  it("returns false when the prompt limit has already been reached", async () => {
+    vi.mocked(Task.findOneAndUpdate).mockResolvedValue(null as never);
+
+    const result = await incrementPromptCountIfBelowLimit({
+      taskId,
+      limit: 10,
+    });
+
+    expect(result).toBe(false);
+  });
+});
+
 describe("deleteTask", () => {
   const taskId = "507f1f77bcf86cd799439011";
+  let stderrWriteSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -190,6 +244,13 @@ describe("deleteTask", () => {
       _id: taskId,
       messages: [],
     } as never);
+    stderrWriteSpy = vi
+      .spyOn(process.stderr, "write")
+      .mockImplementation(() => true);
+  });
+
+  afterEach(() => {
+    stderrWriteSpy.mockRestore();
   });
 
   it("deletes a task when requested by the owner and cleans up owned S3 assets", async () => {
@@ -325,6 +386,9 @@ describe("deleteTask", () => {
     });
     expect(deleteFileFromAWS).toHaveBeenCalledWith(
       "auth_user_1/uploads/photo.png",
+    );
+    expect(stderrWriteSpy).toHaveBeenCalledWith(
+      "[task.actions] deleteTask S3 cleanup failed.\n",
     );
     expect(result).toEqual(
       expect.objectContaining({

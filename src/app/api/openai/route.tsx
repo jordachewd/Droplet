@@ -11,7 +11,12 @@ import {
   TaskStatus,
   UpdateTaskParams,
 } from "@/types/TaskData.d";
-import { createTask, updateTask } from "@/lib/actions/task.actions";
+import {
+  createTask,
+  deleteTask,
+  incrementPromptCountIfBelowLimit,
+  updateTask,
+} from "@/lib/actions/task.actions";
 import { auth } from "@clerk/nextjs/server";
 import { getUserById } from "@/lib/actions/user.actions";
 import { ensureUserSynced } from "@/lib/utils/ensure-user-synced";
@@ -305,7 +310,6 @@ async function persistConversationStop({
   currentMessages,
   stopReason,
   endAction,
-  promptCountIncrement = 0,
   estimatedBytes,
 }: {
   taskId: string;
@@ -313,7 +317,6 @@ async function persistConversationStop({
   currentMessages: Message[];
   stopReason: TaskEndedReason;
   endAction: TaskEndAction;
-  promptCountIncrement?: number;
   estimatedBytes?: number;
 }): Promise<Message> {
   const stopTaskData = createStopTaskData({ stopReason, endAction });
@@ -325,7 +328,6 @@ async function persistConversationStop({
   const updatePayload: UpdateTaskParams = {
     messages: canPersistStopMessage ? messagesWithStop : currentMessages,
     personaId,
-    promptCountIncrement,
     estimatedBytes:
       typeof estimatedBytes === "number"
         ? estimatedBytes
@@ -353,7 +355,6 @@ async function finalizeAIResponse({
   selectedPersonaId,
   storedMessagesWithIncomingPrompt,
   estimatedBytesWithIncomingPrompt,
-  isNewConversation,
   userData,
 }: {
   aiPayload: OpenAIResponsePayload;
@@ -363,7 +364,6 @@ async function finalizeAIResponse({
   selectedPersonaId: PersonaId;
   storedMessagesWithIncomingPrompt: Message[];
   estimatedBytesWithIncomingPrompt: number;
-  isNewConversation: boolean;
   userData: UserData | null;
 }): Promise<{
   status: number;
@@ -399,7 +399,6 @@ async function finalizeAIResponse({
       currentMessages: storedMessagesWithIncomingPrompt,
       stopReason,
       endAction,
-      promptCountIncrement: isNewConversation ? 0 : 1,
       estimatedBytes: estimatedBytesWithIncomingPrompt,
     });
 
@@ -437,7 +436,6 @@ async function finalizeAIResponse({
       currentMessages: storedMessagesWithIncomingPrompt,
       stopReason,
       endAction,
-      promptCountIncrement: isNewConversation ? 0 : 1,
       estimatedBytes: estimatedBytesWithIncomingPrompt,
     });
 
@@ -466,7 +464,6 @@ async function finalizeAIResponse({
     messages: storedMessagesWithAssistant,
     usage: taskUsage ?? 0,
     personaId: selectedPersonaId,
-    promptCountIncrement: isNewConversation ? 0 : 1,
     estimatedBytes: estimatedBytesWithAssistant,
   });
 
@@ -692,14 +689,21 @@ export async function POST(req: Request): Promise<Response> {
       limitType: "audio",
       usagePeriodStart: userData?.plan?.usagePeriodStart,
     });
+    const videoUsage = checkUsageLimit({
+      planName,
+      currentCount: userData?.plan?.videoGenerations,
+      limitType: "video",
+      usagePeriodStart: userData?.plan?.usagePeriodStart,
+    });
 
-    if (imageUsage.didReset || audioUsage.didReset) {
+    if (imageUsage.didReset || audioUsage.didReset || videoUsage.didReset) {
       await User.findOneAndUpdate(
         { clerkId: userId },
         {
           $set: {
             "plan.imageGenerations": 0,
             "plan.audioGenerations": 0,
+            "plan.videoGenerations": 0,
             "plan.usagePeriodStart": new Date(),
           },
         },
@@ -714,6 +718,8 @@ export async function POST(req: Request): Promise<Response> {
       entitlements.supportsImageGeneration && !imageUsage.allowed;
     const audioLimitReached =
       entitlements.supportsAudioGeneration && !audioUsage.allowed;
+    const videoLimitReached =
+      entitlements.supportsVideoGeneration && !videoUsage.allowed;
 
     const resolvedEntitlements = {
       ...entitlements,
@@ -721,43 +727,12 @@ export async function POST(req: Request): Promise<Response> {
         entitlements.supportsImageGeneration && !imageLimitReached,
       supportsAudioGeneration:
         entitlements.supportsAudioGeneration && !audioLimitReached,
+      supportsVideoGeneration:
+        entitlements.supportsVideoGeneration && !videoLimitReached,
       imageLimitReached,
       audioLimitReached,
+      videoLimitReached,
     };
-
-    if (!providedTaskId) {
-      const dailyConversationLimit = await checkDailyConversationLimit(
-        userId,
-        planName,
-      );
-
-      if (!dailyConversationLimit.allowed) {
-        const stopReason: TaskEndedReason = "daily_conversation_limit_reached";
-        const endAction = getPlanBoundEndAction(planName);
-        const taskData = createStopTaskData({
-          stopReason,
-          endAction,
-        });
-
-        emitBlockedChatUsageEvent({
-          userId,
-          personaId: selectedPersona.id,
-          planName,
-          stopReason,
-        });
-
-        return NextResponse.json(
-          createStopResponsePayload({
-            taskData,
-            personaId: selectedPersona.id,
-            stopReason,
-            endAction,
-            acceptedPrompt: false,
-          }),
-          { status: 403 },
-        );
-      }
-    }
 
     const storedMessagesBeforePrompt = persistedTask?.messages ?? [];
     const storedMessagesWithIncomingPrompt = providedTaskId
@@ -769,46 +744,6 @@ export async function POST(req: Request): Promise<Response> {
     const estimatedBytesWithIncomingPrompt = estimateConversationBytes(
       storedMessagesWithIncomingPrompt,
     );
-
-    if (
-      persistedTask &&
-      PLAN_LIMITS[planName].promptsPerConversation !== -1 &&
-      persistedTask.promptCount >= PLAN_LIMITS[planName].promptsPerConversation
-    ) {
-      const stopReason: TaskEndedReason = "prompt_limit_reached";
-      const endAction = await resolvePromptLimitEndAction({
-        userId,
-        planName,
-      });
-      const taskData = await persistConversationStop({
-        taskId: persistedTask._id,
-        personaId: selectedPersona.id,
-        currentMessages: persistedTask.messages,
-        stopReason,
-        endAction,
-        estimatedBytes: persistedTask.estimatedBytes,
-      });
-
-      emitBlockedChatUsageEvent({
-        userId,
-        taskId: persistedTask._id,
-        personaId: selectedPersona.id,
-        planName,
-        stopReason,
-      });
-
-      return NextResponse.json(
-        createStopResponsePayload({
-          taskData,
-          taskId: persistedTask._id,
-          personaId: selectedPersona.id,
-          stopReason,
-          endAction,
-          acceptedPrompt: false,
-        }),
-        { status: 403 },
-      );
-    }
 
     if (estimatedBytesWithIncomingPrompt > TASK_STORAGE_WARNING_BYTES) {
       const stopReason: TaskEndedReason = "conversation_storage_limit_reached";
@@ -869,8 +804,51 @@ export async function POST(req: Request): Promise<Response> {
       );
     }
 
+    if (persistedTask && PLAN_LIMITS[planName].promptsPerConversation !== -1) {
+      const promptLimit = PLAN_LIMITS[planName].promptsPerConversation;
+      const promptSlotClaimed = await incrementPromptCountIfBelowLimit({
+        taskId: persistedTask._id,
+        limit: promptLimit,
+      });
+
+      if (!promptSlotClaimed) {
+        const stopReason: TaskEndedReason = "prompt_limit_reached";
+        const endAction = await resolvePromptLimitEndAction({
+          userId,
+          planName,
+        });
+        const taskData = await persistConversationStop({
+          taskId: persistedTask._id,
+          personaId: selectedPersona.id,
+          currentMessages: persistedTask.messages,
+          stopReason,
+          endAction,
+          estimatedBytes: persistedTask.estimatedBytes,
+        });
+
+        emitBlockedChatUsageEvent({
+          userId,
+          taskId: persistedTask._id,
+          personaId: selectedPersona.id,
+          planName,
+          stopReason,
+        });
+
+        return NextResponse.json(
+          createStopResponsePayload({
+            taskData,
+            taskId: persistedTask._id,
+            personaId: selectedPersona.id,
+            stopReason,
+            endAction,
+            acceptedPrompt: false,
+          }),
+          { status: 403 },
+        );
+      }
+    }
+
     let taskId = providedTaskId;
-    const isNewConversation = !taskId;
 
     if (!taskId) {
       const generatedTitle = await generateTitle(
@@ -904,6 +882,40 @@ export async function POST(req: Request): Promise<Response> {
       }
 
       taskId = createdTaskId;
+
+      const dailyConversationLimit = await checkDailyConversationLimit(
+        userId,
+        planName,
+      );
+
+      if (!dailyConversationLimit.allowed) {
+        await deleteTask(createdTaskId);
+
+        const stopReason: TaskEndedReason = "daily_conversation_limit_reached";
+        const endAction = getPlanBoundEndAction(planName);
+        const taskData = createStopTaskData({
+          stopReason,
+          endAction,
+        });
+
+        emitBlockedChatUsageEvent({
+          userId,
+          personaId: selectedPersona.id,
+          planName,
+          stopReason,
+        });
+
+        return NextResponse.json(
+          createStopResponsePayload({
+            taskData,
+            personaId: selectedPersona.id,
+            stopReason,
+            endAction,
+            acceptedPrompt: false,
+          }),
+          { status: 403 },
+        );
+      }
 
       if (titleRequestMetric) {
         emitUsageEvents({
@@ -965,7 +977,6 @@ export async function POST(req: Request): Promise<Response> {
               selectedPersonaId: selectedPersona.id,
               storedMessagesWithIncomingPrompt,
               estimatedBytesWithIncomingPrompt,
-              isNewConversation,
               userData,
             });
 
@@ -1017,7 +1028,6 @@ export async function POST(req: Request): Promise<Response> {
       selectedPersonaId: selectedPersona.id,
       storedMessagesWithIncomingPrompt,
       estimatedBytesWithIncomingPrompt,
-      isNewConversation,
       userData,
     });
 

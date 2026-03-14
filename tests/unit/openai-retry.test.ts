@@ -33,8 +33,10 @@ const defaultEntitlements = {
   ] as PersonaId[],
   supportsImageGeneration: true,
   supportsAudioGeneration: true,
+  supportsVideoGeneration: true,
   imageLimitReached: false,
   audioLimitReached: false,
+  videoLimitReached: false,
 };
 
 const defaultParams = {

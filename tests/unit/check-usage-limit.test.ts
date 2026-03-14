@@ -26,17 +26,29 @@ describe("checkUsageLimit", () => {
     expect(result.remaining).toBe(43);
   });
 
-  it("blocks Lite audio requests because the plan audio limit is zero", () => {
+  it("allows Lite audio requests while under the audio limit", () => {
     const result = checkUsageLimit({
       planName: "Lite",
       currentCount: 0,
       limitType: "audio",
     });
 
-    expect(result.allowed).toBe(false);
-    expect(result.limit).toBe(0);
-    expect(result.remaining).toBe(0);
+    expect(result.allowed).toBe(true);
+    expect(result.limit).toBe(3);
+    expect(result.remaining).toBe(3);
     expect(result.effectiveCount).toBe(0);
+  });
+
+  it("enforces the Lite video quota", () => {
+    const result = checkUsageLimit({
+      planName: "Lite",
+      currentCount: 1,
+      limitType: "video",
+    });
+
+    expect(result.allowed).toBe(false);
+    expect(result.limit).toBe(1);
+    expect(result.remaining).toBe(0);
   });
 
   it("returns true for Premium unlimited usage", () => {

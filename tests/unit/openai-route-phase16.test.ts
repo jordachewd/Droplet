@@ -5,7 +5,12 @@ import {
   generateStreamingResponse,
 } from "@/lib/utils/openai/generateResponse";
 import { generateTitle } from "@/lib/utils/openai/generateTitle";
-import { createTask, updateTask } from "@/lib/actions/task.actions";
+import {
+  createTask,
+  deleteTask,
+  incrementPromptCountIfBelowLimit,
+  updateTask,
+} from "@/lib/actions/task.actions";
 import { getUserById } from "@/lib/actions/user.actions";
 import { auth } from "@clerk/nextjs/server";
 import User from "@/lib/database/models/user.model";
@@ -25,6 +30,8 @@ vi.mock("@/lib/utils/openai/generateTitle", () => ({
 
 vi.mock("@/lib/actions/task.actions", () => ({
   createTask: vi.fn(),
+  deleteTask: vi.fn(),
+  incrementPromptCountIfBelowLimit: vi.fn(),
   updateTask: vi.fn(),
 }));
 
@@ -135,6 +142,8 @@ describe("POST /api/openai phase16", () => {
       }),
     );
     vi.mocked(createTask).mockResolvedValue({ _id: NEW_TASK_ID } as never);
+    vi.mocked(incrementPromptCountIfBelowLimit).mockResolvedValue(true);
+    vi.mocked(deleteTask).mockResolvedValue({ status: 200 } as never);
     vi.mocked(generateResponse).mockResolvedValue(
       JSON.stringify({
         taskData: {
@@ -207,7 +216,7 @@ describe("POST /api/openai phase16", () => {
         budgetState: "normal",
         entitlements: expect.objectContaining({
           planName: "Lite",
-          supportsAudioGeneration: false,
+          supportsAudioGeneration: true,
         }),
       }),
     );
