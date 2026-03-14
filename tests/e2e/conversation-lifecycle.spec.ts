@@ -189,6 +189,7 @@ test.describe("conversation lifecycle", () => {
       await page.goto("/app/library");
       page.once("dialog", (dialog) => dialog.accept());
       await page
+        .locator("#LibraryPage")
         .getByRole("button", { name: `Delete ${conversationTitle}` })
         .click();
 

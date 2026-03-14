@@ -15,6 +15,7 @@ interface PlansProps {
 
 export default function Plans({ userData, hasLoader = false }: PlansProps) {
   const { isSignedIn } = useUser();
+  const shouldShowUpgradeLabel = Boolean(userData) || isSignedIn;
 
   if (hasLoader && !userData)
     return (
@@ -26,7 +27,7 @@ export default function Plans({ userData, hasLoader = false }: PlansProps) {
   return (
     <div className="Plans mx-auto flex w-full max-w-6xl flex-col gap-6 p-4">
       <PageHead
-        title={`${isSignedIn ? "Upgrade" : "Choose"} your plan`}
+        title={`${shouldShowUpgradeLabel ? "Upgrade" : "Choose"} your plan`}
         subtitle="Select the plan that suits your needs!"
       />
 

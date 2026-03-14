@@ -1,8 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { notFound } from "next/navigation";
-import ChatSidebar from "@/components/chat/chat-sidebar";
 import ChatWrapper from "@/components/chat/chat-wrapper";
-import PageWrapper from "@/components/layout/page-wrapper";
 import { getTaskByIdForUser } from "@/lib/utils/task-queries";
 
 interface ConversationPageProps {
@@ -29,16 +27,13 @@ export default async function ConversationPage({
   }
 
   return (
-    <PageWrapper id="ConversationPageWrapper" className="flex-row!">
-      <ChatSidebar />
-      <ChatWrapper
-        initialMessages={task.messages}
-        initialTaskId={task._id}
-        initialPersonaId={task.personaId}
-        initialTaskStatus={task.status}
-        initialEndedReason={task.endedReason}
-        initialEndAction={task.endAction}
-      />
-    </PageWrapper>
+    <ChatWrapper
+      initialMessages={task.messages}
+      initialTaskId={task._id}
+      initialPersonaId={task.personaId}
+      initialTaskStatus={task.status}
+      initialEndedReason={task.endedReason}
+      initialEndAction={task.endAction}
+    />
   );
 }

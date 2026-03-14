@@ -1,6 +1,6 @@
 import ProfileBilling from "@/components/sections/profile-billing";
 import ProfileHero from "@/components/sections/profile-hero";
-import RouteGroupLayout from "@/components/layout/route-group-layout";
+import PageWrapper from "@/components/layout/page-wrapper";
 import { getAllTransactions } from "@/lib/actions/transaction.action";
 import { ensureUserSynced } from "@/lib/utils/ensure-user-synced";
 import { SUPPORT_EMAIL } from "@/constants/support";
@@ -19,10 +19,10 @@ export default async function AppProfilePage() {
   const stripeId = userData?.plan?.stripeId || null;
 
   return userData ? (
-    <RouteGroupLayout>
+    <PageWrapper id="AppProfilePage" scrollable>
       <ProfileHero userData={userData} />
       <ProfileBilling stripeId={stripeId} userTxns={userTxns} />
-    </RouteGroupLayout>
+    </PageWrapper>
   ) : (
     <div className="AppProfilePage flex h-dvh items-center justify-center">
       <div className="mx-auto max-w-md rounded-lg border border-red-200 bg-red-50 p-6 text-center dark:border-red-800 dark:bg-red-950">
