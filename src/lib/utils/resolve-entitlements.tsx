@@ -11,8 +11,10 @@ export interface Entitlements {
   allowedPersonaIds: PersonaId[];
   supportsImageGeneration: boolean;
   supportsAudioGeneration: boolean;
+  supportsVideoGeneration: boolean;
   imageLimitReached: boolean;
   audioLimitReached: boolean;
+  videoLimitReached: boolean;
 }
 
 interface ResolveEntitlementOptions {
@@ -56,8 +58,10 @@ export function resolveEntitlements(
       allowedPersonaIds: [],
       supportsImageGeneration: false,
       supportsAudioGeneration: false,
+      supportsVideoGeneration: false,
       imageLimitReached: true,
       audioLimitReached: true,
+      videoLimitReached: true,
     };
   }
 
@@ -72,9 +76,11 @@ export function resolveEntitlements(
       planName: "Lite",
       allowedPersonaIds,
       supportsImageGeneration: true,
-      supportsAudioGeneration: false,
+      supportsAudioGeneration: true,
+      supportsVideoGeneration: true,
       imageLimitReached: false,
       audioLimitReached: false,
+      videoLimitReached: false,
     };
   }
 
@@ -84,8 +90,10 @@ export function resolveEntitlements(
       allowedPersonaIds,
       supportsImageGeneration: true,
       supportsAudioGeneration: true,
+      supportsVideoGeneration: true,
       imageLimitReached: false,
       audioLimitReached: false,
+      videoLimitReached: false,
     };
   }
 
@@ -95,8 +103,10 @@ export function resolveEntitlements(
       allowedPersonaIds,
       supportsImageGeneration: true,
       supportsAudioGeneration: true,
+      supportsVideoGeneration: true,
       imageLimitReached: false,
       audioLimitReached: false,
+      videoLimitReached: false,
     };
   }
 
@@ -104,9 +114,11 @@ export function resolveEntitlements(
     planName: "Lite",
     allowedPersonaIds,
     supportsImageGeneration: true,
-    supportsAudioGeneration: false,
+    supportsAudioGeneration: true,
+    supportsVideoGeneration: true,
     imageLimitReached: false,
     audioLimitReached: false,
+    videoLimitReached: false,
   };
 }
 

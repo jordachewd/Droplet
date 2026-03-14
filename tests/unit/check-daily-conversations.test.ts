@@ -24,7 +24,7 @@ describe("checkDailyConversationLimit", () => {
     vi.mocked(Task.countDocuments).mockResolvedValue(3 as never);
     const now = new Date("2026-03-11T14:30:00.000Z");
     const expectedStartOfDay = new Date(now);
-    expectedStartOfDay.setHours(0, 0, 0, 0);
+    expectedStartOfDay.setUTCHours(0, 0, 0, 0);
 
     const result = await checkDailyConversationLimit("user_123", "Lite", now);
 
@@ -40,6 +40,20 @@ describe("checkDailyConversationLimit", () => {
       limit: 5,
       used: 3,
       remaining: 2,
+    });
+  });
+
+  it("uses a UTC midnight boundary regardless of local timezone offsets", async () => {
+    const now = new Date("2026-03-11T23:30:00.000-05:00");
+    const expectedStartOfDay = new Date("2026-03-12T00:00:00.000Z");
+
+    await checkDailyConversationLimit("user_123", "Lite", now);
+
+    expect(Task.countDocuments).toHaveBeenCalledWith({
+      userId: "user_123",
+      createdAt: {
+        $gte: expectedStartOfDay,
+      },
     });
   });
 

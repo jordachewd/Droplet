@@ -5,7 +5,12 @@ import {
   generateStreamingResponse,
 } from "@/lib/utils/openai/generateResponse";
 import { generateTitle } from "@/lib/utils/openai/generateTitle";
-import { createTask, updateTask } from "@/lib/actions/task.actions";
+import {
+  createTask,
+  deleteTask,
+  incrementPromptCountIfBelowLimit,
+  updateTask,
+} from "@/lib/actions/task.actions";
 import { getUserById } from "@/lib/actions/user.actions";
 import { ensureUserSynced } from "@/lib/utils/ensure-user-synced";
 import { auth } from "@clerk/nextjs/server";
@@ -25,6 +30,8 @@ vi.mock("@/lib/utils/openai/generateTitle", () => ({
 
 vi.mock("@/lib/actions/task.actions", () => ({
   createTask: vi.fn(),
+  deleteTask: vi.fn(),
+  incrementPromptCountIfBelowLimit: vi.fn(),
   updateTask: vi.fn(),
 }));
 
@@ -128,6 +135,8 @@ describe("POST /api/openai", () => {
       JSON.stringify({ title: "Generated title", usage: 7 }),
     );
     vi.mocked(createTask).mockResolvedValue({ _id: NEW_TASK_ID } as never);
+    vi.mocked(incrementPromptCountIfBelowLimit).mockResolvedValue(true);
+    vi.mocked(deleteTask).mockResolvedValue({ status: 200 } as never);
     vi.mocked(generateResponse).mockResolvedValue(
       JSON.stringify({
         taskData: {
@@ -241,7 +250,7 @@ describe("POST /api/openai", () => {
         budgetState: "normal",
         entitlements: expect.objectContaining({
           planName: "Lite",
-          supportsAudioGeneration: false,
+          supportsAudioGeneration: true,
         }),
       }),
     );
@@ -258,7 +267,6 @@ describe("POST /api/openai", () => {
         ],
         usage: 11,
         personaId: "strategist",
-        promptCountIncrement: 0,
       }),
     );
     expect(payload.taskId).toBe(NEW_TASK_ID);
@@ -388,6 +396,10 @@ describe("POST /api/openai", () => {
     });
     expect(generateTitle).not.toHaveBeenCalled();
     expect(createTask).not.toHaveBeenCalled();
+    expect(incrementPromptCountIfBelowLimit).toHaveBeenCalledWith({
+      taskId: EXISTING_TASK_ID,
+      limit: 10,
+    });
     expect(generateResponse).toHaveBeenCalledWith(
       expect.objectContaining({
         messages: [
@@ -406,7 +418,7 @@ describe("POST /api/openai", () => {
         budgetState: "normal",
         entitlements: expect.objectContaining({
           planName: "Lite",
-          supportsAudioGeneration: false,
+          supportsAudioGeneration: true,
         }),
       }),
     );
@@ -414,7 +426,6 @@ describe("POST /api/openai", () => {
       EXISTING_TASK_ID,
       expect.objectContaining({
         personaId: "teacher",
-        promptCountIncrement: 1,
         messages: [
           {
             role: "user",
@@ -468,17 +479,13 @@ describe("POST /api/openai", () => {
     expect(payload.stopReason).toBe("daily_conversation_limit_reached");
     expect(payload.endAction).toBe("upgrade_plan");
     expect(payload.acceptedPrompt).toBe(false);
-    expect(createTask).not.toHaveBeenCalled();
+    expect(createTask).toHaveBeenCalledOnce();
+    expect(deleteTask).toHaveBeenCalledWith(NEW_TASK_ID);
     expect(generateResponse).not.toHaveBeenCalled();
   });
 
   it("ends the conversation when the prompt limit has already been reached", async () => {
-    vi.mocked(getTaskByIdForUser).mockResolvedValue(
-      createExistingTask({
-        promptCount: 10,
-        estimatedBytes: 512,
-      }) as never,
-    );
+    vi.mocked(incrementPromptCountIfBelowLimit).mockResolvedValue(false);
     vi.mocked(checkDailyConversationLimit).mockResolvedValue({
       allowed: true,
       limit: 5,
@@ -499,6 +506,10 @@ describe("POST /api/openai", () => {
     expect(payload.endAction).toBe("start_new_conversation");
     expect(payload.acceptedPrompt).toBe(false);
     expect(generateResponse).not.toHaveBeenCalled();
+    expect(incrementPromptCountIfBelowLimit).toHaveBeenCalledWith({
+      taskId: EXISTING_TASK_ID,
+      limit: 10,
+    });
     expect(updateTask).toHaveBeenCalledWith(
       EXISTING_TASK_ID,
       expect.objectContaining({
@@ -586,7 +597,6 @@ describe("POST /api/openai", () => {
         status: "ended",
         endedReason: "media_limit_reached",
         endAction: "upgrade_plan",
-        promptCountIncrement: 1,
       }),
     );
   });
@@ -620,7 +630,6 @@ describe("POST /api/openai", () => {
       expect.objectContaining({
         status: "ended",
         endedReason: "conversation_storage_limit_reached",
-        promptCountIncrement: 1,
       }),
     );
   });

@@ -6,10 +6,11 @@
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
 > **STATUS: Phase 25.7 COMPLETE (PM-verified 2026-03-13). All milestones 0–8 complete. Phases 1–25.7 complete.**
-> **TWO CRITICAL BUGS FOUND: (1) Limits race condition allows plan limit bypass. (2) Image/audio generation crashes on any provider/upload error.**
+> **THREE CRITICAL BUGS: (1) Limits race condition allows plan limit bypass. (2) Image/audio generation crashes on provider/upload error. (3) Rule 10 violated — 6 enforcement layers block features that must be available in all plans/personas.**
 > **PRODUCT RULE CHANGE: All features (image, audio, video) now available in all plans and all personas (Rule 10). Frozen Rule 5 updated.**
 > **All Phase 26+ deferred work is ON HOLD until Phase 27 (critical/medium bug fixes + rule change) is complete.**
-> **Priority order: 27.1 (CRITICAL) → 27.2 (CRITICAL) → 27.3 (HIGH) → 27.4 → 27.5 → 27.6 → 27.7 → Phase 26.**
+> **Priority order: 27.1 (CRITICAL) → 27.2 (CRITICAL) → 27.3 (CRITICAL) → 27.4 → 27.5 → 27.6 → 27.7 → Phase 26.**
+> **PM deep audit #4 (2026-03-14): Three-agent cross-audit confirms all critical findings. Architect gate: REJECT until C1–C3 resolved.**
 > **COMPLETED THIS SESSION: 6 starter prompts per persona (all 9 personas updated). No TODO entry needed — already done.**
 
 ---
@@ -94,7 +95,7 @@
 
 ---
 
-### 27.3 HIGH — Enable universal feature access (all features × all plans × all personas)
+### 27.3 CRITICAL — Enable universal feature access (all features × all plans × all personas)
 
 **Files:** `src/constants/plans.tsx`, `src/constants/assistant-personas.tsx`, `src/lib/utils/resolve-entitlements.tsx`, `src/lib/utils/ai-model-policy.ts`, `src/lib/utils/openai/generateResponse.tsx`, plan card components
 **Ref:** TD-FEAT-01 (new), AGENTS.md Rules 5 & 10
@@ -133,6 +134,7 @@
 - [ ] Plan card UI reflects accurate feature limits for all 3 plans
 - [ ] No feature is blocked for any plan — all are limited by quantity
 - [ ] No feature is blocked for any persona — all are available
+- [ ] `README.md` updated: Audio/Video availability reflects all plans (not "Pro and Premium" or "Premium" only)
 - [ ] Unit tests for Lite audio entitlement, Lite video entitlement, Pro video entitlement
 - [ ] Unit tests for persona feature universality (all personas × all features)
 - [ ] `npx tsc --noEmit` passes

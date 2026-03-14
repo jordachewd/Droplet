@@ -35,8 +35,10 @@ const defaultEntitlements = {
   ] as PersonaId[],
   supportsImageGeneration: true,
   supportsAudioGeneration: true,
+  supportsVideoGeneration: true,
   imageLimitReached: false,
   audioLimitReached: false,
+  videoLimitReached: false,
 };
 
 describe("generateResponse", () => {
@@ -150,6 +152,159 @@ describe("generateResponse", () => {
     expect(payload.generatedImage).toBe(true);
   });
 
+  it("returns a structured service error when image generation fails due to OpenAI API errors", async () => {
+    vi.mocked(openAiClient.chat.completions.create).mockResolvedValue({
+      choices: [
+        {
+          message: {
+            role: "assistant",
+            content: null,
+            tool_calls: [
+              {
+                type: "function",
+                function: {
+                  name: "getGeneratedImage",
+                  arguments: JSON.stringify({
+                    prompt: "A failed image prompt",
+                  }),
+                },
+              },
+            ],
+          },
+        },
+      ],
+      usage: {
+        total_tokens: 20,
+      },
+    } as never);
+    vi.mocked(generateImage).mockRejectedValue(
+      new Error("OpenAI images API unavailable"),
+    );
+
+    const result = await generateResponse({
+      messages: [
+        {
+          role: "user",
+          whois: "user",
+          content: [{ type: "text", text: "Generate an image." }],
+        },
+      ],
+      taskId: "task_image_openai_error",
+      userId: "clerk_1",
+      personaId: "strategist",
+      planName: "Pro",
+      entitlements: defaultEntitlements,
+    });
+
+    const payload = JSON.parse(result as string);
+    expect(payload.errorType).toBe("service_error");
+    expect(payload.errorMessage).toBe(
+      "Image generation failed. Please try again.",
+    );
+  });
+
+  it("returns a structured service error when image upload to S3 fails", async () => {
+    vi.mocked(openAiClient.chat.completions.create).mockResolvedValue({
+      choices: [
+        {
+          message: {
+            role: "assistant",
+            content: null,
+            tool_calls: [
+              {
+                type: "function",
+                function: {
+                  name: "getGeneratedImage",
+                  arguments: JSON.stringify({
+                    prompt: "Upload this image",
+                  }),
+                },
+              },
+            ],
+          },
+        },
+      ],
+      usage: {
+        total_tokens: 20,
+      },
+    } as never);
+    vi.mocked(generateImage).mockRejectedValue(
+      new Error("S3 upload failed for generated image"),
+    );
+
+    const result = await generateResponse({
+      messages: [
+        {
+          role: "user",
+          whois: "user",
+          content: [{ type: "text", text: "Generate an image." }],
+        },
+      ],
+      taskId: "task_image_s3_error",
+      userId: "clerk_1",
+      personaId: "strategist",
+      planName: "Pro",
+      entitlements: defaultEntitlements,
+    });
+
+    const payload = JSON.parse(result as string);
+    expect(payload.errorType).toBe("service_error");
+    expect(payload.errorMessage).toBe(
+      "Image generation failed. Please try again.",
+    );
+  });
+
+  it("returns a structured service error when image conversion fails", async () => {
+    vi.mocked(openAiClient.chat.completions.create).mockResolvedValue({
+      choices: [
+        {
+          message: {
+            role: "assistant",
+            content: null,
+            tool_calls: [
+              {
+                type: "function",
+                function: {
+                  name: "getGeneratedImage",
+                  arguments: JSON.stringify({
+                    prompt: "Convert this image",
+                  }),
+                },
+              },
+            ],
+          },
+        },
+      ],
+      usage: {
+        total_tokens: 20,
+      },
+    } as never);
+    vi.mocked(generateImage).mockRejectedValue(
+      new Error("Sharp conversion failed"),
+    );
+
+    const result = await generateResponse({
+      messages: [
+        {
+          role: "user",
+          whois: "user",
+          content: [{ type: "text", text: "Generate an image." }],
+        },
+      ],
+      taskId: "task_image_sharp_error",
+      userId: "clerk_1",
+      personaId: "strategist",
+      planName: "Pro",
+      entitlements: defaultEntitlements,
+    });
+
+    const payload = JSON.parse(result as string);
+    expect(payload.errorType).toBe("service_error");
+    expect(payload.errorMessage).toBe(
+      "Image generation failed. Please try again.",
+    );
+  });
+
   it("dispatches audio tool calls to generateAudio", async () => {
     vi.mocked(openAiClient.chat.completions.create).mockResolvedValue({
       choices: [
@@ -218,6 +373,58 @@ describe("generateResponse", () => {
     });
     const payload = JSON.parse(result as string);
     expect(payload.generatedAudio).toBe(true);
+  });
+
+  it("returns a structured service error when audio generation fails", async () => {
+    vi.mocked(openAiClient.chat.completions.create).mockResolvedValue({
+      choices: [
+        {
+          message: {
+            role: "assistant",
+            content: null,
+            tool_calls: [
+              {
+                type: "function",
+                function: {
+                  name: "getGeneratedAudio",
+                  arguments: JSON.stringify({
+                    role: "user",
+                    content: "Read this text out loud.",
+                  }),
+                },
+              },
+            ],
+          },
+        },
+      ],
+      usage: {
+        total_tokens: 21,
+      },
+    } as never);
+    vi.mocked(generateAudio).mockRejectedValue(
+      new Error("Audio provider failed"),
+    );
+
+    const result = await generateResponse({
+      messages: [
+        {
+          role: "user",
+          whois: "user",
+          content: [{ type: "text", text: "Create audio." }],
+        },
+      ],
+      taskId: "task_audio_error",
+      userId: "clerk_1",
+      personaId: "teacher",
+      planName: "Pro",
+      entitlements: defaultEntitlements,
+    });
+
+    const payload = JSON.parse(result as string);
+    expect(payload.errorType).toBe("service_error");
+    expect(payload.errorMessage).toBe(
+      "Audio generation failed. Please try again.",
+    );
   });
 
   it("returns entitlement-blocked message when image capability is disabled", async () => {

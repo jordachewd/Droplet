@@ -12,7 +12,7 @@ export interface DailyConversationLimitResult {
 
 function getStartOfDay(now: Date): Date {
   const startOfDay = new Date(now);
-  startOfDay.setHours(0, 0, 0, 0);
+  startOfDay.setUTCHours(0, 0, 0, 0);
   return startOfDay;
 }
 

@@ -353,7 +353,6 @@ async function buildOpenAIResponsePayload({
   userId,
   planName,
   entitlements,
-  selectedPersonaId,
 }: {
   message: {
     role: MessageRole;
@@ -372,9 +371,7 @@ async function buildOpenAIResponsePayload({
   userId: string;
   planName: PlanName;
   entitlements: Entitlements;
-  selectedPersonaId: string;
 }): Promise<OpenAIResponsePayload> {
-  const selectedPersona = getPersona(selectedPersonaId);
   const toolCall = message.tool_calls?.[0];
 
   if (toolCall && toolCall.type === "function" && toolCall.function) {
@@ -395,11 +392,7 @@ async function buildOpenAIResponsePayload({
         taskClass: "final",
       });
 
-      if (
-        !entitlements.supportsImageGeneration ||
-        !selectedPersona.supportsImage ||
-        imagePolicy.hardBlocked
-      ) {
+      if (!entitlements.supportsImageGeneration || imagePolicy.hardBlocked) {
         const blockedReason: BlockedReason = entitlements.imageLimitReached
           ? "media_limit_reached"
           : "image_disabled";
@@ -415,36 +408,45 @@ async function buildOpenAIResponsePayload({
           message:
             blockedReason === "media_limit_reached"
               ? "Image generation limit reached for your current plan."
-              : "Image generation is not enabled for the current plan or persona.",
+              : "Image generation is not enabled for the current plan.",
           taskUsage,
           blockedReason,
           requestMetrics,
         });
       }
 
-      const imageResponse = await generateImage({
-        prompt: typeof parsedArgs.prompt === "string" ? parsedArgs.prompt : "",
-        role: message.role,
-        taskId,
-        userId,
-        planName,
-      });
-      const imagePayload = JSON.parse(imageResponse as string) as {
-        taskData?: Message;
-        taskUsage?: number;
-        generatedImage?: boolean;
-        requestMetric?: AIRequestMetric;
-      };
+      try {
+        const imageResponse = await generateImage({
+          prompt:
+            typeof parsedArgs.prompt === "string" ? parsedArgs.prompt : "",
+          role: message.role,
+          taskId,
+          userId,
+          planName,
+        });
+        const imagePayload = JSON.parse(imageResponse as string) as {
+          taskData?: Message;
+          taskUsage?: number;
+          generatedImage?: boolean;
+          requestMetric?: AIRequestMetric;
+        };
 
-      if (imagePayload.requestMetric) {
-        requestMetrics.push(imagePayload.requestMetric);
+        if (imagePayload.requestMetric) {
+          requestMetrics.push(imagePayload.requestMetric);
+        }
+
+        return {
+          ...imagePayload,
+          taskUsage: taskUsage + (imagePayload.taskUsage ?? 0),
+          requestMetrics,
+        };
+      } catch {
+        return {
+          errorType: "service_error",
+          errorMessage: "Image generation failed. Please try again.",
+          requestMetrics,
+        };
       }
-
-      return {
-        ...imagePayload,
-        taskUsage: taskUsage + (imagePayload.taskUsage ?? 0),
-        requestMetrics,
-      };
     }
 
     if (functionName === "getGeneratedAudio") {
@@ -455,11 +457,7 @@ async function buildOpenAIResponsePayload({
         audioMode: "tts",
       });
 
-      if (
-        !entitlements.supportsAudioGeneration ||
-        !selectedPersona.supportsAudio ||
-        audioPolicy.hardBlocked
-      ) {
+      if (!entitlements.supportsAudioGeneration || audioPolicy.hardBlocked) {
         const blockedReason: BlockedReason = entitlements.audioLimitReached
           ? "media_limit_reached"
           : "audio_disabled";
@@ -475,37 +473,45 @@ async function buildOpenAIResponsePayload({
           message:
             blockedReason === "media_limit_reached"
               ? "Audio generation limit reached for your current plan."
-              : "Audio generation is not enabled for the current plan or persona.",
+              : "Audio generation is not enabled for the current plan.",
           taskUsage,
           blockedReason,
           requestMetrics,
         });
       }
 
-      const audioResponse = await generateAudio({
-        messages: Array.isArray(parsedArgs) ? parsedArgs : [parsedArgs],
-        role: message.role,
-        taskId,
-        userId,
-        planName,
-        audioMode: "tts",
-      });
-      const audioPayload = JSON.parse(audioResponse as string) as {
-        taskData?: Message;
-        taskUsage?: number;
-        generatedAudio?: boolean;
-        requestMetric?: AIRequestMetric;
-      };
+      try {
+        const audioResponse = await generateAudio({
+          messages: Array.isArray(parsedArgs) ? parsedArgs : [parsedArgs],
+          role: message.role,
+          taskId,
+          userId,
+          planName,
+          audioMode: "tts",
+        });
+        const audioPayload = JSON.parse(audioResponse as string) as {
+          taskData?: Message;
+          taskUsage?: number;
+          generatedAudio?: boolean;
+          requestMetric?: AIRequestMetric;
+        };
 
-      if (audioPayload.requestMetric) {
-        requestMetrics.push(audioPayload.requestMetric);
+        if (audioPayload.requestMetric) {
+          requestMetrics.push(audioPayload.requestMetric);
+        }
+
+        return {
+          ...audioPayload,
+          taskUsage: taskUsage + (audioPayload.taskUsage ?? 0),
+          requestMetrics,
+        };
+      } catch {
+        return {
+          errorType: "service_error",
+          errorMessage: "Audio generation failed. Please try again.",
+          requestMetrics,
+        };
       }
-
-      return {
-        ...audioPayload,
-        taskUsage: taskUsage + (audioPayload.taskUsage ?? 0),
-        requestMetrics,
-      };
     }
   }
 
@@ -605,8 +611,8 @@ async function runChatCompletion({
   }
 
   const tools = getChatTools({
-    supportsImageGeneration: selectedPersona.supportsImage,
-    supportsAudioGeneration: selectedPersona.supportsAudio,
+    supportsImageGeneration: entitlements.supportsImageGeneration,
+    supportsAudioGeneration: entitlements.supportsAudioGeneration,
   });
   const chatRequestSettings = buildChatCompletionRequestSettings({
     personaId: selectedPersona.id,
@@ -656,7 +662,6 @@ async function runChatCompletion({
     userId,
     planName,
     entitlements,
-    selectedPersonaId: selectedPersona.id,
   });
 }
 
@@ -697,8 +702,8 @@ async function runStreamingChatCompletion({
   }
 
   const tools = getChatTools({
-    supportsImageGeneration: selectedPersona.supportsImage,
-    supportsAudioGeneration: selectedPersona.supportsAudio,
+    supportsImageGeneration: entitlements.supportsImageGeneration,
+    supportsAudioGeneration: entitlements.supportsAudioGeneration,
   });
   const chatRequestSettings = buildChatCompletionRequestSettings({
     personaId: selectedPersona.id,
@@ -757,7 +762,6 @@ async function runStreamingChatCompletion({
     userId,
     planName,
     entitlements,
-    selectedPersonaId: selectedPersona.id,
   });
 }
 

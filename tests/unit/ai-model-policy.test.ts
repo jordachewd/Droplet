@@ -126,7 +126,7 @@ describe("ai-model-policy", () => {
     });
   });
 
-  it("hard blocks Lite audio, Lite video, Pro video, and hard budget limits", () => {
+  it("enables Lite TTS audio and Lite/Pro video while still honoring hard budget limits", () => {
     expect(
       resolveModelPolicy({
         plan: "lite",
@@ -134,7 +134,19 @@ describe("ai-model-policy", () => {
         audioMode: "tts",
       }),
     ).toMatchObject({
-      model: "blocked",
+      model: "gpt-4o-mini-tts",
+      fallbackModel: "gpt-4o-mini-tts",
+      hardBlocked: false,
+      taskClass: "final",
+    });
+    expect(
+      resolveModelPolicy({
+        plan: "lite",
+        feature: "audio_generation",
+        audioMode: "audio_in_out",
+      }),
+    ).toMatchObject({
+      model: "gpt-4o-mini-tts",
       hardBlocked: true,
       taskClass: "final",
     });
@@ -144,8 +156,9 @@ describe("ai-model-policy", () => {
         feature: "video_generation",
       }),
     ).toMatchObject({
-      model: "blocked",
-      hardBlocked: true,
+      model: "sora-2",
+      fallbackModel: "sora-2",
+      hardBlocked: false,
       taskClass: "preview",
     });
     expect(
@@ -154,8 +167,9 @@ describe("ai-model-policy", () => {
         feature: "video_generation",
       }),
     ).toMatchObject({
-      model: "blocked",
-      hardBlocked: true,
+      model: "sora-2",
+      fallbackModel: "sora-2",
+      hardBlocked: false,
       taskClass: "preview",
     });
     expect(

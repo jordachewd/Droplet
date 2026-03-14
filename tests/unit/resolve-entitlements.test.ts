@@ -8,7 +8,7 @@ import {
 import { PlanName } from "@/types/PlanData.d";
 
 describe("resolveEntitlements", () => {
-  it("allows all personas and blocks audio generation for Lite", () => {
+  it("allows all personas and all media entitlements for Lite", () => {
     const entitlements = resolveEntitlements("Lite");
 
     expect(entitlements.allowedPersonaIds).toEqual(
@@ -16,7 +16,9 @@ describe("resolveEntitlements", () => {
     );
     expect(entitlements.allowedPersonaIds).toContain("boyfriend");
     expect(entitlements.allowedPersonaIds).toContain("girlfriend");
-    expect(entitlements.supportsAudioGeneration).toBe(false);
+    expect(entitlements.supportsImageGeneration).toBe(true);
+    expect(entitlements.supportsAudioGeneration).toBe(true);
+    expect(entitlements.supportsVideoGeneration).toBe(true);
   });
 
   it("preserves companion persona selections for Lite users", () => {
@@ -37,9 +39,7 @@ describe("resolveEntitlements", () => {
 
       expect(entitlements.supportsImageGeneration).toBe(limits.images !== 0);
       expect(entitlements.supportsAudioGeneration).toBe(limits.audio !== 0);
-
-      // Video entitlement is represented by plan limits in current architecture.
-      expect(limits.video).toBe(planName === "Premium" ? 10 : 0);
+      expect(entitlements.supportsVideoGeneration).toBe(limits.video !== 0);
     }
   });
 
@@ -51,7 +51,8 @@ describe("resolveEntitlements", () => {
 
     expect(entitlements.planName).toBe("Lite");
     expect(entitlements.supportsImageGeneration).toBe(true);
-    expect(entitlements.supportsAudioGeneration).toBe(false);
+    expect(entitlements.supportsAudioGeneration).toBe(true);
+    expect(entitlements.supportsVideoGeneration).toBe(true);
     expect(entitlements.allowedPersonaIds).toEqual(
       PERSONAS.map((persona) => persona.id),
     );
@@ -65,8 +66,10 @@ describe("resolveEntitlements", () => {
     expect(entitlements.allowedPersonaIds).toEqual([]);
     expect(entitlements.supportsImageGeneration).toBe(false);
     expect(entitlements.supportsAudioGeneration).toBe(false);
+    expect(entitlements.supportsVideoGeneration).toBe(false);
     expect(entitlements.imageLimitReached).toBe(true);
     expect(entitlements.audioLimitReached).toBe(true);
+    expect(entitlements.videoLimitReached).toBe(true);
   });
 
   it("keeps all 9 personas accessible across all plans", () => {

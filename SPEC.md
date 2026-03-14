@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-13 (PM deep audit #3 complete. HF-8.2, HF-9.1, HF-9.2 verified complete. Phase 25.7.1 PM-verified. All resolved tech debt purged.)
+> Last updated: 2026-03-14 (PM deep audit #4 complete. Three-agent cross-audit. Rule 10 violations identified as CRITICAL — model policy matrix corrected. TD-FEAT-01 added.)
 
 ---
 
@@ -423,11 +423,11 @@ Central resolver: `resolveModelPolicy()` in `src/lib/utils/ai-model-policy.ts`. 
 | Image            | Lite    | `gpt-image-1-mini` | _(none)_                       | One model only. Limit size, count, concurrency. Monthly quota enforced.                                                                                        |
 | Image            | Pro     | `gpt-image-1.5`    | `gpt-image-1-mini`             | Downgrade for retries, previews, or users beyond soft budget.                                                                                                  |
 | Image            | Premium | `gpt-image-1.5`    | `gpt-image-1-mini`             | Same model tiers as Pro; Premium gets unlimited quota.                                                                                                         |
-| Audio            | Lite    | _(blocked)_        | —                              | Audio not available on Lite.                                                                                                                                   |
+| Audio            | Lite    | `gpt-4o-mini-tts`  | _(none)_                       | TTS only (no `audio_in_out`). Monthly quota: 3. Cheapest audio model for budget tier.                                                                          |
 | Audio            | Pro     | `gpt-audio-mini`   | `gpt-4o-mini-tts`              | TTS-only fallback. Do NOT use TTS fallback for `audio_in_out` mode.                                                                                            |
 | Audio            | Premium | `gpt-audio-1.5`    | `gpt-audio-mini`               | Downgrade for retries, previews, long-form beyond soft budget.                                                                                                 |
-| Video            | Lite    | _(blocked)_        | —                              | Video not available on Lite.                                                                                                                                   |
-| Video            | Pro     | _(blocked)_        | —                              | Video not available on Pro.                                                                                                                                    |
+| Video            | Lite    | `sora-2`           | _(none)_                       | Coming soon. Monthly quota: 1. Budget tier — differentiated by quantity only.                                                                                  |
+| Video            | Pro     | `sora-2`           | _(none)_                       | Coming soon. Monthly quota: 10. Differentiated by quantity only.                                                                                               |
 | Video            | Premium | `sora-2-pro`       | `sora-2`                       | `sora-2` for previews/drafts. `sora-2-pro` only for final renders with `explicitPremium`.                                                                      |
 
 ### 8.3 Task Classes
@@ -688,17 +688,18 @@ All file handling technical debt has been resolved. S3 cleanup on task/user dele
 
 ### Active — High Priority
 
-| ID          | Area    | Description                                                                                                                                                                          | Severity |
-| ----------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------- |
-| TD-LIMIT-01 | API     | Prompt limit race condition — read-check-write pattern allows concurrent requests to bypass `promptsPerConversation` limit                                                           | Critical |
-| TD-LIMIT-02 | API     | Daily conversation limit race condition — simultaneous new-conversation requests can bypass `conversationsPerDay` limit                                                              | Critical |
-| TD-AI-19    | OpenAI  | Image/audio generation unhandled exceptions — `buildOpenAIResponsePayload()` calls `generateImage()`/`generateAudio()` without try-catch, any provider/upload error crashes with 500 | Critical |
-| TD-ADMIN-01 | Admin   | Settings page uses JSON textarea editors instead of proper form controls (dropdowns, number inputs, radios)                                                                          | Medium   |
-| TD-ADMIN-02 | Admin   | Admin settings values saved to AppSetting but never consumed — pricing, limits, model config are inert (hardcoded in `PLAN_LIMITS`)                                                  | Medium   |
-| TD-UI-14    | UI      | Layout inconsistency across `/app/*` pages — `/app/new`, `/app/library`, `/app/personas` lack header+sidebar; `/app/plans`, `/app/profile` have header but no sidebar                | Medium   |
-| TD-UI-15    | UI      | Profile page is display-only — no edit for name/email/avatar, no account self-deletion UI                                                                                            | Medium   |
-| TD-ACT-02   | Actions | `deleteUser()` server action only removes MongoDB User record — does not clean up Tasks, Transactions, or S3 assets                                                                  | Medium   |
-| TD-AI-08    | OpenAI  | No video generation (Premium) — UI shows "Coming soon", implementation deferred                                                                                                      | Medium   |
+| ID          | Area    | Description                                                                                                                                                                                                                                                                             | Severity |
+| ----------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| TD-LIMIT-01 | API     | Prompt limit race condition — read-check-write pattern allows concurrent requests to bypass `promptsPerConversation` limit                                                                                                                                                              | Critical |
+| TD-LIMIT-02 | API     | Daily conversation limit race condition — simultaneous new-conversation requests can bypass `conversationsPerDay` limit                                                                                                                                                                 | Critical |
+| TD-AI-19    | OpenAI  | Image/audio generation unhandled exceptions — `buildOpenAIResponsePayload()` calls `generateImage()`/`generateAudio()` without try-catch, any provider/upload error crashes with 500                                                                                                    | Critical |
+| TD-FEAT-01  | Product | **Rule 10 violation** — 6 enforcement layers actively block features: `PLAN_LIMITS` (Lite audio=0, video=0; Pro video=0), `resolveEntitlements` (Lite audio=false), `ai-model-policy` (3 `createBlockedRule` calls), personas (4 block image, 3 block audio), plan card text, README.md | Critical |
+| TD-ADMIN-01 | Admin   | Settings page uses JSON textarea editors instead of proper form controls (dropdowns, number inputs, radios)                                                                                                                                                                             | Medium   |
+| TD-ADMIN-02 | Admin   | Admin settings values saved to AppSetting but never consumed — pricing, limits, model config are inert (hardcoded in `PLAN_LIMITS`)                                                                                                                                                     | Medium   |
+| TD-UI-14    | UI      | Layout inconsistency across `/app/*` pages — `/app/new`, `/app/library`, `/app/personas` lack header+sidebar; `/app/plans`, `/app/profile` have header but no sidebar                                                                                                                   | Medium   |
+| TD-UI-15    | UI      | Profile page is display-only — no edit for name/email/avatar, no account self-deletion UI                                                                                                                                                                                               | Medium   |
+| TD-ACT-02   | Actions | `deleteUser()` server action only removes MongoDB User record — does not clean up Tasks, Transactions, or S3 assets                                                                                                                                                                     | Medium   |
+| TD-AI-08    | OpenAI  | No video generation (Premium) — UI shows "Coming soon", implementation deferred                                                                                                                                                                                                         | Medium   |
 
 ### Active — Low Priority
 

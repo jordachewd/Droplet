@@ -16,15 +16,15 @@ export type PlanLimits = Record<
 export const PLAN_LIMITS: PlanLimits = {
   Lite: {
     images: 3,
-    audio: 0,
-    video: 0,
+    audio: 3,
+    video: 1,
     conversationsPerDay: 5,
     promptsPerConversation: 10,
   },
   Pro: {
     images: 50,
     audio: 50,
-    video: 0,
+    video: 10,
     conversationsPerDay: 50,
     promptsPerConversation: 100,
   },
@@ -87,16 +87,16 @@ export const plans = [
         isIncluded: true,
       },
       {
-        label: "Audio generation (not available)",
-        isIncluded: false,
+        label: "3 audio generations per month",
+        isIncluded: true,
+      },
+      {
+        label: "1 video generation per month (coming soon)",
+        isIncluded: true,
       },
       {
         label: "File uploads (limited)",
         isIncluded: true,
-      },
-      {
-        label: "Premium media features",
-        isIncluded: false,
       },
       {
         label: "Email support",
@@ -136,6 +136,10 @@ export const plans = [
         isIncluded: true,
       },
       {
+        label: "10 video generations per month (coming soon)",
+        isIncluded: true,
+      },
+      {
         label: "Unlimited file uploads",
         isIncluded: true,
       },
@@ -144,7 +148,7 @@ export const plans = [
         isIncluded: true,
       },
       {
-        label: "Premium media features",
+        label: "Premium media quality",
         isIncluded: false,
       },
     ],
@@ -189,8 +193,8 @@ export const plans = [
         isIncluded: true,
       },
       {
-        label: "Video generation - Coming soon (Premium)",
-        isIncluded: false,
+        label: "10 video generations per month (coming soon)",
+        isIncluded: true,
       },
       {
         label: "Priority email support",
