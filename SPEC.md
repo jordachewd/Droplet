@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-14 (PM deep audit #4 complete. Three-agent cross-audit. Rule 10 violations identified as CRITICAL — model policy matrix corrected. TD-FEAT-01 added.)
+> Last updated: 2026-03-14 (PM deep audit #5 complete. Three-agent cross-verification. Phase 27.1–27.3 CRITICAL bugs verified resolved. TD-LIMIT-01, TD-LIMIT-02, TD-AI-19, TD-FEAT-01 moved to Resolved.)
 
 ---
 
@@ -644,7 +644,7 @@ All file handling technical debt has been resolved. S3 cleanup on task/user dele
 
 ## 13. Testing
 
-- **Unit tests**: 58 suites, 297 tests (Vitest) — includes streaming, webhook, chat-wrapper, chat-body stop-state, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, persona prompt, rate limiting, task complexity classification, conversation stop enforcement, entitlement resolver full coverage, checkout-success page, admin audit trail, and OpenAI route tests
+- **Unit tests**: 59 suites, 306 tests (Vitest) — includes streaming, webhook, chat-wrapper, chat-body stop-state, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, persona prompt, rate limiting, task complexity classification, conversation stop enforcement, entitlement resolver full coverage, checkout-success page, admin audit trail, OpenAI route tests, atomic prompt limit, daily conversation limit, media error handling, and universal feature access tests
 - **E2E tests**: 11 Playwright spec files across browser projects (chat-app-shell, auth-boundaries, public-pages with 70+ tests, conversation-lifecycle, user-profile, admin-users, admin-features, landing-page, plans-public, pricing-public, authenticated-flows). 193 total, 185 passed, 0 flaky, 8 skipped.
 - **Coverage**: Configured (Phase 24.1) — v8 provider, thresholds: 70% statements / 60% branches / 70% functions / 70% lines. Current: 82/71/88/82.
 - **Gap**: No dedicated E2E spec for streamed chunk-by-chunk rendering (manually verified via Playwright MCP)
@@ -688,18 +688,14 @@ All file handling technical debt has been resolved. S3 cleanup on task/user dele
 
 ### Active — High Priority
 
-| ID          | Area    | Description                                                                                                                                                                                                                                                                             | Severity |
-| ----------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| TD-LIMIT-01 | API     | Prompt limit race condition — read-check-write pattern allows concurrent requests to bypass `promptsPerConversation` limit                                                                                                                                                              | Critical |
-| TD-LIMIT-02 | API     | Daily conversation limit race condition — simultaneous new-conversation requests can bypass `conversationsPerDay` limit                                                                                                                                                                 | Critical |
-| TD-AI-19    | OpenAI  | Image/audio generation unhandled exceptions — `buildOpenAIResponsePayload()` calls `generateImage()`/`generateAudio()` without try-catch, any provider/upload error crashes with 500                                                                                                    | Critical |
-| TD-FEAT-01  | Product | **Rule 10 violation** — 6 enforcement layers actively block features: `PLAN_LIMITS` (Lite audio=0, video=0; Pro video=0), `resolveEntitlements` (Lite audio=false), `ai-model-policy` (3 `createBlockedRule` calls), personas (4 block image, 3 block audio), plan card text, README.md | Critical |
-| TD-ADMIN-01 | Admin   | Settings page uses JSON textarea editors instead of proper form controls (dropdowns, number inputs, radios)                                                                                                                                                                             | Medium   |
-| TD-ADMIN-02 | Admin   | Admin settings values saved to AppSetting but never consumed — pricing, limits, model config are inert (hardcoded in `PLAN_LIMITS`)                                                                                                                                                     | Medium   |
-| TD-UI-14    | UI      | Layout inconsistency across `/app/*` pages — `/app/new`, `/app/library`, `/app/personas` lack header+sidebar; `/app/plans`, `/app/profile` have header but no sidebar                                                                                                                   | Medium   |
-| TD-UI-15    | UI      | Profile page is display-only — no edit for name/email/avatar, no account self-deletion UI                                                                                                                                                                                               | Medium   |
-| TD-ACT-02   | Actions | `deleteUser()` server action only removes MongoDB User record — does not clean up Tasks, Transactions, or S3 assets                                                                                                                                                                     | Medium   |
-| TD-AI-08    | OpenAI  | No video generation (Premium) — UI shows "Coming soon", implementation deferred                                                                                                                                                                                                         | Medium   |
+| ID          | Area    | Description                                                                                                                                                | Severity |
+| ----------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| TD-ADMIN-01 | Admin   | Settings page uses JSON textarea editors instead of proper form controls (dropdowns, number inputs, radios)                                                | Medium   |
+| TD-ADMIN-02 | Admin   | Admin settings values saved to AppSetting but never consumed — pricing, limits, model config are inert (hardcoded in `PLAN_LIMITS`)                        | Medium   |
+| TD-UI-14    | UI      | Layout inconsistency across `/app/*` pages — `/app/new`, `/app/library`, `/app/personas` lack header+sidebar; `/app/plans`, `/app/profile` have no sidebar | Medium   |
+| TD-UI-15    | UI      | Profile page is display-only — no edit for name/email/avatar, no account self-deletion UI                                                                  | Medium   |
+| TD-ACT-02   | Actions | `deleteUser()` server action only removes MongoDB User record — does not clean up Tasks, Transactions, or S3 assets                                        | Medium   |
+| TD-AI-08    | OpenAI  | No video generation (Premium) — UI shows "Coming soon", implementation deferred                                                                            | Medium   |
 
 ### Active — Low Priority
 
@@ -779,3 +775,7 @@ All file handling technical debt has been resolved. S3 cleanup on task/user dele
 | TD-AUTH-03    | Missing MongoDB user self-healing           | Resolved in HF-2 — `ensureUserSynced()` in `ensure-user-synced.ts`, wired into `/app/profile`, `/app/plans`, `/api/openai`                       |
 | TD-AUTH-04    | `/api/openai` silently degrades to Lite     | Resolved in HF-2 — returns HTTP 503 on self-healing failure instead of silent Lite degradation                                                   |
 | TD-SEC-03     | `updateUser` error handling inconsistency   | Resolved in HF-9.2 — `handleError({ error, source: "updateUser" })` pattern, consistent with all other server actions                            |
+| TD-LIMIT-01   | Prompt limit race condition                 | Resolved in Phase 27.1 — atomic `findOneAndUpdate` with `$lt` condition, no read-check-write race                                                |
+| TD-LIMIT-02   | Daily conversation limit race condition     | Resolved in Phase 27.1 — compensating delete pattern after `createTask`, UTC timezone fix                                                        |
+| TD-AI-19      | Image/audio generation unhandled exceptions | Resolved in Phase 27.2 — try-catch at call sites in `buildOpenAIResponsePayload()`, graceful error payloads                                      |
+| TD-FEAT-01    | Rule 10 violation (features blocked)        | Resolved in Phase 27.3 — all 6 blocking layers opened, all features available in all plans and all personas                                      |
