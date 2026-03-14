@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-14 (PM deep audit #5 complete. Three-agent cross-verification. Phase 27.1–27.3 CRITICAL bugs verified resolved. TD-LIMIT-01, TD-LIMIT-02, TD-AI-19, TD-FEAT-01 moved to Resolved.)
+> Last updated: 2026-03-14 (PM deep audit #6 complete. Three-agent independent audit. Phase 27.6 verified complete. New findings: TD-SEC-04, TD-BILL-03, TD-OBS-01 added. TD-UI-14 moved to Resolved.)
 
 ---
 
@@ -688,14 +688,18 @@ All file handling technical debt has been resolved. S3 cleanup on task/user dele
 
 ### Active — High Priority
 
-| ID          | Area    | Description                                                                                                                                                | Severity |
-| ----------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| TD-ADMIN-01 | Admin   | Settings page uses JSON textarea editors instead of proper form controls (dropdowns, number inputs, radios)                                                | Medium   |
-| TD-ADMIN-02 | Admin   | Admin settings values saved to AppSetting but never consumed — pricing, limits, model config are inert (hardcoded in `PLAN_LIMITS`)                        | Medium   |
-| TD-UI-14    | UI      | Layout inconsistency across `/app/*` pages — `/app/new`, `/app/library`, `/app/personas` lack header+sidebar; `/app/plans`, `/app/profile` have no sidebar | Medium   |
-| TD-UI-15    | UI      | Profile page is display-only — no edit for name/email/avatar, no account self-deletion UI                                                                  | Medium   |
-| TD-ACT-02   | Actions | `deleteUser()` server action only removes MongoDB User record — does not clean up Tasks, Transactions, or S3 assets                                        | Medium   |
-| TD-AI-08    | OpenAI  | No video generation (Premium) — UI shows "Coming soon", implementation deferred                                                                            | Medium   |
+| ID          | Area          | Description                                                                                                                         | Severity |
+| ----------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| TD-ADMIN-01 | Admin         | Settings page uses JSON textarea editors instead of proper form controls (dropdowns, number inputs, radios)                         | Medium   |
+| TD-ADMIN-02 | Admin         | Admin settings values saved to AppSetting but never consumed — pricing, limits, model config are inert (hardcoded in `PLAN_LIMITS`) | Medium   |
+| TD-SEC-04   | Security      | Clerk webhook response bodies leak user data (PII) — `user.created`, `user.updated`, `user.deleted` all return internal documents   | High     |
+| TD-BILL-03  | Billing       | Stripe webhook `checkout.session.completed` does not reset `videoGenerations: 0` on plan upgrade                                    | High     |
+| TD-OBS-01   | Observability | `UsageEvent.create().catch(() => {})` silently swallows DB write failures — zero observability on usage event loss                  | Medium   |
+| TD-UI-15    | UI            | Profile page is display-only — no edit for name/email/avatar, no account self-deletion UI                                           | Medium   |
+| TD-ACT-02   | Actions       | `deleteUser()` server action only removes MongoDB User record — does not clean up Tasks, Transactions, or S3 assets                 | Medium   |
+| TD-ADMIN-01 | Admin         | Settings page uses JSON textarea editors instead of proper form controls (dropdowns, number inputs, radios)                         | Medium   |
+| TD-ADMIN-02 | Admin         | Admin settings values saved to AppSetting but never consumed — pricing, limits, model config are inert (hardcoded in `PLAN_LIMITS`) | Medium   |
+| TD-AI-08    | OpenAI        | No video generation (Premium) — UI shows "Coming soon", implementation deferred                                                     | Medium   |
 
 ### Active — Low Priority
 
@@ -704,6 +708,7 @@ All file handling technical debt has been resolved. S3 cleanup on task/user dele
 | TD-AI-09   | OpenAI  | Image/audio generation prompts not persona-aware (chat prompts done Phase 22) | Low      |
 | TD-AI-13   | OpenAI  | 5 model pricing entries are placeholders pending OpenAI confirmation          | Low      |
 | TD-PLAN-01 | Billing | No recurring subscriptions (deferred v1)                                      | Low      |
+| TD-AI-18   | OpenAI  | errorMessage forwarding pattern in /api/openai is safe but fragile (advisory) | Low      |
 
 ### Resolved
 
@@ -779,3 +784,4 @@ All file handling technical debt has been resolved. S3 cleanup on task/user dele
 | TD-LIMIT-02   | Daily conversation limit race condition     | Resolved in Phase 27.1 — compensating delete pattern after `createTask`, UTC timezone fix                                                        |
 | TD-AI-19      | Image/audio generation unhandled exceptions | Resolved in Phase 27.2 — try-catch at call sites in `buildOpenAIResponsePayload()`, graceful error payloads                                      |
 | TD-FEAT-01    | Rule 10 violation (features blocked)        | Resolved in Phase 27.3 — all 6 blocking layers opened, all features available in all plans and all personas                                      |
+| TD-UI-14      | Layout inconsistency across /app/\* pages   | Resolved in Phase 27.6 — shared `(chat)/layout.tsx` provides ChatSidebar + main content to all `/app/*` routes                                   |

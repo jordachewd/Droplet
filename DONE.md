@@ -2,7 +2,23 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-14 — Phase 27.1–27.3 COMPLETE (three-agent cross-verified). All critical bugs resolved. Phases 1–25.7 + 27.1–27.3 complete.
+> Last updated: 2026-03-14 — Phase 27.6 COMPLETE (three-agent cross-verified PM audit #6). Phases 1–25.7 + 27.1–27.3 + 27.6 complete.
+
+---
+
+## Phase 27.6 — Unify all /app/\* pages under shared layout — COMPLETED (2026-03-14)
+
+- [x] Shared `(chat)/layout.tsx` created — provides `ChatSidebar` + main content section for all `/app/*` routes.
+- [x] All 7 `/app/*` pages confirmed under shared layout: `/app`, `/app/new`, `/app/library`, `/app/personas`, `/app/c/[conversationId]`, `/app/profile`, `/app/plans`.
+- [x] Sidebar visible and functional on all pages (desktop) — verified via Playwright MCP browser session.
+- [x] Mobile responsive: open sidebar button appears, sidebar opens and collapses correctly.
+- [x] `/app/plans` and `/app/profile` switched from `RouteGroupLayout` to `PageWrapper` content wrapper under shared shell.
+- [x] Redundant per-page sidebar/header duplication removed from `/app` and `/app/c/[conversationId]`.
+- [x] Three-agent cross-verification: PM audit #6 independently confirmed by Architect and Engineer.
+
+Resolved: TD-UI-14.
+
+**Files changed:** `src/app/(chat)/layout.tsx`, `src/app/(chat)/app/page.tsx`, `src/app/(chat)/app/c/[conversationId]/page.tsx`, `src/app/(chat)/app/plans/page.tsx`, `src/app/(chat)/app/profile/page.tsx`, `src/components/sections/plans-section.tsx`, `tests/e2e/conversation-lifecycle.spec.ts`
 
 ---
 

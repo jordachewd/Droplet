@@ -5,44 +5,83 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: Phase 27.1–27.3 COMPLETE (three-agent cross-verified 2026-03-14). All critical bugs RESOLVED. Phases 1–25.7 + 27.1–27.3 complete.**
-> **NO CRITICAL BUGS REMAINING. Four medium-priority items remain (27.4–27.7).**
-> **All Phase 26+ deferred work is ON HOLD until Phase 27 (all subtasks 27.4–27.7) is PM-approved complete.**
-> **Priority order: 27.6 (layout) → 27.7 (profile) → 27.4 (admin forms) → 27.5 (settings propagation) → Phase 26.**
-> **PM deep audit #5 (2026-03-14): Three-agent cross-audit complete. Critical bugs 27.1–27.3 verified resolved. Remaining work is UX and architecture-plumbing.**
+> **STATUS: Phases 1–25.7 + 27.1–27.3 + 27.6 complete.**
+> **PM deep audit #6 (2026-03-14): Three-agent independent audit. All critical bugs RESOLVED. 3 HIGH + 1 MEDIUM new findings added (27.8–27.10). 27.6 verified complete.**
+> **Priority order: 27.8 (webhook sanitization) → 27.9 (Stripe video reset) → 27.10 (usage event logging) → 27.7 (profile) → 27.4 (admin forms) → 27.5 (settings propagation) → Phase 26.**
+> **All Phase 26+ deferred work is ON HOLD until Phase 27 (all subtasks 27.4–27.10) is PM-approved complete.**
 
 ---
 
-## Phase 27: UX & Architecture Completion
+## Phase 27: UX, Security & Architecture Completion
 
-> **Blocking all other work.** Remaining medium-priority items from PM audit.
-> Critical bugs 27.1–27.3 resolved (archived in DONE.md).
-> Depends on: Phase 25.7 + 27.1–27.3 complete (verified).
+> **Blocking all other work.** New HIGH-priority security fixes from PM audit #6, plus remaining medium-priority UX items.
+> 27.1–27.3 resolved (archived in DONE.md). 27.6 verified complete (archived in DONE.md).
+> Depends on: Phase 25.7 + 27.1–27.3 + 27.6 complete (verified).
 
 ---
 
-### 27.6 Unify all /app/\* pages under shared layout
+### 27.8 HIGH — Sanitize Clerk webhook response bodies
 
-**Files:** `src/app/(chat)/layout.tsx` (new or modified), `src/app/(chat)/app/` page files
-**Ref:** TD-UI-14
+**Files:** `src/app/api/webhooks/clerk/route.tsx`, `tests/unit/clerk-webhook-route.test.ts`
+**Ref:** TD-SEC-04
 
 **What to do:**
 
-1. Create a shared layout for the `(chat)` route group that provides consistent UI shell for ALL `/app/*` pages.
-2. The shared shell must include: ChatSidebar (collapsible) + main content area — matching the existing `/app` and `/app/c/[conversationId]` layout.
-3. Ensure `/app/new`, `/app/library`, `/app/personas` get the sidebar (currently they have neither header nor sidebar).
-4. Ensure `/app/plans` and `/app/profile` use the same shell (currently they use `RouteGroupLayout` with `ChatHeader` but no sidebar).
-5. Remove redundant per-page layout wrapping once the shared layout is in place.
-6. Preserve responsive behavior — sidebar collapses on mobile.
+1. `user.created` handler (L289): replace `{ message: "OK", user: syncedUser }` with `{ message: "OK" }`.
+2. `user.updated` handler (L344, L347): replace `{ message: "OK", user: null }` and `{ message: "OK", user: updatedUser }` with `{ message: "OK" }`.
+3. `user.deleted` handler (L399-403): replace the JSON body that returns `deletedUser`, `deletedTransactions`, `deletedTasks`, `deletedObjectsCount` with `{ message: "OK" }`. Log deletion counts server-side via `process.stderr.write()`.
+4. Update unit tests to assert only `{ message: "OK" }` in response bodies (no user data assertions).
+
+**Why:** AGENTS.md rule: "generic messages to clients; detailed logs server-side only." Clerk stores webhook response bodies. Current responses leak user documents (email, plan data, clerkId) and internal deletion counts.
 
 **Acceptance criteria:**
 
-- [ ] ALL `/app/*` pages share the same sidebar + main content layout
-- [ ] Sidebar is visible and functional on all `/app/*` pages (desktop)
-- [ ] Sidebar collapses correctly on mobile across all `/app/*` pages
-- [ ] Navigation between `/app/*` pages is visually seamless (no layout shifts)
-- [ ] Existing chat page and conversation page behavior unchanged
-- [ ] E2E tests for app shell navigation still pass
+- [ ] All three Clerk webhook handlers return `{ message: "OK" }` only
+- [ ] Deletion counts logged server-side via `process.stderr.write()`
+- [ ] No user data, no deletion counts, no internal schema in any webhook response
+- [ ] Unit tests updated to assert generic responses
+- [ ] `npx tsc --noEmit` passes
+- [ ] All tests pass
+
+---
+
+### 27.9 HIGH — Add videoGenerations reset to Stripe webhook
+
+**Files:** `src/app/api/webhooks/stripe/route.tsx`, `tests/unit/stripe-webhook-route.test.ts`
+**Ref:** TD-BILL-03
+
+**What to do:**
+
+1. In the `checkout.session.completed` handler, add `videoGenerations: 0` to the plan data object (alongside existing `imageGenerations: 0`, `audioGenerations: 0`).
+2. Update unit test to assert `videoGenerations: 0` in the plan update.
+
+**Why:** Video generation limits exist in `PLAN_LIMITS` (Lite: 1, Pro: 10, Premium: 10) and `videoGenerations` field exists in User model. On plan upgrade, image and audio counters reset but video does not. When video generation ships, upgraded users would carry stale video counts.
+
+**Acceptance criteria:**
+
+- [ ] Stripe webhook plan update includes `videoGenerations: 0`
+- [ ] Unit test asserts video counter reset
+- [ ] `npx tsc --noEmit` passes
+- [ ] All tests pass
+
+---
+
+### 27.10 MEDIUM — Add failure logging to usage event emission
+
+**Files:** `src/lib/utils/usage-event-utils.ts`
+**Ref:** TD-OBS-01
+
+**What to do:**
+
+1. Replace `.catch(() => {})` on the `UsageEvent.create()` call with `.catch((err) => { process.stderr.write(`[UsageEvent] Failed to emit usage event: ${err instanceof Error ? err.message : "unknown"}\n`); })`.
+2. Fire-and-forget pattern preserved — still non-blocking. Only adding observability.
+
+**Why:** Current silent catch means if MongoDB rejects usage event writes (schema validation, connection issue, disk full), there is zero observability. Admin analytics become silently incomplete with no way to detect the gap.
+
+**Acceptance criteria:**
+
+- [ ] `.catch()` handler logs error message via `process.stderr.write()`
+- [ ] Still fire-and-forget (non-blocking)
 - [ ] `npx tsc --noEmit` passes
 - [ ] All tests pass
 
