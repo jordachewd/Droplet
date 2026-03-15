@@ -2,7 +2,59 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-14 — Phase 27.6 COMPLETE (three-agent cross-verified PM audit #6). Phases 1–25.7 + 27.1–27.3 + 27.6 complete.
+> Last updated: 2026-03-15 — Phases 27.7–27.10 COMPLETE (PM deep audit #7, three-agent independent verification). Phases 1–25.7 + 27.1–27.3 + 27.6–27.10 complete.
+
+---
+
+## Phase 27.10 — Add failure logging to usage event emission — COMPLETED (2026-03-15)
+
+- [x] `.catch(() => {})` replaced with `process.stderr.write()` error logging in `usage-event-utils.ts`.
+- [x] Fire-and-forget pattern preserved (non-blocking).
+- [x] Three-agent independent verification: PM audit #7 confirmed.
+
+Resolved: TD-OBS-01.
+
+**Files changed:** `src/lib/utils/usage-event-utils.ts`
+
+---
+
+## Phase 27.9 — Add videoGenerations reset to Stripe webhook — COMPLETED (2026-03-15)
+
+- [x] `videoGenerations: 0` added to Stripe webhook `checkout.session.completed` handler plan update.
+- [x] Alongside existing `imageGenerations: 0` and `audioGenerations: 0`.
+- [x] Unit test assertion added.
+- [x] Three-agent independent verification: PM audit #7 confirmed.
+
+Resolved: TD-BILL-03.
+
+**Files changed:** `src/app/api/webhooks/stripe/route.tsx`, `tests/unit/stripe-webhook-route.test.ts`
+
+---
+
+## Phase 27.8 — Sanitize Clerk webhook response bodies — COMPLETED (2026-03-15)
+
+- [x] All three Clerk webhook handlers (`user.created`, `user.updated`, `user.deleted`) return only `{ message: "OK" }`.
+- [x] Deletion counts logged server-side via `process.stderr.write()`.
+- [x] No user data, deletion counts, or internal schema in any webhook response.
+- [x] Unit tests updated to assert generic responses.
+- [x] Three-agent independent verification: PM audit #7 confirmed.
+
+Resolved: TD-SEC-04.
+
+**Files changed:** `src/app/api/webhooks/clerk/route.tsx`, `tests/unit/clerk-webhook-route.test.ts`
+
+---
+
+## Phase 27.7 — User profile edit + account deletion — COMPLETED (2026-03-15)
+
+- [x] Client editor (`profile-hero-editor.tsx`) with first name, last name, email, avatar upload + delete confirmation + Clerk sign-out.
+- [x] Server component shell (`profile-hero.tsx`) mounts editor.
+- [x] `deleteUser()` action performs full cleanup: delete Tasks, Transactions, S3 prefix, MongoDB User record, plus `revalidatePath`.
+- [x] Three-agent independent verification: PM audit #7 confirmed.
+
+Resolved: TD-UI-15, TD-ACT-02.
+
+**Files changed:** `src/components/sections/profile-hero.tsx`, `src/components/sections/profile-hero-editor.tsx`, `src/lib/actions/user.actions.tsx`, `tests/unit/user-actions.test.ts`, `tests/unit/profile-hero.test.tsx`
 
 ---
 

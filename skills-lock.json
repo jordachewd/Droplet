@@ -1,6 +1,11 @@
 {
   "version": 1,
   "skills": {
+    "breakdown-test": {
+      "source": "github/awesome-copilot",
+      "sourceType": "github",
+      "computedHash": "aec76bd6b3246889ada4fecba3f78a6c5d0717d66a70af5791279556a3891759"
+    },
     "clean-typescript": {
       "source": "academind/ai-config",
       "sourceType": "github",
