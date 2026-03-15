@@ -50,6 +50,11 @@
       "source": "academind/ai-config",
       "sourceType": "github",
       "computedHash": "37c45130687fe29662916293eb647a2c36c35fa681ba2eb3b3a1507e6ac2325a"
+    },
+    "zustand": {
+      "source": "vercel-labs/json-render",
+      "sourceType": "github",
+      "computedHash": "41cb7e8b24638b78524e9b71a3fcd6f54a672009526b1643920a258f3baccb32"
     }
   }
 }

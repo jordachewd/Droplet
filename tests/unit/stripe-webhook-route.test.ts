@@ -204,6 +204,7 @@ describe("POST /api/webhooks/stripe", () => {
           stripeId: "cs_test_123",
           imageGenerations: 0,
           audioGenerations: 0,
+          videoGenerations: 0,
           usagePeriodStart: expect.any(Date),
         }),
       }),

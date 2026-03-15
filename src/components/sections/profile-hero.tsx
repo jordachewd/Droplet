@@ -1,10 +1,11 @@
+import ProfileHeroEditor from "@/components/sections/profile-hero-editor";
 import PlanPromo from "@/components/shared/plan-promo";
-import classNames from "classnames";
-import getFormattedDate from "@/lib/utils/getFormattedDate";
-import PageHead from "@/components/layout/page-head";
-import { UserData } from "@/types/UserData.d";
-import getFullName, { getNameLetters } from "@/lib/utils/getFullName";
 import PlanCountDown from "@/components/shared/plan-count-down";
+import PageHead from "@/components/layout/page-head";
+import getFormattedDate from "@/lib/utils/getFormattedDate";
+import getFullName, { getNameLetters } from "@/lib/utils/getFullName";
+import { UserData } from "@/types/UserData.d";
+import classNames from "classnames";
 
 interface HeroProps {
   userData: UserData;
@@ -90,6 +91,8 @@ export default function ProfileHero({ userData }: HeroProps) {
           <PlanPromo />
         </div>
       </div>
+
+      <ProfileHeroEditor userData={userData} />
     </section>
   );
 }

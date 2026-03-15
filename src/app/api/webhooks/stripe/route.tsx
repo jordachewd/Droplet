@@ -155,6 +155,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           stripeId: id,
           imageGenerations: 0,
           audioGenerations: 0,
+          videoGenerations: 0,
           usagePeriodStart: new Date(),
         } as PlanData,
       };

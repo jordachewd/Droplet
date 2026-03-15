@@ -48,5 +48,9 @@ export function emitUsageEvents({
     createdAt: new Date(),
   }));
 
-  void UsageEvent.create(usageDocuments).catch(() => {});
+  void UsageEvent.create(usageDocuments).catch((err) => {
+    process.stderr.write(
+      `[UsageEvent] Failed to emit usage event: ${err instanceof Error ? err.message : "unknown"}\n`,
+    );
+  });
 }

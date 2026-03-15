@@ -169,8 +169,7 @@ describe("POST /api/webhooks/clerk", () => {
         userImg: "https://cdn.example.com/u1.png",
       },
     });
-    expect(payload.message).toBe("OK");
-    expect(payload.user._id).toBe("mongo_user_1");
+    expect(payload).toEqual({ message: "OK" });
   });
 
   it("treats replayed user.created events as idempotent", async () => {
@@ -204,7 +203,7 @@ describe("POST /api/webhooks/clerk", () => {
         userImg: "https://cdn.example.com/u1.png",
       },
     });
-    expect(payload.user._id).toBe("mongo_user_existing");
+    expect(payload).toEqual({ message: "OK" });
   });
 
   it("resolves the primary email and generates a fallback username locally when Clerk omits username", async () => {
@@ -401,7 +400,7 @@ describe("POST /api/webhooks/clerk", () => {
         upsert: false,
       }),
     );
-    expect(payload.message).toBe("OK");
+    expect(payload).toEqual({ message: "OK" });
   });
 
   it("returns 200 for replayed user.updated when no matching user exists", async () => {
@@ -421,8 +420,7 @@ describe("POST /api/webhooks/clerk", () => {
     const payload = await response.json();
 
     expect(response.status).toBe(200);
-    expect(payload.message).toBe("OK");
-    expect(payload.user).toBeNull();
+    expect(payload).toEqual({ message: "OK" });
   });
 
   it("deletes user, tasks, and S3 assets for user.deleted", async () => {
@@ -460,10 +458,10 @@ describe("POST /api/webhooks/clerk", () => {
       userId: "clerk_user_1",
     });
     expect(deleteS3Prefix).toHaveBeenCalledWith("clerk_user_1/");
-    expect(payload.message).toBe("OK");
-    expect(payload.deletedTransactions.deletedCount).toBe(3);
-    expect(payload.deletedTasks.deletedCount).toBe(8);
-    expect(payload.deletedObjectsCount).toBe(5);
+    expect(payload).toEqual({ message: "OK" });
+    expect(stderrWriteMock).toHaveBeenCalledWith(
+      "[clerk-webhook] user.deleted cleanup counts user=1 transactions=3 tasks=8 s3Objects=5\n",
+    );
   });
 
   it("returns 200 for replayed user.deleted when the user no longer exists", async () => {
@@ -486,7 +484,10 @@ describe("POST /api/webhooks/clerk", () => {
     expect(Task.deleteMany).toHaveBeenCalledWith({
       userId: "clerk_user_1",
     });
-    expect(payload.deletedUser).toBeNull();
+    expect(payload).toEqual({ message: "OK" });
+    expect(stderrWriteMock).toHaveBeenCalledWith(
+      "[clerk-webhook] user.deleted cleanup counts user=0 transactions=0 tasks=0 s3Objects=0\n",
+    );
   });
 
   it("returns 200 and still attempts S3 cleanup when task deletion fails", async () => {
@@ -512,11 +513,12 @@ describe("POST /api/webhooks/clerk", () => {
       userId: "clerk_user_1",
     });
     expect(deleteS3Prefix).toHaveBeenCalledWith("clerk_user_1/");
-    expect(payload.message).toBe("OK");
-    expect(payload.deletedTasks).toBeNull();
-    expect(payload.deletedObjectsCount).toBe(4);
+    expect(payload).toEqual({ message: "OK" });
     expect(stderrWriteMock).toHaveBeenCalledWith(
       "[clerk-webhook] user.deleted task cleanup failed.\n",
+    );
+    expect(stderrWriteMock).toHaveBeenCalledWith(
+      "[clerk-webhook] user.deleted cleanup counts user=0 transactions=0 tasks=unknown s3Objects=4\n",
     );
   });
 
@@ -543,11 +545,12 @@ describe("POST /api/webhooks/clerk", () => {
       userId: "clerk_user_1",
     });
     expect(deleteS3Prefix).toHaveBeenCalledWith("clerk_user_1/");
-    expect(payload.message).toBe("OK");
-    expect(payload.deletedTasks.deletedCount).toBe(2);
-    expect(payload.deletedObjectsCount).toBe(0);
+    expect(payload).toEqual({ message: "OK" });
     expect(stderrWriteMock).toHaveBeenCalledWith(
       "[clerk-webhook] user.deleted s3 cleanup failed.\n",
+    );
+    expect(stderrWriteMock).toHaveBeenCalledWith(
+      "[clerk-webhook] user.deleted cleanup counts user=0 transactions=0 tasks=2 s3Objects=unknown\n",
     );
   });
 
