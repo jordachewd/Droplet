@@ -3,15 +3,6 @@ import { PlanData } from "./PlanData.d";
 
 export type UserRoles = "client" | "admin";
 
-export interface ClerkUserData {
-  userId: string;
-  clerkId: string;
-  username: string;
-  email?: string;
-  firstName?: string;
-  lastName?: string;
-}
-
 /* Used by Clerk Webhook ("user.created") */
 export interface CreateUserParams {
   clerkId: string;

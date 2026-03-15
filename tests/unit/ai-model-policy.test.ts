@@ -119,8 +119,8 @@ describe("ai-model-policy", () => {
         audioMode: "tts",
       }),
     ).toMatchObject({
-      model: "gpt-audio-1.5",
-      fallbackModel: "gpt-audio-mini",
+      model: "gpt-4o-mini-tts",
+      fallbackModel: "gpt-4o-mini-tts",
       taskClass: "final",
       hardBlocked: false,
     });
@@ -351,7 +351,7 @@ describe("ai-model-policy", () => {
     });
   });
 
-  it("blocks the TTS fallback for audio_in_out requests", () => {
+  it("pins TTS requests to the speech model and blocks TTS fallback for audio_in_out requests", () => {
     expect(
       resolveModelPolicy({
         plan: "pro",
@@ -363,8 +363,8 @@ describe("ai-model-policy", () => {
       model: "gpt-4o-mini-tts",
       fallbackModel: "gpt-4o-mini-tts",
       isTtsOnly: true,
-      wasDowngraded: true,
-      downgradeReasons: ["soft_limit_reached"],
+      wasDowngraded: false,
+      downgradeReasons: [],
     });
 
     const fullAudioPolicy = resolveModelPolicy({

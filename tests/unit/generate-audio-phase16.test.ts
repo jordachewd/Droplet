@@ -11,6 +11,11 @@ vi.mock("@/constants/openai", () => ({
         create: vi.fn(),
       },
     },
+    audio: {
+      speech: {
+        create: vi.fn(),
+      },
+    },
   },
 }));
 
@@ -31,7 +36,44 @@ describe("generateAudio phase16", () => {
     );
   });
 
-  it("uploads generated audio bytes and returns request metadata", async () => {
+  it("uses speech API metadata for TTS requests", async () => {
+    vi.mocked(openAiClient.audio.speech.create).mockResolvedValue({
+      arrayBuffer: vi.fn().mockResolvedValue(Buffer.from("audio-bytes")),
+    } as never);
+
+    const result = await generateAudio({
+      messages: [
+        {
+          role: "user",
+          whois: "user",
+          content: [{ type: "text", text: "Create audio." }],
+        },
+      ],
+      role: "assistant",
+      taskId: "task_audio",
+      userId: "user_123",
+      planName: "Pro",
+    });
+    const payload = JSON.parse(result as string);
+
+    expect(uploadFileToAWS).toHaveBeenCalledWith(
+      Buffer.from("audio-bytes"),
+      "task_audio_audio_fixedtoken.wav",
+      "audio/wav",
+      "user_123/audio",
+    );
+    expect(payload.model).toBe("gpt-4o-mini-tts");
+    expect(payload.taskUsage).toBe(0);
+    expect(payload.generatedAudio).toBe(true);
+    expect(payload.requestMetric).toEqual(
+      expect.objectContaining({
+        requestType: "audio",
+        model: "gpt-4o-mini-tts",
+      }),
+    );
+  });
+
+  it("preserves chat-completions metadata for audio_in_out requests", async () => {
     vi.mocked(openAiClient.chat.completions.create).mockResolvedValue({
       choices: [
         {
@@ -62,18 +104,12 @@ describe("generateAudio phase16", () => {
       taskId: "task_audio",
       userId: "user_123",
       planName: "Pro",
+      audioMode: "audio_in_out",
     });
     const payload = JSON.parse(result as string);
 
-    expect(uploadFileToAWS).toHaveBeenCalledWith(
-      Buffer.from("audio-bytes"),
-      "task_audio_audio_fixedtoken.wav",
-      "audio/wav",
-      "user_123/audio",
-    );
     expect(payload.model).toBe("gpt-audio-mini");
     expect(payload.taskUsage).toBe(14);
-    expect(payload.generatedAudio).toBe(true);
     expect(payload.requestMetric).toEqual(
       expect.objectContaining({
         requestType: "audio",

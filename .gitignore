@@ -56,6 +56,7 @@ node_modules/
 /test-results/
 
 # Project specific
+skills-lock.json
 /.agents/
 /.claude/
 /.codex/

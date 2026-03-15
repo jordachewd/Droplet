@@ -13,7 +13,6 @@ import {
 } from "@/types/TaskData.d";
 import {
   createTask,
-  deleteTask,
   incrementPromptCountIfBelowLimit,
   updateTask,
 } from "@/lib/actions/task.actions";
@@ -851,6 +850,38 @@ export async function POST(req: Request): Promise<Response> {
     let taskId = providedTaskId;
 
     if (!taskId) {
+      const dailyConversationLimit = await checkDailyConversationLimit(
+        userId,
+        planName,
+      );
+
+      if (!dailyConversationLimit.allowed) {
+        const stopReason: TaskEndedReason = "daily_conversation_limit_reached";
+        const endAction = getPlanBoundEndAction(planName);
+        const taskData = createStopTaskData({
+          stopReason,
+          endAction,
+        });
+
+        emitBlockedChatUsageEvent({
+          userId,
+          personaId: selectedPersona.id,
+          planName,
+          stopReason,
+        });
+
+        return NextResponse.json(
+          createStopResponsePayload({
+            taskData,
+            personaId: selectedPersona.id,
+            stopReason,
+            endAction,
+            acceptedPrompt: false,
+          }),
+          { status: 403 },
+        );
+      }
+
       const generatedTitle = await generateTitle(
         promptPayloadMessages,
         planName,
@@ -882,40 +913,6 @@ export async function POST(req: Request): Promise<Response> {
       }
 
       taskId = createdTaskId;
-
-      const dailyConversationLimit = await checkDailyConversationLimit(
-        userId,
-        planName,
-      );
-
-      if (!dailyConversationLimit.allowed) {
-        await deleteTask(createdTaskId);
-
-        const stopReason: TaskEndedReason = "daily_conversation_limit_reached";
-        const endAction = getPlanBoundEndAction(planName);
-        const taskData = createStopTaskData({
-          stopReason,
-          endAction,
-        });
-
-        emitBlockedChatUsageEvent({
-          userId,
-          personaId: selectedPersona.id,
-          planName,
-          stopReason,
-        });
-
-        return NextResponse.json(
-          createStopResponsePayload({
-            taskData,
-            personaId: selectedPersona.id,
-            stopReason,
-            endAction,
-            acceptedPrompt: false,
-          }),
-          { status: 403 },
-        );
-      }
 
       if (titleRequestMetric) {
         emitUsageEvents({

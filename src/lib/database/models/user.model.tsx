@@ -11,6 +11,8 @@ interface IUser extends Document {
   suspended?: boolean;
   registerAt: Date;
   plan: PlanData;
+  dailyConversationsStarted: number;
+  dailyConversationWindowStart?: Date | null;
   firstName?: string;
   lastName?: string;
   updatedAt?: Date;
@@ -70,6 +72,14 @@ const UserSchema = new Schema<IUser>({
     audioGenerations: { type: Number, default: 0 },
     videoGenerations: { type: Number, default: 0 },
     usagePeriodStart: { type: Date, default: Date.now },
+  },
+  dailyConversationsStarted: {
+    type: Number,
+    default: 0,
+  },
+  dailyConversationWindowStart: {
+    type: Date,
+    default: null,
   },
   firstName: {
     type: String,

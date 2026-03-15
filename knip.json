@@ -1,5 +1,18 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
-  "ignore": ["src/types/globals.d.tsx", "tests/e2e/global.setup.ts"],
-  "ignoreDependencies": ["prettier"]
+  "ignoreFiles": [
+    "src/types/globals.d.tsx",
+    "tests/e2e/global.setup.ts",
+    "src/components/layout/route-group-layout.tsx",
+    "tests/unit/test-support/server-only.ts"
+  ],
+  "ignoreDependencies": ["prettier", "zustand"],
+  "ignoreBinaries": ["codex"],
+  "ignoreExportsUsedInFile": {
+    "interface": true,
+    "type": true
+  },
+  "ignoreIssues": {
+    "tests/e2e/utils/e2e-test-user.ts": ["exports"]
+  }
 }

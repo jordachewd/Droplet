@@ -1,7 +1,7 @@
 import { normalizePublicAssetUrl } from "@/lib/utils/normalize-public-asset-url";
 
 const URL_PARSE_BASE_ORIGIN = "https://example.invalid";
-export const PRIVATE_ASSET_ROUTE_PATH = "/api/download";
+const PRIVATE_ASSET_ROUTE_PATH = "/api/download";
 
 function safeDecodeURIComponent(value: string): string {
   try {

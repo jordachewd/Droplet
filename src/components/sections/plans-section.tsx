@@ -7,13 +7,19 @@ import PageHead from "@/components/layout/page-head";
 import PlanCard from "@/components/shared/plan-card";
 import LoadingBubbles from "@/components/shared/loading-bubbles";
 import Link from "next/link";
+import classNames from "classnames";
 
 interface PlansProps {
   userData?: UserData | null;
   hasLoader?: boolean;
+  maxWidthClass?: string;
 }
 
-export default function Plans({ userData, hasLoader = false }: PlansProps) {
+export default function Plans({
+  userData,
+  hasLoader = false,
+  maxWidthClass = "max-w-6xl",
+}: PlansProps) {
   const { isSignedIn } = useUser();
   const shouldShowUpgradeLabel = Boolean(userData) || isSignedIn;
 
@@ -24,8 +30,13 @@ export default function Plans({ userData, hasLoader = false }: PlansProps) {
       </div>
     );
 
+  const wrapperClassName = classNames(
+    "Plans mx-auto flex w-full flex-col gap-6 p-4",
+    maxWidthClass,
+  );
+
   return (
-    <div className="Plans mx-auto flex w-full max-w-6xl flex-col gap-6 p-4">
+    <div className={wrapperClassName}>
       <PageHead
         title={`${shouldShowUpgradeLabel ? "Upgrade" : "Choose"} your plan`}
         subtitle="Select the plan that suits your needs!"

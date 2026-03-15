@@ -11,6 +11,11 @@ vi.mock("@/constants/openai", () => ({
         create: vi.fn(),
       },
     },
+    audio: {
+      speech: {
+        create: vi.fn(),
+      },
+    },
   },
 }));
 
@@ -31,21 +36,9 @@ describe("generateAudio", () => {
     );
   });
 
-  it("uploads generated audio bytes to S3 and stores the private asset URL", async () => {
-    vi.mocked(openAiClient.chat.completions.create).mockResolvedValue({
-      choices: [
-        {
-          message: {
-            audio: {
-              data: Buffer.from("audio-bytes").toString("base64"),
-              transcript: "Read this aloud.",
-            },
-          },
-        },
-      ],
-      usage: {
-        total_tokens: 14,
-      },
+  it("uses the speech endpoint for TTS mode and uploads generated audio to S3", async () => {
+    vi.mocked(openAiClient.audio.speech.create).mockResolvedValue({
+      arrayBuffer: vi.fn().mockResolvedValue(Buffer.from("audio-bytes")),
     } as never);
 
     const result = await generateAudio({
@@ -62,6 +55,13 @@ describe("generateAudio", () => {
       planName: "Pro",
     });
 
+    expect(openAiClient.audio.speech.create).toHaveBeenCalledWith({
+      model: "gpt-4o-mini-tts",
+      voice: "alloy",
+      input: "Create audio.",
+      response_format: "wav",
+    });
+    expect(openAiClient.chat.completions.create).not.toHaveBeenCalled();
     expect(uploadFileToAWS).toHaveBeenCalledWith(
       Buffer.from("audio-bytes"),
       "task_audio_audio_fixedtoken.wav",
@@ -71,7 +71,7 @@ describe("generateAudio", () => {
 
     const payload = JSON.parse(result as string);
 
-    expect(payload.taskUsage).toBe(14);
+    expect(payload.taskUsage).toBe(0);
     expect(payload.generatedAudio).toBe(true);
     expect(payload.taskData).toEqual({
       whois: "assistant",
@@ -79,7 +79,7 @@ describe("generateAudio", () => {
       content: [
         {
           type: "text",
-          text: "Read this aloud.",
+          text: "Create audio.",
         },
         {
           type: "audio_url",
@@ -88,5 +88,46 @@ describe("generateAudio", () => {
         },
       ],
     });
+  });
+
+  it("uses chat audio generation for audio_in_out mode", async () => {
+    vi.mocked(openAiClient.chat.completions.create).mockResolvedValue({
+      choices: [
+        {
+          message: {
+            audio: {
+              data: Buffer.from("audio-bytes").toString("base64"),
+              transcript: "Read this aloud.",
+            },
+          },
+        },
+      ],
+      usage: {
+        total_tokens: 14,
+      },
+    } as never);
+
+    await generateAudio({
+      messages: [
+        {
+          role: "user",
+          whois: "user",
+          content: [{ type: "text", text: "Create audio." }],
+        },
+      ],
+      role: "assistant",
+      taskId: "task_audio",
+      userId: "user_123",
+      planName: "Pro",
+      audioMode: "audio_in_out",
+    });
+
+    expect(openAiClient.chat.completions.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        model: "gpt-audio-mini",
+        modalities: ["text", "audio"],
+      }),
+    );
+    expect(openAiClient.audio.speech.create).not.toHaveBeenCalled();
   });
 });

@@ -1,15 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { connectToDatabase } from "@/lib/database/mongoose";
-import Task from "@/lib/database/models/tasks.model";
+import User from "@/lib/database/models/user.model";
 import { checkDailyConversationLimit } from "@/lib/utils/check-daily-conversations";
 
 vi.mock("@/lib/database/mongoose", () => ({
   connectToDatabase: vi.fn(),
 }));
 
-vi.mock("@/lib/database/models/tasks.model", () => ({
+vi.mock("@/lib/database/models/user.model", () => ({
   default: {
-    countDocuments: vi.fn(),
+    findOne: vi.fn(),
   },
 }));
 
@@ -17,24 +17,26 @@ describe("checkDailyConversationLimit", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(connectToDatabase).mockResolvedValue(undefined as never);
-    vi.mocked(Task.countDocuments).mockResolvedValue(0 as never);
+    vi.mocked(User.findOne).mockReturnValue({
+      select: vi.fn().mockReturnThis(),
+      lean: vi.fn().mockResolvedValue(null),
+    } as never);
   });
 
-  it("counts today's conversations for finite plans", async () => {
-    vi.mocked(Task.countDocuments).mockResolvedValue(3 as never);
+  it("reads the durable daily conversation counter for finite plans", async () => {
     const now = new Date("2026-03-11T14:30:00.000Z");
-    const expectedStartOfDay = new Date(now);
-    expectedStartOfDay.setUTCHours(0, 0, 0, 0);
+    vi.mocked(User.findOne).mockReturnValue({
+      select: vi.fn().mockReturnThis(),
+      lean: vi.fn().mockResolvedValue({
+        dailyConversationsStarted: 3,
+        dailyConversationWindowStart: new Date("2026-03-11T00:00:00.000Z"),
+      }),
+    } as never);
 
     const result = await checkDailyConversationLimit("user_123", "Lite", now);
 
     expect(connectToDatabase).toHaveBeenCalledOnce();
-    expect(Task.countDocuments).toHaveBeenCalledWith({
-      userId: "user_123",
-      createdAt: {
-        $gte: expectedStartOfDay,
-      },
-    });
+    expect(User.findOne).toHaveBeenCalledWith({ clerkId: "user_123" });
     expect(result).toEqual({
       allowed: true,
       limit: 5,
@@ -43,22 +45,34 @@ describe("checkDailyConversationLimit", () => {
     });
   });
 
-  it("uses a UTC midnight boundary regardless of local timezone offsets", async () => {
+  it("resets the used count when the stored counter is from a previous UTC day", async () => {
     const now = new Date("2026-03-11T23:30:00.000-05:00");
-    const expectedStartOfDay = new Date("2026-03-12T00:00:00.000Z");
+    vi.mocked(User.findOne).mockReturnValue({
+      select: vi.fn().mockReturnThis(),
+      lean: vi.fn().mockResolvedValue({
+        dailyConversationsStarted: 4,
+        dailyConversationWindowStart: new Date("2026-03-11T00:00:00.000Z"),
+      }),
+    } as never);
 
-    await checkDailyConversationLimit("user_123", "Lite", now);
+    const result = await checkDailyConversationLimit("user_123", "Lite", now);
 
-    expect(Task.countDocuments).toHaveBeenCalledWith({
-      userId: "user_123",
-      createdAt: {
-        $gte: expectedStartOfDay,
-      },
+    expect(result).toEqual({
+      allowed: true,
+      limit: 5,
+      used: 0,
+      remaining: 5,
     });
   });
 
   it("returns allowed false when the daily limit is reached", async () => {
-    vi.mocked(Task.countDocuments).mockResolvedValue(50 as never);
+    vi.mocked(User.findOne).mockReturnValue({
+      select: vi.fn().mockReturnThis(),
+      lean: vi.fn().mockResolvedValue({
+        dailyConversationsStarted: 50,
+        dailyConversationWindowStart: new Date(),
+      }),
+    } as never);
 
     const result = await checkDailyConversationLimit("user_123", "Pro");
 
@@ -74,7 +88,7 @@ describe("checkDailyConversationLimit", () => {
     const result = await checkDailyConversationLimit("user_123", "Premium");
 
     expect(connectToDatabase).not.toHaveBeenCalled();
-    expect(Task.countDocuments).not.toHaveBeenCalled();
+    expect(User.findOne).not.toHaveBeenCalled();
     expect(result).toEqual({
       allowed: true,
       limit: -1,

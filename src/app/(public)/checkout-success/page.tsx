@@ -58,7 +58,7 @@ export default async function CheckoutSuccessPage({
 
   if (!sessionId) {
     return (
-      <section className="CheckoutSuccessPage mx-auto flex w-full max-w-3xl flex-1 flex-col items-center justify-center px-4 py-20 sm:px-6">
+      <section className="CheckoutSuccessPage mx-auto flex w-full max-w-screen-2xl flex-1 flex-col items-center justify-center px-4 py-20 sm:px-6">
         <div className="w-full rounded-4xl border border-lightBorders-400/80 bg-white/85 p-8 text-center shadow-sm dark:border-darkBorders-500 dark:bg-jwdMarine-900/85">
           <h1 className="heading-3">Payment confirmation unavailable</h1>
           <p className="body-2 mt-4 text-sm sm:text-base">
@@ -80,7 +80,7 @@ export default async function CheckoutSuccessPage({
 
   if (paymentVerified) {
     return (
-      <section className="CheckoutSuccessPage mx-auto flex w-full max-w-3xl flex-1 flex-col items-center justify-center px-4 py-20 sm:px-6">
+      <section className="CheckoutSuccessPage mx-auto flex w-full max-w-screen-2xl flex-1 flex-col items-center justify-center px-4 py-20 sm:px-6">
         <div className="w-full rounded-4xl border border-lightBorders-400/80 bg-white/85 p-8 text-center shadow-sm dark:border-darkBorders-500 dark:bg-jwdMarine-900/85">
           <h1 className="heading-3">Payment successful</h1>
           <p className="body-2 mt-4 text-sm sm:text-base">
@@ -98,7 +98,7 @@ export default async function CheckoutSuccessPage({
   }
 
   return (
-    <section className="CheckoutSuccessPage mx-auto flex w-full max-w-3xl flex-1 flex-col items-center justify-center px-4 py-20 sm:px-6">
+    <section className="CheckoutSuccessPage mx-auto flex w-full max-w-screen-2xl flex-1 flex-col items-center justify-center px-4 py-20 sm:px-6">
       <div className="w-full rounded-4xl border border-lightBorders-400/80 bg-white/85 p-8 text-center shadow-sm dark:border-darkBorders-500 dark:bg-jwdMarine-900/85">
         <h1 className="heading-3">Payment confirmation unavailable</h1>
         <p className="body-2 mt-4 text-sm sm:text-base">

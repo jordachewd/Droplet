@@ -1,5 +1,5 @@
 import { PLAN_LIMITS } from "@/constants/plans";
-import Task from "@/lib/database/models/tasks.model";
+import User from "@/lib/database/models/user.model";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import { PlanName } from "@/types/PlanData.d";
 
@@ -15,6 +15,11 @@ function getStartOfDay(now: Date): Date {
   startOfDay.setUTCHours(0, 0, 0, 0);
   return startOfDay;
 }
+
+type DailyConversationCounterDocument = {
+  dailyConversationsStarted?: number;
+  dailyConversationWindowStart?: Date | null;
+};
 
 export async function checkDailyConversationLimit(
   userId: string,
@@ -35,12 +40,20 @@ export async function checkDailyConversationLimit(
 
   await connectToDatabase();
 
-  const used = await Task.countDocuments({
-    userId,
-    createdAt: {
-      $gte: getStartOfDay(now),
-    },
-  });
+  const startOfDay = getStartOfDay(now);
+  const userCounter = await User.findOne({ clerkId: userId })
+    .select("dailyConversationsStarted dailyConversationWindowStart")
+    .lean<DailyConversationCounterDocument>();
+  const windowStart = userCounter?.dailyConversationWindowStart
+    ? new Date(userCounter.dailyConversationWindowStart)
+    : null;
+  const hasCurrentWindow =
+    windowStart instanceof Date &&
+    !Number.isNaN(windowStart.getTime()) &&
+    windowStart.getTime() >= startOfDay.getTime();
+  const used = hasCurrentWindow
+    ? Math.max(0, userCounter?.dailyConversationsStarted ?? 0)
+    : 0;
   const remaining = Math.max(0, limit - used);
 
   return {

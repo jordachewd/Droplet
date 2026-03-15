@@ -7,7 +7,7 @@ export const openAiClient = new OpenAI({
 });
 
 /** Tools available for chat interactions */
-export const imageGenerationTool = {
+const imageGenerationTool = {
   type: "function",
   function: {
     name: "getGeneratedImage",
@@ -30,7 +30,7 @@ export const imageGenerationTool = {
   },
 };
 
-export const audioGenerationTool = {
+const audioGenerationTool = {
   type: "function",
   function: {
     name: "getGeneratedAudio",
