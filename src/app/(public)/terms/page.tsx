@@ -58,7 +58,7 @@ const termsSections = [
 
 export default function TermsPage() {
   return (
-    <section className="TermsPage mx-auto flex w-full max-w-5xl flex-col gap-8 px-4 pb-16 pt-24 sm:px-6 lg:px-8">
+    <section className="TermsPage mx-auto flex w-full max-w-screen-2xl flex-col gap-8 px-4 pb-16 pt-24 sm:px-6 lg:px-8">
       <div
         className={classNames(
           "rounded-[2rem] border px-6 py-10 shadow-sm",

@@ -113,6 +113,7 @@ const TITLE_POLICY_RULE: ModelPolicyRule = {
   maxOutputTokens: 20,
   notes: "Always use the cheapest model for title generation.",
 };
+const DEFAULT_TTS_MODEL = "gpt-4o-mini-tts";
 
 export const MODEL_POLICY_MATRIX = {
   lite: {
@@ -165,8 +166,8 @@ export const MODEL_POLICY_MATRIX = {
       defaultTaskClass: "final",
       taskClasses: {
         final: {
-          model: "gpt-4o-mini-tts",
-          fallbackModel: "gpt-4o-mini-tts",
+          model: DEFAULT_TTS_MODEL,
+          fallbackModel: DEFAULT_TTS_MODEL,
           notes:
             "Lite audio generation is TTS-only; audio_in_out requests are blocked.",
         },
@@ -237,7 +238,7 @@ export const MODEL_POLICY_MATRIX = {
       taskClasses: {
         final: {
           model: "gpt-audio-mini",
-          fallbackModel: "gpt-4o-mini-tts",
+          fallbackModel: DEFAULT_TTS_MODEL,
           notes:
             "TTS-only fallback is allowed only for plain text-to-speech requests.",
         },
@@ -310,10 +311,10 @@ export const MODEL_POLICY_MATRIX = {
       defaultTaskClass: "final",
       taskClasses: {
         final: {
-          model: "gpt-audio-1.5",
+          model: "gpt-audio-mini",
           fallbackModel: "gpt-audio-mini",
           notes:
-            "Downgrade on retries or budget pressure while keeping full audio support.",
+            "Premium uses the same verified full-audio model tier while keeping audio_in_out support.",
         },
       },
     },
@@ -335,7 +336,7 @@ export const MODEL_POLICY_MATRIX = {
   },
 } as const satisfies PlanPolicyMatrix;
 
-export const MODEL_PRICING: Record<string, TokenPricing> = {
+const MODEL_PRICING: Record<string, TokenPricing> = {
   "gpt-4o-mini": {
     inputUsdPerMillion: 0.15,
     outputUsdPerMillion: 0.6,
@@ -363,12 +364,7 @@ export const MODEL_PRICING: Record<string, TokenPricing> = {
     outputUsdPerMillion: 20,
     // TODO: verify the exact token accounting for the current audio model tier.
   },
-  "gpt-audio-1.5": {
-    inputUsdPerMillion: 40,
-    outputUsdPerMillion: 80,
-    // TODO: verify the exact pricing for gpt-audio-1.5 once OpenAI publishes it.
-  },
-  "gpt-4o-mini-tts": {
+  [DEFAULT_TTS_MODEL]: {
     inputUsdPerMillion: 0.6,
     outputUsdPerMillion: 12,
     // TODO: verify text-vs-audio output accounting for the speech API path.
@@ -384,7 +380,7 @@ export const MODEL_PRICING: Record<string, TokenPricing> = {
 };
 
 const MODEL_CAPABILITIES: Record<string, ModelCapability> = {
-  "gpt-4o-mini-tts": {
+  [DEFAULT_TTS_MODEL]: {
     isTtsOnly: true,
   },
 };
@@ -576,6 +572,15 @@ export function resolveModelPolicy(
         "Lite audio_in_out requests are blocked; Lite supports TTS only.",
       ),
     });
+  }
+
+  if (input.feature === "audio_generation" && input.audioMode === "tts") {
+    model = DEFAULT_TTS_MODEL;
+    fallbackModel = DEFAULT_TTS_MODEL;
+    notes = joinNotes(
+      notes,
+      "TTS requests always use the speech synthesis model path.",
+    );
   }
 
   if (

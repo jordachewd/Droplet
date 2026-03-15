@@ -69,7 +69,7 @@ export async function generateAudio({
     let taskUsage: number | undefined;
     let requestMetric: AIRequestMetric;
 
-    if (policy.isTtsOnly) {
+    if (audioMode === "tts") {
       const speechInput = buildTextToSpeechInput(messages);
 
       if (!speechInput) {

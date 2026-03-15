@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.744.0",
+    "@clerk/backend": "^3.2.0",
     "@formkit/auto-animate": "^0.9.0",
     "@tiptap/pm": "^3.20.1",
     "@tiptap/react": "^3.20.1",
@@ -28,6 +29,7 @@
     "openai": "^6.10.0",
     "react-markdown": "^10.1.0",
     "remark-gfm": "^4.0.0",
+    "server-only": "^0.0.1",
     "sharp": "^0.34.5",
     "stripe": "^20.4.0",
     "tailwindcss-animated": "^2.0.0",

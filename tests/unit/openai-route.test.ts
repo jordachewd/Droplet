@@ -7,7 +7,6 @@ import {
 import { generateTitle } from "@/lib/utils/openai/generateTitle";
 import {
   createTask,
-  deleteTask,
   incrementPromptCountIfBelowLimit,
   updateTask,
 } from "@/lib/actions/task.actions";
@@ -30,7 +29,6 @@ vi.mock("@/lib/utils/openai/generateTitle", () => ({
 
 vi.mock("@/lib/actions/task.actions", () => ({
   createTask: vi.fn(),
-  deleteTask: vi.fn(),
   incrementPromptCountIfBelowLimit: vi.fn(),
   updateTask: vi.fn(),
 }));
@@ -136,7 +134,6 @@ describe("POST /api/openai", () => {
     );
     vi.mocked(createTask).mockResolvedValue({ _id: NEW_TASK_ID } as never);
     vi.mocked(incrementPromptCountIfBelowLimit).mockResolvedValue(true);
-    vi.mocked(deleteTask).mockResolvedValue({ status: 200 } as never);
     vi.mocked(generateResponse).mockResolvedValue(
       JSON.stringify({
         taskData: {
@@ -479,8 +476,8 @@ describe("POST /api/openai", () => {
     expect(payload.stopReason).toBe("daily_conversation_limit_reached");
     expect(payload.endAction).toBe("upgrade_plan");
     expect(payload.acceptedPrompt).toBe(false);
-    expect(createTask).toHaveBeenCalledOnce();
-    expect(deleteTask).toHaveBeenCalledWith(NEW_TASK_ID);
+    expect(generateTitle).not.toHaveBeenCalled();
+    expect(createTask).not.toHaveBeenCalled();
     expect(generateResponse).not.toHaveBeenCalled();
   });
 

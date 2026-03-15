@@ -1,8 +1,4 @@
-import {
-  ConversationListItem,
-  Persona,
-  PersonaId,
-} from "@/types/PersonaData.d";
+import { Persona, PersonaId } from "@/types/PersonaData.d";
 
 export const DEFAULT_PERSONA_ID: PersonaId = "strategist";
 
@@ -198,58 +194,7 @@ export const PERSONAS: Persona[] = [
   },
 ];
 
-export const DEMO_CONVERSATIONS: ConversationListItem[] = [
-  {
-    id: "demo-strategy-roadmap",
-    title: "Q2 Launch Roadmap",
-    personaId: "strategist",
-    updatedAtLabel: "5 min ago",
-    href: "/app?persona=strategist",
-    isDemo: true,
-  },
-  {
-    id: "demo-teacher-calculus",
-    title: "Derivatives Explained",
-    personaId: "teacher",
-    updatedAtLabel: "24 min ago",
-    href: "/app?persona=teacher",
-    isDemo: true,
-  },
-  {
-    id: "demo-dev-review",
-    title: "API Error Review",
-    personaId: "developer",
-    updatedAtLabel: "1 h ago",
-    href: "/app?persona=developer",
-    isDemo: true,
-  },
-  {
-    id: "demo-creator-campaign",
-    title: "Campaign Story Angles",
-    personaId: "creator",
-    updatedAtLabel: "2 h ago",
-    href: "/app?persona=creator",
-    isDemo: true,
-  },
-  {
-    id: "demo-wellness-reset",
-    title: "Morning Reset Routine",
-    personaId: "wellness",
-    updatedAtLabel: "3 h ago",
-    href: "/app?persona=wellness",
-    isDemo: true,
-  },
-  {
-    id: "demo-analyst-brief",
-    title: "Competitive Market Brief",
-    personaId: "analyst",
-    updatedAtLabel: "4 h ago",
-    href: "/app?persona=analyst",
-    isDemo: true,
-  },
-];
-
-export const PERSONA_MAP: Record<PersonaId, Persona> = PERSONAS.reduce(
+const PERSONA_MAP: Record<PersonaId, Persona> = PERSONAS.reduce(
   (accumulator, persona) => {
     accumulator[persona.id] = persona;
     return accumulator;

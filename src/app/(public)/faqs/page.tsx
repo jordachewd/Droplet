@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 
 export default function FaqsPage() {
   return (
-    <section className="FaqsPage mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 pb-16 pt-24 sm:px-6 lg:px-8">
+    <section className="FaqsPage mx-auto flex w-full max-w-screen-2xl flex-col gap-8 px-4 pb-16 pt-24 sm:px-6 lg:px-8">
       <div
         className={classNames(
           "rounded-[2rem] border px-5 py-6 shadow-sm",
@@ -20,7 +20,7 @@ export default function FaqsPage() {
           "dark:border-darkBorders-500 dark:bg-jwdMarine-900/82",
         )}
       >
-        <FaqsSection />
+        <FaqsSection maxWidthClass="max-w-screen-2xl" />
       </div>
 
       <div

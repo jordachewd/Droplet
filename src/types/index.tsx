@@ -18,15 +18,3 @@ export interface Messages {
   personaId?: string | null;
   messages: Message[];
 }
-
-type ChipOptions = {
-  id: number;
-  label: string;
-};
-
-export type Chip = {
-  id: number;
-  label: string;
-  icon: string;
-  options: ChipOptions[];
-};

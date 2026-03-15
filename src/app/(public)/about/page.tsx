@@ -290,7 +290,7 @@ function renderAboutVisual(visualType: AboutVisualType) {
 
 export default function AboutPage() {
   return (
-    <section className="AboutPage mx-auto flex w-full max-w-7xl flex-col gap-10 px-4 pb-16 pt-24 sm:px-6 lg:px-8">
+    <section className="AboutPage mx-auto flex w-full max-w-screen-2xl flex-col gap-10 px-4 pb-16 pt-24 sm:px-6 lg:px-8">
       <div
         className={classNames(
           "rounded-[2rem] border px-6 py-10 shadow-sm",
@@ -338,7 +338,7 @@ export default function AboutPage() {
 
       <section
         className={classNames(
-          "rounded-[2rem] border px-6 py-8 shadow-sm",
+          "w-full max-w-screen-2xl rounded-[2rem] border px-6 py-8 shadow-sm",
           "border-lightBorders-400/80 bg-linear-135 from-lightSecondary-100 via-white to-lightAccent-100",
           "dark:border-darkBorders-500 dark:bg-linear-135 dark:from-darkPrimary-1000 dark:via-jwdMarine-1000 dark:to-darkSecondary-900/55",
         )}

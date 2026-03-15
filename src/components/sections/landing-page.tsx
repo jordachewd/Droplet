@@ -69,7 +69,7 @@ export default function LandingPage() {
 
   return (
     <section
-      className="LandingPage relative z-10 -mt-16 mb-10 flex w-full flex-1 flex-col items-center gap-20"
+      className="LandingPage relative z-10 -mt-16 mb-10 mx-auto flex w-full max-w-screen-2xl flex-1 flex-col items-center gap-20"
       id="LandingPageWrapper"
     >
       <div className={heroSectionClass}>
@@ -303,8 +303,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <Plans />
-      <Faqs />
+      <Plans maxWidthClass="max-w-screen-2xl" />
+      <Faqs maxWidthClass="max-w-screen-2xl" />
     </section>
   );
 }

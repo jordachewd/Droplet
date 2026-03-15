@@ -32,10 +32,6 @@ export interface CreateTaskInput {
   updatedAt?: Date;
 }
 
-export interface CreateTaskParams extends CreateTaskInput {
-  userId: string;
-}
-
 export interface UpdateTaskParams {
   messages: Message[];
   usage?: number;
