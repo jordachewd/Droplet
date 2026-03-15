@@ -61,6 +61,22 @@ function logUserDeletedCleanupFailure(step: string) {
   );
 }
 
+function logUserDeletedCleanupSummary({
+  deletedUserCount,
+  deletedTransactionCount,
+  deletedTaskCount,
+  deletedObjectCount,
+}: {
+  deletedUserCount: number | null;
+  deletedTransactionCount: number | null;
+  deletedTaskCount: number | null;
+  deletedObjectCount: number | null;
+}) {
+  process.stderr.write(
+    `[clerk-webhook] user.deleted cleanup counts user=${deletedUserCount ?? "unknown"} transactions=${deletedTransactionCount ?? "unknown"} tasks=${deletedTaskCount ?? "unknown"} s3Objects=${deletedObjectCount ?? "unknown"}\n`,
+  );
+}
+
 function logWebhookProcessingFailure(eventType: string) {
   process.stderr.write(`[clerk-webhook] ${eventType} processing failed.\n`);
 }
@@ -286,7 +302,7 @@ export async function POST(req: NextRequest) {
         },
       });
 
-      return NextResponse.json({ message: "OK", user: syncedUser });
+      return NextResponse.json({ message: "OK" });
     }
 
     // UPDATE USER
@@ -334,17 +350,13 @@ export async function POST(req: NextRequest) {
       }
 
       await connectToDatabase();
-      const updatedUser = await User.findOneAndUpdate({ clerkId: id }, user, {
+      await User.findOneAndUpdate({ clerkId: id }, user, {
         returnDocument: "after",
         strict: true,
         upsert: false,
       });
 
-      if (!updatedUser) {
-        return NextResponse.json({ message: "OK", user: null });
-      }
-
-      return NextResponse.json({ message: "OK", user: updatedUser });
+      return NextResponse.json({ message: "OK" });
     }
 
     // DELETE USER
@@ -363,45 +375,51 @@ export async function POST(req: NextRequest) {
 
       await connectToDatabase();
       const clerkId = id;
-      let deletedUser: unknown = null;
-      let deletedTransactions: { deletedCount?: number } | null = null;
-      let deletedTasks: { deletedCount?: number } | null = null;
-      let deletedObjectsCount = 0;
+      let deletedUserCount: number | null = null;
+      let deletedTransactionCount: number | null = null;
+      let deletedTaskCount: number | null = null;
+      let deletedObjectCount: number | null = null;
 
       try {
         const userToDelete = await User.findOne({ clerkId });
-        deletedUser = userToDelete
-          ? await User.findByIdAndDelete(userToDelete._id)
-          : null;
+        if (userToDelete) {
+          await User.findByIdAndDelete(userToDelete._id);
+          deletedUserCount = 1;
+        } else {
+          deletedUserCount = 0;
+        }
       } catch {
         logUserDeletedCleanupFailure("user");
       }
 
       try {
-        deletedTransactions = await Transaction.deleteMany({ clerkId });
+        const deletedTransactions = await Transaction.deleteMany({ clerkId });
+        deletedTransactionCount = deletedTransactions.deletedCount ?? 0;
       } catch {
         logUserDeletedCleanupFailure("transaction");
       }
 
       try {
-        deletedTasks = await Task.deleteMany({ userId: clerkId });
+        const deletedTasks = await Task.deleteMany({ userId: clerkId });
+        deletedTaskCount = deletedTasks.deletedCount ?? 0;
       } catch {
         logUserDeletedCleanupFailure("task");
       }
 
       try {
-        deletedObjectsCount = await deleteS3Prefix(`${clerkId}/`);
+        deletedObjectCount = await deleteS3Prefix(`${clerkId}/`);
       } catch {
         logUserDeletedCleanupFailure("s3");
       }
 
-      return NextResponse.json({
-        message: "OK",
-        deletedUser,
-        deletedTransactions,
-        deletedTasks,
-        deletedObjectsCount,
+      logUserDeletedCleanupSummary({
+        deletedUserCount,
+        deletedTransactionCount,
+        deletedTaskCount,
+        deletedObjectCount,
       });
+
+      return NextResponse.json({ message: "OK" });
     }
   } catch {
     logWebhookProcessingFailure(eventType);

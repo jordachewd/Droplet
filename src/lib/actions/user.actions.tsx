@@ -3,8 +3,11 @@ import { auth } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 import { UpdateUserParams } from "@/types/UserData.d";
 import User from "@/lib/database/models/user.model";
+import Task from "@/lib/database/models/tasks.model";
+import Transaction from "@/lib/database/models/transaction.model";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import { handleError } from "@/lib/utils/handleError";
+import deleteS3Prefix from "@/lib/utils/aws/delete-s3-prefix";
 import serializeForClient from "@/lib/utils/serialize-for-client";
 
 // UPDATE
@@ -50,21 +53,45 @@ export async function deleteUser(clerkId: string) {
     await connectToDatabase();
 
     // Find user to delete
-    const userToDelete = await User.findOne({ clerkId });
+    const userToDelete = await User.findOne({ clerkId }).select("_id").lean();
 
     if (!userToDelete) {
       return serializeForClient({
         message: "User does not exist!",
-        status: "Error",
+        status: 404,
         source: "deleteUser",
       });
     }
 
-    // Delete user
-    const deletedUser = await User.findByIdAndDelete(userToDelete._id);
-    revalidatePath("/");
+    const [deletedTasks, deletedTransactions] = await Promise.all([
+      Task.deleteMany({ userId: clerkId }),
+      Transaction.deleteMany({ clerkId }),
+    ]);
 
-    return deletedUser ? serializeForClient(deletedUser) : null;
+    const deletedObjectsCount = await deleteS3Prefix(`${clerkId}/`);
+
+    // Delete user after all user-owned data and assets are cleaned up
+    const deletedUser = await User.findByIdAndDelete(userToDelete._id);
+    if (!deletedUser) {
+      return serializeForClient({
+        message: "User deletion failed!",
+        status: 404,
+        source: "deleteUser",
+      });
+    }
+
+    revalidatePath("/");
+    revalidatePath("/app");
+    revalidatePath("/app/profile");
+    revalidatePath("/app/library");
+
+    return serializeForClient({
+      message: "User deleted successfully.",
+      status: 200,
+      deletedTasks: deletedTasks.deletedCount ?? 0,
+      deletedTransactions: deletedTransactions.deletedCount ?? 0,
+      deletedObjectsCount,
+    });
   } catch (error) {
     handleError({ error, source: "deleteUser" });
   }
