@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-16 (PM deep audit #11 complete. Owner instructions received. 30.1 DONE (Interviewer). 30.2 DONE (persona gating). 30.3 DONE (persona picker). 27.4 DONE (admin forms). TD-ADMIN-01 RESOLVED. New phases: 31 (layout/nav), 32 (Library media tabs), 33 (persona trial access), 34 (video gen). Persona trial access model frozen: full/limited/blocked.)
+> Last updated: 2026-03-16 (PM deep audit #12 complete. Phase 31.1–31.3 verified. sidebarExpanded bug found (TD-UI-14). TD-AI-23, TD-LIMIT-07 moved to Resolved. 31.2-fix added to TODO.)
 
 ---
 
@@ -694,8 +694,8 @@ All file handling technical debt has been resolved. S3 cleanup on task/user dele
 
 ## 13. Testing
 
-- **Unit tests**: 61 suites, 320 tests (Vitest) — includes streaming, webhook, chat-wrapper, chat-body stop-state, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, persona prompt, rate limiting, task complexity classification, conversation stop enforcement, entitlement resolver full coverage, checkout-success page, admin audit trail, OpenAI route tests, atomic prompt limit, daily conversation limit, media error handling, and universal feature access tests
-- **E2E tests**: 11 Playwright spec files across browser projects (chat-app-shell, auth-boundaries, public-pages with 70+ tests, conversation-lifecycle, user-profile, admin-users, admin-features, landing-page, plans-public, pricing-public, authenticated-flows). 193 total, 185 passed, 0 flaky, 8 skipped.
+- **Unit tests**: 61 suites, 330 tests (Vitest) — includes streaming, webhook, chat-wrapper, chat-body stop-state, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, persona prompt, rate limiting, task complexity classification, conversation stop enforcement, entitlement resolver full coverage, checkout-success page, admin audit trail, OpenAI route tests, atomic prompt limit, daily conversation limit, media error handling, and universal feature access tests
+- **E2E tests**: 11 Playwright spec files across browser projects (chat-app-shell, auth-boundaries, public-pages with 70+ tests, conversation-lifecycle, user-profile, admin-users, admin-features, landing-page, plans-public, pricing-public, authenticated-flows). 200 total, 182 passed, 0 flaky, 18 skipped.
 - **Coverage**: Configured (Phase 24.1) — v8 provider, thresholds: 70% statements / 60% branches / 70% functions / 70% lines. Current: 82/71/88/82.
 - **Gap**: No dedicated E2E spec for streamed chunk-by-chunk rendering (manually verified via Playwright MCP)
 
@@ -744,10 +744,9 @@ All file handling technical debt has been resolved. S3 cleanup on task/user dele
 
 ### Active — High Priority
 
-| ID          | Area   | Description                                                                                                                                                                                                                                                   | Severity |
-| ----------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| TD-LIMIT-07 | Limits | Media generation counters (image/audio) use read-then-write pattern — `checkUsageLimit()` reads at request start, `$inc` after response. Concurrent requests can bypass limits. Violates AGENTS.md atomic limit rule. Same pattern as old daily limit TOCTOU. | **High** |
-| TD-AI-23    | OpenAI | Audio tool definition `content` parameter description says "Description of the audio file to generate" — misleads AI model into providing brief description instead of actual text to speak. TTS path uses this value as literal speech input.                | **High** |
+| ID       | Area | Description                                                                                                                                                                                                                                                | Severity |
+| -------- | ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| TD-UI-14 | UI   | ChatHeader `sidebarExpanded` computed as `!desktopSidebarCollapsed \|\| mobileSidebarOpen` — always `true` on mobile (OR short-circuit). `aria-expanded` and toggle label wrong. Toggle function works. Fix: viewport-aware ternary via `desktopQueryRef`. | **High** |
 
 ### ~~Active — High Priority~~ (Resolved)
 
@@ -848,6 +847,8 @@ All file handling technical debt has been resolved. S3 cleanup on task/user dele
 | TD-LIMIT-02   | Daily conversation limit race condition                | Resolved in Phase 27.1 — compensating delete pattern after `createTask`, UTC timezone fix                                                                                                                                           |
 | TD-LIMIT-05   | Daily conversation limit TOCTOU race                   | Resolved in Phase 28.1 — atomic `claimDailyConversationSlot` with `findOneAndUpdate` + `$lt` guard, midnight reset in single operation                                                                                              |
 | TD-LIMIT-06   | Midnight reset race                                    | Resolved in Phase 28.1 — stale-window reset handled atomically in `claimDailyConversationSlot`                                                                                                                                      |
+| TD-LIMIT-07   | Media counter TOCTOU race                              | Resolved in Phase 28.6 — `claimMediaGenerationSlot()` atomic `findOneAndUpdate` with `$lt` guard                                                                                                                                    |
+| TD-AI-23      | Audio tool content description misleading              | Resolved in Phase 28.7 — description updated to specify literal text for TTS                                                                                                                                                        |
 | TD-AI-20      | Image generation broken (model IDs + response_format)  | Resolved in Phase 28.2-fix — `response_format: "b64_json"` removed from `generateImage.tsx`, model IDs live-tested (`gpt-image-1-mini`, `gpt-image-1.5` confirmed working), response handler supports both URL and b64_json formats |
 | TD-AI-24      | `response_format` compatibility risk with image models | Resolved in Phase 28.2-fix — `response_format` parameter removed entirely, API returns default format (b64_json) which is handled correctly                                                                                         |
 | TD-AI-22      | Audio messages parameter bug                           | Resolved in Phase 28.3-code — `ttsText` extracted from `parsedArgs.content`, not raw `parsedArgs` as messages                                                                                                                       |
