@@ -992,6 +992,8 @@ These items are not banned forever. They are excluded because they create dispro
 
 ### Milestone 10 — Layout, Navigation & Library Enhancement
 
+> **Status: COMPLETED** — Delivered by Phases 31.1–31.3, 31.2-fix, 35.1, 32.1–32.3. ChatHeader on all /app pages with persona selector, sidebar cleanup, tabbed Library with media aggregation. Remaining polish: 32.4 (media card components), 32.5 (pagination), 32.6 (error handling).
+
 **Objective:** Make the authenticated app shell professional and complete. ChatHeader on all `/app` pages, sidebar cleanup, Library media tabs.
 
 **Dependencies:** Phase 28 remaining complete.

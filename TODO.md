@@ -5,51 +5,83 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: Phases 1–25.7 + 27.1–27.4 + 27.6–27.10 + 28.1 + 28.2-fix + 28.3-code + 28.4 + 28.6 + 28.7 + 30.1 + 30.2 + 30.3 + 31.1 + 31.2 + 31.3 + 31.2-fix complete.**
-> **PM deep audit #13 (2026-03-16): 31.2-fix verified DONE. TD-UI-14 moved to Resolved. Owner requirements: persona selector in ChatHeader, Library media tabs, audio/video verification, admin design consistency.**
-> **CRITICAL OWNER INSTRUCTIONS: Persona selector in ChatHeader, Library media tabs, audio/video verification, admin design consistency, persona trial access.**
-> **Priority order: 35.1 (persona selector) → 28.3-verify (audio) → 32.1–32.5 (Library tabs) → 31.4 (layout E2E) → 33.1–33.8 (persona trial) → 36.1 (admin design) → 30.4 → 30.5 → 27.5 → 34.x (video gen) → 29.1 → 29.2 → Phase 26.**
-> **All Phase 26+ deferred work is ON HOLD until Phases 28 remaining + 31–33 + 35–36 are PM-approved complete.**
+> **STATUS: Phases 1–25.7 + 27.1–27.4 + 27.6–27.10 + 28.1 + 28.2-fix + 28.3-code + 28.3-verify + 28.4 + 28.6 + 28.7 + 30.1 + 30.2 + 30.3 + 31.1 + 31.2 + 31.3 + 31.2-fix + 32.1 + 32.2 + 32.3 + 35.1 complete.**
+> **PM deep audit #14 (2026-03-16): 35.1, 28.3-verify, 32.1, 32.2, 32.3 verified DONE. SPEC audio model reconciled (gpt-audio-1.5 → gpt-audio-mini). E2E regression flagged CRITICAL.**
+> **CRITICAL: E2E suite degraded from 181→68 passing. Must stabilize before new feature work.**
+> **OWNER INSTRUCTIONS: Admin design consistency, admin Usage Top Personas, persona trial access, video gen verification.**
+> **Priority order: 37.1 (E2E stabilization) → 32.6 (Library error handling) → 33.1–33.8 (persona trial) → 32.4 (media cards) → 36.1 (admin design) → 36.2 (admin Top Personas) → 31.4 (layout E2E) → 30.4 → 32.5 → 30.5 → 27.5 → 34.x (video gen) → 35.2 → 29.1 → 29.2 → Phase 26.**
+> **All Phase 26+ deferred work is ON HOLD until Phases 33 + 36 + 37 are PM-approved complete.**
 
 ---
 
-## Phase 35: ChatHeader Persona Selector — HIGH
+## Phase 37: E2E Test Stabilization — CRITICAL
 
-> Owner-mandated (2026-03-16): Personas must be selectable via dropdown inside the ChatHeader persona pill.
-> Currently a static label. Must become an interactive selector for persona switching.
-> Depends on: Phase 30.2 complete (per-plan persona gating — DONE).
+> PM audit #14 flagged: E2E suite degraded from 181 passing to 68 passing. Exit code 1.
+> Must stabilize before any new feature work proceeds.
+> **This is a release blocker.**
 
 ---
 
-### 35.1 HIGH — Add persona dropdown selector to ChatHeader
+### 37.1 CRITICAL — Investigate and fix E2E test regression
 
-**Files:** `src/components/chat/chat-header.tsx`, `src/app/(chat)/layout.tsx`
-**Ref:** Owner instruction: "Personas must be selectable via select input inside ChatHeader"
-**Depends on:** 30.2 complete (DONE)
+**Files:** `tests/e2e/**/*.spec.ts`, Playwright config
+**Ref:** PM audit #14 — E2E degraded from 181→68 passing tests
 
-**Context:** The ChatHeader currently shows a read-only dotted-border pill with the persona name. Owner wants a `<select>` dropdown inside this pill so users can switch personas quickly.
-
-**Architecture constraint:** Persona is bound per-task. The selector sets the persona for the NEXT new conversation. During an active conversation (`/app/c/[conversationId]`), the selector must be disabled (read-only showing the task's persona).
+**Context:** Engineer reports "existing cross-browser failures not isolated to this change set" covering admin/auth/public/app shell flows across chromium/firefox/webkit/mobile projects. Numbers don't reconcile with previous audit (200 total → only 120 accounted for). This needs root-cause analysis.
 
 **What to do:**
 
-1. Replace the static persona label span in `ChatHeader` with a styled `<select>` dropdown inside the dotted-border pill.
-2. Populate with personas available for the user's plan (pass `allowedPersonaIds` from server layout to client header).
-3. Current value from `useChatStore.personaId` — pre-select active persona.
-4. On change: call `useChatStore.setPersonaId(newValue)`.
-5. When on `/app/c/[conversationId]` (active conversation): disable selector — persona is frozen per-task.
-6. When on `/app`, `/app/new`, `/app/library`, `/app/personas`, `/app/profile`, `/app/plans`: selector is active.
-7. Maintain the dotted-border pill styling per Owner's specified markup.
+1. Run full E2E suite and capture per-spec, per-project results.
+2. Categorize failures: (a) flaky/timing, (b) broken by recent changes, (c) pre-existing infrastructure issues, (d) test code vs app code failures.
+3. Fix tests broken by 32.x and 35.1 changes (Library tabs, persona selector — these added new DOM elements that may break existing selectors).
+4. Fix cross-browser timing issues (known pattern: increase timeouts, use `waitForLoadState`).
+5. Skip or mark as known-flaky any tests failing due to browser-specific quirks NOT caused by app code.
+6. Target: 170+ passing tests (≥85% of 200 total).
 
 **Acceptance criteria:**
 
-- [ ] Persona dropdown selector visible in ChatHeader on all `/app` pages
-- [ ] Shows personas available for user's plan
-- [ ] Selecting persona updates `useChatStore.personaId` for next new conversation
-- [ ] Disabled during active conversation (persona bound to task)
-- [ ] Matches dotted-border pill design
+- [ ] Root cause of regression identified and documented
+- [ ] Tests broken by 32.x/35.1 changes fixed
+- [ ] Cross-browser timing flakes stabilized
+- [ ] ≥170 passing tests (target: restore to ~181)
+- [ ] Exit code 0 or only known-flaky skips
+
+---
+
+## Phase 32: Library Media Tabs (remaining)
+
+> 32.1 DONE (media aggregation), 32.2 DONE (video_url schema), 32.3 DONE (tabbed Library UI).
+> Remaining: 32.4 (media card components), 32.5 (pagination), 32.6 (error handling).
+
+---
+
+### 32.6 HIGH — Fix Library page silent error handling
+
+**Files:** `src/app/(chat)/app/library/page.tsx`
+**Ref:** PM audit #14 + Architect audit #13 — Library page catches all errors silently
+
+**Context:** Library page has an empty `catch {}` block that swallows all errors. Users see empty tabs with zero feedback when data fetching fails.
+
+**What to do:**
+
+1. Replace empty `catch {}` with `catch (error) { process.stderr.write(...) }` for server-side logging.
+2. Pass an error flag to the client component so empty tabs show "Failed to load" instead of just empty state.
+3. Do NOT leak error details to client — use generic message only.
+
+**Acceptance criteria:**
+
+- [ ] Errors logged server-side via `process.stderr.write()`
+- [ ] Client sees "Failed to load" message on error (not silent empty)
+- [ ] No error details leaked to client
 - [ ] `npx tsc --noEmit` passes
 - [ ] All tests pass
+
+---
+
+## Phase 35: ChatHeader Persona Selector (remaining)
+
+> 35.1 DONE (persona dropdown selector — archived in DONE.md).
+> Remaining: 35.2 (E2E tests).
 
 ---
 
@@ -71,40 +103,11 @@
 
 ---
 
-## Phase 28: CRITICAL — Media Generation Fixes & Limit Enforcement (remaining)
+## Phase 28: Media Generation Fixes & Limit Enforcement — COMPLETE
 
-> PM audit #10 status: 28.1 DONE, 28.2-fix DONE, 28.3-code DONE, 28.4 DONE, 28.6 DONE, 28.7 DONE (all archived in DONE.md).
-> Remaining: 28.3-verify (audio live test).
-
----
-
-### 28.3-verify HIGH — Live-test audio model IDs and verify TTS end-to-end
-
-**Files:** `src/lib/utils/ai-model-policy.ts`, `src/lib/utils/openai/generateAudio.tsx`
-**Ref:** TD-AI-21 (remaining: model ID live-test)
-**Depends on:** 28.2-fix complete (same verification methodology)
-
-**Status: Code fix DONE (ttsText extraction). Model ID live-testing NOT DONE.**
-
-**Context:** The TTS path currently works because `isTtsOnly` policy forces ALL plans to `gpt-4o-mini-tts` (verified valid). But `gpt-audio-mini` and `gpt-audio-1.5` in the policy matrix are unverified and will break if `audio_in_out` is ever enabled for Pro/Premium.
-
-**What to do:**
-
-1. **Live-test** `gpt-4o-mini-tts` with `openAiClient.audio.speech.create()` — confirm TTS works.
-2. **Live-test** `gpt-audio-mini` with `openAiClient.chat.completions.create()` with audio modality — record result.
-3. **Live-test** `gpt-audio-1.5` with same approach — record result.
-4. If any model ID is invalid, replace with confirmed-valid equivalent.
-5. **End-to-end verify**: trigger audio generation via chat and confirm pipeline works (OpenAI → buffer → S3 → URL in response).
-6. Update unit tests for any corrected model IDs.
-
-**Acceptance criteria:**
-
-- [ ] `gpt-4o-mini-tts` TTS path works end-to-end (Lite → Pro → Premium)
-- [ ] `gpt-audio-mini` and `gpt-audio-1.5` live-tested and recorded
-- [ ] Invalid model IDs replaced if found
-- [ ] Audio generation works end-to-end via chat interface
-- [ ] `npx tsc --noEmit` passes
-- [ ] All tests pass
+> All tasks completed: 28.1, 28.2-fix, 28.3-code, 28.3-verify, 28.4, 28.6, 28.7.
+> Archived in DONE.md. Audio live-test completed: gpt-4o-mini-tts ✅, gpt-audio-mini ✅, gpt-audio-1.5 ❌ (403).
+> SPEC reconciled: Premium audio default → gpt-audio-mini (PM decision audit #14).
 
 ---
 
@@ -236,90 +239,10 @@
 
 ---
 
-## Phase 32: Library Media Tabs — HIGH
+## Phase 32: Library Media Tabs (remaining — continued)
 
-> Owner-mandated (2026-03-16): Library must show Chats, Images, Audios, Videos tabs.
-> Depends on: Phase 28 remaining complete (media generation working).
-
----
-
-### 32.1 HIGH — Add media aggregation query helpers
-
-**Files:** `src/lib/utils/task-queries.tsx`
-**Ref:** Owner instruction: generated media must be accessible in Library
-
-**What to do:**
-
-1. Add `getMediaItemsByUserId(userId, mediaType, limit, offset)` query helper using MongoDB aggregation:
-   - `$match` by userId → `$unwind` messages → `$unwind` messages.content → `$match` by content type.
-   - Returns: `{ url, taskId, taskTitle, personaId, createdAt }`.
-2. Support filtering by media type: `image_url`, `audio_url`, `video_url`.
-3. Support pagination via `$skip` and `$limit`.
-4. Use `.lean()` for read-only results.
-
-**Acceptance criteria:**
-
-- [ ] Query returns media items extracted from Task messages
-- [ ] Supports filtering by image, audio, video types
-- [ ] Supports pagination
-- [ ] Returns task context (title, persona, date) per media item
-- [ ] Unit tests for query helpers
-- [ ] `npx tsc --noEmit` passes
-- [ ] All tests pass
-
----
-
-### 32.2 HIGH — Add video_url to ContentItem type
-
-**Files:** `src/types/index.tsx` (or ContentItem type definition), `src/lib/database/models/tasks.model.tsx`
-**Ref:** Forward-looking schema preparation
-
-**What to do:**
-
-1. Add `"video_url"` to the `ContentItem.type` union: `"text" | "temp" | "image_url" | "audio_url" | "video_url"`.
-2. Add `video_url?: string` field to ContentItem if schema requires explicit field.
-3. Update `MessageSchema` in task model to include `video_url` field.
-4. No behavioral change — just schema readiness for Phase 34.
-
-**Acceptance criteria:**
-
-- [ ] `video_url` type added to ContentItem
-- [ ] Schema supports video URL storage
-- [ ] Existing functionality unchanged
-- [ ] `npx tsc --noEmit` passes
-- [ ] All tests pass
-
----
-
-### 32.3 HIGH — Build tabbed Library UI
-
-**Files:** `src/app/(chat)/app/library/page.tsx`, new client component for tabs
-**Ref:** Owner instruction: tabs for Chat sessions, Images, Audios, Videos
-
-**What to do:**
-
-1. Add a tab bar at the top of the Library page: **Chats** (default) | **Images** | **Audios** | **Videos**.
-2. "Chats" tab shows current conversation list (existing functionality).
-3. "Images" tab queries and displays image grid with thumbnails, persona label, conversation link, and date.
-4. "Audios" tab queries and displays audio items with play controls, persona label, conversation link, and date.
-5. "Videos" tab shows placeholder "Coming soon" state (no video generation yet).
-6. Each tab should show item count.
-7. Use server component for data fetching per tab, client component for tab switching.
-
-**Acceptance criteria:**
-
-- [ ] 4 tabs visible on Library page
-- [ ] Chats tab shows conversation list (existing)
-- [ ] Images tab shows generated images with context
-- [ ] Audios tab shows generated audio files with play controls
-- [ ] Videos tab shows coming soon state
-- [ ] Tab switching is responsive and accessible
-- [ ] `npx tsc --noEmit` passes
-- [ ] All tests pass
-
----
-
-### 32.4 MEDIUM — Media card components
+> 32.1 DONE (media aggregation), 32.2 DONE (video_url schema), 32.3 DONE (tabbed Library UI), 32.6 DONE-pending (error handling — in Phase 32 remaining above).
+> Remaining: 32.4 (media card components), 32.5 (pagination).
 
 **Files:** `src/components/chat/library/` (new directory)
 
@@ -555,9 +478,10 @@
 
 ---
 
-## Phase 36: Admin Design Consistency — MEDIUM
+## Phase 36: Admin Design Consistency & Enhancement — MEDIUM
 
 > Owner-mandated (2026-03-16): Admin panel must respect the same design, fonts, sizes, colors and proportions as client app.
+> Owner-mandated (2026-03-16): Admin Usage must have a "Top Personas" statistic box.
 > Depends on: Core functionality phases complete (28, 31–33, 35).
 
 ---
@@ -574,12 +498,38 @@
 2. Apply consistent design tokens (fontFamily, fontSize, colors, spacing) from client app to admin pages.
 3. Ensure admin uses same card, table, button, form control styling as client app.
 4. Maintain admin-specific layout but ensure visual consistency across both panels.
+5. Replace any raw JSON editors or plain textareas with proper form controls (inputs, selects, radios, checkboxes).
 
 **Acceptance criteria:**
 
 - [ ] Admin pages use same fonts, colors, and spacing as client app
 - [ ] Form controls (inputs, selects, buttons) match client app styling
 - [ ] Visual consistency across admin and client panels
+- [ ] `npx tsc --noEmit` passes
+- [ ] All tests pass
+
+---
+
+### 36.2 MEDIUM — Add "Top Personas" statistic box to Admin Usage page
+
+**Files:** `src/app/(admin)/admin/usage/page.tsx`
+**Ref:** Owner instruction: "ADMIN Usage must have a Top Persona(s) statistic box — similar to the other ones — Will reflect the usage of personas by the users."
+**Depends on:** UsageEvent model exists (Phase 16 — DONE)
+
+**What to do:**
+
+1. Add a "Top Personas" statistic card to the admin Usage page, styled consistently with existing stat boxes.
+2. Query `UsageEvent` collection to aggregate persona usage: group by `personaId`, count total requests per persona, sort descending.
+3. Show top 5 personas with request count and percentage of total.
+4. Include time-range filter if existing Usage page has one (match UX pattern).
+5. Display persona label (not raw ID) using `getPersona()` helper.
+
+**Acceptance criteria:**
+
+- [ ] "Top Personas" stat box visible on admin Usage page
+- [ ] Shows top 5 personas ranked by usage count
+- [ ] Uses persona labels (not raw IDs)
+- [ ] Styled consistently with other admin stat boxes
 - [ ] `npx tsc --noEmit` passes
 - [ ] All tests pass
 

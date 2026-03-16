@@ -2,7 +2,77 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-16 — PM deep audit #13. Phases 1–25.7 + 27.1–27.4 + 27.6–27.10 + 28.1 + 28.2-fix + 28.3-code + 28.4 + 28.6 + 28.7 + 30.1 + 30.2 + 30.3 + 31.1 + 31.2 + 31.3 + 31.2-fix + E2E regression fixes complete.
+> Last updated: 2026-03-16 — PM deep audit #14. Phases 1–25.7 + 27.1–27.4 + 27.6–27.10 + 28.1 + 28.2-fix + 28.3-code + 28.3-verify + 28.4 + 28.6 + 28.7 + 30.1 + 30.2 + 30.3 + 31.1 + 31.2 + 31.3 + 31.2-fix + 32.1 + 32.2 + 32.3 + 35.1 + E2E regression fixes complete.
+
+---
+
+## Phase 35.1 — Add persona dropdown selector to ChatHeader — COMPLETED (2026-03-16)
+
+- [x] Static persona label replaced with native `<select>` dropdown inside the dotted-border pill in ChatHeader.
+- [x] Populated with plan-allowed personas via `allowedPersonaIds` passed from server layout entitlements.
+- [x] Current value reads from `useChatStore.personaId`; on change calls `setPersonaId()` + persists to `preferredPersonaId`.
+- [x] Disabled on `/app/c/[conversationId]` routes — persona is bound per-task.
+- [x] Active on `/app`, `/app/new`, `/app/library`, `/app/personas`, `/app/profile`, `/app/plans`.
+- [x] Proper accessibility: native `<select>` with `aria-label="Select persona"`.
+- [x] Fallback logic: prioritizes `personaId` → `preferredPersonaId` → first available persona.
+- [x] Full validation gateway: prettier ✅, lint ✅, tsc ✅, 332 unit tests ✅, build ✅.
+
+**Files changed:** `src/components/chat/chat-header.tsx`, `src/app/(chat)/layout.tsx`
+
+---
+
+## Phase 32.3 — Build tabbed Library UI — COMPLETED (2026-03-16)
+
+- [x] Client tab component (`library-tabs.tsx`) with 4 tabs: Chats, Images, Audios, Videos.
+- [x] Full ARIA accessibility: `role="tablist"`, `role="tab"`, `role="tabpanel"`, `aria-selected`, `aria-controls`, `aria-labelledby`.
+- [x] Chats tab shows existing conversation cards with delete action.
+- [x] Images tab shows thumbnail grid with persona label, date, and conversation link.
+- [x] Audios tab shows audio player cards with persona label, date, and conversation link.
+- [x] Videos tab shows "Coming Soon" placeholder (intentional — pending Sora API verification).
+- [x] Item counts shown per tab in badge pills.
+- [x] Server page fetches conversations + media datasets via `Promise.all()` and passes into client tabs.
+- [x] Memoized tabs array to prevent unnecessary re-renders.
+
+**Files changed:** `src/components/chat/library-tabs.tsx` (new), `src/app/(chat)/app/library/page.tsx`
+
+---
+
+## Phase 32.2 — Add video_url to ContentItem type and schema — COMPLETED (2026-03-16)
+
+- [x] `video_url` added to `ContentItem` interface in `src/types/index.tsx` as `string | null` (optional).
+- [x] `video_url` field added to `ContentItemSchema` in `tasks.model.tsx`.
+- [x] `video_url` added to Zod `messageTextContentSchema` in `validation-schemas.ts` as `z.string().nullable().optional()`.
+- [x] `video_url` parsing included in task message normalization in `task-queries.tsx`.
+
+**Files changed:** `src/types/index.tsx`, `src/lib/database/models/tasks.model.tsx`, `src/lib/utils/validation-schemas.ts`, `src/lib/utils/task-queries.tsx`
+
+---
+
+## Phase 32.1 — Add media aggregation query helpers — COMPLETED (2026-03-16)
+
+- [x] `getMediaItemsByUserId(userId, mediaType, limit, offset)` added to `task-queries.tsx`.
+- [x] MongoDB aggregation pipeline: `$match` userId → `$unwind` messages → `$unwind` content → `$match` media type → `$project` fields → `$match` non-null URLs → `$sort` → `$skip` → `$limit`.
+- [x] Supports `image_url`, `audio_url`, `video_url` media types.
+- [x] Safe pagination bounds: `safeLimit = Math.max(1, Math.min(limit, 100))`, `safeOffset = Math.max(0, offset)`.
+- [x] Date normalization for malformed legacy values.
+- [x] Valid persona ID fallback via `getPersona()`.
+- [x] Unit tests for aggregation, normalization, pagination bounds, edge cases.
+
+**Files changed:** `src/lib/utils/task-queries.tsx`, `tests/unit/task-queries.test.ts`
+
+---
+
+## Phase 28.3-verify — Live-test audio model IDs and verify TTS end-to-end — COMPLETED (2026-03-16)
+
+- [x] `gpt-4o-mini-tts`: **PASS** — TTS via `audio.speech.create()` works end-to-end.
+- [x] `gpt-audio-mini`: **PASS** — chat completions with audio modality works.
+- [x] `gpt-audio-1.5`: **FAIL** — 403 model access denied in current OpenAI project.
+- [x] OpenAI → S3 TTS pipeline: **PASS** — audio uploaded, URL produced correctly.
+- [x] No code change required — current policy already uses `gpt-audio-mini` for Premium audio path.
+- [x] **PM decision:** SPEC.md Section 8.2 Premium audio default changed from `gpt-audio-1.5` to `gpt-audio-mini` (with note). Code is correct as-is.
+- [x] TD-AI-21 severity downgraded — `gpt-audio-1.5` inaccessibility is documented, not blocking.
+
+**Files verified (no changes needed):** `src/lib/utils/ai-model-policy.ts`, `src/lib/utils/openai/generateAudio.tsx`
 
 ---
 

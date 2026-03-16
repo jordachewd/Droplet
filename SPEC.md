@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-16 (PM deep audit #13 complete. 31.2-fix verified DONE. TD-UI-14 moved to Resolved. Owner requirements: persona selector in ChatHeader, Library media tabs, audio/video verification, admin design consistency.)
+> Last updated: 2026-03-16 (PM deep audit #14 complete. 35.1, 28.3-verify, 32.1, 32.2, 32.3 verified DONE. Audio model policy reconciled: Premium audio → gpt-audio-mini (gpt-audio-1.5 inaccessible). Library media tabs delivered. Persona selector in ChatHeader delivered. E2E regression flagged CRITICAL.)
 
 ---
 
@@ -183,7 +183,7 @@ Prompts are versioned and separated from request handlers. `buildPersonaAwareSys
 1. **Lite is permanent and free.** There is no 3-day trial. There is no expiry. New users receive Lite by default upon account creation.
 2. **Personas are plan-gated.** Lite: Strategist, Developer, Best Friend (3). Pro: all Lite + Teacher, Wellness, Boyfriend, Girlfriend (7). Premium: all 10 personas. Admin can override persona access per plan via admin settings.
 3. **Pro and Premium are paid-only.** Activated via Stripe Checkout one-time payment.
-4. **Premium advantages over Pro:** premium audio quality (`gpt-audio-1.5`), `gpt-5.4` for complex reasoning, unlimited image/audio quotas, and higher video quota. See Section 8 for full model policy.
+4. **Premium advantages over Pro:** higher audio quality model (when available), `gpt-5.4` for complex reasoning, unlimited image/audio quotas, and higher video quota. See Section 8 for full model policy. Note: `gpt-audio-1.5` is currently inaccessible (403) — Premium audio uses `gpt-audio-mini` until access is restored.
 5. When any limit is reached, the server **must end the conversation** with an exact stop reason and exact next-action instruction.
 6. After a forced stop, the user is told one of: start a new conversation (if resources remain), upgrade plan (if applicable), or contact support.
 
@@ -475,7 +475,7 @@ Central resolver: `resolveModelPolicy()` in `src/lib/utils/ai-model-policy.ts`. 
 | Image            | Premium | `gpt-image-1.5`    | `gpt-image-1-mini`             | Same model tiers as Pro; Premium gets unlimited quota.                                                                                                         |
 | Audio            | Lite    | `gpt-4o-mini-tts`  | _(none)_                       | TTS only (no `audio_in_out`). Monthly quota: 3. Cheapest audio model for budget tier.                                                                          |
 | Audio            | Pro     | `gpt-audio-mini`   | `gpt-4o-mini-tts`              | TTS-only fallback. Do NOT use TTS fallback for `audio_in_out` mode.                                                                                            |
-| Audio            | Premium | `gpt-audio-1.5`    | `gpt-audio-mini`               | Downgrade for retries, previews, long-form beyond soft budget.                                                                                                 |
+| Audio            | Premium | `gpt-audio-mini`   | `gpt-4o-mini-tts`              | `gpt-audio-1.5` inaccessible (403) in current OpenAI project — verified live 2026-03-16. Using `gpt-audio-mini` until access restored.                         |
 | Video            | Lite    | `sora-2`           | _(none)_                       | Coming soon. Monthly quota: 1. Budget tier — differentiated by quantity only.                                                                                  |
 | Video            | Pro     | `sora-2`           | _(none)_                       | Coming soon. Monthly quota: 10. Differentiated by quantity only.                                                                                               |
 | Video            | Premium | `sora-2-pro`       | `sora-2`                       | `sora-2` for previews/drafts. `sora-2-pro` only for final renders with `explicitPremium`.                                                                      |
@@ -634,33 +634,33 @@ All file handling technical debt has been resolved. S3 cleanup on task/user dele
 
 ### Route Map (Target)
 
-| Route                                 | Type      | Description                                         |
-| ------------------------------------- | --------- | --------------------------------------------------- |
-| `/`                                   | Public    | Landing (Hero + product sections + CTAs)            |
-| `/about`                              | Public    | How app works (stacked sections)                    |
-| `/plans`                              | Public    | Pricing (plan cards)                                |
-| `/faqs`                               | Public    | FAQ accordion                                       |
-| `/personas`                           | Public    | Personas showcase                                   |
-| `/privacy`                            | Public    | Privacy & Cookie Policy                             |
-| `/cookies`                            | Public    | Cookie Policy                                       |
-| `/terms`                              | Public    | Terms & Conditions                                  |
-| `/sign-in`, `/sign-up`                | Auth      | Clerk auth                                          |
-| `/app`                                | Protected | Chat dashboard                                      |
-| `/app/new`                            | Protected | New conversation                                    |
-| `/app/library`                        | Protected | Media library (tabs: Chats, Images, Audios, Videos) |
-| `/app/personas`                       | Protected | In-app personas                                     |
-| `/app/c/[conversationId]`             | Protected | Resume conversation                                 |
-| `/app/profile`                        | Protected | User profile + plan + history                       |
-| `/app/plans`                          | Protected | Plan upgrade + checkout                             |
-| `/admin`                              | Admin     | Dashboard overview                                  |
-| `/admin/users`                        | Admin     | User management list                                |
-| `/admin/users/[userId]`               | Admin     | User detail + actions                               |
-| `/admin/transactions`                 | Admin     | Transaction management                              |
-| `/admin/transactions/[transactionId]` | Admin     | Transaction detail                                  |
-| `/admin/usage`                        | Admin     | Usage analytics                                     |
-| `/admin/settings`                     | Admin     | App settings                                        |
-| `/admin/website`                      | Admin     | Content management                                  |
-| `/admin/website/[pageId]`             | Admin     | Page editor (Tiptap)                                |
+| Route                                 | Type      | Description                                                                        |
+| ------------------------------------- | --------- | ---------------------------------------------------------------------------------- |
+| `/`                                   | Public    | Landing (Hero + product sections + CTAs)                                           |
+| `/about`                              | Public    | How app works (stacked sections)                                                   |
+| `/plans`                              | Public    | Pricing (plan cards)                                                               |
+| `/faqs`                               | Public    | FAQ accordion                                                                      |
+| `/personas`                           | Public    | Personas showcase                                                                  |
+| `/privacy`                            | Public    | Privacy & Cookie Policy                                                            |
+| `/cookies`                            | Public    | Cookie Policy                                                                      |
+| `/terms`                              | Public    | Terms & Conditions                                                                 |
+| `/sign-in`, `/sign-up`                | Auth      | Clerk auth                                                                         |
+| `/app`                                | Protected | Chat dashboard                                                                     |
+| `/app/new`                            | Protected | New conversation                                                                   |
+| `/app/library`                        | Protected | Media library (tabs: Chats, Images, Audios, Videos) — **Implemented (Phase 32.3)** |
+| `/app/personas`                       | Protected | In-app personas                                                                    |
+| `/app/c/[conversationId]`             | Protected | Resume conversation                                                                |
+| `/app/profile`                        | Protected | User profile + plan + history                                                      |
+| `/app/plans`                          | Protected | Plan upgrade + checkout                                                            |
+| `/admin`                              | Admin     | Dashboard overview                                                                 |
+| `/admin/users`                        | Admin     | User management list                                                               |
+| `/admin/users/[userId]`               | Admin     | User detail + actions                                                              |
+| `/admin/transactions`                 | Admin     | Transaction management                                                             |
+| `/admin/transactions/[transactionId]` | Admin     | Transaction detail                                                                 |
+| `/admin/usage`                        | Admin     | Usage analytics                                                                    |
+| `/admin/settings`                     | Admin     | App settings                                                                       |
+| `/admin/website`                      | Admin     | Content management                                                                 |
+| `/admin/website/[pageId]`             | Admin     | Page editor (Tiptap)                                                               |
 
 ### Public Pages Content
 
@@ -685,7 +685,7 @@ All file handling technical debt has been resolved. S3 cleanup on task/user dele
 
 - **Users**: List, view, add, suspend, remove. User detail page with info + usage per model.
 - **Transactions**: List, view, suspend, decline. Transaction detail page.
-- **Usage**: Model usage, costs per user/time/provider. Powered by UsageEvent.
+- **Usage**: Model usage, costs per user/time/provider. **Top Personas** statistic card showing top 5 personas by usage count. Powered by UsageEvent.
 - **Settings**: AI model per plan, pricing, limits, theme. Powered by AppSetting.
 - **Website**: Add, edit, remove, sort, publish/unpublish public pages. Tiptap editor. Powered by PublicPage.
 - All mutations logged to AdminAuditLog.
@@ -694,8 +694,8 @@ All file handling technical debt has been resolved. S3 cleanup on task/user dele
 
 ## 13. Testing
 
-- **Unit tests**: 62 suites, 330 tests (Vitest) — includes streaming, webhook, chat-wrapper, chat-body stop-state, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, persona prompt, rate limiting, task complexity classification, conversation stop enforcement, entitlement resolver full coverage, checkout-success page, admin audit trail, OpenAI route tests, atomic prompt limit, daily conversation limit, media error handling, and universal feature access tests
-- **E2E tests**: 11 Playwright spec files across browser projects (chat-app-shell, auth-boundaries, public-pages with 70+ tests, conversation-lifecycle, user-profile, admin-users, admin-features, landing-page, plans-public, pricing-public, authenticated-flows). 200 total, 181 passed, 1 failed (pre-existing Firefox admin-features timing), 18 skipped.
+- **Unit tests**: 62 suites, 332 tests (Vitest) — includes streaming, webhook, chat-wrapper, chat-body stop-state, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, persona prompt, rate limiting, task complexity classification, conversation stop enforcement, entitlement resolver full coverage, checkout-success page, admin audit trail, OpenAI route tests, atomic prompt limit, daily conversation limit, media error handling, and universal feature access tests
+- **E2E tests**: 11 Playwright spec files across browser projects (chat-app-shell, auth-boundaries, public-pages with 70+ tests, conversation-lifecycle, user-profile, admin-users, admin-features, landing-page, plans-public, pricing-public, authenticated-flows). 200 total. **E2E REGRESSION (audit #14):** degraded from 181 to 68 passing — stabilization tracked as Phase 37.1 CRITICAL.
 - **Coverage**: Configured (Phase 24.1) — v8 provider, thresholds: 70% statements / 60% branches / 70% functions / 70% lines. Current: 82/71/88/82.
 - **Gap**: No dedicated E2E spec for streamed chunk-by-chunk rendering (manually verified via Playwright MCP)
 
@@ -729,18 +729,13 @@ All file handling technical debt has been resolved. S3 cleanup on task/user dele
 
 ## 15. Technical Debt Summary
 
-### ~~Active — Critical Priority~~ (Resolved)
+### ~~Active — Critical Priority~~ (All Resolved)
 
-| ID       | Area   | Description                                                                              | Status   |
-| -------- | ------ | ---------------------------------------------------------------------------------------- | -------- |
-| TD-AI-16 | OpenAI | ~~Image model IDs are placeholders~~ — **CLOSED: model IDs verified real (OpenAI docs)** | Resolved |
-| TD-AI-17 | OpenAI | ~~Audio model IDs are placeholders~~ — **CLOSED: model IDs verified real (OpenAI docs)** | Resolved |
-
-### Active — Critical Priority
-
-| ID       | Area   | Description                                                                                                                                                                                                                 | Severity |
-| -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| TD-AI-21 | OpenAI | Audio model IDs (`gpt-audio-mini`, `gpt-audio-1.5`) are unverified. Currently mitigated — TTS path forces `gpt-4o-mini-tts` via `isTtsOnly` override. Will break if `audio_in_out` is ever enabled. Requires live API test. | **High** |
+| ID       | Area   | Description                                                                                                                   | Status   |
+| -------- | ------ | ----------------------------------------------------------------------------------------------------------------------------- | -------- |
+| TD-AI-16 | OpenAI | ~~Image model IDs are placeholders~~ — **CLOSED: model IDs verified real (OpenAI docs)**                                      | Resolved |
+| TD-AI-17 | OpenAI | ~~Audio model IDs are placeholders~~ — **CLOSED: model IDs verified real (OpenAI docs)**                                      | Resolved |
+| TD-AI-21 | OpenAI | ~~Audio model IDs unverified~~ — **CLOSED: live-tested 2026-03-16. gpt-audio-mini ✅, gpt-audio-1.5 ❌ (403). SPEC updated.** | Resolved |
 
 ### ~~Active — High Priority~~ (All Resolved)
 
