@@ -2,7 +2,22 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-16 — PM deep audit #11. Phases 1–25.7 + 27.1–27.4 + 27.6–27.10 + 28.1 + 28.2-fix + 28.3-code + 28.4 + 28.6 + 28.7 + 30.1 + 30.2 + 30.3 + 31.1 + 31.2 + 31.3 + E2E regression fixes complete.
+> Last updated: 2026-03-16 — PM deep audit #13. Phases 1–25.7 + 27.1–27.4 + 27.6–27.10 + 28.1 + 28.2-fix + 28.3-code + 28.4 + 28.6 + 28.7 + 30.1 + 30.2 + 30.3 + 31.1 + 31.2 + 31.3 + 31.2-fix + E2E regression fixes complete.
+
+---
+
+## Phase 31.2-fix — Fix sidebarExpanded viewport-aware logic in ChatHeader — COMPLETED (2026-03-16)
+
+- [x] `sidebarExpanded` now uses viewport-aware ternary: `isDesktop ? !desktopSidebarCollapsed : mobileSidebarOpen`.
+- [x] `isDesktop` tracked via `useState` synced with `window.matchMedia("(min-width: 1024px)")` change listener — reactive to live viewport resizes.
+- [x] PM specification proposed `desktopQueryRef.current?.matches` during render — adapted to `useState` approach to satisfy react-hooks/refs ESLint rule.
+- [x] `aria-expanded` and toggle label ("Show menu" / "Hide menu") now correctly reflect sidebar state on both desktop and mobile viewports.
+- [x] Full validation gateway: prettier ✅, lint ✅, tsc ✅, 330 unit tests ✅, build ✅.
+- [x] Three-agent independent verification: PM audit #13 confirmed by Architect and Engineer.
+
+Resolved: TD-UI-14 (ChatHeader sidebarExpanded mobile bug).
+
+**Files changed:** `src/components/chat/chat-header.tsx`
 
 ---
 

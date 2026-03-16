@@ -642,7 +642,7 @@ Move from fragile counters to reliable usage accounting and conversation-stop en
 
 ## Milestone 5 - Chat Lifecycle, Prompt Quality, And Streaming
 
-> **Status: MOSTLY COMPLETE** — Streaming (Phase 19) and model policy (Phase 16) done. Prompt quality pending (Phase 22).
+> **Status: COMPLETED** — Streaming (Phase 19), model policy (Phase 16), and prompt quality (Phase 22) all delivered.
 
 **Objective**
 
@@ -808,6 +808,8 @@ Build the minimum viable operational control plane the business actually needs.
 ---
 
 ## Milestone 8 - Security, Reliability, And Observability Hardening
+
+> **Status: MOSTLY COMPLETE** — MongoDB-backed rate limiting (Phase 25.3), error sanitization (HF series), webhook hardening (Phases 27.8–27.10), atomic limit enforcement (Phases 27.1, 28.1, 28.6), usage event logging (Phase 16) all delivered. Remaining: operational monitoring/alerting.
 
 **Objective**
 

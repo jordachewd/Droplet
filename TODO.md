@@ -5,52 +5,69 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: Phases 1–25.7 + 27.1–27.4 + 27.6–27.10 + 28.1 + 28.2-fix + 28.3-code + 28.4 + 28.6 + 28.7 + 30.1 + 30.2 + 30.3 + 31.1 + 31.2 + 31.3 complete.**
-> **PM deep audit #12 (2026-03-16): Phase 31.1–31.3 verified. sidebarExpanded bug found — 31.2-fix added. TD-AI-23, TD-LIMIT-07 moved to Resolved.**
-> **CRITICAL OWNER INSTRUCTIONS: Library media tabs, ChatHeader on all pages, sidebar cleanup, persona trial access model.**
-> **Priority order: 31.2-fix (IMMEDIATE) → 28.3-verify → 30.5 → 31.4 (layout E2E) → 32.1–32.5 (Library) → 33.1–33.8 (persona trial access) → 30.4 → 27.5 → 34.x (video gen) → 29.1 → 29.2 → Phase 26.**
-> **All Phase 26+ deferred work is ON HOLD until Phase 28 remaining + Phases 31–33 are PM-approved complete.**
+> **STATUS: Phases 1–25.7 + 27.1–27.4 + 27.6–27.10 + 28.1 + 28.2-fix + 28.3-code + 28.4 + 28.6 + 28.7 + 30.1 + 30.2 + 30.3 + 31.1 + 31.2 + 31.3 + 31.2-fix complete.**
+> **PM deep audit #13 (2026-03-16): 31.2-fix verified DONE. TD-UI-14 moved to Resolved. Owner requirements: persona selector in ChatHeader, Library media tabs, audio/video verification, admin design consistency.**
+> **CRITICAL OWNER INSTRUCTIONS: Persona selector in ChatHeader, Library media tabs, audio/video verification, admin design consistency, persona trial access.**
+> **Priority order: 35.1 (persona selector) → 28.3-verify (audio) → 32.1–32.5 (Library tabs) → 31.4 (layout E2E) → 33.1–33.8 (persona trial) → 36.1 (admin design) → 30.4 → 30.5 → 27.5 → 34.x (video gen) → 29.1 → 29.2 → Phase 26.**
+> **All Phase 26+ deferred work is ON HOLD until Phases 28 remaining + 31–33 + 35–36 are PM-approved complete.**
 
 ---
 
-## Phase 31: Layout & Navigation Updates — Bug Fix (IMMEDIATE)
+## Phase 35: ChatHeader Persona Selector — HIGH
+
+> Owner-mandated (2026-03-16): Personas must be selectable via dropdown inside the ChatHeader persona pill.
+> Currently a static label. Must become an interactive selector for persona switching.
+> Depends on: Phase 30.2 complete (per-plan persona gating — DONE).
 
 ---
 
-### 31.2-fix IMMEDIATE — Fix sidebarExpanded logic in ChatHeader for mobile
+### 35.1 HIGH — Add persona dropdown selector to ChatHeader
 
-**Files:** `src/components/chat/chat-header.tsx`
-**Ref:** PM audit #12 — confirmed by Architect + Engineer + Copilot independently
-**Depends on:** None (standalone fix)
+**Files:** `src/components/chat/chat-header.tsx`, `src/app/(chat)/layout.tsx`
+**Ref:** Owner instruction: "Personas must be selectable via select input inside ChatHeader"
+**Depends on:** 30.2 complete (DONE)
 
-**Bug:** `sidebarExpanded` computed as `!desktopSidebarCollapsed || mobileSidebarOpen`. On mobile, `desktopSidebarCollapsed` defaults to `false`, so `!false = true`, making `sidebarExpanded` permanently `true` regardless of `mobileSidebarOpen`.
+**Context:** The ChatHeader currently shows a read-only dotted-border pill with the persona name. Owner wants a `<select>` dropdown inside this pill so users can switch personas quickly.
 
-**Impact:** `aria-expanded` always `true` on mobile (accessibility violation). Toggle label stuck on "Hide menu" when sidebar is closed. E2E `ensureSidebarOpen` fails on mobile viewports.
-
-**Note:** Toggle **function works correctly** — only label/ARIA is wrong.
+**Architecture constraint:** Persona is bound per-task. The selector sets the persona for the NEXT new conversation. During an active conversation (`/app/c/[conversationId]`), the selector must be disabled (read-only showing the task's persona).
 
 **What to do:**
 
-1. Replace line 60 in `chat-header.tsx`:
-   ```ts
-   // FROM:
-   const sidebarExpanded = !desktopSidebarCollapsed || mobileSidebarOpen;
-   // TO:
-   const isDesktop = desktopQueryRef.current?.matches ?? false;
-   const sidebarExpanded = isDesktop
-     ? !desktopSidebarCollapsed
-     : mobileSidebarOpen;
-   ```
-2. Run full validation gateway.
+1. Replace the static persona label span in `ChatHeader` with a styled `<select>` dropdown inside the dotted-border pill.
+2. Populate with personas available for the user's plan (pass `allowedPersonaIds` from server layout to client header).
+3. Current value from `useChatStore.personaId` — pre-select active persona.
+4. On change: call `useChatStore.setPersonaId(newValue)`.
+5. When on `/app/c/[conversationId]` (active conversation): disable selector — persona is frozen per-task.
+6. When on `/app`, `/app/new`, `/app/library`, `/app/personas`, `/app/profile`, `/app/plans`: selector is active.
+7. Maintain the dotted-border pill styling per Owner's specified markup.
 
 **Acceptance criteria:**
 
-- [ ] `sidebarExpanded` is `false` on mobile when sidebar is closed
-- [ ] `aria-expanded` correctly reflects sidebar state on both desktop and mobile
-- [ ] Toggle label shows "Show menu" / "Hide menu" correctly per viewport
-- [ ] E2E `ensureSidebarOpen` works on mobile viewports
+- [ ] Persona dropdown selector visible in ChatHeader on all `/app` pages
+- [ ] Shows personas available for user's plan
+- [ ] Selecting persona updates `useChatStore.personaId` for next new conversation
+- [ ] Disabled during active conversation (persona bound to task)
+- [ ] Matches dotted-border pill design
 - [ ] `npx tsc --noEmit` passes
 - [ ] All tests pass
+
+---
+
+### 35.2 LOW — E2E tests for persona selector in ChatHeader
+
+**Files:** `tests/e2e/chat-app-shell.spec.ts`
+**Depends on:** 35.1 complete
+
+**What to do:**
+
+1. Assert persona selector is visible in header on `/app` pages.
+2. Assert selector shows correct persona count for plan.
+3. Assert selector is disabled during active conversation.
+
+**Acceptance criteria:**
+
+- [ ] E2E covers persona selector visibility and behavior
+- [ ] `npm run test:e2e` passes
 
 ---
 
@@ -535,6 +552,36 @@
 - [ ] E2E covers trial persona selection + limit enforcement
 - [ ] E2E covers upgrade CTA on trial limit
 - [ ] `npm run test:e2e` passes
+
+---
+
+## Phase 36: Admin Design Consistency — MEDIUM
+
+> Owner-mandated (2026-03-16): Admin panel must respect the same design, fonts, sizes, colors and proportions as client app.
+> Depends on: Core functionality phases complete (28, 31–33, 35).
+
+---
+
+### 36.1 MEDIUM — Align admin panel design with client app design system
+
+**Files:** `src/app/(admin)/admin/**/*.tsx`
+**Ref:** Owner instruction: "ADMIN panel layout and sections must respect the same design, fonts, sizes, colors and proportions and CLIENT app panel layout"
+**Depends on:** None (standalone styling task, can run in parallel with functional work)
+
+**What to do:**
+
+1. Audit admin pages for font, color, spacing, and component inconsistencies vs client app.
+2. Apply consistent design tokens (fontFamily, fontSize, colors, spacing) from client app to admin pages.
+3. Ensure admin uses same card, table, button, form control styling as client app.
+4. Maintain admin-specific layout but ensure visual consistency across both panels.
+
+**Acceptance criteria:**
+
+- [ ] Admin pages use same fonts, colors, and spacing as client app
+- [ ] Form controls (inputs, selects, buttons) match client app styling
+- [ ] Visual consistency across admin and client panels
+- [ ] `npx tsc --noEmit` passes
+- [ ] All tests pass
 
 ---
 
