@@ -9,6 +9,8 @@ import User from "@/lib/database/models/user.model";
 import Transaction from "@/lib/database/models/transaction.model";
 import deleteS3Prefix from "@/lib/utils/aws/delete-s3-prefix";
 import serializeForClient from "@/lib/utils/serialize-for-client";
+import { nonEmptyStringSchema } from "@/lib/utils/validation-schemas";
+import { z } from "zod";
 
 type ClerkBackendEmailAddress = {
   id: string;
@@ -23,6 +25,52 @@ type ClerkBackendUserRecord = {
   lastName: string | null;
   imageUrl: string;
 };
+
+const supportedClerkEventSchema = z
+  .object({
+    type: nonEmptyStringSchema,
+    data: z.record(z.string(), z.unknown()),
+  })
+  .passthrough();
+
+const clerkWebhookEmailSchema = z
+  .object({
+    id: z.string().optional(),
+    email_address: nonEmptyStringSchema,
+  })
+  .passthrough();
+
+const userCreatedPayloadSchema = z
+  .object({
+    id: nonEmptyStringSchema,
+    image_url: z.string().nullable().optional(),
+    username: z.string().nullable().optional(),
+    first_name: z.string().nullable().optional(),
+    last_name: z.string().nullable().optional(),
+    created_at: z.union([z.string(), z.number(), z.date()]),
+    email_addresses: z.array(clerkWebhookEmailSchema).nullable().optional(),
+    primary_email_address_id: z.string().nullable().optional(),
+  })
+  .passthrough();
+
+const userUpdatedPayloadSchema = z
+  .object({
+    id: nonEmptyStringSchema,
+    updated_at: z.union([z.string(), z.number(), z.date()]),
+    first_name: z.string().nullable().optional(),
+    last_name: z.string().nullable().optional(),
+    image_url: z.string().nullable().optional(),
+    username: z.string().nullable().optional(),
+    email_addresses: z.array(clerkWebhookEmailSchema).nullable().optional(),
+    primary_email_address_id: z.string().nullable().optional(),
+  })
+  .passthrough();
+
+const userDeletedPayloadSchema = z
+  .object({
+    id: nonEmptyStringSchema,
+  })
+  .passthrough();
 
 async function createUserFromWebhook(user: CreateUserParams) {
   await connectToDatabase();
@@ -244,12 +292,38 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  const eventType = evt.type;
+  const parsedEvent = supportedClerkEventSchema.safeParse(evt);
+
+  if (!parsedEvent.success) {
+    logWebhookVerificationFailure();
+
+    return NextResponse.json(
+      {
+        message: "Webhook error",
+        error: "Invalid Clerk webhook payload",
+      },
+      { status: 400 },
+    );
+  }
+
+  const eventType = parsedEvent.data.type;
 
   try {
     // CREATE USER
     if (evt.type === "user.created") {
-      const clerkUserData = evt.data;
+      const parsedPayload = userCreatedPayloadSchema.safeParse(evt.data);
+
+      if (!parsedPayload.success) {
+        return NextResponse.json(
+          {
+            message: "Webhook error",
+            error: "Invalid Clerk user payload",
+          },
+          { status: 400 },
+        );
+      }
+
+      const clerkUserData = parsedPayload.data as unknown as UserJSON;
       const { id, image_url } = clerkUserData;
 
       if (!id) {
@@ -307,7 +381,19 @@ export async function POST(req: NextRequest) {
 
     // UPDATE USER
     if (evt.type === "user.updated") {
-      const clerkUserData = evt.data;
+      const parsedPayload = userUpdatedPayloadSchema.safeParse(evt.data);
+
+      if (!parsedPayload.success) {
+        return NextResponse.json(
+          {
+            message: "Webhook error",
+            error: "Invalid Clerk user payload",
+          },
+          { status: 400 },
+        );
+      }
+
+      const clerkUserData = parsedPayload.data;
       const {
         id,
         updated_at,
@@ -336,8 +422,8 @@ export async function POST(req: NextRequest) {
         userimg: image_url ?? "",
       };
       const email = resolveWebhookPrimaryEmailAddress(
-        email_addresses,
-        primary_email_address_id,
+        email_addresses as unknown as UserJSON["email_addresses"],
+        primary_email_address_id as UserJSON["primary_email_address_id"],
       );
       const normalizedUsername = toNonEmptyString(username);
 
@@ -361,7 +447,19 @@ export async function POST(req: NextRequest) {
 
     // DELETE USER
     if (evt.type === "user.deleted") {
-      const { id } = evt.data;
+      const parsedPayload = userDeletedPayloadSchema.safeParse(evt.data);
+
+      if (!parsedPayload.success) {
+        return NextResponse.json(
+          {
+            message: "Webhook error",
+            error: "Invalid Clerk user payload",
+          },
+          { status: 400 },
+        );
+      }
+
+      const { id } = parsedPayload.data;
 
       if (!id) {
         return NextResponse.json(

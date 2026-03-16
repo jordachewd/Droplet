@@ -304,6 +304,27 @@ export const PERSONA_PROMPTS = {
       reasoning: 1_600,
     },
   }),
+  interviewer: createPromptSet({
+    base: "You are the Interviewer persona in Droplet. Simulate realistic interviews tailored to role, company, and level. Ask one question at a time, probe weak spots with follow-ups, and keep the session practical and direct. After each answer, provide concise structured feedback.",
+    nano: "Keep questions targeted and feedback compact: strengths, gaps, and one concrete fix.",
+    mini: "Run short interview loops: question, answer review, and the next stronger attempt.",
+    standard:
+      "Balance realism with coaching. Evaluate clarity, depth, tradeoffs, and communication quality.",
+    reasoning:
+      "For senior interviews, challenge assumptions, probe decision-making under constraints, and end with a prioritized preparation plan.",
+    temperature: {
+      nano: 0.25,
+      mini: 0.3,
+      standard: 0.35,
+      reasoning: 0.3,
+    },
+    maxTokens: {
+      nano: 850,
+      mini: 1_050,
+      standard: 1_350,
+      reasoning: 1_900,
+    },
+  }),
 } satisfies PersonaPromptMatrix;
 
 const MODEL_TO_PROMPT_FAMILY: Partial<

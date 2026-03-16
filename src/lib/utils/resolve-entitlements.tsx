@@ -3,11 +3,13 @@ import {
   PERSONAS,
   getPersona,
 } from "@/constants/assistant-personas";
+import { PLAN_LIMITS, PlanLimits } from "@/constants/plans";
 import { PersonaId } from "@/types/PersonaData.d";
 import { PlanName } from "@/types/PlanData.d";
 
 export interface Entitlements {
   planName: PlanName;
+  limits: PlanLimits[PlanName];
   allowedPersonaIds: PersonaId[];
   supportsImageGeneration: boolean;
   supportsAudioGeneration: boolean;
@@ -21,7 +23,22 @@ interface ResolveEntitlementOptions {
   expiresOn?: Date | string | null;
   isSuspended?: boolean;
   now?: Date;
+  planLimits?: PlanLimits;
 }
+
+export const DEFAULT_PERSONA_ACCESS_BY_PLAN: Record<PlanName, PersonaId[]> = {
+  Lite: ["strategist", "developer", "best-friend"],
+  Pro: [
+    "strategist",
+    "developer",
+    "best-friend",
+    "teacher",
+    "wellness",
+    "boyfriend",
+    "girlfriend",
+  ],
+  Premium: PERSONAS.map((persona) => persona.id),
+};
 
 function isPaidPlanExpired({
   planName,
@@ -50,11 +67,12 @@ export function resolveEntitlements(
 ): Entitlements {
   const normalizedPlan: PlanName = planName ?? "Lite";
   const now = options.now ?? new Date();
-  const allowedPersonaIds = PERSONAS.map((persona) => persona.id);
+  const planLimits = options.planLimits ?? PLAN_LIMITS;
 
   if (options.isSuspended) {
     return {
       planName: normalizedPlan,
+      limits: planLimits[normalizedPlan],
       allowedPersonaIds: [],
       supportsImageGeneration: false,
       supportsAudioGeneration: false,
@@ -65,54 +83,18 @@ export function resolveEntitlements(
     };
   }
 
-  if (
-    isPaidPlanExpired({
-      planName: normalizedPlan,
-      expiresOn: options.expiresOn,
-      now,
-    })
-  ) {
-    return {
-      planName: "Lite",
-      allowedPersonaIds,
-      supportsImageGeneration: true,
-      supportsAudioGeneration: true,
-      supportsVideoGeneration: true,
-      imageLimitReached: false,
-      audioLimitReached: false,
-      videoLimitReached: false,
-    };
-  }
-
-  if (normalizedPlan === "Premium") {
-    return {
-      planName: normalizedPlan,
-      allowedPersonaIds,
-      supportsImageGeneration: true,
-      supportsAudioGeneration: true,
-      supportsVideoGeneration: true,
-      imageLimitReached: false,
-      audioLimitReached: false,
-      videoLimitReached: false,
-    };
-  }
-
-  if (normalizedPlan === "Pro") {
-    return {
-      planName: normalizedPlan,
-      allowedPersonaIds,
-      supportsImageGeneration: true,
-      supportsAudioGeneration: true,
-      supportsVideoGeneration: true,
-      imageLimitReached: false,
-      audioLimitReached: false,
-      videoLimitReached: false,
-    };
-  }
+  const effectivePlanName: PlanName = isPaidPlanExpired({
+    planName: normalizedPlan,
+    expiresOn: options.expiresOn,
+    now,
+  })
+    ? "Lite"
+    : normalizedPlan;
 
   return {
-    planName: "Lite",
-    allowedPersonaIds,
+    planName: effectivePlanName,
+    limits: planLimits[effectivePlanName],
+    allowedPersonaIds: [...DEFAULT_PERSONA_ACCESS_BY_PLAN[effectivePlanName]],
     supportsImageGeneration: true,
     supportsAudioGeneration: true,
     supportsVideoGeneration: true,

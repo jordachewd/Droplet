@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { APIError } from "openai";
 import { generateStreamingResponse } from "@/lib/utils/openai/generateResponse";
 import { openAiClient } from "@/constants/openai";
+import { PLAN_LIMITS } from "@/constants/plans";
 import { generateImage } from "@/lib/utils/openai/generateImage";
 import { PersonaId } from "@/types/PersonaData.d";
 
@@ -35,6 +36,7 @@ function createApiError(status: number): APIError {
 
 const defaultEntitlements = {
   planName: "Pro" as const,
+  limits: PLAN_LIMITS.Pro,
   allowedPersonaIds: [
     "strategist",
     "teacher",

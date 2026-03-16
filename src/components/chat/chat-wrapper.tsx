@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import classNames from "classnames";
+import { useShallow } from "zustand/react/shallow";
 import { Message } from "@/types";
 import ChatHeader from "@/components/chat/chat-header";
 import ChatIntro from "@/components/chat/chat-intro";
@@ -10,12 +11,19 @@ import ChatInput from "@/components/chat/chat-input";
 import AlertMessage, { AlertParams } from "@/components/shared/alert-message";
 import { filterAssistantMsg } from "@/lib/utils/openai/filterAssistantMsg";
 import ChatPersonaPicker from "@/components/chat/chat-persona-picker";
-import { getPersona } from "@/constants/assistant-personas";
+import {
+  DEFAULT_PERSONA_ID,
+  PERSONAS,
+  getPersona,
+} from "@/constants/assistant-personas";
 import { PersonaId } from "@/types/PersonaData.d";
 import { TaskEndAction, TaskEndedReason, TaskStatus } from "@/types/TaskData.d";
+import { useChatStore } from "@/lib/hooks/use-chat-store";
+import { usePreferencesStore } from "@/lib/hooks/use-preferences-store";
 
 interface ChatWrapperProps {
   initialPersonaId?: string;
+  allowedPersonaIds?: PersonaId[];
   initialTaskId?: string | null;
   initialMessages?: Message[];
   initialTaskStatus?: TaskStatus;
@@ -56,31 +64,87 @@ type ChatStreamEvent =
 
 export default function ChatWrapper({
   initialPersonaId,
+  allowedPersonaIds,
   initialTaskId = null,
-  initialMessages = [],
+  initialMessages: initialMessagesProp,
   initialTaskStatus = "active",
   initialEndedReason,
   initialEndAction,
 }: ChatWrapperProps) {
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const initialMessages = useMemo(
+    () => initialMessagesProp ?? [],
+    [initialMessagesProp],
+  );
+  const normalizedAllowedPersonaIds = useMemo(() => {
+    if (allowedPersonaIds && allowedPersonaIds.length > 0) {
+      return allowedPersonaIds;
+    }
+
+    return PERSONAS.map((persona) => persona.id);
+  }, [allowedPersonaIds]);
+
+  const resolveSelectablePersonaId = useCallback(
+    (candidatePersonaId?: string | null): PersonaId => {
+      const resolvedPersonaId = getPersona(candidatePersonaId).id;
+
+      if (normalizedAllowedPersonaIds.includes(resolvedPersonaId)) {
+        return resolvedPersonaId;
+      }
+
+      return normalizedAllowedPersonaIds[0] ?? DEFAULT_PERSONA_ID;
+    },
+    [normalizedAllowedPersonaIds],
+  );
+
+  const {
+    isLoading,
+    taskId: dbTaskId,
+    messages: task,
+    taskStatus,
+    endState,
+    hydrateConversation,
+    resetConversation,
+    setTaskId,
+    setMessages,
+    setIsLoading,
+    setTaskStatus,
+    setEndState,
+  } = useChatStore(
+    useShallow((state) => ({
+      isLoading: state.isLoading,
+      taskId: state.taskId,
+      messages: state.messages,
+      taskStatus: state.taskStatus,
+      endState: state.endState,
+      hydrateConversation: state.hydrateConversation,
+      resetConversation: state.resetConversation,
+      setTaskId: state.setTaskId,
+      setMessages: state.setMessages,
+      setIsLoading: state.setIsLoading,
+      setTaskStatus: state.setTaskStatus,
+      setEndState: state.setEndState,
+    })),
+  );
+  const { preferredPersonaId, setPreferredPersonaId } = usePreferencesStore(
+    useShallow((state) => ({
+      preferredPersonaId: state.preferredPersonaId,
+      setPreferredPersonaId: state.setPreferredPersonaId,
+    })),
+  );
   const [alert, setAlert] = useState<AlertParams | null>(null);
   const [startMsg, setStartMsg] = useState<string>("");
-  const [dbTaskId, setDbTaskId] = useState<string | null>(initialTaskId);
-  const [task, setTask] = useState<Message[]>(initialMessages);
-  const [taskStatus, setTaskStatus] = useState<TaskStatus>(initialTaskStatus);
-  const [endState, setEndState] = useState<{
-    stopReason: TaskEndedReason;
-    endAction: TaskEndAction;
-  } | null>(
-    initialTaskStatus === "ended" && initialEndedReason && initialEndAction
-      ? {
-          stopReason: initialEndedReason,
-          endAction: initialEndAction,
-        }
-      : null,
+  const initialEndState = useMemo(
+    () =>
+      initialTaskStatus === "ended" && initialEndedReason && initialEndAction
+        ? {
+            stopReason: initialEndedReason,
+            endAction: initialEndAction,
+          }
+        : null,
+    [initialEndAction, initialEndedReason, initialTaskStatus],
   );
   const [selectedPersonaId, setSelectedPersonaId] = useState<PersonaId>(
-    getPersona(initialPersonaId).id,
+    resolveSelectablePersonaId(initialPersonaId ?? preferredPersonaId),
   );
   const nextAlertId = useRef<number>(0);
   const isConversationEnded = taskStatus === "ended";
@@ -92,20 +156,41 @@ export default function ChatWrapper({
   );
 
   useEffect(() => {
-    setSelectedPersonaId(getPersona(initialPersonaId).id);
-  }, [initialPersonaId]);
+    hydrateConversation({
+      taskId: initialTaskId,
+      messages: initialMessages,
+      taskStatus: initialTaskStatus,
+      endState: initialEndState,
+    });
+  }, [
+    hydrateConversation,
+    initialEndState,
+    initialMessages,
+    initialTaskId,
+    initialTaskStatus,
+  ]);
+
+  useEffect(() => {
+    setSelectedPersonaId(
+      resolveSelectablePersonaId(initialPersonaId ?? preferredPersonaId),
+    );
+  }, [initialPersonaId, preferredPersonaId, resolveSelectablePersonaId]);
+
+  useEffect(() => {
+    setPreferredPersonaId(selectedPersonaId);
+  }, [selectedPersonaId, setPreferredPersonaId]);
 
   function handleSelectPersona(personaId: PersonaId) {
-    if (personaId === selectedPersonaId) {
+    if (
+      personaId === selectedPersonaId ||
+      !normalizedAllowedPersonaIds.includes(personaId)
+    ) {
       return;
     }
 
     setSelectedPersonaId(personaId);
-    setTask([]);
-    setDbTaskId(null);
+    resetConversation();
     setStartMsg("");
-    setTaskStatus("active");
-    setEndState(null);
   }
 
   function syncMessagesWithResponse({
@@ -115,8 +200,8 @@ export default function ChatWrapper({
     taskData?: Message;
     acceptedPrompt?: boolean;
   }) {
-    setTask((prev) => {
-      const withoutTemp = prev.slice(0, -1);
+    setMessages((previousMessages) => {
+      const withoutTemp = previousMessages.slice(0, -1);
       const baseMessages = acceptedPrompt
         ? withoutTemp
         : withoutTemp.slice(0, -1);
@@ -140,7 +225,7 @@ export default function ChatWrapper({
     }
 
     if (responseData.taskId) {
-      setDbTaskId(responseData.taskId);
+      setTaskId(responseData.taskId);
     }
 
     setIsLoading(false);
@@ -153,12 +238,12 @@ export default function ChatWrapper({
       content: [{ type: "text", text: snapshot }],
     };
 
-    setTask((prev) => {
-      if (prev.length === 0) {
+    setMessages((previousMessages) => {
+      if (previousMessages.length === 0) {
         return [streamingTaskData];
       }
 
-      const updatedMessages = [...prev];
+      const updatedMessages = [...previousMessages];
       updatedMessages[updatedMessages.length - 1] = streamingTaskData;
 
       return updatedMessages;
@@ -198,7 +283,7 @@ export default function ChatWrapper({
       }
 
       if (event.type === "meta") {
-        setDbTaskId(event.taskId);
+        setTaskId(event.taskId);
         return;
       }
 
@@ -226,11 +311,13 @@ export default function ChatWrapper({
       });
 
       if (event.payload.taskId) {
-        setDbTaskId(event.payload.taskId);
+        setTaskId(event.payload.taskId);
       }
 
       if (event.payload.personaId) {
-        setSelectedPersonaId(event.payload.personaId);
+        setSelectedPersonaId(
+          resolveSelectablePersonaId(event.payload.personaId),
+        );
       }
 
       if (event.payload.error) {
@@ -277,7 +364,11 @@ export default function ChatWrapper({
       content: [{ type: "temp", text: "Thinking ..." }],
     };
 
-    setTask((prev) => [...prev, prompt, tempPrompt]);
+    setMessages((previousMessages) => [
+      ...previousMessages,
+      prompt,
+      tempPrompt,
+    ]);
 
     try {
       const taskMessages = filterAssistantMsg([...task, prompt] as Message[]);
@@ -331,7 +422,7 @@ export default function ChatWrapper({
       syncMessagesWithResponse({ taskData, acceptedPrompt: true });
 
       if (taskId) {
-        setDbTaskId(taskId);
+        setTaskId(taskId);
       }
 
       if (error) {
@@ -349,7 +440,7 @@ export default function ChatWrapper({
     nextAlertId.current += 1;
     setAlert({ id: nextAlertId.current, title, text });
     setIsLoading(false);
-    setTask((prev) => prev.slice(0, -1));
+    setMessages((previousMessages) => previousMessages.slice(0, -1));
   };
 
   return (
@@ -365,6 +456,7 @@ export default function ChatWrapper({
       <section className="mt-14 flex w-full flex-col gap-3 px-3 pt-2 lg:px-5">
         <ChatPersonaPicker
           selectedPersonaId={selectedPersona.id}
+          allowedPersonaIds={normalizedAllowedPersonaIds}
           onSelectPersona={handleSelectPersona}
         />
       </section>

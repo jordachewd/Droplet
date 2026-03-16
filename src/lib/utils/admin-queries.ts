@@ -1,4 +1,8 @@
-import { plans, PLAN_LIMITS } from "@/constants/plans";
+import {
+  DEFAULT_PLAN_PRICING,
+  PLAN_LIMITS,
+  PlanLimits,
+} from "@/constants/plans";
 import { MODEL_POLICY_MATRIX } from "@/lib/utils/ai-model-policy";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import AppSetting from "@/lib/database/models/app-setting.model";
@@ -470,13 +474,21 @@ export async function getAdminSettingsSnapshot() {
   return {
     settingsByKey,
     defaults: {
-      models: MODEL_POLICY_MATRIX,
-      pricing: plans.map((plan) => ({
-        name: plan.name,
-        price: plan.price,
-        description: plan.desc,
-      })),
-      limits: PLAN_LIMITS,
+      models: {
+        liteChatModel: MODEL_POLICY_MATRIX.lite.chat.taskClasses.standard.model,
+        proChatModel: MODEL_POLICY_MATRIX.pro.chat.taskClasses.standard.model,
+        premiumChatModel:
+          MODEL_POLICY_MATRIX.premium.chat.taskClasses.standard.model,
+        imageModel:
+          MODEL_POLICY_MATRIX.pro.image_generation.taskClasses.final.model,
+        audioModel:
+          MODEL_POLICY_MATRIX.pro.audio_generation.taskClasses.final.model,
+      },
+      pricing: {
+        proPrice: DEFAULT_PLAN_PRICING.Pro,
+        premiumPrice: DEFAULT_PLAN_PRICING.Premium,
+      },
+      limits: structuredClone(PLAN_LIMITS) as PlanLimits,
       theme: {
         defaultMode: "light",
       },

@@ -1,4 +1,4 @@
-import { PLAN_LIMITS } from "@/constants/plans";
+import { PLAN_LIMITS, PlanLimits } from "@/constants/plans";
 import User from "@/lib/database/models/user.model";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import { PlanName } from "@/types/PlanData.d";
@@ -32,9 +32,10 @@ export async function checkDailyConversationLimit(
   userId: string,
   planName?: PlanName | null,
   now: Date = new Date(),
+  planLimits: PlanLimits = PLAN_LIMITS,
 ): Promise<DailyConversationLimitResult> {
   const normalizedPlanName: PlanName = planName ?? "Lite";
-  const limit = PLAN_LIMITS[normalizedPlanName].conversationsPerDay;
+  const limit = planLimits[normalizedPlanName].conversationsPerDay;
 
   if (limit === -1) {
     return {
@@ -75,9 +76,10 @@ export async function claimDailyConversationSlot(
   userId: string,
   planName?: PlanName | null,
   now: Date = new Date(),
+  planLimits: PlanLimits = PLAN_LIMITS,
 ): Promise<ClaimDailyConversationSlotResult> {
   const normalizedPlanName: PlanName = planName ?? "Lite";
-  const limit = PLAN_LIMITS[normalizedPlanName].conversationsPerDay;
+  const limit = planLimits[normalizedPlanName].conversationsPerDay;
 
   if (limit === -1) {
     return {

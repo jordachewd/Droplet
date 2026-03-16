@@ -6,18 +6,21 @@ interface PersonaCardProps {
   persona: Persona;
   href?: string;
   compact?: boolean;
+  locked?: boolean;
 }
 
 export default function PersonaCard({
   persona,
   href,
   compact = false,
+  locked = false,
 }: PersonaCardProps) {
   const cardClass = classNames(
     "PersonaCard flex h-full flex-col rounded-xl border p-4 transition-all duration-300",
     "border-lightBorders-400/70 bg-white/70 shadow-sm",
     "hover:-translate-y-1 hover:shadow-md",
     "dark:border-darkBorders-500 dark:bg-jwdMarine-900/70",
+    locked && "border-dashed opacity-85",
     compact ? "gap-2" : "gap-3",
   );
 
@@ -38,13 +41,25 @@ export default function PersonaCard({
           <i className={classNames(persona.icon, "text-base")}></i>
           <span>{persona.label}</span>
         </h3>
-        <span className="rounded-full border border-dotted px-2 py-1 text-xs">
-          {persona.category}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="rounded-full border border-dotted px-2 py-1 text-xs">
+            {persona.category}
+          </span>
+          {locked && (
+            <span className="rounded-full border border-amber-400/60 bg-amber-100 px-2 py-1 text-xxs font-semibold uppercase tracking-wide text-amber-900 dark:bg-amber-500/20 dark:text-amber-200">
+              Locked
+            </span>
+          )}
+        </div>
       </div>
 
       <p className="text-sm font-medium opacity-80">{persona.tagline}</p>
       <p className={bodyClass}>{persona.description}</p>
+      {locked && (
+        <p className="text-xs font-medium text-amber-700 dark:text-amber-300">
+          Upgrade your plan to unlock this persona.
+        </p>
+      )}
 
       {!compact && (
         <ul className="mt-auto flex flex-wrap gap-2 pt-2">

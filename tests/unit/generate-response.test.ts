@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { APIError } from "openai";
 import { generateResponse } from "@/lib/utils/openai/generateResponse";
 import { openAiClient } from "@/constants/openai";
+import { PLAN_LIMITS } from "@/constants/plans";
 import { generateImage } from "@/lib/utils/openai/generateImage";
 import { generateAudio } from "@/lib/utils/openai/generateAudio";
 import { PersonaId } from "@/types/PersonaData.d";
@@ -27,6 +28,7 @@ vi.mock("@/lib/utils/openai/generateAudio", () => ({
 
 const defaultEntitlements = {
   planName: "Pro" as const,
+  limits: PLAN_LIMITS.Pro,
   allowedPersonaIds: [
     "strategist",
     "teacher",
@@ -150,6 +152,120 @@ describe("generateResponse", () => {
     });
     const payload = JSON.parse(result as string);
     expect(payload.generatedImage).toBe(true);
+  });
+
+  it("returns media_limit_reached when atomic image slot claim fails", async () => {
+    vi.mocked(openAiClient.chat.completions.create).mockResolvedValue({
+      choices: [
+        {
+          message: {
+            role: "assistant",
+            content: null,
+            tool_calls: [
+              {
+                type: "function",
+                function: {
+                  name: "getGeneratedImage",
+                  arguments: JSON.stringify({
+                    prompt: "A mountain at sunrise",
+                  }),
+                },
+              },
+            ],
+          },
+        },
+      ],
+      usage: {
+        total_tokens: 33,
+      },
+    } as never);
+
+    const claimMediaGenerationSlot = vi
+      .fn()
+      .mockResolvedValue({ claimed: false });
+
+    const result = await generateResponse({
+      messages: [
+        {
+          role: "user",
+          whois: "user",
+          content: [{ type: "text", text: "Generate an image for me." }],
+        },
+      ],
+      taskId: "task_image",
+      userId: "clerk_1",
+      personaId: "strategist",
+      planName: "Pro",
+      entitlements: defaultEntitlements,
+      claimMediaGenerationSlot,
+    });
+
+    const payload = JSON.parse(result as string);
+    expect(claimMediaGenerationSlot).toHaveBeenCalledWith({
+      limitType: "images",
+    });
+    expect(generateImage).not.toHaveBeenCalled();
+    expect(payload.blockedReason).toBe("media_limit_reached");
+    expect(payload.taskData.content[0].text).toContain("limit reached");
+  });
+
+  it("rolls back claimed image slot when image generation fails", async () => {
+    vi.mocked(openAiClient.chat.completions.create).mockResolvedValue({
+      choices: [
+        {
+          message: {
+            role: "assistant",
+            content: null,
+            tool_calls: [
+              {
+                type: "function",
+                function: {
+                  name: "getGeneratedImage",
+                  arguments: JSON.stringify({
+                    prompt: "A failed image prompt",
+                  }),
+                },
+              },
+            ],
+          },
+        },
+      ],
+      usage: {
+        total_tokens: 20,
+      },
+    } as never);
+    vi.mocked(generateImage).mockRejectedValue(
+      new Error("OpenAI images API unavailable"),
+    );
+
+    const claimMediaGenerationSlot = vi
+      .fn()
+      .mockResolvedValue({ claimed: true });
+    const rollbackMediaGenerationSlot = vi.fn().mockResolvedValue(undefined);
+
+    await generateResponse({
+      messages: [
+        {
+          role: "user",
+          whois: "user",
+          content: [{ type: "text", text: "Generate an image." }],
+        },
+      ],
+      taskId: "task_image_openai_error",
+      userId: "clerk_1",
+      personaId: "strategist",
+      planName: "Pro",
+      entitlements: defaultEntitlements,
+      claimMediaGenerationSlot,
+      rollbackMediaGenerationSlot,
+    });
+
+    expect(claimMediaGenerationSlot).toHaveBeenCalledWith({
+      limitType: "images",
+    });
+    expect(rollbackMediaGenerationSlot).toHaveBeenCalledWith({
+      limitType: "images",
+    });
   });
 
   it("returns a structured service error when image generation fails due to OpenAI API errors", async () => {
@@ -368,6 +484,66 @@ describe("generateResponse", () => {
     });
     const payload = JSON.parse(result as string);
     expect(payload.generatedAudio).toBe(true);
+  });
+
+  it("rolls back claimed audio slot when audio generation fails", async () => {
+    vi.mocked(openAiClient.chat.completions.create).mockResolvedValue({
+      choices: [
+        {
+          message: {
+            role: "assistant",
+            content: null,
+            tool_calls: [
+              {
+                type: "function",
+                function: {
+                  name: "getGeneratedAudio",
+                  arguments: JSON.stringify({
+                    role: "user",
+                    content: "Read this text out loud.",
+                  }),
+                },
+              },
+            ],
+          },
+        },
+      ],
+      usage: {
+        total_tokens: 21,
+      },
+    } as never);
+    vi.mocked(generateAudio).mockRejectedValue(
+      new Error("Audio provider failed"),
+    );
+
+    const claimMediaGenerationSlot = vi
+      .fn()
+      .mockResolvedValue({ claimed: true });
+    const rollbackMediaGenerationSlot = vi.fn().mockResolvedValue(undefined);
+
+    await generateResponse({
+      messages: [
+        {
+          role: "user",
+          whois: "user",
+          content: [{ type: "text", text: "Create audio." }],
+        },
+      ],
+      taskId: "task_audio_error",
+      userId: "clerk_1",
+      personaId: "teacher",
+      planName: "Pro",
+      entitlements: defaultEntitlements,
+      claimMediaGenerationSlot,
+      rollbackMediaGenerationSlot,
+    });
+
+    expect(claimMediaGenerationSlot).toHaveBeenCalledWith({
+      limitType: "audio",
+    });
+    expect(rollbackMediaGenerationSlot).toHaveBeenCalledWith({
+      limitType: "audio",
+    });
   });
 
   it("returns a structured service error when audio generation fails", async () => {

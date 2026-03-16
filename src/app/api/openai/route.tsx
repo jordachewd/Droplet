@@ -21,10 +21,8 @@ import { getUserById } from "@/lib/actions/user.actions";
 import { ensureUserSynced } from "@/lib/utils/ensure-user-synced";
 import { UserData } from "@/types/UserData.d";
 import { enforceSlidingWindowRateLimit } from "@/lib/utils/rate-limit";
-import {
-  resolvePersonaForPlan,
-  resolveEntitlements,
-} from "@/lib/utils/resolve-entitlements";
+import { resolveEntitlements } from "@/lib/utils/resolve-entitlements";
+import { getPersona } from "@/constants/assistant-personas";
 import User from "@/lib/database/models/user.model";
 import { checkUsageLimit } from "@/lib/utils/check-usage-limit";
 import type {
@@ -41,7 +39,7 @@ import {
 } from "@/lib/utils/check-daily-conversations";
 import { getTaskByIdForUser } from "@/lib/utils/task-queries";
 import { filterAssistantMsg } from "@/lib/utils/openai/filterAssistantMsg";
-import { PLAN_LIMITS } from "@/constants/plans";
+import { PlanLimits } from "@/constants/plans";
 import { SUPPORT_EMAIL } from "@/constants/support";
 import { PlanName } from "@/types/PlanData.d";
 import { PersonaId } from "@/types/PersonaData.d";
@@ -55,6 +53,12 @@ import {
   AIRequestMetric,
   emitUsageEvents,
 } from "@/lib/utils/usage-event-utils";
+import { getEffectivePlanConfig } from "@/lib/utils/effective-plan-config";
+import {
+  chatMessageArraySchema,
+  nonEmptyStringSchema,
+} from "@/lib/utils/validation-schemas";
+import { z } from "zod";
 
 const OPENAI_RATE_LIMIT_MAX_REQUESTS = 20;
 const OPENAI_RATE_LIMIT_WINDOW_MS = 60_000;
@@ -114,6 +118,16 @@ interface ChatApiResponse {
   acceptedPrompt?: boolean;
 }
 
+const openAiRequestBodySchema = z
+  .object({
+    messages: chatMessageArraySchema.min(1),
+    taskId: nonEmptyStringSchema.optional(),
+    personaId: nonEmptyStringSchema.optional(),
+  })
+  .strict();
+
+type OpenAiRequestBody = z.infer<typeof openAiRequestBodySchema>;
+
 interface TitleResponsePayload {
   title: string;
   usage: number;
@@ -149,6 +163,14 @@ interface ConversationStopPayload {
   endAction: TaskEndAction;
   taskStatus: TaskStatus;
   acceptedPrompt: boolean;
+}
+
+type MediaUsageLimitType = "images" | "audio";
+
+interface MediaSlotClaimResult {
+  claimed: boolean;
+  limit: number;
+  remaining: number;
 }
 
 function estimateConversationBytes(messages: Message[]): number {
@@ -205,16 +227,121 @@ function createStopResponsePayload({
   };
 }
 
-function getPlanBoundEndAction(planName?: PlanName | null): TaskEndAction {
+function getPlanBoundEndAction({
+  planName,
+  planLimits,
+}: {
+  planName?: PlanName | null;
+  planLimits: PlanLimits;
+}): TaskEndAction {
   const normalizedPlanName: PlanName = planName ?? "Lite";
 
-  return PLAN_LIMITS[normalizedPlanName].conversationsPerDay === -1
+  return planLimits[normalizedPlanName].conversationsPerDay === -1
     ? "contact_support"
     : "upgrade_plan";
 }
 
 function createUsageTaskId(taskId?: string): string {
   return taskId ?? `request_${crypto.randomUUID()}`;
+}
+
+function resolveMediaCounterField(
+  limitType: MediaUsageLimitType,
+): "plan.imageGenerations" | "plan.audioGenerations" {
+  if (limitType === "images") {
+    return "plan.imageGenerations";
+  }
+
+  return "plan.audioGenerations";
+}
+
+async function claimMediaGenerationSlot({
+  userId,
+  planName,
+  limitType,
+  planLimits,
+}: {
+  userId: string;
+  planName: PlanName;
+  limitType: MediaUsageLimitType;
+  planLimits: PlanLimits;
+}): Promise<MediaSlotClaimResult> {
+  const limit = planLimits[planName][limitType];
+
+  if (limit === -1) {
+    return {
+      claimed: true,
+      limit,
+      remaining: -1,
+    };
+  }
+
+  const counterField = resolveMediaCounterField(limitType);
+  const updatedUser = await User.findOneAndUpdate(
+    {
+      clerkId: userId,
+      [counterField]: { $lt: limit },
+    },
+    {
+      $inc: {
+        [counterField]: 1,
+      },
+    },
+    {
+      new: true,
+      strict: true,
+      upsert: false,
+    },
+  );
+
+  if (!updatedUser) {
+    return {
+      claimed: false,
+      limit,
+      remaining: 0,
+    };
+  }
+
+  const nextCountRaw =
+    limitType === "images"
+      ? updatedUser.plan?.imageGenerations
+      : updatedUser.plan?.audioGenerations;
+  const nextCount =
+    typeof nextCountRaw === "number" && Number.isFinite(nextCountRaw)
+      ? nextCountRaw
+      : 0;
+
+  return {
+    claimed: true,
+    limit,
+    remaining: Math.max(0, limit - nextCount),
+  };
+}
+
+async function rollbackMediaGenerationSlot({
+  userId,
+  limitType,
+}: {
+  userId: string;
+  limitType: MediaUsageLimitType;
+}): Promise<void> {
+  const counterField = resolveMediaCounterField(limitType);
+
+  await User.findOneAndUpdate(
+    {
+      clerkId: userId,
+      [counterField]: { $gt: 0 },
+    },
+    {
+      $inc: {
+        [counterField]: -1,
+      },
+    },
+    {
+      strict: true,
+      upsert: false,
+    },
+  );
 }
 
 function shouldStreamResponse(req: Request): boolean {
@@ -276,19 +403,23 @@ function emitBlockedChatUsageEvent({
 async function resolvePromptLimitEndAction({
   userId,
   planName,
+  planLimits,
 }: {
   userId: string;
   planName?: PlanName | null;
+  planLimits: PlanLimits;
 }): Promise<TaskEndAction> {
   const normalizedPlanName: PlanName = planName ?? "Lite";
 
-  if (PLAN_LIMITS[normalizedPlanName].promptsPerConversation === -1) {
+  if (planLimits[normalizedPlanName].promptsPerConversation === -1) {
     return "contact_support";
   }
 
   const dailyConversationLimit = await checkDailyConversationLimit(
     userId,
     normalizedPlanName,
+    undefined,
+    planLimits,
   );
 
   return dailyConversationLimit.remaining > 0
@@ -354,19 +485,19 @@ async function finalizeAIResponse({
   taskId,
   userId,
   planName,
+  planLimits,
   selectedPersonaId,
   storedMessagesWithIncomingPrompt,
   estimatedBytesWithIncomingPrompt,
-  userData,
 }: {
   aiPayload: OpenAIResponsePayload;
   taskId: string;
   userId: string;
   planName: PlanName;
+  planLimits: PlanLimits;
   selectedPersonaId: PersonaId;
   storedMessagesWithIncomingPrompt: Message[];
   estimatedBytesWithIncomingPrompt: number;
-  userData: UserData | null;
 }): Promise<{
   status: number;
   payload: ChatApiResponse;
@@ -390,11 +521,11 @@ async function finalizeAIResponse({
     };
   }
 
-  const { taskData, taskUsage, generatedImage, generatedAudio } = aiPayload;
+  const { taskData, taskUsage } = aiPayload;
 
   if (aiPayload.blockedReason === "media_limit_reached") {
     const stopReason: TaskEndedReason = "media_limit_reached";
-    const endAction = getPlanBoundEndAction(planName);
+    const endAction = getPlanBoundEndAction({ planName, planLimits });
     const taskDataToPersist = await persistConversationStop({
       taskId,
       personaId: selectedPersonaId,
@@ -469,34 +600,6 @@ async function finalizeAIResponse({
     estimatedBytes: estimatedBytesWithAssistant,
   });
 
-  const usageIncrementFields: Record<string, number> = {};
-  if (generatedImage) {
-    usageIncrementFields["plan.imageGenerations"] = 1;
-  }
-  if (generatedAudio) {
-    usageIncrementFields["plan.audioGenerations"] = 1;
-  }
-
-  if (Object.keys(usageIncrementFields).length > 0) {
-    const counterUpdate: {
-      $inc: Record<string, number>;
-      $set?: Record<string, Date>;
-    } = {
-      $inc: usageIncrementFields,
-    };
-
-    if (!userData?.plan?.usagePeriodStart) {
-      counterUpdate.$set = {
-        "plan.usagePeriodStart": new Date(),
-      };
-    }
-
-    await User.findOneAndUpdate({ clerkId: userId }, counterUpdate, {
-      strict: true,
-      upsert: false,
-    });
-  }
-
   return {
     status: 200,
     payload: {
@@ -511,11 +614,31 @@ async function finalizeAIResponse({
 export async function POST(req: Request): Promise<Response> {
   try {
     const streamingResponseRequested = shouldStreamResponse(req);
+    let rawRequestBody: unknown;
+
+    try {
+      rawRequestBody = await req.json();
+    } catch {
+      return NextResponse.json(
+        { error: "Invalid request body." },
+        { status: 400 },
+      );
+    }
+
+    const parsedRequestBody = openAiRequestBodySchema.safeParse(rawRequestBody);
+
+    if (!parsedRequestBody.success) {
+      return NextResponse.json(
+        { error: "Invalid request body." },
+        { status: 400 },
+      );
+    }
+
     const {
       messages: requestMessages,
       taskId: providedTaskId,
       personaId,
-    } = (await req.json()) as Messages;
+    }: OpenAiRequestBody = parsedRequestBody.data;
     const { userId } = await auth();
 
     if (!userId) {
@@ -574,6 +697,7 @@ export async function POST(req: Request): Promise<Response> {
     }
 
     const planName = userData.plan?.name ?? "Lite";
+    const { limits: effectivePlanLimits } = await getEffectivePlanConfig();
     const persistedTask = providedTaskId
       ? await getTaskByIdForUser({
           taskId: providedTaskId,
@@ -588,10 +712,7 @@ export async function POST(req: Request): Promise<Response> {
       );
     }
 
-    const selectedPersona = resolvePersonaForPlan({
-      personaId: persistedTask?.personaId ?? personaId,
-      planName,
-    });
+    const selectedPersona = getPersona(persistedTask?.personaId ?? personaId);
 
     if (persistedTask?.status === "ended") {
       const stopReason =
@@ -678,24 +799,39 @@ export async function POST(req: Request): Promise<Response> {
       }
     }
 
-    const entitlements = resolveEntitlements(planName);
+    const entitlements = resolveEntitlements(planName, {
+      planLimits: effectivePlanLimits,
+    });
+
+    if (!entitlements.allowedPersonaIds.includes(selectedPersona.id)) {
+      return NextResponse.json(
+        {
+          error: "Selected persona is not available for your current plan.",
+        },
+        { status: 403 },
+      );
+    }
+
     const imageUsage = checkUsageLimit({
       planName,
       currentCount: userData?.plan?.imageGenerations,
       limitType: "images",
       usagePeriodStart: userData?.plan?.usagePeriodStart,
+      planLimits: effectivePlanLimits,
     });
     const audioUsage = checkUsageLimit({
       planName,
       currentCount: userData?.plan?.audioGenerations,
       limitType: "audio",
       usagePeriodStart: userData?.plan?.usagePeriodStart,
+      planLimits: effectivePlanLimits,
     });
     const videoUsage = checkUsageLimit({
       planName,
       currentCount: userData?.plan?.videoGenerations,
       limitType: "video",
       usagePeriodStart: userData?.plan?.usagePeriodStart,
+      planLimits: effectivePlanLimits,
     });
 
     if (imageUsage.didReset || audioUsage.didReset || videoUsage.didReset) {
@@ -806,8 +942,11 @@ export async function POST(req: Request): Promise<Response> {
       );
     }
 
-    if (persistedTask && PLAN_LIMITS[planName].promptsPerConversation !== -1) {
-      const promptLimit = PLAN_LIMITS[planName].promptsPerConversation;
+    if (
+      persistedTask &&
+      effectivePlanLimits[planName].promptsPerConversation !== -1
+    ) {
+      const promptLimit = effectivePlanLimits[planName].promptsPerConversation;
       const promptSlotClaimed = await incrementPromptCountIfBelowLimit({
         taskId: persistedTask._id,
         limit: promptLimit,
@@ -818,6 +957,7 @@ export async function POST(req: Request): Promise<Response> {
         const endAction = await resolvePromptLimitEndAction({
           userId,
           planName,
+          planLimits: effectivePlanLimits,
         });
         const taskData = await persistConversationStop({
           taskId: persistedTask._id,
@@ -853,11 +993,19 @@ export async function POST(req: Request): Promise<Response> {
     let taskId = providedTaskId;
 
     if (!taskId) {
-      const claimResult = await claimDailyConversationSlot(userId, planName);
+      const claimResult = await claimDailyConversationSlot(
+        userId,
+        planName,
+        undefined,
+        effectivePlanLimits,
+      );
 
       if (!claimResult.claimed) {
         const stopReason: TaskEndedReason = "daily_conversation_limit_reached";
-        const endAction = getPlanBoundEndAction(planName);
+        const endAction = getPlanBoundEndAction({
+          planName,
+          planLimits: effectivePlanLimits,
+        });
         const taskData = createStopTaskData({
           stopReason,
           endAction,
@@ -974,6 +1122,18 @@ export async function POST(req: Request): Promise<Response> {
               taskClass: chatTaskClass,
               budgetState: DEFAULT_CHAT_BUDGET_STATE,
               explicitPremium: explicitPremiumRequested,
+              claimMediaGenerationSlot: async ({ limitType }) =>
+                claimMediaGenerationSlot({
+                  userId,
+                  planName,
+                  limitType,
+                  planLimits: effectivePlanLimits,
+                }),
+              rollbackMediaGenerationSlot: async ({ limitType }) =>
+                rollbackMediaGenerationSlot({
+                  userId,
+                  limitType,
+                }),
               abortSignal: req.signal,
               onContentChunk: (delta, snapshot) => {
                 writeStreamEvent(controller, {
@@ -989,10 +1149,10 @@ export async function POST(req: Request): Promise<Response> {
               taskId,
               userId,
               planName,
+              planLimits: effectivePlanLimits,
               selectedPersonaId: selectedPersona.id,
               storedMessagesWithIncomingPrompt,
               estimatedBytesWithIncomingPrompt,
-              userData,
             });
 
             if (finalResult.payload.error && !finalResult.payload.taskData) {
@@ -1032,6 +1192,18 @@ export async function POST(req: Request): Promise<Response> {
       taskClass: chatTaskClass,
       budgetState: DEFAULT_CHAT_BUDGET_STATE,
       explicitPremium: explicitPremiumRequested,
+      claimMediaGenerationSlot: async ({ limitType }) =>
+        claimMediaGenerationSlot({
+          userId,
+          planName,
+          limitType,
+          planLimits: effectivePlanLimits,
+        }),
+      rollbackMediaGenerationSlot: async ({ limitType }) =>
+        rollbackMediaGenerationSlot({
+          userId,
+          limitType,
+        }),
     });
     const aiPayload = JSON.parse(aiResponse as string) as OpenAIResponsePayload;
 
@@ -1040,10 +1212,10 @@ export async function POST(req: Request): Promise<Response> {
       taskId,
       userId,
       planName,
+      planLimits: effectivePlanLimits,
       selectedPersonaId: selectedPersona.id,
       storedMessagesWithIncomingPrompt,
       estimatedBytesWithIncomingPrompt,
-      userData,
     });
 
     return NextResponse.json(finalResult.payload, {

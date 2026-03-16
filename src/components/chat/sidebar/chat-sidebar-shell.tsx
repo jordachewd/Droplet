@@ -7,6 +7,8 @@ import ChatSidebarNavV2 from "@/components/chat/sidebar/chat-sidebar-nav-v2";
 import ChatSidebarPromo from "@/components/chat/sidebar/chat-sidebar-promo";
 import { ConversationListItem } from "@/types/PersonaData.d";
 import { usePathname } from "next/navigation";
+import { useUiStore } from "@/lib/hooks/use-ui-store";
+import { useShallow } from "zustand/react/shallow";
 
 interface ChatSidebarShellProps {
   historyItems: ConversationListItem[];
@@ -20,8 +22,23 @@ export default function ChatSidebarShell({
   const sidebarStorageKey = "droplet-sidebar-collapsed";
   const legacySidebarStorageKey = "cellesseon-sidebar-collapsed";
   const [isDesktopViewport, setIsDesktopViewport] = useState<boolean>(false);
-  const [desktopCollapsed, setDesktopCollapsed] = useState<boolean>(false);
-  const [mobileOpen, setMobileOpen] = useState<boolean>(false);
+  const {
+    desktopSidebarCollapsed: desktopCollapsed,
+    mobileSidebarOpen: mobileOpen,
+    setDesktopSidebarCollapsed,
+    toggleDesktopSidebarCollapsed,
+    setMobileSidebarOpen,
+    toggleMobileSidebarOpen,
+  } = useUiStore(
+    useShallow((state) => ({
+      desktopSidebarCollapsed: state.desktopSidebarCollapsed,
+      mobileSidebarOpen: state.mobileSidebarOpen,
+      setDesktopSidebarCollapsed: state.setDesktopSidebarCollapsed,
+      toggleDesktopSidebarCollapsed: state.toggleDesktopSidebarCollapsed,
+      setMobileSidebarOpen: state.setMobileSidebarOpen,
+      toggleMobileSidebarOpen: state.toggleMobileSidebarOpen,
+    })),
+  );
   const desktopMediaQueryRef = useRef<MediaQueryList | null>(null);
   const pathname = usePathname();
 
@@ -30,11 +47,11 @@ export default function ChatSidebarShell({
       const collapsedFromStorage =
         localStorage.getItem(sidebarStorageKey) ??
         localStorage.getItem(legacySidebarStorageKey);
-      setDesktopCollapsed(collapsedFromStorage === "true");
+      setDesktopSidebarCollapsed(collapsedFromStorage === "true");
     } catch {
-      setDesktopCollapsed(false);
+      setDesktopSidebarCollapsed(false);
     }
-  }, [legacySidebarStorageKey, sidebarStorageKey]);
+  }, [legacySidebarStorageKey, setDesktopSidebarCollapsed, sidebarStorageKey]);
 
   useEffect(() => {
     try {
@@ -50,7 +67,7 @@ export default function ChatSidebarShell({
     const handleBreakpointChange = (event: MediaQueryListEvent) => {
       setIsDesktopViewport(event.matches);
       if (event.matches) {
-        setMobileOpen(false);
+        setMobileSidebarOpen(false);
       }
     };
 
@@ -59,31 +76,31 @@ export default function ChatSidebarShell({
     return () => {
       desktopQuery.removeEventListener("change", handleBreakpointChange);
     };
-  }, []);
+  }, [setMobileSidebarOpen]);
 
   useEffect(() => {
-    setMobileOpen(false);
-  }, [pathname]);
+    setMobileSidebarOpen(false);
+  }, [pathname, setMobileSidebarOpen]);
 
   const isSidebarOpen = isDesktopViewport ? !desktopCollapsed : mobileOpen;
 
   function handleOpenMobileSidebar() {
-    setMobileOpen(true);
+    setMobileSidebarOpen(true);
   }
 
   function handleCloseMobileSidebar() {
-    setMobileOpen(false);
+    setMobileSidebarOpen(false);
   }
 
   function handleToggleSidebar() {
     const isDesktop = desktopMediaQueryRef.current?.matches ?? false;
 
     if (isDesktop) {
-      setDesktopCollapsed((prevState) => !prevState);
+      toggleDesktopSidebarCollapsed();
       return;
     }
 
-    setMobileOpen((prevState) => !prevState);
+    toggleMobileSidebarOpen();
   }
 
   const chatSidebarClass = classNames(

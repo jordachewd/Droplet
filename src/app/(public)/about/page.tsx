@@ -40,10 +40,10 @@ const aboutSections: AboutSection[] = [
     visualType: "workflow",
   },
   {
-    eyebrow: "Nine personas",
-    title: "The full catalog is available across all plans.",
+    eyebrow: "Ten personas",
+    title: "Persona access scales by plan tier.",
     paragraphs: [
-      "Lite, Pro, and Premium all include access to every approved persona. Plan upgrades change limits and media capacity, not who you are allowed to talk to.",
+      "Lite includes Strategist, Developer, and Best Friend. Pro adds Teacher, Wellness, Boyfriend, and Girlfriend. Premium unlocks the full 10-persona catalog, including Interviewer, Creator, and Analyst.",
       "The current catalog covers Productivity, Learning, Creative, Lifestyle, and Companion use cases so users can move between practical execution, reflection, and content work without switching products.",
     ],
     visualType: "personas",
@@ -92,7 +92,7 @@ function renderAboutVisual(visualType: AboutVisualType) {
             <p className="text-xxs font-semibold uppercase tracking-[0.28em] opacity-70">
               Personas
             </p>
-            <p className="heading-4 mt-3">9</p>
+            <p className="heading-4 mt-3">10</p>
             <p className="body-2 mt-2 text-sm">
               Guided conversation styles with distinct prompts and boundaries.
             </p>
@@ -103,7 +103,7 @@ function renderAboutVisual(visualType: AboutVisualType) {
             </p>
             <p className="heading-4 mt-3">3</p>
             <p className="body-2 mt-2 text-sm">
-              Lite, Pro, and Premium with shared persona access.
+              Lite, Pro, and Premium with plan-based persona access.
             </p>
           </article>
           <article className="rounded-2xl bg-lightAccent-100 p-4 dark:bg-darkAccent-1000/80">

@@ -16,15 +16,48 @@ import { connectToDatabase } from "@/lib/database/mongoose";
 import Transaction from "@/lib/database/models/transaction.model";
 import User from "@/lib/database/models/user.model";
 import serializeForClient from "@/lib/utils/serialize-for-client";
+import { nonEmptyStringSchema } from "@/lib/utils/validation-schemas";
 import { BillingCycle, PlanData, PlanName } from "@/types/PlanData.d";
 import { CreateTransactionParams } from "@/types/TransactionData.d";
 import { UpdateUserParams } from "@/types/UserData.d";
 import { NextRequest, NextResponse } from "next/server";
 import stripe from "stripe";
+import { z } from "zod";
 
 const ALLOWED_PLAN_NAMES: readonly PlanName[] = ["Lite", "Pro", "Premium"];
 const ALLOWED_BILLING_CYCLES: readonly BillingCycle[] = ["Monthly", "Yearly"];
 const WEBHOOK_FAILURE_MESSAGE = "Webhook processing failed";
+
+const stripeWebhookEventSchema = z
+  .object({
+    type: nonEmptyStringSchema,
+    data: z
+      .object({
+        object: z.unknown(),
+      })
+      .passthrough(),
+  })
+  .passthrough();
+
+const checkoutSessionMetadataSchema = z
+  .object({
+    userId: nonEmptyStringSchema,
+    clerkId: nonEmptyStringSchema,
+    planId: nonEmptyStringSchema,
+    plan: z.enum(ALLOWED_PLAN_NAMES),
+    billing: z.enum(ALLOWED_BILLING_CYCLES),
+  })
+  .strict();
+
+const checkoutSessionPayloadSchema = z
+  .object({
+    id: nonEmptyStringSchema,
+    amount_total: z.number().nullable().optional(),
+    metadata: checkoutSessionMetadataSchema,
+  })
+  .passthrough();
+
+type CheckoutSessionPayload = z.infer<typeof checkoutSessionPayloadSchema>;
 
 function logStripeWebhookError(message: string) {
   process.stderr.write(`[stripe-webhook] ${message}\n`);
@@ -66,7 +99,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return createWebhookErrorResponse(500);
   }
 
-  let event;
+  let event: stripe.Event;
 
   try {
     event = stripe.webhooks.constructEvent(body, sig, endpointSecret);
@@ -75,33 +108,38 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return createWebhookErrorResponse(400);
   }
 
+  const parsedEvent = stripeWebhookEventSchema.safeParse(event);
+
+  if (!parsedEvent.success) {
+    logStripeWebhookError("Invalid Stripe webhook event payload.");
+    return createWebhookErrorResponse(400);
+  }
+
   // Get the ID and type
-  const eventType = event.type;
+  const eventType = parsedEvent.data.type;
 
   // CREATE
   if (eventType === "checkout.session.completed") {
-    const { id, amount_total, metadata } = event.data.object;
-    const theUserId = metadata?.userId;
-    const theClerkId = metadata?.clerkId;
-    const thePlanId = metadata?.planId?.toString();
-    const thePlanName = metadata?.plan;
-    const theBillingCycle = metadata?.billing;
+    const parsedSessionPayload = checkoutSessionPayloadSchema.safeParse(
+      event.data.object,
+    );
 
-    if (
-      !theUserId ||
-      !theClerkId ||
-      !thePlanId ||
-      !thePlanName ||
-      !theBillingCycle ||
-      !ALLOWED_PLAN_NAMES.includes(thePlanName as PlanName) ||
-      !ALLOWED_BILLING_CYCLES.includes(theBillingCycle as BillingCycle)
-    ) {
+    if (!parsedSessionPayload.success) {
       logStripeWebhookError("Checkout session metadata is invalid.");
       return createWebhookErrorResponse(400);
     }
 
-    const normalizedPlanName = thePlanName as PlanName;
-    const normalizedBillingCycle = theBillingCycle as BillingCycle;
+    const {
+      id,
+      amount_total,
+      metadata: {
+        userId: theUserId,
+        clerkId: theClerkId,
+        planId: thePlanId,
+        plan: normalizedPlanName,
+        billing: normalizedBillingCycle,
+      },
+    }: CheckoutSessionPayload = parsedSessionPayload.data;
     const theAmount = amount_total ? amount_total / 100 : 0;
     const theExpireDate = getExpiresOn(
       normalizedPlanName,

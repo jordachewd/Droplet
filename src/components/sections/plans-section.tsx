@@ -1,6 +1,6 @@
 "use client";
 
-import { plans } from "@/constants/plans";
+import { plans as defaultPlans } from "@/constants/plans";
 import { useUser } from "@clerk/nextjs";
 import { Plan } from "@/types/PlanData.d";
 import { UserData } from "@/types/UserData.d";
@@ -13,10 +13,16 @@ import classNames from "classnames";
 interface PlansProps {
   userData?: UserData | null;
   hasLoader?: boolean;
+  plansData?: Plan[];
 }
 
-export default function Plans({ userData, hasLoader = false }: PlansProps) {
+export default function Plans({
+  userData,
+  hasLoader = false,
+  plansData,
+}: PlansProps) {
   const { isSignedIn } = useUser();
+  const planList = plansData ?? defaultPlans;
 
   if (hasLoader && !userData)
     return (
@@ -37,7 +43,7 @@ export default function Plans({ userData, hasLoader = false }: PlansProps) {
       />
 
       <div className="flex w-full flex-col justify-between gap-10 md:flex-row md:gap-4 lg:gap-8">
-        {plans.map((plan: Plan) => {
+        {planList.map((plan: Plan) => {
           return <PlanCard key={plan.id} plan={plan} userData={userData} />;
         })}
       </div>

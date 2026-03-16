@@ -384,6 +384,21 @@ describe("ai-model-policy", () => {
     expect(fullAudioPolicy.notes).toContain("TTS fallback blocked");
   });
 
+  it("uses the verified full-audio model for Premium audio_in_out requests", () => {
+    expect(
+      resolveModelPolicy({
+        plan: "premium",
+        feature: "audio_generation",
+        audioMode: "audio_in_out",
+      }),
+    ).toMatchObject({
+      model: "gpt-audio-mini",
+      fallbackModel: "gpt-audio-mini",
+      isTtsOnly: false,
+      hardBlocked: false,
+    });
+  });
+
   it("estimates costs for the new model identifiers", () => {
     expect(
       estimateModelCostCents({

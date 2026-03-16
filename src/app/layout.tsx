@@ -6,6 +6,7 @@ import Script from "next/script";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import "@/app/globals.css";
 import MainWrapper from "@/components/layout/main-wrapper";
+import { Analytics } from "@vercel/analytics/next";
 
 export const metadata: Metadata = {
   title: "Droplet",
@@ -80,6 +81,7 @@ export default function RootLayout({
             <MainWrapper>{children}</MainWrapper>
           </DropletTheme>
         </ClerkProvider>
+        <Analytics />
       </body>
     </html>
   );

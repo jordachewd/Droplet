@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  buildPlans,
   getExpiresOn,
   getPlanIcon,
   PLAN_LIMITS,
@@ -83,7 +84,7 @@ describe("plans constants", () => {
           icon: "bi bi-lightning",
           inclusions: expect.arrayContaining([
             expect.objectContaining({
-              label: "All 9 personas",
+              label: "3 personas (Strategist, Developer, Best Friend)",
               isIncluded: true,
             }),
             expect.objectContaining({
@@ -91,7 +92,7 @@ describe("plans constants", () => {
               isIncluded: true,
             }),
             expect.objectContaining({
-              label: "10 messages per conversation",
+              label: "10 prompts per conversation",
               isIncluded: true,
             }),
             expect.objectContaining({
@@ -114,6 +115,15 @@ describe("plans constants", () => {
           desc: "Advanced AI for power users",
           inclusions: expect.arrayContaining([
             expect.objectContaining({
+              label:
+                "7 personas (Strategist, Developer, Best Friend, Teacher, Wellness, Boyfriend, Girlfriend)",
+              isIncluded: true,
+            }),
+            expect.objectContaining({
+              label: "100 prompts per conversation",
+              isIncluded: true,
+            }),
+            expect.objectContaining({
               label: "10 video generations per month (coming soon)",
               isIncluded: true,
             }),
@@ -124,6 +134,15 @@ describe("plans constants", () => {
           price: 39,
           desc: "Ultimate AI experience with premium media",
           inclusions: expect.arrayContaining([
+            expect.objectContaining({
+              label:
+                "All 10 personas (Strategist, Teacher, Developer, Creator, Wellness, Analyst, Best Friend, Boyfriend, Girlfriend, Interviewer)",
+              isIncluded: true,
+            }),
+            expect.objectContaining({
+              label: "Unlimited prompts",
+              isIncluded: true,
+            }),
             expect.objectContaining({
               label: "Quality image generation (Premium)",
               isIncluded: true,
@@ -150,5 +169,63 @@ describe("plans constants", () => {
       .toLowerCase();
 
     expect(allPlanCopy).not.toContain("trial");
+    expect(allPlanCopy).not.toContain("messages per conversation");
+  });
+
+  it("builds plan cards from runtime pricing and limit settings", () => {
+    const configuredPlans = buildPlans({
+      pricing: {
+        Lite: 0,
+        Pro: 25,
+        Premium: 45,
+      },
+      limits: {
+        Lite: {
+          conversationsPerDay: 6,
+          promptsPerConversation: 12,
+          images: 4,
+          audio: 5,
+          video: 2,
+        },
+        Pro: {
+          conversationsPerDay: 60,
+          promptsPerConversation: 120,
+          images: 55,
+          audio: 65,
+          video: 12,
+        },
+        Premium: {
+          conversationsPerDay: -1,
+          promptsPerConversation: -1,
+          images: -1,
+          audio: -1,
+          video: 20,
+        },
+      },
+    });
+
+    const litePlan = configuredPlans.find((plan) => plan.name === "Lite");
+    const proPlan = configuredPlans.find((plan) => plan.name === "Pro");
+    const premiumPlan = configuredPlans.find((plan) => plan.name === "Premium");
+
+    expect(litePlan?.price).toBe(0);
+    expect(proPlan?.price).toBe(25);
+    expect(premiumPlan?.price).toBe(45);
+    expect(
+      litePlan?.inclusions.some(
+        (inclusion) => inclusion.label === "12 prompts per conversation",
+      ),
+    ).toBe(true);
+    expect(
+      proPlan?.inclusions.some(
+        (inclusion) => inclusion.label === "60 conversations per day",
+      ),
+    ).toBe(true);
+    expect(
+      premiumPlan?.inclusions.some(
+        (inclusion) =>
+          inclusion.label === "20 video generations per month (coming soon)",
+      ),
+    ).toBe(true);
   });
 });

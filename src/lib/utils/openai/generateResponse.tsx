@@ -36,6 +36,12 @@ interface GenerateResponseParams {
   retryAttempt?: number;
   highLatency?: boolean;
   explicitPremium?: boolean;
+  claimMediaGenerationSlot?: (params: {
+    limitType: "images" | "audio";
+  }) => Promise<{ claimed: boolean }>;
+  rollbackMediaGenerationSlot?: (params: {
+    limitType: "images" | "audio";
+  }) => Promise<void>;
 }
 
 interface GenerateStreamingResponseParams extends GenerateResponseParams {
@@ -353,6 +359,8 @@ async function buildOpenAIResponsePayload({
   userId,
   planName,
   entitlements,
+  claimMediaGenerationSlot,
+  rollbackMediaGenerationSlot,
 }: {
   message: {
     role: MessageRole;
@@ -371,6 +379,12 @@ async function buildOpenAIResponsePayload({
   userId: string;
   planName: PlanName;
   entitlements: Entitlements;
+  claimMediaGenerationSlot?: (params: {
+    limitType: "images" | "audio";
+  }) => Promise<{ claimed: boolean }>;
+  rollbackMediaGenerationSlot?: (params: {
+    limitType: "images" | "audio";
+  }) => Promise<void>;
 }): Promise<OpenAIResponsePayload> {
   const toolCall = message.tool_calls?.[0];
 
@@ -415,6 +429,32 @@ async function buildOpenAIResponsePayload({
         });
       }
 
+      let imageSlotClaimed = false;
+
+      if (claimMediaGenerationSlot) {
+        const claimResult = await claimMediaGenerationSlot({
+          limitType: "images",
+        });
+
+        if (!claimResult.claimed) {
+          maybeAddBlockedMetric({
+            requestMetrics,
+            policy: imagePolicy,
+            requestType: "image",
+            blockedReason: "media_limit_reached",
+          });
+
+          return createBlockedResponsePayload({
+            message: "Image generation limit reached for your current plan.",
+            taskUsage,
+            blockedReason: "media_limit_reached",
+            requestMetrics,
+          });
+        }
+
+        imageSlotClaimed = true;
+      }
+
       try {
         const imageResponse = await generateImage({
           prompt:
@@ -441,6 +481,18 @@ async function buildOpenAIResponsePayload({
           requestMetrics,
         };
       } catch (imageError) {
+        if (imageSlotClaimed && rollbackMediaGenerationSlot) {
+          try {
+            await rollbackMediaGenerationSlot({
+              limitType: "images",
+            });
+          } catch (rollbackError) {
+            process.stderr.write(
+              `[generateResponse] image slot rollback failed: ${rollbackError instanceof Error ? rollbackError.message : "unknown"}\n`,
+            );
+          }
+        }
+
         const status =
           imageError instanceof Error && "status" in imageError
             ? (imageError as { status?: number }).status
@@ -487,6 +539,32 @@ async function buildOpenAIResponsePayload({
         });
       }
 
+      let audioSlotClaimed = false;
+
+      if (claimMediaGenerationSlot) {
+        const claimResult = await claimMediaGenerationSlot({
+          limitType: "audio",
+        });
+
+        if (!claimResult.claimed) {
+          maybeAddBlockedMetric({
+            requestMetrics,
+            policy: audioPolicy,
+            requestType: "audio",
+            blockedReason: "media_limit_reached",
+          });
+
+          return createBlockedResponsePayload({
+            message: "Audio generation limit reached for your current plan.",
+            taskUsage,
+            blockedReason: "media_limit_reached",
+            requestMetrics,
+          });
+        }
+
+        audioSlotClaimed = true;
+      }
+
       try {
         const ttsText =
           typeof parsedArgs.content === "string" ? parsedArgs.content : "";
@@ -516,6 +594,18 @@ async function buildOpenAIResponsePayload({
           requestMetrics,
         };
       } catch (audioError) {
+        if (audioSlotClaimed && rollbackMediaGenerationSlot) {
+          try {
+            await rollbackMediaGenerationSlot({
+              limitType: "audio",
+            });
+          } catch (rollbackError) {
+            process.stderr.write(
+              `[generateResponse] audio slot rollback failed: ${rollbackError instanceof Error ? rollbackError.message : "unknown"}\n`,
+            );
+          }
+        }
+
         const status =
           audioError instanceof Error && "status" in audioError
             ? (audioError as { status?: number }).status
@@ -605,6 +695,8 @@ async function runChatCompletion({
   retryAttempt = 0,
   highLatency = false,
   explicitPremium = false,
+  claimMediaGenerationSlot,
+  rollbackMediaGenerationSlot,
   requestMetrics,
 }: GenerateResponseParams & {
   requestMetrics: AIRequestMetric[];
@@ -679,6 +771,8 @@ async function runChatCompletion({
     userId,
     planName,
     entitlements,
+    claimMediaGenerationSlot,
+    rollbackMediaGenerationSlot,
   });
 }
 
@@ -694,6 +788,8 @@ async function runStreamingChatCompletion({
   retryAttempt = 0,
   highLatency = false,
   explicitPremium = false,
+  claimMediaGenerationSlot,
+  rollbackMediaGenerationSlot,
   abortSignal,
   onContentChunk,
   requestMetrics,
@@ -779,6 +875,8 @@ async function runStreamingChatCompletion({
     userId,
     planName,
     entitlements,
+    claimMediaGenerationSlot,
+    rollbackMediaGenerationSlot,
   });
 }
 
@@ -794,6 +892,8 @@ export async function generateResponse({
   retryAttempt = 0,
   highLatency = false,
   explicitPremium = false,
+  claimMediaGenerationSlot,
+  rollbackMediaGenerationSlot,
 }: GenerateResponseParams) {
   const requestMetrics: AIRequestMetric[] = [];
 
@@ -824,6 +924,8 @@ export async function generateResponse({
           retryAttempt: resolvedRetryAttempt,
           highLatency,
           explicitPremium,
+          claimMediaGenerationSlot,
+          rollbackMediaGenerationSlot,
           requestMetrics,
         }),
     });
@@ -849,6 +951,8 @@ export async function generateStreamingResponse({
   retryAttempt = 0,
   highLatency = false,
   explicitPremium = false,
+  claimMediaGenerationSlot,
+  rollbackMediaGenerationSlot,
   abortSignal,
   onContentChunk,
 }: GenerateStreamingResponseParams): Promise<OpenAIResponsePayload> {
@@ -883,6 +987,8 @@ export async function generateStreamingResponse({
           retryAttempt: resolvedRetryAttempt,
           highLatency,
           explicitPremium,
+          claimMediaGenerationSlot,
+          rollbackMediaGenerationSlot,
           abortSignal,
           onContentChunk: (delta, snapshot) => {
             didEmitContent = true;

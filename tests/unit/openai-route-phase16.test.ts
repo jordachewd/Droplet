@@ -20,6 +20,8 @@ import {
 import { getTaskByIdForUser } from "@/lib/utils/task-queries";
 import { emitUsageEvents } from "@/lib/utils/usage-event-utils";
 import { enforceSlidingWindowRateLimit } from "@/lib/utils/rate-limit";
+import { PLAN_LIMITS } from "@/constants/plans";
+import { getEffectivePlanConfig } from "@/lib/utils/effective-plan-config";
 
 vi.mock("@/lib/utils/openai/generateResponse", () => ({
   generateResponse: vi.fn(),
@@ -67,6 +69,10 @@ vi.mock("@/lib/utils/rate-limit", () => ({
   enforceSlidingWindowRateLimit: vi.fn(),
 }));
 
+vi.mock("@/lib/utils/effective-plan-config", () => ({
+  getEffectivePlanConfig: vi.fn(),
+}));
+
 const EXISTING_TASK_ID = "507f1f77bcf86cd799439011";
 const NEW_TASK_ID = "507f1f77bcf86cd799439012";
 
@@ -82,7 +88,7 @@ function createExistingTask(overrides: Record<string, unknown> = {}) {
   return {
     _id: EXISTING_TASK_ID,
     title: "Conversation",
-    personaId: "teacher",
+    personaId: "strategist",
     messages: [
       {
         role: "user",
@@ -132,6 +138,10 @@ describe("POST /api/openai phase16", () => {
       remaining: 19,
       resetAt: Date.now() + 60_000,
       retryAfterMs: 0,
+    });
+    vi.mocked(getEffectivePlanConfig).mockResolvedValue({
+      pricing: { Lite: 0, Pro: 19, Premium: 39 },
+      limits: PLAN_LIMITS,
     });
     vi.mocked(getTaskByIdForUser).mockResolvedValue(
       createExistingTask() as never,
