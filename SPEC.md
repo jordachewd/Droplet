@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-16 (PM deep audit #8 complete. Three-agent independent audit. TD-LIMIT-03/TD-LIMIT-04 RESOLVED — durable counter and check-before-create already implemented. New CRITICAL TDs: TD-LIMIT-05 (TOCTOU race), TD-LIMIT-06 (midnight race), TD-AI-22 (audio messages parameter bug). Phase 28 re-scoped and re-ordered: 28.2 → 28.3 → 28.1.)
+> Last updated: 2026-03-16 (PM deep audit #9 complete. Four-agent independent audit. TD-LIMIT-05/TD-LIMIT-06 RESOLVED — atomic `claimDailyConversationSlot`. TD-AI-22 RESOLVED — ttsText extraction. TD-AI-20 STILL CRITICAL — image model IDs never live-tested, image generation fully broken. New TDs: TD-LIMIT-07 (media counter TOCTOU), TD-AI-23 (audio tool definition misleading), TD-AI-24 (response_format compatibility risk).)
 
 ---
 
@@ -179,12 +179,12 @@ Prompts are versioned and separated from request handlers. `buildPersonaAwareSys
 ### Usage Limit Enforcement
 
 - Plan limits stored as constants in `PLAN_LIMITS`.
-- Daily conversation count tracked via durable counter on User model (`dailyConversationsStarted` + `dailyConversationWindowStart`). Counter is incremented on conversation creation and **never decremented** by task deletion. Resets at UTC midnight. **Note:** check and increment are currently separate operations — TOCTOU race is tracked as TD-LIMIT-05.
+- Daily conversation count tracked via durable counter on User model (`dailyConversationsStarted` + `dailyConversationWindowStart`). Counter is incremented on conversation creation and **never decremented** by task deletion. Resets at UTC midnight. Check and increment are now a **single atomic** `findOneAndUpdate` operation via `claimDailyConversationSlot()` — TOCTOU race resolved (Phase 28.1).
 - Per-conversation prompt count tracked on `Task.promptCount` field (initialized on creation, incremented atomically via `findOneAndUpdate` with `$lt` guard — no race window).
 - Conversation storage tracked via `Task.estimatedBytes` field (12MB threshold, 4MB buffer before MongoDB 16MB limit).
 - Media generation counters on User model plan subdoc.
-- `checkDailyConversationLimit()` utility validates daily quota per plan by reading durable counter.
-- `/api/openai` route checks all limits before making OpenAI calls: daily limit (new conversations only, checked BEFORE task creation), prompt limit, storage limit, media limit.
+- `claimDailyConversationSlot()` utility atomically checks AND increments daily quota in a single MongoDB operation — replaces old separated check+increment.
+- `/api/openai` route checks all limits before making OpenAI calls: daily limit (new conversations only, claimed BEFORE task creation), prompt limit, storage limit, media limit.
 - When any limit is hit: conversation is stopped with `taskStatus: "ended"`, stop reason is recorded on Task, user receives next-action message.
 - Unlimited plans (`-1` values in `PLAN_LIMITS`) always bypass limit checks.
 
@@ -644,7 +644,7 @@ All file handling technical debt has been resolved. S3 cleanup on task/user dele
 
 ## 13. Testing
 
-- **Unit tests**: 59 suites, 306 tests (Vitest) — includes streaming, webhook, chat-wrapper, chat-body stop-state, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, persona prompt, rate limiting, task complexity classification, conversation stop enforcement, entitlement resolver full coverage, checkout-success page, admin audit trail, OpenAI route tests, atomic prompt limit, daily conversation limit, media error handling, and universal feature access tests
+- **Unit tests**: 60 suites, 319 tests (Vitest) — includes streaming, webhook, chat-wrapper, chat-body stop-state, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, persona prompt, rate limiting, task complexity classification, conversation stop enforcement, entitlement resolver full coverage, checkout-success page, admin audit trail, OpenAI route tests, atomic prompt limit, daily conversation limit, media error handling, and universal feature access tests
 - **E2E tests**: 11 Playwright spec files across browser projects (chat-app-shell, auth-boundaries, public-pages with 70+ tests, conversation-lifecycle, user-profile, admin-users, admin-features, landing-page, plans-public, pricing-public, authenticated-flows). 193 total, 185 passed, 0 flaky, 8 skipped.
 - **Coverage**: Configured (Phase 24.1) — v8 provider, thresholds: 70% statements / 60% branches / 70% functions / 70% lines. Current: 82/71/88/82.
 - **Gap**: No dedicated E2E spec for streamed chunk-by-chunk rendering (manually verified via Playwright MCP)
@@ -688,13 +688,18 @@ All file handling technical debt has been resolved. S3 cleanup on task/user dele
 
 ### Active — Critical Priority
 
-| ID          | Area   | Description                                                                                                                                                                                                                                                                                                                                     | Severity     |
-| ----------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| TD-AI-20    | OpenAI | Image generation model IDs (`gpt-image-1-mini`, `gpt-image-1.5`) fail in production — owner reports "Image generation failed" errors. HF-3 claims IDs verified against docs but owner still sees failures. **Requires live API test to resolve contradiction.** If model IDs are valid, there may be an API parameter or response format issue. | **Critical** |
-| TD-AI-21    | OpenAI | Audio generation model IDs (`gpt-audio-mini`, `gpt-audio-1.5`) may not be valid. Additionally, tool call handler always passes `audioMode: "tts"` but Pro/Premium TTS requests route to `chat.completions.create()` path instead of `audio.speech.create()`.                                                                                    | **Critical** |
-| TD-AI-22    | OpenAI | Audio tool call handler passes `parsedArgs` (JSON-parsed tool call function arguments) as `messages` parameter to `generateAudio()`. These are NOT proper `Message[]` objects — they are raw JSON from the model. `buildTextToSpeechInput` expects `Message[]` format. This causes audio generation to fail for all plans and all personas.     | **Critical** |
-| TD-LIMIT-05 | Limits | Daily conversation limit TOCTOU race — `checkDailyConversationLimit` (read) and `incrementDailyConversationCounter` (write) are separate operations with seconds between them (title generation API call). Concurrent requests can both pass the check and both create conversations, exceeding the limit.                                      | **Critical** |
-| TD-LIMIT-06 | Limits | Midnight reset race — `incrementDailyConversationCounter` uses two-phase approach. At UTC midnight, concurrent requests can both see yesterday's window, both reach Phase 2 reset, both `$set dailyConversationsStarted: 1`. One increment is lost. Low probability but violates correctness.                                                   | **High**     |
+| ID       | Area   | Description                                                                                                                                                                                                                                                                                                                                  | Severity     |
+| -------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| TD-AI-20 | OpenAI | Image generation model IDs (`gpt-image-1-mini`, `gpt-image-1.5`) fail in production — owner reports "Image generation failed" errors. HF-3 claims IDs verified against docs but owner still sees failures. **Requires live API test to resolve.** Model IDs were NEVER live-tested (PM audit #9 confirmed). Image generation is 100% broken. | **Critical** |
+| TD-AI-24 | OpenAI | `response_format: "b64_json"` in `generateImage.tsx` may not be compatible with newer `gpt-image-*` models (GPT Image API uses different output parameters than DALL-E). Must be verified alongside model ID fix.                                                                                                                            | **Critical** |
+| TD-AI-21 | OpenAI | Audio model IDs (`gpt-audio-mini`, `gpt-audio-1.5`) are unverified. Currently mitigated — TTS path forces `gpt-4o-mini-tts` via `isTtsOnly` override. Will break if `audio_in_out` is ever enabled. Requires live API test.                                                                                                                  | **High**     |
+
+### Active — High Priority
+
+| ID          | Area   | Description                                                                                                                                                                                                                                                   | Severity |
+| ----------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| TD-LIMIT-07 | Limits | Media generation counters (image/audio) use read-then-write pattern — `checkUsageLimit()` reads at request start, `$inc` after response. Concurrent requests can bypass limits. Violates AGENTS.md atomic limit rule. Same pattern as old daily limit TOCTOU. | **High** |
+| TD-AI-23    | OpenAI | Audio tool definition `content` parameter description says "Description of the audio file to generate" — misleads AI model into providing brief description instead of actual text to speak. TTS path uses this value as literal speech input.                | **High** |
 
 ### ~~Active — High Priority~~ (Resolved)
 
@@ -792,6 +797,9 @@ All file handling technical debt has been resolved. S3 cleanup on task/user dele
 | TD-SEC-03     | `updateUser` error handling inconsistency     | Resolved in HF-9.2 — `handleError({ error, source: "updateUser" })` pattern, consistent with all other server actions                            |
 | TD-LIMIT-01   | Prompt limit race condition                   | Resolved in Phase 27.1 — atomic `findOneAndUpdate` with `$lt` condition, no read-check-write race                                                |
 | TD-LIMIT-02   | Daily conversation limit race condition       | Resolved in Phase 27.1 — compensating delete pattern after `createTask`, UTC timezone fix                                                        |
+| TD-LIMIT-05   | Daily conversation limit TOCTOU race          | Resolved in Phase 28.1 — atomic `claimDailyConversationSlot` with `findOneAndUpdate` + `$lt` guard, midnight reset in single operation           |
+| TD-LIMIT-06   | Midnight reset race                           | Resolved in Phase 28.1 — stale-window reset handled atomically in `claimDailyConversationSlot`                                                   |
+| TD-AI-22      | Audio messages parameter bug                  | Resolved in Phase 28.3-code — `ttsText` extracted from `parsedArgs.content`, not raw `parsedArgs` as messages                                    |
 | TD-AI-19      | Image/audio generation unhandled exceptions   | Resolved in Phase 27.2 — try-catch at call sites in `buildOpenAIResponsePayload()`, graceful error payloads                                      |
 | TD-FEAT-01    | Rule 10 violation (features blocked)          | Resolved in Phase 27.3 — all 6 blocking layers opened, all features available in all plans and all personas                                      |
 | TD-UI-14      | Layout inconsistency across /app/\* pages     | Resolved in Phase 27.6 — shared `(chat)/layout.tsx` provides ChatSidebar + main content to all `/app/*` routes                                   |

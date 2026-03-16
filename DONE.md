@@ -2,7 +2,42 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-15 — Phases 27.7–27.10 COMPLETE (PM deep audit #7, three-agent independent verification). Phases 1–25.7 + 27.1–27.3 + 27.6–27.10 complete.
+> Last updated: 2026-03-16 — PM deep audit #9. Phase 28.1 + 28.3-code VERIFIED COMPLETE. Phase 28.2 NOT COMPLETE (image model IDs unchanged). Phases 1–25.7 + 27.1–27.3 + 27.6–27.10 + 28.1 + 28.3-code complete.
+
+---
+
+## Phase 28.1 — Fix daily conversation limit TOCTOU race + midnight race — COMPLETED (2026-03-16)
+
+- [x] `claimDailyConversationSlot()` implemented with atomic `findOneAndUpdate` + `$lt` guard — single MongoDB operation, no TOCTOU gap.
+- [x] Two-phase atomic pattern: (1) claim within current window, (2) stale-window reset — handles midnight race.
+- [x] Old `incrementDailyConversationCounter` fully removed from `src/` (zero matches verified).
+- [x] `createTask` no longer calls any daily counter increment — slot claimed before create.
+- [x] Rollback `Task.findOneAndDelete` wrapped in try/catch with `process.stderr.write` logging.
+- [x] Route calls `claimDailyConversationSlot(userId, planName)` BEFORE task creation at line ~856.
+- [x] Unlimited plans bypass correctly (limit === -1 returns immediately).
+- [x] Unit tests updated: atomic boundary, concurrent claim rejection, midnight reset, rollback failure, unlimited bypass.
+- [x] Four-agent independent verification: PM audit #9 code-level confirmed.
+
+Resolved: TD-LIMIT-05 (TOCTOU race), TD-LIMIT-06 (midnight race).
+
+**Files changed:** `src/lib/utils/check-daily-conversations.ts`, `src/app/api/openai/route.tsx`, `src/lib/actions/task.actions.tsx`, `tests/unit/check-daily-conversations.test.ts`, `tests/unit/openai-route.test.ts`, `tests/unit/conversation-stop.test.ts`, `tests/unit/openai-route-phase16.test.ts`
+
+---
+
+## Phase 28.3-code — Fix audio generation messages parameter bug — COMPLETED (2026-03-16)
+
+- [x] Audio tool call handler in `generateResponse.tsx` now extracts `ttsText` from `parsedArgs.content` instead of passing raw `parsedArgs` as `messages`.
+- [x] TTS requests correctly route to `audio.speech.create()` for ALL plans via `isTtsOnly` policy flag.
+- [x] `audioMode: "tts"` hardcoded in tool call handler — correct per spec (audio_in_out deferred).
+- [x] `generateAudio()` correctly accepts `ttsText?` parameter alongside `messages?`.
+- [x] Unit tests updated for ttsText extraction path.
+- [x] Four-agent independent verification: PM audit #9 code-level confirmed.
+
+Resolved: TD-AI-22 (audio messages parameter bug). TD-AI-21 partially resolved (audioMode fixed, model ID live-testing still required).
+
+**Note:** Audio model IDs (`gpt-audio-mini`, `gpt-audio-1.5`) are not live-tested but currently mitigated — TTS policy forces `gpt-4o-mini-tts` for all plans. Live-testing tracked in Phase 28.3-verify (TODO.md).
+
+**Files changed:** `src/lib/utils/openai/generateResponse.tsx`, `tests/unit/generate-response-phase16.test.ts`, `tests/unit/generate-response.test.ts`
 
 ---
 
