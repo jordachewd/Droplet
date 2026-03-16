@@ -1,18 +1,25 @@
-import Link from "next/link";
-import classNames from "classnames";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { getPersona } from "@/constants/assistant-personas";
 import PageWrapper from "@/components/layout/page-wrapper";
 import PageHead from "@/components/layout/page-head";
-import { getRecentTasksByUserId } from "@/lib/utils/task-queries";
+import LibraryTabs from "@/components/chat/library-tabs";
+import type {
+  LibraryConversationCardItem,
+  LibraryMediaCardItem,
+} from "@/components/chat/library-tabs";
+import {
+  getMediaItemsByUserId,
+  getRecentTasksByUserId,
+} from "@/lib/utils/task-queries";
 import { mapDateToLabel } from "@/lib/utils/map-date-to-label";
-import { ConversationListItem } from "@/types/PersonaData.d";
-import LibraryDeleteButton from "@/components/chat/library-delete-button";
 
 export default async function LibraryPage() {
   const { userId } = await auth();
-  let conversations: ConversationListItem[] = [];
+  let conversations: LibraryConversationCardItem[] = [];
+  let imageItems: LibraryMediaCardItem[] = [];
+  let audioItems: LibraryMediaCardItem[] = [];
+  let videoItems: LibraryMediaCardItem[] = [];
 
   if (!userId) {
     redirect("/sign-in");
@@ -20,13 +27,43 @@ export default async function LibraryPage() {
 
   try {
     const taskHistory = await getRecentTasksByUserId(userId, 20);
+    const [images, audios, videos] = await Promise.all([
+      getMediaItemsByUserId(userId, "image_url", 60),
+      getMediaItemsByUserId(userId, "audio_url", 60),
+      getMediaItemsByUserId(userId, "video_url", 60),
+    ]);
 
     conversations = taskHistory.map((task) => ({
       id: task._id,
       title: task.title,
-      personaId: task.personaId,
+      personaLabel: getPersona(task.personaId).label,
+      personaIcon: getPersona(task.personaId).icon,
       updatedAtLabel: mapDateToLabel(task.updatedAt),
       href: `/app/c/${task._id}`,
+    }));
+
+    imageItems = images.map((item) => ({
+      ...item,
+      personaLabel: getPersona(item.personaId).label,
+      personaIcon: getPersona(item.personaId).icon,
+      createdAtLabel: mapDateToLabel(item.createdAt),
+      href: `/app/c/${item.taskId}`,
+    }));
+
+    audioItems = audios.map((item) => ({
+      ...item,
+      personaLabel: getPersona(item.personaId).label,
+      personaIcon: getPersona(item.personaId).icon,
+      createdAtLabel: mapDateToLabel(item.createdAt),
+      href: `/app/c/${item.taskId}`,
+    }));
+
+    videoItems = videos.map((item) => ({
+      ...item,
+      personaLabel: getPersona(item.personaId).label,
+      personaIcon: getPersona(item.personaId).icon,
+      createdAtLabel: mapDateToLabel(item.createdAt),
+      href: `/app/c/${item.taskId}`,
     }));
   } catch {}
 
@@ -38,76 +75,12 @@ export default async function LibraryPage() {
           subtitle="Saved sessions grouped by persona."
         />
 
-        {conversations.length === 0 ? (
-          <article
-            className={classNames(
-              "rounded-2xl border border-dashed p-8 text-center shadow-sm",
-              "border-lightBorders-400 bg-white/70",
-              "dark:border-darkBorders-500 dark:bg-jwdMarine-900/70",
-            )}
-          >
-            <h2 className="heading-5">No saved conversations yet</h2>
-            <p className="body-2 mt-3">
-              Conversations appear here after you send prompts in the app.
-            </p>
-            <Link
-              href="/app/new"
-              className={classNames(
-                "mt-5 inline-flex items-center justify-center rounded-lg border px-4 py-2 text-sm font-medium transition-all",
-                "border-lightBorders-400 bg-white/80 hover:-translate-y-0.5 hover:bg-lightSecondary-300/70",
-                "dark:border-darkBorders-500 dark:bg-jwdMarine-900/80 dark:hover:bg-darkSecondary-500/30",
-              )}
-            >
-              Start a conversation
-            </Link>
-          </article>
-        ) : (
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-            {conversations.map((conversation) => {
-              const persona = getPersona(conversation.personaId);
-
-              return (
-                <article
-                  key={conversation.id}
-                  className={classNames(
-                    "flex items-start gap-3 rounded-xl border p-4 transition-all duration-300",
-                    "border-lightBorders-400 bg-white/70 shadow-sm",
-                    "dark:border-darkBorders-500 dark:bg-jwdMarine-900/70",
-                  )}
-                >
-                  <Link
-                    href={conversation.href}
-                    className={classNames(
-                      "min-w-0 flex-1 rounded-lg transition-all duration-300",
-                      "hover:-translate-y-0.5 hover:shadow-md",
-                    )}
-                  >
-                    <div className="mb-2 flex items-center gap-3">
-                      <h2 className="heading-6 truncate text-lg">
-                        {conversation.title}
-                      </h2>
-                    </div>
-
-                    <div className="flex items-center justify-between gap-3 text-sm opacity-80">
-                      <span className="inline-flex items-center gap-2">
-                        <i className={persona.icon}></i>
-                        {persona.label}
-                      </span>
-                      <span className="shrink-0">
-                        {conversation.updatedAtLabel}
-                      </span>
-                    </div>
-                  </Link>
-
-                  <LibraryDeleteButton
-                    conversationId={conversation.id}
-                    conversationTitle={conversation.title}
-                  />
-                </article>
-              );
-            })}
-          </div>
-        )}
+        <LibraryTabs
+          conversations={conversations}
+          images={imageItems}
+          audios={audioItems}
+          videos={videoItems}
+        />
       </section>
     </PageWrapper>
   );

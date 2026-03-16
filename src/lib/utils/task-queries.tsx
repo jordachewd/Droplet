@@ -1,4 +1,4 @@
-import { DEFAULT_PERSONA_ID } from "@/constants/assistant-personas";
+import { DEFAULT_PERSONA_ID, getPersona } from "@/constants/assistant-personas";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import Task from "@/lib/database/models/tasks.model";
 import {
@@ -26,6 +26,24 @@ type TaskRecord = {
   endedAt?: Date | string;
   endedReason?: TaskEndedReason;
   endAction?: TaskEndAction;
+};
+
+export type MediaContentType = "image_url" | "audio_url" | "video_url";
+
+export interface MediaLibraryItem {
+  url: string;
+  taskId: string;
+  taskTitle: string;
+  personaId: PersonaId;
+  createdAt: string;
+}
+
+type MediaAggregateRecord = {
+  url?: string;
+  taskId?: unknown;
+  taskTitle?: string;
+  personaId?: string;
+  createdAt?: Date | string;
 };
 
 const messageRoles: MessageRole[] = [
@@ -59,13 +77,14 @@ function toPlainContent(content: unknown): Message["content"] {
       return items;
     }
 
-    const { type, text, image_url, audio_url } = entry;
+    const { type, text, image_url, audio_url, video_url } = entry;
 
     if (
       type !== "text" &&
       type !== "temp" &&
       type !== "image_url" &&
-      type !== "audio_url"
+      type !== "audio_url" &&
+      type !== "video_url"
     ) {
       return items;
     }
@@ -85,6 +104,10 @@ function toPlainContent(content: unknown): Message["content"] {
 
     if (typeof audio_url === "string" || audio_url === null) {
       item.audio_url = audio_url;
+    }
+
+    if (typeof video_url === "string" || video_url === null) {
+      item.video_url = video_url;
     }
 
     items.push(item);
@@ -178,4 +201,86 @@ export async function getTaskByIdForUser({
     endAction: task.endAction,
     updatedAt: new Date(task.updatedAt || Date.now()).toISOString(),
   };
+}
+
+export async function getMediaItemsByUserId(
+  userId: string,
+  mediaType: MediaContentType,
+  limit: number = 24,
+  offset: number = 0,
+): Promise<MediaLibraryItem[]> {
+  await connectToDatabase();
+
+  const safeLimit = Math.max(1, Math.min(limit, 100));
+  const safeOffset = Math.max(0, offset);
+
+  const projectUrlExpression: Record<MediaContentType, string> = {
+    image_url: "$messages.content.image_url.url",
+    audio_url: "$messages.content.audio_url",
+    video_url: "$messages.content.video_url",
+  };
+
+  const mediaItems = (await Task.aggregate([
+    {
+      $match: {
+        userId,
+      },
+    },
+    {
+      $unwind: "$messages",
+    },
+    {
+      $unwind: "$messages.content",
+    },
+    {
+      $match: {
+        "messages.content.type": mediaType,
+      },
+    },
+    {
+      $project: {
+        _id: 0,
+        taskId: "$_id",
+        taskTitle: "$title",
+        personaId: "$personaId",
+        createdAt: {
+          $ifNull: ["$updatedAt", "$createdAt"],
+        },
+        url: projectUrlExpression[mediaType],
+      },
+    },
+    {
+      $match: {
+        url: {
+          $type: "string",
+          $ne: "",
+        },
+      },
+    },
+    {
+      $sort: {
+        createdAt: -1,
+      },
+    },
+    {
+      $skip: safeOffset,
+    },
+    {
+      $limit: safeLimit,
+    },
+  ])) as MediaAggregateRecord[];
+
+  return mediaItems.map((item) => ({
+    // Aggregation may return malformed dates from legacy rows; normalize safely.
+    createdAt: (() => {
+      const parsed = new Date(item.createdAt || Date.now());
+      return Number.isNaN(parsed.getTime())
+        ? new Date().toISOString()
+        : parsed.toISOString();
+    })(),
+    url: item.url ?? "",
+    taskId: String(item.taskId ?? ""),
+    taskTitle: item.taskTitle || "Untitled conversation",
+    personaId: getPersona(item.personaId).id,
+  }));
 }

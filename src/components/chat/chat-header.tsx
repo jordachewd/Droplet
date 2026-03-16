@@ -2,24 +2,39 @@
 
 import { useEffect, useRef, useState } from "react";
 import classNames from "classnames";
+import { usePathname } from "next/navigation";
 import { useShallow } from "zustand/react/shallow";
 import ToggleTheme from "@/components/shared/toggle-theme";
 import AvatarMenu from "@/components/shared/avatar-menu";
 import SidebarToggle from "@/components/shared/sidebar-toggle";
 import { useChatStore } from "@/lib/hooks/use-chat-store";
 import { useUiStore } from "@/lib/hooks/use-ui-store";
-import { getPersona } from "@/constants/assistant-personas";
+import { PERSONAS } from "@/constants/assistant-personas";
+import { PersonaId } from "@/types/PersonaData.d";
+import { usePreferencesStore } from "@/lib/hooks/use-preferences-store";
 
 interface ChatHeaderProps {
   className?: string;
+  allowedPersonaIds?: PersonaId[];
 }
 
-export default function ChatHeader({ className: style = "" }: ChatHeaderProps) {
-  const { messages, taskStatus, personaId } = useChatStore(
+export default function ChatHeader({
+  className: style = "",
+  allowedPersonaIds,
+}: ChatHeaderProps) {
+  const pathname = usePathname();
+  const { messages, taskStatus, personaId, setPersonaId } = useChatStore(
     useShallow((state) => ({
       messages: state.messages,
       taskStatus: state.taskStatus,
       personaId: state.personaId,
+      setPersonaId: state.setPersonaId,
+    })),
+  );
+  const { preferredPersonaId, setPreferredPersonaId } = usePreferencesStore(
+    useShallow((state) => ({
+      preferredPersonaId: state.preferredPersonaId,
+      setPreferredPersonaId: state.setPreferredPersonaId,
     })),
   );
 
@@ -57,11 +72,32 @@ export default function ChatHeader({ className: style = "" }: ChatHeaderProps) {
     }
   }
 
-  const personaLabel = personaId ? getPersona(personaId).label : undefined;
+  const selectablePersonaIds = (
+    allowedPersonaIds?.length
+      ? allowedPersonaIds
+      : PERSONAS.map((persona) => persona.id)
+  ) as PersonaId[];
+  const selectablePersonas = PERSONAS.filter((persona) =>
+    selectablePersonaIds.includes(persona.id),
+  );
+  const activePersonaId = (personaId ??
+    preferredPersonaId ??
+    selectablePersonas[0]?.id) as PersonaId | null;
+  const isConversationRoute = pathname?.startsWith("/app/c/") ?? false;
   const messageCount = messages.length;
   const sidebarExpanded = isDesktop
     ? !desktopSidebarCollapsed
     : mobileSidebarOpen;
+
+  function handlePersonaChange(nextPersonaId: string) {
+    if (!selectablePersonaIds.includes(nextPersonaId as PersonaId)) {
+      return;
+    }
+
+    const nextId = nextPersonaId as PersonaId;
+    setPersonaId(nextId);
+    setPreferredPersonaId(nextId);
+  }
 
   const chatHeaderClass = classNames(
     "ChatHeader absolute left-0 right-0 top-0 z-20 flex w-full px-3",
@@ -82,9 +118,24 @@ export default function ChatHeader({ className: style = "" }: ChatHeaderProps) {
             controlsId="chat-sidebar"
           />
 
-          {personaLabel && (
+          {selectablePersonas.length > 0 && activePersonaId && (
             <div className="flex items-center gap-2 rounded-full border border-dotted px-2.5 py-1 text-xs">
-              <span className="font-semibold">{personaLabel}</span>
+              <select
+                aria-label="Select persona"
+                className={classNames(
+                  "rounded bg-transparent pr-1 text-xs font-semibold outline-none",
+                  "disabled:cursor-not-allowed disabled:opacity-80",
+                )}
+                value={activePersonaId}
+                onChange={(event) => handlePersonaChange(event.target.value)}
+                disabled={isConversationRoute}
+              >
+                {selectablePersonas.map((persona) => (
+                  <option key={persona.id} value={persona.id}>
+                    {persona.label}
+                  </option>
+                ))}
+              </select>
               <span className="opacity-65">Persona</span>
             </div>
           )}
