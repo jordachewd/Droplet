@@ -10,6 +10,13 @@ export interface DailyConversationLimitResult {
   remaining: number;
 }
 
+export interface ClaimDailyConversationSlotResult {
+  claimed: boolean;
+  limit: number;
+  used: number;
+  remaining: number;
+}
+
 function getStartOfDay(now: Date): Date {
   const startOfDay = new Date(now);
   startOfDay.setUTCHours(0, 0, 0, 0);
@@ -61,5 +68,105 @@ export async function checkDailyConversationLimit(
     limit,
     used,
     remaining,
+  };
+}
+
+export async function claimDailyConversationSlot(
+  userId: string,
+  planName?: PlanName | null,
+  now: Date = new Date(),
+): Promise<ClaimDailyConversationSlotResult> {
+  const normalizedPlanName: PlanName = planName ?? "Lite";
+  const limit = PLAN_LIMITS[normalizedPlanName].conversationsPerDay;
+
+  if (limit === -1) {
+    return {
+      claimed: true,
+      limit,
+      used: 0,
+      remaining: -1,
+    };
+  }
+
+  await connectToDatabase();
+
+  const startOfDay = getStartOfDay(now);
+  const updatedAt = new Date();
+
+  // Attempt 1: Atomically increment within current window if below limit
+  const claimedInCurrentWindow =
+    await User.findOneAndUpdate<DailyConversationCounterDocument>(
+      {
+        clerkId: userId,
+        dailyConversationWindowStart: { $gte: startOfDay },
+        dailyConversationsStarted: { $lt: limit },
+      },
+      {
+        $inc: { dailyConversationsStarted: 1 },
+        $set: { updatedAt },
+      },
+      {
+        strict: true,
+        upsert: false,
+        returnDocument: "after",
+        projection: {
+          dailyConversationsStarted: 1,
+        },
+      },
+    ).lean<DailyConversationCounterDocument>();
+
+  if (claimedInCurrentWindow) {
+    const used = claimedInCurrentWindow.dailyConversationsStarted ?? 1;
+    return {
+      claimed: true,
+      limit,
+      used,
+      remaining: Math.max(0, limit - used),
+    };
+  }
+
+  // Attempt 2: Atomically reset stale window and claim first slot of new day
+  const claimedWithReset =
+    await User.findOneAndUpdate<DailyConversationCounterDocument>(
+      {
+        clerkId: userId,
+        $or: [
+          { dailyConversationWindowStart: { $lt: startOfDay } },
+          { dailyConversationWindowStart: { $exists: false } },
+          { dailyConversationWindowStart: null },
+        ],
+      },
+      {
+        $set: {
+          dailyConversationsStarted: 1,
+          dailyConversationWindowStart: startOfDay,
+          updatedAt,
+        },
+      },
+      {
+        strict: true,
+        upsert: false,
+        returnDocument: "after",
+        projection: {
+          dailyConversationsStarted: 1,
+        },
+      },
+    ).lean<DailyConversationCounterDocument>();
+
+  if (claimedWithReset) {
+    return {
+      claimed: true,
+      limit,
+      used: 1,
+      remaining: Math.max(0, limit - 1),
+    };
+  }
+
+  // Both attempts failed: limit reached in the current window
+  return {
+    claimed: false,
+    limit,
+    used: limit,
+    remaining: 0,
   };
 }

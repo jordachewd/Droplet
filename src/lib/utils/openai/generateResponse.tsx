@@ -440,7 +440,14 @@ async function buildOpenAIResponsePayload({
           taskUsage: taskUsage + (imagePayload.taskUsage ?? 0),
           requestMetrics,
         };
-      } catch {
+      } catch (imageError) {
+        const status =
+          imageError instanceof Error && "status" in imageError
+            ? (imageError as { status?: number }).status
+            : undefined;
+        process.stderr.write(
+          `[generateResponse] image generation failed model=${imagePolicy.model} status=${status ?? "unknown"}\n`,
+        );
         return {
           errorType: "service_error",
           errorMessage: "Image generation failed. Please try again.",
@@ -481,8 +488,11 @@ async function buildOpenAIResponsePayload({
       }
 
       try {
+        const ttsText =
+          typeof parsedArgs.content === "string" ? parsedArgs.content : "";
+
         const audioResponse = await generateAudio({
-          messages: Array.isArray(parsedArgs) ? parsedArgs : [parsedArgs],
+          ttsText,
           role: message.role,
           taskId,
           userId,
@@ -505,7 +515,14 @@ async function buildOpenAIResponsePayload({
           taskUsage: taskUsage + (audioPayload.taskUsage ?? 0),
           requestMetrics,
         };
-      } catch {
+      } catch (audioError) {
+        const status =
+          audioError instanceof Error && "status" in audioError
+            ? (audioError as { status?: number }).status
+            : undefined;
+        process.stderr.write(
+          `[generateResponse] audio generation failed model=${audioPolicy.model} status=${status ?? "unknown"}\n`,
+        );
         return {
           errorType: "service_error",
           errorMessage: "Audio generation failed. Please try again.",

@@ -17,7 +17,8 @@ const GENERATED_AUDIO_FORMAT = "wav";
 const GENERATED_AUDIO_CONTENT_TYPE = "audio/wav";
 
 interface GenerateAudioParams {
-  messages: Message[];
+  messages?: Message[];
+  ttsText?: string;
   role: MessageRole;
   taskId: string;
   userId: string;
@@ -43,20 +44,21 @@ function decodeGeneratedAudio(rawAudioData: string): Buffer {
 
 export async function generateAudio({
   messages,
+  ttsText,
   role,
   taskId,
   userId,
   planName,
   audioMode = "tts",
 }: GenerateAudioParams) {
-  try {
-    const policy = resolveModelPolicy({
-      plan: normalizePlanTier(planName),
-      feature: "audio_generation",
-      taskClass: "final",
-      audioMode,
-    });
+  const policy = resolveModelPolicy({
+    plan: normalizePlanTier(planName),
+    feature: "audio_generation",
+    taskClass: "final",
+    audioMode,
+  });
 
+  try {
     if (policy.hardBlocked) {
       throw new Error(
         policy.notes ?? "Audio generation is blocked for the current request.",
@@ -70,7 +72,7 @@ export async function generateAudio({
     let requestMetric: AIRequestMetric;
 
     if (audioMode === "tts") {
-      const speechInput = buildTextToSpeechInput(messages);
+      const speechInput = ttsText ?? buildTextToSpeechInput(messages ?? []);
 
       if (!speechInput) {
         throw new Error("No text input available for TTS audio generation.");
@@ -96,7 +98,7 @@ export async function generateAudio({
         model: policy.model,
         modalities: ["text", "audio"],
         audio: { voice: "alloy", format: GENERATED_AUDIO_FORMAT },
-        messages: [...messages] as ChatCompletionMessageParam[],
+        messages: [...(messages ?? [])] as ChatCompletionMessageParam[],
       });
 
       requestMetric = {
@@ -154,6 +156,13 @@ export async function generateAudio({
       requestMetric,
     });
   } catch (error) {
+    const status =
+      error instanceof Error && "status" in error
+        ? (error as { status?: number }).status
+        : undefined;
+    process.stderr.write(
+      `[generateAudio] model=${policy.model} audioMode=${audioMode} status=${status ?? "unknown"} error=${error instanceof Error ? error.message : "unknown"}\n`,
+    );
     handleError({ error, source: "generateAudio" });
   }
 }

@@ -359,12 +359,7 @@ describe("generateResponse", () => {
     });
 
     expect(generateAudio).toHaveBeenCalledWith({
-      messages: [
-        {
-          role: "user",
-          content: "Read this text out loud.",
-        },
-      ],
+      ttsText: "Read this text out loud.",
       role: "assistant",
       taskId: "task_audio",
       userId: "clerk_1",
