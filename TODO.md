@@ -6,45 +6,17 @@
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
 > **STATUS: Phases 1–25.7 + 27.1–27.3 + 27.6–27.10 complete.**
-> **PM deep audit #7 (2026-03-15): Three-agent independent audit. CRITICAL bugs found: daily limit bypass via deletion + off-by-one, media generation model ID failures. Phases 27.7–27.10 verified complete and archived.**
-> **Priority order: 28.1 (durable daily counter) → 28.2 (media model IDs) → 28.3 (audio mode routing) → 27.4 (admin forms) → 27.5 (settings propagation) → 28.4 (Zod) → 28.5 (Zustand) → Phase 26.**
+> **PM deep audit #8 (2026-03-16): Three-agent independent audit. CRITICAL bugs found: audio generation fully broken (malformed messages + hardcoded audioMode), image generation failing (model IDs need live verification), daily limit TOCTOU race allows bypass under concurrent requests.**
+> **Priority order: 28.2 (image model IDs) → 28.3 (audio generation fix — expanded) → 28.1 (daily limit atomic pattern — re-scoped) → 27.4 (admin forms) → 27.5 (settings propagation) → 28.4 (Zod) → 28.5 (Zustand) → Phase 26.**
 > **All Phase 26+ deferred work is ON HOLD until Phase 28 (all CRITICAL subtasks 28.1–28.3) is PM-approved complete.**
 
 ---
 
-## Phase 28: CRITICAL — Limit Enforcement & Media Generation Fixes
+## Phase 28: CRITICAL — Media Generation Fixes & Limit Enforcement
 
 > **Blocking all other work.** Owner-reported and three-agent-verified critical bugs.
 > Depends on: Phase 27.7–27.10 complete (verified).
-
----
-
-### 28.1 CRITICAL — Implement durable daily conversation counter (fix limit bypass + off-by-one)
-
-**Files:** `src/lib/utils/check-daily-conversations.ts`, `src/app/api/openai/route.tsx`, `src/lib/database/models/user.model.tsx` (or new DailyUsage model), `src/lib/actions/task.actions.tsx`, `tests/unit/check-daily-conversations.test.ts`, `tests/unit/openai-route.test.ts`
-**Ref:** TD-LIMIT-03, TD-LIMIT-04
-
-**Root cause:** `checkDailyConversationLimit` uses `Task.countDocuments({ userId, createdAt: { $gte: startOfDay } })` — a live count of existing tasks. When users delete conversations, the count drops, allowing more conversations beyond the limit. Additionally, the task is created BEFORE the daily limit check, so the newly created task is included in the count, creating an off-by-one (effective limit = N-1).
-
-**What to do:**
-
-1. Add a `dailyConversationsStarted` counter field to the User model (or create a lightweight `DailyUsage` collection keyed by `userId + date`). This counter is incremented on conversation creation and **never decremented** by task deletion.
-2. Rewrite `checkDailyConversationLimit` to read the durable counter instead of `Task.countDocuments`.
-3. Move the daily limit check BEFORE task creation in the `/api/openai` route. If limit is hit, return the stop response WITHOUT creating a task first.
-4. Remove the compensating `deleteTask` pattern (no longer needed — check happens before create).
-5. Update unit tests to cover: durable counter incremented on creation, counter not decremented on deletion, correct limit boundary (exactly 5 for Lite), off-by-one eliminated.
-
-**Acceptance criteria:**
-
-- [ ] Daily conversation limit uses a durable counter, not `Task.countDocuments`
-- [ ] Deleting conversations does NOT free up daily quota
-- [ ] Daily limit check happens BEFORE task creation (no off-by-one)
-- [ ] Compensating delete pattern removed
-- [ ] Lite users can create exactly 5 conversations per day (not 4)
-- [ ] Counter resets at UTC midnight (or 24h rolling window — match existing behavior)
-- [ ] Unit tests cover: boundary at exact limit, deletion does not affect count, unlimited plan bypass
-- [ ] `npx tsc --noEmit` passes
-- [ ] All tests pass
+> PM audit #8 re-scoped: 28.1 re-written (durable counter already exists, TOCTOU race is the real gap). 28.3 expanded (messages parameter bug added). Priority reordered: 28.2 → 28.3 → 28.1 (media is more impactful than narrow race condition).
 
 ---
 
@@ -53,54 +25,117 @@
 **Files:** `src/lib/utils/ai-model-policy.ts`, `src/lib/utils/openai/generateImage.tsx`, `tests/unit/ai-model-policy.test.ts`
 **Ref:** TD-AI-20
 
-**Root cause:** Image model IDs in the policy matrix (`gpt-image-1-mini`, `gpt-image-1.5`) may not be valid OpenAI API model identifiers. If invalid, every image generation call returns a 400 error, which is caught and shown as "Image generation failed" — matching the owner's report.
+**Root cause:** Image model IDs in the policy matrix (`gpt-image-1-mini`, `gpt-image-1.5`) may not be valid OpenAI API model identifiers. HF-3 (DONE.md) claims these were verified against OpenAI docs, but owner still reports "Image generation failed" errors. The try-catch in `generateResponse.tsx` returns a generic error — the actual OpenAI error (e.g., 400 invalid model) is only in stderr. **Only a live API test will resolve this contradiction.**
 
 **What to do:**
 
-1. Check Zod Skills or Context7 MCP for current OpenAI image model documentation.
-2. Test each image model ID against the actual OpenAI API (live verification call).
-3. If any model ID is invalid, replace it with the confirmed-valid equivalent (e.g., `dall-e-3`, `gpt-image-1`, or whatever the API currently supports).
-4. Update the policy matrix with verified model IDs.
-5. Update unit tests for the corrected model IDs.
-6. Verify image generation works end-to-end after the fix.
+1. Read available MCPs (Context7) for current OpenAI image model documentation.
+2. **Live-test** `gpt-image-1-mini` against the OpenAI API with a simple `images.generate` call.
+3. **Live-test** `gpt-image-1.5` against the OpenAI API with a simple `images.generate` call.
+4. If any model ID fails, replace it with a confirmed-valid equivalent from OpenAI docs (`gpt-image-1`, `dall-e-3`, etc.).
+5. Update the policy matrix with verified model IDs.
+6. Add structured error logging on media generation failure — log the model ID and HTTP status code alongside the generic user message.
+7. Update unit tests for any corrected model IDs.
+8. Verify image generation works end-to-end after the fix.
 
 **Acceptance criteria:**
 
-- [ ] All image model IDs in `MODEL_POLICY_MATRIX` are verified-valid OpenAI API model identifiers
+- [ ] All image model IDs in `MODEL_POLICY_MATRIX` are **live-tested** against the OpenAI API (not just doc-checked)
 - [ ] Image generation succeeds for Lite plan
 - [ ] Image generation succeeds for Pro/Premium plans
-- [ ] Policy matrix fallback model IDs are also verified
+- [ ] Policy matrix fallback model IDs are also live-tested
+- [ ] Media generation failures log model ID + HTTP status to stderr
 - [ ] Unit tests updated for correct model IDs
 - [ ] `npx tsc --noEmit` passes
 - [ ] All tests pass
 
 ---
 
-### 28.3 CRITICAL — Verify and fix audio generation model IDs + TTS mode routing
+### 28.3 CRITICAL — Fix audio generation (messages bug + audioMode + model IDs)
 
-**Files:** `src/lib/utils/ai-model-policy.ts`, `src/lib/utils/openai/generateAudio.tsx`, `src/lib/utils/openai/generateResponse.tsx`, `tests/unit/ai-model-policy.test.ts`
-**Ref:** TD-AI-21
+**Files:** `src/lib/utils/openai/generateResponse.tsx`, `src/lib/utils/openai/generateAudio.tsx`, `src/lib/utils/ai-model-policy.ts`, `src/lib/utils/openai/message-policy.ts`, `tests/unit/ai-model-policy.test.ts`, `tests/unit/generate-response.test.ts`
+**Ref:** TD-AI-21, TD-AI-22
 
-**Root cause:** Two issues:
+**Root cause:** Three independent bugs, each of which causes audio generation to fail:
 
-1. Audio model IDs (`gpt-audio-mini`, `gpt-audio-1.5`) may not be valid. If invalid, Pro/Premium audio fails.
-2. The tool call handler in `generateResponse.tsx` always passes `audioMode: "tts"`, but for Pro/Premium the `isTtsOnly` flag resolves to `false` (because the model isn't in the TTS-only list), routing TTS requests through `chat.completions.create()` with `modalities: ["text", "audio"]` instead of `audio.speech.create()`. This may fail if the model doesn't support that modality.
+1. **Messages parameter bug (TD-AI-22):** The tool call handler in `generateResponse.tsx` passes `parsedArgs` (the JSON-parsed tool call function arguments from the model) as the `messages` parameter to `generateAudio()`. These are NOT proper `Message[]` objects — they are whatever JSON the model decided to pass (e.g., `{ role: "...", content: "..." }`). The `buildTextToSpeechInput` function expects `Message[]` format. This causes TTS to fail or produce garbage input. For `audio_in_out`, malformed messages are passed directly to `chat.completions.create()`, which will fail.
+2. **audioMode hardcoded (TD-AI-21):** The tool call handler always passes `audioMode: "tts"` regardless of user plan. Pro/Premium users who should have access to `audio_in_out` are forced into TTS-only mode.
+3. **Audio model IDs (TD-AI-21):** `gpt-audio-mini` and `gpt-audio-1.5` may not be valid. Same HF-3 contradiction as image model IDs.
 
 **What to do:**
 
-1. Verify all audio model IDs against the OpenAI API (live verification).
-2. Fix any invalid model IDs with confirmed-valid equivalents.
-3. Fix the TTS routing: if the tool call requests TTS mode, the `generateAudio` function should use the `audio.speech.create()` path regardless of which model is used (when `audioMode === "tts"`). The `isTtsOnly` policy flag should control whether `audio_in_out` is ALLOWED, not override the requested mode.
-4. Update unit tests.
+1. **Fix the messages parameter:** Extract the TTS text from the tool call arguments (`parsedArgs.content` or similar) and pass it as a dedicated text input. For TTS mode, the `generateAudio` function needs the text to speak, NOT the conversation history. For `audio_in_out` mode, pass the actual conversation messages from the route context (already available in the route handler scope), NOT the tool call arguments.
+2. **Fix audioMode determination:** For Lite, always `"tts"` (isTtsOnly enforced by policy). For Pro/Premium, default to `"tts"` for now (since tool calls request TTS-style generation). `audio_in_out` can be implemented as a future enhancement when the frontend supports audio input. The key fix: ensure that when `audioMode === "tts"`, the `audio.speech.create()` path is ALWAYS used, regardless of which model is resolved.
+3. **Live-test audio model IDs** against the OpenAI API. If invalid, replace with confirmed-valid equivalents from OpenAI docs.
+4. Add structured error logging for audio generation failures (model ID + HTTP status).
+5. Update unit tests for all three fixes.
 
 **Acceptance criteria:**
 
-- [ ] All audio model IDs are verified-valid OpenAI API model identifiers
+- [ ] Audio tool call handler passes correct text input (from tool args) for TTS, not raw parsedArgs as messages
 - [ ] TTS requests use `audio.speech.create()` for ALL plans (Lite, Pro, Premium)
 - [ ] `audio_in_out` mode correctly blocked for Lite (isTtsOnly enforcement preserved)
+- [ ] All audio model IDs are **live-tested** against the OpenAI API
 - [ ] Audio generation succeeds for Lite (TTS path)
 - [ ] Audio generation succeeds for Pro/Premium (TTS path)
-- [ ] Unit tests updated for correct model IDs and TTS routing
+- [ ] Audio generation failures log model ID + HTTP status to stderr
+- [ ] Unit tests cover: TTS path with correct text extraction, audioMode routing, model ID validity
+- [ ] `npx tsc --noEmit` passes
+- [ ] All tests pass
+
+---
+
+### 28.1 CRITICAL — Fix daily conversation limit TOCTOU race + midnight race (re-scoped)
+
+**Files:** `src/lib/actions/task.actions.tsx`, `src/lib/utils/check-daily-conversations.ts`, `src/app/api/openai/route.tsx`, `tests/unit/check-daily-conversations.test.ts`, `tests/unit/task-actions.test.ts`, `tests/unit/openai-route.test.ts`
+**Ref:** TD-LIMIT-05 (TOCTOU race), TD-LIMIT-06 (midnight race)
+
+**IMPORTANT — What is already done (do NOT re-implement):**
+
+- Durable counter (`User.dailyConversationsStarted` + `User.dailyConversationWindowStart`) — **already implemented** (Phase 27.1)
+- `checkDailyConversationLimit` reads from durable counter, NOT `Task.countDocuments` — **already implemented**
+- Check-before-create (daily check at route L869, task create at L917) — **already implemented**
+- TD-LIMIT-03 and TD-LIMIT-04 are **RESOLVED in code** — do not re-implement them
+
+**Root cause of remaining bugs:**
+
+1. **TOCTOU race (TD-LIMIT-05):** `checkDailyConversationLimit` (read) and `incrementDailyConversationCounter` (write) are separate operations separated by seconds (title generation via OpenAI API). Two concurrent requests can both read counter=4/5, both see `allowed: true`, both create tasks, both increment to 6. **Fix:** Replace separated check-then-increment with a single atomic claim-then-create, modeled after the successful `incrementPromptCountIfBelowLimit` pattern.
+2. **Midnight race (TD-LIMIT-06):** At UTC midnight, two concurrent requests see yesterday's window, both reach Phase 2 (reset), both `$set dailyConversationsStarted: 1`. One increment is lost. **Fix:** Handle window reset within the same atomic operation.
+3. **Rollback delete has no error handling (Copilot review):** If `incrementDailyConversationCounter` fails and the compensating `Task.findOneAndDelete` also fails, the error is masked and an orphan task persists. **Fix:** Wrap rollback delete in its own try/catch with stderr logging.
+
+**What to do:**
+
+1. Create new function `claimDailyConversationSlot(userId, planName)` that atomically checks the limit AND increments the counter in a single `findOneAndUpdate` operation:
+   ```
+   User.findOneAndUpdate(
+     { clerkId: userId, dailyConversationWindowStart: { $gte: startOfDay }, dailyConversationsStarted: { $lt: limit } },
+     { $inc: { dailyConversationsStarted: 1 } },
+     { returnDocument: "after" }
+   )
+   ```
+   If returns null AND the window is stale (yesterday), do an atomic reset-and-claim:
+   ```
+   User.findOneAndUpdate(
+     { clerkId: userId, dailyConversationWindowStart: { $lt: startOfDay } },
+     { $set: { dailyConversationsStarted: 1, dailyConversationWindowStart: startOfDay } },
+     { returnDocument: "after" }
+   )
+   ```
+   If both return null, limit is reached.
+2. Replace the separated `checkDailyConversationLimit` + `incrementDailyConversationCounter` calls in the route with the single `claimDailyConversationSlot` call BEFORE task creation.
+3. Remove `incrementDailyConversationCounter` from `createTask` — the slot is already claimed before create.
+4. Wrap the rollback `Task.findOneAndDelete` in its own try/catch with `process.stderr.write` logging.
+5. Update unit tests for: atomic claim at exact boundary, midnight reset under concurrent requests, rollback delete failure logging, unlimited plan bypass.
+
+**Acceptance criteria:**
+
+- [ ] Daily limit check and increment are a SINGLE atomic MongoDB operation (no TOCTOU gap)
+- [ ] Midnight window reset is handled atomically (no lost increments at day boundary)
+- [ ] Rollback delete wrapped in try/catch with stderr logging
+- [ ] Lite users can create exactly 5 conversations per day under concurrent requests
+- [ ] Counter resets correctly at UTC midnight
+- [ ] `incrementDailyConversationCounter` removed from `createTask` (slot claimed before create)
+- [ ] Unit tests cover: atomic boundary, concurrent claim rejection, midnight reset, rollback failure logging, unlimited bypass
 - [ ] `npx tsc --noEmit` passes
 - [ ] All tests pass
 

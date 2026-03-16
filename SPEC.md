@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-15 (PM deep audit #7 complete. Three-agent independent audit. Phases 27.7–27.10 verified complete. CRITICAL: daily limit bypass + off-by-one + media model ID failures identified. New CRITICAL TDs added: TD-LIMIT-03, TD-LIMIT-04, TD-AI-20, TD-AI-21.)
+> Last updated: 2026-03-16 (PM deep audit #8 complete. Three-agent independent audit. TD-LIMIT-03/TD-LIMIT-04 RESOLVED — durable counter and check-before-create already implemented. New CRITICAL TDs: TD-LIMIT-05 (TOCTOU race), TD-LIMIT-06 (midnight race), TD-AI-22 (audio messages parameter bug). Phase 28 re-scoped and re-ordered: 28.2 → 28.3 → 28.1.)
 
 ---
 
@@ -179,12 +179,12 @@ Prompts are versioned and separated from request handlers. `buildPersonaAwareSys
 ### Usage Limit Enforcement
 
 - Plan limits stored as constants in `PLAN_LIMITS`.
-- Daily conversation count tracked via `Task.countDocuments` queries on `createdAt` (uses compound index `{userId, createdAt}`).
-- Per-conversation prompt count tracked on `Task.promptCount` field (initialized on creation, incremented via `$inc`).
+- Daily conversation count tracked via durable counter on User model (`dailyConversationsStarted` + `dailyConversationWindowStart`). Counter is incremented on conversation creation and **never decremented** by task deletion. Resets at UTC midnight. **Note:** check and increment are currently separate operations — TOCTOU race is tracked as TD-LIMIT-05.
+- Per-conversation prompt count tracked on `Task.promptCount` field (initialized on creation, incremented atomically via `findOneAndUpdate` with `$lt` guard — no race window).
 - Conversation storage tracked via `Task.estimatedBytes` field (12MB threshold, 4MB buffer before MongoDB 16MB limit).
 - Media generation counters on User model plan subdoc.
-- `checkDailyConversationLimit()` utility validates daily quota per plan.
-- `/api/openai` route checks all limits before making OpenAI calls: daily limit (new conversations only), prompt limit, storage limit, media limit.
+- `checkDailyConversationLimit()` utility validates daily quota per plan by reading durable counter.
+- `/api/openai` route checks all limits before making OpenAI calls: daily limit (new conversations only, checked BEFORE task creation), prompt limit, storage limit, media limit.
 - When any limit is hit: conversation is stopped with `taskStatus: "ended"`, stop reason is recorded on Task, user receives next-action message.
 - Unlimited plans (`-1` values in `PLAN_LIMITS`) always bypass limit checks.
 
@@ -686,17 +686,30 @@ All file handling technical debt has been resolved. S3 cleanup on task/user dele
 | TD-AI-16 | OpenAI | ~~Image model IDs are placeholders~~ — **CLOSED: model IDs verified real (OpenAI docs)** | Resolved |
 | TD-AI-17 | OpenAI | ~~Audio model IDs are placeholders~~ — **CLOSED: model IDs verified real (OpenAI docs)** | Resolved |
 
-### Active — High Priority
+### Active — Critical Priority
 
-| ID          | Area   | Description                                                                                                                                                                                                                                               | Severity     |
-| ----------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| TD-LIMIT-03 | Limits | Daily conversation limit bypassed via task deletion — `checkDailyConversationLimit` uses `Task.countDocuments` (live count). User deletes conversations → count drops → creates more. Limit is effectively unenforced.                                    | **Critical** |
-| TD-LIMIT-04 | Limits | Daily conversation limit off-by-one — task created BEFORE `checkDailyConversationLimit` runs, new task counted in check. Effective limit = N-1 (Lite gets 4, not 5).                                                                                      | **Critical** |
-| TD-AI-20    | OpenAI | Image generation model IDs (`gpt-image-1-mini`, `gpt-image-1.5`) may not exist in the OpenAI API — all image generation calls fail with 400 error. Must verify and fix with confirmed-valid model IDs.                                                    | **Critical** |
-| TD-AI-21    | OpenAI | Audio generation model IDs (`gpt-audio-mini`, `gpt-audio-1.5`) may not exist; additionally, tool call handler always passes `audioMode: "tts"` but Pro/Premium TTS requests route to `chat.completions.create()` path instead of `audio.speech.create()`. | **Critical** |
-| TD-ADMIN-01 | Admin  | Settings page uses JSON textarea editors instead of proper form controls (dropdowns, number inputs, radios)                                                                                                                                               | Medium       |
-| TD-ADMIN-02 | Admin  | Admin settings values saved to AppSetting but never consumed — pricing, limits, model config are inert (hardcoded in `PLAN_LIMITS`)                                                                                                                       | Medium       |
-| TD-AI-08    | OpenAI | No video generation (Premium) — UI shows "Coming soon", implementation deferred                                                                                                                                                                           | Medium       |
+| ID          | Area   | Description                                                                                                                                                                                                                                                                                                                                     | Severity     |
+| ----------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| TD-AI-20    | OpenAI | Image generation model IDs (`gpt-image-1-mini`, `gpt-image-1.5`) fail in production — owner reports "Image generation failed" errors. HF-3 claims IDs verified against docs but owner still sees failures. **Requires live API test to resolve contradiction.** If model IDs are valid, there may be an API parameter or response format issue. | **Critical** |
+| TD-AI-21    | OpenAI | Audio generation model IDs (`gpt-audio-mini`, `gpt-audio-1.5`) may not be valid. Additionally, tool call handler always passes `audioMode: "tts"` but Pro/Premium TTS requests route to `chat.completions.create()` path instead of `audio.speech.create()`.                                                                                    | **Critical** |
+| TD-AI-22    | OpenAI | Audio tool call handler passes `parsedArgs` (JSON-parsed tool call function arguments) as `messages` parameter to `generateAudio()`. These are NOT proper `Message[]` objects — they are raw JSON from the model. `buildTextToSpeechInput` expects `Message[]` format. This causes audio generation to fail for all plans and all personas.     | **Critical** |
+| TD-LIMIT-05 | Limits | Daily conversation limit TOCTOU race — `checkDailyConversationLimit` (read) and `incrementDailyConversationCounter` (write) are separate operations with seconds between them (title generation API call). Concurrent requests can both pass the check and both create conversations, exceeding the limit.                                      | **Critical** |
+| TD-LIMIT-06 | Limits | Midnight reset race — `incrementDailyConversationCounter` uses two-phase approach. At UTC midnight, concurrent requests can both see yesterday's window, both reach Phase 2 reset, both `$set dailyConversationsStarted: 1`. One increment is lost. Low probability but violates correctness.                                                   | **High**     |
+
+### ~~Active — High Priority~~ (Resolved)
+
+| ID          | Area   | Description                                                                                                                       | Status                                                                                                              |
+| ----------- | ------ | --------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| TD-LIMIT-03 | Limits | ~~Daily conversation limit bypassed via task deletion~~ — `checkDailyConversationLimit` used `Task.countDocuments` (live count)   | **Resolved (Phase 27.1)** — durable counter `User.dailyConversationsStarted` replaces `Task.countDocuments`         |
+| TD-LIMIT-04 | Limits | ~~Daily conversation limit off-by-one~~ — task created BEFORE `checkDailyConversationLimit` runs, creating effective limit of N-1 | **Resolved (Phase 27.1)** — check now happens BEFORE task creation in `/api/openai` route (L869 check, L917 create) |
+
+### Active — Medium Priority
+
+| ID          | Area   | Description                                                                                                 | Severity |
+| ----------- | ------ | ----------------------------------------------------------------------------------------------------------- | -------- |
+| TD-ADMIN-01 | Admin  | Settings page uses JSON textarea editors instead of proper form controls (dropdowns, number inputs, radios) | Medium   |
+| TD-ADMIN-02 | Admin  | Admin settings values saved to AppSetting but never consumed — pricing, limits, model config are inert      | Medium   |
+| TD-AI-08    | OpenAI | No video generation (Premium) — UI shows "Coming soon", implementation deferred                             | Medium   |
 
 ### Active — Low Priority
 
