@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-16 (PM deep audit #12 complete. Phase 31.1–31.3 verified. sidebarExpanded bug found (TD-UI-14). TD-AI-23, TD-LIMIT-07 moved to Resolved. 31.2-fix added to TODO.)
+> Last updated: 2026-03-16 (PM deep audit #13 complete. 31.2-fix verified DONE. TD-UI-14 moved to Resolved. Owner requirements: persona selector in ChatHeader, Library media tabs, audio/video verification, admin design consistency.)
 
 ---
 
@@ -119,7 +119,7 @@ Each persona has: `id`, `label`, `tagline`, `description`, `category`, `icon`, `
 
 - **Personas are plan-gated** (Lite: 3 personas, Pro: 7 personas, Premium: all 10 personas).
 - Default persona access per plan is hardcoded in constants but overridable by admin via AppSetting.
-- Persona selection UI: `ChatPersonaPicker` component in the chat interface — only shows personas available for the user’s plan.
+- Persona selection UI: `ChatPersonaPicker` component on `/app/new` and `/app/personas` pages. `ChatHeader` includes a persona dropdown selector for quick persona switching across all `/app` pages — selector is disabled during active conversations (persona is bound per-task).
 - Persona is stored per task in `Task.personaId`.
 - System prompt is built per-persona via `buildPersonaAwareSystemPrompt()`.
 - Entitlements resolved via `resolveEntitlements()` in `src/lib/utils/resolve-entitlements.tsx`.
@@ -694,8 +694,8 @@ All file handling technical debt has been resolved. S3 cleanup on task/user dele
 
 ## 13. Testing
 
-- **Unit tests**: 61 suites, 330 tests (Vitest) — includes streaming, webhook, chat-wrapper, chat-body stop-state, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, persona prompt, rate limiting, task complexity classification, conversation stop enforcement, entitlement resolver full coverage, checkout-success page, admin audit trail, OpenAI route tests, atomic prompt limit, daily conversation limit, media error handling, and universal feature access tests
-- **E2E tests**: 11 Playwright spec files across browser projects (chat-app-shell, auth-boundaries, public-pages with 70+ tests, conversation-lifecycle, user-profile, admin-users, admin-features, landing-page, plans-public, pricing-public, authenticated-flows). 200 total, 182 passed, 0 flaky, 18 skipped.
+- **Unit tests**: 62 suites, 330 tests (Vitest) — includes streaming, webhook, chat-wrapper, chat-body stop-state, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, persona prompt, rate limiting, task complexity classification, conversation stop enforcement, entitlement resolver full coverage, checkout-success page, admin audit trail, OpenAI route tests, atomic prompt limit, daily conversation limit, media error handling, and universal feature access tests
+- **E2E tests**: 11 Playwright spec files across browser projects (chat-app-shell, auth-boundaries, public-pages with 70+ tests, conversation-lifecycle, user-profile, admin-users, admin-features, landing-page, plans-public, pricing-public, authenticated-flows). 200 total, 181 passed, 1 failed (pre-existing Firefox admin-features timing), 18 skipped.
 - **Coverage**: Configured (Phase 24.1) — v8 provider, thresholds: 70% statements / 60% branches / 70% functions / 70% lines. Current: 82/71/88/82.
 - **Gap**: No dedicated E2E spec for streamed chunk-by-chunk rendering (manually verified via Playwright MCP)
 
@@ -742,11 +742,9 @@ All file handling technical debt has been resolved. S3 cleanup on task/user dele
 | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
 | TD-AI-21 | OpenAI | Audio model IDs (`gpt-audio-mini`, `gpt-audio-1.5`) are unverified. Currently mitigated — TTS path forces `gpt-4o-mini-tts` via `isTtsOnly` override. Will break if `audio_in_out` is ever enabled. Requires live API test. | **High** |
 
-### Active — High Priority
+### ~~Active — High Priority~~ (All Resolved)
 
-| ID       | Area | Description                                                                                                                                                                                                                                                | Severity |
-| -------- | ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| TD-UI-14 | UI   | ChatHeader `sidebarExpanded` computed as `!desktopSidebarCollapsed \|\| mobileSidebarOpen` — always `true` on mobile (OR short-circuit). `aria-expanded` and toggle label wrong. Toggle function works. Fix: viewport-aware ternary via `desktopQueryRef`. | **High** |
+_None._
 
 ### ~~Active — High Priority~~ (Resolved)
 
@@ -785,7 +783,7 @@ All file handling technical debt has been resolved. S3 cleanup on task/user dele
 | TD-PLAN-02    | Usage limits not enforced                              | Implemented                                                                                                                                                                                                                         |
 | TD-PLAN-04    | Lite 3-day expiry                                      | Removed — Lite now "Free forever"                                                                                                                                                                                                   |
 | TD-PLAN-05    | Prices $29/$69                                         | Updated to $19/$39                                                                                                                                                                                                                  |
-| TD-PLAN-06    | Lite restricts 2 personas                              | All 9 available in all plans                                                                                                                                                                                                        |
+| TD-PLAN-06    | Lite restricts 2 personas                              | Resolved — 10 personas total, plan-gated with three-tier access (full/limited/blocked). Lite: 3 full + 7 trial. Pro: 7 full + 3 trial. Premium: 10 full.                                                                            |
 | TD-PLAN-09    | Plan descriptions outdated                             | Updated with accurate limits                                                                                                                                                                                                        |
 | TD-UI-11      | FAQ copy outdated (trial references)                   | Rewritten for Droplet                                                                                                                                                                                                               |
 | TD-AI-02      | No OpenAI error classification                         | Implemented                                                                                                                                                                                                                         |
@@ -860,3 +858,4 @@ All file handling technical debt has been resolved. S3 cleanup on task/user dele
 | TD-OBS-01     | UsageEvent silent catch                                | Resolved in Phase 27.10 — `.catch()` handler logs via `process.stderr.write()`, fire-and-forget preserved                                                                                                                           |
 | TD-UI-15      | Profile page display-only                              | Resolved in Phase 27.7 — full edit form (name, email, avatar upload) + account self-deletion with confirmation                                                                                                                      |
 | TD-ACT-02     | deleteUser incomplete cleanup                          | Resolved in Phase 27.7 — `deleteUser()` now removes Tasks, Transactions, S3 assets, and MongoDB User record; signs out from Clerk                                                                                                   |
+| TD-UI-14      | ChatHeader sidebarExpanded always true on mobile       | Resolved in 31.2-fix — viewport-aware `isDesktop` via `useState` + `matchMedia` listener, ternary per viewport                                                                                                                      |

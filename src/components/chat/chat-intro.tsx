@@ -26,9 +26,7 @@ export default function ChatIntro({ persona, sendPrompt }: ChatIntroProps) {
   }
 
   const introWrapperClass = classNames(
-    "ChatIntro mx-auto flex w-full max-w-4xl flex-col gap-6 rounded-2xl border p-6 shadow-sm",
-    "border-lightBorders-400 bg-white/75",
-    "dark:border-darkBorders-500 dark:bg-jwdMarine-900/70",
+    "ChatIntro mx-auto flex w-full max-w-4xl flex-col gap-12 p-6",
   );
 
   const introPromptButtonClass = classNames(
@@ -39,7 +37,7 @@ export default function ChatIntro({ persona, sendPrompt }: ChatIntroProps) {
 
   return (
     <section className={introWrapperClass}>
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-2 text-center">
         <h1 className="heading-5">
           Hello {user?.firstName || "there"}, welcome to your chat dashboard.
         </h1>
