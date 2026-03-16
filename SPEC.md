@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-16 (PM deep audit #10 complete. Three-agent independent audit. 28.2-fix VERIFIED COMPLETE — image generation fixed. TD-AI-20 RESOLVED. TD-AI-24 RESOLVED. Policy change: per-plan persona gating approved. New Interviewer persona approved. TD-LIMIT-07 still open. TD-AI-23 still open.)
+> Last updated: 2026-03-16 (PM deep audit #11 complete. Owner instructions received. 30.1 DONE (Interviewer). 30.2 DONE (persona gating). 30.3 DONE (persona picker). 27.4 DONE (admin forms). TD-ADMIN-01 RESOLVED. New phases: 31 (layout/nav), 32 (Library media tabs), 33 (persona trial access), 34 (video gen). Persona trial access model frozen: full/limited/blocked.)
 
 ---
 
@@ -88,8 +88,30 @@ Admin access is enforced at the proxy level (`src/proxy.tsx`) via Clerk session 
 | `girlfriend`  | Girlfriend  | Companion    | Yes   | Yes   | No   | Yes | Yes     |
 | `interviewer` | Interviewer | Career       | Yes   | Yes   | No   | No  | Yes     |
 
-> **Rule 3 (updated):** Personas are plan-gated. Lite: Strategist, Developer, Best Friend. Pro: all Lite + Teacher, Wellness, Boyfriend, Girlfriend. Premium: all 10 personas. Admin can override via settings.
+> **Rule 3 (updated):** Personas use a three-tier access model: **full** (plan's normal limits), **limited** (trial limits for try-before-you-buy), or **blocked** (admin-disabled). Lite: 3 personas full access (Strategist, Developer, Best Friend) + 7 personas limited access. Pro: 7 personas full access + 3 personas limited access. Premium: all 10 personas full access. Admin can override via settings.
 > **Rule 10:** All features (image, audio, video) are available for all personas — differentiated by persona purpose (prompt context), not blocked per persona. All plans provide all features — differentiated by plan limits (quantity).
+
+### Persona Trial Access (Limited Access Model)
+
+Users can TEST personas outside their plan's full-access set with reduced limits ("try before you buy").
+
+**Trial limits per conversation (for limited-access personas):**
+
+| Limit                    | Value | Scope                 |
+| ------------------------ | ----- | --------------------- |
+| Prompts per conversation | 5     | Per conversation      |
+| Image generations        | 3     | 30-day rolling window |
+| Audio generations        | 2     | 30-day rolling window |
+| Video generations        | 1     | 30-day rolling window |
+
+**Rules:**
+
+- Trial limits are GLOBAL across all limited-access personas (not per-persona tracking).
+- Trial media counters are SEPARATE from plan media counters.
+- When trial prompt limit (5) is reached, conversation ends with upgrade CTA.
+- When trial media limit is reached, media generation is blocked with upgrade CTA.
+- Trial counters tracked on User model: `trialImageGenerations`, `trialAudioGenerations`, `trialVideoGenerations`, `trialUsagePeriodStart`.
+- Atomic enforcement via `findOneAndUpdate` with `$lt` guard (same pattern as plan counters).
 
 Each persona has: `id`, `label`, `tagline`, `description`, `category`, `icon`, `starterPrompts[]`, `systemPrompt`, `supportsImage`, `supportsAudio`.
 
@@ -217,13 +239,14 @@ Prompts are versioned and separated from request handlers. `buildPersonaAwareSys
 
 ### Conversation Stop Reasons
 
-| Reason Code                          | Message to User                                              | Next Action                                |
-| ------------------------------------ | ------------------------------------------------------------ | ------------------------------------------ |
-| `prompt_limit_reached`               | "You've reached the message limit for this conversation."    | `start_new_conversation` or `upgrade_plan` |
-| `media_limit_reached`                | "You've reached your media generation limit."                | `upgrade_plan` or `contact_support`        |
-| `daily_conversation_limit_reached`   | "You've reached the daily conversation limit for your plan." | `upgrade_plan` or `contact_support`        |
-| `conversation_storage_limit_reached` | "This conversation has reached its storage limit."           | `start_new_conversation`                   |
-| `billing_state_invalid`              | "Your plan has expired."                                     | `upgrade_plan`                             |
+| Reason Code                          | Message to User                                                         | Next Action                                |
+| ------------------------------------ | ----------------------------------------------------------------------- | ------------------------------------------ |
+| `prompt_limit_reached`               | "You've reached the message limit for this conversation."               | `start_new_conversation` or `upgrade_plan` |
+| `media_limit_reached`                | "You've reached your media generation limit."                           | `upgrade_plan` or `contact_support`        |
+| `daily_conversation_limit_reached`   | "You've reached the daily conversation limit for your plan."            | `upgrade_plan` or `contact_support`        |
+| `conversation_storage_limit_reached` | "This conversation has reached its storage limit."                      | `start_new_conversation`                   |
+| `billing_state_invalid`              | "Your plan has expired."                                                | `upgrade_plan`                             |
+| `trial_limit_reached`                | "You've reached the trial limit for this persona. Upgrade to continue." | `upgrade_plan`                             |
 
 ### Plan Technical Debt
 
@@ -611,33 +634,33 @@ All file handling technical debt has been resolved. S3 cleanup on task/user dele
 
 ### Route Map (Target)
 
-| Route                                 | Type      | Description                              |
-| ------------------------------------- | --------- | ---------------------------------------- |
-| `/`                                   | Public    | Landing (Hero + product sections + CTAs) |
-| `/about`                              | Public    | How app works (stacked sections)         |
-| `/plans`                              | Public    | Pricing (plan cards)                     |
-| `/faqs`                               | Public    | FAQ accordion                            |
-| `/personas`                           | Public    | Personas showcase                        |
-| `/privacy`                            | Public    | Privacy & Cookie Policy                  |
-| `/cookies`                            | Public    | Cookie Policy                            |
-| `/terms`                              | Public    | Terms & Conditions                       |
-| `/sign-in`, `/sign-up`                | Auth      | Clerk auth                               |
-| `/app`                                | Protected | Chat dashboard                           |
-| `/app/new`                            | Protected | New conversation                         |
-| `/app/library`                        | Protected | Conversation history                     |
-| `/app/personas`                       | Protected | In-app personas                          |
-| `/app/c/[conversationId]`             | Protected | Resume conversation                      |
-| `/app/profile`                        | Protected | User profile + plan + history            |
-| `/app/plans`                          | Protected | Plan upgrade + checkout                  |
-| `/admin`                              | Admin     | Dashboard overview                       |
-| `/admin/users`                        | Admin     | User management list                     |
-| `/admin/users/[userId]`               | Admin     | User detail + actions                    |
-| `/admin/transactions`                 | Admin     | Transaction management                   |
-| `/admin/transactions/[transactionId]` | Admin     | Transaction detail                       |
-| `/admin/usage`                        | Admin     | Usage analytics                          |
-| `/admin/settings`                     | Admin     | App settings                             |
-| `/admin/website`                      | Admin     | Content management                       |
-| `/admin/website/[pageId]`             | Admin     | Page editor (Tiptap)                     |
+| Route                                 | Type      | Description                                         |
+| ------------------------------------- | --------- | --------------------------------------------------- |
+| `/`                                   | Public    | Landing (Hero + product sections + CTAs)            |
+| `/about`                              | Public    | How app works (stacked sections)                    |
+| `/plans`                              | Public    | Pricing (plan cards)                                |
+| `/faqs`                               | Public    | FAQ accordion                                       |
+| `/personas`                           | Public    | Personas showcase                                   |
+| `/privacy`                            | Public    | Privacy & Cookie Policy                             |
+| `/cookies`                            | Public    | Cookie Policy                                       |
+| `/terms`                              | Public    | Terms & Conditions                                  |
+| `/sign-in`, `/sign-up`                | Auth      | Clerk auth                                          |
+| `/app`                                | Protected | Chat dashboard                                      |
+| `/app/new`                            | Protected | New conversation                                    |
+| `/app/library`                        | Protected | Media library (tabs: Chats, Images, Audios, Videos) |
+| `/app/personas`                       | Protected | In-app personas                                     |
+| `/app/c/[conversationId]`             | Protected | Resume conversation                                 |
+| `/app/profile`                        | Protected | User profile + plan + history                       |
+| `/app/plans`                          | Protected | Plan upgrade + checkout                             |
+| `/admin`                              | Admin     | Dashboard overview                                  |
+| `/admin/users`                        | Admin     | User management list                                |
+| `/admin/users/[userId]`               | Admin     | User detail + actions                               |
+| `/admin/transactions`                 | Admin     | Transaction management                              |
+| `/admin/transactions/[transactionId]` | Admin     | Transaction detail                                  |
+| `/admin/usage`                        | Admin     | Usage analytics                                     |
+| `/admin/settings`                     | Admin     | App settings                                        |
+| `/admin/website`                      | Admin     | Content management                                  |
+| `/admin/website/[pageId]`             | Admin     | Page editor (Tiptap)                                |
 
 ### Public Pages Content
 
@@ -735,11 +758,11 @@ All file handling technical debt has been resolved. S3 cleanup on task/user dele
 
 ### Active — Medium Priority
 
-| ID          | Area   | Description                                                                                                 | Severity |
-| ----------- | ------ | ----------------------------------------------------------------------------------------------------------- | -------- |
-| TD-ADMIN-01 | Admin  | Settings page uses JSON textarea editors instead of proper form controls (dropdowns, number inputs, radios) | Medium   |
-| TD-ADMIN-02 | Admin  | Admin settings values saved to AppSetting but never consumed — pricing, limits, model config are inert      | Medium   |
-| TD-AI-08    | OpenAI | No video generation (Premium) — UI shows "Coming soon", implementation deferred                             | Medium   |
+| ID  | Area | Description | Severity |
+| --- | ---- | ----------- | -------- |
+
+| TD-ADMIN-02 | Admin | Admin settings values saved to AppSetting but never consumed — pricing, limits, model config are inert | Medium |
+| TD-AI-08 | OpenAI | No video generation (Premium) — UI shows "Coming soon", implementation deferred | Medium |
 
 ### Active — Low Priority
 
@@ -757,6 +780,7 @@ All file handling technical debt has been resolved. S3 cleanup on task/user dele
 | SEC-01        | getUserById no ownership check                         | Ownership enforced                                                                                                                                                                                                                  |
 | SEC-02        | getAllTransactions no ownership check                  | Ownership enforced                                                                                                                                                                                                                  |
 | SEC-03        | console.log in /api/openai                             | Removed                                                                                                                                                                                                                             |
+| TD-ADMIN-01   | Admin settings JSON textarea editors                   | Resolved (Phase 27.4) — proper form controls: selects, number inputs, radios                                                                                                                                                        |
 | TD-API-03     | generateImage temporary URLs                           | Persisted to S3                                                                                                                                                                                                                     |
 | TD-API-05     | console.log in OpenAI utils                            | Removed                                                                                                                                                                                                                             |
 | TD-PLAN-02    | Usage limits not enforced                              | Implemented                                                                                                                                                                                                                         |
