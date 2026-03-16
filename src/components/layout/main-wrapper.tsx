@@ -6,13 +6,9 @@ interface MainWrapperProps {
   className?: string;
 }
 
-export default function MainWrapper({
-  children,
-  className: styles = "",
-}: MainWrapperProps) {
+export default function MainWrapper({ children }: MainWrapperProps) {
   const mainWrapperStyles = classNames(
     "MainWrapper relative z-0 flex w-full flex-col pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)]",
-    styles,
   );
 
   return <main className={mainWrapperStyles}>{children}</main>;

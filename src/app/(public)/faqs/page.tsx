@@ -15,17 +15,17 @@ export default function FaqsPage() {
     <section className="FaqsPage mx-auto flex w-full max-w-screen-2xl flex-col gap-8 px-4 pb-16 pt-24 sm:px-6 lg:px-8">
       <div
         className={classNames(
-          "rounded-[2rem] border px-5 py-6 shadow-sm",
+          "rounded-4xl border px-5 py-6 shadow-sm",
           "border-lightBorders-400/80 bg-white/76",
           "dark:border-darkBorders-500 dark:bg-jwdMarine-900/82",
         )}
       >
-        <FaqsSection maxWidthClass="max-w-screen-2xl" />
+        <FaqsSection />
       </div>
 
       <div
         className={classNames(
-          "rounded-[2rem] border px-6 py-8 shadow-sm",
+          "rounded-4xl border px-6 py-8 shadow-sm",
           "border-lightBorders-400/80 bg-lightBackground-200/85",
           "dark:border-darkBorders-500 dark:bg-jwdMarine-900/82",
         )}

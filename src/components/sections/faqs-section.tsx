@@ -1,11 +1,7 @@
 import { faqs } from "@/constants/faqs";
 import classNames from "classnames";
 
-interface FaqsProps {
-  maxWidthClass?: string;
-}
-
-export default function Faqs({ maxWidthClass = "max-w-6xl" }: FaqsProps) {
+export default function Faqs() {
   const faqCardClass = classNames(
     "group rounded-lg border border-lightBorders-500 bg-lightBackground-100 px-4 py-3 shadow-sm transition-all",
     "open:border-lightAccent-700 open:bg-lightPrimary-100/60",
@@ -19,12 +15,11 @@ export default function Faqs({ maxWidthClass = "max-w-6xl" }: FaqsProps) {
     "group-open:grid-rows-[1fr] group-open:opacity-100",
   );
   const wrapperClassName = classNames(
-    "Faqs mx-auto flex w-full flex-col gap-8 p-4 sm:gap-10",
-    maxWidthClass,
+    "Faqs mx-auto flex w-full flex-col gap-8 p-4 sm:gap-10 max-w-screen-2xl",
   );
 
   return (
-    <div className={wrapperClassName}>
+    <section className={wrapperClassName}>
       <div className="flex flex-col items-center justify-center gap-2 text-center">
         <h2 className="heading-4 leading-tight">Frequently Asked Questions</h2>
         <p className="body-2 max-w-2xl">
@@ -52,6 +47,6 @@ export default function Faqs({ maxWidthClass = "max-w-6xl" }: FaqsProps) {
           </details>
         ))}
       </div>
-    </div>
+    </section>
   );
 }

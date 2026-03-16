@@ -1,4 +1,5 @@
 "use client";
+
 import { plans } from "@/constants/plans";
 import { useUser } from "@clerk/nextjs";
 import { Plan } from "@/types/PlanData.d";
@@ -12,16 +13,10 @@ import classNames from "classnames";
 interface PlansProps {
   userData?: UserData | null;
   hasLoader?: boolean;
-  maxWidthClass?: string;
 }
 
-export default function Plans({
-  userData,
-  hasLoader = false,
-  maxWidthClass = "max-w-6xl",
-}: PlansProps) {
+export default function Plans({ userData, hasLoader = false }: PlansProps) {
   const { isSignedIn } = useUser();
-  const shouldShowUpgradeLabel = Boolean(userData) || isSignedIn;
 
   if (hasLoader && !userData)
     return (
@@ -31,18 +26,17 @@ export default function Plans({
     );
 
   const wrapperClassName = classNames(
-    "Plans mx-auto flex w-full flex-col gap-6 p-4",
-    maxWidthClass,
+    "Plans mx-auto flex w-full flex-col gap-6 p-4 max-w-screen-2xl",
   );
 
   return (
-    <div className={wrapperClassName}>
+    <section className={wrapperClassName}>
       <PageHead
-        title={`${shouldShowUpgradeLabel ? "Upgrade" : "Choose"} your plan`}
+        title={`${isSignedIn ? "Upgrade" : "Choose"} your plan`}
         subtitle="Select the plan that suits your needs!"
       />
 
-      <div className="flex w-full flex-col justify-between gap-6 md:flex-row md:gap-4 lg:gap-8">
+      <div className="flex w-full flex-col justify-between gap-10 md:flex-row md:gap-4 lg:gap-8">
         {plans.map((plan: Plan) => {
           return <PlanCard key={plan.id} plan={plan} userData={userData} />;
         })}
@@ -58,6 +52,6 @@ export default function Plans({
           </Link>
         </div>
       )}
-    </div>
+    </section>
   );
 }

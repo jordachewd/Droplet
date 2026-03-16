@@ -17,14 +17,14 @@ export default function Footer() {
   return (
     <section className={footerClass}>
       <div className={footerContentClass}>
-        <div className="flex items-center gap-4 text-xs opacity-60">
+        <div className="flex items-center gap-4 text-xs">
           <div className="flex border-r border-black/25 pr-4 dark:border-white/10">
             <Image
               src="/images/jwd_light.png"
               alt="JWD"
               width={32}
               height={32}
-              className="z-10 opacity-50"
+              className="z-10"
               priority
             />
           </div>
