@@ -2,7 +2,34 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-16 — PM deep audit #15. Phases 1–25.7 + 27.1–27.4 + 27.6–27.10 + 28.1 + 28.2-fix + 28.3-code + 28.3-verify + 28.4 + 28.6 + 28.7 + 30.1 + 30.2 + 30.3 + 31.1 + 31.2 + 31.3 + 31.2-fix + 32.1 + 32.2 + 32.3 + 32.6 + 33.1–33.7 + 35.1 + 37.1 + E2E regression fixes complete.
+> Last updated: 2026-03-16 — PM deep audit #16. Phases 1–25.7 + 27.1–27.4 + 27.6–27.10 + 28.1 + 28.2-fix + 28.3-code + 28.3-verify + 28.4 + 28.6 + 28.7 + 30.1 + 30.2 + 30.3 + 31.1 + 31.2 + 31.3 + 31.2-fix + 32.1 + 32.2 + 32.3 + 32.6 + 33.1–33.7 + 35.1 + 37.1 + 38.1–38.7 + 36.1–36.2 + E2E regression fixes complete.
+
+---
+
+## Phase 38.1–38.7 — UI Polish, Bug Fixes & Owner UI Restructure — COMPLETED (2026-03-16)
+
+> PM audit #16 + Architect code audit. All 7 tasks verified. No regressions. Full validation gateway passed.
+
+- [x] **38.1 CRITICAL** — AlertMessage stacking context fix. Removed `z-0` from ChatWrapper `<main>` element. AlertMessage `fixed z-100` now renders above ChatHeader `z-20` in all `/app` pages. Root cause eliminated.
+- [x] **38.2 HIGH** — allowedPersonaIds undefined vs empty array normalization. Both ChatWrapper and ChatHeader use strict `=== undefined` check. `undefined` → all personas; `[]` → none (blocked); `[...ids]` → exact set. Full entitlement chain verified.
+- [x] **38.3 MEDIUM** — Persona dropdown disabled when messages exist. Condition: `isConversationRoute || messageCount > 0 || taskStatus === "ended"`. Prevents mid-conversation persona switching.
+- [x] **38.4 HIGH** — Library and Personas moved from sidebar to AvatarMenu. Sidebar now has Chat Dashboard + New Conversation + recent history only. DISCOVER section removed. AvatarMenu order: Dashboard (admin) → Library → Personas → Plans → Profile → Logout.
+- [x] **38.5 HIGH** — ChatPersonaPicker removed from /app landing page. Persona selection via ChatHeader dropdown only. ChatPersonaPicker component file preserved for `/app/personas`.
+- [x] **38.6 LOW** — video_url aggregation removed from Library page. `videoItems = []` set directly. Videos tab renders "Coming Soon" with no DB query.
+- [x] **38.7 LOW** — `aria-label="Droplet home"` added to Logo `<Link>` when `iconOnly={true}`. No redundant label when full text visible.
+
+**Files changed:** `chat-wrapper.tsx`, `chat-header.tsx`, `chat-sidebar-nav-v2.tsx`, `avatar-menu.tsx`, `src/app/(chat)/app/library/page.tsx`, `app-logo.tsx`, `src/app/(chat)/app/page.tsx`, `src/app/(chat)/app/c/[conversationId]/page.tsx`, `tests/e2e/chat-app-shell.spec.ts`
+
+---
+
+## Phase 36.1–36.2 — Admin Design Consistency & Top Personas — COMPLETED (2026-03-16)
+
+> PM audit #16 + Architect code audit. Both tasks verified. Design tokens consistent with client app. Aggregation query correct.
+
+- [x] **36.1 MEDIUM** — Admin panel design aligned with client app design system. Header, sidebar, dashboard cards, and usage page all use matching border/bg/backdrop tokens (`border-lightBorders-300/70`, `bg-lightBackground-100/85`, `backdrop-blur-lg`, dark mode equivalents). Visual consistency verified across admin and client surfaces.
+- [x] **36.2 MEDIUM** — "Top Personas" stat box added to admin Usage page. UsageEvent aggregation: `$group` by personaId, `$sort` descending, `$limit` 5. Labels resolved via `getPersona()`. Percentage calculated against total events. Empty state handled.
+
+**Files changed:** `admin-layout-shell.tsx`, `admin-sidebar.tsx`, `src/app/(admin)/admin/page.tsx`, `src/app/(admin)/admin/usage/page.tsx`, `admin-queries.ts`, `tests/e2e/admin-features.spec.ts`
 
 ---
 

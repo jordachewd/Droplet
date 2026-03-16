@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-16 (PM deep audit #14 complete. 35.1, 28.3-verify, 32.1, 32.2, 32.3 verified DONE. Audio model policy reconciled: Premium audio → gpt-audio-mini (gpt-audio-1.5 inaccessible). Library media tabs delivered. Persona selector in ChatHeader delivered. E2E regression flagged CRITICAL.)
+> Last updated: 2026-03-16 (PM deep audit #16 complete. Phase 38 + 36 verified DONE. AlertMessage stacking context fixed. allowedPersonaIds entitlement leak fixed. Persona dropdown disables mid-conversation. Library/Personas moved to AvatarMenu. ChatPersonaPicker removed from landing. Admin design aligned with client app. Top Personas stat box on Usage page. No critical bugs remaining.)
 
 ---
 
@@ -119,10 +119,11 @@ Each persona has: `id`, `label`, `tagline`, `description`, `category`, `icon`, `
 
 - **Personas are plan-gated** (Lite: 3 personas, Pro: 7 personas, Premium: all 10 personas).
 - Default persona access per plan is hardcoded in constants but overridable by admin via AppSetting.
-- Persona selection UI: `ChatPersonaPicker` component on `/app/new` and `/app/personas` pages. `ChatHeader` includes a persona dropdown selector for quick persona switching across all `/app` pages — selector is disabled during active conversations (persona is bound per-task).
+- Persona selection UI: `ChatHeader` includes a persona dropdown selector for quick persona switching across all `/app` pages — selector is disabled during active conversations (`messages.length > 0` or `taskStatus === "ended"` — persona is bound per-task). `ChatPersonaPicker` component available on `/app/personas` page for full persona browsing with trial badges.
 - Persona is stored per task in `Task.personaId`.
 - System prompt is built per-persona via `buildPersonaAwareSystemPrompt()`.
 - Entitlements resolved via `resolveEntitlements()` in `src/lib/utils/resolve-entitlements.tsx`.
+- `allowedPersonaIds` normalization: `undefined` = all personas (no restriction), `[]` = all blocked, `[...ids]` = exact permitted set.
 
 ### Persona Behavioral Requirements
 
@@ -685,19 +686,26 @@ All file handling technical debt has been resolved. S3 cleanup on task/user dele
 
 - **Users**: List, view, add, suspend, remove. User detail page with info + usage per model.
 - **Transactions**: List, view, suspend, decline. Transaction detail page.
-- **Usage**: Model usage, costs per user/time/provider. **Top Personas** statistic card showing top 5 personas by usage count. Powered by UsageEvent.
-- **Settings**: AI model per plan, pricing, limits, theme. Powered by AppSetting.
+- **Usage**: Model usage, costs per user/time/provider. **Top Personas** statistic card showing top 5 personas by usage count with labels and percentages. Powered by UsageEvent aggregation. (Implemented — Phase 36.2)
+- **Settings**: AI model per plan, pricing, limits, theme. Proper form controls (selects, number inputs, radios — no raw JSON editors). Powered by AppSetting. **Note: settings values saved but not yet consumed by app behavior** (TD-ADMIN-02 — admin settings propagation pending Phase 27.5).
 - **Website**: Add, edit, remove, sort, publish/unpublish public pages. Tiptap editor. Powered by PublicPage.
 - All mutations logged to AdminAuditLog.
+- Admin panel design aligned with client app design system (Phase 36.1 — consistent borders, backgrounds, backdrop tokens, fonts).
+
+### Navigation (Authenticated App)
+
+- **Sidebar**: Chat Dashboard, New Conversation, recent conversation history. No Library, Personas, Plans, or Profile links (moved to AvatarMenu — Phase 38.4).
+- **AvatarMenu** (header): Dashboard (admin only) → Library → Personas → Plans → Profile → Logout.
+- **ChatHeader**: Present on all `/app/*` pages. Contains sidebar toggle (left), persona dropdown selector, conversation info (persona label, message count, ended badge).
 
 ---
 
 ## 13. Testing
 
 - **Unit tests**: 62+ suites, 334 tests (Vitest) — includes streaming, webhook, chat-wrapper, chat-body stop-state, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, persona prompt, rate limiting, task complexity classification, conversation stop enforcement, entitlement resolver full coverage, checkout-success page, admin audit trail, OpenAI route tests, atomic prompt limit, daily conversation limit, media error handling, universal feature access, and trial access tests.
-- **E2E tests**: 11 Playwright spec files across browser projects (chat-app-shell, auth-boundaries, public-pages with 70+ tests, conversation-lifecycle, user-profile, admin-users, admin-features, landing-page, plans-public, pricing-public, authenticated-flows). 200 total. **176 passing, 24 skipped** (Phase 37.1 stabilization complete — audit #15).
+- **E2E tests**: 11 Playwright spec files across browser projects (chat-app-shell, auth-boundaries, public-pages with 70+ tests, conversation-lifecycle, user-profile, admin-users, admin-features, landing-page, plans-public, pricing-public, authenticated-flows). 200 total. **176 passing, 24 skipped** (Phase 37.1 stabilization + Phase 38 E2E updates complete — audit #16).
 - **Coverage**: Configured (Phase 24.1) — v8 provider, thresholds: 70% statements / 60% branches / 70% functions / 70% lines. Current: 82/71/88/82.
-- **Gap**: No dedicated E2E spec for streamed chunk-by-chunk rendering (manually verified via Playwright MCP). Trial access E2E (33.8) pending.
+- **Gap**: No dedicated E2E spec for streamed chunk-by-chunk rendering (manually verified via Playwright MCP). Trial access E2E (33.8) pending. Persona selector E2E (35.2) pending.
 
 ---
 

@@ -1072,48 +1072,77 @@ These items are not banned forever. They are excluded because they create dispro
 
 ### Milestone 13 — UI Polish, Bug Fixes & Admin Enhancement (Owner-Directed, 2026-03-16)
 
-> **Status: IN PROGRESS** — New milestone based on Owner instructions and Copilot Code Review.
-> PM audit #15 — 2 confirmed bugs, 1 Owner-reported CRITICAL, plus Owner UI restructure requirements.
+> **Status: MOSTLY COMPLETE** — Blocks A–C delivered (Phase 38 + 36). Verified by PM audit #16 + Architect code audit.
+> Block D (test coverage) remaining.
+> PM audit #16 (2026-03-16): Phase 38 (38.1–38.7) + Phase 36 (36.1–36.2) APPROVED complete. All 9 tasks verified in code. No regressions. Full validation gateway passed.
 
 **Objective:** Fix confirmed bugs, address Owner's UI requirements (sidebar restructure, persona studio removal, error z-index), and enhance admin capabilities.
 
 **Dependencies:** Milestone 11 complete (trial access stable).
 
-**Architect Assessment:** No architectural risk. Straightforward changes. Bugs confirmed independently.
+**Block A — Bug Fixes: COMPLETED**
 
-**Block A — Bug Fixes (FIRST, before any feature work):**
+1. ~~**CRITICAL** — Fix AlertMessage stacking context~~ — DONE (38.1). `z-0` removed from ChatWrapper. AlertMessage renders above ChatHeader.
+2. ~~**HIGH** — Fix `allowedPersonaIds=[]` entitlement leak~~ — DONE (38.2). Strict `=== undefined` check distinguishes no-restriction from all-blocked.
+3. ~~**MEDIUM** — Fix ChatHeader persona dropdown~~ — DONE (38.3). Disabled when `messages.length > 0` or `taskStatus === "ended"`.
 
-1. **CRITICAL** — Fix AlertMessage stacking context. ChatWrapper `z-0` creates a new stacking context that traps the `fixed z-[100]` AlertMessage below ChatHeader. Owner reports error messages render behind the header. Root cause: `position: fixed` inside a `z-0` stacking context parent. Fix: lift AlertMessage to layout level or remove `z-0` from ChatWrapper.
-2. **HIGH** — Fix `allowedPersonaIds=[]` entitlement leak. `allowedPersonaIds?.length` in ChatHeader + ChatWrapper treats empty array as "no restriction" (exposes all personas). Must distinguish `undefined` (no restriction) from `[]` (everything blocked).
-3. **MEDIUM** — Fix ChatHeader persona dropdown: disable when `messages.length > 0` or `taskStatus === "ended"`, not just on `/app/c/` routes. Prevents mid-conversation persona switching that breaks system prompt continuity.
+**Block B — Owner UI Requirements: COMPLETED**
 
-**Block B — Owner UI Requirements:**
+4. ~~**HIGH** — Move Library/Personas to AvatarMenu~~ — DONE (38.4). Sidebar: Chat Dashboard + New Conversation + history only.
+5. ~~**HIGH** — Remove ChatPersonaPicker from landing~~ — DONE (38.5). Persona selection via ChatHeader dropdown only.
+6. ~~**LOW** — Skip video_url aggregation~~ — DONE (38.6). `videoItems = []` directly.
+7. ~~**LOW** — aria-label for iconOnly Logo~~ — DONE (38.7).
 
-4. **HIGH** — Move Library and Personas from sidebar nav to AvatarMenu. Remove DISCOVER section from sidebar. Sidebar retains: Chat Dashboard, New Conversation, recent conversations.
-5. **HIGH** — Remove ChatPersonaPicker section from ChatWrapper landing page. Persona selection now lives in ChatHeader dropdown — the picker is redundant on `/app` landing.
-6. **LOW** — Skip `video_url` aggregation in Library page (Videos tab shows "Coming Soon" but still runs DB query). Set `videoItems = []` directly.
-7. **LOW** — Add `aria-label="Droplet home"` to Logo `<Link>` when `iconOnly={true}`.
+**Block C — Admin Enhancement: COMPLETED**
 
-**Block C — Admin Enhancement:**
+8. ~~**MEDIUM** — Admin design alignment~~ — DONE (36.1). Design tokens consistent with client app.
+9. ~~**MEDIUM** — Top Personas stat box~~ — DONE (36.2). Top 5 personas by usage with labels and percentages.
 
-8. **MEDIUM** — Align admin panel design with client app design system (fonts, colors, spacing, proportions).
-9. **MEDIUM** — Add "Top Personas" stat box to admin Usage page.
-
-**Block D — Test Coverage:**
+**Block D — Test Coverage: REMAINING**
 
 10. **MEDIUM** — E2E tests for trial persona flow (33.8).
 11. **LOW** — E2E tests for persona selector in ChatHeader (35.2).
 
+**Success criteria (verified ✅):**
+
+- ✅ Error messages always render above ChatHeader.
+- ✅ Entitlement logic correctly handles empty `allowedPersonaIds`.
+- ✅ Persona dropdown disabled during active conversations.
+- ✅ Sidebar has only core nav (dashboard, new, history). Library + Personas in AvatarMenu.
+- ✅ No persona studio/picker on landing page.
+- ✅ Admin pages visually consistent with client app.
+- ✅ "Top Personas" stat box on admin Usage page.
+- ⬜ E2E tests cover trial flow (Block D remaining).
+
+### Milestone 14 — Admin Operational Completeness (Owner-Directed, 2026-03-16)
+
+> **Status: NOT STARTED** — Owner reports admin panel "not fully operational" and lacks "full control over the app upon each settings purpose."
+> Depends on: Milestone 13 Block D complete (test coverage).
+
+**Objective:** Make admin settings actually control app behavior. Every admin setting saved must propagate to the corresponding app feature. Admin must have real operational control over plans, pricing, limits, personas, and models.
+
+**Owner Requirements:**
+
+- Admin panel sections must be fully operational with full control over app behavior per each setting's purpose.
+- Admin panel must use proper form controls (inputs, selectors, radios, checkboxes) — no raw editors.
+- Admin layout must maintain consistent design with client app (ongoing — 36.1 established baseline).
+
+**Dependencies:** Milestone 13, Phase 33 (trial system stable).
+
+**Scope:**
+
+1. **Admin settings propagation** (27.5) — Plan pricing, limits, and model config saved in AppSetting must be consumed by `resolveEntitlements()`, `checkUsageLimit()`, plan card components, and checkout flows. Falls back to hardcoded defaults when no AppSetting exists.
+2. **Admin persona access controls** (30.4) — Per-plan persona access toggles (checkboxes). Admin can enable/disable each persona per plan. `resolveEntitlements()` reads admin overrides first, falls back to hardcoded defaults.
+3. **Admin audit trail** — All mutations already audit-logged (established pattern). Extend to new settings.
+4. **Verify propagation end-to-end** — Admin changes a price → plan cards update. Admin changes a limit → enforcement updates. Admin disables a persona → user sees change.
+
 **Success criteria:**
 
-- Error messages always render above ChatHeader.
-- Entitlement logic correctly handles empty `allowedPersonaIds`.
-- Persona dropdown disabled during active conversations.
-- Sidebar has only core nav (dashboard, new, history). Library + Personas in AvatarMenu.
-- No persona studio/picker on landing page.
-- Admin pages visually consistent with client app.
-- "Top Personas" stat box on admin Usage page.
-- E2E tests cover trial flow.
+- Admin settings changes propagate to live app behavior (prices, limits, models, personas).
+- Fallback to hardcoded defaults when no AppSetting exists.
+- Admin forms use proper controls (no raw editors remaining).
+- Full audit trail for all admin mutations.
+- E2E tests verify settings propagation.
 
 ---
 
