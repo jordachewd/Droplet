@@ -2,7 +2,28 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-16 — PM deep audit #9. Phase 28.1 + 28.3-code VERIFIED COMPLETE. Phase 28.2 NOT COMPLETE (image model IDs unchanged). Phases 1–25.7 + 27.1–27.3 + 27.6–27.10 + 28.1 + 28.3-code complete.
+> Last updated: 2026-03-16 — PM deep audit #10. Phase 28.2-fix VERIFIED COMPLETE (image generation fixed). Phases 1–25.7 + 27.1–27.3 + 27.6–27.10 + 28.1 + 28.2-fix + 28.3-code complete.
+
+---
+
+## Phase 28.2-fix — Fix image generation (response_format + live verification) — COMPLETED (2026-03-16)
+
+- [x] Removed incompatible `response_format: "b64_json"` parameter from `generateImage.tsx` — GPT Image API does not accept this parameter.
+- [x] Model IDs `gpt-image-1-mini` (Lite) and `gpt-image-1.5` (Pro/Premium) **live-tested** via `scripts/live-test-image-models.mjs`:
+  - `gpt-image-1-mini` + `response_format` → 400 `unknown_parameter`. Default params → success (returns b64_json).
+  - `gpt-image-1.5` + `response_format` → 400 `unknown_parameter`. Default params → success (returns b64_json).
+  - `gpt-image-1` → 403 `model_not_found` (not available in this OpenAI project).
+- [x] Model IDs centralized via `LITE_IMAGE_MODEL` / `PRO_PREMIUM_IMAGE_MODEL` constants in `ai-model-policy.ts`.
+- [x] `getGeneratedImageBuffer()` supports both `b64_json` and `url` response formats — forward-compatible.
+- [x] `MODEL_PRICING` and `MODEL_CAPABILITIES` updated for image model constants.
+- [x] Unit regression test added ensuring no `response_format` is sent (`generate-image.test.ts`).
+- [x] Gated live E2E test added (`live-image-generation.spec.ts`) — verified rendered image URL contains `/api/download?key=`.
+- [x] Full validation gateway: prettier ✅, lint ✅, tsc ✅, 320 tests ✅, 185 E2E ✅, build ✅.
+- [x] Three-agent independent verification: PM audit #10 confirmed by Architect and Engineer.
+
+Resolved: TD-AI-20 (image generation broken), TD-AI-24 (response_format compatibility risk).
+
+**Files changed:** `src/lib/utils/ai-model-policy.ts`, `src/lib/utils/openai/generateImage.tsx`, `scripts/live-test-image-models.mjs`, `tests/unit/generate-image.test.ts`, `tests/e2e/live-image-generation.spec.ts`
 
 ---
 

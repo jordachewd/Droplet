@@ -5,57 +5,43 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: Phases 1–25.7 + 27.1–27.3 + 27.6–27.10 + 28.1 + 28.3-code complete.**
-> **PM deep audit #9 (2026-03-16): Four-agent independent audit (PM + Architect + Engineer + code verification).**
-> **28.1 VERIFIED COMPLETE. 28.3-code VERIFIED COMPLETE (messages bug fixed). 28.2 NOT COMPLETE (image model IDs unchanged, no live test done).**
-> **New issues found: media counter TOCTOU (TD-LIMIT-07), audio tool definition misleading (TD-AI-23), `response_format` compatibility risk (TD-AI-24).**
-> **Priority order: 28.2-fix (image model IDs — IMMEDIATE) → 28.3-verify (audio live test) → 28.6 (media counter TOCTOU) → 28.7 (audio tool definition fix) → 27.4 → 27.5 → 29.1 (Zod) → 29.2 (Zustand) → Phase 26.**
-> **All Phase 26+ deferred work is ON HOLD until all CRITICAL Phase 28 subtasks are PM-approved complete.**
+> **STATUS: Phases 1–25.7 + 27.1–27.3 + 27.6–27.10 + 28.1 + 28.2-fix + 28.3-code complete.**
+> **PM deep audit #10 (2026-03-16): Three-agent independent audit (PM + Architect + Engineer).**
+> **28.2-fix VERIFIED COMPLETE (image generation fixed). 28.1 VERIFIED COMPLETE. 28.3-code VERIFIED COMPLETE.**
+> **CRITICAL POLICY CHANGE: Per-plan persona gating approved (replaces old Rule #3). New Interviewer persona approved.**
+> **Priority order: 28.4 (UI copy fix — IMMEDIATE) → 28.7 (audio tool fix — IMMEDIATE) → 28.3-verify (audio live test) → 28.6 (media TOCTOU) → 30.1-30.5 (persona policy implementation) → 27.4 → 27.5 → 29.1 (Zod) → 29.2 (Zustand) → Phase 26.**
+> **All Phase 26+ deferred work is ON HOLD until Phase 28 + Phase 30 are PM-approved complete.**
 
 ---
 
-## Phase 28: CRITICAL — Media Generation Fixes & Limit Enforcement
+## Phase 28: CRITICAL — Media Generation Fixes & Limit Enforcement (remaining)
 
-> **Blocking all other work.** Owner-reported and four-agent-verified critical bugs.
-> PM audit #9 status: 28.1 DONE (archived in DONE.md). 28.3-code DONE (messages bug fixed, archived in DONE.md). 28.2 NOT DONE — image model IDs still broken. New subtasks added: 28.6 (media TOCTOU), 28.7 (audio tool definition).
+> PM audit #10 status: 28.1 DONE, 28.2-fix DONE, 28.3-code DONE (all archived in DONE.md).
+> Remaining: 28.4 (UI copy fix), 28.7 (audio tool fix), 28.3-verify (audio live test), 28.6 (media TOCTOU).
 
 ---
 
-### 28.2-fix CRITICAL — Fix image generation model IDs (IMMEDIATE)
+### 28.4 CRITICAL — Fix plan card UI copy ("messages" → "prompts")
 
-**Files:** `src/lib/utils/ai-model-policy.ts`, `src/lib/utils/openai/generateImage.tsx`, `tests/unit/ai-model-policy.test.ts`
-**Ref:** TD-AI-20, TD-AI-24
+**Files:** `src/constants/plans.tsx`, `tests/unit/plans.test.ts`
+**Ref:** PM audit #10 — root cause of owner's limit bypass report
 
-**Status: NOT DONE. This is the #1 blocking issue. Image generation is 100% broken for all plans.**
+**Status: NOT DONE. This is the #1 immediate task.**
 
-**Root cause (PM-verified):** Image model IDs in the policy matrix are `gpt-image-1-mini` (Lite) and `gpt-image-1.5` (Pro/Premium). These have **never been live-tested** against the OpenAI API. HF-3 (DONE.md) claimed doc-verification but Owner consistently reports "Image generation failed" — the generic error message in `generateResponse.tsx` masks the actual OpenAI API error (HTTP 400 invalid model). The previous Engineer work on 28.2 only updated test expectations to match existing (broken) IDs — it did NOT change the model IDs or run a live API test.
-
-**Additional concern:** `response_format: "b64_json"` in `generateImage.tsx` line 75 may not be compatible with newer `gpt-image-*` models (GPT Image API uses different output parameters than DALL-E). This must be verified alongside model IDs.
+**Root cause (PM + Engineer + Architect independently confirmed):** Plan card labels say "10 messages per conversation" but the actual limit is 10 **user prompts** (not total messages). A 10-prompt conversation displays ~20 visible messages (10 user + 10 AI response). The owner counted total visible messages and concluded limits are broken. Backend enforcement is architecturally correct (atomic `$lt` guards) — the issue is misleading UI copy.
 
 **What to do:**
 
-1. Read available MCPs (Context7) for current OpenAI image generation API documentation — model names AND API parameters.
-2. **Live-test** `gpt-image-1-mini` against the OpenAI API with `openAiClient.images.generate()`. Record exact response or error.
-3. **Live-test** `gpt-image-1.5` against the OpenAI API. Record exact response or error.
-4. If any model ID fails, consult OpenAI docs for confirmed-valid equivalents (e.g., `gpt-image-1`, `dall-e-3`).
-5. **Verify `response_format: "b64_json"` compatibility** — if the valid model uses a different output format, update `generateImage.tsx` accordingly.
-6. Update `MODEL_POLICY_MATRIX` with verified model IDs.
-7. Update `MODEL_PRICING` entries if model IDs change.
-8. Update `MODEL_CAPABILITIES` entries if model IDs change.
-9. Update unit tests for corrected model IDs.
-10. **End-to-end verify**: trigger image generation via chat and confirm the full pipeline works (OpenAI → buffer → S3 → URL in response).
+1. In `plans.tsx`, change Lite inclusions label from `"10 messages per conversation"` to `"10 prompts per conversation"`.
+2. In `plans.tsx`, change Pro inclusions label from `"100 messages per conversation"` to `"100 prompts per conversation"`.
+3. In `plans.tsx`, change Premium inclusions label from `"Unlimited messages"` to `"Unlimited prompts"` (if applicable).
+4. Update corresponding test assertions in `plans.test.ts`.
+5. Verify all plan cards (`/plans` and `/app/plans`) render correct labels.
 
 **Acceptance criteria:**
 
-- [ ] All image model IDs in `MODEL_POLICY_MATRIX` are **live-tested** (not just doc-checked) — record test results
-- [ ] `response_format` parameter is compatible with the chosen model
-- [ ] Image generation succeeds end-to-end for Lite plan
-- [ ] Image generation succeeds end-to-end for Pro/Premium plans
-- [ ] Fallback model IDs are also live-tested
-- [ ] `MODEL_PRICING` updated for changed IDs
-- [ ] `MODEL_CAPABILITIES` updated for changed IDs
-- [ ] Media generation failures still log model ID + HTTP status to stderr
-- [ ] Unit tests updated for correct model IDs
+- [ ] Plan card labels say "prompts" not "messages" for conversation limits
+- [ ] Test assertions updated
 - [ ] `npx tsc --noEmit` passes
 - [ ] All tests pass
 
@@ -146,11 +132,146 @@ Between steps, concurrent requests can both pass the check and exceed quotas. Th
 
 ---
 
+## Phase 30: Persona Policy Implementation — CRITICAL
+
+> Owner-mandated policy change: per-plan persona gating + new Interviewer persona.
+> Depends on: Phase 28 remaining subtasks complete (28.4, 28.7 minimum).
+> **Blocking Phase 26+ work.** Personas are the core product to sell.
+
+---
+
+### 30.1 HIGH — Add Interviewer persona definition
+
+**Files:** `src/constants/assistant-personas.tsx`, `src/constants/persona-prompts.ts`, `src/types/PersonaId.d.tsx` (or equivalent type file)
+**Ref:** Owner instruction (2026-03-16), SPEC.md Section 3
+
+**What to do:**
+
+1. Add `interviewer` to the `PersonaId` type union.
+2. Add Interviewer persona object to `PERSONAS` array in `assistant-personas.tsx`:
+   - `id: "interviewer"`, `label: "Interviewer"`, `category: "Career"`, `tagline`, `description`, `icon`, 6 `starterPrompts`, `supportsImage: true`, `supportsAudio: true`.
+3. Add Interviewer system prompt in `persona-prompts.ts` — interview readiness simulator: realistic interview conversations, structured feedback, role/company/level tailoring.
+4. Persona must follow all persona behavioral requirements (pragmatic, direct, honest, practical — see SPEC.md).
+5. Update `PERSONA_MAP` if not auto-derived.
+6. Update all tests that assert persona count (currently 9 → 10).
+
+**Acceptance criteria:**
+
+- [ ] Interviewer persona exists with `id: "interviewer"`
+- [ ] 6 starter prompts covering different interview types (technical, behavioral, promotion, etc.)
+- [ ] system prompt instructs realistic interview simulation with structured feedback
+- [ ] All persona-count assertions updated from 9 to 10
+- [ ] `npx tsc --noEmit` passes
+- [ ] All tests pass
+
+---
+
+### 30.2 HIGH — Implement per-plan persona gating in entitlements
+
+**Files:** `src/lib/utils/resolve-entitlements.tsx`, `src/constants/plans.tsx`, `src/constants/assistant-personas.tsx`
+**Ref:** AGENTS.md Rule #3 (updated), SPEC.md Section 3
+**Depends on:** 30.1 complete
+
+**What to do:**
+
+1. Define default persona access per plan as a constant:
+   - `Lite`: `["strategist", "developer", "best-friend"]`
+   - `Pro`: Lite personas + `["teacher", "wellness", "boyfriend", "girlfriend"]`
+   - `Premium`: all 10 personas
+2. Update `resolveEntitlements()` to filter `allowedPersonaIds` by plan.
+3. Update plan card inclusions: Lite says "3 personas", Pro says "7 personas", Premium says "All 10 personas" (with list).
+4. Update `/api/openai` route to reject requests with personas not in the user's plan entitlement.
+5. Update unit tests for persona gating per plan.
+
+**Acceptance criteria:**
+
+- [ ] `resolveEntitlements("Lite")` returns only 3 persona IDs
+- [ ] `resolveEntitlements("Pro")` returns 7 persona IDs
+- [ ] `resolveEntitlements("Premium")` returns all 10
+- [ ] API route rejects persona not in user's plan
+- [ ] Plan cards show correct persona count per plan
+- [ ] Unit tests cover all plan × persona combinations
+- [ ] `npx tsc --noEmit` passes
+- [ ] All tests pass
+
+---
+
+### 30.3 HIGH — Update persona picker UI for plan-gated display
+
+**Files:** `src/components/chat/chat-persona-picker.tsx`, related chat components
+**Ref:** SPEC.md Section 3
+**Depends on:** 30.2 complete
+
+**What to do:**
+
+1. Persona picker must only show personas available for the user's current plan.
+2. Optionally show locked personas with upgrade CTA (visual only, backend enforces).
+3. Persona grid must display **two persona cards per row** (owner requirement).
+4. Verify persona picker works on `/app/new`, `/app/personas`, and `/personas` (public).
+
+**Acceptance criteria:**
+
+- [ ] Persona picker filters by user's plan entitlement
+- [ ] Grid shows 2 persona cards per row on all screen sizes
+- [ ] Locked personas show upgrade prompt (or are hidden)
+- [ ] Works on all persona grid pages
+- [ ] `npx tsc --noEmit` passes
+- [ ] All tests pass
+
+---
+
+### 30.4 MEDIUM — Add admin persona access control per plan
+
+**Files:** `src/app/(admin)/admin/settings/page.tsx`, `src/lib/utils/resolve-entitlements.tsx`, `src/lib/database/models/app-setting.model.tsx`
+**Ref:** Owner instruction: admin must be able to enable/disable persona access per plan
+**Depends on:** 30.2 + 27.4 complete
+
+**What to do:**
+
+1. Add admin settings section for "Persona Access" with checkboxes per plan per persona.
+2. Save as AppSetting (key: `persona_access_lite`, `persona_access_pro`, `persona_access_premium`).
+3. `resolveEntitlements()` reads AppSetting first, falls back to hardcoded defaults.
+4. Admin audit trail for persona access changes.
+
+**Acceptance criteria:**
+
+- [ ] Admin can toggle persona access per plan in settings
+- [ ] Changes take effect on next entitlement check
+- [ ] Falls back to defaults when no AppSetting exists
+- [ ] Audit log entry created
+- [ ] `npx tsc --noEmit` passes
+- [ ] All tests pass
+
+---
+
+### 30.5 LOW — Generate persona hero images
+
+**Ref:** Owner instruction: each persona must have a representative character/image as hero
+**Depends on:** 30.1 complete (Interviewer added)
+
+**What to do:**
+
+1. Generate a representative character image for each of the 10 personas.
+2. Store images in `public/personas/` as optimized WebP/PNG.
+3. Add `heroImage` field to persona definition in `assistant-personas.tsx`.
+4. Display hero images on persona cards, persona picker, and `/personas` public page.
+
+**Acceptance criteria:**
+
+- [ ] 10 persona hero images exist in `public/personas/`
+- [ ] Each persona definition has `heroImage` path
+- [ ] Hero images visible on persona cards and public personas page
+- [ ] Images are optimized (< 200KB each)
+- [ ] `npx tsc --noEmit` passes
+- [ ] All tests pass
+
+---
+
 ## Phase 27: UX & Architecture Completion (remaining)
 
 > 27.1–27.3 + 27.6–27.10 RESOLVED (archived in DONE.md).
 > Remaining: 27.4 (admin forms) + 27.5 (settings propagation).
-> **ON HOLD until Phase 28 CRITICAL subtasks (28.2-fix, 28.3-verify) are complete.**
+> **ON HOLD until Phase 28 remaining + Phase 30.1–30.3 are PM-approved complete.**
 
 ---
 
@@ -267,8 +388,8 @@ Between steps, concurrent requests can both pass the check and exceed quotas. Th
 
 ## Phase 26: Deferred Features — ON HOLD
 
-> **ON HOLD until Phase 28 + Phase 27 remaining (27.4–27.5) + Phase 29 are PM-approved complete.**
-> Depends on: Phase 28 + Phase 27 + Phase 29 complete.
+> **ON HOLD until Phase 28 + Phase 30 + Phase 27 remaining (27.4–27.5) + Phase 29 are PM-approved complete.**
+> Depends on: Phase 28 + Phase 30 + Phase 27 + Phase 29 complete.
 
 ---
 
@@ -287,5 +408,5 @@ Between steps, concurrent requests can both pass the check and exceed quotas. Th
 ---
 
 > **Completed phases** are archived in [`DONE.md`](DONE.md).
-> HF-1 through HF-9.2 complete. Phases 1–25.7 + 27.1–27.3 + 27.6–27.10 + 28.1 + 28.3-code complete.
+> HF-1 through HF-9.2 complete. Phases 1–25.7 + 27.1–27.3 + 27.6–27.10 + 28.1 + 28.2-fix + 28.3-code complete.
 > Phase 10–12 superseded (see DONE.md for mapping).
