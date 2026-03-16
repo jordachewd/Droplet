@@ -2,7 +2,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { auth } from "@clerk/nextjs/server";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import Task from "@/lib/database/models/tasks.model";
-import User from "@/lib/database/models/user.model";
 import {
   createTask,
   deleteTask,
@@ -28,12 +27,6 @@ vi.mock("@/lib/database/models/tasks.model", () => ({
   },
 }));
 
-vi.mock("@/lib/database/models/user.model", () => ({
-  default: {
-    findOneAndUpdate: vi.fn(),
-  },
-}));
-
 vi.mock("@/lib/utils/aws/deleteFileFromAWS", () => ({
   default: vi.fn(),
 }));
@@ -43,9 +36,6 @@ describe("createTask", () => {
     vi.clearAllMocks();
     vi.mocked(auth).mockResolvedValue({ userId: "auth_user_1" } as never);
     vi.mocked(connectToDatabase).mockResolvedValue(undefined as never);
-    vi.mocked(User.findOneAndUpdate).mockResolvedValue({
-      _id: "user_1",
-    } as never);
   });
 
   it("uses the authenticated user id instead of any caller-supplied user id", async () => {
@@ -98,40 +88,6 @@ describe("createTask", () => {
     );
   });
 
-  it("increments the durable daily conversation counter when a task is created", async () => {
-    vi.mocked(Task.create).mockResolvedValue({
-      _id: "task_1",
-    } as never);
-    vi.mocked(User.findOneAndUpdate)
-      .mockResolvedValueOnce({ _id: "user_1" } as never)
-      .mockResolvedValueOnce({ _id: "user_1" } as never);
-
-    await createTask({
-      title: "Generated title",
-      messages: [],
-    });
-
-    expect(User.findOneAndUpdate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        clerkId: "auth_user_1",
-      }),
-      expect.objectContaining({
-        $inc: {
-          dailyConversationsStarted: 1,
-        },
-        $set: expect.objectContaining({
-          dailyConversationWindowStart: expect.any(Date),
-          updatedAt: expect.any(Date),
-        }),
-      }),
-      {
-        strict: true,
-        upsert: false,
-        returnDocument: "after",
-      },
-    );
-  });
-
   it("rejects unauthenticated task creation attempts", async () => {
     vi.mocked(auth).mockResolvedValue({ userId: null } as never);
 
@@ -144,7 +100,6 @@ describe("createTask", () => {
 
     expect(connectToDatabase).not.toHaveBeenCalled();
     expect(Task.create).not.toHaveBeenCalled();
-    expect(User.findOneAndUpdate).not.toHaveBeenCalled();
   });
 });
 
@@ -289,9 +244,6 @@ describe("deleteTask", () => {
       _id: taskId,
       messages: [],
     } as never);
-    vi.mocked(User.findOneAndUpdate).mockResolvedValue({
-      _id: "user_1",
-    } as never);
     stderrWriteSpy = vi
       .spyOn(process.stderr, "write")
       .mockImplementation(() => true);
@@ -338,7 +290,6 @@ describe("deleteTask", () => {
       _id: taskId,
       userId: "auth_user_1",
     });
-    expect(User.findOneAndUpdate).not.toHaveBeenCalled();
     expect(deleteFileFromAWS).toHaveBeenCalledTimes(2);
     expect(deleteFileFromAWS).toHaveBeenNthCalledWith(
       1,

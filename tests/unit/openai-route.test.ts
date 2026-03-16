@@ -14,7 +14,10 @@ import { getUserById } from "@/lib/actions/user.actions";
 import { ensureUserSynced } from "@/lib/utils/ensure-user-synced";
 import { auth } from "@clerk/nextjs/server";
 import User from "@/lib/database/models/user.model";
-import { checkDailyConversationLimit } from "@/lib/utils/check-daily-conversations";
+import {
+  checkDailyConversationLimit,
+  claimDailyConversationSlot,
+} from "@/lib/utils/check-daily-conversations";
 import { getTaskByIdForUser } from "@/lib/utils/task-queries";
 import { enforceSlidingWindowRateLimit } from "@/lib/utils/rate-limit";
 
@@ -49,6 +52,7 @@ vi.mock("@/lib/database/models/user.model", () => ({
 
 vi.mock("@/lib/utils/check-daily-conversations", () => ({
   checkDailyConversationLimit: vi.fn(),
+  claimDailyConversationSlot: vi.fn(),
 }));
 
 vi.mock("@/lib/utils/task-queries", () => ({
@@ -118,6 +122,12 @@ describe("POST /api/openai", () => {
       limit: 5,
       used: 0,
       remaining: 5,
+    });
+    vi.mocked(claimDailyConversationSlot).mockResolvedValue({
+      claimed: true,
+      limit: 5,
+      used: 1,
+      remaining: 4,
     });
     vi.mocked(enforceSlidingWindowRateLimit).mockResolvedValue({
       success: true,
@@ -223,10 +233,7 @@ describe("POST /api/openai", () => {
     );
     const payload = await response.json();
 
-    expect(checkDailyConversationLimit).toHaveBeenCalledWith(
-      "user_123",
-      "Lite",
-    );
+    expect(claimDailyConversationSlot).toHaveBeenCalledWith("user_123", "Lite");
     expect(generateTitle).toHaveBeenCalledOnce();
     expect(createTask).toHaveBeenCalledWith({
       title: "Generated title",
@@ -458,8 +465,8 @@ describe("POST /api/openai", () => {
   });
 
   it("blocks new conversations when the daily limit is reached", async () => {
-    vi.mocked(checkDailyConversationLimit).mockResolvedValue({
-      allowed: false,
+    vi.mocked(claimDailyConversationSlot).mockResolvedValue({
+      claimed: false,
       limit: 5,
       used: 5,
       remaining: 0,

@@ -6,7 +6,6 @@ import { connectToDatabase } from "@/lib/database/mongoose";
 import { handleError } from "@/lib/utils/handleError";
 import serializeForClient from "@/lib/utils/serialize-for-client";
 import Task from "@/lib/database/models/tasks.model";
-import User from "@/lib/database/models/user.model";
 import { auth } from "@clerk/nextjs/server";
 import deleteFileFromAWS from "@/lib/utils/aws/deleteFileFromAWS";
 import {
@@ -24,68 +23,6 @@ function estimateMessageBytes(messages: Message[]): number {
   }
 
   return Buffer.byteLength(JSON.stringify(messages), "utf8");
-}
-
-function getUtcStartOfDay(now: Date = new Date()): Date {
-  const startOfDay = new Date(now);
-  startOfDay.setUTCHours(0, 0, 0, 0);
-  return startOfDay;
-}
-
-async function incrementDailyConversationCounter(
-  userId: string,
-): Promise<void> {
-  const startOfDay = getUtcStartOfDay();
-  const updatedAt = new Date();
-
-  const updatedCounter = await User.findOneAndUpdate(
-    {
-      clerkId: userId,
-      $or: [
-        { dailyConversationWindowStart: { $gte: startOfDay } },
-        { dailyConversationWindowStart: { $exists: false } },
-        { dailyConversationWindowStart: null },
-      ],
-    },
-    {
-      $inc: {
-        dailyConversationsStarted: 1,
-      },
-      $set: {
-        dailyConversationWindowStart: startOfDay,
-        updatedAt,
-      },
-    },
-    {
-      strict: true,
-      upsert: false,
-      returnDocument: "after",
-    },
-  );
-
-  if (updatedCounter) {
-    return;
-  }
-
-  const resetCounter = await User.findOneAndUpdate(
-    { clerkId: userId },
-    {
-      $set: {
-        dailyConversationsStarted: 1,
-        dailyConversationWindowStart: startOfDay,
-        updatedAt,
-      },
-    },
-    {
-      strict: true,
-      upsert: false,
-      returnDocument: "after",
-    },
-  );
-
-  if (!resetCounter) {
-    throw new Error("Daily conversation counter update failed.");
-  }
 }
 
 function collectOwnedTaskAssetObjectKeys(
@@ -147,16 +84,6 @@ export async function createTask(task: CreateTaskInput) {
 
     if (!newTask) {
       throw new Error("Task creation failed!");
-    }
-
-    try {
-      await incrementDailyConversationCounter(userId);
-    } catch (counterError) {
-      await Task.findOneAndDelete({ _id: newTask._id, userId });
-
-      throw new Error("Task counter update failed.", {
-        cause: counterError,
-      });
     }
 
     return serializeForClient(newTask);

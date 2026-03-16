@@ -235,12 +235,7 @@ describe("generateResponse phase16", () => {
     const payload = JSON.parse(result as string);
 
     expect(generateAudio).toHaveBeenCalledWith({
-      messages: [
-        {
-          role: "user",
-          content: "Read this text out loud.",
-        },
-      ],
+      ttsText: "Read this text out loud.",
       role: "assistant",
       taskId: "task_audio",
       userId: "clerk_1",

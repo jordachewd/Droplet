@@ -1,9 +1,9 @@
 import Plans from "./plans-section";
 import Faqs from "./faqs-section";
 import classNames from "classnames";
-import Image from "next/image";
 import Link from "next/link";
 import { PERSONAS } from "@/constants/assistant-personas";
+import HeroSection from "./hero-section";
 
 const featureCards = [
   {
@@ -52,71 +52,19 @@ const featuredPersonas = PERSONAS.filter((persona) =>
 );
 
 export default function LandingPage() {
-  const heroSectionClass = classNames(
-    "flex w-full items-center justify-between px-4 pt-14 shadow-sm",
-    "bg-white/50 sm:px-6 lg:px-8 dark:bg-darkPrimary-900/50",
-  );
-
-  const heroImageWrapperClass = classNames(
-    "relative flex w-full justify-center self-end overflow-hidden",
-    "sm:min-h-[420px] lg:w-1/2 lg:min-h-[500px] xl:min-h-[600px] xxl:min-h-[700px]",
-  );
-
-  const heroGlowClass = classNames(
-    "absolute -bottom-28 left-1/2 z-0 h-[90%] w-[60%] -translate-x-1/2 rounded-full blur-3xl",
-    "bg-lightSecondary-400/30 dark:bg-darkSecondary-400/20",
-  );
-
   return (
     <section
-      className="LandingPage relative z-10 -mt-16 mb-10 mx-auto flex w-full max-w-screen-2xl flex-1 flex-col items-center gap-20"
+      className="LandingPage relative z-10 -mt-16 mb-10 mx-auto flex w-full flex-1 flex-col items-center gap-20"
       id="LandingPageWrapper"
     >
-      <div className={heroSectionClass}>
-        <div className="mx-auto mt-12 flex max-w-screen-2xl flex-col items-center justify-between lg:mt-0 lg:flex-row lg:gap-8">
-          <div className="flex w-full flex-col items-center gap-12 text-center lg:w-1/2 lg:items-start lg:text-left">
-            <h1 className="heading-2 leading-tight">
-              Chat, create,
-              <br />
-              and get things done.
-            </h1>
+      <HeroSection />
 
-            <p className="heading-6 max-w-2xl">
-              Unlock all personas across text conversations, image, and audio
-              generation.
-              <br />
-              Upgrade when you want higher limits and Premium video generation.
-            </p>
-
-            <Link
-              className="btn btn-lg btn-outlined w-full max-w-[300px] p-4 uppercase"
-              href="/app/new"
-            >
-              Try it for free
-            </Link>
-          </div>
-
-          <div className={heroImageWrapperClass}>
-            <Image
-              src="/images/droplet-hero-860x860.png"
-              alt="hero"
-              width={700}
-              height={700}
-              priority
-              className="z-10"
-            />
-
-            <div className={heroGlowClass}>&nbsp;</div>
-          </div>
-        </div>
-      </div>
-
-      <section className="LandingPageFeatures mx-auto grid w-full max-w-screen-2xl gap-4 px-4 sm:px-6 lg:grid-cols-3 lg:px-0">
+      <section className="Features mx-auto grid w-full max-w-screen-2xl gap-4 px-4 sm:px-6 lg:grid-cols-3 lg:px-0">
         {featureCards.map((card) => (
           <article
             key={card.title}
             className={classNames(
-              "rounded-[2rem] border px-6 py-8 shadow-sm",
+              "rounded-4xl border px-6 py-8 shadow-sm",
               "border-lightBorders-400/80 bg-white/78",
               "dark:border-darkBorders-500 dark:bg-jwdMarine-900/82",
             )}
@@ -132,10 +80,10 @@ export default function LandingPage() {
         ))}
       </section>
 
-      <section className="LandingPageWorkflow mx-auto grid w-full max-w-screen-2xl gap-6 px-4 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:px-0">
+      <section className="Workflow mx-auto grid w-full max-w-screen-2xl gap-6 px-4 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:px-0">
         <div
           className={classNames(
-            "rounded-[2rem] border px-6 py-8 shadow-sm",
+            "rounded-4xl border px-6 py-8 shadow-sm",
             "border-lightBorders-400/80 bg-white/78",
             "dark:border-darkBorders-500 dark:bg-jwdMarine-900/82",
           )}
@@ -178,7 +126,7 @@ export default function LandingPage() {
 
         <div
           className={classNames(
-            "rounded-[2rem] border px-6 py-8 shadow-sm",
+            "rounded-4xl border px-6 py-8 shadow-sm",
             "border-lightBorders-400/80 bg-linear-135 from-lightPrimary-100 via-white to-lightSecondary-100",
             "dark:border-darkBorders-500 dark:bg-linear-135 dark:from-darkPrimary-1000 dark:via-jwdMarine-1000 dark:to-darkSecondary-900/60",
           )}
@@ -219,7 +167,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className="LandingPagePersonas mx-auto flex w-full max-w-screen-2xl flex-col gap-6 px-4 sm:px-6 lg:px-0">
+      <section className="Personas mx-auto flex w-full max-w-screen-2xl flex-col gap-6 px-4 sm:px-6 lg:px-0">
         <div className="flex flex-col gap-3 text-center">
           <p className="text-xxs font-semibold uppercase tracking-[0.3em] opacity-65">
             Persona spotlight
@@ -239,7 +187,7 @@ export default function LandingPage() {
             <article
               key={persona.id}
               className={classNames(
-                "rounded-[2rem] border px-6 py-7 shadow-sm",
+                "rounded-4xl border px-6 py-7 shadow-sm",
                 "border-lightBorders-400/80 bg-white/78",
                 "dark:border-darkBorders-500 dark:bg-jwdMarine-900/82",
               )}
@@ -266,10 +214,10 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className="LandingPageCta mx-auto w-full max-w-screen-2xl px-4 sm:px-6 lg:px-0">
+      <section className="CtaBanner mx-auto w-full max-w-screen-2xl px-4 sm:px-6 lg:px-0">
         <div
           className={classNames(
-            "rounded-[2rem] border px-6 py-8 shadow-sm",
+            "rounded-4xl border px-6 py-8 shadow-sm",
             "border-lightBorders-400/80 bg-linear-135 from-lightSecondary-100 via-white to-lightAccent-100",
             "dark:border-darkBorders-500 dark:bg-linear-135 dark:from-darkPrimary-1000 dark:via-jwdMarine-1000 dark:to-darkSecondary-900/55",
           )}
@@ -303,8 +251,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <Plans maxWidthClass="max-w-screen-2xl" />
-      <Faqs maxWidthClass="max-w-screen-2xl" />
+      <Plans />
+      <Faqs />
     </section>
   );
 }

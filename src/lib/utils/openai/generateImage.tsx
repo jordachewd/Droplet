@@ -55,13 +55,13 @@ export async function generateImage({
   userId,
   planName,
 }: GenerateImageParams) {
-  try {
-    const policy = resolveModelPolicy({
-      plan: normalizePlanTier(planName),
-      feature: "image_generation",
-      taskClass: "final",
-    });
+  const policy = resolveModelPolicy({
+    plan: normalizePlanTier(planName),
+    feature: "image_generation",
+    taskClass: "final",
+  });
 
+  try {
     if (policy.hardBlocked) {
       throw new Error(
         policy.notes ?? "Image generation is blocked for the current request.",
@@ -129,6 +129,13 @@ export async function generateImage({
       requestMetric,
     });
   } catch (error) {
+    const status =
+      error instanceof Error && "status" in error
+        ? (error as { status?: number }).status
+        : undefined;
+    process.stderr.write(
+      `[generateImage] model=${policy.model} status=${status ?? "unknown"} error=${error instanceof Error ? error.message : "unknown"}\n`,
+    );
     handleError({ error, source: "generateImage" });
   }
 }

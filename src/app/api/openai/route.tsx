@@ -35,7 +35,10 @@ import {
   classifyTaskComplexity,
   isExplicitDeepAnalysisRequest,
 } from "@/lib/utils/openai/classify-task-complexity";
-import { checkDailyConversationLimit } from "@/lib/utils/check-daily-conversations";
+import {
+  checkDailyConversationLimit,
+  claimDailyConversationSlot,
+} from "@/lib/utils/check-daily-conversations";
 import { getTaskByIdForUser } from "@/lib/utils/task-queries";
 import { filterAssistantMsg } from "@/lib/utils/openai/filterAssistantMsg";
 import { PLAN_LIMITS } from "@/constants/plans";
@@ -850,12 +853,9 @@ export async function POST(req: Request): Promise<Response> {
     let taskId = providedTaskId;
 
     if (!taskId) {
-      const dailyConversationLimit = await checkDailyConversationLimit(
-        userId,
-        planName,
-      );
+      const claimResult = await claimDailyConversationSlot(userId, planName);
 
-      if (!dailyConversationLimit.allowed) {
+      if (!claimResult.claimed) {
         const stopReason: TaskEndedReason = "daily_conversation_limit_reached";
         const endAction = getPlanBoundEndAction(planName);
         const taskData = createStopTaskData({
@@ -893,14 +893,32 @@ export async function POST(req: Request): Promise<Response> {
         requestMetric: titleRequestMetric,
       } = JSON.parse(generatedTitle as string) as TitleResponsePayload;
 
-      const newTask = await createTask({
-        title,
-        messages: storedMessagesWithIncomingPrompt,
-        usage,
-        personaId: selectedPersona.id,
-        promptCount: 1,
-        estimatedBytes: estimatedBytesWithIncomingPrompt,
-      });
+      let newTask;
+      try {
+        newTask = await createTask({
+          title,
+          messages: storedMessagesWithIncomingPrompt,
+          usage,
+          personaId: selectedPersona.id,
+          promptCount: 1,
+          estimatedBytes: estimatedBytesWithIncomingPrompt,
+        });
+      } catch (createError) {
+        // Rollback the claimed slot — wrap in try/catch so rollback failure
+        // doesn't mask the original error.
+        try {
+          await User.findOneAndUpdate(
+            { clerkId: userId },
+            { $inc: { dailyConversationsStarted: -1 } },
+            { strict: true, upsert: false },
+          );
+        } catch (rollbackError) {
+          process.stderr.write(
+            `[openai/route] daily slot rollback failed after createTask error: ${rollbackError instanceof Error ? rollbackError.message : "unknown"}\\n`,
+          );
+        }
+        throw createError;
+      }
 
       if (!newTask) {
         throw new Error("Task creation failed.");
