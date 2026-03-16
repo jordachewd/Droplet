@@ -33,7 +33,7 @@ export default function AdminSidebar() {
     <aside
       className={classNames(
         "AdminSidebar hidden w-72 shrink-0 flex-col border-r px-4 py-6 lg:flex",
-        "border-lightBorders-300 bg-white/70 dark:border-darkBorders-500 dark:bg-jwdMarine-950/70",
+        "border-lightBorders-300/70 bg-lightBackground-100/85 backdrop-blur-lg dark:border-darkBorders-500 dark:bg-jwdMarine-950/70",
       )}
     >
       <div className="mb-8 flex flex-col gap-1 px-2">

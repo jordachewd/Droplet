@@ -298,7 +298,7 @@ a {
   }
 
   .tooltip-content {
-    @apply pointer-events-none absolute z-50 rounded-md bg-darkSecondary-600 p-0.5 text-[10px] leading-none text-white opacity-0 shadow transition-opacity duration-200 group-hover:opacity-100 group-focus-within:opacity-100;
+    @apply pointer-events-none absolute z-50 rounded-md bg-darkSecondary-600 p-0.5 text-xxs leading-none text-white opacity-0 shadow transition-opacity duration-200 group-hover:opacity-100 group-focus-within:opacity-100;
   }
 
   .chat-markdown {

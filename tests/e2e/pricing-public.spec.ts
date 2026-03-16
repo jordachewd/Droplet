@@ -18,22 +18,23 @@ test("shows the reconciled pricing and FAQ copy on the public pricing page", asy
   await expect(
     page
       .locator(".PlanCard")
-      .getByText("3 personas (Strategist, Developer, Best Friend)"),
+      .getByText("3 personas (full access) + try all others (limited access)"),
+  ).toHaveCount(1);
+  await expect(
+    page
+      .locator(".PlanCard")
+      .getByText("7 personas (full access) + try all others (limited access)"),
+  ).toHaveCount(1);
+  await expect(
+    page.locator(".PlanCard").getByText("All 10 personas (unlimited)"),
   ).toHaveCount(1);
   await expect(
     page
       .locator(".PlanCard")
       .getByText(
-        "7 personas (Strategist, Developer, Best Friend, Teacher, Wellness, Boyfriend, Girlfriend)",
+        "Trial personas: 5 prompts, 3 images, 2 audio, 1 video / 30 days",
       ),
-  ).toHaveCount(1);
-  await expect(
-    page
-      .locator(".PlanCard")
-      .getByText(
-        "All 10 personas (Strategist, Teacher, Developer, Creator, Wellness, Analyst, Best Friend, Boyfriend, Girlfriend, Interviewer)",
-      ),
-  ).toHaveCount(1);
+  ).toHaveCount(2);
   await expect(page.getByLabel("Toggle yearly billing")).toHaveCount(0);
   await expect(page.getByText("Save 40%", { exact: true })).toHaveCount(0);
   await expect(page.getByText("Yearly", { exact: true })).toHaveCount(0);

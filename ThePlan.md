@@ -992,6 +992,10 @@ These items are not banned forever. They are excluded because they create dispro
 
 ### Milestone 10 — Layout, Navigation & Library Enhancement
 
+> **Status: COMPLETED** — Delivered by Phases 31.1–31.3, 31.2-fix, 35.1, 32.1–32.3, 32.6.
+> ChatHeader on all /app pages with persona selector, sidebar cleanup, tabbed Library with media aggregation and error handling.
+> Remaining polish: 32.4 (media card components), 32.5 (pagination).
+
 **Objective:** Make the authenticated app shell professional and complete. ChatHeader on all `/app` pages, sidebar cleanup, Library media tabs.
 
 **Dependencies:** Phase 28 remaining complete.
@@ -1003,15 +1007,20 @@ These items are not banned forever. They are excluded because they create dispro
 3. Remove Plans and Profile from sidebar (already in AvatarMenu — redundant).
 4. Build tabbed Library page: Chats | Images | Audios | Videos tabs.
 5. Media aggregation queries against Task messages for image/audio extraction.
-6. Media card components with thumbnails, persona label, conversation link.
+6. Library error handling with server-side logging and client-side error state.
 
 **Success criteria:**
 
 - ChatHeader visible on all 7 `/app/*` routes.
 - Sidebar toggle in header, Plans/Profile removed from sidebar.
-- Library shows generated media organized by type.
+- Library shows generated media organized by type with error handling.
 
 ### Milestone 11 — Persona Trial Access System
+
+> **Status: COMPLETED** — Delivered by Phases 33.1–33.7, 37.1 (E2E stabilization).
+> Three-tier persona access (full/limited/blocked), trial counters, atomic enforcement, persona picker badges, plan card trial copy.
+> 334 unit tests passing, 176 E2E tests passing, build passing.
+> Remaining: 33.8 (trial E2E tests), 30.4 (admin persona controls).
 
 **Objective:** Enable try-before-you-buy persona access. Users can TEST non-plan personas with reduced limits to drive upgrades.
 
@@ -1060,6 +1069,51 @@ These items are not banned forever. They are excluded because they create dispro
 - Video generation works end-to-end via chat interface.
 - Videos stored in S3, URLs in messages.
 - Limits enforced per plan.
+
+### Milestone 13 — UI Polish, Bug Fixes & Admin Enhancement (Owner-Directed, 2026-03-16)
+
+> **Status: IN PROGRESS** — New milestone based on Owner instructions and Copilot Code Review.
+> PM audit #15 — 2 confirmed bugs, 1 Owner-reported CRITICAL, plus Owner UI restructure requirements.
+
+**Objective:** Fix confirmed bugs, address Owner's UI requirements (sidebar restructure, persona studio removal, error z-index), and enhance admin capabilities.
+
+**Dependencies:** Milestone 11 complete (trial access stable).
+
+**Architect Assessment:** No architectural risk. Straightforward changes. Bugs confirmed independently.
+
+**Block A — Bug Fixes (FIRST, before any feature work):**
+
+1. **CRITICAL** — Fix AlertMessage stacking context. ChatWrapper `z-0` creates a new stacking context that traps the `fixed z-[100]` AlertMessage below ChatHeader. Owner reports error messages render behind the header. Root cause: `position: fixed` inside a `z-0` stacking context parent. Fix: lift AlertMessage to layout level or remove `z-0` from ChatWrapper.
+2. **HIGH** — Fix `allowedPersonaIds=[]` entitlement leak. `allowedPersonaIds?.length` in ChatHeader + ChatWrapper treats empty array as "no restriction" (exposes all personas). Must distinguish `undefined` (no restriction) from `[]` (everything blocked).
+3. **MEDIUM** — Fix ChatHeader persona dropdown: disable when `messages.length > 0` or `taskStatus === "ended"`, not just on `/app/c/` routes. Prevents mid-conversation persona switching that breaks system prompt continuity.
+
+**Block B — Owner UI Requirements:**
+
+4. **HIGH** — Move Library and Personas from sidebar nav to AvatarMenu. Remove DISCOVER section from sidebar. Sidebar retains: Chat Dashboard, New Conversation, recent conversations.
+5. **HIGH** — Remove ChatPersonaPicker section from ChatWrapper landing page. Persona selection now lives in ChatHeader dropdown — the picker is redundant on `/app` landing.
+6. **LOW** — Skip `video_url` aggregation in Library page (Videos tab shows "Coming Soon" but still runs DB query). Set `videoItems = []` directly.
+7. **LOW** — Add `aria-label="Droplet home"` to Logo `<Link>` when `iconOnly={true}`.
+
+**Block C — Admin Enhancement:**
+
+8. **MEDIUM** — Align admin panel design with client app design system (fonts, colors, spacing, proportions).
+9. **MEDIUM** — Add "Top Personas" stat box to admin Usage page.
+
+**Block D — Test Coverage:**
+
+10. **MEDIUM** — E2E tests for trial persona flow (33.8).
+11. **LOW** — E2E tests for persona selector in ChatHeader (35.2).
+
+**Success criteria:**
+
+- Error messages always render above ChatHeader.
+- Entitlement logic correctly handles empty `allowedPersonaIds`.
+- Persona dropdown disabled during active conversations.
+- Sidebar has only core nav (dashboard, new, history). Library + Personas in AvatarMenu.
+- No persona studio/picker on landing page.
+- Admin pages visually consistent with client app.
+- "Top Personas" stat box on admin Usage page.
+- E2E tests cover trial flow.
 
 ---
 

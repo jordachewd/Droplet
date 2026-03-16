@@ -4,13 +4,15 @@ import {
   getPersona,
 } from "@/constants/assistant-personas";
 import { PLAN_LIMITS, PlanLimits } from "@/constants/plans";
-import { PersonaId } from "@/types/PersonaData.d";
+import { PersonaAccessLevel, PersonaId } from "@/types/PersonaData.d";
 import { PlanName } from "@/types/PlanData.d";
 
 export interface Entitlements {
   planName: PlanName;
   limits: PlanLimits[PlanName];
+  personaAccess?: Record<PersonaId, PersonaAccessLevel>;
   allowedPersonaIds: PersonaId[];
+  trialPersonaIds?: PersonaId[];
   supportsImageGeneration: boolean;
   supportsAudioGeneration: boolean;
   supportsVideoGeneration: boolean;
@@ -26,7 +28,10 @@ interface ResolveEntitlementOptions {
   planLimits?: PlanLimits;
 }
 
-export const DEFAULT_PERSONA_ACCESS_BY_PLAN: Record<PlanName, PersonaId[]> = {
+export const DEFAULT_FULL_PERSONA_ACCESS_BY_PLAN: Record<
+  PlanName,
+  PersonaId[]
+> = {
   Lite: ["strategist", "developer", "best-friend"],
   Pro: [
     "strategist",
@@ -39,6 +44,48 @@ export const DEFAULT_PERSONA_ACCESS_BY_PLAN: Record<PlanName, PersonaId[]> = {
   ],
   Premium: PERSONAS.map((persona) => persona.id),
 };
+
+function buildPersonaAccessByPlan(
+  planName: PlanName,
+): Record<PersonaId, PersonaAccessLevel> {
+  const fullPersonaSet = new Set(DEFAULT_FULL_PERSONA_ACCESS_BY_PLAN[planName]);
+
+  return PERSONAS.reduce(
+    (accumulator, persona) => {
+      accumulator[persona.id] = fullPersonaSet.has(persona.id)
+        ? "full"
+        : "limited";
+      return accumulator;
+    },
+    {} as Record<PersonaId, PersonaAccessLevel>,
+  );
+}
+
+function buildBlockedPersonaAccess(): Record<PersonaId, PersonaAccessLevel> {
+  return PERSONAS.reduce(
+    (accumulator, persona) => {
+      accumulator[persona.id] = "blocked";
+      return accumulator;
+    },
+    {} as Record<PersonaId, PersonaAccessLevel>,
+  );
+}
+
+function getAllowedPersonaIds(
+  personaAccess: Record<PersonaId, PersonaAccessLevel>,
+): PersonaId[] {
+  return PERSONAS.filter(
+    (persona) => personaAccess[persona.id] !== "blocked",
+  ).map((persona) => persona.id);
+}
+
+function getTrialPersonaIds(
+  personaAccess: Record<PersonaId, PersonaAccessLevel>,
+): PersonaId[] {
+  return PERSONAS.filter(
+    (persona) => personaAccess[persona.id] === "limited",
+  ).map((persona) => persona.id);
+}
 
 function isPaidPlanExpired({
   planName,
@@ -70,10 +117,14 @@ export function resolveEntitlements(
   const planLimits = options.planLimits ?? PLAN_LIMITS;
 
   if (options.isSuspended) {
+    const personaAccess = buildBlockedPersonaAccess();
+
     return {
       planName: normalizedPlan,
       limits: planLimits[normalizedPlan],
+      personaAccess,
       allowedPersonaIds: [],
+      trialPersonaIds: [],
       supportsImageGeneration: false,
       supportsAudioGeneration: false,
       supportsVideoGeneration: false,
@@ -90,11 +141,14 @@ export function resolveEntitlements(
   })
     ? "Lite"
     : normalizedPlan;
+  const personaAccess = buildPersonaAccessByPlan(effectivePlanName);
 
   return {
     planName: effectivePlanName,
     limits: planLimits[effectivePlanName],
-    allowedPersonaIds: [...DEFAULT_PERSONA_ACCESS_BY_PLAN[effectivePlanName]],
+    personaAccess,
+    allowedPersonaIds: getAllowedPersonaIds(personaAccess),
+    trialPersonaIds: getTrialPersonaIds(personaAccess),
     supportsImageGeneration: true,
     supportsAudioGeneration: true,
     supportsVideoGeneration: true,

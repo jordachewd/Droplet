@@ -65,7 +65,7 @@ export default function AlertMessage({ message }: AlertMessageProps) {
       : filledSeverityStyles[severity];
 
   return (
-    <div className="AlertMessage fixed left-1/2 top-4 z-[100] w-full max-w-xl -translate-x-1/2 px-4">
+    <div className="AlertMessage fixed left-1/2 top-4 z-100 w-full max-w-xl -translate-x-1/2 px-4">
       <div
         role="alert"
         className={classNames(
@@ -76,7 +76,7 @@ export default function AlertMessage({ message }: AlertMessageProps) {
         <div className="flex items-start justify-between gap-4">
           <div className="flex flex-col gap-1">
             {title && (
-              <h2 className="heading-6 !text-base !leading-tight !text-inherit">
+              <h2 className="heading-6 text-base! leading-tight! text-inherit!">
                 {title}
               </h2>
             )}

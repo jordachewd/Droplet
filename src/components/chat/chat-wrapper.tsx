@@ -9,7 +9,6 @@ import ChatBody from "@/components/chat/chat-body";
 import ChatInput from "@/components/chat/chat-input";
 import AlertMessage, { AlertParams } from "@/components/shared/alert-message";
 import { filterAssistantMsg } from "@/lib/utils/openai/filterAssistantMsg";
-import ChatPersonaPicker from "@/components/chat/chat-persona-picker";
 import {
   DEFAULT_PERSONA_ID,
   PERSONAS,
@@ -75,7 +74,7 @@ export default function ChatWrapper({
     [initialMessagesProp],
   );
   const normalizedAllowedPersonaIds = useMemo(() => {
-    if (allowedPersonaIds && allowedPersonaIds.length > 0) {
+    if (allowedPersonaIds !== undefined) {
       return allowedPersonaIds;
     }
 
@@ -102,7 +101,6 @@ export default function ChatWrapper({
     taskStatus,
     endState,
     hydrateConversation,
-    resetConversation,
     setTaskId,
     setPersonaId,
     setMessages,
@@ -117,7 +115,6 @@ export default function ChatWrapper({
       taskStatus: state.taskStatus,
       endState: state.endState,
       hydrateConversation: state.hydrateConversation,
-      resetConversation: state.resetConversation,
       setTaskId: state.setTaskId,
       setPersonaId: state.setPersonaId,
       setMessages: state.setMessages,
@@ -185,19 +182,6 @@ export default function ChatWrapper({
     setPersonaId(selectedPersonaId);
     return () => setPersonaId(null);
   }, [selectedPersonaId, setPersonaId]);
-
-  function handleSelectPersona(personaId: PersonaId) {
-    if (
-      personaId === selectedPersonaId ||
-      !normalizedAllowedPersonaIds.includes(personaId)
-    ) {
-      return;
-    }
-
-    setSelectedPersonaId(personaId);
-    resetConversation();
-    setStartMsg("");
-  }
 
   function syncMessagesWithResponse({
     taskData,
@@ -450,21 +434,13 @@ export default function ChatWrapper({
   };
 
   return (
-    <main className="ChatWrapper relative z-0 flex h-full flex-1 flex-col overflow-hidden">
+    <main className="ChatWrapper relative flex h-full flex-1 flex-col overflow-hidden">
       {alert && <AlertMessage message={alert} />}
-
-      <section className="mt-14 flex w-full flex-col gap-3 px-3 pt-2 lg:px-5">
-        <ChatPersonaPicker
-          selectedPersonaId={selectedPersona.id}
-          allowedPersonaIds={normalizedAllowedPersonaIds}
-          onSelectPersona={handleSelectPersona}
-        />
-      </section>
 
       <section
         id="ChatWrapperContent"
         className={classNames(
-          "droplet-scrollbar relative z-10 flex w-full flex-1 flex-col overflow-y-auto pb-4",
+          "droplet-scrollbar relative z-10 mt-14 flex w-full flex-1 flex-col overflow-y-auto pb-4",
           isNewTask && "items-center justify-center px-4",
         )}
       >

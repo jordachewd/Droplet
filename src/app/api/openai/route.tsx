@@ -39,7 +39,7 @@ import {
 } from "@/lib/utils/check-daily-conversations";
 import { getTaskByIdForUser } from "@/lib/utils/task-queries";
 import { filterAssistantMsg } from "@/lib/utils/openai/filterAssistantMsg";
-import { PlanLimits } from "@/constants/plans";
+import { PERSONA_TRIAL_LIMITS, PlanLimits } from "@/constants/plans";
 import { SUPPORT_EMAIL } from "@/constants/support";
 import { PlanName } from "@/types/PlanData.d";
 import { PersonaId } from "@/types/PersonaData.d";
@@ -93,6 +93,8 @@ const OPENAI_ERROR_MESSAGES: Record<OpenAIErrorType, string> = {
 const STOP_REASON_MESSAGES: Record<TaskEndedReason, string> = {
   prompt_limit_reached:
     "You've reached the message limit for this conversation.",
+  trial_limit_reached:
+    "You've reached the trial limit for this persona conversation.",
   media_limit_reached: "You've reached your media generation limit.",
   daily_conversation_limit_reached:
     "You've reached the daily conversation limit for your plan.",
@@ -166,6 +168,7 @@ interface ConversationStopPayload {
 }
 
 type MediaUsageLimitType = "images" | "audio";
+type MediaCounterScope = "plan" | "trial";
 
 interface MediaSlotClaimResult {
   claimed: boolean;
@@ -247,27 +250,34 @@ function createUsageTaskId(taskId?: string): string {
 
 function resolveMediaCounterField(
   limitType: MediaUsageLimitType,
-): "plan.imageGenerations" | "plan.audioGenerations" {
-  if (limitType === "images") {
-    return "plan.imageGenerations";
+  counterScope: MediaCounterScope,
+):
+  | "plan.imageGenerations"
+  | "plan.audioGenerations"
+  | "plan.trialUsage.trialImageGenerations"
+  | "plan.trialUsage.trialAudioGenerations" {
+  if (counterScope === "trial") {
+    return limitType === "images"
+      ? "plan.trialUsage.trialImageGenerations"
+      : "plan.trialUsage.trialAudioGenerations";
   }
 
-  return "plan.audioGenerations";
+  return limitType === "images"
+    ? "plan.imageGenerations"
+    : "plan.audioGenerations";
 }
 
 async function claimMediaGenerationSlot({
   userId,
-  planName,
   limitType,
-  planLimits,
+  limit,
+  counterScope,
 }: {
   userId: string;
-  planName: PlanName;
   limitType: MediaUsageLimitType;
-  planLimits: PlanLimits;
+  limit: number;
+  counterScope: MediaCounterScope;
 }): Promise<MediaSlotClaimResult> {
-  const limit = planLimits[planName][limitType];
-
   if (limit === -1) {
     return {
       claimed: true,
@@ -276,7 +286,7 @@ async function claimMediaGenerationSlot({
     };
   }
 
-  const counterField = resolveMediaCounterField(limitType);
+  const counterField = resolveMediaCounterField(limitType, counterScope);
   const updatedUser = await User.findOneAndUpdate(
     {
       clerkId: userId,
@@ -303,9 +313,13 @@ async function claimMediaGenerationSlot({
   }
 
   const nextCountRaw =
-    limitType === "images"
-      ? updatedUser.plan?.imageGenerations
-      : updatedUser.plan?.audioGenerations;
+    counterScope === "trial"
+      ? limitType === "images"
+        ? updatedUser.plan?.trialUsage?.trialImageGenerations
+        : updatedUser.plan?.trialUsage?.trialAudioGenerations
+      : limitType === "images"
+        ? updatedUser.plan?.imageGenerations
+        : updatedUser.plan?.audioGenerations;
   const nextCount =
     typeof nextCountRaw === "number" && Number.isFinite(nextCountRaw)
       ? nextCountRaw
@@ -321,11 +335,13 @@ async function claimMediaGenerationSlot({
 async function rollbackMediaGenerationSlot({
   userId,
   limitType,
+  counterScope,
 }: {
   userId: string;
   limitType: MediaUsageLimitType;
+  counterScope: MediaCounterScope;
 }): Promise<void> {
-  const counterField = resolveMediaCounterField(limitType);
+  const counterField = resolveMediaCounterField(limitType, counterScope);
 
   await User.findOneAndUpdate(
     {
@@ -486,6 +502,7 @@ async function finalizeAIResponse({
   userId,
   planName,
   planLimits,
+  isTrialPersona,
   selectedPersonaId,
   storedMessagesWithIncomingPrompt,
   estimatedBytesWithIncomingPrompt,
@@ -495,6 +512,7 @@ async function finalizeAIResponse({
   userId: string;
   planName: PlanName;
   planLimits: PlanLimits;
+  isTrialPersona: boolean;
   selectedPersonaId: PersonaId;
   storedMessagesWithIncomingPrompt: Message[];
   estimatedBytesWithIncomingPrompt: number;
@@ -524,8 +542,12 @@ async function finalizeAIResponse({
   const { taskData, taskUsage } = aiPayload;
 
   if (aiPayload.blockedReason === "media_limit_reached") {
-    const stopReason: TaskEndedReason = "media_limit_reached";
-    const endAction = getPlanBoundEndAction({ planName, planLimits });
+    const stopReason: TaskEndedReason = isTrialPersona
+      ? "trial_limit_reached"
+      : "media_limit_reached";
+    const endAction: TaskEndAction = isTrialPersona
+      ? "upgrade_plan"
+      : getPlanBoundEndAction({ planName, planLimits });
     const taskDataToPersist = await persistConversationStop({
       taskId,
       personaId: selectedPersonaId,
@@ -803,7 +825,16 @@ export async function POST(req: Request): Promise<Response> {
       planLimits: effectivePlanLimits,
     });
 
-    if (!entitlements.allowedPersonaIds.includes(selectedPersona.id)) {
+    const selectedPersonaAccess = entitlements.personaAccess?.[
+      selectedPersona.id
+    ]
+      ? entitlements.personaAccess[selectedPersona.id]
+      : entitlements.allowedPersonaIds.includes(selectedPersona.id)
+        ? "full"
+        : "blocked";
+    const isTrialPersona = selectedPersonaAccess === "limited";
+
+    if (selectedPersonaAccess === "blocked") {
       return NextResponse.json(
         {
           error: "Selected persona is not available for your current plan.",
@@ -814,37 +845,61 @@ export async function POST(req: Request): Promise<Response> {
 
     const imageUsage = checkUsageLimit({
       planName,
-      currentCount: userData?.plan?.imageGenerations,
+      currentCount: isTrialPersona
+        ? userData?.plan?.trialUsage?.trialImageGenerations
+        : userData?.plan?.imageGenerations,
       limitType: "images",
-      usagePeriodStart: userData?.plan?.usagePeriodStart,
+      overrideLimit: isTrialPersona ? PERSONA_TRIAL_LIMITS.images : undefined,
+      usagePeriodStart: isTrialPersona
+        ? userData?.plan?.trialUsage?.trialUsagePeriodStart
+        : userData?.plan?.usagePeriodStart,
       planLimits: effectivePlanLimits,
     });
     const audioUsage = checkUsageLimit({
       planName,
-      currentCount: userData?.plan?.audioGenerations,
+      currentCount: isTrialPersona
+        ? userData?.plan?.trialUsage?.trialAudioGenerations
+        : userData?.plan?.audioGenerations,
       limitType: "audio",
-      usagePeriodStart: userData?.plan?.usagePeriodStart,
+      overrideLimit: isTrialPersona ? PERSONA_TRIAL_LIMITS.audio : undefined,
+      usagePeriodStart: isTrialPersona
+        ? userData?.plan?.trialUsage?.trialUsagePeriodStart
+        : userData?.plan?.usagePeriodStart,
       planLimits: effectivePlanLimits,
     });
     const videoUsage = checkUsageLimit({
       planName,
-      currentCount: userData?.plan?.videoGenerations,
+      currentCount: isTrialPersona
+        ? userData?.plan?.trialUsage?.trialVideoGenerations
+        : userData?.plan?.videoGenerations,
       limitType: "video",
-      usagePeriodStart: userData?.plan?.usagePeriodStart,
+      overrideLimit: isTrialPersona ? PERSONA_TRIAL_LIMITS.video : undefined,
+      usagePeriodStart: isTrialPersona
+        ? userData?.plan?.trialUsage?.trialUsagePeriodStart
+        : userData?.plan?.usagePeriodStart,
       planLimits: effectivePlanLimits,
     });
 
     if (imageUsage.didReset || audioUsage.didReset || videoUsage.didReset) {
       await User.findOneAndUpdate(
         { clerkId: userId },
-        {
-          $set: {
-            "plan.imageGenerations": 0,
-            "plan.audioGenerations": 0,
-            "plan.videoGenerations": 0,
-            "plan.usagePeriodStart": new Date(),
-          },
-        },
+        isTrialPersona
+          ? {
+              $set: {
+                "plan.trialUsage.trialImageGenerations": 0,
+                "plan.trialUsage.trialAudioGenerations": 0,
+                "plan.trialUsage.trialVideoGenerations": 0,
+                "plan.trialUsage.trialUsagePeriodStart": new Date(),
+              },
+            }
+          : {
+              $set: {
+                "plan.imageGenerations": 0,
+                "plan.audioGenerations": 0,
+                "plan.videoGenerations": 0,
+                "plan.usagePeriodStart": new Date(),
+              },
+            },
         {
           strict: true,
           upsert: false,
@@ -942,23 +997,27 @@ export async function POST(req: Request): Promise<Response> {
       );
     }
 
-    if (
-      persistedTask &&
-      effectivePlanLimits[planName].promptsPerConversation !== -1
-    ) {
-      const promptLimit = effectivePlanLimits[planName].promptsPerConversation;
+    const promptLimit = isTrialPersona
+      ? PERSONA_TRIAL_LIMITS.promptsPerConversation
+      : effectivePlanLimits[planName].promptsPerConversation;
+
+    if (persistedTask && promptLimit !== -1) {
       const promptSlotClaimed = await incrementPromptCountIfBelowLimit({
         taskId: persistedTask._id,
         limit: promptLimit,
       });
 
       if (!promptSlotClaimed) {
-        const stopReason: TaskEndedReason = "prompt_limit_reached";
-        const endAction = await resolvePromptLimitEndAction({
-          userId,
-          planName,
-          planLimits: effectivePlanLimits,
-        });
+        const stopReason: TaskEndedReason = isTrialPersona
+          ? "trial_limit_reached"
+          : "prompt_limit_reached";
+        const endAction: TaskEndAction = isTrialPersona
+          ? "upgrade_plan"
+          : await resolvePromptLimitEndAction({
+              userId,
+              planName,
+              planLimits: effectivePlanLimits,
+            });
         const taskData = await persistConversationStop({
           taskId: persistedTask._id,
           personaId: selectedPersona.id,
@@ -1125,14 +1184,17 @@ export async function POST(req: Request): Promise<Response> {
               claimMediaGenerationSlot: async ({ limitType }) =>
                 claimMediaGenerationSlot({
                   userId,
-                  planName,
                   limitType,
-                  planLimits: effectivePlanLimits,
+                  limit: isTrialPersona
+                    ? PERSONA_TRIAL_LIMITS[limitType]
+                    : effectivePlanLimits[planName][limitType],
+                  counterScope: isTrialPersona ? "trial" : "plan",
                 }),
               rollbackMediaGenerationSlot: async ({ limitType }) =>
                 rollbackMediaGenerationSlot({
                   userId,
                   limitType,
+                  counterScope: isTrialPersona ? "trial" : "plan",
                 }),
               abortSignal: req.signal,
               onContentChunk: (delta, snapshot) => {
@@ -1150,6 +1212,7 @@ export async function POST(req: Request): Promise<Response> {
               userId,
               planName,
               planLimits: effectivePlanLimits,
+              isTrialPersona,
               selectedPersonaId: selectedPersona.id,
               storedMessagesWithIncomingPrompt,
               estimatedBytesWithIncomingPrompt,
@@ -1195,14 +1258,17 @@ export async function POST(req: Request): Promise<Response> {
       claimMediaGenerationSlot: async ({ limitType }) =>
         claimMediaGenerationSlot({
           userId,
-          planName,
           limitType,
-          planLimits: effectivePlanLimits,
+          limit: isTrialPersona
+            ? PERSONA_TRIAL_LIMITS[limitType]
+            : effectivePlanLimits[planName][limitType],
+          counterScope: isTrialPersona ? "trial" : "plan",
         }),
       rollbackMediaGenerationSlot: async ({ limitType }) =>
         rollbackMediaGenerationSlot({
           userId,
           limitType,
+          counterScope: isTrialPersona ? "trial" : "plan",
         }),
     });
     const aiPayload = JSON.parse(aiResponse as string) as OpenAIResponsePayload;
@@ -1213,6 +1279,7 @@ export async function POST(req: Request): Promise<Response> {
       userId,
       planName,
       planLimits: effectivePlanLimits,
+      isTrialPersona,
       selectedPersonaId: selectedPersona.id,
       storedMessagesWithIncomingPrompt,
       estimatedBytesWithIncomingPrompt,

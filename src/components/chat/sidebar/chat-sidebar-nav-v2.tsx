@@ -28,11 +28,6 @@ const WORKSPACE_LINKS: NavLinkItem[] = [
     exact: true,
   },
   { href: "/app/new", label: "New Conversation", icon: "bi bi-plus-circle" },
-  { href: "/app/library", label: "Library", icon: "bi bi-clock-history" },
-];
-
-const DISCOVER_LINKS: NavLinkItem[] = [
-  { href: "/app/personas", label: "Personas", icon: "bi bi-grid-3x3-gap" },
 ];
 
 function SidebarNavLink({
@@ -134,18 +129,6 @@ export default function ChatSidebarNavV2({
       <section className="ChatSidebarNavV2Section flex flex-col gap-1.5">
         <p className={headingClass}>Workspace</p>
         {WORKSPACE_LINKS.map((link) => (
-          <SidebarNavLink
-            key={link.href}
-            item={link}
-            pathname={pathname}
-            isOpen={isOpen}
-          />
-        ))}
-      </section>
-
-      <section className="ChatSidebarNavV2Section flex flex-col gap-1.5">
-        <p className={headingClass}>Discover</p>
-        {DISCOVER_LINKS.map((link) => (
           <SidebarNavLink
             key={link.href}
             item={link}

@@ -8,27 +8,28 @@ import {
 import { PlanName } from "@/types/PlanData.d";
 
 describe("resolveEntitlements", () => {
-  it("returns Lite plan-gated personas and all media entitlements", () => {
+  it("returns Lite full + trial persona access and all media entitlements", () => {
     const entitlements = resolveEntitlements("Lite");
 
-    expect(entitlements.allowedPersonaIds).toEqual([
-      "strategist",
-      "developer",
-      "best-friend",
-    ]);
-    expect(entitlements.allowedPersonaIds).not.toContain("girlfriend");
+    expect(
+      entitlements.allowedPersonaIds.filter(
+        (personaId) => entitlements.personaAccess![personaId] === "full",
+      ),
+    ).toEqual(["strategist", "developer", "best-friend"]);
+    expect(entitlements.allowedPersonaIds).toContain("girlfriend");
+    expect(entitlements.trialPersonaIds).toContain("girlfriend");
     expect(entitlements.supportsImageGeneration).toBe(true);
     expect(entitlements.supportsAudioGeneration).toBe(true);
     expect(entitlements.supportsVideoGeneration).toBe(true);
   });
 
-  it("falls back to the first allowed persona when Lite users select a blocked persona", () => {
+  it("allows selecting limited personas for Lite users", () => {
     const persona = resolvePersonaForPlan({
       personaId: "girlfriend",
       planName: "Lite",
     });
 
-    expect(persona.id).toBe("strategist");
+    expect(persona.id).toBe("girlfriend");
   });
 
   it("covers plan x media capability combinations for image, audio, and video", () => {
@@ -54,11 +55,8 @@ describe("resolveEntitlements", () => {
     expect(entitlements.supportsImageGeneration).toBe(true);
     expect(entitlements.supportsAudioGeneration).toBe(true);
     expect(entitlements.supportsVideoGeneration).toBe(true);
-    expect(entitlements.allowedPersonaIds).toEqual([
-      "strategist",
-      "developer",
-      "best-friend",
-    ]);
+    expect(entitlements.personaAccess!.strategist).toBe("full");
+    expect(entitlements.personaAccess!.girlfriend).toBe("limited");
   });
 
   it("blocks entitlements for suspended users", () => {
@@ -80,31 +78,25 @@ describe("resolveEntitlements", () => {
     const proEntitlements = resolveEntitlements("Pro");
     const premiumEntitlements = resolveEntitlements("Premium");
 
-    expect(liteEntitlements.allowedPersonaIds).toEqual([
-      "strategist",
-      "developer",
-      "best-friend",
-    ]);
-    expect(liteEntitlements.allowedPersonaIds).toHaveLength(3);
+    expect(liteEntitlements.allowedPersonaIds).toHaveLength(10);
+    expect(liteEntitlements.trialPersonaIds).toHaveLength(7);
+    expect(liteEntitlements.personaAccess!.strategist).toBe("full");
+    expect(liteEntitlements.personaAccess!.developer).toBe("full");
+    expect(liteEntitlements.personaAccess!["best-friend"]).toBe("full");
+    expect(liteEntitlements.personaAccess!.teacher).toBe("limited");
 
-    expect(proEntitlements.allowedPersonaIds).toEqual([
-      "strategist",
-      "developer",
-      "best-friend",
-      "teacher",
-      "wellness",
-      "boyfriend",
-      "girlfriend",
-    ]);
-    expect(proEntitlements.allowedPersonaIds).toHaveLength(7);
-    expect(proEntitlements.allowedPersonaIds).not.toContain("interviewer");
-    expect(proEntitlements.allowedPersonaIds).not.toContain("creator");
-    expect(proEntitlements.allowedPersonaIds).not.toContain("analyst");
+    expect(proEntitlements.allowedPersonaIds).toHaveLength(10);
+    expect(proEntitlements.trialPersonaIds).toHaveLength(3);
+    expect(proEntitlements.personaAccess!.interviewer).toBe("limited");
+    expect(proEntitlements.personaAccess!.creator).toBe("limited");
+    expect(proEntitlements.personaAccess!.analyst).toBe("limited");
 
     expect(premiumEntitlements.allowedPersonaIds).toEqual(
       PERSONAS.map((persona) => persona.id),
     );
+    expect(premiumEntitlements.trialPersonaIds).toEqual([]);
     expect(premiumEntitlements.allowedPersonaIds).toHaveLength(10);
     expect(premiumEntitlements.allowedPersonaIds).toContain("interviewer");
+    expect(premiumEntitlements.personaAccess!.interviewer).toBe("full");
   });
 });
