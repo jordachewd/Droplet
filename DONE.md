@@ -2,7 +2,79 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-16 — PM deep audit #11. Phases 1–25.7 + 27.1–27.4 + 27.6–27.10 + 28.1 + 28.2-fix + 28.3-code + 30.1 + 30.2 + 30.3 + E2E regression fixes complete.
+> Last updated: 2026-03-16 — PM deep audit #11. Phases 1–25.7 + 27.1–27.4 + 27.6–27.10 + 28.1 + 28.2-fix + 28.3-code + 28.4 + 28.6 + 28.7 + 30.1 + 30.2 + 30.3 + 31.1 + 31.2 + 31.3 + E2E regression fixes complete.
+
+---
+
+## Phase 31.1 — Move ChatHeader to layout level for all /app routes — COMPLETED (2026-03-16)
+
+- Moved `ChatHeader` from `ChatWrapper` (chat-only pages) to `(chat)/layout.tsx` main section so it renders on all 7 `/app/*` routes.
+- ChatHeader reads `useChatStore` (personaId, messages, taskStatus) and `useUiStore` (sidebar state). Shows persona label + message count + ended badge when in conversation.
+- Added `personaId: PersonaId | null` field and `setPersonaId` action to `useChatStore`. ChatWrapper syncs via useEffect; cleanup resets to null on unmount.
+- Removed duplicate `ChatHeader` import/rendering from `ChatWrapper`.
+- All pages correctly spaced (`mt-14` via `PageWrapper` scrollable mode and ChatWrapper persona section).
+
+**Files changed:** `src/app/(chat)/layout.tsx`, `src/components/chat/chat-header.tsx`, `src/components/chat/chat-wrapper.tsx`, `src/lib/hooks/use-chat-store.ts`
+
+---
+
+## Phase 31.2 — Move sidebar toggle to ChatHeader as first-left item — COMPLETED (2026-03-16)
+
+- Moved `SidebarToggle` from `SidebarHead` (inside sidebar) to `ChatHeader` (main content area) as first-left item.
+- ChatHeader manages desktop/mobile detection via `useRef<MediaQueryList>` and dispatches to `toggleDesktopSidebarCollapsed` or `toggleMobileSidebarOpen` accordingly.
+- Removed `SidebarToggle`, `isOpen`, and `onToggleSidebar` props from `SidebarHead` — now only renders Logo.
+- Removed floating mobile toggle button from `ChatSidebarShell`.
+- Removed `hasAuthUser` prop from `ChatSidebarShell` (no longer needed without floating toggle).
+
+**Files changed:** `src/components/chat/chat-header.tsx`, `src/components/chat/sidebar/sidebar-head.tsx`, `src/components/chat/sidebar/chat-sidebar-shell.tsx`, `src/components/chat/chat-sidebar.tsx`
+
+---
+
+## Phase 31.3 — Remove Plans and Profile from sidebar navigation — COMPLETED (2026-03-16)
+
+- Removed Plans and Profile from `DISCOVER_LINKS` in `chat-sidebar-nav-v2.tsx` (only Personas remains).
+- Plans and Profile remain accessible via AvatarMenu in ChatHeader.
+- Updated E2E test `chat-app-shell.spec.ts`: removed Profile/Plans from `sidebarDestinations`, updated `ensureSidebarOpen` to use new toggle button label.
+
+**Files changed:** `src/components/chat/sidebar/chat-sidebar-nav-v2.tsx`, `tests/e2e/chat-app-shell.spec.ts`
+
+---
+
+## Phase 28.6 — Fix media generation counter TOCTOU race — COMPLETED (2026-03-16)
+
+- [x] `claimMediaGenerationSlot()` uses atomic `findOneAndUpdate` with `{ $lt: limit }` guard — single MongoDB operation.
+- [x] `rollbackMediaGenerationSlot()` uses atomic `findOneAndUpdate` with `{ $gt: 0 }` guard for safe decrement.
+- [x] `resolveMediaCounterField()` maps `limitType` to `plan.imageGenerations` / `plan.audioGenerations`.
+- [x] Image generation: claim → generate → rollback on failure. No TOCTOU gap.
+- [x] Audio generation: claim → generate → rollback on failure. No TOCTOU gap.
+- [x] Rollback catch blocks log to `process.stderr` (per AGENTS.md).
+- [x] Old post-response `$inc` pattern fully removed.
+- [x] `checkUsageLimit()` retained only as pre-check optimization (tool list filtering, 30-day period reset).
+- [x] Discovered already implemented during Engineer audit.
+
+**Files verified:** `src/app/api/openai/route.tsx`, `src/lib/utils/openai/generateResponse.tsx`, `src/lib/utils/check-usage-limit.ts`
+
+---
+
+## Phase 28.7 — Fix audio tool definition content parameter — COMPLETED (2026-03-16)
+
+- [x] Audio tool `content` description already updated to: "The exact text content to be spoken aloud as audio. Provide the full text, not a description."
+- [x] `strict: true` schema intact.
+- [x] Discovered already implemented during Engineer audit.
+
+**Files verified:** `src/constants/openai.tsx`
+
+---
+
+## Phase 28.4 — Fix plan card UI copy ("messages" → "prompts") — COMPLETED (2026-03-16)
+
+- [x] `formatPromptsLabel()` in `plans.tsx` already outputs "X prompts per conversation" / "Unlimited prompts".
+- [x] No "messages" string exists anywhere in `plans.tsx`.
+- [x] Test file asserts "prompts" labels AND explicitly rejects "messages per conversation" (negative assertion).
+- [x] All 8 plan tests pass.
+- [x] Discovered already implemented during Engineer audit — was never tracked as complete.
+
+**Files verified:** `src/constants/plans.tsx`, `tests/unit/plans.test.ts`
 
 ---
 

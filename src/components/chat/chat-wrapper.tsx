@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import classNames from "classnames";
 import { useShallow } from "zustand/react/shallow";
 import { Message } from "@/types";
-import ChatHeader from "@/components/chat/chat-header";
 import ChatIntro from "@/components/chat/chat-intro";
 import ChatBody from "@/components/chat/chat-body";
 import ChatInput from "@/components/chat/chat-input";
@@ -105,6 +104,7 @@ export default function ChatWrapper({
     hydrateConversation,
     resetConversation,
     setTaskId,
+    setPersonaId,
     setMessages,
     setIsLoading,
     setTaskStatus,
@@ -119,6 +119,7 @@ export default function ChatWrapper({
       hydrateConversation: state.hydrateConversation,
       resetConversation: state.resetConversation,
       setTaskId: state.setTaskId,
+      setPersonaId: state.setPersonaId,
       setMessages: state.setMessages,
       setIsLoading: state.setIsLoading,
       setTaskStatus: state.setTaskStatus,
@@ -179,6 +180,11 @@ export default function ChatWrapper({
   useEffect(() => {
     setPreferredPersonaId(selectedPersonaId);
   }, [selectedPersonaId, setPreferredPersonaId]);
+
+  useEffect(() => {
+    setPersonaId(selectedPersonaId);
+    return () => setPersonaId(null);
+  }, [selectedPersonaId, setPersonaId]);
 
   function handleSelectPersona(personaId: PersonaId) {
     if (
@@ -446,12 +452,6 @@ export default function ChatWrapper({
   return (
     <main className="ChatWrapper relative z-0 flex h-full flex-1 flex-col overflow-hidden">
       {alert && <AlertMessage message={alert} />}
-
-      <ChatHeader
-        personaLabel={selectedPersona.label}
-        messageCount={task.length}
-        conversationStatus={taskStatus}
-      />
 
       <section className="mt-14 flex w-full flex-col gap-3 px-3 pt-2 lg:px-5">
         <ChatPersonaPicker

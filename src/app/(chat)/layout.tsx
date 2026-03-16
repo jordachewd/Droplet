@@ -1,4 +1,5 @@
 import ChatSidebar from "@/components/chat/chat-sidebar";
+import ChatHeader from "@/components/chat/chat-header";
 import PageWrapper from "@/components/layout/page-wrapper";
 
 interface ChatRouteLayoutProps {
@@ -14,6 +15,7 @@ export default function ChatRouteLayout({ children }: ChatRouteLayoutProps) {
       <ChatSidebar />
 
       <section className="ChatRouteLayoutMain relative flex h-full min-w-0 flex-1">
+        <ChatHeader />
         {children}
       </section>
     </PageWrapper>

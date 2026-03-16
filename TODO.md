@@ -5,45 +5,19 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: Phases 1–25.7 + 27.1–27.4 + 27.6–27.10 + 28.1 + 28.2-fix + 28.3-code + 30.1 + 30.2 + 30.3 complete.**
+> **STATUS: Phases 1–25.7 + 27.1–27.4 + 27.6–27.10 + 28.1 + 28.2-fix + 28.3-code + 28.4 + 28.6 + 28.7 + 30.1 + 30.2 + 30.3 + 31.1 + 31.2 + 31.3 complete.**
 > **PM deep audit #11 (2026-03-16): Owner instructions received. New phases added.**
-> **30.1 DONE (Interviewer). 30.2 DONE (persona gating). 30.3 DONE (persona picker UI). 27.4 DONE (admin forms).**
+> **28.4 DONE (plan card labels). 28.6 DONE (media TOCTOU). 28.7 DONE (audio tool fix). 30.1 DONE (Interviewer). 30.2 DONE (persona gating). 30.3 DONE (persona picker UI). 27.4 DONE (admin forms).**
 > **CRITICAL OWNER INSTRUCTIONS: Library media tabs, ChatHeader on all pages, sidebar cleanup, persona trial access model.**
-> **Priority order: 28.4 → 28.7 → 28.3-verify → 28.6 → 30.5 → 31.1–31.4 (layout/nav) → 32.1–32.5 (Library) → 33.1–33.8 (persona trial access) → 30.4 → 27.5 → 34.x (video gen) → 29.1 → 29.2 → Phase 26.**
+> **Priority order: 28.3-verify → 30.5 → 31.4 (layout E2E) → 32.1–32.5 (Library) → 33.1–33.8 (persona trial access) → 30.4 → 27.5 → 34.x (video gen) → 29.1 → 29.2 → Phase 26.**
 > **All Phase 26+ deferred work is ON HOLD until Phase 28 remaining + Phases 31–33 are PM-approved complete.**
 
 ---
 
 ## Phase 28: CRITICAL — Media Generation Fixes & Limit Enforcement (remaining)
 
-> PM audit #10 status: 28.1 DONE, 28.2-fix DONE, 28.3-code DONE (all archived in DONE.md).
-> Remaining: 28.4 (UI copy fix), 28.7 (audio tool fix), 28.3-verify (audio live test), 28.6 (media TOCTOU).
-
----
-
-### 28.4 CRITICAL — Fix plan card UI copy ("messages" → "prompts")
-
-**Files:** `src/constants/plans.tsx`, `tests/unit/plans.test.ts`
-**Ref:** PM audit #10 — root cause of owner's limit bypass report
-
-**Status: NOT DONE. This is the #1 immediate task.**
-
-**Root cause (PM + Engineer + Architect independently confirmed):** Plan card labels say "10 messages per conversation" but the actual limit is 10 **user prompts** (not total messages). A 10-prompt conversation displays ~20 visible messages (10 user + 10 AI response). The owner counted total visible messages and concluded limits are broken. Backend enforcement is architecturally correct (atomic `$lt` guards) — the issue is misleading UI copy.
-
-**What to do:**
-
-1. In `plans.tsx`, change Lite inclusions label from `"10 messages per conversation"` to `"10 prompts per conversation"`.
-2. In `plans.tsx`, change Pro inclusions label from `"100 messages per conversation"` to `"100 prompts per conversation"`.
-3. In `plans.tsx`, change Premium inclusions label from `"Unlimited messages"` to `"Unlimited prompts"` (if applicable).
-4. Update corresponding test assertions in `plans.test.ts`.
-5. Verify all plan cards (`/plans` and `/app/plans`) render correct labels.
-
-**Acceptance criteria:**
-
-- [ ] Plan card labels say "prompts" not "messages" for conversation limits
-- [ ] Test assertions updated
-- [ ] `npx tsc --noEmit` passes
-- [ ] All tests pass
+> PM audit #10 status: 28.1 DONE, 28.2-fix DONE, 28.3-code DONE, 28.4 DONE, 28.6 DONE, 28.7 DONE (all archived in DONE.md).
+> Remaining: 28.3-verify (audio live test).
 
 ---
 
@@ -77,67 +51,12 @@
 
 ---
 
-### 28.6 HIGH — Fix media generation counter TOCTOU race
-
-**Files:** `src/app/api/openai/route.tsx`
-**Ref:** TD-LIMIT-07 (new — Architect audit #9)
-**Depends on:** 28.2-fix complete
-
-**Root cause (Architect-identified):** Image/audio generation counters use read-then-write pattern:
-
-1. **Check** (~L684): `checkUsageLimit()` reads `userData.plan.imageGenerations` from user object fetched at request start.
-2. **Increment** (~L474): After AI response, `User.findOneAndUpdate({ $inc })` increments counter.
-
-Between steps, concurrent requests can both pass the check and exceed quotas. This violates AGENTS.md: "Limit checks must be atomic — use `findOneAndUpdate` with `$lt` guard."
-
-**What to do:**
-
-1. Replace the separated check-then-increment for media counters with a single atomic `findOneAndUpdate` with `$lt` guard, modeled after `incrementPromptCountIfBelowLimit` and `claimDailyConversationSlot`.
-2. Create function `claimMediaGenerationSlot(userId, mediaType, planName)` that atomically checks limit AND increments counter.
-3. Call this BEFORE `generateImage`/`generateAudio` in `buildOpenAIResponsePayload`.
-4. Remove the post-response `$inc` pattern for media counters.
-5. Handle rollback if generation fails after slot claim (decrement counter).
-6. Unit tests for atomic boundary, concurrent claim rejection, and rollback.
-
-**Acceptance criteria:**
-
-- [ ] Media limit check and increment are a SINGLE atomic MongoDB operation
-- [ ] No TOCTOU gap between check and increment
-- [ ] Rollback on generation failure
-- [ ] Concurrent requests cannot exceed media quota
-- [ ] Unit tests cover atomic boundary and rollback
-- [ ] `npx tsc --noEmit` passes
-- [ ] All tests pass
-
----
-
-### 28.7 MEDIUM — Fix audio tool definition content parameter
-
-**Files:** `src/constants/openai.tsx`
-**Ref:** TD-AI-23 (new — Architect audit #9)
-
-**Root cause:** The `getGeneratedAudio` tool definition describes `content` as "Description of the audio file to generate." This misleads the AI model into providing a brief description (e.g., "A soothing poem about rain") instead of the actual text to be spoken. The TTS path uses this value as literal speech input — a description produces garbage audio.
-
-**What to do:**
-
-1. Change `content` parameter description to: `"The exact text content to be spoken aloud as audio. Provide the full text, not a description."`
-2. Verify that the tool call `strict: true` schema is still valid after the description change.
-
-**Acceptance criteria:**
-
-- [ ] Audio tool definition `content` description clearly instructs model to provide exact text to speak
-- [ ] AI model provides actual speech text (not description) when generating audio
-- [ ] `npx tsc --noEmit` passes
-- [ ] All tests pass
-
----
-
 ## Phase 30: Persona Policy Implementation (remaining)
 
 > Owner-mandated policy change: per-plan persona gating + new Interviewer persona.
 > **30.1 DONE** (Interviewer persona added). **30.2 DONE** (per-plan persona gating). **30.3 DONE** (persona picker UI).
 > Remaining: 30.4 (admin persona controls), 30.5 (persona hero images).
-> Depends on: Phase 28 remaining subtasks complete (28.4, 28.7 minimum).
+> Depends on: Phase 28 remaining subtasks complete.
 
 ---
 
@@ -233,77 +152,16 @@ Between steps, concurrent requests can both pass the check and exceed quotas. Th
 > Owner-mandated (2026-03-16): ChatHeader on all /app pages, sidebar cleanup, toggle relocation.
 > Depends on: Phase 28 remaining complete.
 > Fast-win, high owner visibility.
+> **31.1 DONE** (ChatHeader in layout). **31.2 DONE** (sidebar toggle to header). **31.3 DONE** (Plans/Profile removed from sidebar).
+> Remaining: 31.4 (E2E tests for layout changes).
 
 ---
 
-### 31.1 HIGH — Move ChatHeader to layout level for all /app routes
+### 31.1 — DONE — archived in DONE.md
 
-**Files:** `src/app/(chat)/layout.tsx`, `src/components/chat/chat-header.tsx`, `src/components/chat/chat-wrapper.tsx`
-**Ref:** Owner instruction: ChatHeader must be present on all /app pages
+### 31.2 — DONE — archived in DONE.md
 
-**Context:** Currently `ChatHeader` only renders on `/app` and `/app/c/[id]` (inside `ChatWrapper`). Other 5 pages (`/app/new`, `/app/library`, `/app/personas`, `/app/plans`, `/app/profile`) use `PageWrapper` with no header.
-
-**What to do:**
-
-1. Add a **base `ChatHeader`** to the `(chat)` layout's main section so it renders on ALL `/app/*` routes.
-2. Base header shows: sidebar toggle (left), app brand, theme toggle, avatar menu (right).
-3. On chat pages (`/app`, `/app/c/[id]`), `ChatWrapper` enhances the header with persona label, message count, and conversation status via Zustand `useChatStore`.
-4. Remove duplicate `ChatHeader` rendering from `ChatWrapper` to avoid double header.
-5. Verify all pages have correct padding/spacing with header present.
-
-**Acceptance criteria:**
-
-- [ ] `ChatHeader` visible on all 7 `/app/*` routes
-- [ ] Header shows brand + theme toggle + avatar menu on all pages
-- [ ] Chat pages show persona + message count in header
-- [ ] No double header on chat pages
-- [ ] `npx tsc --noEmit` passes
-- [ ] All tests pass
-
----
-
-### 31.2 HIGH — Move sidebar toggle to ChatHeader as first-left item
-
-**Files:** `src/components/chat/sidebar/sidebar-head.tsx`, `src/components/chat/chat-header.tsx`, `src/components/shared/sidebar-toggle.tsx`
-**Ref:** Owner instruction: ChatSidebarHeadToggle to be moved inside ChatHeader as first item on the left
-**Depends on:** 31.1 complete
-
-**What to do:**
-
-1. Move `SidebarToggle` button from `SidebarHead` (inside sidebar) to `ChatHeader` (inside main content area) as the first item on the left.
-2. The toggle must still operate the same sidebar state (Zustand `usePreferencesStore`).
-3. Remove `ChatSidebarHeadToggle` from `SidebarHead`.
-4. Verify toggle works on desktop (collapse/expand) and mobile (open/close overlay).
-
-**Acceptance criteria:**
-
-- [ ] Sidebar toggle appears as first-left item in ChatHeader
-- [ ] Toggle removed from sidebar header
-- [ ] Desktop toggle collapses/expands sidebar
-- [ ] Mobile toggle opens/closes sidebar overlay
-- [ ] `npx tsc --noEmit` passes
-- [ ] All tests pass
-
----
-
-### 31.3 MEDIUM — Remove Plans and Profile from sidebar navigation
-
-**Files:** `src/components/chat/sidebar/chat-sidebar-nav.tsx`
-**Ref:** Owner instruction: no need of Plans and Profile in sidebar as they are in AvatarMenu
-
-**What to do:**
-
-1. Remove "Plans" and "Profile" entries from `DISCOVER_LINKS` in sidebar nav.
-2. Keep the "Personas" link in DISCOVER section (or collapse DISCOVER if empty).
-3. Update E2E tests that assert sidebar navigation destinations.
-
-**Acceptance criteria:**
-
-- [ ] Plans and Profile links removed from sidebar
-- [ ] Plans and Profile still accessible via AvatarMenu
-- [ ] Sidebar navigation tests updated
-- [ ] `npx tsc --noEmit` passes
-- [ ] All tests pass
+### 31.3 — DONE — archived in DONE.md
 
 ---
 

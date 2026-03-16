@@ -2,6 +2,7 @@
 
 import { create } from "zustand";
 import { Message } from "@/types";
+import { PersonaId } from "@/types/PersonaData.d";
 import { TaskEndAction, TaskEndedReason, TaskStatus } from "@/types/TaskData.d";
 
 export interface ChatEndState {
@@ -11,6 +12,7 @@ export interface ChatEndState {
 
 interface ChatHydrationPayload {
   taskId?: string | null;
+  personaId?: PersonaId | null;
   messages?: Message[];
   taskStatus?: TaskStatus;
   endState?: ChatEndState | null;
@@ -18,6 +20,7 @@ interface ChatHydrationPayload {
 
 interface ChatStoreState {
   taskId: string | null;
+  personaId: PersonaId | null;
   messages: Message[];
   isLoading: boolean;
   taskStatus: TaskStatus;
@@ -25,6 +28,7 @@ interface ChatStoreState {
   hydrateConversation: (payload: ChatHydrationPayload) => void;
   resetConversation: () => void;
   setTaskId: (taskId: string | null) => void;
+  setPersonaId: (personaId: PersonaId | null) => void;
   setMessages: (
     messages: Message[] | ((previousMessages: Message[]) => Message[]),
   ) => void;
@@ -35,18 +39,21 @@ interface ChatStoreState {
 
 export const useChatStore = create<ChatStoreState>()((set) => ({
   taskId: null,
+  personaId: null,
   messages: [],
   isLoading: false,
   taskStatus: "active",
   endState: null,
   hydrateConversation: ({
     taskId = null,
+    personaId = null,
     messages = [],
     taskStatus = "active",
     endState = null,
   }) =>
     set({
       taskId,
+      personaId,
       messages,
       taskStatus,
       endState,
@@ -55,12 +62,14 @@ export const useChatStore = create<ChatStoreState>()((set) => ({
   resetConversation: () =>
     set({
       taskId: null,
+      personaId: null,
       messages: [],
       isLoading: false,
       taskStatus: "active",
       endState: null,
     }),
   setTaskId: (taskId) => set({ taskId }),
+  setPersonaId: (personaId) => set({ personaId }),
   setMessages: (messages) =>
     set((state) => ({
       messages:
