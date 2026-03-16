@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import classNames from "classnames";
 import SidebarHead from "@/components/chat/sidebar/sidebar-head";
 import ChatSidebarNavV2 from "@/components/chat/sidebar/chat-sidebar-nav-v2";
@@ -12,12 +12,10 @@ import { useShallow } from "zustand/react/shallow";
 
 interface ChatSidebarShellProps {
   historyItems: ConversationListItem[];
-  hasAuthUser: boolean;
 }
 
 export default function ChatSidebarShell({
   historyItems,
-  hasAuthUser,
 }: ChatSidebarShellProps) {
   const sidebarStorageKey = "droplet-sidebar-collapsed";
   const legacySidebarStorageKey = "cellesseon-sidebar-collapsed";
@@ -26,20 +24,15 @@ export default function ChatSidebarShell({
     desktopSidebarCollapsed: desktopCollapsed,
     mobileSidebarOpen: mobileOpen,
     setDesktopSidebarCollapsed,
-    toggleDesktopSidebarCollapsed,
     setMobileSidebarOpen,
-    toggleMobileSidebarOpen,
   } = useUiStore(
     useShallow((state) => ({
       desktopSidebarCollapsed: state.desktopSidebarCollapsed,
       mobileSidebarOpen: state.mobileSidebarOpen,
       setDesktopSidebarCollapsed: state.setDesktopSidebarCollapsed,
-      toggleDesktopSidebarCollapsed: state.toggleDesktopSidebarCollapsed,
       setMobileSidebarOpen: state.setMobileSidebarOpen,
-      toggleMobileSidebarOpen: state.toggleMobileSidebarOpen,
     })),
   );
-  const desktopMediaQueryRef = useRef<MediaQueryList | null>(null);
   const pathname = usePathname();
 
   useEffect(() => {
@@ -61,7 +54,6 @@ export default function ChatSidebarShell({
 
   useEffect(() => {
     const desktopQuery = window.matchMedia("(min-width: 1024px)");
-    desktopMediaQueryRef.current = desktopQuery;
     setIsDesktopViewport(desktopQuery.matches);
 
     const handleBreakpointChange = (event: MediaQueryListEvent) => {
@@ -84,23 +76,8 @@ export default function ChatSidebarShell({
 
   const isSidebarOpen = isDesktopViewport ? !desktopCollapsed : mobileOpen;
 
-  function handleOpenMobileSidebar() {
-    setMobileSidebarOpen(true);
-  }
-
   function handleCloseMobileSidebar() {
     setMobileSidebarOpen(false);
-  }
-
-  function handleToggleSidebar() {
-    const isDesktop = desktopMediaQueryRef.current?.matches ?? false;
-
-    if (isDesktop) {
-      toggleDesktopSidebarCollapsed();
-      return;
-    }
-
-    toggleMobileSidebarOpen();
   }
 
   const chatSidebarClass = classNames(
@@ -117,33 +94,13 @@ export default function ChatSidebarShell({
     !isSidebarOpen && "lg:items-center",
   );
 
-  const floatingButtonClass = classNames(
-    "fixed left-3 top-[74px] z-20 rounded-lg border px-2.5 py-1.5 shadow-sm lg:hidden",
-    "border-lightBorders-400 bg-white/95 dark:border-darkBorders-500 dark:bg-jwdMarine-900/95",
-  );
-
   const sidebarBackdropClass = classNames(
     "fixed inset-0 z-20 bg-black/35 backdrop-blur-[1px] lg:hidden",
     !mobileOpen && "hidden",
   );
 
-  const shouldShowFloatingToggle = !mobileOpen && !isDesktopViewport;
-
   return (
     <>
-      {shouldShowFloatingToggle && hasAuthUser && (
-        <button
-          type="button"
-          className={floatingButtonClass}
-          onClick={handleOpenMobileSidebar}
-          aria-label="Open sidebar"
-          aria-expanded="false"
-          aria-controls="chat-sidebar"
-        >
-          <i className="bi bi-layout-sidebar"></i>
-        </button>
-      )}
-
       <button
         type="button"
         className={sidebarBackdropClass}
@@ -152,11 +109,7 @@ export default function ChatSidebarShell({
       />
 
       <aside className={chatSidebarClass} id="chat-sidebar">
-        <SidebarHead
-          isOpen={isSidebarOpen}
-          onToggleSidebar={handleToggleSidebar}
-          isDesktopCollapsed={desktopCollapsed}
-        />
+        <SidebarHead isDesktopCollapsed={desktopCollapsed} />
 
         <div className={navWrapperClass}>
           <ChatSidebarNavV2

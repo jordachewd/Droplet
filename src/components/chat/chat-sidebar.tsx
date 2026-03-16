@@ -27,7 +27,5 @@ export default async function ChatSidebar() {
     } catch {}
   }
 
-  return (
-    <ChatSidebarShell historyItems={history} hasAuthUser={Boolean(userId)} />
-  );
+  return <ChatSidebarShell historyItems={history} />;
 }

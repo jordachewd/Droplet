@@ -48,34 +48,14 @@ const sidebarDestinations: SidebarDestination[] = [
       ).toBeVisible();
     },
   },
-  {
-    href: "/app/profile",
-    linkName: "Profile",
-    expectedPath: /\/app\/profile$/,
-    verify: async (page) => {
-      await expect(
-        page.getByRole("heading", { name: "Profile" }),
-      ).toBeVisible();
-    },
-  },
-  {
-    href: "/app/plans",
-    linkName: "Plans",
-    expectedPath: /\/app\/plans$/,
-    verify: async (page) => {
-      await expect(
-        page.getByRole("heading", { name: /upgrade your plan/i }),
-      ).toBeVisible();
-    },
-  },
 ];
 
 async function ensureSidebarOpen(page: Page) {
   const sidebar = page.locator("aside#chat-sidebar");
-  const openSidebarButton = page.getByRole("button", { name: "Open sidebar" });
+  const toggleButton = page.getByRole("button", { name: /show menu/i });
 
-  if (await openSidebarButton.isVisible()) {
-    await openSidebarButton.click();
+  if (await toggleButton.isVisible()) {
+    await toggleButton.click();
   }
 
   await expect(sidebar).toBeVisible();

@@ -33,8 +33,6 @@ const WORKSPACE_LINKS: NavLinkItem[] = [
 
 const DISCOVER_LINKS: NavLinkItem[] = [
   { href: "/app/personas", label: "Personas", icon: "bi bi-grid-3x3-gap" },
-  { href: "/app/plans", label: "Plans", icon: "bi bi-stars" },
-  { href: "/app/profile", label: "Profile", icon: "bi bi-person" },
 ];
 
 function SidebarNavLink({
