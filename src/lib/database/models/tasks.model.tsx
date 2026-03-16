@@ -27,6 +27,7 @@ const ContentItemSchema = new Schema<ContentItem>(
       url: { type: String, default: null },
     },
     audio_url: { type: String },
+    video_url: { type: String },
   },
   { _id: false },
 );

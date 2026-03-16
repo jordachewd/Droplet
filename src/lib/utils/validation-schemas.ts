@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const messageTextContentSchema = z
   .object({
-    type: z.enum(["text", "temp", "image_url", "audio_url"]),
+    type: z.enum(["text", "temp", "image_url", "audio_url", "video_url"]),
     text: z.string().nullable().optional(),
     image_url: z
       .object({
@@ -10,6 +10,7 @@ export const messageTextContentSchema = z
       })
       .optional(),
     audio_url: z.string().nullable().optional(),
+    video_url: z.string().nullable().optional(),
   })
   .strict();
 export const messageContentItemSchema = messageTextContentSchema;

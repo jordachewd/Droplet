@@ -1,8 +1,9 @@
 export interface ContentItem {
-  type: "text" | "temp" | "image_url" | "audio_url";
+  type: "text" | "temp" | "image_url" | "audio_url" | "video_url";
   text?: string | null | undefined;
   image_url?: { url: string | null };
   audio_url?: string | null;
+  video_url?: string | null;
 }
 
 export type MessageRole = "user" | "assistant" | "system" | "developer";

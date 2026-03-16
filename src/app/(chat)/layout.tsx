@@ -1,12 +1,21 @@
 import ChatSidebar from "@/components/chat/chat-sidebar";
 import ChatHeader from "@/components/chat/chat-header";
 import PageWrapper from "@/components/layout/page-wrapper";
+import { auth } from "@clerk/nextjs/server";
+import { ensureUserSynced } from "@/lib/utils/ensure-user-synced";
+import { resolveEntitlements } from "@/lib/utils/resolve-entitlements";
 
 interface ChatRouteLayoutProps {
   children: React.ReactNode;
 }
 
-export default function ChatRouteLayout({ children }: ChatRouteLayoutProps) {
+export default async function ChatRouteLayout({
+  children,
+}: ChatRouteLayoutProps) {
+  const { userId } = await auth();
+  const userData = userId ? await ensureUserSynced(userId) : null;
+  const entitlements = resolveEntitlements(userData?.plan?.name ?? "Lite");
+
   return (
     <PageWrapper
       id="ChatRouteLayoutWrapper"
@@ -15,7 +24,7 @@ export default function ChatRouteLayout({ children }: ChatRouteLayoutProps) {
       <ChatSidebar />
 
       <section className="ChatRouteLayoutMain relative flex h-full min-w-0 flex-1">
-        <ChatHeader />
+        <ChatHeader allowedPersonaIds={entitlements.allowedPersonaIds} />
         {children}
       </section>
     </PageWrapper>
