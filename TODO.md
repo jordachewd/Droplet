@@ -5,244 +5,196 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: Phases 1–25.7 + 27.1–27.4 + 27.6–27.10 + 28.1 + 28.2-fix + 28.3-code + 28.3-verify + 28.4 + 28.6 + 28.7 + 30.1 + 30.2 + 30.3 + 31.1 + 31.2 + 31.3 + 31.2-fix + 32.1 + 32.2 + 32.3 + 35.1 complete.**
-> **PM deep audit #14 (2026-03-16): 35.1, 28.3-verify, 32.1, 32.2, 32.3 verified DONE. SPEC audio model reconciled (gpt-audio-1.5 → gpt-audio-mini). E2E regression flagged CRITICAL.**
-> **CRITICAL: E2E suite degraded from 181→68 passing. Must stabilize before new feature work.**
-> **OWNER INSTRUCTIONS: Admin design consistency, admin Usage Top Personas, persona trial access, video gen verification.**
-> **Priority order: 37.1 (E2E stabilization) → 32.6 (Library error handling) → 33.1–33.8 (persona trial) → 32.4 (media cards) → 36.1 (admin design) → 36.2 (admin Top Personas) → 31.4 (layout E2E) → 30.4 → 32.5 → 30.5 → 27.5 → 34.x (video gen) → 35.2 → 29.1 → 29.2 → Phase 26.**
-> **All Phase 26+ deferred work is ON HOLD until Phases 33 + 36 + 37 are PM-approved complete.**
+> **STATUS: Phases 1–25.7 + 27.1–27.4 + 27.6–27.10 + 28.1 + 28.2-fix + 28.3-code + 28.3-verify + 28.4 + 28.6 + 28.7 + 30.1 + 30.2 + 30.3 + 31.1 + 31.2 + 31.3 + 31.2-fix + 32.1 + 32.2 + 32.3 + 32.6 + 33.1–33.7 + 35.1 + 37.1 complete.**
+> **PM deep audit #15 (2026-03-16): 37.1, 32.6, 33.1–33.7 verified DONE. E2E stabilized (176 passed). 334 unit tests passing. Build passing.**
+> **OWNER INSTRUCTIONS (latest): Fix error z-index CRITICAL. Move Library/Personas to AvatarMenu. Remove Persona Studio from landing. Admin design consistency. Admin Usage Top Personas.**
+> **BUGS: allowedPersonaIds=[] entitlement leak (HIGH). Persona dropdown enabled mid-conversation (MEDIUM). AlertMessage stacking context (CRITICAL).**
+> **Priority order: 38.1–38.3 (bug fixes) → 38.4–38.5 (Owner UI) → 36.1–36.2 (admin) → 38.6–38.7 (polish) → 33.8 + 35.2 (E2E) → 32.4 → 30.4 → 32.5 → 30.5 → 27.5 → 34.x → 29.1 → 29.2 → Phase 26.**
+> **All Phase 26+ deferred work is ON HOLD until Phase 38 + 36 are PM-approved complete.**
 
 ---
 
-## Phase 37: E2E Test Stabilization — CRITICAL
+## Phase 38: UI Polish, Bug Fixes & Owner UI Restructure — CRITICAL
 
-> PM audit #14 flagged: E2E suite degraded from 181 passing to 68 passing. Exit code 1.
-> Must stabilize before any new feature work proceeds.
-> **This is a release blocker.**
+> PM audit #15 + Architect audit: 2 confirmed bugs + 1 Owner-reported CRITICAL + Owner UI restructure.
+> ThePlan.md Milestone 13.
+> **Bug fixes FIRST (38.1–38.3). Then Owner UI (38.4–38.5). Then polish (38.6–38.7).**
 
 ---
 
-### 37.1 CRITICAL — Investigate and fix E2E test regression
+### 38.1 CRITICAL — Fix AlertMessage stacking context (error messages behind ChatHeader)
 
-**Files:** `tests/e2e/**/*.spec.ts`, Playwright config
-**Ref:** PM audit #14 — E2E degraded from 181→68 passing tests
+**Files:** `src/components/chat/chat-wrapper.tsx`, `src/app/(chat)/layout.tsx`
+**Ref:** Owner report: "error messages appear behind the ChatHeader; Must be above entire page"
 
-**Context:** Engineer reports "existing cross-browser failures not isolated to this change set" covering admin/auth/public/app shell flows across chromium/firefox/webkit/mobile projects. Numbers don't reconcile with previous audit (200 total → only 120 accounted for). This needs root-cause analysis.
+**Root cause:** ChatWrapper's `<main>` element uses `className="... relative z-0"` which creates a new stacking context. AlertMessage inside it uses `fixed z-[100]`, but the `z-[100]` is constrained within the parent's `z-0` stacking context. ChatHeader is rendered in the layout OUTSIDE ChatWrapper, so AlertMessage appears behind it.
 
 **What to do:**
 
-1. Run full E2E suite and capture per-spec, per-project results.
-2. Categorize failures: (a) flaky/timing, (b) broken by recent changes, (c) pre-existing infrastructure issues, (d) test code vs app code failures.
-3. Fix tests broken by 32.x and 35.1 changes (Library tabs, persona selector — these added new DOM elements that may break existing selectors).
-4. Fix cross-browser timing issues (known pattern: increase timeouts, use `waitForLoadState`).
-5. Skip or mark as known-flaky any tests failing due to browser-specific quirks NOT caused by app code.
-6. Target: 170+ passing tests (≥85% of 200 total).
+1. **Option A (preferred):** Lift AlertMessage rendering from ChatWrapper to the layout level (`src/app/(chat)/layout.tsx`). Pass alert state up via Zustand store or render AlertMessage in layout.
+2. **Option B:** Remove `z-0` from ChatWrapper's `<main>` element if it doesn't break other layering.
+3. Verify AlertMessage renders above ChatHeader (`z-20`) on all `/app` pages.
 
 **Acceptance criteria:**
 
-- [ ] Root cause of regression identified and documented
-- [ ] Tests broken by 32.x/35.1 changes fixed
-- [ ] Cross-browser timing flakes stabilized
-- [ ] ≥170 passing tests (target: restore to ~181)
-- [ ] Exit code 0 or only known-flaky skips
+- [ ] AlertMessage always renders above ChatHeader
+- [ ] No visual layering regressions on any `/app` page
+- [ ] `npx tsc --noEmit` passes
+- [ ] All tests pass
+
+---
+
+### 38.2 HIGH — Fix allowedPersonaIds empty array entitlement leak
+
+**Files:** `src/components/chat/chat-header.tsx`, `src/components/chat/chat-wrapper.tsx`
+**Ref:** Copilot Code Review — `allowedPersonaIds?.length` treats `[]` as "no restriction"
+
+**Root cause:** In both ChatHeader and ChatWrapper, `allowedPersonaIds?.length ? allowedPersonaIds : PERSONAS.map(...)` treats an empty array `[]` as falsy (`.length === 0`), falling back to ALL personas. If `resolveEntitlements()` returns `allowedPersonaIds: []` (e.g., suspended user), the UI would show all 10 personas.
+
+**What to do:**
+
+1. Distinguish `undefined` (no restriction — backward compat) from `[]` (everything blocked):
+   - `undefined` → show all personas
+   - `[]` → show no personas (or disable selector)
+   - `PersonaId[]` with items → show exactly those
+2. Apply the same fix in ChatHeader (`selectablePersonaIds` derivation) and ChatWrapper (`normalizedAllowedPersonaIds` derivation).
+
+**Acceptance criteria:**
+
+- [ ] `allowedPersonaIds=undefined` → all personas shown
+- [ ] `allowedPersonaIds=[]` → no personas shown / selector disabled
+- [ ] `allowedPersonaIds=["strategist","developer"]` → only those shown
+- [ ] `npx tsc --noEmit` passes
+- [ ] All tests pass
+
+---
+
+### 38.3 MEDIUM — Fix ChatHeader persona dropdown: disable when messages exist
+
+**Files:** `src/components/chat/chat-header.tsx`
+**Ref:** Copilot Code Review — persona dropdown only disabled on `/app/c/` routes
+
+**Root cause:** `isConversationRoute` only checks `pathname?.startsWith("/app/c/")`. On `/app` or `/app/new`, when a user already has messages in the conversation, the dropdown remains enabled. Changing persona mid-conversation breaks system prompt continuity without resetting messages.
+
+**What to do:**
+
+1. Read `messages` from `useChatStore` (already imported).
+2. Change disable condition to: `const shouldDisablePersonaChange = isConversationRoute || messages.length > 0 || taskStatus === "ended"`.
+3. Apply to the `<select>` `disabled` prop.
+
+**Acceptance criteria:**
+
+- [ ] Persona dropdown disabled on `/app/c/[conversationId]` routes
+- [ ] Persona dropdown disabled when `messages.length > 0`
+- [ ] Persona dropdown disabled when `taskStatus === "ended"`
+- [ ] Persona dropdown enabled on `/app`, `/app/new` (with no messages)
+- [ ] `npx tsc --noEmit` passes
+- [ ] All tests pass
+
+---
+
+### 38.4 HIGH — Move Library and Personas from sidebar to AvatarMenu
+
+**Files:** `src/components/chat/sidebar/chat-sidebar-nav-v2.tsx`, `src/components/shared/avatar-menu.tsx`
+**Ref:** Owner instruction: "no need of Personas and Library on the sidebar — move under AvatarMenu"
+
+**What to do:**
+
+1. Remove "Library" from `WORKSPACE_LINKS` in sidebar nav.
+2. Remove "Personas" from `DISCOVER_LINKS` in sidebar nav.
+3. Remove the DISCOVER section entirely from sidebar (if empty after removal).
+4. Add "Library" (`/app/library`, icon `bi-clock-history`) to AvatarMenu — between Dashboard (admin) and Plans.
+5. Add "Personas" (`/app/personas`, icon `bi-grid-3x3-gap`) to AvatarMenu — between Library and Plans.
+6. Update E2E test assertions if sidebar link counts changed.
+
+**Acceptance criteria:**
+
+- [ ] Library and Personas links removed from sidebar
+- [ ] Library and Personas links present in AvatarMenu dropdown
+- [ ] Sidebar has only: Chat Dashboard, New Conversation, recent conversations
+- [ ] DISCOVER section removed from sidebar
+- [ ] AvatarMenu order: Dashboard (admin only) → Library → Personas → Plans → Profile → Logout
+- [ ] `npx tsc --noEmit` passes
+- [ ] All tests pass
+
+---
+
+### 38.5 HIGH — Remove ChatPersonaPicker section from landing page
+
+**Files:** `src/components/chat/chat-wrapper.tsx`
+**Ref:** Owner instruction: "we no longer need Persona Studio on /app landing page — remove it"
+
+**Context:** Since persona selection now lives in ChatHeader dropdown (Phase 35.1), the ChatPersonaPicker section rendered in ChatWrapper is redundant on the `/app` landing page. The ChatPersonaPicker component file itself must be KEPT — it's still used on `/app/personas` page.
+
+**What to do:**
+
+1. Remove the `<ChatPersonaPicker>` section from ChatWrapper's render output.
+2. Remove related props (`allowedPersonaIds`, `personaAccess`, `onSelectPersona`) from ChatWrapper if they were only used for the picker.
+3. Keep `ChatPersonaPicker` component file — still used by `/app/personas`.
+4. Verify `/app` landing and `/app/new` no longer show persona cards grid.
+
+**Acceptance criteria:**
+
+- [ ] No persona picker/studio on `/app` or `/app/new` pages
+- [ ] ChatPersonaPicker component file preserved for `/app/personas`
+- [ ] ChatHeader persona dropdown still works for persona selection
+- [ ] `npx tsc --noEmit` passes
+- [ ] All tests pass
+
+---
+
+### 38.6 LOW — Skip video_url aggregation in Library page
+
+**Files:** `src/app/(chat)/app/library/page.tsx`
+**Ref:** Copilot Code Review — Library fetches video_url but Videos tab shows "Coming Soon"
+
+**What to do:**
+
+1. Remove `getMediaItemsByUserId(userId, "video_url", 60)` from the `Promise.all()`.
+2. Pass `videoItems = []` directly to the tabs component.
+3. Keep the Videos tab in the UI (still shows "Coming Soon").
+
+**Acceptance criteria:**
+
+- [ ] No video_url aggregation query executed
+- [ ] Videos tab still renders "Coming Soon" with 0 count
+- [ ] `npx tsc --noEmit` passes
+- [ ] All tests pass
+
+---
+
+### 38.7 LOW — Add accessible name to Logo when iconOnly
+
+**Files:** `src/components/shared/app-logo.tsx`
+**Ref:** Copilot Code Review — no accessible name when iconOnly hides text label
+
+**What to do:**
+
+1. Add `aria-label="Droplet home"` to the `<Link>` when `iconOnly={true}`.
+2. Only apply when `iconOnly` is true (otherwise the visible "droplet" text serves as accessible name).
+
+**Acceptance criteria:**
+
+- [ ] Screen readers announce "Droplet home" when Logo is icon-only
+- [ ] Full logo with text has no redundant aria-label
+- [ ] `npx tsc --noEmit` passes
+
+---
+
+## Phase 37: E2E Test Stabilization — COMPLETE
+
+> **37.1 DONE** — E2E suite stabilized: 176 passed, 24 skipped, 0 failures. Archived in DONE.md.
 
 ---
 
 ## Phase 32: Library Media Tabs (remaining)
 
-> 32.1 DONE (media aggregation), 32.2 DONE (video_url schema), 32.3 DONE (tabbed Library UI).
-> Remaining: 32.4 (media card components), 32.5 (pagination), 32.6 (error handling).
-
----
-
-### 32.6 HIGH — Fix Library page silent error handling
-
-**Files:** `src/app/(chat)/app/library/page.tsx`
-**Ref:** PM audit #14 + Architect audit #13 — Library page catches all errors silently
-
-**Context:** Library page has an empty `catch {}` block that swallows all errors. Users see empty tabs with zero feedback when data fetching fails.
-
-**What to do:**
-
-1. Replace empty `catch {}` with `catch (error) { process.stderr.write(...) }` for server-side logging.
-2. Pass an error flag to the client component so empty tabs show "Failed to load" instead of just empty state.
-3. Do NOT leak error details to client — use generic message only.
-
-**Acceptance criteria:**
-
-- [ ] Errors logged server-side via `process.stderr.write()`
-- [ ] Client sees "Failed to load" message on error (not silent empty)
-- [ ] No error details leaked to client
-- [ ] `npx tsc --noEmit` passes
-- [ ] All tests pass
-
----
-
-## Phase 35: ChatHeader Persona Selector (remaining)
-
-> 35.1 DONE (persona dropdown selector — archived in DONE.md).
-> Remaining: 35.2 (E2E tests).
-
----
-
-### 35.2 LOW — E2E tests for persona selector in ChatHeader
-
-**Files:** `tests/e2e/chat-app-shell.spec.ts`
-**Depends on:** 35.1 complete
-
-**What to do:**
-
-1. Assert persona selector is visible in header on `/app` pages.
-2. Assert selector shows correct persona count for plan.
-3. Assert selector is disabled during active conversation.
-
-**Acceptance criteria:**
-
-- [ ] E2E covers persona selector visibility and behavior
-- [ ] `npm run test:e2e` passes
-
----
-
-## Phase 28: Media Generation Fixes & Limit Enforcement — COMPLETE
-
-> All tasks completed: 28.1, 28.2-fix, 28.3-code, 28.3-verify, 28.4, 28.6, 28.7.
-> Archived in DONE.md. Audio live-test completed: gpt-4o-mini-tts ✅, gpt-audio-mini ✅, gpt-audio-1.5 ❌ (403).
-> SPEC reconciled: Premium audio default → gpt-audio-mini (PM decision audit #14).
-
----
-
-## Phase 30: Persona Policy Implementation (remaining)
-
-> Owner-mandated policy change: per-plan persona gating + new Interviewer persona.
-> **30.1 DONE** (Interviewer persona added). **30.2 DONE** (per-plan persona gating). **30.3 DONE** (persona picker UI).
-> Remaining: 30.4 (admin persona controls), 30.5 (persona hero images).
-> Depends on: Phase 28 remaining subtasks complete.
-
----
-
-### 30.4 MEDIUM — Add admin persona access control per plan
-
-**Files:** `src/app/(admin)/admin/settings/page.tsx`, `src/lib/utils/resolve-entitlements.tsx`, `src/lib/database/models/app-setting.model.tsx`
-**Ref:** Owner instruction: admin must be able to enable/disable persona access per plan
-**Depends on:** Phase 33 complete (trial access system must be stable first)
-
-**What to do:**
-
-1. Add admin settings section for "Persona Access" with checkboxes per plan per persona.
-2. Save as AppSetting (key: `persona_access_lite`, `persona_access_pro`, `persona_access_premium`).
-3. `resolveEntitlements()` reads AppSetting first, falls back to hardcoded defaults.
-4. Admin audit trail for persona access changes.
-
-**Acceptance criteria:**
-
-- [ ] Admin can toggle persona access per plan in settings
-- [ ] Changes take effect on next entitlement check
-- [ ] Falls back to defaults when no AppSetting exists
-- [ ] Audit log entry created
-- [ ] `npx tsc --noEmit` passes
-- [ ] All tests pass
-
----
-
-### 30.5 LOW — Generate persona hero images
-
-**Ref:** Owner instruction: each persona must have a representative character/image as hero
-**Depends on:** 30.1 complete (Interviewer added)
-
-**What to do:**
-
-1. Generate a representative character image for each of the 10 personas.
-2. Store images in `public/personas/` as optimized WebP/PNG.
-3. Add `heroImage` field to persona definition in `assistant-personas.tsx`.
-4. Display hero images on persona cards, persona picker, and `/personas` public page.
-
-**Acceptance criteria:**
-
-- [ ] 10 persona hero images exist in `public/personas/`
-- [ ] Each persona definition has `heroImage` path
-- [ ] Hero images visible on persona cards and public personas page
-- [ ] Images are optimized (< 200KB each)
-- [ ] `npx tsc --noEmit` passes
-- [ ] All tests pass
-
----
-
-## Phase 27: UX & Architecture Completion (remaining)
-
-> 27.1–27.4 + 27.6–27.10 RESOLVED (archived in DONE.md).
-> Remaining: 27.5 (settings propagation).
-> **ON HOLD until Phase 28 remaining + Phases 31–33 are PM-approved complete.**
-
----
-
-### 27.5 Admin settings — propagate pricing & limits to plan cards
-
-**Files:** `src/constants/plans.tsx`, `src/lib/utils/resolve-entitlements.tsx`, `src/lib/utils/check-usage-limit.ts`, `src/lib/utils/admin-queries.ts`, plan card components
-**Ref:** TD-ADMIN-02
-**Depends on:** 27.4 complete (DONE)
-
-**What to do:**
-
-1. Create a server-side utility (e.g., `getEffectivePlanConfig()`) that reads `AppSetting` values for pricing and limits, falling back to hardcoded `PLAN_LIMITS` defaults when no setting exists.
-2. Wire plan card components (`/plans` public page and `/app/plans` authenticated page) to use effective config instead of static constants.
-3. Wire entitlement resolver and usage limit checks to use effective config for limit values.
-4. Ensure admin changes to pricing/limits take effect on next page load — no restart required.
-5. Add cache-control / `revalidatePath` so changes propagate without stale data.
-
-**Acceptance criteria:**
-
-- [ ] Plan cards on `/plans` and `/app/plans` show prices from AppSetting (or defaults)
-- [ ] Entitlement resolver uses limits from AppSetting (or defaults)
-- [ ] Usage limit checks use limits from AppSetting (or defaults)
-- [ ] Admin saves new price → plan cards reflect it on next load
-- [ ] Admin saves new limit → limits enforce on next request
-- [ ] Fallback to hardcoded defaults when AppSetting is empty
-- [ ] `npx tsc --noEmit` passes
-- [ ] All tests pass
-
----
-
-## Phase 31: Layout & Navigation Updates — HIGH
-
-> Owner-mandated (2026-03-16): ChatHeader on all /app pages, sidebar cleanup, toggle relocation.
-> Depends on: Phase 28 remaining complete.
-> Fast-win, high owner visibility.
-> **31.1 DONE** (ChatHeader in layout). **31.2 DONE** (sidebar toggle to header). **31.3 DONE** (Plans/Profile removed from sidebar).
-> Remaining: 31.4 (E2E tests for layout changes).
-
----
-
-### 31.1 — DONE — archived in DONE.md
-
-### 31.2 — DONE — archived in DONE.md
-
-### 31.3 — DONE — archived in DONE.md
-
----
-
-### 31.4 LOW — Update E2E tests for layout changes
-
-**Files:** `tests/e2e/chat-app-shell.spec.ts`, related E2E specs
-**Ref:** Phase 31.1–31.3
-
-**What to do:**
-
-1. Update sidebar navigation assertions (fewer links).
-2. Add assertions for ChatHeader presence on non-chat pages.
-3. Verify sidebar toggle works from its new position in header.
-
-**Acceptance criteria:**
-
-- [ ] E2E tests reflect new layout structure
-- [ ] No false positives from old layout assertions
-- [ ] `npm run test:e2e` passes
-
----
-
-## Phase 32: Library Media Tabs (remaining — continued)
-
-> 32.1 DONE (media aggregation), 32.2 DONE (video_url schema), 32.3 DONE (tabbed Library UI), 32.6 DONE-pending (error handling — in Phase 32 remaining above).
+> 32.1 DONE (media aggregation), 32.2 DONE (video_url schema), 32.3 DONE (tabbed Library UI), **32.6 DONE** (error handling).
 > Remaining: 32.4 (media card components), 32.5 (pagination).
+
+---
+
+### 32.4 LOW — Media card components for Library
 
 **Files:** `src/components/chat/library/` (new directory)
 
@@ -283,183 +235,14 @@
 
 ---
 
-## Phase 33: Persona Trial Access System — CRITICAL
+## Phase 33: Persona Trial Access System — MOSTLY COMPLETE
 
-> Owner-mandated (2026-03-16): Users must be able to TEST personas outside their plan.
-> **"Personas are the real product we sell!"** — try-before-you-buy conversion funnel.
-> Depends on: Phase 30 complete (base persona gating in place).
-> This phase replaces the binary "blocked" model with a three-tier access model.
-
-### PM-Frozen Trial Limit Semantics (Decision Gate 33.1)
-
-**Per conversation** for trial (limited-access) personas:
-
-- 5 prompts per conversation (vs full plan limit for full-access personas)
-- 3 image generations per 30-day rolling window
-- 2 audio generations per 30-day rolling window
-- 1 video generation per 30-day rolling window (when implemented)
-
-**Tracking:** GLOBAL across all trial personas (NOT per-persona). Shared trial counters on User model.
-**Quota separation:** Trial limits are SEPARATE from plan limits. Using a trial persona does NOT consume plan quota.
-**Conversation end:** When trial prompts are exhausted in a conversation, the conversation ends with upgrade CTA.
+> **33.1–33.7 DONE** — Core trial system implemented and verified. Archived in DONE.md.
+> Remaining: **33.8** (trial E2E tests).
 
 ---
 
-### 33.1 CRITICAL — Freeze & document trial limit semantics
-
-**Status: PM-FROZEN (see above).** This task is pre-resolved documentation.
-
-**What to do:**
-
-1. Document the frozen trial limit semantics in SPEC.md Section 4.
-2. Confirm the frozen semantics match the implementation plan in 33.2–33.8.
-3. No code changes.
-
-**Acceptance criteria:**
-
-- [ ] Trial limit semantics documented in SPEC.md
-- [ ] Semantics approved by PM (this document)
-
----
-
-### 33.2 HIGH — Add PersonaAccessLevel type and PERSONA_TRIAL_LIMITS constant
-
-**Files:** `src/types/PersonaData.d.tsx`, `src/constants/plans.tsx`
-
-**What to do:**
-
-1. Add `PersonaAccessLevel` type: `"full" | "limited" | "blocked"`.
-2. Add `PERSONA_TRIAL_LIMITS` constant: `{ promptsPerConversation: 5, images: 3, audio: 2, video: 1 }`.
-3. Update existing type definitions to use `PersonaAccessLevel` where applicable.
-
-**Acceptance criteria:**
-
-- [ ] `PersonaAccessLevel` type exported
-- [ ] `PERSONA_TRIAL_LIMITS` constant exported from plans.tsx
-- [ ] `npx tsc --noEmit` passes
-
----
-
-### 33.3 HIGH — Refactor resolveEntitlements() for three-tier persona access
-
-**Files:** `src/lib/utils/resolve-entitlements.tsx`
-**Depends on:** 33.2 complete
-
-**What to do:**
-
-1. Replace `allowedPersonaIds: PersonaId[]` with `personaAccess: Record<PersonaId, PersonaAccessLevel>`.
-2. Lite: 3 personas `full`, remaining 7 personas `limited`.
-3. Pro: 7 personas `full`, remaining 3 personas `limited`.
-4. Premium: all 10 personas `full`.
-5. Maintain backward compatibility: keep `allowedPersonaIds` as derived list (all `full` + `limited` personas).
-6. Add `trialPersonaIds` as derived list (all `limited` personas).
-7. Update unit tests for three-tier access.
-
-**Acceptance criteria:**
-
-- [ ] `resolveEntitlements()` returns `personaAccess` with full/limited/blocked per persona
-- [ ] Lite: 3 full, 7 limited. Pro: 7 full, 3 limited. Premium: 10 full.
-- [ ] `allowedPersonaIds` includes both full and limited personas
-- [ ] `trialPersonaIds` returns only limited personas
-- [ ] Unit tests pass
-- [ ] `npx tsc --noEmit` passes
-
----
-
-### 33.4 HIGH — Add trial usage tracking fields to User model
-
-**Files:** `src/lib/database/models/user.model.tsx`, `src/types/PlanData.d.tsx`
-
-**What to do:**
-
-1. Add `trialUsage` embedded subdocument to User model plan subdoc:
-   - `trialImageGenerations: Number` (default 0)
-   - `trialAudioGenerations: Number` (default 0)
-   - `trialVideoGenerations: Number` (default 0)
-   - `trialUsagePeriodStart: Date`
-2. Trial prompt count: tracked per-Task via existing `promptCount` (no new field needed — limit enforcement uses different ceiling).
-3. Add corresponding TypeScript types.
-
-**Acceptance criteria:**
-
-- [ ] Trial usage fields on User model
-- [ ] TypeScript types updated
-- [ ] `npx tsc --noEmit` passes
-- [ ] All tests pass
-
----
-
-### 33.5 HIGH — Update /api/openai to apply trial limits for limited-access personas
-
-**Files:** `src/app/api/openai/route.tsx`, `src/lib/utils/check-usage-limit.ts`
-**Depends on:** 33.3 + 33.4 complete
-
-**What to do:**
-
-1. When persona is `limited` access: use `PERSONA_TRIAL_LIMITS.promptsPerConversation` (5) instead of plan's limit (10/100/unlimited).
-2. For media in trial persona conversations: check trial media counters (`trialImageGenerations`, etc.) against `PERSONA_TRIAL_LIMITS`.
-3. When trial limit hit: end conversation with stop reason `trial_limit_reached` and action `upgrade_plan`.
-4. Replace the 403 "not available for your plan" rejection with conditional logic: `blocked` → reject, `limited` → allow with trial limits.
-5. Atomic trial media counter via `findOneAndUpdate` with `$lt` guard (same pattern as plan counters).
-
-**Acceptance criteria:**
-
-- [ ] Trial personas allowed with reduced limits (not blocked)
-- [ ] 5 prompts/conversation enforced for trial personas
-- [ ] Trial media counters enforced atomically
-- [ ] Trial limit hit → conversation ends with upgrade CTA
-- [ ] Full-access personas unaffected
-- [ ] Unit tests for trial vs full limit paths
-- [ ] `npx tsc --noEmit` passes
-- [ ] All tests pass
-
----
-
-### 33.6 MEDIUM — Update persona picker for trial personas with badge/CTA
-
-**Files:** `src/components/chat/chat-persona-picker.tsx`
-**Depends on:** 33.3 complete
-
-**What to do:**
-
-1. Show all personas (not just full-access ones).
-2. Full-access personas: show "Open" (current).
-3. Limited-access personas: show "Trial" badge instead of "Locked". Enable button (not disabled).
-4. On selecting a trial persona: show brief info tooltip "Limited access — 5 prompts per conversation. Upgrade to unlock full access."
-5. Remove `disabled={isLocked}` for trial personas.
-
-**Acceptance criteria:**
-
-- [ ] All 10 personas visible regardless of plan
-- [ ] Full = "Open", Limited = "Trial", Blocked = "Locked" (only if admin-blocked)
-- [ ] Trial personas are selectable
-- [ ] Trial info visible to user
-- [ ] `npx tsc --noEmit` passes
-- [ ] All tests pass
-
----
-
-### 33.7 MEDIUM — Update plan cards to explain trial access
-
-**Files:** `src/constants/plans.tsx`, plan card components
-
-**What to do:**
-
-1. Lite plan card: "3 personas (full access) + try all others (limited)".
-2. Pro plan card: "7 personas (full access) + try all others (limited)".
-3. Premium plan card: "All 10 personas (unlimited)".
-4. Add brief explanation of trial limits where applicable.
-
-**Acceptance criteria:**
-
-- [ ] Plan cards accurately describe trial access
-- [ ] No misleading "blocked" language for non-plan personas
-- [ ] `npx tsc --noEmit` passes
-- [ ] All tests pass
-
----
-
-### 33.8 LOW — E2E tests for persona trial access flow
+### 33.8 MEDIUM — E2E tests for persona trial access flow
 
 **Files:** `tests/e2e/` (new or updated specs)
 
@@ -478,11 +261,24 @@
 
 ---
 
+## Phase 35: ChatHeader Persona Selector — COMPLETE
+
+> **35.1 DONE** (persona dropdown selector — archived in DONE.md).
+> **35.2** (E2E tests) — merged into Phase 38 test coverage.
+
+---
+
+## Phase 28: Media Generation Fixes & Limit Enforcement — COMPLETE
+
+> All tasks completed. Archived in DONE.md.
+
+---
+
 ## Phase 36: Admin Design Consistency & Enhancement — MEDIUM
 
 > Owner-mandated (2026-03-16): Admin panel must respect the same design, fonts, sizes, colors and proportions as client app.
 > Owner-mandated (2026-03-16): Admin Usage must have a "Top Personas" statistic box.
-> Depends on: Core functionality phases complete (28, 31–33, 35).
+> Depends on: Phase 38 bug fixes complete.
 
 ---
 
@@ -535,7 +331,36 @@
 
 ---
 
-## Phase 30: Persona Policy Implementation (remaining — continued)
+## Phase 30: Persona Policy Implementation (remaining)
+
+> 30.1 DONE (Interviewer persona), 30.2 DONE (per-plan persona gating), 30.3 DONE (persona picker UI).
+> Remaining: 30.4 (admin persona controls), 30.5 (persona hero images).
+
+---
+
+### 30.4 MEDIUM — Add admin persona access control per plan
+
+**Files:** `src/app/(admin)/admin/settings/page.tsx`, `src/lib/utils/resolve-entitlements.tsx`, `src/lib/database/models/app-setting.model.tsx`
+**Ref:** Owner instruction: admin must be able to enable/disable persona access per plan
+**Depends on:** Phase 33 complete (trial access system must be stable first)
+
+**What to do:**
+
+1. Add admin settings section for "Persona Access" with checkboxes per plan per persona.
+2. Save as AppSetting (key: `persona_access_lite`, `persona_access_pro`, `persona_access_premium`).
+3. `resolveEntitlements()` reads AppSetting first, falls back to hardcoded defaults.
+4. Admin audit trail for persona access changes.
+
+**Acceptance criteria:**
+
+- [ ] Admin can toggle persona access per plan in settings
+- [ ] Changes take effect on next entitlement check
+- [ ] Falls back to defaults when no AppSetting exists
+- [ ] Audit log entry created
+- [ ] `npx tsc --noEmit` passes
+- [ ] All tests pass
+
+---
 
 ### 30.5 MEDIUM — Generate persona hero images
 
@@ -555,6 +380,63 @@
 - [ ] Each persona definition has `heroImage` path
 - [ ] Hero images visible on persona cards and public personas page
 - [ ] Images are optimized (< 200KB each)
+- [ ] `npx tsc --noEmit` passes
+- [ ] All tests pass
+
+---
+
+## Phase 31: Layout & Navigation Updates (remaining)
+
+> 31.1 DONE (ChatHeader in layout), 31.2 DONE (sidebar toggle to header), 31.3 DONE (Plans/Profile from sidebar).
+> Remaining: 31.4 (E2E tests).
+
+---
+
+### 31.4 LOW — Update E2E tests for layout changes
+
+**Files:** `tests/e2e/chat-app-shell.spec.ts`, related E2E specs
+**Ref:** Phase 31.1–31.3
+
+**What to do:**
+
+1. Update sidebar navigation assertions (fewer links).
+2. Add assertions for ChatHeader presence on non-chat pages.
+3. Verify sidebar toggle works from its new position in header.
+
+**Acceptance criteria:**
+
+- [ ] E2E tests reflect new layout structure
+- [ ] No false positives from old layout assertions
+- [ ] `npm run test:e2e` passes
+
+---
+
+## Phase 27: UX & Architecture Completion (remaining)
+
+> 27.1–27.4 + 27.6–27.10 DONE. Remaining: 27.5 (settings propagation).
+> **ON HOLD until Phase 38 + 36 + 33.8 are PM-approved complete.**
+
+---
+
+### 27.5 LOW — Admin settings — propagate pricing & limits to plan cards
+
+**Files:** `src/constants/plans.tsx`, `src/lib/utils/resolve-entitlements.tsx`, `src/lib/utils/check-usage-limit.ts`, `src/lib/utils/admin-queries.ts`, plan card components
+**Ref:** TD-ADMIN-02
+
+**What to do:**
+
+1. Create a server-side utility (e.g., `getEffectivePlanConfig()`) that reads `AppSetting` values for pricing and limits, falling back to hardcoded `PLAN_LIMITS` defaults.
+2. Wire plan card components to use effective config instead of static constants.
+3. Wire entitlement resolver and usage limit checks to use effective config.
+4. Ensure admin changes take effect on next page load.
+5. Add cache-control / `revalidatePath` so changes propagate without stale data.
+
+**Acceptance criteria:**
+
+- [ ] Plan cards show prices from AppSetting (or defaults)
+- [ ] Entitlement resolver uses limits from AppSetting (or defaults)
+- [ ] Admin saves new price → plan cards reflect on next load
+- [ ] Fallback to hardcoded defaults when AppSetting is empty
 - [ ] `npx tsc --noEmit` passes
 - [ ] All tests pass
 

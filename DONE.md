@@ -2,7 +2,100 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-16 — PM deep audit #14. Phases 1–25.7 + 27.1–27.4 + 27.6–27.10 + 28.1 + 28.2-fix + 28.3-code + 28.3-verify + 28.4 + 28.6 + 28.7 + 30.1 + 30.2 + 30.3 + 31.1 + 31.2 + 31.3 + 31.2-fix + 32.1 + 32.2 + 32.3 + 35.1 + E2E regression fixes complete.
+> Last updated: 2026-03-16 — PM deep audit #15. Phases 1–25.7 + 27.1–27.4 + 27.6–27.10 + 28.1 + 28.2-fix + 28.3-code + 28.3-verify + 28.4 + 28.6 + 28.7 + 30.1 + 30.2 + 30.3 + 31.1 + 31.2 + 31.3 + 31.2-fix + 32.1 + 32.2 + 32.3 + 32.6 + 33.1–33.7 + 35.1 + 37.1 + E2E regression fixes complete.
+
+---
+
+## Phase 37.1 — E2E Test Stabilization — COMPLETED (2026-03-16)
+
+- [x] Full E2E suite stabilized: 176 passed, 24 skipped, 0 failures.
+- [x] Fixed profile page selectors, plans page assertions, modal wait patterns.
+- [x] Fixed admin test user detection, sidebar toggle assertions.
+- [x] Resolved flaky race conditions in conversation flow and persona selector tests.
+- [x] All 24 skipped tests are pending feature implementation (video, admin controls), not broken.
+
+**Files changed:** `tests/e2e/*.spec.ts`
+
+---
+
+## Phase 32.6 — Library page error handling — COMPLETED (2026-03-16)
+
+- [x] Replaced empty `catch {}` block in Library page with proper server-side error logging via `process.stderr.write()`.
+- [x] Added error flag propagation to client component for user-facing "Failed to load" message.
+- [x] No error details leaked to client — generic message only.
+
+**Files changed:** `src/app/(chat)/app/library/page.tsx`
+
+---
+
+## Phase 33.1 — Freeze & document trial limit semantics — COMPLETED (2026-03-16)
+
+- [x] Trial limit semantics frozen and documented in SPEC.md Section 4.
+- [x] PM decision gate: 5 prompts/conversation, 3 images, 2 audio, 1 video per 30-day window.
+- [x] Tracking: global across all trial personas, separate from plan limits.
+
+---
+
+## Phase 33.2 — PersonaAccessLevel type and PERSONA_TRIAL_LIMITS — COMPLETED (2026-03-16)
+
+- [x] `PersonaAccessLevel` type added: `"full" | "limited" | "blocked"`.
+- [x] `PERSONA_TRIAL_LIMITS` constant added to `plans.tsx`: `{ promptsPerConversation: 5, images: 3, audio: 2, video: 1 }`.
+- [x] TypeScript types updated across persona-related interfaces.
+
+**Files changed:** `src/types/PersonaData.d.tsx`, `src/constants/plans.tsx`
+
+---
+
+## Phase 33.3 — Refactor resolveEntitlements() for three-tier persona access — COMPLETED (2026-03-16)
+
+- [x] `resolveEntitlements()` returns `personaAccess: Record<PersonaId, PersonaAccessLevel>` (full/limited/blocked per persona).
+- [x] Lite: 3 full (Strategist, Developer, Best Friend), 7 limited. Pro: 7 full, 3 limited. Premium: all 10 full.
+- [x] `allowedPersonaIds` includes both full + limited personas. `trialPersonaIds` returns limited-only.
+- [x] Unit tests updated for three-tier access.
+
+**Files changed:** `src/lib/utils/resolve-entitlements.tsx`, `tests/unit/resolve-entitlements.test.ts`
+
+---
+
+## Phase 33.4 — Trial usage tracking fields on User model — COMPLETED (2026-03-16)
+
+- [x] `trialUsage` embedded subdocument added to User model: `trialImageGenerations`, `trialAudioGenerations`, `trialVideoGenerations`, `trialUsagePeriodStart`.
+- [x] TypeScript types updated.
+
+**Files changed:** `src/lib/database/models/user.model.tsx`, `src/types/PlanData.d.tsx`
+
+---
+
+## Phase 33.5 — Trial limits enforcement in /api/openai — COMPLETED (2026-03-16)
+
+- [x] Limited-access persona conversations use `PERSONA_TRIAL_LIMITS.promptsPerConversation` (5) instead of plan limits.
+- [x] Trial media counters enforced atomically via `findOneAndUpdate` with `$lt` guard.
+- [x] `trial_limit_reached` stop reason + `upgrade_plan` action on limit hit.
+- [x] `blocked` → reject 403, `limited` → allow with trial limits.
+
+**Files changed:** `src/app/api/openai/route.tsx`, `src/lib/utils/check-usage-limit.ts`
+
+---
+
+## Phase 33.6 — Persona picker trial badges — COMPLETED (2026-03-16)
+
+- [x] All 10 personas visible regardless of plan.
+- [x] Full = "Open", Limited = "Trial" badge, Blocked = "Locked".
+- [x] Trial personas are selectable (not disabled).
+- [x] Brief trial info tooltip on selection.
+
+**Files changed:** `src/components/chat/chat-persona-picker.tsx`
+
+---
+
+## Phase 33.7 — Plan cards trial access copy — COMPLETED (2026-03-16)
+
+- [x] Lite: "3 personas (full access) + try all others (limited)".
+- [x] Pro: "7 personas (full access) + try all others (limited)".
+- [x] Premium: "All 10 personas (unlimited)".
+- [x] No misleading "blocked" language.
+
+**Files changed:** `src/constants/plans.tsx`, plan card components
 
 ---
 
