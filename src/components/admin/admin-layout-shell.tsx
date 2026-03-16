@@ -7,11 +7,11 @@ interface AdminLayoutShellProps {
 
 export default function AdminLayoutShell({ children }: AdminLayoutShellProps) {
   return (
-    <section className="AdminLayoutShell flex min-h-dvh w-full">
+    <section className="AdminLayoutShell flex min-h-dvh w-full bg-lightBackground-200 dark:bg-jwdMarine-1000">
       <AdminSidebar />
 
       <div className="flex min-h-dvh flex-1 flex-col">
-        <header className="AdminLayoutHeader flex items-center justify-between border-b border-lightBorders-300 bg-white/70 px-4 py-4 backdrop-blur dark:border-darkBorders-500 dark:bg-jwdMarine-950/70 md:px-6">
+        <header className="AdminLayoutHeader flex items-center justify-between border-b border-lightBorders-300/70 bg-lightBackground-100/85 px-4 py-4 backdrop-blur-lg dark:border-darkBorders-500 dark:bg-jwdMarine-950/70 md:px-6">
           <div className="flex flex-col gap-1">
             <p className="text-xs font-semibold uppercase tracking-[0.28em] opacity-60">
               Operations

@@ -9,13 +9,12 @@ import ChatBody from "@/components/chat/chat-body";
 import ChatInput from "@/components/chat/chat-input";
 import AlertMessage, { AlertParams } from "@/components/shared/alert-message";
 import { filterAssistantMsg } from "@/lib/utils/openai/filterAssistantMsg";
-import ChatPersonaPicker from "@/components/chat/chat-persona-picker";
 import {
   DEFAULT_PERSONA_ID,
   PERSONAS,
   getPersona,
 } from "@/constants/assistant-personas";
-import { PersonaAccessLevel, PersonaId } from "@/types/PersonaData.d";
+import { PersonaId } from "@/types/PersonaData.d";
 import { TaskEndAction, TaskEndedReason, TaskStatus } from "@/types/TaskData.d";
 import { useChatStore } from "@/lib/hooks/use-chat-store";
 import { usePreferencesStore } from "@/lib/hooks/use-preferences-store";
@@ -23,7 +22,6 @@ import { usePreferencesStore } from "@/lib/hooks/use-preferences-store";
 interface ChatWrapperProps {
   initialPersonaId?: string;
   allowedPersonaIds?: PersonaId[];
-  personaAccess?: Partial<Record<PersonaId, PersonaAccessLevel>>;
   initialTaskId?: string | null;
   initialMessages?: Message[];
   initialTaskStatus?: TaskStatus;
@@ -65,7 +63,6 @@ type ChatStreamEvent =
 export default function ChatWrapper({
   initialPersonaId,
   allowedPersonaIds,
-  personaAccess,
   initialTaskId = null,
   initialMessages: initialMessagesProp,
   initialTaskStatus = "active",
@@ -77,22 +74,12 @@ export default function ChatWrapper({
     [initialMessagesProp],
   );
   const normalizedAllowedPersonaIds = useMemo(() => {
-    if (allowedPersonaIds && allowedPersonaIds.length > 0) {
+    if (allowedPersonaIds !== undefined) {
       return allowedPersonaIds;
     }
 
-    if (personaAccess) {
-      const nonBlockedPersonaIds = PERSONAS.filter(
-        (persona) => personaAccess[persona.id] !== "blocked",
-      ).map((persona) => persona.id);
-
-      if (nonBlockedPersonaIds.length > 0) {
-        return nonBlockedPersonaIds;
-      }
-    }
-
     return PERSONAS.map((persona) => persona.id);
-  }, [allowedPersonaIds, personaAccess]);
+  }, [allowedPersonaIds]);
 
   const resolveSelectablePersonaId = useCallback(
     (candidatePersonaId?: string | null): PersonaId => {
@@ -114,7 +101,6 @@ export default function ChatWrapper({
     taskStatus,
     endState,
     hydrateConversation,
-    resetConversation,
     setTaskId,
     setPersonaId,
     setMessages,
@@ -129,7 +115,6 @@ export default function ChatWrapper({
       taskStatus: state.taskStatus,
       endState: state.endState,
       hydrateConversation: state.hydrateConversation,
-      resetConversation: state.resetConversation,
       setTaskId: state.setTaskId,
       setPersonaId: state.setPersonaId,
       setMessages: state.setMessages,
@@ -197,19 +182,6 @@ export default function ChatWrapper({
     setPersonaId(selectedPersonaId);
     return () => setPersonaId(null);
   }, [selectedPersonaId, setPersonaId]);
-
-  function handleSelectPersona(personaId: PersonaId) {
-    if (
-      personaId === selectedPersonaId ||
-      !normalizedAllowedPersonaIds.includes(personaId)
-    ) {
-      return;
-    }
-
-    setSelectedPersonaId(personaId);
-    resetConversation();
-    setStartMsg("");
-  }
 
   function syncMessagesWithResponse({
     taskData,
@@ -462,22 +434,13 @@ export default function ChatWrapper({
   };
 
   return (
-    <main className="ChatWrapper relative z-0 flex h-full flex-1 flex-col overflow-hidden">
+    <main className="ChatWrapper relative flex h-full flex-1 flex-col overflow-hidden">
       {alert && <AlertMessage message={alert} />}
-
-      <section className="mt-14 flex w-full flex-col gap-3 px-3 pt-2 lg:px-5">
-        <ChatPersonaPicker
-          selectedPersonaId={selectedPersona.id}
-          allowedPersonaIds={normalizedAllowedPersonaIds}
-          personaAccess={personaAccess}
-          onSelectPersona={handleSelectPersona}
-        />
-      </section>
 
       <section
         id="ChatWrapperContent"
         className={classNames(
-          "droplet-scrollbar relative z-10 flex w-full flex-1 flex-col overflow-y-auto pb-4",
+          "droplet-scrollbar relative z-10 mt-14 flex w-full flex-1 flex-col overflow-y-auto pb-4",
           isNewTask && "items-center justify-center px-4",
         )}
       >

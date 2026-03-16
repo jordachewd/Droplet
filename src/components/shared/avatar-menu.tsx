@@ -113,6 +113,24 @@ export default function AvatarMenu() {
           )}
 
           <Link
+            href="/app/library"
+            className={accountMenuLinkClass}
+            onClick={handleCloseUserMenu}
+          >
+            <i className="bi bi-clock-history mr-4"></i>
+            <span>Library</span>
+          </Link>
+
+          <Link
+            href="/app/personas"
+            className={accountMenuLinkClass}
+            onClick={handleCloseUserMenu}
+          >
+            <i className="bi bi-grid-3x3-gap mr-4"></i>
+            <span>Personas</span>
+          </Link>
+
+          <Link
             href="/app/plans"
             className={accountMenuLinkClass}
             onClick={handleCloseUserMenu}
@@ -132,7 +150,7 @@ export default function AvatarMenu() {
 
           <hr className="my-1 border-jwdAqua-100/20" />
 
-          <div className="flex min-w-[180px] items-center px-5 py-2 text-sm">
+          <div className="flex min-w-45 items-center px-5 py-2 text-sm">
             <LogoutBtn />
           </div>
         </div>

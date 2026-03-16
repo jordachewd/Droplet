@@ -26,14 +26,14 @@ test("shows the reconciled pricing and FAQ copy on the public plans page", async
       .getByText("7 personas (full access) + try all others (limited access)"),
   ).toHaveCount(1);
   await expect(
-    page
-      .locator(".PlanCard")
-      .getByText("All 10 personas (unlimited)"),
+    page.locator(".PlanCard").getByText("All 10 personas (unlimited)"),
   ).toHaveCount(1);
   await expect(
     page
       .locator(".PlanCard")
-      .getByText("Trial personas: 5 prompts, 3 images, 2 audio, 1 video / 30 days"),
+      .getByText(
+        "Trial personas: 5 prompts, 3 images, 2 audio, 1 video / 30 days",
+      ),
   ).toHaveCount(2);
   await expect(page.getByLabel("Toggle yearly billing")).toHaveCount(0);
   await expect(page.getByText("Save 40%", { exact: true })).toHaveCount(0);

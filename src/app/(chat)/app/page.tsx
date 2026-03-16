@@ -23,7 +23,6 @@ export default async function ChatPage({ searchParams }: ChatPageProps) {
     <ChatWrapper
       initialPersonaId={persona}
       allowedPersonaIds={entitlements.allowedPersonaIds}
-      personaAccess={entitlements.personaAccess}
     />
   );
 }

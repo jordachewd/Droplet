@@ -72,11 +72,10 @@ export default function ChatHeader({
     }
   }
 
-  const selectablePersonaIds = (
-    allowedPersonaIds?.length
-      ? allowedPersonaIds
-      : PERSONAS.map((persona) => persona.id)
-  ) as PersonaId[];
+  const selectablePersonaIds =
+    allowedPersonaIds === undefined
+      ? (PERSONAS.map((persona) => persona.id) as PersonaId[])
+      : allowedPersonaIds;
   const selectablePersonas = PERSONAS.filter((persona) =>
     selectablePersonaIds.includes(persona.id),
   );
@@ -85,6 +84,8 @@ export default function ChatHeader({
     selectablePersonas[0]?.id) as PersonaId | null;
   const isConversationRoute = pathname?.startsWith("/app/c/") ?? false;
   const messageCount = messages.length;
+  const shouldDisablePersonaChange =
+    isConversationRoute || messageCount > 0 || taskStatus === "ended";
   const sidebarExpanded = isDesktop
     ? !desktopSidebarCollapsed
     : mobileSidebarOpen;
@@ -128,7 +129,7 @@ export default function ChatHeader({
                 )}
                 value={activePersonaId}
                 onChange={(event) => handlePersonaChange(event.target.value)}
-                disabled={isConversationRoute}
+                disabled={shouldDisablePersonaChange}
               >
                 {selectablePersonas.map((persona) => (
                   <option key={persona.id} value={persona.id}>

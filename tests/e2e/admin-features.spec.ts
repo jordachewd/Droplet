@@ -31,6 +31,7 @@ test.describe("admin transactions, usage, settings, and website", () => {
     await expect(
       page.getByRole("heading", { name: "Top Users" }),
     ).toBeVisible();
+    await expect(page.getByText("Top Personas")).toBeVisible();
     await expect(page.getByRole("heading", { name: "By Model" })).toBeVisible();
 
     await page.goto("/admin/settings");

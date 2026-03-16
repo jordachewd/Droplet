@@ -28,6 +28,9 @@ const sidebarDestinations: SidebarDestination[] = [
       await expect(page.locator(".PersonaCard")).toHaveCount(10);
     },
   },
+];
+
+const accountMenuDestinations: SidebarDestination[] = [
   {
     href: "/app/library",
     linkName: "Library",
@@ -111,6 +114,11 @@ async function resetDesktopSidebarPreference(page: Page) {
   await page.reload({ waitUntil: "domcontentloaded" });
 }
 
+async function openAccountMenu(page: Page) {
+  await page.getByRole("button", { name: "Account menu" }).click();
+  await expect(page.locator("#my-account")).toBeVisible();
+}
+
 async function ensureNotSignedOut(page: Page): Promise<boolean> {
   if (!/\/sign-in(?:\/|$|\?)/.test(page.url())) {
     return false;
@@ -140,7 +148,7 @@ test.describe("authenticated app shell and navigation", () => {
     await ensureSidebarOpen(page);
 
     await expect(page.locator("main.ChatWrapper")).toBeVisible();
-    await expect(page.getByText("Persona Studio")).toBeVisible();
+    await expect(page.getByText("Persona Studio")).toHaveCount(0);
     await expect(
       page.getByRole("button", { name: "Account menu" }),
     ).toBeVisible();
@@ -154,6 +162,34 @@ test.describe("authenticated app shell and navigation", () => {
         await clickSidebarLink(page, destination);
         if (await ensureNotSignedOut(page)) {
           await clickSidebarLink(page, destination);
+        }
+
+        await expect(page).toHaveURL(destination.expectedPath);
+        await destination.verify(page);
+      });
+    }
+
+    for (const destination of accountMenuDestinations) {
+      await test.step(`navigates to ${destination.expectedPath} from account menu`, async () => {
+        await ensureAuthenticatedAppPage(page);
+        await ensureNotSignedOut(page);
+        await openAccountMenu(page);
+
+        const accountLink = page
+          .locator(`#my-account a[href="${destination.href}"]`)
+          .filter({ hasText: destination.linkName })
+          .first();
+
+        await expect(accountLink).toBeVisible();
+        await accountLink.click();
+
+        if (await ensureNotSignedOut(page)) {
+          await openAccountMenu(page);
+          await page
+            .locator(`#my-account a[href="${destination.href}"]`)
+            .filter({ hasText: destination.linkName })
+            .first()
+            .click();
         }
 
         await expect(page).toHaveURL(destination.expectedPath);

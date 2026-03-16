@@ -19,7 +19,7 @@ export default async function LibraryPage() {
   let conversations: LibraryConversationCardItem[] = [];
   let imageItems: LibraryMediaCardItem[] = [];
   let audioItems: LibraryMediaCardItem[] = [];
-  let videoItems: LibraryMediaCardItem[] = [];
+  const videoItems: LibraryMediaCardItem[] = [];
   let hasLoadError = false;
 
   if (!userId) {
@@ -28,10 +28,9 @@ export default async function LibraryPage() {
 
   try {
     const taskHistory = await getRecentTasksByUserId(userId, 20);
-    const [images, audios, videos] = await Promise.all([
+    const [images, audios] = await Promise.all([
       getMediaItemsByUserId(userId, "image_url", 60),
       getMediaItemsByUserId(userId, "audio_url", 60),
-      getMediaItemsByUserId(userId, "video_url", 60),
     ]);
 
     conversations = taskHistory.map((task) => ({
@@ -52,14 +51,6 @@ export default async function LibraryPage() {
     }));
 
     audioItems = audios.map((item) => ({
-      ...item,
-      personaLabel: getPersona(item.personaId).label,
-      personaIcon: getPersona(item.personaId).icon,
-      createdAtLabel: mapDateToLabel(item.createdAt),
-      href: `/app/c/${item.taskId}`,
-    }));
-
-    videoItems = videos.map((item) => ({
       ...item,
       personaLabel: getPersona(item.personaId).label,
       personaIcon: getPersona(item.personaId).icon,

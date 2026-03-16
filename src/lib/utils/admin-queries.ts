@@ -3,6 +3,7 @@ import {
   PLAN_LIMITS,
   PlanLimits,
 } from "@/constants/plans";
+import { getPersona } from "@/constants/assistant-personas";
 import { MODEL_POLICY_MATRIX } from "@/lib/utils/ai-model-policy";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import AppSetting from "@/lib/database/models/app-setting.model";
@@ -305,6 +306,7 @@ export async function getAdminUsageAnalytics() {
   const [
     summaryAggregate,
     topUsersAggregate,
+    topPersonasAggregate,
     byModel,
     byRequestType,
     byDay,
@@ -352,6 +354,16 @@ export async function getAdminUsageAnalytics() {
       },
       { $sort: { count: -1 } },
       { $limit: 10 },
+    ]),
+    UsageEvent.aggregate([
+      {
+        $group: {
+          _id: "$personaId",
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { count: -1 } },
+      { $limit: 5 },
     ]),
     UsageEvent.aggregate([
       {
@@ -428,6 +440,8 @@ export async function getAdminUsageAnalytics() {
     totalTokensIn: 0,
     totalTokensOut: 0,
   };
+  const totalEvents = summary.totalEvents || 0;
+  const typedTopPersonas = topPersonasAggregate as UsageAggregateRecord[];
 
   return {
     summary,
@@ -437,6 +451,12 @@ export async function getAdminUsageAnalytics() {
       email: topUserMap.get(item._id)?.email ?? "Unknown email",
       count: item.count,
       costCents: item.costCents ?? 0,
+    })),
+    topPersonas: typedTopPersonas.map((item) => ({
+      personaId: item._id,
+      label: getPersona(item._id).label,
+      count: item.count,
+      percentage: totalEvents > 0 ? (item.count / totalEvents) * 100 : 0,
     })),
     byModel: (byModel as UsageAggregateRecord[]).map((item) => ({
       label: item._id,
