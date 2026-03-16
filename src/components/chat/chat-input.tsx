@@ -260,7 +260,7 @@ export default function ChatInput({
                 priority
                 width={40}
                 height={40}
-                className="max-h-[40px] max-w-[40px] rounded-sm"
+                className="max-h-10 max-w-10 rounded-sm"
                 alt="Selected image"
                 src={previewUrl}
               />
