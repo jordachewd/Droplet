@@ -19,6 +19,15 @@ import {
 import uploadFileToAWS from "@/lib/utils/aws/uploadFileToAWS";
 import { buildS3ObjectKey } from "@/lib/utils/aws/s3-file-reference";
 import { auth } from "@clerk/nextjs/server";
+import { z } from "zod";
+
+const uploadFormDataSchema = z
+  .object({
+    file: z.instanceof(File),
+  })
+  .strict();
+
+type UploadFormData = z.infer<typeof uploadFormDataSchema>;
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
@@ -31,8 +40,15 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     }
 
     const formData = await req.formData();
+    const parsedFormData = uploadFormDataSchema.safeParse({
+      file: formData.get("file"),
+    });
 
-    const file = formData.get("file") as File | null;
+    if (!parsedFormData.success) {
+      return NextResponse.json({ error: "No file uploaded." }, { status: 400 });
+    }
+
+    const { file }: UploadFormData = parsedFormData.data;
 
     const validation = validateUploadFile(file);
     if (!validation.isValid) {
@@ -42,9 +58,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       );
     }
 
-    const safeFile = file as File;
-
-    const fileExtension = getUploadFileExtension(safeFile.type);
+    const fileExtension = getUploadFileExtension(file.type);
     if (!fileExtension) {
       return NextResponse.json(
         {
@@ -56,15 +70,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     }
     const fileName = `uploaded_file_${Date.now()}.${fileExtension}`;
 
-    const buffer = Buffer.from(await safeFile.arrayBuffer());
+    const buffer = Buffer.from(await file.arrayBuffer());
     const folder = `${userId}/uploads`;
     const objectKey = buildS3ObjectKey(folder, fileName);
-    const fileUrl = await uploadFileToAWS(
-      buffer,
-      fileName,
-      safeFile.type,
-      folder,
-    );
+    const fileUrl = await uploadFileToAWS(buffer, fileName, file.type, folder);
 
     return NextResponse.json({ fileName, fileUrl, objectKey });
   } catch {

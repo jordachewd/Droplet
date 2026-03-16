@@ -10,8 +10,28 @@ import { CheckoutPlanParams } from "@/types/PlanData.d";
 import getFullName from "@/lib/utils/getFullName";
 import serializeForClient from "@/lib/utils/serialize-for-client";
 import { auth } from "@clerk/nextjs/server";
+import { nonEmptyStringSchema } from "@/lib/utils/validation-schemas";
+import { z } from "zod";
+
+const checkoutPlanSchema = z
+  .object({
+    plan: z
+      .object({
+        id: z.number(),
+        billing: z.enum(["Monthly", "Yearly"]),
+        name: z.enum(["Lite", "Pro", "Premium"]),
+        price: z.number().nonnegative(),
+      })
+      .strict(),
+  })
+  .strict();
+
+type CheckoutPlanInput = z.infer<typeof checkoutPlanSchema>;
 
 export async function checkoutPlan(transaction: CheckoutTransactionParams) {
+  const parsedTransaction = checkoutPlanSchema.safeParse(transaction);
+  if (!parsedTransaction.success) throw new Error("Invalid checkout payload.");
+
   const { userId: authedUserId } = await auth();
   if (!authedUserId) throw new Error("Unauthorized");
 
@@ -28,7 +48,7 @@ export async function checkoutPlan(transaction: CheckoutTransactionParams) {
     billing: planBilling,
     name: planName,
     price: planPrice,
-  }: CheckoutPlanParams = transaction.plan;
+  }: CheckoutPlanParams = (parsedTransaction.data as CheckoutPlanInput).plan;
 
   const fullName = getFullName({
     firstName: currentUser.firstName || "",
@@ -69,17 +89,24 @@ export async function checkoutPlan(transaction: CheckoutTransactionParams) {
 
 export async function getAllTransactions(userId: string) {
   try {
+    const parsedUserId = nonEmptyStringSchema.safeParse(userId);
+    if (!parsedUserId.success) throw new Error("Invalid user identifier.");
+
     const { userId: authedUserId } = await auth();
     if (!authedUserId) throw new Error("Unauthorized");
-    if (authedUserId !== userId) throw new Error("Forbidden");
+    if (authedUserId !== parsedUserId.data) throw new Error("Forbidden");
 
     await connectToDatabase();
 
-    const transactions = await Transaction.find({ clerkId: userId }, null, {
-      sort: {
-        createdAt: -1,
+    const transactions = await Transaction.find(
+      { clerkId: parsedUserId.data },
+      null,
+      {
+        sort: {
+          createdAt: -1,
+        },
       },
-    })
+    )
       .lean()
       .exec();
 

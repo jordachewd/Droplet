@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { APIError } from "openai";
 import { generateResponse } from "@/lib/utils/openai/generateResponse";
 import { openAiClient } from "@/constants/openai";
+import { PLAN_LIMITS } from "@/constants/plans";
 import { PersonaId } from "@/types/PersonaData.d";
 
 vi.mock("@/constants/openai", () => ({
@@ -25,6 +26,7 @@ vi.mock("@/lib/utils/openai/generateAudio", () => ({
 
 const defaultEntitlements = {
   planName: "Pro" as const,
+  limits: PLAN_LIMITS.Pro,
   allowedPersonaIds: [
     "strategist",
     "teacher",

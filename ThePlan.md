@@ -982,13 +982,86 @@ These items are not banned forever. They are excluded because they create dispro
 - Multi-provider LLM routing
 - Team or workspace accounts
 - User-created custom personas
-- Premium video generation without verified provider and moderation design
 - Broad role systems beyond `client` and `admin`
-- CMS-like website complexity beyond the required public pages
 
 ---
 
-## 11. What The Team Must Stop Doing
+## 11. Owner-Directed New Work (Added 2026-03-16)
+
+### Milestone 10 — Layout, Navigation & Library Enhancement
+
+**Objective:** Make the authenticated app shell professional and complete. ChatHeader on all `/app` pages, sidebar cleanup, Library media tabs.
+
+**Dependencies:** Phase 28 remaining complete.
+
+**Scope:**
+
+1. Move `ChatHeader` to `(chat)` layout level so it renders on ALL `/app/*` routes.
+2. Move sidebar toggle from sidebar header to ChatHeader as first-left item.
+3. Remove Plans and Profile from sidebar (already in AvatarMenu — redundant).
+4. Build tabbed Library page: Chats | Images | Audios | Videos tabs.
+5. Media aggregation queries against Task messages for image/audio extraction.
+6. Media card components with thumbnails, persona label, conversation link.
+
+**Success criteria:**
+
+- ChatHeader visible on all 7 `/app/*` routes.
+- Sidebar toggle in header, Plans/Profile removed from sidebar.
+- Library shows generated media organized by type.
+
+### Milestone 11 — Persona Trial Access System
+
+**Objective:** Enable try-before-you-buy persona access. Users can TEST non-plan personas with reduced limits to drive upgrades.
+
+**Dependencies:** Phase 30 complete (base persona gating).
+
+**Key decision (PM-frozen):**
+
+- Trial limits: 5 prompts/conversation, 3 images, 2 audio, 1 video per 30-day window.
+- Global across all trial personas (not per-persona tracking).
+- Separate counters from plan limits.
+- Conversation ends with upgrade CTA when trial limit hit.
+
+**Scope:**
+
+1. Three-tier persona access: `full` / `limited` / `blocked`.
+2. Trial usage tracking fields on User model.
+3. API route applies trial limits for limited-access personas.
+4. Persona picker shows "Trial" badge instead of "Locked."
+5. Plan cards explain trial access.
+6. Admin persona access controls per plan.
+
+**Success criteria:**
+
+- Every plan's non-primary personas accessible with trial limits.
+- Upgrade CTA appears when trial limits are hit.
+- Admin can override persona access per plan.
+
+### Milestone 12 — Video Generation
+
+**Objective:** Implement video generation using OpenAI Sora API.
+
+**Dependencies:** Audio verified, entitlement system stable.
+
+**Gated on:** Sora API availability verification + S3 cost ceiling approval.
+
+**Scope:**
+
+1. `generateVideo.tsx` utility with Sora integration.
+2. Video tool definition and API route integration.
+3. Video player component in chat messages.
+4. `video_url` type added to ContentItem schema.
+5. Video counter tracking and limit enforcement.
+
+**Success criteria:**
+
+- Video generation works end-to-end via chat interface.
+- Videos stored in S3, URLs in messages.
+- Limits enforced per plan.
+
+---
+
+## 12. What The Team Must Stop Doing
 
 1. Stop changing plan copy before backend rules are settled.
 2. Stop encoding plan rules in UI components.

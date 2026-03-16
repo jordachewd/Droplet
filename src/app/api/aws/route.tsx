@@ -7,18 +7,37 @@ import {
   resolveS3ObjectKey,
 } from "@/lib/utils/aws/s3-file-reference";
 import { generateString } from "@/lib/utils/generateString";
+import { nonEmptyStringSchema } from "@/lib/utils/validation-schemas";
 import { currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import { z } from "zod";
 
 const MAX_BASE64_IMAGE_SIZE_BYTES = 10 * 1024 * 1024;
+
+const awsUploadBodySchema = z
+  .object({
+    taskId: nonEmptyStringSchema,
+    imgBuffer: nonEmptyStringSchema,
+  })
+  .strict();
+
+const awsDeleteBodySchema = z
+  .object({
+    objectKey: nonEmptyStringSchema.optional(),
+    key: nonEmptyStringSchema.optional(),
+    fileUrl: nonEmptyStringSchema.optional(),
+    folder: nonEmptyStringSchema.optional(),
+    fileName: nonEmptyStringSchema.optional(),
+  })
+  .strict();
+
+type AwsDeleteBody = z.infer<typeof awsDeleteBodySchema>;
 
 function normalizeFolderPath(folder: string): string {
   return normalizeS3ObjectKey(folder).replace(/\/+$/g, "");
 }
 
-function resolveDeleteObjectKey(
-  payload: Record<string, unknown>,
-): string | null {
+function resolveDeleteObjectKey(payload: AwsDeleteBody): string | null {
   const objectKeyCandidate =
     typeof payload.objectKey === "string"
       ? payload.objectKey
@@ -58,19 +77,16 @@ export async function POST(req: Request): Promise<NextResponse> {
       );
     }
 
-    const { taskId, imgBuffer } = await req.json();
+    const parsedBody = awsUploadBodySchema.safeParse(await req.json());
 
-    if (
-      typeof taskId !== "string" ||
-      typeof imgBuffer !== "string" ||
-      !taskId ||
-      !imgBuffer
-    ) {
+    if (!parsedBody.success) {
       return NextResponse.json(
         { message: "TaskId and image buffer are required." },
         { status: 400 },
       );
     }
+
+    const { taskId, imgBuffer } = parsedBody.data;
 
     const normalizedImgBuffer = imgBuffer.replace(/^data:[^;]+;base64,/, "");
     const payloadSizeBytes = Buffer.byteLength(normalizedImgBuffer, "base64");
@@ -114,8 +130,19 @@ export async function DELETE(req: Request): Promise<NextResponse> {
       );
     }
 
-    const payload = (await req.json()) as Record<string, unknown>;
-    const objectKey = resolveDeleteObjectKey(payload);
+    const parsedBody = awsDeleteBodySchema.safeParse(await req.json());
+
+    if (!parsedBody.success) {
+      return NextResponse.json(
+        {
+          message:
+            "objectKey, fileUrl, or folder and fileName are required for deletion.",
+        },
+        { status: 400 },
+      );
+    }
+
+    const objectKey = resolveDeleteObjectKey(parsedBody.data);
 
     if (!objectKey) {
       return NextResponse.json(

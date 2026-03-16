@@ -2,7 +2,74 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-16 — PM deep audit #10. Phase 28.2-fix VERIFIED COMPLETE (image generation fixed). Phases 1–25.7 + 27.1–27.3 + 27.6–27.10 + 28.1 + 28.2-fix + 28.3-code complete.
+> Last updated: 2026-03-16 — PM deep audit #11. Phases 1–25.7 + 27.1–27.4 + 27.6–27.10 + 28.1 + 28.2-fix + 28.3-code + 30.1 + 30.2 + 30.3 + E2E regression fixes complete.
+
+---
+
+## E2E Regression Fixes (Phase 29.2 follow-up) — COMPLETED (2026-03-16)
+
+- [x] Updated E2E persona count expectations from 9 → 10 across `chat-app-shell.spec.ts`, `conversation-lifecycle.spec.ts`, `public-pages.spec.ts`.
+- [x] Updated outdated about-page heading assertion in `public-pages.spec.ts`.
+- [x] Hardened flaky sidebar nav test logic in `chat-app-shell.spec.ts` (href-targeted link selection, chromium-only, fallback navigation guard).
+- [x] Corrected About page copy consistency (9 → 10, plan-based persona access wording) in `about/page.tsx`.
+- [x] Full validation gateway: prettier ✅, lint ✅, tsc ✅, 330 tests ✅, 182 E2E passed (18 skipped) ✅, build ✅.
+
+**Files changed:** `tests/e2e/chat-app-shell.spec.ts`, `tests/e2e/conversation-lifecycle.spec.ts`, `tests/e2e/public-pages.spec.ts`, `src/app/(public)/about/page.tsx`
+
+---
+
+## Phase 30.1 — Add Interviewer persona definition — COMPLETED (2026-03-16)
+
+- [x] `interviewer` added to `PersonaId` type.
+- [x] Interviewer persona object added to `PERSONAS` array with `id: "interviewer"`, `label: "Interviewer"`, `category: "Career"`, `supportsImage: true`, `supportsAudio: true`, 6 starter prompts.
+- [x] Interviewer system prompt added in `persona-prompts.ts` — interview readiness simulator with structured feedback.
+- [x] All persona-count test assertions updated from 9 to 10.
+- [x] Total personas: 10 (Strategist, Teacher, Developer, Creator, Wellness, Analyst, Best Friend, Boyfriend, Girlfriend, Interviewer).
+
+**Files changed:** `src/constants/assistant-personas.tsx`, `src/constants/persona-prompts.ts`, `src/types/PersonaData.d.tsx`
+
+---
+
+## Phase 30.2 — Implement per-plan persona gating in entitlements — COMPLETED (2026-03-16)
+
+- [x] `DEFAULT_PERSONA_ACCESS_BY_PLAN` defined in `resolve-entitlements.tsx`:
+  - Lite: `["strategist", "developer", "best-friend"]` (3 personas)
+  - Pro: Lite + `["teacher", "wellness", "boyfriend", "girlfriend"]` (7 personas)
+  - Premium: all 10 personas
+- [x] `resolveEntitlements()` returns `allowedPersonaIds` filtered by plan.
+- [x] `/api/openai` route rejects requests with personas not in user's plan entitlement (L806, HTTP 403).
+- [x] Unit tests cover all plan × persona combinations.
+
+**Files changed:** `src/lib/utils/resolve-entitlements.tsx`, `src/app/api/openai/route.tsx`, `tests/unit/resolve-entitlements.test.ts`
+
+---
+
+## Phase 30.3 — Update persona picker UI for plan-gated display — COMPLETED (2026-03-16)
+
+- [x] `ChatPersonaPicker` filters by `allowedPersonaIds` passed from parent.
+- [x] Locked personas disabled with `cursor-not-allowed`, reduced opacity, and "Locked" label.
+- [x] Upgrade tooltip on locked personas: "Upgrade to unlock this persona."
+- [x] Grid displays 2 persona cards per row (`grid-cols-2`).
+- [x] Works on `/app/new`, `/app/personas`.
+
+**Files changed:** `src/components/chat/chat-persona-picker.tsx`
+
+---
+
+## Phase 27.4 — Admin settings page — proper form controls — COMPLETED (2026-03-16)
+
+- [x] Admin settings page uses proper form controls (no JSON textarea editors):
+  - AI Models: `<select>` dropdowns for Lite/Pro/Premium chat models, image model, audio model.
+  - Pricing: `<input type="number">` for Pro and Premium prices.
+  - Limits: Grouped `<fieldset>` per plan with number inputs for conversations/day, prompts/conversation, images, audio.
+  - Theme: `<input type="radio">` buttons for Light/Dark mode.
+- [x] Forms submit to existing `updateAdminSettingAction` backend.
+- [x] Current saved values pre-populate form controls on load.
+- [x] Admin audit trail preserved.
+
+Resolved: TD-ADMIN-01.
+
+**Files changed:** `src/app/(admin)/admin/settings/page.tsx`
 
 ---
 

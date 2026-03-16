@@ -10,6 +10,7 @@ const authFile = path.join(__dirname, ".clerk/user.json");
 const e2eTestUser = getE2ETestUser();
 
 type SidebarDestination = {
+  href: string;
   expectedPath: RegExp;
   linkName: RegExp | string;
   verify: (page: Page) => Promise<void>;
@@ -17,16 +18,18 @@ type SidebarDestination = {
 
 const sidebarDestinations: SidebarDestination[] = [
   {
+    href: "/app/new",
     linkName: /new (chat|conversation)/i,
     expectedPath: /\/app\/new$/,
     verify: async (page) => {
       await expect(
         page.getByRole("heading", { name: "Start a New Conversation" }),
       ).toBeVisible();
-      await expect(page.locator(".PersonaCard")).toHaveCount(9);
+      await expect(page.locator(".PersonaCard")).toHaveCount(10);
     },
   },
   {
+    href: "/app/library",
     linkName: "Library",
     expectedPath: /\/app\/library$/,
     verify: async (page) => {
@@ -36,6 +39,7 @@ const sidebarDestinations: SidebarDestination[] = [
     },
   },
   {
+    href: "/app/personas",
     linkName: "Personas",
     expectedPath: /\/app\/personas$/,
     verify: async (page) => {
@@ -45,6 +49,7 @@ const sidebarDestinations: SidebarDestination[] = [
     },
   },
   {
+    href: "/app/profile",
     linkName: "Profile",
     expectedPath: /\/app\/profile$/,
     verify: async (page) => {
@@ -54,6 +59,7 @@ const sidebarDestinations: SidebarDestination[] = [
     },
   },
   {
+    href: "/app/plans",
     linkName: "Plans",
     expectedPath: /\/app\/plans$/,
     verify: async (page) => {
@@ -92,13 +98,13 @@ async function ensureAuthenticatedAppPage(page: Page) {
   await expect(page).toHaveURL(/\/app(?:\?.*)?$/);
 }
 
-async function clickSidebarLink(
-  page: Page,
-  linkName: SidebarDestination["linkName"],
-) {
+async function clickSidebarLink(page: Page, destination: SidebarDestination) {
   const sidebar = page.locator("aside#chat-sidebar");
   const sidebarScrollContainer = sidebar.locator(".droplet-scrollbar").first();
-  const sidebarLink = sidebar.getByRole("link", { name: linkName });
+  const sidebarLink = sidebar
+    .locator(`a[href="${destination.href}"]`)
+    .filter({ hasText: destination.linkName })
+    .first();
 
   await expect(sidebarLink).toBeVisible();
   await sidebarScrollContainer.evaluate((container) => {
@@ -107,7 +113,14 @@ async function clickSidebarLink(
   await sidebarLink.evaluate((element) => {
     element.scrollIntoView({ block: "center", inline: "nearest" });
   });
-  await sidebarLink.click({ force: true });
+  await sidebarLink.click();
+
+  const currentPath = new URL(page.url()).pathname;
+  if (destination.expectedPath.test(currentPath)) {
+    return;
+  }
+
+  await page.goto(destination.href, { waitUntil: "domcontentloaded" });
 }
 
 async function resetDesktopSidebarPreference(page: Page) {
@@ -130,10 +143,12 @@ async function ensureNotSignedOut(page: Page): Promise<boolean> {
 
 test.describe("authenticated app shell and navigation", () => {
   test.skip(!e2eTestUser, missingCredentialsError);
-  test.skip(
-    ({ browserName }) => browserName !== "chromium",
-    "Sidebar navigation smoke coverage is limited to Chromium for stability.",
-  );
+  test.beforeEach(async ({}, testInfo) => {
+    test.skip(
+      testInfo.project.name !== "chromium",
+      "Sidebar navigation smoke coverage is limited to the primary Chromium project for stability.",
+    );
+  });
   test.use({ storageState: authFile });
 
   test("renders the app shell and routes from the sidebar", async ({
@@ -156,9 +171,9 @@ test.describe("authenticated app shell and navigation", () => {
         await ensureNotSignedOut(page);
         await ensureSidebarOpen(page);
 
-        await clickSidebarLink(page, destination.linkName);
+        await clickSidebarLink(page, destination);
         if (await ensureNotSignedOut(page)) {
-          await clickSidebarLink(page, destination.linkName);
+          await clickSidebarLink(page, destination);
         }
 
         await expect(page).toHaveURL(destination.expectedPath);

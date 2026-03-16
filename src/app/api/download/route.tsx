@@ -9,10 +9,25 @@ import { NextRequest, NextResponse } from "next/server";
 import { isAllowedDownloadUrl } from "@/lib/utils/download-url-allowlist";
 import { normalizePublicAssetUrl } from "@/lib/utils/normalize-public-asset-url";
 import { auth } from "@clerk/nextjs/server";
+import { nonEmptyStringSchema } from "@/lib/utils/validation-schemas";
+import { z } from "zod";
 
 function isDownloadRequest(downloadValue: string | null): boolean {
   return downloadValue === "1" || downloadValue === "true";
 }
+
+const downloadQuerySchema = z
+  .object({
+    key: nonEmptyStringSchema.optional(),
+    url: nonEmptyStringSchema.optional(),
+    download: z.string().optional(),
+    filename: z.string().optional(),
+  })
+  .refine((value) => Boolean(value.key || value.url), {
+    message: "A file key or URL is required",
+  });
+
+type DownloadQuery = z.infer<typeof downloadQuerySchema>;
 
 function sanitizeFileName(fileName: string): string {
   const sanitizedFileName = fileName
@@ -107,19 +122,27 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       return new NextResponse("Authentication required", { status: 401 });
     }
 
-    const objectKeyParam = req.nextUrl.searchParams.get("key");
-    const imageUrl = req.nextUrl.searchParams.get("url");
-    const download = isDownloadRequest(
-      req.nextUrl.searchParams.get("download"),
-    );
-    const requestedFileName = req.nextUrl.searchParams.get("filename");
+    const parsedQuery = downloadQuerySchema.safeParse({
+      key: req.nextUrl.searchParams.get("key") ?? undefined,
+      url: req.nextUrl.searchParams.get("url") ?? undefined,
+      download: req.nextUrl.searchParams.get("download") ?? undefined,
+      filename: req.nextUrl.searchParams.get("filename") ?? undefined,
+    });
+
+    if (!parsedQuery.success) {
+      return new NextResponse("A file key or URL is required", { status: 400 });
+    }
+
+    const {
+      key: objectKeyParam,
+      url: imageUrl,
+      download: downloadParam,
+      filename: requestedFileName,
+    }: DownloadQuery = parsedQuery.data;
+    const download = isDownloadRequest(downloadParam ?? null);
     const normalizedImageUrl = imageUrl
       ? normalizePublicAssetUrl(imageUrl)
       : null;
-
-    if (!objectKeyParam && !imageUrl) {
-      return new NextResponse("A file key or URL is required", { status: 400 });
-    }
 
     const resolvedObjectKey =
       typeof objectKeyParam === "string" && objectKeyParam.trim()

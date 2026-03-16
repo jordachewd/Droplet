@@ -1,4 +1,4 @@
-import { PLAN_LIMITS } from "@/constants/plans";
+import { PLAN_LIMITS, PlanLimits } from "@/constants/plans";
 import { PlanName } from "@/types/PlanData.d";
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
@@ -11,6 +11,7 @@ interface CheckUsageLimitParams {
   limitType: UsageLimitType;
   usagePeriodStart?: Date | string | null;
   now?: Date;
+  planLimits?: PlanLimits;
 }
 
 interface UsageLimitResult {
@@ -27,9 +28,10 @@ export function checkUsageLimit({
   limitType,
   usagePeriodStart,
   now = new Date(),
+  planLimits = PLAN_LIMITS,
 }: CheckUsageLimitParams): UsageLimitResult {
   const normalizedPlanName: PlanName = planName ?? "Lite";
-  const limit = PLAN_LIMITS[normalizedPlanName][limitType];
+  const limit = planLimits[normalizedPlanName][limitType];
 
   if (limit === -1) {
     return {

@@ -56,7 +56,7 @@ test("renders the about page with multiple content sections", async ({
   ).toBeVisible();
   await expect(
     page.getByRole("heading", {
-      name: "The full catalog is available across all plans.",
+      name: "Persona access scales by plan tier.",
     }),
   ).toBeVisible();
 });
@@ -133,7 +133,7 @@ test("renders the personas page with persona cards", async ({ page }) => {
   await expect(
     page.getByRole("heading", { name: "Choose Your AI Persona" }),
   ).toBeVisible();
-  await expect(page.locator(".PersonaCard")).toHaveCount(9);
+  await expect(page.locator(".PersonaCard")).toHaveCount(10);
   await expect(page.getByRole("heading", { name: "Strategist" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Teacher" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Creator" })).toBeVisible();

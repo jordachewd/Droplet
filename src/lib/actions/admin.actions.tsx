@@ -11,15 +11,27 @@ import User from "@/lib/database/models/user.model";
 import { createAdminAuditLogEntry } from "@/lib/utils/admin-audit";
 import { requireAdminActionAccess } from "@/lib/utils/admin-auth";
 import deleteS3Prefix from "@/lib/utils/aws/delete-s3-prefix";
+import { z } from "zod";
+
+const requiredStringSchema = z.string().trim().min(1);
+const numericFieldSchema = z.coerce.number().finite();
+const adminSettingCategorySchema = z.enum([
+  "plans",
+  "models",
+  "theme",
+  "limits",
+  "features",
+]);
 
 function getStringField(formData: FormData, fieldName: string): string {
   const value = formData.get(fieldName);
+  const parsedValue = requiredStringSchema.safeParse(value);
 
-  if (typeof value !== "string" || !value.trim()) {
+  if (!parsedValue.success) {
     throw new Error(`Missing required field: ${fieldName}`);
   }
 
-  return value.trim();
+  return parsedValue.data;
 }
 
 function parseJsonValue(rawValue: string): unknown {
@@ -28,6 +40,98 @@ function parseJsonValue(rawValue: string): unknown {
   } catch {
     return rawValue;
   }
+}
+
+function getNumericField(formData: FormData, fieldName: string): number {
+  const rawValue = getStringField(formData, fieldName);
+  const parsedValue = numericFieldSchema.safeParse(rawValue);
+
+  if (!parsedValue.success) {
+    throw new Error(`Invalid numeric field: ${fieldName}`);
+  }
+
+  return parsedValue.data;
+}
+
+function parseStructuredAdminSettingValue({
+  key,
+  formData,
+}: {
+  key: string;
+  formData: FormData;
+}): unknown | null {
+  if (key === "admin.models") {
+    return {
+      liteChatModel: getStringField(formData, "liteChatModel"),
+      proChatModel: getStringField(formData, "proChatModel"),
+      premiumChatModel: getStringField(formData, "premiumChatModel"),
+      imageModel: getStringField(formData, "imageModel"),
+      audioModel: getStringField(formData, "audioModel"),
+    };
+  }
+
+  if (key === "admin.pricing") {
+    return {
+      proPrice: getNumericField(formData, "proPrice"),
+      premiumPrice: getNumericField(formData, "premiumPrice"),
+    };
+  }
+
+  if (key === "admin.limits") {
+    return {
+      Lite: {
+        conversationsPerDay: getNumericField(
+          formData,
+          "liteConversationsPerDay",
+        ),
+        promptsPerConversation: getNumericField(
+          formData,
+          "litePromptsPerConversation",
+        ),
+        images: getNumericField(formData, "liteImages"),
+        audio: getNumericField(formData, "liteAudio"),
+        video: getNumericField(formData, "liteVideo"),
+      },
+      Pro: {
+        conversationsPerDay: getNumericField(
+          formData,
+          "proConversationsPerDay",
+        ),
+        promptsPerConversation: getNumericField(
+          formData,
+          "proPromptsPerConversation",
+        ),
+        images: getNumericField(formData, "proImages"),
+        audio: getNumericField(formData, "proAudio"),
+        video: getNumericField(formData, "proVideo"),
+      },
+      Premium: {
+        conversationsPerDay: getNumericField(
+          formData,
+          "premiumConversationsPerDay",
+        ),
+        promptsPerConversation: getNumericField(
+          formData,
+          "premiumPromptsPerConversation",
+        ),
+        images: getNumericField(formData, "premiumImages"),
+        audio: getNumericField(formData, "premiumAudio"),
+        video: getNumericField(formData, "premiumVideo"),
+      },
+    };
+  }
+
+  if (key === "admin.theme") {
+    const defaultMode = getStringField(formData, "defaultMode");
+
+    if (defaultMode !== "light" && defaultMode !== "dark") {
+      throw new Error("Invalid default theme mode.");
+    }
+
+    return { defaultMode };
+  }
+
+  return null;
 }
 
 export async function toggleUserSuspensionAction(formData: FormData) {
@@ -128,9 +232,23 @@ export async function removeUserByAdminAction(formData: FormData) {
 export async function updateAdminSettingAction(formData: FormData) {
   const adminId = await requireAdminActionAccess();
   const key = getStringField(formData, "key");
-  const category = getStringField(formData, "category");
-  const rawValue = getStringField(formData, "value");
-  const parsedValue = parseJsonValue(rawValue);
+  const categoryValue = getStringField(formData, "category");
+  const parsedCategory = adminSettingCategorySchema.safeParse(categoryValue);
+
+  if (!parsedCategory.success) {
+    throw new Error("Invalid settings category.");
+  }
+
+  const category = parsedCategory.data;
+  const rawValue = formData.get("value");
+  const parsedValue =
+    typeof rawValue === "string" && rawValue.trim().length > 0
+      ? parseJsonValue(rawValue.trim())
+      : parseStructuredAdminSettingValue({ key, formData });
+
+  if (parsedValue === null) {
+    throw new Error("Missing required field: value");
+  }
 
   await connectToDatabase();
 
@@ -163,6 +281,11 @@ export async function updateAdminSettingAction(formData: FormData) {
   });
 
   revalidatePath("/admin/settings");
+
+  if (key === "admin.pricing" || key === "admin.limits") {
+    revalidatePath("/plans");
+    revalidatePath("/app/plans");
+  }
 }
 
 export async function createPublicPageAction(formData: FormData) {

@@ -12,6 +12,68 @@ import {
   isUserOwnedS3ObjectKey,
   resolveS3ObjectKey,
 } from "@/lib/utils/aws/s3-file-reference";
+import {
+  chatMessageArraySchema,
+  nonEmptyStringSchema,
+} from "@/lib/utils/validation-schemas";
+import { z } from "zod";
+
+const taskStatusSchema = z.enum(["active", "ended"]);
+const taskEndedReasonSchema = z.enum([
+  "prompt_limit_reached",
+  "media_limit_reached",
+  "daily_conversation_limit_reached",
+  "conversation_storage_limit_reached",
+  "billing_state_invalid",
+]);
+const taskEndActionSchema = z.enum([
+  "start_new_conversation",
+  "upgrade_plan",
+  "contact_support",
+]);
+
+const createTaskSchema = z
+  .object({
+    usage: z.number().optional(),
+    title: nonEmptyStringSchema,
+    messages: chatMessageArraySchema,
+    personaId: nonEmptyStringSchema.optional(),
+    promptCount: z.number().optional(),
+    mediaCount: z.number().optional(),
+    estimatedBytes: z.number().optional(),
+    status: taskStatusSchema.optional(),
+    endedAt: z.date().optional(),
+    endedReason: taskEndedReasonSchema.optional(),
+    endAction: taskEndActionSchema.optional(),
+    createdAt: z.date().optional(),
+    updatedAt: z.date().optional(),
+  })
+  .passthrough();
+
+const updateTaskSchema = z
+  .object({
+    messages: chatMessageArraySchema,
+    usage: z.number().optional(),
+    personaId: nonEmptyStringSchema.optional(),
+    promptCount: z.number().optional(),
+    mediaCount: z.number().optional(),
+    estimatedBytes: z.number().optional(),
+    status: taskStatusSchema.optional(),
+    endedAt: z.date().optional(),
+    endedReason: taskEndedReasonSchema.optional(),
+    endAction: taskEndActionSchema.optional(),
+    updatedAt: z.date().optional(),
+  })
+  .strict();
+
+const incrementPromptCountSchema = z
+  .object({
+    taskId: nonEmptyStringSchema,
+    limit: z.number().int().positive(),
+  })
+  .strict();
+
+type UpdateTaskInputSchema = z.infer<typeof updateTaskSchema>;
 
 function countUserMessages(messages: Message[]): number {
   return messages.filter((message) => message.role === "user").length;
@@ -63,23 +125,26 @@ function logTaskAssetCleanupFailure() {
 // CREATE TASK
 export async function createTask(task: CreateTaskInput) {
   try {
+    const parsedTask = createTaskSchema.safeParse(task);
+    if (!parsedTask.success) throw new Error("Invalid task payload.");
+
     const { userId } = await auth();
     if (!userId) throw new Error("Unauthorized");
 
     await connectToDatabase();
 
     const newTask = await Task.create({
-      ...task,
+      ...parsedTask.data,
       userId,
-      personaId: task.personaId || "strategist",
+      personaId: parsedTask.data.personaId || "strategist",
       promptCount:
-        typeof task.promptCount === "number"
-          ? task.promptCount
-          : countUserMessages(task.messages),
+        typeof parsedTask.data.promptCount === "number"
+          ? parsedTask.data.promptCount
+          : countUserMessages(parsedTask.data.messages),
       estimatedBytes:
-        typeof task.estimatedBytes === "number"
-          ? task.estimatedBytes
-          : estimateMessageBytes(task.messages),
+        typeof parsedTask.data.estimatedBytes === "number"
+          ? parsedTask.data.estimatedBytes
+          : estimateMessageBytes(parsedTask.data.messages),
     });
 
     if (!newTask) {
@@ -95,20 +160,32 @@ export async function createTask(task: CreateTaskInput) {
 // UPDATE TASK
 export async function updateTask(taskId: string, task: UpdateTaskParams) {
   try {
+    const parsedTaskId = nonEmptyStringSchema.safeParse(taskId);
+    if (!parsedTaskId.success) throw new Error("Invalid task identifier.");
+
+    const parsedTask = updateTaskSchema.safeParse(task);
+    if (!parsedTask.success) throw new Error("Invalid task update payload.");
+
     const { userId } = await auth();
     if (!userId) throw new Error("Unauthorized");
 
     await connectToDatabase();
 
-    const updateFields = { ...task, updatedAt: new Date() };
+    const updateFields = {
+      ...parsedTask.data,
+      updatedAt: new Date(),
+    } as UpdateTaskInputSchema;
     if (typeof updateFields.estimatedBytes !== "number") {
       updateFields.estimatedBytes = estimateMessageBytes(updateFields.messages);
     }
 
     const incFields: Record<string, number> = {};
 
-    if (typeof task.usage === "number" && task.usage !== 0) {
-      incFields.usage = task.usage;
+    if (
+      typeof parsedTask.data.usage === "number" &&
+      parsedTask.data.usage !== 0
+    ) {
+      incFields.usage = parsedTask.data.usage;
     }
 
     delete updateFields.usage;
@@ -124,7 +201,7 @@ export async function updateTask(taskId: string, task: UpdateTaskParams) {
           };
 
     const updatedTask = await Task.findOneAndUpdate(
-      { _id: taskId, userId },
+      { _id: parsedTaskId.data, userId },
       updateDocument,
       {
         returnDocument: "after",
@@ -152,6 +229,9 @@ export async function incrementPromptCountIfBelowLimit({
   limit: number;
 }): Promise<boolean> {
   try {
+    const parsedInput = incrementPromptCountSchema.safeParse({ taskId, limit });
+    if (!parsedInput.success) throw new Error("Invalid prompt slot claim.");
+
     const { userId } = await auth();
     if (!userId) throw new Error("Unauthorized");
 
@@ -159,9 +239,9 @@ export async function incrementPromptCountIfBelowLimit({
 
     const updatedTask = await Task.findOneAndUpdate(
       {
-        _id: taskId,
+        _id: parsedInput.data.taskId,
         userId,
-        promptCount: { $lt: limit },
+        promptCount: { $lt: parsedInput.data.limit },
       },
       {
         $inc: { promptCount: 1 },
@@ -184,6 +264,15 @@ export async function incrementPromptCountIfBelowLimit({
 // DELETE TASK
 export async function deleteTask(taskId: string) {
   try {
+    const parsedTaskId = nonEmptyStringSchema.safeParse(taskId);
+    if (!parsedTaskId.success) {
+      return serializeForClient({
+        message: "Invalid conversation identifier",
+        status: 400,
+        source: "deleteTask",
+      });
+    }
+
     const { userId } = await auth();
     if (!userId) {
       return serializeForClient({
@@ -193,7 +282,7 @@ export async function deleteTask(taskId: string) {
       });
     }
 
-    if (!isValidObjectId(taskId)) {
+    if (!isValidObjectId(parsedTaskId.data)) {
       return serializeForClient({
         message: "Invalid conversation identifier",
         status: 400,
@@ -203,7 +292,10 @@ export async function deleteTask(taskId: string) {
 
     await connectToDatabase();
 
-    const taskToDelete = await Task.findOne({ _id: taskId, userId });
+    const taskToDelete = await Task.findOne({
+      _id: parsedTaskId.data,
+      userId,
+    });
 
     if (!taskToDelete) {
       return serializeForClient({
@@ -218,7 +310,10 @@ export async function deleteTask(taskId: string) {
       userId,
     );
 
-    const deletedTask = await Task.findOneAndDelete({ _id: taskId, userId });
+    const deletedTask = await Task.findOneAndDelete({
+      _id: parsedTaskId.data,
+      userId,
+    });
 
     if (!deletedTask) {
       return serializeForClient({

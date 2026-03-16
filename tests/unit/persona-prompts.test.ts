@@ -9,8 +9,8 @@ import {
 } from "@/constants/persona-prompts";
 
 describe("persona-prompts", () => {
-  it("defines versioned prompt variants for all nine personas", () => {
-    expect(Object.keys(PERSONA_PROMPTS)).toHaveLength(9);
+  it("defines versioned prompt variants for all ten personas", () => {
+    expect(Object.keys(PERSONA_PROMPTS)).toHaveLength(10);
     expect(PROMPT_VERSION).toBe("1.0");
   });
 
@@ -62,5 +62,16 @@ describe("persona-prompts", () => {
     expect(promptMessages[1].content).toContain(
       "Do not provide medical, legal, or financial advice.",
     );
+  });
+
+  it("builds interviewer prompts for realistic interview simulation", () => {
+    const promptConfig = resolvePersonaPromptConfig({
+      personaId: "interviewer",
+      model: "gpt-4.1",
+    });
+
+    expect(promptConfig.modelFamily).toBe("standard");
+    expect(promptConfig.systemPrompt).toContain("Ask one question at a time");
+    expect(promptConfig.systemPrompt).toContain("structured feedback");
   });
 });

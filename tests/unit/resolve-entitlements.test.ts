@@ -8,26 +8,27 @@ import {
 import { PlanName } from "@/types/PlanData.d";
 
 describe("resolveEntitlements", () => {
-  it("allows all personas and all media entitlements for Lite", () => {
+  it("returns Lite plan-gated personas and all media entitlements", () => {
     const entitlements = resolveEntitlements("Lite");
 
-    expect(entitlements.allowedPersonaIds).toEqual(
-      PERSONAS.map((persona) => persona.id),
-    );
-    expect(entitlements.allowedPersonaIds).toContain("boyfriend");
-    expect(entitlements.allowedPersonaIds).toContain("girlfriend");
+    expect(entitlements.allowedPersonaIds).toEqual([
+      "strategist",
+      "developer",
+      "best-friend",
+    ]);
+    expect(entitlements.allowedPersonaIds).not.toContain("girlfriend");
     expect(entitlements.supportsImageGeneration).toBe(true);
     expect(entitlements.supportsAudioGeneration).toBe(true);
     expect(entitlements.supportsVideoGeneration).toBe(true);
   });
 
-  it("preserves companion persona selections for Lite users", () => {
+  it("falls back to the first allowed persona when Lite users select a blocked persona", () => {
     const persona = resolvePersonaForPlan({
       personaId: "girlfriend",
       planName: "Lite",
     });
 
-    expect(persona.id).toBe("girlfriend");
+    expect(persona.id).toBe("strategist");
   });
 
   it("covers plan x media capability combinations for image, audio, and video", () => {
@@ -53,9 +54,11 @@ describe("resolveEntitlements", () => {
     expect(entitlements.supportsImageGeneration).toBe(true);
     expect(entitlements.supportsAudioGeneration).toBe(true);
     expect(entitlements.supportsVideoGeneration).toBe(true);
-    expect(entitlements.allowedPersonaIds).toEqual(
-      PERSONAS.map((persona) => persona.id),
-    );
+    expect(entitlements.allowedPersonaIds).toEqual([
+      "strategist",
+      "developer",
+      "best-friend",
+    ]);
   });
 
   it("blocks entitlements for suspended users", () => {
@@ -72,14 +75,36 @@ describe("resolveEntitlements", () => {
     expect(entitlements.videoLimitReached).toBe(true);
   });
 
-  it("keeps all 9 personas accessible across all plans", () => {
-    const expectedPersonaIds = PERSONAS.map((persona) => persona.id);
+  it("enforces the approved persona access matrix per plan", () => {
+    const liteEntitlements = resolveEntitlements("Lite");
+    const proEntitlements = resolveEntitlements("Pro");
+    const premiumEntitlements = resolveEntitlements("Premium");
 
-    for (const planName of ["Lite", "Pro", "Premium"] as const) {
-      const entitlements = resolveEntitlements(planName);
+    expect(liteEntitlements.allowedPersonaIds).toEqual([
+      "strategist",
+      "developer",
+      "best-friend",
+    ]);
+    expect(liteEntitlements.allowedPersonaIds).toHaveLength(3);
 
-      expect(entitlements.allowedPersonaIds).toEqual(expectedPersonaIds);
-      expect(entitlements.allowedPersonaIds).toHaveLength(9);
-    }
+    expect(proEntitlements.allowedPersonaIds).toEqual([
+      "strategist",
+      "developer",
+      "best-friend",
+      "teacher",
+      "wellness",
+      "boyfriend",
+      "girlfriend",
+    ]);
+    expect(proEntitlements.allowedPersonaIds).toHaveLength(7);
+    expect(proEntitlements.allowedPersonaIds).not.toContain("interviewer");
+    expect(proEntitlements.allowedPersonaIds).not.toContain("creator");
+    expect(proEntitlements.allowedPersonaIds).not.toContain("analyst");
+
+    expect(premiumEntitlements.allowedPersonaIds).toEqual(
+      PERSONAS.map((persona) => persona.id),
+    );
+    expect(premiumEntitlements.allowedPersonaIds).toHaveLength(10);
+    expect(premiumEntitlements.allowedPersonaIds).toContain("interviewer");
   });
 });

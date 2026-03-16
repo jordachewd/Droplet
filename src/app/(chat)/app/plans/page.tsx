@@ -4,14 +4,18 @@ import Plans from "@/components/sections/plans-section";
 import { ensureUserSynced } from "@/lib/utils/ensure-user-synced";
 import { SUPPORT_EMAIL } from "@/constants/support";
 import { auth } from "@clerk/nextjs/server";
+import { buildPlans } from "@/constants/plans";
+import { getEffectivePlanConfig } from "@/lib/utils/effective-plan-config";
 
 export default async function AppPlansPage() {
   const { userId } = await auth();
   const userData = userId ? await ensureUserSynced(userId) : null;
+  const { pricing, limits } = await getEffectivePlanConfig();
+  const plans = buildPlans({ pricing, limits });
 
   return userData ? (
     <PageWrapper id="AppPlansPage" scrollable>
-      <Plans userData={userData} hasLoader />
+      <Plans userData={userData} hasLoader plansData={plans} />
       <Faqs />
     </PageWrapper>
   ) : (

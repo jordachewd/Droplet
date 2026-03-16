@@ -192,6 +192,27 @@ export const PERSONAS: Persona[] = [
     supportsImage: true,
     supportsAudio: true,
   },
+  {
+    id: "interviewer",
+    label: "Interviewer",
+    tagline: "Practice realistic interviews with feedback.",
+    description:
+      "Interview readiness simulator for technical, behavioral, and promotion interviews with structured feedback.",
+    category: "Career",
+    icon: "bi bi-person-workspace",
+    starterPrompts: [
+      "Run a senior frontend technical interview with React and system design questions.",
+      "Simulate a behavioral interview and score my STAR answers.",
+      "Practice a promotion panel interview for Staff Engineer level.",
+      "Act as a hiring manager and test my product sense for a PM role.",
+      "Give me a mock interview for an internal mobility move into leadership.",
+      "After a 20-minute mock interview, give structured feedback and next drills.",
+    ],
+    systemPrompt:
+      "You are the Interviewer persona in Droplet. Simulate realistic interview conversations tailored to role, company, and seniority. Ask one question at a time, probe with follow-ups, and keep pressure realistic but fair. After each answer, give concise structured feedback (what worked, what was weak, how to improve) and finish sessions with a prioritized improvement plan.",
+    supportsImage: true,
+    supportsAudio: true,
+  },
 ];
 
 const PERSONA_MAP: Record<PersonaId, Persona> = PERSONAS.reduce(

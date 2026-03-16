@@ -8,6 +8,7 @@ import {
   useMemo,
   useState,
 } from "react";
+import { useUiStore } from "@/lib/hooks/use-ui-store";
 
 interface ThemeProps {
   children: ReactNode;
@@ -62,7 +63,8 @@ const persistMode = (nextMode: ThemeMode) => {
 };
 
 export default function DropletTheme({ children }: ThemeProps) {
-  const [mode, setModeState] = useState<ThemeMode>("system");
+  const mode = useUiStore((state) => state.themeMode);
+  const setModeState = useUiStore((state) => state.setThemeMode);
   const [resolvedMode, setResolvedMode] = useState<ResolvedThemeMode>("light");
 
   const applyTheme = useCallback((targetMode: ThemeMode) => {
@@ -78,7 +80,7 @@ export default function DropletTheme({ children }: ThemeProps) {
 
     setModeState(safeInitialTheme);
     applyTheme(safeInitialTheme);
-  }, [applyTheme]);
+  }, [applyTheme, setModeState]);
 
   useEffect(() => {
     if (mode !== "system") return;
@@ -96,7 +98,7 @@ export default function DropletTheme({ children }: ThemeProps) {
       persistMode(nextMode);
       applyTheme(nextMode);
     },
-    [applyTheme],
+    [applyTheme, setModeState],
   );
 
   const contextValue = useMemo(

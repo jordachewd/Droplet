@@ -20,6 +20,8 @@ import {
 } from "@/lib/utils/check-daily-conversations";
 import { getTaskByIdForUser } from "@/lib/utils/task-queries";
 import { enforceSlidingWindowRateLimit } from "@/lib/utils/rate-limit";
+import { PLAN_LIMITS } from "@/constants/plans";
+import { getEffectivePlanConfig } from "@/lib/utils/effective-plan-config";
 
 vi.mock("@/lib/utils/openai/generateResponse", () => ({
   generateResponse: vi.fn(),
@@ -67,6 +69,10 @@ vi.mock("@/lib/utils/ensure-user-synced", () => ({
   ensureUserSynced: vi.fn(),
 }));
 
+vi.mock("@/lib/utils/effective-plan-config", () => ({
+  getEffectivePlanConfig: vi.fn(),
+}));
+
 const EXISTING_TASK_ID = "507f1f77bcf86cd799439011";
 const NEW_TASK_ID = "507f1f77bcf86cd799439012";
 
@@ -85,7 +91,7 @@ function createExistingTask(overrides: Record<string, unknown> = {}) {
   return {
     _id: EXISTING_TASK_ID,
     title: "Conversation",
-    personaId: "teacher",
+    personaId: "strategist",
     messages: [
       {
         role: "user",
@@ -135,6 +141,10 @@ describe("POST /api/openai", () => {
       remaining: 19,
       resetAt: Date.now() + 60_000,
       retryAfterMs: 0,
+    });
+    vi.mocked(getEffectivePlanConfig).mockResolvedValue({
+      pricing: { Lite: 0, Pro: 19, Premium: 39 },
+      limits: PLAN_LIMITS,
     });
     vi.mocked(getTaskByIdForUser).mockResolvedValue(
       createExistingTask() as never,
@@ -225,6 +235,21 @@ describe("POST /api/openai", () => {
     expect(payload.error).toContain("plan has expired");
   });
 
+  it("rejects personas that are not allowed for the current plan", async () => {
+    const response = await POST(
+      buildRequest({
+        personaId: "teacher",
+        messages: [{ role: "user", whois: "user", content: "new chat" }],
+      }),
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(payload.error).toContain("not available for your current plan");
+    expect(generateTitle).not.toHaveBeenCalled();
+    expect(generateResponse).not.toHaveBeenCalled();
+  });
+
   it("creates a new task when no taskId is provided", async () => {
     const response = await POST(
       buildRequest({
@@ -233,7 +258,12 @@ describe("POST /api/openai", () => {
     );
     const payload = await response.json();
 
-    expect(claimDailyConversationSlot).toHaveBeenCalledWith("user_123", "Lite");
+    expect(claimDailyConversationSlot).toHaveBeenCalledWith(
+      "user_123",
+      "Lite",
+      undefined,
+      PLAN_LIMITS,
+    );
     expect(generateTitle).toHaveBeenCalledOnce();
     expect(createTask).toHaveBeenCalledWith({
       title: "Generated title",
@@ -416,7 +446,7 @@ describe("POST /api/openai", () => {
         ],
         taskId: EXISTING_TASK_ID,
         userId: "user_123",
-        personaId: "teacher",
+        personaId: "strategist",
         planName: "Lite",
         taskClass: "standard",
         budgetState: "normal",
@@ -429,7 +459,7 @@ describe("POST /api/openai", () => {
     expect(updateTask).toHaveBeenCalledWith(
       EXISTING_TASK_ID,
       expect.objectContaining({
-        personaId: "teacher",
+        personaId: "strategist",
         messages: [
           {
             role: "user",
@@ -446,7 +476,7 @@ describe("POST /api/openai", () => {
       }),
     );
     expect(payload.taskId).toBe(EXISTING_TASK_ID);
-    expect(payload.personaId).toBe("teacher");
+    expect(payload.personaId).toBe("strategist");
   });
 
   it("returns 404 when an existing conversation is not owned by the user", async () => {
@@ -566,21 +596,39 @@ describe("POST /api/openai", () => {
   });
 
   it("ends the conversation when media generation is blocked by plan limits", async () => {
-    vi.mocked(generateResponse).mockResolvedValue(
-      JSON.stringify({
-        blockedReason: "media_limit_reached",
-        taskUsage: 5,
-        taskData: {
-          whois: "assistant",
-          role: "assistant",
-          content: [
-            {
-              type: "text",
-              text: "Image generation limit reached for your current plan.",
+    vi.mocked(User.findOneAndUpdate).mockResolvedValueOnce(null as never);
+    vi.mocked(generateResponse).mockImplementation(
+      async ({ claimMediaGenerationSlot }) => {
+        const claimResult = await claimMediaGenerationSlot?.({
+          limitType: "images",
+        });
+
+        if (!claimResult?.claimed) {
+          return JSON.stringify({
+            blockedReason: "media_limit_reached",
+            taskUsage: 5,
+            taskData: {
+              whois: "assistant",
+              role: "assistant",
+              content: [
+                {
+                  type: "text",
+                  text: "Image generation limit reached for your current plan.",
+                },
+              ],
             },
-          ],
-        },
-      }),
+          });
+        }
+
+        return JSON.stringify({
+          taskData: {
+            whois: "assistant",
+            role: "assistant",
+            content: [{ type: "text", text: "Image generated." }],
+          },
+          taskUsage: 5,
+        });
+      },
     );
 
     const response = await POST(
@@ -638,17 +686,26 @@ describe("POST /api/openai", () => {
     );
   });
 
-  it("increments image generation counter after a successful image response", async () => {
-    vi.mocked(generateResponse).mockResolvedValue(
-      JSON.stringify({
-        taskData: {
-          whois: "assistant",
-          role: "assistant",
-          content: [{ type: "text", text: "Generated image output." }],
-        },
-        taskUsage: 10,
-        generatedImage: true,
-      }),
+  it("claims image generation counter atomically before a successful image response", async () => {
+    vi.mocked(User.findOneAndUpdate).mockResolvedValue({
+      plan: {
+        imageGenerations: 1,
+      },
+    } as never);
+    vi.mocked(generateResponse).mockImplementation(
+      async ({ claimMediaGenerationSlot }) => {
+        await claimMediaGenerationSlot?.({ limitType: "images" });
+
+        return JSON.stringify({
+          taskData: {
+            whois: "assistant",
+            role: "assistant",
+            content: [{ type: "text", text: "Generated image output." }],
+          },
+          taskUsage: 10,
+          generatedImage: true,
+        });
+      },
     );
 
     const response = await POST(
@@ -660,13 +717,82 @@ describe("POST /api/openai", () => {
 
     expect(response.status).toBe(200);
     expect(User.findOneAndUpdate).toHaveBeenCalledWith(
-      { clerkId: "user_123" },
+      {
+        clerkId: "user_123",
+        "plan.imageGenerations": { $lt: 3 },
+      },
       {
         $inc: {
           "plan.imageGenerations": 1,
         },
       },
       {
+        new: true,
+        strict: true,
+        upsert: false,
+      },
+    );
+  });
+
+  it("rejects the second image claim at the quota boundary", async () => {
+    const firstClaimDoc = {
+      plan: {
+        imageGenerations: 3,
+      },
+    };
+    let firstClaimed = false;
+    let secondClaimed = true;
+
+    vi.mocked(User.findOneAndUpdate)
+      .mockResolvedValueOnce(firstClaimDoc as never)
+      .mockResolvedValueOnce(null as never);
+    vi.mocked(generateResponse).mockImplementation(
+      async ({ claimMediaGenerationSlot }) => {
+        const firstClaim = await claimMediaGenerationSlot?.({
+          limitType: "images",
+        });
+        const secondClaim = await claimMediaGenerationSlot?.({
+          limitType: "images",
+        });
+
+        firstClaimed = Boolean(firstClaim?.claimed);
+        secondClaimed = Boolean(secondClaim?.claimed);
+
+        return JSON.stringify({
+          taskData: {
+            whois: "assistant",
+            role: "assistant",
+            content: [{ type: "text", text: "Generated image output." }],
+          },
+          taskUsage: 10,
+          generatedImage: true,
+        });
+      },
+    );
+
+    const response = await POST(
+      buildRequest({
+        taskId: EXISTING_TASK_ID,
+        messages: [{ role: "user", whois: "user", content: "create image" }],
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(firstClaimed).toBe(true);
+    expect(secondClaimed).toBe(false);
+    expect(User.findOneAndUpdate).toHaveBeenNthCalledWith(
+      1,
+      {
+        clerkId: "user_123",
+        "plan.imageGenerations": { $lt: 3 },
+      },
+      {
+        $inc: {
+          "plan.imageGenerations": 1,
+        },
+      },
+      {
+        new: true,
         strict: true,
         upsert: false,
       },

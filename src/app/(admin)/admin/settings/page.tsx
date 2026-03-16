@@ -1,21 +1,277 @@
 import PageHead from "@/components/layout/page-head";
 import { updateAdminSettingAction } from "@/lib/actions/admin.actions";
 import { getAdminSettingsSnapshot } from "@/lib/utils/admin-queries";
+import { PlanLimits } from "@/constants/plans";
 
-function toTextareaValue(value: unknown): string {
-  return JSON.stringify(value, null, 2);
+interface ModelSettingsFormValue {
+  liteChatModel: string;
+  proChatModel: string;
+  premiumChatModel: string;
+  imageModel: string;
+  audioModel: string;
+}
+
+interface PricingSettingsFormValue {
+  proPrice: number;
+  premiumPrice: number;
+}
+
+interface ThemeSettingsFormValue {
+  defaultMode: "light" | "dark";
+}
+
+type LimitsSettingsFormValue = PlanLimits;
+
+const CHAT_MODEL_OPTIONS = [
+  "gpt-4o-mini",
+  "gpt-4.1",
+  "gpt-5.4",
+  "gpt-4.1-nano",
+  "gpt-4.1-mini",
+];
+
+const IMAGE_MODEL_OPTIONS = [
+  "gpt-image-1-mini",
+  "gpt-image-1.5",
+  "gpt-image-1",
+];
+const AUDIO_MODEL_OPTIONS = [
+  "gpt-4o-mini-tts",
+  "gpt-audio-mini",
+  "gpt-audio-1.5",
+];
+
+function isObjectRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function readNumericValue(
+  source: Record<string, unknown>,
+  key: string,
+  fallbackValue: number,
+): number {
+  const rawValue = source[key];
+  if (typeof rawValue !== "number" || !Number.isFinite(rawValue)) {
+    return fallbackValue;
+  }
+
+  return rawValue;
+}
+
+function normalizeModelSettingsValue(
+  value: unknown,
+  defaults: ModelSettingsFormValue,
+): ModelSettingsFormValue {
+  if (!isObjectRecord(value)) {
+    return defaults;
+  }
+
+  const liteChatModel =
+    typeof value.liteChatModel === "string"
+      ? value.liteChatModel
+      : typeof value.lite === "object" &&
+          value.lite &&
+          "chat" in value.lite &&
+          typeof (
+            value.lite as {
+              chat?: { taskClasses?: { standard?: { model?: string } } };
+            }
+          ).chat?.taskClasses?.standard?.model === "string"
+        ? (
+            value.lite as {
+              chat: { taskClasses: { standard: { model: string } } };
+            }
+          ).chat.taskClasses.standard.model
+        : defaults.liteChatModel;
+  const proChatModel =
+    typeof value.proChatModel === "string"
+      ? value.proChatModel
+      : typeof value.pro === "object" &&
+          value.pro &&
+          "chat" in value.pro &&
+          typeof (
+            value.pro as {
+              chat?: { taskClasses?: { standard?: { model?: string } } };
+            }
+          ).chat?.taskClasses?.standard?.model === "string"
+        ? (
+            value.pro as {
+              chat: { taskClasses: { standard: { model: string } } };
+            }
+          ).chat.taskClasses.standard.model
+        : defaults.proChatModel;
+  const premiumChatModel =
+    typeof value.premiumChatModel === "string"
+      ? value.premiumChatModel
+      : typeof value.premium === "object" &&
+          value.premium &&
+          "chat" in value.premium &&
+          typeof (
+            value.premium as {
+              chat?: { taskClasses?: { standard?: { model?: string } } };
+            }
+          ).chat?.taskClasses?.standard?.model === "string"
+        ? (
+            value.premium as {
+              chat: { taskClasses: { standard: { model: string } } };
+            }
+          ).chat.taskClasses.standard.model
+        : defaults.premiumChatModel;
+  const imageModel =
+    typeof value.imageModel === "string"
+      ? value.imageModel
+      : defaults.imageModel;
+  const audioModel =
+    typeof value.audioModel === "string"
+      ? value.audioModel
+      : defaults.audioModel;
+
+  return {
+    liteChatModel,
+    proChatModel,
+    premiumChatModel,
+    imageModel,
+    audioModel,
+  };
+}
+
+function normalizePricingSettingsValue(
+  value: unknown,
+  defaults: PricingSettingsFormValue,
+): PricingSettingsFormValue {
+  if (Array.isArray(value)) {
+    const proPlan = value.find(
+      (item): item is { name: string; price?: number } =>
+        isObjectRecord(item) && item.name === "Pro",
+    );
+    const premiumPlan = value.find(
+      (item): item is { name: string; price?: number } =>
+        isObjectRecord(item) && item.name === "Premium",
+    );
+
+    return {
+      proPrice:
+        typeof proPlan?.price === "number" && Number.isFinite(proPlan.price)
+          ? proPlan.price
+          : defaults.proPrice,
+      premiumPrice:
+        typeof premiumPlan?.price === "number" &&
+        Number.isFinite(premiumPlan.price)
+          ? premiumPlan.price
+          : defaults.premiumPrice,
+    };
+  }
+
+  if (!isObjectRecord(value)) {
+    return defaults;
+  }
+
+  return {
+    proPrice: readNumericValue(value, "proPrice", defaults.proPrice),
+    premiumPrice: readNumericValue(
+      value,
+      "premiumPrice",
+      defaults.premiumPrice,
+    ),
+  };
+}
+
+function normalizeLimitsSettingsValue(
+  value: unknown,
+  defaults: LimitsSettingsFormValue,
+): LimitsSettingsFormValue {
+  if (!isObjectRecord(value)) {
+    return defaults;
+  }
+
+  const liteValue = isObjectRecord(value.Lite) ? value.Lite : {};
+  const proValue = isObjectRecord(value.Pro) ? value.Pro : {};
+  const premiumValue = isObjectRecord(value.Premium) ? value.Premium : {};
+
+  return {
+    Lite: {
+      conversationsPerDay: readNumericValue(
+        liteValue,
+        "conversationsPerDay",
+        defaults.Lite.conversationsPerDay,
+      ),
+      promptsPerConversation: readNumericValue(
+        liteValue,
+        "promptsPerConversation",
+        defaults.Lite.promptsPerConversation,
+      ),
+      images: readNumericValue(liteValue, "images", defaults.Lite.images),
+      audio: readNumericValue(liteValue, "audio", defaults.Lite.audio),
+      video: readNumericValue(liteValue, "video", defaults.Lite.video),
+    },
+    Pro: {
+      conversationsPerDay: readNumericValue(
+        proValue,
+        "conversationsPerDay",
+        defaults.Pro.conversationsPerDay,
+      ),
+      promptsPerConversation: readNumericValue(
+        proValue,
+        "promptsPerConversation",
+        defaults.Pro.promptsPerConversation,
+      ),
+      images: readNumericValue(proValue, "images", defaults.Pro.images),
+      audio: readNumericValue(proValue, "audio", defaults.Pro.audio),
+      video: readNumericValue(proValue, "video", defaults.Pro.video),
+    },
+    Premium: {
+      conversationsPerDay: readNumericValue(
+        premiumValue,
+        "conversationsPerDay",
+        defaults.Premium.conversationsPerDay,
+      ),
+      promptsPerConversation: readNumericValue(
+        premiumValue,
+        "promptsPerConversation",
+        defaults.Premium.promptsPerConversation,
+      ),
+      images: readNumericValue(premiumValue, "images", defaults.Premium.images),
+      audio: readNumericValue(premiumValue, "audio", defaults.Premium.audio),
+      video: readNumericValue(premiumValue, "video", defaults.Premium.video),
+    },
+  };
+}
+
+function normalizeThemeSettingsValue(
+  value: unknown,
+  defaults: ThemeSettingsFormValue,
+): ThemeSettingsFormValue {
+  if (!isObjectRecord(value)) {
+    return defaults;
+  }
+
+  return {
+    defaultMode: value.defaultMode === "dark" ? "dark" : defaults.defaultMode,
+  };
 }
 
 export default async function AdminSettingsPage() {
   const snapshot = await getAdminSettingsSnapshot();
-  const modelValue =
-    snapshot.settingsByKey["admin.models"]?.value ?? snapshot.defaults.models;
-  const pricingValue =
-    snapshot.settingsByKey["admin.pricing"]?.value ?? snapshot.defaults.pricing;
-  const limitsValue =
-    snapshot.settingsByKey["admin.limits"]?.value ?? snapshot.defaults.limits;
-  const themeValue =
-    snapshot.settingsByKey["admin.theme"]?.value ?? snapshot.defaults.theme;
+  const modelDefaults = snapshot.defaults.models as ModelSettingsFormValue;
+  const pricingDefaults = snapshot.defaults.pricing as PricingSettingsFormValue;
+  const limitsDefaults = snapshot.defaults.limits as LimitsSettingsFormValue;
+  const themeDefaults = snapshot.defaults.theme as ThemeSettingsFormValue;
+  const modelValue = normalizeModelSettingsValue(
+    snapshot.settingsByKey["admin.models"]?.value,
+    modelDefaults,
+  );
+  const pricingValue = normalizePricingSettingsValue(
+    snapshot.settingsByKey["admin.pricing"]?.value,
+    pricingDefaults,
+  );
+  const limitsValue = normalizeLimitsSettingsValue(
+    snapshot.settingsByKey["admin.limits"]?.value,
+    limitsDefaults,
+  );
+  const themeValue = normalizeThemeSettingsValue(
+    snapshot.settingsByKey["admin.theme"]?.value,
+    themeDefaults,
+  );
 
   return (
     <section className="AdminSettingsPage mx-auto flex w-full max-w-6xl flex-col gap-6">
@@ -33,13 +289,84 @@ export default async function AdminSettingsPage() {
           <input type="hidden" name="category" value="models" />
           <h2 className="heading-6 mb-2">AI Models</h2>
           <p className="mb-4 text-sm opacity-70">
-            Choose the model mapping used by each plan and request type.
+            Choose model defaults by plan and media type.
           </p>
-          <textarea
-            className="min-h-72 w-full rounded-xl border border-lightBorders-400 bg-white px-3 py-3 font-mono text-xs dark:border-darkBorders-500 dark:bg-jwdMarine-1000"
-            name="value"
-            defaultValue={toTextareaValue(modelValue)}
-          />
+          <div className="grid grid-cols-1 gap-3">
+            <label className="text-sm">
+              <span className="mb-1 block font-medium">Lite Chat Model</span>
+              <select
+                name="liteChatModel"
+                defaultValue={modelValue.liteChatModel}
+                className="w-full rounded-lg border border-lightBorders-400 bg-white px-3 py-2 text-sm dark:border-darkBorders-500 dark:bg-jwdMarine-1000"
+              >
+                {CHAT_MODEL_OPTIONS.map((modelId) => (
+                  <option key={`lite-chat-${modelId}`} value={modelId}>
+                    {modelId}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="text-sm">
+              <span className="mb-1 block font-medium">Pro Chat Model</span>
+              <select
+                name="proChatModel"
+                defaultValue={modelValue.proChatModel}
+                className="w-full rounded-lg border border-lightBorders-400 bg-white px-3 py-2 text-sm dark:border-darkBorders-500 dark:bg-jwdMarine-1000"
+              >
+                {CHAT_MODEL_OPTIONS.map((modelId) => (
+                  <option key={`pro-chat-${modelId}`} value={modelId}>
+                    {modelId}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="text-sm">
+              <span className="mb-1 block font-medium">Premium Chat Model</span>
+              <select
+                name="premiumChatModel"
+                defaultValue={modelValue.premiumChatModel}
+                className="w-full rounded-lg border border-lightBorders-400 bg-white px-3 py-2 text-sm dark:border-darkBorders-500 dark:bg-jwdMarine-1000"
+              >
+                {CHAT_MODEL_OPTIONS.map((modelId) => (
+                  <option key={`premium-chat-${modelId}`} value={modelId}>
+                    {modelId}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="text-sm">
+              <span className="mb-1 block font-medium">
+                Default Image Model
+              </span>
+              <select
+                name="imageModel"
+                defaultValue={modelValue.imageModel}
+                className="w-full rounded-lg border border-lightBorders-400 bg-white px-3 py-2 text-sm dark:border-darkBorders-500 dark:bg-jwdMarine-1000"
+              >
+                {IMAGE_MODEL_OPTIONS.map((modelId) => (
+                  <option key={`image-${modelId}`} value={modelId}>
+                    {modelId}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="text-sm">
+              <span className="mb-1 block font-medium">
+                Default Audio Model
+              </span>
+              <select
+                name="audioModel"
+                defaultValue={modelValue.audioModel}
+                className="w-full rounded-lg border border-lightBorders-400 bg-white px-3 py-2 text-sm dark:border-darkBorders-500 dark:bg-jwdMarine-1000"
+              >
+                {AUDIO_MODEL_OPTIONS.map((modelId) => (
+                  <option key={`audio-${modelId}`} value={modelId}>
+                    {modelId}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
           <div className="mt-4 flex justify-end">
             <button className="btn btn-md btn-contained" type="submit">
               Save Models
@@ -55,13 +382,34 @@ export default async function AdminSettingsPage() {
           <input type="hidden" name="category" value="plans" />
           <h2 className="heading-6 mb-2">Pricing</h2>
           <p className="mb-4 text-sm opacity-70">
-            Manage plan price and description metadata shown to operators.
+            Manage Pro and Premium monthly prices.
           </p>
-          <textarea
-            className="min-h-72 w-full rounded-xl border border-lightBorders-400 bg-white px-3 py-3 font-mono text-xs dark:border-darkBorders-500 dark:bg-jwdMarine-1000"
-            name="value"
-            defaultValue={toTextareaValue(pricingValue)}
-          />
+          <div className="grid grid-cols-1 gap-3">
+            <label className="text-sm">
+              <span className="mb-1 block font-medium">Pro Price (USD)</span>
+              <input
+                type="number"
+                min={0}
+                step={1}
+                name="proPrice"
+                defaultValue={pricingValue.proPrice}
+                className="w-full rounded-lg border border-lightBorders-400 bg-white px-3 py-2 text-sm dark:border-darkBorders-500 dark:bg-jwdMarine-1000"
+              />
+            </label>
+            <label className="text-sm">
+              <span className="mb-1 block font-medium">
+                Premium Price (USD)
+              </span>
+              <input
+                type="number"
+                min={0}
+                step={1}
+                name="premiumPrice"
+                defaultValue={pricingValue.premiumPrice}
+                className="w-full rounded-lg border border-lightBorders-400 bg-white px-3 py-2 text-sm dark:border-darkBorders-500 dark:bg-jwdMarine-1000"
+              />
+            </label>
+          </div>
           <div className="mt-4 flex justify-end">
             <button className="btn btn-md btn-contained" type="submit">
               Save Pricing
@@ -80,11 +428,74 @@ export default async function AdminSettingsPage() {
             Adjust plan ceilings for conversations, prompts, and media
             generation.
           </p>
-          <textarea
-            className="min-h-72 w-full rounded-xl border border-lightBorders-400 bg-white px-3 py-3 font-mono text-xs dark:border-darkBorders-500 dark:bg-jwdMarine-1000"
-            name="value"
-            defaultValue={toTextareaValue(limitsValue)}
-          />
+          <div className="grid grid-cols-1 gap-4">
+            {(["Lite", "Pro", "Premium"] as const).map((planName) => {
+              const planLimits = limitsValue[planName];
+              const fieldPrefix = planName.toLowerCase();
+
+              return (
+                <fieldset
+                  key={planName}
+                  className="rounded-lg border border-lightBorders-300 p-3 dark:border-darkBorders-500"
+                >
+                  <legend className="px-1 text-sm font-semibold">
+                    {planName}
+                  </legend>
+                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                    <label className="text-sm">
+                      <span className="mb-1 block font-medium">
+                        Conversations / Day
+                      </span>
+                      <input
+                        type="number"
+                        name={`${fieldPrefix}ConversationsPerDay`}
+                        defaultValue={planLimits.conversationsPerDay}
+                        className="w-full rounded-lg border border-lightBorders-400 bg-white px-3 py-2 text-sm dark:border-darkBorders-500 dark:bg-jwdMarine-1000"
+                      />
+                    </label>
+                    <label className="text-sm">
+                      <span className="mb-1 block font-medium">
+                        Prompts / Conversation
+                      </span>
+                      <input
+                        type="number"
+                        name={`${fieldPrefix}PromptsPerConversation`}
+                        defaultValue={planLimits.promptsPerConversation}
+                        className="w-full rounded-lg border border-lightBorders-400 bg-white px-3 py-2 text-sm dark:border-darkBorders-500 dark:bg-jwdMarine-1000"
+                      />
+                    </label>
+                    <label className="text-sm">
+                      <span className="mb-1 block font-medium">
+                        Image Generations
+                      </span>
+                      <input
+                        type="number"
+                        name={`${fieldPrefix}Images`}
+                        defaultValue={planLimits.images}
+                        className="w-full rounded-lg border border-lightBorders-400 bg-white px-3 py-2 text-sm dark:border-darkBorders-500 dark:bg-jwdMarine-1000"
+                      />
+                    </label>
+                    <label className="text-sm">
+                      <span className="mb-1 block font-medium">
+                        Audio Generations
+                      </span>
+                      <input
+                        type="number"
+                        name={`${fieldPrefix}Audio`}
+                        defaultValue={planLimits.audio}
+                        className="w-full rounded-lg border border-lightBorders-400 bg-white px-3 py-2 text-sm dark:border-darkBorders-500 dark:bg-jwdMarine-1000"
+                      />
+                    </label>
+                  </div>
+                  <input
+                    type="hidden"
+                    name={`${fieldPrefix}Video`}
+                    value={planLimits.video}
+                  />
+                </fieldset>
+              );
+            })}
+          </div>
           <div className="mt-4 flex justify-end">
             <button className="btn btn-md btn-contained" type="submit">
               Save Limits
@@ -102,11 +513,27 @@ export default async function AdminSettingsPage() {
           <p className="mb-4 text-sm opacity-70">
             Set the default theme configuration used as the admin baseline.
           </p>
-          <textarea
-            className="min-h-72 w-full rounded-xl border border-lightBorders-400 bg-white px-3 py-3 font-mono text-xs dark:border-darkBorders-500 dark:bg-jwdMarine-1000"
-            name="value"
-            defaultValue={toTextareaValue(themeValue)}
-          />
+          <fieldset className="space-y-2">
+            <legend className="text-sm font-medium">Default Mode</legend>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="radio"
+                name="defaultMode"
+                value="light"
+                defaultChecked={themeValue.defaultMode === "light"}
+              />
+              Light
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="radio"
+                name="defaultMode"
+                value="dark"
+                defaultChecked={themeValue.defaultMode === "dark"}
+              />
+              Dark
+            </label>
+          </fieldset>
           <div className="mt-4 flex justify-end">
             <button className="btn btn-md btn-contained" type="submit">
               Save Theme

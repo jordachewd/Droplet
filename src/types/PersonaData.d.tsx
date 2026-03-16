@@ -3,7 +3,8 @@ export type PersonaCategory =
   | "Learning"
   | "Creative"
   | "Lifestyle"
-  | "Companion";
+  | "Companion"
+  | "Career";
 
 export type PersonaId =
   | "strategist"
@@ -14,7 +15,8 @@ export type PersonaId =
   | "analyst"
   | "best-friend"
   | "boyfriend"
-  | "girlfriend";
+  | "girlfriend"
+  | "interviewer";
 
 export interface Persona {
   id: PersonaId;

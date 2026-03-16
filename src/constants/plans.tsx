@@ -1,4 +1,4 @@
-import { BillingCycle, PlanName } from "@/types/PlanData.d";
+import { BillingCycle, Plan, PlanName } from "@/types/PlanData.d";
 
 const LITE_NEVER_EXPIRES_ON = "9999-12-31T23:59:59.999Z";
 
@@ -12,6 +12,14 @@ export type PlanLimits = Record<
     promptsPerConversation: number;
   }
 >;
+
+export type PlanPricing = Record<PlanName, number>;
+
+export const DEFAULT_PLAN_PRICING: PlanPricing = {
+  Lite: 0,
+  Pro: 19,
+  Premium: 39,
+};
 
 export const PLAN_LIMITS: PlanLimits = {
   Lite: {
@@ -58,151 +66,239 @@ export function getExpiresOn(plan: PlanName, billing?: BillingCycle): Date {
   return new Date(currentDate);
 }
 
-export const plans = [
-  {
-    id: 0,
-    price: 0,
-    name: "Lite" as PlanName,
-    desc: "Free forever",
-    icon: "bi bi-lightning",
-    inclusions: [
-      {
-        label: "AI chat assistant",
-        isIncluded: true,
-      },
-      {
-        label: "All 9 personas",
-        isIncluded: true,
-      },
-      {
-        label: "5 conversations per day",
-        isIncluded: true,
-      },
-      {
-        label: "10 messages per conversation",
-        isIncluded: true,
-      },
-      {
-        label: "3 image generations per month",
-        isIncluded: true,
-      },
-      {
-        label: "3 audio generations per month",
-        isIncluded: true,
-      },
-      {
-        label: "1 video generation per month (coming soon)",
-        isIncluded: true,
-      },
-      {
-        label: "File uploads (limited)",
-        isIncluded: true,
-      },
-      {
-        label: "Email support",
-        isIncluded: false,
-      },
-    ],
-  },
-  {
-    id: 1,
-    price: 19,
-    name: "Pro" as PlanName,
-    desc: "Advanced AI for power users",
-    icon: "bi bi-stars",
-    inclusions: [
-      {
-        label: "Advanced AI model",
-        isIncluded: true,
-      },
-      {
-        label: "All 9 personas",
-        isIncluded: true,
-      },
-      {
-        label: "50 conversations per day",
-        isIncluded: true,
-      },
-      {
-        label: "100 messages per conversation",
-        isIncluded: true,
-      },
-      {
-        label: "50 image generations per month",
-        isIncluded: true,
-      },
-      {
-        label: "50 audio generations per month",
-        isIncluded: true,
-      },
-      {
-        label: "10 video generations per month (coming soon)",
-        isIncluded: true,
-      },
-      {
-        label: "Unlimited file uploads",
-        isIncluded: true,
-      },
-      {
-        label: "Email support",
-        isIncluded: true,
-      },
-      {
-        label: "Premium media quality",
-        isIncluded: false,
-      },
-    ],
-  },
-  {
-    id: 2,
-    price: 39,
-    name: "Premium" as PlanName,
-    desc: "Ultimate AI experience with premium media",
-    icon: "bi bi-gem",
-    inclusions: [
-      {
-        label: "Best AI model",
-        isIncluded: true,
-      },
-      {
-        label: "All 9 personas",
-        isIncluded: true,
-      },
-      {
-        label: "Unlimited conversations",
-        isIncluded: true,
-      },
-      {
-        label: "Unlimited messages",
-        isIncluded: true,
-      },
-      {
-        label: "Unlimited image generations",
-        isIncluded: true,
-      },
-      {
-        label: "Unlimited audio generations",
-        isIncluded: true,
-      },
-      {
-        label: "Quality image generation (Premium)",
-        isIncluded: true,
-      },
-      {
-        label: "Quality audio generation (Premium)",
-        isIncluded: true,
-      },
-      {
-        label: "10 video generations per month (coming soon)",
-        isIncluded: true,
-      },
-      {
-        label: "Priority email support",
-        isIncluded: true,
-      },
-    ],
-  },
-];
+function formatConversationsLabel(limit: number): string {
+  return limit === -1
+    ? "Unlimited conversations"
+    : `${limit} conversations per day`;
+}
+
+function formatPromptsLabel(limit: number): string {
+  return limit === -1
+    ? "Unlimited prompts"
+    : `${limit} prompts per conversation`;
+}
+
+function formatMediaLimitLabel({
+  limit,
+  singular,
+  plural,
+  suffix,
+}: {
+  limit: number;
+  singular: string;
+  plural: string;
+  suffix: string;
+}): string {
+  if (limit === -1) {
+    return `Unlimited ${plural}${suffix}`;
+  }
+
+  const noun = limit === 1 ? singular : plural;
+  return `${limit} ${noun}${suffix}`;
+}
+
+export function buildPlans({
+  pricing = DEFAULT_PLAN_PRICING,
+  limits = PLAN_LIMITS,
+}: {
+  pricing?: PlanPricing;
+  limits?: PlanLimits;
+} = {}): Plan[] {
+  return [
+    {
+      id: 0,
+      price: pricing.Lite,
+      name: "Lite",
+      desc: "Free forever",
+      icon: "bi bi-lightning",
+      inclusions: [
+        {
+          label: "AI chat assistant",
+          isIncluded: true,
+        },
+        {
+          label: "3 personas (Strategist, Developer, Best Friend)",
+          isIncluded: true,
+        },
+        {
+          label: formatConversationsLabel(limits.Lite.conversationsPerDay),
+          isIncluded: true,
+        },
+        {
+          label: formatPromptsLabel(limits.Lite.promptsPerConversation),
+          isIncluded: true,
+        },
+        {
+          label: formatMediaLimitLabel({
+            limit: limits.Lite.images,
+            singular: "image generation",
+            plural: "image generations",
+            suffix: " per month",
+          }),
+          isIncluded: true,
+        },
+        {
+          label: formatMediaLimitLabel({
+            limit: limits.Lite.audio,
+            singular: "audio generation",
+            plural: "audio generations",
+            suffix: " per month",
+          }),
+          isIncluded: true,
+        },
+        {
+          label: `${formatMediaLimitLabel({
+            limit: limits.Lite.video,
+            singular: "video generation",
+            plural: "video generations",
+            suffix: " per month",
+          })} (coming soon)`,
+          isIncluded: true,
+        },
+        {
+          label: "File uploads (limited)",
+          isIncluded: true,
+        },
+        {
+          label: "Email support",
+          isIncluded: false,
+        },
+      ],
+    },
+    {
+      id: 1,
+      price: pricing.Pro,
+      name: "Pro",
+      desc: "Advanced AI for power users",
+      icon: "bi bi-stars",
+      inclusions: [
+        {
+          label: "Advanced AI model",
+          isIncluded: true,
+        },
+        {
+          label:
+            "7 personas (Strategist, Developer, Best Friend, Teacher, Wellness, Boyfriend, Girlfriend)",
+          isIncluded: true,
+        },
+        {
+          label: formatConversationsLabel(limits.Pro.conversationsPerDay),
+          isIncluded: true,
+        },
+        {
+          label: formatPromptsLabel(limits.Pro.promptsPerConversation),
+          isIncluded: true,
+        },
+        {
+          label: formatMediaLimitLabel({
+            limit: limits.Pro.images,
+            singular: "image generation",
+            plural: "image generations",
+            suffix: " per month",
+          }),
+          isIncluded: true,
+        },
+        {
+          label: formatMediaLimitLabel({
+            limit: limits.Pro.audio,
+            singular: "audio generation",
+            plural: "audio generations",
+            suffix: " per month",
+          }),
+          isIncluded: true,
+        },
+        {
+          label: `${formatMediaLimitLabel({
+            limit: limits.Pro.video,
+            singular: "video generation",
+            plural: "video generations",
+            suffix: " per month",
+          })} (coming soon)`,
+          isIncluded: true,
+        },
+        {
+          label: "Unlimited file uploads",
+          isIncluded: true,
+        },
+        {
+          label: "Email support",
+          isIncluded: true,
+        },
+        {
+          label: "Premium media quality",
+          isIncluded: false,
+        },
+      ],
+    },
+    {
+      id: 2,
+      price: pricing.Premium,
+      name: "Premium",
+      desc: "Ultimate AI experience with premium media",
+      icon: "bi bi-gem",
+      inclusions: [
+        {
+          label: "Best AI model",
+          isIncluded: true,
+        },
+        {
+          label:
+            "All 10 personas (Strategist, Teacher, Developer, Creator, Wellness, Analyst, Best Friend, Boyfriend, Girlfriend, Interviewer)",
+          isIncluded: true,
+        },
+        {
+          label: formatConversationsLabel(limits.Premium.conversationsPerDay),
+          isIncluded: true,
+        },
+        {
+          label: formatPromptsLabel(limits.Premium.promptsPerConversation),
+          isIncluded: true,
+        },
+        {
+          label: formatMediaLimitLabel({
+            limit: limits.Premium.images,
+            singular: "image generation",
+            plural: "image generations",
+            suffix: "",
+          }),
+          isIncluded: true,
+        },
+        {
+          label: formatMediaLimitLabel({
+            limit: limits.Premium.audio,
+            singular: "audio generation",
+            plural: "audio generations",
+            suffix: "",
+          }),
+          isIncluded: true,
+        },
+        {
+          label: "Quality image generation (Premium)",
+          isIncluded: true,
+        },
+        {
+          label: "Quality audio generation (Premium)",
+          isIncluded: true,
+        },
+        {
+          label: `${formatMediaLimitLabel({
+            limit: limits.Premium.video,
+            singular: "video generation",
+            plural: "video generations",
+            suffix: " per month",
+          })} (coming soon)`,
+          isIncluded: true,
+        },
+        {
+          label: "Priority email support",
+          isIncluded: true,
+        },
+      ],
+    },
+  ];
+}
+
+export const plans = buildPlans();
 
 export function getPlanIcon(name: PlanName) {
   if (!name) return;

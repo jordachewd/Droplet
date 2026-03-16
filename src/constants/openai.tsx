@@ -48,7 +48,8 @@ const audioGenerationTool = {
         },
         content: {
           type: "string",
-          description: "Description of the audio file to generate",
+          description:
+            "The exact text content to be spoken aloud as audio. Provide the full text, not a description.",
         },
       },
       required: ["role", "content"],

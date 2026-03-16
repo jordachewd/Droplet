@@ -27,7 +27,7 @@ export const faqs = [
     question: "What subscription plans does Droplet offer?",
     answer:
       "Droplet offers Lite for free forever, Pro for $19, and Premium for $39. " +
-      "All plans include all 9 personas, while the paid tiers raise usage and media limits.",
+      "Persona access is plan-gated: Lite has 3 personas, Pro has 7 personas, and Premium unlocks all 10 personas, while paid tiers also raise usage and media limits.",
   },
   {
     id: 4,
