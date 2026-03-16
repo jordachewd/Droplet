@@ -6,11 +6,51 @@
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
 > **STATUS: Phases 1–25.7 + 27.1–27.4 + 27.6–27.10 + 28.1 + 28.2-fix + 28.3-code + 28.4 + 28.6 + 28.7 + 30.1 + 30.2 + 30.3 + 31.1 + 31.2 + 31.3 complete.**
-> **PM deep audit #11 (2026-03-16): Owner instructions received. New phases added.**
-> **28.4 DONE (plan card labels). 28.6 DONE (media TOCTOU). 28.7 DONE (audio tool fix). 30.1 DONE (Interviewer). 30.2 DONE (persona gating). 30.3 DONE (persona picker UI). 27.4 DONE (admin forms).**
+> **PM deep audit #12 (2026-03-16): Phase 31.1–31.3 verified. sidebarExpanded bug found — 31.2-fix added. TD-AI-23, TD-LIMIT-07 moved to Resolved.**
 > **CRITICAL OWNER INSTRUCTIONS: Library media tabs, ChatHeader on all pages, sidebar cleanup, persona trial access model.**
-> **Priority order: 28.3-verify → 30.5 → 31.4 (layout E2E) → 32.1–32.5 (Library) → 33.1–33.8 (persona trial access) → 30.4 → 27.5 → 34.x (video gen) → 29.1 → 29.2 → Phase 26.**
+> **Priority order: 31.2-fix (IMMEDIATE) → 28.3-verify → 30.5 → 31.4 (layout E2E) → 32.1–32.5 (Library) → 33.1–33.8 (persona trial access) → 30.4 → 27.5 → 34.x (video gen) → 29.1 → 29.2 → Phase 26.**
 > **All Phase 26+ deferred work is ON HOLD until Phase 28 remaining + Phases 31–33 are PM-approved complete.**
+
+---
+
+## Phase 31: Layout & Navigation Updates — Bug Fix (IMMEDIATE)
+
+---
+
+### 31.2-fix IMMEDIATE — Fix sidebarExpanded logic in ChatHeader for mobile
+
+**Files:** `src/components/chat/chat-header.tsx`
+**Ref:** PM audit #12 — confirmed by Architect + Engineer + Copilot independently
+**Depends on:** None (standalone fix)
+
+**Bug:** `sidebarExpanded` computed as `!desktopSidebarCollapsed || mobileSidebarOpen`. On mobile, `desktopSidebarCollapsed` defaults to `false`, so `!false = true`, making `sidebarExpanded` permanently `true` regardless of `mobileSidebarOpen`.
+
+**Impact:** `aria-expanded` always `true` on mobile (accessibility violation). Toggle label stuck on "Hide menu" when sidebar is closed. E2E `ensureSidebarOpen` fails on mobile viewports.
+
+**Note:** Toggle **function works correctly** — only label/ARIA is wrong.
+
+**What to do:**
+
+1. Replace line 60 in `chat-header.tsx`:
+   ```ts
+   // FROM:
+   const sidebarExpanded = !desktopSidebarCollapsed || mobileSidebarOpen;
+   // TO:
+   const isDesktop = desktopQueryRef.current?.matches ?? false;
+   const sidebarExpanded = isDesktop
+     ? !desktopSidebarCollapsed
+     : mobileSidebarOpen;
+   ```
+2. Run full validation gateway.
+
+**Acceptance criteria:**
+
+- [ ] `sidebarExpanded` is `false` on mobile when sidebar is closed
+- [ ] `aria-expanded` correctly reflects sidebar state on both desktop and mobile
+- [ ] Toggle label shows "Show menu" / "Hide menu" correctly per viewport
+- [ ] E2E `ensureSidebarOpen` works on mobile viewports
+- [ ] `npx tsc --noEmit` passes
+- [ ] All tests pass
 
 ---
 
@@ -106,11 +146,6 @@
 - [ ] All tests pass
 
 ---
-
-## Phase 27: UX & Architecture Completion (remaining)
-
-> 27.1–27.3 + 27.6–27.10 RESOLVED (archived in DONE.md).
-> Remaining: 27.4 (admin forms) + 27.5 (settings propagation).
 
 ## Phase 27: UX & Architecture Completion (remaining)
 

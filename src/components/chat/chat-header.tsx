@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import classNames from "classnames";
 import { useShallow } from "zustand/react/shallow";
 import ToggleTheme from "@/components/shared/toggle-theme";
@@ -38,9 +38,15 @@ export default function ChatHeader({ className: style = "" }: ChatHeaderProps) {
   );
 
   const desktopQueryRef = useRef<MediaQueryList | null>(null);
+  const [isDesktop, setIsDesktop] = useState(false);
 
   useEffect(() => {
-    desktopQueryRef.current = window.matchMedia("(min-width: 1024px)");
+    const mql = window.matchMedia("(min-width: 1024px)");
+    desktopQueryRef.current = mql;
+    setIsDesktop(mql.matches);
+    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+    mql.addEventListener("change", handler);
+    return () => mql.removeEventListener("change", handler);
   }, []);
 
   function handleToggleSidebar() {
@@ -53,7 +59,9 @@ export default function ChatHeader({ className: style = "" }: ChatHeaderProps) {
 
   const personaLabel = personaId ? getPersona(personaId).label : undefined;
   const messageCount = messages.length;
-  const sidebarExpanded = !desktopSidebarCollapsed || mobileSidebarOpen;
+  const sidebarExpanded = isDesktop
+    ? !desktopSidebarCollapsed
+    : mobileSidebarOpen;
 
   const chatHeaderClass = classNames(
     "ChatHeader absolute left-0 right-0 top-0 z-20 flex w-full px-3",
