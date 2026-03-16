@@ -18,6 +18,8 @@ export type PersonaId =
   | "girlfriend"
   | "interviewer";
 
+export type PersonaAccessLevel = "full" | "limited" | "blocked";
+
 export interface Persona {
   id: PersonaId;
   label: string;

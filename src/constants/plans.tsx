@@ -45,6 +45,13 @@ export const PLAN_LIMITS: PlanLimits = {
   },
 };
 
+export const PERSONA_TRIAL_LIMITS = {
+  promptsPerConversation: 5,
+  images: 3,
+  audio: 2,
+  video: 1,
+} as const;
+
 export function getExpiresOn(plan: PlanName, billing?: BillingCycle): Date {
   const currentDate = new Date();
 
@@ -117,7 +124,12 @@ export function buildPlans({
           isIncluded: true,
         },
         {
-          label: "3 personas (Strategist, Developer, Best Friend)",
+          label: "3 personas (full access) + try all others (limited access)",
+          isIncluded: true,
+        },
+        {
+          label:
+            "Trial personas: 5 prompts, 3 images, 2 audio, 1 video / 30 days",
           isIncluded: true,
         },
         {
@@ -177,8 +189,12 @@ export function buildPlans({
           isIncluded: true,
         },
         {
+          label: "7 personas (full access) + try all others (limited access)",
+          isIncluded: true,
+        },
+        {
           label:
-            "7 personas (Strategist, Developer, Best Friend, Teacher, Wellness, Boyfriend, Girlfriend)",
+            "Trial personas: 5 prompts, 3 images, 2 audio, 1 video / 30 days",
           isIncluded: true,
         },
         {
@@ -242,8 +258,7 @@ export function buildPlans({
           isIncluded: true,
         },
         {
-          label:
-            "All 10 personas (Strategist, Teacher, Developer, Creator, Wellness, Analyst, Best Friend, Boyfriend, Girlfriend, Interviewer)",
+          label: "All 10 personas (unlimited)",
           isIncluded: true,
         },
         {

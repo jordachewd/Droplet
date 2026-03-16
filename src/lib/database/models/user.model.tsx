@@ -72,6 +72,12 @@ const UserSchema = new Schema<IUser>({
     audioGenerations: { type: Number, default: 0 },
     videoGenerations: { type: Number, default: 0 },
     usagePeriodStart: { type: Date, default: Date.now },
+    trialUsage: {
+      trialImageGenerations: { type: Number, default: 0 },
+      trialAudioGenerations: { type: Number, default: 0 },
+      trialVideoGenerations: { type: Number, default: 0 },
+      trialUsagePeriodStart: { type: Date, default: Date.now },
+    },
   },
   dailyConversationsStarted: {
     type: Number,

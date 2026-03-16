@@ -235,7 +235,7 @@ describe("POST /api/openai", () => {
     expect(payload.error).toContain("plan has expired");
   });
 
-  it("rejects personas that are not allowed for the current plan", async () => {
+  it("allows limited personas on Lite plan as trial access", async () => {
     const response = await POST(
       buildRequest({
         personaId: "teacher",
@@ -244,10 +244,10 @@ describe("POST /api/openai", () => {
     );
     const payload = await response.json();
 
-    expect(response.status).toBe(403);
-    expect(payload.error).toContain("not available for your current plan");
-    expect(generateTitle).not.toHaveBeenCalled();
-    expect(generateResponse).not.toHaveBeenCalled();
+    expect(response.status).toBe(200);
+    expect(payload.personaId).toBe("teacher");
+    expect(generateTitle).toHaveBeenCalledOnce();
+    expect(generateResponse).toHaveBeenCalledOnce();
   });
 
   it("creates a new task when no taskId is provided", async () => {
@@ -554,6 +554,37 @@ describe("POST /api/openai", () => {
     );
   });
 
+  it("enforces the trial prompt limit for limited personas", async () => {
+    vi.mocked(getTaskByIdForUser).mockResolvedValue(
+      createExistingTask({ personaId: "teacher" }) as never,
+    );
+    vi.mocked(incrementPromptCountIfBelowLimit).mockResolvedValue(false);
+
+    const response = await POST(
+      buildRequest({
+        taskId: EXISTING_TASK_ID,
+        messages: [{ role: "user", whois: "user", content: "continue" }],
+      }),
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(payload.stopReason).toBe("trial_limit_reached");
+    expect(payload.endAction).toBe("upgrade_plan");
+    expect(incrementPromptCountIfBelowLimit).toHaveBeenCalledWith({
+      taskId: EXISTING_TASK_ID,
+      limit: 5,
+    });
+    expect(updateTask).toHaveBeenCalledWith(
+      EXISTING_TASK_ID,
+      expect.objectContaining({
+        status: "ended",
+        endedReason: "trial_limit_reached",
+        endAction: "upgrade_plan",
+      }),
+    );
+  });
+
   it("returns a structured stop payload when the conversation is already ended", async () => {
     vi.mocked(getTaskByIdForUser).mockResolvedValue(
       createExistingTask({
@@ -648,6 +679,78 @@ describe("POST /api/openai", () => {
       expect.objectContaining({
         status: "ended",
         endedReason: "media_limit_reached",
+        endAction: "upgrade_plan",
+      }),
+    );
+  });
+
+  it("uses trial media counters for limited personas and ends with trial limit reason", async () => {
+    vi.mocked(getTaskByIdForUser).mockResolvedValue(
+      createExistingTask({ personaId: "teacher" }) as never,
+    );
+    vi.mocked(User.findOneAndUpdate).mockResolvedValueOnce(null as never);
+    vi.mocked(generateResponse).mockImplementation(
+      async ({ claimMediaGenerationSlot }) => {
+        const claimResult = await claimMediaGenerationSlot?.({
+          limitType: "images",
+        });
+
+        if (!claimResult?.claimed) {
+          return JSON.stringify({
+            blockedReason: "media_limit_reached",
+            taskUsage: 5,
+            taskData: {
+              whois: "assistant",
+              role: "assistant",
+              content: [{ type: "text", text: "Trial limit reached." }],
+            },
+          });
+        }
+
+        return JSON.stringify({
+          taskData: {
+            whois: "assistant",
+            role: "assistant",
+            content: [{ type: "text", text: "Generated image output." }],
+          },
+          taskUsage: 5,
+        });
+      },
+    );
+
+    const response = await POST(
+      buildRequest({
+        taskId: EXISTING_TASK_ID,
+        messages: [{ role: "user", whois: "user", content: "generate image" }],
+      }),
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(payload.stopReason).toBe("trial_limit_reached");
+    expect(payload.endAction).toBe("upgrade_plan");
+    expect(User.findOneAndUpdate).toHaveBeenNthCalledWith(
+      1,
+      {
+        clerkId: "user_123",
+        "plan.trialUsage.trialImageGenerations": { $lt: 3 },
+      },
+      {
+        $inc: {
+          "plan.trialUsage.trialImageGenerations": 1,
+        },
+      },
+      {
+        new: true,
+        strict: true,
+        upsert: false,
+      },
+    );
+    expect(updateTask).toHaveBeenCalledWith(
+      EXISTING_TASK_ID,
+      expect.objectContaining({
+        status: "ended",
+        endedReason: "trial_limit_reached",
         endAction: "upgrade_plan",
       }),
     );

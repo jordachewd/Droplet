@@ -24,6 +24,8 @@ interface ChatBodyProps {
 const stopReasonTitles: Record<TaskEndedReason, string> = {
   prompt_limit_reached:
     "You've reached the message limit for this conversation.",
+  trial_limit_reached:
+    "You've reached the trial limit for this persona conversation.",
   media_limit_reached: "You've reached your media generation limit.",
   daily_conversation_limit_reached:
     "You've reached the daily conversation limit for your plan.",

@@ -15,7 +15,7 @@ import {
   PERSONAS,
   getPersona,
 } from "@/constants/assistant-personas";
-import { PersonaId } from "@/types/PersonaData.d";
+import { PersonaAccessLevel, PersonaId } from "@/types/PersonaData.d";
 import { TaskEndAction, TaskEndedReason, TaskStatus } from "@/types/TaskData.d";
 import { useChatStore } from "@/lib/hooks/use-chat-store";
 import { usePreferencesStore } from "@/lib/hooks/use-preferences-store";
@@ -23,6 +23,7 @@ import { usePreferencesStore } from "@/lib/hooks/use-preferences-store";
 interface ChatWrapperProps {
   initialPersonaId?: string;
   allowedPersonaIds?: PersonaId[];
+  personaAccess?: Partial<Record<PersonaId, PersonaAccessLevel>>;
   initialTaskId?: string | null;
   initialMessages?: Message[];
   initialTaskStatus?: TaskStatus;
@@ -64,6 +65,7 @@ type ChatStreamEvent =
 export default function ChatWrapper({
   initialPersonaId,
   allowedPersonaIds,
+  personaAccess,
   initialTaskId = null,
   initialMessages: initialMessagesProp,
   initialTaskStatus = "active",
@@ -79,8 +81,18 @@ export default function ChatWrapper({
       return allowedPersonaIds;
     }
 
+    if (personaAccess) {
+      const nonBlockedPersonaIds = PERSONAS.filter(
+        (persona) => personaAccess[persona.id] !== "blocked",
+      ).map((persona) => persona.id);
+
+      if (nonBlockedPersonaIds.length > 0) {
+        return nonBlockedPersonaIds;
+      }
+    }
+
     return PERSONAS.map((persona) => persona.id);
-  }, [allowedPersonaIds]);
+  }, [allowedPersonaIds, personaAccess]);
 
   const resolveSelectablePersonaId = useCallback(
     (candidatePersonaId?: string | null): PersonaId => {
@@ -457,6 +469,7 @@ export default function ChatWrapper({
         <ChatPersonaPicker
           selectedPersonaId={selectedPersona.id}
           allowedPersonaIds={normalizedAllowedPersonaIds}
+          personaAccess={personaAccess}
           onSelectPersona={handleSelectPersona}
         />
       </section>

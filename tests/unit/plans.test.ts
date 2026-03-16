@@ -74,7 +74,7 @@ describe("plans constants", () => {
     });
   });
 
-  it("defines current pricing and plan copy without trial language", () => {
+  it("defines current pricing and plan copy with trial access language", () => {
     expect(plans).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -84,7 +84,13 @@ describe("plans constants", () => {
           icon: "bi bi-lightning",
           inclusions: expect.arrayContaining([
             expect.objectContaining({
-              label: "3 personas (Strategist, Developer, Best Friend)",
+              label:
+                "3 personas (full access) + try all others (limited access)",
+              isIncluded: true,
+            }),
+            expect.objectContaining({
+              label:
+                "Trial personas: 5 prompts, 3 images, 2 audio, 1 video / 30 days",
               isIncluded: true,
             }),
             expect.objectContaining({
@@ -116,7 +122,12 @@ describe("plans constants", () => {
           inclusions: expect.arrayContaining([
             expect.objectContaining({
               label:
-                "7 personas (Strategist, Developer, Best Friend, Teacher, Wellness, Boyfriend, Girlfriend)",
+                "7 personas (full access) + try all others (limited access)",
+              isIncluded: true,
+            }),
+            expect.objectContaining({
+              label:
+                "Trial personas: 5 prompts, 3 images, 2 audio, 1 video / 30 days",
               isIncluded: true,
             }),
             expect.objectContaining({
@@ -135,8 +146,7 @@ describe("plans constants", () => {
           desc: "Ultimate AI experience with premium media",
           inclusions: expect.arrayContaining([
             expect.objectContaining({
-              label:
-                "All 10 personas (Strategist, Teacher, Developer, Creator, Wellness, Analyst, Best Friend, Boyfriend, Girlfriend, Interviewer)",
+              label: "All 10 personas (unlimited)",
               isIncluded: true,
             }),
             expect.objectContaining({
@@ -168,7 +178,7 @@ describe("plans constants", () => {
       .join(" ")
       .toLowerCase();
 
-    expect(allPlanCopy).not.toContain("trial");
+    expect(allPlanCopy).toContain("trial");
     expect(allPlanCopy).not.toContain("messages per conversation");
   });
 

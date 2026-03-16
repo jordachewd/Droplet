@@ -20,6 +20,7 @@ export default async function LibraryPage() {
   let imageItems: LibraryMediaCardItem[] = [];
   let audioItems: LibraryMediaCardItem[] = [];
   let videoItems: LibraryMediaCardItem[] = [];
+  let hasLoadError = false;
 
   if (!userId) {
     redirect("/sign-in");
@@ -65,7 +66,13 @@ export default async function LibraryPage() {
       createdAtLabel: mapDateToLabel(item.createdAt),
       href: `/app/c/${item.taskId}`,
     }));
-  } catch {}
+  } catch (error) {
+    hasLoadError = true;
+    const message = error instanceof Error ? error.message : "Unknown error";
+    process.stderr.write(
+      `[LibraryPage] Failed to load library data: ${message}\n`,
+    );
+  }
 
   return (
     <PageWrapper id="LibraryPage" scrollable>
@@ -80,6 +87,7 @@ export default async function LibraryPage() {
           images={imageItems}
           audios={audioItems}
           videos={videoItems}
+          hasLoadError={hasLoadError}
         />
       </section>
     </PageWrapper>

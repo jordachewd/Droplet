@@ -54,8 +54,8 @@ async function ensureSidebarOpen(page: Page) {
   const sidebar = page.locator("aside#chat-sidebar");
   const toggleButton = page.getByRole("button", { name: /show menu/i });
 
-  if (await toggleButton.isVisible()) {
-    await toggleButton.click();
+  if ((await toggleButton.count()) > 0) {
+    await toggleButton.first().click({ force: true, timeout: 5_000 });
   }
 
   await expect(sidebar).toBeVisible();

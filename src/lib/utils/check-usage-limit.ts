@@ -9,6 +9,7 @@ interface CheckUsageLimitParams {
   planName?: PlanName | null;
   currentCount?: number | null;
   limitType: UsageLimitType;
+  overrideLimit?: number;
   usagePeriodStart?: Date | string | null;
   now?: Date;
   planLimits?: PlanLimits;
@@ -26,12 +27,16 @@ export function checkUsageLimit({
   planName,
   currentCount,
   limitType,
+  overrideLimit,
   usagePeriodStart,
   now = new Date(),
   planLimits = PLAN_LIMITS,
 }: CheckUsageLimitParams): UsageLimitResult {
   const normalizedPlanName: PlanName = planName ?? "Lite";
-  const limit = planLimits[normalizedPlanName][limitType];
+  const limit =
+    typeof overrideLimit === "number"
+      ? overrideLimit
+      : planLimits[normalizedPlanName][limitType];
 
   if (limit === -1) {
     return {

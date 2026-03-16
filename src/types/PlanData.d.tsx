@@ -29,6 +29,12 @@ export interface PlanData {
   audioGenerations?: number;
   videoGenerations?: number;
   usagePeriodStart?: Date;
+  trialUsage?: {
+    trialImageGenerations?: number;
+    trialAudioGenerations?: number;
+    trialVideoGenerations?: number;
+    trialUsagePeriodStart?: Date;
+  };
 }
 
 export interface PlanStatus {

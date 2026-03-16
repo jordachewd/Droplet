@@ -30,6 +30,7 @@ interface LibraryTabsProps {
   images: LibraryMediaCardItem[];
   audios: LibraryMediaCardItem[];
   videos: LibraryMediaCardItem[];
+  hasLoadError?: boolean;
 }
 
 type LibraryTabId = "chats" | "images" | "audios" | "videos";
@@ -39,6 +40,7 @@ export default function LibraryTabs({
   images,
   audios,
   videos,
+  hasLoadError = false,
 }: LibraryTabsProps) {
   const [activeTabId, setActiveTabId] = useState<LibraryTabId>("chats");
 
@@ -99,7 +101,12 @@ export default function LibraryTabs({
         aria-labelledby="library-tab-chats"
         hidden={activeTabId !== "chats"}
       >
-        {conversations.length === 0 ? (
+        {hasLoadError ? (
+          <EmptyState
+            title="Failed to load library"
+            text="Please refresh and try again."
+          />
+        ) : conversations.length === 0 ? (
           <EmptyState
             title="No saved conversations yet"
             text="Conversations appear here after you send prompts in the app."
@@ -157,7 +164,12 @@ export default function LibraryTabs({
         aria-labelledby="library-tab-images"
         hidden={activeTabId !== "images"}
       >
-        {images.length === 0 ? (
+        {hasLoadError ? (
+          <EmptyState
+            title="Failed to load images"
+            text="Please refresh and try again."
+          />
+        ) : images.length === 0 ? (
           <EmptyState
             title="No generated images yet"
             text="Image generations will appear here with conversation context."
@@ -208,7 +220,12 @@ export default function LibraryTabs({
         aria-labelledby="library-tab-audios"
         hidden={activeTabId !== "audios"}
       >
-        {audios.length === 0 ? (
+        {hasLoadError ? (
+          <EmptyState
+            title="Failed to load audios"
+            text="Please refresh and try again."
+          />
+        ) : audios.length === 0 ? (
           <EmptyState
             title="No generated audios yet"
             text="Audio generations will appear here with quick playback controls."
@@ -257,10 +274,17 @@ export default function LibraryTabs({
         aria-labelledby="library-tab-videos"
         hidden={activeTabId !== "videos"}
       >
-        <EmptyState
-          title="Video Library Coming Soon"
-          text="Video generation is gated pending Sora API verification."
-        />
+        {hasLoadError ? (
+          <EmptyState
+            title="Failed to load videos"
+            text="Please refresh and try again."
+          />
+        ) : (
+          <EmptyState
+            title="Video Library Coming Soon"
+            text="Video generation is gated pending Sora API verification."
+          />
+        )}
       </section>
     </section>
   );

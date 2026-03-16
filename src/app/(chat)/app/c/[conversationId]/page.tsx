@@ -41,6 +41,7 @@ export default async function ConversationPage({
       initialTaskId={task._id}
       initialPersonaId={task.personaId}
       allowedPersonaIds={entitlements.allowedPersonaIds}
+      personaAccess={entitlements.personaAccess}
       initialTaskStatus={task.status}
       initialEndedReason={task.endedReason}
       initialEndAction={task.endAction}

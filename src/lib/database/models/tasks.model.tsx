@@ -73,6 +73,7 @@ const TaskSchema = new Schema<ITask>({
     type: String,
     enum: [
       "prompt_limit_reached",
+      "trial_limit_reached",
       "media_limit_reached",
       "daily_conversation_limit_reached",
       "conversation_storage_limit_reached",
