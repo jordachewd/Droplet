@@ -114,6 +114,8 @@ const TITLE_POLICY_RULE: ModelPolicyRule = {
   notes: "Always use the cheapest model for title generation.",
 };
 const DEFAULT_TTS_MODEL = "gpt-4o-mini-tts";
+const LITE_IMAGE_MODEL = "gpt-image-1-mini";
+const PRO_PREMIUM_IMAGE_MODEL = "gpt-image-1.5";
 
 export const MODEL_POLICY_MATRIX = {
   lite: {
@@ -156,7 +158,7 @@ export const MODEL_POLICY_MATRIX = {
       defaultTaskClass: "final",
       taskClasses: {
         final: {
-          model: "gpt-image-1-mini",
+          model: LITE_IMAGE_MODEL,
           notes:
             "Lite image generation uses the cost-optimized GPT Image tier.",
         },
@@ -226,8 +228,8 @@ export const MODEL_POLICY_MATRIX = {
       defaultTaskClass: "final",
       taskClasses: {
         final: {
-          model: "gpt-image-1.5",
-          fallbackModel: "gpt-image-1-mini",
+          model: PRO_PREMIUM_IMAGE_MODEL,
+          fallbackModel: LITE_IMAGE_MODEL,
           notes:
             "Downgrade for retries or budget pressure to the cheaper GPT Image tier.",
         },
@@ -300,8 +302,8 @@ export const MODEL_POLICY_MATRIX = {
       defaultTaskClass: "final",
       taskClasses: {
         final: {
-          model: "gpt-image-1.5",
-          fallbackModel: "gpt-image-1-mini",
+          model: PRO_PREMIUM_IMAGE_MODEL,
+          fallbackModel: LITE_IMAGE_MODEL,
           notes:
             "Premium keeps the same GPT Image ladder as Pro with quota-free access.",
         },
@@ -353,10 +355,10 @@ const MODEL_PRICING: Record<string, TokenPricing> = {
     inputUsdPerMillion: 2.5,
     outputUsdPerMillion: 15,
   },
-  "gpt-image-1-mini": {
+  [LITE_IMAGE_MODEL]: {
     flatUsd: 0.011,
   },
-  "gpt-image-1.5": {
+  [PRO_PREMIUM_IMAGE_MODEL]: {
     flatUsd: 0.034,
   },
   "gpt-audio-mini": {
@@ -380,6 +382,8 @@ const MODEL_PRICING: Record<string, TokenPricing> = {
 };
 
 const MODEL_CAPABILITIES: Record<string, ModelCapability> = {
+  [LITE_IMAGE_MODEL]: {},
+  [PRO_PREMIUM_IMAGE_MODEL]: {},
   [DEFAULT_TTS_MODEL]: {
     isTtsOnly: true,
   },
