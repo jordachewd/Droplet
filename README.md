@@ -2,7 +2,7 @@
 
 **Your AI assistant, your way.**
 
-Droplet is a smart AI chatbot with 9 unique personas — each with its own personality, expertise, and conversational style. Choose the assistant that fits your need, and start a real conversation.
+Droplet is a smart AI chatbot with 10 unique personas — each with its own personality, expertise, and conversational style. Choose the assistant that fits your need, and start a real conversation.
 
 ---
 
@@ -29,14 +29,15 @@ Every response is shaped by the persona you choose, giving you a truly personali
 | **Best Friend** | Casual conversation, support, and companionship  |
 | **Boyfriend**   | Warm, caring, and attentive conversation         |
 | **Girlfriend**  | Supportive, fun, and engaging conversation       |
+| **Interviewer** | Interview prep, practice sessions, and feedback  |
 
-All 9 personas are available on every plan — no restrictions.
+Personas are available based on your plan — upgrade to unlock more.
 
 ---
 
 ## Key Features
 
-- **9 AI Personas** — each with a distinct personality, tone, and expertise
+- **10 AI Personas** — each with a distinct personality, tone, and expertise
 - **Real-time Streaming** — watch responses appear as they're generated
 - **Image Generation** — create images through conversation
 - **Audio Generation** — generate audio content through conversation
@@ -52,12 +53,12 @@ All 9 personas are available on every plan — no restrictions.
 |                               | Lite         | Pro       | Premium                |
 | ----------------------------- | ------------ | --------- | ---------------------- |
 | **Price**                     | Free forever | $19/month | $39/month              |
+| **Personas**                  | 3            | 7         | All 10                 |
 | **Conversations/Day**         | 5            | 50        | Unlimited              |
-| **Messages/Conversation**     | 10           | 100       | Unlimited              |
+| **Prompts/Conversation**      | 10           | 100       | Unlimited              |
 | **Image Generation**          | 3/month      | 50/month  | Unlimited              |
 | **Audio Generation**          | 3/month      | 50/month  | Unlimited              |
 | **Video Generation**          | 1/month      | 10/month  | 10/month (coming soon) |
-| **All 9 Personas**            | ✓            | ✓         | ✓                      |
 | **Streaming Responses**       | ✓            | ✓         | ✓                      |
 | **Premium Audio Quality**     | —            | —         | ✓                      |
 | **Advanced AI for Reasoning** | —            | —         | ✓                      |

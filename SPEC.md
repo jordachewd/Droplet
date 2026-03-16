@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-16 (PM deep audit #8 complete. Three-agent independent audit. TD-LIMIT-03/TD-LIMIT-04 RESOLVED — durable counter and check-before-create already implemented. New CRITICAL TDs: TD-LIMIT-05 (TOCTOU race), TD-LIMIT-06 (midnight race), TD-AI-22 (audio messages parameter bug). Phase 28 re-scoped and re-ordered: 28.2 → 28.3 → 28.1.)
+> Last updated: 2026-03-16 (PM deep audit #10 complete. Three-agent independent audit. 28.2-fix VERIFIED COMPLETE — image generation fixed. TD-AI-20 RESOLVED. TD-AI-24 RESOLVED. Policy change: per-plan persona gating approved. New Interviewer persona approved. TD-LIMIT-07 still open. TD-AI-23 still open.)
 
 ---
 
@@ -21,7 +21,7 @@ The product monetises through tiered subscription plans paid via Stripe.
 ### Core Value Proposition
 
 - Multi-modal AI assistant (text + image + audio + video generation)
-- 9 predefined personas with distinct system prompts and capabilities
+- 10 predefined personas with distinct system prompts and capabilities
 - Streaming responses for real-time chat UX
 - Conversation history persisted per user with resume capability
 - Three-tier subscription model (Lite / Pro / Premium) with per-plan entitlements
@@ -30,7 +30,8 @@ The product monetises through tiered subscription plans paid via Stripe.
 
 ### Approved v1 Release Scope
 
-- 9 predefined personas (no dynamic persona creation)
+- 10 predefined personas (no dynamic persona creation)
+- Per-plan persona gating (Lite: 3, Pro: 7, Premium: all 10) — admin-configurable
 - Text chat as primary mode with **streaming responses**
 - Image upload support
 - Image generation (all tiers, with enforced usage limits)
@@ -72,31 +73,57 @@ Admin access is enforced at the proxy level (`src/proxy.tsx`) via Clerk session 
 
 ## 3. Personas
 
-9 predefined personas defined in `src/constants/assistant-personas.tsx`:
+10 predefined personas defined in `src/constants/assistant-personas.tsx`:
 
-| Persona ID    | Label       | Category     | Image | Audio |
-| ------------- | ----------- | ------------ | ----- | ----- |
-| `strategist`  | Strategist  | Productivity | Yes   | Yes   |
-| `teacher`     | Teacher     | Learning     | Yes   | Yes   |
-| `developer`   | Developer   | Productivity | Yes   | Yes   |
-| `creator`     | Creator     | Creative     | Yes   | Yes   |
-| `wellness`    | Wellness    | Lifestyle    | Yes   | Yes   |
-| `analyst`     | Analyst     | Productivity | Yes   | Yes   |
-| `best-friend` | Best Friend | Companion    | Yes   | Yes   |
-| `boyfriend`   | Boyfriend   | Companion    | Yes   | Yes   |
-| `girlfriend`  | Girlfriend  | Companion    | Yes   | Yes   |
+| Persona ID    | Label       | Category     | Image | Audio | Lite | Pro | Premium |
+| ------------- | ----------- | ------------ | ----- | ----- | ---- | --- | ------- |
+| `strategist`  | Strategist  | Productivity | Yes   | Yes   | Yes  | Yes | Yes     |
+| `teacher`     | Teacher     | Learning     | Yes   | Yes   | No   | Yes | Yes     |
+| `developer`   | Developer   | Productivity | Yes   | Yes   | Yes  | Yes | Yes     |
+| `creator`     | Creator     | Creative     | Yes   | Yes   | No   | Yes | Yes     |
+| `wellness`    | Wellness    | Lifestyle    | Yes   | Yes   | No   | Yes | Yes     |
+| `analyst`     | Analyst     | Productivity | Yes   | Yes   | No   | Yes | Yes     |
+| `best-friend` | Best Friend | Companion    | Yes   | Yes   | Yes  | Yes | Yes     |
+| `boyfriend`   | Boyfriend   | Companion    | Yes   | Yes   | No   | Yes | Yes     |
+| `girlfriend`  | Girlfriend  | Companion    | Yes   | Yes   | No   | Yes | Yes     |
+| `interviewer` | Interviewer | Career       | Yes   | Yes   | No   | No  | Yes     |
 
+> **Rule 3 (updated):** Personas are plan-gated. Lite: Strategist, Developer, Best Friend. Pro: all Lite + Teacher, Wellness, Boyfriend, Girlfriend. Premium: all 10 personas. Admin can override via settings.
 > **Rule 10:** All features (image, audio, video) are available for all personas — differentiated by persona purpose (prompt context), not blocked per persona. All plans provide all features — differentiated by plan limits (quantity).
 
 Each persona has: `id`, `label`, `tagline`, `description`, `category`, `icon`, `starterPrompts[]`, `systemPrompt`, `supportsImage`, `supportsAudio`.
 
 ### Persona Selection & Entitlements
 
-- **All personas are available in all plans** (Lite, Pro, Premium).
-- Persona selection UI: `ChatPersonaPicker` component in the chat interface.
+- **Personas are plan-gated** (Lite: 3 personas, Pro: 7 personas, Premium: all 10 personas).
+- Default persona access per plan is hardcoded in constants but overridable by admin via AppSetting.
+- Persona selection UI: `ChatPersonaPicker` component in the chat interface — only shows personas available for the user’s plan.
 - Persona is stored per task in `Task.personaId`.
 - System prompt is built per-persona via `buildPersonaAwareSystemPrompt()`.
 - Entitlements resolved via `resolveEntitlements()` in `src/lib/utils/resolve-entitlements.tsx`.
+
+### Persona Behavioral Requirements
+
+All personas must:
+
+- Be pragmatic and direct
+- Provide honest, clear answers without evasions or ambiguous wording
+- Communicate clearly, as a partner who really wants to help
+- Avoid unnecessary language or artificial questions
+- Be intelligent, grounded in reality, and call a spade a spade
+- Verify information before delivering it
+- Get right to the point
+- Be practical above all
+
+### Interviewer Persona
+
+The Interviewer persona is an interview readiness simulator:
+
+- Practice realistic, back-and-forth interview conversations
+- Receive structured feedback after each session
+- Prepare for real interviews, promotions, and internal mobility
+- Tailored to role, company, and experience level
+- Premium-only persona
 
 ### Prompt Architecture (Implemented — Phase 22)
 
@@ -132,7 +159,7 @@ Prompts are versioned and separated from request handlers. `buildPersonaAwareSys
 ### Plan Rules
 
 1. **Lite is permanent and free.** There is no 3-day trial. There is no expiry. New users receive Lite by default upon account creation.
-2. **All personas are available in all plans.** There are no persona restrictions per plan.
+2. **Personas are plan-gated.** Lite: Strategist, Developer, Best Friend (3). Pro: all Lite + Teacher, Wellness, Boyfriend, Girlfriend (7). Premium: all 10 personas. Admin can override persona access per plan via admin settings.
 3. **Pro and Premium are paid-only.** Activated via Stripe Checkout one-time payment.
 4. **Premium advantages over Pro:** premium audio quality (`gpt-audio-1.5`), `gpt-5.4` for complex reasoning, unlimited image/audio quotas, and higher video quota. See Section 8 for full model policy.
 5. When any limit is reached, the server **must end the conversation** with an exact stop reason and exact next-action instruction.
@@ -179,12 +206,12 @@ Prompts are versioned and separated from request handlers. `buildPersonaAwareSys
 ### Usage Limit Enforcement
 
 - Plan limits stored as constants in `PLAN_LIMITS`.
-- Daily conversation count tracked via durable counter on User model (`dailyConversationsStarted` + `dailyConversationWindowStart`). Counter is incremented on conversation creation and **never decremented** by task deletion. Resets at UTC midnight. **Note:** check and increment are currently separate operations — TOCTOU race is tracked as TD-LIMIT-05.
+- Daily conversation count tracked via durable counter on User model (`dailyConversationsStarted` + `dailyConversationWindowStart`). Counter is incremented on conversation creation and **never decremented** by task deletion. Resets at UTC midnight. Check and increment are now a **single atomic** `findOneAndUpdate` operation via `claimDailyConversationSlot()` — TOCTOU race resolved (Phase 28.1).
 - Per-conversation prompt count tracked on `Task.promptCount` field (initialized on creation, incremented atomically via `findOneAndUpdate` with `$lt` guard — no race window).
 - Conversation storage tracked via `Task.estimatedBytes` field (12MB threshold, 4MB buffer before MongoDB 16MB limit).
 - Media generation counters on User model plan subdoc.
-- `checkDailyConversationLimit()` utility validates daily quota per plan by reading durable counter.
-- `/api/openai` route checks all limits before making OpenAI calls: daily limit (new conversations only, checked BEFORE task creation), prompt limit, storage limit, media limit.
+- `claimDailyConversationSlot()` utility atomically checks AND increments daily quota in a single MongoDB operation — replaces old separated check+increment.
+- `/api/openai` route checks all limits before making OpenAI calls: daily limit (new conversations only, claimed BEFORE task creation), prompt limit, storage limit, media limit.
 - When any limit is hit: conversation is stopped with `taskStatus: "ended"`, stop reason is recorded on Task, user receives next-action message.
 - Unlimited plans (`-1` values in `PLAN_LIMITS`) always bypass limit checks.
 
@@ -644,7 +671,7 @@ All file handling technical debt has been resolved. S3 cleanup on task/user dele
 
 ## 13. Testing
 
-- **Unit tests**: 59 suites, 306 tests (Vitest) — includes streaming, webhook, chat-wrapper, chat-body stop-state, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, persona prompt, rate limiting, task complexity classification, conversation stop enforcement, entitlement resolver full coverage, checkout-success page, admin audit trail, OpenAI route tests, atomic prompt limit, daily conversation limit, media error handling, and universal feature access tests
+- **Unit tests**: 61 suites, 320 tests (Vitest) — includes streaming, webhook, chat-wrapper, chat-body stop-state, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, persona prompt, rate limiting, task complexity classification, conversation stop enforcement, entitlement resolver full coverage, checkout-success page, admin audit trail, OpenAI route tests, atomic prompt limit, daily conversation limit, media error handling, and universal feature access tests
 - **E2E tests**: 11 Playwright spec files across browser projects (chat-app-shell, auth-boundaries, public-pages with 70+ tests, conversation-lifecycle, user-profile, admin-users, admin-features, landing-page, plans-public, pricing-public, authenticated-flows). 193 total, 185 passed, 0 flaky, 8 skipped.
 - **Coverage**: Configured (Phase 24.1) — v8 provider, thresholds: 70% statements / 60% branches / 70% functions / 70% lines. Current: 82/71/88/82.
 - **Gap**: No dedicated E2E spec for streamed chunk-by-chunk rendering (manually verified via Playwright MCP)
@@ -688,13 +715,16 @@ All file handling technical debt has been resolved. S3 cleanup on task/user dele
 
 ### Active — Critical Priority
 
-| ID          | Area   | Description                                                                                                                                                                                                                                                                                                                                     | Severity     |
-| ----------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| TD-AI-20    | OpenAI | Image generation model IDs (`gpt-image-1-mini`, `gpt-image-1.5`) fail in production — owner reports "Image generation failed" errors. HF-3 claims IDs verified against docs but owner still sees failures. **Requires live API test to resolve contradiction.** If model IDs are valid, there may be an API parameter or response format issue. | **Critical** |
-| TD-AI-21    | OpenAI | Audio generation model IDs (`gpt-audio-mini`, `gpt-audio-1.5`) may not be valid. Additionally, tool call handler always passes `audioMode: "tts"` but Pro/Premium TTS requests route to `chat.completions.create()` path instead of `audio.speech.create()`.                                                                                    | **Critical** |
-| TD-AI-22    | OpenAI | Audio tool call handler passes `parsedArgs` (JSON-parsed tool call function arguments) as `messages` parameter to `generateAudio()`. These are NOT proper `Message[]` objects — they are raw JSON from the model. `buildTextToSpeechInput` expects `Message[]` format. This causes audio generation to fail for all plans and all personas.     | **Critical** |
-| TD-LIMIT-05 | Limits | Daily conversation limit TOCTOU race — `checkDailyConversationLimit` (read) and `incrementDailyConversationCounter` (write) are separate operations with seconds between them (title generation API call). Concurrent requests can both pass the check and both create conversations, exceeding the limit.                                      | **Critical** |
-| TD-LIMIT-06 | Limits | Midnight reset race — `incrementDailyConversationCounter` uses two-phase approach. At UTC midnight, concurrent requests can both see yesterday's window, both reach Phase 2 reset, both `$set dailyConversationsStarted: 1`. One increment is lost. Low probability but violates correctness.                                                   | **High**     |
+| ID       | Area   | Description                                                                                                                                                                                                                 | Severity |
+| -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| TD-AI-21 | OpenAI | Audio model IDs (`gpt-audio-mini`, `gpt-audio-1.5`) are unverified. Currently mitigated — TTS path forces `gpt-4o-mini-tts` via `isTtsOnly` override. Will break if `audio_in_out` is ever enabled. Requires live API test. | **High** |
+
+### Active — High Priority
+
+| ID          | Area   | Description                                                                                                                                                                                                                                                   | Severity |
+| ----------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| TD-LIMIT-07 | Limits | Media generation counters (image/audio) use read-then-write pattern — `checkUsageLimit()` reads at request start, `$inc` after response. Concurrent requests can bypass limits. Violates AGENTS.md atomic limit rule. Same pattern as old daily limit TOCTOU. | **High** |
+| TD-AI-23    | OpenAI | Audio tool definition `content` parameter description says "Description of the audio file to generate" — misleads AI model into providing brief description instead of actual text to speak. TTS path uses this value as literal speech input.                | **High** |
 
 ### ~~Active — High Priority~~ (Resolved)
 
@@ -722,81 +752,86 @@ All file handling technical debt has been resolved. S3 cleanup on task/user dele
 
 ### Resolved
 
-| ID            | Description                                   | Resolution                                                                                                                                       |
-| ------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| SEC-01        | getUserById no ownership check                | Ownership enforced                                                                                                                               |
-| SEC-02        | getAllTransactions no ownership check         | Ownership enforced                                                                                                                               |
-| SEC-03        | console.log in /api/openai                    | Removed                                                                                                                                          |
-| TD-API-03     | generateImage temporary URLs                  | Persisted to S3                                                                                                                                  |
-| TD-API-05     | console.log in OpenAI utils                   | Removed                                                                                                                                          |
-| TD-PLAN-02    | Usage limits not enforced                     | Implemented                                                                                                                                      |
-| TD-PLAN-04    | Lite 3-day expiry                             | Removed — Lite now "Free forever"                                                                                                                |
-| TD-PLAN-05    | Prices $29/$69                                | Updated to $19/$39                                                                                                                               |
-| TD-PLAN-06    | Lite restricts 2 personas                     | All 9 available in all plans                                                                                                                     |
-| TD-PLAN-09    | Plan descriptions outdated                    | Updated with accurate limits                                                                                                                     |
-| TD-UI-11      | FAQ copy outdated (trial references)          | Rewritten for Droplet                                                                                                                            |
-| TD-AI-02      | No OpenAI error classification                | Implemented                                                                                                                                      |
-| TD-AI-05      | Audio base64 in messages                      | Audio now uploaded to S3                                                                                                                         |
-| TD-API-06     | handleError loses stack traces                | Resolved in Phase 20 via `{ cause: error }` pattern                                                                                              |
-| TD-FILE-01    | S3 cleanup on task deletion                   | Fully resolved in Phase 20: deleteTask + Clerk webhook + admin remove                                                                            |
-| TD-FILE-02    | Inline base64 in chat-input.tsx               | Resolved in Phase 20 via `/api/upload` FormData                                                                                                  |
-| TD-ACT-01     | deleteAllTransactions unaudited               | Resolved in Phase 20: function removed entirely                                                                                                  |
-| TD-WEBHOOK-02 | Clerk webhook no idempotency                  | Resolved in Phase 20: duplicate check + graceful miss handling                                                                                   |
-| TD-UI-04      | No error boundaries                           | Added                                                                                                                                            |
-| TD-UI-05      | mapDateToLabel duplicated                     | Extracted                                                                                                                                        |
-| TD-RENAME-01  | "role" to "persona" rename                    | Completed                                                                                                                                        |
-| TD-RENAME-02  | Cellesseon → Droplet rename                   | Completed (3 legacy migration keys intentional)                                                                                                  |
-| TD-DB-07      | Audio base64 inflates Task docs               | Audio uploads to S3, stores URL                                                                                                                  |
-| TD-DB-08      | getUserById missing .lean()/.select()         | Added                                                                                                                                            |
-| TD-DB-09      | getAllTransactions missing .lean()            | Added                                                                                                                                            |
-| TD-DB-10      | Task missing lifecycle fields                 | Added in Phase 14                                                                                                                                |
-| TD-DB-11      | UsageEvent model missing                      | Created in Phase 14                                                                                                                              |
-| TD-DB-12      | AppSetting model missing                      | Created in Phase 14                                                                                                                              |
-| TD-DB-13      | PublicPage model missing                      | Created in Phase 14                                                                                                                              |
-| TD-DB-14      | AdminAuditLog model missing                   | Created in Phase 14                                                                                                                              |
-| TD-UI-02      | No loading skeletons                          | Added                                                                                                                                            |
-| TD-UI-06      | No conversation delete UI                     | Added                                                                                                                                            |
-| TD-AI-06      | No retry/backoff for transient failures       | Resolved in Phase 22 via `withOpenAIRetry()` — exponential backoff, model downgrade                                                              |
-| TD-AI-14      | Dead `chatSystemMsg` export in `openai.tsx`   | Resolved in Phase 23.1 — constant removed, zero usages confirmed                                                                                 |
-| TD-AI-11      | Dead combinedCount parameter                  | Resolved in Phase 21-C — removed from interface, body, and callers                                                                               |
-| TD-AI-12      | Video matrix/resolver dual source of truth    | Resolved in Phase 21-C — matrix now shows `sora-2` with notes                                                                                    |
-| TD-PLAN-07    | No daily conversation limit                   | Implemented in Phase 15 via `checkDailyConversationLimit` + route enforcement                                                                    |
-| TD-PLAN-08    | No per-conversation prompt limit              | Implemented in Phase 15 via `Task.promptCount` + route enforcement                                                                               |
-| TD-DB-05      | Task messages unbounded (16MB risk)           | Implemented in Phase 15 via `estimatedBytes` tracking + 12MB threshold guard                                                                     |
-| TD-AI-07      | Models hardcoded                              | Resolved in Phase 16 via `ai-model-policy.ts` + `resolveModelForPlan()`                                                                          |
-| TD-AI-03      | No per-user cost tracking                     | Resolved in Phase 16 via `UsageEvent` + `usage-event-utils.ts`                                                                                   |
-| TD-AUTH-01    | Proxy protects old routes                     | Resolved in Phase 17 — proxy now protects `/app(.*)` and `/admin(.*)` only                                                                       |
-| TD-AUTH-02    | Admin at /dashboard not /admin                | Resolved in Phase 17 — admin is at `/admin` with full control plane                                                                              |
-| TD-UI-09      | Account pages at wrong routes                 | Resolved in Phase 17 — profile/plans under `/app/*`                                                                                              |
-| TD-UI-10      | Admin has no operational capability           | Resolved in Phase 17 — 9 admin routes with full CRUD, audit, Tiptap                                                                              |
-| TD-BILL-01    | Stripe redirect URLs hardcode old routes      | Resolved in Phase 17 — redirects point to `/app/profile` and `/app/plans`                                                                        |
-| TD-BILL-02    | Stripe checkout redirect to /sign-in          | Resolved in HF-4 — public `/checkout-success` intermediary route with Stripe session verification, `success_url` updated                         |
-| TD-UI-08      | Missing 5 public pages                        | Resolved in Phase 18 — /about, /faqs, /privacy, /cookies, /terms created                                                                         |
-| TD-UI-07      | Homepage needs more sections                  | Resolved in Phase 18 — 7 sections: Hero, Features, Workflow, Personas, CTA, Plans, FAQs                                                          |
-| TD-UI-12      | Footer links non-functional (spans)           | Resolved in Phase 18 — `<Link>` to `/privacy` and `/terms`                                                                                       |
-| TD-UI-13      | Header nav missing /about, /faqs links        | Resolved in Phase 18 — Header has About, Personas, Plans, FAQs links                                                                             |
-| TD-LOG-01     | console.error in production code (15)         | Resolved in Phase 17-C — zero console.error/log/warn in `src/`                                                                                   |
-| TD-AI-01      | No streaming                                  | Resolved in Phase 19 — `generateStreamingResponse()` + SSE events                                                                                |
-| TD-API-07     | No streaming implementation                   | Resolved in Phase 19 — streaming branch in `/api/openai` route                                                                                   |
-| TD-DB-15      | Clerk user.deleted doesn't clean Tasks        | Resolved in Phase 19 — `Task.deleteMany` in Clerk webhook handler                                                                                |
-| TD-WEBHOOK-01 | Clerk user.deleted orphans S3 objects         | Resolved in Phase 19 — `deleteS3Prefix` in Clerk webhook handler                                                                                 |
-| TD-AI-10      | Model policy flat resolver                    | Resolved in Phase 21 — `MODEL_POLICY_MATRIX` + `resolveModelPolicy()` with task classes, fallbacks, downgrade triggers, token limits, audio mode |
-| TD-AI-15      | Hardcoded TTS model-name branch               | Resolved in Phase 23.2 — `isTtsOnly` policy flag via `MODEL_CAPABILITIES` map                                                                    |
-| TD-API-01     | In-memory rate limiter                        | Resolved in Phase 25.3 — MongoDB-backed `RateLimitEntry` with TTL index, atomic sliding window                                                   |
-| TD-CODE-01    | Relative import violations                    | Resolved in Phase 24.4 — all 15 relative imports replaced with `@/*` alias across 10 files                                                       |
-| TD-SEC-01     | Stripe webhook event type leak                | Resolved in HF-8.2 — generic `"Unhandled event"` response, event type logged server-side only                                                    |
-| TD-SEC-02     | Chat input upload error leak                  | Resolved in HF-9.1 — fixed generic message `"Failed to upload file. Please try again."`, no `error.message` exposed                              |
-| TD-SEC-03     | updateUser error handling inconsistency       | Resolved in HF-9.2 — `handleError({ error, source: "updateUser" })` pattern, consistent with all other server actions                            |
-| TD-AUTH-03    | Missing MongoDB user self-healing             | Resolved in HF-2 — `ensureUserSynced()` in `ensure-user-synced.ts`, wired into `/app/profile`, `/app/plans`, `/api/openai`                       |
-| TD-AUTH-04    | `/api/openai` silently degrades to Lite       | Resolved in HF-2 — returns HTTP 503 on self-healing failure instead of silent Lite degradation                                                   |
-| TD-SEC-03     | `updateUser` error handling inconsistency     | Resolved in HF-9.2 — `handleError({ error, source: "updateUser" })` pattern, consistent with all other server actions                            |
-| TD-LIMIT-01   | Prompt limit race condition                   | Resolved in Phase 27.1 — atomic `findOneAndUpdate` with `$lt` condition, no read-check-write race                                                |
-| TD-LIMIT-02   | Daily conversation limit race condition       | Resolved in Phase 27.1 — compensating delete pattern after `createTask`, UTC timezone fix                                                        |
-| TD-AI-19      | Image/audio generation unhandled exceptions   | Resolved in Phase 27.2 — try-catch at call sites in `buildOpenAIResponsePayload()`, graceful error payloads                                      |
-| TD-FEAT-01    | Rule 10 violation (features blocked)          | Resolved in Phase 27.3 — all 6 blocking layers opened, all features available in all plans and all personas                                      |
-| TD-UI-14      | Layout inconsistency across /app/\* pages     | Resolved in Phase 27.6 — shared `(chat)/layout.tsx` provides ChatSidebar + main content to all `/app/*` routes                                   |
-| TD-SEC-04     | Clerk webhook responses leak user data        | Resolved in Phase 27.8 — all three Clerk webhook handlers return `{ message: "OK" }` only, deletion counts logged server-side                    |
-| TD-BILL-03    | Stripe webhook missing videoGenerations reset | Resolved in Phase 27.9 — `videoGenerations: 0` included in checkout plan update                                                                  |
-| TD-OBS-01     | UsageEvent silent catch                       | Resolved in Phase 27.10 — `.catch()` handler logs via `process.stderr.write()`, fire-and-forget preserved                                        |
-| TD-UI-15      | Profile page display-only                     | Resolved in Phase 27.7 — full edit form (name, email, avatar upload) + account self-deletion with confirmation                                   |
-| TD-ACT-02     | deleteUser incomplete cleanup                 | Resolved in Phase 27.7 — `deleteUser()` now removes Tasks, Transactions, S3 assets, and MongoDB User record; signs out from Clerk                |
+| ID            | Description                                            | Resolution                                                                                                                                                                                                                          |
+| ------------- | ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| SEC-01        | getUserById no ownership check                         | Ownership enforced                                                                                                                                                                                                                  |
+| SEC-02        | getAllTransactions no ownership check                  | Ownership enforced                                                                                                                                                                                                                  |
+| SEC-03        | console.log in /api/openai                             | Removed                                                                                                                                                                                                                             |
+| TD-API-03     | generateImage temporary URLs                           | Persisted to S3                                                                                                                                                                                                                     |
+| TD-API-05     | console.log in OpenAI utils                            | Removed                                                                                                                                                                                                                             |
+| TD-PLAN-02    | Usage limits not enforced                              | Implemented                                                                                                                                                                                                                         |
+| TD-PLAN-04    | Lite 3-day expiry                                      | Removed — Lite now "Free forever"                                                                                                                                                                                                   |
+| TD-PLAN-05    | Prices $29/$69                                         | Updated to $19/$39                                                                                                                                                                                                                  |
+| TD-PLAN-06    | Lite restricts 2 personas                              | All 9 available in all plans                                                                                                                                                                                                        |
+| TD-PLAN-09    | Plan descriptions outdated                             | Updated with accurate limits                                                                                                                                                                                                        |
+| TD-UI-11      | FAQ copy outdated (trial references)                   | Rewritten for Droplet                                                                                                                                                                                                               |
+| TD-AI-02      | No OpenAI error classification                         | Implemented                                                                                                                                                                                                                         |
+| TD-AI-05      | Audio base64 in messages                               | Audio now uploaded to S3                                                                                                                                                                                                            |
+| TD-API-06     | handleError loses stack traces                         | Resolved in Phase 20 via `{ cause: error }` pattern                                                                                                                                                                                 |
+| TD-FILE-01    | S3 cleanup on task deletion                            | Fully resolved in Phase 20: deleteTask + Clerk webhook + admin remove                                                                                                                                                               |
+| TD-FILE-02    | Inline base64 in chat-input.tsx                        | Resolved in Phase 20 via `/api/upload` FormData                                                                                                                                                                                     |
+| TD-ACT-01     | deleteAllTransactions unaudited                        | Resolved in Phase 20: function removed entirely                                                                                                                                                                                     |
+| TD-WEBHOOK-02 | Clerk webhook no idempotency                           | Resolved in Phase 20: duplicate check + graceful miss handling                                                                                                                                                                      |
+| TD-UI-04      | No error boundaries                                    | Added                                                                                                                                                                                                                               |
+| TD-UI-05      | mapDateToLabel duplicated                              | Extracted                                                                                                                                                                                                                           |
+| TD-RENAME-01  | "role" to "persona" rename                             | Completed                                                                                                                                                                                                                           |
+| TD-RENAME-02  | Cellesseon → Droplet rename                            | Completed (3 legacy migration keys intentional)                                                                                                                                                                                     |
+| TD-DB-07      | Audio base64 inflates Task docs                        | Audio uploads to S3, stores URL                                                                                                                                                                                                     |
+| TD-DB-08      | getUserById missing .lean()/.select()                  | Added                                                                                                                                                                                                                               |
+| TD-DB-09      | getAllTransactions missing .lean()                     | Added                                                                                                                                                                                                                               |
+| TD-DB-10      | Task missing lifecycle fields                          | Added in Phase 14                                                                                                                                                                                                                   |
+| TD-DB-11      | UsageEvent model missing                               | Created in Phase 14                                                                                                                                                                                                                 |
+| TD-DB-12      | AppSetting model missing                               | Created in Phase 14                                                                                                                                                                                                                 |
+| TD-DB-13      | PublicPage model missing                               | Created in Phase 14                                                                                                                                                                                                                 |
+| TD-DB-14      | AdminAuditLog model missing                            | Created in Phase 14                                                                                                                                                                                                                 |
+| TD-UI-02      | No loading skeletons                                   | Added                                                                                                                                                                                                                               |
+| TD-UI-06      | No conversation delete UI                              | Added                                                                                                                                                                                                                               |
+| TD-AI-06      | No retry/backoff for transient failures                | Resolved in Phase 22 via `withOpenAIRetry()` — exponential backoff, model downgrade                                                                                                                                                 |
+| TD-AI-14      | Dead `chatSystemMsg` export in `openai.tsx`            | Resolved in Phase 23.1 — constant removed, zero usages confirmed                                                                                                                                                                    |
+| TD-AI-11      | Dead combinedCount parameter                           | Resolved in Phase 21-C — removed from interface, body, and callers                                                                                                                                                                  |
+| TD-AI-12      | Video matrix/resolver dual source of truth             | Resolved in Phase 21-C — matrix now shows `sora-2` with notes                                                                                                                                                                       |
+| TD-PLAN-07    | No daily conversation limit                            | Implemented in Phase 15 via `checkDailyConversationLimit` + route enforcement                                                                                                                                                       |
+| TD-PLAN-08    | No per-conversation prompt limit                       | Implemented in Phase 15 via `Task.promptCount` + route enforcement                                                                                                                                                                  |
+| TD-DB-05      | Task messages unbounded (16MB risk)                    | Implemented in Phase 15 via `estimatedBytes` tracking + 12MB threshold guard                                                                                                                                                        |
+| TD-AI-07      | Models hardcoded                                       | Resolved in Phase 16 via `ai-model-policy.ts` + `resolveModelForPlan()`                                                                                                                                                             |
+| TD-AI-03      | No per-user cost tracking                              | Resolved in Phase 16 via `UsageEvent` + `usage-event-utils.ts`                                                                                                                                                                      |
+| TD-AUTH-01    | Proxy protects old routes                              | Resolved in Phase 17 — proxy now protects `/app(.*)` and `/admin(.*)` only                                                                                                                                                          |
+| TD-AUTH-02    | Admin at /dashboard not /admin                         | Resolved in Phase 17 — admin is at `/admin` with full control plane                                                                                                                                                                 |
+| TD-UI-09      | Account pages at wrong routes                          | Resolved in Phase 17 — profile/plans under `/app/*`                                                                                                                                                                                 |
+| TD-UI-10      | Admin has no operational capability                    | Resolved in Phase 17 — 9 admin routes with full CRUD, audit, Tiptap                                                                                                                                                                 |
+| TD-BILL-01    | Stripe redirect URLs hardcode old routes               | Resolved in Phase 17 — redirects point to `/app/profile` and `/app/plans`                                                                                                                                                           |
+| TD-BILL-02    | Stripe checkout redirect to /sign-in                   | Resolved in HF-4 — public `/checkout-success` intermediary route with Stripe session verification, `success_url` updated                                                                                                            |
+| TD-UI-08      | Missing 5 public pages                                 | Resolved in Phase 18 — /about, /faqs, /privacy, /cookies, /terms created                                                                                                                                                            |
+| TD-UI-07      | Homepage needs more sections                           | Resolved in Phase 18 — 7 sections: Hero, Features, Workflow, Personas, CTA, Plans, FAQs                                                                                                                                             |
+| TD-UI-12      | Footer links non-functional (spans)                    | Resolved in Phase 18 — `<Link>` to `/privacy` and `/terms`                                                                                                                                                                          |
+| TD-UI-13      | Header nav missing /about, /faqs links                 | Resolved in Phase 18 — Header has About, Personas, Plans, FAQs links                                                                                                                                                                |
+| TD-LOG-01     | console.error in production code (15)                  | Resolved in Phase 17-C — zero console.error/log/warn in `src/`                                                                                                                                                                      |
+| TD-AI-01      | No streaming                                           | Resolved in Phase 19 — `generateStreamingResponse()` + SSE events                                                                                                                                                                   |
+| TD-API-07     | No streaming implementation                            | Resolved in Phase 19 — streaming branch in `/api/openai` route                                                                                                                                                                      |
+| TD-DB-15      | Clerk user.deleted doesn't clean Tasks                 | Resolved in Phase 19 — `Task.deleteMany` in Clerk webhook handler                                                                                                                                                                   |
+| TD-WEBHOOK-01 | Clerk user.deleted orphans S3 objects                  | Resolved in Phase 19 — `deleteS3Prefix` in Clerk webhook handler                                                                                                                                                                    |
+| TD-AI-10      | Model policy flat resolver                             | Resolved in Phase 21 — `MODEL_POLICY_MATRIX` + `resolveModelPolicy()` with task classes, fallbacks, downgrade triggers, token limits, audio mode                                                                                    |
+| TD-AI-15      | Hardcoded TTS model-name branch                        | Resolved in Phase 23.2 — `isTtsOnly` policy flag via `MODEL_CAPABILITIES` map                                                                                                                                                       |
+| TD-API-01     | In-memory rate limiter                                 | Resolved in Phase 25.3 — MongoDB-backed `RateLimitEntry` with TTL index, atomic sliding window                                                                                                                                      |
+| TD-CODE-01    | Relative import violations                             | Resolved in Phase 24.4 — all 15 relative imports replaced with `@/*` alias across 10 files                                                                                                                                          |
+| TD-SEC-01     | Stripe webhook event type leak                         | Resolved in HF-8.2 — generic `"Unhandled event"` response, event type logged server-side only                                                                                                                                       |
+| TD-SEC-02     | Chat input upload error leak                           | Resolved in HF-9.1 — fixed generic message `"Failed to upload file. Please try again."`, no `error.message` exposed                                                                                                                 |
+| TD-SEC-03     | updateUser error handling inconsistency                | Resolved in HF-9.2 — `handleError({ error, source: "updateUser" })` pattern, consistent with all other server actions                                                                                                               |
+| TD-AUTH-03    | Missing MongoDB user self-healing                      | Resolved in HF-2 — `ensureUserSynced()` in `ensure-user-synced.ts`, wired into `/app/profile`, `/app/plans`, `/api/openai`                                                                                                          |
+| TD-AUTH-04    | `/api/openai` silently degrades to Lite                | Resolved in HF-2 — returns HTTP 503 on self-healing failure instead of silent Lite degradation                                                                                                                                      |
+| TD-SEC-03     | `updateUser` error handling inconsistency              | Resolved in HF-9.2 — `handleError({ error, source: "updateUser" })` pattern, consistent with all other server actions                                                                                                               |
+| TD-LIMIT-01   | Prompt limit race condition                            | Resolved in Phase 27.1 — atomic `findOneAndUpdate` with `$lt` condition, no read-check-write race                                                                                                                                   |
+| TD-LIMIT-02   | Daily conversation limit race condition                | Resolved in Phase 27.1 — compensating delete pattern after `createTask`, UTC timezone fix                                                                                                                                           |
+| TD-LIMIT-05   | Daily conversation limit TOCTOU race                   | Resolved in Phase 28.1 — atomic `claimDailyConversationSlot` with `findOneAndUpdate` + `$lt` guard, midnight reset in single operation                                                                                              |
+| TD-LIMIT-06   | Midnight reset race                                    | Resolved in Phase 28.1 — stale-window reset handled atomically in `claimDailyConversationSlot`                                                                                                                                      |
+| TD-AI-20      | Image generation broken (model IDs + response_format)  | Resolved in Phase 28.2-fix — `response_format: "b64_json"` removed from `generateImage.tsx`, model IDs live-tested (`gpt-image-1-mini`, `gpt-image-1.5` confirmed working), response handler supports both URL and b64_json formats |
+| TD-AI-24      | `response_format` compatibility risk with image models | Resolved in Phase 28.2-fix — `response_format` parameter removed entirely, API returns default format (b64_json) which is handled correctly                                                                                         |
+| TD-AI-22      | Audio messages parameter bug                           | Resolved in Phase 28.3-code — `ttsText` extracted from `parsedArgs.content`, not raw `parsedArgs` as messages                                                                                                                       |
+| TD-AI-19      | Image/audio generation unhandled exceptions            | Resolved in Phase 27.2 — try-catch at call sites in `buildOpenAIResponsePayload()`, graceful error payloads                                                                                                                         |
+| TD-FEAT-01    | Rule 10 violation (features blocked)                   | Resolved in Phase 27.3 — all 6 blocking layers opened, all features available in all plans and all personas                                                                                                                         |
+| TD-UI-14      | Layout inconsistency across /app/\* pages              | Resolved in Phase 27.6 — shared `(chat)/layout.tsx` provides ChatSidebar + main content to all `/app/*` routes                                                                                                                      |
+| TD-SEC-04     | Clerk webhook responses leak user data                 | Resolved in Phase 27.8 — all three Clerk webhook handlers return `{ message: "OK" }` only, deletion counts logged server-side                                                                                                       |
+| TD-BILL-03    | Stripe webhook missing videoGenerations reset          | Resolved in Phase 27.9 — `videoGenerations: 0` included in checkout plan update                                                                                                                                                     |
+| TD-OBS-01     | UsageEvent silent catch                                | Resolved in Phase 27.10 — `.catch()` handler logs via `process.stderr.write()`, fire-and-forget preserved                                                                                                                           |
+| TD-UI-15      | Profile page display-only                              | Resolved in Phase 27.7 — full edit form (name, email, avatar upload) + account self-deletion with confirmation                                                                                                                      |
+| TD-ACT-02     | deleteUser incomplete cleanup                          | Resolved in Phase 27.7 — `deleteUser()` now removes Tasks, Transactions, S3 assets, and MongoDB User record; signs out from Clerk                                                                                                   |

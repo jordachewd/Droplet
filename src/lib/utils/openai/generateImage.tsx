@@ -72,7 +72,6 @@ export async function generateImage({
     const response = await openAiClient.images.generate({
       model: policy.model,
       prompt,
-      response_format: "b64_json",
     });
     const requestMetric: AIRequestMetric = {
       requestType: "image",

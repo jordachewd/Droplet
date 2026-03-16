@@ -2,7 +2,63 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-15 — Phases 27.7–27.10 COMPLETE (PM deep audit #7, three-agent independent verification). Phases 1–25.7 + 27.1–27.3 + 27.6–27.10 complete.
+> Last updated: 2026-03-16 — PM deep audit #10. Phase 28.2-fix VERIFIED COMPLETE (image generation fixed). Phases 1–25.7 + 27.1–27.3 + 27.6–27.10 + 28.1 + 28.2-fix + 28.3-code complete.
+
+---
+
+## Phase 28.2-fix — Fix image generation (response_format + live verification) — COMPLETED (2026-03-16)
+
+- [x] Removed incompatible `response_format: "b64_json"` parameter from `generateImage.tsx` — GPT Image API does not accept this parameter.
+- [x] Model IDs `gpt-image-1-mini` (Lite) and `gpt-image-1.5` (Pro/Premium) **live-tested** via `scripts/live-test-image-models.mjs`:
+  - `gpt-image-1-mini` + `response_format` → 400 `unknown_parameter`. Default params → success (returns b64_json).
+  - `gpt-image-1.5` + `response_format` → 400 `unknown_parameter`. Default params → success (returns b64_json).
+  - `gpt-image-1` → 403 `model_not_found` (not available in this OpenAI project).
+- [x] Model IDs centralized via `LITE_IMAGE_MODEL` / `PRO_PREMIUM_IMAGE_MODEL` constants in `ai-model-policy.ts`.
+- [x] `getGeneratedImageBuffer()` supports both `b64_json` and `url` response formats — forward-compatible.
+- [x] `MODEL_PRICING` and `MODEL_CAPABILITIES` updated for image model constants.
+- [x] Unit regression test added ensuring no `response_format` is sent (`generate-image.test.ts`).
+- [x] Gated live E2E test added (`live-image-generation.spec.ts`) — verified rendered image URL contains `/api/download?key=`.
+- [x] Full validation gateway: prettier ✅, lint ✅, tsc ✅, 320 tests ✅, 185 E2E ✅, build ✅.
+- [x] Three-agent independent verification: PM audit #10 confirmed by Architect and Engineer.
+
+Resolved: TD-AI-20 (image generation broken), TD-AI-24 (response_format compatibility risk).
+
+**Files changed:** `src/lib/utils/ai-model-policy.ts`, `src/lib/utils/openai/generateImage.tsx`, `scripts/live-test-image-models.mjs`, `tests/unit/generate-image.test.ts`, `tests/e2e/live-image-generation.spec.ts`
+
+---
+
+## Phase 28.1 — Fix daily conversation limit TOCTOU race + midnight race — COMPLETED (2026-03-16)
+
+- [x] `claimDailyConversationSlot()` implemented with atomic `findOneAndUpdate` + `$lt` guard — single MongoDB operation, no TOCTOU gap.
+- [x] Two-phase atomic pattern: (1) claim within current window, (2) stale-window reset — handles midnight race.
+- [x] Old `incrementDailyConversationCounter` fully removed from `src/` (zero matches verified).
+- [x] `createTask` no longer calls any daily counter increment — slot claimed before create.
+- [x] Rollback `Task.findOneAndDelete` wrapped in try/catch with `process.stderr.write` logging.
+- [x] Route calls `claimDailyConversationSlot(userId, planName)` BEFORE task creation at line ~856.
+- [x] Unlimited plans bypass correctly (limit === -1 returns immediately).
+- [x] Unit tests updated: atomic boundary, concurrent claim rejection, midnight reset, rollback failure, unlimited bypass.
+- [x] Four-agent independent verification: PM audit #9 code-level confirmed.
+
+Resolved: TD-LIMIT-05 (TOCTOU race), TD-LIMIT-06 (midnight race).
+
+**Files changed:** `src/lib/utils/check-daily-conversations.ts`, `src/app/api/openai/route.tsx`, `src/lib/actions/task.actions.tsx`, `tests/unit/check-daily-conversations.test.ts`, `tests/unit/openai-route.test.ts`, `tests/unit/conversation-stop.test.ts`, `tests/unit/openai-route-phase16.test.ts`
+
+---
+
+## Phase 28.3-code — Fix audio generation messages parameter bug — COMPLETED (2026-03-16)
+
+- [x] Audio tool call handler in `generateResponse.tsx` now extracts `ttsText` from `parsedArgs.content` instead of passing raw `parsedArgs` as `messages`.
+- [x] TTS requests correctly route to `audio.speech.create()` for ALL plans via `isTtsOnly` policy flag.
+- [x] `audioMode: "tts"` hardcoded in tool call handler — correct per spec (audio_in_out deferred).
+- [x] `generateAudio()` correctly accepts `ttsText?` parameter alongside `messages?`.
+- [x] Unit tests updated for ttsText extraction path.
+- [x] Four-agent independent verification: PM audit #9 code-level confirmed.
+
+Resolved: TD-AI-22 (audio messages parameter bug). TD-AI-21 partially resolved (audioMode fixed, model ID live-testing still required).
+
+**Note:** Audio model IDs (`gpt-audio-mini`, `gpt-audio-1.5`) are not live-tested but currently mitigated — TTS policy forces `gpt-4o-mini-tts` for all plans. Live-testing tracked in Phase 28.3-verify (TODO.md).
+
+**Files changed:** `src/lib/utils/openai/generateResponse.tsx`, `tests/unit/generate-response-phase16.test.ts`, `tests/unit/generate-response.test.ts`
 
 ---
 
