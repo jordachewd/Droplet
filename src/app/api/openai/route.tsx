@@ -45,6 +45,7 @@ import { PlanName } from "@/types/PlanData.d";
 import { PersonaId } from "@/types/PersonaData.d";
 import {
   BudgetState,
+  ModelPolicyModelOverrides,
   TaskClass,
   normalizePlanTier,
   resolveModelPolicy,
@@ -53,6 +54,8 @@ import {
   AIRequestMetric,
   emitUsageEvents,
 } from "@/lib/utils/usage-event-utils";
+import { getEffectivePersonaAccessByPlan } from "@/lib/utils/effective-persona-access";
+import { getEffectiveModelConfig } from "@/lib/utils/effective-model-config";
 import { getEffectivePlanConfig } from "@/lib/utils/effective-plan-config";
 import {
   chatMessageArraySchema,
@@ -382,18 +385,21 @@ function emitBlockedChatUsageEvent({
   personaId,
   planName,
   stopReason,
+  modelOverrides,
 }: {
   userId: string;
   taskId?: string;
   personaId: PersonaId;
   planName?: PlanName | null;
   stopReason: TaskEndedReason;
+  modelOverrides?: ModelPolicyModelOverrides;
 }) {
   const policy = resolveModelPolicy({
     plan: normalizePlanTier(planName ?? "Lite"),
     feature: "chat",
     taskClass: DEFAULT_CHAT_TASK_CLASS,
     budgetState: DEFAULT_CHAT_BUDGET_STATE,
+    modelOverrides,
   });
 
   if (policy.hardBlocked || policy.model === "blocked") {
@@ -503,6 +509,7 @@ async function finalizeAIResponse({
   planName,
   planLimits,
   isTrialPersona,
+  modelOverrides,
   selectedPersonaId,
   storedMessagesWithIncomingPrompt,
   estimatedBytesWithIncomingPrompt,
@@ -513,6 +520,7 @@ async function finalizeAIResponse({
   planName: PlanName;
   planLimits: PlanLimits;
   isTrialPersona: boolean;
+  modelOverrides?: ModelPolicyModelOverrides;
   selectedPersonaId: PersonaId;
   storedMessagesWithIncomingPrompt: Message[];
   estimatedBytesWithIncomingPrompt: number;
@@ -600,6 +608,7 @@ async function finalizeAIResponse({
       personaId: selectedPersonaId,
       planName,
       stopReason,
+      modelOverrides,
     });
 
     return {
@@ -719,7 +728,22 @@ export async function POST(req: Request): Promise<Response> {
     }
 
     const planName = userData.plan?.name ?? "Lite";
-    const { limits: effectivePlanLimits } = await getEffectivePlanConfig();
+    const [effectivePlanConfig, fullPersonaAccessByPlan, effectiveModelConfig] =
+      await Promise.all([
+        getEffectivePlanConfig(),
+        getEffectivePersonaAccessByPlan(),
+        getEffectiveModelConfig(),
+      ]);
+    const effectivePlanLimits = effectivePlanConfig.limits;
+    const modelOverrides: ModelPolicyModelOverrides = {
+      chat: {
+        lite: effectiveModelConfig.liteChatModel,
+        pro: effectiveModelConfig.proChatModel,
+        premium: effectiveModelConfig.premiumChatModel,
+      },
+      imageGenerationModel: effectiveModelConfig.imageModel,
+      audioGenerationModel: effectiveModelConfig.audioModel,
+    };
     const persistedTask = providedTaskId
       ? await getTaskByIdForUser({
           taskId: providedTaskId,
@@ -781,6 +805,7 @@ export async function POST(req: Request): Promise<Response> {
             personaId: selectedPersona.id,
             planName,
             stopReason,
+            modelOverrides,
           });
 
           return NextResponse.json(
@@ -806,6 +831,7 @@ export async function POST(req: Request): Promise<Response> {
           personaId: selectedPersona.id,
           planName,
           stopReason,
+          modelOverrides,
         });
 
         return NextResponse.json(
@@ -823,6 +849,7 @@ export async function POST(req: Request): Promise<Response> {
 
     const entitlements = resolveEntitlements(planName, {
       planLimits: effectivePlanLimits,
+      fullPersonaAccessByPlan,
     });
 
     const selectedPersonaAccess = entitlements.personaAccess?.[
@@ -958,6 +985,7 @@ export async function POST(req: Request): Promise<Response> {
           personaId: selectedPersona.id,
           planName,
           stopReason,
+          modelOverrides,
         });
 
         return NextResponse.json(
@@ -983,6 +1011,7 @@ export async function POST(req: Request): Promise<Response> {
         personaId: selectedPersona.id,
         planName,
         stopReason,
+        modelOverrides,
       });
 
       return NextResponse.json(
@@ -1033,6 +1062,7 @@ export async function POST(req: Request): Promise<Response> {
           personaId: selectedPersona.id,
           planName,
           stopReason,
+          modelOverrides,
         });
 
         return NextResponse.json(
@@ -1075,6 +1105,7 @@ export async function POST(req: Request): Promise<Response> {
           personaId: selectedPersona.id,
           planName,
           stopReason,
+          modelOverrides,
         });
 
         return NextResponse.json(
@@ -1093,6 +1124,7 @@ export async function POST(req: Request): Promise<Response> {
         promptPayloadMessages,
         planName,
         selectedPersona.id,
+        modelOverrides,
       );
       const {
         title,
@@ -1178,6 +1210,7 @@ export async function POST(req: Request): Promise<Response> {
               personaId: selectedPersona.id,
               planName,
               entitlements: resolvedEntitlements,
+              modelOverrides,
               taskClass: chatTaskClass,
               budgetState: DEFAULT_CHAT_BUDGET_STATE,
               explicitPremium: explicitPremiumRequested,
@@ -1213,6 +1246,7 @@ export async function POST(req: Request): Promise<Response> {
               planName,
               planLimits: effectivePlanLimits,
               isTrialPersona,
+              modelOverrides,
               selectedPersonaId: selectedPersona.id,
               storedMessagesWithIncomingPrompt,
               estimatedBytesWithIncomingPrompt,
@@ -1252,6 +1286,7 @@ export async function POST(req: Request): Promise<Response> {
       personaId: selectedPersona.id,
       planName,
       entitlements: resolvedEntitlements,
+      modelOverrides,
       taskClass: chatTaskClass,
       budgetState: DEFAULT_CHAT_BUDGET_STATE,
       explicitPremium: explicitPremiumRequested,
@@ -1280,6 +1315,7 @@ export async function POST(req: Request): Promise<Response> {
       planName,
       planLimits: effectivePlanLimits,
       isTrialPersona,
+      modelOverrides,
       selectedPersonaId: selectedPersona.id,
       storedMessagesWithIncomingPrompt,
       estimatedBytesWithIncomingPrompt,

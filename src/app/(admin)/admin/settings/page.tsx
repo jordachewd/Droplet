@@ -1,7 +1,9 @@
 import PageHead from "@/components/layout/page-head";
 import { updateAdminSettingAction } from "@/lib/actions/admin.actions";
+import { PERSONAS } from "@/constants/assistant-personas";
 import { getAdminSettingsSnapshot } from "@/lib/utils/admin-queries";
 import { PlanLimits } from "@/constants/plans";
+import { PersonaId } from "@/types/PersonaData.d";
 
 interface ModelSettingsFormValue {
   liteChatModel: string;
@@ -21,6 +23,19 @@ interface ThemeSettingsFormValue {
 }
 
 type LimitsSettingsFormValue = PlanLimits;
+
+type PersonaAccessSettingsFormValue = Record<
+  "Lite" | "Pro" | "Premium",
+  PersonaId[]
+>;
+
+const PERSONA_ACCESS_KEY_BY_PLAN = {
+  Lite: "persona_access_lite",
+  Pro: "persona_access_pro",
+  Premium: "persona_access_premium",
+} as const;
+
+const VALID_PERSONA_ID_SET = new Set(PERSONAS.map((persona) => persona.id));
 
 const CHAT_MODEL_OPTIONS = [
   "gpt-4o-mini",
@@ -250,12 +265,48 @@ function normalizeThemeSettingsValue(
   };
 }
 
+function normalizePersonaAccessValue(
+  value: unknown,
+  fallback: PersonaId[],
+): PersonaId[] {
+  if (!Array.isArray(value)) {
+    return fallback;
+  }
+
+  return value.filter(
+    (entry): entry is PersonaId =>
+      typeof entry === "string" && VALID_PERSONA_ID_SET.has(entry as PersonaId),
+  );
+}
+
+function normalizePersonaAccessSettings(
+  settingsByKey: Record<string, { value: unknown }>,
+  defaults: PersonaAccessSettingsFormValue,
+): PersonaAccessSettingsFormValue {
+  return {
+    Lite: normalizePersonaAccessValue(
+      settingsByKey[PERSONA_ACCESS_KEY_BY_PLAN.Lite]?.value,
+      defaults.Lite,
+    ),
+    Pro: normalizePersonaAccessValue(
+      settingsByKey[PERSONA_ACCESS_KEY_BY_PLAN.Pro]?.value,
+      defaults.Pro,
+    ),
+    Premium: normalizePersonaAccessValue(
+      settingsByKey[PERSONA_ACCESS_KEY_BY_PLAN.Premium]?.value,
+      defaults.Premium,
+    ),
+  };
+}
+
 export default async function AdminSettingsPage() {
   const snapshot = await getAdminSettingsSnapshot();
   const modelDefaults = snapshot.defaults.models as ModelSettingsFormValue;
   const pricingDefaults = snapshot.defaults.pricing as PricingSettingsFormValue;
   const limitsDefaults = snapshot.defaults.limits as LimitsSettingsFormValue;
   const themeDefaults = snapshot.defaults.theme as ThemeSettingsFormValue;
+  const personaAccessDefaults = snapshot.defaults
+    .personaAccess as PersonaAccessSettingsFormValue;
   const modelValue = normalizeModelSettingsValue(
     snapshot.settingsByKey["admin.models"]?.value,
     modelDefaults,
@@ -272,12 +323,16 @@ export default async function AdminSettingsPage() {
     snapshot.settingsByKey["admin.theme"]?.value,
     themeDefaults,
   );
+  const personaAccessValue = normalizePersonaAccessSettings(
+    snapshot.settingsByKey as Record<string, { value: unknown }>,
+    personaAccessDefaults,
+  );
 
   return (
     <section className="AdminSettingsPage mx-auto flex w-full max-w-6xl flex-col gap-6">
       <PageHead
         title="Settings"
-        subtitle="Persist mutable operational settings for models, pricing, limits, and default theme."
+        subtitle="Persist mutable operational settings for models, pricing, limits, persona access, and default theme."
       />
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
@@ -502,6 +557,65 @@ export default async function AdminSettingsPage() {
             </button>
           </div>
         </form>
+
+        <div className="rounded-2xl border border-lightBorders-300 bg-white/70 p-5 dark:border-darkBorders-500 dark:bg-jwdMarine-900/70">
+          <h2 className="heading-6 mb-2">Persona Access</h2>
+          <p className="mb-4 text-sm opacity-70">
+            Choose which personas have full access for each plan. Unchecked
+            personas become limited trial access unless blocked elsewhere.
+          </p>
+
+          <div className="grid grid-cols-1 gap-4">
+            {(["Lite", "Pro", "Premium"] as const).map((planName) => {
+              const selectedPersonaIdSet = new Set(
+                personaAccessValue[planName],
+              );
+
+              return (
+                <form
+                  key={planName}
+                  action={updateAdminSettingAction}
+                  className="rounded-lg border border-lightBorders-300 p-3 dark:border-darkBorders-500"
+                >
+                  <input
+                    type="hidden"
+                    name="key"
+                    value={PERSONA_ACCESS_KEY_BY_PLAN[planName]}
+                  />
+                  <input type="hidden" name="category" value="features" />
+                  <fieldset>
+                    <legend className="px-1 text-sm font-semibold">
+                      {planName}
+                    </legend>
+                    <div className="mt-2 grid grid-cols-2 gap-2 md:grid-cols-3">
+                      {PERSONAS.map((persona) => (
+                        <label
+                          key={`${planName}-${persona.id}`}
+                          className="flex items-center gap-2 rounded-md border border-lightBorders-300 px-2 py-1.5 text-xs dark:border-darkBorders-500"
+                        >
+                          <input
+                            type="checkbox"
+                            name="personaIds"
+                            value={persona.id}
+                            defaultChecked={selectedPersonaIdSet.has(
+                              persona.id,
+                            )}
+                          />
+                          <span>{persona.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </fieldset>
+                  <div className="mt-3 flex justify-end">
+                    <button className="btn btn-sm btn-contained" type="submit">
+                      Save {planName} Persona Access
+                    </button>
+                  </div>
+                </form>
+              );
+            })}
+          </div>
+        </div>
 
         <form
           action={updateAdminSettingAction}

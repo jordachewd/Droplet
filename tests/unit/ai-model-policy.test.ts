@@ -126,6 +126,47 @@ describe("ai-model-policy", () => {
     });
   });
 
+  it("applies runtime model overrides for chat, image, and audio", () => {
+    const modelOverrides = {
+      chat: {
+        lite: "gpt-4.1-mini",
+      },
+      imageGenerationModel: "gpt-image-1",
+      audioGenerationModel: "gpt-audio-1.5",
+    };
+
+    expect(
+      resolveModelPolicy({
+        plan: "lite",
+        feature: "chat",
+        modelOverrides,
+      }),
+    ).toMatchObject({
+      model: "gpt-4.1-mini",
+    });
+
+    expect(
+      resolveModelPolicy({
+        plan: "pro",
+        feature: "image_generation",
+        modelOverrides,
+      }),
+    ).toMatchObject({
+      model: "gpt-image-1",
+    });
+
+    expect(
+      resolveModelPolicy({
+        plan: "premium",
+        feature: "audio_generation",
+        audioMode: "audio_in_out",
+        modelOverrides,
+      }),
+    ).toMatchObject({
+      model: "gpt-audio-1.5",
+    });
+  });
+
   it("enables Lite TTS audio and Lite/Pro video while still honoring hard budget limits", () => {
     expect(
       resolveModelPolicy({

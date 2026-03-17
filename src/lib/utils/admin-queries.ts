@@ -3,6 +3,7 @@ import {
   PLAN_LIMITS,
   PlanLimits,
 } from "@/constants/plans";
+import { DEFAULT_FULL_PERSONA_ACCESS_BY_PLAN } from "@/lib/utils/resolve-entitlements";
 import { getPersona } from "@/constants/assistant-personas";
 import { MODEL_POLICY_MATRIX } from "@/lib/utils/ai-model-policy";
 import { connectToDatabase } from "@/lib/database/mongoose";
@@ -509,6 +510,11 @@ export async function getAdminSettingsSnapshot() {
         premiumPrice: DEFAULT_PLAN_PRICING.Premium,
       },
       limits: structuredClone(PLAN_LIMITS) as PlanLimits,
+      personaAccess: {
+        Lite: [...DEFAULT_FULL_PERSONA_ACCESS_BY_PLAN.Lite],
+        Pro: [...DEFAULT_FULL_PERSONA_ACCESS_BY_PLAN.Pro],
+        Premium: [...DEFAULT_FULL_PERSONA_ACCESS_BY_PLAN.Premium],
+      },
       theme: {
         defaultMode: "light",
       },

@@ -2,7 +2,120 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-16 — PM deep audit #15. Phases 1–25.7 + 27.1–27.4 + 27.6–27.10 + 28.1 + 28.2-fix + 28.3-code + 28.3-verify + 28.4 + 28.6 + 28.7 + 30.1 + 30.2 + 30.3 + 31.1 + 31.2 + 31.3 + 31.2-fix + 32.1 + 32.2 + 32.3 + 32.6 + 33.1–33.7 + 35.1 + 37.1 + E2E regression fixes complete.
+> Last updated: 2026-03-17 — PM deep audit #20. 32.4 (Library media card components) verified DONE. Phases 1–25.7 + 27.1–27.5 + 27.6–27.10 + 28.1 + 28.2-fix + 28.3-code + 28.3-verify + 28.4 + 28.6 + 28.7 + 30.1 + 30.2 + 30.3 + 30.4 + 31.1 + 31.2 + 31.3 + 31.2-fix + 32.1 + 32.2 + 32.3 + 32.4 + 32.6 + 33.1–33.8 + 35.1 + 37.1 + 38.1–38.7 + 36.1–36.2 + 39.1 + E2E regression fixes complete.
+
+---
+
+## Phase 32.4 — Library Media Card Components — COMPLETED (2026-03-17)
+
+> PM audit #20 + Architect code audit. Verified DONE. No regressions. Full validation gateway passed.
+
+- [x] **32.4 LOW** — Refactored Library image/audio tabs from inline markup to dedicated media card components:
+  - `LibraryImageCard`: thumbnail via `resolveStoredAssetUrl()`, preview control (opens media), download control (`download=1` URL), persona metadata, task link.
+  - `LibraryAudioCard`: audio header, native `<audio controls>` with resolved source URL, download control (`download=1` URL), persona metadata, task link.
+  - Secure URL resolution through `/api/download?key=` proxy — no direct S3 URLs exposed to client.
+- [x] Unit tests: `library-tabs-media-cards.test.tsx` (2 tests) — image thumbnail source is secure/proxied, preview and download controls exist, audio element renders with secure source, audio download uses secure URL.
+- [x] Full validation gateway: prettier, lint, tsc, 341 unit tests (64 suites), 180 E2E, build — all passing.
+
+**Files changed:** `src/components/chat/library-tabs.tsx`, `tests/unit/library-tabs-media-cards.test.tsx` (new)
+
+---
+
+## Phase 39.1 — Checkout Price Bypass Fix (TD-CHECKOUT-01) — COMPLETED (2026-03-17)
+
+> PM audit #19 + Architect code audit #19. Verified DONE. Security fix complete. No residual risk.
+
+- [x] **39.1 HIGH** — Server-side price re-verification in `checkoutPlan()`:
+  - Imported `getEffectivePlanConfig()` in `transaction.action.tsx`.
+  - Effective pricing fetched server-side after auth + DB lookup, before Stripe session.
+  - Strict equality check `serverPlanPrice !== planPrice` — mismatch rejects with generic `"Unable to start checkout."` (no price leak).
+  - Stripe `unit_amount` now uses `serverPlanPrice` (server-derived), not client-submitted `planPrice`.
+  - Crafted requests submitting `price: 0` for paid plans are now rejected before Stripe session creation.
+- [x] Unit test: `checkout-plan-phase17.test.ts` — new test `"rejects checkout when client price does not match server pricing"`. Mocks `getEffectivePlanConfig`, submits Pro with price 0, asserts rejection + Stripe session NOT created.
+- [x] Full validation gateway passed: prettier, lint, tsc, 339 unit tests, 180 E2E, build.
+
+**Files changed:** `src/lib/actions/transaction.action.tsx`, `tests/unit/checkout-plan-phase17.test.ts`
+
+---
+
+## Phase 27.5 — Admin Settings: Pricing, Limits & Model Propagation — COMPLETED (2026-03-17)
+
+> PM audit #18 + Architect code audit. Verified DONE. Full propagation chain operational. TD-ADMIN-02 fully resolved.
+
+- [x] **27.5 MEDIUM-HIGH** — Admin settings pricing, limits, and model config propagation:
+  - **Model propagation:** `effective-model-config.ts` reads `AppSetting("admin.models")`, normalizes with safe defaults from `MODEL_POLICY_MATRIX`. `ModelPolicyModelOverrides` type added to `ai-model-policy.ts`. `resolveModelPolicy()` applies admin overrides for chat (per plan), image, and audio models. OpenAI route loads effective model config in parallel, constructs overrides, passes to all `generate*` utilities.
+  - **Pricing propagation:** `effective-plan-config.ts` reads `AppSetting("admin.pricing")`, returns effective pricing with fallback to `DEFAULT_PLAN_PRICING`. Plan card components (public `/plans`, authenticated `/app/plans`) call `getEffectivePlanConfig()` and pass to `buildPlans()`. Admin price change → plan cards update on next load.
+  - **Limits propagation:** `effective-plan-config.ts` reads `AppSetting("admin.limits")`, returns effective limits with fallback to `PLAN_LIMITS`. OpenAI route passes `effectivePlanLimits` to all `checkUsageLimit()` and `checkDailyConversationLimit()` calls. Admin limit change → enforcement uses new limits.
+  - All config reads use `"server-only"`, `.lean()`, `.select()`, try/catch with safe defaults.
+  - 3 parallel DB reads per AI request: plan config, persona access, model config.
+- [x] Tests: `effective-model-config.test.ts` (2 tests), `effective-plan-config.test.ts` (2 tests), `ai-model-policy.test.ts` updated with `modelOverrides` coverage.
+- [x] Unit: 338 tests passing. E2E: 180 passing, 48 skipped (explained). Build: passing.
+
+**Files changed:** `src/lib/utils/effective-model-config.ts` (new), `src/lib/utils/effective-plan-config.ts` (new), `src/lib/utils/ai-model-policy.ts`, `src/app/api/openai/route.tsx`, `src/lib/utils/openai/generateResponse.tsx`, `src/lib/utils/openai/generateTitle.tsx`, `src/lib/utils/openai/generateImage.tsx`, `src/lib/utils/openai/generateAudio.tsx`, `src/lib/utils/check-usage-limit.ts`, `src/constants/plans.tsx`, `src/app/(public)/plans/page.tsx`, `src/app/(chat)/app/plans/page.tsx`, `tests/unit/effective-model-config.test.ts` (new), `tests/unit/effective-plan-config.test.ts` (new), `tests/unit/ai-model-policy.test.ts`
+
+---
+
+## Phase 33.8 — Trial Access E2E Tests — COMPLETED (2026-03-16)
+
+> PM audit #17 + Architect code audit. Verified DONE. No regressions.
+
+- [x] **33.8 MEDIUM** — E2E tests for persona trial access flow. 4 E2E tests in `persona-trial-access.spec.ts`:
+  - Lite user trial persona selection (Teacher) starts conversation.
+  - Trial conversation stops at 5 prompts with upgrade CTA.
+  - Full-access persona (Strategist) uses plan limits (10 prompts).
+  - Persona picker shows "Trial" badge for limited personas.
+- [x] Tests use route interception with mock API handler — tests UI flow, not server-side entitlements.
+- [x] Proper cleanup in `finally` blocks for route handlers.
+
+**Files changed:** `tests/e2e/persona-trial-access.spec.ts` (new)
+
+---
+
+## Phase 30.4 — Admin Persona Access Controls — COMPLETED (2026-03-16)
+
+> PM audit #17 + Architect code audit. Verified DONE. Includes runtime propagation to all 6 call sites.
+
+- [x] **30.4 MEDIUM-HIGH** — Admin persona access controls per plan:
+  - Checkbox matrix UI in admin settings page per plan (Lite/Pro/Premium) × all 10 personas.
+  - Persists to AppSetting keys: `persona_access_lite`, `persona_access_pro`, `persona_access_premium`.
+  - New utility `effective-persona-access.ts` reads AppSetting, normalizes persona IDs against `VALID_PERSONA_ID_SET`, falls back to defaults safely.
+  - `resolveEntitlements()` extended with `fullPersonaAccessByPlan` override parameter — preserves existing behavior when no override provided (`??` fallback).
+  - All 6 runtime call sites wired: `(chat)/layout.tsx`, `app/page.tsx`, `app/new/page.tsx`, `app/personas/page.tsx`, `app/c/[conversationId]/page.tsx`, `/api/openai/route.tsx`.
+  - Admin audit log entry created on every persona access change.
+  - `revalidatePath` for `/app`, `/app/new`, `/app/personas` on setting change.
+  - Uses `.lean()` and `.select()` for DB reads. `$in` query for efficient batch read.
+- [x] `persona-card.tsx` updated with trial badge support (sky-colored "Trial" span).
+- [x] `resolve-entitlements.test.ts` updated with override coverage (admin overrides Lite personas → teacher becomes full, developer becomes limited).
+- [x] Security: proxy + layout + action-level admin auth (triple-check).
+
+**Files changed:** `src/lib/utils/effective-persona-access.ts` (new), `src/lib/utils/resolve-entitlements.tsx`, `src/app/(chat)/layout.tsx`, `src/app/(chat)/app/page.tsx`, `src/app/(chat)/app/new/page.tsx`, `src/app/(chat)/app/personas/page.tsx`, `src/app/(chat)/app/c/[conversationId]/page.tsx`, `src/app/api/openai/route.tsx`, `src/app/(admin)/admin/settings/page.tsx`, `src/lib/actions/admin.actions.tsx`, `src/lib/utils/admin-queries.ts`, `src/components/shared/persona-card.tsx`, `tests/unit/resolve-entitlements.test.ts`
+
+---
+
+## Phase 38.1–38.7 — UI Polish, Bug Fixes & Owner UI Restructure — COMPLETED (2026-03-16)
+
+> PM audit #16 + Architect code audit. All 7 tasks verified. No regressions. Full validation gateway passed.
+
+- [x] **38.1 CRITICAL** — AlertMessage stacking context fix. Removed `z-0` from ChatWrapper `<main>` element. AlertMessage `fixed z-100` now renders above ChatHeader `z-20` in all `/app` pages. Root cause eliminated.
+- [x] **38.2 HIGH** — allowedPersonaIds undefined vs empty array normalization. Both ChatWrapper and ChatHeader use strict `=== undefined` check. `undefined` → all personas; `[]` → none (blocked); `[...ids]` → exact set. Full entitlement chain verified.
+- [x] **38.3 MEDIUM** — Persona dropdown disabled when messages exist. Condition: `isConversationRoute || messageCount > 0 || taskStatus === "ended"`. Prevents mid-conversation persona switching.
+- [x] **38.4 HIGH** — Library and Personas moved from sidebar to AvatarMenu. Sidebar now has Chat Dashboard + New Conversation + recent history only. DISCOVER section removed. AvatarMenu order: Dashboard (admin) → Library → Personas → Plans → Profile → Logout.
+- [x] **38.5 HIGH** — ChatPersonaPicker removed from /app landing page. Persona selection via ChatHeader dropdown only. ChatPersonaPicker component file preserved for `/app/personas`.
+- [x] **38.6 LOW** — video_url aggregation removed from Library page. `videoItems = []` set directly. Videos tab renders "Coming Soon" with no DB query.
+- [x] **38.7 LOW** — `aria-label="Droplet home"` added to Logo `<Link>` when `iconOnly={true}`. No redundant label when full text visible.
+
+**Files changed:** `chat-wrapper.tsx`, `chat-header.tsx`, `chat-sidebar-nav-v2.tsx`, `avatar-menu.tsx`, `src/app/(chat)/app/library/page.tsx`, `app-logo.tsx`, `src/app/(chat)/app/page.tsx`, `src/app/(chat)/app/c/[conversationId]/page.tsx`, `tests/e2e/chat-app-shell.spec.ts`
+
+---
+
+## Phase 36.1–36.2 — Admin Design Consistency & Top Personas — COMPLETED (2026-03-16)
+
+> PM audit #16 + Architect code audit. Both tasks verified. Design tokens consistent with client app. Aggregation query correct.
+
+- [x] **36.1 MEDIUM** — Admin panel design aligned with client app design system. Header, sidebar, dashboard cards, and usage page all use matching border/bg/backdrop tokens (`border-lightBorders-300/70`, `bg-lightBackground-100/85`, `backdrop-blur-lg`, dark mode equivalents). Visual consistency verified across admin and client surfaces.
+- [x] **36.2 MEDIUM** — "Top Personas" stat box added to admin Usage page. UsageEvent aggregation: `$group` by personaId, `$sort` descending, `$limit` 5. Labels resolved via `getPersona()`. Percentage calculated against total events. Empty state handled.
+
+**Files changed:** `admin-layout-shell.tsx`, `admin-sidebar.tsx`, `src/app/(admin)/admin/page.tsx`, `src/app/(admin)/admin/usage/page.tsx`, `admin-queries.ts`, `tests/e2e/admin-features.spec.ts`
 
 ---
 

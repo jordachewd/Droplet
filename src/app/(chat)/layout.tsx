@@ -2,6 +2,7 @@ import ChatSidebar from "@/components/chat/chat-sidebar";
 import ChatHeader from "@/components/chat/chat-header";
 import PageWrapper from "@/components/layout/page-wrapper";
 import { auth } from "@clerk/nextjs/server";
+import { getEffectivePersonaAccessByPlan } from "@/lib/utils/effective-persona-access";
 import { ensureUserSynced } from "@/lib/utils/ensure-user-synced";
 import { resolveEntitlements } from "@/lib/utils/resolve-entitlements";
 
@@ -14,7 +15,10 @@ export default async function ChatRouteLayout({
 }: ChatRouteLayoutProps) {
   const { userId } = await auth();
   const userData = userId ? await ensureUserSynced(userId) : null;
-  const entitlements = resolveEntitlements(userData?.plan?.name ?? "Lite");
+  const fullPersonaAccessByPlan = await getEffectivePersonaAccessByPlan();
+  const entitlements = resolveEntitlements(userData?.plan?.name ?? "Lite", {
+    fullPersonaAccessByPlan,
+  });
 
   return (
     <PageWrapper

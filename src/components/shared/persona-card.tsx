@@ -7,6 +7,7 @@ interface PersonaCardProps {
   href?: string;
   compact?: boolean;
   locked?: boolean;
+  trial?: boolean;
 }
 
 export default function PersonaCard({
@@ -14,6 +15,7 @@ export default function PersonaCard({
   href,
   compact = false,
   locked = false,
+  trial = false,
 }: PersonaCardProps) {
   const cardClass = classNames(
     "PersonaCard flex h-full flex-col rounded-xl border p-4 transition-all duration-300",
@@ -50,6 +52,11 @@ export default function PersonaCard({
               Locked
             </span>
           )}
+          {!locked && trial && (
+            <span className="rounded-full border border-sky-400/60 bg-sky-100 px-2 py-1 text-xxs font-semibold uppercase tracking-wide text-sky-900 dark:bg-sky-500/20 dark:text-sky-200">
+              Trial
+            </span>
+          )}
         </div>
       </div>
 
@@ -58,6 +65,11 @@ export default function PersonaCard({
       {locked && (
         <p className="text-xs font-medium text-amber-700 dark:text-amber-300">
           Upgrade your plan to unlock this persona.
+        </p>
+      )}
+      {!locked && trial && (
+        <p className="text-xs font-medium text-sky-700 dark:text-sky-300">
+          Trial access with reduced limits. Upgrade to unlock full access.
         </p>
       )}
 

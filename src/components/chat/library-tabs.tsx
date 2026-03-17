@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import classNames from "classnames";
 import LibraryDeleteButton from "@/components/chat/library-delete-button";
+import { resolveStoredAssetUrl } from "@/lib/utils/aws/s3-file-reference";
 
 export interface LibraryConversationCardItem {
   id: string;
@@ -177,38 +178,10 @@ export default function LibraryTabs({
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {images.map((item) => (
-              <article
+              <LibraryImageCard
                 key={`${item.taskId}-${item.url}`}
-                className={classNames(
-                  "overflow-hidden rounded-xl border",
-                  "border-lightBorders-400 bg-white/80",
-                  "dark:border-darkBorders-500 dark:bg-jwdMarine-900/80",
-                )}
-              >
-                <Image
-                  src={item.url}
-                  alt={`Generated image from ${item.taskTitle}`}
-                  width={720}
-                  height={480}
-                  unoptimized
-                  className="h-48 w-full object-cover"
-                />
-                <div className="space-y-2 p-3">
-                  <Link
-                    href={item.href}
-                    className="line-clamp-1 text-sm font-semibold hover:underline"
-                  >
-                    {item.taskTitle}
-                  </Link>
-                  <div className="flex items-center justify-between text-xs opacity-80">
-                    <span className="inline-flex items-center gap-1.5">
-                      <i className={item.personaIcon}></i>
-                      {item.personaLabel}
-                    </span>
-                    <span>{item.createdAtLabel}</span>
-                  </div>
-                </div>
-              </article>
+                item={item}
+              />
             ))}
           </div>
         )}
@@ -233,36 +206,10 @@ export default function LibraryTabs({
         ) : (
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             {audios.map((item) => (
-              <article
+              <LibraryAudioCard
                 key={`${item.taskId}-${item.url}`}
-                className={classNames(
-                  "rounded-xl border p-4",
-                  "border-lightBorders-400 bg-white/80",
-                  "dark:border-darkBorders-500 dark:bg-jwdMarine-900/80",
-                )}
-              >
-                <Link
-                  href={item.href}
-                  className="mb-3 line-clamp-1 block text-sm font-semibold hover:underline"
-                >
-                  {item.taskTitle}
-                </Link>
-                <audio
-                  controls
-                  src={item.url}
-                  className="w-full"
-                  preload="none"
-                >
-                  Your browser does not support the audio player.
-                </audio>
-                <div className="mt-3 flex items-center justify-between text-xs opacity-80">
-                  <span className="inline-flex items-center gap-1.5">
-                    <i className={item.personaIcon}></i>
-                    {item.personaLabel}
-                  </span>
-                  <span>{item.createdAtLabel}</span>
-                </div>
-              </article>
+                item={item}
+              />
             ))}
           </div>
         )}
@@ -287,6 +234,145 @@ export default function LibraryTabs({
         )}
       </section>
     </section>
+  );
+}
+
+function LibraryImageCard({ item }: { item: LibraryMediaCardItem }) {
+  const resolvedImageUrl = resolveStoredAssetUrl(item.url);
+  const downloadImageUrl = resolveStoredAssetUrl(item.url, { download: true });
+
+  return (
+    <article
+      className={classNames(
+        "LibraryImageCard overflow-hidden rounded-xl border",
+        "border-lightBorders-400 bg-white/80",
+        "dark:border-darkBorders-500 dark:bg-jwdMarine-900/80",
+      )}
+    >
+      <Link href={item.href} className="block">
+        <Image
+          src={resolvedImageUrl}
+          alt={`Generated image from ${item.taskTitle}`}
+          width={720}
+          height={480}
+          unoptimized
+          className="h-48 w-full object-cover"
+        />
+      </Link>
+
+      <div className="space-y-3 p-3">
+        <Link
+          href={item.href}
+          className="line-clamp-1 text-sm font-semibold hover:underline"
+        >
+          {item.taskTitle}
+        </Link>
+
+        <div className="flex items-center justify-between text-xs opacity-80">
+          <span className="inline-flex items-center gap-1.5">
+            <i className={item.personaIcon}></i>
+            {item.personaLabel}
+          </span>
+          <span>{item.createdAtLabel}</span>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <a
+            href={resolvedImageUrl}
+            target="_blank"
+            rel="noreferrer"
+            className={classNames(
+              "inline-flex items-center gap-1 rounded-md border px-2.5 py-1.5 text-xs font-medium transition-all",
+              "border-lightBorders-400 hover:bg-lightSecondary-300/70",
+              "dark:border-darkBorders-500 dark:hover:bg-darkSecondary-500/30",
+            )}
+          >
+            <i className="bi bi-arrows-fullscreen"></i>
+            Preview
+          </a>
+
+          <a
+            href={downloadImageUrl}
+            className={classNames(
+              "inline-flex items-center gap-1 rounded-md border px-2.5 py-1.5 text-xs font-medium transition-all",
+              "border-lightBorders-400 hover:bg-lightSecondary-300/70",
+              "dark:border-darkBorders-500 dark:hover:bg-darkSecondary-500/30",
+            )}
+          >
+            <i className="bi bi-download"></i>
+            Download
+          </a>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function LibraryAudioCard({ item }: { item: LibraryMediaCardItem }) {
+  const resolvedAudioUrl = resolveStoredAssetUrl(item.url);
+  const downloadAudioUrl = resolveStoredAssetUrl(item.url, { download: true });
+
+  return (
+    <article
+      className={classNames(
+        "LibraryAudioCard rounded-xl border p-4",
+        "border-lightBorders-400 bg-white/80",
+        "dark:border-darkBorders-500 dark:bg-jwdMarine-900/80",
+      )}
+    >
+      <div
+        className={classNames(
+          "mb-3 flex h-20 items-center justify-between rounded-lg border px-3",
+          "border-lightBorders-400 bg-lightSecondary-300/40",
+          "dark:border-darkBorders-500 dark:bg-darkSecondary-500/20",
+        )}
+      >
+        <span className="inline-flex items-center gap-2 text-sm font-medium">
+          <i className="bi bi-mic-fill"></i>
+          Audio generation
+        </span>
+
+        <span className="inline-flex items-end gap-1" aria-hidden>
+          <span className="h-3 w-1 rounded-full bg-current opacity-50"></span>
+          <span className="h-5 w-1 rounded-full bg-current opacity-70"></span>
+          <span className="h-7 w-1 rounded-full bg-current opacity-90"></span>
+          <span className="h-4 w-1 rounded-full bg-current opacity-60"></span>
+        </span>
+      </div>
+
+      <Link
+        href={item.href}
+        className="mb-3 line-clamp-1 block text-sm font-semibold hover:underline"
+      >
+        {item.taskTitle}
+      </Link>
+
+      <audio controls src={resolvedAudioUrl} className="w-full" preload="none">
+        Your browser does not support the audio player.
+      </audio>
+
+      <div className="mt-3 flex items-center justify-between text-xs opacity-80">
+        <span className="inline-flex items-center gap-1.5">
+          <i className={item.personaIcon}></i>
+          {item.personaLabel}
+        </span>
+        <span>{item.createdAtLabel}</span>
+      </div>
+
+      <div className="mt-3 flex items-center gap-2">
+        <a
+          href={downloadAudioUrl}
+          className={classNames(
+            "inline-flex items-center gap-1 rounded-md border px-2.5 py-1.5 text-xs font-medium transition-all",
+            "border-lightBorders-400 hover:bg-lightSecondary-300/70",
+            "dark:border-darkBorders-500 dark:hover:bg-darkSecondary-500/30",
+          )}
+        >
+          <i className="bi bi-download"></i>
+          Download
+        </a>
+      </div>
+    </article>
   );
 }
 

@@ -6,6 +6,7 @@ import { ChatCompletionMessageParam } from "openai/resources/chat/completions.mj
 import { handleError } from "@/lib/utils/handleError";
 import { filterAssistantMsg } from "./filterAssistantMsg";
 import {
+  ModelPolicyModelOverrides,
   normalizePlanTier,
   resolveModelPolicy,
 } from "@/lib/utils/ai-model-policy";
@@ -16,6 +17,7 @@ export async function generateTitle(
   messages: Message[],
   planName: PlanName,
   personaId?: string | null,
+  modelOverrides?: ModelPolicyModelOverrides,
 ) {
   try {
     const persona = getPersona(personaId);
@@ -23,6 +25,7 @@ export async function generateTitle(
       plan: normalizePlanTier(planName),
       feature: "title_generation",
       taskClass: "utility",
+      modelOverrides,
     });
 
     if (policy.hardBlocked) {

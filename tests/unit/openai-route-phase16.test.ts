@@ -221,6 +221,13 @@ describe("POST /api/openai phase16", () => {
       [{ role: "user", whois: "user", content: "new chat" }],
       "Lite",
       "strategist",
+      expect.objectContaining({
+        chat: expect.objectContaining({
+          lite: expect.any(String),
+          pro: expect.any(String),
+          premium: expect.any(String),
+        }),
+      }),
     );
     expect(generateResponse).toHaveBeenCalledWith(
       expect.objectContaining({

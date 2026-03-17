@@ -16,6 +16,7 @@ import { Entitlements } from "@/lib/utils/resolve-entitlements";
 import { APIError } from "openai";
 import {
   BudgetState,
+  ModelPolicyModelOverrides,
   TaskClass,
   normalizePlanTier,
   resolveModelPolicy,
@@ -36,6 +37,7 @@ interface GenerateResponseParams {
   retryAttempt?: number;
   highLatency?: boolean;
   explicitPremium?: boolean;
+  modelOverrides?: ModelPolicyModelOverrides;
   claimMediaGenerationSlot?: (params: {
     limitType: "images" | "audio";
   }) => Promise<{ claimed: boolean }>;
@@ -268,6 +270,7 @@ function resolveFeaturePolicy({
   retryAttempt,
   highLatency,
   explicitPremium,
+  modelOverrides,
 }: {
   planName: PlanName;
   feature: "chat" | "image_generation";
@@ -276,6 +279,7 @@ function resolveFeaturePolicy({
   retryAttempt?: number;
   highLatency?: boolean;
   explicitPremium?: boolean;
+  modelOverrides?: ModelPolicyModelOverrides;
 }): ResolvedModelPolicy;
 function resolveFeaturePolicy({
   planName,
@@ -286,6 +290,7 @@ function resolveFeaturePolicy({
   highLatency,
   explicitPremium,
   audioMode,
+  modelOverrides,
 }: {
   planName: PlanName;
   feature: "audio_generation";
@@ -295,6 +300,7 @@ function resolveFeaturePolicy({
   highLatency?: boolean;
   explicitPremium?: boolean;
   audioMode: "tts" | "audio_in_out";
+  modelOverrides?: ModelPolicyModelOverrides;
 }): ResolvedModelPolicy;
 function resolveFeaturePolicy({
   planName,
@@ -305,6 +311,7 @@ function resolveFeaturePolicy({
   highLatency,
   explicitPremium,
   audioMode,
+  modelOverrides,
 }: {
   planName: PlanName;
   feature: "chat" | "image_generation" | "audio_generation";
@@ -314,6 +321,7 @@ function resolveFeaturePolicy({
   highLatency?: boolean;
   explicitPremium?: boolean;
   audioMode?: "tts" | "audio_in_out";
+  modelOverrides?: ModelPolicyModelOverrides;
 }): ResolvedModelPolicy {
   return resolveModelPolicy({
     plan: normalizePlanTier(planName),
@@ -324,6 +332,7 @@ function resolveFeaturePolicy({
     highLatency,
     explicitPremium,
     audioMode,
+    modelOverrides,
   });
 }
 
@@ -359,6 +368,7 @@ async function buildOpenAIResponsePayload({
   userId,
   planName,
   entitlements,
+  modelOverrides,
   claimMediaGenerationSlot,
   rollbackMediaGenerationSlot,
 }: {
@@ -379,6 +389,7 @@ async function buildOpenAIResponsePayload({
   userId: string;
   planName: PlanName;
   entitlements: Entitlements;
+  modelOverrides?: ModelPolicyModelOverrides;
   claimMediaGenerationSlot?: (params: {
     limitType: "images" | "audio";
   }) => Promise<{ claimed: boolean }>;
@@ -404,6 +415,7 @@ async function buildOpenAIResponsePayload({
         planName,
         feature: "image_generation",
         taskClass: "final",
+        modelOverrides,
       });
 
       if (!entitlements.supportsImageGeneration || imagePolicy.hardBlocked) {
@@ -463,6 +475,7 @@ async function buildOpenAIResponsePayload({
           taskId,
           userId,
           planName,
+          modelOverrides,
         });
         const imagePayload = JSON.parse(imageResponse as string) as {
           taskData?: Message;
@@ -514,6 +527,7 @@ async function buildOpenAIResponsePayload({
         feature: "audio_generation",
         taskClass: "final",
         audioMode: "tts",
+        modelOverrides,
       });
 
       if (!entitlements.supportsAudioGeneration || audioPolicy.hardBlocked) {
@@ -576,6 +590,7 @@ async function buildOpenAIResponsePayload({
           userId,
           planName,
           audioMode: "tts",
+          modelOverrides,
         });
         const audioPayload = JSON.parse(audioResponse as string) as {
           taskData?: Message;
@@ -695,6 +710,7 @@ async function runChatCompletion({
   retryAttempt = 0,
   highLatency = false,
   explicitPremium = false,
+  modelOverrides,
   claimMediaGenerationSlot,
   rollbackMediaGenerationSlot,
   requestMetrics,
@@ -710,6 +726,7 @@ async function runChatCompletion({
     retryAttempt,
     highLatency,
     explicitPremium,
+    modelOverrides,
   });
 
   if (chatPolicy.hardBlocked) {
@@ -771,6 +788,7 @@ async function runChatCompletion({
     userId,
     planName,
     entitlements,
+    modelOverrides,
     claimMediaGenerationSlot,
     rollbackMediaGenerationSlot,
   });
@@ -788,6 +806,7 @@ async function runStreamingChatCompletion({
   retryAttempt = 0,
   highLatency = false,
   explicitPremium = false,
+  modelOverrides,
   claimMediaGenerationSlot,
   rollbackMediaGenerationSlot,
   abortSignal,
@@ -805,6 +824,7 @@ async function runStreamingChatCompletion({
     retryAttempt,
     highLatency,
     explicitPremium,
+    modelOverrides,
   });
 
   if (chatPolicy.hardBlocked) {
@@ -875,6 +895,7 @@ async function runStreamingChatCompletion({
     userId,
     planName,
     entitlements,
+    modelOverrides,
     claimMediaGenerationSlot,
     rollbackMediaGenerationSlot,
   });
@@ -892,6 +913,7 @@ export async function generateResponse({
   retryAttempt = 0,
   highLatency = false,
   explicitPremium = false,
+  modelOverrides,
   claimMediaGenerationSlot,
   rollbackMediaGenerationSlot,
 }: GenerateResponseParams) {
@@ -910,6 +932,7 @@ export async function generateResponse({
           retryAttempt: nextRetryAttempt,
           highLatency,
           explicitPremium,
+          modelOverrides,
         }).model,
       execute: (resolvedRetryAttempt) =>
         runChatCompletion({
@@ -924,6 +947,7 @@ export async function generateResponse({
           retryAttempt: resolvedRetryAttempt,
           highLatency,
           explicitPremium,
+          modelOverrides,
           claimMediaGenerationSlot,
           rollbackMediaGenerationSlot,
           requestMetrics,
@@ -951,6 +975,7 @@ export async function generateStreamingResponse({
   retryAttempt = 0,
   highLatency = false,
   explicitPremium = false,
+  modelOverrides,
   claimMediaGenerationSlot,
   rollbackMediaGenerationSlot,
   abortSignal,
@@ -972,6 +997,7 @@ export async function generateStreamingResponse({
           retryAttempt: nextRetryAttempt,
           highLatency,
           explicitPremium,
+          modelOverrides,
         }).model,
       shouldRetry: () => !didEmitContent,
       execute: (resolvedRetryAttempt) =>
@@ -987,6 +1013,7 @@ export async function generateStreamingResponse({
           retryAttempt: resolvedRetryAttempt,
           highLatency,
           explicitPremium,
+          modelOverrides,
           claimMediaGenerationSlot,
           rollbackMediaGenerationSlot,
           abortSignal,
