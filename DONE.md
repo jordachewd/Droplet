@@ -2,7 +2,17 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-17 — PM deep audit #24. Phases 34.9a-e, 48.1, 49.1-49.5 archived. All Phases 1–49.5 complete. All Milestones 0–18 COMPLETED.
+> Last updated: 2026-03-17 — PM deep audit #24. Phase 51.1 archived. All Phases 1–51.1 complete. All Milestones 0–18 COMPLETED.
+
+---
+
+## Phase 51.1 — Video Generation Prompt Fix — COMPLETED (2026-03-17)
+
+> PM audit #24 CRITICAL finding. Triple-audit confirmed root cause: persona system prompts had zero references to video/image/audio tool capabilities. Model defaulted to training data and refused video requests.
+
+- [x] **51.1 CRITICAL** — Added media-tool awareness to `CHAT_PLATFORM_PROMPT` in `persona-prompts.ts`. Platform prompt now explicitly states the model has access to tools for generating images, audio, and video. All persona system prompts inherit this via the shared platform prompt. Root cause of owner-reported "unable to create videos" bug resolved.
+
+**Files changed:** `src/constants/persona-prompts.ts`
 
 ---
 

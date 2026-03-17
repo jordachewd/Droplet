@@ -5,40 +5,11 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: All Milestones 0–18 COMPLETE. Phases 1–49.5 complete. 365 unit tests passing (65 suites). Build passing.**
-> **PM deep audit #24 (2026-03-17): Full triple-audit (PM + Architect + Engineer). All prior phases verified COMPLETE.**
-> **OWNER INSTRUCTIONS (latest, 2026-03-17): Video generation prompt gap (CRITICAL), admin tabbed sections (HIGH), admin video model override (MEDIUM), admin error boundary (LOW).**
-> **Priority order: 51.1 → 52.1 → 52.2 → 50.1 → 46.1 → 46.2 → 31.4 → 29.x → 26.x**
+> **STATUS: All Milestones 0–18 COMPLETE. Phases 1–51.1 complete. 365 unit tests passing (65 suites). Build passing.**
+> **PM deep audit #24 (2026-03-17): Full triple-audit (PM + Architect + Engineer). Phase 51.1 COMPLETED (video prompt fix).**
+> **OWNER INSTRUCTIONS (latest, 2026-03-17): Admin tabbed sections (HIGH), admin video model override (MEDIUM), admin error boundary (LOW).**
+> **Priority order: 52.1 → 52.2 → 50.1 → 46.1 → 46.2 → 31.4 → 29.x → 26.x**
 > **All Phase 26+ deferred work is ON HOLD until PM-approved.**
-
----
-
-## Phase 51: Video Generation Prompt Fix — CRITICAL (PM Audit #24)
-
-> **CRITICAL priority. PM audit #24 triple-audit finding (confirmed by all 3 agents independently): persona system prompts contain ZERO references to video generation capability. The AI model does not know it can generate video. This is the root cause of the owner-reported bug: "I can generate audio or images, but I'm currently unable to create or generate videos."**
-> **The video tool (`getGeneratedVideo`) IS correctly registered in `getChatTools()`. The backend handler IS correct. But the model's own knowledge says video generation is not possible, and no system prompt overrides this. The model chooses NOT to invoke the video tool.**
-
----
-
-### 51.1 CRITICAL — Add video generation capability to persona system prompts
-
-**Ref:** PM audit #24 — Owner reported: "Video generation returns 'I can generate audio or images, but I'm currently unable to create or generate videos'" in some cases. Root cause: `src/constants/persona-prompts.ts` has zero mentions of "video" in any persona prompt. The model defaults to its training knowledge (no video capability) and refuses to call the registered video tool.
-
-**Files:** `src/constants/persona-prompts.ts`
-
-**What to do:**
-
-1. Add video generation capability instruction to `CHAT_PLATFORM_PROMPT` (the shared platform-level instruction that all personas receive). Example: "You have access to tools for generating images, audio, and video. When the user asks for any of these, use the appropriate tool."
-2. This is the same pattern used for image and audio — the model needs to know it has the capability via system prompt, not just via tool registration.
-3. Do NOT add per-persona video instructions — the platform prompt covers all personas equally.
-
-**Acceptance criteria:**
-
-- [ ] `CHAT_PLATFORM_PROMPT` mentions image, audio, AND video generation capabilities
-- [ ] All persona system prompts inherit video awareness via the shared platform prompt
-- [ ] Model invokes `getGeneratedVideo` tool when user requests video
-- [ ] `npx tsc --noEmit` passes
-- [ ] All tests pass
 
 ---
 

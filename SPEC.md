@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-17 (PM audit #23. Video generation IMPLEMENTED � Phase 34 complete. `sora-2` / `sora-2-pro` operational. Phase 34.9 quality fixes COMPLETE. Currency configurability IMPLEMENTED (Phase 48.1). 365 unit tests (65 suites), 174 E2E passing, 6 E2E failed (pre-existing timeout/navigation).)
+> Last updated: 2026-03-17 (PM audit #24. Video generation IMPLEMENTED — Phase 34 complete + Phase 51.1 prompt fix COMPLETE. `sora-2` / `sora-2-pro` operational. Phase 34.9 quality fixes COMPLETE. Currency configurability IMPLEMENTED (Phase 48.1). 365 unit tests (65 suites). Build passing.)
 
 ---
 
@@ -36,7 +36,7 @@ The product monetises through tiered subscription plans paid via Stripe.
 - Image upload support
 - Image generation (all tiers, with enforced usage limits)
 - Audio generation (all tiers, with enforced usage limits)
-- Video generation (all tiers, with enforced usage limits — **Phase 34 COMPLETE, Phase 34.9 quality fixes COMPLETE**). `sora-2` and `sora-2-pro` operational. Async job model: create → poll → download MP4 → upload to S3. Duration: 4s default. `supportsVideoGeneration` is `true` for all non-suspended plans. **Known gap (Phase 51.1):** persona system prompts lack video generation awareness — model may not invoke video tool without explicit system prompt instruction.
+- Video generation (all tiers, with enforced usage limits — **Phase 34 COMPLETE, Phase 34.9 quality fixes COMPLETE, Phase 51.1 prompt fix COMPLETE**). `sora-2` and `sora-2-pro` operational. Async job model: create → poll → download MP4 → upload to S3. Duration: 4s default. `supportsVideoGeneration` is `true` for all non-suspended plans. Platform prompt includes media-tool awareness.
 - Account-required access � no anonymous usage
 - Authenticated `/app` experience with persona-led UX
 - Real conversation history (list, resume, delete)
@@ -602,7 +602,7 @@ All auth/limit checks execute before streaming begins. Final task persistence an
 - **TD-AI-09**: Image/audio generation prompts not yet persona-aware. Chat prompts are fully persona-aware (Phase 22). Tracked as Phase 26.1.
 - **TD-AI-13**: 5 model pricing entries in `ai-model-policy.ts` are placeholders pending OpenAI confirmation (`gpt-audio-mini`, `gpt-audio-1.5`, `gpt-4o-mini-tts`, `sora-2`, `sora-2-pro`).
 - **TD-AI-18** (advisory): OpenAI route `errorMessage` forwarding pattern is safe today but fragile — if any future code sets `aiPayload.errorMessage` to a raw OpenAI error, it will leak to clients. Consider always using generic constants.
-- **TD-AI-25** (CRITICAL): Persona system prompts contain zero references to video generation capability. The AI model does not know it can generate video via the registered `getGeneratedVideo` tool. The model defaults to its training knowledge and refuses video requests. **Root cause of owner-reported "unable to create videos" bug.** Fix: add video awareness to `CHAT_PLATFORM_PROMPT` in `persona-prompts.ts`. Tracked as Phase 51.1.
+- **TD-AI-25**: ~~Persona system prompts had zero video generation awareness~~ — **RESOLVED (Phase 51.1)**: `CHAT_PLATFORM_PROMPT` updated to include explicit media-tool awareness (images, audio, video). Model now knows it can invoke `getGeneratedVideo` tool.
 
 ---
 
@@ -737,11 +737,11 @@ All file handling technical debt has been resolved. S3 cleanup on task/user dele
 
 ## 15. Technical Debt Summary
 
-### Active — Critical Priority
+### ~~Active — Critical Priority~~ (All Resolved — Phase 51.1)
 
-| ID       | Area   | Description                                                                                                                                                                     | Severity |
-| -------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| TD-AI-25 | OpenAI | Persona system prompts have zero video generation awareness. Model refuses video requests. Root cause of owner bug report. Fix: add video capability to `CHAT_PLATFORM_PROMPT`. | Critical |
+| ID       | Area   | Description                                                                                                                                                                                     | Severity              |
+| -------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------- |
+| TD-AI-25 | OpenAI | ~~Persona system prompts have zero video generation awareness~~ — **RESOLVED (Phase 51.1)**: `CHAT_PLATFORM_PROMPT` updated with media-tool awareness. Model now invokes video tool on request. | ~~Critical~~ Resolved |
 
 ### ~~Active � Critical Priority~~ (All Resolved)
 
