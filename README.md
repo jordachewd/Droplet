@@ -89,7 +89,7 @@ Create a free account and start chatting today. Upgrade anytime — no commitmen
 
 ## Get Started
 
-Visit [Droplet](https://dropletai.com) to create your free account and start chatting today.
+Visit [Droplet](https://droplet.jwd-apps.com) to create your free account and start chatting today.
 
 ---
 
