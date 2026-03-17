@@ -31,19 +31,33 @@ interface LibraryTabsProps {
   images: LibraryMediaCardItem[];
   audios: LibraryMediaCardItem[];
   videos: LibraryMediaCardItem[];
+  initialTabId?: LibraryTabId;
+  conversationsPagination: LibraryPaginationState;
+  imagesPagination: LibraryPaginationState;
+  audiosPagination: LibraryPaginationState;
   hasLoadError?: boolean;
 }
 
 type LibraryTabId = "chats" | "images" | "audios" | "videos";
+
+interface LibraryPaginationState {
+  currentPage: number;
+  hasPreviousPage: boolean;
+  hasNextPage: boolean;
+}
 
 export default function LibraryTabs({
   conversations,
   images,
   audios,
   videos,
+  initialTabId = "chats",
+  conversationsPagination,
+  imagesPagination,
+  audiosPagination,
   hasLoadError = false,
 }: LibraryTabsProps) {
-  const [activeTabId, setActiveTabId] = useState<LibraryTabId>("chats");
+  const [activeTabId, setActiveTabId] = useState<LibraryTabId>(initialTabId);
 
   const tabs = useMemo(
     () => [
@@ -115,47 +129,54 @@ export default function LibraryTabs({
             ctaLabel="Start a conversation"
           />
         ) : (
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-            {conversations.map((conversation) => (
-              <article
-                key={conversation.id}
-                className={classNames(
-                  "flex items-start gap-3 rounded-xl border p-4 transition-all duration-300",
-                  "border-lightBorders-400 bg-white/70 shadow-sm",
-                  "dark:border-darkBorders-500 dark:bg-jwdMarine-900/70",
-                )}
-              >
-                <Link
-                  href={conversation.href}
+          <>
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+              {conversations.map((conversation) => (
+                <article
+                  key={conversation.id}
                   className={classNames(
-                    "min-w-0 flex-1 rounded-lg transition-all duration-300",
-                    "hover:-translate-y-0.5 hover:shadow-md",
+                    "flex items-start gap-3 rounded-xl border p-4 transition-all duration-300",
+                    "border-lightBorders-400 bg-white/70 shadow-sm",
+                    "dark:border-darkBorders-500 dark:bg-jwdMarine-900/70",
                   )}
                 >
-                  <div className="mb-2 flex items-center gap-3">
-                    <h2 className="heading-6 truncate text-lg">
-                      {conversation.title}
-                    </h2>
-                  </div>
+                  <Link
+                    href={conversation.href}
+                    className={classNames(
+                      "min-w-0 flex-1 rounded-lg transition-all duration-300",
+                      "hover:-translate-y-0.5 hover:shadow-md",
+                    )}
+                  >
+                    <div className="mb-2 flex items-center gap-3">
+                      <h2 className="heading-6 truncate text-lg">
+                        {conversation.title}
+                      </h2>
+                    </div>
 
-                  <div className="flex items-center justify-between gap-3 text-sm opacity-80">
-                    <span className="inline-flex items-center gap-2">
-                      <i className={conversation.personaIcon}></i>
-                      {conversation.personaLabel}
-                    </span>
-                    <span className="shrink-0">
-                      {conversation.updatedAtLabel}
-                    </span>
-                  </div>
-                </Link>
+                    <div className="flex items-center justify-between gap-3 text-sm opacity-80">
+                      <span className="inline-flex items-center gap-2">
+                        <i className={conversation.personaIcon}></i>
+                        {conversation.personaLabel}
+                      </span>
+                      <span className="shrink-0">
+                        {conversation.updatedAtLabel}
+                      </span>
+                    </div>
+                  </Link>
 
-                <LibraryDeleteButton
-                  conversationId={conversation.id}
-                  conversationTitle={conversation.title}
-                />
-              </article>
-            ))}
-          </div>
+                  <LibraryDeleteButton
+                    conversationId={conversation.id}
+                    conversationTitle={conversation.title}
+                  />
+                </article>
+              ))}
+            </div>
+
+            <LibraryPagination
+              tabId="chats"
+              pagination={conversationsPagination}
+            />
+          </>
         )}
       </section>
 
@@ -176,14 +197,18 @@ export default function LibraryTabs({
             text="Image generations will appear here with conversation context."
           />
         ) : (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {images.map((item) => (
-              <LibraryImageCard
-                key={`${item.taskId}-${item.url}`}
-                item={item}
-              />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {images.map((item) => (
+                <LibraryImageCard
+                  key={`${item.taskId}-${item.url}`}
+                  item={item}
+                />
+              ))}
+            </div>
+
+            <LibraryPagination tabId="images" pagination={imagesPagination} />
+          </>
         )}
       </section>
 
@@ -204,14 +229,18 @@ export default function LibraryTabs({
             text="Audio generations will appear here with quick playback controls."
           />
         ) : (
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-            {audios.map((item) => (
-              <LibraryAudioCard
-                key={`${item.taskId}-${item.url}`}
-                item={item}
-              />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+              {audios.map((item) => (
+                <LibraryAudioCard
+                  key={`${item.taskId}-${item.url}`}
+                  item={item}
+                />
+              ))}
+            </div>
+
+            <LibraryPagination tabId="audios" pagination={audiosPagination} />
+          </>
         )}
       </section>
 
@@ -410,5 +439,91 @@ function EmptyState({
         </Link>
       )}
     </article>
+  );
+}
+
+function LibraryPagination({
+  tabId,
+  pagination,
+}: {
+  tabId: Extract<LibraryTabId, "chats" | "images" | "audios">;
+  pagination: LibraryPaginationState;
+}) {
+  if (!pagination.hasPreviousPage && !pagination.hasNextPage) {
+    return null;
+  }
+
+  const pageParamByTab = {
+    chats: "chatsPage",
+    images: "imagesPage",
+    audios: "audiosPage",
+  } as const;
+
+  const pageParamName = pageParamByTab[tabId];
+
+  const buildHref = (nextPage: number): string => {
+    const params = new URLSearchParams({
+      tab: tabId,
+      [pageParamName]: String(nextPage),
+    });
+
+    return `/app/library?${params.toString()}`;
+  };
+
+  return (
+    <nav
+      aria-label={`${tabId} pagination`}
+      className="mt-4 flex items-center justify-end gap-2"
+    >
+      {pagination.hasPreviousPage ? (
+        <Link
+          href={buildHref(pagination.currentPage - 1)}
+          className={classNames(
+            "rounded-lg border px-3 py-1.5 text-sm font-medium transition-all",
+            "border-lightBorders-400 bg-white/80 hover:bg-lightSecondary-300/70",
+            "dark:border-darkBorders-500 dark:bg-jwdMarine-900/80 dark:hover:bg-darkSecondary-500/30",
+          )}
+        >
+          Previous
+        </Link>
+      ) : (
+        <span
+          className={classNames(
+            "rounded-lg border px-3 py-1.5 text-sm font-medium opacity-50",
+            "border-lightBorders-400 dark:border-darkBorders-500",
+          )}
+          aria-hidden
+        >
+          Previous
+        </span>
+      )}
+
+      <span className="px-2 text-sm opacity-80">
+        Page {pagination.currentPage}
+      </span>
+
+      {pagination.hasNextPage ? (
+        <Link
+          href={buildHref(pagination.currentPage + 1)}
+          className={classNames(
+            "rounded-lg border px-3 py-1.5 text-sm font-medium transition-all",
+            "border-lightBorders-400 bg-white/80 hover:bg-lightSecondary-300/70",
+            "dark:border-darkBorders-500 dark:bg-jwdMarine-900/80 dark:hover:bg-darkSecondary-500/30",
+          )}
+        >
+          Next
+        </Link>
+      ) : (
+        <span
+          className={classNames(
+            "rounded-lg border px-3 py-1.5 text-sm font-medium opacity-50",
+            "border-lightBorders-400 dark:border-darkBorders-500",
+          )}
+          aria-hidden
+        >
+          Next
+        </span>
+      )}
+    </nav>
   );
 }

@@ -142,12 +142,17 @@ function toPlainMessages(messages: unknown): Message[] {
 export async function getRecentTasksByUserId(
   userId: string,
   limit: number = 8,
+  offset: number = 0,
 ): Promise<TaskHistoryItem[]> {
   await connectToDatabase();
 
+  const safeLimit = Math.max(1, Math.min(limit, 100));
+  const safeOffset = Math.max(0, offset);
+
   const tasks = (await Task.find({ userId })
     .sort({ updatedAt: -1 })
-    .limit(limit)
+    .skip(safeOffset)
+    .limit(safeLimit)
     .select("_id title personaId updatedAt")
     .lean()) as TaskRecord[];
 
