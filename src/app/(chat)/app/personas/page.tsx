@@ -2,9 +2,14 @@ import { auth } from "@clerk/nextjs/server";
 import { notFound } from "next/navigation";
 import PageWrapper from "@/components/layout/page-wrapper";
 import PersonasSection from "@/components/sections/personas-section";
+import { PERSONAS } from "@/constants/assistant-personas";
 import { getEffectivePersonaAccessByPlan } from "@/lib/utils/effective-persona-access";
 import { ensureUserSynced } from "@/lib/utils/ensure-user-synced";
-import { resolveEntitlements } from "@/lib/utils/resolve-entitlements";
+import {
+  getRequiredPlanForPersona,
+  resolveEntitlements,
+} from "@/lib/utils/resolve-entitlements";
+import { PersonaId } from "@/types/PersonaData.d";
 
 export default async function AppPersonasPage() {
   const { userId } = await auth();
@@ -19,12 +24,24 @@ export default async function AppPersonasPage() {
     fullPersonaAccessByPlan,
   });
 
+  const personaRequiredPlan: Partial<
+    Record<PersonaId, "Pro" | "Premium" | null>
+  > = {};
+  for (const persona of PERSONAS) {
+    personaRequiredPlan[persona.id] = getRequiredPlanForPersona(
+      persona.id,
+      fullPersonaAccessByPlan,
+    );
+  }
+
   return (
     <PageWrapper id="AppPersonasPage" scrollable>
       <PersonasSection
         isAppMode
         allowedPersonaIds={entitlements.allowedPersonaIds}
         showLockedPersonas
+        personaAccess={entitlements.personaAccess}
+        personaRequiredPlan={personaRequiredPlan}
       />
     </PageWrapper>
   );

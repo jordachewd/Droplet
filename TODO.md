@@ -5,250 +5,336 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: Phases 1–25.7 + 27.1–27.5 + 27.6–27.10 + 28.1 + 28.2-fix + 28.3-code + 28.3-verify + 28.4 + 28.6 + 28.7 + 30.1 + 30.2 + 30.3 + 30.4 + 31.1 + 31.2 + 31.3 + 31.2-fix + 32.1 + 32.2 + 32.3 + 32.4 + 32.6 + 33.1–33.8 + 35.1 + 37.1 + 38.1–38.7 + 36.1–36.2 + 39.1 complete.**
-> **PM deep audit #20 (2026-03-17): 32.4 VERIFIED DONE (Architect code audit + PM gateway verification). Library media card components complete with secure URL handling.**
-> **341 unit tests passing (64 suites). 180 E2E passing. 48 skipped (explained: Chromium-only trial spec × 6 non-Chromium projects). Build passing.**
-> **OWNER INSTRUCTIONS (latest): Admin panel fully operational. All verified DONE (PM audit #19).**
-> **NO CRITICAL BUGS REMAINING. NO HIGH SECURITY FINDINGS REMAINING.**
-> **Priority order: 32.5 → 31.4 → 30.5 → 35.2 → 34.x → 29.1 → 29.2 → Phase 26.**
-> **All Phase 26+ deferred work is ON HOLD until Milestone 14 is PM-approved complete.**
+> **STATUS: Phases 1–43.4 complete (except 43.2 hero images — in progress). All Milestones 0–17 COMPLETED.**
+> **PM deep audit #21 (2026-03-17): Full codebase audit by PM + Architect + Engineer. All critical bugs from Phases 40–43 resolved.**
+> **359 unit tests passing (65 suites). 180 E2E passing. 48 skipped (explained). Build passing.**
+> **OWNER INSTRUCTIONS (latest, 2026-03-17): Admin configurability audit, no hardcoded plan refs, no client fetch(), re-render audit, server-side utilities, JSON/types outsourcing.**
+> **Priority order: 44.1 → 44.2 → 44.3 → 44.4 → 44.5 → 45.1 → 45.2 → 45.3 → 45.4 → 43.2 → 46.x → 31.4 → 34.x → 29.1 → 29.2 → Phase 26.**
+> **All Phase 26+ deferred work is ON HOLD until Milestone 18 is PM-approved complete.**
 
 ---
 
-## Phase 38: UI Polish, Bug Fixes & Owner UI Restructure — COMPLETE
+## Phase 44: Admin Configurability Audit — CRITICAL (Owner-Directed, 2026-03-17)
 
-> PM audit #16: All 7 tasks (38.1–38.7) verified DONE by Architect code audit + PM approval. Archived in DONE.md.
-
----
-
-## Phase 36: Admin Design Consistency & Enhancement — COMPLETE
-
-> PM audit #16: Both tasks (36.1–36.2) verified DONE by Architect code audit + PM approval. Archived in DONE.md.
+> **CRITICAL priority. Owner directive: "Plans, prices, features, settings, naming, descriptions, limits, etc must be fully configurable from the ADMIN panel; NO hardcoded references inside code."**
+> **PM deep audit #21: Architect + Engineer + PM all confirmed critical hardcoded values in public pages.**
+> **Must be resolved before any other feature work.**
 
 ---
 
-## Phase 33: Persona Trial Access System — COMPLETE
+### 44.1 CRITICAL — Fix stale FAQ persona counts and pricing
 
-> **33.1–33.8 DONE** — Core trial system + E2E tests verified. Archived in DONE.md.
+**Ref:** PM audit #21 — FAQs reference "3 personas / 7 personas / 10 personas" (old 10-persona system). Current system: 6 personas, 2/5/6 split. Also contains hardcoded "$19" and "$39" prices.
 
----
-
-## Phase 35: ChatHeader Persona Selector — COMPLETE
-
-> **35.1 DONE** (persona dropdown selector — archived in DONE.md).
-> **35.2** (E2E tests) — merged into Milestone 13 Block D test coverage.
-
----
-
-## Phase 28: Media Generation Fixes & Limit Enforcement — COMPLETE
-
-> All tasks completed. Archived in DONE.md.
-
----
-
-## Phase 30: Persona Policy Implementation (remaining)
-
-> 30.1 DONE (Interviewer persona), 30.2 DONE (per-plan persona gating), 30.3 DONE (persona picker UI), 30.4 DONE (admin persona access controls + runtime propagation).
-> Remaining: 30.5 (persona hero images).
-
----
-
-### 30.5 MEDIUM — Generate persona hero images
-
-**Ref:** Owner instruction: each persona must have a representative character/image as hero
-**Depends on:** 30.1 complete (Interviewer added — DONE)
+**Files:** `src/constants/faqs.tsx`, `src/components/sections/faqs-section.tsx`
 
 **What to do:**
 
-1. Generate a representative character image for each of the 10 personas.
-2. Store images in `public/personas/` as optimized WebP/PNG.
-3. Add `heroImage` field to persona definition in `assistant-personas.tsx`.
-4. Display hero images on persona cards, persona picker, and `/personas` public page.
+1. Convert `faqs` from a static constant to a function `buildFaqs(config)` that takes pricing + persona gating config.
+2. Replace hardcoded "$19" / "$39" with `config.proPlanPrice` / `config.premiumPlanPrice`.
+3. Replace hardcoded "3 personas / 7 personas / 10 personas" with correct admin-resolved counts.
+4. All pages rendering FAQs (`/faqs`, `/plans`, `/app/plans`, landing page) must call `getEffectivePlanConfig()` and `getEffectivePersonaAccessByPlan()` server-side and pass to `buildFaqs()`.
 
 **Acceptance criteria:**
 
-- [ ] 10 persona hero images exist in `public/personas/`
-- [ ] Each persona definition has `heroImage` path
-- [ ] Hero images visible on persona cards and public personas page
-- [ ] Images are optimized (< 200KB each)
+- [ ] Zero hardcoded prices in FAQ text
+- [ ] Persona counts match current admin-configured values (currently 2/5/6)
+- [ ] FAQ renders correctly with admin-overridden pricing
 - [ ] `npx tsc --noEmit` passes
 - [ ] All tests pass
 
 ---
 
-## Phase 31: Layout & Navigation Updates (remaining)
+### 44.2 CRITICAL — Fix hardcoded prices and persona count in About page
 
-> 31.1 DONE (ChatHeader in layout), 31.2 DONE (sidebar toggle to header), 31.3 DONE (Plans/Profile from sidebar).
-> Remaining: 31.4 (E2E tests).
+**Ref:** PM audit #21 — About page has hardcoded `$19`, `$39`, `10` personas, and hardcoded persona gating text.
+
+**Files:** `src/app/(public)/about/page.tsx`
+
+**What to do:**
+
+1. About page is a Server Component — call `getEffectivePlanConfig()` and `getEffectivePersonaAccessByPlan()` at the top.
+2. Replace hardcoded `$19` / `$39` with effective pricing values.
+3. Replace hardcoded `10` persona count with `PERSONAS.length` or admin-derived count.
+4. Replace hardcoded persona gating description ("Lite includes Strategist and Developer...") with dynamically generated text from persona access config.
+
+**Acceptance criteria:**
+
+- [ ] Zero hardcoded pricing in About page
+- [ ] Persona count and gating text derived from admin config
+- [ ] `npx tsc --noEmit` passes
+- [ ] All tests pass
 
 ---
+
+### 44.3 CRITICAL — Fix hardcoded prices in Terms page
+
+**Ref:** PM audit #21 — Terms page has `"Pro for $19, and Premium for $39"` hardcoded.
+
+**Files:** `src/app/(public)/terms/page.tsx`
+
+**What to do:**
+
+1. Terms page is a Server Component — call `getEffectivePlanConfig()` at the top.
+2. Use template interpolation for the pricing text in `termsSections`.
+
+**Acceptance criteria:**
+
+- [ ] Zero hardcoded prices in Terms page
+- [ ] `npx tsc --noEmit` passes
+
+---
+
+### 44.4 HIGH — Make plan card persona labels dynamic
+
+**Ref:** PM audit #21 — Plan card descriptions contain hardcoded "2 personas (full access)", "5 personas (full access)", "All 6 personas", and trial limit labels.
+
+**Files:** `src/constants/plans.tsx`
+
+**What to do:**
+
+1. `buildPlans()` already accepts `pricing` and `limits` params. Add `personaAccess` param.
+2. Generate persona count labels dynamically: count the admin-resolved full-access persona IDs per plan.
+3. Generate trial limit labels from effective trial limits.
+4. Ensure all call sites pass admin-resolved config.
+
+**Acceptance criteria:**
+
+- [ ] Persona count in plan cards matches admin-configured persona access
+- [ ] No hardcoded "2 personas" / "5 personas" / "6 personas" strings
+- [ ] `npx tsc --noEmit` passes
+
+---
+
+### 44.5 HIGH — Create `getEffectiveTrialLimits()` utility
+
+**Ref:** PM audit #21 — `PERSONA_TRIAL_LIMITS` is used directly in `/api/openai` route (6 call sites). No admin-configurable path.
+
+**Files:** `src/lib/utils/effective-plan-config.ts` (extend), `src/app/api/openai/route.tsx`, `src/constants/plans.tsx`
+
+**What to do:**
+
+1. Add `getEffectiveTrialLimits()` to `effective-plan-config.ts` — reads `AppSetting("admin.trialLimits")`, falls back to `PERSONA_TRIAL_LIMITS`.
+2. Replace all 6 direct `PERSONA_TRIAL_LIMITS` references in `/api/openai` route with `effectiveTrialLimits`.
+3. Add trial limits section to admin settings page.
+
+**Acceptance criteria:**
+
+- [ ] Zero direct `PERSONA_TRIAL_LIMITS` imports in route handlers
+- [ ] Admin can configure trial limits via settings page
+- [ ] Falls back to defaults when no admin setting exists
+- [ ] `npx tsc --noEmit` passes
+- [ ] All tests pass
+
+---
+
+## Phase 45: Code Quality & Organization (Owner-Directed, 2026-03-17)
+
+> **HIGH-MEDIUM priority. After Phase 44. Owner directives: server-side utilities, cleanup dead code, outsource data/types.**
+
+---
+
+### 45.1 HIGH — Remove dead code: V1 sidebar nav
+
+**Ref:** PM audit #21 — `chat-sidebar-nav.tsx` (V1) is dead code. Only V2 is imported. V1 contains broken `/profile` and `/plans` links.
+
+**Files:** `src/components/chat/sidebar/chat-sidebar-nav.tsx`
+
+**What to do:**
+
+1. Verify zero imports of `chat-sidebar-nav.tsx` (confirmed by PM audit).
+2. Delete the file.
+
+**Acceptance criteria:**
+
+- [ ] `chat-sidebar-nav.tsx` deleted
+- [ ] `npx tsc --noEmit` passes
+- [ ] Build passes
+
+---
+
+### 45.2 MEDIUM — Add missing `.lean()` / `.select()` to DB queries
+
+**Ref:** PM audit #21 — 5 DB queries missing read optimizations.
+
+**Files:** `src/app/api/webhooks/stripe/route.tsx`, `src/lib/actions/transaction.action.tsx`, `src/app/api/webhooks/clerk/route.tsx`, `src/lib/utils/check-daily-conversations.ts`
+
+**What to do:**
+
+1. Stripe webhook `Transaction.findOne({ stripeId })` — add `.select("_id").lean()`.
+2. Stripe webhook `User.findOne({ _id, clerkId })` — add `.select("_id clerkId").lean()`.
+3. `checkoutPlan` `User.findOne({ clerkId })` — add `.select("_id firstName lastName username email").lean()`.
+4. Clerk webhook `User.findOne({ clerkId })` — add `.lean()` and `.select()`.
+5. `check-daily-conversations.ts` — add `.lean()` to query with existing `.select()`.
+
+**Acceptance criteria:**
+
+- [ ] All 5 queries have `.lean()` and `.select()` applied
+- [ ] `npx tsc --noEmit` passes
+- [ ] All tests pass
+
+---
+
+### 45.3 MEDIUM — Outsource inline data to constants files
+
+**Ref:** Owner directive: "Dummy data JSONs must be outsourced in a folder named `json` or similar."
+
+**Files:** `src/app/(public)/about/page.tsx`, `src/app/(public)/terms/page.tsx`, `src/app/(public)/privacy/page.tsx`, `src/app/(public)/cookies/page.tsx`, `src/components/sections/landing-page.tsx`
+
+**What to do:**
+
+1. Extract `aboutSections` from `about/page.tsx` to `src/constants/about-data.ts`.
+2. Extract `termsSections` from `terms/page.tsx` to `src/constants/terms-data.ts`.
+3. Extract `privacySections` from `privacy/page.tsx` to `src/constants/privacy-data.ts`.
+4. Extract `cookieCategories` from `cookies/page.tsx` to `src/constants/cookies-data.ts`.
+5. Extract `featureCards` and `howItWorksSteps` from `landing-page.tsx` to `src/constants/landing-data.ts`.
+6. Import from the new constant files in each page.
+
+**Acceptance criteria:**
+
+- [ ] Zero large inline data arrays in page/component files
+- [ ] New constants files in `src/constants/`
+- [ ] No behavior changes — data-only extraction
+- [ ] `npx tsc --noEmit` passes
+
+---
+
+### 45.4 MEDIUM — Consolidate shared TypeScript types to `src/types/`
+
+**Ref:** Owner directive: "TypeScript must be outsourced from files into a folder named `types` or similar."
+
+**Files:** Multiple component and utility files with shared types.
+
+**What to do:**
+
+1. Deduplicate `UploadRouteResponse` (exists in both `chat-input.tsx` and `profile-hero-editor.tsx`) → move to `src/types/UploadData.d.tsx`.
+2. Deduplicate `ModelSettingsFormValue` (exists in both `effective-model-config.ts` and `admin/settings/page.tsx`) → move to `src/types/AdminData.d.tsx`.
+3. Move exported `LibraryConversationCardItem`, `LibraryMediaCardItem`, `LibraryPaginationState` from `library-tabs.tsx` → to `src/types/LibraryData.d.tsx`.
+4. Move exported `AlertParams` from `alert-message.tsx` → to `src/types/`.
+5. Unify `ThemeMode` (in `droplet-theme.tsx`) and `UiThemeMode` (in `use-ui-store.ts`) → single type in `src/types/`.
+6. Keep component-scoped Props interfaces co-located (those are fine where they are).
+
+**Acceptance criteria:**
+
+- [ ] Zero duplicated types across files
+- [ ] Shared types in `src/types/`
+- [ ] Component-local Props interfaces remain in component files
+- [ ] `npx tsc --noEmit` passes
+- [ ] All tests pass
+
+---
+
+### 45.5 LOW — Fix autoAnimate cleanup in chat-body
+
+**Files:** `src/components/chat/chat-body.tsx`
+
+**What to do:**
+
+1. Store `autoAnimate()` return value.
+2. Call cleanup in useEffect return function.
+
+**Acceptance criteria:**
+
+- [ ] No MutationObserver leak from autoAnimate
+- [ ] `npx tsc --noEmit` passes
+
+---
+
+## Phase 43.2: Persona Hero Images — IN PROGRESS (Owner providing images)
+
+> **Owner directive: use placeholders for now. Images will be provided by the owner.**
+
+### 43.2 MEDIUM — Persona hero images (6 personas)
+
+**What to do:**
+
+1. Add placeholder hero images for 6 personas in `public/personas/`.
+2. Add `heroImage` field to persona definitions in `assistant-personas.tsx`.
+3. Display on persona cards and public `/personas` page.
+4. Owner will provide final images to replace placeholders.
+
+**Acceptance criteria:**
+
+- [ ] 6 placeholder images in `public/personas/`
+- [ ] Each persona definition has `heroImage` path
+- [ ] Images visible on persona cards and public page
+- [ ] `npx tsc --noEmit` passes
+
+---
+
+## Phase 46: Performance & Resource Leak Audit — ON HOLD
+
+> **HIGH priority. After Phase 45. Owner directive: "Evaluate entire codebase for good practices, reduce unnecessary re-renders and resource leaks."**
+> **PM audit #21 finding: Codebase is mostly clean. Minor items identified below.**
+
+---
+
+### 46.1 LOW — Add admin error boundary
+
+**Files:** `src/app/(admin)/error.tsx` (new)
+
+**What to do:**
+
+1. Create `error.tsx` for admin route group.
+2. Handle admin-specific errors with appropriate recovery UI.
+
+---
+
+### 46.2 LOW — Add stderr logging to silent catch blocks
+
+**Files:** `src/components/shared/audio-player.tsx`, `src/components/chat/chat-sidebar.tsx`
+
+**What to do:**
+
+1. Replace empty `catch {}` blocks with `catch { /* localStorage/audio non-critical */ }` comments or minimal stderr logging where appropriate.
+
+---
+
+## Phase 31.4: E2E Test Updates — LOW (remaining)
 
 ### 31.4 LOW — Update E2E tests for layout changes
 
 **Files:** `tests/e2e/chat-app-shell.spec.ts`, related E2E specs
-**Ref:** Phase 31.1–31.3
-
-**What to do:**
-
-1. Update sidebar navigation assertions (fewer links).
-2. Add assertions for ChatHeader presence on non-chat pages.
-3. Verify sidebar toggle works from its new position in header.
 
 **Acceptance criteria:**
 
-- [ ] E2E tests reflect new layout structure
-- [ ] No false positives from old layout assertions
+- [ ] E2E tests reflect current layout structure
 - [ ] `npm run test:e2e` passes
-
----
-
-## Phase 27: UX & Architecture Completion (remaining)
-
-> 27.1–27.5 + 27.6–27.10 DONE. Phase 27 COMPLETE.
-> All admin settings propagation (pricing, limits, models, persona access) verified operational.
-
----
-
-## Phase 39: Security Hardening — Checkout Price Bypass — COMPLETE
-
-> **Identified by PM audit #18 + Architect code audit (2026-03-17). Resolved by Engineer (2026-03-17).**
-> **39.1 VERIFIED DONE by Architect audit #19 + PM approval. TD-CHECKOUT-01 FULLY RESOLVED. Archived in DONE.md.**
 
 ---
 
 ## Phase 34: Video Generation — ON HOLD (gated)
 
 > **GATED:** Requires Sora API verification + S3 cost ceiling approval before implementation.
-> Depends on: Phase 28 audio verification complete, Phase 33 entitlement system stable.
-> Owner requests video generation to work — this is the implementation phase.
-
----
 
 ### 34.1 DECISION GATE — Verify Sora API availability and pricing
 
-**What to do:**
-
-1. Live-test `sora-2` and `sora-2-pro` model IDs against OpenAI API.
-2. Measure video generation latency and output size.
-3. Calculate S3 storage cost for video files.
-4. Present cost ceiling analysis to PM/Owner for approval.
-
-**Acceptance criteria:**
-
-- [ ] Sora API availability confirmed or alternative chosen
-- [ ] Cost analysis presented and approved
-
----
-
 ### 34.2 HIGH — Implement generateVideo utility
-
-**Files:** `src/lib/utils/openai/generateVideo.tsx` (new)
-
-**What to do:**
-
-1. Create `generateVideo()` following same pattern as `generateImage()`/`generateAudio()`.
-2. Use `resolveModelPolicy()` for model selection.
-3. Upload video file to S3, return URL.
-4. Handle video-specific constraints (longer generation time, larger files).
-
----
 
 ### 34.3 HIGH — Add video tool definition and API route integration
 
-**Files:** `src/constants/openai.tsx`, `src/app/api/openai/route.tsx`, `src/lib/utils/openai/generateResponse.tsx`
-
-**What to do:**
-
-1. Add video tool definition in OpenAI constants.
-2. Wire video generation into `buildOpenAIResponsePayload` tool call handler.
-3. Wire video counter tracking in API route.
-
----
-
 ### 34.4 MEDIUM — Video player component for chat messages
-
-**Files:** `src/components/chat/` (new component)
-
-**What to do:**
-
-1. Create inline video player component for chat message rendering.
-2. Support basic controls: play, pause, volume, fullscreen.
 
 ---
 
 ## Phase 29: App-Wide Modernization — ON HOLD
 
-> **ON HOLD until Milestone 13 Block D + Milestone 14 are PM-approved complete.**
-> Owner-approved modernization items. Dependencies already installed.
-
----
+> **ON HOLD until Phase 44 + 45 complete.**
 
 ### 29.1 Implement Zod schema validation across the app
 
-**Ref:** Owner instruction (2026-03-16)
-
-**What to do:**
-
-1. Read available Zod Skills and MCPs for best practices and updated documentation.
-2. Add Zod schemas for all API route request bodies (`/api/openai`, `/api/upload`, `/api/download`, `/api/aws`).
-3. Add Zod schemas for server action inputs (user actions, task actions, transaction actions, admin actions).
-4. Add Zod schemas for webhook payloads (Clerk, Stripe) as additional validation after signature verification.
-5. Replace manual `typeof` / truthiness checks with Zod `.safeParse()` at system boundaries.
-6. Use `z.infer<>` for TypeScript type derivation where it reduces duplication.
-7. Do NOT add Zod to internal utility functions that receive already-validated data.
-
-**Acceptance criteria:**
-
-- [ ] All API route request bodies validated with Zod schemas
-- [ ] All server action inputs validated with Zod schemas
-- [ ] Webhook payloads have Zod validation after signature verification
-- [ ] `z.infer<>` used where it reduces type duplication
-- [ ] No Zod on internal utility functions (only at system boundaries)
-- [ ] `npx tsc --noEmit` passes
-- [ ] All tests pass
-
----
-
 ### 29.2 Implement Zustand for client-side state management
-
-**Ref:** Owner instruction (2026-03-16)
-
-**What to do:**
-
-1. Read available Zustand Skills and Context7 MCP for documentation and best practices.
-2. Create Zustand stores for: chat state (current conversation, messages, loading), UI state (sidebar, theme), user preferences.
-3. Replace prop-drilling and scattered `useState` with Zustand stores where appropriate.
-4. Keep Server Component data flow unchanged — Zustand is for CLIENT components only.
-5. Do NOT replace simple local state (single-component `useState`) with Zustand — only shared state.
-
-**Acceptance criteria:**
-
-- [ ] Zustand stores created for shared client state (chat, UI, preferences)
-- [ ] Prop-drilling reduced in chat components
-- [ ] Server Component data flow unchanged
-- [ ] Simple local state left as `useState`
-- [ ] `npx tsc --noEmit` passes
-- [ ] All tests pass
 
 ---
 
 ## Phase 26: Deferred Features — ON HOLD
 
-> **ON HOLD until Milestone 13 Block D + Milestone 14 + Phases 34 + 29 are PM-approved complete.**
-> Depends on: All preceding phases complete.
+### 26.1 Persona-aware media generation prompts (TD-AI-09)
 
----
-
-### 26.1 Persona-aware media generation prompts
-
-**Ref:** TD-AI-09 (remaining gap)
-
-### 26.2 Implement Stripe subscription mode (auto-renewal)
-
-**Ref:** TD-PLAN-01
+### 26.2 Implement Stripe subscription mode — auto-renewal (TD-PLAN-01)
 
 ---
 
 > **Completed phases** are archived in [`DONE.md`](DONE.md).
-> HF-1 through HF-9.2 complete. Phases 1–25.7 + 27.1–27.4 + 27.6–27.10 + 28.1 + 28.2-fix + 28.3-code + 30.1 + 30.2 + 30.3 + 30.4 + 33.8 + 35.1 + 37.1 + 38.1–38.7 + 36.1–36.2 complete.
+> All phases through 43.4 complete (except 43.2 hero images — in progress).
 > Phase 10–12 superseded (see DONE.md for mapping).

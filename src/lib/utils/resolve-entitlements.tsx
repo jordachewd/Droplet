@@ -33,18 +33,20 @@ export const DEFAULT_FULL_PERSONA_ACCESS_BY_PLAN: Record<
   PlanName,
   PersonaId[]
 > = {
-  Lite: ["strategist", "developer", "best-friend"],
-  Pro: [
-    "strategist",
-    "developer",
-    "best-friend",
-    "teacher",
-    "wellness",
-    "boyfriend",
-    "girlfriend",
-  ],
+  Lite: ["strategist", "developer"],
+  Pro: ["strategist", "developer", "teacher", "creator", "wellness"],
   Premium: PERSONAS.map((persona) => persona.id),
 };
+
+export function getRequiredPlanForPersona(
+  personaId: PersonaId,
+  fullPersonaAccessByPlan: Record<PlanName, PersonaId[]>,
+): "Pro" | "Premium" | null {
+  if (fullPersonaAccessByPlan.Lite.includes(personaId)) return null;
+  if (fullPersonaAccessByPlan.Pro.includes(personaId)) return "Pro";
+  if (fullPersonaAccessByPlan.Premium.includes(personaId)) return "Premium";
+  return null;
+}
 
 function buildPersonaAccessByPlan(
   planName: PlanName,

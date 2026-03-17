@@ -3,11 +3,13 @@
 import classNames from "classnames";
 import { PERSONAS } from "@/constants/assistant-personas";
 import { PersonaAccessLevel, PersonaId } from "@/types/PersonaData.d";
+import { PlanName } from "@/types/PlanData.d";
 
 interface ChatPersonaPickerProps {
   selectedPersonaId: PersonaId;
   allowedPersonaIds: PersonaId[];
   personaAccess?: Partial<Record<PersonaId, PersonaAccessLevel>>;
+  personaRequiredPlan?: Partial<Record<PersonaId, PlanName | null>>;
   onSelectPersona: (personaId: PersonaId) => void;
 }
 
@@ -15,6 +17,7 @@ export default function ChatPersonaPicker({
   selectedPersonaId,
   allowedPersonaIds,
   personaAccess,
+  personaRequiredPlan,
   onSelectPersona,
 }: ChatPersonaPickerProps) {
   const allowedPersonaIdSet = new Set(allowedPersonaIds);
@@ -34,11 +37,16 @@ export default function ChatPersonaPicker({
               : "blocked";
           const isBlocked = accessLevel === "blocked";
           const isTrial = accessLevel === "limited";
-          const accessLabel = isBlocked ? "Locked" : isTrial ? "Trial" : "Open";
-          const accessDescription = isBlocked
-            ? "Upgrade to unlock this persona."
+          const planLabel = personaRequiredPlan?.[persona.id];
+          const accessLabel = isBlocked
+            ? (planLabel ?? "Locked")
             : isTrial
-              ? "Limited access - 5 prompts per conversation. Upgrade to unlock full access."
+              ? (planLabel ?? "Trial")
+              : "Open";
+          const accessDescription = isBlocked
+            ? `Upgrade${planLabel ? ` to ${planLabel}` : ""} to unlock this persona.`
+            : isTrial
+              ? `Limited access - 5 prompts per conversation.${planLabel ? ` Upgrade to ${planLabel} for` : " Upgrade to unlock"} full access.`
               : undefined;
 
           return (

@@ -2,6 +2,7 @@ import Image from "next/image";
 import classNames from "classnames";
 import { useState, ChangeEvent, useEffect, useRef, KeyboardEvent } from "react";
 import { Message } from "@/types";
+import { UploadRouteResponse } from "@/types/UploadData.d";
 import { UploadFileInput } from "@/components/shared/upload-file-input";
 import { TooltipArrow } from "@/components/shared/tooltip-arrow";
 
@@ -11,12 +12,6 @@ interface ChatInputProps {
   startPrompt?: string;
   personaLabel?: string;
   sendMessage: (message: Message) => void;
-}
-
-interface UploadRouteResponse {
-  fileUrl?: string;
-  error?: string;
-  message?: string;
 }
 
 export default function ChatInput({

@@ -3,7 +3,6 @@ export type PersonaCategory =
   | "Learning"
   | "Creative"
   | "Lifestyle"
-  | "Companion"
   | "Career";
 
 export type PersonaId =
@@ -12,10 +11,6 @@ export type PersonaId =
   | "developer"
   | "creator"
   | "wellness"
-  | "analyst"
-  | "best-friend"
-  | "boyfriend"
-  | "girlfriend"
   | "interviewer";
 
 export type PersonaAccessLevel = "full" | "limited" | "blocked";
@@ -27,6 +22,7 @@ export interface Persona {
   description: string;
   category: PersonaCategory;
   icon: string;
+  heroImage: string;
   starterPrompts: string[];
   systemPrompt: string;
   supportsImage: boolean;

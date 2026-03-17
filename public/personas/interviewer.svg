@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 720" role="img" aria-label="Interviewer persona placeholder">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#9333ea"/>
+      <stop offset="100%" stop-color="#581c87"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="720" fill="url(#bg)"/>
+  <rect x="860" y="110" width="240" height="160" rx="18" fill="#ddd6fe" opacity="0.25"/>
+  <text x="80" y="360" fill="#f5f3ff" font-family="Arial, sans-serif" font-size="76" font-weight="700">Interviewer</text>
+</svg>

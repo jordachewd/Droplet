@@ -18,15 +18,15 @@ test("shows the reconciled pricing and FAQ copy on the public plans page", async
   await expect(
     page
       .locator(".PlanCard")
-      .getByText("3 personas (full access) + try all others (limited access)"),
+      .getByText("2 personas (full access) + try all others (limited access)"),
   ).toHaveCount(1);
   await expect(
     page
       .locator(".PlanCard")
-      .getByText("7 personas (full access) + try all others (limited access)"),
+      .getByText("5 personas (full access) + try all others (limited access)"),
   ).toHaveCount(1);
   await expect(
-    page.locator(".PlanCard").getByText("All 10 personas (unlimited)"),
+    page.locator(".PlanCard").getByText("All 6 personas (full access)"),
   ).toHaveCount(1);
   await expect(
     page

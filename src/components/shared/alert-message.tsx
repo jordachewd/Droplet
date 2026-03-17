@@ -2,14 +2,9 @@
 
 import { useMemo, useState, useEffect } from "react";
 import classNames from "classnames";
+import { AlertParams } from "@/types/AlertData.d";
 
-export interface AlertParams {
-  id?: number;
-  title: string;
-  text?: string;
-  severity?: "info" | "error" | "success" | "warning";
-  variant?: "filled" | "outlined";
-}
+export type { AlertParams } from "@/types/AlertData.d";
 
 interface AlertMessageProps {
   message: AlertParams;

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 720" role="img" aria-label="Strategist persona placeholder">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0f766e"/>
+      <stop offset="100%" stop-color="#164e63"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="720" fill="url(#bg)"/>
+  <circle cx="220" cy="540" r="180" fill="#99f6e4" opacity="0.2"/>
+  <text x="80" y="360" fill="#ecfeff" font-family="Arial, sans-serif" font-size="76" font-weight="700">Strategist</text>
+</svg>

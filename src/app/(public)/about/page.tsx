@@ -3,72 +3,20 @@ import classNames from "classnames";
 import Link from "next/link";
 import PageHead from "@/components/layout/page-head";
 import { PERSONAS } from "@/constants/assistant-personas";
+import {
+  AboutVisualType,
+  buildAboutSections,
+  buildPersonaAccessSummary,
+} from "@/constants/about-data";
+import { PlanPricing } from "@/constants/plans";
+import { getEffectivePersonaAccessByPlan } from "@/lib/utils/effective-persona-access";
+import { getEffectivePlanConfig } from "@/lib/utils/effective-plan-config";
 
 export const metadata: Metadata = {
   title: "About | Droplet",
   description:
     "Learn how Droplet combines persona-led AI guidance, media workflows, and plan-based access for focused conversations.",
 };
-
-type AboutVisualType = "identity" | "workflow" | "personas" | "media" | "plans";
-
-interface AboutSection {
-  eyebrow: string;
-  title: string;
-  paragraphs: string[];
-  visualType: AboutVisualType;
-}
-
-const aboutSections: AboutSection[] = [
-  {
-    eyebrow: "Persona-led guidance",
-    title: "Droplet is an AI workspace shaped by specialist personas.",
-    paragraphs: [
-      "Each conversation starts with a persona that sets the assistant's tone, boundaries, and style of help. Instead of a generic chatbot, you begin with a role that already knows how to think about planning, learning, creative work, analysis, or companionship.",
-      "That structure keeps the product grounded: the Strategist plans, the Teacher explains, the Developer debugs, and the companion personas stay supportive without blurring safety boundaries.",
-    ],
-    visualType: "identity",
-  },
-  {
-    eyebrow: "How the flow works",
-    title:
-      "Pick a persona, start a conversation, and keep momentum in one place.",
-    paragraphs: [
-      "Droplet is built around account-based conversations. You choose a persona, send a prompt, and continue the thread with saved context instead of starting over every time.",
-      "The app keeps each conversation tied to the persona you selected, so follow-up prompts stay coherent and the conversation history remains easy to revisit from your library.",
-    ],
-    visualType: "workflow",
-  },
-  {
-    eyebrow: "Ten personas",
-    title: "Persona access scales by plan tier.",
-    paragraphs: [
-      "Lite includes Strategist, Developer, and Best Friend. Pro adds Teacher, Wellness, Boyfriend, and Girlfriend. Premium unlocks the full 10-persona catalog, including Interviewer, Creator, and Analyst.",
-      "The current catalog covers Productivity, Learning, Creative, Lifestyle, and Companion use cases so users can move between practical execution, reflection, and content work without switching products.",
-    ],
-    visualType: "personas",
-  },
-  {
-    eyebrow: "Media workflows",
-    title:
-      "Text is the core experience, with media tools layered in where they help.",
-    paragraphs: [
-      "Droplet supports text conversations first, then extends into media workflows such as image and audio generation when the selected persona and the user's plan allow it.",
-      "Premium is the top-tier plan for the most advanced media workflows, including the plan area reserved for video generation, while Lite and Pro keep the focus on day-to-day chat plus capped media usage.",
-    ],
-    visualType: "media",
-  },
-  {
-    eyebrow: "Plans and limits",
-    title:
-      "Choose the limits that match how often you want to rely on Droplet.",
-    paragraphs: [
-      "New accounts start on Lite, which is free forever and designed for everyday testing, light productivity, and occasional media use. Pro and Premium increase conversation capacity, prompt limits, and media headroom.",
-      "If you want the full plan breakdown, pricing, and current entitlements, the plans page is the canonical public reference.",
-    ],
-    visualType: "plans",
-  },
-];
 
 const personaCategories = Object.entries(
   PERSONAS.reduce<Record<string, number>>((accumulator, persona) => {
@@ -77,7 +25,7 @@ const personaCategories = Object.entries(
   }, {}),
 );
 
-function renderAboutVisual(visualType: AboutVisualType) {
+function renderAboutVisual(visualType: AboutVisualType, pricing: PlanPricing) {
   const visualClassName = classNames(
     "rounded-[2rem] border p-6 shadow-sm",
     "border-lightBorders-400/80 bg-white/80",
@@ -92,7 +40,7 @@ function renderAboutVisual(visualType: AboutVisualType) {
             <p className="text-xxs font-semibold uppercase tracking-[0.28em] opacity-70">
               Personas
             </p>
-            <p className="heading-4 mt-3">10</p>
+            <p className="heading-4 mt-3">{PERSONAS.length}</p>
             <p className="body-2 mt-2 text-sm">
               Guided conversation styles with distinct prompts and boundaries.
             </p>
@@ -269,7 +217,7 @@ function renderAboutVisual(visualType: AboutVisualType) {
           <p className="text-xxs font-semibold uppercase tracking-[0.28em] opacity-70">
             Pro
           </p>
-          <p className="heading-5 mt-3">$19</p>
+          <p className="heading-5 mt-3">{`$${pricing.Pro}`}</p>
           <p className="body-2 mt-2 text-sm">
             Higher prompt and conversation ceilings for regular work.
           </p>
@@ -278,7 +226,7 @@ function renderAboutVisual(visualType: AboutVisualType) {
           <p className="text-xxs font-semibold uppercase tracking-[0.28em] opacity-70">
             Premium
           </p>
-          <p className="heading-5 mt-3">$39</p>
+          <p className="heading-5 mt-3">{`$${pricing.Premium}`}</p>
           <p className="body-2 mt-2 text-sm">
             Highest-capacity tier for advanced media and premium workflows.
           </p>
@@ -288,12 +236,19 @@ function renderAboutVisual(visualType: AboutVisualType) {
   );
 }
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const [effectivePlanConfig, personaAccessByPlan] = await Promise.all([
+    getEffectivePlanConfig(),
+    getEffectivePersonaAccessByPlan(),
+  ]);
+  const personaAccessSummary = buildPersonaAccessSummary(personaAccessByPlan);
+  const aboutSections = buildAboutSections({ personaAccessSummary });
+
   return (
     <section className="AboutPage mx-auto flex w-full max-w-screen-2xl flex-col gap-10 px-4 pb-16 pt-24 sm:px-6 lg:px-8">
       <div
         className={classNames(
-          "rounded-[2rem] border px-6 py-10 shadow-sm",
+          "rounded-4xl border px-6 py-10 shadow-sm",
           "border-lightBorders-400/80 bg-white/72 backdrop-blur-sm",
           "dark:border-darkBorders-500 dark:bg-jwdMarine-900/80",
         )}
@@ -314,7 +269,7 @@ export default function AboutPage() {
         >
           <div
             className={classNames(
-              "rounded-[2rem] border px-6 py-7 shadow-sm",
+              "rounded-4xl border px-6 py-7 shadow-sm",
               "border-lightBorders-400/80 bg-white/76",
               "dark:border-darkBorders-500 dark:bg-jwdMarine-900/82",
             )}
@@ -332,13 +287,13 @@ export default function AboutPage() {
             </div>
           </div>
 
-          {renderAboutVisual(section.visualType)}
+          {renderAboutVisual(section.visualType, effectivePlanConfig.pricing)}
         </article>
       ))}
 
       <section
         className={classNames(
-          "w-full max-w-screen-2xl rounded-[2rem] border px-6 py-8 shadow-sm",
+          "w-full max-w-screen-2xl rounded-4xl border px-6 py-8 shadow-sm",
           "border-lightBorders-400/80 bg-linear-135 from-lightSecondary-100 via-white to-lightAccent-100",
           "dark:border-darkBorders-500 dark:bg-linear-135 dark:from-darkPrimary-1000 dark:via-jwdMarine-1000 dark:to-darkSecondary-900/55",
         )}

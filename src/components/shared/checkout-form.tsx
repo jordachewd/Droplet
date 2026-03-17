@@ -38,7 +38,7 @@ const Checkout = ({ plan, planStatus }: CheckoutProps) => {
         type="submit"
         disabled={isIncluded}
         className={classNames(
-          "btn btn-md w-full min-w-[12rem] sm:min-w-[220px]",
+          "btn btn-md w-full min-w-48 sm:min-w-55",
           buttonVariant,
           disabledStyle,
         )}

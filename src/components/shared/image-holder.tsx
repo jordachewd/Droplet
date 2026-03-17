@@ -79,7 +79,7 @@ export default function ImageHolder({
             aria-label="Download generated image"
           >
             {isDownloading ? (
-              <LoadingBubbles size="small" className="!w-auto gap-0.5" />
+              <LoadingBubbles size="small" className="w-auto! gap-0.5" />
             ) : (
               <i className="bi bi-download"></i>
             )}

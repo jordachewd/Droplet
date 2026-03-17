@@ -6,12 +6,7 @@ import { UserData } from "@/types/UserData.d";
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useClerk } from "@clerk/nextjs";
-
-type UploadRouteResponse = {
-  fileUrl?: string;
-  error?: string;
-  message?: string;
-};
+import { UploadRouteResponse } from "@/types/UploadData.d";
 
 type ProfileActionResponse = {
   status?: number;

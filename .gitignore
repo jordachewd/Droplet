@@ -57,6 +57,7 @@ node_modules/
 
 # Project specific
 skills-lock.json
+/.github/
 /.agents/
 /.claude/
 /.codex/

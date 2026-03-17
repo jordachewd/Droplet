@@ -85,7 +85,7 @@ describe("plans constants", () => {
           inclusions: expect.arrayContaining([
             expect.objectContaining({
               label:
-                "3 personas (full access) + try all others (limited access)",
+                "2 personas (full access) + try all others (limited access)",
               isIncluded: true,
             }),
             expect.objectContaining({
@@ -122,7 +122,7 @@ describe("plans constants", () => {
           inclusions: expect.arrayContaining([
             expect.objectContaining({
               label:
-                "7 personas (full access) + try all others (limited access)",
+                "5 personas (full access) + try all others (limited access)",
               isIncluded: true,
             }),
             expect.objectContaining({
@@ -146,7 +146,7 @@ describe("plans constants", () => {
           desc: "Ultimate AI experience with premium media",
           inclusions: expect.arrayContaining([
             expect.objectContaining({
-              label: "All 10 personas (unlimited)",
+              label: "All 6 personas (full access)",
               isIncluded: true,
             }),
             expect.objectContaining({

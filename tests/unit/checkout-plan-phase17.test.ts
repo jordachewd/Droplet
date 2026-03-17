@@ -89,6 +89,12 @@ describe("checkoutPlan phase17", () => {
           promptsPerConversation: -1,
         },
       },
+      trialLimits: {
+        promptsPerConversation: 5,
+        images: 3,
+        audio: 2,
+        video: 1,
+      },
     });
     createSessionMock.mockResolvedValue({ url: "http://stripe.test/session" });
   });

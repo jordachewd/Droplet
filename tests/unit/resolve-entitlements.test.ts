@@ -4,6 +4,8 @@ import { PLAN_LIMITS } from "@/constants/plans";
 import {
   resolveEntitlements,
   resolvePersonaForPlan,
+  getRequiredPlanForPersona,
+  DEFAULT_FULL_PERSONA_ACCESS_BY_PLAN,
 } from "@/lib/utils/resolve-entitlements";
 import { PlanName } from "@/types/PlanData.d";
 
@@ -15,9 +17,9 @@ describe("resolveEntitlements", () => {
       entitlements.allowedPersonaIds.filter(
         (personaId) => entitlements.personaAccess![personaId] === "full",
       ),
-    ).toEqual(["strategist", "developer", "best-friend"]);
-    expect(entitlements.allowedPersonaIds).toContain("girlfriend");
-    expect(entitlements.trialPersonaIds).toContain("girlfriend");
+    ).toEqual(["strategist", "developer"]);
+    expect(entitlements.allowedPersonaIds).toContain("teacher");
+    expect(entitlements.trialPersonaIds).toContain("teacher");
     expect(entitlements.supportsImageGeneration).toBe(true);
     expect(entitlements.supportsAudioGeneration).toBe(true);
     expect(entitlements.supportsVideoGeneration).toBe(true);
@@ -25,11 +27,11 @@ describe("resolveEntitlements", () => {
 
   it("allows selecting limited personas for Lite users", () => {
     const persona = resolvePersonaForPlan({
-      personaId: "girlfriend",
+      personaId: "teacher",
       planName: "Lite",
     });
 
-    expect(persona.id).toBe("girlfriend");
+    expect(persona.id).toBe("teacher");
   });
 
   it("covers plan x media capability combinations for image, audio, and video", () => {
@@ -56,7 +58,7 @@ describe("resolveEntitlements", () => {
     expect(entitlements.supportsAudioGeneration).toBe(true);
     expect(entitlements.supportsVideoGeneration).toBe(true);
     expect(entitlements.personaAccess!.strategist).toBe("full");
-    expect(entitlements.personaAccess!.girlfriend).toBe("limited");
+    expect(entitlements.personaAccess!.teacher).toBe("limited");
   });
 
   it("blocks entitlements for suspended users", () => {
@@ -78,24 +80,29 @@ describe("resolveEntitlements", () => {
     const proEntitlements = resolveEntitlements("Pro");
     const premiumEntitlements = resolveEntitlements("Premium");
 
-    expect(liteEntitlements.allowedPersonaIds).toHaveLength(10);
-    expect(liteEntitlements.trialPersonaIds).toHaveLength(7);
+    expect(liteEntitlements.allowedPersonaIds).toHaveLength(6);
+    expect(liteEntitlements.trialPersonaIds).toHaveLength(4);
     expect(liteEntitlements.personaAccess!.strategist).toBe("full");
     expect(liteEntitlements.personaAccess!.developer).toBe("full");
-    expect(liteEntitlements.personaAccess!["best-friend"]).toBe("full");
     expect(liteEntitlements.personaAccess!.teacher).toBe("limited");
+    expect(liteEntitlements.personaAccess!.creator).toBe("limited");
+    expect(liteEntitlements.personaAccess!.wellness).toBe("limited");
+    expect(liteEntitlements.personaAccess!.interviewer).toBe("limited");
 
-    expect(proEntitlements.allowedPersonaIds).toHaveLength(10);
-    expect(proEntitlements.trialPersonaIds).toHaveLength(3);
+    expect(proEntitlements.allowedPersonaIds).toHaveLength(6);
+    expect(proEntitlements.trialPersonaIds).toHaveLength(1);
+    expect(proEntitlements.personaAccess!.strategist).toBe("full");
+    expect(proEntitlements.personaAccess!.developer).toBe("full");
+    expect(proEntitlements.personaAccess!.teacher).toBe("full");
+    expect(proEntitlements.personaAccess!.creator).toBe("full");
+    expect(proEntitlements.personaAccess!.wellness).toBe("full");
     expect(proEntitlements.personaAccess!.interviewer).toBe("limited");
-    expect(proEntitlements.personaAccess!.creator).toBe("limited");
-    expect(proEntitlements.personaAccess!.analyst).toBe("limited");
 
     expect(premiumEntitlements.allowedPersonaIds).toEqual(
       PERSONAS.map((persona) => persona.id),
     );
     expect(premiumEntitlements.trialPersonaIds).toEqual([]);
-    expect(premiumEntitlements.allowedPersonaIds).toHaveLength(10);
+    expect(premiumEntitlements.allowedPersonaIds).toHaveLength(6);
     expect(premiumEntitlements.allowedPersonaIds).toContain("interviewer");
     expect(premiumEntitlements.personaAccess!.interviewer).toBe("full");
   });
@@ -111,5 +118,46 @@ describe("resolveEntitlements", () => {
     expect(entitlements.personaAccess!.teacher).toBe("full");
     expect(entitlements.personaAccess!.developer).toBe("limited");
     expect(entitlements.trialPersonaIds).toContain("developer");
+  });
+});
+
+describe("getRequiredPlanForPersona", () => {
+  it("returns null for Lite-accessible personas", () => {
+    expect(
+      getRequiredPlanForPersona(
+        "strategist",
+        DEFAULT_FULL_PERSONA_ACCESS_BY_PLAN,
+      ),
+    ).toBeNull();
+    expect(
+      getRequiredPlanForPersona(
+        "developer",
+        DEFAULT_FULL_PERSONA_ACCESS_BY_PLAN,
+      ),
+    ).toBeNull();
+  });
+
+  it("returns Pro for Pro-tier personas", () => {
+    expect(
+      getRequiredPlanForPersona("teacher", DEFAULT_FULL_PERSONA_ACCESS_BY_PLAN),
+    ).toBe("Pro");
+    expect(
+      getRequiredPlanForPersona("creator", DEFAULT_FULL_PERSONA_ACCESS_BY_PLAN),
+    ).toBe("Pro");
+    expect(
+      getRequiredPlanForPersona(
+        "wellness",
+        DEFAULT_FULL_PERSONA_ACCESS_BY_PLAN,
+      ),
+    ).toBe("Pro");
+  });
+
+  it("returns Premium for Premium-only personas", () => {
+    expect(
+      getRequiredPlanForPersona(
+        "interviewer",
+        DEFAULT_FULL_PERSONA_ACCESS_BY_PLAN,
+      ),
+    ).toBe("Premium");
   });
 });

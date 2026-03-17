@@ -147,7 +147,7 @@ export async function getRecentTasksByUserId(
   await connectToDatabase();
 
   const safeLimit = Math.max(1, Math.min(limit, 100));
-  const safeOffset = Math.max(0, offset);
+  const safeOffset = Math.min(Math.max(0, offset), 10000);
 
   const tasks = (await Task.find({ userId })
     .sort({ updatedAt: -1 })
@@ -217,7 +217,7 @@ export async function getMediaItemsByUserId(
   await connectToDatabase();
 
   const safeLimit = Math.max(1, Math.min(limit, 100));
-  const safeOffset = Math.max(0, offset);
+  const safeOffset = Math.min(Math.max(0, offset), 10000);
 
   const projectUrlExpression: Record<MediaContentType, string> = {
     image_url: "$messages.content.image_url.url",

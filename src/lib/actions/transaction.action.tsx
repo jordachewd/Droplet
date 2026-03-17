@@ -38,7 +38,11 @@ export async function checkoutPlan(transaction: CheckoutTransactionParams) {
 
   await connectToDatabase();
 
-  const currentUser = await User.findOne({ clerkId: authedUserId });
+  const currentUser = await User.findOne(
+    { clerkId: authedUserId },
+    "_id firstName lastName username email",
+    { lean: true },
+  );
   if (!currentUser) throw new Error("User not found");
 
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 720" role="img" aria-label="Developer persona placeholder">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1d4ed8"/>
+      <stop offset="100%" stop-color="#1e3a8a"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="720" fill="url(#bg)"/>
+  <rect x="120" y="180" width="320" height="320" rx="24" fill="#93c5fd" opacity="0.2"/>
+  <text x="80" y="360" fill="#eff6ff" font-family="Arial, sans-serif" font-size="76" font-weight="700">Developer</text>
+</svg>

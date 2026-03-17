@@ -3,55 +3,33 @@ import Faqs from "./faqs-section";
 import classNames from "classnames";
 import Link from "next/link";
 import { PERSONAS } from "@/constants/assistant-personas";
+import { featureCards, howItWorksSteps } from "@/constants/landing-data";
+import { getEffectivePlanConfig } from "@/lib/utils/effective-plan-config";
+import { getEffectivePersonaAccessByPlan } from "@/lib/utils/effective-persona-access";
+import { buildPlans } from "@/constants/plans";
+import { buildFaqs } from "@/constants/faqs";
 import HeroSection from "./hero-section";
-
-const featureCards = [
-  {
-    icon: "bi bi-person-badge",
-    title: "Persona-driven chat",
-    description:
-      "Start each conversation with a specialist persona instead of forcing one generic assistant to do every job.",
-  },
-  {
-    icon: "bi bi-image",
-    title: "Media-capable workflows",
-    description:
-      "Move from text into image and audio tasks when the persona and plan support the next step.",
-  },
-  {
-    icon: "bi bi-lightning-charge",
-    title: "Real-time response flow",
-    description:
-      "Built for fast back-and-forth conversations so planning, writing, and iteration feel immediate.",
-  },
-];
-
-const howItWorksSteps = [
-  {
-    step: "01",
-    title: "Pick the right persona",
-    description:
-      "Choose the Strategist for planning, the Teacher for explanation, the Creator for ideas, or any other approved persona.",
-  },
-  {
-    step: "02",
-    title: "Give Droplet the job to do",
-    description:
-      "Send a prompt, add context, and keep the thread focused on one goal instead of starting from scratch every time.",
-  },
-  {
-    step: "03",
-    title: "Turn the answer into output",
-    description:
-      "Use the result as a draft, a plan, a teaching aid, or the next step in a media workflow.",
-  },
-];
 
 const featuredPersonas = PERSONAS.filter((persona) =>
   ["strategist", "teacher", "creator"].includes(persona.id),
 );
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const [effectivePlanConfig, personaAccessByPlan] = await Promise.all([
+    getEffectivePlanConfig(),
+    getEffectivePersonaAccessByPlan(),
+  ]);
+  const plans = buildPlans({
+    pricing: effectivePlanConfig.pricing,
+    limits: effectivePlanConfig.limits,
+    personaAccess: personaAccessByPlan,
+    trialLimits: effectivePlanConfig.trialLimits,
+  });
+  const faqs = buildFaqs({
+    pricing: effectivePlanConfig.pricing,
+    personaAccessByPlan,
+  });
+
   return (
     <section
       className="LandingPage relative z-10 -mt-16 mb-10 mx-auto flex w-full flex-1 flex-col items-center gap-20"
@@ -251,8 +229,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <Plans />
-      <Faqs />
+      <Plans plansData={plans} />
+      <Faqs faqsData={faqs} />
     </section>
   );
 }
