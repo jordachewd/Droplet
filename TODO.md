@@ -5,167 +5,29 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: All Milestones 0–20 COMPLETE. Phases 1–59.2 complete. 368 unit tests passing (65+ suites). Build passing.**
-> **PM deep audit #28 (2026-03-17): Full triple-audit (PM + Architect + Engineer). Owner instructions integrated.**
-> **Priority order: 60.1 → 60.2 → 60.3 → 60.4 → 60.5 → 60.6 → 60.7 → 61.1 → 61.2 → 61.3 → 31.4 → 46.1 → 46.2 → 62.1 → 29.x → 26.x**
+> **STATUS: All Milestones 0–21 COMPLETE. Phases 1–60.7, 63.1–63.2 complete. 369 unit tests passing (65+ suites). Build passing.**
+> **PM deep audit #29 (2026-03-17): Full triple-audit (PM + Architect + Engineer). Owner instructions integrated.**
+> **Priority order: 61.1 → 61.2 → 61.3 → 31.4 → 46.1 → 46.2 → 29.x → 26.x**
 > **All Phase 26+ deferred work is ON HOLD until PM-approved.**
 
 ---
 
-## Phase 60: Color Palette Upgrade — HIGH (PM Audit #28, Owner Directive — Color Palette)
+## Phase 63: Critical Bug Fixes — CRITICAL (PM Audit #29, Triple-Audit Confirmed)
 
-> **HIGH priority. Owner directive: Replace entire app color palette with Navy (#0D3B66) / Lemon (#FAF0CA) / Grass (#27A148). Remove custom lightAccent, darkAccent, jwdAqua, jwdMarine, lightBorders, darkBorders palettes. Replace borders with TailwindCSS slate palette.**
-> **Scope: 58 source files + globals.css. Token-based architecture makes migration clean — palette changes in CSS propagate via design tokens.**
-
----
-
-### 60.1 HIGH — Define new color palette in globals.css
-
-**Ref:** PM audit #28 — Owner color palette directive. Architect report: 14 palette groups, 122 CSS custom properties.
-
-**What to do:**
-
-1. In `src/app/globals.css`, replace existing `@theme` palette definitions with new scales generated from:
-   - **Navy** (#0D3B66) — replaces `jwdMarine`, `darkBackground`, `darkText` (dark mode base)
-   - **Lemon** (#FAF0CA) — replaces `lightBackground` (light mode base), used as light mode secondary
-   - **Grass** (#27A148) — replaces `lightAccent` AND `darkAccent` (unified accent for both themes)
-2. Generate 100-900 (or 100-1000) shade scales for each base color.
-3. Replace `lightBorders` / `darkBorders` custom definitions with TailwindCSS `slate` palette references.
-4. Remove `lightPrimary`, `darkPrimary`, `lightSecondary`, `darkSecondary` palettes — consolidate into the 3-palette system (Navy/Lemon/Grass) plus `slate` for borders.
-5. Keep token names that match the new intent (e.g., rename `lightAccent` → `accent` since it's now the same for both themes, or keep separate names but point to same Grass values).
-
-**Acceptance criteria:**
-
-- [ ] globals.css defines Navy, Lemon, Grass palettes with proper shade scales
-- [ ] `lightAccent` and `darkAccent` both resolve to Grass (#27A148) shades
-- [ ] `jwdAqua` and `jwdMarine` removed — replaced with Navy shades
-- [ ] `lightBorders` and `darkBorders` removed — replaced with `slate` palette
-- [ ] `lightPrimary`/`darkPrimary`/`lightSecondary`/`darkSecondary` removed — replaced with Navy/Lemon shades
-- [ ] Body `@apply` rule updated for new palette
-- [ ] Button utility classes updated for Grass accent
-- [ ] Scrollbar, markdown, and blockquote styles updated
-- [ ] `npx tsc --noEmit` passes
+> **CRITICAL priority. Triple-audit confirmed: client self-delete orphans Clerk account. Must be fixed before any feature work.**
+> **Premium media limitation report also investigated — requires admin UI safeguard and owner clarification on Premium video limit.**
 
 ---
 
-### 60.2 HIGH — Replace bg-white with design tokens across all non-admin files
+### ~~63.1 CRITICAL — Fix client self-delete to also delete from Clerk~~ ✅ DONE
 
-**Ref:** PM audit #28 — Architect report: 45 `bg-white` instances across 20 non-admin files. Pre-step before palette propagation.
-
-**Files:** 20 files listed in Architect report (public pages, shared components, chat components, layout).
-
-**What to do:**
-
-1. Replace all `bg-white` and `bg-white/xx` usages with appropriate Lemon-based light background token (e.g., `bg-lightBackground-100/xx`).
-2. Ensure each replacement has proper `dark:` counterpart using Navy-based dark token.
-3. Special attention to `alert-message.tsx` — 4 severity variants use `bg-white`.
-
-**Acceptance criteria:**
-
-- [ ] Zero `bg-white` in any src/ file
-- [ ] All replacements have dark mode pairing
-- [ ] Alert message severity colors preserved (sky, red, emerald, amber text colors)
-- [ ] Visual consistency maintained
-- [ ] `npx tsc --noEmit` passes
+**Completed PM audit #29.** Clerk deletion added before MongoDB cleanup. Clerk failure prevents MongoDB deletion. Unit test added (369 total). Archived to DONE.md.
 
 ---
 
-### 60.3 HIGH — Migrate border tokens (lightBorders/darkBorders → slate)
+### ~~63.2 HIGH — Add admin limits UI safeguard for unlimited (-1) values~~ ✅ DONE
 
-**Ref:** Architect report: 43 files use `lightBorders`, 43 use `darkBorders`. Highest-impact migration batch.
-
-**What to do:**
-
-1. Replace all `lightBorders-*` references with `slate-*` equivalents from TailwindCSS.
-2. Replace all `darkBorders-*` references with `slate-*` equivalents for dark mode.
-3. Mapping: `lightBorders-100→slate-100`, `lightBorders-200→slate-200`, `lightBorders-300→slate-300`, `lightBorders-400→slate-400`, etc. Adjust shade mapping for visual consistency.
-
-**Acceptance criteria:**
-
-- [ ] Zero `lightBorders` or `darkBorders` references in src/
-- [ ] All border tokens use TailwindCSS `slate` palette
-- [ ] Both light and dark modes render correctly
-- [ ] `npx tsc --noEmit` passes
-
----
-
-### 60.4 HIGH — Migrate background tokens to new palette
-
-**Ref:** Architect report: `lightBackground` in 31 files, `jwdMarine` in 42 files, `darkBackground` in 1 file.
-
-**What to do:**
-
-1. Update `lightBackground` CSS variables to generate from Lemon (#FAF0CA) as base color.
-2. Update `jwdMarine` CSS variables to generate from Navy (#0D3B66) as base color. Or rename token to `navy` and find/replace across 42 files.
-3. Remove `darkBackground` definitions (only used in globals.css itself).
-
-**Acceptance criteria:**
-
-- [ ] Light backgrounds use Lemon (#FAF0CA) shade scale
-- [ ] Dark backgrounds use Navy (#0D3B66) shade scale
-- [ ] `jwdAqua` references (4 files) replaced with closest Navy or slate shade
-- [ ] `npx tsc --noEmit` passes
-
----
-
-### 60.5 HIGH — Migrate accent and primary tokens to Grass
-
-**Ref:** Architect report: `lightAccent` in 10 files, `darkAccent` in 10 files, `lightPrimary` in 23 files, `darkPrimary` in 22 files.
-
-**What to do:**
-
-1. Update `lightAccent` CSS variables to Grass (#27A148) shade scale.
-2. Update `darkAccent` CSS variables to Grass (#27A148) shade scale (same as light — unified accent).
-3. Evaluate `lightPrimary`/`darkPrimary` usage — these are decorative (progress bars, header backgrounds). Replace with appropriate Navy/Lemon/Grass shades.
-4. Evaluate `lightSecondary`/`darkSecondary` — used for hover states, utility highlights. Replace with appropriate palette shades.
-
-**Acceptance criteria:**
-
-- [ ] All accent colors resolve to Grass (#27A148) shades
-- [ ] `lightPrimary`/`darkPrimary` removed or reassigned
-- [ ] `lightSecondary`/`darkSecondary` removed or reassigned
-- [ ] `npx tsc --noEmit` passes
-
----
-
-### 60.6 HIGH — Migrate text tokens
-
-**Ref:** Architect report: `lightText` in 7 files, `darkText` in 5 files.
-
-**What to do:**
-
-1. Light theme text: Update `lightText` CSS variables to Navy (#0D3B66) shade scale per owner directive.
-2. Dark theme text: Update `darkText` CSS variables to Lemon (#FAF0CA) shade scale per owner directive.
-
-**Acceptance criteria:**
-
-- [ ] Light theme primary text is Navy-based
-- [ ] Dark theme primary text is Lemon-based
-- [ ] Text readability maintained (contrast ratios)
-- [ ] `npx tsc --noEmit` passes
-
----
-
-### 60.7 HIGH — Remove old palette definitions and visual QA
-
-**What to do:**
-
-1. Remove all old palette CSS custom properties from globals.css that are no longer referenced.
-2. Verify zero references remain to removed palette names in src/.
-3. Visual QA: verify all pages in light mode AND dark mode render correctly.
-4. Run full validation gateway.
-
-**Acceptance criteria:**
-
-- [ ] Zero unused CSS custom properties in globals.css
-- [ ] Zero stale palette references in src/
-- [ ] All pages render correctly in light mode
-- [ ] All pages render correctly in dark mode
-- [ ] `npx prettier . --write` passes
-- [ ] `npm run lint` passes
-- [ ] `npx tsc --noEmit` passes
-- [ ] `npm run test` passes
-- [ ] `npm run build` passes
+**Completed PM audit #29.** LimitInput component added with Unlimited badge, min={-1}, amber warning on unlimited→finite change, helper text. Archived to DONE.md.
 
 ---
 
@@ -285,14 +147,6 @@
 **What to do:**
 
 1. Replace empty `catch {}` blocks (3 total) with `catch { /* localStorage/audio non-critical */ }` comments or minimal stderr logging where appropriate.
-
----
-
-## Phase 62: Confirmation Modal Upgrade — LOW
-
-### 62.1 LOW — Replace window.confirm temporary bridge
-
-**Note:** This is tracked separately from 61.1 in case palette migration takes priority. If 61.1 is executed first, skip this phase.
 
 ---
 

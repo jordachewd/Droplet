@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-17 (PM audit #28. All PM #27 items resolved (Phases 57.1–59.2). TD-UX-01/02/03/04, TD-ADMIN-14 RESOLVED. New items TD-DS-01/02, TD-UX-05 registered. 368 unit tests (65+ suites). Build passing.)
+> Last updated: 2026-03-17 (PM audit #29. Phases 60, 63.1–63.2 COMPLETE. TD-DS-01/02, TD-AUTH-05, TD-UX-06 RESOLVED. Active: TD-UX-05 (MEDIUM), TD-API-09 (LOW). 369 unit tests (65+ suites). Build passing.)
 
 ---
 
@@ -780,14 +780,31 @@ _None._
 | TD-PLAN-01 | Billing | No recurring subscriptions (deferred v1)                                      | Low      |
 | TD-AI-18   | OpenAI  | errorMessage forwarding pattern in /api/openai is safe but fragile (advisory) | Low      |
 
-### Active — High Priority (PM Audit #28, Owner-Directed)
+### ~~Active~~ Resolved — Critical Priority (PM Audit #29)
 
-| ID        | Area   | Description                                                                                                                                                                                                                                | Severity |
-| --------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------- |
-| TD-DS-01  | Design | 58 source files depend on 14 custom color palettes scheduled for replacement with Navy/Lemon/Grass. Migration affects every visual surface. Phase 60 planned.                                                                              | High     |
-| TD-DS-02  | Design | 45 `bg-white` instances across 20 non-admin files. Inconsistent with admin (0 `bg-white`). Pre-step before palette migration. Phase 60.2 planned.                                                                                          | High     |
-| TD-UX-05  | UI     | 4 locations use `window.confirm()` as temporary bridge instead of proper confirmation modal component. AGENTS.md allows as temporary bridge. Phase 61.1 planned.                                                                           | Medium   |
-| TD-API-09 | API    | `messageTextContentSchema` still uses `.strict()` — inner content items could reject extra fields from model responses on conversation resumption. `chatMessageSchema` is passthrough (53.3) but content items are strict. Monitor needed. | Low      |
+| ID         | Area | Description                                                                                                                                                                                                | Severity | Status   |
+| ---------- | ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | -------- |
+| TD-AUTH-05 | Auth | Client self-delete Clerk orphan. FIXED: `deleteUser()` now calls `clerkClient().users.deleteUser()` before MongoDB cleanup. Clerk failure prevents MongoDB deletion. Unit test added. Phase 63.1 COMPLETE. | Critical | RESOLVED |
+
+### Active — Medium Priority (PM Audit #29)
+
+| ID        | Area | Description                                                                                                                                                                                                                                | Severity |
+| --------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------- |
+| TD-UX-05  | UI   | 4 locations use `window.confirm()` as temporary bridge instead of proper confirmation modal component. AGENTS.md allows as temporary bridge. Phase 61.1 planned.                                                                           | Medium   |
+| TD-API-09 | API  | `messageTextContentSchema` still uses `.strict()` — inner content items could reject extra fields from model responses on conversation resumption. `chatMessageSchema` is passthrough (53.3) but content items are strict. Monitor needed. | Low      |
+
+### ~~Active~~ Resolved — High Priority (PM Audit #29)
+
+| ID       | Area  | Description                                                                                                                                                               | Status   |
+| -------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| TD-UX-06 | Admin | Admin limits form unlimited (-1) safeguard. FIXED: LimitInput component with badge, min={-1}, amber warning on unlimited→finite change, helper text. Phase 63.2 COMPLETE. | RESOLVED |
+
+### ~~Active — High Priority (PM Audit #28, Owner-Directed)~~ (All Resolved — PM Audit #29)
+
+| ID       | Area   | Description                                                                                         | Status                                                                                                              |
+| -------- | ------ | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| TD-DS-01 | Design | 58 source files depend on 14 custom color palettes scheduled for replacement with Navy/Lemon/Grass. | **Resolved (Phase 60.1–60.7)** — Full palette migration complete. Zero legacy palette references. 58 files changed. |
+| TD-DS-02 | Design | 45 `bg-white` instances across 20 non-admin files. Inconsistent with admin.                         | **Resolved (Phase 60.2)** — Zero `bg-white` references remain. All tokenized with dark mode pairing.                |
 
 ### ~~Active — High Priority (PM Audit #27, Owner-Directed)~~ (All Resolved — PM Audit #28)
 
