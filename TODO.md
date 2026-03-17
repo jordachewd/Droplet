@@ -5,12 +5,13 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: Phases 1–25.7 + 27.1–27.4 + 27.6–27.10 + 28.1 + 28.2-fix + 28.3-code + 28.3-verify + 28.4 + 28.6 + 28.7 + 30.1 + 30.2 + 30.3 + 31.1 + 31.2 + 31.3 + 31.2-fix + 32.1 + 32.2 + 32.3 + 32.6 + 33.1–33.7 + 35.1 + 37.1 + 38.1–38.7 + 36.1–36.2 complete.**
-> **PM deep audit #16 (2026-03-16): Phase 38 + 36 verified DONE (Architect code audit + PM approval). All 9 tasks confirmed in code. No regressions. 334 unit tests passing. 176 E2E passing. Build passing.**
+> **STATUS: Phases 1–25.7 + 27.1–27.4 + 27.6–27.10 + 28.1 + 28.2-fix + 28.3-code + 28.3-verify + 28.4 + 28.6 + 28.7 + 30.1 + 30.2 + 30.3 + 30.4 + 31.1 + 31.2 + 31.3 + 31.2-fix + 32.1 + 32.2 + 32.3 + 32.6 + 33.1–33.8 + 35.1 + 37.1 + 38.1–38.7 + 36.1–36.2 complete.**
+> **PM deep audit #17 (2026-03-16): 33.8, 30.4 verified DONE (Architect code audit + PM approval). 27.5 persona access propagation confirmed as part of 30.4. 27.5 pricing/limits/model propagation NOT YET DONE.**
+> **335 unit tests passing. 180 E2E passing. 48 skipped. Build passing.**
 > **OWNER INSTRUCTIONS (latest): Admin panel must be fully operational with full control over each setting's purpose. Admin forms must use proper controls. Admin design consistency maintained (36.1 baseline). Top Personas delivered (36.2).**
 > **NO CRITICAL BUGS REMAINING.**
-> **Priority order: 33.8 (trial E2E) → 30.4 (admin persona controls) → 27.5 (admin settings propagation) → 32.4 → 32.5 → 31.4 → 30.5 → 34.x → 29.1 → 29.2 → Phase 26.**
-> **All Phase 26+ deferred work is ON HOLD until Milestone 13 Block D + Milestone 14 are PM-approved complete.**
+> **Priority order: 27.5 (pricing/limits propagation) → 32.4 → 32.5 → 31.4 → 30.5 → 35.2 → 34.x → 29.1 → 29.2 → Phase 26.**
+> **All Phase 26+ deferred work is ON HOLD until Milestone 14 is PM-approved complete.**
 
 ---
 
@@ -26,29 +27,9 @@
 
 ---
 
-## Phase 33: Persona Trial Access System — MOSTLY COMPLETE
+## Phase 33: Persona Trial Access System — COMPLETE
 
-> **33.1–33.7 DONE** — Core trial system implemented and verified. Archived in DONE.md.
-> Remaining: **33.8** (trial E2E tests).
-
----
-
-### 33.8 MEDIUM — E2E tests for persona trial access flow
-
-**Files:** `tests/e2e/` (new or updated specs)
-
-**What to do:**
-
-1. Test: Lite user can select a trial persona and start conversation.
-2. Test: Trial conversation stops at 5 prompts with upgrade CTA.
-3. Test: Full-access persona conversation uses plan limits (10 prompts).
-4. Test: Persona picker shows "Trial" badge for limited personas.
-
-**Acceptance criteria:**
-
-- [ ] E2E covers trial persona selection + limit enforcement
-- [ ] E2E covers upgrade CTA on trial limit
-- [ ] `npm run test:e2e` passes
+> **33.1–33.8 DONE** — Core trial system + E2E tests verified. Archived in DONE.md.
 
 ---
 
@@ -67,33 +48,8 @@
 
 ## Phase 30: Persona Policy Implementation (remaining)
 
-> 30.1 DONE (Interviewer persona), 30.2 DONE (per-plan persona gating), 30.3 DONE (persona picker UI).
-> Remaining: 30.4 (admin persona controls), 30.5 (persona hero images).
-> **30.4 elevated to MEDIUM-HIGH** — Owner requires admin operational completeness (Milestone 14).
-
----
-
-### 30.4 MEDIUM-HIGH — Add admin persona access control per plan
-
-**Files:** `src/app/(admin)/admin/settings/page.tsx`, `src/lib/utils/resolve-entitlements.tsx`, `src/lib/database/models/app-setting.model.tsx`
-**Ref:** Owner instruction: admin must be able to enable/disable persona access per plan
-**Depends on:** Phase 33 complete (trial access system must be stable first)
-
-**What to do:**
-
-1. Add admin settings section for "Persona Access" with checkboxes per plan per persona.
-2. Save as AppSetting (key: `persona_access_lite`, `persona_access_pro`, `persona_access_premium`).
-3. `resolveEntitlements()` reads AppSetting first, falls back to hardcoded defaults.
-4. Admin audit trail for persona access changes.
-
-**Acceptance criteria:**
-
-- [ ] Admin can toggle persona access per plan in settings
-- [ ] Changes take effect on next entitlement check
-- [ ] Falls back to defaults when no AppSetting exists
-- [ ] Audit log entry created
-- [ ] `npx tsc --noEmit` passes
-- [ ] All tests pass
+> 30.1 DONE (Interviewer persona), 30.2 DONE (per-plan persona gating), 30.3 DONE (persona picker UI), 30.4 DONE (admin persona access controls + runtime propagation).
+> Remaining: 30.5 (persona hero images).
 
 ---
 
@@ -148,30 +104,32 @@
 
 ## Phase 27: UX & Architecture Completion (remaining)
 
-> 27.1–27.4 + 27.6–27.10 DONE. Remaining: 27.5 (settings propagation).
-> **27.5 elevated to MEDIUM-HIGH** — Owner requires admin operational completeness (Milestone 14).
-> **ON HOLD until 33.8 + 30.4 are PM-approved complete.**
+> 27.1–27.4 + 27.6–27.10 DONE. Remaining: 27.5 (pricing/limits/model propagation).
+> **27.5 remains MEDIUM-HIGH** — Owner requires admin operational completeness (Milestone 14). TD-ADMIN-02.
+> NOTE: Persona access propagation was delivered as part of 30.4. Only pricing, limits, and model config propagation remain.
 
 ---
 
-### 27.5 MEDIUM-HIGH — Admin settings — propagate pricing & limits to plan cards
+### 27.5 MEDIUM-HIGH — Admin settings — propagate pricing, limits & model config
 
-**Files:** `src/constants/plans.tsx`, `src/lib/utils/resolve-entitlements.tsx`, `src/lib/utils/check-usage-limit.ts`, `src/lib/utils/admin-queries.ts`, plan card components
-**Ref:** TD-ADMIN-02
+**Files:** `src/constants/plans.tsx`, `src/lib/utils/resolve-entitlements.tsx`, `src/lib/utils/check-usage-limit.ts`, `src/lib/utils/admin-queries.ts`, plan card components, checkout flows
+**Ref:** TD-ADMIN-02 (remaining portion: pricing, limits, model config inert)
+**NOTE:** Persona access propagation is DONE (delivered with 30.4). This task now covers ONLY pricing, limits, and model config propagation.
 
 **What to do:**
 
-1. Create a server-side utility (e.g., `getEffectivePlanConfig()`) that reads `AppSetting` values for pricing and limits, falling back to hardcoded `PLAN_LIMITS` defaults.
-2. Wire plan card components to use effective config instead of static constants.
-3. Wire entitlement resolver and usage limit checks to use effective config.
-4. Ensure admin changes take effect on next page load.
-5. Add cache-control / `revalidatePath` so changes propagate without stale data.
+1. Verify/extend `getEffectivePlanConfig()` to read AppSetting values for pricing and limits, falling back to hardcoded `PLAN_LIMITS` defaults.
+2. Wire plan card components (public `/plans`, authenticated `/app/plans`) to use effective config instead of static constants.
+3. Wire `checkUsageLimit()` to use effective limits from AppSetting (or defaults).
+4. Wire checkout flows to use effective pricing from AppSetting (or defaults).
+5. Ensure admin changes take effect on next page load via `revalidatePath`.
 
 **Acceptance criteria:**
 
 - [ ] Plan cards show prices from AppSetting (or defaults)
-- [ ] Entitlement resolver uses limits from AppSetting (or defaults)
+- [ ] Usage limit checks use limits from AppSetting (or defaults)
 - [ ] Admin saves new price → plan cards reflect on next load
+- [ ] Admin saves new limit → enforcement uses new limit
 - [ ] Fallback to hardcoded defaults when AppSetting is empty
 - [ ] `npx tsc --noEmit` passes
 - [ ] All tests pass
@@ -312,5 +270,5 @@
 ---
 
 > **Completed phases** are archived in [`DONE.md`](DONE.md).
-> HF-1 through HF-9.2 complete. Phases 1–25.7 + 27.1–27.4 + 27.6–27.10 + 28.1 + 28.2-fix + 28.3-code + 30.1 + 30.2 + 30.3 + 35.1 + 37.1 + 38.1–38.7 + 36.1–36.2 complete.
+> HF-1 through HF-9.2 complete. Phases 1–25.7 + 27.1–27.4 + 27.6–27.10 + 28.1 + 28.2-fix + 28.3-code + 30.1 + 30.2 + 30.3 + 30.4 + 33.8 + 35.1 + 37.1 + 38.1–38.7 + 36.1–36.2 complete.
 > Phase 10–12 superseded (see DONE.md for mapping).

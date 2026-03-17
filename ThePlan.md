@@ -1017,10 +1017,10 @@ These items are not banned forever. They are excluded because they create dispro
 
 ### Milestone 11 — Persona Trial Access System
 
-> **Status: COMPLETED** — Delivered by Phases 33.1–33.7, 37.1 (E2E stabilization).
+> **Status: COMPLETED** — Delivered by Phases 33.1–33.8, 30.4, 37.1 (E2E stabilization).
 > Three-tier persona access (full/limited/blocked), trial counters, atomic enforcement, persona picker badges, plan card trial copy.
-> 334 unit tests passing, 176 E2E tests passing, build passing.
-> Remaining: 33.8 (trial E2E tests), 30.4 (admin persona controls).
+> Trial E2E tests (33.8) and admin persona access controls (30.4) delivered. Verified by PM audit #17 + Architect code audit.
+> 335 unit tests passing, 180 E2E passing, build passing.
 
 **Objective:** Enable try-before-you-buy persona access. Users can TEST non-plan personas with reduced limits to drive upgrades.
 
@@ -1072,9 +1072,9 @@ These items are not banned forever. They are excluded because they create dispro
 
 ### Milestone 13 — UI Polish, Bug Fixes & Admin Enhancement (Owner-Directed, 2026-03-16)
 
-> **Status: MOSTLY COMPLETE** — Blocks A–C delivered (Phase 38 + 36). Verified by PM audit #16 + Architect code audit.
-> Block D (test coverage) remaining.
-> PM audit #16 (2026-03-16): Phase 38 (38.1–38.7) + Phase 36 (36.1–36.2) APPROVED complete. All 9 tasks verified in code. No regressions. Full validation gateway passed.
+> **Status: MOSTLY COMPLETE** — Blocks A–C delivered (Phase 38 + 36). Block D partially delivered (33.8 DONE).
+> PM audit #16: Phase 38 + 36 APPROVED. PM audit #17: 33.8 APPROVED.
+> Remaining: 35.2 (persona selector E2E tests).
 
 **Objective:** Fix confirmed bugs, address Owner's UI requirements (sidebar restructure, persona studio removal, error z-index), and enhance admin capabilities.
 
@@ -1098,9 +1098,9 @@ These items are not banned forever. They are excluded because they create dispro
 8. ~~**MEDIUM** — Admin design alignment~~ — DONE (36.1). Design tokens consistent with client app.
 9. ~~**MEDIUM** — Top Personas stat box~~ — DONE (36.2). Top 5 personas by usage with labels and percentages.
 
-**Block D — Test Coverage: REMAINING**
+**Block D — Test Coverage: MOSTLY COMPLETE**
 
-10. **MEDIUM** — E2E tests for trial persona flow (33.8).
+10. ~~**MEDIUM** — E2E tests for trial persona flow~~ — DONE (33.8). 4 E2E tests covering trial selection, stop, full-access, and badge visibility.
 11. **LOW** — E2E tests for persona selector in ChatHeader (35.2).
 
 **Success criteria (verified ✅):**
@@ -1112,12 +1112,15 @@ These items are not banned forever. They are excluded because they create dispro
 - ✅ No persona studio/picker on landing page.
 - ✅ Admin pages visually consistent with client app.
 - ✅ "Top Personas" stat box on admin Usage page.
-- ⬜ E2E tests cover trial flow (Block D remaining).
+- ✅ E2E tests cover trial flow (33.8).
+- ⬜ E2E tests for persona selector (35.2 remaining).
 
 ### Milestone 14 — Admin Operational Completeness (Owner-Directed, 2026-03-16)
 
-> **Status: NOT STARTED** — Owner reports admin panel "not fully operational" and lacks "full control over the app upon each settings purpose."
-> Depends on: Milestone 13 Block D complete (test coverage).
+> **Status: IN PROGRESS** — 30.4 (persona access controls) DONE. 27.5 persona access propagation DONE.
+> 27.5 pricing/limits/model config propagation still PENDING (TD-ADMIN-02 partially resolved).
+> PM audit #17 (2026-03-16): 30.4 APPROVED complete. 27.5 scope narrowed to pricing/limits/model propagation only.
+> Depends on: Milestone 13 Block D (33.8 DONE, 35.2 remaining).
 
 **Objective:** Make admin settings actually control app behavior. Every admin setting saved must propagate to the corresponding app feature. Admin must have real operational control over plans, pricing, limits, personas, and models.
 

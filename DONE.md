@@ -2,7 +2,44 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-16 — PM deep audit #16. Phases 1–25.7 + 27.1–27.4 + 27.6–27.10 + 28.1 + 28.2-fix + 28.3-code + 28.3-verify + 28.4 + 28.6 + 28.7 + 30.1 + 30.2 + 30.3 + 31.1 + 31.2 + 31.3 + 31.2-fix + 32.1 + 32.2 + 32.3 + 32.6 + 33.1–33.7 + 35.1 + 37.1 + 38.1–38.7 + 36.1–36.2 + E2E regression fixes complete.
+> Last updated: 2026-03-16 — PM deep audit #17. Phases 1–25.7 + 27.1–27.4 + 27.6–27.10 + 28.1 + 28.2-fix + 28.3-code + 28.3-verify + 28.4 + 28.6 + 28.7 + 30.1 + 30.2 + 30.3 + 30.4 + 31.1 + 31.2 + 31.3 + 31.2-fix + 32.1 + 32.2 + 32.3 + 32.6 + 33.1–33.8 + 35.1 + 37.1 + 38.1–38.7 + 36.1–36.2 + E2E regression fixes complete.
+
+---
+
+## Phase 33.8 — Trial Access E2E Tests — COMPLETED (2026-03-16)
+
+> PM audit #17 + Architect code audit. Verified DONE. No regressions.
+
+- [x] **33.8 MEDIUM** — E2E tests for persona trial access flow. 4 E2E tests in `persona-trial-access.spec.ts`:
+  - Lite user trial persona selection (Teacher) starts conversation.
+  - Trial conversation stops at 5 prompts with upgrade CTA.
+  - Full-access persona (Strategist) uses plan limits (10 prompts).
+  - Persona picker shows "Trial" badge for limited personas.
+- [x] Tests use route interception with mock API handler — tests UI flow, not server-side entitlements.
+- [x] Proper cleanup in `finally` blocks for route handlers.
+
+**Files changed:** `tests/e2e/persona-trial-access.spec.ts` (new)
+
+---
+
+## Phase 30.4 — Admin Persona Access Controls — COMPLETED (2026-03-16)
+
+> PM audit #17 + Architect code audit. Verified DONE. Includes runtime propagation to all 6 call sites.
+
+- [x] **30.4 MEDIUM-HIGH** — Admin persona access controls per plan:
+  - Checkbox matrix UI in admin settings page per plan (Lite/Pro/Premium) × all 10 personas.
+  - Persists to AppSetting keys: `persona_access_lite`, `persona_access_pro`, `persona_access_premium`.
+  - New utility `effective-persona-access.ts` reads AppSetting, normalizes persona IDs against `VALID_PERSONA_ID_SET`, falls back to defaults safely.
+  - `resolveEntitlements()` extended with `fullPersonaAccessByPlan` override parameter — preserves existing behavior when no override provided (`??` fallback).
+  - All 6 runtime call sites wired: `(chat)/layout.tsx`, `app/page.tsx`, `app/new/page.tsx`, `app/personas/page.tsx`, `app/c/[conversationId]/page.tsx`, `/api/openai/route.tsx`.
+  - Admin audit log entry created on every persona access change.
+  - `revalidatePath` for `/app`, `/app/new`, `/app/personas` on setting change.
+  - Uses `.lean()` and `.select()` for DB reads. `$in` query for efficient batch read.
+- [x] `persona-card.tsx` updated with trial badge support (sky-colored "Trial" span).
+- [x] `resolve-entitlements.test.ts` updated with override coverage (admin overrides Lite personas → teacher becomes full, developer becomes limited).
+- [x] Security: proxy + layout + action-level admin auth (triple-check).
+
+**Files changed:** `src/lib/utils/effective-persona-access.ts` (new), `src/lib/utils/resolve-entitlements.tsx`, `src/app/(chat)/layout.tsx`, `src/app/(chat)/app/page.tsx`, `src/app/(chat)/app/new/page.tsx`, `src/app/(chat)/app/personas/page.tsx`, `src/app/(chat)/app/c/[conversationId]/page.tsx`, `src/app/api/openai/route.tsx`, `src/app/(admin)/admin/settings/page.tsx`, `src/lib/actions/admin.actions.tsx`, `src/lib/utils/admin-queries.ts`, `src/components/shared/persona-card.tsx`, `tests/unit/resolve-entitlements.test.ts`
 
 ---
 

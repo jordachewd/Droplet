@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-16 (PM deep audit #16 complete. Phase 38 + 36 verified DONE. AlertMessage stacking context fixed. allowedPersonaIds entitlement leak fixed. Persona dropdown disables mid-conversation. Library/Personas moved to AvatarMenu. ChatPersonaPicker removed from landing. Admin design aligned with client app. Top Personas stat box on Usage page. No critical bugs remaining.)
+> Last updated: 2026-03-16 (PM deep audit #17. 33.8 trial E2E + 30.4 admin persona access controls verified DONE. Admin persona access now operational — persona overrides propagate from AppSetting to all runtime entitlement checks. Milestone 14 IN PROGRESS. 27.5 pricing/limits propagation still pending. No critical bugs.)
 
 ---
 
@@ -661,7 +661,7 @@ All file handling technical debt has been resolved. S3 cleanup on task/user dele
 | `/admin/usage`                        | Admin     | Usage analytics                                                                    |
 | `/admin/settings`                     | Admin     | App settings                                                                       |
 | `/admin/website`                      | Admin     | Content management                                                                 |
-| `/admin/website/[pageId]`             | Admin     | Page editor (Tiptap)                                                               |
+| `/admin/website/[pageId]`             | Admin     | Page editor (textarea fallback — Tiptap replaced)                                  |
 
 ### Public Pages Content
 
@@ -687,8 +687,8 @@ All file handling technical debt has been resolved. S3 cleanup on task/user dele
 - **Users**: List, view, add, suspend, remove. User detail page with info + usage per model.
 - **Transactions**: List, view, suspend, decline. Transaction detail page.
 - **Usage**: Model usage, costs per user/time/provider. **Top Personas** statistic card showing top 5 personas by usage count with labels and percentages. Powered by UsageEvent aggregation. (Implemented — Phase 36.2)
-- **Settings**: AI model per plan, pricing, limits, theme. Proper form controls (selects, number inputs, radios — no raw JSON editors). Powered by AppSetting. **Note: settings values saved but not yet consumed by app behavior** (TD-ADMIN-02 — admin settings propagation pending Phase 27.5).
-- **Website**: Add, edit, remove, sort, publish/unpublish public pages. Tiptap editor. Powered by PublicPage.
+- **Settings**: AI model per plan, pricing, limits, theme. Proper form controls (selects, number inputs, radios — no raw JSON editors). **Persona Access**: per-plan persona access checkbox matrix — admin can toggle each persona's full access per plan. Saves to AppSetting, consumed at runtime by `resolveEntitlements()` via `getEffectivePersonaAccessByPlan()` (Phase 30.4 — operational). Powered by AppSetting. **Note: persona access settings are now operational (30.4 DONE). Pricing, limits, and model config settings are still inert** (TD-ADMIN-02 — pending Phase 27.5).
+- **Website**: Add, edit, remove, sort, publish/unpublish public pages. Textarea-based editor (Tiptap replaced with fallback). Powered by PublicPage.
 - All mutations logged to AdminAuditLog.
 - Admin panel design aligned with client app design system (Phase 36.1 — consistent borders, backgrounds, backdrop tokens, fonts).
 
@@ -702,10 +702,10 @@ All file handling technical debt has been resolved. S3 cleanup on task/user dele
 
 ## 13. Testing
 
-- **Unit tests**: 62+ suites, 334 tests (Vitest) — includes streaming, webhook, chat-wrapper, chat-body stop-state, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, persona prompt, rate limiting, task complexity classification, conversation stop enforcement, entitlement resolver full coverage, checkout-success page, admin audit trail, OpenAI route tests, atomic prompt limit, daily conversation limit, media error handling, universal feature access, and trial access tests.
-- **E2E tests**: 11 Playwright spec files across browser projects (chat-app-shell, auth-boundaries, public-pages with 70+ tests, conversation-lifecycle, user-profile, admin-users, admin-features, landing-page, plans-public, pricing-public, authenticated-flows). 200 total. **176 passing, 24 skipped** (Phase 37.1 stabilization + Phase 38 E2E updates complete — audit #16).
+- **Unit tests**: 62+ suites, 335 tests (Vitest) — includes streaming, webhook, chat-wrapper, chat-body stop-state, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, persona prompt, rate limiting, task complexity classification, conversation stop enforcement, entitlement resolver full coverage (including admin override tests), checkout-success page, admin audit trail, OpenAI route tests, atomic prompt limit, daily conversation limit, media error handling, universal feature access, and trial access tests.
+- **E2E tests**: 12 Playwright spec files across browser projects (chat-app-shell, auth-boundaries, public-pages with 70+ tests, conversation-lifecycle, user-profile, admin-users, admin-features, landing-page, plans-public, pricing-public, authenticated-flows, persona-trial-access). 228 total. **180 passing, 48 skipped** (PM audit #17).
 - **Coverage**: Configured (Phase 24.1) — v8 provider, thresholds: 70% statements / 60% branches / 70% functions / 70% lines. Current: 82/71/88/82.
-- **Gap**: No dedicated E2E spec for streamed chunk-by-chunk rendering (manually verified via Playwright MCP). Trial access E2E (33.8) pending. Persona selector E2E (35.2) pending.
+- **Gap**: No dedicated E2E spec for streamed chunk-by-chunk rendering (manually verified via Playwright MCP). Persona selector E2E (35.2) pending.
 
 ---
 
@@ -761,7 +761,7 @@ _None._
 | ID  | Area | Description | Severity |
 | --- | ---- | ----------- | -------- |
 
-| TD-ADMIN-02 | Admin | Admin settings values saved to AppSetting but never consumed — pricing, limits, model config are inert | Medium |
+| TD-ADMIN-02 | Admin | Admin settings: pricing, limits, model config saved to AppSetting but not yet consumed by app behavior — inert. Persona access propagation is DONE (30.4). | Medium |
 | TD-AI-08 | OpenAI | No video generation (Premium) — UI shows "Coming soon", implementation deferred | Medium |
 
 ### Active — Low Priority
