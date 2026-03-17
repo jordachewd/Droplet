@@ -100,6 +100,10 @@ function formatMediaLimitLabel({
     return `Unlimited ${plural}${suffix}`;
   }
 
+  if (limit === 0) {
+    return `✕ ${plural}${suffix}`;
+  }
+
   const noun = limit === 1 ? singular : plural;
   return `${limit} ${noun}${suffix}`;
 }
@@ -124,7 +128,7 @@ export function buildPlans({
           isIncluded: true,
         },
         {
-          label: "3 personas (full access) + try all others (limited access)",
+          label: "2 personas (full access) + try all others (limited access)",
           isIncluded: true,
         },
         {
@@ -189,7 +193,7 @@ export function buildPlans({
           isIncluded: true,
         },
         {
-          label: "7 personas (full access) + try all others (limited access)",
+          label: "5 personas (full access) + try all others (limited access)",
           isIncluded: true,
         },
         {
@@ -258,7 +262,7 @@ export function buildPlans({
           isIncluded: true,
         },
         {
-          label: "All 10 personas (unlimited)",
+          label: "All 6 personas (unlimited)",
           isIncluded: true,
         },
         {

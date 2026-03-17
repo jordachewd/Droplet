@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { getPersona } from "@/constants/assistant-personas";
 import {
-  buildPersonaAwareSystemPrompt,
   PERSONA_PROMPTS,
   PROMPT_VERSION,
   resolvePersonaPromptConfig,
@@ -9,8 +8,8 @@ import {
 } from "@/constants/persona-prompts";
 
 describe("persona-prompts", () => {
-  it("defines versioned prompt variants for all ten personas", () => {
-    expect(Object.keys(PERSONA_PROMPTS)).toHaveLength(10);
+  it("defines versioned prompt variants for all six personas", () => {
+    expect(Object.keys(PERSONA_PROMPTS)).toHaveLength(6);
     expect(PROMPT_VERSION).toBe("1.0");
   });
 
@@ -50,18 +49,15 @@ describe("persona-prompts", () => {
     );
   });
 
-  it("builds companion prompts with the approved safety constraints", () => {
-    const promptMessages = buildPersonaAwareSystemPrompt("boyfriend", {
-      model: "gpt-5.4",
+  it("builds strategist prompts with analysis capabilities", () => {
+    const promptConfig = resolvePersonaPromptConfig({
+      personaId: "strategist",
+      model: "gpt-4.1",
     });
 
-    expect(promptMessages).toHaveLength(2);
-    expect(promptMessages[1].content).toContain(
-      "Do not generate romantic or sexual content.",
-    );
-    expect(promptMessages[1].content).toContain(
-      "Do not provide medical, legal, or financial advice.",
-    );
+    expect(promptConfig.modelFamily).toBe("standard");
+    expect(promptConfig.systemPrompt).toContain("evidence-first");
+    expect(promptConfig.systemPrompt).toContain("actionable conclusions");
   });
 
   it("builds interviewer prompts for realistic interview simulation", () => {

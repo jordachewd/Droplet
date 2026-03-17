@@ -126,8 +126,8 @@ interface ChatApiResponse {
 const openAiRequestBodySchema = z
   .object({
     messages: chatMessageArraySchema.min(1),
-    taskId: nonEmptyStringSchema.optional(),
-    personaId: nonEmptyStringSchema.optional(),
+    taskId: nonEmptyStringSchema.nullable().optional(),
+    personaId: nonEmptyStringSchema.nullable().optional(),
   })
   .strict();
 

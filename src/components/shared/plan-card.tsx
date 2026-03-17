@@ -42,7 +42,7 @@ export default function PlanCard({ plan, userData }: PlanCardProps) {
       {(isPopular || isCurrent) && (
         <div
           className={classNames(
-            "absolute -left-8 top-3.5 flex -rotate-45 bg-orange-600 p-1.5 px-8 text-[8px] font-bold uppercase leading-none tracking-widest text-white shadow-md",
+            "absolute -left-8 top-3.5 flex -rotate-45 bg-orange-600 p-1.5 px-8 text-2xs font-bold uppercase leading-none tracking-widest text-white shadow-md",
             isCurrent && "bg-blue-600 dark:bg-green-700",
           )}
         >

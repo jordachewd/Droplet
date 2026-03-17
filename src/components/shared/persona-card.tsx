@@ -8,6 +8,7 @@ interface PersonaCardProps {
   compact?: boolean;
   locked?: boolean;
   trial?: boolean;
+  requiredPlan?: "Pro" | "Premium" | null;
 }
 
 export default function PersonaCard({
@@ -16,6 +17,7 @@ export default function PersonaCard({
   compact = false,
   locked = false,
   trial = false,
+  requiredPlan,
 }: PersonaCardProps) {
   const cardClass = classNames(
     "PersonaCard flex h-full flex-col rounded-xl border p-4 transition-all duration-300",
@@ -47,7 +49,12 @@ export default function PersonaCard({
           <span className="rounded-full border border-dotted px-2 py-1 text-xs">
             {persona.category}
           </span>
-          {locked && (
+          {locked && requiredPlan && (
+            <span className="rounded-full border border-amber-400/60 bg-amber-100 px-2 py-1 text-xxs font-semibold uppercase tracking-wide text-amber-900 dark:bg-amber-500/20 dark:text-amber-200">
+              {requiredPlan}
+            </span>
+          )}
+          {locked && !requiredPlan && (
             <span className="rounded-full border border-amber-400/60 bg-amber-100 px-2 py-1 text-xxs font-semibold uppercase tracking-wide text-amber-900 dark:bg-amber-500/20 dark:text-amber-200">
               Locked
             </span>
@@ -64,7 +71,9 @@ export default function PersonaCard({
       <p className={bodyClass}>{persona.description}</p>
       {locked && (
         <p className="text-xs font-medium text-amber-700 dark:text-amber-300">
-          Upgrade your plan to unlock this persona.
+          {requiredPlan
+            ? `Upgrade to ${requiredPlan} to unlock this persona.`
+            : "Upgrade your plan to unlock this persona."}
         </p>
       )}
       {!locked && trial && (

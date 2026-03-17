@@ -6,7 +6,10 @@ import PageWrapper from "@/components/layout/page-wrapper";
 import PersonaCard from "@/components/shared/persona-card";
 import { getEffectivePersonaAccessByPlan } from "@/lib/utils/effective-persona-access";
 import { ensureUserSynced } from "@/lib/utils/ensure-user-synced";
-import { resolveEntitlements } from "@/lib/utils/resolve-entitlements";
+import {
+  getRequiredPlanForPersona,
+  resolveEntitlements,
+} from "@/lib/utils/resolve-entitlements";
 
 export default async function NewConversationPage() {
   const { userId } = await auth();
@@ -30,11 +33,15 @@ export default async function NewConversationPage() {
           subtitle="Pick an AI persona and jump directly into the chat dashboard."
         />
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {PERSONAS.map((persona) => {
             const isLocked = !allowedPersonaIdSet.has(persona.id);
             const isTrialPersona =
               entitlements.personaAccess?.[persona.id] === "limited";
+            const requiredPlan = getRequiredPlanForPersona(
+              persona.id,
+              fullPersonaAccessByPlan,
+            );
 
             return (
               <PersonaCard
@@ -44,6 +51,7 @@ export default async function NewConversationPage() {
                 compact
                 locked={isLocked}
                 trial={isTrialPersona}
+                requiredPlan={requiredPlan}
               />
             );
           })}

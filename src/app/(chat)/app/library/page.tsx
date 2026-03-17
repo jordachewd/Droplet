@@ -7,6 +7,7 @@ import LibraryTabs from "@/components/chat/library-tabs";
 import type {
   LibraryConversationCardItem,
   LibraryMediaCardItem,
+  LibraryPaginationState,
 } from "@/components/chat/library-tabs";
 import {
   getMediaItemsByUserId,
@@ -25,12 +26,6 @@ interface LibraryPageProps {
   }>;
 }
 
-interface PaginationState {
-  currentPage: number;
-  hasPreviousPage: boolean;
-  hasNextPage: boolean;
-}
-
 const CHAT_PAGE_SIZE = 12;
 const MEDIA_PAGE_SIZE = 12;
 
@@ -41,7 +36,7 @@ function parsePage(value: string | undefined): number {
     return 1;
   }
 
-  return parsed;
+  return Math.min(parsed, 1000);
 }
 
 function parseTab(value: string | undefined): LibraryTabId {
@@ -68,17 +63,17 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
   let imageItems: LibraryMediaCardItem[] = [];
   let audioItems: LibraryMediaCardItem[] = [];
   const videoItems: LibraryMediaCardItem[] = [];
-  let conversationsPagination: PaginationState = {
+  let conversationsPagination: LibraryPaginationState = {
     currentPage: conversationsPage,
     hasPreviousPage: conversationsPage > 1,
     hasNextPage: false,
   };
-  let imagesPagination: PaginationState = {
+  let imagesPagination: LibraryPaginationState = {
     currentPage: imagesPageNumber,
     hasPreviousPage: imagesPageNumber > 1,
     hasNextPage: false,
   };
-  let audiosPagination: PaginationState = {
+  let audiosPagination: LibraryPaginationState = {
     currentPage: audiosPageNumber,
     hasPreviousPage: audiosPageNumber > 1,
     hasNextPage: false,

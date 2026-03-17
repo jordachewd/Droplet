@@ -73,8 +73,8 @@ This section defines the intended v1 target state.
 
 1. Users must create an account before using chat, uploads, media generation, or plan-limited features.
 2. Lite is permanent and free. The 3-day trial behavior must be removed everywhere.
-3. All personas are available in all plans.
-4. Lite is limited by usage, not by persona access.
+3. Personas are plan-gated. 6 personas total. Lite: 2 full access (Strategist, Developer) + 4 limited (trial). Pro: 5 full access (+ Teacher, Creator, Wellness) + 1 limited. Premium: all 6 full access. Admin can override per-plan persona access via admin settings.
+4. Each persona acts as an independent AI agent specifically trained and skilled for its purpose, with related tools and features provided per persona field.
 5. Lite users are capped at 5 conversations per day.
 6. Lite users are capped at 10 user prompts per conversation.
 7. Lite users are capped at 3 media generations in the approved reset window.
@@ -84,14 +84,19 @@ This section defines the intended v1 target state.
 11. After a forced stop, the user must be told only one of these next actions: start a new conversation, upgrade the plan, or contact support.
 12. Private pages must be auth-protected and user ownership must be enforced in every read and write path.
 13. Admin routes and admin actions must be role-protected server-side and at the proxy boundary.
+14. Plan cards must show ✕ for unavailable options (not "0"). E.g., "✕ Audio generations per month" instead of "0 audio generations per month".
+15. Unavailable personas must be clearly indicated as PRO or PREMIUM feature with a small font-size label indicator.
+16. Personas must be displayed in a 3-per-row grid on desktop view.
+17. Each persona must have a representative hero image.
+18. All persona configuration must be managed from admin panel by admin role only.
 
 ### 3.2 Tier contract
 
-| Tier    | Access              | Price | Model policy                                                                                                 | Required baseline limits                                                                                                                                 |
-| ------- | ------------------- | ----- | ------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Lite    | Auth required, free | 0     | `gpt-4o-mini` (chat), `gpt-image-1-mini` (image). Audio/video blocked.                                       | 5 conversations per day, 10 user prompts per conversation, 3 media generations per approved reset window, hard conversation stop on quota or storage hit |
-| Pro     | Paid only           | 19    | `gpt-4.1` (chat), `gpt-image-1.5` (image), `gpt-audio-mini` (audio). Video blocked.                          | Higher ceilings than Lite, paid-only reliability and quality improvements                                                                                |
-| Premium | Paid only           | 39    | `gpt-4.1`/`gpt-5.4` (chat), `gpt-image-1.5` (image), `gpt-audio-1.5` (audio), `sora-2`/`sora-2-pro` (video). | Highest ceilings plus 3 explicitly defined Premium-only features                                                                                         |
+| Tier    | Access              | Price | Model policy                                                                                                 | Required baseline limits                                                                                                                                                       |
+| ------- | ------------------- | ----- | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Lite    | Auth required, free | 0     | `gpt-4o-mini` (chat), `gpt-image-1-mini` (image). Audio/video blocked.                                       | 5 conversations/day, 10 prompts/conversation, 3 media generations per approved reset window, hard conversation stop on quota or storage hit. 2 full-access personas + 4 trial. |
+| Pro     | Paid only           | 19    | `gpt-4.1` (chat), `gpt-image-1.5` (image), `gpt-audio-mini` (audio). Video blocked.                          | Higher ceilings than Lite, 5 full-access personas + 1 trial.                                                                                                                   |
+| Premium | Paid only           | 39    | `gpt-4.1`/`gpt-5.4` (chat), `gpt-image-1.5` (image), `gpt-audio-1.5` (audio), `sora-2`/`sora-2-pro` (video). | Highest ceilings, all 6 personas full access.                                                                                                                                  |
 
 ### 3.3 Public surface required for release
 
@@ -929,9 +934,12 @@ Every gate must pass.
 ### Gate C - Product Gate
 
 - Lite is permanent and account-required
-- All personas are available for all plans
+- 6 personas plan-gated with trial access for non-full-access personas
 - Stop reasons and next actions work across chat flows
 - Streaming is stable enough for production
+- Unavailable personas clearly labeled as PRO or PREMIUM feature
+- Plan cards show ✕ for unavailable options (not 0)
+- Personas displayed in 3-per-row grid on desktop
 
 ### Gate D - Admin Gate
 
@@ -1149,6 +1157,76 @@ These items are not banned forever. They are excluded because they create dispro
 - ✅ Full audit trail for all admin mutations.
 - ✅ Checkout server-side price re-verification operational (TD-CHECKOUT-01 resolved — Phase 39.1).
 
+### Milestone 15 — Critical Bug Fixes (Owner-Directed, 2026-03-17)
+
+> **Status: NOT STARTED**
+
+**Objective:** Fix critical production bugs blocking normal user experience.
+
+**Dependencies:** None — critical path. Must be resolved before any other work.
+
+**Scope:**
+
+1. Fix chat generation "Invalid request body" error after authentication.
+2. Fix persona access gating enforcement (all personas showing as available for all plans).
+3. Add PRO/PREMIUM label indicators on unavailable personas.
+
+**Success criteria:**
+
+- Chat generation works end-to-end for authenticated users (Lite, Pro, Premium).
+- Persona access correctly enforced per plan defaults and admin overrides.
+- Non-accessible personas display clear plan requirement labels.
+
+### Milestone 16 — Persona Restructure (Owner-Directed, 2026-03-17)
+
+> **Status: NOT STARTED**
+
+**Objective:** Reduce from 10 to 6 personas. Remove companions, merge Strategist+Analyst.
+
+**Dependencies:** Milestone 15 (critical bugs fixed first).
+
+**Scope:**
+
+1. Remove Best Friend, Boyfriend, Girlfriend from constants, types, prompts, entitlements, admin settings.
+2. Merge Analyst capabilities into Strategist persona (keep `strategist` ID).
+3. Remove `analyst`, `best-friend`, `boyfriend`, `girlfriend` from `PersonaId` type union.
+4. Remove `COMPANION_SAFETY_RULES` references (remove or archive).
+5. Update default plan-gating for 6 personas (Lite: 2, Pro: 5, Premium: 6).
+6. Handle orphaned DB records (Tasks/UsageEvents with removed personaIds — keep readable, prevent new conversations).
+7. Update admin persona access settings validation.
+8. Generate 6 persona hero images.
+9. Implement 3-per-row persona grid layout.
+10. Add persona category display/sorting.
+
+**Success criteria:**
+
+- Exactly 6 personas in code, types, constants, and docs.
+- No references to removed personas in production code.
+- Orphaned DB records handled gracefully (existing conversations readable, no new conversations with removed personas).
+- Hero images for all 6 personas.
+- 3-per-row grid on desktop.
+
+### Milestone 17 — Admin Panel Redesign & UI Polish (Owner-Directed, 2026-03-17)
+
+> **Status: NOT STARTED**
+
+**Objective:** Full admin panel design consistency with client app. Plan card improvements. Code review fixes.
+
+**Dependencies:** Milestone 16.
+
+**Scope:**
+
+1. Admin panel layout matches client app design (fonts, sizes, colors, proportions).
+2. Plan cards: show ✕ instead of 0 for unavailable options.
+3. Plans fully configurable from admin panel.
+4. Code review fixes: Tailwind token corrections, pagination clamping, state sync, type deduplication.
+
+**Success criteria:**
+
+- Admin panel visually consistent in design system with client app.
+- Plan cards never show "0" for unavailable options.
+- All Copilot code review items resolved.
+
 ---
 
 ## 12. What The Team Must Stop Doing
@@ -1159,3 +1237,5 @@ These items are not banned forever. They are excluded because they create dispro
 4. Stop treating admin as a cosmetic dashboard problem.
 5. Stop promising advanced Premium features before provider and storage readiness are proven.
 6. Stop allowing route structure to drift away from product boundaries.
+7. Stop maintaining companion personas (Best Friend, Boyfriend, Girlfriend) — Owner directive: removed.
+8. Stop treating Analyst as separate from Strategist — merged by Owner directive.

@@ -24,8 +24,8 @@ const aboutSections: AboutSection[] = [
     eyebrow: "Persona-led guidance",
     title: "Droplet is an AI workspace shaped by specialist personas.",
     paragraphs: [
-      "Each conversation starts with a persona that sets the assistant's tone, boundaries, and style of help. Instead of a generic chatbot, you begin with a role that already knows how to think about planning, learning, creative work, analysis, or companionship.",
-      "That structure keeps the product grounded: the Strategist plans, the Teacher explains, the Developer debugs, and the companion personas stay supportive without blurring safety boundaries.",
+      "Each conversation starts with a persona that sets the assistant's tone, boundaries, and style of help. Instead of a generic chatbot, you begin with a role that already knows how to think about planning, learning, creative work, analysis, or career preparation.",
+      "That structure keeps the product grounded: the Strategist plans and analyzes, the Teacher explains, the Developer debugs, the Creator ideates, and the Wellness persona supports healthy routines.",
     ],
     visualType: "identity",
   },
@@ -40,11 +40,11 @@ const aboutSections: AboutSection[] = [
     visualType: "workflow",
   },
   {
-    eyebrow: "Ten personas",
+    eyebrow: "Six personas",
     title: "Persona access scales by plan tier.",
     paragraphs: [
-      "Lite includes Strategist, Developer, and Best Friend. Pro adds Teacher, Wellness, Boyfriend, and Girlfriend. Premium unlocks the full 10-persona catalog, including Interviewer, Creator, and Analyst.",
-      "The current catalog covers Productivity, Learning, Creative, Lifestyle, and Companion use cases so users can move between practical execution, reflection, and content work without switching products.",
+      "Lite includes Strategist and Developer. Pro adds Teacher, Creator, and Wellness. Premium unlocks all six personas, including Interviewer.",
+      "The current catalog covers Productivity, Learning, Creative, Lifestyle, and Career use cases so users can move between practical execution, reflection, and content work without switching products.",
     ],
     visualType: "personas",
   },
@@ -293,7 +293,7 @@ export default function AboutPage() {
     <section className="AboutPage mx-auto flex w-full max-w-screen-2xl flex-col gap-10 px-4 pb-16 pt-24 sm:px-6 lg:px-8">
       <div
         className={classNames(
-          "rounded-[2rem] border px-6 py-10 shadow-sm",
+          "rounded-4xl border px-6 py-10 shadow-sm",
           "border-lightBorders-400/80 bg-white/72 backdrop-blur-sm",
           "dark:border-darkBorders-500 dark:bg-jwdMarine-900/80",
         )}
@@ -314,7 +314,7 @@ export default function AboutPage() {
         >
           <div
             className={classNames(
-              "rounded-[2rem] border px-6 py-7 shadow-sm",
+              "rounded-4xl border px-6 py-7 shadow-sm",
               "border-lightBorders-400/80 bg-white/76",
               "dark:border-darkBorders-500 dark:bg-jwdMarine-900/82",
             )}
@@ -338,7 +338,7 @@ export default function AboutPage() {
 
       <section
         className={classNames(
-          "w-full max-w-screen-2xl rounded-[2rem] border px-6 py-8 shadow-sm",
+          "w-full max-w-screen-2xl rounded-4xl border px-6 py-8 shadow-sm",
           "border-lightBorders-400/80 bg-linear-135 from-lightSecondary-100 via-white to-lightAccent-100",
           "dark:border-darkBorders-500 dark:bg-linear-135 dark:from-darkPrimary-1000 dark:via-jwdMarine-1000 dark:to-darkSecondary-900/55",
         )}

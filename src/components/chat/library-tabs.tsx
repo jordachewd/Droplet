@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import classNames from "classnames";
@@ -40,7 +40,7 @@ interface LibraryTabsProps {
 
 type LibraryTabId = "chats" | "images" | "audios" | "videos";
 
-interface LibraryPaginationState {
+export interface LibraryPaginationState {
   currentPage: number;
   hasPreviousPage: boolean;
   hasNextPage: boolean;
@@ -58,6 +58,10 @@ export default function LibraryTabs({
   hasLoadError = false,
 }: LibraryTabsProps) {
   const [activeTabId, setActiveTabId] = useState<LibraryTabId>(initialTabId);
+
+  useEffect(() => {
+    setActiveTabId(initialTabId);
+  }, [initialTabId]);
 
   const tabs = useMemo(
     () => [

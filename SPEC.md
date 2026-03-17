@@ -21,7 +21,7 @@ The product monetises through tiered subscription plans paid via Stripe.
 ### Core Value Proposition
 
 - Multi-modal AI assistant (text + image + audio + video generation)
-- 10 predefined personas with distinct system prompts and capabilities
+- 6 predefined personas with distinct system prompts and capabilities
 - Streaming responses for real-time chat UX
 - Conversation history persisted per user with resume capability
 - Three-tier subscription model (Lite / Pro / Premium) with per-plan entitlements
@@ -30,8 +30,8 @@ The product monetises through tiered subscription plans paid via Stripe.
 
 ### Approved v1 Release Scope
 
-- 10 predefined personas (no dynamic persona creation)
-- Per-plan persona gating (Lite: 3, Pro: 7, Premium: all 10) — admin-configurable
+- 6 predefined personas (no dynamic persona creation)
+- Per-plan persona gating (Lite: 2, Pro: 5, Premium: all 6) — admin-configurable
 - Text chat as primary mode with **streaming responses**
 - Image upload support
 - Image generation (all tiers, with enforced usage limits)
@@ -73,7 +73,7 @@ Admin access is enforced at the proxy level (`src/proxy.tsx`) via Clerk session 
 
 ## 3. Personas
 
-10 predefined personas defined in `src/constants/assistant-personas.tsx`:
+6 predefined personas defined in `src/constants/assistant-personas.tsx`:
 
 | Persona ID    | Label       | Category     | Image | Audio | Lite | Pro | Premium |
 | ------------- | ----------- | ------------ | ----- | ----- | ---- | --- | ------- |
@@ -82,14 +82,11 @@ Admin access is enforced at the proxy level (`src/proxy.tsx`) via Clerk session 
 | `developer`   | Developer   | Productivity | Yes   | Yes   | Yes  | Yes | Yes     |
 | `creator`     | Creator     | Creative     | Yes   | Yes   | No   | Yes | Yes     |
 | `wellness`    | Wellness    | Lifestyle    | Yes   | Yes   | No   | Yes | Yes     |
-| `analyst`     | Analyst     | Productivity | Yes   | Yes   | No   | Yes | Yes     |
-| `best-friend` | Best Friend | Companion    | Yes   | Yes   | Yes  | Yes | Yes     |
-| `boyfriend`   | Boyfriend   | Companion    | Yes   | Yes   | No   | Yes | Yes     |
-| `girlfriend`  | Girlfriend  | Companion    | Yes   | Yes   | No   | Yes | Yes     |
 | `interviewer` | Interviewer | Career       | Yes   | Yes   | No   | No  | Yes     |
 
-> **Rule 3 (updated):** Personas use a three-tier access model: **full** (plan's normal limits), **limited** (trial limits for try-before-you-buy), or **blocked** (admin-disabled). Lite: 3 personas full access (Strategist, Developer, Best Friend) + 7 personas limited access. Pro: 7 personas full access + 3 personas limited access. Premium: all 10 personas full access. Admin can override via settings.
+> **Rule 3 (updated):** Personas use a three-tier access model: **full** (plan's normal limits), **limited** (trial limits for try-before-you-buy), or **blocked** (admin-disabled). Lite: 2 personas full access (Strategist, Developer) + 4 personas limited access. Pro: 5 personas full access (+ Teacher, Creator, Wellness) + 1 persona limited access. Premium: all 6 personas full access. Admin can override via settings.
 > **Rule 10:** All features (image, audio, video) are available for all personas — differentiated by persona purpose (prompt context), not blocked per persona. All plans provide all features — differentiated by plan limits (quantity).
+> **Rule (new):** Each persona acts as an independent AI agent trained and skilled for its field. Related tools and features are provided to each persona to perform best in its domain. Personas are displayed in a 3-per-row grid on desktop. Each persona has a representative hero image. All persona configuration (access, enablement) is managed exclusively from the admin panel by the admin role. Unavailable personas are clearly labeled as "PRO" or "PREMIUM" feature with a small-font indicator.
 
 ### Persona Trial Access (Limited Access Model)
 
@@ -117,7 +114,7 @@ Each persona has: `id`, `label`, `tagline`, `description`, `category`, `icon`, `
 
 ### Persona Selection & Entitlements
 
-- **Personas are plan-gated** (Lite: 3 personas, Pro: 7 personas, Premium: all 10 personas).
+- **Personas are plan-gated** (Lite: 2 personas, Pro: 5 personas, Premium: all 6 personas).
 - Default persona access per plan is hardcoded in constants but overridable by admin via AppSetting.
 - Persona selection UI: `ChatHeader` includes a persona dropdown selector for quick persona switching across all `/app` pages — selector is disabled during active conversations (`messages.length > 0` or `taskStatus === "ended"` — persona is bound per-task). `ChatPersonaPicker` component available on `/app/personas` page for full persona browsing with trial badges.
 - Persona is stored per task in `Task.personaId`.
@@ -146,7 +143,7 @@ The Interviewer persona is an interview readiness simulator:
 - Receive structured feedback after each session
 - Prepare for real interviews, promotions, and internal mobility
 - Tailored to role, company, and experience level
-- Premium-only persona
+- Premium-only persona (Lite and Pro: trial access)
 
 ### Prompt Architecture (Implemented — Phase 22)
 
@@ -154,11 +151,11 @@ Prompt system implemented in `src/constants/persona-prompts.ts` (server-only, ve
 
 Current implementation covers:
 
-- **Persona identity**: unique personality, tone, domain expertise — all 9 personas have distinct prompts
+- **Persona identity**: unique personality, tone, domain expertise — all 6 personas have distinct prompts
 - **Plan tier**: model-family-aware prompt adaptation (nano/mini/standard/reasoning model families)
 - **Model family resolution**: `resolvePromptModelFamily()` maps model IDs to prompt families
 - **Temperature/max-token settings**: per-persona, per-model-family configuration
-- **Safety constraints**: `COMPANION_SAFETY_RULES` for companion personas (boyfriend, girlfriend, best-friend), `WELLNESS_SAFETY_RULES` for wellness
+- **Safety constraints**: `WELLNESS_SAFETY_RULES` for wellness persona
 - **Answer style and formatting**: persona-specific output formatting rules
 - **Version identifier**: `PROMPT_VERSION = "1.0"`
 - **Fallback chain**: model-family prompt → persona default `systemPrompt` in assistant-personas.tsx
@@ -182,11 +179,12 @@ Prompts are versioned and separated from request handlers. `buildPersonaAwareSys
 ### Plan Rules
 
 1. **Lite is permanent and free.** There is no 3-day trial. There is no expiry. New users receive Lite by default upon account creation.
-2. **Personas are plan-gated.** Lite: Strategist, Developer, Best Friend (3). Pro: all Lite + Teacher, Wellness, Boyfriend, Girlfriend (7). Premium: all 10 personas. Admin can override persona access per plan via admin settings.
+2. **Personas are plan-gated.** Lite: Strategist, Developer (2). Pro: all Lite + Teacher, Creator, Wellness (5). Premium: all 6 personas. Admin can override persona access per plan via admin settings.
 3. **Pro and Premium are paid-only.** Activated via Stripe Checkout one-time payment.
 4. **Premium advantages over Pro:** higher audio quality model (when available), `gpt-5.4` for complex reasoning, unlimited image/audio quotas, and higher video quota. See Section 8 for full model policy. Note: `gpt-audio-1.5` is currently inaccessible (403) — Premium audio uses `gpt-audio-mini` until access is restored.
 5. When any limit is reached, the server **must end the conversation** with an exact stop reason and exact next-action instruction.
 6. After a forced stop, the user is told one of: start a new conversation (if resources remain), upgrade plan (if applicable), or contact support.
+7. **Plan cards must show ✕ for unavailable options** (not "0"). E.g., "✕ Audio generations per month" instead of "0 audio generations per month".
 
 ### Lite Plan Limits (Detailed)
 

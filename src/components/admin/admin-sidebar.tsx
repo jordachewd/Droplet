@@ -1,8 +1,11 @@
 "use client";
 
+import { useEffect } from "react";
 import classNames from "classnames";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useUiStore } from "@/lib/hooks/use-ui-store";
+import { useShallow } from "zustand/react/shallow";
 
 const ADMIN_LINKS = [
   {
@@ -28,48 +31,115 @@ const ADMIN_LINKS = [
 
 export default function AdminSidebar() {
   const pathname = usePathname();
+  const {
+    desktopSidebarCollapsed: desktopCollapsed,
+    mobileSidebarOpen: mobileOpen,
+    setMobileSidebarOpen,
+  } = useUiStore(
+    useShallow((state) => ({
+      desktopSidebarCollapsed: state.desktopSidebarCollapsed,
+      mobileSidebarOpen: state.mobileSidebarOpen,
+      setMobileSidebarOpen: state.setMobileSidebarOpen,
+    })),
+  );
+
+  useEffect(() => {
+    setMobileSidebarOpen(false);
+  }, [pathname, setMobileSidebarOpen]);
+
+  const sidebarClass = classNames(
+    "AdminSidebar fixed bottom-0 left-0 top-0 z-30 flex w-72 flex-col justify-between",
+    "border-r border-lightBorders-300/70 bg-lightBackground-200 shadow-xl transition-all duration-300",
+    "lg:relative lg:z-10 lg:translate-x-0 lg:shadow-none",
+    "dark:border-darkBorders-500 dark:bg-jwdMarine-1000",
+    mobileOpen ? "translate-x-0" : "-translate-x-full",
+    desktopCollapsed ? "lg:w-[78px]" : "lg:w-72",
+  );
+
+  const isOpen = !desktopCollapsed;
+
+  const backdropClass = classNames(
+    "fixed inset-0 z-20 bg-black/35 backdrop-blur-[1px] lg:hidden",
+    !mobileOpen && "hidden",
+  );
 
   return (
-    <aside
-      className={classNames(
-        "AdminSidebar hidden w-72 shrink-0 flex-col border-r px-4 py-6 lg:flex",
-        "border-lightBorders-300/70 bg-lightBackground-100/85 backdrop-blur-lg dark:border-darkBorders-500 dark:bg-jwdMarine-950/70",
-      )}
-    >
-      <div className="mb-8 flex flex-col gap-1 px-2">
-        <p className="text-xs font-semibold uppercase tracking-[0.28em] opacity-60">
-          Droplet
-        </p>
-        <h2 className="heading-5">Admin Control Plane</h2>
-      </div>
+    <>
+      <button
+        type="button"
+        className={backdropClass}
+        onClick={() => setMobileSidebarOpen(false)}
+        aria-label="Close sidebar overlay"
+      />
 
-      <nav className="flex flex-col gap-2">
-        {ADMIN_LINKS.map((link) => {
-          const isActive = link.exact
-            ? pathname === link.href
-            : pathname === link.href || pathname.startsWith(`${link.href}/`);
-
-          return (
-            <Link
-              key={link.href}
-              href={link.href}
+      <aside className={sidebarClass} id="admin-sidebar">
+        <div className="flex flex-col px-4 py-6">
+          <div
+            className={classNames(
+              "mb-8 flex flex-col gap-1 px-2",
+              !isOpen && "lg:items-center lg:px-0",
+            )}
+          >
+            <p
               className={classNames(
-                "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all",
-                "hover:bg-lightSecondary-300/70 dark:hover:bg-darkSecondary-500/30",
-                isActive &&
-                  "bg-lightPrimary-100 font-semibold dark:bg-darkPrimary-500/25",
+                "text-xs font-semibold uppercase tracking-[0.28em] opacity-60",
+                !isOpen && "lg:hidden",
               )}
             >
-              <i className={classNames(link.icon, "text-base")}></i>
-              <span>{link.label}</span>
-            </Link>
-          );
-        })}
-      </nav>
+              Droplet
+            </p>
+            <h2 className={classNames("heading-5", !isOpen && "lg:hidden")}>
+              Admin Panel
+            </h2>
+            {!isOpen && (
+              <span className="hidden text-lg font-bold lg:block">D</span>
+            )}
+          </div>
 
-      <div className="mt-auto px-2 pt-6 text-xs opacity-70">
-        <p>Admin pages are protected at the proxy and server layers.</p>
-      </div>
-    </aside>
+          <nav
+            className={classNames(
+              "droplet-scrollbar flex flex-col gap-2 overflow-y-auto",
+              !isOpen && "lg:items-center",
+            )}
+          >
+            {ADMIN_LINKS.map((link) => {
+              const isActive = link.exact
+                ? pathname === link.href
+                : pathname === link.href ||
+                  pathname.startsWith(`${link.href}/`);
+
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  title={!isOpen ? link.label : undefined}
+                  className={classNames(
+                    "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all",
+                    "hover:bg-lightSecondary-300/70 dark:hover:bg-darkSecondary-500/30",
+                    isActive &&
+                      "bg-lightPrimary-100 font-semibold dark:bg-darkPrimary-500/25",
+                    !isOpen && "lg:justify-center lg:px-0",
+                  )}
+                >
+                  <i className={classNames(link.icon, "text-base")}></i>
+                  <span className={classNames(!isOpen && "lg:hidden")}>
+                    {link.label}
+                  </span>
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
+
+        <div
+          className={classNames(
+            "px-6 pb-6 text-xs opacity-70",
+            !isOpen && "lg:hidden",
+          )}
+        >
+          <p>Protected by proxy and server layers.</p>
+        </div>
+      </aside>
+    </>
   );
 }
