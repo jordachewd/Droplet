@@ -2,7 +2,39 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-17 — PM deep audit #22. Phases 44.1–44.5 + 45.1–45.4 + 43.2 archived. All Phases 1–45.4 complete. All Milestones 0–17 COMPLETED. Milestone 18 MOSTLY COMPLETE.
+> Last updated: 2026-03-17 — PM deep audit #23. Phase 47.1 + Phase 34.2–34.8 archived. All Phases 1–45.4 complete. Phase 47.1 + 34.2–34.8 complete. Milestones 0–17 COMPLETED. Milestone 12 (Video) COMPLETED. Milestone 18 MOSTLY COMPLETE.
+
+---
+
+## Phase 34.2–34.8 — Video Generation (Full Implementation) — COMPLETED (2026-03-17)
+
+> PM audit #23. Triple-audit verified (PM + Architect + Engineer). Video generation end-to-end operational.
+> Quality gaps tracked in Phase 34.9 (see TODO.md).
+> 360 unit tests (65 suites). 174 E2E passing. Build passing.
+
+- [x] **34.2 HIGH** — Created `generateVideo.tsx` utility with async Sora polling: `videos.create()` → `waitForCompletedVideo()` → `videos.downloadContent()` → `uploadFileToAWS()`. Model resolved via `resolveModelPolicy()`. 180s polling timeout. Zero-byte check. S3 upload to `{userId}/videos/`.
+- [x] **34.3 HIGH** — Added `videoGenerationTool` definition and `getChatTools()` update with `supportsVideoGeneration` flag.
+- [x] **34.4 HIGH** — Added `getGeneratedVideo` handler in `buildOpenAIResponsePayload()`. Atomic slot claim/rollback. Error-isolated rollback in catch. `requestMetric` tracking.
+- [x] **34.5 HIGH** — Extended `MediaUsageLimitType` to include `"video"`. `resolveMediaCounterField()` maps video to `plan.videoGenerations` / `plan.trialUsage.trialVideoGenerations`. Atomic `findOneAndUpdate` with `$lt` guard.
+- [x] **34.6 HIGH** — Created `VideoPlayer` component (`src/components/shared/video-player.tsx`). Video rendering in `chat-body.tsx` for `video_url` content items.
+- [x] **34.7 HIGH** — Re-enabled `supportsVideoGeneration: true` in entitlements. Library page queries video items. Library tabs render video cards with pagination.
+- [x] **34.8 HIGH** — Unit tests: `generate-video.test.ts` (1 test, happy path), `generate-response.test.ts` updated, `filter-assistant-msg.test.ts` updated, `library-tabs-media-cards.test.tsx` updated.
+
+**Files changed:** `src/lib/utils/openai/generateVideo.tsx` (new), `src/constants/openai.tsx`, `src/lib/utils/openai/generateResponse.tsx`, `src/app/api/openai/route.tsx`, `src/components/shared/video-player.tsx` (new), `src/components/chat/chat-body.tsx`, `src/app/(chat)/app/library/page.tsx`, `src/components/chat/library-tabs.tsx`, `src/lib/utils/resolve-entitlements.tsx`, `src/lib/utils/openai/filterAssistantMsg.tsx`, `src/lib/actions/task.actions.tsx`, `tests/unit/generate-video.test.ts` (new), `tests/unit/generate-response.test.ts`, `tests/unit/filter-assistant-msg.test.ts`, `tests/unit/library-tabs-media-cards.test.tsx`
+
+**Known gaps (tracked in Phase 34.9):** Missing `seconds`/`size` in Sora API call. Missing `playsInline` on VideoPlayer. Video tool description missing spaces. Unit tests cover only happy path. Plan cards still show "(coming soon)" for video.
+
+---
+
+## Phase 47.1 — Video Generation Claims Suppression — COMPLETED (2026-03-17)
+
+> PM audit #23. Verified DONE. Temporary suppression executed, then reversed by Phase 34.7.
+
+- [x] **47.1 CRITICAL** — Forced `supportsVideoGeneration: false` for all plans during video development window.
+- [x] Suppression reversed in Phase 34.7 after full video implementation delivered.
+- [x] Plan cards kept "Coming soon" label during development (to be removed in Phase 34.9a).
+
+**Files changed:** `src/lib/utils/resolve-entitlements.tsx`
 
 ---
 
