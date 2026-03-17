@@ -2,14 +2,84 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-17 — PM deep audit #23. Phase 47.1 + Phase 34.2–34.8 archived. All Phases 1–45.4 complete. Phase 47.1 + 34.2–34.8 complete. Milestones 0–17 COMPLETED. Milestone 12 (Video) COMPLETED. Milestone 18 MOSTLY COMPLETE.
+> Last updated: 2026-03-17 — PM deep audit #24. Phases 34.9a-e, 48.1, 49.1-49.5 archived. All Phases 1–49.5 complete. All Milestones 0–18 COMPLETED.
+
+---
+
+## Phase 49.4–49.5 — Promo Cards Role-Aware & Plan-Contextual — COMPLETED (2026-03-17)
+
+> PM audit #24. Engineer work report confirmed. Verified by triple-audit.
+
+- [x] **49.4 MEDIUM** — Admin users see "Admin access — full permissions" instead of upgrade promo in `PlanPromo`. Sidebar promo gets role/plan from server and shows contextual upgrade text, hides for Premium, special admin message.
+- [x] **49.5 MEDIUM** — Promo cards now contextual to user's current plan. Lite sees upgrade to Pro, Pro sees upgrade to Premium, Premium/admin see nothing or admin message. Zero hardcoded promo text.
+
+**Files changed:** `src/components/shared/plan-promo.tsx`, `src/components/chat/sidebar/chat-sidebar-promo.tsx`, `src/components/chat/sidebar/chat-sidebar-shell.tsx`, `src/components/chat/chat-sidebar.tsx`
+
+---
+
+## Phase 49.3 — SVG Persona Image Optimization Fix — COMPLETED (2026-03-17)
+
+> PM audit #24. Engineer work report confirmed.
+
+- [x] **49.3 MEDIUM** — Added `unoptimized` prop to `<Image>` rendering persona SVG hero images.
+
+**Files changed:** `src/components/shared/persona-card.tsx`
+
+---
+
+## Phase 49.2 — Import Type Fixes — COMPLETED (2026-03-17)
+
+> PM audit #24. Engineer work report confirmed.
+
+- [x] **49.2 MEDIUM** — Changed runtime imports to `import type` for `FullPersonaAccessByPlan` in `faqs.tsx` and `about-data.ts`. No runtime dependency on `server-only` sentinel.
+
+**Files changed:** `src/constants/faqs.tsx`, `src/constants/about-data.ts`
+
+---
+
+## Phase 49.1 — autoAnimate MutationObserver Leak Fix — COMPLETED (2026-03-17)
+
+> PM audit #24. Engineer work report confirmed. Verified by triple-audit.
+
+- [x] **49.1 HIGH** — Fixed autoAnimate leak by initializing once on ref availability, keeping scroll effect separate, and using controller cleanup (`disable()` + `destroy()`).
+
+**Files changed:** `src/components/chat/chat-body.tsx`
+
+---
+
+## Phase 48.1 — Currency Configurability — COMPLETED (2026-03-17)
+
+> PM audit #24. Engineer work report confirmed. Verified by triple-audit. Full end-to-end currency configurability.
+
+- [x] **48.1 HIGH** — Implemented currency symbol configurability:
+  - Added `currencySymbol` to `PlanPricing` type/default.
+  - Added `getEffectiveCurrencySymbol()` reading `AppSetting("admin.currencySymbol")` with `$` fallback.
+  - Admin settings currency selector (USD/EUR).
+  - Replaced hardcoded `$` in plan cards, FAQs, about, terms, admin usage.
+  - All rendering surfaces use dynamic currency symbol.
+
+**Files changed:** `src/constants/plans.tsx`, `src/lib/utils/effective-plan-config.ts`, `src/components/shared/plan-card.tsx`, `src/constants/faqs.tsx`, `src/constants/about-data.ts`, `src/constants/terms-data.ts`, `src/app/(admin)/admin/settings/page.tsx`, `src/app/(admin)/admin/usage/page.tsx`, `src/lib/actions/admin.actions.tsx`, `src/app/(public)/plans/page.tsx`, `src/app/(chat)/app/plans/page.tsx`, `src/app/(public)/faqs/page.tsx`, `src/app/(public)/about/page.tsx`, `src/app/(public)/terms/page.tsx`, `src/components/sections/landing-page.tsx`
+
+---
+
+## Phase 34.9a–34.9e — Video Implementation Quality Fixes — COMPLETED (2026-03-17)
+
+> PM audit #24. Engineer work report confirmed. All 5 quality gaps from PM audit #23 fixed.
+
+- [x] **34.9a CRITICAL** — Removed "(coming soon)" suffix from all 3 video labels in plan cards. Zero "coming soon" references remain.
+- [x] **34.9b HIGH** — Added explicit Sora output controls (`seconds`, `size`) to `generateVideo.tsx`.
+- [x] **34.9c HIGH** — Added `playsInline` attribute to VideoPlayer for iOS Safari inline playback.
+- [x] **34.9d HIGH** — Fixed missing whitespace in video tool description in `openai.tsx`.
+- [x] **34.9e HIGH** — Expanded unit coverage with 4 failure-path tests: failed status with failure reason, timeout path, hard-block policy path, empty downloaded content path.
+
+**Files changed:** `src/constants/plans.tsx`, `src/lib/utils/openai/generateVideo.tsx`, `src/components/shared/video-player.tsx`, `src/constants/openai.tsx`, `tests/unit/generate-video.test.ts`
 
 ---
 
 ## Phase 34.2–34.8 — Video Generation (Full Implementation) — COMPLETED (2026-03-17)
 
 > PM audit #23. Triple-audit verified (PM + Architect + Engineer). Video generation end-to-end operational.
-> Quality gaps tracked in Phase 34.9 (see TODO.md).
+> Quality gaps tracked in Phase 34.9 (now COMPLETED).
 > 360 unit tests (65 suites). 174 E2E passing. Build passing.
 
 - [x] **34.2 HIGH** — Created `generateVideo.tsx` utility with async Sora polling: `videos.create()` → `waitForCompletedVideo()` → `videos.downloadContent()` → `uploadFileToAWS()`. Model resolved via `resolveModelPolicy()`. 180s polling timeout. Zero-byte check. S3 upload to `{userId}/videos/`.
