@@ -6,6 +6,7 @@ import {
   toggleUserSuspensionAction,
 } from "@/lib/actions/admin.actions";
 import { getAdminUserDetail } from "@/lib/utils/admin-queries";
+import { getEffectiveCurrencySymbol } from "@/lib/utils/effective-plan-config";
 
 interface AdminUserDetailPageProps {
   params: Promise<{ userId: string }>;
@@ -15,11 +16,19 @@ export default async function AdminUserDetailPage({
   params,
 }: AdminUserDetailPageProps) {
   const { userId } = await params;
-  const user = await getAdminUserDetail(userId);
+  const [user, currencySymbol] = await Promise.all([
+    getAdminUserDetail(userId),
+    getEffectiveCurrencySymbol(),
+  ]);
 
   if (!user) {
     notFound();
   }
+
+  const formatUsage = (usage: { used: number; limit: number }) =>
+    usage.limit === -1
+      ? `${usage.used} / Unlimited`
+      : `${usage.used} / ${usage.limit}`;
 
   return (
     <section className="AdminUserDetailPage mx-auto flex w-full max-w-7xl flex-col gap-6">
@@ -63,7 +72,8 @@ export default async function AdminUserDetailPage({
                 Plan
               </dt>
               <dd className="mt-1 text-sm">
-                {user.planName} (${user.planAmount})
+                {user.planName} ({currencySymbol}
+                {user.planAmount})
               </dd>
             </div>
             <div>
@@ -108,13 +118,35 @@ export default async function AdminUserDetailPage({
               <p className="text-xs font-semibold uppercase tracking-wide opacity-60">
                 Image Generations
               </p>
-              <p className="heading-5 mt-1">{user.imageGenerations}</p>
+              <p className="heading-5 mt-1">
+                {formatUsage(user.mediaUsage.images)}
+              </p>
             </div>
             <div className="rounded-xl border border-lightBorders-300 px-4 py-3 dark:border-darkBorders-500">
               <p className="text-xs font-semibold uppercase tracking-wide opacity-60">
                 Audio Generations
               </p>
-              <p className="heading-5 mt-1">{user.audioGenerations}</p>
+              <p className="heading-5 mt-1">
+                {formatUsage(user.mediaUsage.audio)}
+              </p>
+            </div>
+            <div className="rounded-xl border border-lightBorders-300 px-4 py-3 dark:border-darkBorders-500">
+              <p className="text-xs font-semibold uppercase tracking-wide opacity-60">
+                Video Generations
+              </p>
+              <p className="heading-5 mt-1">
+                {formatUsage(user.mediaUsage.video)}
+              </p>
+            </div>
+            <div className="rounded-xl border border-lightBorders-300 px-4 py-3 dark:border-darkBorders-500">
+              <p className="text-xs font-semibold uppercase tracking-wide opacity-60">
+                Trial Usage (Img / Audio / Video)
+              </p>
+              <p className="mt-1 text-sm">
+                {formatUsage(user.trialUsage.images)} |{" "}
+                {formatUsage(user.trialUsage.audio)} |{" "}
+                {formatUsage(user.trialUsage.video)}
+              </p>
             </div>
           </div>
         </article>
@@ -169,7 +201,10 @@ export default async function AdminUserDetailPage({
               className="grid grid-cols-[0.8fr_0.8fr_0.8fr_1fr] gap-3 py-3 text-sm transition-all hover:bg-lightSecondary-300/50 dark:hover:bg-darkSecondary-500/20"
             >
               <span>{transaction.plan}</span>
-              <span>${transaction.amount}</span>
+              <span>
+                {currencySymbol}
+                {transaction.amount}
+              </span>
               <span>{transaction.billing}</span>
               <span>
                 {transaction.createdAt

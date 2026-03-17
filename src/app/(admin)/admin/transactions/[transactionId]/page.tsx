@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import PageHead from "@/components/layout/page-head";
 import { getAdminTransactionDetail } from "@/lib/utils/admin-queries";
+import { getEffectiveCurrencySymbol } from "@/lib/utils/effective-plan-config";
 
 interface AdminTransactionDetailPageProps {
   params: Promise<{ transactionId: string }>;
@@ -10,7 +11,10 @@ export default async function AdminTransactionDetailPage({
   params,
 }: AdminTransactionDetailPageProps) {
   const { transactionId } = await params;
-  const transaction = await getAdminTransactionDetail(transactionId);
+  const [transaction, currencySymbol] = await Promise.all([
+    getAdminTransactionDetail(transactionId),
+    getEffectiveCurrencySymbol(),
+  ]);
 
   if (!transaction) {
     notFound();
@@ -53,7 +57,10 @@ export default async function AdminTransactionDetailPage({
             <dt className="text-xs font-semibold uppercase tracking-wide opacity-60">
               Amount
             </dt>
-            <dd className="mt-1 text-sm">${transaction.amount}</dd>
+            <dd className="mt-1 text-sm">
+              {currencySymbol}
+              {transaction.amount}
+            </dd>
           </div>
           <div>
             <dt className="text-xs font-semibold uppercase tracking-wide opacity-60">

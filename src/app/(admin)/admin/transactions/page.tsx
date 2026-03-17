@@ -1,9 +1,13 @@
 import Link from "next/link";
 import PageHead from "@/components/layout/page-head";
 import { getAdminTransactions } from "@/lib/utils/admin-queries";
+import { getEffectiveCurrencySymbol } from "@/lib/utils/effective-plan-config";
 
 export default async function AdminTransactionsPage() {
-  const transactions = await getAdminTransactions();
+  const [transactions, currencySymbol] = await Promise.all([
+    getAdminTransactions(),
+    getEffectiveCurrencySymbol(),
+  ]);
 
   return (
     <section className="AdminTransactionsPage mx-auto flex w-full max-w-7xl flex-col gap-6">
@@ -39,7 +43,8 @@ export default async function AdminTransactionsPage() {
               <span className="truncate">{transaction.email}</span>
               <span>{transaction.plan}</span>
               <span>
-                ${transaction.amount} /{" "}
+                {currencySymbol}
+                {transaction.amount} /{" "}
                 {transaction.billing === "Monthly" ? "Mo" : "Yr"}
               </span>
               <span>

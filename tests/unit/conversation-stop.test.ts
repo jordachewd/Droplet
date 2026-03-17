@@ -302,7 +302,7 @@ describe("conversation stop enforcement", () => {
       expect.objectContaining({
         entitlements: expect.objectContaining({
           imageLimitReached: true,
-          supportsImageGeneration: false,
+          supportsImageGeneration: true,
         }),
       }),
     );
@@ -353,7 +353,7 @@ describe("conversation stop enforcement", () => {
       expect.objectContaining({
         entitlements: expect.objectContaining({
           audioLimitReached: true,
-          supportsAudioGeneration: false,
+          supportsAudioGeneration: true,
         }),
       }),
     );

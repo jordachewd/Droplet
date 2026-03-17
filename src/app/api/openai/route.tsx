@@ -677,6 +677,10 @@ export async function POST(req: Request): Promise<Response> {
     const parsedRequestBody = openAiRequestBodySchema.safeParse(rawRequestBody);
 
     if (!parsedRequestBody.success) {
+      process.stderr.write(
+        `[openai/route] invalid request body: ${JSON.stringify(parsedRequestBody.error.issues)}\n`,
+      );
+
       return NextResponse.json(
         { error: "Invalid request body." },
         { status: 400 },
@@ -745,6 +749,7 @@ export async function POST(req: Request): Promise<Response> {
       );
     }
 
+    const isAdminUser = userData.role === "admin";
     const planName = userData.plan?.name ?? "Lite";
     const [effectivePlanConfig, fullPersonaAccessByPlan, effectiveModelConfig] =
       await Promise.all([
@@ -801,7 +806,7 @@ export async function POST(req: Request): Promise<Response> {
       );
     }
 
-    if (planName !== "Lite" && userData?.plan?.expiresOn) {
+    if (!isAdminUser && planName !== "Lite" && userData?.plan?.expiresOn) {
       const expiresOn = new Date(userData.plan.expiresOn);
 
       if (expiresOn < new Date()) {
@@ -867,17 +872,18 @@ export async function POST(req: Request): Promise<Response> {
     }
 
     const entitlements = resolveEntitlements(planName, {
+      isAdmin: isAdminUser,
       planLimits: effectivePlanLimits,
       fullPersonaAccessByPlan,
     });
 
-    const selectedPersonaAccess = entitlements.personaAccess?.[
-      selectedPersona.id
-    ]
-      ? entitlements.personaAccess[selectedPersona.id]
-      : entitlements.allowedPersonaIds.includes(selectedPersona.id)
-        ? "full"
-        : "blocked";
+    const selectedPersonaAccess = isAdminUser
+      ? "full"
+      : entitlements.personaAccess?.[selectedPersona.id]
+        ? entitlements.personaAccess[selectedPersona.id]
+        : entitlements.allowedPersonaIds.includes(selectedPersona.id)
+          ? "full"
+          : "blocked";
     const isTrialPersona = selectedPersonaAccess === "limited";
 
     if (selectedPersonaAccess === "blocked") {
@@ -895,7 +901,11 @@ export async function POST(req: Request): Promise<Response> {
         ? userData?.plan?.trialUsage?.trialImageGenerations
         : userData?.plan?.imageGenerations,
       limitType: "images",
-      overrideLimit: isTrialPersona ? effectiveTrialLimits.images : undefined,
+      overrideLimit: isAdminUser
+        ? -1
+        : isTrialPersona
+          ? effectiveTrialLimits.images
+          : undefined,
       usagePeriodStart: isTrialPersona
         ? userData?.plan?.trialUsage?.trialUsagePeriodStart
         : userData?.plan?.usagePeriodStart,
@@ -907,7 +917,11 @@ export async function POST(req: Request): Promise<Response> {
         ? userData?.plan?.trialUsage?.trialAudioGenerations
         : userData?.plan?.audioGenerations,
       limitType: "audio",
-      overrideLimit: isTrialPersona ? effectiveTrialLimits.audio : undefined,
+      overrideLimit: isAdminUser
+        ? -1
+        : isTrialPersona
+          ? effectiveTrialLimits.audio
+          : undefined,
       usagePeriodStart: isTrialPersona
         ? userData?.plan?.trialUsage?.trialUsagePeriodStart
         : userData?.plan?.usagePeriodStart,
@@ -919,7 +933,11 @@ export async function POST(req: Request): Promise<Response> {
         ? userData?.plan?.trialUsage?.trialVideoGenerations
         : userData?.plan?.videoGenerations,
       limitType: "video",
-      overrideLimit: isTrialPersona ? effectiveTrialLimits.video : undefined,
+      overrideLimit: isAdminUser
+        ? -1
+        : isTrialPersona
+          ? effectiveTrialLimits.video
+          : undefined,
       usagePeriodStart: isTrialPersona
         ? userData?.plan?.trialUsage?.trialUsagePeriodStart
         : userData?.plan?.usagePeriodStart,
@@ -962,12 +980,6 @@ export async function POST(req: Request): Promise<Response> {
 
     const resolvedEntitlements = {
       ...entitlements,
-      supportsImageGeneration:
-        entitlements.supportsImageGeneration && !imageLimitReached,
-      supportsAudioGeneration:
-        entitlements.supportsAudioGeneration && !audioLimitReached,
-      supportsVideoGeneration:
-        entitlements.supportsVideoGeneration && !videoLimitReached,
       imageLimitReached,
       audioLimitReached,
       videoLimitReached,
@@ -1045,9 +1057,11 @@ export async function POST(req: Request): Promise<Response> {
       );
     }
 
-    const promptLimit = isTrialPersona
-      ? effectiveTrialLimits.promptsPerConversation
-      : effectivePlanLimits[planName].promptsPerConversation;
+    const promptLimit = isAdminUser
+      ? -1
+      : isTrialPersona
+        ? effectiveTrialLimits.promptsPerConversation
+        : effectivePlanLimits[planName].promptsPerConversation;
 
     if (persistedTask && promptLimit !== -1) {
       const promptSlotClaimed = await incrementPromptCountIfBelowLimit({
@@ -1100,7 +1114,7 @@ export async function POST(req: Request): Promise<Response> {
 
     let taskId = providedTaskId;
 
-    if (!taskId) {
+    if (!taskId && !isAdminUser) {
       const claimResult = await claimDailyConversationSlot(
         userId,
         planName,
@@ -1200,6 +1214,45 @@ export async function POST(req: Request): Promise<Response> {
       }
     }
 
+    if (!taskId && isAdminUser) {
+      const generatedTitle = await generateTitle(
+        promptPayloadMessages,
+        planName,
+        selectedPersona.id,
+        modelOverrides,
+      );
+      const {
+        title,
+        usage,
+        requestMetric: titleRequestMetric,
+      } = JSON.parse(generatedTitle as string) as TitleResponsePayload;
+
+      const newTask = await createTask({
+        title,
+        messages: storedMessagesWithIncomingPrompt,
+        usage,
+        personaId: selectedPersona.id,
+        promptCount: 1,
+        estimatedBytes: estimatedBytesWithIncomingPrompt,
+      });
+
+      if (!newTask?._id) {
+        throw new Error("Task creation failed.");
+      }
+
+      const createdTaskId = newTask._id;
+      taskId = createdTaskId;
+
+      if (titleRequestMetric) {
+        emitUsageEvents({
+          userId,
+          taskId: createdTaskId,
+          personaId: selectedPersona.id,
+          metrics: [titleRequestMetric],
+        });
+      }
+    }
+
     if (!taskId) {
       throw new Error("Task ID is undefined.");
     }
@@ -1211,6 +1264,23 @@ export async function POST(req: Request): Promise<Response> {
     const explicitPremiumRequested =
       chatTaskClass === "complex" &&
       isExplicitDeepAnalysisRequest(latestUserMessage);
+    const mediaGenerationLimitByType = {
+      images: isAdminUser
+        ? -1
+        : isTrialPersona
+          ? effectiveTrialLimits.images
+          : effectivePlanLimits[planName].images,
+      audio: isAdminUser
+        ? -1
+        : isTrialPersona
+          ? effectiveTrialLimits.audio
+          : effectivePlanLimits[planName].audio,
+      video: isAdminUser
+        ? -1
+        : isTrialPersona
+          ? effectiveTrialLimits.video
+          : effectivePlanLimits[planName].video,
+    } as const;
 
     if (streamingResponseRequested) {
       const stream = new ReadableStream<Uint8Array>({
@@ -1237,9 +1307,7 @@ export async function POST(req: Request): Promise<Response> {
                 claimMediaGenerationSlot({
                   userId,
                   limitType,
-                  limit: isTrialPersona
-                    ? effectiveTrialLimits[limitType]
-                    : effectivePlanLimits[planName][limitType],
+                  limit: mediaGenerationLimitByType[limitType],
                   counterScope: isTrialPersona ? "trial" : "plan",
                 }),
               rollbackMediaGenerationSlot: async ({ limitType }) =>
@@ -1313,9 +1381,7 @@ export async function POST(req: Request): Promise<Response> {
         claimMediaGenerationSlot({
           userId,
           limitType,
-          limit: isTrialPersona
-            ? effectiveTrialLimits[limitType]
-            : effectivePlanLimits[planName][limitType],
+          limit: mediaGenerationLimitByType[limitType],
           counterScope: isTrialPersona ? "trial" : "plan",
         }),
       rollbackMediaGenerationSlot: async ({ limitType }) =>

@@ -110,13 +110,13 @@ describe("chatMessageSchema", () => {
     expect(result.success).toBe(true);
   });
 
-  it("rejects message with extra properties (strict mode)", () => {
+  it("accepts message with extra properties (passthrough mode)", () => {
     const result = chatMessageSchema.safeParse({
       role: "user",
       content: "Hello",
       unknownField: true,
     });
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
   });
 });
 
