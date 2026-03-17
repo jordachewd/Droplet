@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-17 (PM audit #25. Triple-audit complete. TD-ADMIN-03 through TD-ADMIN-09 registered. Admin role bypass, video tool removal, Zod strict mode identified as critical/high. 365 unit tests (65 suites). Build passing.)
+> Last updated: 2026-03-17 (PM audit #26. All PM #25 critical/high items resolved (Phases 52.1–54.4). New items TD-ADMIN-10/11/12, TD-API-09 registered. 368 unit tests (65 suites). Build passing.)
 
 ---
 
@@ -780,19 +780,28 @@ _None._
 | TD-PLAN-01 | Billing | No recurring subscriptions (deferred v1)                                      | Low      |
 | TD-AI-18   | OpenAI  | errorMessage forwarding pattern in /api/openai is safe but fragile (advisory) | Low      |
 
-### Active — Critical/High Priority (PM Audit #25)
+### Active — High Priority (PM Audit #26)
 
-| ID          | Area   | Description                                                                                                                                                                                                  | Severity |
-| ----------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------- |
-| TD-ADMIN-03 | Admin  | Admin role has ZERO special treatment in `/api/openai`. Admin users get plan-level limits, not full permissions. PlanPromo UI says "full permissions" but backend doesn't enforce it. Phase 53.1 planned.    | Critical |
-| TD-AI-26    | OpenAI | Video tool silently removed when `videoLimitReached`, but system prompt still claims video capability. Causes confusing AI refusal text. Phase 53.2 planned.                                                 | High     |
-| TD-API-08   | API    | Zod `.strict()` on `chatMessageSchema` rejects any extra message fields. Stored messages from conversations with tool calls may contain extra fields that fail validation on resumption. Phase 53.3 planned. | High     |
-| TD-ADMIN-04 | Admin  | Admin user detail missing `videoGenerations` count (shows image + audio but not video). Also missing remaining limits context ("X of Y used"). Phase 54.2 planned.                                           | Medium   |
-| TD-ADMIN-05 | Admin  | Admin dashboard shows only 4 metric cards (Users, Conversations, Transactions, Usage Events). Missing: media generation counts, plan distribution, active users. Phase 54.1 planned.                         | Medium   |
-| TD-ADMIN-06 | Admin  | Hardcoded `$` currency symbol in admin user detail (`${transaction.amount}`) and admin transaction views. Must use `getEffectiveCurrencySymbol()`. Phase 54.3 planned.                                       | Medium   |
-| TD-ADMIN-07 | Admin  | Top Personas aggregation includes null `personaId` events (title generation, blocked events). `getPersona(null)` falls back to "Strategist", potentially creating duplicate entries. Phase 54.4 planned.     | Medium   |
-| TD-ADMIN-08 | Admin  | Admin settings page is 735 lines with 7 inline form sections, 5+ normalizer functions, 3 inline model option arrays. No tabbed navigation. Phase 52.1-52.2 planned.                                          | High     |
-| TD-ADMIN-09 | Admin  | Video model not admin-overridable. Image and audio models have admin overrides via `getEffectiveModelConfig()` but video does not. No `videoGenerationModel` in admin settings. Phase 50.1 planned.          | Medium   |
+| ID          | Area  | Description                                                                                                                                                                                                                                | Severity |
+| ----------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------- |
+| TD-ADMIN-10 | Admin | Admin UI persona gap: 5 `/app` pages call `resolveEntitlements()` without `isAdmin: true`. Admin users see Trial/PRO/PREMIUM labels even though backend grants full access. Phase 56.1 planned.                                            | High     |
+| TD-ADMIN-11 | Admin | Top Personas aggregation: legacy persona IDs (analyst, best-friend, boyfriend, girlfriend) from pre-Phase 41 data resolve to "Strategist" via `getPersona()` fallback. Null filter (54.4) insufficient. Phase 56.2 planned.                | Medium   |
+| TD-ADMIN-12 | Admin | Admin page design token inconsistency: users, transactions, website pages use `bg-white/70` while dashboard + usage use `bg-lightBackground-100/80`. 12 instances need standardization. Phase 56.3 planned.                                | Medium   |
+| TD-ADMIN-09 | Admin | Video model not admin-overridable. Image and audio models have admin overrides via `getEffectiveModelConfig()` but video does not. No `videoGenerationModel` in admin settings. Phase 50.1 planned.                                        | Medium   |
+| TD-API-09   | API   | `messageTextContentSchema` still uses `.strict()` — inner content items could reject extra fields from model responses on conversation resumption. `chatMessageSchema` is passthrough (53.3) but content items are strict. Monitor needed. | Low      |
+
+### ~~Active — Critical/High Priority (PM Audit #25)~~ (All Resolved — PM Audit #26)
+
+| ID          | Area   | Description                                                                         | Status                                                                                                                 |
+| ----------- | ------ | ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| TD-ADMIN-03 | Admin  | Admin role had ZERO special treatment in `/api/openai`.                             | **Resolved (Phase 53.1)** — admin bypass: unlimited limits, all personas full, no quota enforcement.                   |
+| TD-AI-26    | OpenAI | Video tool silently removed when `videoLimitReached`, causing confusing AI refusal. | **Resolved (Phase 53.2)** — tools stay registered at limit; limit enforced in tool handlers.                           |
+| TD-API-08   | API    | Zod `.strict()` on `chatMessageSchema` rejects extra fields on resumption.          | **Resolved (Phase 53.3)** — changed to `.passthrough()`. Server-side error logging added.                              |
+| TD-ADMIN-04 | Admin  | Admin user detail missing `videoGenerations` and remaining limits context.          | **Resolved (Phase 54.2)** — shows image/audio/video `used/limit` format + trial usage.                                 |
+| TD-ADMIN-05 | Admin  | Admin dashboard only 4 metric cards.                                                | **Resolved (Phase 54.1)** — 7 cards: Users, Conversations, Transactions, Usage Events, Images, Audio, Video Generated. |
+| TD-ADMIN-06 | Admin  | Hardcoded `$` currency symbol in admin views.                                       | **Resolved (Phase 54.3)** — all admin views use `getEffectiveCurrencySymbol()`.                                        |
+| TD-ADMIN-07 | Admin  | Top Personas null `personaId` events creating duplicates.                           | **Partially resolved (Phase 54.4)** — null filter added. Legacy ID fallback remains (tracked as TD-ADMIN-11).          |
+| TD-ADMIN-08 | Admin  | Admin settings page 735 lines, no tabs.                                             | **Resolved (Phase 52.1-52.2)** — 5-tab UI, extracted sections, thin shell page.                                        |
 
 ### Active � High Priority (Security)
 

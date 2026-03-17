@@ -1,4 +1,4 @@
-﻿# Droplet - Completion Plan
+# Droplet - Completion Plan
 
 > Purpose: one execution document for finishing the SaaS without avoidable rework.
 >
@@ -870,7 +870,7 @@ Close the operational gaps that would make launch fragile.
 
 ## Milestone 9 - Launch Readiness And Release Control
 
-> **Status: COMPLETED** — Validation workflow passes (Prettier, lint, tsc, 65 suites / 365 unit tests, build). E2E: majority passing with known timeout-related skips. Release gates A–E green. Gate F substantially green.
+> **Status: COMPLETED** — Validation workflow passes (Prettier, lint, tsc, 65 suites / 368 unit tests, build). E2E: 180 passing with known timeout-related skips. Release gates A–E green. Gate F substantially green.
 
 **Objective**
 
@@ -971,7 +971,7 @@ npm run test:e2e
 npm run build
 ```
 
-**Current status (post-Phase 34):** Prettier, lint, tsc, unit tests (65 suites / 365 tests), and build all pass. E2E: 174 passed, 48 skipped, **6 failed** (timeout/navigation failures in existing specs â€” not video-related). The 6 E2E failures require investigation before Gate F can be declared green.
+**Current status (post-Phase 54):** Prettier, lint, tsc, unit tests (65 suites / 368 tests), and build all pass. E2E: 180 passed (48 skipped). Gate F substantially green.
 
 ---
 
@@ -1005,7 +1005,7 @@ These items are not banned forever. They are excluded because they create dispro
 
 ## 11. Owner-Directed New Work (Added 2026-03-16, Updated 2026-03-17)
 
-> **All Milestones 0–18 COMPLETED. All Phases 1–51.1 COMPLETED. 365 unit tests (65 suites) passing. Build passing.**
+> **All Milestones 0–18 COMPLETED. All Phases 1–54.4 COMPLETED. 368 unit tests (65 suites) passing. Build passing.**
 
 ### Milestone 10 â€” Layout, Navigation & Library Enhancement
 
@@ -1281,7 +1281,7 @@ These items are not banned forever. They are excluded because they create dispro
 
 ### Milestone 19 — Admin UX, Data Architecture & Production Hardening (Owner-Directed, 2026-03-17)
 
-> **Status: PLANNED** — Owner directives from latest review. Prioritized by severity.
+> **Status: IN PROGRESS** — Phases 52.1–52.2 (tabbed settings), 53.1–53.3 (admin bypass, video tools, Zod fix), 54.1–54.4 (dashboard enrichment, user detail, currency, null persona filter) ALL DELIVERED. Remaining: Phase 56.1 (admin UI persona gap), 56.2 (legacy persona IDs), 56.3 (design token standardization), 50.1 (video model override), 55.1 (ADMIN_LINKS extraction).
 
 **Objective:** Complete admin panel UX transformation (tabbed settings, design alignment, dashboard enrichment), fix remaining media generation bugs, eliminate hardcoded data, and enforce clean component architecture.
 

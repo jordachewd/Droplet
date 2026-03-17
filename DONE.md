@@ -2,7 +2,47 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-17 — PM deep audit #24. Phase 51.1 archived. All Phases 1–51.1 complete. All Milestones 0–18 COMPLETED.
+> Last updated: 2026-03-17 — PM deep audit #26. Phases 52.1–54.4 archived. All Phases 1–54.4 complete. All Milestones 0–18 COMPLETED. 368 unit tests (65+ suites). Build passing.
+
+---
+
+## Phase 54.1–54.4 — Admin Enrichment Batch — COMPLETED (2026-03-17)
+
+> PM audit #26. Engineer work report confirmed. Triple-audit verified (PM + Architect + Engineer).
+
+- [x] **54.1 MEDIUM** — Added 3 media generation count cards to admin dashboard (Images Generated, Audio Generated, Video Generated). Dashboard now shows 7 metric cards total. Counts from `UsageEvent` aggregation where `blocked` is false.
+- [x] **54.2 MEDIUM** — Added video generations + remaining limits to admin user detail. Shows "used / limit" format for image, audio, video. Trial usage counters displayed.
+- [x] **54.3 MEDIUM** — Replaced hardcoded `$` with dynamic currency symbol via `getEffectiveCurrencySymbol()` in admin user detail and transaction views.
+- [x] **54.4 MEDIUM** — Filtered null `personaId` from Top Personas aggregation via `{ $match: { personaId: { $exists: true, $ne: null } } }`.
+
+**Files changed:** `src/lib/utils/admin-queries.ts`, `src/app/(admin)/admin/page.tsx`, `src/app/(admin)/admin/users/[userId]/page.tsx`, `src/app/(admin)/admin/transactions/page.tsx`, `src/app/(admin)/admin/transactions/[transactionId]/page.tsx`
+
+**Known gap (PM audit #26):** Top Personas still shows duplicate "Strategist" entries due to legacy persona IDs (analyst, best-friend, boyfriend, girlfriend) in UsageEvent records resolving to "Strategist" via `getPersona()` fallback. Null filter is necessary but insufficient. Tracked as Phase 56.2.
+
+---
+
+## Phase 53.1–53.3 — CRITICAL Admin Bypass + Media Generation Fixes — COMPLETED (2026-03-17)
+
+> PM audit #26. Engineer work report confirmed. Triple-audit verified.
+
+- [x] **53.1 CRITICAL** — Added admin role bypass in `/api/openai` route. Admin users now bypass: plan expiry blocking, daily conversation limit, prompt quota, media quota. `resolveEntitlements()` extended with `isAdmin` option granting: all 6 personas full access, all limits `-1` (unlimited), all media supported, zero trial restrictions. Auth requirement preserved.
+- [x] **53.2 HIGH** — Fixed video/image/audio tool removal at limit boundary. Media support flags kept enabled (plan-based support) even when limits are reached. Limit enforcement happens inside tool handlers, not via tool removal. Prevents confusing AI refusals when model can see capability in system prompt but not find the tool.
+- [x] **53.3 HIGH** — Changed `chatMessageSchema` from `.strict()` to `.passthrough()`. Added server-side Zod validation error logging. Backend now resilient to extra message fields on conversation resumption.
+
+**Files changed:** `src/app/api/openai/route.tsx`, `src/lib/utils/resolve-entitlements.tsx`, `src/lib/utils/validation-schemas.ts`
+
+**Known gap (PM audit #26):** `messageTextContentSchema` still uses `.strict()`. Inner content items could potentially reject extra fields from model responses. Monitoring required.
+
+---
+
+## Phase 52.1–52.2 — Admin Settings Tabbed UI + Extraction — COMPLETED (2026-03-17)
+
+> PM audit #26. Engineer work report confirmed. Triple-audit verified.
+
+- [x] **52.1 HIGH** — Implemented tabbed navigation for admin settings. 5 tabs: Models, Plans & Pricing, Limits, Personas, Theme. Accessible tab bar with `role="tablist"`, `role="tab"`, `role="tabpanel"`, `aria-selected`, `aria-controls`. Tab state persisted to localStorage.
+- [x] **52.2 HIGH** — Extracted admin settings sections into separate components: `AdminModelsSection`, `AdminPricingSection`, `AdminLimitsSection`, `AdminPersonasSection`, `AdminThemeSection`. Model option arrays moved to `admin-options.ts`. Normalization logic moved to `normalize-admin-settings.ts`. Main settings page is now a thin shell.
+
+**Files changed:** `src/app/(admin)/admin/settings/page.tsx`, `src/components/admin/settings/admin-settings-tabs.tsx`, `src/components/admin/settings/admin-models-section.tsx`, `src/components/admin/settings/admin-pricing-section.tsx`, `src/components/admin/settings/admin-limits-section.tsx`, `src/components/admin/settings/admin-personas-section.tsx`, `src/components/admin/settings/admin-theme-section.tsx`, `src/constants/admin-options.ts`, `src/components/admin/settings/normalize-admin-settings.ts`, `src/components/admin/settings/types.ts`
 
 ---
 
