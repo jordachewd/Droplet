@@ -5,12 +5,12 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: Phases 1–25.7 + 27.1–27.5 + 27.6–27.10 + 28.1 + 28.2-fix + 28.3-code + 28.3-verify + 28.4 + 28.6 + 28.7 + 30.1 + 30.2 + 30.3 + 30.4 + 31.1 + 31.2 + 31.3 + 31.2-fix + 32.1 + 32.2 + 32.3 + 32.6 + 33.1–33.8 + 35.1 + 37.1 + 38.1–38.7 + 36.1–36.2 + 39.1 complete.**
-> **PM deep audit #19 (2026-03-17): 39.1 VERIFIED DONE (Architect code audit #19 + PM approval). TD-CHECKOUT-01 FULLY RESOLVED. Milestone 14 COMPLETED (no caveats). All admin Owner requirements verified DONE.**
-> **339 unit tests passing. 180 E2E passing. 48 skipped (explained: Chromium-only trial spec × 6 non-Chromium projects). Build passing.**
+> **STATUS: Phases 1–25.7 + 27.1–27.5 + 27.6–27.10 + 28.1 + 28.2-fix + 28.3-code + 28.3-verify + 28.4 + 28.6 + 28.7 + 30.1 + 30.2 + 30.3 + 30.4 + 31.1 + 31.2 + 31.3 + 31.2-fix + 32.1 + 32.2 + 32.3 + 32.4 + 32.6 + 33.1–33.8 + 35.1 + 37.1 + 38.1–38.7 + 36.1–36.2 + 39.1 complete.**
+> **PM deep audit #20 (2026-03-17): 32.4 VERIFIED DONE (Architect code audit + PM gateway verification). Library media card components complete with secure URL handling.**
+> **341 unit tests passing (64 suites). 180 E2E passing. 48 skipped (explained: Chromium-only trial spec × 6 non-Chromium projects). Build passing.**
 > **OWNER INSTRUCTIONS (latest): Admin panel fully operational. All verified DONE (PM audit #19).**
 > **NO CRITICAL BUGS REMAINING. NO HIGH SECURITY FINDINGS REMAINING.**
-> **Priority order: 32.4 → 32.5 → 31.4 → 30.5 → 35.2 → 34.x → 29.1 → 29.2 → Phase 26.**
+> **Priority order: 32.5 → 31.4 → 30.5 → 35.2 → 34.x → 29.1 → 29.2 → Phase 26.**
 > **All Phase 26+ deferred work is ON HOLD until Milestone 14 is PM-approved complete.**
 
 ---

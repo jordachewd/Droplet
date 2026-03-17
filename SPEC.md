@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-17 (PM deep audit #19. TD-CHECKOUT-01 RESOLVED (Phase 39.1). Milestone 14 COMPLETED (no caveats). All admin Owner requirements verified DONE. 339 unit tests, 180 E2E passing. No critical bugs, no high security findings remaining.)
+> Last updated: 2026-03-17 (PM deep audit #20. 32.4 Library media cards verified DONE. Milestone 14 COMPLETED (no caveats). 341 unit tests (64 suites), 180 E2E passing. No critical bugs, no high security findings remaining.)
 
 ---
 
@@ -635,33 +635,33 @@ All file handling technical debt has been resolved. S3 cleanup on task/user dele
 
 ### Route Map (Target)
 
-| Route                                 | Type      | Description                                                                        |
-| ------------------------------------- | --------- | ---------------------------------------------------------------------------------- |
-| `/`                                   | Public    | Landing (Hero + product sections + CTAs)                                           |
-| `/about`                              | Public    | How app works (stacked sections)                                                   |
-| `/plans`                              | Public    | Pricing (plan cards)                                                               |
-| `/faqs`                               | Public    | FAQ accordion                                                                      |
-| `/personas`                           | Public    | Personas showcase                                                                  |
-| `/privacy`                            | Public    | Privacy & Cookie Policy                                                            |
-| `/cookies`                            | Public    | Cookie Policy                                                                      |
-| `/terms`                              | Public    | Terms & Conditions                                                                 |
-| `/sign-in`, `/sign-up`                | Auth      | Clerk auth                                                                         |
-| `/app`                                | Protected | Chat dashboard                                                                     |
-| `/app/new`                            | Protected | New conversation                                                                   |
-| `/app/library`                        | Protected | Media library (tabs: Chats, Images, Audios, Videos) — **Implemented (Phase 32.3)** |
-| `/app/personas`                       | Protected | In-app personas                                                                    |
-| `/app/c/[conversationId]`             | Protected | Resume conversation                                                                |
-| `/app/profile`                        | Protected | User profile + plan + history                                                      |
-| `/app/plans`                          | Protected | Plan upgrade + checkout                                                            |
-| `/admin`                              | Admin     | Dashboard overview                                                                 |
-| `/admin/users`                        | Admin     | User management list                                                               |
-| `/admin/users/[userId]`               | Admin     | User detail + actions                                                              |
-| `/admin/transactions`                 | Admin     | Transaction management                                                             |
-| `/admin/transactions/[transactionId]` | Admin     | Transaction detail                                                                 |
-| `/admin/usage`                        | Admin     | Usage analytics                                                                    |
-| `/admin/settings`                     | Admin     | App settings                                                                       |
-| `/admin/website`                      | Admin     | Content management                                                                 |
-| `/admin/website/[pageId]`             | Admin     | Page editor (textarea fallback — Tiptap replaced)                                  |
+| Route                                 | Type      | Description                                                                                           |
+| ------------------------------------- | --------- | ----------------------------------------------------------------------------------------------------- |
+| `/`                                   | Public    | Landing (Hero + product sections + CTAs)                                                              |
+| `/about`                              | Public    | How app works (stacked sections)                                                                      |
+| `/plans`                              | Public    | Pricing (plan cards)                                                                                  |
+| `/faqs`                               | Public    | FAQ accordion                                                                                         |
+| `/personas`                           | Public    | Personas showcase                                                                                     |
+| `/privacy`                            | Public    | Privacy & Cookie Policy                                                                               |
+| `/cookies`                            | Public    | Cookie Policy                                                                                         |
+| `/terms`                              | Public    | Terms & Conditions                                                                                    |
+| `/sign-in`, `/sign-up`                | Auth      | Clerk auth                                                                                            |
+| `/app`                                | Protected | Chat dashboard                                                                                        |
+| `/app/new`                            | Protected | New conversation                                                                                      |
+| `/app/library`                        | Protected | Media library (tabs: Chats, Images, Audios, Videos) — **Implemented (Phase 32.3 + 32.4 media cards)** |
+| `/app/personas`                       | Protected | In-app personas                                                                                       |
+| `/app/c/[conversationId]`             | Protected | Resume conversation                                                                                   |
+| `/app/profile`                        | Protected | User profile + plan + history                                                                         |
+| `/app/plans`                          | Protected | Plan upgrade + checkout                                                                               |
+| `/admin`                              | Admin     | Dashboard overview                                                                                    |
+| `/admin/users`                        | Admin     | User management list                                                                                  |
+| `/admin/users/[userId]`               | Admin     | User detail + actions                                                                                 |
+| `/admin/transactions`                 | Admin     | Transaction management                                                                                |
+| `/admin/transactions/[transactionId]` | Admin     | Transaction detail                                                                                    |
+| `/admin/usage`                        | Admin     | Usage analytics                                                                                       |
+| `/admin/settings`                     | Admin     | App settings                                                                                          |
+| `/admin/website`                      | Admin     | Content management                                                                                    |
+| `/admin/website/[pageId]`             | Admin     | Page editor (textarea fallback — Tiptap replaced)                                                     |
 
 ### Public Pages Content
 

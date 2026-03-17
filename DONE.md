@@ -2,7 +2,22 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-17 — PM deep audit #19. 39.1 (TD-CHECKOUT-01 checkout price bypass) verified DONE. All admin Owner requirements verified DONE. Milestone 14 COMPLETED (no caveats). Phases 1–25.7 + 27.1–27.5 + 27.6–27.10 + 28.1 + 28.2-fix + 28.3-code + 28.3-verify + 28.4 + 28.6 + 28.7 + 30.1 + 30.2 + 30.3 + 30.4 + 31.1 + 31.2 + 31.3 + 31.2-fix + 32.1 + 32.2 + 32.3 + 32.6 + 33.1–33.8 + 35.1 + 37.1 + 38.1–38.7 + 36.1–36.2 + 39.1 + E2E regression fixes complete.
+> Last updated: 2026-03-17 — PM deep audit #20. 32.4 (Library media card components) verified DONE. Phases 1–25.7 + 27.1–27.5 + 27.6–27.10 + 28.1 + 28.2-fix + 28.3-code + 28.3-verify + 28.4 + 28.6 + 28.7 + 30.1 + 30.2 + 30.3 + 30.4 + 31.1 + 31.2 + 31.3 + 31.2-fix + 32.1 + 32.2 + 32.3 + 32.4 + 32.6 + 33.1–33.8 + 35.1 + 37.1 + 38.1–38.7 + 36.1–36.2 + 39.1 + E2E regression fixes complete.
+
+---
+
+## Phase 32.4 — Library Media Card Components — COMPLETED (2026-03-17)
+
+> PM audit #20 + Architect code audit. Verified DONE. No regressions. Full validation gateway passed.
+
+- [x] **32.4 LOW** — Refactored Library image/audio tabs from inline markup to dedicated media card components:
+  - `LibraryImageCard`: thumbnail via `resolveStoredAssetUrl()`, preview control (opens media), download control (`download=1` URL), persona metadata, task link.
+  - `LibraryAudioCard`: audio header, native `<audio controls>` with resolved source URL, download control (`download=1` URL), persona metadata, task link.
+  - Secure URL resolution through `/api/download?key=` proxy — no direct S3 URLs exposed to client.
+- [x] Unit tests: `library-tabs-media-cards.test.tsx` (2 tests) — image thumbnail source is secure/proxied, preview and download controls exist, audio element renders with secure source, audio download uses secure URL.
+- [x] Full validation gateway: prettier, lint, tsc, 341 unit tests (64 suites), 180 E2E, build — all passing.
+
+**Files changed:** `src/components/chat/library-tabs.tsx`, `tests/unit/library-tabs-media-cards.test.tsx` (new)
 
 ---
 
