@@ -26,6 +26,7 @@ interface ResolveEntitlementOptions {
   isSuspended?: boolean;
   now?: Date;
   planLimits?: PlanLimits;
+  fullPersonaAccessByPlan?: Partial<Record<PlanName, PersonaId[]>>;
 }
 
 export const DEFAULT_FULL_PERSONA_ACCESS_BY_PLAN: Record<
@@ -47,8 +48,9 @@ export const DEFAULT_FULL_PERSONA_ACCESS_BY_PLAN: Record<
 
 function buildPersonaAccessByPlan(
   planName: PlanName,
+  fullPersonaAccessByPlan: Record<PlanName, PersonaId[]>,
 ): Record<PersonaId, PersonaAccessLevel> {
-  const fullPersonaSet = new Set(DEFAULT_FULL_PERSONA_ACCESS_BY_PLAN[planName]);
+  const fullPersonaSet = new Set(fullPersonaAccessByPlan[planName]);
 
   return PERSONAS.reduce(
     (accumulator, persona) => {
@@ -59,6 +61,16 @@ function buildPersonaAccessByPlan(
     },
     {} as Record<PersonaId, PersonaAccessLevel>,
   );
+}
+
+function resolveFullPersonaAccessByPlan(
+  overrides?: Partial<Record<PlanName, PersonaId[]>>,
+): Record<PlanName, PersonaId[]> {
+  return {
+    Lite: overrides?.Lite ?? DEFAULT_FULL_PERSONA_ACCESS_BY_PLAN.Lite,
+    Pro: overrides?.Pro ?? DEFAULT_FULL_PERSONA_ACCESS_BY_PLAN.Pro,
+    Premium: overrides?.Premium ?? DEFAULT_FULL_PERSONA_ACCESS_BY_PLAN.Premium,
+  };
 }
 
 function buildBlockedPersonaAccess(): Record<PersonaId, PersonaAccessLevel> {
@@ -115,6 +127,9 @@ export function resolveEntitlements(
   const normalizedPlan: PlanName = planName ?? "Lite";
   const now = options.now ?? new Date();
   const planLimits = options.planLimits ?? PLAN_LIMITS;
+  const fullPersonaAccessByPlan = resolveFullPersonaAccessByPlan(
+    options.fullPersonaAccessByPlan,
+  );
 
   if (options.isSuspended) {
     const personaAccess = buildBlockedPersonaAccess();
@@ -141,7 +156,10 @@ export function resolveEntitlements(
   })
     ? "Lite"
     : normalizedPlan;
-  const personaAccess = buildPersonaAccessByPlan(effectivePlanName);
+  const personaAccess = buildPersonaAccessByPlan(
+    effectivePlanName,
+    fullPersonaAccessByPlan,
+  );
 
   return {
     planName: effectivePlanName,

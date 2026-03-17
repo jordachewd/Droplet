@@ -1,8 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { EditorContent, useEditor } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
 
 interface TiptapEditorProps {
   inputName: string;
@@ -14,19 +12,19 @@ export default function TiptapEditor({
   initialContent,
 }: TiptapEditorProps) {
   const [html, setHtml] = useState(initialContent);
-  const editor = useEditor({
-    extensions: [StarterKit],
-    content: initialContent,
-    immediatelyRender: false,
-    onUpdate: ({ editor: currentEditor }) => {
-      setHtml(currentEditor.getHTML());
-    },
-  });
 
   useEffect(() => {
     setHtml(initialContent);
-    editor?.commands.setContent(initialContent);
-  }, [editor, initialContent]);
+  }, [initialContent]);
+
+  function applySimpleFormat(tag: "strong" | "em" | "ul") {
+    if (tag === "ul") {
+      setHtml((previous) => `${previous}\n<ul>\n  <li></li>\n</ul>`);
+      return;
+    }
+
+    setHtml((previous) => `${previous}<${tag}></${tag}>`);
+  }
 
   return (
     <div className="TiptapEditor flex flex-col gap-3">
@@ -34,35 +32,33 @@ export default function TiptapEditor({
         <button
           type="button"
           className="btn btn-sm btn-outlined"
-          onClick={() => editor?.chain().focus().toggleBold().run()}
-          aria-pressed={editor?.isActive("bold") ?? false}
+          onClick={() => applySimpleFormat("strong")}
         >
           Bold
         </button>
         <button
           type="button"
           className="btn btn-sm btn-outlined"
-          onClick={() => editor?.chain().focus().toggleItalic().run()}
-          aria-pressed={editor?.isActive("italic") ?? false}
+          onClick={() => applySimpleFormat("em")}
         >
           Italic
         </button>
         <button
           type="button"
           className="btn btn-sm btn-outlined"
-          onClick={() => editor?.chain().focus().toggleBulletList().run()}
-          aria-pressed={editor?.isActive("bulletList") ?? false}
+          onClick={() => applySimpleFormat("ul")}
         >
           Bullets
         </button>
       </div>
 
       <div className="min-h-80 rounded-2xl border border-lightBorders-400 bg-white px-4 py-3 dark:border-darkBorders-500 dark:bg-jwdMarine-1000">
-        {editor ? (
-          <EditorContent editor={editor} />
-        ) : (
-          <div className="text-sm opacity-60">Loading editor...</div>
-        )}
+        <textarea
+          className="h-80 w-full resize-y bg-transparent text-sm outline-none"
+          value={html}
+          onChange={(event) => setHtml(event.target.value)}
+          aria-label="Website page content"
+        />
       </div>
 
       <input type="hidden" name={inputName} value={html} readOnly />

@@ -3,6 +3,7 @@
 import { clerkClient } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 import { connectToDatabase } from "@/lib/database/mongoose";
+import { PERSONAS } from "@/constants/assistant-personas";
 import AppSetting from "@/lib/database/models/app-setting.model";
 import PublicPage from "@/lib/database/models/public-page.model";
 import Task from "@/lib/database/models/tasks.model";
@@ -11,6 +12,7 @@ import User from "@/lib/database/models/user.model";
 import { createAdminAuditLogEntry } from "@/lib/utils/admin-audit";
 import { requireAdminActionAccess } from "@/lib/utils/admin-auth";
 import deleteS3Prefix from "@/lib/utils/aws/delete-s3-prefix";
+import { PersonaId } from "@/types/PersonaData.d";
 import { z } from "zod";
 
 const requiredStringSchema = z.string().trim().min(1);
@@ -22,6 +24,12 @@ const adminSettingCategorySchema = z.enum([
   "limits",
   "features",
 ]);
+const PERSONA_ACCESS_KEYS = new Set([
+  "persona_access_lite",
+  "persona_access_pro",
+  "persona_access_premium",
+]);
+const VALID_PERSONA_ID_SET = new Set(PERSONAS.map((persona) => persona.id));
 
 function getStringField(formData: FormData, fieldName: string): string {
   const value = formData.get(fieldName);
@@ -129,6 +137,16 @@ function parseStructuredAdminSettingValue({
     }
 
     return { defaultMode };
+  }
+
+  if (PERSONA_ACCESS_KEYS.has(key)) {
+    return formData
+      .getAll("personaIds")
+      .filter(
+        (value): value is PersonaId =>
+          typeof value === "string" &&
+          VALID_PERSONA_ID_SET.has(value as PersonaId),
+      );
   }
 
   return null;
@@ -285,6 +303,12 @@ export async function updateAdminSettingAction(formData: FormData) {
   if (key === "admin.pricing" || key === "admin.limits") {
     revalidatePath("/plans");
     revalidatePath("/app/plans");
+  }
+
+  if (PERSONA_ACCESS_KEYS.has(key)) {
+    revalidatePath("/app");
+    revalidatePath("/app/new");
+    revalidatePath("/app/personas");
   }
 }
 

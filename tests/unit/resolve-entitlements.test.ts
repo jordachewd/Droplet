@@ -99,4 +99,17 @@ describe("resolveEntitlements", () => {
     expect(premiumEntitlements.allowedPersonaIds).toContain("interviewer");
     expect(premiumEntitlements.personaAccess!.interviewer).toBe("full");
   });
+
+  it("applies admin full-persona-access overrides per plan", () => {
+    const entitlements = resolveEntitlements("Lite", {
+      fullPersonaAccessByPlan: {
+        Lite: ["strategist", "teacher"],
+      },
+    });
+
+    expect(entitlements.personaAccess!.strategist).toBe("full");
+    expect(entitlements.personaAccess!.teacher).toBe("full");
+    expect(entitlements.personaAccess!.developer).toBe("limited");
+    expect(entitlements.trialPersonaIds).toContain("developer");
+  });
 });

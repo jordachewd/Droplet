@@ -53,6 +53,7 @@ import {
   AIRequestMetric,
   emitUsageEvents,
 } from "@/lib/utils/usage-event-utils";
+import { getEffectivePersonaAccessByPlan } from "@/lib/utils/effective-persona-access";
 import { getEffectivePlanConfig } from "@/lib/utils/effective-plan-config";
 import {
   chatMessageArraySchema,
@@ -719,7 +720,11 @@ export async function POST(req: Request): Promise<Response> {
     }
 
     const planName = userData.plan?.name ?? "Lite";
-    const { limits: effectivePlanLimits } = await getEffectivePlanConfig();
+    const [effectivePlanConfig, fullPersonaAccessByPlan] = await Promise.all([
+      getEffectivePlanConfig(),
+      getEffectivePersonaAccessByPlan(),
+    ]);
+    const effectivePlanLimits = effectivePlanConfig.limits;
     const persistedTask = providedTaskId
       ? await getTaskByIdForUser({
           taskId: providedTaskId,
@@ -823,6 +828,7 @@ export async function POST(req: Request): Promise<Response> {
 
     const entitlements = resolveEntitlements(planName, {
       planLimits: effectivePlanLimits,
+      fullPersonaAccessByPlan,
     });
 
     const selectedPersonaAccess = entitlements.personaAccess?.[
