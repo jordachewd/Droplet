@@ -1059,25 +1059,36 @@ These items are not banned forever. They are excluded because they create dispro
 
 ### Milestone 12 — Video Generation
 
+> **Status: UNBLOCKED — IN PROGRESS (2026-03-17)**
+> Owner confirmed `sora-2` and `sora-2-pro` configured on OpenAI platform.
+> OpenAI SDK v6.31.0 includes `openAiClient.videos.*` API (async job model).
+> Decision gate PASSED. No separate cost ceiling approval needed — flat pricing already defined.
+> Phase 34.2–34.8 scheduled. Phase 47.1 (suppress false claims) executes first as safety guard.
+
 **Objective:** Implement video generation using OpenAI Sora API.
 
-**Dependencies:** Audio verified, entitlement system stable.
+**Dependencies:** Audio verified ✅, entitlement system stable ✅.
 
-**Gated on:** Sora API availability verification + S3 cost ceiling approval.
+**Gated on:** ~~Sora API availability verification + S3 cost ceiling approval~~ — CLEARED.
 
 **Scope:**
 
-1. `generateVideo.tsx` utility with Sora integration.
-2. Video tool definition and API route integration.
-3. Video player component in chat messages.
-4. `video_url` type added to ContentItem schema.
-5. Video counter tracking and limit enforcement.
+1. `generateVideo.tsx` utility with Sora integration (Phase 34.2).
+2. Video tool definition (`getGeneratedVideo`) and `getChatTools()` update (Phase 34.3).
+3. Video handler in `buildOpenAIResponsePayload()` with slot claim/rollback (Phase 34.4).
+4. API route `MediaUsageLimitType` extension for video slots (Phase 34.5).
+5. `VideoPlayer` component + chat-body rendering (Phase 34.6).
+6. Re-enable `supportsVideoGeneration` + library integration (Phase 34.7).
+7. Unit tests for video generation chain (Phase 34.8).
 
 **Success criteria:**
 
 - Video generation works end-to-end via chat interface.
-- Videos stored in S3, URLs in messages.
-- Limits enforced per plan.
+- Videos stored in S3 (`{userId}/videos/`), URLs in messages.
+- Limits enforced per plan (Lite: 1/mo, Pro: 10/mo, Premium: unlimited).
+- `VideoPlayer` renders in chat messages.
+- Library videos tab shows generated videos.
+- No false capability claims during development window (Phase 47.1 → 34.7).
 
 ### Milestone 13 — UI Polish, Bug Fixes & Admin Enhancement (Owner-Directed, 2026-03-16)
 
@@ -1228,7 +1239,8 @@ These items are not banned forever. They are excluded because they create dispro
 
 ### Milestone 18 — Admin Configurability & Code Quality (Owner-Directed, 2026-03-17)
 
-> **Status: NOT STARTED**
+> **Status: MOSTLY COMPLETE** — Block A (Admin Configurability) delivered by Phases 44.1–44.5. Block C (Code Organization) delivered by Phases 45.1–45.4, 43.2. Block B (Code Quality) partially done — client fetch audit CLEAN, re-render audit found 1 issue (autoAnimate leak).
+> PM audit #22: Triple-audit confirmed Phases 44–45 complete. Remaining: currency configurability (Phase 48), autoAnimate fix (Phase 49.1), import type fixes (Phase 49.2), SVG optimization (Phase 49.3), admin-aware promo cards (Phase 49.4–49.5).
 
 **Objective:** Make ALL plans, prices, features, and settings fully admin-configurable with zero hardcoded references in code. Improve code quality by eliminating client-side fetching, unnecessary re-renders, and inline data.
 

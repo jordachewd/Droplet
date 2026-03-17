@@ -5,260 +5,186 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: Phases 1–43.4 complete (except 43.2 hero images — in progress). All Milestones 0–17 COMPLETED.**
-> **PM deep audit #21 (2026-03-17): Full codebase audit by PM + Architect + Engineer. All critical bugs from Phases 40–43 resolved.**
-> **359 unit tests passing (65 suites). 180 E2E passing. 48 skipped (explained). Build passing.**
-> **OWNER INSTRUCTIONS (latest, 2026-03-17): Admin configurability audit, no hardcoded plan refs, no client fetch(), re-render audit, server-side utilities, JSON/types outsourcing.**
-> **Priority order: 44.1 → 44.2 → 44.3 → 44.4 → 44.5 → 45.1 → 45.2 → 45.3 → 45.4 → 43.2 → 46.x → 31.4 → 34.x → 29.1 → 29.2 → Phase 26.**
-> **All Phase 26+ deferred work is ON HOLD until Milestone 18 is PM-approved complete.**
+> **STATUS: Phases 1–45.4 complete. Phase 43.2 complete (placeholders). All Milestones 0–18 MOSTLY COMPLETE.**
+> **PM deep audit #22 (2026-03-17): Full triple-audit (PM + Architect + Engineer). Video generation confirmed NOT implemented. Currency hardcoding confirmed. autoAnimate leak confirmed. Chat "Invalid request body" confirmed FIXED.**
+> **357 unit tests passing (65 suites). 180 E2E passing. 48 skipped (explained). Build passing.**
+> **OWNER INSTRUCTIONS (latest, 2026-03-17): Video integration HIGH (Sora API confirmed), video player HIGH, currency configurability, admin full permissions display, admin design, import type fixes, SVG optimization.**
+> **Sora API UNBLOCKED (2026-03-17): Owner confirmed `sora-2` and `sora-2-pro` configured on OpenAI platform. SDK v6.31.0 has `openAiClient.videos.*` API. Phase 34 elevated to HIGH.**
+> **Priority order: 47.1 → 34.2 → 34.3 → 34.4 → 34.5 → 34.6 → 34.7 → 34.8 → 48.1 → 49.1 → 49.2 → 49.3 → 49.4 → 49.5 → 46.x → 31.4 → 29.x → 26.x**
+> **All Phase 26+ deferred work is ON HOLD until PM-approved complete.**
 
 ---
 
-## Phase 44: Admin Configurability Audit — CRITICAL (Owner-Directed, 2026-03-17)
+## Phase 47: Video Generation Claims Suppression — CRITICAL (Owner-Directed, PM Audit #22)
 
-> **CRITICAL priority. Owner directive: "Plans, prices, features, settings, naming, descriptions, limits, etc must be fully configurable from the ADMIN panel; NO hardcoded references inside code."**
-> **PM deep audit #21: Architect + Engineer + PM all confirmed critical hardcoded values in public pages.**
-> **Must be resolved before any other feature work.**
+> **CRITICAL priority. PM audit #22 triple-audit finding: Video generation is NOT implemented. No `generateVideo.tsx`, no video tool in `getChatTools()`, no video handler in `processToolUsage()`, no video rendering in `chat-body.tsx`, no `VideoPlayer` component. But system prompts and entitlements claim video IS available, causing the AI to produce confusing refusal messages or errors when users request video.**
+> **Root cause of Owner-reported issue: "I get an error message or 'I can generate audio or images, but I'm currently unable to create or generate videos.'"**
+> **Phase 34 (full video implementation) remains ON HOLD pending Sora API verification. This phase only suppresses false claims.**
 
 ---
 
-### 44.1 CRITICAL — Fix stale FAQ persona counts and pricing
+### 47.1 CRITICAL — Suppress video capability claims until implementation exists
 
-**Ref:** PM audit #21 — FAQs reference "3 personas / 7 personas / 10 personas" (old 10-persona system). Current system: 6 personas, 2/5/6 split. Also contains hardcoded "$19" and "$39" prices.
+**Ref:** PM audit #22 — `supportsVideoGeneration: true` is resolved by entitlements and passed to system prompt context, but no video tool exists for the AI to call. AI model fabricates errors or refusals.
 
-**Files:** `src/constants/faqs.tsx`, `src/components/sections/faqs-section.tsx`
+**Files:** `src/lib/utils/resolve-entitlements.tsx`, `src/lib/utils/openai/generateResponse.tsx`, `src/constants/persona-prompts.ts`
 
 **What to do:**
 
-1. Convert `faqs` from a static constant to a function `buildFaqs(config)` that takes pricing + persona gating config.
-2. Replace hardcoded "$19" / "$39" with `config.proPlanPrice` / `config.premiumPlanPrice`.
-3. Replace hardcoded "3 personas / 7 personas / 10 personas" with correct admin-resolved counts.
-4. All pages rendering FAQs (`/faqs`, `/plans`, `/app/plans`, landing page) must call `getEffectivePlanConfig()` and `getEffectivePersonaAccessByPlan()` server-side and pass to `buildFaqs()`.
+1. In `resolveEntitlements()`, force `supportsVideoGeneration: false` for ALL plans until Phase 34 delivers the video tool. Add comment: `// Video generation not implemented — suppress until Phase 34`.
+2. Verify system prompt builder does NOT mention video capability when `supportsVideoGeneration` is false.
+3. Verify plan cards already show "Coming soon" for video (confirmed — no change needed there).
+4. Do NOT remove video scaffolding (model policy, DB fields, usage counters) — those are future-ready.
 
 **Acceptance criteria:**
 
-- [ ] Zero hardcoded prices in FAQ text
-- [ ] Persona counts match current admin-configured values (currently 2/5/6)
-- [ ] FAQ renders correctly with admin-overridden pricing
-- [ ] `npx tsc --noEmit` passes
-- [ ] All tests pass
+- [x] `supportsVideoGeneration` returns `false` for all plans
+- [x] AI model no longer claims it can generate videos
+- [x] No confusing errors when user asks for video — model responds honestly that video is coming soon
+- [x] Plan cards still show "Coming soon" for video
+- [x] Video scaffolding (model policy, DB schema, counters) preserved
+- [x] `npx tsc --noEmit` passes
+- [x] All tests pass
 
 ---
 
-### 44.2 CRITICAL — Fix hardcoded prices and persona count in About page
+## Phase 48: Currency Configurability — HIGH (Owner-Directed, PM Audit #22)
 
-**Ref:** PM audit #21 — About page has hardcoded `$19`, `$39`, `10` personas, and hardcoded persona gating text.
+> **HIGH priority. Owner directive: "Hardcoded '$' currency symbol is not allowed. The app will use different currencies depending on selling region. For now USD and Euro — must be configurable by admin."**
+> **PM audit #22: Hardcoded `$` confirmed in plan-card.tsx, about page, faqs.tsx, terms-data.ts, admin usage page.**
 
-**Files:** `src/app/(public)/about/page.tsx`
+---
+
+### 48.1 HIGH — Add configurable currency symbol to plan pricing display
+
+**Ref:** PM audit #22 — `$` hardcoded in 5 files. Owner wants admin-configurable currency (USD `$` / EUR `€`).
+
+**Files:** `src/constants/plans.tsx`, `src/lib/utils/effective-plan-config.ts`, `src/components/shared/plan-card.tsx`, `src/constants/faqs.tsx`, `src/constants/about-data.ts`, `src/constants/terms-data.ts`, `src/app/(admin)/admin/settings/page.tsx`, `src/app/(admin)/admin/usage/page.tsx`
 
 **What to do:**
 
-1. About page is a Server Component — call `getEffectivePlanConfig()` and `getEffectivePersonaAccessByPlan()` at the top.
-2. Replace hardcoded `$19` / `$39` with effective pricing values.
-3. Replace hardcoded `10` persona count with `PERSONAS.length` or admin-derived count.
-4. Replace hardcoded persona gating description ("Lite includes Strategist and Developer...") with dynamically generated text from persona access config.
+1. Add `currencySymbol: string` field to `PlanPricing` type (default `"$"`).
+2. Add `getEffectiveCurrencySymbol()` to `effective-plan-config.ts` — reads `AppSetting("admin.currencySymbol")`, falls back to `"$"`.
+3. Pass `currencySymbol` from server to all plan display surfaces.
+4. Replace hardcoded `"$"` in `plan-card.tsx` with prop-driven `currencySymbol`.
+5. Replace hardcoded `$` prefix in `buildFaqs()` template literals with `currencySymbol` param.
+6. Replace hardcoded `$` prefix in `buildAboutSections()` with `currencySymbol` param.
+7. Replace hardcoded `$` prefix in `buildTermsSections()` with `currencySymbol` param.
+8. Replace hardcoded `$` in admin usage `formatCost()` with effective currency symbol.
+9. Add currency symbol selector (USD/EUR) to admin settings page.
 
 **Acceptance criteria:**
 
-- [ ] Zero hardcoded pricing in About page
-- [ ] Persona count and gating text derived from admin config
-- [ ] `npx tsc --noEmit` passes
-- [ ] All tests pass
+- [x] Zero hardcoded `$` currency symbols in rendering code
+- [x] `currencySymbol` resolved from admin settings with `$` fallback
+- [x] Admin can switch between `$` (USD) and `€` (EUR)
+- [x] All plan cards, FAQs, About, Terms render correct currency symbol
+- [x] `npx tsc --noEmit` passes
+- [x] All tests pass
 
 ---
 
-### 44.3 CRITICAL — Fix hardcoded prices in Terms page
+## Phase 49: Code Quality Fixes — HIGH-MEDIUM (PM Audit #22)
 
-**Ref:** PM audit #21 — Terms page has `"Pro for $19, and Premium for $39"` hardcoded.
-
-**Files:** `src/app/(public)/terms/page.tsx`
-
-**What to do:**
-
-1. Terms page is a Server Component — call `getEffectivePlanConfig()` at the top.
-2. Use template interpolation for the pricing text in `termsSections`.
-
-**Acceptance criteria:**
-
-- [ ] Zero hardcoded prices in Terms page
-- [ ] `npx tsc --noEmit` passes
+> **Findings from PM audit #22 triple-audit. Mixed priority.**
 
 ---
 
-### 44.4 HIGH — Make plan card persona labels dynamic
+### 49.1 HIGH — Fix autoAnimate MutationObserver leak in chat-body.tsx
 
-**Ref:** PM audit #21 — Plan card descriptions contain hardcoded "2 personas (full access)", "5 personas (full access)", "All 6 personas", and trial limit labels.
-
-**Files:** `src/constants/plans.tsx`
-
-**What to do:**
-
-1. `buildPlans()` already accepts `pricing` and `limits` params. Add `personaAccess` param.
-2. Generate persona count labels dynamically: count the admin-resolved full-access persona IDs per plan.
-3. Generate trial limit labels from effective trial limits.
-4. Ensure all call sites pass admin-resolved config.
-
-**Acceptance criteria:**
-
-- [ ] Persona count in plan cards matches admin-configured persona access
-- [ ] No hardcoded "2 personas" / "5 personas" / "6 personas" strings
-- [ ] `npx tsc --noEmit` passes
-
----
-
-### 44.5 HIGH — Create `getEffectiveTrialLimits()` utility
-
-**Ref:** PM audit #21 — `PERSONA_TRIAL_LIMITS` is used directly in `/api/openai` route (6 call sites). No admin-configurable path.
-
-**Files:** `src/lib/utils/effective-plan-config.ts` (extend), `src/app/api/openai/route.tsx`, `src/constants/plans.tsx`
-
-**What to do:**
-
-1. Add `getEffectiveTrialLimits()` to `effective-plan-config.ts` — reads `AppSetting("admin.trialLimits")`, falls back to `PERSONA_TRIAL_LIMITS`.
-2. Replace all 6 direct `PERSONA_TRIAL_LIMITS` references in `/api/openai` route with `effectiveTrialLimits`.
-3. Add trial limits section to admin settings page.
-
-**Acceptance criteria:**
-
-- [ ] Zero direct `PERSONA_TRIAL_LIMITS` imports in route handlers
-- [ ] Admin can configure trial limits via settings page
-- [ ] Falls back to defaults when no admin setting exists
-- [ ] `npx tsc --noEmit` passes
-- [ ] All tests pass
-
----
-
-## Phase 45: Code Quality & Organization (Owner-Directed, 2026-03-17)
-
-> **HIGH-MEDIUM priority. After Phase 44. Owner directives: server-side utilities, cleanup dead code, outsource data/types.**
-
----
-
-### 45.1 HIGH — Remove dead code: V1 sidebar nav
-
-**Ref:** PM audit #21 — `chat-sidebar-nav.tsx` (V1) is dead code. Only V2 is imported. V1 contains broken `/profile` and `/plans` links.
-
-**Files:** `src/components/chat/sidebar/chat-sidebar-nav.tsx`
-
-**What to do:**
-
-1. Verify zero imports of `chat-sidebar-nav.tsx` (confirmed by PM audit).
-2. Delete the file.
-
-**Acceptance criteria:**
-
-- [ ] `chat-sidebar-nav.tsx` deleted
-- [ ] `npx tsc --noEmit` passes
-- [ ] Build passes
-
----
-
-### 45.2 MEDIUM — Add missing `.lean()` / `.select()` to DB queries
-
-**Ref:** PM audit #21 — 5 DB queries missing read optimizations.
-
-**Files:** `src/app/api/webhooks/stripe/route.tsx`, `src/lib/actions/transaction.action.tsx`, `src/app/api/webhooks/clerk/route.tsx`, `src/lib/utils/check-daily-conversations.ts`
-
-**What to do:**
-
-1. Stripe webhook `Transaction.findOne({ stripeId })` — add `.select("_id").lean()`.
-2. Stripe webhook `User.findOne({ _id, clerkId })` — add `.select("_id clerkId").lean()`.
-3. `checkoutPlan` `User.findOne({ clerkId })` — add `.select("_id firstName lastName username email").lean()`.
-4. Clerk webhook `User.findOne({ clerkId })` — add `.lean()` and `.select()`.
-5. `check-daily-conversations.ts` — add `.lean()` to query with existing `.select()`.
-
-**Acceptance criteria:**
-
-- [ ] All 5 queries have `.lean()` and `.select()` applied
-- [ ] `npx tsc --noEmit` passes
-- [ ] All tests pass
-
----
-
-### 45.3 MEDIUM — Outsource inline data to constants files
-
-**Ref:** Owner directive: "Dummy data JSONs must be outsourced in a folder named `json` or similar."
-
-**Files:** `src/app/(public)/about/page.tsx`, `src/app/(public)/terms/page.tsx`, `src/app/(public)/privacy/page.tsx`, `src/app/(public)/cookies/page.tsx`, `src/components/sections/landing-page.tsx`
-
-**What to do:**
-
-1. Extract `aboutSections` from `about/page.tsx` to `src/constants/about-data.ts`.
-2. Extract `termsSections` from `terms/page.tsx` to `src/constants/terms-data.ts`.
-3. Extract `privacySections` from `privacy/page.tsx` to `src/constants/privacy-data.ts`.
-4. Extract `cookieCategories` from `cookies/page.tsx` to `src/constants/cookies-data.ts`.
-5. Extract `featureCards` and `howItWorksSteps` from `landing-page.tsx` to `src/constants/landing-data.ts`.
-6. Import from the new constant files in each page.
-
-**Acceptance criteria:**
-
-- [ ] Zero large inline data arrays in page/component files
-- [ ] New constants files in `src/constants/`
-- [ ] No behavior changes — data-only extraction
-- [ ] `npx tsc --noEmit` passes
-
----
-
-### 45.4 MEDIUM — Consolidate shared TypeScript types to `src/types/`
-
-**Ref:** Owner directive: "TypeScript must be outsourced from files into a folder named `types` or similar."
-
-**Files:** Multiple component and utility files with shared types.
-
-**What to do:**
-
-1. Deduplicate `UploadRouteResponse` (exists in both `chat-input.tsx` and `profile-hero-editor.tsx`) → move to `src/types/UploadData.d.tsx`.
-2. Deduplicate `ModelSettingsFormValue` (exists in both `effective-model-config.ts` and `admin/settings/page.tsx`) → move to `src/types/AdminData.d.tsx`.
-3. Move exported `LibraryConversationCardItem`, `LibraryMediaCardItem`, `LibraryPaginationState` from `library-tabs.tsx` → to `src/types/LibraryData.d.tsx`.
-4. Move exported `AlertParams` from `alert-message.tsx` → to `src/types/`.
-5. Unify `ThemeMode` (in `droplet-theme.tsx`) and `UiThemeMode` (in `use-ui-store.ts`) → single type in `src/types/`.
-6. Keep component-scoped Props interfaces co-located (those are fine where they are).
-
-**Acceptance criteria:**
-
-- [ ] Zero duplicated types across files
-- [ ] Shared types in `src/types/`
-- [ ] Component-local Props interfaces remain in component files
-- [ ] `npx tsc --noEmit` passes
-- [ ] All tests pass
-
----
-
-### 45.5 LOW — Fix autoAnimate cleanup in chat-body
+**Ref:** PM audit #22 — `autoAnimate()` called on every message update without cleanup. MutationObserver leak. Supersedes Phase 45.5.
 
 **Files:** `src/components/chat/chat-body.tsx`
 
 **What to do:**
 
-1. Store `autoAnimate()` return value.
-2. Call cleanup in useEffect return function.
+1. Separate autoAnimate initialization from scroll-to-bottom logic.
+2. Initialize `autoAnimate()` once on ref availability (not on every message change).
+3. Store return value (AnimationController).
+4. Call cleanup in useEffect return function.
+5. Keep scroll-to-bottom in separate effect keyed on `messages.length`.
 
 **Acceptance criteria:**
 
-- [ ] No MutationObserver leak from autoAnimate
-- [ ] `npx tsc --noEmit` passes
+- [x] autoAnimate called once, not on every message
+- [x] Cleanup function returned from useEffect
+- [x] No MutationObserver leak
+- [x] Scroll-to-bottom still works on new messages
+- [x] `npx tsc --noEmit` passes
 
 ---
 
-## Phase 43.2: Persona Hero Images — IN PROGRESS (Owner providing images)
+### 49.2 MEDIUM — Fix `import type` issues in faqs.tsx and about-data.ts
 
-> **Owner directive: use placeholders for now. Images will be provided by the owner.**
+**Ref:** PM audit #22 + Copilot code review — `FullPersonaAccessByPlan` imported as runtime from `effective-persona-access.ts` (which has `import "server-only"`), but only used as a type.
 
-### 43.2 MEDIUM — Persona hero images (6 personas)
+**Files:** `src/constants/faqs.tsx`, `src/constants/about-data.ts`
 
 **What to do:**
 
-1. Add placeholder hero images for 6 personas in `public/personas/`.
-2. Add `heroImage` field to persona definitions in `assistant-personas.tsx`.
-3. Display on persona cards and public `/personas` page.
-4. Owner will provide final images to replace placeholders.
+1. Change `import { FullPersonaAccessByPlan }` to `import type { FullPersonaAccessByPlan }` in both files.
 
 **Acceptance criteria:**
 
-- [ ] 6 placeholder images in `public/personas/`
-- [ ] Each persona definition has `heroImage` path
-- [ ] Images visible on persona cards and public page
-- [ ] `npx tsc --noEmit` passes
+- [x] `import type` used for type-only imports from server-only modules
+- [x] No runtime dependency on `server-only` sentinel from constants files
+- [x] `npx tsc --noEmit` passes
+
+---
+
+### 49.3 MEDIUM — Add `unoptimized` to persona card SVG images
+
+**Ref:** PM audit #22 + Copilot code review — `persona-card.tsx` uses `next/image` with SVG hero images. SVGs routed through image optimizer produce blurry raster versions.
+
+**Files:** `src/components/shared/persona-card.tsx`
+
+**What to do:**
+
+1. Add `unoptimized` prop to `<Image>` rendering `persona.heroImage` (which are `.svg` files).
+
+**Acceptance criteria:**
+
+- [x] SVG persona images served directly without optimization
+- [x] `npx tsc --noEmit` passes
+
+---
+
+### 49.4 MEDIUM — Make PlanPromo and ChatSidebarPromo admin-role-aware
+
+**Ref:** PM audit #22 — Admin users see "Unlock premium features" promo. Owner directive: admin role has full permission with no limitations — promo cards should display relevant info.
+
+**Files:** `src/components/shared/plan-promo.tsx`, `src/components/chat/sidebar/chat-sidebar-promo.tsx`
+
+**What to do:**
+
+1. In `PlanPromo` (Server Component): check `userData.role === "admin"` — if admin, show "Admin Access — Full permissions" instead of upgrade promo.
+2. In `ChatSidebarPromo` (Client Component): receive `userRole` prop from parent server layout. If admin, show admin-appropriate message or hide promo entirely.
+
+**Acceptance criteria:**
+
+- [x] Admin users do not see upgrade promo
+- [x] Admin users see "Admin Access" or equivalent
+- [x] Non-admin users see upgrade promo as before
+- [x] `npx tsc --noEmit` passes
+
+---
+
+### 49.5 MEDIUM — Remove hardcoded promo text in chat-sidebar-promo.tsx
+
+**Ref:** PM audit #22 — Hardcoded "Unlock image and audio features with Pro." text. Should reference plan features dynamically.
+
+**Files:** `src/components/chat/sidebar/chat-sidebar-promo.tsx`
+
+**What to do:**
+
+1. Receive plan name or promo text as prop from parent server layout.
+2. Display contextual promo based on current plan: Lite users see upgrade to Pro, Pro users see upgrade to Premium, Premium/admin see nothing.
+
+**Acceptance criteria:**
+
+- [x] Zero hardcoded promo text
+- [x] Promo contextual to user's current plan
+- [x] `npx tsc --noEmit` passes
 
 ---
 
@@ -303,17 +229,244 @@
 
 ---
 
-## Phase 34: Video Generation — ON HOLD (gated)
+## Phase 34: Video Generation — HIGH (UNBLOCKED)
 
-> **GATED:** Requires Sora API verification + S3 cost ceiling approval before implementation.
+> **UNBLOCKED (2026-03-17):** Owner confirmed Sora API models `sora-2` and `sora-2-pro` configured on OpenAI platform.
+> **SDK support:** OpenAI SDK v6.31.0 includes `openAiClient.videos.*` API — async job model (create → poll → download).
+> **Model policy:** Already configured in `ai-model-policy.ts`. Pricing: `sora-2` = $0.10/video, `sora-2-pro` = $0.30/video.
+> **Scaffolding ready:** DB counters (`videoGenerations`, `trialVideoGenerations`), plan limits (Lite: 1, Pro: 10, Premium: unlimited), `ContentItem.video_url` type, library tab, admin settings fields — all exist.
+> **Phase 47.1 (suppress false claims) must complete FIRST** — protects users during development window.
+> **Depends on:** Phase 47.1 complete. After 34.8, video is fully live.
 
-### 34.1 DECISION GATE — Verify Sora API availability and pricing
+---
 
-### 34.2 HIGH — Implement generateVideo utility
+### 34.1 DECISION GATE — PASSED ✅
 
-### 34.3 HIGH — Add video tool definition and API route integration
+**Verified 2026-03-17:**
 
-### 34.4 MEDIUM — Video player component for chat messages
+- Sora API models (`sora-2`, `sora-2-pro`) confirmed configured on Owner's OpenAI platform.
+- OpenAI SDK v6.31.0 includes `openAiClient.videos.create()`, `.retrieve()`, `.downloadContent()`.
+- Async job model: create returns `Video` object with `status` (`queued` | `in_progress` | `completed` | `failed`), poll until done, download MP4.
+- Duration: 4, 8, or 12 seconds. Sizes: 720x1280, 1280x720, 1024x1792, 1792x1024.
+- Model policy already in `ai-model-policy.ts` (all plans use `sora-2`, Premium can override to `sora-2-pro`).
+- S3 storage: follows existing pattern (`{userId}/videos/`).
+- No separate cost ceiling approval needed — flat pricing already defined.
+
+---
+
+### 34.2 HIGH — Create generateVideo.tsx utility
+
+**Ref:** Follow `generateImage.tsx` and `generateAudio.tsx` patterns exactly.
+
+**Files:** `src/lib/utils/openai/generateVideo.tsx` (new)
+
+**What to do:**
+
+1. Create `generateVideo.tsx` following the existing media generation pattern.
+2. Interface: `GenerateVideoParams { prompt: string; role: MessageRole; taskId: string; userId: string; planName: PlanName; modelOverrides?: ModelPolicyModelOverrides; }`
+3. Resolve model via `resolveModelPolicy({ plan, feature: "video_generation", taskClass: "final", modelOverrides })`.
+4. Check `policy.hardBlocked` — throw if blocked.
+5. Call `openAiClient.videos.create({ prompt, model: policy.model, seconds: "4", size: "1280x720" })`.
+6. Poll `openAiClient.videos.retrieve(video.id)` in a loop (1-second interval, max 180 seconds timeout). Check `video.status === "completed"` or `"failed"`.
+7. On `"failed"`: throw with error message from `video.error.message`.
+8. On `"completed"`: call `openAiClient.videos.downloadContent(video.id, { variant: "video" })` to get Response object.
+9. Convert response to Buffer: `Buffer.from(await response.arrayBuffer())`.
+10. Upload to S3: `uploadFileToAWS(videoBuffer, fileName, "video/mp4", \`${userId}/videos\`)`. Filename pattern: `${taskId}_video_${generateString()}.mp4`.
+11. Build `taskData: Message` with content: `[{ type: "text", text: prompt }, { type: "video_url", video_url: videoS3Url }]`.
+12. Return `JSON.stringify({ taskData, generatedVideo: true, model: policy.model, requestMetric })`.
+13. Error handling: log to stderr with `[generateVideo]` prefix, call `handleError()`.
+
+**Acceptance criteria:**
+
+- [ ] `generateVideo()` follows exact pattern of `generateImage()` and `generateAudio()`
+- [ ] Model resolved via `resolveModelPolicy` — no hardcoded model names
+- [ ] Polling has maximum timeout (180s) to prevent infinite wait
+- [ ] Video uploaded to S3, URL stored in message content
+- [ ] Error handling with stderr logging matches existing pattern
+- [ ] `npx tsc --noEmit` passes
+
+---
+
+### 34.3 HIGH — Add video tool definition + update getChatTools
+
+**Ref:** Follow `imageGenerationTool` and `audioGenerationTool` patterns.
+
+**Files:** `src/constants/openai.tsx`
+
+**What to do:**
+
+1. Add `videoGenerationTool` constant:
+   ```typescript
+   const videoGenerationTool = {
+     type: "function",
+     function: {
+       name: "getGeneratedVideo",
+       description:
+         "Generates a short video clip when requested by the user. Use this function if the user asks for a video, " +
+         "e.g., when prompted with 'generate video ...', 'create video ...' or anything related. " +
+         "USE PREVIOUS PROMPTS for generating videos as well. Trim prompts to maximum 4000 characters.",
+       strict: true,
+       parameters: {
+         type: "object",
+         properties: {
+           prompt: {
+             type: "string",
+             description: "Description of the video to generate",
+           },
+         },
+         required: ["prompt"],
+         additionalProperties: false,
+       },
+     },
+   };
+   ```
+2. Update `chatTools` array to include `videoGenerationTool`.
+3. Add `supportsVideoGeneration: boolean` parameter to `getChatTools()` function.
+4. Conditionally push `videoGenerationTool` when `supportsVideoGeneration` is true.
+
+**Acceptance criteria:**
+
+- [ ] Video tool follows same structure as image/audio tools
+- [ ] `getChatTools()` accepts and uses `supportsVideoGeneration` flag
+- [ ] `npx tsc --noEmit` passes
+
+---
+
+### 34.4 HIGH — Add video handler in generateResponse.tsx
+
+**Ref:** Follow exact image/audio handler patterns in `buildOpenAIResponsePayload()`.
+
+**Files:** `src/lib/utils/openai/generateResponse.tsx`
+
+**What to do:**
+
+1. Import `generateVideo` from `./generateVideo`.
+2. Update `claimMediaGenerationSlot` type to accept `limitType: "images" | "audio" | "video"`.
+3. Update `rollbackMediaGenerationSlot` type to accept `limitType: "images" | "audio" | "video"`.
+4. Add `getGeneratedVideo` case in `buildOpenAIResponsePayload()` after the audio handler:
+   - Resolve video policy via `resolveFeaturePolicy({ feature: "video_generation", taskClass: "final" })`.
+   - Check `entitlements.supportsVideoGeneration` and `videoPolicy.hardBlocked`.
+   - Claim video slot via `claimMediaGenerationSlot({ limitType: "video" })`.
+   - Call `generateVideo({ prompt: parsedArgs.prompt, role, taskId, userId, planName, modelOverrides })`.
+   - Parse response, accumulate metrics.
+   - On error: rollback slot, log to stderr, return service_error payload.
+5. Update the default no-tool return to include `generatedVideo: false`.
+6. Update both `getChatTools()` calls in `runChatCompletion()` and `runStreamingChatCompletion()` to pass `supportsVideoGeneration: entitlements.supportsVideoGeneration`.
+
+**Acceptance criteria:**
+
+- [ ] Video handler follows exact same pattern as image/audio handlers
+- [ ] Slot claim and rollback are atomic with proper error isolation
+- [ ] `supportsVideoGeneration` passed to `getChatTools()` in both streaming and non-streaming paths
+- [ ] `npx tsc --noEmit` passes
+
+---
+
+### 34.5 HIGH — Update API route video slot management
+
+**Ref:** Extend existing `MediaUsageLimitType` and counter field resolution.
+
+**Files:** `src/app/api/openai/route.tsx`
+
+**What to do:**
+
+1. Update `MediaUsageLimitType` from `"images" | "audio"` to `"images" | "audio" | "video"`.
+2. Update `resolveMediaCounterField()` return type union to include `"plan.videoGenerations"` and `"plan.trialUsage.trialVideoGenerations"`.
+3. Add video case logic: if `limitType === "video"`, map to `"plan.videoGenerations"` (plan scope) or `"plan.trialUsage.trialVideoGenerations"` (trial scope).
+4. Update remaining-count calculation in `claimMediaGenerationSlot()` to handle video counter fields.
+5. Verify the `claimMediaGenerationSlot` and `rollbackMediaGenerationSlot` closures passed to `generateResponse()` work correctly with `"video"` type.
+
+**Acceptance criteria:**
+
+- [ ] `"video"` added to `MediaUsageLimitType`
+- [ ] `resolveMediaCounterField()` correctly maps video to DB fields
+- [ ] Slot claim/rollback work atomically for video (same TOCTOU-safe pattern)
+- [ ] `npx tsc --noEmit` passes
+
+---
+
+### 34.6 HIGH — Create VideoPlayer component + chat rendering
+
+**Ref:** Follow `AudioPlayer` component pattern. Use HTML5 `<video>` element.
+
+**Files:** `src/components/chat/video-player.tsx` (new), `src/components/chat/chat-body.tsx`
+
+**What to do:**
+
+1. Create `video-player.tsx` with `VideoPlayer` component:
+   - Props: `{ videoSrc: string | null }`.
+   - Render HTML5 `<video>` element with `controls`, `preload="metadata"`, `playsInline`.
+   - Set `className="VideoPlayer"` per coding standards.
+   - Max width constraint (e.g., `max-w-md`) to fit chat bubble.
+   - Handle null/empty src gracefully (show placeholder or nothing).
+   - Add `"use client"` directive (needs browser `<video>` element).
+2. In `chat-body.tsx`, add video rendering case in the content array map:
+   ```typescript
+   if (reply.type === "video_url") {
+     return (
+       <VideoPlayer
+         key={contentIndex}
+         videoSrc={reply.video_url || null}
+       />
+     );
+   }
+   ```
+3. Import `VideoPlayer` in `chat-body.tsx`.
+
+**Acceptance criteria:**
+
+- [ ] `VideoPlayer` renders HTML5 video with controls
+- [ ] Video displays correctly in chat messages
+- [ ] Null/empty src handled gracefully
+- [ ] Component has unique CSS class `VideoPlayer`
+- [ ] `npx tsc --noEmit` passes
+
+---
+
+### 34.7 HIGH — Re-enable supportsVideoGeneration + update library
+
+**Ref:** Reverses Phase 47.1 suppression now that video tool chain is complete.
+
+**Files:** `src/lib/utils/resolve-entitlements.tsx`, `src/app/(chat)/app/library/page.tsx`, `src/components/chat/library-tabs.tsx`
+
+**What to do:**
+
+1. In `resolve-entitlements.tsx`: verify `supportsVideoGeneration: true` is restored (if Phase 47.1 changed it to false, change it back to true).
+2. In `library/page.tsx`: update video items query to aggregate `video_url` content items from tasks (follow same pattern as `imageItems` and `audioItems` aggregation).
+3. In `library-tabs.tsx`: replace "Video Library Coming Soon" placeholder with actual video card rendering using `LibraryMediaCard` (follow images/audios pattern).
+4. Update the placeholder text in `library-tabs.tsx` from "Video generation is gated pending Sora API verification" to actual empty state ("No videos generated yet").
+
+**Acceptance criteria:**
+
+- [ ] `supportsVideoGeneration` returns `true` for all non-suspended plans
+- [ ] Library page queries and displays video items
+- [ ] "Coming Soon" placeholder removed from library videos tab
+- [ ] Videos appear in library after generation
+- [ ] `npx tsc --noEmit` passes
+- [ ] All tests pass
+
+---
+
+### 34.8 HIGH — Video generation unit tests
+
+**Ref:** Test coverage for new video functionality.
+
+**Files:** `tests/unit/generateVideo.test.ts` (new), `tests/unit/openai-tools.test.ts` (update if exists)
+
+**What to do:**
+
+1. Test `generateVideo()`: mock `openAiClient.videos.create()`, `retrieve()`, `downloadContent()`. Verify polling logic, S3 upload call, return shape.
+2. Test `getChatTools()` with `supportsVideoGeneration: true/false` — verify tool inclusion/exclusion.
+3. Test `resolveMediaCounterField()` with `"video"` type — verify correct DB field paths.
+4. Test video handler in `buildOpenAIResponsePayload()` if feasible (mock dependencies).
+
+**Acceptance criteria:**
+
+- [ ] Unit tests cover generateVideo success path
+- [ ] Unit tests cover generateVideo failure/timeout path
+- [ ] Unit tests cover getChatTools video flag
+- [ ] All existing tests still pass
+- [ ] `npm run test` passes
 
 ---
 

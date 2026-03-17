@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-17 (PM deep audit #20. 32.4 Library media cards verified DONE. Milestone 14 COMPLETED (no caveats). 341 unit tests (64 suites), 180 E2E passing. No critical bugs, no high security findings remaining.)
+> Last updated: 2026-03-17 (PM audit #22 + Owner Sora update. Video generation UNBLOCKED — Phase 34 elevated to HIGH. `sora-2` / `sora-2-pro` confirmed on OpenAI platform. SDK v6.31.0 supports `openAiClient.videos.*`. Currency configurability requirement added. 357 unit tests (65 suites), 180 E2E passing.)
 
 ---
 
@@ -36,7 +36,7 @@ The product monetises through tiered subscription plans paid via Stripe.
 - Image upload support
 - Image generation (all tiers, with enforced usage limits)
 - Audio generation (all tiers, with enforced usage limits)
-- Video generation (all tiers, with enforced usage limits — **coming soon**, implementation deferred)
+- Video generation (all tiers, with enforced usage limits — **Phase 34 in progress**). `sora-2` and `sora-2-pro` confirmed on OpenAI platform (2026-03-17). Async job model: create → poll → download MP4 → upload to S3. Duration: 4/8/12s. `supportsVideoGeneration` will be `true` once full tool chain is delivered (Phase 34.7).
 - Account-required access — no anonymous usage
 - Authenticated `/app` experience with persona-led UX
 - Real conversation history (list, resume, delete)
@@ -185,6 +185,7 @@ Prompts are versioned and separated from request handlers. `buildPersonaAwareSys
 5. When any limit is reached, the server **must end the conversation** with an exact stop reason and exact next-action instruction.
 6. After a forced stop, the user is told one of: start a new conversation (if resources remain), upgrade plan (if applicable), or contact support.
 7. **Plan cards must show ✕ for unavailable options** (not "0"). E.g., "✕ Audio generations per month" instead of "0 audio generations per month".
+8. **Currency symbol must be admin-configurable.** Default: `$` (USD). Supported: `$` (USD), `€` (EUR). Resolved via `getEffectiveCurrencySymbol()` with `AppSetting("admin.currencySymbol")`. All price rendering must use dynamic currency symbol — no hardcoded `$` in rendering code.
 
 ### Lite Plan Limits (Detailed)
 
@@ -597,7 +598,7 @@ All auth/limit checks execute before streaming begins. Final task persistence an
 
 ### OpenAI Technical Debt
 
-- **TD-AI-08**: No video generation (Premium). UI now shows "Coming soon" — implementation deferred.
+- **TD-AI-08**: Video generation in progress (Phase 34, UNBLOCKED 2026-03-17). Sora API (`sora-2`, `sora-2-pro`) confirmed available. Implementation: `generateVideo.tsx` + video tool + handler + `VideoPlayer` component + API route slot management + library integration. `supportsVideoGeneration` suppressed during development (Phase 47.1), re-enabled in Phase 34.7.
 - **TD-AI-09**: Image/audio generation prompts not yet persona-aware. Chat prompts are fully persona-aware (Phase 22). Tracked as Phase 26.1.
 - **TD-AI-13**: 5 model pricing entries in `ai-model-policy.ts` are placeholders pending OpenAI confirmation (`gpt-audio-mini`, `gpt-audio-1.5`, `gpt-4o-mini-tts`, `sora-2`, `sora-2-pro`).
 - **TD-AI-18** (advisory): OpenAI route `errorMessage` forwarding pattern at L370-376 is safe today but fragile — if any future code sets `aiPayload.errorMessage` to a raw OpenAI error, it will leak to clients. Consider always using generic constants.
@@ -760,7 +761,7 @@ _None._
 | --- | ---- | ----------- | -------- |
 
 | TD-ADMIN-02 | Admin | ~~Admin settings: pricing, limits, model config saved to AppSetting but not yet consumed by app behavior~~ — **RESOLVED (Phase 27.5)**: all admin settings (pricing, limits, models, persona access) now propagate to runtime via `effective-plan-config.ts`, `effective-model-config.ts`, `effective-persona-access.ts`. | ~~Medium~~ Resolved |
-| TD-AI-08 | OpenAI | No video generation (Premium) — UI shows "Coming soon", implementation deferred | Medium |
+| TD-AI-08 | OpenAI | Video generation in progress (Phase 34, UNBLOCKED) — Sora API confirmed, implementation underway | Medium |
 
 ### Active — Low Priority
 
