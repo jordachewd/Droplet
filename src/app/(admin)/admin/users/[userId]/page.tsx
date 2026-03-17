@@ -5,6 +5,8 @@ import {
   removeUserByAdminAction,
   toggleUserSuspensionAction,
 } from "@/lib/actions/admin.actions";
+import { AdminManagedForm } from "@/components/admin/admin-managed-form";
+import { AdminFormSubmitButton } from "@/components/admin/admin-form-submit-button";
 import { getAdminUserDetail } from "@/lib/utils/admin-queries";
 import { getEffectiveCurrencySymbol } from "@/lib/utils/effective-plan-config";
 
@@ -25,10 +27,26 @@ export default async function AdminUserDetailPage({
     notFound();
   }
 
-  const formatUsage = (usage: { used: number; limit: number }) =>
+  const formatUsageLabel = (usage: {
+    used: number;
+    limit: number;
+    remaining: number;
+  }) =>
     usage.limit === -1
       ? `${usage.used} / Unlimited`
-      : `${usage.used} / ${usage.limit}`;
+      : `${usage.used} / ${usage.limit} (${usage.remaining} left)`;
+
+  const getUsagePercent = (usage: {
+    used: number;
+    limit: number;
+    remaining: number;
+  }) => {
+    if (usage.limit <= 0) {
+      return 0;
+    }
+
+    return Math.min(100, Math.round((usage.used / usage.limit) * 100));
+  };
 
   return (
     <section className="AdminUserDetailPage mx-auto flex w-full max-w-7xl flex-col gap-6">
@@ -110,42 +128,93 @@ export default async function AdminUserDetailPage({
           <div className="grid grid-cols-1 gap-3">
             <div className="rounded-xl border border-lightBorders-300 px-4 py-3 dark:border-darkBorders-500">
               <p className="text-xs font-semibold uppercase tracking-wide opacity-60">
-                Conversations
+                Daily Conversations
               </p>
-              <p className="heading-5 mt-1">{user.conversationCount}</p>
+              <p className="heading-5 mt-1">
+                {formatUsageLabel(user.conversationUsage)}
+              </p>
+              <div className="mt-2 h-2 overflow-hidden rounded-full bg-lightSecondary-300 dark:bg-darkSecondary-500/40">
+                <div
+                  className="h-full bg-lightPrimary-500 dark:bg-darkPrimary-400"
+                  style={{
+                    width: `${getUsagePercent(user.conversationUsage)}%`,
+                  }}
+                />
+              </div>
+            </div>
+            <div className="rounded-xl border border-lightBorders-300 px-4 py-3 dark:border-darkBorders-500">
+              <p className="text-xs font-semibold uppercase tracking-wide opacity-60">
+                Prompts / Conversation (Peak)
+              </p>
+              <p className="heading-5 mt-1">
+                {formatUsageLabel(user.promptUsage)}
+              </p>
+              <p className="mt-1 text-xs opacity-70">
+                Total prompts across tasks: {user.promptUsage.total}
+              </p>
+              <div className="mt-2 h-2 overflow-hidden rounded-full bg-lightSecondary-300 dark:bg-darkSecondary-500/40">
+                <div
+                  className="h-full bg-lightPrimary-500 dark:bg-darkPrimary-400"
+                  style={{ width: `${getUsagePercent(user.promptUsage)}%` }}
+                />
+              </div>
             </div>
             <div className="rounded-xl border border-lightBorders-300 px-4 py-3 dark:border-darkBorders-500">
               <p className="text-xs font-semibold uppercase tracking-wide opacity-60">
                 Image Generations
               </p>
               <p className="heading-5 mt-1">
-                {formatUsage(user.mediaUsage.images)}
+                {formatUsageLabel(user.mediaUsage.images)}
               </p>
+              <div className="mt-2 h-2 overflow-hidden rounded-full bg-lightSecondary-300 dark:bg-darkSecondary-500/40">
+                <div
+                  className="h-full bg-lightPrimary-500 dark:bg-darkPrimary-400"
+                  style={{
+                    width: `${getUsagePercent(user.mediaUsage.images)}%`,
+                  }}
+                />
+              </div>
             </div>
             <div className="rounded-xl border border-lightBorders-300 px-4 py-3 dark:border-darkBorders-500">
               <p className="text-xs font-semibold uppercase tracking-wide opacity-60">
                 Audio Generations
               </p>
               <p className="heading-5 mt-1">
-                {formatUsage(user.mediaUsage.audio)}
+                {formatUsageLabel(user.mediaUsage.audio)}
               </p>
+              <div className="mt-2 h-2 overflow-hidden rounded-full bg-lightSecondary-300 dark:bg-darkSecondary-500/40">
+                <div
+                  className="h-full bg-lightPrimary-500 dark:bg-darkPrimary-400"
+                  style={{
+                    width: `${getUsagePercent(user.mediaUsage.audio)}%`,
+                  }}
+                />
+              </div>
             </div>
             <div className="rounded-xl border border-lightBorders-300 px-4 py-3 dark:border-darkBorders-500">
               <p className="text-xs font-semibold uppercase tracking-wide opacity-60">
                 Video Generations
               </p>
               <p className="heading-5 mt-1">
-                {formatUsage(user.mediaUsage.video)}
+                {formatUsageLabel(user.mediaUsage.video)}
               </p>
+              <div className="mt-2 h-2 overflow-hidden rounded-full bg-lightSecondary-300 dark:bg-darkSecondary-500/40">
+                <div
+                  className="h-full bg-lightPrimary-500 dark:bg-darkPrimary-400"
+                  style={{
+                    width: `${getUsagePercent(user.mediaUsage.video)}%`,
+                  }}
+                />
+              </div>
             </div>
             <div className="rounded-xl border border-lightBorders-300 px-4 py-3 dark:border-darkBorders-500">
               <p className="text-xs font-semibold uppercase tracking-wide opacity-60">
                 Trial Usage (Img / Audio / Video)
               </p>
               <p className="mt-1 text-sm">
-                {formatUsage(user.trialUsage.images)} |{" "}
-                {formatUsage(user.trialUsage.audio)} |{" "}
-                {formatUsage(user.trialUsage.video)}
+                {formatUsageLabel(user.trialUsage.images)} |{" "}
+                {formatUsageLabel(user.trialUsage.audio)} |{" "}
+                {formatUsageLabel(user.trialUsage.video)}
               </p>
             </div>
           </div>
@@ -155,27 +224,34 @@ export default async function AdminUserDetailPage({
       <article className="rounded-2xl border border-lightBorders-300 bg-lightBackground-100/80 p-5 dark:border-darkBorders-500 dark:bg-jwdMarine-900/70">
         <h2 className="heading-6 mb-4">Admin Actions</h2>
         <div className="flex flex-col gap-3 md:flex-row">
-          <form action={toggleUserSuspensionAction}>
+          <AdminManagedForm
+            action={toggleUserSuspensionAction}
+            confirmMessage={`Are you sure you want to ${user.suspended ? "reinstate" : "suspend"} this user?`}
+          >
             <input type="hidden" name="userId" value={user.id} />
             <input
               type="hidden"
               name="suspended"
               value={(!user.suspended).toString()}
             />
-            <button className="btn btn-md btn-outlined" type="submit">
-              {user.suspended ? "Reinstate User" : "Suspend User"}
-            </button>
-          </form>
+            <AdminFormSubmitButton
+              className="btn btn-md btn-outlined"
+              label={user.suspended ? "Reinstate User" : "Suspend User"}
+              pendingLabel="Updating user..."
+            />
+          </AdminManagedForm>
 
-          <form action={removeUserByAdminAction}>
+          <AdminManagedForm
+            action={removeUserByAdminAction}
+            confirmMessage="Are you sure you want to permanently remove this user? This will delete all their data including conversations, transactions, and files. This action cannot be undone."
+          >
             <input type="hidden" name="userId" value={user.id} />
-            <button
+            <AdminFormSubmitButton
               className="btn btn-md btn-contained bg-red-700 text-white hover:bg-red-800"
-              type="submit"
-            >
-              Remove User
-            </button>
-          </form>
+              label="Remove User"
+              pendingLabel="Removing user..."
+            />
+          </AdminManagedForm>
         </div>
       </article>
 

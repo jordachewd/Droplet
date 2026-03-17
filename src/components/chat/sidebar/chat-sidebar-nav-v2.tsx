@@ -4,6 +4,7 @@ import Link from "next/link";
 import classNames from "classnames";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import AlertMessage from "@/components/shared/alert-message";
 import { ConversationListItem } from "@/types/PersonaData.d";
 import { getPersona } from "@/constants/assistant-personas";
 import { deleteTask } from "@/lib/actions/task.actions";
@@ -71,6 +72,13 @@ export default function ChatSidebarNavV2({
   const [deletingConversationId, setDeletingConversationId] = useState<
     string | null
   >(null);
+  const [alert, setAlert] = useState<{
+    id: number;
+    title: string;
+    text: string;
+    severity: "success" | "error";
+    variant: "outlined";
+  } | null>(null);
   const headingClass = classNames(
     "px-2.5 text-xxs font-semibold uppercase tracking-wide opacity-65",
     !isOpen && "lg:hidden",
@@ -103,7 +111,13 @@ export default function ChatSidebarNavV2({
         | undefined;
 
       if (result?.status !== 200) {
-        window.alert(result?.message || "Conversation deletion failed.");
+        setAlert({
+          id: Date.now(),
+          title: "Delete failed",
+          text: result?.message || "Conversation deletion failed.",
+          severity: "error",
+          variant: "outlined",
+        });
         return;
       }
 
@@ -112,13 +126,33 @@ export default function ChatSidebarNavV2({
       );
 
       if (pathname === item.href) {
+        setAlert({
+          id: Date.now(),
+          title: "Conversation removed",
+          text: "Conversation deleted successfully.",
+          severity: "success",
+          variant: "outlined",
+        });
         router.replace("/app");
         return;
       }
 
+      setAlert({
+        id: Date.now(),
+        title: "Conversation removed",
+        text: "Conversation deleted successfully.",
+        severity: "success",
+        variant: "outlined",
+      });
       router.refresh();
     } catch {
-      window.alert("Conversation deletion failed.");
+      setAlert({
+        id: Date.now(),
+        title: "Delete failed",
+        text: "Conversation deletion failed.",
+        severity: "error",
+        variant: "outlined",
+      });
     } finally {
       setDeletingConversationId(null);
     }
@@ -126,6 +160,7 @@ export default function ChatSidebarNavV2({
 
   return (
     <nav className="ChatSidebarNavV2 mb-auto flex flex-col gap-6 px-3 py-4">
+      {alert ? <AlertMessage message={alert} /> : null}
       <section className="ChatSidebarNavV2Section flex flex-col gap-1.5">
         <p className={headingClass}>Workspace</p>
         {WORKSPACE_LINKS.map((link) => (

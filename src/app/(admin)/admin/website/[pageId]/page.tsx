@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
 import PageHead from "@/components/layout/page-head";
 import TiptapEditor from "@/components/admin/tiptap-editor";
+import { AdminManagedForm } from "@/components/admin/admin-managed-form";
+import { AdminFormSubmitButton } from "@/components/admin/admin-form-submit-button";
 import { savePublicPageAction } from "@/lib/actions/admin.actions";
 import { getAdminPublicPage } from "@/lib/utils/admin-queries";
 
@@ -25,7 +27,7 @@ export default async function AdminWebsiteEditorPage({
         subtitle="Update page copy and rich content, then persist the latest HTML output."
       />
 
-      <form
+      <AdminManagedForm
         action={savePublicPageAction}
         className="flex flex-col gap-4 rounded-2xl border border-lightBorders-300 bg-lightBackground-100/80 p-5 dark:border-darkBorders-500 dark:bg-jwdMarine-900/70"
       >
@@ -34,7 +36,7 @@ export default async function AdminWebsiteEditorPage({
         <label className="flex flex-col gap-2 text-sm">
           <span className="font-medium">Title</span>
           <input
-            className="rounded-xl border border-lightBorders-400 bg-white px-3 py-2 dark:border-darkBorders-500 dark:bg-jwdMarine-1000"
+            className="rounded-xl border border-lightBorders-400 bg-lightBackground-100 px-3 py-2 dark:border-darkBorders-500 dark:bg-jwdMarine-1000"
             type="text"
             name="title"
             defaultValue={page.title}
@@ -68,11 +70,13 @@ export default async function AdminWebsiteEditorPage({
         <TiptapEditor inputName="content" initialContent={page.content} />
 
         <div className="flex justify-end">
-          <button className="btn btn-md btn-contained" type="submit">
-            Save Page
-          </button>
+          <AdminFormSubmitButton
+            className="btn btn-md btn-contained"
+            label="Save Page"
+            pendingLabel="Saving page..."
+          />
         </div>
-      </form>
+      </AdminManagedForm>
     </section>
   );
 }

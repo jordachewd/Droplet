@@ -1,5 +1,6 @@
 import Link from "next/link";
 import PageHead from "@/components/layout/page-head";
+import { AdminUsersTable } from "@/components/admin/users/admin-users-table";
 import { getAdminUsers } from "@/lib/utils/admin-queries";
 
 interface AdminUsersPageProps {
@@ -26,7 +27,7 @@ export default async function AdminUsersPage({
         <label className="flex flex-1 flex-col gap-2 text-sm">
           <span className="font-medium">Search users</span>
           <input
-            className="rounded-xl border border-lightBorders-400 bg-white px-3 py-2 dark:border-darkBorders-500 dark:bg-jwdMarine-1000"
+            className="rounded-xl border border-lightBorders-400 bg-lightBackground-100 px-3 py-2 dark:border-darkBorders-500 dark:bg-jwdMarine-1000"
             type="search"
             name="q"
             defaultValue={q}
@@ -43,43 +44,7 @@ export default async function AdminUsersPage({
         </div>
       </form>
 
-      <div className="overflow-hidden rounded-2xl border border-lightBorders-300 bg-lightBackground-100/80 dark:border-darkBorders-500 dark:bg-jwdMarine-900/70">
-        <div className="grid grid-cols-[1.4fr_1.6fr_0.7fr_0.7fr_0.9fr_0.8fr] gap-3 border-b border-lightBorders-300 px-4 py-3 text-xs font-semibold uppercase tracking-wide opacity-70 dark:border-darkBorders-500">
-          <span>Username</span>
-          <span>Email</span>
-          <span>Role</span>
-          <span>Plan</span>
-          <span>Registered</span>
-          <span>State</span>
-        </div>
-
-        <div className="divide-y divide-lightBorders-300 dark:divide-darkBorders-500">
-          {users.length === 0 && (
-            <p className="px-4 py-6 text-sm opacity-70">
-              No users matched this search.
-            </p>
-          )}
-
-          {users.map((user) => (
-            <Link
-              key={user.id}
-              href={`/admin/users/${user.id}`}
-              className="grid grid-cols-[1.4fr_1.6fr_0.7fr_0.7fr_0.9fr_0.8fr] gap-3 px-4 py-4 text-sm transition-all hover:bg-lightSecondary-300/50 dark:hover:bg-darkSecondary-500/20"
-            >
-              <span className="font-medium">{user.username}</span>
-              <span className="truncate">{user.email}</span>
-              <span className="capitalize">{user.role}</span>
-              <span>{user.planName}</span>
-              <span>
-                {user.registerAt
-                  ? new Date(user.registerAt).toLocaleDateString()
-                  : "-"}
-              </span>
-              <span>{user.suspended ? "Suspended" : "Active"}</span>
-            </Link>
-          ))}
-        </div>
-      </div>
+      <AdminUsersTable users={users} />
     </section>
   );
 }

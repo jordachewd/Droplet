@@ -1,4 +1,8 @@
+"use client";
+
 import { updateAdminSettingAction } from "@/lib/actions/admin.actions";
+import { AdminManagedForm } from "@/components/admin/admin-managed-form";
+import { AdminFormSubmitButton } from "@/components/admin/admin-form-submit-button";
 import { PricingSettingsFormValue } from "@/components/admin/settings/types";
 
 interface AdminPricingSectionProps {
@@ -10,9 +14,9 @@ export function AdminPricingSection({
 }: AdminPricingSectionProps) {
   return (
     <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-      <form
+      <AdminManagedForm
         action={updateAdminSettingAction}
-        className="rounded-2xl border border-lightBorders-300 bg-white/70 p-5 dark:border-darkBorders-500 dark:bg-jwdMarine-900/70"
+        className="rounded-2xl border border-lightBorders-300 bg-lightBackground-100/80 p-5 dark:border-darkBorders-500 dark:bg-jwdMarine-900/70"
       >
         <input type="hidden" name="key" value="admin.pricing" />
         <input type="hidden" name="category" value="plans" />
@@ -29,7 +33,7 @@ export function AdminPricingSection({
               step={1}
               name="proPrice"
               defaultValue={pricingValue.proPrice}
-              className="w-full rounded-lg border border-lightBorders-400 bg-white px-3 py-2 text-sm dark:border-darkBorders-500 dark:bg-jwdMarine-1000"
+              className="w-full rounded-lg border border-lightBorders-400 bg-lightBackground-100 px-3 py-2 text-sm dark:border-darkBorders-500 dark:bg-jwdMarine-1000"
             />
           </label>
           <label className="text-sm">
@@ -40,20 +44,22 @@ export function AdminPricingSection({
               step={1}
               name="premiumPrice"
               defaultValue={pricingValue.premiumPrice}
-              className="w-full rounded-lg border border-lightBorders-400 bg-white px-3 py-2 text-sm dark:border-darkBorders-500 dark:bg-jwdMarine-1000"
+              className="w-full rounded-lg border border-lightBorders-400 bg-lightBackground-100 px-3 py-2 text-sm dark:border-darkBorders-500 dark:bg-jwdMarine-1000"
             />
           </label>
         </div>
         <div className="mt-4 flex justify-end">
-          <button className="btn btn-md btn-contained" type="submit">
-            Save Pricing
-          </button>
+          <AdminFormSubmitButton
+            className="btn btn-md btn-contained"
+            label="Save Pricing"
+            pendingLabel="Saving pricing..."
+          />
         </div>
-      </form>
+      </AdminManagedForm>
 
-      <form
+      <AdminManagedForm
         action={updateAdminSettingAction}
-        className="rounded-2xl border border-lightBorders-300 bg-white/70 p-5 dark:border-darkBorders-500 dark:bg-jwdMarine-900/70"
+        className="rounded-2xl border border-lightBorders-300 bg-lightBackground-100/80 p-5 dark:border-darkBorders-500 dark:bg-jwdMarine-900/70"
       >
         <input type="hidden" name="key" value="admin.currencySymbol" />
         <input type="hidden" name="category" value="plans" />
@@ -66,18 +72,20 @@ export function AdminPricingSection({
           <select
             name="currencySymbol"
             defaultValue={pricingValue.currencySymbol}
-            className="w-full rounded-lg border border-lightBorders-400 bg-white px-3 py-2 text-sm dark:border-darkBorders-500 dark:bg-jwdMarine-1000"
+            className="w-full rounded-lg border border-lightBorders-400 bg-lightBackground-100 px-3 py-2 text-sm dark:border-darkBorders-500 dark:bg-jwdMarine-1000"
           >
             <option value="$">USD ($)</option>
             <option value="€">EUR (€)</option>
           </select>
         </label>
         <div className="mt-4 flex justify-end">
-          <button className="btn btn-md btn-contained" type="submit">
-            Save Currency
-          </button>
+          <AdminFormSubmitButton
+            className="btn btn-md btn-contained"
+            label="Save Currency"
+            pendingLabel="Saving currency..."
+          />
         </div>
-      </form>
+      </AdminManagedForm>
     </div>
   );
 }

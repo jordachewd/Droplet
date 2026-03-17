@@ -1,4 +1,8 @@
+"use client";
+
 import { updateAdminSettingAction } from "@/lib/actions/admin.actions";
+import { AdminManagedForm } from "@/components/admin/admin-managed-form";
+import { AdminFormSubmitButton } from "@/components/admin/admin-form-submit-button";
 import { ThemeSettingsFormValue } from "@/components/admin/settings/types";
 
 interface AdminThemeSectionProps {
@@ -7,9 +11,9 @@ interface AdminThemeSectionProps {
 
 export function AdminThemeSection({ themeValue }: AdminThemeSectionProps) {
   return (
-    <form
+    <AdminManagedForm
       action={updateAdminSettingAction}
-      className="rounded-2xl border border-lightBorders-300 bg-white/70 p-5 dark:border-darkBorders-500 dark:bg-jwdMarine-900/70"
+      className="rounded-2xl border border-lightBorders-300 bg-lightBackground-100/80 p-5 dark:border-darkBorders-500 dark:bg-jwdMarine-900/70"
     >
       <input type="hidden" name="key" value="admin.theme" />
       <input type="hidden" name="category" value="theme" />
@@ -39,10 +43,12 @@ export function AdminThemeSection({ themeValue }: AdminThemeSectionProps) {
         </label>
       </fieldset>
       <div className="mt-4 flex justify-end">
-        <button className="btn btn-md btn-contained" type="submit">
-          Save Theme
-        </button>
+        <AdminFormSubmitButton
+          className="btn btn-md btn-contained"
+          label="Save Theme"
+          pendingLabel="Saving theme..."
+        />
       </div>
-    </form>
+    </AdminManagedForm>
   );
 }

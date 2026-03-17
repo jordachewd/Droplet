@@ -1,5 +1,9 @@
+"use client";
+
 import { PERSONAS } from "@/constants/assistant-personas";
 import { updateAdminSettingAction } from "@/lib/actions/admin.actions";
+import { AdminManagedForm } from "@/components/admin/admin-managed-form";
+import { AdminFormSubmitButton } from "@/components/admin/admin-form-submit-button";
 import {
   PersonaAccessSettingsFormValue,
   PERSONA_ACCESS_KEY_BY_PLAN,
@@ -13,7 +17,7 @@ export function AdminPersonasSection({
   personaAccessValue,
 }: AdminPersonasSectionProps) {
   return (
-    <div className="rounded-2xl border border-lightBorders-300 bg-white/70 p-5 dark:border-darkBorders-500 dark:bg-jwdMarine-900/70">
+    <div className="rounded-2xl border border-lightBorders-300 bg-lightBackground-100/80 p-5 dark:border-darkBorders-500 dark:bg-jwdMarine-900/70">
       <h2 className="heading-6 mb-2">Persona Access</h2>
       <p className="mb-4 text-sm opacity-70">
         Choose which personas have full access for each plan. Unchecked personas
@@ -25,7 +29,7 @@ export function AdminPersonasSection({
           const selectedPersonaIdSet = new Set(personaAccessValue[planName]);
 
           return (
-            <form
+            <AdminManagedForm
               key={planName}
               action={updateAdminSettingAction}
               className="rounded-lg border border-lightBorders-300 p-3 dark:border-darkBorders-500"
@@ -58,11 +62,13 @@ export function AdminPersonasSection({
                 </div>
               </fieldset>
               <div className="mt-3 flex justify-end">
-                <button className="btn btn-sm btn-contained" type="submit">
-                  Save {planName} Persona Access
-                </button>
+                <AdminFormSubmitButton
+                  className="btn btn-sm btn-contained"
+                  label={`Save ${planName} Persona Access`}
+                  pendingLabel="Saving..."
+                />
               </div>
-            </form>
+            </AdminManagedForm>
           );
         })}
       </div>

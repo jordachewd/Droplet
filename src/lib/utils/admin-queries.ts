@@ -30,6 +30,7 @@ type UserRecord = {
   lastName?: string;
   updatedAt?: Date | string;
   userimg?: string;
+  dailyConversationsStarted?: number;
   plan?: {
     name?: PlanName;
     amount?: number;
@@ -206,7 +207,7 @@ export async function getAdminUserDetail(userId: string) {
 
   const user = (await User.findById(userId)
     .select(
-      "clerkId username email role suspended registerAt plan firstName lastName updatedAt userimg",
+      "clerkId username email role suspended registerAt plan firstName lastName updatedAt userimg dailyConversationsStarted",
     )
     .lean()) as UserRecord | null;
 
@@ -214,9 +215,23 @@ export async function getAdminUserDetail(userId: string) {
     return null;
   }
 
-  const [conversationCount, transactions, effectivePlanConfig] =
+  const [conversationCount, promptMetrics, transactions, effectivePlanConfig] =
     await Promise.all([
       Task.countDocuments({ userId: user.clerkId }),
+      Task.aggregate([
+        {
+          $match: {
+            userId: user.clerkId,
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            totalPromptCount: { $sum: "$promptCount" },
+            maxPromptCount: { $max: "$promptCount" },
+          },
+        },
+      ]),
       Transaction.find({ clerkId: user.clerkId })
         .sort({ createdAt: -1 })
         .select("stripeId createdAt expiresOn amount plan billing")
@@ -224,6 +239,10 @@ export async function getAdminUserDetail(userId: string) {
       getEffectivePlanConfig(),
     ]);
   const typedTransactions = transactions as TransactionRecord[];
+  const promptUsageAggregate =
+    (promptMetrics[0] as
+      | { totalPromptCount?: number; maxPromptCount?: number }
+      | undefined) ?? {};
   const resolvedPlanName = user.plan?.name ?? "Lite";
   const planLimits = effectivePlanConfig.limits[resolvedPlanName];
   const trialLimits = effectivePlanConfig.trialLimits;
@@ -236,6 +255,9 @@ export async function getAdminUserDetail(userId: string) {
     user.plan?.trialUsage?.trialAudioGenerations ?? 0;
   const trialVideoGenerations =
     user.plan?.trialUsage?.trialVideoGenerations ?? 0;
+  const dailyConversationsStarted = user.dailyConversationsStarted ?? 0;
+  const maxPromptCount = promptUsageAggregate.maxPromptCount ?? 0;
+  const totalPromptCount = promptUsageAggregate.totalPromptCount ?? 0;
 
   return {
     ...toAdminUserListItem(user),
@@ -291,6 +313,26 @@ export async function getAdminUserDetail(userId: string) {
         limit: trialLimits.video,
         remaining: Math.max(0, trialLimits.video - trialVideoGenerations),
       },
+    },
+    conversationUsage: {
+      used: dailyConversationsStarted,
+      limit: planLimits.conversationsPerDay,
+      remaining:
+        planLimits.conversationsPerDay === -1
+          ? -1
+          : Math.max(
+              0,
+              planLimits.conversationsPerDay - dailyConversationsStarted,
+            ),
+    },
+    promptUsage: {
+      used: maxPromptCount,
+      total: totalPromptCount,
+      limit: planLimits.promptsPerConversation,
+      remaining:
+        planLimits.promptsPerConversation === -1
+          ? -1
+          : Math.max(0, planLimits.promptsPerConversation - maxPromptCount),
     },
     conversationCount,
     transactions: typedTransactions.map((transaction) => ({
