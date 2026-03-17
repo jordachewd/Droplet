@@ -1120,8 +1120,8 @@ These items are not banned forever. They are excluded because they create dispro
 > **Status: COMPLETED** — All admin settings propagation verified by PM audit #18 + Architect code audit (2026-03-17).
 > 30.4 (persona access controls) DONE. 27.5 (pricing + limits + model propagation) DONE.
 > TD-ADMIN-02 FULLY RESOLVED — all admin settings are operational and consumed at runtime.
-> **Caveat:** TD-CHECKOUT-01 identified — `checkoutPlan()` trusts client-submitted price without server-side re-verification. Must be fixed before production billing goes live.
-> PM audit #18: 27.5 APPROVED complete (Architect code audit verified full propagation chain). 338 unit tests, 180 E2E passing (48 skipped — explained, no hidden failures).
+> TD-CHECKOUT-01 RESOLVED (PM audit #19 + Architect audit #19, 2026-03-17) — server-side price re-verification in `checkoutPlan()` confirmed. Crafted price bypass no longer possible.
+> PM audit #19: 339 unit tests passing. 180 E2E passing (48 skipped — explained, no hidden failures). Build passing.
 
 **Objective:** Make admin settings actually control app behavior. Every admin setting saved must propagate to the corresponding app feature. Admin must have real operational control over plans, pricing, limits, personas, and models.
 
@@ -1147,7 +1147,7 @@ These items are not banned forever. They are excluded because they create dispro
 - ✅ Fallback to hardcoded defaults when no AppSetting exists.
 - ✅ Admin forms use proper controls (no raw editors remaining).
 - ✅ Full audit trail for all admin mutations.
-- ⚠️ Checkout server-side price validation pending (TD-CHECKOUT-01).
+- ✅ Checkout server-side price re-verification operational (TD-CHECKOUT-01 resolved — Phase 39.1).
 
 ---
 

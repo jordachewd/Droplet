@@ -5,12 +5,12 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: Phases 1–25.7 + 27.1–27.5 + 27.6–27.10 + 28.1 + 28.2-fix + 28.3-code + 28.3-verify + 28.4 + 28.6 + 28.7 + 30.1 + 30.2 + 30.3 + 30.4 + 31.1 + 31.2 + 31.3 + 31.2-fix + 32.1 + 32.2 + 32.3 + 32.6 + 33.1–33.8 + 35.1 + 37.1 + 38.1–38.7 + 36.1–36.2 complete.**
-> **PM deep audit #18 (2026-03-17): 27.5 VERIFIED DONE (Architect code audit + PM approval). Full pricing/limits/model propagation chain operational. TD-ADMIN-02 FULLY RESOLVED. TD-CHECKOUT-01 identified (checkout price bypass). Milestone 14 COMPLETED with caveat.**
-> **338 unit tests passing. 180 E2E passing. 48 skipped (explained: Chromium-only trial spec × 6 non-Chromium projects). Build passing.**
-> **OWNER INSTRUCTIONS (latest): Admin panel must be fully operational with full control over each setting's purpose. Admin forms must use proper controls. Admin design consistency maintained (36.1 baseline). Top Personas delivered (36.2). All verified DONE.**
-> **NO CRITICAL BUGS REMAINING. 1 HIGH security finding: TD-CHECKOUT-01 (checkout price bypass).**
-> **Priority order: TD-CHECKOUT-01 (checkout security) → 32.4 → 32.5 → 31.4 → 30.5 → 35.2 → 34.x → 29.1 → 29.2 → Phase 26.**
+> **STATUS: Phases 1–25.7 + 27.1–27.5 + 27.6–27.10 + 28.1 + 28.2-fix + 28.3-code + 28.3-verify + 28.4 + 28.6 + 28.7 + 30.1 + 30.2 + 30.3 + 30.4 + 31.1 + 31.2 + 31.3 + 31.2-fix + 32.1 + 32.2 + 32.3 + 32.6 + 33.1–33.8 + 35.1 + 37.1 + 38.1–38.7 + 36.1–36.2 + 39.1 complete.**
+> **PM deep audit #19 (2026-03-17): 39.1 VERIFIED DONE (Architect code audit #19 + PM approval). TD-CHECKOUT-01 FULLY RESOLVED. Milestone 14 COMPLETED (no caveats). All admin Owner requirements verified DONE.**
+> **339 unit tests passing. 180 E2E passing. 48 skipped (explained: Chromium-only trial spec × 6 non-Chromium projects). Build passing.**
+> **OWNER INSTRUCTIONS (latest): Admin panel fully operational. All verified DONE (PM audit #19).**
+> **NO CRITICAL BUGS REMAINING. NO HIGH SECURITY FINDINGS REMAINING.**
+> **Priority order: 32.4 → 32.5 → 31.4 → 30.5 → 35.2 → 34.x → 29.1 → 29.2 → Phase 26.**
 > **All Phase 26+ deferred work is ON HOLD until Milestone 14 is PM-approved complete.**
 
 ---
@@ -109,33 +109,10 @@
 
 ---
 
-## Phase 39: Security Hardening — Checkout Price Bypass
+## Phase 39: Security Hardening — Checkout Price Bypass — COMPLETE
 
-> **Identified by PM audit #18 + Architect code audit (2026-03-17).**
-> **TD-CHECKOUT-01: `checkoutPlan()` trusts client-submitted price without server-side re-verification.**
-
----
-
-### 39.1 HIGH — Server-side price re-verification in checkoutPlan()
-
-**Ref:** TD-CHECKOUT-01 (Architect audit #18)
-**Files:** `src/lib/actions/transaction.actions.tsx`, `src/lib/utils/effective-plan-config.ts`
-
-**What to do:**
-
-1. In `checkoutPlan()`, after Zod validation, call `getEffectivePlanConfig()` to get the current effective pricing.
-2. Compare the client-submitted `planPrice` against the effective price for the requested `planName`.
-3. If they don't match, reject the request (return error, do NOT create Stripe session).
-4. This prevents a crafted request from submitting `price: 0` for a paid plan.
-
-**Acceptance criteria:**
-
-- [ ] `checkoutPlan()` re-verifies price against `getEffectivePlanConfig()` before Stripe session creation
-- [ ] Mismatched price is rejected with generic error message
-- [ ] No price information leaked in error response
-- [ ] Unit test covers price mismatch rejection
-- [ ] `npx tsc --noEmit` passes
-- [ ] All tests pass
+> **Identified by PM audit #18 + Architect code audit (2026-03-17). Resolved by Engineer (2026-03-17).**
+> **39.1 VERIFIED DONE by Architect audit #19 + PM approval. TD-CHECKOUT-01 FULLY RESOLVED. Archived in DONE.md.**
 
 ---
 

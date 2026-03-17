@@ -2,7 +2,24 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-17 — PM deep audit #18. 27.5 (pricing/limits/model propagation) verified DONE. TD-ADMIN-02 fully resolved. Milestone 14 COMPLETED. Phases 1–25.7 + 27.1–27.5 + 27.6–27.10 + 28.1 + 28.2-fix + 28.3-code + 28.3-verify + 28.4 + 28.6 + 28.7 + 30.1 + 30.2 + 30.3 + 30.4 + 31.1 + 31.2 + 31.3 + 31.2-fix + 32.1 + 32.2 + 32.3 + 32.6 + 33.1–33.8 + 35.1 + 37.1 + 38.1–38.7 + 36.1–36.2 + E2E regression fixes complete.
+> Last updated: 2026-03-17 — PM deep audit #19. 39.1 (TD-CHECKOUT-01 checkout price bypass) verified DONE. All admin Owner requirements verified DONE. Milestone 14 COMPLETED (no caveats). Phases 1–25.7 + 27.1–27.5 + 27.6–27.10 + 28.1 + 28.2-fix + 28.3-code + 28.3-verify + 28.4 + 28.6 + 28.7 + 30.1 + 30.2 + 30.3 + 30.4 + 31.1 + 31.2 + 31.3 + 31.2-fix + 32.1 + 32.2 + 32.3 + 32.6 + 33.1–33.8 + 35.1 + 37.1 + 38.1–38.7 + 36.1–36.2 + 39.1 + E2E regression fixes complete.
+
+---
+
+## Phase 39.1 — Checkout Price Bypass Fix (TD-CHECKOUT-01) — COMPLETED (2026-03-17)
+
+> PM audit #19 + Architect code audit #19. Verified DONE. Security fix complete. No residual risk.
+
+- [x] **39.1 HIGH** — Server-side price re-verification in `checkoutPlan()`:
+  - Imported `getEffectivePlanConfig()` in `transaction.action.tsx`.
+  - Effective pricing fetched server-side after auth + DB lookup, before Stripe session.
+  - Strict equality check `serverPlanPrice !== planPrice` — mismatch rejects with generic `"Unable to start checkout."` (no price leak).
+  - Stripe `unit_amount` now uses `serverPlanPrice` (server-derived), not client-submitted `planPrice`.
+  - Crafted requests submitting `price: 0` for paid plans are now rejected before Stripe session creation.
+- [x] Unit test: `checkout-plan-phase17.test.ts` — new test `"rejects checkout when client price does not match server pricing"`. Mocks `getEffectivePlanConfig`, submits Pro with price 0, asserts rejection + Stripe session NOT created.
+- [x] Full validation gateway passed: prettier, lint, tsc, 339 unit tests, 180 E2E, build.
+
+**Files changed:** `src/lib/actions/transaction.action.tsx`, `tests/unit/checkout-plan-phase17.test.ts`
 
 ---
 
