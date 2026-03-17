@@ -52,7 +52,7 @@ export default function TiptapEditor({
         </button>
       </div>
 
-      <div className="min-h-80 rounded-2xl border border-lightBorders-400 bg-lightBackground-100 px-4 py-3 dark:border-darkBorders-500 dark:bg-jwdMarine-1000">
+      <div className="min-h-80 rounded-2xl border border-slate-400 bg-lightBackground-100 px-4 py-3 dark:border-slate-500 dark:bg-darkBackground-1000">
         <textarea
           className="h-80 w-full resize-y bg-transparent text-sm outline-none"
           value={html}

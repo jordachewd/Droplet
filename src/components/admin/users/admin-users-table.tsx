@@ -51,8 +51,8 @@ export function AdminUsersTable({ users }: AdminUsersTableProps) {
   };
 
   return (
-    <div className="AdminUsersTable overflow-hidden rounded-2xl border border-lightBorders-300 bg-lightBackground-100/80 dark:border-darkBorders-500 dark:bg-jwdMarine-900/70">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-lightBorders-300 px-4 py-3 dark:border-darkBorders-500">
+    <div className="AdminUsersTable overflow-hidden rounded-2xl border border-slate-300 bg-lightBackground-100/80 dark:border-slate-500 dark:bg-darkBackground-900/70">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-300 px-4 py-3 dark:border-slate-500">
         <label className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide opacity-75">
           <input
             type="checkbox"
@@ -112,7 +112,7 @@ export function AdminUsersTable({ users }: AdminUsersTableProps) {
         ) : null}
       </div>
 
-      <div className="grid grid-cols-[0.35fr_1.2fr_1.5fr_0.7fr_0.7fr_0.8fr_0.7fr] gap-3 border-b border-lightBorders-300 px-4 py-3 text-xs font-semibold uppercase tracking-wide opacity-70 dark:border-darkBorders-500">
+      <div className="grid grid-cols-[0.35fr_1.2fr_1.5fr_0.7fr_0.7fr_0.8fr_0.7fr] gap-3 border-b border-slate-300 px-4 py-3 text-xs font-semibold uppercase tracking-wide opacity-70 dark:border-slate-500">
         <span></span>
         <span>Username</span>
         <span>Email</span>
@@ -122,7 +122,7 @@ export function AdminUsersTable({ users }: AdminUsersTableProps) {
         <span>State</span>
       </div>
 
-      <div className="divide-y divide-lightBorders-300 dark:divide-darkBorders-500">
+      <div className="divide-y divide-slate-300 dark:divide-slate-500">
         {users.length === 0 ? (
           <p className="px-4 py-6 text-sm opacity-70">
             No users matched this search.

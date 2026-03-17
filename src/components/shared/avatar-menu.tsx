@@ -55,14 +55,14 @@ export default function AvatarMenu() {
 
   const userInitialsClass = classNames(
     "inline-flex h-7 w-7 items-center justify-center overflow-hidden rounded-full",
-    "bg-lightPrimary-500 text-[13px] font-semibold text-white",
+    "bg-lightBackground-500 text-[13px] font-semibold text-white",
     "shadow-[0px_0px_5px_0px_rgba(122,75,204,0.3)]",
   );
 
   const accountMenuClass = classNames(
     "absolute right-0 top-full z-40 mt-2 min-w-[180px] rounded-lg py-2",
     "bg-lightBackground-100 shadow-[0px_0px_6px_0px_rgba(122,75,204,0.2)]",
-    "dark:bg-jwdMarine-900",
+    "dark:bg-darkBackground-900",
   );
 
   const accountMenuLinkClass = classNames(
@@ -148,7 +148,7 @@ export default function AvatarMenu() {
             <span>Profile</span>
           </Link>
 
-          <hr className="my-1 border-jwdAqua-100/20" />
+          <hr className="my-1 border-darkBackground-100/20" />
 
           <div className="flex min-w-[180px] items-center px-5 py-2 text-sm">
             <LogoutBtn />

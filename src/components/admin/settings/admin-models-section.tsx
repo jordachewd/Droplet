@@ -19,7 +19,7 @@ export function AdminModelsSection({ modelValue }: AdminModelsSectionProps) {
   return (
     <AdminManagedForm
       action={updateAdminSettingAction}
-      className="rounded-2xl border border-lightBorders-300 bg-lightBackground-100/80 p-5 dark:border-darkBorders-500 dark:bg-jwdMarine-900/70"
+      className="rounded-2xl border border-slate-300 bg-lightBackground-100/80 p-5 dark:border-slate-500 dark:bg-darkBackground-900/70"
     >
       <input type="hidden" name="key" value="admin.models" />
       <input type="hidden" name="category" value="models" />
@@ -33,7 +33,7 @@ export function AdminModelsSection({ modelValue }: AdminModelsSectionProps) {
           <select
             name="liteChatModel"
             defaultValue={modelValue.liteChatModel}
-            className="w-full rounded-lg border border-lightBorders-400 bg-lightBackground-100 px-3 py-2 text-sm dark:border-darkBorders-500 dark:bg-jwdMarine-1000"
+            className="w-full rounded-lg border border-slate-400 bg-lightBackground-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-darkBackground-1000"
           >
             {CHAT_MODEL_OPTIONS.map((modelId) => (
               <option key={`lite-chat-${modelId}`} value={modelId}>
@@ -47,7 +47,7 @@ export function AdminModelsSection({ modelValue }: AdminModelsSectionProps) {
           <select
             name="proChatModel"
             defaultValue={modelValue.proChatModel}
-            className="w-full rounded-lg border border-lightBorders-400 bg-lightBackground-100 px-3 py-2 text-sm dark:border-darkBorders-500 dark:bg-jwdMarine-1000"
+            className="w-full rounded-lg border border-slate-400 bg-lightBackground-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-darkBackground-1000"
           >
             {CHAT_MODEL_OPTIONS.map((modelId) => (
               <option key={`pro-chat-${modelId}`} value={modelId}>
@@ -61,7 +61,7 @@ export function AdminModelsSection({ modelValue }: AdminModelsSectionProps) {
           <select
             name="premiumChatModel"
             defaultValue={modelValue.premiumChatModel}
-            className="w-full rounded-lg border border-lightBorders-400 bg-lightBackground-100 px-3 py-2 text-sm dark:border-darkBorders-500 dark:bg-jwdMarine-1000"
+            className="w-full rounded-lg border border-slate-400 bg-lightBackground-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-darkBackground-1000"
           >
             {CHAT_MODEL_OPTIONS.map((modelId) => (
               <option key={`premium-chat-${modelId}`} value={modelId}>
@@ -75,7 +75,7 @@ export function AdminModelsSection({ modelValue }: AdminModelsSectionProps) {
           <select
             name="imageModel"
             defaultValue={modelValue.imageModel}
-            className="w-full rounded-lg border border-lightBorders-400 bg-lightBackground-100 px-3 py-2 text-sm dark:border-darkBorders-500 dark:bg-jwdMarine-1000"
+            className="w-full rounded-lg border border-slate-400 bg-lightBackground-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-darkBackground-1000"
           >
             {IMAGE_MODEL_OPTIONS.map((modelId) => (
               <option key={`image-${modelId}`} value={modelId}>
@@ -89,7 +89,7 @@ export function AdminModelsSection({ modelValue }: AdminModelsSectionProps) {
           <select
             name="audioModel"
             defaultValue={modelValue.audioModel}
-            className="w-full rounded-lg border border-lightBorders-400 bg-lightBackground-100 px-3 py-2 text-sm dark:border-darkBorders-500 dark:bg-jwdMarine-1000"
+            className="w-full rounded-lg border border-slate-400 bg-lightBackground-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-darkBackground-1000"
           >
             {AUDIO_MODEL_OPTIONS.map((modelId) => (
               <option key={`audio-${modelId}`} value={modelId}>
@@ -103,7 +103,7 @@ export function AdminModelsSection({ modelValue }: AdminModelsSectionProps) {
           <select
             name="videoModel"
             defaultValue={modelValue.videoModel}
-            className="w-full rounded-lg border border-lightBorders-400 bg-lightBackground-100 px-3 py-2 text-sm dark:border-darkBorders-500 dark:bg-jwdMarine-1000"
+            className="w-full rounded-lg border border-slate-400 bg-lightBackground-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-darkBackground-1000"
           >
             {VIDEO_MODEL_OPTIONS.map((modelId) => (
               <option key={`video-${modelId}`} value={modelId}>

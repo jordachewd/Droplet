@@ -31,15 +31,15 @@ export default function PrivacyPage() {
       <div
         className={classNames(
           "rounded-4xl border px-6 py-10 shadow-sm",
-          "border-lightBorders-400/80 bg-white/76",
-          "dark:border-darkBorders-500 dark:bg-jwdMarine-900/82",
+          "border-slate-400/80 bg-lightBackground-100/76",
+          "dark:border-slate-500 dark:bg-darkBackground-900/82",
         )}
       >
         <PageHead
           title="Privacy Policy"
           subtitle="How Droplet handles account data, conversations, stored assets, billing records, and provider integrations."
         />
-        <p className="body-2 mt-5 rounded-2xl bg-lightAccent-100/90 px-4 py-3 text-sm dark:bg-darkAccent-1000/80">
+        <p className="body-2 mt-5 rounded-2xl bg-grass-100/90 px-4 py-3 text-sm dark:bg-grass-1000/80">
           {legalReviewDisclaimer}
         </p>
       </div>
@@ -49,8 +49,8 @@ export default function PrivacyPage() {
           key={section.title}
           className={classNames(
             "rounded-4xl border px-6 py-7 shadow-sm",
-            "border-lightBorders-400/80 bg-white/76",
-            "dark:border-darkBorders-500 dark:bg-jwdMarine-900/82",
+            "border-slate-400/80 bg-lightBackground-100/76",
+            "dark:border-slate-500 dark:bg-darkBackground-900/82",
           )}
         >
           <h2 className="heading-5">{section.title}</h2>
@@ -67,8 +67,8 @@ export default function PrivacyPage() {
       <div
         className={classNames(
           "rounded-4xl border px-6 py-7 shadow-sm",
-          "border-lightBorders-400/80 bg-lightBackground-200/85",
-          "dark:border-darkBorders-500 dark:bg-jwdMarine-900/82",
+          "border-slate-400/80 bg-lightBackground-200/85",
+          "dark:border-slate-500 dark:bg-darkBackground-900/82",
         )}
       >
         <h2 className="heading-5">Related policy pages</h2>

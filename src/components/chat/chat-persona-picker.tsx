@@ -57,12 +57,12 @@ export default function ChatPersonaPicker({
               disabled={isBlocked}
               className={classNames(
                 "inline-flex w-full items-center justify-between gap-2 rounded-lg border px-3 py-2 text-xs transition-all",
-                "border-lightBorders-500 bg-lightBackground-100 hover:bg-lightSecondary-200/90",
-                "dark:border-darkBorders-500 dark:bg-jwdMarine-900 dark:hover:bg-darkSecondary-500/30",
+                "border-slate-500 bg-lightBackground-100 hover:bg-lightBackground-200/90",
+                "dark:border-slate-500 dark:bg-darkBackground-900 dark:hover:bg-darkBackground-500/30",
                 isActive &&
-                  "border-jwdMarine-300 bg-lightPrimary-100 font-semibold dark:border-jwdAqua-500 dark:bg-darkPrimary-500/25",
+                  "border-darkBackground-300 bg-lightBackground-100 font-semibold dark:border-darkBackground-500 dark:bg-darkBackground-500/25",
                 isBlocked &&
-                  "cursor-not-allowed opacity-70 hover:bg-lightBackground-100 dark:hover:bg-jwdMarine-900",
+                  "cursor-not-allowed opacity-70 hover:bg-lightBackground-100 dark:hover:bg-darkBackground-900",
               )}
               aria-pressed={isActive}
               title={accessDescription}

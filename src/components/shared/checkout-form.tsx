@@ -28,8 +28,8 @@ const Checkout = ({ plan, planStatus }: CheckoutProps) => {
 
   const disabledStyle = isIncluded
     ? isCurrent
-      ? "disabled:text-darkAccent-1000/50"
-      : "disabled:text-lightAccent-700/50 dark:disabled:text-darkAccent-500/50"
+      ? "disabled:text-grass-1000/50"
+      : "disabled:text-grass-700/50 dark:disabled:text-grass-500/50"
     : "";
 
   return (

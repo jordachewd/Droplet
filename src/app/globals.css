@@ -4,148 +4,78 @@
 @custom-variant dark (&:is([data-droplet-theme="dark"] *));
 
 @theme {
-  --color-lightPrimary-100: #ffecef;
-  --color-lightPrimary-200: #fdd6da;
-  --color-lightPrimary-300: #fbc1c6;
-  --color-lightPrimary-400: #f9acb2;
-  --color-lightPrimary-500: #fadadd;
-  --color-lightPrimary-600: #e6c5c9;
-  --color-lightPrimary-700: #d2b0b4;
-  --color-lightPrimary-800: #be9ba0;
-  --color-lightPrimary-900: #aa868c;
+  --color-navy-100: #dbe6f0;
+  --color-navy-200: #b6cee0;
+  --color-navy-300: #92b5d1;
+  --color-navy-400: #6d9dc2;
+  --color-navy-500: #0d3b66;
+  --color-navy-600: #0b355c;
+  --color-navy-700: #092f52;
+  --color-navy-800: #072847;
+  --color-navy-900: #05223d;
+  --color-navy-1000: #031729;
 
-  --color-lightSecondary-100: #f3e9ff;
-  --color-lightSecondary-200: #e3d0ff;
-  --color-lightSecondary-300: #d3b6ff;
-  --color-lightSecondary-400: #c39dff;
-  --color-lightSecondary-500: #d4bfff;
-  --color-lightSecondary-600: #b39cdb;
-  --color-lightSecondary-700: #9281b7;
-  --color-lightSecondary-800: #726793;
-  --color-lightSecondary-900: #524d6f;
+  --color-lemon-100: #fffdf6;
+  --color-lemon-200: #fff9ed;
+  --color-lemon-300: #fdf5e2;
+  --color-lemon-400: #fcf1d6;
+  --color-lemon-500: #faf0ca;
+  --color-lemon-600: #e1d8b6;
+  --color-lemon-700: #c8c0a2;
+  --color-lemon-800: #afa98e;
+  --color-lemon-900: #96917a;
 
-  --color-lightAccent-100: #e6f7eb;
-  --color-lightAccent-200: #c8eed3;
-  --color-lightAccent-300: #a9e6bb;
-  --color-lightAccent-400: #8bdea3;
-  --color-lightAccent-500: #50c878;
-  --color-lightAccent-600: #47b06c;
-  --color-lightAccent-700: #3e995f;
-  --color-lightAccent-800: #357153;
-  --color-lightAccent-900: #2c5946;
+  --color-grass-100: #e8f6ec;
+  --color-grass-200: #cdebd6;
+  --color-grass-300: #b2e0c1;
+  --color-grass-400: #97d5ab;
+  --color-grass-500: #27a148;
+  --color-grass-600: #228f40;
+  --color-grass-700: #1e7d38;
+  --color-grass-800: #196b30;
+  --color-grass-900: #145928;
+  --color-grass-1000: #0f3f1c;
 
-  --color-lightBackground-100: #fffcfb;
-  --color-lightBackground-200: #fdf7f5;
-  --color-lightBackground-300: #fbf3ef;
-  --color-lightBackground-400: #f9eeea;
-  --color-lightBackground-500: #f9f5f1;
-  --color-lightBackground-600: #d4d0cd;
-  --color-lightBackground-700: #b0aca9;
-  --color-lightBackground-800: #8c8886;
-  --color-lightBackground-900: #686462;
+  --color-lightBackground-100: #fffdf6;
+  --color-lightBackground-200: #fff9ed;
+  --color-lightBackground-300: #fdf5e2;
+  --color-lightBackground-400: #fcf1d6;
+  --color-lightBackground-500: #faf0ca;
+  --color-lightBackground-600: #e1d8b6;
+  --color-lightBackground-700: #c8c0a2;
+  --color-lightBackground-800: #afa98e;
+  --color-lightBackground-900: #96917a;
 
-  --color-lightText-100: #d4d4d4;
-  --color-lightText-200: #aaaaaa;
-  --color-lightText-300: #808080;
-  --color-lightText-400: #565656;
-  --color-lightText-500: #4a4a4a;
-  --color-lightText-600: #414141;
-  --color-lightText-700: #383838;
-  --color-lightText-800: #2f2f2f;
-  --color-lightText-900: #262626;
+  --color-darkBackground-100: #dbe6f0;
+  --color-darkBackground-200: #b6cee0;
+  --color-darkBackground-300: #92b5d1;
+  --color-darkBackground-400: #6d9dc2;
+  --color-darkBackground-500: #0d3b66;
+  --color-darkBackground-600: #0b355c;
+  --color-darkBackground-700: #092f52;
+  --color-darkBackground-800: #072847;
+  --color-darkBackground-900: #05223d;
+  --color-darkBackground-1000: #031729;
 
-  --color-lightBorders-100: #f5f5f5;
-  --color-lightBorders-200: #ebebeb;
-  --color-lightBorders-300: #e1e1e1;
-  --color-lightBorders-400: #d7d7d7;
-  --color-lightBorders-500: #d1d1d1;
-  --color-lightBorders-600: #b9b9b9;
-  --color-lightBorders-700: #a1a1a1;
-  --color-lightBorders-800: #898989;
-  --color-lightBorders-900: #717171;
+  --color-lightText-100: #6d8ba8;
+  --color-lightText-200: #567795;
+  --color-lightText-300: #3f6382;
+  --color-lightText-400: #284f70;
+  --color-lightText-500: #0d3b66;
+  --color-lightText-600: #0b355c;
+  --color-lightText-700: #092f52;
+  --color-lightText-800: #072847;
+  --color-lightText-900: #05223d;
 
-  --color-darkPrimary-100: #f0e5f8;
-  --color-darkPrimary-200: #d9bff0;
-  --color-darkPrimary-300: #c399e8;
-  --color-darkPrimary-400: #ac74e0;
-  --color-darkPrimary-500: #6a0dad;
-  --color-darkPrimary-600: #5f0c9b;
-  --color-darkPrimary-700: #540b88;
-  --color-darkPrimary-800: #490a76;
-  --color-darkPrimary-900: #3f0963;
-  --color-darkPrimary-1000: #1c032b;
-
-  --color-darkSecondary-100: #d4f5f5;
-  --color-darkSecondary-200: #a9ebeb;
-  --color-darkSecondary-300: #7fe0e0;
-  --color-darkSecondary-400: #54d6d6;
-  --color-darkSecondary-500: #008080;
-  --color-darkSecondary-600: #007373;
-  --color-darkSecondary-700: #006666;
-  --color-darkSecondary-800: #005959;
-  --color-darkSecondary-900: #004c4c;
-
-  --color-darkAccent-100: #fff1eb;
-  --color-darkAccent-200: #ffdccf;
-  --color-darkAccent-300: #ffc6b3;
-  --color-darkAccent-400: #ffb197;
-  --color-darkAccent-500: #e8a87c;
-  --color-darkAccent-600: #d29a70;
-  --color-darkAccent-700: #bc8b63;
-  --color-darkAccent-800: #a67d57;
-  --color-darkAccent-900: #906e4a;
-  --color-darkAccent-1000: #60492e;
-
-  --color-darkBackground-100: #595959;
-  --color-darkBackground-200: #454545;
-  --color-darkBackground-300: #313131;
-  --color-darkBackground-400: #2a2a2a;
-  --color-darkBackground-500: #1e1e1e;
-  --color-darkBackground-600: #1b1b1b;
-  --color-darkBackground-700: #161616;
-  --color-darkBackground-800: #121212;
-  --color-darkBackground-900: #0d0d0d;
-
-  --color-darkText-100: #ffffff;
-  --color-darkText-200: #fafafa;
-  --color-darkText-300: #f4f4f4;
-  --color-darkText-400: #efefef;
-  --color-darkText-500: #eaeaea;
-  --color-darkText-600: #d1d1d1;
-  --color-darkText-700: #b9b9b9;
-  --color-darkText-800: #a1a1a1;
-  --color-darkText-900: #898989;
-
-  --color-darkBorders-100: #cacaca;
-  --color-darkBorders-200: #b4b4b4;
-  --color-darkBorders-300: #9e9e9e;
-  --color-darkBorders-400: #888888;
-  --color-darkBorders-500: #3a3a3a;
-  --color-darkBorders-600: #323232;
-  --color-darkBorders-700: #2b2b2b;
-  --color-darkBorders-800: #232323;
-  --color-darkBorders-900: #1c1c1c;
-
-  --color-jwdAqua-100: #a8ebe9;
-  --color-jwdAqua-200: #81e3e1;
-  --color-jwdAqua-300: #5adbd8;
-  --color-jwdAqua-400: #33d4cf;
-  --color-jwdAqua-500: #26d0ce;
-  --color-jwdAqua-600: #21bab9;
-  --color-jwdAqua-700: #1da5a4;
-  --color-jwdAqua-800: #198f8e;
-  --color-jwdAqua-900: #147978;
-
-  --color-jwdMarine-100: #b0bad7;
-  --color-jwdMarine-200: #8695c0;
-  --color-jwdMarine-300: #5d70aa;
-  --color-jwdMarine-400: #344b94;
-  --color-jwdMarine-500: #1a2980;
-  --color-jwdMarine-600: #172472;
-  --color-jwdMarine-700: #141f65;
-  --color-jwdMarine-800: #101957;
-  --color-jwdMarine-900: #0d144a;
-  --color-jwdMarine-1000: #020519;
+  --color-darkText-100: #fffdf6;
+  --color-darkText-200: #fff9ed;
+  --color-darkText-300: #fdf5e2;
+  --color-darkText-400: #fcf1d6;
+  --color-darkText-500: #faf0ca;
+  --color-darkText-600: #e1d8b6;
+  --color-darkText-700: #c8c0a2;
+  --color-darkText-800: #afa98e;
+  --color-darkText-900: #96917a;
 
   --breakpoint-xxl: 1440px;
   --breakpoint-3xl: 1600px;
@@ -195,7 +125,7 @@
   }
 
   body {
-    @apply scroll-smooth antialiased bg-lightBackground-500 text-lightText-500 dark:bg-jwdMarine-1000 dark:text-darkText-500;
+    @apply scroll-smooth antialiased bg-lightBackground-500 text-lightText-500 dark:bg-darkBackground-1000 dark:text-darkText-500;
     @apply pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)];
     font-family: var(--font-jwd-albertsans), sans-serif;
     line-height: 1.4;
@@ -216,7 +146,7 @@ object {
 }
 
 a {
-  @apply text-lightText-600 transition-all ease-in hover:text-jwdMarine-500 dark:text-darkText-700 dark:hover:text-white;
+  @apply text-lightText-600 transition-all ease-in hover:text-darkBackground-500 dark:text-darkText-700 dark:hover:text-white;
 }
 
 @layer components {
@@ -280,32 +210,32 @@ a {
   }
 
   .btn-text {
-    @apply border-transparent text-lightAccent-700 hover:text-lightAccent-800 dark:text-darkAccent-500 dark:hover:text-darkAccent-400;
+    @apply border-transparent text-grass-700 hover:text-grass-800 dark:text-grass-500 dark:hover:text-grass-400;
   }
 
   .btn-outlined {
-    @apply border-lightAccent-700 text-lightAccent-700 hover:border-lightAccent-800 hover:text-lightAccent-800 dark:border-darkAccent-500 dark:text-darkAccent-500 dark:hover:border-darkAccent-400 dark:hover:text-darkAccent-400;
+    @apply border-grass-700 text-grass-700 hover:border-grass-800 hover:text-grass-800 dark:border-grass-500 dark:text-grass-500 dark:hover:border-grass-400 dark:hover:text-grass-400;
   }
 
   .btn-contained {
-    @apply border-darkSecondary-600 bg-darkSecondary-600 text-white shadow-[0px_1px_4px_0px_rgba(21,118,118,0.3)] hover:bg-darkSecondary-600 hover:shadow-[0px_1px_4px_0px_rgba(21,118,118,0.4)];
+    @apply border-darkBackground-600 bg-darkBackground-600 text-white shadow-[0px_1px_4px_0px_rgba(21,118,118,0.3)] hover:bg-darkBackground-600 hover:shadow-[0px_1px_4px_0px_rgba(21,118,118,0.4)];
   }
 
   .icon-btn {
     @apply inline-flex min-h-8 min-w-8 items-center justify-center rounded-lg px-2.5 py-1.5 leading-none transition-all duration-300 ease-in-out disabled:cursor-not-allowed disabled:opacity-50;
-    @apply text-lightText-500 hover:bg-lightSecondary-300/70 dark:text-darkText-500 dark:hover:bg-darkSecondary-500/40;
+    @apply text-lightText-500 hover:bg-lightBackground-300/70 dark:text-darkText-500 dark:hover:bg-darkBackground-500/40;
   }
 
   .tooltip-content {
-    @apply pointer-events-none absolute z-50 rounded-md bg-darkSecondary-600 p-0.5 text-xxs leading-none text-white opacity-0 shadow transition-opacity duration-200 group-hover:opacity-100 group-focus-within:opacity-100;
+    @apply pointer-events-none absolute z-50 rounded-md bg-darkBackground-600 p-0.5 text-xxs leading-none text-white opacity-0 shadow transition-opacity duration-200 group-hover:opacity-100 group-focus-within:opacity-100;
   }
 
   .chat-markdown {
-    @apply max-w-full wrap-break-word rounded-xl bg-lightSecondary-200 px-3 py-2 text-lightText-500 shadow-sm dark:bg-darkSecondary-500 dark:text-darkText-500;
+    @apply max-w-full wrap-break-word rounded-xl bg-lightBackground-200 px-3 py-2 text-lightText-500 shadow-sm dark:bg-darkBackground-500 dark:text-darkText-500;
   }
 
   .chat-markdown--bot {
-    @apply rounded-xl bg-lightPrimary-100 p-3 dark:bg-darkPrimary-500/40;
+    @apply rounded-xl bg-lightBackground-100 p-3 dark:bg-darkBackground-500/40;
   }
 
   .chat-markdown h1,
@@ -376,11 +306,11 @@ a {
   }
 
   .chat-markdown table {
-    @apply my-4 min-w-full overflow-auto bg-slate-200 shadow dark:bg-jwdAqua-500/5;
+    @apply my-4 min-w-full overflow-auto bg-slate-200 shadow dark:bg-darkBackground-500/5;
   }
 
   .chat-markdown table th {
-    @apply bg-slate-300/70 p-2 text-left font-semibold dark:bg-jwdAqua-100/10;
+    @apply bg-slate-300/70 p-2 text-left font-semibold dark:bg-darkBackground-100/10;
   }
 
   .chat-markdown table th strong {
@@ -388,7 +318,7 @@ a {
   }
 
   .chat-markdown table tbody tr {
-    @apply border-b border-slate-300/50 transition-all ease-in-out last-of-type:border-none hover:bg-slate-100 dark:border-jwdAqua-100/5 dark:hover:bg-jwdAqua-100/5;
+    @apply border-b border-slate-300/50 transition-all ease-in-out last-of-type:border-none hover:bg-slate-100 dark:border-darkBackground-100/5 dark:hover:bg-darkBackground-100/5;
   }
 
   .chat-markdown table td {
@@ -396,7 +326,7 @@ a {
   }
 
   .chat-markdown hr {
-    @apply my-4 flex w-full border-dashed border-jwdAqua-100/5;
+    @apply my-4 flex w-full border-dashed border-darkBackground-100/5;
   }
 
   @media (max-width: 640px) {
@@ -418,7 +348,7 @@ a {
     }
 
     .chat-markdown table tr {
-      @apply mb-2 rounded border border-slate-300 bg-slate-200 p-2 shadow dark:border-jwdAqua-100/10 dark:bg-jwdAqua-500/10;
+      @apply mb-2 rounded border border-slate-300 bg-slate-200 p-2 shadow dark:border-darkBackground-100/10 dark:bg-darkBackground-500/10;
     }
 
     .chat-markdown table td {
@@ -427,11 +357,11 @@ a {
 
     .chat-markdown table tbody td::before {
       content: attr(data-label);
-      @apply bg-jwdAqua-500/5 font-semibold;
+      @apply bg-darkBackground-500/5 font-semibold;
     }
   }
 
   .droplet-scrollbar {
-    @apply [&::-webkit-scrollbar]:w-0.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:bg-lightBorders-500 [&::-webkit-scrollbar-thumb]:bg-lightSecondary-800 dark:[&::-webkit-scrollbar-track]:bg-darkBorders-500 dark:[&::-webkit-scrollbar-thumb]:bg-darkSecondary-500;
+    @apply [&::-webkit-scrollbar]:w-0.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:bg-slate-500 [&::-webkit-scrollbar-thumb]:bg-lightBackground-800 dark:[&::-webkit-scrollbar-track]:bg-slate-500 dark:[&::-webkit-scrollbar-thumb]:bg-darkBackground-500;
   }
 }

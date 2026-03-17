@@ -102,8 +102,8 @@ export default function ChatHeader({
 
   const chatHeaderClass = classNames(
     "ChatHeader absolute left-0 right-0 top-0 z-20 flex w-full px-3",
-    "border-b border-lightBorders-300/70 bg-lightPrimary-100/85 backdrop-blur-lg",
-    "dark:border-darkBorders-500 dark:bg-darkPrimary-900/55",
+    "border-b border-slate-300/70 bg-lightBackground-100/85 backdrop-blur-lg",
+    "dark:border-slate-500 dark:bg-darkBackground-900/55",
     style,
   );
 

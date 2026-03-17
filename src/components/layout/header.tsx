@@ -31,7 +31,7 @@ export default function Header() {
       className={classNames(
         "Header sticky left-0 right-0 top-0 z-20 flex w-full px-4 transition-all duration-300 ease-in-out",
         scrolled &&
-          "bg-lightPrimary-100/50 shadow-sm backdrop-blur-lg dark:bg-darkPrimary-900/50",
+          "bg-lightBackground-100/50 shadow-sm backdrop-blur-lg dark:bg-darkBackground-900/50",
       )}
     >
       <div className="mx-auto flex w-full max-w-screen-2xl items-center justify-between gap-4 py-3">

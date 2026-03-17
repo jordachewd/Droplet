@@ -8,10 +8,10 @@ interface FaqsProps {
 export default function Faqs({ faqsData }: FaqsProps) {
   const faqItems = faqsData ?? faqs;
   const faqCardClass = classNames(
-    "group rounded-lg border border-lightBorders-500 bg-lightBackground-100 px-4 py-3 shadow-sm transition-all",
-    "open:border-lightAccent-700 open:bg-lightPrimary-100/60",
-    "dark:border-darkBorders-500 dark:bg-jwdMarine-900",
-    "dark:open:border-darkAccent-500 dark:open:bg-darkPrimary-900/50",
+    "group rounded-lg border border-slate-500 bg-lightBackground-100 px-4 py-3 shadow-sm transition-all",
+    "open:border-grass-700 open:bg-lightBackground-100/60",
+    "dark:border-slate-500 dark:bg-darkBackground-900",
+    "dark:open:border-grass-500 dark:open:bg-darkBackground-900/50",
   );
 
   const faqContentClass = classNames(

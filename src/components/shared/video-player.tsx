@@ -14,8 +14,8 @@ export default function VideoPlayer({ videoSrc }: VideoPlayerProps) {
     <div
       className={classNames(
         "VideoPlayer mt-3 overflow-hidden rounded-xl border",
-        "border-lightBorders-500 bg-lightBackground-100",
-        "dark:border-darkBorders-500 dark:bg-jwdMarine-900",
+        "border-slate-500 bg-lightBackground-100",
+        "dark:border-slate-500 dark:bg-darkBackground-900",
       )}
     >
       <video

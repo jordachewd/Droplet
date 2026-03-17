@@ -18,13 +18,13 @@ const filledSeverityStyles = {
 };
 
 const outlinedSeverityStyles = {
-  info: "bg-white text-sky-700 border-sky-600 dark:bg-jwdMarine-1000 dark:text-sky-300",
+  info: "bg-lightBackground-100 text-sky-700 border-sky-600 dark:bg-darkBackground-1000 dark:text-sky-300",
   error:
-    "bg-white text-red-700 border-red-600 dark:bg-jwdMarine-1000 dark:text-red-300",
+    "bg-lightBackground-100 text-red-700 border-red-600 dark:bg-darkBackground-1000 dark:text-red-300",
   success:
-    "bg-white text-emerald-700 border-emerald-600 dark:bg-jwdMarine-1000 dark:text-emerald-300",
+    "bg-lightBackground-100 text-emerald-700 border-emerald-600 dark:bg-darkBackground-1000 dark:text-emerald-300",
   warning:
-    "bg-white text-amber-700 border-amber-600 dark:bg-jwdMarine-1000 dark:text-amber-300",
+    "bg-lightBackground-100 text-amber-700 border-amber-600 dark:bg-darkBackground-1000 dark:text-amber-300",
 };
 
 export default function AlertMessage({ message }: AlertMessageProps) {

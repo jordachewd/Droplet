@@ -24,7 +24,7 @@ export default function ChatSidebarPromo({
         <article
           className={classNames(
             "rounded-xl border p-3 shadow-sm",
-            "border-lightBorders-400 bg-white/70 dark:border-darkBorders-500 dark:bg-jwdMarine-900/70",
+            "border-slate-400 bg-lightBackground-100/70 dark:border-slate-500 dark:bg-darkBackground-900/70",
           )}
         >
           <p className="mb-2 text-xs font-semibold uppercase tracking-wide opacity-70">
@@ -52,7 +52,7 @@ export default function ChatSidebarPromo({
       <article
         className={classNames(
           "rounded-xl border p-3 shadow-sm",
-          "border-lightBorders-400 bg-white/70 dark:border-darkBorders-500 dark:bg-jwdMarine-900/70",
+          "border-slate-400 bg-lightBackground-100/70 dark:border-slate-500 dark:bg-darkBackground-900/70",
         )}
       >
         <p className="mb-2 text-xs font-semibold uppercase tracking-wide opacity-70">

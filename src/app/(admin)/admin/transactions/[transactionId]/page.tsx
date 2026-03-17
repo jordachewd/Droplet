@@ -27,7 +27,7 @@ export default async function AdminTransactionDetailPage({
         subtitle="View billing metadata, effective dates, and the associated user account."
       />
 
-      <article className="rounded-2xl border border-lightBorders-300 bg-lightBackground-100/80 p-5 dark:border-darkBorders-500 dark:bg-jwdMarine-900/70">
+      <article className="rounded-2xl border border-slate-300 bg-lightBackground-100/80 p-5 dark:border-slate-500 dark:bg-darkBackground-900/70">
         <dl className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>
             <dt className="text-xs font-semibold uppercase tracking-wide opacity-60">
@@ -85,7 +85,7 @@ export default async function AdminTransactionDetailPage({
         </dl>
       </article>
 
-      <article className="rounded-2xl border border-lightBorders-300 bg-lightBackground-100/80 p-5 dark:border-darkBorders-500 dark:bg-jwdMarine-900/70">
+      <article className="rounded-2xl border border-slate-300 bg-lightBackground-100/80 p-5 dark:border-slate-500 dark:bg-darkBackground-900/70">
         <h2 className="heading-6 mb-4">Associated User</h2>
         {transaction.user ? (
           <dl className="grid grid-cols-1 gap-4 md:grid-cols-2">

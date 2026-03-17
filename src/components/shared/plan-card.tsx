@@ -26,15 +26,15 @@ export default function PlanCard({
 
   const { isCurrent, isPopular } = planStatus as PlanStatus;
   const accentStyles = isCurrent
-    ? "bg-lightAccent-500 text-darkAccent-1000 dark:bg-darkAccent-500 dark:text-darkAccent-1000"
+    ? "bg-grass-500 text-grass-1000 dark:bg-grass-500 dark:text-grass-1000"
     : isPopular
-      ? "bg-darkSecondary-600 text-white"
-      : "bg-lightPrimary-500/50 text-lightText-500 dark:bg-darkPrimary-500/30 dark:text-darkText-500";
+      ? "bg-darkBackground-600 text-white"
+      : "bg-lightBackground-500/50 text-lightText-500 dark:bg-darkBackground-500/30 dark:text-darkText-500";
 
   const titleStyles = isPopular
     ? "text-white"
     : isCurrent
-      ? "text-darkAccent-1000"
+      ? "text-grass-1000"
       : "text-lightText-500 dark:text-darkText-500";
 
   return (

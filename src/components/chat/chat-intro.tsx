@@ -31,8 +31,8 @@ export default function ChatIntro({ persona, sendPrompt }: ChatIntroProps) {
 
   const introPromptButtonClass = classNames(
     "flex w-full items-start gap-2 rounded-lg border px-3 py-2 text-left text-sm transition-all",
-    "border-lightBorders-400 hover:bg-lightSecondary-200/60",
-    "dark:border-darkBorders-500 dark:hover:bg-darkSecondary-500/25",
+    "border-slate-400 hover:bg-lightBackground-200/60",
+    "dark:border-slate-500 dark:hover:bg-darkBackground-500/25",
   );
 
   return (
