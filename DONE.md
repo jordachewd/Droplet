@@ -2,7 +2,39 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-17 — PM deep audit #26. Phases 52.1–54.4 archived. All Phases 1–54.4 complete. All Milestones 0–18 COMPLETED. 368 unit tests (65+ suites). Build passing.
+> Last updated: 2026-03-17 — PM deep audit #27. Phases 55.1–56.3 + 50.1 archived. All Phases 1–56.3 complete. All Milestones 0–19 COMPLETED. 368 unit tests (65+ suites). Build passing.
+
+---
+
+## Phase 56.1–56.3 — Admin UI Completeness — COMPLETED (2026-03-17)
+
+> PM audit #27. Engineer work report confirmed. Triple-audit verified (PM + Architect + Engineer).
+
+- [x] **56.1 HIGH** — Passed `isAdmin: true` to `resolveEntitlements()` in all 5 `/app` server component pages. Admin users now see all 6 personas as full access (no Trial/PRO/PREMIUM labels). Computed `userData?.role === "admin"` after `ensureUserSynced()`.
+- [x] **56.2 MEDIUM** — Fixed Top Personas aggregation: imported `PERSONAS` from constants, changed `$match` to `{ personaId: { $in: PERSONAS.map(p => p.id) } }`. Legacy persona IDs (analyst, best-friend, boyfriend, girlfriend) now excluded at query level.
+- [x] **56.3 MEDIUM** — Replaced all `bg-white/70` with `bg-lightBackground-100/80` in 6 admin pages: users, user detail, transactions, transaction detail, website, website page detail.
+
+**Files changed:** `src/app/(chat)/layout.tsx`, `src/app/(chat)/app/page.tsx`, `src/app/(chat)/app/new/page.tsx`, `src/app/(chat)/app/personas/page.tsx`, `src/app/(chat)/app/c/[conversationId]/page.tsx`, `src/lib/utils/admin-queries.ts`, `src/app/(admin)/admin/users/page.tsx`, `src/app/(admin)/admin/users/[userId]/page.tsx`, `src/app/(admin)/admin/transactions/page.tsx`, `src/app/(admin)/admin/transactions/[transactionId]/page.tsx`, `src/app/(admin)/admin/website/page.tsx`, `src/app/(admin)/admin/website/[pageId]/page.tsx`
+
+---
+
+## Phase 50.1 — Admin Video Model Override — COMPLETED (2026-03-17)
+
+> PM audit #27. Engineer work report confirmed.
+
+- [x] **50.1 MEDIUM** — Added `videoGenerationModel` to admin model overrides end-to-end: type (`AdminData.d.tsx`), admin form parsing (`admin.actions.tsx`), defaults/normalization (`effective-model-config.ts`, `normalize-admin-settings.ts`), policy resolver (`ai-model-policy.ts`), API route wiring (`route.tsx`), admin UI selector (`admin-models-section.tsx`), constants (`admin-options.ts`), admin snapshot default (`admin-queries.ts`). Unit tests updated.
+
+**Files changed:** `src/types/AdminData.d.tsx`, `src/lib/utils/effective-model-config.ts`, `src/lib/actions/admin.actions.tsx`, `src/lib/utils/ai-model-policy.ts`, `src/app/api/openai/route.tsx`, `src/components/admin/settings/admin-models-section.tsx`, `src/components/admin/settings/normalize-admin-settings.ts`, `src/constants/admin-options.ts`, `src/lib/utils/admin-queries.ts`, `tests/unit/effective-model-config.test.ts`, `tests/unit/ai-model-policy.test.ts`
+
+---
+
+## Phase 55.1 — ADMIN_LINKS Extraction — COMPLETED (2026-03-17)
+
+> PM audit #27. Engineer work report confirmed.
+
+- [x] **55.1 LOW** — Moved `ADMIN_LINKS` from inline in `admin-sidebar.tsx` to `src/constants/admin.ts`. Sidebar now imports from constants.
+
+**Files changed:** `src/constants/admin.ts` (new), `src/components/admin/admin-sidebar.tsx`
 
 ---
 

@@ -5,151 +5,253 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: All Milestones 0–18 COMPLETE. Phases 1–54.4 complete. 368 unit tests passing (65+ suites). Build passing.**
-> **PM deep audit #26 (2026-03-17): Full triple-audit (PM + Architect + Engineer). Owner instructions integrated.**
-> **Priority order: 56.1 → 56.2 → 56.3 → 50.1 → 55.1 → 46.1 → 46.2 → 31.4 → 29.x → 26.x**
+> **STATUS: All Milestones 0–19 COMPLETE. Phases 1–56.3 complete. 368 unit tests passing (65+ suites). Build passing.**
+> **PM deep audit #27 (2026-03-17): Full triple-audit (PM + Architect + Engineer). Owner instructions integrated.**
+> **Priority order: 57.1 → 57.2 → 57.3 → 57.4 → 58.1 → 58.2 → 58.3 → 59.1 → 59.2 → 31.4 → 46.1 → 46.2 → 29.x → 26.x**
 > **All Phase 26+ deferred work is ON HOLD until PM-approved.**
 
 ---
 
-## Phase 56: Admin UI Completeness — HIGH (PM Audit #26, Owner-Reported)
+## Phase 57: Admin Action Feedback & Safety — CRITICAL (PM Audit #27, Owner Directives #6/#7/#8)
 
-> **HIGH priority. PM audit #26 triple-audit confirmed: admin UI persona gap, Top Personas legacy ID duplicates, admin design token inconsistency. Owner directives: "Admin full permissions over all personas" (UI gap), "Top Personas not correct" (duplicates), "Admin panel design must match /app design" (inconsistent bg tokens).**
+> **CRITICAL priority. PM audit #27 triple-audit unanimous: ALL 14 admin forms have ZERO confirmation dialogs on destructive actions, ZERO visual feedback on any action, and ZERO loading indicators. Owner directives #6, #7, #8 are completely unimplemented in admin panel.**
 
 ---
 
-### 56.1 HIGH — Pass isAdmin to all resolveEntitlements() calls in /app pages
+### 57.1 CRITICAL — Add confirmation dialogs to all admin destructive actions
 
-**Ref:** PM audit #26 — Both Architect and Engineer confirmed. Owner directive: "ADMIN has full permissions over all personas in /app/personas — TRIAL is not applicable for admin role."
+**Ref:** PM audit #27 — Both Architect and Engineer confirmed. Owner directive #6: "Any Delete or Remove user action MUST be prevented by a confirmation message and require user acknowledgement."
 
-**Root cause:** Backend (Phase 53.1) correctly grants admin full access in `/api/openai` route. But all 5 `/app` server component pages call `resolveEntitlements()` WITHOUT `isAdmin: true`. Admin users on Lite plan see only 2 personas as "full access" with Trial/PRO/PREMIUM labels on the remaining 4 — even though backend grants full access to all 6.
+**Root cause:** Admin destructive actions fire immediately via plain `<form action={...}>`. Remove User deletes the entire user account, all tasks, transactions, and S3 assets with a single unconfirmed click. Suspend User and Delete Page also have no confirmation.
 
-**Files:** `src/app/(chat)/layout.tsx`, `src/app/(chat)/app/page.tsx`, `src/app/(chat)/app/new/page.tsx`, `src/app/(chat)/app/personas/page.tsx`, `src/app/(chat)/app/c/[conversationId]/page.tsx`
+**Files:** `src/app/(admin)/admin/users/[userId]/page.tsx`, `src/app/(admin)/admin/website/page.tsx`
 
 **What to do:**
 
-1. In each of the 5 files, after `ensureUserSynced()`, check `userData?.role === "admin"`.
-2. Pass `isAdmin: true` to `resolveEntitlements()` when user is admin.
-3. This makes admin users see all 6 personas as "full access" in the UI — matching backend behavior.
+1. Create a reusable `AdminActionButton` client component (or similar) that wraps destructive admin form buttons with `window.confirm()` before form submission.
+2. Apply to "Remove User" button — message: "Are you sure you want to permanently remove this user? This will delete all their data including conversations, transactions, and files. This action cannot be undone."
+3. Apply to "Suspend/Reinstate User" button — message: "Are you sure you want to suspend/reinstate this user?"
+4. Apply to "Delete Page" button — message: "Are you sure you want to delete this page? This action cannot be undone."
 
 **Acceptance criteria:**
 
-- [ ] Admin user sees all 6 personas as "full access" (no Trial/PRO/PREMIUM labels)
-- [ ] Admin user sees no trial badges on any persona
-- [ ] Non-admin users are unaffected (same behavior as before)
+- [ ] "Remove User" requires explicit confirmation before executing
+- [ ] "Suspend/Reinstate User" requires explicit confirmation before executing
+- [ ] "Delete Page" requires explicit confirmation before executing
+- [ ] Canceling confirmation prevents the action
 - [ ] `npx tsc --noEmit` passes
 - [ ] All tests pass
 
 ---
 
-### 56.2 MEDIUM — Fix Top Personas aggregation to filter valid current persona IDs
+### 57.2 CRITICAL — Add visual feedback (AlertMessage) to all admin forms
 
-**Ref:** PM audit #26 — Owner reported: "in /admin/usage page inside Top Personas there is Strategist mentioned several times." Root cause: legacy persona IDs (`analyst`, `best-friend`, `boyfriend`, `girlfriend`) in UsageEvent records from pre-Phase 41 (10→6 persona restructure) resolve to "Strategist" via `getPersona()` fallback. Phase 54.4 null filter is necessary but insufficient.
+**Ref:** PM audit #27 — Owner directive #7: "Any action (Delete, Remove, Save, Update, Edit, etc) must be confirmed by a similar message as for errors; colors to be adapted (green = success, orange = warning, blue = info, red = error)."
 
-**Files:** `src/lib/utils/admin-queries.ts`
+**Root cause:** All 14 admin forms silently reload the page after submission. Admin has zero visual indication whether an action succeeded or failed.
+
+**Affected forms (14 total):**
+
+- Settings: Save Models, Save Pricing, Save Currency, Save Limits, Save Trial Limits, Save Persona Access, Save Theme (7 forms)
+- Website: Create Page, Delete Page, Publish/Unpublish, Save Sort Order, Save Page Content (5 forms)
+- Users: Suspend/Reinstate, Remove User (2 forms)
 
 **What to do:**
 
-1. Import `PERSONAS` from `@/constants/assistant-personas`.
-2. Change the first `$match` stage in the topPersonas aggregation from:
-   ```js
-   { $match: { personaId: { $exists: true, $ne: null } } }
-   ```
-   to:
-   ```js
-   {
-     $match: {
-       personaId: {
-         $in: PERSONAS.map((p) => p.id);
-       }
-     }
-   }
-   ```
-3. This automatically excludes legacy persona IDs by matching only current valid IDs.
+1. Modify server actions (`admin.actions.tsx`, `website.actions.tsx`, etc.) to return `{ success: boolean; message: string }` instead of just calling `revalidatePath()`.
+2. Use `useActionState` (React 19) in admin form wrappers to capture action result.
+3. Display result using `AlertMessage` component with appropriate severity: `success` (green) for successful operations, `error` (red) for failures.
+4. Auto-dismiss success messages after 5 seconds.
 
 **Acceptance criteria:**
 
-- [ ] Top Personas shows each persona at most once
-- [ ] Legacy persona IDs (analyst, best-friend, boyfriend, girlfriend) excluded
-- [ ] Current valid personas (strategist, teacher, developer, creator, wellness, interviewer) included
+- [ ] Every admin save/update/delete action shows visual feedback
+- [ ] Success: green AlertMessage with confirmation text
+- [ ] Error: red AlertMessage with error description
+- [ ] Messages auto-dismiss after timeout
 - [ ] `npx tsc --noEmit` passes
 - [ ] All tests pass
 
 ---
 
-### 56.3 MEDIUM — Standardize admin page design tokens
+### 57.3 CRITICAL — Add loading indicators to all admin forms
 
-**Ref:** PM audit #26 — Owner directive: "Admin panel layout and sections must respect the same design, fonts, sizes, colors and proportions as /app panel layout — Still old design!!" Root cause: Admin dashboard + usage use `bg-lightBackground-100/80` (correct, matches `/app`), but users, user detail, transactions, transaction detail, and website pages use `bg-white/70` (old design).
+**Ref:** PM audit #27 — Owner directive #8: "If any kind of user action take long time display LoadingBubbles so the user shall be aware that the action is on the way."
 
-**Files:** `src/app/(admin)/admin/users/page.tsx`, `src/app/(admin)/admin/users/[userId]/page.tsx`, `src/app/(admin)/admin/transactions/page.tsx`, `src/app/(admin)/admin/transactions/[transactionId]/page.tsx`, `src/app/(admin)/admin/website/page.tsx`, `src/app/(admin)/admin/website/[pageId]/page.tsx`
+**Root cause:** Zero admin forms show any pending/loading state during submission.
 
 **What to do:**
 
-1. Replace all `bg-white/70` with `bg-lightBackground-100/80` in the 6 admin page files.
-2. Verify dark mode equivalent is already `dark:bg-jwdMarine-900/70` (should be consistent).
-3. Do not change any other styling — only the background token.
+1. Use `useFormStatus()` hook in admin form submit buttons.
+2. Show `LoadingBubbles` inline or disable the submit button with "Saving..." text while `pending === true`.
+3. Apply to all 14 admin forms identified in 57.2.
 
 **Acceptance criteria:**
 
-- [ ] All admin pages use `bg-lightBackground-100/80` for card backgrounds
-- [ ] Visual consistency across all admin pages matches dashboard + usage pages
-- [ ] Dark mode unaffected (already using correct `dark:bg-jwdMarine-900/70`)
+- [ ] All admin submit buttons show loading state during submission
+- [ ] Buttons disabled while pending (prevent double submission)
+- [ ] Loading state visually clear (LoadingBubbles or spinner)
 - [ ] `npx tsc --noEmit` passes
 
 ---
 
-## Phase 50: Admin Video Model Override — MEDIUM (PM Audit #23)
+### 57.4 HIGH — Replace window.alert() with AlertMessage in user-facing actions
 
-> **MEDIUM priority. Admin model override pattern exists for image and audio but not video.**
+**Ref:** PM audit #27 — Owner directive #7 applies to ALL user types (admin, guest, client).
 
----
+**Root cause:** User-facing delete error paths use `window.alert()` for error feedback. This is functional but visually inconsistent with the app's design system.
 
-### 50.1 MEDIUM — Add videoGenerationModel to admin model overrides
-
-**Ref:** PM audit #23 — Architect finding H1.
-
-**Files:** `src/lib/utils/ai-model-policy.ts`, `src/types/AdminData.d.tsx`, `src/lib/utils/effective-model-config.ts`, `src/app/api/openai/route.tsx`, `src/app/(admin)/admin/settings/page.tsx`
+**Files:** `src/components/chat/library-delete-button.tsx`, `src/components/chat/sidebar/chat-sidebar-nav-v2.tsx`
 
 **What to do:**
 
-1. Add `videoGenerationModel?: string` to `ModelPolicyModelOverrides` interface.
-2. Add `videoGenerationModel` to `ModelSettingsFormValue` type.
-3. Add video model resolution in `getEffectiveModelConfig()`.
-4. Wire `videoGenerationModel` into `modelOverrides` construction in `/api/openai` route.
-5. Add video model selector in admin settings page.
-6. Apply `modelOverrides.videoGenerationModel` in `resolveModelPolicy()` for `video_generation` feature.
+1. Replace `window.alert(...)` calls with `AlertMessage` component (or a callback to parent that triggers `AlertMessage`).
+2. Success feedback: green message on successful deletion.
+3. Error feedback: red message on failed deletion.
 
 **Acceptance criteria:**
 
-- [ ] Admin can change video model via settings panel
-- [ ] `resolveModelPolicy()` applies admin video model override
-- [ ] Follows same pattern as image/audio overrides
+- [ ] No `window.alert()` calls remain in src/ (excluding test files)
+- [ ] Delete success shows green feedback
+- [ ] Delete failure shows red feedback
 - [ ] `npx tsc --noEmit` passes
-- [ ] All tests pass
 
 ---
 
-## Phase 55: Data Architecture Cleanup — LOW (PM Audit #25)
+## Phase 58: Admin Bulk Actions — HIGH (PM Audit #27, Owner Directive #9)
 
-> **LOW priority. Structural cleanup — no runtime impact.**
+> **HIGH priority. PM audit #27 triple-audit confirmed: ZERO admin data tables have bulk selection or bulk action capability. Owner directive: "All data tables in admin must have option to select one, more or all items/rows for Bulk Actions (edit/remove — where appropriate)."**
 
 ---
 
-### 55.1 LOW — Move ADMIN_LINKS to constants
+### 58.1 HIGH — Add bulk actions to admin users table
 
-**Ref:** PM audit #26 — `ADMIN_LINKS` still inline in `admin-sidebar.tsx`. Model option arrays already moved to `admin-options.ts` (Phase 52.2).
-
-**Files:** `src/components/admin/admin-sidebar.tsx`, new `src/constants/admin.ts`
+**Files:** `src/app/(admin)/admin/users/page.tsx`
 
 **What to do:**
 
-1. Move `ADMIN_LINKS` to `src/constants/admin.ts`.
+1. Add checkbox column to users table (per-row + select-all in header).
+2. Add bulk action bar that appears when items are selected: "Bulk Suspend" and "Bulk Remove" buttons.
+3. Bulk actions must trigger confirmation dialogs (per 57.1 pattern).
+4. Show count of selected items.
+5. Create corresponding bulk server actions in `admin.actions.tsx`.
 
 **Acceptance criteria:**
 
-- [ ] No inline data arrays in component files
-- [ ] Constants importable from dedicated files
+- [ ] Users table has per-row checkboxes and select-all
+- [ ] Bulk action bar appears when items selected
+- [ ] "Bulk Suspend" and "Bulk Remove" available
+- [ ] Each bulk action requires confirmation
+- [ ] Bulk actions show feedback (per 57.2 pattern)
 - [ ] `npx tsc --noEmit` passes
+
+---
+
+### 58.2 HIGH — Add bulk actions to admin transactions table
+
+**Files:** `src/app/(admin)/admin/transactions/page.tsx`
+
+**What to do:**
+
+1. Add checkbox column to transactions table (per-row + select-all).
+2. Add bulk action bar with appropriate actions (e.g., "Bulk Remove").
+3. Bulk actions require confirmation and show feedback.
+
+**Acceptance criteria:**
+
+- [ ] Transactions table has per-row checkboxes and select-all
+- [ ] Bulk action bar appears when items selected
+- [ ] Bulk actions require confirmation and show feedback
+- [ ] `npx tsc --noEmit` passes
+
+---
+
+### 58.3 HIGH — Add bulk actions to admin website pages table
+
+**Files:** `src/app/(admin)/admin/website/page.tsx`
+
+**What to do:**
+
+1. Add checkbox column to pages table (per-row + select-all).
+2. Add bulk action bar: "Bulk Delete", "Bulk Publish", "Bulk Unpublish".
+3. Bulk actions require confirmation and show feedback.
+
+**Acceptance criteria:**
+
+- [ ] Website pages table has per-row checkboxes and select-all
+- [ ] Bulk action bar appears when items selected
+- [ ] "Bulk Delete", "Bulk Publish", "Bulk Unpublish" available
+- [ ] Bulk actions require confirmation and show feedback
+- [ ] `npx tsc --noEmit` passes
+
+---
+
+## Phase 59: Admin User Detail & Design Polish — MEDIUM (PM Audit #27, Owner Directives #11/#12)
+
+> **MEDIUM priority. Admin user detail displays "used / limit" but not "remaining". Admin form inputs use `bg-white` instead of design tokens.**
+
+---
+
+### 59.1 MEDIUM — Show "remaining" in admin user detail usage section
+
+**Ref:** PM audit #27 — Owner directive #12: "Admin users table and single page must provide information about usage and limits (remained vs included)."
+
+**Files:** `src/app/(admin)/admin/users/[userId]/page.tsx`
+
+**What to do:**
+
+1. Change usage display format from `{used} / {limit}` to `{used} / {limit} ({remaining} left)` or equivalent "remaining" indicator.
+2. Show visual progress bar for each metric (image, audio, video, conversations, prompts).
+3. "Unlimited" plans show "Unlimited" instead of remaining count.
+
+**Acceptance criteria:**
+
+- [ ] Each usage metric shows used, limit, AND remaining
+- [ ] Unlimited values clearly indicated
+- [ ] `npx tsc --noEmit` passes
+
+---
+
+### 59.2 MEDIUM — Standardize admin form input design tokens
+
+**Ref:** PM audit #27 — Architect finding M2: admin form inputs use `bg-white` while /app uses design tokens.
+
+**Files:** `src/app/(admin)/admin/website/page.tsx`, `src/app/(admin)/admin/users/page.tsx`, `src/components/admin/settings/admin-models-section.tsx`, `src/components/admin/settings/admin-limits-section.tsx`, `src/components/admin/settings/admin-pricing-section.tsx`, `src/components/admin/tiptap-editor.tsx`
+
+**What to do:**
+
+1. Replace `bg-white` in admin form inputs/selects with `bg-lightBackground-100` (or similar design token matching `/app`).
+2. Ensure `dark:bg-jwdMarine-1000` pairing is preserved.
+
+**Acceptance criteria:**
+
+- [ ] Zero `bg-white` in admin page/component files (only design tokens)
+- [ ] Dark mode unaffected
+- [ ] Visual consistency with /app form inputs
+- [ ] `npx tsc --noEmit` passes
+
+---
+
+## Phase 31.4: E2E Test Updates — LOW (remaining)
+
+### 31.4 LOW — Update E2E tests for current UI structure
+
+**Ref:** PM audit #27 — Engineer analysis: 5 E2E failures caused by stale Clerk auth session (4 tests) and DB connectivity (2 tests). `pricing-public.spec.ts` is a duplicate of `plans-public.spec.ts`.
+
+**Files:** `tests/e2e/chat-app-shell.spec.ts`, `tests/e2e/plans-public.spec.ts`, `tests/e2e/pricing-public.spec.ts`, `tests/e2e/public-pages.spec.ts`, `tests/e2e/user-profile.spec.ts`
+
+**What to do:**
+
+1. Fix auth session refresh logic in E2E global setup (stale Clerk token is root cause of 4/5 failures).
+2. Remove or repurpose `pricing-public.spec.ts` (duplicate of `plans-public.spec.ts`).
+3. Update selectors/assertions in remaining failing specs to match current UI text and structure.
+4. Add DB connectivity check in E2E setup.
+
+**Acceptance criteria:**
+
+- [ ] `npm run test:e2e` passes with 0 failures (excluding intentionally skipped)
+- [ ] No duplicate test files
+- [ ] Auth session handled correctly across test runs
 
 ---
 
@@ -180,19 +282,6 @@
 
 ---
 
-## Phase 31.4: E2E Test Updates — LOW (remaining)
-
-### 31.4 LOW — Update E2E tests for layout changes
-
-**Files:** `tests/e2e/chat-app-shell.spec.ts`, related E2E specs
-
-**Acceptance criteria:**
-
-- [ ] E2E tests reflect current layout structure
-- [ ] `npm run test:e2e` passes
-
----
-
 ## Phase 29: App-Wide Modernization — ON HOLD
 
 > **ON HOLD until all HIGH-priority phases complete.**
@@ -212,5 +301,5 @@
 ---
 
 > **Completed phases** are archived in [`DONE.md`](DONE.md).
-> All phases through 54.4 complete. Phase 47.1 + 34.2–34.9e complete.
+> All phases through 56.3 complete. Phase 47.1 + 34.2–34.9e complete.
 > Phase 10–12 superseded (see DONE.md for mapping).

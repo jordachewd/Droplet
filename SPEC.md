@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-17 (PM audit #26. All PM #25 critical/high items resolved (Phases 52.1–54.4). New items TD-ADMIN-10/11/12, TD-API-09 registered. 368 unit tests (65 suites). Build passing.)
+> Last updated: 2026-03-17 (PM audit #27. All PM #26 items resolved (Phases 55.1–56.3, 50.1). New items TD-UX-01/02/03, TD-ADMIN-13/14 registered. 368 unit tests (65+ suites). Build passing.)
 
 ---
 
@@ -704,9 +704,9 @@ All file handling technical debt has been resolved. S3 cleanup on task/user dele
 
 ## 13. Testing
 
-- **Unit tests**: 65+ suites, 360 tests (Vitest) � includes streaming, webhook, chat-wrapper, chat-body stop-state, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, persona prompt, rate limiting, task complexity classification, conversation stop enforcement, entitlement resolver full coverage (including admin override tests), checkout-success page, admin audit trail, OpenAI route tests, atomic prompt limit, daily conversation limit, media error handling, universal feature access, trial access tests, effective model config, effective plan config, checkout price bypass regression, video generation.
-- **E2E tests**: 13 Playwright spec files across browser projects (chat-app-shell, auth-boundaries, public-pages with 70+ tests, conversation-lifecycle, user-profile, admin-users, admin-features, landing-page, plans-public, pricing-public, authenticated-flows, persona-trial-access). 228 total. **174 passing, 6 failed (timeout/navigation, pre-existing), 48 skipped** (explained: Chromium-only trial spec � 6 non-Chromium projects = 24 new skips, all intentional).
-- **Coverage**: Configured (Phase 24.1) � v8 provider, thresholds: 70% statements / 60% branches / 70% functions / 70% lines. Current: 82/71/88/82.
+- **Unit tests**: 65+ suites, 368 tests (Vitest) — includes streaming, webhook, chat-wrapper, chat-body stop-state, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, persona prompt, rate limiting, task complexity classification, conversation stop enforcement, entitlement resolver full coverage (including admin override tests), checkout-success page, admin audit trail, OpenAI route tests, atomic prompt limit, daily conversation limit, media error handling, universal feature access, trial access tests, effective model config, effective plan config, checkout price bypass regression, video generation.
+- **E2E tests**: 13 Playwright spec files across browser projects (chat-app-shell, auth-boundaries, public-pages with 70+ tests, conversation-lifecycle, user-profile, admin-users, admin-features, landing-page, plans-public, pricing-public, authenticated-flows, persona-trial-access). 228 total. **165 passing, 5 failed (stale Clerk auth session + DB connectivity), 48 skipped** (explained: Chromium-only trial spec × 6 non-Chromium projects = 24 new skips, all intentional). Note: `pricing-public.spec.ts` is a duplicate of `plans-public.spec.ts` — to be removed (Phase 31.4).
+- **Coverage**: Configured (Phase 24.1) — v8 provider, thresholds: 70% statements / 60% branches / 70% functions / 70% lines. Current: 82/71/88/82.
 - **Gap**: No dedicated E2E spec for streamed chunk-by-chunk rendering (manually verified via Playwright MCP). Persona selector E2E (35.2) pending.
 
 ---
@@ -780,15 +780,25 @@ _None._
 | TD-PLAN-01 | Billing | No recurring subscriptions (deferred v1)                                      | Low      |
 | TD-AI-18   | OpenAI  | errorMessage forwarding pattern in /api/openai is safe but fragile (advisory) | Low      |
 
-### Active — High Priority (PM Audit #26)
+### Active — High Priority (PM Audit #27, Owner-Directed)
 
 | ID          | Area  | Description                                                                                                                                                                                                                                | Severity |
 | ----------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------- |
-| TD-ADMIN-10 | Admin | Admin UI persona gap: 5 `/app` pages call `resolveEntitlements()` without `isAdmin: true`. Admin users see Trial/PRO/PREMIUM labels even though backend grants full access. Phase 56.1 planned.                                            | High     |
-| TD-ADMIN-11 | Admin | Top Personas aggregation: legacy persona IDs (analyst, best-friend, boyfriend, girlfriend) from pre-Phase 41 data resolve to "Strategist" via `getPersona()` fallback. Null filter (54.4) insufficient. Phase 56.2 planned.                | Medium   |
-| TD-ADMIN-12 | Admin | Admin page design token inconsistency: users, transactions, website pages use `bg-white/70` while dashboard + usage use `bg-lightBackground-100/80`. 12 instances need standardization. Phase 56.3 planned.                                | Medium   |
-| TD-ADMIN-09 | Admin | Video model not admin-overridable. Image and audio models have admin overrides via `getEffectiveModelConfig()` but video does not. No `videoGenerationModel` in admin settings. Phase 50.1 planned.                                        | Medium   |
+| TD-UX-01    | Admin | ALL 14 admin forms have ZERO confirmation dialogs on destructive actions, ZERO visual feedback, and ZERO loading indicators. Owner directives #6/#7/#8 completely unimplemented in admin. Phase 57 planned.                                | Critical |
+| TD-UX-02    | Admin | ZERO admin data tables have bulk selection or bulk action capability (checkboxes, select-all, bulk delete/suspend/publish). Owner directive #9. Phase 58 planned.                                                                          | High     |
+| TD-UX-03    | Admin | Admin user detail shows `{used} / {limit}` but not "remaining". Owner directive #12: "remained vs included". Phase 59.1 planned.                                                                                                           | Medium   |
+| TD-ADMIN-14 | Admin | Admin form inputs use `bg-white` instead of design tokens. Inconsistent with `/app` input styling that uses design tokens. Phase 59.2 planned.                                                                                             | Medium   |
+| TD-UX-04    | UI    | User-facing delete error paths use `window.alert()` instead of the app's `AlertMessage` design system. Phase 57.4 planned.                                                                                                                 | High     |
 | TD-API-09   | API   | `messageTextContentSchema` still uses `.strict()` — inner content items could reject extra fields from model responses on conversation resumption. `chatMessageSchema` is passthrough (53.3) but content items are strict. Monitor needed. | Low      |
+
+### ~~Active — High Priority (PM Audit #26)~~ (All Resolved — PM Audit #27)
+
+| ID          | Area  | Description                                                                                | Status                                                                                                      |
+| ----------- | ----- | ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
+| TD-ADMIN-10 | Admin | Admin UI persona gap: 5 `/app` pages call `resolveEntitlements()` without `isAdmin: true`. | **Resolved (Phase 56.1)** — all 5 pages pass `isAdmin: true` when user is admin.                            |
+| TD-ADMIN-11 | Admin | Top Personas aggregation: legacy persona IDs resolve to "Strategist" via fallback.         | **Resolved (Phase 56.2)** — `$match` now uses `{ personaId: { $in: PERSONAS.map(p => p.id) } }`.            |
+| TD-ADMIN-12 | Admin | Admin page design token inconsistency: `bg-white/70` in 6 pages.                           | **Resolved (Phase 56.3)** — all pages use `bg-lightBackground-100/80`.                                      |
+| TD-ADMIN-09 | Admin | Video model not admin-overridable.                                                         | **Resolved (Phase 50.1)** — `videoGenerationModel` added to admin settings, effective config, and resolver. |
 
 ### ~~Active — Critical/High Priority (PM Audit #25)~~ (All Resolved — PM Audit #26)
 
