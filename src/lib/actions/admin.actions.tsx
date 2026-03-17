@@ -25,6 +25,7 @@ const adminSettingCategorySchema = z.enum([
   "trial",
   "features",
 ]);
+const currencySymbolSchema = z.enum(["$", "€"]);
 const PERSONA_ACCESS_KEYS = new Set([
   "persona_access_lite",
   "persona_access_pro",
@@ -84,6 +85,18 @@ function parseStructuredAdminSettingValue({
       proPrice: getNumericField(formData, "proPrice"),
       premiumPrice: getNumericField(formData, "premiumPrice"),
     };
+  }
+
+  if (key === "admin.currencySymbol") {
+    const parsedCurrencySymbol = currencySymbolSchema.safeParse(
+      getStringField(formData, "currencySymbol"),
+    );
+
+    if (!parsedCurrencySymbol.success) {
+      throw new Error("Invalid currency symbol.");
+    }
+
+    return parsedCurrencySymbol.data;
   }
 
   if (key === "admin.limits") {
@@ -312,6 +325,7 @@ export async function updateAdminSettingAction(formData: FormData) {
 
   if (
     key === "admin.pricing" ||
+    key === "admin.currencySymbol" ||
     key === "admin.limits" ||
     key === "admin.trialLimits"
   ) {

@@ -85,7 +85,21 @@ describe("getEffectivePlanConfig", () => {
       Lite: 0,
       Pro: 23,
       Premium: 47,
+      currencySymbol: "$",
     });
     expect(config.limits).toEqual(customLimits);
+  });
+
+  it("uses persisted currency symbol setting when available", async () => {
+    mockSettings([
+      {
+        key: "admin.currencySymbol",
+        value: "€",
+      },
+    ]);
+
+    const config = await getEffectivePlanConfig();
+
+    expect(config.pricing.currencySymbol).toBe("€");
   });
 });

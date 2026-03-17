@@ -65,6 +65,7 @@ describe("checkoutPlan phase17", () => {
         Lite: 0,
         Pro: 19,
         Premium: 39,
+        currencySymbol: "$",
       },
       limits: {
         Lite: {

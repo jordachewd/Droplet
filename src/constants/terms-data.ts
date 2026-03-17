@@ -8,7 +8,13 @@ export interface LegalSection {
 export const legalReviewDisclaimer =
   "This policy is provided for informational purposes. Legal review recommended before production publication.";
 
-export function buildTermsSections(pricing: PlanPricing): LegalSection[] {
+export function buildTermsSections({
+  pricing,
+  currencySymbol = pricing.currencySymbol,
+}: {
+  pricing: PlanPricing;
+  currencySymbol?: string;
+}): LegalSection[] {
   return [
     {
       title: "Service description",
@@ -34,7 +40,7 @@ export function buildTermsSections(pricing: PlanPricing): LegalSection[] {
     {
       title: "Payment terms",
       paragraphs: [
-        `The current approved public prices are Lite for free, Pro for $${pricing.Pro}, and Premium for $${pricing.Premium}. Paid tiers are available only after successful payment processing through Stripe or another approved billing provider.`,
+        `The current approved public prices are Lite for free, Pro for ${currencySymbol}${pricing.Pro}, and Premium for ${currencySymbol}${pricing.Premium}. Paid tiers are available only after successful payment processing through Stripe or another approved billing provider.`,
         "Draft product policy currently treats Pro and Premium as paid access periods rather than auto-renewing subscriptions. Exact renewal, refund, and billing-state handling should be reviewed and finalized before publication.",
       ],
     },

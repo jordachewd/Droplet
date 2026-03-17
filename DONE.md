@@ -2,7 +2,159 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-17 — PM deep audit #21. Phases 40–43.4 archived (except 43.2 hero images — in progress). Phases 1–25.7 + 27.1–27.5 + 27.6–27.10 + 28.1 + 28.2-fix + 28.3-code + 28.3-verify + 28.4 + 28.6 + 28.7 + 30.1 + 30.2 + 30.3 + 30.4 + 31.1 + 31.2 + 31.3 + 31.2-fix + 32.1 + 32.2 + 32.3 + 32.4 + 32.6 + 33.1–33.8 + 35.1 + 37.1 + 38.1–38.7 + 36.1–36.2 + 39.1 + 40.1–40.2 + 41.1–41.4 + 42.1–42.3 + 43.1 + 43.3 + 43.4 + E2E regression fixes complete.
+> Last updated: 2026-03-17 — PM deep audit #23. Phase 47.1 + Phase 34.2–34.8 archived. All Phases 1–45.4 complete. Phase 47.1 + 34.2–34.8 complete. Milestones 0–17 COMPLETED. Milestone 12 (Video) COMPLETED. Milestone 18 MOSTLY COMPLETE.
+
+---
+
+## Phase 34.2–34.8 — Video Generation (Full Implementation) — COMPLETED (2026-03-17)
+
+> PM audit #23. Triple-audit verified (PM + Architect + Engineer). Video generation end-to-end operational.
+> Quality gaps tracked in Phase 34.9 (see TODO.md).
+> 360 unit tests (65 suites). 174 E2E passing. Build passing.
+
+- [x] **34.2 HIGH** — Created `generateVideo.tsx` utility with async Sora polling: `videos.create()` → `waitForCompletedVideo()` → `videos.downloadContent()` → `uploadFileToAWS()`. Model resolved via `resolveModelPolicy()`. 180s polling timeout. Zero-byte check. S3 upload to `{userId}/videos/`.
+- [x] **34.3 HIGH** — Added `videoGenerationTool` definition and `getChatTools()` update with `supportsVideoGeneration` flag.
+- [x] **34.4 HIGH** — Added `getGeneratedVideo` handler in `buildOpenAIResponsePayload()`. Atomic slot claim/rollback. Error-isolated rollback in catch. `requestMetric` tracking.
+- [x] **34.5 HIGH** — Extended `MediaUsageLimitType` to include `"video"`. `resolveMediaCounterField()` maps video to `plan.videoGenerations` / `plan.trialUsage.trialVideoGenerations`. Atomic `findOneAndUpdate` with `$lt` guard.
+- [x] **34.6 HIGH** — Created `VideoPlayer` component (`src/components/shared/video-player.tsx`). Video rendering in `chat-body.tsx` for `video_url` content items.
+- [x] **34.7 HIGH** — Re-enabled `supportsVideoGeneration: true` in entitlements. Library page queries video items. Library tabs render video cards with pagination.
+- [x] **34.8 HIGH** — Unit tests: `generate-video.test.ts` (1 test, happy path), `generate-response.test.ts` updated, `filter-assistant-msg.test.ts` updated, `library-tabs-media-cards.test.tsx` updated.
+
+**Files changed:** `src/lib/utils/openai/generateVideo.tsx` (new), `src/constants/openai.tsx`, `src/lib/utils/openai/generateResponse.tsx`, `src/app/api/openai/route.tsx`, `src/components/shared/video-player.tsx` (new), `src/components/chat/chat-body.tsx`, `src/app/(chat)/app/library/page.tsx`, `src/components/chat/library-tabs.tsx`, `src/lib/utils/resolve-entitlements.tsx`, `src/lib/utils/openai/filterAssistantMsg.tsx`, `src/lib/actions/task.actions.tsx`, `tests/unit/generate-video.test.ts` (new), `tests/unit/generate-response.test.ts`, `tests/unit/filter-assistant-msg.test.ts`, `tests/unit/library-tabs-media-cards.test.tsx`
+
+**Known gaps (tracked in Phase 34.9):** Missing `seconds`/`size` in Sora API call. Missing `playsInline` on VideoPlayer. Video tool description missing spaces. Unit tests cover only happy path. Plan cards still show "(coming soon)" for video.
+
+---
+
+## Phase 47.1 — Video Generation Claims Suppression — COMPLETED (2026-03-17)
+
+> PM audit #23. Verified DONE. Temporary suppression executed, then reversed by Phase 34.7.
+
+- [x] **47.1 CRITICAL** — Forced `supportsVideoGeneration: false` for all plans during video development window.
+- [x] Suppression reversed in Phase 34.7 after full video implementation delivered.
+- [x] Plan cards kept "Coming soon" label during development (to be removed in Phase 34.9a).
+
+**Files changed:** `src/lib/utils/resolve-entitlements.tsx`
+
+---
+
+## Phase 45.4 — Consolidate Shared TypeScript Types to src/types/ — COMPLETED (2026-03-17)
+
+> PM audit #22. Verified DONE. Engineer work report confirmed.
+
+- [x] **45.4 MEDIUM** — Deduplicated `UploadRouteResponse`, `ModelSettingsFormValue`, `ThemeMode` types.
+- [x] Moved `LibraryConversationCardItem`, `LibraryMediaCardItem`, `LibraryPaginationState` to `src/types/LibraryData.d.tsx`.
+- [x] Moved `AlertParams` to `src/types/AlertData.d.tsx`.
+- [x] Component-local Props interfaces kept co-located.
+
+**Files changed:** `src/types/UploadData.d.tsx`, `src/types/AdminData.d.tsx`, `src/types/LibraryData.d.tsx`, `src/types/AlertData.d.tsx`, `src/types/ThemeData.d.tsx`, consumers rewired.
+
+---
+
+## Phase 45.3 — Outsource Inline Data to Constants Files — COMPLETED (2026-03-17)
+
+> PM audit #22. Verified DONE. Engineer work report confirmed.
+
+- [x] **45.3 MEDIUM** — Extracted inline data arrays to dedicated constants files.
+- [x] `about-data.ts`, `terms-data.ts`, `privacy-data.ts`, `cookies-data.ts`, `landing-data.ts` in `src/constants/`.
+- [x] Pages import from constants — no inline data arrays remain.
+
+**Files changed:** `src/constants/about-data.ts` (new), `src/constants/terms-data.ts` (new), `src/constants/privacy-data.ts` (new), `src/constants/cookies-data.ts` (new), `src/constants/landing-data.ts` (new), page files rewired.
+
+---
+
+## Phase 45.2 — Add Missing .lean() / .select() to DB Queries — COMPLETED (2026-03-17)
+
+> PM audit #22. Verified DONE. Engineer work report confirmed.
+
+- [x] **45.2 MEDIUM** — 5 DB queries optimized with `.lean()` and `.select()`.
+- [x] Stripe webhook, transaction action, Clerk webhook, check-daily-conversations all updated.
+
+**Files changed:** `src/app/api/webhooks/stripe/route.tsx`, `src/lib/actions/transaction.action.tsx`, `src/app/api/webhooks/clerk/route.tsx`, `src/lib/utils/check-daily-conversations.ts`
+
+---
+
+## Phase 45.1 — Remove Dead Code: V1 Sidebar Nav — COMPLETED (2026-03-17)
+
+> PM audit #22. Verified DONE. Engineer work report confirmed.
+
+- [x] **45.1 HIGH** — Deleted `chat-sidebar-nav.tsx` (V1 dead code with broken links).
+- [x] Removed obsolete unit test.
+
+**Files changed:** `src/components/chat/sidebar/chat-sidebar-nav.tsx` (deleted), `tests/unit/chat-sidebar-nav.test.tsx` (deleted).
+
+---
+
+## Phase 44.5 — Create getEffectiveTrialLimits() Utility — COMPLETED (2026-03-17)
+
+> PM audit #22. Verified DONE. Engineer work report confirmed.
+
+- [x] **44.5 HIGH** — `getEffectiveTrialLimits()` reads `AppSetting("admin.trialLimits")`, falls back to `PERSONA_TRIAL_LIMITS`.
+- [x] All 6 direct `PERSONA_TRIAL_LIMITS` references in `/api/openai` route replaced with effective config.
+- [x] Admin trial limits form and persistence added to admin settings.
+
+**Files changed:** `src/lib/utils/effective-plan-config.ts`, `src/app/api/openai/route.tsx`, `src/app/(admin)/admin/settings/page.tsx`, `src/lib/actions/admin.actions.tsx`, `src/lib/utils/admin-queries.ts`
+
+---
+
+## Phase 44.4 — Make Plan Card Persona Labels Dynamic — COMPLETED (2026-03-17)
+
+> PM audit #22. Verified DONE. Engineer work report confirmed.
+
+- [x] **44.4 HIGH** — Plan card persona count labels generated from effective persona access config.
+- [x] Dynamic trial limit labels from effective trial limits.
+- [x] All call sites pass admin-resolved config.
+
+**Files changed:** `src/constants/plans.tsx`, plan page call sites.
+
+---
+
+## Phase 44.3 — Fix Hardcoded Prices in Terms Page — COMPLETED (2026-03-17)
+
+> PM audit #22. Verified DONE. Engineer work report confirmed.
+
+- [x] **44.3 CRITICAL** — `buildTermsSections(pricing)` uses template interpolation for pricing text.
+- [x] Zero hardcoded prices in Terms page.
+
+**Files changed:** `src/constants/terms-data.ts`, `src/app/(public)/terms/page.tsx`
+
+---
+
+## Phase 44.2 — Fix Hardcoded Prices and Persona Count in About Page — COMPLETED (2026-03-17)
+
+> PM audit #22. Verified DONE. Engineer work report confirmed.
+
+- [x] **44.2 CRITICAL** — About page calls `getEffectivePlanConfig()` + `getEffectivePersonaAccessByPlan()`.
+- [x] Pricing values and persona counts fully dynamic from admin config.
+- [x] Persona gating copy generated from effective access config via `about-data.ts`.
+
+**Files changed:** `src/app/(public)/about/page.tsx`, `src/constants/about-data.ts`
+
+---
+
+## Phase 44.1 — Fix Stale FAQ Persona Counts and Pricing — COMPLETED (2026-03-17)
+
+> PM audit #22. Verified DONE. Engineer work report confirmed.
+
+- [x] **44.1 CRITICAL** — `buildFaqs(config)` function takes pricing + persona gating config.
+- [x] Replaced hardcoded "$19" / "$39" with dynamic `pricing.Pro` / `pricing.Premium`.
+- [x] Replaced hardcoded persona counts with admin-resolved values.
+- [x] All FAQ render points wired: `/faqs`, `/plans`, `/app/plans`, landing page.
+
+**Files changed:** `src/constants/faqs.tsx`, `src/components/sections/faqs-section.tsx`, FAQ pages.
+
+---
+
+## Phase 43.2 — Persona Hero Images (Placeholders) — COMPLETED (2026-03-17)
+
+> PM audit #22. Verified DONE. Engineer work report confirmed. Using placeholder SVGs until Owner provides final images.
+
+- [x] **43.2 MEDIUM** — 6 placeholder SVG hero images in `public/personas/`.
+- [x] `heroImage` field added to persona type and all persona definitions.
+- [x] Hero images displayed on persona cards and public `/personas` page.
+- [x] Owner will provide final images to replace placeholders.
+
+**Files changed:** `src/types/PersonaData.d.tsx`, `src/constants/assistant-personas.tsx`, `src/components/shared/persona-card.tsx`, `public/personas/*.svg`
 
 ---
 

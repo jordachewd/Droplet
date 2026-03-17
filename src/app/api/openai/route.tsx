@@ -170,7 +170,7 @@ interface ConversationStopPayload {
   acceptedPrompt: boolean;
 }
 
-type MediaUsageLimitType = "images" | "audio";
+type MediaUsageLimitType = "images" | "audio" | "video";
 type MediaCounterScope = "plan" | "trial";
 
 interface MediaSlotClaimResult {
@@ -257,17 +257,31 @@ function resolveMediaCounterField(
 ):
   | "plan.imageGenerations"
   | "plan.audioGenerations"
+  | "plan.videoGenerations"
   | "plan.trialUsage.trialImageGenerations"
-  | "plan.trialUsage.trialAudioGenerations" {
+  | "plan.trialUsage.trialAudioGenerations"
+  | "plan.trialUsage.trialVideoGenerations" {
   if (counterScope === "trial") {
-    return limitType === "images"
-      ? "plan.trialUsage.trialImageGenerations"
-      : "plan.trialUsage.trialAudioGenerations";
+    if (limitType === "images") {
+      return "plan.trialUsage.trialImageGenerations";
+    }
+
+    if (limitType === "audio") {
+      return "plan.trialUsage.trialAudioGenerations";
+    }
+
+    return "plan.trialUsage.trialVideoGenerations";
   }
 
-  return limitType === "images"
-    ? "plan.imageGenerations"
-    : "plan.audioGenerations";
+  if (limitType === "images") {
+    return "plan.imageGenerations";
+  }
+
+  if (limitType === "audio") {
+    return "plan.audioGenerations";
+  }
+
+  return "plan.videoGenerations";
 }
 
 async function claimMediaGenerationSlot({
@@ -319,10 +333,14 @@ async function claimMediaGenerationSlot({
     counterScope === "trial"
       ? limitType === "images"
         ? updatedUser.plan?.trialUsage?.trialImageGenerations
-        : updatedUser.plan?.trialUsage?.trialAudioGenerations
+        : limitType === "audio"
+          ? updatedUser.plan?.trialUsage?.trialAudioGenerations
+          : updatedUser.plan?.trialUsage?.trialVideoGenerations
       : limitType === "images"
         ? updatedUser.plan?.imageGenerations
-        : updatedUser.plan?.audioGenerations;
+        : limitType === "audio"
+          ? updatedUser.plan?.audioGenerations
+          : updatedUser.plan?.videoGenerations;
   const nextCount =
     typeof nextCountRaw === "number" && Number.isFinite(nextCountRaw)
       ? nextCountRaw

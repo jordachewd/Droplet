@@ -140,7 +140,7 @@ describe("POST /api/openai phase16", () => {
       retryAfterMs: 0,
     });
     vi.mocked(getEffectivePlanConfig).mockResolvedValue({
-      pricing: { Lite: 0, Pro: 19, Premium: 39 },
+      pricing: { Lite: 0, Pro: 19, Premium: 39, currencySymbol: "$" },
       limits: PLAN_LIMITS,
       trialLimits: {
         promptsPerConversation: 5,

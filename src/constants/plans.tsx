@@ -15,12 +15,15 @@ export type PlanLimits = Record<
   }
 >;
 
-export type PlanPricing = Record<PlanName, number>;
+export type PlanPricing = Record<PlanName, number> & {
+  currencySymbol: string;
+};
 
 export const DEFAULT_PLAN_PRICING: PlanPricing = {
   Lite: 0,
   Pro: 19,
   Premium: 39,
+  currencySymbol: "$",
 };
 
 export const PLAN_LIMITS: PlanLimits = {
@@ -198,12 +201,12 @@ export function buildPlans({
           isIncluded: true,
         },
         {
-          label: `${formatMediaLimitLabel({
+          label: formatMediaLimitLabel({
             limit: limits.Lite.video,
             singular: "video generation",
             plural: "video generations",
             suffix: " per month",
-          })} (coming soon)`,
+          }),
           isIncluded: true,
         },
         {
@@ -262,12 +265,12 @@ export function buildPlans({
           isIncluded: true,
         },
         {
-          label: `${formatMediaLimitLabel({
+          label: formatMediaLimitLabel({
             limit: limits.Pro.video,
             singular: "video generation",
             plural: "video generations",
             suffix: " per month",
-          })} (coming soon)`,
+          }),
           isIncluded: true,
         },
         {
@@ -334,12 +337,12 @@ export function buildPlans({
           isIncluded: true,
         },
         {
-          label: `${formatMediaLimitLabel({
+          label: formatMediaLimitLabel({
             limit: limits.Premium.video,
             singular: "video generation",
             plural: "video generations",
             suffix: " per month",
-          })} (coming soon)`,
+          }),
           isIncluded: true,
         },
         {

@@ -5,6 +5,7 @@ import { openAiClient } from "@/constants/openai";
 import { PLAN_LIMITS } from "@/constants/plans";
 import { generateImage } from "@/lib/utils/openai/generateImage";
 import { generateAudio } from "@/lib/utils/openai/generateAudio";
+import { generateVideo } from "@/lib/utils/openai/generateVideo";
 import { PersonaId } from "@/types/PersonaData.d";
 
 vi.mock("@/constants/openai", () => ({
@@ -24,6 +25,10 @@ vi.mock("@/lib/utils/openai/generateImage", () => ({
 
 vi.mock("@/lib/utils/openai/generateAudio", () => ({
   generateAudio: vi.fn(),
+}));
+
+vi.mock("@/lib/utils/openai/generateVideo", () => ({
+  generateVideo: vi.fn(),
 }));
 
 const defaultEntitlements = {
@@ -484,6 +489,69 @@ describe("generateResponse", () => {
     });
     const payload = JSON.parse(result as string);
     expect(payload.generatedAudio).toBe(true);
+  });
+
+  it("dispatches video tool calls to generateVideo", async () => {
+    vi.mocked(openAiClient.chat.completions.create).mockResolvedValue({
+      choices: [
+        {
+          message: {
+            role: "assistant",
+            content: null,
+            tool_calls: [
+              {
+                type: "function",
+                function: {
+                  name: "getGeneratedVideo",
+                  arguments: JSON.stringify({
+                    prompt: "A cinematic drone shot over mountains",
+                  }),
+                },
+              },
+            ],
+          },
+        },
+      ],
+      usage: {
+        total_tokens: 18,
+      },
+    } as never);
+
+    vi.mocked(generateVideo).mockResolvedValue(
+      JSON.stringify({
+        taskData: {
+          role: "assistant",
+          whois: "assistant",
+          content: [{ type: "text", text: "Video generated." }],
+        },
+        generatedVideo: true,
+      }),
+    );
+
+    const result = await generateResponse({
+      messages: [
+        {
+          role: "user",
+          whois: "user",
+          content: [{ type: "text", text: "Create a video." }],
+        },
+      ],
+      taskId: "task_video",
+      userId: "clerk_1",
+      personaId: "creator",
+      planName: "Pro",
+      entitlements: defaultEntitlements,
+    });
+
+    expect(generateVideo).toHaveBeenCalledWith({
+      prompt: "A cinematic drone shot over mountains",
+      role: "assistant",
+      taskId: "task_video",
+      userId: "clerk_1",
+      planName: "Pro",
+    });
+    const payload = JSON.parse(result as string);
+    expect(payload.generatedVideo).toBe(true);
   });
 
   it("rolls back claimed audio slot when audio generation fails", async () => {

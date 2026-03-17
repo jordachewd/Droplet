@@ -23,6 +23,7 @@ interface LibraryPageProps {
     chatsPage?: string;
     imagesPage?: string;
     audiosPage?: string;
+    videosPage?: string;
   }>;
 }
 
@@ -48,21 +49,24 @@ function parseTab(value: string | undefined): LibraryTabId {
 }
 
 export default async function LibraryPage({ searchParams }: LibraryPageProps) {
-  const { tab, chatsPage, imagesPage, audiosPage } = await searchParams;
+  const { tab, chatsPage, imagesPage, audiosPage, videosPage } =
+    await searchParams;
   const { userId } = await auth();
   const activeTabId = parseTab(tab);
   const conversationsPage = parsePage(chatsPage);
   const imagesPageNumber = parsePage(imagesPage);
   const audiosPageNumber = parsePage(audiosPage);
+  const videosPageNumber = parsePage(videosPage);
 
   const conversationsOffset = (conversationsPage - 1) * CHAT_PAGE_SIZE;
   const imagesOffset = (imagesPageNumber - 1) * MEDIA_PAGE_SIZE;
   const audiosOffset = (audiosPageNumber - 1) * MEDIA_PAGE_SIZE;
+  const videosOffset = (videosPageNumber - 1) * MEDIA_PAGE_SIZE;
 
   let conversations: LibraryConversationCardItem[] = [];
   let imageItems: LibraryMediaCardItem[] = [];
   let audioItems: LibraryMediaCardItem[] = [];
-  const videoItems: LibraryMediaCardItem[] = [];
+  let videoItems: LibraryMediaCardItem[] = [];
   let conversationsPagination: LibraryPaginationState = {
     currentPage: conversationsPage,
     hasPreviousPage: conversationsPage > 1,
@@ -78,6 +82,11 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
     hasPreviousPage: audiosPageNumber > 1,
     hasNextPage: false,
   };
+  let videosPagination: LibraryPaginationState = {
+    currentPage: videosPageNumber,
+    hasPreviousPage: videosPageNumber > 1,
+    hasNextPage: false,
+  };
   let hasLoadError = false;
 
   if (!userId) {
@@ -90,7 +99,7 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
       CHAT_PAGE_SIZE + 1,
       conversationsOffset,
     );
-    const [images, audios] = await Promise.all([
+    const [images, audios, videos] = await Promise.all([
       getMediaItemsByUserId(
         userId,
         "image_url",
@@ -103,11 +112,18 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
         MEDIA_PAGE_SIZE + 1,
         audiosOffset,
       ),
+      getMediaItemsByUserId(
+        userId,
+        "video_url",
+        MEDIA_PAGE_SIZE + 1,
+        videosOffset,
+      ),
     ]);
 
     const pagedTaskHistory = taskHistory.slice(0, CHAT_PAGE_SIZE);
     const pagedImages = images.slice(0, MEDIA_PAGE_SIZE);
     const pagedAudios = audios.slice(0, MEDIA_PAGE_SIZE);
+    const pagedVideos = videos.slice(0, MEDIA_PAGE_SIZE);
 
     conversationsPagination = {
       currentPage: conversationsPage,
@@ -123,6 +139,11 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
       currentPage: audiosPageNumber,
       hasPreviousPage: audiosPageNumber > 1,
       hasNextPage: audios.length > MEDIA_PAGE_SIZE,
+    };
+    videosPagination = {
+      currentPage: videosPageNumber,
+      hasPreviousPage: videosPageNumber > 1,
+      hasNextPage: videos.length > MEDIA_PAGE_SIZE,
     };
 
     conversations = pagedTaskHistory.map((task) => ({
@@ -143,6 +164,14 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
     }));
 
     audioItems = pagedAudios.map((item) => ({
+      ...item,
+      personaLabel: getPersona(item.personaId).label,
+      personaIcon: getPersona(item.personaId).icon,
+      createdAtLabel: mapDateToLabel(item.createdAt),
+      href: `/app/c/${item.taskId}`,
+    }));
+
+    videoItems = pagedVideos.map((item) => ({
       ...item,
       personaLabel: getPersona(item.personaId).label,
       personaIcon: getPersona(item.personaId).icon,
@@ -174,6 +203,7 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
           conversationsPagination={conversationsPagination}
           imagesPagination={imagesPagination}
           audiosPagination={audiosPagination}
+          videosPagination={videosPagination}
           hasLoadError={hasLoadError}
         />
       </section>

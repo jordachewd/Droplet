@@ -8,6 +8,7 @@ import remarkGfm from "remark-gfm";
 import LoadingBubbles from "@/components/shared/loading-bubbles";
 import ImageHolder from "@/components/shared/image-holder";
 import AudioPlayer from "@/components/shared/audio-player";
+import VideoPlayer from "@/components/shared/video-player";
 import { TaskEndAction, TaskEndedReason } from "@/types/TaskData.d";
 import { SUPPORT_EMAIL } from "@/constants/support";
 
@@ -77,10 +78,20 @@ export default function ChatBody({
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
+    if (!parent.current) {
+      return;
+    }
+
+    const stopAutoAnimate = autoAnimate(parent.current);
+
+    return () => {
+      stopAutoAnimate.disable();
+      stopAutoAnimate.destroy?.();
+    };
+  }, []);
+
+  useEffect(() => {
     if (messages.length > 0) {
-      if (parent.current) {
-        autoAnimate(parent.current);
-      }
       bottomRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages]);
@@ -148,6 +159,15 @@ export default function ChatBody({
                       <AudioPlayer
                         key={contentIndex}
                         audioSrc={reply.audio_url || null}
+                      />
+                    );
+                  }
+
+                  if (reply.type === "video_url") {
+                    return (
+                      <VideoPlayer
+                        key={contentIndex}
+                        videoSrc={reply.video_url || null}
                       />
                     );
                   }

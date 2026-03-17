@@ -16,6 +16,7 @@ export default async function PlanPromo() {
 
   if (!userPlan) return null;
 
+  const isAdmin = userData?.role === "admin";
   const { name } = userPlan;
   const isLite = name === "Lite";
   const isPremiumFull = name === "Premium";
@@ -42,10 +43,10 @@ export default async function PlanPromo() {
               "rounded-[5px] px-1 py-1 text-2xs uppercase leading-none tracking-wider",
               "bg-lightAccent-900 text-lightAccent-300",
               "dark:bg-darkAccent-1000 dark:text-darkAccent-400",
-              { "min-w-[82px]": !isLite },
+              { "min-w-20.5": !isLite },
             )}
           >
-            {isLite ? "Free forever" : "Your plan"}
+            {isAdmin ? "Admin" : isLite ? "Free forever" : "Your plan"}
           </span>
         </div>
 
@@ -56,7 +57,11 @@ export default async function PlanPromo() {
           <span>{name}</span>
         </h2>
 
-        {!isPremiumFull && (
+        {isAdmin ? (
+          <div className="flex w-full items-center justify-center border-t border-dotted border-darkAccent-1000 pt-2.5 text-xs font-semibold uppercase tracking-wide">
+            Admin access - full permissions
+          </div>
+        ) : !isPremiumFull ? (
           <>
             <div className="flex w-full items-center justify-center border-t border-dotted border-darkAccent-1000 pt-2.5 text-xs">
               Unlock premium features with an upgrade!
@@ -68,7 +73,7 @@ export default async function PlanPromo() {
               Upgrade now
             </Link>
           </>
-        )}
+        ) : null}
       </div>
     </div>
   );

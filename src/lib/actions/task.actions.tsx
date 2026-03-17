@@ -99,7 +99,11 @@ function collectOwnedTaskAssetObjectKeys(
     }
 
     for (const contentItem of message.content) {
-      const rawValues = [contentItem.image_url?.url, contentItem.audio_url];
+      const rawValues = [
+        contentItem.image_url?.url,
+        contentItem.audio_url,
+        contentItem.video_url,
+      ];
 
       for (const rawValue of rawValues) {
         if (!rawValue) {

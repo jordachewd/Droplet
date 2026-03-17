@@ -509,6 +509,7 @@ export async function getAdminSettingsSnapshot() {
       pricing: {
         proPrice: DEFAULT_PLAN_PRICING.Pro,
         premiumPrice: DEFAULT_PLAN_PRICING.Premium,
+        currencySymbol: DEFAULT_PLAN_PRICING.currencySymbol,
       },
       limits: structuredClone(PLAN_LIMITS) as PlanLimits,
       trialLimits: { ...PERSONA_TRIAL_LIMITS },

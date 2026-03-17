@@ -14,12 +14,14 @@ interface PlansProps {
   userData?: UserData | null;
   hasLoader?: boolean;
   plansData?: Plan[];
+  currencySymbol?: string;
 }
 
 export default function Plans({
   userData,
   hasLoader = false,
   plansData,
+  currencySymbol = "$",
 }: PlansProps) {
   const { isSignedIn } = useUser();
   const planList = plansData ?? defaultPlans;
@@ -44,7 +46,14 @@ export default function Plans({
 
       <div className="flex w-full flex-col justify-between gap-10 md:flex-row md:gap-4 lg:gap-8">
         {planList.map((plan: Plan) => {
-          return <PlanCard key={plan.id} plan={plan} userData={userData} />;
+          return (
+            <PlanCard
+              key={plan.id}
+              plan={plan}
+              userData={userData}
+              currencySymbol={currencySymbol}
+            />
+          );
         })}
       </div>
 

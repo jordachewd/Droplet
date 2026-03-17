@@ -7,9 +7,14 @@ import Checkout from "@/components/shared/checkout-form";
 interface PlanCardProps {
   plan: Plan;
   userData?: UserData | null;
+  currencySymbol?: string;
 }
 
-export default function PlanCard({ plan, userData }: PlanCardProps) {
+export default function PlanCard({
+  plan,
+  userData,
+  currencySymbol = "$",
+}: PlanCardProps) {
   const hasUserData = userData && Object.keys(userData).length > 0;
   const planFee = plan.price;
 
@@ -63,7 +68,7 @@ export default function PlanCard({ plan, userData }: PlanCardProps) {
             )}
           >
             <span className="flex">
-              {plan.price !== 0 ? "$" + planFee : "Free"}
+              {plan.price !== 0 ? currencySymbol + planFee : "Free"}
             </span>
 
             {plan.price !== 0 && (

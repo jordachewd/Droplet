@@ -6,16 +6,22 @@ import SidebarHead from "@/components/chat/sidebar/sidebar-head";
 import ChatSidebarNavV2 from "@/components/chat/sidebar/chat-sidebar-nav-v2";
 import ChatSidebarPromo from "@/components/chat/sidebar/chat-sidebar-promo";
 import { ConversationListItem } from "@/types/PersonaData.d";
+import { PlanName } from "@/types/PlanData.d";
+import { UserRoles } from "@/types/UserData.d";
 import { usePathname } from "next/navigation";
 import { useUiStore } from "@/lib/hooks/use-ui-store";
 import { useShallow } from "zustand/react/shallow";
 
 interface ChatSidebarShellProps {
   historyItems: ConversationListItem[];
+  userRole?: UserRoles;
+  userPlanName?: PlanName | null;
 }
 
 export default function ChatSidebarShell({
   historyItems,
+  userRole,
+  userPlanName,
 }: ChatSidebarShellProps) {
   const sidebarStorageKey = "droplet-sidebar-collapsed";
   const legacySidebarStorageKey = "cellesseon-sidebar-collapsed";
@@ -118,7 +124,11 @@ export default function ChatSidebarShell({
           />
         </div>
 
-        <ChatSidebarPromo isOpen={isSidebarOpen} />
+        <ChatSidebarPromo
+          isOpen={isSidebarOpen}
+          userRole={userRole}
+          planName={userPlanName}
+        />
       </aside>
     </>
   );
