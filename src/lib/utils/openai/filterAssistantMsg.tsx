@@ -7,7 +7,10 @@ export function filterAssistantMsg(messages: Message[]) {
         ...message,
         content: Array.isArray(message.content)
           ? message.content.filter(
-              (item) => item.type !== "image_url" && item.type !== "audio_url",
+              (item) =>
+                item.type !== "image_url" &&
+                item.type !== "audio_url" &&
+                item.type !== "video_url",
             )
           : message.content,
       };

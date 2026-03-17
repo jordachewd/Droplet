@@ -3,7 +3,7 @@ import { filterAssistantMsg } from "@/lib/utils/openai/filterAssistantMsg";
 import { Message } from "@/types";
 
 describe("filterAssistantMsg", () => {
-  it("removes image/audio tool outputs from assistant messages", () => {
+  it("removes image/audio/video tool outputs from assistant messages", () => {
     const messages: Message[] = [
       {
         whois: "assistant",
@@ -15,6 +15,7 @@ describe("filterAssistantMsg", () => {
             image_url: { url: "https://example.com/a.png" },
           },
           { type: "audio_url", audio_url: "audio-data" },
+          { type: "video_url", video_url: "https://example.com/a.mp4" },
         ],
       },
     ];
