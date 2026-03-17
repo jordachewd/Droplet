@@ -42,6 +42,13 @@ export interface ResolveModelInput {
   highLatency?: boolean;
   explicitPremium?: boolean;
   audioMode?: AudioMode;
+  modelOverrides?: ModelPolicyModelOverrides;
+}
+
+export interface ModelPolicyModelOverrides {
+  chat?: Partial<Record<PlanTier, string>>;
+  imageGenerationModel?: string;
+  audioGenerationModel?: string;
 }
 
 export interface ModelPolicyRule {
@@ -522,6 +529,40 @@ export function resolveModelPolicy(
   let model = rule.model;
   let fallbackModel = rule.fallbackModel;
   let notes = rule.notes;
+
+  const chatOverride = input.modelOverrides?.chat?.[plan];
+  if (
+    input.feature === "chat" &&
+    typeof chatOverride === "string" &&
+    chatOverride.length > 0
+  ) {
+    model = chatOverride;
+    notes = joinNotes(notes, "Admin override applied for chat model.");
+  }
+
+  if (
+    input.feature === "image_generation" &&
+    typeof input.modelOverrides?.imageGenerationModel === "string" &&
+    input.modelOverrides.imageGenerationModel.length > 0
+  ) {
+    model = input.modelOverrides.imageGenerationModel;
+    notes = joinNotes(
+      notes,
+      "Admin override applied for image generation model.",
+    );
+  }
+
+  if (
+    input.feature === "audio_generation" &&
+    typeof input.modelOverrides?.audioGenerationModel === "string" &&
+    input.modelOverrides.audioGenerationModel.length > 0
+  ) {
+    model = input.modelOverrides.audioGenerationModel;
+    notes = joinNotes(
+      notes,
+      "Admin override applied for audio generation model.",
+    );
+  }
 
   if (normalizedBudgetState === "hard_limit_reached") {
     return createResolvedPolicy({

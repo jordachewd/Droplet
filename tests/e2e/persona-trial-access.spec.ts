@@ -179,7 +179,10 @@ test.describe("persona trial access flow", () => {
       .first();
 
     await expect(
-      teacherCard.locator("span").filter({ hasText: /^Trial$/ }).first(),
+      teacherCard
+        .locator("span")
+        .filter({ hasText: /^Trial$/ })
+        .first(),
     ).toBeVisible();
   });
 });

@@ -7,6 +7,7 @@ import uploadFileToAWS from "@/lib/utils/aws/uploadFileToAWS";
 import { generateString } from "@/lib/utils/generateString";
 import {
   AudioMode,
+  ModelPolicyModelOverrides,
   normalizePlanTier,
   resolveModelPolicy,
 } from "@/lib/utils/ai-model-policy";
@@ -24,6 +25,7 @@ interface GenerateAudioParams {
   userId: string;
   planName: PlanName;
   audioMode?: AudioMode;
+  modelOverrides?: ModelPolicyModelOverrides;
 }
 
 function decodeGeneratedAudio(rawAudioData: string): Buffer {
@@ -50,12 +52,14 @@ export async function generateAudio({
   userId,
   planName,
   audioMode = "tts",
+  modelOverrides,
 }: GenerateAudioParams) {
   const policy = resolveModelPolicy({
     plan: normalizePlanTier(planName),
     feature: "audio_generation",
     taskClass: "final",
     audioMode,
+    modelOverrides,
   });
 
   try {

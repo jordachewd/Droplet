@@ -6,6 +6,7 @@ import sharp from "sharp";
 import uploadFileToAWS from "@/lib/utils/aws/uploadFileToAWS";
 import { generateString } from "@/lib/utils/generateString";
 import {
+  ModelPolicyModelOverrides,
   normalizePlanTier,
   resolveModelPolicy,
 } from "@/lib/utils/ai-model-policy";
@@ -17,6 +18,7 @@ interface GenerateImageParams {
   taskId: string;
   userId: string;
   planName: PlanName;
+  modelOverrides?: ModelPolicyModelOverrides;
 }
 
 async function convertToPng(imageBuffer: Buffer): Promise<Buffer | undefined> {
@@ -54,11 +56,13 @@ export async function generateImage({
   taskId,
   userId,
   planName,
+  modelOverrides,
 }: GenerateImageParams) {
   const policy = resolveModelPolicy({
     plan: normalizePlanTier(planName),
     feature: "image_generation",
     taskClass: "final",
+    modelOverrides,
   });
 
   try {
