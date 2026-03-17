@@ -25,11 +25,17 @@ export default async function AppPlansPage() {
   const faqs = buildFaqs({
     pricing: effectivePlanConfig.pricing,
     personaAccessByPlan,
+    currencySymbol: effectivePlanConfig.pricing.currencySymbol,
   });
 
   return userData ? (
     <PageWrapper id="AppPlansPage" scrollable>
-      <Plans userData={userData} hasLoader plansData={plans} />
+      <Plans
+        userData={userData}
+        hasLoader
+        plansData={plans}
+        currencySymbol={effectivePlanConfig.pricing.currencySymbol}
+      />
       <Faqs faqsData={faqs} />
     </PageWrapper>
   ) : (

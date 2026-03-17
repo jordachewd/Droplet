@@ -1,12 +1,16 @@
 import PageHead from "@/components/layout/page-head";
 import { getAdminUsageAnalytics } from "@/lib/utils/admin-queries";
+import { getEffectiveCurrencySymbol } from "@/lib/utils/effective-plan-config";
 
-function formatCost(costCents: number) {
-  return `$${(costCents / 100).toFixed(2)}`;
+function formatCost(costCents: number, currencySymbol: string) {
+  return `${currencySymbol}${(costCents / 100).toFixed(2)}`;
 }
 
 export default async function AdminUsagePage() {
-  const analytics = await getAdminUsageAnalytics();
+  const [analytics, currencySymbol] = await Promise.all([
+    getAdminUsageAnalytics(),
+    getEffectiveCurrencySymbol(),
+  ]);
 
   return (
     <section className="AdminUsagePage mx-auto flex w-full max-w-7xl flex-col gap-6">
@@ -33,7 +37,7 @@ export default async function AdminUsagePage() {
             Estimated Cost
           </p>
           <p className="heading-4 mt-2">
-            {formatCost(analytics.summary.totalCostCents)}
+            {formatCost(analytics.summary.totalCostCents, currencySymbol)}
           </p>
         </article>
         <article className="rounded-2xl border border-lightBorders-300/70 bg-lightBackground-100/80 p-5 shadow-sm dark:border-darkBorders-500 dark:bg-jwdMarine-900/70">
@@ -77,7 +81,7 @@ export default async function AdminUsagePage() {
                 <span className="font-medium">{user.username}</span>
                 <span className="truncate">{user.email}</span>
                 <span>{user.count} events</span>
-                <span>{formatCost(user.costCents)}</span>
+                <span>{formatCost(user.costCents, currencySymbol)}</span>
               </div>
             ))}
           </div>
@@ -93,7 +97,7 @@ export default async function AdminUsagePage() {
               >
                 <span className="truncate">{item.label}</span>
                 <span>{item.count}</span>
-                <span>{formatCost(item.costCents)}</span>
+                <span>{formatCost(item.costCents, currencySymbol)}</span>
               </div>
             ))}
           </div>
@@ -111,7 +115,7 @@ export default async function AdminUsagePage() {
               >
                 <span className="capitalize">{item.label}</span>
                 <span>{item.count}</span>
-                <span>{formatCost(item.costCents)}</span>
+                <span>{formatCost(item.costCents, currencySymbol)}</span>
               </div>
             ))}
           </div>
@@ -127,7 +131,7 @@ export default async function AdminUsagePage() {
               >
                 <span className="capitalize">{item.label}</span>
                 <span>{item.count}</span>
-                <span>{formatCost(item.costCents)}</span>
+                <span>{formatCost(item.costCents, currencySymbol)}</span>
               </div>
             ))}
           </div>

@@ -74,6 +74,7 @@ export default function PersonaCard({
           src={persona.heroImage}
           alt={`${persona.label} persona`}
           fill
+          unoptimized
           sizes="(max-width: 1024px) 100vw, 33vw"
           className="object-cover"
         />

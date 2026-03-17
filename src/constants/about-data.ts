@@ -1,5 +1,5 @@
 import { PERSONAS } from "@/constants/assistant-personas";
-import { FullPersonaAccessByPlan } from "@/lib/utils/effective-persona-access";
+import type { FullPersonaAccessByPlan } from "@/lib/utils/effective-persona-access";
 
 export type AboutVisualType =
   | "identity"

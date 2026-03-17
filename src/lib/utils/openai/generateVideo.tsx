@@ -115,6 +115,8 @@ export async function generateVideo({
       await openAiClient.videos.create({
         model: policy.model,
         prompt,
+        seconds: "4",
+        size: "1280x720",
       }),
     );
 

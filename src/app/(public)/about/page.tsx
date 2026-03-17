@@ -25,7 +25,11 @@ const personaCategories = Object.entries(
   }, {}),
 );
 
-function renderAboutVisual(visualType: AboutVisualType, pricing: PlanPricing) {
+function renderAboutVisual(
+  visualType: AboutVisualType,
+  pricing: PlanPricing,
+  currencySymbol: string,
+) {
   const visualClassName = classNames(
     "rounded-[2rem] border p-6 shadow-sm",
     "border-lightBorders-400/80 bg-white/80",
@@ -217,7 +221,7 @@ function renderAboutVisual(visualType: AboutVisualType, pricing: PlanPricing) {
           <p className="text-xxs font-semibold uppercase tracking-[0.28em] opacity-70">
             Pro
           </p>
-          <p className="heading-5 mt-3">{`$${pricing.Pro}`}</p>
+          <p className="heading-5 mt-3">{`${currencySymbol}${pricing.Pro}`}</p>
           <p className="body-2 mt-2 text-sm">
             Higher prompt and conversation ceilings for regular work.
           </p>
@@ -226,7 +230,7 @@ function renderAboutVisual(visualType: AboutVisualType, pricing: PlanPricing) {
           <p className="text-xxs font-semibold uppercase tracking-[0.28em] opacity-70">
             Premium
           </p>
-          <p className="heading-5 mt-3">{`$${pricing.Premium}`}</p>
+          <p className="heading-5 mt-3">{`${currencySymbol}${pricing.Premium}`}</p>
           <p className="body-2 mt-2 text-sm">
             Highest-capacity tier for advanced media and premium workflows.
           </p>
@@ -287,7 +291,11 @@ export default async function AboutPage() {
             </div>
           </div>
 
-          {renderAboutVisual(section.visualType, effectivePlanConfig.pricing)}
+          {renderAboutVisual(
+            section.visualType,
+            effectivePlanConfig.pricing,
+            effectivePlanConfig.pricing.currencySymbol,
+          )}
         </article>
       ))}
 

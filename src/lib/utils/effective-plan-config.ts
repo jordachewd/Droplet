@@ -18,6 +18,7 @@ type AppSettingRecord = {
 };
 
 const PLAN_NAMES: PlanName[] = ["Lite", "Pro", "Premium"];
+const DEFAULT_CURRENCY_SYMBOL = "$";
 
 export interface EffectivePlanConfig {
   pricing: PlanPricing;
@@ -52,6 +53,11 @@ function normalizePositiveInteger({
 }
 
 function normalizePricingValue(value: unknown): PlanPricing {
+  const normalizedCurrencySymbol =
+    isObjectRecord(value) && typeof value.currencySymbol === "string"
+      ? normalizeCurrencySymbol(value.currencySymbol)
+      : DEFAULT_PLAN_PRICING.currencySymbol;
+
   if (Array.isArray(value)) {
     const proPlan = value.find(
       (item): item is { name: string; price?: unknown } =>
@@ -72,6 +78,7 @@ function normalizePricingValue(value: unknown): PlanPricing {
         value: premiumPlan?.price,
         fallback: DEFAULT_PLAN_PRICING.Premium,
       }),
+      currencySymbol: DEFAULT_PLAN_PRICING.currencySymbol,
     };
   }
 
@@ -89,7 +96,22 @@ function normalizePricingValue(value: unknown): PlanPricing {
       value: value.premiumPrice,
       fallback: DEFAULT_PLAN_PRICING.Premium,
     }),
+    currencySymbol: normalizedCurrencySymbol,
   };
+}
+
+function normalizeCurrencySymbol(value: unknown): string {
+  if (typeof value !== "string") {
+    return DEFAULT_CURRENCY_SYMBOL;
+  }
+
+  const trimmedValue = value.trim();
+
+  if (trimmedValue === "$" || trimmedValue === "€") {
+    return trimmedValue;
+  }
+
+  return DEFAULT_CURRENCY_SYMBOL;
 }
 
 function normalizePlanLimitsValue(value: unknown): PlanLimits {
@@ -202,7 +224,14 @@ export async function getEffectivePlanConfig(): Promise<EffectivePlanConfig> {
   await connectToDatabase();
 
   const settings = (await AppSetting.find({
-    key: { $in: ["admin.pricing", "admin.limits", "admin.trialLimits"] },
+    key: {
+      $in: [
+        "admin.pricing",
+        "admin.limits",
+        "admin.trialLimits",
+        "admin.currencySymbol",
+      ],
+    },
   })
     .select("key value")
     .lean()) as AppSettingRecord[];
@@ -211,14 +240,32 @@ export async function getEffectivePlanConfig(): Promise<EffectivePlanConfig> {
   );
 
   const pricingValue = settingsMap.get("admin.pricing")?.value;
+  const currencySymbolValue = settingsMap.get("admin.currencySymbol")?.value;
   const limitsValue = settingsMap.get("admin.limits")?.value;
   const trialLimitsValue = settingsMap.get("admin.trialLimits")?.value;
+  const normalizedPricing = normalizePricingValue(pricingValue);
 
   return {
-    pricing: normalizePricingValue(pricingValue),
+    pricing: {
+      ...normalizedPricing,
+      currencySymbol:
+        currencySymbolValue !== undefined
+          ? normalizeCurrencySymbol(currencySymbolValue)
+          : normalizedPricing.currencySymbol,
+    },
     limits: normalizePlanLimitsValue(limitsValue),
     trialLimits: normalizeTrialLimitsValue(trialLimitsValue),
   };
+}
+
+export async function getEffectiveCurrencySymbol(): Promise<string> {
+  await connectToDatabase();
+
+  const setting = (await AppSetting.findOne({ key: "admin.currencySymbol" })
+    .select("value")
+    .lean()) as AppSettingRecord | null;
+
+  return normalizeCurrencySymbol(setting?.value);
 }
 
 export async function getEffectiveTrialLimits(): Promise<PersonaTrialLimits> {

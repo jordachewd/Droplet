@@ -28,6 +28,7 @@ export default async function LandingPage() {
   const faqs = buildFaqs({
     pricing: effectivePlanConfig.pricing,
     personaAccessByPlan,
+    currencySymbol: effectivePlanConfig.pricing.currencySymbol,
   });
 
   return (
@@ -229,7 +230,10 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      <Plans plansData={plans} />
+      <Plans
+        plansData={plans}
+        currencySymbol={effectivePlanConfig.pricing.currencySymbol}
+      />
       <Faqs faqsData={faqs} />
     </section>
   );

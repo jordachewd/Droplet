@@ -110,7 +110,7 @@ describe("plans constants", () => {
               isIncluded: true,
             }),
             expect.objectContaining({
-              label: "1 video generation per month (coming soon)",
+              label: "1 video generation per month",
               isIncluded: true,
             }),
           ]),
@@ -135,7 +135,7 @@ describe("plans constants", () => {
               isIncluded: true,
             }),
             expect.objectContaining({
-              label: "10 video generations per month (coming soon)",
+              label: "10 video generations per month",
               isIncluded: true,
             }),
           ]),
@@ -162,7 +162,7 @@ describe("plans constants", () => {
               isIncluded: true,
             }),
             expect.objectContaining({
-              label: "10 video generations per month (coming soon)",
+              label: "10 video generations per month",
               isIncluded: true,
             }),
           ]),
@@ -188,6 +188,7 @@ describe("plans constants", () => {
         Lite: 0,
         Pro: 25,
         Premium: 45,
+        currencySymbol: "$",
       },
       limits: {
         Lite: {
@@ -233,8 +234,7 @@ describe("plans constants", () => {
     ).toBe(true);
     expect(
       premiumPlan?.inclusions.some(
-        (inclusion) =>
-          inclusion.label === "20 video generations per month (coming soon)",
+        (inclusion) => inclusion.label === "20 video generations per month",
       ),
     ).toBe(true);
   });

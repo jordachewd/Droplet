@@ -15,7 +15,10 @@ export const metadata: Metadata = {
 
 export default async function TermsPage() {
   const effectivePlanConfig = await getEffectivePlanConfig();
-  const termsSections = buildTermsSections(effectivePlanConfig.pricing);
+  const termsSections = buildTermsSections({
+    pricing: effectivePlanConfig.pricing,
+    currencySymbol: effectivePlanConfig.pricing.currencySymbol,
+  });
 
   return (
     <section className="TermsPage mx-auto flex w-full max-w-screen-2xl flex-col gap-8 px-4 pb-16 pt-24 sm:px-6 lg:px-8">

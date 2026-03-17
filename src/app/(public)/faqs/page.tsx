@@ -21,6 +21,7 @@ export default async function FaqsPage() {
   const faqs = buildFaqs({
     pricing: effectivePlanConfig.pricing,
     personaAccessByPlan,
+    currencySymbol: effectivePlanConfig.pricing.currencySymbol,
   });
 
   return (

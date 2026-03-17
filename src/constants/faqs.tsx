@@ -1,6 +1,6 @@
 import { SUPPORT_EMAIL } from "@/constants/support";
 import { DEFAULT_PLAN_PRICING, PlanPricing } from "@/constants/plans";
-import { FullPersonaAccessByPlan } from "@/lib/utils/effective-persona-access";
+import type { FullPersonaAccessByPlan } from "@/lib/utils/effective-persona-access";
 import { DEFAULT_FULL_PERSONA_ACCESS_BY_PLAN } from "@/lib/utils/resolve-entitlements";
 
 export interface FaqItem {
@@ -12,11 +12,13 @@ export interface FaqItem {
 interface BuildFaqsConfig {
   pricing?: PlanPricing;
   personaAccessByPlan?: FullPersonaAccessByPlan;
+  currencySymbol?: string;
 }
 
 export function buildFaqs({
   pricing = DEFAULT_PLAN_PRICING,
   personaAccessByPlan = DEFAULT_FULL_PERSONA_ACCESS_BY_PLAN,
+  currencySymbol = pricing.currencySymbol,
 }: BuildFaqsConfig = {}): FaqItem[] {
   const liteCount = personaAccessByPlan.Lite.length;
   const proCount = personaAccessByPlan.Pro.length;
@@ -48,7 +50,7 @@ export function buildFaqs({
       id: 3,
       question: "What subscription plans does Droplet offer?",
       answer:
-        `Droplet offers Lite for free forever, Pro for $${pricing.Pro}, and Premium for $${pricing.Premium}. ` +
+        `Droplet offers Lite for free forever, Pro for ${currencySymbol}${pricing.Pro}, and Premium for ${currencySymbol}${pricing.Premium}. ` +
         `Persona access is plan-gated: Lite has ${liteCount} personas, Pro has ${proCount} personas, and Premium unlocks all ${premiumCount} personas, while paid tiers also raise usage and media limits.`,
     },
     {

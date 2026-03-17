@@ -21,11 +21,15 @@ export default async function PlansPage() {
   const faqs = buildFaqs({
     pricing: effectivePlanConfig.pricing,
     personaAccessByPlan,
+    currencySymbol: effectivePlanConfig.pricing.currencySymbol,
   });
 
   return (
     <section className="PlansPage mx-auto mt-14 flex w-full max-w-screen-2xl flex-1 flex-col gap-10 pb-10">
-      <Plans plansData={plans} />
+      <Plans
+        plansData={plans}
+        currencySymbol={effectivePlanConfig.pricing.currencySymbol}
+      />
       <Faqs faqsData={faqs} />
     </section>
   );

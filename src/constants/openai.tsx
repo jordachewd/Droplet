@@ -64,8 +64,8 @@ const videoGenerationTool = {
     name: "getGeneratedVideo",
     description:
       "Generates a video when requested by the user. Use this function if the user asks for a video," +
-      "e.g., when prompted with 'generate video ...', 'create video ...' or anything related." +
-      "USE PREVIOUS PROMPTS for generating videos as well. Trim prompts to maximum 4000 characters.",
+      " e.g., when prompted with 'generate video ...', 'create video ...' or anything related." +
+      " USE PREVIOUS PROMPTS for generating videos as well. Trim prompts to maximum 4000 characters.",
     strict: true,
     parameters: {
       type: "object",

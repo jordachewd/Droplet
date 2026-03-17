@@ -78,10 +78,20 @@ export default function ChatBody({
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
+    if (!parent.current) {
+      return;
+    }
+
+    const stopAutoAnimate = autoAnimate(parent.current);
+
+    return () => {
+      stopAutoAnimate.disable();
+      stopAutoAnimate.destroy?.();
+    };
+  }, []);
+
+  useEffect(() => {
     if (messages.length > 0) {
-      if (parent.current) {
-        autoAnimate(parent.current);
-      }
       bottomRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages]);

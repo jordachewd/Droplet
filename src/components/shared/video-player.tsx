@@ -20,6 +20,7 @@ export default function VideoPlayer({ videoSrc }: VideoPlayerProps) {
     >
       <video
         controls
+        playsInline
         preload="metadata"
         className="h-auto w-full"
         src={resolvedVideoSrc ?? undefined}
