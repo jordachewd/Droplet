@@ -2,7 +2,24 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-16 — PM deep audit #17. Phases 1–25.7 + 27.1–27.4 + 27.6–27.10 + 28.1 + 28.2-fix + 28.3-code + 28.3-verify + 28.4 + 28.6 + 28.7 + 30.1 + 30.2 + 30.3 + 30.4 + 31.1 + 31.2 + 31.3 + 31.2-fix + 32.1 + 32.2 + 32.3 + 32.6 + 33.1–33.8 + 35.1 + 37.1 + 38.1–38.7 + 36.1–36.2 + E2E regression fixes complete.
+> Last updated: 2026-03-17 — PM deep audit #18. 27.5 (pricing/limits/model propagation) verified DONE. TD-ADMIN-02 fully resolved. Milestone 14 COMPLETED. Phases 1–25.7 + 27.1–27.5 + 27.6–27.10 + 28.1 + 28.2-fix + 28.3-code + 28.3-verify + 28.4 + 28.6 + 28.7 + 30.1 + 30.2 + 30.3 + 30.4 + 31.1 + 31.2 + 31.3 + 31.2-fix + 32.1 + 32.2 + 32.3 + 32.6 + 33.1–33.8 + 35.1 + 37.1 + 38.1–38.7 + 36.1–36.2 + E2E regression fixes complete.
+
+---
+
+## Phase 27.5 — Admin Settings: Pricing, Limits & Model Propagation — COMPLETED (2026-03-17)
+
+> PM audit #18 + Architect code audit. Verified DONE. Full propagation chain operational. TD-ADMIN-02 fully resolved.
+
+- [x] **27.5 MEDIUM-HIGH** — Admin settings pricing, limits, and model config propagation:
+  - **Model propagation:** `effective-model-config.ts` reads `AppSetting("admin.models")`, normalizes with safe defaults from `MODEL_POLICY_MATRIX`. `ModelPolicyModelOverrides` type added to `ai-model-policy.ts`. `resolveModelPolicy()` applies admin overrides for chat (per plan), image, and audio models. OpenAI route loads effective model config in parallel, constructs overrides, passes to all `generate*` utilities.
+  - **Pricing propagation:** `effective-plan-config.ts` reads `AppSetting("admin.pricing")`, returns effective pricing with fallback to `DEFAULT_PLAN_PRICING`. Plan card components (public `/plans`, authenticated `/app/plans`) call `getEffectivePlanConfig()` and pass to `buildPlans()`. Admin price change → plan cards update on next load.
+  - **Limits propagation:** `effective-plan-config.ts` reads `AppSetting("admin.limits")`, returns effective limits with fallback to `PLAN_LIMITS`. OpenAI route passes `effectivePlanLimits` to all `checkUsageLimit()` and `checkDailyConversationLimit()` calls. Admin limit change → enforcement uses new limits.
+  - All config reads use `"server-only"`, `.lean()`, `.select()`, try/catch with safe defaults.
+  - 3 parallel DB reads per AI request: plan config, persona access, model config.
+- [x] Tests: `effective-model-config.test.ts` (2 tests), `effective-plan-config.test.ts` (2 tests), `ai-model-policy.test.ts` updated with `modelOverrides` coverage.
+- [x] Unit: 338 tests passing. E2E: 180 passing, 48 skipped (explained). Build: passing.
+
+**Files changed:** `src/lib/utils/effective-model-config.ts` (new), `src/lib/utils/effective-plan-config.ts` (new), `src/lib/utils/ai-model-policy.ts`, `src/app/api/openai/route.tsx`, `src/lib/utils/openai/generateResponse.tsx`, `src/lib/utils/openai/generateTitle.tsx`, `src/lib/utils/openai/generateImage.tsx`, `src/lib/utils/openai/generateAudio.tsx`, `src/lib/utils/check-usage-limit.ts`, `src/constants/plans.tsx`, `src/app/(public)/plans/page.tsx`, `src/app/(chat)/app/plans/page.tsx`, `tests/unit/effective-model-config.test.ts` (new), `tests/unit/effective-plan-config.test.ts` (new), `tests/unit/ai-model-policy.test.ts`
 
 ---
 

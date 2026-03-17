@@ -5,12 +5,12 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: Phases 1–25.7 + 27.1–27.4 + 27.6–27.10 + 28.1 + 28.2-fix + 28.3-code + 28.3-verify + 28.4 + 28.6 + 28.7 + 30.1 + 30.2 + 30.3 + 30.4 + 31.1 + 31.2 + 31.3 + 31.2-fix + 32.1 + 32.2 + 32.3 + 32.6 + 33.1–33.8 + 35.1 + 37.1 + 38.1–38.7 + 36.1–36.2 complete.**
-> **PM deep audit #17 (2026-03-16): 33.8, 30.4 verified DONE (Architect code audit + PM approval). 27.5 persona access propagation confirmed as part of 30.4. 27.5 pricing/limits/model propagation NOT YET DONE.**
-> **335 unit tests passing. 180 E2E passing. 48 skipped. Build passing.**
-> **OWNER INSTRUCTIONS (latest): Admin panel must be fully operational with full control over each setting's purpose. Admin forms must use proper controls. Admin design consistency maintained (36.1 baseline). Top Personas delivered (36.2).**
-> **NO CRITICAL BUGS REMAINING.**
-> **Priority order: 27.5 (pricing/limits propagation) → 32.4 → 32.5 → 31.4 → 30.5 → 35.2 → 34.x → 29.1 → 29.2 → Phase 26.**
+> **STATUS: Phases 1–25.7 + 27.1–27.5 + 27.6–27.10 + 28.1 + 28.2-fix + 28.3-code + 28.3-verify + 28.4 + 28.6 + 28.7 + 30.1 + 30.2 + 30.3 + 30.4 + 31.1 + 31.2 + 31.3 + 31.2-fix + 32.1 + 32.2 + 32.3 + 32.6 + 33.1–33.8 + 35.1 + 37.1 + 38.1–38.7 + 36.1–36.2 complete.**
+> **PM deep audit #18 (2026-03-17): 27.5 VERIFIED DONE (Architect code audit + PM approval). Full pricing/limits/model propagation chain operational. TD-ADMIN-02 FULLY RESOLVED. TD-CHECKOUT-01 identified (checkout price bypass). Milestone 14 COMPLETED with caveat.**
+> **338 unit tests passing. 180 E2E passing. 48 skipped (explained: Chromium-only trial spec × 6 non-Chromium projects). Build passing.**
+> **OWNER INSTRUCTIONS (latest): Admin panel must be fully operational with full control over each setting's purpose. Admin forms must use proper controls. Admin design consistency maintained (36.1 baseline). Top Personas delivered (36.2). All verified DONE.**
+> **NO CRITICAL BUGS REMAINING. 1 HIGH security finding: TD-CHECKOUT-01 (checkout price bypass).**
+> **Priority order: TD-CHECKOUT-01 (checkout security) → 32.4 → 32.5 → 31.4 → 30.5 → 35.2 → 34.x → 29.1 → 29.2 → Phase 26.**
 > **All Phase 26+ deferred work is ON HOLD until Milestone 14 is PM-approved complete.**
 
 ---
@@ -104,33 +104,36 @@
 
 ## Phase 27: UX & Architecture Completion (remaining)
 
-> 27.1–27.4 + 27.6–27.10 DONE. Remaining: 27.5 (pricing/limits/model propagation).
-> **27.5 remains MEDIUM-HIGH** — Owner requires admin operational completeness (Milestone 14). TD-ADMIN-02.
-> NOTE: Persona access propagation was delivered as part of 30.4. Only pricing, limits, and model config propagation remain.
+> 27.1–27.5 + 27.6–27.10 DONE. Phase 27 COMPLETE.
+> All admin settings propagation (pricing, limits, models, persona access) verified operational.
 
 ---
 
-### 27.5 MEDIUM-HIGH — Admin settings — propagate pricing, limits & model config
+## Phase 39: Security Hardening — Checkout Price Bypass
 
-**Files:** `src/constants/plans.tsx`, `src/lib/utils/resolve-entitlements.tsx`, `src/lib/utils/check-usage-limit.ts`, `src/lib/utils/admin-queries.ts`, plan card components, checkout flows
-**Ref:** TD-ADMIN-02 (remaining portion: pricing, limits, model config inert)
-**NOTE:** Persona access propagation is DONE (delivered with 30.4). This task now covers ONLY pricing, limits, and model config propagation.
+> **Identified by PM audit #18 + Architect code audit (2026-03-17).**
+> **TD-CHECKOUT-01: `checkoutPlan()` trusts client-submitted price without server-side re-verification.**
+
+---
+
+### 39.1 HIGH — Server-side price re-verification in checkoutPlan()
+
+**Ref:** TD-CHECKOUT-01 (Architect audit #18)
+**Files:** `src/lib/actions/transaction.actions.tsx`, `src/lib/utils/effective-plan-config.ts`
 
 **What to do:**
 
-1. Verify/extend `getEffectivePlanConfig()` to read AppSetting values for pricing and limits, falling back to hardcoded `PLAN_LIMITS` defaults.
-2. Wire plan card components (public `/plans`, authenticated `/app/plans`) to use effective config instead of static constants.
-3. Wire `checkUsageLimit()` to use effective limits from AppSetting (or defaults).
-4. Wire checkout flows to use effective pricing from AppSetting (or defaults).
-5. Ensure admin changes take effect on next page load via `revalidatePath`.
+1. In `checkoutPlan()`, after Zod validation, call `getEffectivePlanConfig()` to get the current effective pricing.
+2. Compare the client-submitted `planPrice` against the effective price for the requested `planName`.
+3. If they don't match, reject the request (return error, do NOT create Stripe session).
+4. This prevents a crafted request from submitting `price: 0` for a paid plan.
 
 **Acceptance criteria:**
 
-- [ ] Plan cards show prices from AppSetting (or defaults)
-- [ ] Usage limit checks use limits from AppSetting (or defaults)
-- [ ] Admin saves new price → plan cards reflect on next load
-- [ ] Admin saves new limit → enforcement uses new limit
-- [ ] Fallback to hardcoded defaults when AppSetting is empty
+- [ ] `checkoutPlan()` re-verifies price against `getEffectivePlanConfig()` before Stripe session creation
+- [ ] Mismatched price is rejected with generic error message
+- [ ] No price information leaked in error response
+- [ ] Unit test covers price mismatch rejection
 - [ ] `npx tsc --noEmit` passes
 - [ ] All tests pass
 

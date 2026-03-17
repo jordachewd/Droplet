@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-16 (PM deep audit #17. 33.8 trial E2E + 30.4 admin persona access controls verified DONE. Admin persona access now operational — persona overrides propagate from AppSetting to all runtime entitlement checks. Milestone 14 IN PROGRESS. 27.5 pricing/limits propagation still pending. No critical bugs.)
+> Last updated: 2026-03-17 (PM deep audit #18. 27.5 pricing/limits/model propagation verified DONE. TD-ADMIN-02 fully resolved — all admin settings operational. Milestone 14 COMPLETED. TD-CHECKOUT-01 identified: checkout price bypass. 338 unit tests, 180 E2E passing.)
 
 ---
 
@@ -687,7 +687,7 @@ All file handling technical debt has been resolved. S3 cleanup on task/user dele
 - **Users**: List, view, add, suspend, remove. User detail page with info + usage per model.
 - **Transactions**: List, view, suspend, decline. Transaction detail page.
 - **Usage**: Model usage, costs per user/time/provider. **Top Personas** statistic card showing top 5 personas by usage count with labels and percentages. Powered by UsageEvent aggregation. (Implemented — Phase 36.2)
-- **Settings**: AI model per plan, pricing, limits, theme. Proper form controls (selects, number inputs, radios — no raw JSON editors). **Persona Access**: per-plan persona access checkbox matrix — admin can toggle each persona's full access per plan. Saves to AppSetting, consumed at runtime by `resolveEntitlements()` via `getEffectivePersonaAccessByPlan()` (Phase 30.4 — operational). Powered by AppSetting. **Note: persona access settings are now operational (30.4 DONE). Pricing, limits, and model config settings are still inert** (TD-ADMIN-02 — pending Phase 27.5).
+- **Settings**: AI model per plan, pricing, limits, theme. Proper form controls (selects, number inputs, radios — no raw JSON editors). **Persona Access**: per-plan persona access checkbox matrix — admin can toggle each persona's full access per plan. Saves to AppSetting, consumed at runtime by `resolveEntitlements()` via `getEffectivePersonaAccessByPlan()` (Phase 30.4 — operational). **Pricing/Limits/Model propagation**: all admin settings consumed at runtime via `getEffectivePlanConfig()` and `getEffectiveModelConfig()` (Phase 27.5 — operational). Powered by AppSetting. **TD-ADMIN-02 fully resolved.**
 - **Website**: Add, edit, remove, sort, publish/unpublish public pages. Textarea-based editor (Tiptap replaced with fallback). Powered by PublicPage.
 - All mutations logged to AdminAuditLog.
 - Admin panel design aligned with client app design system (Phase 36.1 — consistent borders, backgrounds, backdrop tokens, fonts).
@@ -702,8 +702,8 @@ All file handling technical debt has been resolved. S3 cleanup on task/user dele
 
 ## 13. Testing
 
-- **Unit tests**: 62+ suites, 335 tests (Vitest) — includes streaming, webhook, chat-wrapper, chat-body stop-state, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, persona prompt, rate limiting, task complexity classification, conversation stop enforcement, entitlement resolver full coverage (including admin override tests), checkout-success page, admin audit trail, OpenAI route tests, atomic prompt limit, daily conversation limit, media error handling, universal feature access, and trial access tests.
-- **E2E tests**: 12 Playwright spec files across browser projects (chat-app-shell, auth-boundaries, public-pages with 70+ tests, conversation-lifecycle, user-profile, admin-users, admin-features, landing-page, plans-public, pricing-public, authenticated-flows, persona-trial-access). 228 total. **180 passing, 48 skipped** (PM audit #17).
+- **Unit tests**: 62+ suites, 338 tests (Vitest) — includes streaming, webhook, chat-wrapper, chat-body stop-state, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, persona prompt, rate limiting, task complexity classification, conversation stop enforcement, entitlement resolver full coverage (including admin override tests), checkout-success page, admin audit trail, OpenAI route tests, atomic prompt limit, daily conversation limit, media error handling, universal feature access, trial access tests, effective model config, effective plan config.
+- **E2E tests**: 13 Playwright spec files across browser projects (chat-app-shell, auth-boundaries, public-pages with 70+ tests, conversation-lifecycle, user-profile, admin-users, admin-features, landing-page, plans-public, pricing-public, authenticated-flows, persona-trial-access). 228 total. **180 passing, 48 skipped** (PM audit #18 — skipped count explained: Chromium-only trial spec × 6 non-Chromium projects = 24 new skips, all intentional).
 - **Coverage**: Configured (Phase 24.1) — v8 provider, thresholds: 70% statements / 60% branches / 70% functions / 70% lines. Current: 82/71/88/82.
 - **Gap**: No dedicated E2E spec for streamed chunk-by-chunk rendering (manually verified via Playwright MCP). Persona selector E2E (35.2) pending.
 
@@ -761,7 +761,7 @@ _None._
 | ID  | Area | Description | Severity |
 | --- | ---- | ----------- | -------- |
 
-| TD-ADMIN-02 | Admin | Admin settings: pricing, limits, model config saved to AppSetting but not yet consumed by app behavior — inert. Persona access propagation is DONE (30.4). | Medium |
+| TD-ADMIN-02 | Admin | ~~Admin settings: pricing, limits, model config saved to AppSetting but not yet consumed by app behavior~~ — **RESOLVED (Phase 27.5)**: all admin settings (pricing, limits, models, persona access) now propagate to runtime via `effective-plan-config.ts`, `effective-model-config.ts`, `effective-persona-access.ts`. | ~~Medium~~ Resolved |
 | TD-AI-08 | OpenAI | No video generation (Premium) — UI shows "Coming soon", implementation deferred | Medium |
 
 ### Active — Low Priority
@@ -772,6 +772,12 @@ _None._
 | TD-AI-13   | OpenAI  | 5 model pricing entries are placeholders pending OpenAI confirmation          | Low      |
 | TD-PLAN-01 | Billing | No recurring subscriptions (deferred v1)                                      | Low      |
 | TD-AI-18   | OpenAI  | errorMessage forwarding pattern in /api/openai is safe but fragile (advisory) | Low      |
+
+### Active — High Priority (Security)
+
+| ID             | Area    | Description                                                                                                                                                                                                          | Severity |
+| -------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| TD-CHECKOUT-01 | Billing | `checkoutPlan()` trusts client-submitted price without server-side re-verification against `getEffectivePlanConfig()`. A crafted request could submit `price: 0` for a Pro plan. Must fix before production billing. | High     |
 
 ### Resolved
 

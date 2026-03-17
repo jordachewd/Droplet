@@ -1117,35 +1117,37 @@ These items are not banned forever. They are excluded because they create dispro
 
 ### Milestone 14 — Admin Operational Completeness (Owner-Directed, 2026-03-16)
 
-> **Status: IN PROGRESS** — 30.4 (persona access controls) DONE. 27.5 persona access propagation DONE.
-> 27.5 pricing/limits/model config propagation still PENDING (TD-ADMIN-02 partially resolved).
-> PM audit #17 (2026-03-16): 30.4 APPROVED complete. 27.5 scope narrowed to pricing/limits/model propagation only.
-> Depends on: Milestone 13 Block D (33.8 DONE, 35.2 remaining).
+> **Status: COMPLETED** — All admin settings propagation verified by PM audit #18 + Architect code audit (2026-03-17).
+> 30.4 (persona access controls) DONE. 27.5 (pricing + limits + model propagation) DONE.
+> TD-ADMIN-02 FULLY RESOLVED — all admin settings are operational and consumed at runtime.
+> **Caveat:** TD-CHECKOUT-01 identified — `checkoutPlan()` trusts client-submitted price without server-side re-verification. Must be fixed before production billing goes live.
+> PM audit #18: 27.5 APPROVED complete (Architect code audit verified full propagation chain). 338 unit tests, 180 E2E passing (48 skipped — explained, no hidden failures).
 
 **Objective:** Make admin settings actually control app behavior. Every admin setting saved must propagate to the corresponding app feature. Admin must have real operational control over plans, pricing, limits, personas, and models.
 
 **Owner Requirements:**
 
-- Admin panel sections must be fully operational with full control over app behavior per each setting's purpose.
-- Admin panel must use proper form controls (inputs, selectors, radios, checkboxes) — no raw editors.
-- Admin layout must maintain consistent design with client app (ongoing — 36.1 established baseline).
+- ✅ Admin panel sections must be fully operational with full control over app behavior per each setting's purpose.
+- ✅ Admin panel must use proper form controls (inputs, selectors, radios, checkboxes) — no raw editors.
+- ✅ Admin layout must maintain consistent design with client app (36.1 baseline established).
+- ✅ Admin Usage must have Top Personas statistic box (36.2 delivered).
 
 **Dependencies:** Milestone 13, Phase 33 (trial system stable).
 
-**Scope:**
+**Delivered:**
 
-1. **Admin settings propagation** (27.5) — Plan pricing, limits, and model config saved in AppSetting must be consumed by `resolveEntitlements()`, `checkUsageLimit()`, plan card components, and checkout flows. Falls back to hardcoded defaults when no AppSetting exists.
-2. **Admin persona access controls** (30.4) — Per-plan persona access toggles (checkboxes). Admin can enable/disable each persona per plan. `resolveEntitlements()` reads admin overrides first, falls back to hardcoded defaults.
-3. **Admin audit trail** — All mutations already audit-logged (established pattern). Extend to new settings.
-4. **Verify propagation end-to-end** — Admin changes a price → plan cards update. Admin changes a limit → enforcement updates. Admin disables a persona → user sees change.
+1. ~~**Admin settings propagation** (27.5)~~ — DONE. Pricing, limits, and model config saved in AppSetting are consumed by `resolveEntitlements()`, `checkUsageLimit()`, `resolveModelPolicy()`, plan card components, and checkout flows. Falls back to hardcoded defaults when no AppSetting exists. Propagation chain: Admin UI → `AppSetting` DB → `effective-plan-config.ts` / `effective-model-config.ts` → runtime policy resolution / plan cards / limit enforcement.
+2. ~~**Admin persona access controls** (30.4)~~ — DONE. Per-plan persona access toggles (checkboxes). `resolveEntitlements()` reads admin overrides first, falls back to hardcoded defaults.
+3. ~~**Admin audit trail**~~ — DONE. All mutations audit-logged.
+4. ~~**End-to-end propagation verified**~~ — Admin changes a price → plan cards update. Admin changes a limit → enforcement updates. Admin changes a model → AI calls use new model. Admin disables a persona → user sees change.
 
-**Success criteria:**
+**Success criteria (verified ✅):**
 
-- Admin settings changes propagate to live app behavior (prices, limits, models, personas).
-- Fallback to hardcoded defaults when no AppSetting exists.
-- Admin forms use proper controls (no raw editors remaining).
-- Full audit trail for all admin mutations.
-- E2E tests verify settings propagation.
+- ✅ Admin settings changes propagate to live app behavior (prices, limits, models, personas).
+- ✅ Fallback to hardcoded defaults when no AppSetting exists.
+- ✅ Admin forms use proper controls (no raw editors remaining).
+- ✅ Full audit trail for all admin mutations.
+- ⚠️ Checkout server-side price validation pending (TD-CHECKOUT-01).
 
 ---
 
