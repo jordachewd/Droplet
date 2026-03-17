@@ -297,7 +297,10 @@ export async function toggleUserSuspensionAction(
   maybeFormData?: FormData,
 ): Promise<AdminActionState> {
   try {
-    const formData = resolveActionFormData(previousStateOrFormData, maybeFormData);
+    const formData = resolveActionFormData(
+      previousStateOrFormData,
+      maybeFormData,
+    );
     const adminId = await requireAdminActionAccess();
     const targetUserId = getStringField(formData, "userId");
     const suspended = getStringField(formData, "suspended") === "true";
@@ -349,7 +352,10 @@ export async function removeUserByAdminAction(
   maybeFormData?: FormData,
 ): Promise<AdminActionState> {
   try {
-    const formData = resolveActionFormData(previousStateOrFormData, maybeFormData);
+    const formData = resolveActionFormData(
+      previousStateOrFormData,
+      maybeFormData,
+    );
     const adminId = await requireAdminActionAccess();
     const targetUserId = getStringField(formData, "userId");
 
@@ -370,7 +376,10 @@ export async function updateAdminSettingAction(
   maybeFormData?: FormData,
 ): Promise<AdminActionState> {
   try {
-    const formData = resolveActionFormData(previousStateOrFormData, maybeFormData);
+    const formData = resolveActionFormData(
+      previousStateOrFormData,
+      maybeFormData,
+    );
     const adminId = await requireAdminActionAccess();
     const key = getStringField(formData, "key");
     const categoryValue = getStringField(formData, "category");
@@ -450,7 +459,10 @@ export async function createPublicPageAction(
   maybeFormData?: FormData,
 ): Promise<AdminActionState> {
   try {
-    const formData = resolveActionFormData(previousStateOrFormData, maybeFormData);
+    const formData = resolveActionFormData(
+      previousStateOrFormData,
+      maybeFormData,
+    );
     const adminId = await requireAdminActionAccess();
     const title = getStringField(formData, "title");
     const slug = getStringField(formData, "slug");
@@ -504,7 +516,10 @@ export async function togglePublicPagePublishedAction(
   maybeFormData?: FormData,
 ): Promise<AdminActionState> {
   try {
-    const formData = resolveActionFormData(previousStateOrFormData, maybeFormData);
+    const formData = resolveActionFormData(
+      previousStateOrFormData,
+      maybeFormData,
+    );
     const adminId = await requireAdminActionAccess();
     const pageId = getStringField(formData, "pageId");
     const isPublished = getStringField(formData, "isPublished") === "true";
@@ -556,7 +571,10 @@ export async function deletePublicPageAction(
   maybeFormData?: FormData,
 ): Promise<AdminActionState> {
   try {
-    const formData = resolveActionFormData(previousStateOrFormData, maybeFormData);
+    const formData = resolveActionFormData(
+      previousStateOrFormData,
+      maybeFormData,
+    );
     const adminId = await requireAdminActionAccess();
     const pageId = getStringField(formData, "pageId");
 
@@ -592,7 +610,10 @@ export async function updatePublicPageSortOrderAction(
   maybeFormData?: FormData,
 ): Promise<AdminActionState> {
   try {
-    const formData = resolveActionFormData(previousStateOrFormData, maybeFormData);
+    const formData = resolveActionFormData(
+      previousStateOrFormData,
+      maybeFormData,
+    );
     const adminId = await requireAdminActionAccess();
     const pageId = getStringField(formData, "pageId");
     const sortOrder = Number(getStringField(formData, "sortOrder"));
@@ -644,7 +665,10 @@ export async function savePublicPageAction(
   maybeFormData?: FormData,
 ): Promise<AdminActionState> {
   try {
-    const formData = resolveActionFormData(previousStateOrFormData, maybeFormData);
+    const formData = resolveActionFormData(
+      previousStateOrFormData,
+      maybeFormData,
+    );
     const adminId = await requireAdminActionAccess();
     const pageId = getStringField(formData, "pageId");
     const title = getStringField(formData, "title");
@@ -698,7 +722,10 @@ export async function bulkSuspendUsersAction(
   maybeFormData?: FormData,
 ): Promise<AdminActionState> {
   try {
-    const formData = resolveActionFormData(previousStateOrFormData, maybeFormData);
+    const formData = resolveActionFormData(
+      previousStateOrFormData,
+      maybeFormData,
+    );
     const adminId = await requireAdminActionAccess();
     const userIds = getMultiStringField(formData, "userIds");
 
@@ -746,7 +773,10 @@ export async function bulkRemoveUsersAction(
   maybeFormData?: FormData,
 ): Promise<AdminActionState> {
   try {
-    const formData = resolveActionFormData(previousStateOrFormData, maybeFormData);
+    const formData = resolveActionFormData(
+      previousStateOrFormData,
+      maybeFormData,
+    );
     const adminId = await requireAdminActionAccess();
     const userIds = getMultiStringField(formData, "userIds");
 
@@ -773,7 +803,10 @@ export async function bulkDeleteTransactionsAction(
   maybeFormData?: FormData,
 ): Promise<AdminActionState> {
   try {
-    const formData = resolveActionFormData(previousStateOrFormData, maybeFormData);
+    const formData = resolveActionFormData(
+      previousStateOrFormData,
+      maybeFormData,
+    );
     const adminId = await requireAdminActionAccess();
     const transactionIds = getMultiStringField(formData, "transactionIds");
 
@@ -811,7 +844,10 @@ export async function bulkDeletePublicPagesAction(
   maybeFormData?: FormData,
 ): Promise<AdminActionState> {
   try {
-    const formData = resolveActionFormData(previousStateOrFormData, maybeFormData);
+    const formData = resolveActionFormData(
+      previousStateOrFormData,
+      maybeFormData,
+    );
     const adminId = await requireAdminActionAccess();
     const pageIds = getMultiStringField(formData, "pageIds");
 
@@ -846,7 +882,10 @@ export async function bulkPublishPublicPagesAction(
   maybeFormData?: FormData,
 ): Promise<AdminActionState> {
   try {
-    const formData = resolveActionFormData(previousStateOrFormData, maybeFormData);
+    const formData = resolveActionFormData(
+      previousStateOrFormData,
+      maybeFormData,
+    );
     const adminId = await requireAdminActionAccess();
     const pageIds = getMultiStringField(formData, "pageIds");
 
@@ -891,7 +930,10 @@ export async function bulkUnpublishPublicPagesAction(
   maybeFormData?: FormData,
 ): Promise<AdminActionState> {
   try {
-    const formData = resolveActionFormData(previousStateOrFormData, maybeFormData);
+    const formData = resolveActionFormData(
+      previousStateOrFormData,
+      maybeFormData,
+    );
     const adminId = await requireAdminActionAccess();
     const pageIds = getMultiStringField(formData, "pageIds");
 

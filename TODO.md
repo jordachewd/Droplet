@@ -5,229 +5,235 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: All Milestones 0–19 COMPLETE. Phases 1–56.3 complete. 368 unit tests passing (65+ suites). Build passing.**
-> **PM deep audit #27 (2026-03-17): Full triple-audit (PM + Architect + Engineer). Owner instructions integrated.**
-> **Priority order: 57.1 → 57.2 → 57.3 → 57.4 → 58.1 → 58.2 → 58.3 → 59.1 → 59.2 → 31.4 → 46.1 → 46.2 → 29.x → 26.x**
+> **STATUS: All Milestones 0–20 COMPLETE. Phases 1–59.2 complete. 368 unit tests passing (65+ suites). Build passing.**
+> **PM deep audit #28 (2026-03-17): Full triple-audit (PM + Architect + Engineer). Owner instructions integrated.**
+> **Priority order: 60.1 → 60.2 → 60.3 → 60.4 → 60.5 → 60.6 → 60.7 → 61.1 → 61.2 → 61.3 → 31.4 → 46.1 → 46.2 → 62.1 → 29.x → 26.x**
 > **All Phase 26+ deferred work is ON HOLD until PM-approved.**
 
 ---
 
-## Phase 57: Admin Action Feedback & Safety — CRITICAL (PM Audit #27, Owner Directives #6/#7/#8)
+## Phase 60: Color Palette Upgrade — HIGH (PM Audit #28, Owner Directive — Color Palette)
 
-> **CRITICAL priority. PM audit #27 triple-audit unanimous: ALL 14 admin forms have ZERO confirmation dialogs on destructive actions, ZERO visual feedback on any action, and ZERO loading indicators. Owner directives #6, #7, #8 are completely unimplemented in admin panel.**
-
----
-
-### 57.1 CRITICAL — Add confirmation dialogs to all admin destructive actions
-
-**Ref:** PM audit #27 — Both Architect and Engineer confirmed. Owner directive #6: "Any Delete or Remove user action MUST be prevented by a confirmation message and require user acknowledgement."
-
-**Root cause:** Admin destructive actions fire immediately via plain `<form action={...}>`. Remove User deletes the entire user account, all tasks, transactions, and S3 assets with a single unconfirmed click. Suspend User and Delete Page also have no confirmation.
-
-**Files:** `src/app/(admin)/admin/users/[userId]/page.tsx`, `src/app/(admin)/admin/website/page.tsx`
-
-**What to do:**
-
-1. Create a reusable `AdminActionButton` client component (or similar) that wraps destructive admin form buttons with `window.confirm()` before form submission.
-2. Apply to "Remove User" button — message: "Are you sure you want to permanently remove this user? This will delete all their data including conversations, transactions, and files. This action cannot be undone."
-3. Apply to "Suspend/Reinstate User" button — message: "Are you sure you want to suspend/reinstate this user?"
-4. Apply to "Delete Page" button — message: "Are you sure you want to delete this page? This action cannot be undone."
-
-**Acceptance criteria:**
-
-- [ ] "Remove User" requires explicit confirmation before executing
-- [ ] "Suspend/Reinstate User" requires explicit confirmation before executing
-- [ ] "Delete Page" requires explicit confirmation before executing
-- [ ] Canceling confirmation prevents the action
-- [ ] `npx tsc --noEmit` passes
-- [ ] All tests pass
+> **HIGH priority. Owner directive: Replace entire app color palette with Navy (#0D3B66) / Lemon (#FAF0CA) / Grass (#27A148). Remove custom lightAccent, darkAccent, jwdAqua, jwdMarine, lightBorders, darkBorders palettes. Replace borders with TailwindCSS slate palette.**
+> **Scope: 58 source files + globals.css. Token-based architecture makes migration clean — palette changes in CSS propagate via design tokens.**
 
 ---
 
-### 57.2 CRITICAL — Add visual feedback (AlertMessage) to all admin forms
+### 60.1 HIGH — Define new color palette in globals.css
 
-**Ref:** PM audit #27 — Owner directive #7: "Any action (Delete, Remove, Save, Update, Edit, etc) must be confirmed by a similar message as for errors; colors to be adapted (green = success, orange = warning, blue = info, red = error)."
-
-**Root cause:** All 14 admin forms silently reload the page after submission. Admin has zero visual indication whether an action succeeded or failed.
-
-**Affected forms (14 total):**
-
-- Settings: Save Models, Save Pricing, Save Currency, Save Limits, Save Trial Limits, Save Persona Access, Save Theme (7 forms)
-- Website: Create Page, Delete Page, Publish/Unpublish, Save Sort Order, Save Page Content (5 forms)
-- Users: Suspend/Reinstate, Remove User (2 forms)
+**Ref:** PM audit #28 — Owner color palette directive. Architect report: 14 palette groups, 122 CSS custom properties.
 
 **What to do:**
 
-1. Modify server actions (`admin.actions.tsx`, `website.actions.tsx`, etc.) to return `{ success: boolean; message: string }` instead of just calling `revalidatePath()`.
-2. Use `useActionState` (React 19) in admin form wrappers to capture action result.
-3. Display result using `AlertMessage` component with appropriate severity: `success` (green) for successful operations, `error` (red) for failures.
-4. Auto-dismiss success messages after 5 seconds.
+1. In `src/app/globals.css`, replace existing `@theme` palette definitions with new scales generated from:
+   - **Navy** (#0D3B66) — replaces `jwdMarine`, `darkBackground`, `darkText` (dark mode base)
+   - **Lemon** (#FAF0CA) — replaces `lightBackground` (light mode base), used as light mode secondary
+   - **Grass** (#27A148) — replaces `lightAccent` AND `darkAccent` (unified accent for both themes)
+2. Generate 100-900 (or 100-1000) shade scales for each base color.
+3. Replace `lightBorders` / `darkBorders` custom definitions with TailwindCSS `slate` palette references.
+4. Remove `lightPrimary`, `darkPrimary`, `lightSecondary`, `darkSecondary` palettes — consolidate into the 3-palette system (Navy/Lemon/Grass) plus `slate` for borders.
+5. Keep token names that match the new intent (e.g., rename `lightAccent` → `accent` since it's now the same for both themes, or keep separate names but point to same Grass values).
 
 **Acceptance criteria:**
 
-- [ ] Every admin save/update/delete action shows visual feedback
-- [ ] Success: green AlertMessage with confirmation text
-- [ ] Error: red AlertMessage with error description
-- [ ] Messages auto-dismiss after timeout
-- [ ] `npx tsc --noEmit` passes
-- [ ] All tests pass
-
----
-
-### 57.3 CRITICAL — Add loading indicators to all admin forms
-
-**Ref:** PM audit #27 — Owner directive #8: "If any kind of user action take long time display LoadingBubbles so the user shall be aware that the action is on the way."
-
-**Root cause:** Zero admin forms show any pending/loading state during submission.
-
-**What to do:**
-
-1. Use `useFormStatus()` hook in admin form submit buttons.
-2. Show `LoadingBubbles` inline or disable the submit button with "Saving..." text while `pending === true`.
-3. Apply to all 14 admin forms identified in 57.2.
-
-**Acceptance criteria:**
-
-- [ ] All admin submit buttons show loading state during submission
-- [ ] Buttons disabled while pending (prevent double submission)
-- [ ] Loading state visually clear (LoadingBubbles or spinner)
+- [ ] globals.css defines Navy, Lemon, Grass palettes with proper shade scales
+- [ ] `lightAccent` and `darkAccent` both resolve to Grass (#27A148) shades
+- [ ] `jwdAqua` and `jwdMarine` removed — replaced with Navy shades
+- [ ] `lightBorders` and `darkBorders` removed — replaced with `slate` palette
+- [ ] `lightPrimary`/`darkPrimary`/`lightSecondary`/`darkSecondary` removed — replaced with Navy/Lemon shades
+- [ ] Body `@apply` rule updated for new palette
+- [ ] Button utility classes updated for Grass accent
+- [ ] Scrollbar, markdown, and blockquote styles updated
 - [ ] `npx tsc --noEmit` passes
 
 ---
 
-### 57.4 HIGH — Replace window.alert() with AlertMessage in user-facing actions
+### 60.2 HIGH — Replace bg-white with design tokens across all non-admin files
 
-**Ref:** PM audit #27 — Owner directive #7 applies to ALL user types (admin, guest, client).
+**Ref:** PM audit #28 — Architect report: 45 `bg-white` instances across 20 non-admin files. Pre-step before palette propagation.
 
-**Root cause:** User-facing delete error paths use `window.alert()` for error feedback. This is functional but visually inconsistent with the app's design system.
-
-**Files:** `src/components/chat/library-delete-button.tsx`, `src/components/chat/sidebar/chat-sidebar-nav-v2.tsx`
+**Files:** 20 files listed in Architect report (public pages, shared components, chat components, layout).
 
 **What to do:**
 
-1. Replace `window.alert(...)` calls with `AlertMessage` component (or a callback to parent that triggers `AlertMessage`).
-2. Success feedback: green message on successful deletion.
-3. Error feedback: red message on failed deletion.
+1. Replace all `bg-white` and `bg-white/xx` usages with appropriate Lemon-based light background token (e.g., `bg-lightBackground-100/xx`).
+2. Ensure each replacement has proper `dark:` counterpart using Navy-based dark token.
+3. Special attention to `alert-message.tsx` — 4 severity variants use `bg-white`.
 
 **Acceptance criteria:**
 
-- [ ] No `window.alert()` calls remain in src/ (excluding test files)
-- [ ] Delete success shows green feedback
-- [ ] Delete failure shows red feedback
+- [ ] Zero `bg-white` in any src/ file
+- [ ] All replacements have dark mode pairing
+- [ ] Alert message severity colors preserved (sky, red, emerald, amber text colors)
+- [ ] Visual consistency maintained
 - [ ] `npx tsc --noEmit` passes
 
 ---
 
-## Phase 58: Admin Bulk Actions — HIGH (PM Audit #27, Owner Directive #9)
+### 60.3 HIGH — Migrate border tokens (lightBorders/darkBorders → slate)
 
-> **HIGH priority. PM audit #27 triple-audit confirmed: ZERO admin data tables have bulk selection or bulk action capability. Owner directive: "All data tables in admin must have option to select one, more or all items/rows for Bulk Actions (edit/remove — where appropriate)."**
-
----
-
-### 58.1 HIGH — Add bulk actions to admin users table
-
-**Files:** `src/app/(admin)/admin/users/page.tsx`
+**Ref:** Architect report: 43 files use `lightBorders`, 43 use `darkBorders`. Highest-impact migration batch.
 
 **What to do:**
 
-1. Add checkbox column to users table (per-row + select-all in header).
-2. Add bulk action bar that appears when items are selected: "Bulk Suspend" and "Bulk Remove" buttons.
-3. Bulk actions must trigger confirmation dialogs (per 57.1 pattern).
-4. Show count of selected items.
-5. Create corresponding bulk server actions in `admin.actions.tsx`.
+1. Replace all `lightBorders-*` references with `slate-*` equivalents from TailwindCSS.
+2. Replace all `darkBorders-*` references with `slate-*` equivalents for dark mode.
+3. Mapping: `lightBorders-100→slate-100`, `lightBorders-200→slate-200`, `lightBorders-300→slate-300`, `lightBorders-400→slate-400`, etc. Adjust shade mapping for visual consistency.
 
 **Acceptance criteria:**
 
-- [ ] Users table has per-row checkboxes and select-all
-- [ ] Bulk action bar appears when items selected
-- [ ] "Bulk Suspend" and "Bulk Remove" available
-- [ ] Each bulk action requires confirmation
-- [ ] Bulk actions show feedback (per 57.2 pattern)
+- [ ] Zero `lightBorders` or `darkBorders` references in src/
+- [ ] All border tokens use TailwindCSS `slate` palette
+- [ ] Both light and dark modes render correctly
 - [ ] `npx tsc --noEmit` passes
 
 ---
 
-### 58.2 HIGH — Add bulk actions to admin transactions table
+### 60.4 HIGH — Migrate background tokens to new palette
 
-**Files:** `src/app/(admin)/admin/transactions/page.tsx`
+**Ref:** Architect report: `lightBackground` in 31 files, `jwdMarine` in 42 files, `darkBackground` in 1 file.
 
 **What to do:**
 
-1. Add checkbox column to transactions table (per-row + select-all).
-2. Add bulk action bar with appropriate actions (e.g., "Bulk Remove").
-3. Bulk actions require confirmation and show feedback.
+1. Update `lightBackground` CSS variables to generate from Lemon (#FAF0CA) as base color.
+2. Update `jwdMarine` CSS variables to generate from Navy (#0D3B66) as base color. Or rename token to `navy` and find/replace across 42 files.
+3. Remove `darkBackground` definitions (only used in globals.css itself).
 
 **Acceptance criteria:**
 
-- [ ] Transactions table has per-row checkboxes and select-all
-- [ ] Bulk action bar appears when items selected
-- [ ] Bulk actions require confirmation and show feedback
+- [ ] Light backgrounds use Lemon (#FAF0CA) shade scale
+- [ ] Dark backgrounds use Navy (#0D3B66) shade scale
+- [ ] `jwdAqua` references (4 files) replaced with closest Navy or slate shade
 - [ ] `npx tsc --noEmit` passes
 
 ---
 
-### 58.3 HIGH — Add bulk actions to admin website pages table
+### 60.5 HIGH — Migrate accent and primary tokens to Grass
 
-**Files:** `src/app/(admin)/admin/website/page.tsx`
+**Ref:** Architect report: `lightAccent` in 10 files, `darkAccent` in 10 files, `lightPrimary` in 23 files, `darkPrimary` in 22 files.
 
 **What to do:**
 
-1. Add checkbox column to pages table (per-row + select-all).
-2. Add bulk action bar: "Bulk Delete", "Bulk Publish", "Bulk Unpublish".
-3. Bulk actions require confirmation and show feedback.
+1. Update `lightAccent` CSS variables to Grass (#27A148) shade scale.
+2. Update `darkAccent` CSS variables to Grass (#27A148) shade scale (same as light — unified accent).
+3. Evaluate `lightPrimary`/`darkPrimary` usage — these are decorative (progress bars, header backgrounds). Replace with appropriate Navy/Lemon/Grass shades.
+4. Evaluate `lightSecondary`/`darkSecondary` — used for hover states, utility highlights. Replace with appropriate palette shades.
 
 **Acceptance criteria:**
 
-- [ ] Website pages table has per-row checkboxes and select-all
-- [ ] Bulk action bar appears when items selected
-- [ ] "Bulk Delete", "Bulk Publish", "Bulk Unpublish" available
-- [ ] Bulk actions require confirmation and show feedback
+- [ ] All accent colors resolve to Grass (#27A148) shades
+- [ ] `lightPrimary`/`darkPrimary` removed or reassigned
+- [ ] `lightSecondary`/`darkSecondary` removed or reassigned
 - [ ] `npx tsc --noEmit` passes
 
 ---
 
-## Phase 59: Admin User Detail & Design Polish — MEDIUM (PM Audit #27, Owner Directives #11/#12)
+### 60.6 HIGH — Migrate text tokens
 
-> **MEDIUM priority. Admin user detail displays "used / limit" but not "remaining". Admin form inputs use `bg-white` instead of design tokens.**
-
----
-
-### 59.1 MEDIUM — Show "remaining" in admin user detail usage section
-
-**Ref:** PM audit #27 — Owner directive #12: "Admin users table and single page must provide information about usage and limits (remained vs included)."
-
-**Files:** `src/app/(admin)/admin/users/[userId]/page.tsx`
+**Ref:** Architect report: `lightText` in 7 files, `darkText` in 5 files.
 
 **What to do:**
 
-1. Change usage display format from `{used} / {limit}` to `{used} / {limit} ({remaining} left)` or equivalent "remaining" indicator.
-2. Show visual progress bar for each metric (image, audio, video, conversations, prompts).
-3. "Unlimited" plans show "Unlimited" instead of remaining count.
+1. Light theme text: Update `lightText` CSS variables to Navy (#0D3B66) shade scale per owner directive.
+2. Dark theme text: Update `darkText` CSS variables to Lemon (#FAF0CA) shade scale per owner directive.
 
 **Acceptance criteria:**
 
-- [ ] Each usage metric shows used, limit, AND remaining
-- [ ] Unlimited values clearly indicated
+- [ ] Light theme primary text is Navy-based
+- [ ] Dark theme primary text is Lemon-based
+- [ ] Text readability maintained (contrast ratios)
 - [ ] `npx tsc --noEmit` passes
 
 ---
 
-### 59.2 MEDIUM — Standardize admin form input design tokens
-
-**Ref:** PM audit #27 — Architect finding M2: admin form inputs use `bg-white` while /app uses design tokens.
-
-**Files:** `src/app/(admin)/admin/website/page.tsx`, `src/app/(admin)/admin/users/page.tsx`, `src/components/admin/settings/admin-models-section.tsx`, `src/components/admin/settings/admin-limits-section.tsx`, `src/components/admin/settings/admin-pricing-section.tsx`, `src/components/admin/tiptap-editor.tsx`
+### 60.7 HIGH — Remove old palette definitions and visual QA
 
 **What to do:**
 
-1. Replace `bg-white` in admin form inputs/selects with `bg-lightBackground-100` (or similar design token matching `/app`).
-2. Ensure `dark:bg-jwdMarine-1000` pairing is preserved.
+1. Remove all old palette CSS custom properties from globals.css that are no longer referenced.
+2. Verify zero references remain to removed palette names in src/.
+3. Visual QA: verify all pages in light mode AND dark mode render correctly.
+4. Run full validation gateway.
 
 **Acceptance criteria:**
 
-- [ ] Zero `bg-white` in admin page/component files (only design tokens)
-- [ ] Dark mode unaffected
-- [ ] Visual consistency with /app form inputs
+- [ ] Zero unused CSS custom properties in globals.css
+- [ ] Zero stale palette references in src/
+- [ ] All pages render correctly in light mode
+- [ ] All pages render correctly in dark mode
+- [ ] `npx prettier . --write` passes
+- [ ] `npm run lint` passes
+- [ ] `npx tsc --noEmit` passes
+- [ ] `npm run test` passes
+- [ ] `npm run build` passes
+
+---
+
+## Phase 61: Admin Design Alignment & Data Organization — MEDIUM (PM Audit #28, Owner Directives)
+
+> **MEDIUM priority. Run after Phase 60 (palette migration). Admin design must match /app design. JSON data outsourcing.**
+
+---
+
+### 61.1 MEDIUM — Proper confirmation modal component (replace window.confirm bridge)
+
+**Ref:** AGENTS.md UX Safety Rules: "No window.confirm() in production UI." Currently 4 locations use window.confirm as temporary bridge.
+
+**Files:** `src/components/admin/admin-managed-form.tsx`, `src/components/chat/library-delete-button.tsx`, `src/components/chat/sidebar/chat-sidebar-nav-v2.tsx`, `src/components/sections/profile-hero-editor.tsx`
+
+**What to do:**
+
+1. Create a reusable `ConfirmationModal` component using the app's design system (not browser native dialog).
+2. Replace all 4 `window.confirm()` usages with the new modal.
+3. Modal must show title, description, confirm/cancel buttons with appropriate styling.
+
+**Acceptance criteria:**
+
+- [ ] Zero `window.confirm()` calls in src/
+- [ ] Reusable `ConfirmationModal` component created
+- [ ] All destructive actions use the modal
+- [ ] Modal accessible (keyboard, screen reader)
+- [ ] `npx tsc --noEmit` passes
+
+---
+
+### 61.2 MEDIUM — Outsource static JSON data to dedicated folder
+
+**Ref:** Owner directive: "JSON data inside app files/components must be outsourced to a folder named json or similar."
+
+**Files:** `src/constants/landing-data.ts`, `src/constants/cookies-data.ts`
+
+**What to do:**
+
+1. Create `src/json/` directory.
+2. Move pure static data arrays from `landing-data.ts` (featureCards, howItWorksSteps) and `cookies-data.ts` (cookieCategories) to JSON files in `src/json/`.
+3. Update imports in consuming components.
+4. Note: `about-data.ts`, `terms-data.ts`, `privacy-data.ts`, and `faqs.tsx` contain builder functions with dynamic config interpolation — these stay in `src/constants/`.
+
+**Acceptance criteria:**
+
+- [ ] `src/json/` directory exists with static data files
+- [ ] `landing-data.ts` and `cookies-data.ts` import from json files or are moved entirely
+- [ ] Builder functions remain in `src/constants/`
+- [ ] `npx tsc --noEmit` passes
+
+---
+
+### 61.3 MEDIUM — Admin user detail usage columns in users list table
+
+**Ref:** Owner directive: "In /admin/users table must provide information about usage and limits (remained vs included)."
+
+**Files:** `src/app/(admin)/admin/users/page.tsx`, `src/components/admin/users/admin-users-table.tsx`
+
+**What to do:**
+
+1. Add usage summary columns to admin users list table: current plan, conversations used/limit, media used/limit.
+2. Keep it concise — full detail available on user detail page.
+
+**Acceptance criteria:**
+
+- [ ] Users list table shows plan name, conversations used/limit, media usage summary
+- [ ] Data fetched server-side, passed as props
 - [ ] `npx tsc --noEmit` passes
 
 ---
@@ -236,22 +242,22 @@
 
 ### 31.4 LOW — Update E2E tests for current UI structure
 
-**Ref:** PM audit #27 — Engineer analysis: 5 E2E failures caused by stale Clerk auth session (4 tests) and DB connectivity (2 tests). `pricing-public.spec.ts` is a duplicate of `plans-public.spec.ts`.
+**Ref:** PM audit #28 — Engineer analysis: E2E failures caused by stale Clerk auth session and DB connectivity. `pricing-public.spec.ts` is a confirmed duplicate of `plans-public.spec.ts`.
 
 **Files:** `tests/e2e/chat-app-shell.spec.ts`, `tests/e2e/plans-public.spec.ts`, `tests/e2e/pricing-public.spec.ts`, `tests/e2e/public-pages.spec.ts`, `tests/e2e/user-profile.spec.ts`
 
 **What to do:**
 
-1. Fix auth session refresh logic in E2E global setup (stale Clerk token is root cause of 4/5 failures).
-2. Remove or repurpose `pricing-public.spec.ts` (duplicate of `plans-public.spec.ts`).
-3. Update selectors/assertions in remaining failing specs to match current UI text and structure.
+1. Delete `pricing-public.spec.ts` (confirmed duplicate of `plans-public.spec.ts`).
+2. Fix auth session refresh logic in E2E global setup.
+3. Update selectors/assertions in remaining failing specs.
 4. Add DB connectivity check in E2E setup.
 
 **Acceptance criteria:**
 
+- [ ] `pricing-public.spec.ts` deleted
 - [ ] `npm run test:e2e` passes with 0 failures (excluding intentionally skipped)
 - [ ] No duplicate test files
-- [ ] Auth session handled correctly across test runs
 
 ---
 
@@ -274,11 +280,19 @@
 
 ### 46.2 LOW — Add stderr logging to silent catch blocks
 
-**Files:** `src/components/shared/audio-player.tsx`, `src/components/chat/chat-sidebar.tsx`
+**Files:** `src/components/shared/audio-player.tsx`, `src/components/chat/chat-sidebar.tsx`, `src/components/chat/sidebar/chat-sidebar-shell.tsx`
 
 **What to do:**
 
-1. Replace empty `catch {}` blocks with `catch { /* localStorage/audio non-critical */ }` comments or minimal stderr logging where appropriate.
+1. Replace empty `catch {}` blocks (3 total) with `catch { /* localStorage/audio non-critical */ }` comments or minimal stderr logging where appropriate.
+
+---
+
+## Phase 62: Confirmation Modal Upgrade — LOW
+
+### 62.1 LOW — Replace window.confirm temporary bridge
+
+**Note:** This is tracked separately from 61.1 in case palette migration takes priority. If 61.1 is executed first, skip this phase.
 
 ---
 
@@ -301,5 +315,5 @@
 ---
 
 > **Completed phases** are archived in [`DONE.md`](DONE.md).
-> All phases through 56.3 complete. Phase 47.1 + 34.2–34.9e complete.
+> All phases through 59.2 complete. All Milestones 0–20 COMPLETED.
 > Phase 10–12 superseded (see DONE.md for mapping).
