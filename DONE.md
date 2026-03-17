@@ -2,7 +2,77 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-17 — PM deep audit #20. 32.4 (Library media card components) verified DONE. Phases 1–25.7 + 27.1–27.5 + 27.6–27.10 + 28.1 + 28.2-fix + 28.3-code + 28.3-verify + 28.4 + 28.6 + 28.7 + 30.1 + 30.2 + 30.3 + 30.4 + 31.1 + 31.2 + 31.3 + 31.2-fix + 32.1 + 32.2 + 32.3 + 32.4 + 32.6 + 33.1–33.8 + 35.1 + 37.1 + 38.1–38.7 + 36.1–36.2 + 39.1 + E2E regression fixes complete.
+> Last updated: 2026-03-17 — PM deep audit #21. Phases 40–43.4 archived (except 43.2 hero images — in progress). Phases 1–25.7 + 27.1–27.5 + 27.6–27.10 + 28.1 + 28.2-fix + 28.3-code + 28.3-verify + 28.4 + 28.6 + 28.7 + 30.1 + 30.2 + 30.3 + 30.4 + 31.1 + 31.2 + 31.3 + 31.2-fix + 32.1 + 32.2 + 32.3 + 32.4 + 32.6 + 33.1–33.8 + 35.1 + 37.1 + 38.1–38.7 + 36.1–36.2 + 39.1 + 40.1–40.2 + 41.1–41.4 + 42.1–42.3 + 43.1 + 43.3 + 43.4 + E2E regression fixes complete.
+
+---
+
+## Phase 43.4 — Persona Category Display & Sorting — COMPLETED (2026-03-17)
+
+> PM audit #21. Verified DONE.
+
+- [x] **43.4 LOW** — Personas grouped and sorted by category in display order: Productivity, Learning, Creative, Lifestyle, Career.
+- [x] Category badges visible on each persona card.
+- [x] Order consistent across all persona surfaces (picker, public page, app page).
+
+**Files changed:** `src/constants/assistant-personas.tsx`, `src/types/PersonaData.d.tsx`, `src/components/shared/persona-card.tsx`
+
+---
+
+## Phase 43.3 — 3-per-row Persona Grid Layout — COMPLETED (2026-03-17)
+
+> PM audit #21. Verified DONE.
+
+- [x] **43.3 MEDIUM** — Persona grids render as `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3`.
+- [x] 1 column on mobile, 2 on tablet, 3 on desktop.
+- [x] Consistent across persona picker, public page, app page.
+
+**Files changed:** `src/components/sections/personas-section.tsx`, `src/app/(chat)/app/new/page.tsx`
+
+---
+
+## Phase 43.1 — Code Review Fixes (Copilot Review) — COMPLETED (2026-03-17)
+
+> PM audit #21. Verified DONE. 6 of 7 items fixed; item 7 was already correct (Tailwind v4 suffix `!` important syntax).
+
+- [x] **43.1 MEDIUM** — Offset clamping in `task-queries.tsx` and `library/page.tsx`. `activeTabId` sync in `library-tabs.tsx`. Deduplicated `PaginationState` types. Fixed `min-w-45` → `min-w-[180px]` in `avatar-menu.tsx`. Fixed `z-100` → `z-[100]` in `alert-message.tsx`. Tailwind v4 suffix `!` confirmed correct.
+
+**Files changed:** Multiple chat and utility files.
+
+---
+
+## Phase 42.1–42.3 — Admin Panel + Plan Cards Improvements — COMPLETED (2026-03-17)
+
+> PM audit #21. Verified DONE. All 3 tasks complete.
+
+- [x] **42.1 MEDIUM** — Admin panel design consistency aligned with client app (layout, fonts, sizes, colors, proportions).
+- [x] **42.2 MEDIUM** — Plan card UI: "0" values replaced with "✕" symbol for unavailable features. Muted styling for unavailability.
+- [x] **42.3 MEDIUM** — Unavailable persona PRO/PREMIUM labels. Persona cards display correct plan requirement label. Trial interaction not blocked.
+
+**Files changed:** `src/app/(admin)/admin/settings/page.tsx`, `src/constants/plans.tsx`, `src/components/shared/persona-card.tsx`
+
+---
+
+## Phase 41.1–41.4 — Persona Restructure (10 → 6 Personas) — COMPLETED (2026-03-17)
+
+> PM audit #21. Verified DONE. Major structural change.
+
+- [x] **41.1 HIGH** — Removed companion personas (Best Friend, Boyfriend, Girlfriend) from constants, types, prompts, entitlements, admin settings.
+- [x] **41.2 HIGH** — Merged Analyst into Strategist. Strategist now encompasses analysis + planning capabilities.
+- [x] **41.3 HIGH** — Updated plan-gating defaults: Lite = 2 (Strategist, Developer), Pro = 5 (Lite + Teacher, Creator, Wellness), Premium = all 6 (+ Interviewer).
+- [x] **41.4 MEDIUM** — Migration script (`scripts/migrate-removed-personas.mjs`) handles orphaned persona IDs. Reassigns Task/UsageEvent records for removed personas (analyst → strategist). Graceful fallback in `getPersona()` for existing conversations.
+
+**Files changed:** `src/constants/assistant-personas.tsx`, `src/types/PersonaData.d.tsx`, `src/lib/utils/resolve-entitlements.tsx`, `src/app/(admin)/admin/settings/page.tsx`, `scripts/migrate-removed-personas.mjs`
+
+---
+
+## Phase 40.1–40.2 — Critical Bug Fixes — COMPLETED (2026-03-17)
+
+> PM audit #21. Verified DONE. Critical production bugs resolved.
+
+- [x] **40.1 CRITICAL** — Fixed chat generation "Invalid request body" error. Updated Zod schema with `.nullable().optional()` for optional fields. Chat generation works end-to-end for all plan tiers.
+- [x] **40.2 CRITICAL** — Fixed persona access gating enforcement. Corrected plan-gating defaults to 2/5/6 split. Clear plan requirement labels display on unavailable personas.
+
+**Files changed:** `src/lib/utils/validation-schemas.ts`, `src/app/api/openai/route.tsx`
 
 ---
 

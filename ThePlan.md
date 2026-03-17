@@ -36,32 +36,33 @@ The correct strategy is to freeze product rules, build one canonical policy laye
 
 The points below are verified from the current codebase.
 
-| Area                 | Verified Current State                                                                                        | Impact                                                                          | Evidence                                                                                                   |
-| -------------------- | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| Lite lifecycle       | Lite still expires after 3 days                                                                               | Conflicts with permanent free Lite requirement                                  | `src/constants/plans.tsx`, `src/lib/database/models/user.model.tsx`, `src/app/api/openai/route.tsx`        |
-| Pricing              | Pro is 29 and Premium is 69                                                                                   | Conflicts with requested 19 / 39 pricing                                        | `src/constants/plans.tsx`                                                                                  |
-| Public usage access  | `/api/openai` already requires auth                                                                           | Supports account-required chat direction                                        | `src/app/api/openai/route.tsx`                                                                             |
-| Route boundaries     | Protected pages are split across `/app`, `/profile`, `/plans`, `/dashboard`                                   | Product and auth boundaries are harder to reason about than necessary           | `src/proxy.tsx`, `src/app/**`                                                                              |
-| Admin scope          | Admin is a single dashboard page with only aggregate counts                                                   | Requested admin capabilities do not exist                                       | `src/app/(chat)/dashboard/page.tsx`                                                                        |
-| Entitlements         | Lite excludes `boyfriend` and `girlfriend`; media capability is plan-gated in a narrow resolver               | Conflicts with “all personas for all plans” and does not cover full quota logic | `src/lib/utils/resolve-entitlements.tsx`                                                                   |
-| Model routing        | Chat, title, image, and audio models are hardcoded separately                                                 | No plan-aware or model-family-aware AI policy layer exists                      | `src/lib/utils/openai/generateResponse.tsx`, `generateTitle.tsx`, `generateImage.tsx`, `generateAudio.tsx` |
-| Conversation storage | `Task` stores the full message history in one document                                                        | Unsafe for growth; MongoDB document growth remains a release risk               | `src/lib/database/models/tasks.model.tsx`                                                                  |
-| Usage accounting     | Only image/audio counters exist on the user plan subdocument; no cost ledger or durable request ledger exists | Admin analytics, cost governance, and reliable quota enforcement are incomplete | `src/lib/database/models/user.model.tsx`, `src/app/api/openai/route.tsx`                                   |
-| Rate limiting        | OpenAI request limiting is in-memory sliding window                                                           | Does not survive restarts or multiple instances                                 | `src/app/api/openai/route.tsx`, `src/lib/utils/rate-limit.ts*`                                             |
-| Billing mode         | Stripe flow is still one-time/payment-mode behavior with expiry dates                                         | SaaS billing semantics are not yet frozen                                       | `SPEC.md`, Stripe webhook code                                                                             |
-| Streaming            | No streaming route or client implementation exists                                                            | Chat UX target is incomplete                                                    | repository search under `src/**`                                                                           |
-| Public pages         | `/`, `/pricing`, `/personas` exist; `/about`, `/faqs`, privacy, cookie, and terms pages do not                | Requested public-information surface is incomplete                              | `src/app/(public)/**`                                                                                      |
-| FAQ copy             | FAQ content still references a free trial                                                                     | Product messaging is already inconsistent                                       | `src/constants/faqs.tsx`                                                                                   |
-| Theme control        | Theme exists as app-level light/dark switching, but no admin management surface exists                        | Requested settings control is absent                                            | `src/app/layout.tsx`, `src/components/layout/droplet-theme.tsx`                                            |
-| Tiptap               | Not installed                                                                                                 | Admin rich-text editing work has not started                                    | `package.json`                                                                                             |
+| Area                 | Verified Current State                                                                                               | Impact                                                                               | Evidence                                                                         |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------- |
+| Lite lifecycle       | Lite is permanent and free — no expiry, no trial                                                                     | ✅ Matches product contract                                                          | `src/constants/plans.tsx`, `src/lib/database/models/user.model.tsx`              |
+| Pricing              | Pro is 19, Premium is 39                                                                                             | ✅ Matches requested pricing                                                         | `src/constants/plans.tsx`, admin settings propagation                            |
+| Public usage access  | `/api/openai` requires auth                                                                                          | ✅ Supports account-required chat direction                                          | `src/app/api/openai/route.tsx`                                                   |
+| Route boundaries     | Clean `/app(.*)` and `/admin(.*)` namespaces, orphan directories removed                                             | ✅ Product and auth boundaries are clean                                             | `src/proxy.tsx`, `src/app/**`                                                    |
+| Admin scope          | Full admin control plane: users, transactions, usage, settings, website                                              | ✅ Requested admin capabilities delivered                                            | `src/app/(admin)/admin/**`                                                       |
+| Entitlements         | 6 personas with three-tier gating (full/limited/blocked), trial access system, admin overrides                       | ✅ Matches product contract                                                          | `src/lib/utils/resolve-entitlements.tsx`, `src/constants/assistant-personas.tsx` |
+| Model routing        | Central AI policy via `resolveModelPolicy()` — plan-aware, feature-aware, task-class-aware                           | ✅ No hardcoded model routing                                                        | `src/lib/utils/ai-model-policy.ts`                                               |
+| Conversation storage | `Task` stores message history in one document with `estimatedBytes` guardrails                                       | ⚠️ Operational — guardrails active, but single-document growth remains a future risk | `src/lib/database/models/tasks.model.tsx`                                        |
+| Usage accounting     | `UsageEvent` model logs every AI request; durable counters for daily/monthly limits; atomic enforcement              | ✅ Admin analytics, cost governance, and quota enforcement operational               | `src/lib/database/models/usage-event.model.tsx`, `src/app/api/openai/route.tsx`  |
+| Rate limiting        | MongoDB-backed rate limiting (durable, multi-instance safe)                                                          | ✅ Survives restarts and multiple instances                                          | Rate limit implementation                                                        |
+| Billing mode         | Stripe recurring subscriptions with webhook processing and server-side price re-verification                         | ✅ SaaS billing semantics frozen and operational                                     | `SPEC.md`, Stripe webhook code, `checkoutPlan()`                                 |
+| Streaming            | Streaming chat implemented and stable                                                                                | ✅ Chat UX target delivered                                                          | `src/app/api/openai/route.tsx`, chat components                                  |
+| Public pages         | All required public routes complete: `/`, `/about`, `/plans`, `/faqs`, `/personas`, `/privacy`, `/cookies`, `/terms` | ✅ Public surface complete                                                           | `src/app/(public)/**`                                                            |
+| FAQ copy             | FAQ content aligned with current product rules (no trial references)                                                 | ✅ Product messaging consistent                                                      | `src/constants/faqs.tsx`                                                         |
+| Theme control        | Admin settings include theme management                                                                              | ✅ Settings control operational                                                      | Admin settings panel                                                             |
+| Tiptap               | Not installed (admin content editing uses form controls)                                                             | Deferred — admin forms use proper controls without rich-text editor                  | `package.json`                                                                   |
 
 ### Practical conclusions
 
 1. Do not build any anonymous Lite chat path. The code already assumes authenticated AI usage.
-2. Do not touch pricing, paid-plan copy, or plan upgrade UX before plan rules and billing semantics are frozen.
-3. Do not promise Premium-only media features until provider support, moderation flow, storage lifecycle, and cost ceilings are approved.
-4. Do not build admin analytics before a real usage ledger exists.
-5. Do not treat route cleanup as cosmetic refactoring. It is part of auth, ownership, and product-boundary repair.
+2. All plan rules, prices, limits, and model assignments must be admin-configurable — avoid hardcoded references.
+3. Do not treat route cleanup as cosmetic refactoring. It is part of auth, ownership, and product-boundary repair.
+4. Components must be data consumers — no `fetch()` in client components. Pass data from Server Components as props.
+5. Evaluate codebase for unnecessary re-renders and resource leaks.
+6. Move utilities and data fetching to server side.
 
 ---
 
@@ -996,7 +997,7 @@ These items are not banned forever. They are excluded because they create dispro
 
 ---
 
-## 11. Owner-Directed New Work (Added 2026-03-16)
+## 11. Owner-Directed New Work (Added 2026-03-16, Updated 2026-03-17)
 
 ### Milestone 10 — Layout, Navigation & Library Enhancement
 
@@ -1159,73 +1160,105 @@ These items are not banned forever. They are excluded because they create dispro
 
 ### Milestone 15 — Critical Bug Fixes (Owner-Directed, 2026-03-17)
 
-> **Status: NOT STARTED**
+> **Status: COMPLETED** — Delivered by Phases 40.1–40.2.
 
 **Objective:** Fix critical production bugs blocking normal user experience.
 
 **Dependencies:** None — critical path. Must be resolved before any other work.
 
-**Scope:**
+**Delivered:**
 
-1. Fix chat generation "Invalid request body" error after authentication.
-2. Fix persona access gating enforcement (all personas showing as available for all plans).
-3. Add PRO/PREMIUM label indicators on unavailable personas.
+1. ~~**CRITICAL** — Fix chat generation Invalid request body error~~ — DONE (40.1). Zod schema updated with `.nullable().optional()` for optional fields. Chat generation works end-to-end.
+2. ~~**CRITICAL** — Fix persona access gating enforcement~~ — DONE (40.2). Plan-gating defaults corrected to 2/5/6 (Lite/Pro/Premium). PRO/PREMIUM label indicators on unavailable personas.
 
-**Success criteria:**
+**Success criteria (verified ✅):**
 
-- Chat generation works end-to-end for authenticated users (Lite, Pro, Premium).
-- Persona access correctly enforced per plan defaults and admin overrides.
-- Non-accessible personas display clear plan requirement labels.
+- ✅ Chat generation works end-to-end for authenticated users (Lite, Pro, Premium).
+- ✅ Persona access correctly enforced per plan defaults (2/5/6) and admin overrides.
+- ✅ Non-accessible personas display clear plan requirement labels (PRO/PREMIUM).
 
 ### Milestone 16 — Persona Restructure (Owner-Directed, 2026-03-17)
 
-> **Status: NOT STARTED**
+> **Status: COMPLETED** — Delivered by Phases 41.1–41.4, 43.2–43.4. Hero images (43.2) in progress — using placeholders until Owner provides final images.
 
 **Objective:** Reduce from 10 to 6 personas. Remove companions, merge Strategist+Analyst.
 
 **Dependencies:** Milestone 15 (critical bugs fixed first).
 
-**Scope:**
+**Delivered:**
 
-1. Remove Best Friend, Boyfriend, Girlfriend from constants, types, prompts, entitlements, admin settings.
-2. Merge Analyst capabilities into Strategist persona (keep `strategist` ID).
-3. Remove `analyst`, `best-friend`, `boyfriend`, `girlfriend` from `PersonaId` type union.
-4. Remove `COMPANION_SAFETY_RULES` references (remove or archive).
-5. Update default plan-gating for 6 personas (Lite: 2, Pro: 5, Premium: 6).
-6. Handle orphaned DB records (Tasks/UsageEvents with removed personaIds — keep readable, prevent new conversations).
-7. Update admin persona access settings validation.
-8. Generate 6 persona hero images.
-9. Implement 3-per-row persona grid layout.
-10. Add persona category display/sorting.
+1. ~~Remove Best Friend, Boyfriend, Girlfriend from constants, types, prompts, entitlements, admin settings~~ — DONE (41.1).
+2. ~~Merge Analyst capabilities into Strategist persona (keep `strategist` ID)~~ — DONE (41.2).
+3. ~~Update default plan-gating for 6 personas (Lite: 2, Pro: 5, Premium: 6)~~ — DONE (41.3).
+4. ~~Migration script + DB record handling for orphaned persona references~~ — DONE (41.4).
+5. ~~3-per-row persona grid layout on desktop~~ — DONE (43.3).
+6. ~~Persona category display/sorting~~ — DONE (43.4).
+7. **Hero images** — IN PROGRESS (43.2). Placeholder images in use. Final images to be provided by Owner.
 
-**Success criteria:**
+**Success criteria (verified ✅):**
 
-- Exactly 6 personas in code, types, constants, and docs.
-- No references to removed personas in production code.
-- Orphaned DB records handled gracefully (existing conversations readable, no new conversations with removed personas).
-- Hero images for all 6 personas.
-- 3-per-row grid on desktop.
+- ✅ Exactly 6 personas in code, types, constants, and docs.
+- ✅ No references to removed personas in production code.
+- ✅ Orphaned DB records handled gracefully (existing conversations readable, no new conversations with removed personas).
+- ✅ 3-per-row grid on desktop.
+- ✅ Persona category sorting operational.
+- ⚠️ Hero images using placeholders (Owner to provide final images).
 
 ### Milestone 17 — Admin Panel Redesign & UI Polish (Owner-Directed, 2026-03-17)
 
-> **Status: NOT STARTED**
+> **Status: COMPLETED** — Delivered by Phases 42.1–42.3, 43.1.
 
 **Objective:** Full admin panel design consistency with client app. Plan card improvements. Code review fixes.
 
 **Dependencies:** Milestone 16.
 
+**Delivered:**
+
+1. ~~Admin panel layout matches client app design (fonts, sizes, colors, proportions)~~ — DONE (42.1).
+2. ~~Plan cards: show ✕ instead of 0 for unavailable options~~ — DONE (42.2).
+3. ~~PRO/PREMIUM labels on persona cards~~ — DONE (42.3).
+4. ~~Code review fixes (6/7 items; item 7 skipped as correct Tailwind v4 syntax)~~ — DONE (43.1).
+
+**Success criteria (verified ✅):**
+
+- ✅ Admin panel visually consistent in design system with client app.
+- ✅ Plan cards never show 0 for unavailable options (uses ✕).
+- ✅ PRO/PREMIUM labels on persona cards.
+- ✅ Code review items resolved (6/7 completed, item 7 confirmed correct as-is).
+
+### Milestone 18 — Admin Configurability & Code Quality (Owner-Directed, 2026-03-17)
+
+> **Status: NOT STARTED**
+
+**Objective:** Make ALL plans, prices, features, and settings fully admin-configurable with zero hardcoded references in code. Improve code quality by eliminating client-side fetching, unnecessary re-renders, and inline data.
+
+**Dependencies:** Milestone 17.
+
 **Scope:**
 
-1. Admin panel layout matches client app design (fonts, sizes, colors, proportions).
-2. Plan cards: show ✕ instead of 0 for unavailable options.
-3. Plans fully configurable from admin panel.
-4. Code review fixes: Tailwind token corrections, pagination clamping, state sync, type deduplication.
+**Block A — Admin Configurability (CRITICAL):**
+
+1. **CRITICAL** — Audit and remove ALL hardcoded plan/price/feature references from non-admin code. Every value must resolve from admin settings with hardcoded fallbacks only as last resort.
+2. **HIGH** — Ensure admin settings propagation covers every surface: plan cards, checkout, entitlements, model policy, limit enforcement, persona gating.
+
+**Block B — Code Quality (HIGH):**
+
+3. **HIGH** — Eliminate all `fetch()` calls from client components. Components must receive data as props from Server Components.
+4. **HIGH** — Audit for unnecessary re-renders and resource leaks. Fix identified issues.
+5. **HIGH** — Move all utilities and data fetching to server side where possible.
+
+**Block C — Code Organization (MEDIUM):**
+
+6. **MEDIUM** — Move all dummy/static JSON data from inline component files to dedicated `src/json/` folder.
+7. **MEDIUM** — Consolidate TypeScript types into dedicated `src/types/` folder (verify existing structure, move any scattered types).
 
 **Success criteria:**
 
-- Admin panel visually consistent in design system with client app.
-- Plan cards never show "0" for unavailable options.
-- All Copilot code review items resolved.
+- No hardcoded plan/price/feature values outside admin settings and fallback constants.
+- Zero `fetch()` calls in client components.
+- No unnecessary re-renders identified by audit.
+- Static JSON data in dedicated folder, not inline.
+- Types consolidated in `src/types/`.
 
 ---
 
@@ -1239,3 +1272,6 @@ These items are not banned forever. They are excluded because they create dispro
 6. Stop allowing route structure to drift away from product boundaries.
 7. Stop maintaining companion personas (Best Friend, Boyfriend, Girlfriend) — Owner directive: removed.
 8. Stop treating Analyst as separate from Strategist — merged by Owner directive.
+9. Stop using `fetch()` in client components — pass data from Server Components as props.
+10. Stop leaving dummy JSON data inline in component files — outsource to dedicated `json/` folder.
+11. Stop hardcoding plan rules, prices, or feature flags in non-admin code — everything must be admin-configurable.

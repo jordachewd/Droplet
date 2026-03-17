@@ -2,7 +2,7 @@
 
 **Your AI assistant, your way.**
 
-Droplet is a smart AI chatbot with 10 unique personas — each with its own personality, expertise, and conversational style. Choose the assistant that fits your need, and start a real conversation.
+Droplet is a smart AI chatbot with 6 specialized personas — each with its own personality, expertise, and conversational style. Choose the assistant that fits your need, and start a real conversation.
 
 ---
 
@@ -10,7 +10,7 @@ Droplet is a smart AI chatbot with 10 unique personas — each with its own pers
 
 Droplet is not just another chatbot. It's a personal AI assistant that adapts to you.
 
-Pick a persona — from a strategic advisor to a creative partner, a coding companion, or even a supportive friend — and have conversations that feel natural, helpful, and uniquely tailored.
+Pick a persona — from a strategic advisor to a creative partner, a coding companion, or even a wellness coach — and have conversations that feel natural, helpful, and uniquely tailored.
 
 Every response is shaped by the persona you choose, giving you a truly personalized AI experience.
 
@@ -18,31 +18,28 @@ Every response is shaped by the persona you choose, giving you a truly personali
 
 ## Meet the Personas
 
-| Persona         | What They Do                                     |
-| --------------- | ------------------------------------------------ |
-| **Strategist**  | Business strategy, planning, and decision-making |
-| **Teacher**     | Learning, explanations, and educational guidance |
-| **Developer**   | Code, debugging, and technical solutions         |
-| **Creator**     | Creative writing, brainstorming, and content     |
-| **Wellness**    | Mental health tips, mindfulness, and self-care   |
-| **Analyst**     | Data analysis, research, and critical thinking   |
-| **Best Friend** | Casual conversation, support, and companionship  |
-| **Boyfriend**   | Warm, caring, and attentive conversation         |
-| **Girlfriend**  | Supportive, fun, and engaging conversation       |
-| **Interviewer** | Interview prep, practice sessions, and feedback  |
+| Persona         | Category     | What They Do                                     |
+| --------------- | ------------ | ------------------------------------------------ |
+| **Strategist**  | Productivity | Business strategy, planning, analysis, decisions |
+| **Developer**   | Productivity | Code, debugging, and technical solutions         |
+| **Teacher**     | Learning     | Learning, explanations, and educational guidance |
+| **Creator**     | Creative     | Creative writing, brainstorming, and content     |
+| **Wellness**    | Lifestyle    | Mental health tips, mindfulness, and self-care   |
+| **Interviewer** | Career       | Interview prep, practice sessions, and feedback  |
 
-Personas are available based on your plan — upgrade to unlock more.
+Each persona is an independent AI agent — pragmatic, direct, and grounded in reality. Personas are available based on your plan.
 
 ---
 
 ## Key Features
 
-- **10 AI Personas** — each with a distinct personality, tone, and expertise
+- **6 AI Personas** — each with a distinct personality, tone, and expertise
 - **Real-time Streaming** — watch responses appear as they're generated
 - **Image Generation** — create images through conversation
 - **Audio Generation** — generate audio content through conversation
 - **Video Generation** — create video content (coming soon)
 - **Conversation History** — save, resume, and manage your chats
+- **Media Library** — browse and download all generated images and audio
 - **File Uploads** — share images with your AI assistant
 - **Secure & Private** — your data stays yours, always
 
@@ -50,18 +47,18 @@ Personas are available based on your plan — upgrade to unlock more.
 
 ## Plans & Pricing
 
-|                               | Lite         | Pro       | Premium                |
-| ----------------------------- | ------------ | --------- | ---------------------- |
-| **Price**                     | Free forever | $19/month | $39/month              |
-| **Personas**                  | 3            | 7         | All 10                 |
-| **Conversations/Day**         | 5            | 50        | Unlimited              |
-| **Prompts/Conversation**      | 10           | 100       | Unlimited              |
-| **Image Generation**          | 3/month      | 50/month  | Unlimited              |
-| **Audio Generation**          | 3/month      | 50/month  | Unlimited              |
-| **Video Generation**          | 1/month      | 10/month  | 10/month (coming soon) |
-| **Streaming Responses**       | ✓            | ✓         | ✓                      |
-| **Premium Audio Quality**     | —            | —         | ✓                      |
-| **Advanced AI for Reasoning** | —            | —         | ✓                      |
+|                          | Lite         | Pro       | Premium   |
+| ------------------------ | ------------ | --------- | --------- |
+| **Price**                | Free forever | $19/month | $39/month |
+| **Personas (full)**      | 2            | 5         | All 6     |
+| **Trial access**         | All others   | Remaining | —         |
+| **Conversations/Day**    | 5            | 50        | Unlimited |
+| **Prompts/Conversation** | 10           | 100       | Unlimited |
+| **Image Generation**     | 3/month      | 50/month  | Unlimited |
+| **Audio Generation**     | 3/month      | 50/month  | Unlimited |
+| **Video Generation**     | 1/month      | 10/month  | Unlimited |
+
+All plans include all features — differentiated by usage limits, not by feature lockout. Personas not fully included in your plan are available as trials with reduced limits.
 
 Create a free account and start chatting today. Upgrade anytime — no commitment.
 
@@ -81,7 +78,7 @@ Create a free account and start chatting today. Upgrade anytime — no commitmen
 
 - **It's personal** — every conversation is shaped by the persona you choose
 - **It's powerful** — built on the latest AI models for speed and quality
-- **It's flexible** — from productivity to creativity to companionship
+- **It's flexible** — from productivity to creativity to career growth
 - **It's private** — your conversations, your data, your control
 - **It's free to start** — no credit card required for the Lite plan
 
