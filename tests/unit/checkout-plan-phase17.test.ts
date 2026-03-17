@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import User from "@/lib/database/models/user.model";
 import { checkoutPlan } from "@/lib/actions/transaction.action";
+import { getEffectivePlanConfig } from "@/lib/utils/effective-plan-config";
 
 const createSessionMock = vi.hoisted(() => vi.fn());
 
@@ -41,6 +42,10 @@ vi.mock("@/lib/database/models/user.model", () => ({
   },
 }));
 
+vi.mock("@/lib/utils/effective-plan-config", () => ({
+  getEffectivePlanConfig: vi.fn(),
+}));
+
 describe("checkoutPlan phase17", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -55,6 +60,36 @@ describe("checkoutPlan phase17", () => {
       firstName: "Test",
       lastName: "User",
     } as never);
+    vi.mocked(getEffectivePlanConfig).mockResolvedValue({
+      pricing: {
+        Lite: 0,
+        Pro: 19,
+        Premium: 39,
+      },
+      limits: {
+        Lite: {
+          images: 3,
+          audio: 3,
+          video: 1,
+          conversationsPerDay: 5,
+          promptsPerConversation: 10,
+        },
+        Pro: {
+          images: 50,
+          audio: 50,
+          video: 10,
+          conversationsPerDay: 50,
+          promptsPerConversation: 100,
+        },
+        Premium: {
+          images: -1,
+          audio: -1,
+          video: 10,
+          conversationsPerDay: -1,
+          promptsPerConversation: -1,
+        },
+      },
+    });
     createSessionMock.mockResolvedValue({ url: "http://stripe.test/session" });
   });
 
@@ -76,5 +111,21 @@ describe("checkoutPlan phase17", () => {
       }),
     );
     expect(redirect).toHaveBeenCalledWith("http://stripe.test/session");
+  });
+
+  it("rejects checkout when client price does not match server pricing", async () => {
+    await expect(
+      checkoutPlan({
+        plan: {
+          id: 1,
+          billing: "Monthly",
+          name: "Pro",
+          price: 0,
+        },
+      }),
+    ).rejects.toThrow("Unable to start checkout.");
+
+    expect(createSessionMock).not.toHaveBeenCalled();
+    expect(redirect).not.toHaveBeenCalled();
   });
 });

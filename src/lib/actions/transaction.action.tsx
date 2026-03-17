@@ -12,6 +12,7 @@ import serializeForClient from "@/lib/utils/serialize-for-client";
 import { auth } from "@clerk/nextjs/server";
 import { nonEmptyStringSchema } from "@/lib/utils/validation-schemas";
 import { z } from "zod";
+import { getEffectivePlanConfig } from "@/lib/utils/effective-plan-config";
 
 const checkoutPlanSchema = z
   .object({
@@ -50,6 +51,13 @@ export async function checkoutPlan(transaction: CheckoutTransactionParams) {
     price: planPrice,
   }: CheckoutPlanParams = (parsedTransaction.data as CheckoutPlanInput).plan;
 
+  const { pricing } = await getEffectivePlanConfig();
+  const serverPlanPrice = pricing[planName];
+
+  if (serverPlanPrice !== planPrice) {
+    throw new Error("Unable to start checkout.");
+  }
+
   const fullName = getFullName({
     firstName: currentUser.firstName || "",
     lastName: currentUser.lastName || "",
@@ -63,7 +71,7 @@ export async function checkoutPlan(transaction: CheckoutTransactionParams) {
       {
         price_data: {
           currency: "usd",
-          unit_amount: Number(planPrice) * 100,
+          unit_amount: Number(serverPlanPrice) * 100,
           product_data: {
             name: planName,
           },
