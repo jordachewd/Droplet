@@ -8,7 +8,7 @@ import type {
   LibraryConversationCardItem,
   LibraryMediaCardItem,
   LibraryPaginationState,
-} from "@/components/chat/library-tabs";
+} from "@/types/LibraryData.d";
 import {
   getMediaItemsByUserId,
   getRecentTasksByUserId,

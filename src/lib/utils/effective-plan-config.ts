@@ -2,7 +2,9 @@ import "server-only";
 
 import {
   DEFAULT_PLAN_PRICING,
+  PERSONA_TRIAL_LIMITS,
   PLAN_LIMITS,
+  PersonaTrialLimits,
   PlanLimits,
   PlanPricing,
 } from "@/constants/plans";
@@ -20,6 +22,7 @@ const PLAN_NAMES: PlanName[] = ["Lite", "Pro", "Premium"];
 export interface EffectivePlanConfig {
   pricing: PlanPricing;
   limits: PlanLimits;
+  trialLimits: PersonaTrialLimits;
 }
 
 function isObjectRecord(value: unknown): value is Record<string, unknown> {
@@ -170,11 +173,36 @@ function normalizePlanLimitsValue(value: unknown): PlanLimits {
   };
 }
 
+function normalizeTrialLimitsValue(value: unknown): PersonaTrialLimits {
+  if (!isObjectRecord(value)) {
+    return { ...PERSONA_TRIAL_LIMITS };
+  }
+
+  return {
+    promptsPerConversation: normalizePositiveInteger({
+      value: value.promptsPerConversation,
+      fallback: PERSONA_TRIAL_LIMITS.promptsPerConversation,
+    }),
+    images: normalizePositiveInteger({
+      value: value.images,
+      fallback: PERSONA_TRIAL_LIMITS.images,
+    }),
+    audio: normalizePositiveInteger({
+      value: value.audio,
+      fallback: PERSONA_TRIAL_LIMITS.audio,
+    }),
+    video: normalizePositiveInteger({
+      value: value.video,
+      fallback: PERSONA_TRIAL_LIMITS.video,
+    }),
+  };
+}
+
 export async function getEffectivePlanConfig(): Promise<EffectivePlanConfig> {
   await connectToDatabase();
 
   const settings = (await AppSetting.find({
-    key: { $in: ["admin.pricing", "admin.limits"] },
+    key: { $in: ["admin.pricing", "admin.limits", "admin.trialLimits"] },
   })
     .select("key value")
     .lean()) as AppSettingRecord[];
@@ -184,11 +212,23 @@ export async function getEffectivePlanConfig(): Promise<EffectivePlanConfig> {
 
   const pricingValue = settingsMap.get("admin.pricing")?.value;
   const limitsValue = settingsMap.get("admin.limits")?.value;
+  const trialLimitsValue = settingsMap.get("admin.trialLimits")?.value;
 
   return {
     pricing: normalizePricingValue(pricingValue),
     limits: normalizePlanLimitsValue(limitsValue),
+    trialLimits: normalizeTrialLimitsValue(trialLimitsValue),
   };
+}
+
+export async function getEffectiveTrialLimits(): Promise<PersonaTrialLimits> {
+  await connectToDatabase();
+
+  const setting = (await AppSetting.findOne({ key: "admin.trialLimits" })
+    .select("value")
+    .lean()) as AppSettingRecord | null;
+
+  return normalizeTrialLimitsValue(setting?.value);
 }
 
 export function getPlanLimit({

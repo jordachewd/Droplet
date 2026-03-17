@@ -39,7 +39,7 @@ import {
 } from "@/lib/utils/check-daily-conversations";
 import { getTaskByIdForUser } from "@/lib/utils/task-queries";
 import { filterAssistantMsg } from "@/lib/utils/openai/filterAssistantMsg";
-import { PERSONA_TRIAL_LIMITS, PlanLimits } from "@/constants/plans";
+import { PlanLimits } from "@/constants/plans";
 import { SUPPORT_EMAIL } from "@/constants/support";
 import { PlanName } from "@/types/PlanData.d";
 import { PersonaId } from "@/types/PersonaData.d";
@@ -735,6 +735,7 @@ export async function POST(req: Request): Promise<Response> {
         getEffectiveModelConfig(),
       ]);
     const effectivePlanLimits = effectivePlanConfig.limits;
+    const effectiveTrialLimits = effectivePlanConfig.trialLimits;
     const modelOverrides: ModelPolicyModelOverrides = {
       chat: {
         lite: effectiveModelConfig.liteChatModel,
@@ -876,7 +877,7 @@ export async function POST(req: Request): Promise<Response> {
         ? userData?.plan?.trialUsage?.trialImageGenerations
         : userData?.plan?.imageGenerations,
       limitType: "images",
-      overrideLimit: isTrialPersona ? PERSONA_TRIAL_LIMITS.images : undefined,
+      overrideLimit: isTrialPersona ? effectiveTrialLimits.images : undefined,
       usagePeriodStart: isTrialPersona
         ? userData?.plan?.trialUsage?.trialUsagePeriodStart
         : userData?.plan?.usagePeriodStart,
@@ -888,7 +889,7 @@ export async function POST(req: Request): Promise<Response> {
         ? userData?.plan?.trialUsage?.trialAudioGenerations
         : userData?.plan?.audioGenerations,
       limitType: "audio",
-      overrideLimit: isTrialPersona ? PERSONA_TRIAL_LIMITS.audio : undefined,
+      overrideLimit: isTrialPersona ? effectiveTrialLimits.audio : undefined,
       usagePeriodStart: isTrialPersona
         ? userData?.plan?.trialUsage?.trialUsagePeriodStart
         : userData?.plan?.usagePeriodStart,
@@ -900,7 +901,7 @@ export async function POST(req: Request): Promise<Response> {
         ? userData?.plan?.trialUsage?.trialVideoGenerations
         : userData?.plan?.videoGenerations,
       limitType: "video",
-      overrideLimit: isTrialPersona ? PERSONA_TRIAL_LIMITS.video : undefined,
+      overrideLimit: isTrialPersona ? effectiveTrialLimits.video : undefined,
       usagePeriodStart: isTrialPersona
         ? userData?.plan?.trialUsage?.trialUsagePeriodStart
         : userData?.plan?.usagePeriodStart,
@@ -1027,7 +1028,7 @@ export async function POST(req: Request): Promise<Response> {
     }
 
     const promptLimit = isTrialPersona
-      ? PERSONA_TRIAL_LIMITS.promptsPerConversation
+      ? effectiveTrialLimits.promptsPerConversation
       : effectivePlanLimits[planName].promptsPerConversation;
 
     if (persistedTask && promptLimit !== -1) {
@@ -1219,7 +1220,7 @@ export async function POST(req: Request): Promise<Response> {
                   userId,
                   limitType,
                   limit: isTrialPersona
-                    ? PERSONA_TRIAL_LIMITS[limitType]
+                    ? effectiveTrialLimits[limitType]
                     : effectivePlanLimits[planName][limitType],
                   counterScope: isTrialPersona ? "trial" : "plan",
                 }),
@@ -1295,7 +1296,7 @@ export async function POST(req: Request): Promise<Response> {
           userId,
           limitType,
           limit: isTrialPersona
-            ? PERSONA_TRIAL_LIMITS[limitType]
+            ? effectiveTrialLimits[limitType]
             : effectivePlanLimits[planName][limitType],
           counterScope: isTrialPersona ? "trial" : "plan",
         }),

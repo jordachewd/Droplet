@@ -2,16 +2,9 @@ import PageHead from "@/components/layout/page-head";
 import { updateAdminSettingAction } from "@/lib/actions/admin.actions";
 import { PERSONAS } from "@/constants/assistant-personas";
 import { getAdminSettingsSnapshot } from "@/lib/utils/admin-queries";
-import { PlanLimits } from "@/constants/plans";
+import { PersonaTrialLimits, PlanLimits } from "@/constants/plans";
+import { ModelSettingsFormValue } from "@/types/AdminData.d";
 import { PersonaId } from "@/types/PersonaData.d";
-
-interface ModelSettingsFormValue {
-  liteChatModel: string;
-  proChatModel: string;
-  premiumChatModel: string;
-  imageModel: string;
-  audioModel: string;
-}
 
 interface PricingSettingsFormValue {
   proPrice: number;
@@ -23,6 +16,7 @@ interface ThemeSettingsFormValue {
 }
 
 type LimitsSettingsFormValue = PlanLimits;
+type TrialLimitsSettingsFormValue = PersonaTrialLimits;
 
 type PersonaAccessSettingsFormValue = Record<
   "Lite" | "Pro" | "Premium",
@@ -265,6 +259,26 @@ function normalizeThemeSettingsValue(
   };
 }
 
+function normalizeTrialLimitsSettingsValue(
+  value: unknown,
+  defaults: TrialLimitsSettingsFormValue,
+): TrialLimitsSettingsFormValue {
+  if (!isObjectRecord(value)) {
+    return defaults;
+  }
+
+  return {
+    promptsPerConversation: readNumericValue(
+      value,
+      "promptsPerConversation",
+      defaults.promptsPerConversation,
+    ),
+    images: readNumericValue(value, "images", defaults.images),
+    audio: readNumericValue(value, "audio", defaults.audio),
+    video: readNumericValue(value, "video", defaults.video),
+  };
+}
+
 function normalizePersonaAccessValue(
   value: unknown,
   fallback: PersonaId[],
@@ -304,6 +318,8 @@ export default async function AdminSettingsPage() {
   const modelDefaults = snapshot.defaults.models as ModelSettingsFormValue;
   const pricingDefaults = snapshot.defaults.pricing as PricingSettingsFormValue;
   const limitsDefaults = snapshot.defaults.limits as LimitsSettingsFormValue;
+  const trialLimitsDefaults = snapshot.defaults
+    .trialLimits as TrialLimitsSettingsFormValue;
   const themeDefaults = snapshot.defaults.theme as ThemeSettingsFormValue;
   const personaAccessDefaults = snapshot.defaults
     .personaAccess as PersonaAccessSettingsFormValue;
@@ -322,6 +338,10 @@ export default async function AdminSettingsPage() {
   const themeValue = normalizeThemeSettingsValue(
     snapshot.settingsByKey["admin.theme"]?.value,
     themeDefaults,
+  );
+  const trialLimitsValue = normalizeTrialLimitsSettingsValue(
+    snapshot.settingsByKey["admin.trialLimits"]?.value,
+    trialLimitsDefaults,
   );
   const personaAccessValue = normalizePersonaAccessSettings(
     snapshot.settingsByKey as Record<string, { value: unknown }>,
@@ -616,6 +636,67 @@ export default async function AdminSettingsPage() {
             })}
           </div>
         </div>
+
+        <form
+          action={updateAdminSettingAction}
+          className="rounded-2xl border border-lightBorders-300 bg-white/70 p-5 dark:border-darkBorders-500 dark:bg-jwdMarine-900/70"
+        >
+          <input type="hidden" name="key" value="admin.trialLimits" />
+          <input type="hidden" name="category" value="trial" />
+          <h2 className="heading-6 mb-2">Trial Limits</h2>
+          <p className="mb-4 text-sm opacity-70">
+            Set limits for limited-access persona trials across 30-day windows.
+          </p>
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+            <label className="text-sm">
+              <span className="mb-1 block font-medium">
+                Prompts / Conversation
+              </span>
+              <input
+                type="number"
+                min={0}
+                name="trialPrompts"
+                defaultValue={trialLimitsValue.promptsPerConversation}
+                className="w-full rounded-lg border border-lightBorders-400 bg-white px-3 py-2 text-sm dark:border-darkBorders-500 dark:bg-jwdMarine-1000"
+              />
+            </label>
+            <label className="text-sm">
+              <span className="mb-1 block font-medium">Image Generations</span>
+              <input
+                type="number"
+                min={0}
+                name="trialImages"
+                defaultValue={trialLimitsValue.images}
+                className="w-full rounded-lg border border-lightBorders-400 bg-white px-3 py-2 text-sm dark:border-darkBorders-500 dark:bg-jwdMarine-1000"
+              />
+            </label>
+            <label className="text-sm">
+              <span className="mb-1 block font-medium">Audio Generations</span>
+              <input
+                type="number"
+                min={0}
+                name="trialAudio"
+                defaultValue={trialLimitsValue.audio}
+                className="w-full rounded-lg border border-lightBorders-400 bg-white px-3 py-2 text-sm dark:border-darkBorders-500 dark:bg-jwdMarine-1000"
+              />
+            </label>
+            <label className="text-sm">
+              <span className="mb-1 block font-medium">Video Generations</span>
+              <input
+                type="number"
+                min={0}
+                name="trialVideo"
+                defaultValue={trialLimitsValue.video}
+                className="w-full rounded-lg border border-lightBorders-400 bg-white px-3 py-2 text-sm dark:border-darkBorders-500 dark:bg-jwdMarine-1000"
+              />
+            </label>
+          </div>
+          <div className="mt-4 flex justify-end">
+            <button className="btn btn-md btn-contained" type="submit">
+              Save Trial Limits
+            </button>
+          </div>
+        </form>
 
         <form
           action={updateAdminSettingAction}

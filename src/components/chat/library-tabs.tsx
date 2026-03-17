@@ -6,25 +6,11 @@ import Image from "next/image";
 import classNames from "classnames";
 import LibraryDeleteButton from "@/components/chat/library-delete-button";
 import { resolveStoredAssetUrl } from "@/lib/utils/aws/s3-file-reference";
-
-export interface LibraryConversationCardItem {
-  id: string;
-  title: string;
-  personaLabel: string;
-  personaIcon: string;
-  updatedAtLabel: string;
-  href: string;
-}
-
-export interface LibraryMediaCardItem {
-  url: string;
-  taskId: string;
-  taskTitle: string;
-  personaLabel: string;
-  personaIcon: string;
-  createdAtLabel: string;
-  href: string;
-}
+import {
+  LibraryConversationCardItem,
+  LibraryMediaCardItem,
+  LibraryPaginationState,
+} from "@/types/LibraryData.d";
 
 interface LibraryTabsProps {
   conversations: LibraryConversationCardItem[];
@@ -39,12 +25,6 @@ interface LibraryTabsProps {
 }
 
 type LibraryTabId = "chats" | "images" | "audios" | "videos";
-
-export interface LibraryPaginationState {
-  currentPage: number;
-  hasPreviousPage: boolean;
-  hasNextPage: boolean;
-}
 
 export default function LibraryTabs({
   conversations,

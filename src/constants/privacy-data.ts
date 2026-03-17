@@ -1,0 +1,45 @@
+export interface LegalSection {
+  title: string;
+  paragraphs: string[];
+}
+
+export const legalReviewDisclaimer =
+  "This policy is provided for informational purposes. Legal review recommended before production publication.";
+
+export const privacySections: LegalSection[] = [
+  {
+    title: "What Droplet collects",
+    paragraphs: [
+      "Droplet collects account information needed to operate the service, including identifiers supplied through Clerk, profile details you provide, and billing records associated with plan purchases.",
+      "When you use the product, Droplet also processes conversation content, uploaded files, generated media references, and service metadata such as timestamps, plan state, and usage counters required to enforce limits and support the product.",
+    ],
+  },
+  {
+    title: "How that information is used",
+    paragraphs: [
+      "Droplet uses collected information to authenticate users, deliver chat and media features, maintain conversation history, enforce plan entitlements, process billing, and investigate support or security issues.",
+      "Usage metadata may also be processed for reliability, abuse prevention, cost control, operational analytics, and product improvement. Droplet should not use personal data for unrelated marketing or resale without explicit approval and notice.",
+    ],
+  },
+  {
+    title: "Third-party service providers",
+    paragraphs: [
+      "Droplet relies on third-party processors to deliver core service functions. These include OpenAI for model responses, Clerk for authentication and session management, Stripe for payments, and AWS S3 for file storage.",
+      "Those providers may process only the information necessary for their role in delivering the service. Droplet operators should maintain written agreements, access controls, and retention policies appropriate to each provider relationship.",
+    ],
+  },
+  {
+    title: "Storage, retention, and security",
+    paragraphs: [
+      "Conversation records, uploaded assets, and billing data are retained for as long as needed to operate the service, satisfy support obligations, enforce limits, and meet legal or accounting requirements. Retention periods should be finalized through legal and operational review before production publication.",
+      "Droplet is designed to apply authentication, ownership checks, provider signature verification, upload validation, and other security controls at service boundaries. No system can guarantee absolute security, so the operator should continue to harden infrastructure and monitor for abuse.",
+    ],
+  },
+  {
+    title: "Cookies, local storage, and similar technologies",
+    paragraphs: [
+      "Droplet uses essential authentication technologies through Clerk and stores interface preferences such as theme and sidebar state in browser storage. More detail appears in the dedicated Cookie Policy.",
+      "For the current public experience, the documented browser storage keys include `droplet-theme-mode`, `droplet-sidebar-collapsed`, and the legacy migration keys `cellesseon-theme-mode` and `cellesseon-sidebar-collapsed`.",
+    ],
+  },
+];

@@ -1,4 +1,6 @@
 import { BillingCycle, Plan, PlanName } from "@/types/PlanData.d";
+import { PersonaId } from "@/types/PersonaData.d";
+import { PERSONAS } from "@/constants/assistant-personas";
 
 const LITE_NEVER_EXPIRES_ON = "9999-12-31T23:59:59.999Z";
 
@@ -51,6 +53,21 @@ export const PERSONA_TRIAL_LIMITS = {
   audio: 2,
   video: 1,
 } as const;
+
+export interface PersonaTrialLimits {
+  promptsPerConversation: number;
+  images: number;
+  audio: number;
+  video: number;
+}
+
+type PersonaAccessByPlan = Record<PlanName, PersonaId[]>;
+
+const DEFAULT_PERSONA_ACCESS_BY_PLAN: PersonaAccessByPlan = {
+  Lite: ["strategist", "developer"],
+  Pro: ["strategist", "developer", "teacher", "creator", "wellness"],
+  Premium: PERSONAS.map((persona) => persona.id),
+};
 
 export function getExpiresOn(plan: PlanName, billing?: BillingCycle): Date {
   const currentDate = new Date();
@@ -111,10 +128,29 @@ function formatMediaLimitLabel({
 export function buildPlans({
   pricing = DEFAULT_PLAN_PRICING,
   limits = PLAN_LIMITS,
+  personaAccess = DEFAULT_PERSONA_ACCESS_BY_PLAN,
+  trialLimits = PERSONA_TRIAL_LIMITS,
 }: {
   pricing?: PlanPricing;
   limits?: PlanLimits;
+  personaAccess?: PersonaAccessByPlan;
+  trialLimits?: PersonaTrialLimits;
 } = {}): Plan[] {
+  const totalPersonaCount = PERSONAS.length;
+
+  function formatPersonaAccess(planName: PlanName): string {
+    const fullAccessCount = personaAccess[planName].length;
+    const limitedCount = Math.max(0, totalPersonaCount - fullAccessCount);
+
+    if (limitedCount === 0) {
+      return `All ${fullAccessCount} personas (full access)`;
+    }
+
+    return `${fullAccessCount} personas (full access) + try all others (limited access)`;
+  }
+
+  const trialLimitsLabel = `Trial personas: ${trialLimits.promptsPerConversation} prompts, ${trialLimits.images} images, ${trialLimits.audio} audio, ${trialLimits.video} video / 30 days`;
+
   return [
     {
       id: 0,
@@ -128,12 +164,11 @@ export function buildPlans({
           isIncluded: true,
         },
         {
-          label: "2 personas (full access) + try all others (limited access)",
+          label: formatPersonaAccess("Lite"),
           isIncluded: true,
         },
         {
-          label:
-            "Trial personas: 5 prompts, 3 images, 2 audio, 1 video / 30 days",
+          label: trialLimitsLabel,
           isIncluded: true,
         },
         {
@@ -193,12 +228,11 @@ export function buildPlans({
           isIncluded: true,
         },
         {
-          label: "5 personas (full access) + try all others (limited access)",
+          label: formatPersonaAccess("Pro"),
           isIncluded: true,
         },
         {
-          label:
-            "Trial personas: 5 prompts, 3 images, 2 audio, 1 video / 30 days",
+          label: trialLimitsLabel,
           isIncluded: true,
         },
         {
@@ -262,7 +296,7 @@ export function buildPlans({
           isIncluded: true,
         },
         {
-          label: "All 6 personas (unlimited)",
+          label: formatPersonaAccess("Premium"),
           isIncluded: true,
         },
         {

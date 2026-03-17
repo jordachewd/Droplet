@@ -159,7 +159,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     // Idempotency: check if this Stripe event was already processed
     await connectToDatabase();
-    const existingTransaction = await Transaction.findOne({ stripeId: id });
+    const existingTransaction = await Transaction.findOne(
+      { stripeId: id },
+      "_id",
+      { lean: true },
+    );
     if (existingTransaction) {
       return NextResponse.json(
         { message: "Already processed" },
@@ -167,10 +171,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    const existingUser = await User.findOne({
-      _id: theUserId,
-      clerkId: theClerkId,
-    });
+    const existingUser = await User.findOne(
+      {
+        _id: theUserId,
+        clerkId: theClerkId,
+      },
+      "_id clerkId",
+      { lean: true },
+    );
 
     if (!existingUser) {
       logStripeWebhookError("Checkout session could not be matched to a user.");

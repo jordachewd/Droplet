@@ -49,9 +49,11 @@ export async function checkDailyConversationLimit(
   await connectToDatabase();
 
   const startOfDay = getStartOfDay(now);
-  const userCounter = await User.findOne({ clerkId: userId })
-    .select("dailyConversationsStarted dailyConversationWindowStart")
-    .lean<DailyConversationCounterDocument>();
+  const userCounter = (await User.findOne(
+    { clerkId: userId },
+    "dailyConversationsStarted dailyConversationWindowStart",
+    { lean: true },
+  )) as DailyConversationCounterDocument | null;
   const windowStart = userCounter?.dailyConversationWindowStart
     ? new Date(userCounter.dailyConversationWindowStart)
     : null;

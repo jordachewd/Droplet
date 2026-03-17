@@ -146,7 +146,7 @@ describe("plans constants", () => {
           desc: "Ultimate AI experience with premium media",
           inclusions: expect.arrayContaining([
             expect.objectContaining({
-              label: "All 6 personas (unlimited)",
+              label: "All 6 personas (full access)",
               isIncluded: true,
             }),
             expect.objectContaining({

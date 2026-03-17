@@ -190,10 +190,14 @@ describe("POST /api/webhooks/stripe", () => {
         billing: "Monthly",
       }),
     );
-    expect(User.findOne).toHaveBeenCalledWith({
-      _id: "mongo_user_1",
-      clerkId: "clerk_user_1",
-    });
+    expect(User.findOne).toHaveBeenCalledWith(
+      {
+        _id: "mongo_user_1",
+        clerkId: "clerk_user_1",
+      },
+      "_id clerkId",
+      { lean: true },
+    );
     expect(User.findOneAndUpdate).toHaveBeenCalledWith(
       { _id: "mongo_user_1", clerkId: "clerk_user_1" },
       expect.objectContaining({

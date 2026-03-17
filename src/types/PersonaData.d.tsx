@@ -22,6 +22,7 @@ export interface Persona {
   description: string;
   category: PersonaCategory;
   icon: string;
+  heroImage: string;
   starterPrompts: string[];
   systemPrompt: string;
   supportsImage: boolean;

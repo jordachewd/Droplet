@@ -156,7 +156,7 @@ test.describe("conversation lifecycle", () => {
       await expect(
         page.getByRole("heading", { name: "Start a New Conversation" }),
       ).toBeVisible();
-      await expect(page.locator(".PersonaCard")).toHaveCount(10);
+      await expect(page.locator(".PersonaCard")).toHaveCount(6);
 
       await page
         .locator(".PersonaCard")

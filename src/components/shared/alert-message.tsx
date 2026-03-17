@@ -2,14 +2,9 @@
 
 import { useMemo, useState, useEffect } from "react";
 import classNames from "classnames";
+import { AlertParams } from "@/types/AlertData.d";
 
-export interface AlertParams {
-  id?: number;
-  title: string;
-  text?: string;
-  severity?: "info" | "error" | "success" | "warning";
-  variant?: "filled" | "outlined";
-}
+export type { AlertParams } from "@/types/AlertData.d";
 
 interface AlertMessageProps {
   message: AlertParams;
@@ -65,7 +60,7 @@ export default function AlertMessage({ message }: AlertMessageProps) {
       : filledSeverityStyles[severity];
 
   return (
-    <div className="AlertMessage fixed left-1/2 top-4 z-[100] w-full max-w-xl -translate-x-1/2 px-4">
+    <div className="AlertMessage fixed left-1/2 top-4 z-100 w-full max-w-xl -translate-x-1/2 px-4">
       <div
         role="alert"
         className={classNames(

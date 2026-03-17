@@ -7,7 +7,8 @@ import { Message } from "@/types";
 import ChatIntro from "@/components/chat/chat-intro";
 import ChatBody from "@/components/chat/chat-body";
 import ChatInput from "@/components/chat/chat-input";
-import AlertMessage, { AlertParams } from "@/components/shared/alert-message";
+import AlertMessage from "@/components/shared/alert-message";
+import { AlertParams } from "@/types/AlertData.d";
 import { filterAssistantMsg } from "@/lib/utils/openai/filterAssistantMsg";
 import {
   DEFAULT_PERSONA_ID,

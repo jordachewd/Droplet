@@ -90,7 +90,11 @@ async function createUserFromWebhook(user: CreateUserParams) {
 async function findUserByClerkId(clerkId: string) {
   await connectToDatabase();
 
-  const existingUser = await User.findOne({ clerkId });
+  const existingUser = await User.findOne(
+    { clerkId },
+    "_id clerkId email username firstName lastName userimg registerAt",
+    { lean: true },
+  );
   return existingUser ? serializeForClient(existingUser) : null;
 }
 

@@ -1,5 +1,6 @@
 import {
   DEFAULT_PLAN_PRICING,
+  PERSONA_TRIAL_LIMITS,
   PLAN_LIMITS,
   PlanLimits,
 } from "@/constants/plans";
@@ -510,6 +511,7 @@ export async function getAdminSettingsSnapshot() {
         premiumPrice: DEFAULT_PLAN_PRICING.Premium,
       },
       limits: structuredClone(PLAN_LIMITS) as PlanLimits,
+      trialLimits: { ...PERSONA_TRIAL_LIMITS },
       personaAccess: {
         Lite: [...DEFAULT_FULL_PERSONA_ACCESS_BY_PLAN.Lite],
         Pro: [...DEFAULT_FULL_PERSONA_ACCESS_BY_PLAN.Pro],

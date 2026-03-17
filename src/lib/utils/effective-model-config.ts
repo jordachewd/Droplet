@@ -3,14 +3,7 @@ import "server-only";
 import AppSetting from "@/lib/database/models/app-setting.model";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import { MODEL_POLICY_MATRIX } from "@/lib/utils/ai-model-policy";
-
-interface ModelSettingsFormValue {
-  liteChatModel: string;
-  proChatModel: string;
-  premiumChatModel: string;
-  imageModel: string;
-  audioModel: string;
-}
+import { ModelSettingsFormValue } from "@/types/AdminData.d";
 
 type AppSettingRecord = {
   value: unknown;

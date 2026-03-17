@@ -5,18 +5,32 @@ import { ensureUserSynced } from "@/lib/utils/ensure-user-synced";
 import { SUPPORT_EMAIL } from "@/constants/support";
 import { auth } from "@clerk/nextjs/server";
 import { buildPlans } from "@/constants/plans";
+import { buildFaqs } from "@/constants/faqs";
 import { getEffectivePlanConfig } from "@/lib/utils/effective-plan-config";
+import { getEffectivePersonaAccessByPlan } from "@/lib/utils/effective-persona-access";
 
 export default async function AppPlansPage() {
   const { userId } = await auth();
   const userData = userId ? await ensureUserSynced(userId) : null;
-  const { pricing, limits } = await getEffectivePlanConfig();
-  const plans = buildPlans({ pricing, limits });
+  const [effectivePlanConfig, personaAccessByPlan] = await Promise.all([
+    getEffectivePlanConfig(),
+    getEffectivePersonaAccessByPlan(),
+  ]);
+  const plans = buildPlans({
+    pricing: effectivePlanConfig.pricing,
+    limits: effectivePlanConfig.limits,
+    personaAccess: personaAccessByPlan,
+    trialLimits: effectivePlanConfig.trialLimits,
+  });
+  const faqs = buildFaqs({
+    pricing: effectivePlanConfig.pricing,
+    personaAccessByPlan,
+  });
 
   return userData ? (
     <PageWrapper id="AppPlansPage" scrollable>
       <Plans userData={userData} hasLoader plansData={plans} />
-      <Faqs />
+      <Faqs faqsData={faqs} />
     </PageWrapper>
   ) : (
     <div className="AppPlansPage flex h-dvh items-center justify-center">

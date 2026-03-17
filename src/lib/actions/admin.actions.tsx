@@ -22,6 +22,7 @@ const adminSettingCategorySchema = z.enum([
   "models",
   "theme",
   "limits",
+  "trial",
   "features",
 ]);
 const PERSONA_ACCESS_KEYS = new Set([
@@ -126,6 +127,15 @@ function parseStructuredAdminSettingValue({
         audio: getNumericField(formData, "premiumAudio"),
         video: getNumericField(formData, "premiumVideo"),
       },
+    };
+  }
+
+  if (key === "admin.trialLimits") {
+    return {
+      promptsPerConversation: getNumericField(formData, "trialPrompts"),
+      images: getNumericField(formData, "trialImages"),
+      audio: getNumericField(formData, "trialAudio"),
+      video: getNumericField(formData, "trialVideo"),
     };
   }
 
@@ -300,7 +310,11 @@ export async function updateAdminSettingAction(formData: FormData) {
 
   revalidatePath("/admin/settings");
 
-  if (key === "admin.pricing" || key === "admin.limits") {
+  if (
+    key === "admin.pricing" ||
+    key === "admin.limits" ||
+    key === "admin.trialLimits"
+  ) {
     revalidatePath("/plans");
     revalidatePath("/app/plans");
   }

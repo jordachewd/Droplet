@@ -3,6 +3,9 @@ import classNames from "classnames";
 import Link from "next/link";
 import FaqsSection from "@/components/sections/faqs-section";
 import { SUPPORT_EMAIL } from "@/constants/support";
+import { buildFaqs } from "@/constants/faqs";
+import { getEffectivePlanConfig } from "@/lib/utils/effective-plan-config";
+import { getEffectivePersonaAccessByPlan } from "@/lib/utils/effective-persona-access";
 
 export const metadata: Metadata = {
   title: "FAQs | Droplet",
@@ -10,7 +13,16 @@ export const metadata: Metadata = {
     "Read the most common questions about Droplet plans, support, account requirements, and day-to-day product usage.",
 };
 
-export default function FaqsPage() {
+export default async function FaqsPage() {
+  const [effectivePlanConfig, personaAccessByPlan] = await Promise.all([
+    getEffectivePlanConfig(),
+    getEffectivePersonaAccessByPlan(),
+  ]);
+  const faqs = buildFaqs({
+    pricing: effectivePlanConfig.pricing,
+    personaAccessByPlan,
+  });
+
   return (
     <section className="FaqsPage mx-auto flex w-full max-w-screen-2xl flex-col gap-8 px-4 pb-16 pt-24 sm:px-6 lg:px-8">
       <div
@@ -20,7 +32,7 @@ export default function FaqsPage() {
           "dark:border-darkBorders-500 dark:bg-jwdMarine-900/82",
         )}
       >
-        <FaqsSection />
+        <FaqsSection faqsData={faqs} />
       </div>
 
       <div

@@ -1,18 +1,17 @@
 "use client";
 
 import { create } from "zustand";
-
-export type UiThemeMode = "system" | "light" | "dark";
+import { ThemeMode } from "@/types/ThemeData.d";
 
 interface UiStoreState {
   desktopSidebarCollapsed: boolean;
   mobileSidebarOpen: boolean;
-  themeMode: UiThemeMode;
+  themeMode: ThemeMode;
   setDesktopSidebarCollapsed: (collapsed: boolean) => void;
   toggleDesktopSidebarCollapsed: () => void;
   setMobileSidebarOpen: (open: boolean) => void;
   toggleMobileSidebarOpen: () => void;
-  setThemeMode: (mode: UiThemeMode) => void;
+  setThemeMode: (mode: ThemeMode) => void;
 }
 
 export const useUiStore = create<UiStoreState>()((set) => ({

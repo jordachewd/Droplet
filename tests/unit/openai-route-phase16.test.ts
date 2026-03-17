@@ -142,6 +142,12 @@ describe("POST /api/openai phase16", () => {
     vi.mocked(getEffectivePlanConfig).mockResolvedValue({
       pricing: { Lite: 0, Pro: 19, Premium: 39 },
       limits: PLAN_LIMITS,
+      trialLimits: {
+        promptsPerConversation: 5,
+        images: 3,
+        audio: 2,
+        video: 1,
+      },
     });
     vi.mocked(getTaskByIdForUser).mockResolvedValue(
       createExistingTask() as never,

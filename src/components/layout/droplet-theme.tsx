@@ -9,12 +9,12 @@ import {
   useState,
 } from "react";
 import { useUiStore } from "@/lib/hooks/use-ui-store";
+import { ThemeMode } from "@/types/ThemeData.d";
 
 interface ThemeProps {
   children: ReactNode;
 }
 
-export type ThemeMode = "system" | "light" | "dark";
 type ResolvedThemeMode = "light" | "dark";
 
 interface ThemeContextValue {

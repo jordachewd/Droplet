@@ -1,5 +1,6 @@
 import classNames from "classnames";
 import Link from "next/link";
+import Image from "next/image";
 import { Persona } from "@/types/PersonaData.d";
 
 interface PersonaCardProps {
@@ -68,6 +69,15 @@ export default function PersonaCard({
       </div>
 
       <p className="text-sm font-medium opacity-80">{persona.tagline}</p>
+      <div className="relative mt-1 h-36 w-full overflow-hidden rounded-lg border border-lightBorders-400/60 dark:border-darkBorders-500">
+        <Image
+          src={persona.heroImage}
+          alt={`${persona.label} persona`}
+          fill
+          sizes="(max-width: 1024px) 100vw, 33vw"
+          className="object-cover"
+        />
+      </div>
       <p className={bodyClass}>{persona.description}</p>
       {locked && (
         <p className="text-xs font-medium text-amber-700 dark:text-amber-300">
