@@ -5,7 +5,7 @@ import {
   PlanLimits,
 } from "@/constants/plans";
 import { DEFAULT_FULL_PERSONA_ACCESS_BY_PLAN } from "@/lib/utils/resolve-entitlements";
-import { getPersona } from "@/constants/assistant-personas";
+import { getPersona, PERSONAS } from "@/constants/assistant-personas";
 import { MODEL_POLICY_MATRIX } from "@/lib/utils/ai-model-policy";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import AppSetting from "@/lib/database/models/app-setting.model";
@@ -14,6 +14,7 @@ import Task from "@/lib/database/models/tasks.model";
 import Transaction from "@/lib/database/models/transaction.model";
 import UsageEvent from "@/lib/database/models/usage-event.model";
 import User from "@/lib/database/models/user.model";
+import { getEffectivePlanConfig } from "@/lib/utils/effective-plan-config";
 import { PlanName } from "@/types/PlanData.d";
 import { isValidObjectId } from "mongoose";
 
@@ -29,6 +30,7 @@ type UserRecord = {
   lastName?: string;
   updatedAt?: Date | string;
   userimg?: string;
+  dailyConversationsStarted?: number;
   plan?: {
     name?: PlanName;
     amount?: number;
@@ -37,6 +39,12 @@ type UserRecord = {
     stripeId?: string;
     imageGenerations?: number;
     audioGenerations?: number;
+    videoGenerations?: number;
+    trialUsage?: {
+      trialImageGenerations?: number;
+      trialAudioGenerations?: number;
+      trialVideoGenerations?: number;
+    };
   };
 };
 
@@ -104,13 +112,23 @@ function toAdminUserListItem(user: UserRecord) {
 export async function getAdminDashboardStats() {
   await connectToDatabase();
 
-  const [usersCount, conversationsCount, paidTransactionsCount, usageEvents] =
-    await Promise.all([
-      User.countDocuments({}),
-      Task.countDocuments({}),
-      Transaction.countDocuments({}),
-      UsageEvent.countDocuments({}),
-    ]);
+  const [
+    usersCount,
+    conversationsCount,
+    paidTransactionsCount,
+    usageEvents,
+    imageGenerations,
+    audioGenerations,
+    videoGenerations,
+  ] = await Promise.all([
+    User.countDocuments({}),
+    Task.countDocuments({}),
+    Transaction.countDocuments({}),
+    UsageEvent.countDocuments({}),
+    UsageEvent.countDocuments({ requestType: "image", blocked: false }),
+    UsageEvent.countDocuments({ requestType: "audio", blocked: false }),
+    UsageEvent.countDocuments({ requestType: "video", blocked: false }),
+  ]);
 
   return [
     {
@@ -135,6 +153,24 @@ export async function getAdminDashboardStats() {
       label: "Usage Events",
       value: usageEvents,
       icon: "bi bi-graph-up-arrow",
+      href: "/admin/usage",
+    },
+    {
+      label: "Images Generated",
+      value: imageGenerations,
+      icon: "bi bi-image",
+      href: "/admin/usage",
+    },
+    {
+      label: "Audio Generated",
+      value: audioGenerations,
+      icon: "bi bi-mic",
+      href: "/admin/usage",
+    },
+    {
+      label: "Video Generated",
+      value: videoGenerations,
+      icon: "bi bi-camera-video",
       href: "/admin/usage",
     },
   ];
@@ -171,7 +207,7 @@ export async function getAdminUserDetail(userId: string) {
 
   const user = (await User.findById(userId)
     .select(
-      "clerkId username email role suspended registerAt plan firstName lastName updatedAt userimg",
+      "clerkId username email role suspended registerAt plan firstName lastName updatedAt userimg dailyConversationsStarted",
     )
     .lean()) as UserRecord | null;
 
@@ -179,14 +215,49 @@ export async function getAdminUserDetail(userId: string) {
     return null;
   }
 
-  const [conversationCount, transactions] = await Promise.all([
-    Task.countDocuments({ userId: user.clerkId }),
-    Transaction.find({ clerkId: user.clerkId })
-      .sort({ createdAt: -1 })
-      .select("stripeId createdAt expiresOn amount plan billing")
-      .lean(),
-  ]);
+  const [conversationCount, promptMetrics, transactions, effectivePlanConfig] =
+    await Promise.all([
+      Task.countDocuments({ userId: user.clerkId }),
+      Task.aggregate([
+        {
+          $match: {
+            userId: user.clerkId,
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            totalPromptCount: { $sum: "$promptCount" },
+            maxPromptCount: { $max: "$promptCount" },
+          },
+        },
+      ]),
+      Transaction.find({ clerkId: user.clerkId })
+        .sort({ createdAt: -1 })
+        .select("stripeId createdAt expiresOn amount plan billing")
+        .lean(),
+      getEffectivePlanConfig(),
+    ]);
   const typedTransactions = transactions as TransactionRecord[];
+  const promptUsageAggregate =
+    (promptMetrics[0] as
+      | { totalPromptCount?: number; maxPromptCount?: number }
+      | undefined) ?? {};
+  const resolvedPlanName = user.plan?.name ?? "Lite";
+  const planLimits = effectivePlanConfig.limits[resolvedPlanName];
+  const trialLimits = effectivePlanConfig.trialLimits;
+  const imageGenerations = user.plan?.imageGenerations ?? 0;
+  const audioGenerations = user.plan?.audioGenerations ?? 0;
+  const videoGenerations = user.plan?.videoGenerations ?? 0;
+  const trialImageGenerations =
+    user.plan?.trialUsage?.trialImageGenerations ?? 0;
+  const trialAudioGenerations =
+    user.plan?.trialUsage?.trialAudioGenerations ?? 0;
+  const trialVideoGenerations =
+    user.plan?.trialUsage?.trialVideoGenerations ?? 0;
+  const dailyConversationsStarted = user.dailyConversationsStarted ?? 0;
+  const maxPromptCount = promptUsageAggregate.maxPromptCount ?? 0;
+  const totalPromptCount = promptUsageAggregate.totalPromptCount ?? 0;
 
   return {
     ...toAdminUserListItem(user),
@@ -197,8 +268,72 @@ export async function getAdminUserDetail(userId: string) {
     planAmount: user.plan?.amount ?? 0,
     billing: user.plan?.billing ?? "Monthly",
     expiresOn: toIsoString(user.plan?.expiresOn),
-    imageGenerations: user.plan?.imageGenerations ?? 0,
-    audioGenerations: user.plan?.audioGenerations ?? 0,
+    imageGenerations,
+    audioGenerations,
+    videoGenerations,
+    mediaUsage: {
+      images: {
+        used: imageGenerations,
+        limit: planLimits.images,
+        remaining:
+          planLimits.images === -1
+            ? -1
+            : Math.max(0, planLimits.images - imageGenerations),
+      },
+      audio: {
+        used: audioGenerations,
+        limit: planLimits.audio,
+        remaining:
+          planLimits.audio === -1
+            ? -1
+            : Math.max(0, planLimits.audio - audioGenerations),
+      },
+      video: {
+        used: videoGenerations,
+        limit: planLimits.video,
+        remaining:
+          planLimits.video === -1
+            ? -1
+            : Math.max(0, planLimits.video - videoGenerations),
+      },
+    },
+    trialUsage: {
+      images: {
+        used: trialImageGenerations,
+        limit: trialLimits.images,
+        remaining: Math.max(0, trialLimits.images - trialImageGenerations),
+      },
+      audio: {
+        used: trialAudioGenerations,
+        limit: trialLimits.audio,
+        remaining: Math.max(0, trialLimits.audio - trialAudioGenerations),
+      },
+      video: {
+        used: trialVideoGenerations,
+        limit: trialLimits.video,
+        remaining: Math.max(0, trialLimits.video - trialVideoGenerations),
+      },
+    },
+    conversationUsage: {
+      used: dailyConversationsStarted,
+      limit: planLimits.conversationsPerDay,
+      remaining:
+        planLimits.conversationsPerDay === -1
+          ? -1
+          : Math.max(
+              0,
+              planLimits.conversationsPerDay - dailyConversationsStarted,
+            ),
+    },
+    promptUsage: {
+      used: maxPromptCount,
+      total: totalPromptCount,
+      limit: planLimits.promptsPerConversation,
+      remaining:
+        planLimits.promptsPerConversation === -1
+          ? -1
+          : Math.max(0, planLimits.promptsPerConversation - maxPromptCount),
+    },
     conversationCount,
     transactions: typedTransactions.map((transaction) => ({
       id: String(transaction._id),
@@ -359,6 +494,13 @@ export async function getAdminUsageAnalytics() {
     ]),
     UsageEvent.aggregate([
       {
+        $match: {
+          personaId: {
+            $in: PERSONAS.map((persona) => persona.id),
+          },
+        },
+      },
+      {
         $group: {
           _id: "$personaId",
           count: { $sum: 1 },
@@ -505,6 +647,8 @@ export async function getAdminSettingsSnapshot() {
           MODEL_POLICY_MATRIX.pro.image_generation.taskClasses.final.model,
         audioModel:
           MODEL_POLICY_MATRIX.pro.audio_generation.taskClasses.final.model,
+        videoModel:
+          MODEL_POLICY_MATRIX.pro.video_generation.taskClasses.preview.model,
       },
       pricing: {
         proPrice: DEFAULT_PLAN_PRICING.Pro,

@@ -12,6 +12,7 @@ import User from "@/lib/database/models/user.model";
 import { createAdminAuditLogEntry } from "@/lib/utils/admin-audit";
 import { requireAdminActionAccess } from "@/lib/utils/admin-auth";
 import deleteS3Prefix from "@/lib/utils/aws/delete-s3-prefix";
+import { AdminActionState } from "@/components/admin/admin-action-state";
 import { PersonaId } from "@/types/PersonaData.d";
 import { z } from "zod";
 
@@ -63,6 +64,121 @@ function getNumericField(formData: FormData, fieldName: string): number {
   return parsedValue.data;
 }
 
+function getMultiStringField(formData: FormData, fieldName: string): string[] {
+  const values = formData
+    .getAll(fieldName)
+    .filter((value): value is string => typeof value === "string")
+    .map((value) => value.trim())
+    .filter((value) => value.length > 0);
+
+  if (values.length === 0) {
+    throw new Error(`Missing required field: ${fieldName}`);
+  }
+
+  return values;
+}
+
+function resolveActionFormData(
+  previousStateOrFormData: AdminActionState | FormData,
+  maybeFormData?: FormData,
+): FormData {
+  if (previousStateOrFormData instanceof FormData) {
+    return previousStateOrFormData;
+  }
+
+  if (maybeFormData instanceof FormData) {
+    return maybeFormData;
+  }
+
+  throw new Error("Form data is required.");
+}
+
+function successState(
+  message: string,
+  severity: AdminActionState["severity"] = "success",
+): AdminActionState {
+  return {
+    status: "success",
+    message,
+    severity,
+  };
+}
+
+function errorState(message: string): AdminActionState {
+  return {
+    status: "error",
+    message,
+    severity: "error",
+  };
+}
+
+async function removeUserByAdmin({
+  adminId,
+  targetUserId,
+}: {
+  adminId: string;
+  targetUserId: string;
+}): Promise<{
+  userId: string;
+  clerkId: string;
+  deletedTasks: number;
+  deletedTransactions: number;
+  deletedObjectsCount: number;
+  assetCleanupStatus: "completed" | "failed";
+}> {
+  const targetUser = await User.findById(targetUserId)
+    .select("clerkId email username")
+    .lean();
+
+  if (!targetUser) {
+    throw new Error("User not found.");
+  }
+
+  const client = await clerkClient();
+  await client.users.deleteUser(targetUser.clerkId);
+
+  const [deletedTasks, deletedTransactions, deletedUser] = await Promise.all([
+    Task.deleteMany({ userId: targetUser.clerkId }),
+    Transaction.deleteMany({ clerkId: targetUser.clerkId }),
+    User.findByIdAndDelete(targetUserId),
+  ]);
+
+  let deletedObjectsCount = 0;
+  let assetCleanupStatus: "completed" | "failed" = "completed";
+
+  try {
+    deletedObjectsCount = await deleteS3Prefix(`${targetUser.clerkId}/`);
+  } catch {
+    assetCleanupStatus = "failed";
+  }
+
+  await createAdminAuditLogEntry({
+    adminId,
+    action: "user.remove",
+    targetType: "User",
+    targetId: targetUserId,
+    details: {
+      clerkId: targetUser.clerkId,
+      email: targetUser.email,
+      username: targetUser.username,
+      deletedTasks: deletedTasks.deletedCount ?? 0,
+      deletedTransactions: deletedTransactions.deletedCount ?? 0,
+      deletedObjectsCount,
+      assetCleanupStatus,
+      deletedUser: Boolean(deletedUser),
+    },
+  });
+
+  return {
+    userId: targetUserId,
+    clerkId: targetUser.clerkId,
+    deletedTasks: deletedTasks.deletedCount ?? 0,
+    deletedTransactions: deletedTransactions.deletedCount ?? 0,
+    deletedObjectsCount,
+    assetCleanupStatus,
+  };
+}
+
 function parseStructuredAdminSettingValue({
   key,
   formData,
@@ -77,6 +193,7 @@ function parseStructuredAdminSettingValue({
       premiumChatModel: getStringField(formData, "premiumChatModel"),
       imageModel: getStringField(formData, "imageModel"),
       audioModel: getStringField(formData, "audioModel"),
+      videoModel: getStringField(formData, "videoModel"),
     };
   }
 
@@ -175,363 +292,641 @@ function parseStructuredAdminSettingValue({
   return null;
 }
 
-export async function toggleUserSuspensionAction(formData: FormData) {
-  const adminId = await requireAdminActionAccess();
-  const targetUserId = getStringField(formData, "userId");
-  const suspended = getStringField(formData, "suspended") === "true";
-
-  await connectToDatabase();
-
-  const updatedUser = await User.findByIdAndUpdate(
-    targetUserId,
-    {
-      $set: {
-        suspended,
-        updatedAt: new Date(),
-      },
-    },
-    {
-      returnDocument: "after",
-      strict: true,
-      upsert: false,
-    },
-  );
-
-  if (!updatedUser) {
-    throw new Error("User not found.");
-  }
-
-  await createAdminAuditLogEntry({
-    adminId,
-    action: suspended ? "user.suspend" : "user.reinstate",
-    targetType: "User",
-    targetId: targetUserId,
-    details: {
-      clerkId: updatedUser.clerkId,
-      suspended,
-    },
-  });
-
-  revalidatePath("/admin");
-  revalidatePath("/admin/users");
-  revalidatePath(`/admin/users/${targetUserId}`);
-}
-
-export async function removeUserByAdminAction(formData: FormData) {
-  const adminId = await requireAdminActionAccess();
-  const targetUserId = getStringField(formData, "userId");
-
-  await connectToDatabase();
-
-  const targetUser = await User.findById(targetUserId)
-    .select("clerkId email username")
-    .lean();
-
-  if (!targetUser) {
-    throw new Error("User not found.");
-  }
-
-  const client = await clerkClient();
-  await client.users.deleteUser(targetUser.clerkId);
-
-  const [deletedTasks, deletedTransactions, deletedUser] = await Promise.all([
-    Task.deleteMany({ userId: targetUser.clerkId }),
-    Transaction.deleteMany({ clerkId: targetUser.clerkId }),
-    User.findByIdAndDelete(targetUserId),
-  ]);
-
-  let deletedObjectsCount = 0;
-  let assetCleanupStatus = "completed";
-
+export async function toggleUserSuspensionAction(
+  previousStateOrFormData: AdminActionState | FormData,
+  maybeFormData?: FormData,
+): Promise<AdminActionState> {
   try {
-    deletedObjectsCount = await deleteS3Prefix(`${targetUser.clerkId}/`);
-  } catch {
-    assetCleanupStatus = "failed";
-  }
+    const formData = resolveActionFormData(previousStateOrFormData, maybeFormData);
+    const adminId = await requireAdminActionAccess();
+    const targetUserId = getStringField(formData, "userId");
+    const suspended = getStringField(formData, "suspended") === "true";
 
-  await createAdminAuditLogEntry({
-    adminId,
-    action: "user.remove",
-    targetType: "User",
-    targetId: targetUserId,
-    details: {
-      clerkId: targetUser.clerkId,
-      email: targetUser.email,
-      username: targetUser.username,
-      deletedTasks: deletedTasks.deletedCount ?? 0,
-      deletedTransactions: deletedTransactions.deletedCount ?? 0,
-      deletedObjectsCount,
-      assetCleanupStatus,
-      deletedUser: Boolean(deletedUser),
-    },
-  });
+    await connectToDatabase();
 
-  revalidatePath("/admin");
-  revalidatePath("/admin/users");
-}
-
-export async function updateAdminSettingAction(formData: FormData) {
-  const adminId = await requireAdminActionAccess();
-  const key = getStringField(formData, "key");
-  const categoryValue = getStringField(formData, "category");
-  const parsedCategory = adminSettingCategorySchema.safeParse(categoryValue);
-
-  if (!parsedCategory.success) {
-    throw new Error("Invalid settings category.");
-  }
-
-  const category = parsedCategory.data;
-  const rawValue = formData.get("value");
-  const parsedValue =
-    typeof rawValue === "string" && rawValue.trim().length > 0
-      ? parseJsonValue(rawValue.trim())
-      : parseStructuredAdminSettingValue({ key, formData });
-
-  if (parsedValue === null) {
-    throw new Error("Missing required field: value");
-  }
-
-  await connectToDatabase();
-
-  await AppSetting.findOneAndUpdate(
-    { key },
-    {
-      $set: {
-        value: parsedValue,
-        category,
-        updatedAt: new Date(),
-        updatedBy: adminId,
+    const updatedUser = await User.findByIdAndUpdate(
+      targetUserId,
+      {
+        $set: {
+          suspended,
+          updatedAt: new Date(),
+        },
       },
-    },
-    {
-      returnDocument: "after",
-      strict: true,
-      upsert: true,
-    },
-  );
+      {
+        returnDocument: "after",
+        strict: true,
+        upsert: false,
+      },
+    );
 
-  await createAdminAuditLogEntry({
-    adminId,
-    action: "setting.update",
-    targetType: "AppSetting",
-    targetId: key,
-    details: {
-      category,
-      value: parsedValue,
-    },
-  });
+    if (!updatedUser) {
+      return errorState("User not found.");
+    }
 
-  revalidatePath("/admin/settings");
+    await createAdminAuditLogEntry({
+      adminId,
+      action: suspended ? "user.suspend" : "user.reinstate",
+      targetType: "User",
+      targetId: targetUserId,
+      details: {
+        clerkId: updatedUser.clerkId,
+        suspended,
+      },
+    });
 
-  if (
-    key === "admin.pricing" ||
-    key === "admin.currencySymbol" ||
-    key === "admin.limits" ||
-    key === "admin.trialLimits"
-  ) {
-    revalidatePath("/plans");
-    revalidatePath("/app/plans");
-  }
+    revalidatePath("/admin");
+    revalidatePath("/admin/users");
+    revalidatePath(`/admin/users/${targetUserId}`);
 
-  if (PERSONA_ACCESS_KEYS.has(key)) {
-    revalidatePath("/app");
-    revalidatePath("/app/new");
-    revalidatePath("/app/personas");
+    return successState(suspended ? "User suspended." : "User reinstated.");
+  } catch {
+    return errorState("Unable to update user state.");
   }
 }
 
-export async function createPublicPageAction(formData: FormData) {
-  const adminId = await requireAdminActionAccess();
-  const title = getStringField(formData, "title");
-  const slug = getStringField(formData, "slug");
+export async function removeUserByAdminAction(
+  previousStateOrFormData: AdminActionState | FormData,
+  maybeFormData?: FormData,
+): Promise<AdminActionState> {
+  try {
+    const formData = resolveActionFormData(previousStateOrFormData, maybeFormData);
+    const adminId = await requireAdminActionAccess();
+    const targetUserId = getStringField(formData, "userId");
 
-  await connectToDatabase();
+    await connectToDatabase();
+    await removeUserByAdmin({ adminId, targetUserId });
 
-  const existingPage = await PublicPage.findOne({ slug }).select("_id").lean();
+    revalidatePath("/admin");
+    revalidatePath("/admin/users");
 
-  if (existingPage) {
-    throw new Error("A page with this slug already exists.");
+    return successState("User and related data removed.");
+  } catch {
+    return errorState("Unable to remove user.");
   }
+}
 
-  const latestPage = await PublicPage.findOne({})
-    .sort({ sortOrder: -1 })
-    .select("sortOrder")
-    .lean();
-  const page = await PublicPage.create({
-    slug,
-    title,
-    content: "<p>Start writing...</p>",
-    sortOrder: (latestPage?.sortOrder ?? -1) + 1,
-    isPublished: false,
-    updatedBy: adminId,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  });
+export async function updateAdminSettingAction(
+  previousStateOrFormData: AdminActionState | FormData,
+  maybeFormData?: FormData,
+): Promise<AdminActionState> {
+  try {
+    const formData = resolveActionFormData(previousStateOrFormData, maybeFormData);
+    const adminId = await requireAdminActionAccess();
+    const key = getStringField(formData, "key");
+    const categoryValue = getStringField(formData, "category");
+    const parsedCategory = adminSettingCategorySchema.safeParse(categoryValue);
 
-  await createAdminAuditLogEntry({
-    adminId,
-    action: "page.create",
-    targetType: "PublicPage",
-    targetId: String(page._id),
-    details: {
+    if (!parsedCategory.success) {
+      return errorState("Invalid settings category.");
+    }
+
+    const category = parsedCategory.data;
+    const rawValue = formData.get("value");
+    const parsedValue =
+      typeof rawValue === "string" && rawValue.trim().length > 0
+        ? parseJsonValue(rawValue.trim())
+        : parseStructuredAdminSettingValue({ key, formData });
+
+    if (parsedValue === null) {
+      return errorState("Missing required settings value.");
+    }
+
+    await connectToDatabase();
+
+    await AppSetting.findOneAndUpdate(
+      { key },
+      {
+        $set: {
+          value: parsedValue,
+          category,
+          updatedAt: new Date(),
+          updatedBy: adminId,
+        },
+      },
+      {
+        returnDocument: "after",
+        strict: true,
+        upsert: true,
+      },
+    );
+
+    await createAdminAuditLogEntry({
+      adminId,
+      action: "setting.update",
+      targetType: "AppSetting",
+      targetId: key,
+      details: {
+        category,
+        value: parsedValue,
+      },
+    });
+
+    revalidatePath("/admin/settings");
+
+    if (
+      key === "admin.pricing" ||
+      key === "admin.currencySymbol" ||
+      key === "admin.limits" ||
+      key === "admin.trialLimits"
+    ) {
+      revalidatePath("/plans");
+      revalidatePath("/app/plans");
+    }
+
+    if (PERSONA_ACCESS_KEYS.has(key)) {
+      revalidatePath("/app");
+      revalidatePath("/app/new");
+      revalidatePath("/app/personas");
+    }
+
+    return successState("Settings updated.");
+  } catch {
+    return errorState("Unable to update settings.");
+  }
+}
+
+export async function createPublicPageAction(
+  previousStateOrFormData: AdminActionState | FormData,
+  maybeFormData?: FormData,
+): Promise<AdminActionState> {
+  try {
+    const formData = resolveActionFormData(previousStateOrFormData, maybeFormData);
+    const adminId = await requireAdminActionAccess();
+    const title = getStringField(formData, "title");
+    const slug = getStringField(formData, "slug");
+
+    await connectToDatabase();
+
+    const existingPage = await PublicPage.findOne({ slug })
+      .select("_id")
+      .lean();
+
+    if (existingPage) {
+      return errorState("A page with this slug already exists.");
+    }
+
+    const latestPage = await PublicPage.findOne({})
+      .sort({ sortOrder: -1 })
+      .select("sortOrder")
+      .lean();
+    const page = await PublicPage.create({
       slug,
       title,
-    },
-  });
+      content: "<p>Start writing...</p>",
+      sortOrder: (latestPage?.sortOrder ?? -1) + 1,
+      isPublished: false,
+      updatedBy: adminId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
 
-  revalidatePath("/admin/website");
-}
-
-export async function togglePublicPagePublishedAction(formData: FormData) {
-  const adminId = await requireAdminActionAccess();
-  const pageId = getStringField(formData, "pageId");
-  const isPublished = getStringField(formData, "isPublished") === "true";
-
-  await connectToDatabase();
-
-  const page = await PublicPage.findByIdAndUpdate(
-    pageId,
-    {
-      $set: {
-        isPublished,
-        updatedAt: new Date(),
-        updatedBy: adminId,
-      },
-    },
-    {
-      returnDocument: "after",
-      strict: true,
-      upsert: false,
-    },
-  );
-
-  if (!page) {
-    throw new Error("Page not found.");
-  }
-
-  await createAdminAuditLogEntry({
-    adminId,
-    action: isPublished ? "page.publish" : "page.unpublish",
-    targetType: "PublicPage",
-    targetId: pageId,
-    details: {
-      slug: page.slug,
-      isPublished,
-    },
-  });
-
-  revalidatePath("/admin/website");
-  revalidatePath(`/admin/website/${pageId}`);
-}
-
-export async function deletePublicPageAction(formData: FormData) {
-  const adminId = await requireAdminActionAccess();
-  const pageId = getStringField(formData, "pageId");
-
-  await connectToDatabase();
-
-  const deletedPage = await PublicPage.findByIdAndDelete(pageId);
-
-  if (!deletedPage) {
-    throw new Error("Page not found.");
-  }
-
-  await createAdminAuditLogEntry({
-    adminId,
-    action: "page.delete",
-    targetType: "PublicPage",
-    targetId: pageId,
-    details: {
-      slug: deletedPage.slug,
-      title: deletedPage.title,
-    },
-  });
-
-  revalidatePath("/admin/website");
-}
-
-export async function updatePublicPageSortOrderAction(formData: FormData) {
-  const adminId = await requireAdminActionAccess();
-  const pageId = getStringField(formData, "pageId");
-  const sortOrder = Number(getStringField(formData, "sortOrder"));
-
-  await connectToDatabase();
-
-  const page = await PublicPage.findByIdAndUpdate(
-    pageId,
-    {
-      $set: {
-        sortOrder,
-        updatedAt: new Date(),
-        updatedBy: adminId,
-      },
-    },
-    {
-      returnDocument: "after",
-      strict: true,
-      upsert: false,
-    },
-  );
-
-  if (!page) {
-    throw new Error("Page not found.");
-  }
-
-  await createAdminAuditLogEntry({
-    adminId,
-    action: "page.sort",
-    targetType: "PublicPage",
-    targetId: pageId,
-    details: {
-      slug: page.slug,
-      sortOrder,
-    },
-  });
-
-  revalidatePath("/admin/website");
-  revalidatePath(`/admin/website/${pageId}`);
-}
-
-export async function savePublicPageAction(formData: FormData) {
-  const adminId = await requireAdminActionAccess();
-  const pageId = getStringField(formData, "pageId");
-  const title = getStringField(formData, "title");
-  const content = getStringField(formData, "content");
-
-  await connectToDatabase();
-
-  const page = await PublicPage.findByIdAndUpdate(
-    pageId,
-    {
-      $set: {
+    await createAdminAuditLogEntry({
+      adminId,
+      action: "page.create",
+      targetType: "PublicPage",
+      targetId: String(page._id),
+      details: {
+        slug,
         title,
-        content,
-        updatedAt: new Date(),
-        updatedBy: adminId,
       },
-    },
-    {
-      returnDocument: "after",
-      strict: true,
-      upsert: false,
-    },
-  );
+    });
 
-  if (!page) {
-    throw new Error("Page not found.");
+    revalidatePath("/admin/website");
+
+    return successState("Public page created.");
+  } catch {
+    return errorState("Unable to create page.");
   }
+}
 
-  await createAdminAuditLogEntry({
-    adminId,
-    action: "page.save",
-    targetType: "PublicPage",
-    targetId: pageId,
-    details: {
-      slug: page.slug,
-      title,
-    },
-  });
+export async function togglePublicPagePublishedAction(
+  previousStateOrFormData: AdminActionState | FormData,
+  maybeFormData?: FormData,
+): Promise<AdminActionState> {
+  try {
+    const formData = resolveActionFormData(previousStateOrFormData, maybeFormData);
+    const adminId = await requireAdminActionAccess();
+    const pageId = getStringField(formData, "pageId");
+    const isPublished = getStringField(formData, "isPublished") === "true";
 
-  revalidatePath("/admin/website");
-  revalidatePath(`/admin/website/${pageId}`);
+    await connectToDatabase();
+
+    const page = await PublicPage.findByIdAndUpdate(
+      pageId,
+      {
+        $set: {
+          isPublished,
+          updatedAt: new Date(),
+          updatedBy: adminId,
+        },
+      },
+      {
+        returnDocument: "after",
+        strict: true,
+        upsert: false,
+      },
+    );
+
+    if (!page) {
+      return errorState("Page not found.");
+    }
+
+    await createAdminAuditLogEntry({
+      adminId,
+      action: isPublished ? "page.publish" : "page.unpublish",
+      targetType: "PublicPage",
+      targetId: pageId,
+      details: {
+        slug: page.slug,
+        isPublished,
+      },
+    });
+
+    revalidatePath("/admin/website");
+    revalidatePath(`/admin/website/${pageId}`);
+
+    return successState(isPublished ? "Page published." : "Page unpublished.");
+  } catch {
+    return errorState("Unable to change page publish state.");
+  }
+}
+
+export async function deletePublicPageAction(
+  previousStateOrFormData: AdminActionState | FormData,
+  maybeFormData?: FormData,
+): Promise<AdminActionState> {
+  try {
+    const formData = resolveActionFormData(previousStateOrFormData, maybeFormData);
+    const adminId = await requireAdminActionAccess();
+    const pageId = getStringField(formData, "pageId");
+
+    await connectToDatabase();
+
+    const deletedPage = await PublicPage.findByIdAndDelete(pageId);
+
+    if (!deletedPage) {
+      return errorState("Page not found.");
+    }
+
+    await createAdminAuditLogEntry({
+      adminId,
+      action: "page.delete",
+      targetType: "PublicPage",
+      targetId: pageId,
+      details: {
+        slug: deletedPage.slug,
+        title: deletedPage.title,
+      },
+    });
+
+    revalidatePath("/admin/website");
+
+    return successState("Page deleted.", "warning");
+  } catch {
+    return errorState("Unable to delete page.");
+  }
+}
+
+export async function updatePublicPageSortOrderAction(
+  previousStateOrFormData: AdminActionState | FormData,
+  maybeFormData?: FormData,
+): Promise<AdminActionState> {
+  try {
+    const formData = resolveActionFormData(previousStateOrFormData, maybeFormData);
+    const adminId = await requireAdminActionAccess();
+    const pageId = getStringField(formData, "pageId");
+    const sortOrder = Number(getStringField(formData, "sortOrder"));
+
+    await connectToDatabase();
+
+    const page = await PublicPage.findByIdAndUpdate(
+      pageId,
+      {
+        $set: {
+          sortOrder,
+          updatedAt: new Date(),
+          updatedBy: adminId,
+        },
+      },
+      {
+        returnDocument: "after",
+        strict: true,
+        upsert: false,
+      },
+    );
+
+    if (!page) {
+      return errorState("Page not found.");
+    }
+
+    await createAdminAuditLogEntry({
+      adminId,
+      action: "page.sort",
+      targetType: "PublicPage",
+      targetId: pageId,
+      details: {
+        slug: page.slug,
+        sortOrder,
+      },
+    });
+
+    revalidatePath("/admin/website");
+    revalidatePath(`/admin/website/${pageId}`);
+
+    return successState("Sort order updated.");
+  } catch {
+    return errorState("Unable to update sort order.");
+  }
+}
+
+export async function savePublicPageAction(
+  previousStateOrFormData: AdminActionState | FormData,
+  maybeFormData?: FormData,
+): Promise<AdminActionState> {
+  try {
+    const formData = resolveActionFormData(previousStateOrFormData, maybeFormData);
+    const adminId = await requireAdminActionAccess();
+    const pageId = getStringField(formData, "pageId");
+    const title = getStringField(formData, "title");
+    const content = getStringField(formData, "content");
+
+    await connectToDatabase();
+
+    const page = await PublicPage.findByIdAndUpdate(
+      pageId,
+      {
+        $set: {
+          title,
+          content,
+          updatedAt: new Date(),
+          updatedBy: adminId,
+        },
+      },
+      {
+        returnDocument: "after",
+        strict: true,
+        upsert: false,
+      },
+    );
+
+    if (!page) {
+      return errorState("Page not found.");
+    }
+
+    await createAdminAuditLogEntry({
+      adminId,
+      action: "page.save",
+      targetType: "PublicPage",
+      targetId: pageId,
+      details: {
+        slug: page.slug,
+        title,
+      },
+    });
+
+    revalidatePath("/admin/website");
+    revalidatePath(`/admin/website/${pageId}`);
+
+    return successState("Page content saved.");
+  } catch {
+    return errorState("Unable to save page content.");
+  }
+}
+
+export async function bulkSuspendUsersAction(
+  previousStateOrFormData: AdminActionState | FormData,
+  maybeFormData?: FormData,
+): Promise<AdminActionState> {
+  try {
+    const formData = resolveActionFormData(previousStateOrFormData, maybeFormData);
+    const adminId = await requireAdminActionAccess();
+    const userIds = getMultiStringField(formData, "userIds");
+
+    await connectToDatabase();
+
+    const result = await User.updateMany(
+      { _id: { $in: userIds } },
+      {
+        $set: {
+          suspended: true,
+          updatedAt: new Date(),
+        },
+      },
+      {
+        strict: true,
+        upsert: false,
+      },
+    );
+
+    await createAdminAuditLogEntry({
+      adminId,
+      action: "user.bulk_suspend",
+      targetType: "User",
+      targetId: userIds.join(","),
+      details: {
+        selectedCount: userIds.length,
+        modifiedCount: result.modifiedCount ?? 0,
+      },
+    });
+
+    revalidatePath("/admin");
+    revalidatePath("/admin/users");
+
+    return successState(
+      `${result.modifiedCount ?? 0} users suspended.`,
+      "warning",
+    );
+  } catch {
+    return errorState("Unable to suspend selected users.");
+  }
+}
+
+export async function bulkRemoveUsersAction(
+  previousStateOrFormData: AdminActionState | FormData,
+  maybeFormData?: FormData,
+): Promise<AdminActionState> {
+  try {
+    const formData = resolveActionFormData(previousStateOrFormData, maybeFormData);
+    const adminId = await requireAdminActionAccess();
+    const userIds = getMultiStringField(formData, "userIds");
+
+    await connectToDatabase();
+
+    let removedCount = 0;
+
+    for (const targetUserId of userIds) {
+      await removeUserByAdmin({ adminId, targetUserId });
+      removedCount += 1;
+    }
+
+    revalidatePath("/admin");
+    revalidatePath("/admin/users");
+
+    return successState(`${removedCount} users removed.`, "warning");
+  } catch {
+    return errorState("Unable to remove selected users.");
+  }
+}
+
+export async function bulkDeleteTransactionsAction(
+  previousStateOrFormData: AdminActionState | FormData,
+  maybeFormData?: FormData,
+): Promise<AdminActionState> {
+  try {
+    const formData = resolveActionFormData(previousStateOrFormData, maybeFormData);
+    const adminId = await requireAdminActionAccess();
+    const transactionIds = getMultiStringField(formData, "transactionIds");
+
+    await connectToDatabase();
+
+    const result = await Transaction.deleteMany({
+      _id: { $in: transactionIds },
+    });
+
+    await createAdminAuditLogEntry({
+      adminId,
+      action: "transaction.bulk_delete",
+      targetType: "Transaction",
+      targetId: transactionIds.join(","),
+      details: {
+        selectedCount: transactionIds.length,
+        deletedCount: result.deletedCount ?? 0,
+      },
+    });
+
+    revalidatePath("/admin");
+    revalidatePath("/admin/transactions");
+
+    return successState(
+      `${result.deletedCount ?? 0} transactions removed.`,
+      "warning",
+    );
+  } catch {
+    return errorState("Unable to remove selected transactions.");
+  }
+}
+
+export async function bulkDeletePublicPagesAction(
+  previousStateOrFormData: AdminActionState | FormData,
+  maybeFormData?: FormData,
+): Promise<AdminActionState> {
+  try {
+    const formData = resolveActionFormData(previousStateOrFormData, maybeFormData);
+    const adminId = await requireAdminActionAccess();
+    const pageIds = getMultiStringField(formData, "pageIds");
+
+    await connectToDatabase();
+
+    const result = await PublicPage.deleteMany({ _id: { $in: pageIds } });
+
+    await createAdminAuditLogEntry({
+      adminId,
+      action: "page.bulk_delete",
+      targetType: "PublicPage",
+      targetId: pageIds.join(","),
+      details: {
+        selectedCount: pageIds.length,
+        deletedCount: result.deletedCount ?? 0,
+      },
+    });
+
+    revalidatePath("/admin/website");
+
+    return successState(
+      `${result.deletedCount ?? 0} pages deleted.`,
+      "warning",
+    );
+  } catch {
+    return errorState("Unable to delete selected pages.");
+  }
+}
+
+export async function bulkPublishPublicPagesAction(
+  previousStateOrFormData: AdminActionState | FormData,
+  maybeFormData?: FormData,
+): Promise<AdminActionState> {
+  try {
+    const formData = resolveActionFormData(previousStateOrFormData, maybeFormData);
+    const adminId = await requireAdminActionAccess();
+    const pageIds = getMultiStringField(formData, "pageIds");
+
+    await connectToDatabase();
+
+    const result = await PublicPage.updateMany(
+      { _id: { $in: pageIds } },
+      {
+        $set: {
+          isPublished: true,
+          updatedAt: new Date(),
+          updatedBy: adminId,
+        },
+      },
+      {
+        strict: true,
+        upsert: false,
+      },
+    );
+
+    await createAdminAuditLogEntry({
+      adminId,
+      action: "page.bulk_publish",
+      targetType: "PublicPage",
+      targetId: pageIds.join(","),
+      details: {
+        selectedCount: pageIds.length,
+        modifiedCount: result.modifiedCount ?? 0,
+      },
+    });
+
+    revalidatePath("/admin/website");
+
+    return successState(`${result.modifiedCount ?? 0} pages published.`);
+  } catch {
+    return errorState("Unable to publish selected pages.");
+  }
+}
+
+export async function bulkUnpublishPublicPagesAction(
+  previousStateOrFormData: AdminActionState | FormData,
+  maybeFormData?: FormData,
+): Promise<AdminActionState> {
+  try {
+    const formData = resolveActionFormData(previousStateOrFormData, maybeFormData);
+    const adminId = await requireAdminActionAccess();
+    const pageIds = getMultiStringField(formData, "pageIds");
+
+    await connectToDatabase();
+
+    const result = await PublicPage.updateMany(
+      { _id: { $in: pageIds } },
+      {
+        $set: {
+          isPublished: false,
+          updatedAt: new Date(),
+          updatedBy: adminId,
+        },
+      },
+      {
+        strict: true,
+        upsert: false,
+      },
+    );
+
+    await createAdminAuditLogEntry({
+      adminId,
+      action: "page.bulk_unpublish",
+      targetType: "PublicPage",
+      targetId: pageIds.join(","),
+      details: {
+        selectedCount: pageIds.length,
+        modifiedCount: result.modifiedCount ?? 0,
+      },
+    });
+
+    revalidatePath("/admin/website");
+
+    return successState(`${result.modifiedCount ?? 0} pages unpublished.`);
+  } catch {
+    return errorState("Unable to unpublish selected pages.");
+  }
 }

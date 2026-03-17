@@ -49,6 +49,7 @@ export interface ModelPolicyModelOverrides {
   chat?: Partial<Record<PlanTier, string>>;
   imageGenerationModel?: string;
   audioGenerationModel?: string;
+  videoGenerationModel?: string;
 }
 
 export interface ModelPolicyRule {
@@ -654,6 +655,18 @@ export function resolveModelPolicy(
       model = "sora-2";
       fallbackModel = "sora-2";
     }
+  }
+
+  if (
+    input.feature === "video_generation" &&
+    typeof input.modelOverrides?.videoGenerationModel === "string" &&
+    input.modelOverrides.videoGenerationModel.length > 0
+  ) {
+    model = input.modelOverrides.videoGenerationModel;
+    notes = joinNotes(
+      notes,
+      "Admin override applied for video generation model.",
+    );
   }
 
   const shouldDowngradeForSimpleTask =

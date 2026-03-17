@@ -21,7 +21,7 @@ export const chatMessageSchema = z
     whois: z.enum(["user", "assistant", "system", "developer"]).optional(),
     content: z.union([z.string(), z.array(messageContentItemSchema), z.null()]),
   })
-  .strict();
+  .passthrough();
 
 export const chatMessageArraySchema = z.array(chatMessageSchema);
 

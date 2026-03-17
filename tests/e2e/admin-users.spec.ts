@@ -19,7 +19,7 @@ test.describe("admin dashboard and user management", () => {
     await expect(
       page.getByRole("heading", { name: "Admin Dashboard" }),
     ).toBeVisible();
-    await expect(page.locator(".AdminDashboardPage a")).toHaveCount(4);
+    await expect(page.locator(".AdminDashboardPage a")).toHaveCount(7);
 
     await page.goto("/admin/users");
     await expect(page.getByRole("heading", { name: "Users" })).toBeVisible();

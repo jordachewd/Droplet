@@ -126,13 +126,14 @@ describe("ai-model-policy", () => {
     });
   });
 
-  it("applies runtime model overrides for chat, image, and audio", () => {
+  it("applies runtime model overrides for chat, image, audio, and video", () => {
     const modelOverrides = {
       chat: {
         lite: "gpt-4.1-mini",
       },
       imageGenerationModel: "gpt-image-1",
       audioGenerationModel: "gpt-audio-1.5",
+      videoGenerationModel: "sora-2-pro",
     };
 
     expect(
@@ -164,6 +165,16 @@ describe("ai-model-policy", () => {
       }),
     ).toMatchObject({
       model: "gpt-audio-1.5",
+    });
+
+    expect(
+      resolveModelPolicy({
+        plan: "lite",
+        feature: "video_generation",
+        modelOverrides,
+      }),
+    ).toMatchObject({
+      model: "sora-2-pro",
     });
   });
 

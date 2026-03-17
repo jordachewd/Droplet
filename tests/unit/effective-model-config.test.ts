@@ -38,6 +38,7 @@ describe("getEffectiveModelConfig", () => {
       premiumChatModel: "gpt-4.1",
       imageModel: "gpt-image-1.5",
       audioModel: "gpt-audio-mini",
+      videoModel: "sora-2",
     });
   });
 
@@ -48,6 +49,7 @@ describe("getEffectiveModelConfig", () => {
       premiumChatModel: "gpt-5.4",
       imageModel: "gpt-image-1",
       audioModel: "gpt-4o-mini-tts",
+      videoModel: "sora-2-pro",
     });
 
     const config = await getEffectiveModelConfig();
@@ -58,6 +60,7 @@ describe("getEffectiveModelConfig", () => {
       premiumChatModel: "gpt-5.4",
       imageModel: "gpt-image-1",
       audioModel: "gpt-4o-mini-tts",
+      videoModel: "sora-2-pro",
     });
   });
 });

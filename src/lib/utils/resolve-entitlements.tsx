@@ -24,6 +24,7 @@ export interface Entitlements {
 interface ResolveEntitlementOptions {
   expiresOn?: Date | string | null;
   isSuspended?: boolean;
+  isAdmin?: boolean;
   now?: Date;
   planLimits?: PlanLimits;
   fullPersonaAccessByPlan?: Partial<Record<PlanName, PersonaId[]>>;
@@ -79,6 +80,16 @@ function buildBlockedPersonaAccess(): Record<PersonaId, PersonaAccessLevel> {
   return PERSONAS.reduce(
     (accumulator, persona) => {
       accumulator[persona.id] = "blocked";
+      return accumulator;
+    },
+    {} as Record<PersonaId, PersonaAccessLevel>,
+  );
+}
+
+function buildFullPersonaAccess(): Record<PersonaId, PersonaAccessLevel> {
+  return PERSONAS.reduce(
+    (accumulator, persona) => {
+      accumulator[persona.id] = "full";
       return accumulator;
     },
     {} as Record<PersonaId, PersonaAccessLevel>,
@@ -148,6 +159,30 @@ export function resolveEntitlements(
       imageLimitReached: true,
       audioLimitReached: true,
       videoLimitReached: true,
+    };
+  }
+
+  if (options.isAdmin) {
+    const personaAccess = buildFullPersonaAccess();
+
+    return {
+      planName: normalizedPlan,
+      limits: {
+        conversationsPerDay: -1,
+        promptsPerConversation: -1,
+        images: -1,
+        audio: -1,
+        video: -1,
+      },
+      personaAccess,
+      allowedPersonaIds: getAllowedPersonaIds(personaAccess),
+      trialPersonaIds: [],
+      supportsImageGeneration: true,
+      supportsAudioGeneration: true,
+      supportsVideoGeneration: true,
+      imageLimitReached: false,
+      audioLimitReached: false,
+      videoLimitReached: false,
     };
   }
 

@@ -2,14 +2,166 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-17 — PM deep audit #23. Phase 47.1 + Phase 34.2–34.8 archived. All Phases 1–45.4 complete. Phase 47.1 + 34.2–34.8 complete. Milestones 0–17 COMPLETED. Milestone 12 (Video) COMPLETED. Milestone 18 MOSTLY COMPLETE.
+> Last updated: 2026-03-17 — PM deep audit #27. Phases 55.1–56.3 + 50.1 archived. All Phases 1–56.3 complete. All Milestones 0–19 COMPLETED. 368 unit tests (65+ suites). Build passing.
+
+---
+
+## Phase 56.1–56.3 — Admin UI Completeness — COMPLETED (2026-03-17)
+
+> PM audit #27. Engineer work report confirmed. Triple-audit verified (PM + Architect + Engineer).
+
+- [x] **56.1 HIGH** — Passed `isAdmin: true` to `resolveEntitlements()` in all 5 `/app` server component pages. Admin users now see all 6 personas as full access (no Trial/PRO/PREMIUM labels). Computed `userData?.role === "admin"` after `ensureUserSynced()`.
+- [x] **56.2 MEDIUM** — Fixed Top Personas aggregation: imported `PERSONAS` from constants, changed `$match` to `{ personaId: { $in: PERSONAS.map(p => p.id) } }`. Legacy persona IDs (analyst, best-friend, boyfriend, girlfriend) now excluded at query level.
+- [x] **56.3 MEDIUM** — Replaced all `bg-white/70` with `bg-lightBackground-100/80` in 6 admin pages: users, user detail, transactions, transaction detail, website, website page detail.
+
+**Files changed:** `src/app/(chat)/layout.tsx`, `src/app/(chat)/app/page.tsx`, `src/app/(chat)/app/new/page.tsx`, `src/app/(chat)/app/personas/page.tsx`, `src/app/(chat)/app/c/[conversationId]/page.tsx`, `src/lib/utils/admin-queries.ts`, `src/app/(admin)/admin/users/page.tsx`, `src/app/(admin)/admin/users/[userId]/page.tsx`, `src/app/(admin)/admin/transactions/page.tsx`, `src/app/(admin)/admin/transactions/[transactionId]/page.tsx`, `src/app/(admin)/admin/website/page.tsx`, `src/app/(admin)/admin/website/[pageId]/page.tsx`
+
+---
+
+## Phase 50.1 — Admin Video Model Override — COMPLETED (2026-03-17)
+
+> PM audit #27. Engineer work report confirmed.
+
+- [x] **50.1 MEDIUM** — Added `videoGenerationModel` to admin model overrides end-to-end: type (`AdminData.d.tsx`), admin form parsing (`admin.actions.tsx`), defaults/normalization (`effective-model-config.ts`, `normalize-admin-settings.ts`), policy resolver (`ai-model-policy.ts`), API route wiring (`route.tsx`), admin UI selector (`admin-models-section.tsx`), constants (`admin-options.ts`), admin snapshot default (`admin-queries.ts`). Unit tests updated.
+
+**Files changed:** `src/types/AdminData.d.tsx`, `src/lib/utils/effective-model-config.ts`, `src/lib/actions/admin.actions.tsx`, `src/lib/utils/ai-model-policy.ts`, `src/app/api/openai/route.tsx`, `src/components/admin/settings/admin-models-section.tsx`, `src/components/admin/settings/normalize-admin-settings.ts`, `src/constants/admin-options.ts`, `src/lib/utils/admin-queries.ts`, `tests/unit/effective-model-config.test.ts`, `tests/unit/ai-model-policy.test.ts`
+
+---
+
+## Phase 55.1 — ADMIN_LINKS Extraction — COMPLETED (2026-03-17)
+
+> PM audit #27. Engineer work report confirmed.
+
+- [x] **55.1 LOW** — Moved `ADMIN_LINKS` from inline in `admin-sidebar.tsx` to `src/constants/admin.ts`. Sidebar now imports from constants.
+
+**Files changed:** `src/constants/admin.ts` (new), `src/components/admin/admin-sidebar.tsx`
+
+---
+
+## Phase 54.1–54.4 — Admin Enrichment Batch — COMPLETED (2026-03-17)
+
+> PM audit #26. Engineer work report confirmed. Triple-audit verified (PM + Architect + Engineer).
+
+- [x] **54.1 MEDIUM** — Added 3 media generation count cards to admin dashboard (Images Generated, Audio Generated, Video Generated). Dashboard now shows 7 metric cards total. Counts from `UsageEvent` aggregation where `blocked` is false.
+- [x] **54.2 MEDIUM** — Added video generations + remaining limits to admin user detail. Shows "used / limit" format for image, audio, video. Trial usage counters displayed.
+- [x] **54.3 MEDIUM** — Replaced hardcoded `$` with dynamic currency symbol via `getEffectiveCurrencySymbol()` in admin user detail and transaction views.
+- [x] **54.4 MEDIUM** — Filtered null `personaId` from Top Personas aggregation via `{ $match: { personaId: { $exists: true, $ne: null } } }`.
+
+**Files changed:** `src/lib/utils/admin-queries.ts`, `src/app/(admin)/admin/page.tsx`, `src/app/(admin)/admin/users/[userId]/page.tsx`, `src/app/(admin)/admin/transactions/page.tsx`, `src/app/(admin)/admin/transactions/[transactionId]/page.tsx`
+
+**Known gap (PM audit #26):** Top Personas still shows duplicate "Strategist" entries due to legacy persona IDs (analyst, best-friend, boyfriend, girlfriend) in UsageEvent records resolving to "Strategist" via `getPersona()` fallback. Null filter is necessary but insufficient. Tracked as Phase 56.2.
+
+---
+
+## Phase 53.1–53.3 — CRITICAL Admin Bypass + Media Generation Fixes — COMPLETED (2026-03-17)
+
+> PM audit #26. Engineer work report confirmed. Triple-audit verified.
+
+- [x] **53.1 CRITICAL** — Added admin role bypass in `/api/openai` route. Admin users now bypass: plan expiry blocking, daily conversation limit, prompt quota, media quota. `resolveEntitlements()` extended with `isAdmin` option granting: all 6 personas full access, all limits `-1` (unlimited), all media supported, zero trial restrictions. Auth requirement preserved.
+- [x] **53.2 HIGH** — Fixed video/image/audio tool removal at limit boundary. Media support flags kept enabled (plan-based support) even when limits are reached. Limit enforcement happens inside tool handlers, not via tool removal. Prevents confusing AI refusals when model can see capability in system prompt but not find the tool.
+- [x] **53.3 HIGH** — Changed `chatMessageSchema` from `.strict()` to `.passthrough()`. Added server-side Zod validation error logging. Backend now resilient to extra message fields on conversation resumption.
+
+**Files changed:** `src/app/api/openai/route.tsx`, `src/lib/utils/resolve-entitlements.tsx`, `src/lib/utils/validation-schemas.ts`
+
+**Known gap (PM audit #26):** `messageTextContentSchema` still uses `.strict()`. Inner content items could potentially reject extra fields from model responses. Monitoring required.
+
+---
+
+## Phase 52.1–52.2 — Admin Settings Tabbed UI + Extraction — COMPLETED (2026-03-17)
+
+> PM audit #26. Engineer work report confirmed. Triple-audit verified.
+
+- [x] **52.1 HIGH** — Implemented tabbed navigation for admin settings. 5 tabs: Models, Plans & Pricing, Limits, Personas, Theme. Accessible tab bar with `role="tablist"`, `role="tab"`, `role="tabpanel"`, `aria-selected`, `aria-controls`. Tab state persisted to localStorage.
+- [x] **52.2 HIGH** — Extracted admin settings sections into separate components: `AdminModelsSection`, `AdminPricingSection`, `AdminLimitsSection`, `AdminPersonasSection`, `AdminThemeSection`. Model option arrays moved to `admin-options.ts`. Normalization logic moved to `normalize-admin-settings.ts`. Main settings page is now a thin shell.
+
+**Files changed:** `src/app/(admin)/admin/settings/page.tsx`, `src/components/admin/settings/admin-settings-tabs.tsx`, `src/components/admin/settings/admin-models-section.tsx`, `src/components/admin/settings/admin-pricing-section.tsx`, `src/components/admin/settings/admin-limits-section.tsx`, `src/components/admin/settings/admin-personas-section.tsx`, `src/components/admin/settings/admin-theme-section.tsx`, `src/constants/admin-options.ts`, `src/components/admin/settings/normalize-admin-settings.ts`, `src/components/admin/settings/types.ts`
+
+---
+
+## Phase 51.1 — Video Generation Prompt Fix — COMPLETED (2026-03-17)
+
+> PM audit #24 CRITICAL finding. Triple-audit confirmed root cause: persona system prompts had zero references to video/image/audio tool capabilities. Model defaulted to training data and refused video requests.
+
+- [x] **51.1 CRITICAL** — Added media-tool awareness to `CHAT_PLATFORM_PROMPT` in `persona-prompts.ts`. Platform prompt now explicitly states the model has access to tools for generating images, audio, and video. All persona system prompts inherit this via the shared platform prompt. Root cause of owner-reported "unable to create videos" bug resolved.
+
+**Files changed:** `src/constants/persona-prompts.ts`
+
+---
+
+## Phase 49.4–49.5 — Promo Cards Role-Aware & Plan-Contextual — COMPLETED (2026-03-17)
+
+> PM audit #24. Engineer work report confirmed. Verified by triple-audit.
+
+- [x] **49.4 MEDIUM** — Admin users see "Admin access — full permissions" instead of upgrade promo in `PlanPromo`. Sidebar promo gets role/plan from server and shows contextual upgrade text, hides for Premium, special admin message.
+- [x] **49.5 MEDIUM** — Promo cards now contextual to user's current plan. Lite sees upgrade to Pro, Pro sees upgrade to Premium, Premium/admin see nothing or admin message. Zero hardcoded promo text.
+
+**Files changed:** `src/components/shared/plan-promo.tsx`, `src/components/chat/sidebar/chat-sidebar-promo.tsx`, `src/components/chat/sidebar/chat-sidebar-shell.tsx`, `src/components/chat/chat-sidebar.tsx`
+
+---
+
+## Phase 49.3 — SVG Persona Image Optimization Fix — COMPLETED (2026-03-17)
+
+> PM audit #24. Engineer work report confirmed.
+
+- [x] **49.3 MEDIUM** — Added `unoptimized` prop to `<Image>` rendering persona SVG hero images.
+
+**Files changed:** `src/components/shared/persona-card.tsx`
+
+---
+
+## Phase 49.2 — Import Type Fixes — COMPLETED (2026-03-17)
+
+> PM audit #24. Engineer work report confirmed.
+
+- [x] **49.2 MEDIUM** — Changed runtime imports to `import type` for `FullPersonaAccessByPlan` in `faqs.tsx` and `about-data.ts`. No runtime dependency on `server-only` sentinel.
+
+**Files changed:** `src/constants/faqs.tsx`, `src/constants/about-data.ts`
+
+---
+
+## Phase 49.1 — autoAnimate MutationObserver Leak Fix — COMPLETED (2026-03-17)
+
+> PM audit #24. Engineer work report confirmed. Verified by triple-audit.
+
+- [x] **49.1 HIGH** — Fixed autoAnimate leak by initializing once on ref availability, keeping scroll effect separate, and using controller cleanup (`disable()` + `destroy()`).
+
+**Files changed:** `src/components/chat/chat-body.tsx`
+
+---
+
+## Phase 48.1 — Currency Configurability — COMPLETED (2026-03-17)
+
+> PM audit #24. Engineer work report confirmed. Verified by triple-audit. Full end-to-end currency configurability.
+
+- [x] **48.1 HIGH** — Implemented currency symbol configurability:
+  - Added `currencySymbol` to `PlanPricing` type/default.
+  - Added `getEffectiveCurrencySymbol()` reading `AppSetting("admin.currencySymbol")` with `$` fallback.
+  - Admin settings currency selector (USD/EUR).
+  - Replaced hardcoded `$` in plan cards, FAQs, about, terms, admin usage.
+  - All rendering surfaces use dynamic currency symbol.
+
+**Files changed:** `src/constants/plans.tsx`, `src/lib/utils/effective-plan-config.ts`, `src/components/shared/plan-card.tsx`, `src/constants/faqs.tsx`, `src/constants/about-data.ts`, `src/constants/terms-data.ts`, `src/app/(admin)/admin/settings/page.tsx`, `src/app/(admin)/admin/usage/page.tsx`, `src/lib/actions/admin.actions.tsx`, `src/app/(public)/plans/page.tsx`, `src/app/(chat)/app/plans/page.tsx`, `src/app/(public)/faqs/page.tsx`, `src/app/(public)/about/page.tsx`, `src/app/(public)/terms/page.tsx`, `src/components/sections/landing-page.tsx`
+
+---
+
+## Phase 34.9a–34.9e — Video Implementation Quality Fixes — COMPLETED (2026-03-17)
+
+> PM audit #24. Engineer work report confirmed. All 5 quality gaps from PM audit #23 fixed.
+
+- [x] **34.9a CRITICAL** — Removed "(coming soon)" suffix from all 3 video labels in plan cards. Zero "coming soon" references remain.
+- [x] **34.9b HIGH** — Added explicit Sora output controls (`seconds`, `size`) to `generateVideo.tsx`.
+- [x] **34.9c HIGH** — Added `playsInline` attribute to VideoPlayer for iOS Safari inline playback.
+- [x] **34.9d HIGH** — Fixed missing whitespace in video tool description in `openai.tsx`.
+- [x] **34.9e HIGH** — Expanded unit coverage with 4 failure-path tests: failed status with failure reason, timeout path, hard-block policy path, empty downloaded content path.
+
+**Files changed:** `src/constants/plans.tsx`, `src/lib/utils/openai/generateVideo.tsx`, `src/components/shared/video-player.tsx`, `src/constants/openai.tsx`, `tests/unit/generate-video.test.ts`
 
 ---
 
 ## Phase 34.2–34.8 — Video Generation (Full Implementation) — COMPLETED (2026-03-17)
 
 > PM audit #23. Triple-audit verified (PM + Architect + Engineer). Video generation end-to-end operational.
-> Quality gaps tracked in Phase 34.9 (see TODO.md).
+> Quality gaps tracked in Phase 34.9 (now COMPLETED).
 > 360 unit tests (65 suites). 174 E2E passing. Build passing.
 
 - [x] **34.2 HIGH** — Created `generateVideo.tsx` utility with async Sora polling: `videos.create()` → `waitForCompletedVideo()` → `videos.downloadContent()` → `uploadFileToAWS()`. Model resolved via `resolveModelPolicy()`. 180s polling timeout. Zero-byte check. S3 upload to `{userId}/videos/`.

@@ -256,6 +256,81 @@ describe("POST /api/openai", () => {
     expect(generateResponse).toHaveBeenCalledOnce();
   });
 
+  it("bypasses persona and quota restrictions for admin role users", async () => {
+    vi.mocked(getUserById).mockResolvedValue({
+      clerkId: "user_123",
+      role: "admin",
+      plan: {
+        name: "Lite",
+        expiresOn: new Date(Date.now() - 86_400_000),
+        imageGenerations: 999,
+        audioGenerations: 999,
+        videoGenerations: 999,
+        usagePeriodStart: new Date(),
+      },
+    } as never);
+
+    const response = await POST(
+      buildRequest({
+        personaId: "interviewer",
+        messages: [{ role: "user", whois: "user", content: "new chat" }],
+      }),
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.personaId).toBe("interviewer");
+    expect(claimDailyConversationSlot).not.toHaveBeenCalled();
+    expect(generateResponse).toHaveBeenCalledWith(
+      expect.objectContaining({
+        personaId: "interviewer",
+        entitlements: expect.objectContaining({
+          supportsImageGeneration: true,
+          supportsAudioGeneration: true,
+          supportsVideoGeneration: true,
+          allowedPersonaIds: expect.arrayContaining([
+            "strategist",
+            "teacher",
+            "developer",
+            "creator",
+            "wellness",
+            "interviewer",
+          ]),
+        }),
+      }),
+    );
+  });
+
+  it("keeps video support enabled in entitlements when video limit is reached", async () => {
+    vi.mocked(getUserById).mockResolvedValue({
+      clerkId: "user_123",
+      plan: {
+        name: "Lite",
+        expiresOn: new Date(Date.now() + 86_400_000),
+        imageGenerations: 0,
+        audioGenerations: 0,
+        videoGenerations: 1,
+        usagePeriodStart: new Date(),
+      },
+    } as never);
+
+    await POST(
+      buildRequest({
+        taskId: EXISTING_TASK_ID,
+        messages: [{ role: "user", whois: "user", content: "continue" }],
+      }),
+    );
+
+    expect(generateResponse).toHaveBeenCalledWith(
+      expect.objectContaining({
+        entitlements: expect.objectContaining({
+          supportsVideoGeneration: true,
+          videoLimitReached: true,
+        }),
+      }),
+    );
+  });
+
   it("creates a new task when no taskId is provided", async () => {
     const response = await POST(
       buildRequest({

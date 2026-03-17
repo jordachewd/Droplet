@@ -75,6 +75,23 @@ describe("resolveEntitlements", () => {
     expect(entitlements.videoLimitReached).toBe(true);
   });
 
+  it("grants unlimited full access for admin role context", () => {
+    const entitlements = resolveEntitlements("Lite", {
+      isAdmin: true,
+    });
+
+    expect(entitlements.allowedPersonaIds).toEqual(
+      PERSONAS.map((persona) => persona.id),
+    );
+    expect(entitlements.trialPersonaIds).toEqual([]);
+    expect(entitlements.limits.conversationsPerDay).toBe(-1);
+    expect(entitlements.limits.promptsPerConversation).toBe(-1);
+    expect(entitlements.limits.images).toBe(-1);
+    expect(entitlements.limits.audio).toBe(-1);
+    expect(entitlements.limits.video).toBe(-1);
+    expect(entitlements.personaAccess!.interviewer).toBe("full");
+  });
+
   it("enforces the approved persona access matrix per plan", () => {
     const liteEntitlements = resolveEntitlements("Lite");
     const proEntitlements = resolveEntitlements("Pro");

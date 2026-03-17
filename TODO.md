@@ -5,266 +5,259 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: Phases 1–45.4 complete. Phase 43.2 complete (placeholders). Phase 47.1 complete. Phase 34.2–34.8 complete. All Milestones 0–18 MOSTLY COMPLETE. Milestone 12 (Video) COMPLETE.**
-> **PM deep audit #23 (2026-03-17): Full triple-audit (PM + Architect + Engineer). Video generation IMPLEMENTED (Phase 34). Plan cards still show "coming soon" for video — MUST FIX. Currency hardcoding confirmed NOT fixed. autoAnimate leak confirmed NOT fixed. Phase 48/49 checkboxes were FALSE — corrected.**
-> **360 unit tests passing (65 suites). 174 E2E passing. 6 E2E failed (timeout/navigation, pre-existing). 48 skipped (explained). Build passing.**
-> **OWNER INSTRUCTIONS (latest, 2026-03-17): Currency configurability HIGH, admin full permissions display, import type fixes, SVG optimization.**
-> **Priority order: 34.9 → 49.1 → 48.1 → 49.2 → 49.3 → 49.4 → 49.5 → 50.1 → 46.x → 31.4 → 29.x → 26.x**
-> **All Phase 26+ deferred work is ON HOLD until PM-approved complete.**
+> **STATUS: All Milestones 0–19 COMPLETE. Phases 1–56.3 complete. 368 unit tests passing (65+ suites). Build passing.**
+> **PM deep audit #27 (2026-03-17): Full triple-audit (PM + Architect + Engineer). Owner instructions integrated.**
+> **Priority order: 57.1 → 57.2 → 57.3 → 57.4 → 58.1 → 58.2 → 58.3 → 59.1 → 59.2 → 31.4 → 46.1 → 46.2 → 29.x → 26.x**
+> **All Phase 26+ deferred work is ON HOLD until PM-approved.**
 
 ---
 
-## Phase 47: Video Generation Claims Suppression — COMPLETED (PM Audit #23)
+## Phase 57: Admin Action Feedback & Safety — CRITICAL (PM Audit #27, Owner Directives #6/#7/#8)
 
-> **COMPLETED.** Phase 47.1 executed (suppression), then Phase 34.2-34.8 delivered full video implementation, and Phase 34.7 re-enabled `supportsVideoGeneration: true`. Suppression was temporary, now reversed. Archived in `DONE.md`.
-
----
-
-## Phase 34.9: Video Implementation Quality Fixes — CRITICAL (PM Audit #23)
-
-> **CRITICAL priority. PM audit #23 triple-audit finding: Phase 34 video implementation is structurally sound but has quality gaps that must be fixed before declaring video fully ship-ready.**
-> **Plan cards still say "(coming soon)" for video — directly contradicts implemented feature.**
-> **Sora API call missing required parameters. VideoPlayer missing iOS support. Tool description has formatting errors. Unit test coverage insufficient.**
+> **CRITICAL priority. PM audit #27 triple-audit unanimous: ALL 14 admin forms have ZERO confirmation dialogs on destructive actions, ZERO visual feedback on any action, and ZERO loading indicators. Owner directives #6, #7, #8 are completely unimplemented in admin panel.**
 
 ---
 
-### 34.9a CRITICAL — Remove "(coming soon)" from plan card video labels
+### 57.1 CRITICAL — Add confirmation dialogs to all admin destructive actions
 
-**Ref:** PM audit #23 — 3 instances of `(coming soon)` appended to video generation labels in plan cards. Video IS implemented. User-facing false claim.
+**Ref:** PM audit #27 — Both Architect and Engineer confirmed. Owner directive #6: "Any Delete or Remove user action MUST be prevented by a confirmation message and require user acknowledgement."
 
-**Files:** `src/constants/plans.tsx`
+**Root cause:** Admin destructive actions fire immediately via plain `<form action={...}>`. Remove User deletes the entire user account, all tasks, transactions, and S3 assets with a single unconfirmed click. Suspend User and Delete Page also have no confirmation.
+
+**Files:** `src/app/(admin)/admin/users/[userId]/page.tsx`, `src/app/(admin)/admin/website/page.tsx`
 
 **What to do:**
 
-1. Remove `(coming soon)` suffix from video generation label in Lite plan features (line ~206).
-2. Remove `(coming soon)` suffix from video generation label in Pro plan features (line ~270).
-3. Remove `(coming soon)` suffix from video generation label in Premium plan features (line ~342).
+1. Create a reusable `AdminActionButton` client component (or similar) that wraps destructive admin form buttons with `window.confirm()` before form submission.
+2. Apply to "Remove User" button — message: "Are you sure you want to permanently remove this user? This will delete all their data including conversations, transactions, and files. This action cannot be undone."
+3. Apply to "Suspend/Reinstate User" button — message: "Are you sure you want to suspend/reinstate this user?"
+4. Apply to "Delete Page" button — message: "Are you sure you want to delete this page? This action cannot be undone."
 
 **Acceptance criteria:**
 
-- [ ] Zero "coming soon" references for video in plan cards
-- [ ] Video feature labels match image/audio pattern (just the limit label)
-- [ ] `npx tsc --noEmit` passes
-
----
-
-### 34.9b HIGH — Add `seconds` and `size` parameters to Sora API call
-
-**Ref:** PM audit #23 — `openAiClient.videos.create()` called without `seconds` or `size`. Uncontrolled video output. Phase 34.2 spec explicitly required `seconds: "4"` and `size: "1280x720"`.
-
-**Files:** `src/lib/utils/openai/generateVideo.tsx`
-
-**What to do:**
-
-1. Add `seconds: "4"` to the `openAiClient.videos.create()` call (line ~116).
-2. Add `size: "1280x720"` to the same call.
-
-**Acceptance criteria:**
-
-- [ ] Sora API call includes explicit `seconds` and `size`
-- [ ] `npx tsc --noEmit` passes
-
----
-
-### 34.9c HIGH — Add `playsInline` to VideoPlayer
-
-**Ref:** PM audit #23 — `<video>` element missing `playsInline`. iOS Safari forces fullscreen.
-
-**Files:** `src/components/shared/video-player.tsx`
-
-**What to do:**
-
-1. Add `playsInline` attribute to the `<video>` element.
-
-**Acceptance criteria:**
-
-- [ ] `<video>` has `playsInline` attribute
-- [ ] Video plays inline on iOS Safari
-- [ ] `npx tsc --noEmit` passes
-
----
-
-### 34.9d HIGH — Fix video tool description missing spaces
-
-**Ref:** PM audit #23 — String concatenation in `videoGenerationTool` produces `"video,e.g."` (missing space).
-
-**Files:** `src/constants/openai.tsx`
-
-**What to do:**
-
-1. Add space before `"e.g."` in the video tool description string concatenation (line ~67-68).
-
-**Acceptance criteria:**
-
-- [ ] Tool description reads naturally with proper spacing
-- [ ] `npx tsc --noEmit` passes
-
----
-
-### 34.9e HIGH — Add failure and timeout unit tests for generateVideo
-
-**Ref:** PM audit #23 — Only 1 happy-path test exists. Phase 34.8 spec required failure/timeout coverage.
-
-**Files:** `tests/unit/generate-video.test.ts`
-
-**What to do:**
-
-1. Add test: Sora API returns `"failed"` status with `failure_reason` → throws error.
-2. Add test: Polling exceeds 180s timeout → throws timeout error.
-3. Add test: `hardBlocked` policy → throws blocked error.
-4. Add test: Video buffer is 0 bytes → throws empty content error.
-
-**Acceptance criteria:**
-
-- [ ] At least 4 additional tests covering failure paths
-- [ ] `npm run test` passes
-
----
-
-## Phase 48: Currency Configurability — HIGH (Owner-Directed, PM Audit #22)
-
-> **HIGH priority. Owner directive: "Hardcoded '$' currency symbol is not allowed. The app will use different currencies depending on selling region. For now USD and Euro — must be configurable by admin."**
-> **PM audit #22: Hardcoded `$` confirmed in plan-card.tsx, about page, faqs.tsx, terms-data.ts, admin usage page.**
-
----
-
-### 48.1 HIGH — Add configurable currency symbol to plan pricing display
-
-**Ref:** PM audit #22 — `$` hardcoded in 5 files. Owner wants admin-configurable currency (USD `$` / EUR `€`).
-
-**Files:** `src/constants/plans.tsx`, `src/lib/utils/effective-plan-config.ts`, `src/components/shared/plan-card.tsx`, `src/constants/faqs.tsx`, `src/constants/about-data.ts`, `src/constants/terms-data.ts`, `src/app/(admin)/admin/settings/page.tsx`, `src/app/(admin)/admin/usage/page.tsx`
-
-**What to do:**
-
-1. Add `currencySymbol: string` field to `PlanPricing` type (default `"$"`).
-2. Add `getEffectiveCurrencySymbol()` to `effective-plan-config.ts` — reads `AppSetting("admin.currencySymbol")`, falls back to `"$"`.
-3. Pass `currencySymbol` from server to all plan display surfaces.
-4. Replace hardcoded `"$"` in `plan-card.tsx` with prop-driven `currencySymbol`.
-5. Replace hardcoded `$` prefix in `buildFaqs()` template literals with `currencySymbol` param.
-6. Replace hardcoded `$` prefix in `buildAboutSections()` with `currencySymbol` param.
-7. Replace hardcoded `$` prefix in `buildTermsSections()` with `currencySymbol` param.
-8. Replace hardcoded `$` in admin usage `formatCost()` with effective currency symbol.
-9. Add currency symbol selector (USD/EUR) to admin settings page.
-
-**Acceptance criteria:**
-
-- [ ] Zero hardcoded `$` currency symbols in rendering code
-- [ ] `currencySymbol` resolved from admin settings with `$` fallback
-- [ ] Admin can switch between `$` (USD) and `€` (EUR)
-- [ ] All plan cards, FAQs, About, Terms render correct currency symbol
+- [ ] "Remove User" requires explicit confirmation before executing
+- [ ] "Suspend/Reinstate User" requires explicit confirmation before executing
+- [ ] "Delete Page" requires explicit confirmation before executing
+- [ ] Canceling confirmation prevents the action
 - [ ] `npx tsc --noEmit` passes
 - [ ] All tests pass
 
 ---
 
-## Phase 49: Code Quality Fixes — HIGH-MEDIUM (PM Audit #22)
+### 57.2 CRITICAL — Add visual feedback (AlertMessage) to all admin forms
 
-> **Findings from PM audit #22 triple-audit. Mixed priority.**
+**Ref:** PM audit #27 — Owner directive #7: "Any action (Delete, Remove, Save, Update, Edit, etc) must be confirmed by a similar message as for errors; colors to be adapted (green = success, orange = warning, blue = info, red = error)."
 
----
+**Root cause:** All 14 admin forms silently reload the page after submission. Admin has zero visual indication whether an action succeeded or failed.
 
-### 49.1 HIGH — Fix autoAnimate MutationObserver leak in chat-body.tsx
+**Affected forms (14 total):**
 
-**Ref:** PM audit #22 — `autoAnimate()` called on every message update without cleanup. MutationObserver leak. Supersedes Phase 45.5.
-
-**Files:** `src/components/chat/chat-body.tsx`
+- Settings: Save Models, Save Pricing, Save Currency, Save Limits, Save Trial Limits, Save Persona Access, Save Theme (7 forms)
+- Website: Create Page, Delete Page, Publish/Unpublish, Save Sort Order, Save Page Content (5 forms)
+- Users: Suspend/Reinstate, Remove User (2 forms)
 
 **What to do:**
 
-1. Separate autoAnimate initialization from scroll-to-bottom logic.
-2. Initialize `autoAnimate()` once on ref availability (not on every message change).
-3. Store return value (AnimationController).
-4. Call cleanup in useEffect return function.
-5. Keep scroll-to-bottom in separate effect keyed on `messages.length`.
+1. Modify server actions (`admin.actions.tsx`, `website.actions.tsx`, etc.) to return `{ success: boolean; message: string }` instead of just calling `revalidatePath()`.
+2. Use `useActionState` (React 19) in admin form wrappers to capture action result.
+3. Display result using `AlertMessage` component with appropriate severity: `success` (green) for successful operations, `error` (red) for failures.
+4. Auto-dismiss success messages after 5 seconds.
 
 **Acceptance criteria:**
 
-- [ ] autoAnimate called once, not on every message
-- [ ] Cleanup function returned from useEffect
-- [ ] No MutationObserver leak
-- [ ] Scroll-to-bottom still works on new messages
+- [ ] Every admin save/update/delete action shows visual feedback
+- [ ] Success: green AlertMessage with confirmation text
+- [ ] Error: red AlertMessage with error description
+- [ ] Messages auto-dismiss after timeout
+- [ ] `npx tsc --noEmit` passes
+- [ ] All tests pass
+
+---
+
+### 57.3 CRITICAL — Add loading indicators to all admin forms
+
+**Ref:** PM audit #27 — Owner directive #8: "If any kind of user action take long time display LoadingBubbles so the user shall be aware that the action is on the way."
+
+**Root cause:** Zero admin forms show any pending/loading state during submission.
+
+**What to do:**
+
+1. Use `useFormStatus()` hook in admin form submit buttons.
+2. Show `LoadingBubbles` inline or disable the submit button with "Saving..." text while `pending === true`.
+3. Apply to all 14 admin forms identified in 57.2.
+
+**Acceptance criteria:**
+
+- [ ] All admin submit buttons show loading state during submission
+- [ ] Buttons disabled while pending (prevent double submission)
+- [ ] Loading state visually clear (LoadingBubbles or spinner)
 - [ ] `npx tsc --noEmit` passes
 
 ---
 
-### 49.2 MEDIUM — Fix `import type` issues in faqs.tsx and about-data.ts
+### 57.4 HIGH — Replace window.alert() with AlertMessage in user-facing actions
 
-**Ref:** PM audit #22 + Copilot code review — `FullPersonaAccessByPlan` imported as runtime from `effective-persona-access.ts` (which has `import "server-only"`), but only used as a type.
+**Ref:** PM audit #27 — Owner directive #7 applies to ALL user types (admin, guest, client).
 
-**Files:** `src/constants/faqs.tsx`, `src/constants/about-data.ts`
+**Root cause:** User-facing delete error paths use `window.alert()` for error feedback. This is functional but visually inconsistent with the app's design system.
+
+**Files:** `src/components/chat/library-delete-button.tsx`, `src/components/chat/sidebar/chat-sidebar-nav-v2.tsx`
 
 **What to do:**
 
-1. Change `import { FullPersonaAccessByPlan }` to `import type { FullPersonaAccessByPlan }` in both files.
+1. Replace `window.alert(...)` calls with `AlertMessage` component (or a callback to parent that triggers `AlertMessage`).
+2. Success feedback: green message on successful deletion.
+3. Error feedback: red message on failed deletion.
 
 **Acceptance criteria:**
 
-- [ ] `import type` used for type-only imports from server-only modules
-- [ ] No runtime dependency on `server-only` sentinel from constants files
+- [ ] No `window.alert()` calls remain in src/ (excluding test files)
+- [ ] Delete success shows green feedback
+- [ ] Delete failure shows red feedback
 - [ ] `npx tsc --noEmit` passes
 
 ---
 
-### 49.3 MEDIUM — Add `unoptimized` to persona card SVG images
+## Phase 58: Admin Bulk Actions — HIGH (PM Audit #27, Owner Directive #9)
 
-**Ref:** PM audit #22 + Copilot code review — `persona-card.tsx` uses `next/image` with SVG hero images. SVGs routed through image optimizer produce blurry raster versions.
+> **HIGH priority. PM audit #27 triple-audit confirmed: ZERO admin data tables have bulk selection or bulk action capability. Owner directive: "All data tables in admin must have option to select one, more or all items/rows for Bulk Actions (edit/remove — where appropriate)."**
 
-**Files:** `src/components/shared/persona-card.tsx`
+---
+
+### 58.1 HIGH — Add bulk actions to admin users table
+
+**Files:** `src/app/(admin)/admin/users/page.tsx`
 
 **What to do:**
 
-1. Add `unoptimized` prop to `<Image>` rendering `persona.heroImage` (which are `.svg` files).
+1. Add checkbox column to users table (per-row + select-all in header).
+2. Add bulk action bar that appears when items are selected: "Bulk Suspend" and "Bulk Remove" buttons.
+3. Bulk actions must trigger confirmation dialogs (per 57.1 pattern).
+4. Show count of selected items.
+5. Create corresponding bulk server actions in `admin.actions.tsx`.
 
 **Acceptance criteria:**
 
-- [ ] SVG persona images served directly without optimization
+- [ ] Users table has per-row checkboxes and select-all
+- [ ] Bulk action bar appears when items selected
+- [ ] "Bulk Suspend" and "Bulk Remove" available
+- [ ] Each bulk action requires confirmation
+- [ ] Bulk actions show feedback (per 57.2 pattern)
 - [ ] `npx tsc --noEmit` passes
 
 ---
 
-### 49.4 MEDIUM — Make PlanPromo and ChatSidebarPromo admin-role-aware
+### 58.2 HIGH — Add bulk actions to admin transactions table
 
-**Ref:** PM audit #22 — Admin users see "Unlock premium features" promo. Owner directive: admin role has full permission with no limitations — promo cards should display relevant info.
-
-**Files:** `src/components/shared/plan-promo.tsx`, `src/components/chat/sidebar/chat-sidebar-promo.tsx`
+**Files:** `src/app/(admin)/admin/transactions/page.tsx`
 
 **What to do:**
 
-1. In `PlanPromo` (Server Component): check `userData.role === "admin"` — if admin, show "Admin Access — Full permissions" instead of upgrade promo.
-2. In `ChatSidebarPromo` (Client Component): receive `userRole` prop from parent server layout. If admin, show admin-appropriate message or hide promo entirely.
+1. Add checkbox column to transactions table (per-row + select-all).
+2. Add bulk action bar with appropriate actions (e.g., "Bulk Remove").
+3. Bulk actions require confirmation and show feedback.
 
 **Acceptance criteria:**
 
-- [ ] Admin users do not see upgrade promo
-- [ ] Admin users see "Admin Access" or equivalent
-- [ ] Non-admin users see upgrade promo as before
+- [ ] Transactions table has per-row checkboxes and select-all
+- [ ] Bulk action bar appears when items selected
+- [ ] Bulk actions require confirmation and show feedback
 - [ ] `npx tsc --noEmit` passes
 
 ---
 
-### 49.5 MEDIUM — Remove hardcoded promo text in chat-sidebar-promo.tsx
+### 58.3 HIGH — Add bulk actions to admin website pages table
 
-**Ref:** PM audit #22 — Hardcoded "Unlock image and audio features with Pro." text. Should reference plan features dynamically.
-
-**Files:** `src/components/chat/sidebar/chat-sidebar-promo.tsx`
+**Files:** `src/app/(admin)/admin/website/page.tsx`
 
 **What to do:**
 
-1. Receive plan name or promo text as prop from parent server layout.
-2. Display contextual promo based on current plan: Lite users see upgrade to Pro, Pro users see upgrade to Premium, Premium/admin see nothing.
+1. Add checkbox column to pages table (per-row + select-all).
+2. Add bulk action bar: "Bulk Delete", "Bulk Publish", "Bulk Unpublish".
+3. Bulk actions require confirmation and show feedback.
 
 **Acceptance criteria:**
 
-- [ ] Zero hardcoded promo text
-- [ ] Promo contextual to user's current plan
+- [ ] Website pages table has per-row checkboxes and select-all
+- [ ] Bulk action bar appears when items selected
+- [ ] "Bulk Delete", "Bulk Publish", "Bulk Unpublish" available
+- [ ] Bulk actions require confirmation and show feedback
 - [ ] `npx tsc --noEmit` passes
 
 ---
 
-## Phase 46: Performance & Resource Leak Audit — ON HOLD
+## Phase 59: Admin User Detail & Design Polish — MEDIUM (PM Audit #27, Owner Directives #11/#12)
 
-> **HIGH priority. After Phase 45. Owner directive: "Evaluate entire codebase for good practices, reduce unnecessary re-renders and resource leaks."**
-> **PM audit #21 finding: Codebase is mostly clean. Minor items identified below.**
+> **MEDIUM priority. Admin user detail displays "used / limit" but not "remaining". Admin form inputs use `bg-white` instead of design tokens.**
+
+---
+
+### 59.1 MEDIUM — Show "remaining" in admin user detail usage section
+
+**Ref:** PM audit #27 — Owner directive #12: "Admin users table and single page must provide information about usage and limits (remained vs included)."
+
+**Files:** `src/app/(admin)/admin/users/[userId]/page.tsx`
+
+**What to do:**
+
+1. Change usage display format from `{used} / {limit}` to `{used} / {limit} ({remaining} left)` or equivalent "remaining" indicator.
+2. Show visual progress bar for each metric (image, audio, video, conversations, prompts).
+3. "Unlimited" plans show "Unlimited" instead of remaining count.
+
+**Acceptance criteria:**
+
+- [ ] Each usage metric shows used, limit, AND remaining
+- [ ] Unlimited values clearly indicated
+- [ ] `npx tsc --noEmit` passes
+
+---
+
+### 59.2 MEDIUM — Standardize admin form input design tokens
+
+**Ref:** PM audit #27 — Architect finding M2: admin form inputs use `bg-white` while /app uses design tokens.
+
+**Files:** `src/app/(admin)/admin/website/page.tsx`, `src/app/(admin)/admin/users/page.tsx`, `src/components/admin/settings/admin-models-section.tsx`, `src/components/admin/settings/admin-limits-section.tsx`, `src/components/admin/settings/admin-pricing-section.tsx`, `src/components/admin/tiptap-editor.tsx`
+
+**What to do:**
+
+1. Replace `bg-white` in admin form inputs/selects with `bg-lightBackground-100` (or similar design token matching `/app`).
+2. Ensure `dark:bg-jwdMarine-1000` pairing is preserved.
+
+**Acceptance criteria:**
+
+- [ ] Zero `bg-white` in admin page/component files (only design tokens)
+- [ ] Dark mode unaffected
+- [ ] Visual consistency with /app form inputs
+- [ ] `npx tsc --noEmit` passes
+
+---
+
+## Phase 31.4: E2E Test Updates — LOW (remaining)
+
+### 31.4 LOW — Update E2E tests for current UI structure
+
+**Ref:** PM audit #27 — Engineer analysis: 5 E2E failures caused by stale Clerk auth session (4 tests) and DB connectivity (2 tests). `pricing-public.spec.ts` is a duplicate of `plans-public.spec.ts`.
+
+**Files:** `tests/e2e/chat-app-shell.spec.ts`, `tests/e2e/plans-public.spec.ts`, `tests/e2e/pricing-public.spec.ts`, `tests/e2e/public-pages.spec.ts`, `tests/e2e/user-profile.spec.ts`
+
+**What to do:**
+
+1. Fix auth session refresh logic in E2E global setup (stale Clerk token is root cause of 4/5 failures).
+2. Remove or repurpose `pricing-public.spec.ts` (duplicate of `plans-public.spec.ts`).
+3. Update selectors/assertions in remaining failing specs to match current UI text and structure.
+4. Add DB connectivity check in E2E setup.
+
+**Acceptance criteria:**
+
+- [ ] `npm run test:e2e` passes with 0 failures (excluding intentionally skipped)
+- [ ] No duplicate test files
+- [ ] Auth session handled correctly across test runs
+
+---
+
+## Phase 46: Performance & Resource Leak Audit — LOW (PM Audit #24)
+
+> **Codebase is clean. All resource leaks resolved (autoAnimate fixed Phase 49.1). Only minor items remain.**
 
 ---
 
@@ -289,29 +282,9 @@
 
 ---
 
-## Phase 31.4: E2E Test Updates — LOW (remaining)
-
-### 31.4 LOW — Update E2E tests for layout changes
-
-**Files:** `tests/e2e/chat-app-shell.spec.ts`, related E2E specs
-
-**Acceptance criteria:**
-
-- [ ] E2E tests reflect current layout structure
-- [ ] `npm run test:e2e` passes
-
----
-
-## Phase 34: Video Generation — COMPLETED (PM Audit #23)
-
-> **COMPLETED (2026-03-17).** All phases 34.1–34.8 implemented by Droplet-Engineer. Verified by triple-audit (PM + Architect + Engineer). Video generation end-to-end operational. Quality gaps tracked in Phase 34.9 above.
-> Archived in `DONE.md`.
-
----
-
 ## Phase 29: App-Wide Modernization — ON HOLD
 
-> **ON HOLD until Phase 44 + 45 complete.**
+> **ON HOLD until all HIGH-priority phases complete.**
 
 ### 29.1 Implement Zod schema validation across the app
 
@@ -327,37 +300,6 @@
 
 ---
 
-## Phase 50: Admin Video Model Override — MEDIUM (PM Audit #23)
-
-> **MEDIUM priority. PM audit #23: Admin cannot override video generation model. Inconsistent with image/audio admin overrides. No `videoGenerationModel` in `ModelPolicyModelOverrides` interface, no admin UI control, no `effective-model-config.ts` support.**
-
----
-
-### 50.1 MEDIUM — Add videoGenerationModel to admin model overrides
-
-**Ref:** PM audit #23 — Architect finding H1. Admin model override pattern exists for image (`imageGenerationModel`) and audio (`audioGenerationModel`) but not video.
-
-**Files:** `src/lib/utils/ai-model-policy.ts`, `src/types/AdminData.d.tsx`, `src/lib/utils/effective-model-config.ts`, `src/app/api/openai/route.tsx`, `src/app/(admin)/admin/settings/page.tsx`
-
-**What to do:**
-
-1. Add `videoGenerationModel?: string` to `ModelPolicyModelOverrides` interface.
-2. Add `videoGenerationModel` to `ModelSettingsFormValue` type.
-3. Add video model resolution in `getEffectiveModelConfig()`.
-4. Wire `videoGenerationModel` into `modelOverrides` construction in `/api/openai` route.
-5. Add video model selector in admin settings page.
-6. Apply `modelOverrides.videoGenerationModel` in `resolveModelPolicy()` for `video_generation` feature.
-
-**Acceptance criteria:**
-
-- [ ] Admin can change video model via settings panel
-- [ ] `resolveModelPolicy()` applies admin video model override
-- [ ] Follows same pattern as image/audio overrides
-- [ ] `npx tsc --noEmit` passes
-- [ ] All tests pass
-
----
-
 > **Completed phases** are archived in [`DONE.md`](DONE.md).
-> All phases through 45.4 complete. Phase 47.1 + 34.2–34.8 complete.
+> All phases through 56.3 complete. Phase 47.1 + 34.2–34.9e complete.
 > Phase 10–12 superseded (see DONE.md for mapping).

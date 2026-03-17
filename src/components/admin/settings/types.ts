@@ -1,0 +1,26 @@
+import { PersonaTrialLimits, PlanLimits } from "@/constants/plans";
+import { PersonaId } from "@/types/PersonaData.d";
+
+export interface PricingSettingsFormValue {
+  proPrice: number;
+  premiumPrice: number;
+  currencySymbol: "$" | "€";
+}
+
+export interface ThemeSettingsFormValue {
+  defaultMode: "light" | "dark";
+}
+
+export type LimitsSettingsFormValue = PlanLimits;
+export type TrialLimitsSettingsFormValue = PersonaTrialLimits;
+
+export type PersonaAccessSettingsFormValue = Record<
+  "Lite" | "Pro" | "Premium",
+  PersonaId[]
+>;
+
+export const PERSONA_ACCESS_KEY_BY_PLAN = {
+  Lite: "persona_access_lite",
+  Pro: "persona_access_pro",
+  Premium: "persona_access_premium",
+} as const;

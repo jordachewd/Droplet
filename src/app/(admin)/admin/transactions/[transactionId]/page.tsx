@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import PageHead from "@/components/layout/page-head";
 import { getAdminTransactionDetail } from "@/lib/utils/admin-queries";
+import { getEffectiveCurrencySymbol } from "@/lib/utils/effective-plan-config";
 
 interface AdminTransactionDetailPageProps {
   params: Promise<{ transactionId: string }>;
@@ -10,7 +11,10 @@ export default async function AdminTransactionDetailPage({
   params,
 }: AdminTransactionDetailPageProps) {
   const { transactionId } = await params;
-  const transaction = await getAdminTransactionDetail(transactionId);
+  const [transaction, currencySymbol] = await Promise.all([
+    getAdminTransactionDetail(transactionId),
+    getEffectiveCurrencySymbol(),
+  ]);
 
   if (!transaction) {
     notFound();
@@ -23,7 +27,7 @@ export default async function AdminTransactionDetailPage({
         subtitle="View billing metadata, effective dates, and the associated user account."
       />
 
-      <article className="rounded-2xl border border-lightBorders-300 bg-white/70 p-5 dark:border-darkBorders-500 dark:bg-jwdMarine-900/70">
+      <article className="rounded-2xl border border-lightBorders-300 bg-lightBackground-100/80 p-5 dark:border-darkBorders-500 dark:bg-jwdMarine-900/70">
         <dl className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>
             <dt className="text-xs font-semibold uppercase tracking-wide opacity-60">
@@ -53,7 +57,10 @@ export default async function AdminTransactionDetailPage({
             <dt className="text-xs font-semibold uppercase tracking-wide opacity-60">
               Amount
             </dt>
-            <dd className="mt-1 text-sm">${transaction.amount}</dd>
+            <dd className="mt-1 text-sm">
+              {currencySymbol}
+              {transaction.amount}
+            </dd>
           </div>
           <div>
             <dt className="text-xs font-semibold uppercase tracking-wide opacity-60">
@@ -78,7 +85,7 @@ export default async function AdminTransactionDetailPage({
         </dl>
       </article>
 
-      <article className="rounded-2xl border border-lightBorders-300 bg-white/70 p-5 dark:border-darkBorders-500 dark:bg-jwdMarine-900/70">
+      <article className="rounded-2xl border border-lightBorders-300 bg-lightBackground-100/80 p-5 dark:border-darkBorders-500 dark:bg-jwdMarine-900/70">
         <h2 className="heading-6 mb-4">Associated User</h2>
         {transaction.user ? (
           <dl className="grid grid-cols-1 gap-4 md:grid-cols-2">
