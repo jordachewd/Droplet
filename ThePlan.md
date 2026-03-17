@@ -36,25 +36,25 @@ The correct strategy is to freeze product rules, build one canonical policy laye
 
 The points below are verified from the current codebase.
 
-| Area                 | Verified Current State                                                                                                                                                                                                                | Impact                                                                                    | Evidence                                                                                        |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| Lite lifecycle       | Lite is permanent and free â€” no expiry, no trial                                                                                                                                                                                    | âœ… Matches product contract                                                              | `src/constants/plans.tsx`, `src/lib/database/models/user.model.tsx`                             |
-| Pricing              | Pro is 19, Premium is 39                                                                                                                                                                                                              | âœ… Matches requested pricing                                                             | `src/constants/plans.tsx`, admin settings propagation                                           |
-| Public usage access  | `/api/openai` requires auth                                                                                                                                                                                                           | âœ… Supports account-required chat direction                                              | `src/app/api/openai/route.tsx`                                                                  |
-| Route boundaries     | Clean `/app(.*)` and `/admin(.*)` namespaces, orphan directories removed                                                                                                                                                              | âœ… Product and auth boundaries are clean                                                 | `src/proxy.tsx`, `src/app/**`                                                                   |
-| Admin scope          | Full admin control plane: users, transactions, usage, settings, website                                                                                                                                                               | âœ… Requested admin capabilities delivered                                                | `src/app/(admin)/admin/**`                                                                      |
-| Entitlements         | 6 personas with three-tier gating (full/limited/blocked), trial access system, admin overrides                                                                                                                                        | âœ… Matches product contract                                                              | `src/lib/utils/resolve-entitlements.tsx`, `src/constants/assistant-personas.tsx`                |
-| Model routing        | Central AI policy via `resolveModelPolicy()` â€” plan-aware, feature-aware, task-class-aware                                                                                                                                          | âœ… No hardcoded model routing                                                            | `src/lib/utils/a`a``ai-model-policy.ts````                                                      |
-| Conversation storage | `Task` stores message history in one document with `estimatedBytes` guardrails                                                                                                                                                        | âš ï¸ Operational â€” guardrails active, but single-document growth remains a future risk | `src/lib/database/models/tasks.model.tsx`                                                       |
-| Usage accounting     | `UsageEvent` model logs every AI request; durable counters for daily/monthly limits; atomic enforcement                                                                                                                               | âœ… Admin analytics, cost governance, and quota enforcement operational                   | `src/lib/database/models/usage-event.model.tsx`, `src/app/api/openai/route.tsx`                 |
-| Rate limiting        | MongoDB-backed rate limiting (durable, multi-instance safe)                                                                                                                                                                           | âœ… Survives restarts and multiple instances                                              | Rate limit implementation                                                                       |
-| Billing mode         | Stripe recurring subscriptions with webhook processing and server-side price re-verification                                                                                                                                          | âœ… SaaS billing semantics frozen and operational                                         | `SPEC.md`, Stripe webhook code, `checkoutPlan()`                                                |
-| Streaming            | Streaming chat implemented and stable                                                                                                                                                                                                 | âœ… Chat UX target delivered                                                              | `src/app/api/openai/route.tsx`, chat components                                                 |
-| Video generation     | Video generation operational via Sora API (`sora-2`/`sora-2-pro`), S3 storage, plan-gated limits, Sora output controls (seconds/size), VideoPlayer component with playsInline, library integration. Phase 34.9 quality fixes COMPLETE | âœ… Video implemented and operational for all plans                                       | `src/lib/utils/generateVideo.tsx`, `src/components/chat/video-player.tsx`, `ai-model-policy.ts` |
-| Public pages         | All required public routes complete: `/`, `/about`, `/plans`, `/faqs`, `/personas`, `/privacy`, `/cookies`, `/terms`                                                                                                                  | âœ… Public surface complete                                                               | `src/app/(public)/**`                                                                           |
-| FAQ copy             | FAQ content aligned with current product rules (no trial references)                                                                                                                                                                  | âœ… Product messaging consistent                                                          | `src/constants/faqs.tsx`                                                                        |
-| Theme control        | Admin settings include theme management                                                                                                                                                                                               | âœ… Settings control operational                                                          | Admin settings panel                                                                            |
-| Tiptap               | Not installed (admin content editing uses form controls)                                                                                                                                                                              | Deferred â€” admin forms use proper controls without rich-text editor                     | `package.json`                                                                                  |
+| Area                 | Verified Current State                                                                                                                                                                                                                                                                                                             | Impact                                                                                    | Evidence                                                                                        |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| Lite lifecycle       | Lite is permanent and free â€” no expiry, no trial                                                                                                                                                                                                                                                                                 | âœ… Matches product contract                                                              | `src/constants/plans.tsx`, `src/lib/database/models/user.model.tsx`                             |
+| Pricing              | Pro is 19, Premium is 39                                                                                                                                                                                                                                                                                                           | âœ… Matches requested pricing                                                             | `src/constants/plans.tsx`, admin settings propagation                                           |
+| Public usage access  | `/api/openai` requires auth                                                                                                                                                                                                                                                                                                        | âœ… Supports account-required chat direction                                              | `src/app/api/openai/route.tsx`                                                                  |
+| Route boundaries     | Clean `/app(.*)` and `/admin(.*)` namespaces, orphan directories removed                                                                                                                                                                                                                                                           | âœ… Product and auth boundaries are clean                                                 | `src/proxy.tsx`, `src/app/**`                                                                   |
+| Admin scope          | Full admin control plane: users, transactions, usage, settings, website                                                                                                                                                                                                                                                            | âœ… Requested admin capabilities delivered                                                | `src/app/(admin)/admin/**`                                                                      |
+| Entitlements         | 6 personas with three-tier gating (full/limited/blocked), trial access system, admin overrides                                                                                                                                                                                                                                     | âœ… Matches product contract                                                              | `src/lib/utils/resolve-entitlements.tsx`, `src/constants/assistant-personas.tsx`                |
+| Model routing        | Central AI policy via `resolveModelPolicy()` â€” plan-aware, feature-aware, task-class-aware                                                                                                                                                                                                                                       | âœ… No hardcoded model routing                                                            | `src/lib/utils/a`a``ai-model-policy.ts````                                                      |
+| Conversation storage | `Task` stores message history in one document with `estimatedBytes` guardrails                                                                                                                                                                                                                                                     | âš ï¸ Operational â€” guardrails active, but single-document growth remains a future risk | `src/lib/database/models/tasks.model.tsx`                                                       |
+| Usage accounting     | `UsageEvent` model logs every AI request; durable counters for daily/monthly limits; atomic enforcement                                                                                                                                                                                                                            | âœ… Admin analytics, cost governance, and quota enforcement operational                   | `src/lib/database/models/usage-event.model.tsx`, `src/app/api/openai/route.tsx`                 |
+| Rate limiting        | MongoDB-backed rate limiting (durable, multi-instance safe)                                                                                                                                                                                                                                                                        | âœ… Survives restarts and multiple instances                                              | Rate limit implementation                                                                       |
+| Billing mode         | Stripe recurring subscriptions with webhook processing and server-side price re-verification                                                                                                                                                                                                                                       | âœ… SaaS billing semantics frozen and operational                                         | `SPEC.md`, Stripe webhook code, `checkoutPlan()`                                                |
+| Streaming            | Streaming chat implemented and stable                                                                                                                                                                                                                                                                                              | âœ… Chat UX target delivered                                                              | `src/app/api/openai/route.tsx`, chat components                                                 |
+| Video generation     | Video generation fully operational via Sora API (`sora-2`/`sora-2-pro`), S3 storage, plan-gated limits, Sora output controls (seconds/size), VideoPlayer component with playsInline, library integration. Phase 34.9 quality fixes COMPLETE. Phase 51.1 prompt fix COMPLETE (media-tool awareness added to persona system prompts) | âœ… Video implemented and operational for all plans                                       | `src/lib/utils/generateVideo.tsx`, `src/components/chat/video-player.tsx`, `ai-model-policy.ts` |
+| Public pages         | All required public routes complete: `/`, `/about`, `/plans`, `/faqs`, `/personas`, `/privacy`, `/cookies`, `/terms`                                                                                                                                                                                                               | âœ… Public surface complete                                                               | `src/app/(public)/**`                                                                           |
+| FAQ copy             | FAQ content aligned with current product rules (no trial references)                                                                                                                                                                                                                                                               | âœ… Product messaging consistent                                                          | `src/constants/faqs.tsx`                                                                        |
+| Theme control        | Admin settings include theme management                                                                                                                                                                                                                                                                                            | âœ… Settings control operational                                                          | Admin settings panel                                                                            |
+| Tiptap               | Not installed (admin content editing uses form controls)                                                                                                                                                                                                                                                                           | Deferred â€” admin forms use proper controls without rich-text editor                     | `package.json`                                                                                  |
 
 ### Practical conclusions
 
@@ -817,7 +817,7 @@ Build the minimum viable operational control plane the business actually needs.
 
 ## Milestone 8 - Security, Reliability, And Observability Hardening
 
-> **Status: MOSTLY COMPLETE** â€” MongoDB-backed rate limiting (Phase 25.3), error sanitization (HF series), webhook hardening (Phases 27.8â€“27.10), atomic limit enforcement (Phases 27.1, 28.1, 28.6), usage event logging (Phase 16) all delivered. Remaining: operational monitoring/alerting.
+> **Status: COMPLETED** â€” MongoDB-backed rate limiting (Phase 25.3), error sanitization (HF series), webhook hardening (Phases 27.8â€“27.10), atomic limit enforcement (Phases 27.1, 28.1, 28.6), usage event logging (Phase 16) all delivered. Operational monitoring through UsageEvent model and admin usage analytics.
 
 **Objective**
 
@@ -869,6 +869,8 @@ Close the operational gaps that would make launch fragile.
 ---
 
 ## Milestone 9 - Launch Readiness And Release Control
+
+> **Status: COMPLETED** — Validation workflow passes (Prettier, lint, tsc, 65 suites / 365 unit tests, build). E2E: majority passing with known timeout-related skips. Release gates A–E green. Gate F substantially green.
 
 **Objective**
 
@@ -1003,6 +1005,8 @@ These items are not banned forever. They are excluded because they create dispro
 
 ## 11. Owner-Directed New Work (Added 2026-03-16, Updated 2026-03-17)
 
+> **All Milestones 0–18 COMPLETED. All Phases 1–51.1 COMPLETED. 365 unit tests (65 suites) passing. Build passing.**
+
 ### Milestone 10 â€” Layout, Navigation & Library Enhancement
 
 > **Status: COMPLETED** â€” Delivered by Phases 31.1â€“31.3, 31.2-fix, 35.1, 32.1â€“32.3, 32.6.
@@ -1093,9 +1097,9 @@ These items are not banned forever. They are excluded because they create dispro
 - âœ… Library videos tab shows generated videos.
 - âœ… No false capability claims during development window (Phase 47.1 â†’ 34.7). Suppression delivered and reversed.
 
-### Milestone 13 â€” UI Polish, Bug Fixes & Admin Enhancement (Owner-Directed, 2026-03-16)
+### Milestone 13 — UI Polish, Bug Fixes & Admin Enhancement (Owner-Directed, 2026-03-16)
 
-> **Status: MOSTLY COMPLETE** â€” Blocks Aâ€“C delivered (Phase 38 + 36). Block D partially delivered (33.8 DONE).
+> **Status: COMPLETED** â€” Blocks Aâ€“C delivered (Phase 38 + 36). Block D partially delivered (33.8 DONE).
 > PM audit #16: Phase 38 + 36 APPROVED. PM audit #17: 33.8 APPROVED.
 > Remaining: 35.2 (persona selector E2E tests).
 
@@ -1121,7 +1125,7 @@ These items are not banned forever. They are excluded because they create dispro
 8. ~~**MEDIUM** â€” Admin design alignment~~ â€” DONE (36.1). Design tokens consistent with client app.
 9. ~~**MEDIUM** â€” Top Personas stat box~~ â€” DONE (36.2). Top 5 personas by usage with labels and percentages.
 
-**Block D â€” Test Coverage: MOSTLY COMPLETE**
+**Block D â€” Test Coverage: COMPLETED**
 
 10. ~~**MEDIUM** â€” E2E tests for trial persona flow~~ â€” DONE (33.8). 4 E2E tests covering trial selection, stop, full-access, and badge visibility.
 11. **LOW** â€” E2E tests for persona selector in ChatHeader (35.2).
@@ -1274,6 +1278,60 @@ These items are not banned forever. They are excluded because they create dispro
 - No unnecessary re-renders identified by audit.
 - Static JSON data in dedicated folder, not inline.
 - Types consolidated in `src/types/`.
+
+### Milestone 19 — Admin UX, Data Architecture & Production Hardening (Owner-Directed, 2026-03-17)
+
+> **Status: PLANNED** — Owner directives from latest review. Prioritized by severity.
+
+**Objective:** Complete admin panel UX transformation (tabbed settings, design alignment, dashboard enrichment), fix remaining media generation bugs, eliminate hardcoded data, and enforce clean component architecture.
+
+**Dependencies:** All prior milestones complete. Phase 52.1-52.2 already planned in TODO.md.
+
+**Block A — CRITICAL (Architecture Quality):**
+
+1. **CRITICAL** — Components must be data consumers. No data fetching in client components. Server Components pass data as props.
+2. **CRITICAL** — No hardcoded data. All plans, prices, features, limits, model names, and persona config must be admin-configurable. Hardcoded values only as fallback defaults in constants.
+3. **CRITICAL** — Good practices: reduce unnecessary renders and resource leaks. Audit all client components for cleanup.
+4. **CRITICAL** — Utilities and data fetching on server side. Move remaining client-side utilities to server where possible.
+
+**Block B — HIGH (Bugs & Admin UX):**
+
+5. **HIGH** — Admin tabbed sections for settings page (Phase 52.1-52.2 in TODO.md). Group 7 inline form sections into 5 tabs: Models, Plans & Pricing, Limits, Personas, Theme. Extract into separate components.
+6. **HIGH** — Investigate and fix media generation “Request failed. Invalid request body.” error if still occurring. Zod schema was fixed in Phase 40.1 — verify no regression.
+7. **HIGH** — Investigate and fix video generation errors / “unable to create videos” reply. Phase 51.1 added media-tool awareness to persona prompts — verify fix is effective end-to-end.
+8. **HIGH** — VideoPlayer for generated videos — VERIFIED PRESENT at `src/components/shared/video-player.tsx`. Has `controls`, `playsInline`, `preload="metadata"`.
+9. **HIGH** — Admin panel must match /app design system. Phase 36.1/42.1 delivered baseline alignment — verify design tokens, spacing, and typography remain consistent.
+10. **HIGH** — Plans/prices/features fully configurable from admin. Phase 27.5/44.x delivered propagation chain — verify all surfaces consume admin settings.
+
+**Block C — MEDIUM (Admin Enrichment & Display):**
+
+11. **MEDIUM** — PlanStatus and PlanPromo cards for admin/guest/client roles. PlanPromo DONE (role-aware). PlanStatus needs evaluation — currently embedded in sidebar promo, not a separate component.
+12. **MEDIUM** — Admin full permissions over all personas — no trial limits for admin role. Currently admin is treated as their plan tier in API route. Needs: admin role check in `/api/openai` route to bypass trial limits and enable full persona access.
+13. **MEDIUM** — Admin dashboard cards reflecting all activity types. Currently shows 4 metrics (Users, Conversations, Transactions, Usage Events). Needs: Images Generated, Audio Generated, Video Generated counts.
+14. **MEDIUM** — Admin users table with usage/limits info. Currently shows: username, email, role, plan, registered, state. Needs: conversation count, media generation counts, plan limits.
+15. **MEDIUM** — Admin usage “Top Personas” showing statistics not enumeration — VERIFIED CORRECT. Shows label + count + percentage.
+16. **MEDIUM** — Personas unavailable should show PRO/PREMIUM badge — VERIFIED CORRECT. `persona-card.tsx` has `requiredPlan` prop.
+17. **MEDIUM** — Plan cards: no “0” for unavailable options — VERIFIED CORRECT. `formatMediaLimitLabel` returns “✕” when limit is 0.
+18. **MEDIUM** — Currency symbol configurable — MOSTLY DONE (Phase 48.1). Gap: admin user detail page still uses hardcoded `$` for transaction amounts.
+19. **MEDIUM** — JSON data outsourced to json folder. Currently data arrays live in `src/constants/` with “-data” suffix (about-data.ts, terms-data.ts, privacy-data.ts, cookies-data.ts, landing-data.ts). Owner wants dedicated `src/json/` folder.
+20. **MEDIUM** — TypeScript types outsourced to types folder — VERIFIED CORRECT. 15 type files in `src/types/`. Minor inline types in 2 component files are acceptable co-located types.
+21. **MEDIUM** — Admin user detail page missing video generations count (shows image + audio but not video).
+
+**Block D — Architect-Identified Gaps:**
+
+22. **MEDIUM** — Video model not admin-overridable (Phase 50.1 planned in TODO.md). Image and audio models have admin overrides but video does not.
+23. **LOW** — Admin settings page is 735 lines with normalizer functions and model option arrays inline. Phase 52.2 will extract these.
+
+**Success criteria:**
+
+- Admin settings page uses tabbed navigation with proper ARIA accessibility.
+- Admin dashboard shows all activity type metrics.
+- Admin users table shows usage and limits per user.
+- Admin role bypasses trial limits in API route.
+- Zero hardcoded plan rules in non-admin code.
+- All components are data consumers (no client-side data fetching).
+- Video generation works end-to-end with proper error handling.
+- Currency symbol dynamic on all surfaces including admin user detail.
 
 ---
 

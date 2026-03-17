@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-17 (PM audit #24. Video generation IMPLEMENTED — Phase 34 complete + Phase 51.1 prompt fix COMPLETE. `sora-2` / `sora-2-pro` operational. Phase 34.9 quality fixes COMPLETE. Currency configurability IMPLEMENTED (Phase 48.1). 365 unit tests (65 suites). Build passing.)
+> Last updated: 2026-03-17 (PM audit #25. Triple-audit complete. TD-ADMIN-03 through TD-ADMIN-09 registered. Admin role bypass, video tool removal, Zod strict mode identified as critical/high. 365 unit tests (65 suites). Build passing.)
 
 ---
 
@@ -66,6 +66,8 @@ The product monetises through tiered subscription plans paid via Stripe.
 
 `User.role` is stored in Mongoose and synced to Clerk `publicMetadata.role`.
 Admin access is enforced at the proxy level (`src/proxy.tsx`) via Clerk session claims (`metadata.role === "admin"`).
+
+> **Rule (new, PM audit #25):** Admin role users must have full permissions over all features and all personas with no limitations. Admin bypasses all plan limits (conversations, prompts, media generations), all trial restrictions, and all persona gating. This must be enforced in the backend `/api/openai` route, not just in UI components. Tracked as TD-ADMIN-03.
 
 > **Note:** `User.role` refers to user access level (`client` / `admin`). It is unrelated to AI **personas**.
 
@@ -777,6 +779,20 @@ _None._
 | TD-AI-13   | OpenAI  | 5 model pricing entries are placeholders pending OpenAI confirmation          | Low      |
 | TD-PLAN-01 | Billing | No recurring subscriptions (deferred v1)                                      | Low      |
 | TD-AI-18   | OpenAI  | errorMessage forwarding pattern in /api/openai is safe but fragile (advisory) | Low      |
+
+### Active — Critical/High Priority (PM Audit #25)
+
+| ID          | Area   | Description                                                                                                                                                                                                  | Severity |
+| ----------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------- |
+| TD-ADMIN-03 | Admin  | Admin role has ZERO special treatment in `/api/openai`. Admin users get plan-level limits, not full permissions. PlanPromo UI says "full permissions" but backend doesn't enforce it. Phase 53.1 planned.    | Critical |
+| TD-AI-26    | OpenAI | Video tool silently removed when `videoLimitReached`, but system prompt still claims video capability. Causes confusing AI refusal text. Phase 53.2 planned.                                                 | High     |
+| TD-API-08   | API    | Zod `.strict()` on `chatMessageSchema` rejects any extra message fields. Stored messages from conversations with tool calls may contain extra fields that fail validation on resumption. Phase 53.3 planned. | High     |
+| TD-ADMIN-04 | Admin  | Admin user detail missing `videoGenerations` count (shows image + audio but not video). Also missing remaining limits context ("X of Y used"). Phase 54.2 planned.                                           | Medium   |
+| TD-ADMIN-05 | Admin  | Admin dashboard shows only 4 metric cards (Users, Conversations, Transactions, Usage Events). Missing: media generation counts, plan distribution, active users. Phase 54.1 planned.                         | Medium   |
+| TD-ADMIN-06 | Admin  | Hardcoded `$` currency symbol in admin user detail (`${transaction.amount}`) and admin transaction views. Must use `getEffectiveCurrencySymbol()`. Phase 54.3 planned.                                       | Medium   |
+| TD-ADMIN-07 | Admin  | Top Personas aggregation includes null `personaId` events (title generation, blocked events). `getPersona(null)` falls back to "Strategist", potentially creating duplicate entries. Phase 54.4 planned.     | Medium   |
+| TD-ADMIN-08 | Admin  | Admin settings page is 735 lines with 7 inline form sections, 5+ normalizer functions, 3 inline model option arrays. No tabbed navigation. Phase 52.1-52.2 planned.                                          | High     |
+| TD-ADMIN-09 | Admin  | Video model not admin-overridable. Image and audio models have admin overrides via `getEffectiveModelConfig()` but video does not. No `videoGenerationModel` in admin settings. Phase 50.1 planned.          | Medium   |
 
 ### Active � High Priority (Security)
 
