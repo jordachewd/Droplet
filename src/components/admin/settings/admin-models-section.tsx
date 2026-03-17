@@ -4,6 +4,7 @@ import {
   AUDIO_MODEL_OPTIONS,
   CHAT_MODEL_OPTIONS,
   IMAGE_MODEL_OPTIONS,
+  VIDEO_MODEL_OPTIONS,
 } from "@/constants/admin-options";
 
 interface AdminModelsSectionProps {
@@ -88,6 +89,20 @@ export function AdminModelsSection({ modelValue }: AdminModelsSectionProps) {
           >
             {AUDIO_MODEL_OPTIONS.map((modelId) => (
               <option key={`audio-${modelId}`} value={modelId}>
+                {modelId}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="text-sm">
+          <span className="mb-1 block font-medium">Default Video Model</span>
+          <select
+            name="videoModel"
+            defaultValue={modelValue.videoModel}
+            className="w-full rounded-lg border border-lightBorders-400 bg-white px-3 py-2 text-sm dark:border-darkBorders-500 dark:bg-jwdMarine-1000"
+          >
+            {VIDEO_MODEL_OPTIONS.map((modelId) => (
+              <option key={`video-${modelId}`} value={modelId}>
                 {modelId}
               </option>
             ))}

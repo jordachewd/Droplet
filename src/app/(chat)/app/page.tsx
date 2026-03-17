@@ -18,8 +18,10 @@ export default async function ChatPage({ searchParams }: ChatPageProps) {
     notFound();
   }
 
+  const isAdmin = userData.role === "admin";
   const fullPersonaAccessByPlan = await getEffectivePersonaAccessByPlan();
   const entitlements = resolveEntitlements(userData.plan?.name ?? "Lite", {
+    isAdmin,
     fullPersonaAccessByPlan,
   });
 

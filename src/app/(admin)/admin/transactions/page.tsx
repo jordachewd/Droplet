@@ -16,7 +16,7 @@ export default async function AdminTransactionsPage() {
         subtitle="Review the billing history attached to user accounts and plan state."
       />
 
-      <div className="overflow-hidden rounded-2xl border border-lightBorders-300 bg-white/70 dark:border-darkBorders-500 dark:bg-jwdMarine-900/70">
+      <div className="overflow-hidden rounded-2xl border border-lightBorders-300 bg-lightBackground-100/80 dark:border-darkBorders-500 dark:bg-jwdMarine-900/70">
         <div className="grid grid-cols-[1fr_1.5fr_0.6fr_0.8fr_0.8fr_0.8fr] gap-3 border-b border-lightBorders-300 px-4 py-3 text-xs font-semibold uppercase tracking-wide opacity-70 dark:border-darkBorders-500">
           <span>User</span>
           <span>Email</span>

@@ -27,7 +27,7 @@ export default async function AdminWebsiteEditorPage({
 
       <form
         action={savePublicPageAction}
-        className="flex flex-col gap-4 rounded-2xl border border-lightBorders-300 bg-white/70 p-5 dark:border-darkBorders-500 dark:bg-jwdMarine-900/70"
+        className="flex flex-col gap-4 rounded-2xl border border-lightBorders-300 bg-lightBackground-100/80 p-5 dark:border-darkBorders-500 dark:bg-jwdMarine-900/70"
       >
         <input type="hidden" name="pageId" value={page.id} />
 

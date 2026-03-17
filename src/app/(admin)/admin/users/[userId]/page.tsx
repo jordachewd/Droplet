@@ -38,7 +38,7 @@ export default async function AdminUserDetailPage({
       />
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.4fr_0.8fr]">
-        <article className="rounded-2xl border border-lightBorders-300 bg-white/70 p-5 dark:border-darkBorders-500 dark:bg-jwdMarine-900/70">
+        <article className="rounded-2xl border border-lightBorders-300 bg-lightBackground-100/80 p-5 dark:border-darkBorders-500 dark:bg-jwdMarine-900/70">
           <h2 className="heading-6 mb-4">Account Details</h2>
           <dl className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
@@ -105,7 +105,7 @@ export default async function AdminUserDetailPage({
           </dl>
         </article>
 
-        <article className="rounded-2xl border border-lightBorders-300 bg-white/70 p-5 dark:border-darkBorders-500 dark:bg-jwdMarine-900/70">
+        <article className="rounded-2xl border border-lightBorders-300 bg-lightBackground-100/80 p-5 dark:border-darkBorders-500 dark:bg-jwdMarine-900/70">
           <h2 className="heading-6 mb-4">Usage Snapshot</h2>
           <div className="grid grid-cols-1 gap-3">
             <div className="rounded-xl border border-lightBorders-300 px-4 py-3 dark:border-darkBorders-500">
@@ -152,7 +152,7 @@ export default async function AdminUserDetailPage({
         </article>
       </div>
 
-      <article className="rounded-2xl border border-lightBorders-300 bg-white/70 p-5 dark:border-darkBorders-500 dark:bg-jwdMarine-900/70">
+      <article className="rounded-2xl border border-lightBorders-300 bg-lightBackground-100/80 p-5 dark:border-darkBorders-500 dark:bg-jwdMarine-900/70">
         <h2 className="heading-6 mb-4">Admin Actions</h2>
         <div className="flex flex-col gap-3 md:flex-row">
           <form action={toggleUserSuspensionAction}>
@@ -179,7 +179,7 @@ export default async function AdminUserDetailPage({
         </div>
       </article>
 
-      <article className="rounded-2xl border border-lightBorders-300 bg-white/70 p-5 dark:border-darkBorders-500 dark:bg-jwdMarine-900/70">
+      <article className="rounded-2xl border border-lightBorders-300 bg-lightBackground-100/80 p-5 dark:border-darkBorders-500 dark:bg-jwdMarine-900/70">
         <div className="mb-4 flex items-center justify-between gap-4">
           <h2 className="heading-6">Recent Transactions</h2>
           <Link className="btn btn-sm btn-outlined" href="/admin/transactions">

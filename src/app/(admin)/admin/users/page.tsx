@@ -20,7 +20,7 @@ export default async function AdminUsersPage({
       />
 
       <form
-        className="flex flex-col gap-3 rounded-2xl border border-lightBorders-300 bg-white/70 p-4 dark:border-darkBorders-500 dark:bg-jwdMarine-900/70 md:flex-row"
+        className="flex flex-col gap-3 rounded-2xl border border-lightBorders-300 bg-lightBackground-100/80 p-4 dark:border-darkBorders-500 dark:bg-jwdMarine-900/70 md:flex-row"
         method="get"
       >
         <label className="flex flex-1 flex-col gap-2 text-sm">
@@ -43,7 +43,7 @@ export default async function AdminUsersPage({
         </div>
       </form>
 
-      <div className="overflow-hidden rounded-2xl border border-lightBorders-300 bg-white/70 dark:border-darkBorders-500 dark:bg-jwdMarine-900/70">
+      <div className="overflow-hidden rounded-2xl border border-lightBorders-300 bg-lightBackground-100/80 dark:border-darkBorders-500 dark:bg-jwdMarine-900/70">
         <div className="grid grid-cols-[1.4fr_1.6fr_0.7fr_0.7fr_0.9fr_0.8fr] gap-3 border-b border-lightBorders-300 px-4 py-3 text-xs font-semibold uppercase tracking-wide opacity-70 dark:border-darkBorders-500">
           <span>Username</span>
           <span>Email</span>

@@ -77,6 +77,7 @@ function parseStructuredAdminSettingValue({
       premiumChatModel: getStringField(formData, "premiumChatModel"),
       imageModel: getStringField(formData, "imageModel"),
       audioModel: getStringField(formData, "audioModel"),
+      videoModel: getStringField(formData, "videoModel"),
     };
   }
 

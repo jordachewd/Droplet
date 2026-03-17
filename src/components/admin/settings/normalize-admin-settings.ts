@@ -57,6 +57,10 @@ export function normalizeModelSettingsValue(
     typeof value.audioModel === "string"
       ? value.audioModel
       : defaults.audioModel;
+  const videoModel =
+    typeof value.videoModel === "string"
+      ? value.videoModel
+      : defaults.videoModel;
 
   return {
     liteChatModel,
@@ -64,6 +68,7 @@ export function normalizeModelSettingsValue(
     premiumChatModel,
     imageModel,
     audioModel,
+    videoModel,
   };
 }
 

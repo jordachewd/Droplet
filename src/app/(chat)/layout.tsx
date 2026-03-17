@@ -15,8 +15,10 @@ export default async function ChatRouteLayout({
 }: ChatRouteLayoutProps) {
   const { userId } = await auth();
   const userData = userId ? await ensureUserSynced(userId) : null;
+  const isAdmin = userData?.role === "admin";
   const fullPersonaAccessByPlan = await getEffectivePersonaAccessByPlan();
   const entitlements = resolveEntitlements(userData?.plan?.name ?? "Lite", {
+    isAdmin,
     fullPersonaAccessByPlan,
   });
 

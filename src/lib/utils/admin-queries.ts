@@ -5,7 +5,7 @@ import {
   PlanLimits,
 } from "@/constants/plans";
 import { DEFAULT_FULL_PERSONA_ACCESS_BY_PLAN } from "@/lib/utils/resolve-entitlements";
-import { getPersona } from "@/constants/assistant-personas";
+import { getPersona, PERSONAS } from "@/constants/assistant-personas";
 import { MODEL_POLICY_MATRIX } from "@/lib/utils/ai-model-policy";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import AppSetting from "@/lib/database/models/app-setting.model";
@@ -453,7 +453,9 @@ export async function getAdminUsageAnalytics() {
     UsageEvent.aggregate([
       {
         $match: {
-          personaId: { $exists: true, $ne: null },
+          personaId: {
+            $in: PERSONAS.map((persona) => persona.id),
+          },
         },
       },
       {
@@ -603,6 +605,8 @@ export async function getAdminSettingsSnapshot() {
           MODEL_POLICY_MATRIX.pro.image_generation.taskClasses.final.model,
         audioModel:
           MODEL_POLICY_MATRIX.pro.audio_generation.taskClasses.final.model,
+        videoModel:
+          MODEL_POLICY_MATRIX.pro.video_generation.taskClasses.preview.model,
       },
       pricing: {
         proPrice: DEFAULT_PLAN_PRICING.Pro,

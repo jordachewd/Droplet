@@ -767,6 +767,7 @@ export async function POST(req: Request): Promise<Response> {
       },
       imageGenerationModel: effectiveModelConfig.imageModel,
       audioGenerationModel: effectiveModelConfig.audioModel,
+      videoGenerationModel: effectiveModelConfig.videoModel,
     };
     const persistedTask = providedTaskId
       ? await getTaskByIdForUser({

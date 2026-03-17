@@ -20,7 +20,7 @@ export default async function AdminWebsitePage() {
 
       <form
         action={createPublicPageAction}
-        className="grid grid-cols-1 gap-3 rounded-2xl border border-lightBorders-300 bg-white/70 p-4 dark:border-darkBorders-500 dark:bg-jwdMarine-900/70 md:grid-cols-[1fr_1fr_auto]"
+        className="grid grid-cols-1 gap-3 rounded-2xl border border-lightBorders-300 bg-lightBackground-100/80 p-4 dark:border-darkBorders-500 dark:bg-jwdMarine-900/70 md:grid-cols-[1fr_1fr_auto]"
       >
         <label className="flex flex-col gap-2 text-sm">
           <span className="font-medium">Title</span>
@@ -49,7 +49,7 @@ export default async function AdminWebsitePage() {
         </div>
       </form>
 
-      <div className="overflow-hidden rounded-2xl border border-lightBorders-300 bg-white/70 dark:border-darkBorders-500 dark:bg-jwdMarine-900/70">
+      <div className="overflow-hidden rounded-2xl border border-lightBorders-300 bg-lightBackground-100/80 dark:border-darkBorders-500 dark:bg-jwdMarine-900/70">
         <div className="grid grid-cols-[1.2fr_1fr_0.7fr_0.7fr_1.1fr] gap-3 border-b border-lightBorders-300 px-4 py-3 text-xs font-semibold uppercase tracking-wide opacity-70 dark:border-darkBorders-500">
           <span>Title</span>
           <span>Slug</span>
