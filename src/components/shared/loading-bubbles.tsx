@@ -15,9 +15,9 @@ const sizeMappings = {
 };
 
 const colorMappings = [
-  "bg-lightPrimary-600 dark:bg-darkPrimary-400/60",
-  "bg-lightPrimary-600 dark:bg-darkPrimary-400/50",
-  "bg-lightPrimary-600 dark:bg-darkPrimary-400/40",
+  "bg-lightBackground-600 dark:bg-darkBackground-400/60",
+  "bg-lightBackground-600 dark:bg-darkBackground-400/50",
+  "bg-lightBackground-600 dark:bg-darkBackground-400/40",
 ];
 
 export default function LoadingBubbles({

@@ -58,8 +58,8 @@ export function AdminTransactionsTable({
   };
 
   return (
-    <div className="AdminTransactionsTable overflow-hidden rounded-2xl border border-lightBorders-300 bg-lightBackground-100/80 dark:border-darkBorders-500 dark:bg-jwdMarine-900/70">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-lightBorders-300 px-4 py-3 dark:border-darkBorders-500">
+    <div className="AdminTransactionsTable overflow-hidden rounded-2xl border border-slate-300 bg-lightBackground-100/80 dark:border-slate-500 dark:bg-darkBackground-900/70">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-300 px-4 py-3 dark:border-slate-500">
         <label className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide opacity-75">
           <input
             type="checkbox"
@@ -98,7 +98,7 @@ export function AdminTransactionsTable({
         ) : null}
       </div>
 
-      <div className="grid grid-cols-[0.35fr_1fr_1.5fr_0.6fr_0.8fr_0.8fr_0.8fr] gap-3 border-b border-lightBorders-300 px-4 py-3 text-xs font-semibold uppercase tracking-wide opacity-70 dark:border-darkBorders-500">
+      <div className="grid grid-cols-[0.35fr_1fr_1.5fr_0.6fr_0.8fr_0.8fr_0.8fr] gap-3 border-b border-slate-300 px-4 py-3 text-xs font-semibold uppercase tracking-wide opacity-70 dark:border-slate-500">
         <span></span>
         <span>User</span>
         <span>Email</span>
@@ -108,7 +108,7 @@ export function AdminTransactionsTable({
         <span>Status</span>
       </div>
 
-      <div className="divide-y divide-lightBorders-300 dark:divide-darkBorders-500">
+      <div className="divide-y divide-slate-300 dark:divide-slate-500">
         {transactions.length === 0 ? (
           <p className="px-4 py-6 text-sm opacity-70">
             No transactions recorded yet.

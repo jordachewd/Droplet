@@ -13,7 +13,7 @@ export function AdminThemeSection({ themeValue }: AdminThemeSectionProps) {
   return (
     <AdminManagedForm
       action={updateAdminSettingAction}
-      className="rounded-2xl border border-lightBorders-300 bg-lightBackground-100/80 p-5 dark:border-darkBorders-500 dark:bg-jwdMarine-900/70"
+      className="rounded-2xl border border-slate-300 bg-lightBackground-100/80 p-5 dark:border-slate-500 dark:bg-darkBackground-900/70"
     >
       <input type="hidden" name="key" value="admin.theme" />
       <input type="hidden" name="category" value="theme" />

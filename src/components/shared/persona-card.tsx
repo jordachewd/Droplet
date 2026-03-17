@@ -22,9 +22,9 @@ export default function PersonaCard({
 }: PersonaCardProps) {
   const cardClass = classNames(
     "PersonaCard flex h-full flex-col rounded-xl border p-4 transition-all duration-300",
-    "border-lightBorders-400/70 bg-white/70 shadow-sm",
+    "border-slate-400/70 bg-lightBackground-100/70 shadow-sm",
     "hover:-translate-y-1 hover:shadow-md",
-    "dark:border-darkBorders-500 dark:bg-jwdMarine-900/70",
+    "dark:border-slate-500 dark:bg-darkBackground-900/70",
     locked && "border-dashed opacity-85",
     compact ? "gap-2" : "gap-3",
   );
@@ -69,7 +69,7 @@ export default function PersonaCard({
       </div>
 
       <p className="text-sm font-medium opacity-80">{persona.tagline}</p>
-      <div className="relative mt-1 h-36 w-full overflow-hidden rounded-lg border border-lightBorders-400/60 dark:border-darkBorders-500">
+      <div className="relative mt-1 h-36 w-full overflow-hidden rounded-lg border border-slate-400/60 dark:border-slate-500">
         <Image
           src={persona.heroImage}
           alt={`${persona.label} persona`}
@@ -95,10 +95,10 @@ export default function PersonaCard({
 
       {!compact && (
         <ul className="mt-auto flex flex-wrap gap-2 pt-2">
-          <li className="rounded-full bg-lightSecondary-200 px-2 py-1 text-xxs dark:bg-darkSecondary-500/40">
+          <li className="rounded-full bg-lightBackground-200 px-2 py-1 text-xxs dark:bg-darkBackground-500/40">
             {persona.supportsImage ? "Image-enabled" : "Text-first"}
           </li>
-          <li className="rounded-full bg-lightSecondary-200 px-2 py-1 text-xxs dark:bg-darkSecondary-500/40">
+          <li className="rounded-full bg-lightBackground-200 px-2 py-1 text-xxs dark:bg-darkBackground-500/40">
             {persona.supportsAudio ? "Audio-enabled" : "Audio off"}
           </li>
         </ul>

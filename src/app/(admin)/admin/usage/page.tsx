@@ -20,19 +20,19 @@ export default async function AdminUsagePage() {
       />
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
-        <article className="rounded-2xl border border-lightBorders-300/70 bg-lightBackground-100/80 p-5 shadow-sm dark:border-darkBorders-500 dark:bg-jwdMarine-900/70">
+        <article className="rounded-2xl border border-slate-300/70 bg-lightBackground-100/80 p-5 shadow-sm dark:border-slate-500 dark:bg-darkBackground-900/70">
           <p className="text-xs font-semibold uppercase tracking-wide opacity-60">
             Total Events
           </p>
           <p className="heading-4 mt-2">{analytics.summary.totalEvents}</p>
         </article>
-        <article className="rounded-2xl border border-lightBorders-300/70 bg-lightBackground-100/80 p-5 shadow-sm dark:border-darkBorders-500 dark:bg-jwdMarine-900/70">
+        <article className="rounded-2xl border border-slate-300/70 bg-lightBackground-100/80 p-5 shadow-sm dark:border-slate-500 dark:bg-darkBackground-900/70">
           <p className="text-xs font-semibold uppercase tracking-wide opacity-60">
             Blocked Events
           </p>
           <p className="heading-4 mt-2">{analytics.summary.blockedEvents}</p>
         </article>
-        <article className="rounded-2xl border border-lightBorders-300/70 bg-lightBackground-100/80 p-5 shadow-sm dark:border-darkBorders-500 dark:bg-jwdMarine-900/70">
+        <article className="rounded-2xl border border-slate-300/70 bg-lightBackground-100/80 p-5 shadow-sm dark:border-slate-500 dark:bg-darkBackground-900/70">
           <p className="text-xs font-semibold uppercase tracking-wide opacity-60">
             Estimated Cost
           </p>
@@ -40,7 +40,7 @@ export default async function AdminUsagePage() {
             {formatCost(analytics.summary.totalCostCents, currencySymbol)}
           </p>
         </article>
-        <article className="rounded-2xl border border-lightBorders-300/70 bg-lightBackground-100/80 p-5 shadow-sm dark:border-darkBorders-500 dark:bg-jwdMarine-900/70">
+        <article className="rounded-2xl border border-slate-300/70 bg-lightBackground-100/80 p-5 shadow-sm dark:border-slate-500 dark:bg-darkBackground-900/70">
           <p className="text-xs font-semibold uppercase tracking-wide opacity-60">
             Token Throughput
           </p>
@@ -49,7 +49,7 @@ export default async function AdminUsagePage() {
             {analytics.summary.totalTokensOut}
           </p>
         </article>
-        <article className="rounded-2xl border border-lightBorders-300/70 bg-lightBackground-100/80 p-5 shadow-sm dark:border-darkBorders-500 dark:bg-jwdMarine-900/70">
+        <article className="rounded-2xl border border-slate-300/70 bg-lightBackground-100/80 p-5 shadow-sm dark:border-slate-500 dark:bg-darkBackground-900/70">
           <p className="text-xs font-semibold uppercase tracking-wide opacity-60">
             Top Personas
           </p>
@@ -70,9 +70,9 @@ export default async function AdminUsagePage() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-        <article className="rounded-2xl border border-lightBorders-300/70 bg-lightBackground-100/80 p-5 shadow-sm dark:border-darkBorders-500 dark:bg-jwdMarine-900/70">
+        <article className="rounded-2xl border border-slate-300/70 bg-lightBackground-100/80 p-5 shadow-sm dark:border-slate-500 dark:bg-darkBackground-900/70">
           <h2 className="heading-6 mb-4">Top Users</h2>
-          <div className="divide-y divide-lightBorders-300 dark:divide-darkBorders-500">
+          <div className="divide-y divide-slate-300 dark:divide-slate-500">
             {analytics.topUsers.map((user) => (
               <div
                 key={user.userId}
@@ -87,9 +87,9 @@ export default async function AdminUsagePage() {
           </div>
         </article>
 
-        <article className="rounded-2xl border border-lightBorders-300/70 bg-lightBackground-100/80 p-5 shadow-sm dark:border-darkBorders-500 dark:bg-jwdMarine-900/70">
+        <article className="rounded-2xl border border-slate-300/70 bg-lightBackground-100/80 p-5 shadow-sm dark:border-slate-500 dark:bg-darkBackground-900/70">
           <h2 className="heading-6 mb-4">By Model</h2>
-          <div className="divide-y divide-lightBorders-300 dark:divide-darkBorders-500">
+          <div className="divide-y divide-slate-300 dark:divide-slate-500">
             {analytics.byModel.map((item) => (
               <div
                 key={item.label}
@@ -105,9 +105,9 @@ export default async function AdminUsagePage() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-        <article className="rounded-2xl border border-lightBorders-300/70 bg-lightBackground-100/80 p-5 shadow-sm dark:border-darkBorders-500 dark:bg-jwdMarine-900/70">
+        <article className="rounded-2xl border border-slate-300/70 bg-lightBackground-100/80 p-5 shadow-sm dark:border-slate-500 dark:bg-darkBackground-900/70">
           <h2 className="heading-6 mb-4">By Request Type</h2>
-          <div className="divide-y divide-lightBorders-300 dark:divide-darkBorders-500">
+          <div className="divide-y divide-slate-300 dark:divide-slate-500">
             {analytics.byRequestType.map((item) => (
               <div
                 key={item.label}
@@ -121,9 +121,9 @@ export default async function AdminUsagePage() {
           </div>
         </article>
 
-        <article className="rounded-2xl border border-lightBorders-300/70 bg-lightBackground-100/80 p-5 shadow-sm dark:border-darkBorders-500 dark:bg-jwdMarine-900/70">
+        <article className="rounded-2xl border border-slate-300/70 bg-lightBackground-100/80 p-5 shadow-sm dark:border-slate-500 dark:bg-darkBackground-900/70">
           <h2 className="heading-6 mb-4">By Provider</h2>
-          <div className="divide-y divide-lightBorders-300 dark:divide-darkBorders-500">
+          <div className="divide-y divide-slate-300 dark:divide-slate-500">
             {analytics.byProvider.map((item) => (
               <div
                 key={item.label}
@@ -137,9 +137,9 @@ export default async function AdminUsagePage() {
           </div>
         </article>
 
-        <article className="rounded-2xl border border-lightBorders-300/70 bg-lightBackground-100/80 p-5 shadow-sm dark:border-darkBorders-500 dark:bg-jwdMarine-900/70">
+        <article className="rounded-2xl border border-slate-300/70 bg-lightBackground-100/80 p-5 shadow-sm dark:border-slate-500 dark:bg-darkBackground-900/70">
           <h2 className="heading-6 mb-4">By Day</h2>
-          <div className="divide-y divide-lightBorders-300 dark:divide-darkBorders-500">
+          <div className="divide-y divide-slate-300 dark:divide-slate-500">
             {analytics.byDay.map((item) => (
               <div
                 key={item.label}

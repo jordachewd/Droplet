@@ -17,7 +17,7 @@ export function AdminPersonasSection({
   personaAccessValue,
 }: AdminPersonasSectionProps) {
   return (
-    <div className="rounded-2xl border border-lightBorders-300 bg-lightBackground-100/80 p-5 dark:border-darkBorders-500 dark:bg-jwdMarine-900/70">
+    <div className="rounded-2xl border border-slate-300 bg-lightBackground-100/80 p-5 dark:border-slate-500 dark:bg-darkBackground-900/70">
       <h2 className="heading-6 mb-2">Persona Access</h2>
       <p className="mb-4 text-sm opacity-70">
         Choose which personas have full access for each plan. Unchecked personas
@@ -32,7 +32,7 @@ export function AdminPersonasSection({
             <AdminManagedForm
               key={planName}
               action={updateAdminSettingAction}
-              className="rounded-lg border border-lightBorders-300 p-3 dark:border-darkBorders-500"
+              className="rounded-lg border border-slate-300 p-3 dark:border-slate-500"
             >
               <input
                 type="hidden"
@@ -48,7 +48,7 @@ export function AdminPersonasSection({
                   {PERSONAS.map((persona) => (
                     <label
                       key={`${planName}-${persona.id}`}
-                      className="flex items-center gap-2 rounded-md border border-lightBorders-300 px-2 py-1.5 text-xs dark:border-darkBorders-500"
+                      className="flex items-center gap-2 rounded-md border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-500"
                     >
                       <input
                         type="checkbox"

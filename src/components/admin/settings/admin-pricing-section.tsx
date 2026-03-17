@@ -16,7 +16,7 @@ export function AdminPricingSection({
     <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
       <AdminManagedForm
         action={updateAdminSettingAction}
-        className="rounded-2xl border border-lightBorders-300 bg-lightBackground-100/80 p-5 dark:border-darkBorders-500 dark:bg-jwdMarine-900/70"
+        className="rounded-2xl border border-slate-300 bg-lightBackground-100/80 p-5 dark:border-slate-500 dark:bg-darkBackground-900/70"
       >
         <input type="hidden" name="key" value="admin.pricing" />
         <input type="hidden" name="category" value="plans" />
@@ -33,7 +33,7 @@ export function AdminPricingSection({
               step={1}
               name="proPrice"
               defaultValue={pricingValue.proPrice}
-              className="w-full rounded-lg border border-lightBorders-400 bg-lightBackground-100 px-3 py-2 text-sm dark:border-darkBorders-500 dark:bg-jwdMarine-1000"
+              className="w-full rounded-lg border border-slate-400 bg-lightBackground-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-darkBackground-1000"
             />
           </label>
           <label className="text-sm">
@@ -44,7 +44,7 @@ export function AdminPricingSection({
               step={1}
               name="premiumPrice"
               defaultValue={pricingValue.premiumPrice}
-              className="w-full rounded-lg border border-lightBorders-400 bg-lightBackground-100 px-3 py-2 text-sm dark:border-darkBorders-500 dark:bg-jwdMarine-1000"
+              className="w-full rounded-lg border border-slate-400 bg-lightBackground-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-darkBackground-1000"
             />
           </label>
         </div>
@@ -59,7 +59,7 @@ export function AdminPricingSection({
 
       <AdminManagedForm
         action={updateAdminSettingAction}
-        className="rounded-2xl border border-lightBorders-300 bg-lightBackground-100/80 p-5 dark:border-darkBorders-500 dark:bg-jwdMarine-900/70"
+        className="rounded-2xl border border-slate-300 bg-lightBackground-100/80 p-5 dark:border-slate-500 dark:bg-darkBackground-900/70"
       >
         <input type="hidden" name="key" value="admin.currencySymbol" />
         <input type="hidden" name="category" value="plans" />
@@ -72,7 +72,7 @@ export function AdminPricingSection({
           <select
             name="currencySymbol"
             defaultValue={pricingValue.currencySymbol}
-            className="w-full rounded-lg border border-lightBorders-400 bg-lightBackground-100 px-3 py-2 text-sm dark:border-darkBorders-500 dark:bg-jwdMarine-1000"
+            className="w-full rounded-lg border border-slate-400 bg-lightBackground-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-darkBackground-1000"
           >
             <option value="$">USD ($)</option>
             <option value="€">EUR (€)</option>

@@ -169,15 +169,15 @@ export default function ChatInput({
 
   const chatInputWrapperClass = classNames(
     "flex w-full max-w-screen-lg items-end gap-2 rounded-xl border p-2 shadow-md",
-    "border-lightBorders-500 bg-white/90 backdrop-blur",
-    "dark:border-darkBorders-500 dark:bg-jwdMarine-900/90",
+    "border-slate-500 bg-lightBackground-100/90 backdrop-blur",
+    "dark:border-slate-500 dark:bg-darkBackground-900/90",
     disabled &&
       "border-amber-400 bg-amber-50/90 dark:border-amber-400/50 dark:bg-amber-500/10",
   );
 
   const promptWrapperClass = classNames(
     "relative flex flex-1 items-end gap-2 rounded-lg px-2",
-    "bg-lightBackground-200 dark:bg-jwdMarine-1000",
+    "bg-lightBackground-200 dark:bg-darkBackground-1000",
   );
 
   const textareaClass = classNames(

@@ -16,12 +16,12 @@ const placementStyles = {
 };
 
 const arrowStyles = {
-  top: "left-1/2 top-full -translate-x-1/2 border-x-4 border-t-4 border-x-transparent border-t-darkSecondary-600",
+  top: "left-1/2 top-full -translate-x-1/2 border-x-4 border-t-4 border-x-transparent border-t-darkBackground-600",
   right:
-    "right-full top-1/2 -translate-y-1/2 border-y-4 border-r-4 border-y-transparent border-r-darkSecondary-600",
+    "right-full top-1/2 -translate-y-1/2 border-y-4 border-r-4 border-y-transparent border-r-darkBackground-600",
   bottom:
-    "left-1/2 bottom-full -translate-x-1/2 border-x-4 border-b-4 border-x-transparent border-b-darkSecondary-600",
-  left: "left-full top-1/2 -translate-y-1/2 border-y-4 border-l-4 border-y-transparent border-l-darkSecondary-600",
+    "left-1/2 bottom-full -translate-x-1/2 border-x-4 border-b-4 border-x-transparent border-b-darkBackground-600",
+  left: "left-full top-1/2 -translate-y-1/2 border-y-4 border-l-4 border-y-transparent border-l-darkBackground-600",
 };
 
 export const TooltipArrow = ({

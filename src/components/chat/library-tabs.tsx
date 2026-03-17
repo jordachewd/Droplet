@@ -62,8 +62,8 @@ export default function LibraryTabs({
         aria-label="Library content tabs"
         className={classNames(
           "flex w-full flex-wrap items-center gap-2 rounded-xl border p-2",
-          "border-lightBorders-400 bg-white/80",
-          "dark:border-darkBorders-500 dark:bg-jwdMarine-900/70",
+          "border-slate-400 bg-lightBackground-100/80",
+          "dark:border-slate-500 dark:bg-darkBackground-900/70",
         )}
       >
         {tabs.map((tab) => {
@@ -79,11 +79,11 @@ export default function LibraryTabs({
               aria-controls={`library-panel-${tab.id}`}
               className={classNames(
                 "inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm transition-all",
-                "border-lightBorders-400 hover:-translate-y-0.5",
-                "dark:border-darkBorders-500",
+                "border-slate-400 hover:-translate-y-0.5",
+                "dark:border-slate-500",
                 selected
-                  ? "bg-lightPrimary-200/80 font-semibold dark:bg-darkPrimary-500/30"
-                  : "bg-white/80 dark:bg-jwdMarine-900/80",
+                  ? "bg-lightBackground-200/80 font-semibold dark:bg-darkBackground-500/30"
+                  : "bg-lightBackground-100/80 dark:bg-darkBackground-900/80",
               )}
               onClick={() => setActiveTabId(tab.id)}
             >
@@ -122,8 +122,8 @@ export default function LibraryTabs({
                   key={conversation.id}
                   className={classNames(
                     "flex items-start gap-3 rounded-xl border p-4 transition-all duration-300",
-                    "border-lightBorders-400 bg-white/70 shadow-sm",
-                    "dark:border-darkBorders-500 dark:bg-jwdMarine-900/70",
+                    "border-slate-400 bg-lightBackground-100/70 shadow-sm",
+                    "dark:border-slate-500 dark:bg-darkBackground-900/70",
                   )}
                 >
                   <Link
@@ -273,8 +273,8 @@ function LibraryImageCard({ item }: { item: LibraryMediaCardItem }) {
     <article
       className={classNames(
         "LibraryImageCard overflow-hidden rounded-xl border",
-        "border-lightBorders-400 bg-white/80",
-        "dark:border-darkBorders-500 dark:bg-jwdMarine-900/80",
+        "border-slate-400 bg-lightBackground-100/80",
+        "dark:border-slate-500 dark:bg-darkBackground-900/80",
       )}
     >
       <Link href={item.href} className="block">
@@ -311,8 +311,8 @@ function LibraryImageCard({ item }: { item: LibraryMediaCardItem }) {
             rel="noreferrer"
             className={classNames(
               "inline-flex items-center gap-1 rounded-md border px-2.5 py-1.5 text-xs font-medium transition-all",
-              "border-lightBorders-400 hover:bg-lightSecondary-300/70",
-              "dark:border-darkBorders-500 dark:hover:bg-darkSecondary-500/30",
+              "border-slate-400 hover:bg-lightBackground-300/70",
+              "dark:border-slate-500 dark:hover:bg-darkBackground-500/30",
             )}
           >
             <i className="bi bi-arrows-fullscreen"></i>
@@ -323,8 +323,8 @@ function LibraryImageCard({ item }: { item: LibraryMediaCardItem }) {
             href={downloadImageUrl}
             className={classNames(
               "inline-flex items-center gap-1 rounded-md border px-2.5 py-1.5 text-xs font-medium transition-all",
-              "border-lightBorders-400 hover:bg-lightSecondary-300/70",
-              "dark:border-darkBorders-500 dark:hover:bg-darkSecondary-500/30",
+              "border-slate-400 hover:bg-lightBackground-300/70",
+              "dark:border-slate-500 dark:hover:bg-darkBackground-500/30",
             )}
           >
             <i className="bi bi-download"></i>
@@ -344,15 +344,15 @@ function LibraryAudioCard({ item }: { item: LibraryMediaCardItem }) {
     <article
       className={classNames(
         "LibraryAudioCard rounded-xl border p-4",
-        "border-lightBorders-400 bg-white/80",
-        "dark:border-darkBorders-500 dark:bg-jwdMarine-900/80",
+        "border-slate-400 bg-lightBackground-100/80",
+        "dark:border-slate-500 dark:bg-darkBackground-900/80",
       )}
     >
       <div
         className={classNames(
           "mb-3 flex h-20 items-center justify-between rounded-lg border px-3",
-          "border-lightBorders-400 bg-lightSecondary-300/40",
-          "dark:border-darkBorders-500 dark:bg-darkSecondary-500/20",
+          "border-slate-400 bg-lightBackground-300/40",
+          "dark:border-slate-500 dark:bg-darkBackground-500/20",
         )}
       >
         <span className="inline-flex items-center gap-2 text-sm font-medium">
@@ -392,8 +392,8 @@ function LibraryAudioCard({ item }: { item: LibraryMediaCardItem }) {
           href={downloadAudioUrl}
           className={classNames(
             "inline-flex items-center gap-1 rounded-md border px-2.5 py-1.5 text-xs font-medium transition-all",
-            "border-lightBorders-400 hover:bg-lightSecondary-300/70",
-            "dark:border-darkBorders-500 dark:hover:bg-darkSecondary-500/30",
+            "border-slate-400 hover:bg-lightBackground-300/70",
+            "dark:border-slate-500 dark:hover:bg-darkBackground-500/30",
           )}
         >
           <i className="bi bi-download"></i>
@@ -412,8 +412,8 @@ function LibraryVideoCard({ item }: { item: LibraryMediaCardItem }) {
     <article
       className={classNames(
         "LibraryVideoCard rounded-xl border p-4",
-        "border-lightBorders-400 bg-white/80",
-        "dark:border-darkBorders-500 dark:bg-jwdMarine-900/80",
+        "border-slate-400 bg-lightBackground-100/80",
+        "dark:border-slate-500 dark:bg-darkBackground-900/80",
       )}
     >
       <Link
@@ -441,8 +441,8 @@ function LibraryVideoCard({ item }: { item: LibraryMediaCardItem }) {
           href={downloadVideoUrl}
           className={classNames(
             "inline-flex items-center gap-1 rounded-md border px-2.5 py-1.5 text-xs font-medium transition-all",
-            "border-lightBorders-400 hover:bg-lightSecondary-300/70",
-            "dark:border-darkBorders-500 dark:hover:bg-darkSecondary-500/30",
+            "border-slate-400 hover:bg-lightBackground-300/70",
+            "dark:border-slate-500 dark:hover:bg-darkBackground-500/30",
           )}
         >
           <i className="bi bi-download"></i>
@@ -468,8 +468,8 @@ function EmptyState({
     <article
       className={classNames(
         "rounded-2xl border border-dashed p-8 text-center shadow-sm",
-        "border-lightBorders-400 bg-white/70",
-        "dark:border-darkBorders-500 dark:bg-jwdMarine-900/70",
+        "border-slate-400 bg-lightBackground-100/70",
+        "dark:border-slate-500 dark:bg-darkBackground-900/70",
       )}
     >
       <h2 className="heading-5">{title}</h2>
@@ -479,8 +479,8 @@ function EmptyState({
           href={ctaHref}
           className={classNames(
             "mt-5 inline-flex items-center justify-center rounded-lg border px-4 py-2 text-sm font-medium transition-all",
-            "border-lightBorders-400 bg-white/80 hover:-translate-y-0.5 hover:bg-lightSecondary-300/70",
-            "dark:border-darkBorders-500 dark:bg-jwdMarine-900/80 dark:hover:bg-darkSecondary-500/30",
+            "border-slate-400 bg-lightBackground-100/80 hover:-translate-y-0.5 hover:bg-lightBackground-300/70",
+            "dark:border-slate-500 dark:bg-darkBackground-900/80 dark:hover:bg-darkBackground-500/30",
           )}
         >
           {ctaLabel}
@@ -529,8 +529,8 @@ function LibraryPagination({
           href={buildHref(pagination.currentPage - 1)}
           className={classNames(
             "rounded-lg border px-3 py-1.5 text-sm font-medium transition-all",
-            "border-lightBorders-400 bg-white/80 hover:bg-lightSecondary-300/70",
-            "dark:border-darkBorders-500 dark:bg-jwdMarine-900/80 dark:hover:bg-darkSecondary-500/30",
+            "border-slate-400 bg-lightBackground-100/80 hover:bg-lightBackground-300/70",
+            "dark:border-slate-500 dark:bg-darkBackground-900/80 dark:hover:bg-darkBackground-500/30",
           )}
         >
           Previous
@@ -539,7 +539,7 @@ function LibraryPagination({
         <span
           className={classNames(
             "rounded-lg border px-3 py-1.5 text-sm font-medium opacity-50",
-            "border-lightBorders-400 dark:border-darkBorders-500",
+            "border-slate-400 dark:border-slate-500",
           )}
           aria-hidden
         >
@@ -556,8 +556,8 @@ function LibraryPagination({
           href={buildHref(pagination.currentPage + 1)}
           className={classNames(
             "rounded-lg border px-3 py-1.5 text-sm font-medium transition-all",
-            "border-lightBorders-400 bg-white/80 hover:bg-lightSecondary-300/70",
-            "dark:border-darkBorders-500 dark:bg-jwdMarine-900/80 dark:hover:bg-darkSecondary-500/30",
+            "border-slate-400 bg-lightBackground-100/80 hover:bg-lightBackground-300/70",
+            "dark:border-slate-500 dark:bg-darkBackground-900/80 dark:hover:bg-darkBackground-500/30",
           )}
         >
           Next
@@ -566,7 +566,7 @@ function LibraryPagination({
         <span
           className={classNames(
             "rounded-lg border px-3 py-1.5 text-sm font-medium opacity-50",
-            "border-lightBorders-400 dark:border-darkBorders-500",
+            "border-slate-400 dark:border-slate-500",
           )}
           aria-hidden
         >

@@ -40,9 +40,9 @@ export default function ProfileHeroEditor({
 
   const profileInputClass = classNames(
     "w-full rounded-md border px-3 py-2 text-sm",
-    "border-lightBorders-500 bg-white text-lightText-900",
-    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lightPrimary-300/60",
-    "dark:border-darkBorders-500 dark:bg-jwdMarine-900 dark:text-white dark:focus-visible:ring-darkPrimary-500/40",
+    "border-slate-500 bg-lightBackground-100 text-lightText-900",
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lightBackground-300/60",
+    "dark:border-slate-500 dark:bg-darkBackground-900 dark:text-white dark:focus-visible:ring-darkBackground-500/40",
   );
 
   useEffect(() => {
@@ -176,15 +176,15 @@ export default function ProfileHeroEditor({
       <form
         className={classNames(
           "ProfileHeroEditor flex w-full flex-col gap-4 rounded-lg border p-6 shadow-md",
-          "border-lightBorders-500 bg-white/80",
-          "dark:border-darkBorders-500 dark:bg-jwdMarine-950/80",
+          "border-slate-500 bg-lightBackground-100/80",
+          "dark:border-slate-500 dark:bg-darkBackground-1000/80",
         )}
         onSubmit={(event) => void handleSaveProfile(event)}
       >
         <h3 className="heading-5">Edit account details</h3>
 
         <div className="flex items-center gap-4">
-          <span className="inline-flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-lightPrimary-500 text-sm font-semibold text-white dark:bg-darkPrimary-500">
+          <span className="inline-flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-lightBackground-500 text-sm font-semibold text-white dark:bg-darkBackground-500">
             {displayAvatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -248,8 +248,8 @@ export default function ProfileHeroEditor({
             className={classNames(
               "block w-full cursor-pointer text-sm",
               "file:mr-4 file:rounded-md file:border file:px-3 file:py-2 file:text-sm file:font-medium",
-              "file:border-lightBorders-500 file:bg-lightSecondary-300/40 file:text-lightText-900",
-              "dark:file:border-darkBorders-500 dark:file:bg-darkSecondary-500/30 dark:file:text-white",
+              "file:border-slate-500 file:bg-lightBackground-300/40 file:text-lightText-900",
+              "dark:file:border-slate-500 dark:file:bg-darkBackground-500/30 dark:file:text-white",
             )}
           />
         </label>
@@ -271,7 +271,7 @@ export default function ProfileHeroEditor({
             type="submit"
             className={classNames(
               "inline-flex min-w-36 items-center justify-center rounded-md px-4 py-2 text-sm font-semibold",
-              "bg-lightPrimary-500 text-white transition hover:opacity-90",
+              "bg-lightBackground-500 text-white transition hover:opacity-90",
               "disabled:cursor-not-allowed disabled:opacity-60",
             )}
             disabled={isSaving || isDeleting}

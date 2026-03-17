@@ -10,7 +10,7 @@ export default function SidebarHead({
   isDesktopCollapsed = false,
 }: SidebarHeadProps) {
   return (
-    <div className="ChatSidebarHead flex w-full items-center gap-2 bg-lightPrimary-100 p-3 dark:bg-darkPrimary-1000 border-b border-lightBorders-300/70 dark:border-darkBorders-500">
+    <div className="ChatSidebarHead flex w-full items-center gap-2 bg-lightBackground-100 p-3 dark:bg-darkBackground-1000 border-b border-slate-300/70 dark:border-slate-500">
       <Logo size={36} iconOnly={isDesktopCollapsed} />
     </div>
   );

@@ -28,9 +28,9 @@ export default function AdminSidebar() {
 
   const sidebarClass = classNames(
     "AdminSidebar fixed bottom-0 left-0 top-0 z-30 flex w-72 flex-col justify-between",
-    "border-r border-lightBorders-300/70 bg-lightBackground-200 shadow-xl transition-all duration-300",
+    "border-r border-slate-300/70 bg-lightBackground-200 shadow-xl transition-all duration-300",
     "lg:relative lg:z-10 lg:translate-x-0 lg:shadow-none",
-    "dark:border-darkBorders-500 dark:bg-jwdMarine-1000",
+    "dark:border-slate-500 dark:bg-darkBackground-1000",
     mobileOpen ? "translate-x-0" : "-translate-x-full",
     desktopCollapsed ? "lg:w-[78px]" : "lg:w-72",
   );
@@ -94,9 +94,9 @@ export default function AdminSidebar() {
                   title={!isOpen ? link.label : undefined}
                   className={classNames(
                     "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all",
-                    "hover:bg-lightSecondary-300/70 dark:hover:bg-darkSecondary-500/30",
+                    "hover:bg-lightBackground-300/70 dark:hover:bg-darkBackground-500/30",
                     isActive &&
-                      "bg-lightPrimary-100 font-semibold dark:bg-darkPrimary-500/25",
+                      "bg-lightBackground-100 font-semibold dark:bg-darkBackground-500/25",
                     !isOpen && "lg:justify-center lg:px-0",
                   )}
                 >

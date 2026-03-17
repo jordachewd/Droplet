@@ -5,7 +5,7 @@ import Link from "next/link";
 export default function HeroSection() {
   const heroSectionClass = classNames(
     "Hero flex w-full items-center justify-between px-4 pt-14 shadow-sm",
-    "bg-white/50 sm:px-6 lg:px-0 dark:bg-darkPrimary-900/50",
+    "bg-lightBackground-100/50 sm:px-6 lg:px-0 dark:bg-darkBackground-900/50",
   );
   const heroImageWrapperClass = classNames(
     "relative flex w-full justify-center self-end overflow-hidden",
@@ -13,7 +13,7 @@ export default function HeroSection() {
   );
   const heroGlowClass = classNames(
     "absolute -bottom-28 left-1/2 z-0 h-[90%] w-[60%] -translate-x-1/2 rounded-full blur-3xl",
-    "bg-lightSecondary-400/30 dark:bg-darkSecondary-400/20",
+    "bg-lightBackground-400/30 dark:bg-darkBackground-400/20",
   );
 
   return (

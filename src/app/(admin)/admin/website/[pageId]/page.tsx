@@ -29,14 +29,14 @@ export default async function AdminWebsiteEditorPage({
 
       <AdminManagedForm
         action={savePublicPageAction}
-        className="flex flex-col gap-4 rounded-2xl border border-lightBorders-300 bg-lightBackground-100/80 p-5 dark:border-darkBorders-500 dark:bg-jwdMarine-900/70"
+        className="flex flex-col gap-4 rounded-2xl border border-slate-300 bg-lightBackground-100/80 p-5 dark:border-slate-500 dark:bg-darkBackground-900/70"
       >
         <input type="hidden" name="pageId" value={page.id} />
 
         <label className="flex flex-col gap-2 text-sm">
           <span className="font-medium">Title</span>
           <input
-            className="rounded-xl border border-lightBorders-400 bg-lightBackground-100 px-3 py-2 dark:border-darkBorders-500 dark:bg-jwdMarine-1000"
+            className="rounded-xl border border-slate-400 bg-lightBackground-100 px-3 py-2 dark:border-slate-500 dark:bg-darkBackground-1000"
             type="text"
             name="title"
             defaultValue={page.title}
@@ -45,13 +45,13 @@ export default async function AdminWebsiteEditorPage({
         </label>
 
         <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-          <div className="rounded-xl border border-lightBorders-300 px-4 py-3 dark:border-darkBorders-500">
+          <div className="rounded-xl border border-slate-300 px-4 py-3 dark:border-slate-500">
             <p className="text-xs font-semibold uppercase tracking-wide opacity-60">
               Slug
             </p>
             <p className="mt-1 text-sm">/{page.slug}</p>
           </div>
-          <div className="rounded-xl border border-lightBorders-300 px-4 py-3 dark:border-darkBorders-500">
+          <div className="rounded-xl border border-slate-300 px-4 py-3 dark:border-slate-500">
             <p className="text-xs font-semibold uppercase tracking-wide opacity-60">
               Status
             </p>
@@ -59,7 +59,7 @@ export default async function AdminWebsiteEditorPage({
               {page.isPublished ? "Published" : "Draft"}
             </p>
           </div>
-          <div className="rounded-xl border border-lightBorders-300 px-4 py-3 dark:border-darkBorders-500">
+          <div className="rounded-xl border border-slate-300 px-4 py-3 dark:border-slate-500">
             <p className="text-xs font-semibold uppercase tracking-wide opacity-60">
               Sort Order
             </p>

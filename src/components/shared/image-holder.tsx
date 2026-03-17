@@ -54,7 +54,7 @@ export default function ImageHolder({
 
   const imageHolderClass = classNames(
     "ImageHolder relative mb-2 mt-3 flex max-h-max max-w-max items-center justify-center overflow-hidden rounded",
-    "bg-jwdAqua-500/10 shadow-sm transition-all",
+    "bg-darkBackground-500/10 shadow-sm transition-all",
   );
 
   const imageClass = classNames(

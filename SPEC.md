@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-17 (PM audit #27. All PM #26 items resolved (Phases 55.1–56.3, 50.1). New items TD-UX-01/02/03, TD-ADMIN-13/14 registered. 368 unit tests (65+ suites). Build passing.)
+> Last updated: 2026-03-17 (PM audit #28. All PM #27 items resolved (Phases 57.1–59.2). TD-UX-01/02/03/04, TD-ADMIN-14 RESOLVED. New items TD-DS-01/02, TD-UX-05 registered. 368 unit tests (65+ suites). Build passing.)
 
 ---
 
@@ -780,16 +780,24 @@ _None._
 | TD-PLAN-01 | Billing | No recurring subscriptions (deferred v1)                                      | Low      |
 | TD-AI-18   | OpenAI  | errorMessage forwarding pattern in /api/openai is safe but fragile (advisory) | Low      |
 
-### Active — High Priority (PM Audit #27, Owner-Directed)
+### Active — High Priority (PM Audit #28, Owner-Directed)
 
-| ID          | Area  | Description                                                                                                                                                                                                                                | Severity |
-| ----------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------- |
-| TD-UX-01    | Admin | ALL 14 admin forms have ZERO confirmation dialogs on destructive actions, ZERO visual feedback, and ZERO loading indicators. Owner directives #6/#7/#8 completely unimplemented in admin. Phase 57 planned.                                | Critical |
-| TD-UX-02    | Admin | ZERO admin data tables have bulk selection or bulk action capability (checkboxes, select-all, bulk delete/suspend/publish). Owner directive #9. Phase 58 planned.                                                                          | High     |
-| TD-UX-03    | Admin | Admin user detail shows `{used} / {limit}` but not "remaining". Owner directive #12: "remained vs included". Phase 59.1 planned.                                                                                                           | Medium   |
-| TD-ADMIN-14 | Admin | Admin form inputs use `bg-white` instead of design tokens. Inconsistent with `/app` input styling that uses design tokens. Phase 59.2 planned.                                                                                             | Medium   |
-| TD-UX-04    | UI    | User-facing delete error paths use `window.alert()` instead of the app's `AlertMessage` design system. Phase 57.4 planned.                                                                                                                 | High     |
-| TD-API-09   | API   | `messageTextContentSchema` still uses `.strict()` — inner content items could reject extra fields from model responses on conversation resumption. `chatMessageSchema` is passthrough (53.3) but content items are strict. Monitor needed. | Low      |
+| ID        | Area   | Description                                                                                                                                                                                                                                | Severity |
+| --------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------- |
+| TD-DS-01  | Design | 58 source files depend on 14 custom color palettes scheduled for replacement with Navy/Lemon/Grass. Migration affects every visual surface. Phase 60 planned.                                                                              | High     |
+| TD-DS-02  | Design | 45 `bg-white` instances across 20 non-admin files. Inconsistent with admin (0 `bg-white`). Pre-step before palette migration. Phase 60.2 planned.                                                                                          | High     |
+| TD-UX-05  | UI     | 4 locations use `window.confirm()` as temporary bridge instead of proper confirmation modal component. AGENTS.md allows as temporary bridge. Phase 61.1 planned.                                                                           | Medium   |
+| TD-API-09 | API    | `messageTextContentSchema` still uses `.strict()` — inner content items could reject extra fields from model responses on conversation resumption. `chatMessageSchema` is passthrough (53.3) but content items are strict. Monitor needed. | Low      |
+
+### ~~Active — High Priority (PM Audit #27, Owner-Directed)~~ (All Resolved — PM Audit #28)
+
+| ID          | Area  | Description                                                                                                                 | Status                                                                                                             |
+| ----------- | ----- | --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| TD-UX-01    | Admin | ALL 14 admin forms had ZERO confirmation dialogs on destructive actions, ZERO visual feedback, and ZERO loading indicators. | **Resolved (Phases 57.1–57.3)** — `AdminManagedForm` + `AdminFormSubmitButton` + `AlertMessage` on all 14 forms.   |
+| TD-UX-02    | Admin | ZERO admin data tables had bulk selection or bulk action capability.                                                        | **Resolved (Phases 58.1–58.3)** — users, transactions, website tables all have bulk select + actions.              |
+| TD-UX-03    | Admin | Admin user detail showed `{used} / {limit}` but not "remaining".                                                            | **Resolved (Phase 59.1)** — format: `{used} / {limit} ({remaining} left)` with progress bars.                      |
+| TD-ADMIN-14 | Admin | Admin form inputs used `bg-white` instead of design tokens.                                                                 | **Resolved (Phase 59.2)** — zero `bg-white` in admin. All use `bg-lightBackground-100` + `dark:bg-jwdMarine-1000`. |
+| TD-UX-04    | UI    | User-facing delete error paths used `window.alert()`.                                                                       | **Resolved (Phase 57.4)** — zero `window.alert()` in src/. Delete flows use `window.confirm` + `AlertMessage`.     |
 
 ### ~~Active — High Priority (PM Audit #26)~~ (All Resolved — PM Audit #27)
 

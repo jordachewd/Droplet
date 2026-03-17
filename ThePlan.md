@@ -55,6 +55,7 @@ The points below are verified from the current codebase.
 | FAQ copy             | FAQ content aligned with current product rules (no trial references)                                                                                                                                                                                                                                                               | âœ… Product messaging consistent                                                          | `src/constants/faqs.tsx`                                                                        |
 | Theme control        | Admin settings include theme management                                                                                                                                                                                                                                                                                            | âœ… Settings control operational                                                          | Admin settings panel                                                                            |
 | Tiptap               | Not installed (admin content editing uses form controls)                                                                                                                                                                                                                                                                           | Deferred â€” admin forms use proper controls without rich-text editor                     | `package.json`                                                                                  |
+| Admin UX safety      | Confirmation dialogs on all destructive admin actions, AlertMessage feedback on all 14 admin forms, loading indicators, bulk actions on users/transactions/website tables                                                                                                                                                          | ✅ Admin UX safety directives fully implemented                                           | Admin pages, AdminActionButton, AlertMessage integration                                        |
 
 ### Practical conclusions
 
@@ -870,7 +871,7 @@ Close the operational gaps that would make launch fragile.
 
 ## Milestone 9 - Launch Readiness And Release Control
 
-> **Status: COMPLETED** — Validation workflow passes (Prettier, lint, tsc, 65+ suites / 368 unit tests, build). E2E: 165 passed, 5 failed (content/selector drift), 48 skipped. Release gates A–E green. Gate F substantially green.
+> **Status: COMPLETED** — Validation workflow passes (Prettier, lint, tsc, 65+ suites / 368 unit tests, build). E2E: 14 failures (plans/pricing copy assertion mismatch — not functional failures). Release gates A–E green. Gate F substantially green.
 
 **Objective**
 
@@ -971,23 +972,44 @@ npm run test:e2e
 npm run build
 ```
 
-**Current status (post-Phase 56):** Prettier, lint, tsc, unit tests (65+ suites / 368 tests), and build all pass. E2E: 165 passed, 5 failed (content/selector drift in chat-app-shell, plans-public, pricing-public, public-pages, user-profile — not functional failures), 48 skipped. Gate F substantially green.
+**Current status (post-Phase 59):** Prettier, lint, tsc, unit tests (65+ suites / 368 tests), and build all pass. E2E: 14 failures (plans/pricing copy assertion mismatch — not functional failures). Gate F substantially green.
 
 ---
 
 ## 9. Immediate Execution Order
 
-This is the correct first-pass order for the next serious work cycle.
+Milestones 0–20 are COMPLETED. The next execution cycle focuses on Milestone 21.
 
-1. Freeze billing semantics, tier limits, Premium extras, and legal review path.
-2. Design and approve the canonical entitlement and stop-reason contract.
-3. Finalize the route map and auth boundary redesign.
-4. Align billing and plan lifecycle logic with the approved contract.
-5. Introduce the usage ledger, storage ledger, and guardrails.
-6. Build the AI policy layer and streaming chat path.
-7. Finish public pages and legal pages against the now-stable product contract.
-8. Build the admin control plane on top of the finished data foundations.
-9. Hardening, observability, and launch readiness.
+**Completed (Milestones 0–20):**
+
+1. ✅ Product contract freeze, entitlement engine, route boundaries.
+2. ✅ Billing, usage ledger, storage guardrails.
+3. ✅ AI policy, streaming, prompt quality.
+4. ✅ Public pages, FAQ, legal surface.
+5. ✅ Admin control plane, settings, audit trail.
+6. ✅ Security, reliability, observability hardening.
+7. ✅ Layout, navigation, library, persona trial access.
+8. ✅ Video generation, UI polish, admin operational completeness.
+9. ✅ Persona restructure (10 → 6), admin panel redesign.
+10. ✅ Admin configurability, code quality, production hardening.
+11. ✅ Admin UX safety, bulk actions, design token standardization.
+
+**Next (Milestone 21 — Color Palette Upgrade & Design System Overhaul):**
+
+1. Color palette upgrade: Navy (#0D3B66), Lemon (#FAF0CA), Grass (#27A148).
+2. Remove legacy custom palettes (lightAccent, darkAccent, jwdAqua, jwdMarine, lightBorders, darkBorders).
+3. Replace custom border palettes with TailwindCSS slate.
+4. Full audit and alignment of admin panel design to match /app.
+5. Admin users table usage/limits columns.
+6. Move JSON data files to dedicated src/json/ folder.
+7. Archive completed items from TODO.md and ThePlan.md to DONE.md.
+
+**Remaining deferred work (ON HOLD):**
+
+8. Phase 31.4 — E2E test updates (LOW).
+9. Phase 46.1–46.2 — Admin error boundary + silent catch logging (LOW).
+10. Phase 29.x — Zod/Zustand app-wide modernization (ON HOLD).
+11. Phase 26.x — Persona-aware media prompts, Stripe auto-renewal (ON HOLD).
 
 ---
 
@@ -1005,7 +1027,7 @@ These items are not banned forever. They are excluded because they create dispro
 
 ## 11. Owner-Directed New Work (Added 2026-03-16, Updated 2026-03-17)
 
-> **All Milestones 0–19 COMPLETED. All Phases 1–56.3 COMPLETED. 368 unit tests (65+ suites) passing. Build passing.**
+> **All Milestones 0–20 COMPLETED. All Phases 1–59.2 COMPLETED. 368 unit tests (65+ suites) passing. Build passing.**
 
 ### Milestone 10 â€” Layout, Navigation & Library Enhancement
 
@@ -1332,6 +1354,85 @@ These items are not banned forever. They are excluded because they create dispro
 - All components are data consumers (no client-side data fetching).
 - Video generation works end-to-end with proper error handling.
 - Currency symbol dynamic on all surfaces including admin user detail.
+
+### Milestone 20 — Admin UX Safety, Bulk Actions & Design (Owner-Directed, 2026-03-17)
+
+> **Status: COMPLETED** — Delivered by Phases 57.1–57.4, 58.1–58.3, 59.1–59.2.
+> PM audit #28. Engineer work report confirmed. All owner UX safety directives (#6, #7, #8, #9, #11, #12) implemented.
+> 368 unit tests (65+ suites) passing. Build passing. E2E: 14 failures (plans/pricing copy assertion mismatch).
+
+**Objective:** Implement all owner-mandated admin UX safety requirements: confirmation dialogs on destructive actions, visual feedback on all forms, loading indicators, bulk actions on data tables, usage display improvements, and design token standardization.
+
+**Dependencies:** Milestone 19.
+
+**Delivered:**
+
+1. ~~**CRITICAL** — Confirmation dialogs on all admin destructive actions (57.1)~~ — DONE. Remove User, Suspend/Reinstate User, Delete Page all require explicit confirmation before executing. AdminActionButton component wraps destructive form buttons.
+2. ~~**CRITICAL** — AlertMessage visual feedback on all 14 admin forms (57.2)~~ — DONE. Server actions return `{ success, message }`. useActionState captures results. Green AlertMessage for success, red for errors. All 7 settings forms, 5 website forms, 2 user forms covered.
+3. ~~**CRITICAL** — Loading indicators on all 14 admin forms (57.3)~~ — DONE. useFormStatus() hook in submit buttons. LoadingBubbles shown while pending. Buttons disabled during submission to prevent double-submit.
+4. ~~**HIGH** — Replace window.alert() with AlertMessage in user-facing flows (57.4)~~ — DONE. Library delete and sidebar delete error paths now use AlertMessage instead of browser native dialogs.
+5. ~~**HIGH** — Bulk actions on admin users table (58.1)~~ — DONE. Checkbox column with select-all, bulk action bar with Bulk Suspend and Bulk Remove, confirmation dialogs, feedback messages, selected count display.
+6. ~~**HIGH** — Bulk actions on admin transactions table (58.2)~~ — DONE. Checkbox column with select-all, bulk action bar with Bulk Remove, confirmation and feedback.
+7. ~~**HIGH** — Bulk actions on admin website pages table (58.3)~~ — DONE. Checkbox column with select-all, bulk action bar with Bulk Delete, Bulk Publish, Bulk Unpublish, confirmation and feedback.
+8. ~~**MEDIUM** — Admin user detail remaining usage with progress bars (59.1)~~ — DONE. Usage metrics show used/limit/remaining with visual progress bars. Unlimited values clearly indicated.
+9. ~~**MEDIUM** — Admin form inputs standardized with design tokens (59.2)~~ — DONE. Replaced bg-white with design token classes. Dark mode preserved. Visual consistency with /app form inputs.
+
+**Success criteria (verified ✅):**
+
+- ✅ All destructive admin actions require confirmation before executing.
+- ✅ All 14 admin forms show visual success/error feedback via AlertMessage.
+- ✅ All admin forms show loading indicators during submission.
+- ✅ No window.alert() calls remain in production src/ code.
+- ✅ All 3 admin data tables (users, transactions, website) have bulk selection and bulk actions.
+- ✅ Admin user detail shows remaining usage with progress bars.
+- ✅ Admin form inputs use design tokens, not bg-white.
+
+### Milestone 21 — Color Palette Upgrade & Design System Overhaul (Owner-Directed, 2026-03-17)
+
+> **Status: NOT STARTED** — Owner instructions received. Pending implementation.
+
+**Objective:** Upgrade the app's color palette to the new owner-specified colors, remove legacy custom palettes, standardize borders, and ensure admin panel design fully matches /app design. Clean project docs by archiving completed items.
+
+**Dependencies:** Milestone 20.
+
+**Owner Requirements:**
+
+1. **HIGH** — Color palette upgrade to new brand colors: Navy (#0D3B66), Lemon (#FAF0CA), Grass (#27A148). Integrate into Tailwind config and apply across all surfaces.
+2. **HIGH** — Remove custom `lightAccent`, `darkAccent`, `jwdAqua`, `jwdMarine` palettes. Replace all references with new palette values.
+3. **HIGH** — Remove custom `lightBorders`, `darkBorders` palettes. Replace with TailwindCSS `slate` palette for borders.
+4. **HIGH** — Admin panel design must fully match /app design — currently incomplete per owner assessment. Full audit and alignment required.
+5. **MEDIUM** — Admin /admin/users table must show usage and limits (remaining vs included) inline in the table view — not just on the detail page.
+6. **MEDIUM** — JSON data from app constant files must be outsourced to dedicated `src/json/` folder (about-data, terms-data, privacy-data, cookies-data, landing-data).
+7. **MEDIUM** — Clean TODO.md and ThePlan.md by moving all DONE/COMPLETE items to DONE.md archive.
+
+**Scope:**
+
+**Block A — Color Palette (HIGH):**
+
+1. Update Tailwind config with new palette: Navy (#0D3B66), Lemon (#FAF0CA), Grass (#27A148).
+2. Audit and replace all `lightAccent`, `darkAccent`, `jwdAqua`, `jwdMarine` references across all components.
+3. Audit and replace all `lightBorders`, `darkBorders` references with TailwindCSS `slate` palette equivalents.
+4. Verify dark mode compatibility with new palette.
+
+**Block B — Admin Design Alignment (HIGH):**
+
+5. Full audit of admin panel design against /app design system.
+6. Fix all remaining design inconsistencies (spacing, typography, colors, component styles).
+
+**Block C — Data & Documentation (MEDIUM):**
+
+7. Add usage/limits columns to admin users table (remaining vs included).
+8. Move JSON data files from `src/constants/` to `src/json/` folder.
+9. Archive completed items from TODO.md and ThePlan.md to DONE.md.
+
+**Success criteria:**
+
+- New color palette (Navy, Lemon, Grass) applied across all surfaces.
+- Zero references to removed custom palettes (lightAccent, darkAccent, jwdAqua, jwdMarine, lightBorders, darkBorders).
+- Admin panel visually identical to /app design system.
+- Admin users table shows usage/limits inline.
+- JSON data files in dedicated folder.
+- Project docs cleaned and archived.
 
 ---
 

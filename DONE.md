@@ -2,7 +2,45 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-17 — PM deep audit #27. Phases 55.1–56.3 + 50.1 archived. All Phases 1–56.3 complete. All Milestones 0–19 COMPLETED. 368 unit tests (65+ suites). Build passing.
+> Last updated: 2026-03-17 — PM deep audit #28. Phases 57.1–59.2 archived. All Phases 1–59.2 complete. All Milestones 0–20 COMPLETED. 368 unit tests (65+ suites). Build passing.
+
+---
+
+## Phase 57.1–57.4 — Admin Action Feedback & Safety — COMPLETED (2026-03-17)
+
+> PM audit #28. Engineer work report confirmed. Triple-audit verified (PM + Architect + Engineer). Owner directives #6/#7/#8 fully implemented.
+
+- [x] **57.1 CRITICAL** — Added confirmation dialogs to all admin destructive actions via reusable `AdminManagedForm` with `confirmMessage` prop. Remove User, Suspend/Reinstate User, Delete Page, and all bulk actions require explicit user confirmation before executing.
+- [x] **57.2 CRITICAL** — Added `AlertMessage` visual feedback to all 14 admin forms. Server actions return `{ success, message }` state. `useActionState` captures results. Success = green, Error = red. Auto-dismiss after 5 seconds.
+- [x] **57.3 CRITICAL** — Added loading indicators to all 14 admin forms via `AdminFormSubmitButton` using `useFormStatus()`. Shows `LoadingBubbles` while pending. Buttons disabled during submission.
+- [x] **57.4 HIGH** — Replaced all `window.alert()` with `AlertMessage` in user-facing delete flows. Zero `window.alert()` calls remain in src/. Library delete and sidebar delete now use `window.confirm` + `AlertMessage` for success/error feedback.
+
+**Files changed:** `src/components/admin/admin-managed-form.tsx` (new), `src/components/admin/admin-form-submit-button.tsx` (new), `src/components/admin/admin-action-state.ts` (new), `src/lib/actions/admin.actions.tsx`, `src/app/(admin)/admin/users/[userId]/page.tsx`, `src/components/admin/website/admin-website-manager.tsx`, `src/components/admin/settings/admin-models-section.tsx`, `src/components/admin/settings/admin-pricing-section.tsx`, `src/components/admin/settings/admin-limits-section.tsx`, `src/components/admin/settings/admin-personas-section.tsx`, `src/components/admin/settings/admin-theme-section.tsx`, `src/app/(admin)/admin/website/[pageId]/page.tsx`, `src/components/chat/library-delete-button.tsx`, `src/components/chat/sidebar/chat-sidebar-nav-v2.tsx`
+
+---
+
+## Phase 58.1–58.3 — Admin Bulk Actions — COMPLETED (2026-03-17)
+
+> PM audit #28. Engineer work report confirmed. Triple-audit verified. Owner directive #9 fully implemented.
+
+- [x] **58.1 HIGH** — Added bulk actions to admin users table. Per-row checkboxes + select-all. "Bulk Suspend" and "Bulk Remove" with confirmation dialogs and feedback.
+- [x] **58.2 HIGH** — Added bulk actions to admin transactions table. Per-row checkboxes + select-all. "Bulk Remove" with confirmation and feedback.
+- [x] **58.3 HIGH** — Added bulk actions to admin website pages table. Per-row checkboxes + select-all. "Bulk Delete", "Bulk Publish", "Bulk Unpublish" with confirmation and feedback.
+
+**Files changed:** `src/components/admin/users/admin-users-table.tsx` (new), `src/components/admin/transactions/admin-transactions-table.tsx` (new), `src/components/admin/website/admin-website-manager.tsx`, `src/lib/actions/admin.actions.tsx`, `src/app/(admin)/admin/users/page.tsx`, `src/app/(admin)/admin/transactions/page.tsx`, `src/app/(admin)/admin/website/page.tsx`
+
+**Server actions added:** `bulkSuspendUsersAction`, `bulkRemoveUsersAction`, `bulkDeleteTransactionsAction`, `bulkDeletePublicPagesAction`, `bulkPublishPublicPagesAction`, `bulkUnpublishPublicPagesAction`
+
+---
+
+## Phase 59.1–59.2 — Admin User Detail & Design Polish — COMPLETED (2026-03-17)
+
+> PM audit #28. Engineer work report confirmed. Triple-audit verified.
+
+- [x] **59.1 MEDIUM** — Admin user detail shows "remaining" usage with progress bars. Format: `{used} / {limit} ({remaining} left)`. Progress bars for daily conversations, prompts/conversation, image/audio/video generations. "Unlimited" for admin/unlimited tiers. Trial usage displayed separately.
+- [x] **59.2 MEDIUM** — Standardized admin form input design tokens. Zero `bg-white` in admin pages or admin components. All inputs use `bg-lightBackground-100` with `dark:bg-jwdMarine-1000` pairing.
+
+**Files changed:** `src/app/(admin)/admin/users/[userId]/page.tsx`, `src/lib/utils/admin-queries.ts`, `src/components/admin/settings/admin-models-section.tsx`, `src/components/admin/settings/admin-limits-section.tsx`, `src/components/admin/settings/admin-pricing-section.tsx`, `src/components/admin/tiptap-editor.tsx`, `src/app/(admin)/admin/users/page.tsx`
 
 ---
 

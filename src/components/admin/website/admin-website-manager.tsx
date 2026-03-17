@@ -57,12 +57,12 @@ export function AdminWebsiteManager({ pages }: AdminWebsiteManagerProps) {
     <div className="AdminWebsiteManager flex flex-col gap-6">
       <AdminManagedForm
         action={createPublicPageAction}
-        className="grid grid-cols-1 gap-3 rounded-2xl border border-lightBorders-300 bg-lightBackground-100/80 p-4 dark:border-darkBorders-500 dark:bg-jwdMarine-900/70 md:grid-cols-[1fr_1fr_auto]"
+        className="grid grid-cols-1 gap-3 rounded-2xl border border-slate-300 bg-lightBackground-100/80 p-4 dark:border-slate-500 dark:bg-darkBackground-900/70 md:grid-cols-[1fr_1fr_auto]"
       >
         <label className="flex flex-col gap-2 text-sm">
           <span className="font-medium">Title</span>
           <input
-            className="rounded-xl border border-lightBorders-400 bg-lightBackground-100 px-3 py-2 dark:border-darkBorders-500 dark:bg-jwdMarine-1000"
+            className="rounded-xl border border-slate-400 bg-lightBackground-100 px-3 py-2 dark:border-slate-500 dark:bg-darkBackground-1000"
             type="text"
             name="title"
             placeholder="About Droplet"
@@ -72,7 +72,7 @@ export function AdminWebsiteManager({ pages }: AdminWebsiteManagerProps) {
         <label className="flex flex-col gap-2 text-sm">
           <span className="font-medium">Slug</span>
           <input
-            className="rounded-xl border border-lightBorders-400 bg-lightBackground-100 px-3 py-2 dark:border-darkBorders-500 dark:bg-jwdMarine-1000"
+            className="rounded-xl border border-slate-400 bg-lightBackground-100 px-3 py-2 dark:border-slate-500 dark:bg-darkBackground-1000"
             type="text"
             name="slug"
             placeholder="about"
@@ -88,8 +88,8 @@ export function AdminWebsiteManager({ pages }: AdminWebsiteManagerProps) {
         </div>
       </AdminManagedForm>
 
-      <div className="overflow-hidden rounded-2xl border border-lightBorders-300 bg-lightBackground-100/80 dark:border-darkBorders-500 dark:bg-jwdMarine-900/70">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-lightBorders-300 px-4 py-3 dark:border-darkBorders-500">
+      <div className="overflow-hidden rounded-2xl border border-slate-300 bg-lightBackground-100/80 dark:border-slate-500 dark:bg-darkBackground-900/70">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-300 px-4 py-3 dark:border-slate-500">
           <label className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide opacity-75">
             <input
               type="checkbox"
@@ -169,7 +169,7 @@ export function AdminWebsiteManager({ pages }: AdminWebsiteManagerProps) {
           ) : null}
         </div>
 
-        <div className="grid grid-cols-[0.35fr_1.2fr_1fr_0.7fr_0.7fr_1.2fr] gap-3 border-b border-lightBorders-300 px-4 py-3 text-xs font-semibold uppercase tracking-wide opacity-70 dark:border-darkBorders-500">
+        <div className="grid grid-cols-[0.35fr_1.2fr_1fr_0.7fr_0.7fr_1.2fr] gap-3 border-b border-slate-300 px-4 py-3 text-xs font-semibold uppercase tracking-wide opacity-70 dark:border-slate-500">
           <span></span>
           <span>Title</span>
           <span>Slug</span>
@@ -178,7 +178,7 @@ export function AdminWebsiteManager({ pages }: AdminWebsiteManagerProps) {
           <span>Actions</span>
         </div>
 
-        <div className="divide-y divide-lightBorders-300 dark:divide-darkBorders-500">
+        <div className="divide-y divide-slate-300 dark:divide-slate-500">
           {pages.length === 0 ? (
             <p className="px-4 py-6 text-sm opacity-70">
               No public pages created yet.
@@ -209,7 +209,7 @@ export function AdminWebsiteManager({ pages }: AdminWebsiteManagerProps) {
               >
                 <input type="hidden" name="pageId" value={page.id} />
                 <input
-                  className="w-20 rounded-lg border border-lightBorders-400 bg-lightBackground-100 px-2 py-1 dark:border-darkBorders-500 dark:bg-jwdMarine-1000"
+                  className="w-20 rounded-lg border border-slate-400 bg-lightBackground-100 px-2 py-1 dark:border-slate-500 dark:bg-darkBackground-1000"
                   type="number"
                   name="sortOrder"
                   defaultValue={page.sortOrder}
