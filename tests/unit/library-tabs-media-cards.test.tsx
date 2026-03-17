@@ -22,6 +22,12 @@ vi.mock("next/image", () => ({
 }));
 
 describe("LibraryTabs media cards", () => {
+  const defaultPagination = {
+    currentPage: 1,
+    hasPreviousPage: false,
+    hasNextPage: false,
+  };
+
   const imageItem = {
     url: "user_123/media/generated-image.webp",
     taskId: "task_1",
@@ -49,6 +55,13 @@ describe("LibraryTabs media cards", () => {
         images={[imageItem]}
         audios={[]}
         videos={[]}
+        conversationsPagination={defaultPagination}
+        imagesPagination={{
+          currentPage: 2,
+          hasPreviousPage: true,
+          hasNextPage: true,
+        }}
+        audiosPagination={defaultPagination}
       />,
     );
 
@@ -66,6 +79,13 @@ describe("LibraryTabs media cards", () => {
     expect(downloadLink.getAttribute("href")).toContain(
       "/api/download?key=user_123%2Fmedia%2Fgenerated-image.webp&download=1",
     );
+
+    expect(
+      screen.getByRole("link", { name: "Previous" }).getAttribute("href"),
+    ).toBe("/app/library?tab=images&imagesPage=1");
+    expect(
+      screen.getByRole("link", { name: "Next" }).getAttribute("href"),
+    ).toBe("/app/library?tab=images&imagesPage=3");
   });
 
   it("renders audio card controls with secure download URL", () => {
@@ -75,6 +95,9 @@ describe("LibraryTabs media cards", () => {
         images={[]}
         audios={[audioItem]}
         videos={[]}
+        conversationsPagination={defaultPagination}
+        imagesPagination={defaultPagination}
+        audiosPagination={defaultPagination}
       />,
     );
 

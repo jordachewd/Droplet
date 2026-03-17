@@ -3,6 +3,7 @@ import { connectToDatabase } from "@/lib/database/mongoose";
 import Task from "@/lib/database/models/tasks.model";
 import {
   getMediaItemsByUserId,
+  getRecentTasksByUserId,
   getTaskByIdForUser,
 } from "@/lib/utils/task-queries";
 
@@ -169,6 +170,44 @@ describe("getMediaItemsByUserId", () => {
         taskTitle: "Untitled conversation",
         personaId: "strategist",
         createdAt: expect.any(String),
+      },
+    ]);
+  });
+});
+
+describe("getRecentTasksByUserId", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(connectToDatabase).mockResolvedValue(undefined as never);
+  });
+
+  it("applies offset and limit bounds when fetching task history", async () => {
+    const lean = vi.fn().mockResolvedValue([
+      {
+        _id: "task_1",
+        title: "First",
+        personaId: "strategist",
+        updatedAt: "2026-03-16T10:00:00.000Z",
+      },
+    ]);
+    const select = vi.fn().mockReturnValue({ lean });
+    const limit = vi.fn().mockReturnValue({ select });
+    const skip = vi.fn().mockReturnValue({ limit });
+    const sort = vi.fn().mockReturnValue({ skip });
+
+    vi.mocked(Task.find).mockReturnValue({ sort } as never);
+
+    const result = await getRecentTasksByUserId("user_1", 999, -5);
+
+    expect(sort).toHaveBeenCalledWith({ updatedAt: -1 });
+    expect(skip).toHaveBeenCalledWith(0);
+    expect(limit).toHaveBeenCalledWith(100);
+    expect(result).toEqual([
+      {
+        _id: "task_1",
+        title: "First",
+        personaId: "strategist",
+        updatedAt: "2026-03-16T10:00:00.000Z",
       },
     ]);
   });
