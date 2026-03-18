@@ -167,15 +167,15 @@ a {
   }
 
   .body-1 {
-    @apply text-base md:text-[1.05rem] text-midnightBlue-500 dark:text-lavenderHaze-500;
+    @apply text-base md:text-lg text-midnightBlue-500 dark:text-lavenderHaze-500;
   }
 
   .body-2 {
-    @apply text-[0.95rem] md:text-base text-midnightBlue-500 dark:text-lavenderHaze-500;
+    @apply text-xs md:text-base text-midnightBlue-500 dark:text-lavenderHaze-500;
   }
 
   .btn {
-    @apply inline-flex min-w-0 items-center justify-center rounded-lg border px-1 py-1 tracking-[1px] transition-all duration-300 ease-in-out disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex min-w-0 items-center justify-center rounded-lg border px-1 py-1 transition-all duration-300 ease-in-out disabled:cursor-not-allowed disabled:opacity-50;
     font-family: var(--font-jwd-dosis), sans-serif;
   }
 

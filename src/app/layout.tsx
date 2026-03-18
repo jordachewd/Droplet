@@ -10,7 +10,7 @@ import { Analytics } from "@vercel/analytics/next";
 
 export const metadata: Metadata = {
   title: "Droplet",
-  description: "Droplet Smart Assistant",
+  description: "Your AI assistant, your way.",
 };
 
 export const viewport: Viewport = {

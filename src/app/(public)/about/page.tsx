@@ -11,6 +11,7 @@ import {
 import { PlanPricing } from "@/constants/plans";
 import { getEffectivePersonaAccessByPlan } from "@/lib/utils/effective-persona-access";
 import { getEffectivePlanConfig } from "@/lib/utils/effective-plan-config";
+import DropletGlobe from "@/components/shared/droplet-globe";
 
 export const metadata: Metadata = {
   title: "About | Droplet",
@@ -250,32 +251,25 @@ export default async function AboutPage() {
 
   return (
     <section className="AboutPage mx-auto flex w-full max-w-screen-2xl flex-col gap-10 px-4 pb-16 pt-24 sm:px-6 lg:px-8">
-      <div
-        className={classNames(
-          "rounded-4xl border px-6 py-10 shadow-sm",
-          "border-slate-400/80 bg-lavenderHaze-100/72 backdrop-blur-sm",
-          "dark:border-slate-500 dark:bg-nightIndigo-900/80",
-        )}
-      >
-        <PageHead
-          title="About Droplet"
-          subtitle="A persona-driven AI assistant built for structured conversations, practical output, and media-aware workflows."
-        />
-      </div>
+      <PageHead
+        title="About Droplet"
+        subtitle="A persona-driven AI assistant built for structured conversations, practical output, and media-aware workflows."
+      />
+
+      <DropletGlobe />
 
       {aboutSections.map((section, index) => (
         <article
           key={section.title}
           className={classNames(
-            "grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)] lg:items-center",
+            "grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)]",
             index % 2 === 1 && "lg:[&>*:first-child]:order-2",
           )}
         >
           <div
             className={classNames(
-              "rounded-4xl border px-6 py-7 shadow-sm",
-              "border-slate-400/80 bg-lavenderHaze-100/76",
-              "dark:border-slate-500 dark:bg-nightIndigo-900/82",
+              "rounded-4xl px-6 py-7 shadow-sm",
+              "bg-lavenderHaze-100/76 dark:bg-midnightBlue-900/80",
             )}
           >
             <p className="text-xxs font-semibold uppercase tracking-[0.3em] opacity-65">
@@ -301,9 +295,9 @@ export default async function AboutPage() {
 
       <section
         className={classNames(
-          "w-full max-w-screen-2xl rounded-4xl border px-6 py-8 shadow-sm",
-          "border-slate-400/80 bg-linear-135 from-lavenderHaze-100 via-white to-twilightPurple-100",
-          "dark:border-slate-500 dark:bg-linear-135 dark:from-nightIndigo-1000 dark:via-nightIndigo-1000 dark:to-nightIndigo-900/55",
+          "w-full max-w-screen-2xl rounded-4xl  px-6 py-8 shadow-sm",
+          "bg-linear-135 from-lavenderHaze-100 via-white to-twilightPurple-100",
+          "dark:bg-linear-135 dark:from-nightIndigo-1000 dark:via-nightIndigo-1000 dark:to-nightIndigo-900/55",
         )}
       >
         <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
