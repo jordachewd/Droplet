@@ -2,7 +2,25 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-17 — PM deep audit #29. Phases 63.1–63.2 archived. All Phases 1–60.7, 63.1–63.2 complete. All Milestones 0–21 COMPLETED. 369 unit tests (65+ suites). Build passing.
+> Last updated: 2026-03-18 — PM deep audit #31. Phase 64 archived. All Phases 1–64.7, 63.1–63.2 complete. Milestone 22 substantially complete. 369 unit tests (65+ suites). Build passing.
+
+---
+
+## Phase 64.1–64.7 — Brand Color Palette v2 Migration — COMPLETED (2026-03-18)
+
+> PM audit #31. Engineer Phase 64 work report confirmed. Triple-audit verified (PM + Architect + Engineer). All legacy palette tokens removed. Full validation gateway passed (prettier, lint, tsc, 369 unit tests, build). E2E: 2 pre-existing failures in pricing copy specs (not migration related).
+
+- [x] **64.1 HIGH** — Defined new brand palette shade scales in globals.css @theme. Added 10-step palettes for nightIndigo, twilightPurple, midnightBlue, lavenderHaze, dustyBlue. Removed `--color-navy-*`, `--color-lemon-*`, `--color-lightBackground-*`, `--color-darkBackground-*`, `--color-lightText-*`, `--color-darkText-*` definitions. Kept `--color-grass-*` temporarily.
+- [x] **64.2 HIGH** — Updated globals.css component utility classes + @apply rules. Body, links, headings, buttons, icon button, tooltip, chat markdown, scrollbar — all migrated to new palette. `btn-contained` light = twilightPurple, dark = dustyBlue, text = lavenderHaze. Hardcoded teal shadow removed.
+- [x] **64.3 HIGH** — Bulk rename: `lightBackground-` → `lavenderHaze-` and `darkText-` → `lavenderHaze-` across all src/ files.
+- [x] **64.4 HIGH** — Bulk rename: `darkBackground-` → `nightIndigo-` and `lightText-` → `midnightBlue-` across all src/ files.
+- [x] **64.5 HIGH** — Migrated `grass-` → `twilightPurple-` (light) / `dustyBlue-` (dark). 17 mechanical + 8 manual locations. plan-promo, plan-card, checkout-form, landing-page, about, faqs, admin-limits-section all updated. Removed `--color-grass-*` definitions.
+- [x] **64.6 HIGH** — Clerk appearance hex updated: `colorPrimary: "#4B0082"` (Twilight Purple), `colorText: "#191970"` (Midnight Blue). Old teal shadow removed from btn-contained.
+- [x] **64.7 HIGH** — Full validation gateway passed. Zero old token references in src/ (lightBackground, darkBackground, lightText, darkText, grass, navy, lemon). @theme block contains only 5 brand palettes.
+
+**Scope:** ~60 source files, ~538 references migrated. Brand palette v2 fully operational.
+
+**New palette:** nightIndigo (#1B003F), twilightPurple (#4B0082), midnightBlue (#191970), lavenderHaze (#E6E6FA), dustyBlue (#6495ED). Supersedes Navy/Lemon/Grass (Milestone 21).
 
 ---
 

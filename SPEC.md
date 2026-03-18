@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-18 (PM audit #30. Phases 60, 63.1–63.2 COMPLETE. Brand palette v2 planned (Phase 64, TD-DS-03). Active: TD-DS-03 (HIGH), TD-DS-04 (MEDIUM), TD-UX-05 (MEDIUM), TD-API-09 (LOW). 369 unit tests (65+ suites). Build passing.)
+> Last updated: 2026-03-18 (PM audit #31. Phases 1–64.7, 63.1–63.2 COMPLETE. Brand palette v2 delivered (TD-DS-03 RESOLVED). Active: TD-MEDIA-01 (CRITICAL), TD-DATA-01 (CRITICAL), TD-DATA-02 (HIGH), TD-DS-04 (MEDIUM), TD-UX-05 (MEDIUM), TD-API-09 (LOW). 369 unit tests (65+ suites). Build passing.)
 
 ---
 
@@ -244,7 +244,10 @@ Prompts are versioned and separated from request handlers. `buildPersonaAwareSys
 | Reason Code                          | Message to User                                                         | Next Action                                |
 | ------------------------------------ | ----------------------------------------------------------------------- | ------------------------------------------ |
 | `prompt_limit_reached`               | "You've reached the message limit for this conversation."               | `start_new_conversation` or `upgrade_plan` |
-| `media_limit_reached`                | "You've reached your media generation limit."                           | `upgrade_plan` or `contact_support`        |
+| `media_limit_reached`                | "You've reached your media generation limit." (legacy generic)          | `upgrade_plan` or `contact_support`        |
+| `image_limit_reached`                | "You've reached your image generation limit for this billing period."   | `upgrade_plan` or `contact_support`        |
+| `audio_limit_reached`                | "You've reached your audio generation limit for this billing period."   | `upgrade_plan` or `contact_support`        |
+| `video_limit_reached`                | "You've reached your video generation limit for this billing period."   | `upgrade_plan` or `contact_support`        |
 | `daily_conversation_limit_reached`   | "You've reached the daily conversation limit for your plan."            | `upgrade_plan` or `contact_support`        |
 | `conversation_storage_limit_reached` | "This conversation has reached its storage limit."                      | `start_new_conversation`                   |
 | `billing_state_invalid`              | "Your plan has expired."                                                | `upgrade_plan`                             |
@@ -680,7 +683,7 @@ All file handling technical debt has been resolved. S3 cleanup on task/user dele
 - Dark/light themes via `data-Droplet-theme` attribute
 - Bootstrap Icons
 
-#### Brand Color Palette (Milestone 22 — pending implementation)
+#### Brand Color Palette (Milestone 22 — IMPLEMENTED, Phase 64)
 
 | Token Name       | Base Hex  | Role                                     |
 | ---------------- | --------- | ---------------------------------------- |
@@ -696,7 +699,7 @@ All file handling technical debt has been resolved. S3 cleanup on task/user dele
 
 **Borders:** TailwindCSS `slate` palette (unchanged from Milestone 21).
 
-**Previous palette (Milestone 21, superseded):** Navy (#0D3B66), Lemon (#FAF0CA), Grass (#27A148) — being replaced. Semantic tokens `lightBackground`, `darkBackground`, `lightText`, `darkText` → removed. New tokens use brand palette names directly.
+**Previous palette (Milestone 21, superseded):** Navy (#0D3B66), Lemon (#FAF0CA), Grass (#27A148) — replaced. Semantic tokens `lightBackground`, `darkBackground`, `lightText`, `darkText` → removed. New tokens use brand palette names directly.
 
 ---
 
@@ -722,7 +725,7 @@ All file handling technical debt has been resolved. S3 cleanup on task/user dele
 
 ## 13. Testing
 
-- **Unit tests**: 65+ suites, 368 tests (Vitest) — includes streaming, webhook, chat-wrapper, chat-body stop-state, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, persona prompt, rate limiting, task complexity classification, conversation stop enforcement, entitlement resolver full coverage (including admin override tests), checkout-success page, admin audit trail, OpenAI route tests, atomic prompt limit, daily conversation limit, media error handling, universal feature access, trial access tests, effective model config, effective plan config, checkout price bypass regression, video generation.
+- **Unit tests**: 65+ suites, 369 tests (Vitest) — includes streaming, webhook, chat-wrapper, chat-body stop-state, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, persona prompt, rate limiting, task complexity classification, conversation stop enforcement, entitlement resolver full coverage (including admin override tests), checkout-success page, admin audit trail, OpenAI route tests, atomic prompt limit, daily conversation limit, media error handling, universal feature access, trial access tests, effective model config, effective plan config, checkout price bypass regression, video generation.
 - **E2E tests**: 13 Playwright spec files across browser projects (chat-app-shell, auth-boundaries, public-pages with 70+ tests, conversation-lifecycle, user-profile, admin-users, admin-features, landing-page, plans-public, pricing-public, authenticated-flows, persona-trial-access). 228 total. **165 passing, 5 failed (stale Clerk auth session + DB connectivity), 48 skipped** (explained: Chromium-only trial spec × 6 non-Chromium projects = 24 new skips, all intentional). Note: `pricing-public.spec.ts` is a duplicate of `plans-public.spec.ts` — to be removed (Phase 31.4).
 - **Coverage**: Configured (Phase 24.1) — v8 provider, thresholds: 70% statements / 60% branches / 70% functions / 70% lines. Current: 82/71/88/82.
 - **Gap**: No dedicated E2E spec for streamed chunk-by-chunk rendering (manually verified via Playwright MCP). Persona selector E2E (35.2) pending.
@@ -798,12 +801,25 @@ _None._
 | TD-PLAN-01 | Billing | No recurring subscriptions (deferred v1)                                      | Low      |
 | TD-AI-18   | OpenAI  | errorMessage forwarding pattern in /api/openai is safe but fragile (advisory) | Low      |
 
-### Active — High Priority (PM Audit #30, Owner-Directed)
+### Active — Critical Priority (PM Audit #31, Triple-Audit Confirmed)
 
-| ID       | Area   | Description                                                                                                                                                                                                                     | Severity |
-| -------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| TD-DS-03 | Design | Brand palette v2 migration: replace Navy/Lemon/Grass + semantic tokens (lightBackground, darkBackground, lightText, darkText) with 5 brand palette tokens (nightIndigo, twilightPurple, midnightBlue, lavenderHaze, dustyBlue). | High     |
-| TD-DS-04 | Design | 55+ pre-existing dark mode pairing gaps: light tokens used without `dark:` counterpart or vice versa. Inherited from Milestone 21. Track separately from palette migration.                                                     | Medium   |
+| ID          | Area | Description                                                                                                                                                                                                                                                                              | Severity |
+| ----------- | ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| TD-MEDIA-01 | API  | Generic `media_limit_reached` stop reason masks per-media-type limiting. Premium users hitting video cap (10/month) see "media generation limit" — implies ALL media is limited when only video is. Must split into `image_limit_reached`, `audio_limit_reached`, `video_limit_reached`. | Critical |
+| TD-DATA-01  | Data | User deletion does NOT cascade to `UsageEvent` records. All 3 deletion paths (self-delete, admin remove, Clerk webhook) miss `UsageEvent.deleteMany`. Orphaned records accumulate forever. GDPR compliance risk.                                                                         | Critical |
+| TD-DATA-02  | Data | Admin `removeUserByAdmin` races `User.findByIdAndDelete` in parallel with child cleanup. If User deletes first but child cleanup fails, orphaned data is unrecoverable. Must match sequential pattern from user self-delete.                                                             | High     |
+
+### ~~Active — High Priority (PM Audit #30, Owner-Directed)~~ (Resolved — PM Audit #31)
+
+| ID       | Area   | Description                                                                                                                 | Status   |
+| -------- | ------ | --------------------------------------------------------------------------------------------------------------------------- | -------- |
+| TD-DS-03 | Design | Brand palette v2 migration — **RESOLVED (Phase 64.1–64.7)**. All 5 brand tokens operational. Zero legacy references remain. | Resolved |
+
+### Active — Medium Priority (PM Audit #31)
+
+| ID       | Area   | Description                                                                                                                                                                 | Severity |
+| -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| TD-DS-04 | Design | 55+ pre-existing dark mode pairing gaps: light tokens used without `dark:` counterpart or vice versa. Inherited from Milestone 21. Track separately from palette migration. | Medium   |
 
 ### ~~Active~~ Resolved — Critical Priority (PM Audit #29)
 

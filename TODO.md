@@ -5,228 +5,277 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: All Milestones 0–22 COMPLETE (21 delivered, 22 pending). Phases 1–60.7, 63.1–63.2 complete. 369 unit tests passing (65+ suites). Build passing.**
-> **PM deep audit #30 (2026-03-18): Triple-audit (PM + Architect + Engineer). Brand palette v2 migration planned.**
-> **Priority order: 64.1 → 64.2 → 64.3 → 64.4 → 64.5 → 64.6 → 64.7 → 61.1 → 61.2 → 61.3 → 31.4 → 46.x → 29.x → 26.x**
-> **All Phase 26+ deferred work is ON HOLD until PM-approved.**
+> **STATUS: Milestone 22 substantially COMPLETE. Phases 1–64.7, 63.1–63.2 complete. 369 unit tests passing (65+ suites). Build passing.**
+> **PM deep audit #31 (2026-03-18): Triple-audit (PM + Architect + Engineer). 2 CRITICAL bugs found. Owner directives integrated.**
+> **Priority order: 65.1 → 65.2 → 65.3 → 65.4 → 66.1 → 66.2 → 66.3 → 67.1 → 67.2 → 67.3 → 61.1 → 61.2 → 61.3 → 31.4 → 46.x → 29.x → 26.x**
+> **CRITICAL bugs (Phase 65) MUST be resolved before any other work. All Phase 26+ deferred work is ON HOLD until PM-approved.**
 
 ---
 
-## Phase 64: Brand Color Palette v2 Migration — HIGH (PM Audit #30, Owner-Directed)
+## ~~Phase 64: Brand Color Palette v2 Migration~~ — ✅ DONE (Archived to DONE.md)
 
-> **HIGH priority. Owner-directed brand palette change. Blocks all feature work until complete.**
-> **Milestone 22. Triple-audit (PM + Architect + Engineer) confirmed scope: ~60 files, ~538 references, ~175 min estimated.**
->
-> **Brand Palette:** Night Indigo (#1B003F), Twilight Purple (#4B0082), Midnight Blue (#191970), Lavender Haze (#E6E6FA), Dusty Blue (#6495ED).
-> **Light Theme:** Text = Midnight Blue, Background = Lavender Haze, Buttons = bg Twilight Purple / text Lavender Haze.
-> **Dark Theme:** Text = Lavender Haze, Background = Night Indigo, Buttons = bg Dusty Blue / text Lavender Haze.
->
-> **Migration mapping:**
->
-> - `lightBackground-*` → `lavenderHaze-*` (53 files, 217 refs)
-> - `darkBackground-*` → `nightIndigo-*` (55 files, 241 refs)
-> - `lightText-*` → `midnightBlue-*` (7 files, 15 refs)
-> - `darkText-*` → `lavenderHaze-*` (5 files, 12 refs)
-> - `grass-*` → `twilightPurple-*` (light) / `dustyBlue-*` (dark) (11 files, 53 refs)
-> - Remove dead `navy-*`, `lemon-*` definitions (0 component refs)
->
-> **Execution order:** 64.1 → 64.2 → 64.3 → 64.4 → 64.5 → 64.6 → 64.7. Each sub-phase is a checkpoint.
+**Completed 2026-03-18.** All 7 sub-tasks (64.1–64.7) delivered. ~60 files, ~538 references migrated. Brand palette v2 operational.
 
 ---
 
-### 64.1 HIGH — Define new brand palette shade scales in globals.css @theme
+## ~~Phase 63: Critical Bug Fixes~~ — ✅ DONE (Archived to DONE.md)
 
-**Ref:** Milestone 22 Block A. Foundation step — everything depends on this.
+**Completed 2026-03-17.** 63.1 (Client self-delete Clerk cascade) + 63.2 (Admin limits UI safeguard) delivered.
+
+---
+
+## Phase 65: CRITICAL Bug Fixes — CRITICAL (PM Audit #31, Triple-Audit Confirmed)
+
+> **CRITICAL priority. Triple-audit (PM + Architect + Engineer) all confirmed these bugs independently.**
+> **MUST be resolved before any other work. Premium users are affected.**
+
+---
+
+### 65.1 CRITICAL — Split `media_limit_reached` into type-specific stop reasons (image/audio/video)
+
+**Ref:** PM audit #31. Owner report: "PREMIUM user has media limitations — gets error message about that — why?" Root cause: Premium has unlimited images + audio, but video is capped at 10/month. When video limit is hit, the error says "You've reached your media generation limit" (generic) — Premium user thinks ALL media is limited.
+
+**Files:** `src/types/TaskData.d.tsx`, `src/lib/database/models/tasks.model.tsx`, `src/lib/actions/task.actions.tsx`, `src/lib/utils/openai/generateResponse.tsx`, `src/app/api/openai/route.tsx`, `src/components/chat/chat-body.tsx`, `tests/unit/conversation-stop.test.ts`, `tests/unit/chat-body.test.tsx`
 
 **What to do:**
 
-1. Generate 10-step shade scales (100-1000) for all 5 brand colors using oklch-based perceptual lightness. Use https://uicolors.app/create or similar tool. Base (500) values: Night Indigo #1B003F, Twilight Purple #4B0082, Midnight Blue #191970, Lavender Haze #E6E6FA, Dusty Blue #6495ED.
-2. Add all 5 new palette definitions to the `@theme` block in `src/app/globals.css` as `--color-nightIndigo-*`, `--color-twilightPurple-*`, `--color-midnightBlue-*`, `--color-lavenderHaze-*`, `--color-dustyBlue-*`.
-3. Remove `--color-navy-*` (10 definitions) and `--color-lemon-*` (9 definitions) — confirmed dead tokens with zero component references.
-4. Remove `--color-lightBackground-*`, `--color-darkBackground-*`, `--color-lightText-*`, `--color-darkText-*` definitions.
-5. Keep `--color-grass-*` temporarily (needed until 64.5).
-6. Verify contrast: `lavenderHaze-500` (#E6E6FA) on `nightIndigo-1000` must be ≥4.5:1 (currently ~13.5:1 — good). Also verify `lavenderHaze-700` against `nightIndigo-900`/`1000`.
+1. Add three new `TaskEndedReason` variants: `"image_limit_reached"`, `"audio_limit_reached"`, `"video_limit_reached"` alongside existing `"media_limit_reached"` (keep for backward compat with existing DB records).
+2. Add three new `BlockedReason` variants in `generateResponse.tsx`: `"image_limit_reached"`, `"audio_limit_reached"`, `"video_limit_reached"`.
+3. Update `generateResponse.tsx` blocked handlers to return type-specific `blockedReason` instead of generic `"media_limit_reached"`.
+4. Update `STOP_REASON_MESSAGES` in `route.tsx` with type-specific messages:
+   - `image_limit_reached: "You've reached your image generation limit for this billing period."`
+   - `audio_limit_reached: "You've reached your audio generation limit for this billing period."`
+   - `video_limit_reached: "You've reached your video generation limit for this billing period."`
+5. Update `stopReasonTitles` in `chat-body.tsx` with matching messages.
+6. Update `finalizeAIResponse()` in route to map type-specific blocked reasons.
+7. Update Mongoose `endedReason` enum to include new values.
+8. Update `VALID_STATUS_TRANSITIONS` in `task.actions.tsx`.
+9. Update unit tests for all three new stop reason types.
 
 **Acceptance criteria:**
 
-- [ ] `@theme` block contains 5 new brand palettes + grass (temporary)
-- [ ] Zero `--color-navy-*` or `--color-lemon-*` definitions remain
-- [ ] Zero `--color-lightBackground-*`, `--color-darkBackground-*`, `--color-lightText-*`, `--color-darkText-*` definitions remain
-- [ ] Contrast check: lavenderHaze shades 500-700 all pass ≥4.5:1 against nightIndigo 900-1000
-- [ ] `npx tsc --noEmit` passes (CSS-only change, no type impact)
+- [ ] Premium user hitting video limit sees "video generation limit" not "media generation limit"
+- [ ] Each media type has its own specific stop reason and user-facing message
+- [ ] Existing `media_limit_reached` records in DB still render correctly (backward compat)
+- [ ] Unit tests cover all three new stop reason types
+- [ ] `npx tsc --noEmit` passes
+- [ ] `npm run test` passes
 
 ---
 
-### 64.2 HIGH — Update globals.css component utility classes + @apply rules
+### 65.2 CRITICAL — Add UsageEvent cascade to all user deletion paths
 
-**Ref:** Milestone 22 Block A. 18 @apply rules in globals.css reference old tokens. Globals.css changes propagate to every component using these utility classes.
+**Ref:** PM audit #31. UsageEvent records orphaned forever when users are deleted. GDPR compliance risk — user data retained after deletion.
 
-**Files:** `src/app/globals.css` only.
+**Files:** `src/lib/actions/user.actions.tsx`, `src/lib/actions/admin.actions.tsx`, `src/app/api/webhooks/clerk/route.tsx`
 
 **What to do:**
 
-1. Update `body` base: `bg-lightBackground-500` → `bg-lavenderHaze-500`, `text-lightText-500` → `text-midnightBlue-500`, `dark:bg-darkBackground-1000` → `dark:bg-nightIndigo-1000`, `dark:text-darkText-500` → `dark:text-lavenderHaze-500`.
-2. Update `a` element: `text-lightText-600` → `text-midnightBlue-600`, `hover:text-darkBackground-500` → `hover:text-nightIndigo-500`, `dark:text-darkText-700` → `dark:text-lavenderHaze-700`.
-3. Update `.heading-*`, `.body-*` text classes: `lightText-500` → `midnightBlue-500`, `darkText-500` → `lavenderHaze-500`.
-4. Update `.btn-text` and `.btn-outlined`: `grass-*` → `twilightPurple-*` (light) / `dustyBlue-*` (dark). Already split via `dark:` prefix.
-5. Update `.btn-contained`: `darkBackground-600` → `twilightPurple-600` (light), add `dark:border-dustyBlue-600 dark:bg-dustyBlue-600`. Also change `text-white` to `text-lavenderHaze-500` per brand spec. **Fix hardcoded teal shadow** `rgba(21,118,118,0.3)` → use new brand accent color rgb values.
-6. Update `.icon-btn`: `lightText-500` → `midnightBlue-500`, `lightBackground-300` → `lavenderHaze-300`, etc.
-7. Update `.tooltip-content`: `darkBackground-600` → `nightIndigo-600`.
-8. Update `.chat-markdown`, `.chat-markdown--bot`, table styles, `.droplet-scrollbar`: all old tokens → new brand tokens.
+1. Add `UsageEvent.deleteMany({ userId: clerkId })` to user self-delete in `user.actions.tsx`.
+2. Add `UsageEvent.deleteMany({ userId: targetUser.clerkId })` to admin `removeUserByAdmin` in `admin.actions.tsx`.
+3. Add `UsageEvent.deleteMany({ userId: clerkId })` to Clerk webhook `user.deleted` handler.
+4. Optionally add `RateLimitEntry.deleteMany({ key: { $regex: clerkId } })` — lower priority since TTL auto-expires, but cleaner.
+5. Do NOT delete AdminAuditLog entries — audit trail must persist beyond user lifecycle.
 
 **Acceptance criteria:**
 
-- [ ] Zero `lightBackground-*`, `darkBackground-*`, `lightText-*`, `darkText-*`, `grass-*` references in globals.css @apply rules
-- [ ] `btn-contained` shadow uses brand accent rgb, not teal
-- [ ] `btn-contained` has light (twilightPurple) and dark (dustyBlue) variants
-- [ ] Visual smoke test: whole app reflects new palette via globals.css cascade
+- [ ] All three deletion paths include `UsageEvent.deleteMany`
+- [ ] No orphaned UsageEvent records after user deletion
+- [ ] AdminAuditLog entries preserved (not deleted)
+- [ ] `npx tsc --noEmit` passes
+- [ ] Existing unit tests still pass
+
+---
+
+### 65.3 HIGH — Fix admin removeUserByAdmin deletion order (race condition)
+
+**Ref:** PM audit #31. `User.findByIdAndDelete` runs in parallel with `Task.deleteMany` and `Transaction.deleteMany`. If User deletes first but child cleanup fails, orphaned data remains with no way to retry.
+
+**Files:** `src/lib/actions/admin.actions.tsx`
+
+**What to do:**
+
+1. Change admin `removeUserByAdmin` to delete child data FIRST, then User document LAST.
+2. Match the pattern used in user self-delete (`user.actions.tsx`) — sequential, not parallel.
+3. Order: Clerk delete → Tasks delete → Transactions delete → UsageEvent delete → S3 cleanup → User delete.
+
+**Acceptance criteria:**
+
+- [ ] `User.findByIdAndDelete` runs AFTER child data cleanup
+- [ ] Failure in any child cleanup step prevents User deletion (returns error)
 - [ ] `npx tsc --noEmit` passes
 
 ---
 
-### 64.3 HIGH — Bulk rename: lightBackground → lavenderHaze + darkText → lavenderHaze
+### 65.4 HIGH — Extract STOP_REASON_MESSAGES to shared constant
 
-**Ref:** Milestone 22 Block B. Mechanical find-replace across all component files.
+**Ref:** PM audit #31. Stop reason messages are duplicated in `route.tsx` and `chat-body.tsx`. If one changes and the other doesn't, user sees inconsistent messages.
+
+**Files:** `src/constants/openai.tsx` (or new `src/constants/stop-reasons.ts`), `src/app/api/openai/route.tsx`, `src/components/chat/chat-body.tsx`
 
 **What to do:**
 
-1. Find-replace `lightBackground-` → `lavenderHaze-` in ALL files under `src/` (excluding globals.css @theme definitions which were already removed in 64.1).
-2. Find-replace `darkText-` → `lavenderHaze-` in ALL files under `src/`.
-3. Both map to the same `lavenderHaze-*` palette. This is architecturally correct — they shared the same Lemon-based values in the old system.
-4. Verify all opacity modifiers are preserved (e.g., `bg-lavenderHaze-100/80`).
-
-**Estimated scope:** 53 files (lightBackground) + 5 files (darkText) = ~58 files, ~229 refs.
+1. Create a shared `STOP_REASON_MESSAGES` constant in `src/constants/`.
+2. Import and use in both `route.tsx` and `chat-body.tsx`.
+3. Remove the duplicated definitions.
 
 **Acceptance criteria:**
 
-- [ ] Zero `lightBackground-` references in `src/` (grep verification)
-- [ ] Zero `darkText-` references in `src/` (grep verification)
-- [ ] All opacity modifiers preserved
+- [ ] Single source of truth for stop reason messages
+- [ ] Both route.tsx and chat-body.tsx import from shared constant
 - [ ] `npx tsc --noEmit` passes
 
 ---
 
-### 64.4 HIGH — Bulk rename: darkBackground → nightIndigo + lightText → midnightBlue
+## Phase 66: Profile & Admin Usability — HIGH (PM Audit #31, Owner-Directed)
 
-**Ref:** Milestone 22 Block B. Mechanical find-replace across all component files.
+> **HIGH priority. Owner directives: "client profile page must display plan limitations and usage" and "admin/users table must provide usage and limits info."**
+
+---
+
+### 66.1 HIGH — Add usage display section to client profile page
+
+**Ref:** Owner directive. Profile page has `userData.plan` with `imageGenerations`, `audioGenerations`, `videoGenerations`, `usagePeriodStart` — but never displays them.
+
+**Files:** `src/app/(chat)/app/profile/page.tsx`, `src/components/sections/profile-hero.tsx` (or new `profile-usage.tsx`)
 
 **What to do:**
 
-1. Find-replace `darkBackground-` → `nightIndigo-` in ALL files under `src/`.
-2. Find-replace `lightText-` → `midnightBlue-` in ALL files under `src/`.
-3. Note: `darkBackground-*` is used as both background AND accent (btn-contained, tooltip, link hover). The rename is correct per brand spec — these non-background uses intentionally change from navy to deep purple.
-4. Verify all opacity modifiers are preserved.
-
-**Estimated scope:** 55 files (darkBackground) + 7 files (lightText) = ~62 files, ~256 refs.
+1. Fetch effective plan limits server-side via `getEffectivePlanConfig()`.
+2. Compute usage data: images used/limit, audio used/limit, video used/limit, daily conversations used/limit.
+3. Display a "Usage" section (below profile info, above billing) showing:
+   - Current plan name + tier badge
+   - Media generation counters: `{used} / {limit}` with progress bars (or "Unlimited" for -1)
+   - Daily conversations: `{used} / {limit}` (fetch daily count from User model)
+   - Usage period start + reset date
+4. Data fetched server-side, passed as props. No client-side fetching.
 
 **Acceptance criteria:**
 
-- [ ] Zero `darkBackground-` references in `src/` (grep verification)
-- [ ] Zero `lightText-` references in `src/` (grep verification)
-- [ ] All opacity modifiers preserved
+- [ ] Profile page shows image/audio/video usage counters with limits
+- [ ] Profile page shows daily conversation usage
+- [ ] "Unlimited" displayed for -1 limit values
+- [ ] All data from server-side, no useEffect fetching
 - [ ] `npx tsc --noEmit` passes
 
 ---
 
-### 64.5 HIGH — Migrate grass → twilightPurple/dustyBlue (accent split)
+### 66.2 HIGH — Make video generation limit editable in admin settings
 
-**Ref:** Milestone 22 Block B. Most complex sub-task. `grass-*` is unified accent, new design splits by theme.
+**Ref:** PM audit #31. Video limit uses `<input type="hidden">` — admin cannot change it.
 
-**Files:** 11 files, 53 refs. Architect identified 17 locations with existing `dark:` prefix (mechanical) and 8 locations needing manual `dark:` additions.
+**Files:** `src/components/admin/settings/admin-limits-section.tsx`
 
 **What to do:**
 
-1. **Mechanical split** (17 locations): Where `grass-X` has a `dark:grass-Y` companion on same element, replace `grass-X` → `twilightPurple-X` and `dark:grass-Y` → `dark:dustyBlue-Y`.
-2. **Manual split** (8 locations needing new dark variants):
-   - `plan-promo.tsx`: `bg-grass-500 text-grass-1000` → `bg-twilightPurple-500 text-twilightPurple-1000 dark:bg-dustyBlue-500 dark:text-dustyBlue-1000`. Same for `border-grass-1000` lines.
-   - `plan-card.tsx`: Same pattern. `bg-grass-500 text-grass-1000 dark:bg-grass-500 dark:text-grass-1000` → `bg-twilightPurple-500 text-twilightPurple-1000 dark:bg-dustyBlue-500 dark:text-dustyBlue-1000`.
-   - `checkout-form.tsx`: `disabled:text-grass-1000/50` → `disabled:text-twilightPurple-1000/50 dark:disabled:text-dustyBlue-1000/50`.
-3. After all replacements, remove `--color-grass-*` definitions from `@theme` block.
-4. Gradient tokens (about, landing-page): `to-grass-100` → `to-twilightPurple-100`. Dark gradient lines already use separate tokens.
+1. Replace `<input type="hidden" name="${fieldPrefix}Video" value={planLimits.video} />` with `<LimitInput label="Video Generations" name="${fieldPrefix}Video" defaultValue={planLimits.video} />`.
+2. Verify the form submission parses `${plan}Video` correctly in `admin.actions.tsx`.
 
 **Acceptance criteria:**
 
-- [ ] Zero `grass-` references in `src/` (grep verification)
-- [ ] Zero `--color-grass-*` definitions in globals.css
-- [ ] All button/accent elements have both light (twilightPurple) and dark (dustyBlue) variants
+- [ ] Video generation limits editable via admin UI for all plans
+- [ ] Existing LimitInput component reused (shows Unlimited badge for -1)
+- [ ] Form submission correctly saves video limit changes
 - [ ] `npx tsc --noEmit` passes
 
 ---
 
-### 64.6 HIGH — Clerk appearance hex update + btn-contained shadow cleanup
+### 66.3 MEDIUM — Add usage summary columns to admin users list table
 
-**Ref:** Milestone 22 Block C. Non-token-based color references that won't be caught by find-replace.
+**Ref:** Owner directive: "In /admin/users table must provide information about usage and limits."
 
-**Files:** `src/app/layout.tsx`, `src/app/globals.css`
+**Files:** `src/app/(admin)/admin/users/page.tsx`, `src/components/admin/users/admin-users-table.tsx`, `src/lib/utils/admin-queries.ts`
 
 **What to do:**
 
-1. Update Clerk `appearance.variables` in `layout.tsx`:
-   - `colorPrimary: "#6A0DAD"` → `colorPrimary: "#4B0082"` (Twilight Purple)
-   - `colorText: "#008080"` → `colorText: "#191970"` (Midnight Blue)
-2. Verify `btn-contained` shadow was updated in 64.2. If not, fix `rgba(21,118,118,0.3)` → appropriate brand accent rgb values.
+1. Extend admin users list query to include plan limits and basic usage data (images/audio/video used, conversations today).
+2. Add concise usage columns to the users table: "Plan" (already exists), "Media Used" (e.g., "3/50 img · 2/50 aud · 0/10 vid"), "Convos Today" (e.g., "3/50").
+3. Keep table concise — full detail available on user detail page click-through.
+4. Data fetched server-side, passed as props to table component.
 
 **Acceptance criteria:**
 
-- [ ] Clerk appearance uses brand palette hex values
-- [ ] No hardcoded teal/legacy color values in src/
+- [ ] Users list table shows media usage summary per user
+- [ ] Users list table shows daily conversation count
+- [ ] Data fetched server-side, not client-side
+- [ ] Unlimited values shown as "∞"
 - [ ] `npx tsc --noEmit` passes
 
 ---
 
-### 64.7 HIGH — Full validation gateway + zero-reference verification
+## Phase 67: Admin Configurability & Hardcoded Data Removal — HIGH (PM Audit #31, Owner-Directed)
 
-**Ref:** Milestone 22 Block C. Final checkpoint.
+> **HIGH priority. Owner directive: "NO HARDCODED data — everything MUST be fully configurable from the ADMIN panel."**
+
+---
+
+### 67.1 HIGH — Refactor PlanPromo to accept data as props (remove independent fetch)
+
+**Ref:** PM audit #31. `PlanPromo` calls `auth()` + `getUserById()` independently despite being rendered inside pages that already have user data. Redundant DB query. Violates "components must be data consumers" rule.
+
+**Files:** `src/components/shared/plan-promo.tsx`, all parent pages that render `PlanPromo`
 
 **What to do:**
 
-1. Grep verify: zero hits for ALL removed token names in `src/`: `lightBackground-`, `darkBackground-`, `lightText-`, `darkText-`, `grass-`, `navy-`, `lemon-`.
-2. Grep verify: zero `--color-navy`, `--color-lemon`, `--color-grass`, `--color-lightBackground`, `--color-darkBackground`, `--color-lightText`, `--color-darkText` in globals.css.
-3. Verify `@theme` block contains ONLY: `nightIndigo-*`, `twilightPurple-*`, `midnightBlue-*`, `lavenderHaze-*`, `dustyBlue-*` + standard Tailwind overrides (breakpoints, container, text sizes).
-4. Run full validation gateway:
-   ```bash
-   npx prettier --write .
-   npm run lint
-   npx tsc --noEmit
-   npm run test
-   npm run build
-   ```
-5. All 5 gates must pass.
+1. Change `PlanPromo` from async Server Component that fetches its own data to a pure data-consuming component that receives `planName`, `role`, and `plan` data as props.
+2. Update all parent pages to pass the required props.
+3. Remove the independent `auth()` + `getUserById()` calls from PlanPromo.
 
 **Acceptance criteria:**
 
-- [ ] Zero old token references in src/
-- [ ] @theme block clean — only 5 brand palettes
-- [ ] Prettier passes
-- [ ] Lint passes
-- [ ] TypeScript passes
-- [ ] Unit tests pass (369+)
-- [ ] Build passes
+- [ ] PlanPromo receives all data via props
+- [ ] Zero independent data fetching inside PlanPromo
+- [ ] All parent pages pass required props
+- [ ] `npx tsc --noEmit` passes
 
 ---
 
-## Phase 63: Critical Bug Fixes — CRITICAL (PM Audit #29, Triple-Audit Confirmed)
+### 67.2 MEDIUM — Add `"server-only"` import to admin-queries.ts
 
-> **CRITICAL priority. Triple-audit confirmed: client self-delete orphans Clerk account. Must be fixed before any feature work.**
-> **Premium media limitation report also investigated — requires admin UI safeguard and owner clarification on Premium video limit.**
+**Ref:** PM audit #31. `admin-queries.ts` has no `"server-only"` guard — if accidentally imported from a client component, it would leak server-side DB logic.
 
----
+**Files:** `src/lib/utils/admin-queries.ts`
 
-### ~~63.1 CRITICAL — Fix client self-delete to also delete from Clerk~~ ✅ DONE
+**What to do:**
 
-**Completed PM audit #29.** Clerk deletion added before MongoDB cleanup. Clerk failure prevents MongoDB deletion. Unit test added (369 total). Archived to DONE.md.
+1. Add `import "server-only";` as the first import in `admin-queries.ts`.
 
----
+**Acceptance criteria:**
 
-### ~~63.2 HIGH — Add admin limits UI safeguard for unlimited (-1) values~~ ✅ DONE
-
-**Completed PM audit #29.** LimitInput component added with Unlimited badge, min={-1}, amber warning on unlimited→finite change, helper text. Archived to DONE.md.
+- [ ] `import "server-only"` present
+- [ ] `npx tsc --noEmit` passes
 
 ---
 
-## Phase 61: Admin Design Alignment & Data Organization — MEDIUM (PM Audit #28, Owner Directives)
+### 67.3 MEDIUM — Outsource pure static JSON data to dedicated folder
 
-> **MEDIUM priority. Run after Phase 60 (palette migration). Admin design must match /app design. JSON data outsourcing.**
+**Ref:** Owner directive: "JSON data inside app files/components must be outsourced to a folder named json or similar."
+
+**Files:** `src/constants/landing-data.ts`, `src/constants/cookies-data.ts`, `src/constants/privacy-data.ts`, `src/constants/terms-data.ts`
+
+**What to do:**
+
+1. Create `src/json/` directory.
+2. Move pure static data arrays from files that have NO dynamic logic:
+   - `landing-data.ts` → `src/json/landing.json` (featureCards, howItWorksSteps)
+   - `cookies-data.ts` → `src/json/cookies.json` (cookieCategories)
+   - `privacy-data.ts` → `src/json/privacy.json` (privacy sections)
+   - `terms-data.ts` → `src/json/terms.json` (terms sections — BUT `buildTermsSections` uses pricing interpolation, so only static parts)
+3. Keep builder functions that use dynamic config interpolation in `src/constants/` — they import from JSON + apply config.
+4. Update imports in consuming components.
+
+**Acceptance criteria:**
+
+- [ ] `src/json/` directory exists with static data files
+- [ ] Builder functions remain in `src/constants/` importing from json
+- [ ] No runtime logic in JSON files
+- [ ] `npx tsc --noEmit` passes
+
+---
+
+## Phase 61: Admin Design Alignment & UX — MEDIUM (PM Audit #28, Owner Directives)
+
+> **MEDIUM priority. Run after Phase 65-67. Admin design must match /app design.**
 
 ---
 
@@ -252,44 +301,20 @@
 
 ---
 
-### 61.2 MEDIUM — Outsource static JSON data to dedicated folder
+### 61.2 MEDIUM — Outsource remaining static data constants to JSON folder
 
-**Ref:** Owner directive: "JSON data inside app files/components must be outsourced to a folder named json or similar."
-
-**Files:** `src/constants/landing-data.ts`, `src/constants/cookies-data.ts`
-
-**What to do:**
-
-1. Create `src/json/` directory.
-2. Move pure static data arrays from `landing-data.ts` (featureCards, howItWorksSteps) and `cookies-data.ts` (cookieCategories) to JSON files in `src/json/`.
-3. Update imports in consuming components.
-4. Note: `about-data.ts`, `terms-data.ts`, `privacy-data.ts`, and `faqs.tsx` contain builder functions with dynamic config interpolation — these stay in `src/constants/`.
+**Ref:** If Phase 67.3 is complete, evaluate if additional constants can be moved. If already sufficient, mark as N/A.
 
 **Acceptance criteria:**
 
-- [ ] `src/json/` directory exists with static data files
-- [ ] `landing-data.ts` and `cookies-data.ts` import from json files or are moved entirely
-- [ ] Builder functions remain in `src/constants/`
-- [ ] `npx tsc --noEmit` passes
+- [ ] All pure static data arrays live in `src/json/`
+- [ ] Builder functions that use dynamic config remain in `src/constants/`
 
 ---
 
 ### 61.3 MEDIUM — Admin user detail usage columns in users list table
 
-**Ref:** Owner directive: "In /admin/users table must provide information about usage and limits (remained vs included)."
-
-**Files:** `src/app/(admin)/admin/users/page.tsx`, `src/components/admin/users/admin-users-table.tsx`
-
-**What to do:**
-
-1. Add usage summary columns to admin users list table: current plan, conversations used/limit, media used/limit.
-2. Keep it concise — full detail available on user detail page.
-
-**Acceptance criteria:**
-
-- [ ] Users list table shows plan name, conversations used/limit, media usage summary
-- [ ] Data fetched server-side, passed as props
-- [ ] `npx tsc --noEmit` passes
+**Ref:** Superseded by Phase 66.3. If 66.3 is complete, mark this as N/A.
 
 ---
 
@@ -362,5 +387,5 @@
 ---
 
 > **Completed phases** are archived in [`DONE.md`](DONE.md).
-> All phases through 59.2 complete. All Milestones 0–20 COMPLETED.
+> All phases through 64.7 complete. All Milestones 0–21 COMPLETED. Milestone 22 substantially complete.
 > Phase 10–12 superseded (see DONE.md for mapping).

@@ -56,6 +56,7 @@ The points below are verified from the current codebase.
 | Theme control        | Admin settings include theme management                                                                                                                                                                                                                                                                                            | ✅ Settings control operational                                                      | Admin settings panel                                                                            |
 | Tiptap               | Not installed (admin content editing uses form controls)                                                                                                                                                                                                                                                                           | Deferred — admin forms use proper controls without rich-text editor                  | `package.json`                                                                                  |
 | Admin UX safety      | Confirmation dialogs on all destructive admin actions, AlertMessage feedback on all 14 admin forms, loading indicators, bulk actions on users/transactions/website tables                                                                                                                                                          | ✅ Admin UX safety directives fully implemented                                      | Admin pages, AdminActionButton, AlertMessage integration                                        |
+| Color palette        | Brand palette v2 delivered: nightIndigo (#1B003F), twilightPurple (#4B0082), midnightBlue (#191970), lavenderHaze (#E6E6FA), dustyBlue (#6495ED). All M21 legacy tokens (lightBackground, darkBackground, lightText, darkText, grass, navy, lemon) removed. Clerk appearance updated.                                              | ✅ Brand identity v2 finalized and fully propagated                                  | Phase 64, `src/app/globals.css`, 58+ migrated files                                             |
 
 ### Practical conclusions
 
@@ -65,6 +66,9 @@ The points below are verified from the current codebase.
 4. Components must be data consumers — no `fetch()` in client components. Pass data from Server Components as props.
 5. Evaluate codebase for unnecessary re-renders and resource leaks.
 6. Move utilities and data fetching to server side.
+7. User removal must cascade Clerk + DB + all related data (Phase 63.1 delivered).
+8. Investigate and fix PREMIUM user media limitations error.
+9. Client profile page must display plan limitations and current usage.
 
 ---
 
@@ -871,7 +875,7 @@ Close the operational gaps that would make launch fragile.
 
 ## Milestone 9 - Launch Readiness And Release Control
 
-> **Status: COMPLETED** — Validation workflow passes (Prettier, lint, tsc, 65+ suites / 368 unit tests, build). E2E: 14 failures (plans/pricing copy assertion mismatch — not functional failures). Release gates A–E green. Gate F substantially green.
+> **Status: COMPLETED** — Validation workflow passes (Prettier, lint, tsc, 65+ suites / 369 unit tests, build). E2E: 2 pre-existing failures (pricing copy assertions — not functional failures). Release gates A–E green. Gate F substantially green.
 
 **Objective**
 
@@ -972,13 +976,13 @@ npm run test:e2e
 npm run build
 ```
 
-**Current status (post-Phase 59):** Prettier, lint, tsc, unit tests (65+ suites / 368 tests), and build all pass. E2E: 14 failures (plans/pricing copy assertion mismatch — not functional failures). Gate F substantially green.
+**Current status (post-Phase 64):** Prettier, lint, tsc, unit tests (65+ suites / 369 tests), and build all pass. E2E: 2 pre-existing failures (pricing copy assertions — not functional failures). Gate F substantially green.
 
 ---
 
 ## 9. Immediate Execution Order
 
-Milestones 0–21 are COMPLETED. The next execution cycle focuses on Milestone 22.
+Milestones 0–22 are SUBSTANTIALLY COMPLETE. Phase 64 (brand palette v2) delivered. Remaining work: Phases 61.1–61.3 and 31.4.
 
 **Completed (Milestones 0–21):**
 
@@ -993,22 +997,40 @@ Milestones 0–21 are COMPLETED. The next execution cycle focuses on Milestone 2
 9. ✅ Persona restructure (10 → 6), admin panel redesign.
 10. ✅ Admin configurability, code quality, production hardening.
 11. ✅ Admin UX safety, bulk actions, design token standardization.
+12. ✅ Brand palette v2 migration (Phase 64), client self-delete cascade (Phase 63.1), admin limits safeguard (Phase 63.2).
 
-**Current (Milestone 22 — Critical Bug Fixes + Admin Design Alignment):**
+**Completed in Milestone 22:**
 
-1. **CRITICAL:** Fix client self-delete Clerk orphaning (Phase 63.1) — **MUST BE FIRST**.
-2. **HIGH:** Admin limits UI safeguard for -1 unlimited values (Phase 63.2).
-3. Proper confirmation modal replacing window.confirm (Phase 61.1).
-4. JSON data outsourcing to dedicated folder (Phase 61.2).
-5. Admin users table usage/limits columns (Phase 61.3).
-6. Archive completed items from TODO.md and ThePlan.md to DONE.md.
+1. ✅ Fix client self-delete Clerk orphaning (Phase 63.1) — DONE.
+2. ✅ Admin limits UI safeguard for -1 unlimited values (Phase 63.2) — DONE.
+3. ✅ Brand palette v2 migration (Phase 64.1–64.7) — DONE. New tokens: nightIndigo, twilightPurple, midnightBlue, lavenderHaze, dustyBlue. All M21 legacy tokens removed. Clerk appearance updated.
+
+**Remaining in Milestone 22:**
+
+4. Proper confirmation modal replacing window.confirm (Phase 61.1) — MEDIUM.
+5. JSON data outsourcing to dedicated folder (Phase 61.2) — MEDIUM.
+6. Admin users table usage/limits columns (Phase 61.3) — MEDIUM.
+7. Phase 31.4 — E2E test updates (LOW).
+
+**Owner-Directed New Requirements (added 2026-03-18):**
+
+8. **CRITICAL** — PREMIUM user media limitations error — needs investigation and fix.
+9. **HIGH** — Client profile page must display plan limitations and current usage.
+10. **HIGH** — Admin panel: Plans, pricing, settings fully configurable — NO hardcoded references in any non-admin code.
+11. **HIGH** — Admin panel layout must respect same design system as /app.
+12. **MEDIUM** — Admin users table must show usage/limits info inline.
+13. **MEDIUM** — JSON data must be outsourced to dedicated json folder.
+
+**Owner Components (added 2026-03-18):**
+
+- `DropletGlobe` component added by Owner at `src/components/shared/droplet-globe.tsx` — currently used on `/about` page.
+- `ToggleTheme` component refactored by Owner at `src/components/shared/toggle-theme.tsx`.
 
 **Remaining deferred work (ON HOLD):**
 
-8. Phase 31.4 — E2E test updates (LOW).
-9. Phase 46.1–46.2 — Admin error boundary + silent catch logging (LOW).
-10. Phase 29.x — Zod/Zustand app-wide modernization (ON HOLD).
-11. Phase 26.x — Persona-aware media prompts, Stripe auto-renewal (ON HOLD).
+14. Phase 46.1–46.2 — Admin error boundary + silent catch logging (LOW).
+15. Phase 29.x — Zod/Zustand app-wide modernization (ON HOLD).
+16. Phase 26.x — Persona-aware media prompts, Stripe auto-renewal (ON HOLD).
 
 ---
 
@@ -1024,9 +1046,9 @@ These items are not banned forever. They are excluded because they create dispro
 
 ---
 
-## 11. Owner-Directed New Work (Added 2026-03-16, Updated 2026-03-17)
+## 11. Owner-Directed New Work (Added 2026-03-16, Updated 2026-03-18)
 
-> **All Milestones 0–21 COMPLETED. All Phases 1–60.7 COMPLETED. 368 unit tests (65+ suites) passing. Build passing.**
+> **All Milestones 0–22 SUBSTANTIALLY COMPLETE. All Phases 1–64.7 COMPLETED. 369 unit tests (65+ suites) passing. Build passing.**
 
 ### Milestone 10 — Layout, Navigation & Library Enhancement
 
@@ -1442,7 +1464,7 @@ These items are not banned forever. They are excluded because they create dispro
 
 ### Milestone 22 — Brand Color Palette v2 Migration (Owner-Directed, 2026-03-18)
 
-> **Status: NOT YET STARTED**
+> **Status: SUBSTANTIALLY COMPLETE** — Phase 64 (brand palette v2 migration) delivered end-to-end (64.1–64.7). New brand palette tokens (nightIndigo, twilightPurple, midnightBlue, lavenderHaze, dustyBlue) fully propagated across 58+ files. All M21 legacy tokens removed. Clerk appearance updated (#4B0082, #191970). Validation: prettier, lint, tsc, 369 unit tests, build all passed. E2E: 2 pre-existing failures (pricing copy specs, NOT migration-related). Remaining: Phases 61.1–61.3, 31.4.
 
 **Context:**
 
