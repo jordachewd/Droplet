@@ -134,8 +134,8 @@ export default function AudioPlayer({ audioSrc }: AudioPlayerProps) {
 
   const audioPlayerClass = classNames(
     "AudioPlayer mx-auto mt-3 flex w-full rounded-lg border shadow",
-    "border-slate-500 bg-lightBackground-100",
-    "dark:border-slate-500 dark:bg-darkBackground-900",
+    "border-slate-500 bg-lavenderHaze-100",
+    "dark:border-slate-500 dark:bg-nightIndigo-900",
   );
 
   const progressTrackClass = classNames(
@@ -163,7 +163,7 @@ export default function AudioPlayer({ audioSrc }: AudioPlayerProps) {
 
         <div className={progressTrackClass}>
           <div
-            className="h-full bg-darkBackground-600 transition-all duration-150"
+            className="h-full bg-nightIndigo-600 transition-all duration-150"
             style={{ width: `${progress}%` }}
           />
         </div>

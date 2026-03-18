@@ -17,7 +17,7 @@ export default async function AdminDashboardPage() {
           <Link
             key={stat.label}
             href={stat.href}
-            className="rounded-2xl border border-slate-300/70 bg-lightBackground-100/80 p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md dark:border-slate-500 dark:bg-darkBackground-900/70"
+            className="rounded-2xl border border-slate-300/70 bg-lavenderHaze-100/80 p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md dark:border-slate-500 dark:bg-nightIndigo-900/70"
           >
             <p className="mb-2 flex items-center gap-2 text-sm opacity-70">
               <i className={stat.icon}></i>

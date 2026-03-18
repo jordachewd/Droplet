@@ -12,8 +12,14 @@ import {
   updateUser,
 } from "@/lib/actions/user.actions";
 
+const { mockDeleteClerkUser } = vi.hoisted(() => ({
+  mockDeleteClerkUser: vi.fn(),
+}));
 vi.mock("@clerk/nextjs/server", () => ({
   auth: vi.fn(),
+  clerkClient: vi
+    .fn()
+    .mockResolvedValue({ users: { deleteUser: mockDeleteClerkUser } }),
 }));
 
 vi.mock("@/lib/database/mongoose", () => ({
@@ -129,6 +135,7 @@ describe("deleteUser", () => {
     vi.clearAllMocks();
     vi.mocked(auth).mockResolvedValue({ userId: "clerk_user_1" } as never);
     vi.mocked(connectToDatabase).mockResolvedValue(undefined as never);
+    mockDeleteClerkUser.mockResolvedValue({});
     vi.mocked(Task.deleteMany).mockResolvedValue({ deletedCount: 0 } as never);
     vi.mocked(Transaction.deleteMany).mockResolvedValue({
       deletedCount: 0,
@@ -157,6 +164,7 @@ describe("deleteUser", () => {
 
     const response = await deleteUser("clerk_user_1");
 
+    expect(mockDeleteClerkUser).toHaveBeenCalledWith("clerk_user_1");
     expect(connectToDatabase).toHaveBeenCalledOnce();
     expect(User.findOne).toHaveBeenCalledWith({ clerkId: "clerk_user_1" });
     expect(deleteUserSelectMock).toHaveBeenCalledWith("_id");
@@ -204,12 +212,32 @@ describe("deleteUser", () => {
 
     const response = await deleteUser("clerk_user_1");
 
+    expect(mockDeleteClerkUser).toHaveBeenCalledWith("clerk_user_1");
     expect(response).toEqual(
       expect.objectContaining({
         status: 404,
         message: "User does not exist!",
       }),
     );
+    expect(Task.deleteMany).not.toHaveBeenCalled();
+    expect(Transaction.deleteMany).not.toHaveBeenCalled();
+    expect(deleteS3Prefix).not.toHaveBeenCalled();
+    expect(User.findByIdAndDelete).not.toHaveBeenCalled();
+  });
+
+  it("returns error and skips MongoDB cleanup when Clerk deletion fails", async () => {
+    mockDeleteClerkUser.mockRejectedValue(new Error("Clerk API error"));
+
+    const response = await deleteUser("clerk_user_1");
+
+    expect(response).toEqual(
+      expect.objectContaining({
+        status: 500,
+        message: "Account deletion failed. Please try again.",
+      }),
+    );
+    expect(connectToDatabase).not.toHaveBeenCalled();
+    expect(User.findOne).not.toHaveBeenCalled();
     expect(Task.deleteMany).not.toHaveBeenCalled();
     expect(Transaction.deleteMany).not.toHaveBeenCalled();
     expect(deleteS3Prefix).not.toHaveBeenCalled();

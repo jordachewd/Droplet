@@ -10,7 +10,7 @@ import { Analytics } from "@vercel/analytics/next";
 
 export const metadata: Metadata = {
   title: "Droplet",
-  description: "Droplet Smart Assistant",
+  description: "Your AI assistant, your way.",
 };
 
 export const viewport: Viewport = {
@@ -53,8 +53,8 @@ export default function RootLayout({
         <ClerkProvider
           appearance={{
             variables: {
-              colorPrimary: "#6A0DAD",
-              colorText: "#008080",
+              colorPrimary: "#4B0082",
+              colorText: "#191970",
             },
           }}
         >

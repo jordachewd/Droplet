@@ -88,9 +88,9 @@ export default function ChatSidebarShell({
 
   const chatSidebarClass = classNames(
     "ChatSidebar fixed bottom-0 left-0 top-0 z-30 flex w-72 flex-col justify-between",
-    "border-r border-slate-300/70 bg-lightBackground-200 shadow-xl transition-all duration-300",
+    "border-r border-slate-300/70 bg-lavenderHaze-200 shadow-xl transition-all duration-300",
     "lg:relative lg:z-10 lg:translate-x-0 lg:shadow-none",
-    "dark:border-slate-500 dark:bg-darkBackground-1000",
+    "dark:border-slate-500 dark:bg-nightIndigo-1000",
     mobileOpen ? "translate-x-0" : "-translate-x-full",
     desktopCollapsed ? "lg:w-[78px]" : "lg:w-72",
   );

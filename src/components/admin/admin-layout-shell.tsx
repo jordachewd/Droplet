@@ -54,15 +54,15 @@ export default function AdminLayoutShell({ children }: AdminLayoutShellProps) {
     : mobileSidebarOpen;
 
   return (
-    <section className="AdminLayoutShell flex min-h-dvh w-full bg-lightBackground-200 dark:bg-darkBackground-1000">
+    <section className="AdminLayoutShell flex min-h-dvh w-full bg-lavenderHaze-200 dark:bg-nightIndigo-1000">
       <AdminSidebar />
 
       <div className="flex min-h-dvh flex-1 flex-col">
         <header
           className={classNames(
             "AdminLayoutHeader flex items-center justify-between px-3",
-            "border-b border-slate-300/70 bg-lightBackground-100/85 backdrop-blur-lg",
-            "dark:border-slate-500 dark:bg-darkBackground-900/55",
+            "border-b border-slate-300/70 bg-lavenderHaze-100/85 backdrop-blur-lg",
+            "dark:border-slate-500 dark:bg-nightIndigo-900/55",
           )}
         >
           <div className="flex items-center gap-2">

@@ -21,13 +21,13 @@ export default async function AdminUsersPage({
       />
 
       <form
-        className="flex flex-col gap-3 rounded-2xl border border-slate-300 bg-lightBackground-100/80 p-4 dark:border-slate-500 dark:bg-darkBackground-900/70 md:flex-row"
+        className="flex flex-col gap-3 rounded-2xl border border-slate-300 bg-lavenderHaze-100/80 p-4 dark:border-slate-500 dark:bg-nightIndigo-900/70 md:flex-row"
         method="get"
       >
         <label className="flex flex-1 flex-col gap-2 text-sm">
           <span className="font-medium">Search users</span>
           <input
-            className="rounded-xl border border-slate-400 bg-lightBackground-100 px-3 py-2 dark:border-slate-500 dark:bg-darkBackground-1000"
+            className="rounded-xl border border-slate-400 bg-lavenderHaze-100 px-3 py-2 dark:border-slate-500 dark:bg-nightIndigo-1000"
             type="search"
             name="q"
             defaultValue={q}

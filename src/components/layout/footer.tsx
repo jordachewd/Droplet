@@ -5,8 +5,8 @@ import Link from "next/link";
 export default function Footer() {
   const footerClass = classNames(
     "Footer z-20 flex w-full items-center justify-between border-t px-4",
-    "border-lightBackground-800/20 bg-lightBackground-100",
-    "dark:border-darkBackground-900/80 dark:bg-darkBackground-1000",
+    "border-lavenderHaze-800/20 bg-lavenderHaze-100",
+    "dark:border-nightIndigo-900/80 dark:bg-nightIndigo-1000",
   );
 
   const footerContentClass = classNames(

@@ -1,5 +1,5 @@
 "use server";
-import { auth } from "@clerk/nextjs/server";
+import { auth, clerkClient } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 import { UpdateUserParams } from "@/types/UserData.d";
 import User from "@/lib/database/models/user.model";
@@ -97,6 +97,18 @@ export async function deleteUser(clerkId: string) {
     const { userId: authedUserId } = await auth();
     if (!authedUserId) throw new Error("Unauthorized");
     if (authedUserId !== parsedClerkId.data) throw new Error("Forbidden");
+
+    // Delete Clerk account first — if this fails, skip MongoDB cleanup
+    try {
+      const client = await clerkClient();
+      await client.users.deleteUser(parsedClerkId.data);
+    } catch {
+      return serializeForClient({
+        message: "Account deletion failed. Please try again.",
+        status: 500,
+        source: "deleteUser",
+      });
+    }
 
     await connectToDatabase();
 

@@ -49,9 +49,9 @@ function SidebarNavLink({
       href={item.href}
       className={classNames(
         "group flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-sm transition-all",
-        "hover:bg-lightBackground-300/70 dark:hover:bg-darkBackground-500/30",
+        "hover:bg-lavenderHaze-300/70 dark:hover:bg-nightIndigo-500/30",
         isActive &&
-          "bg-lightBackground-100 font-semibold dark:bg-darkBackground-500/25",
+          "bg-lavenderHaze-100 font-semibold dark:bg-nightIndigo-500/25",
         !isOpen && "lg:w-auto lg:justify-center lg:px-2",
       )}
     >
@@ -208,9 +208,9 @@ export default function ChatSidebarNavV2({
                   href={item.href}
                   className={classNames(
                     "group flex min-w-0 flex-1 items-center gap-2 rounded-lg px-2.5 py-2 transition-all",
-                    "hover:bg-lightBackground-300/70 dark:hover:bg-darkBackground-500/30",
+                    "hover:bg-lavenderHaze-300/70 dark:hover:bg-nightIndigo-500/30",
                     isActive &&
-                      "bg-lightBackground-100 dark:bg-darkBackground-500/25",
+                      "bg-lavenderHaze-100 dark:bg-nightIndigo-500/25",
                     !isOpen && "lg:flex-1 lg:justify-center lg:px-2",
                   )}
                 >
@@ -231,10 +231,10 @@ export default function ChatSidebarNavV2({
                   type="button"
                   className={classNames(
                     "SidebarDeleteBtn inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-transparent text-xs opacity-65 transition-all",
-                    "hover:border-slate-400 hover:bg-lightBackground-300/70 hover:opacity-100",
-                    "focus-visible:border-lightBackground-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lightBackground-300/60",
-                    "dark:hover:border-slate-500 dark:hover:bg-darkBackground-500/30",
-                    "dark:focus-visible:border-darkBackground-400 dark:focus-visible:ring-darkBackground-500/40",
+                    "hover:border-slate-400 hover:bg-lavenderHaze-300/70 hover:opacity-100",
+                    "focus-visible:border-lavenderHaze-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lavenderHaze-300/60",
+                    "dark:hover:border-slate-500 dark:hover:bg-nightIndigo-500/30",
+                    "dark:focus-visible:border-nightIndigo-400 dark:focus-visible:ring-nightIndigo-500/40",
                     isDeleteDisabled &&
                       "cursor-not-allowed opacity-35 hover:border-transparent hover:bg-transparent",
                   )}

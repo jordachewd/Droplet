@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { updateAdminSettingAction } from "@/lib/actions/admin.actions";
 import { AdminManagedForm } from "@/components/admin/admin-managed-form";
 import { AdminFormSubmitButton } from "@/components/admin/admin-form-submit-button";
@@ -7,6 +8,49 @@ import {
   LimitsSettingsFormValue,
   TrialLimitsSettingsFormValue,
 } from "@/components/admin/settings/types";
+
+interface LimitInputProps {
+  label: string;
+  name: string;
+  defaultValue: number;
+}
+
+function LimitInput({ label, name, defaultValue }: LimitInputProps) {
+  const isDefaultUnlimited = defaultValue === -1;
+  const [value, setValue] = useState(defaultValue);
+  const isUnlimited = value === -1;
+  const changedFromUnlimited = isDefaultUnlimited && !isUnlimited;
+
+  return (
+    <label className="text-sm">
+      <span className="mb-1 flex items-center gap-1.5 font-medium">
+        {label}
+        {isUnlimited && (
+          <span className="rounded bg-twilightPurple-100 px-1.5 py-0.5 text-xs font-semibold text-twilightPurple-700 dark:bg-dustyBlue-1000 dark:text-dustyBlue-400">
+            Unlimited
+          </span>
+        )}
+      </span>
+      <input
+        type="number"
+        min={-1}
+        name={name}
+        defaultValue={defaultValue}
+        onChange={(e) => setValue(Number(e.target.value))}
+        className={`w-full rounded-lg border px-3 py-2 text-sm ${
+          changedFromUnlimited
+            ? "border-amber-500 bg-amber-50 dark:border-amber-400 dark:bg-amber-950"
+            : "border-slate-400 bg-lavenderHaze-100 dark:border-slate-500 dark:bg-nightIndigo-1000"
+        }`}
+      />
+      {changedFromUnlimited && (
+        <span className="mt-1 block text-xs text-amber-700 dark:text-amber-300">
+          ⚠ Changing from unlimited to a finite limit
+        </span>
+      )}
+    </label>
+  );
+}
 
 interface AdminLimitsSectionProps {
   limitsValue: LimitsSettingsFormValue;
@@ -21,13 +65,14 @@ export function AdminLimitsSection({
     <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
       <AdminManagedForm
         action={updateAdminSettingAction}
-        className="rounded-2xl border border-slate-300 bg-lightBackground-100/80 p-5 dark:border-slate-500 dark:bg-darkBackground-900/70"
+        className="rounded-2xl border border-slate-300 bg-lavenderHaze-100/80 p-5 dark:border-slate-500 dark:bg-nightIndigo-900/70"
       >
         <input type="hidden" name="key" value="admin.limits" />
         <input type="hidden" name="category" value="limits" />
         <h2 className="heading-6 mb-2">Limits</h2>
         <p className="mb-4 text-sm opacity-70">
           Adjust plan ceilings for conversations, prompts, and media generation.
+          Use <strong>-1</strong> for unlimited.
         </p>
         <div className="grid grid-cols-1 gap-4">
           {(["Lite", "Pro", "Premium"] as const).map((planName) => {
@@ -43,50 +88,26 @@ export function AdminLimitsSection({
                   {planName}
                 </legend>
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                  <label className="text-sm">
-                    <span className="mb-1 block font-medium">
-                      Conversations / Day
-                    </span>
-                    <input
-                      type="number"
-                      name={`${fieldPrefix}ConversationsPerDay`}
-                      defaultValue={planLimits.conversationsPerDay}
-                      className="w-full rounded-lg border border-slate-400 bg-lightBackground-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-darkBackground-1000"
-                    />
-                  </label>
-                  <label className="text-sm">
-                    <span className="mb-1 block font-medium">
-                      Prompts / Conversation
-                    </span>
-                    <input
-                      type="number"
-                      name={`${fieldPrefix}PromptsPerConversation`}
-                      defaultValue={planLimits.promptsPerConversation}
-                      className="w-full rounded-lg border border-slate-400 bg-lightBackground-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-darkBackground-1000"
-                    />
-                  </label>
-                  <label className="text-sm">
-                    <span className="mb-1 block font-medium">
-                      Image Generations
-                    </span>
-                    <input
-                      type="number"
-                      name={`${fieldPrefix}Images`}
-                      defaultValue={planLimits.images}
-                      className="w-full rounded-lg border border-slate-400 bg-lightBackground-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-darkBackground-1000"
-                    />
-                  </label>
-                  <label className="text-sm">
-                    <span className="mb-1 block font-medium">
-                      Audio Generations
-                    </span>
-                    <input
-                      type="number"
-                      name={`${fieldPrefix}Audio`}
-                      defaultValue={planLimits.audio}
-                      className="w-full rounded-lg border border-slate-400 bg-lightBackground-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-darkBackground-1000"
-                    />
-                  </label>
+                  <LimitInput
+                    label="Conversations / Day"
+                    name={`${fieldPrefix}ConversationsPerDay`}
+                    defaultValue={planLimits.conversationsPerDay}
+                  />
+                  <LimitInput
+                    label="Prompts / Conversation"
+                    name={`${fieldPrefix}PromptsPerConversation`}
+                    defaultValue={planLimits.promptsPerConversation}
+                  />
+                  <LimitInput
+                    label="Image Generations"
+                    name={`${fieldPrefix}Images`}
+                    defaultValue={planLimits.images}
+                  />
+                  <LimitInput
+                    label="Audio Generations"
+                    name={`${fieldPrefix}Audio`}
+                    defaultValue={planLimits.audio}
+                  />
                 </div>
                 <input
                   type="hidden"
@@ -108,7 +129,7 @@ export function AdminLimitsSection({
 
       <AdminManagedForm
         action={updateAdminSettingAction}
-        className="rounded-2xl border border-slate-300 bg-lightBackground-100/80 p-5 dark:border-slate-500 dark:bg-darkBackground-900/70"
+        className="rounded-2xl border border-slate-300 bg-lavenderHaze-100/80 p-5 dark:border-slate-500 dark:bg-nightIndigo-900/70"
       >
         <input type="hidden" name="key" value="admin.trialLimits" />
         <input type="hidden" name="category" value="trial" />
@@ -126,7 +147,7 @@ export function AdminLimitsSection({
               min={0}
               name="trialPrompts"
               defaultValue={trialLimitsValue.promptsPerConversation}
-              className="w-full rounded-lg border border-slate-400 bg-lightBackground-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-darkBackground-1000"
+              className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
             />
           </label>
           <label className="text-sm">
@@ -136,7 +157,7 @@ export function AdminLimitsSection({
               min={0}
               name="trialImages"
               defaultValue={trialLimitsValue.images}
-              className="w-full rounded-lg border border-slate-400 bg-lightBackground-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-darkBackground-1000"
+              className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
             />
           </label>
           <label className="text-sm">
@@ -146,7 +167,7 @@ export function AdminLimitsSection({
               min={0}
               name="trialAudio"
               defaultValue={trialLimitsValue.audio}
-              className="w-full rounded-lg border border-slate-400 bg-lightBackground-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-darkBackground-1000"
+              className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
             />
           </label>
           <label className="text-sm">
@@ -156,7 +177,7 @@ export function AdminLimitsSection({
               min={0}
               name="trialVideo"
               defaultValue={trialLimitsValue.video}
-              className="w-full rounded-lg border border-slate-400 bg-lightBackground-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-darkBackground-1000"
+              className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
             />
           </label>
         </div>

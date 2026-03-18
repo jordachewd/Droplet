@@ -2,7 +2,54 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-17 — PM deep audit #28. Phases 57.1–59.2 archived. All Phases 1–59.2 complete. All Milestones 0–20 COMPLETED. 368 unit tests (65+ suites). Build passing.
+> Last updated: 2026-03-18 — PM deep audit #31. Phase 64 archived. All Phases 1–64.7, 63.1–63.2 complete. Milestone 22 substantially complete. 369 unit tests (65+ suites). Build passing.
+
+---
+
+## Phase 64.1–64.7 — Brand Color Palette v2 Migration — COMPLETED (2026-03-18)
+
+> PM audit #31. Engineer Phase 64 work report confirmed. Triple-audit verified (PM + Architect + Engineer). All legacy palette tokens removed. Full validation gateway passed (prettier, lint, tsc, 369 unit tests, build). E2E: 2 pre-existing failures in pricing copy specs (not migration related).
+
+- [x] **64.1 HIGH** — Defined new brand palette shade scales in globals.css @theme. Added 10-step palettes for nightIndigo, twilightPurple, midnightBlue, lavenderHaze, dustyBlue. Removed `--color-navy-*`, `--color-lemon-*`, `--color-lightBackground-*`, `--color-darkBackground-*`, `--color-lightText-*`, `--color-darkText-*` definitions. Kept `--color-grass-*` temporarily.
+- [x] **64.2 HIGH** — Updated globals.css component utility classes + @apply rules. Body, links, headings, buttons, icon button, tooltip, chat markdown, scrollbar — all migrated to new palette. `btn-contained` light = twilightPurple, dark = dustyBlue, text = lavenderHaze. Hardcoded teal shadow removed.
+- [x] **64.3 HIGH** — Bulk rename: `lightBackground-` → `lavenderHaze-` and `darkText-` → `lavenderHaze-` across all src/ files.
+- [x] **64.4 HIGH** — Bulk rename: `darkBackground-` → `nightIndigo-` and `lightText-` → `midnightBlue-` across all src/ files.
+- [x] **64.5 HIGH** — Migrated `grass-` → `twilightPurple-` (light) / `dustyBlue-` (dark). 17 mechanical + 8 manual locations. plan-promo, plan-card, checkout-form, landing-page, about, faqs, admin-limits-section all updated. Removed `--color-grass-*` definitions.
+- [x] **64.6 HIGH** — Clerk appearance hex updated: `colorPrimary: "#4B0082"` (Twilight Purple), `colorText: "#191970"` (Midnight Blue). Old teal shadow removed from btn-contained.
+- [x] **64.7 HIGH** — Full validation gateway passed. Zero old token references in src/ (lightBackground, darkBackground, lightText, darkText, grass, navy, lemon). @theme block contains only 5 brand palettes.
+
+**Scope:** ~60 source files, ~538 references migrated. Brand palette v2 fully operational.
+
+**New palette:** nightIndigo (#1B003F), twilightPurple (#4B0082), midnightBlue (#191970), lavenderHaze (#E6E6FA), dustyBlue (#6495ED). Supersedes Navy/Lemon/Grass (Milestone 21).
+
+---
+
+## Phase 63.1–63.2 — Critical Bug Fixes + Admin Safeguard — COMPLETED (2026-03-17)
+
+> PM audit #29. CRITICAL bug fix + HIGH admin UX safeguard. Triple-audit confirmed.
+
+- [x] **63.1 CRITICAL** — Added `clerkClient().users.deleteUser()` call to `deleteUser()` in `src/lib/actions/user.actions.tsx`. Clerk deletion happens BEFORE MongoDB cleanup. If Clerk deletion fails, MongoDB cleanup is skipped (returns error). Follows same pattern as admin `removeUserByAdmin()`. Unit test added for Clerk failure path. 369 tests passing.
+- [x] **63.2 HIGH** — Added admin limits UI safeguard in `admin-limits-section.tsx`. New `LimitInput` component with: green "Unlimited" badge when value is -1, `min={-1}` on all inputs, amber warning border + text when changing from unlimited to finite, helper text explaining -1 = unlimited. Existing form submission preserved.
+
+---
+
+## Phase 60.1–60.7 — Color Palette Upgrade (Navy/Lemon/Grass) — COMPLETED (2026-03-17)
+
+> PM audit #29. Engineer Phase 60 work report confirmed. Triple-audit verified (PM + Architect + Engineer). Zero legacy palette references remain. Full validation gateway passed (prettier, lint, tsc, 368 unit tests, build). E2E: 11 failures in pre-existing stale specs (not Phase 60 related).
+
+- [x] **60.1 HIGH** — Defined new color palette in globals.css: Navy (#0D3B66) scale, Lemon (#FAF0CA) scale, Grass (#27A148) scale. Rebuilt semantic tokens lightBackground/darkBackground/lightText/darkText to resolve to Lemon/Navy. Removed legacy custom palette definitions.
+- [x] **60.2 HIGH** — Replaced all `bg-white` usage across src/ with tokenized light backgrounds with dark counterparts. Zero `bg-white` references remain.
+- [x] **60.3 HIGH** — Migrated all `lightBorders` and `darkBorders` references to TailwindCSS `slate` palette. Zero custom border palette references remain.
+- [x] **60.4 HIGH** — Migrated `jwdMarine` and `jwdAqua` usages to darkBackground/Navy-based tokens. Zero legacy background palette references remain.
+- [x] **60.5 HIGH** — Migrated `lightAccent`/`darkAccent` to Grass-based tokens. Removed `lightPrimary`/`darkPrimary`/`lightSecondary`/`darkSecondary` from src usage.
+- [x] **60.6 HIGH** — Migrated `lightText` to Navy-based values and `darkText` to Lemon-based values.
+- [x] **60.7 HIGH** — Removed all old palette CSS custom properties from globals.css. Verified zero stale palette references in src/. Full validation gateway passed.
+
+**Scope:** 58 source files + globals.css. Token-based architecture made migration clean — palette changes in CSS propagated via design tokens.
+
+**Legacy palettes removed:** `lightAccent`, `darkAccent`, `jwdAqua`, `jwdMarine`, `lightBorders`, `darkBorders`, `lightPrimary`, `darkPrimary`, `lightSecondary`, `darkSecondary`, all `bg-white` instances.
+
+**New palette system:** Navy/Lemon/Grass + TailwindCSS slate for borders. Unified accent (Grass) for both light and dark themes.
 
 ---
 

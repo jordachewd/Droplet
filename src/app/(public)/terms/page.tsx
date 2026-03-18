@@ -25,15 +25,15 @@ export default async function TermsPage() {
       <div
         className={classNames(
           "rounded-4xl border px-6 py-10 shadow-sm",
-          "border-slate-400/80 bg-lightBackground-100/76",
-          "dark:border-slate-500 dark:bg-darkBackground-900/82",
+          "border-slate-400/80 bg-lavenderHaze-100/76",
+          "dark:border-slate-500 dark:bg-nightIndigo-900/82",
         )}
       >
         <PageHead
           title="Terms & Conditions"
           subtitle="Draft service terms covering account use, pricing, AI-generated content, suspension, and legal review requirements."
         />
-        <p className="body-2 mt-5 rounded-2xl bg-grass-100/90 px-4 py-3 text-sm dark:bg-grass-1000/80">
+        <p className="body-2 mt-5 rounded-2xl bg-twilightPurple-100/90 px-4 py-3 text-sm dark:bg-dustyBlue-1000/80">
           {legalReviewDisclaimer}
         </p>
       </div>
@@ -43,8 +43,8 @@ export default async function TermsPage() {
           key={section.title}
           className={classNames(
             "rounded-4xl border px-6 py-7 shadow-sm",
-            "border-slate-400/80 bg-lightBackground-100/76",
-            "dark:border-slate-500 dark:bg-darkBackground-900/82",
+            "border-slate-400/80 bg-lavenderHaze-100/76",
+            "dark:border-slate-500 dark:bg-nightIndigo-900/82",
           )}
         >
           <h2 className="heading-5">{section.title}</h2>

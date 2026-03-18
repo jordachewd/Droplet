@@ -23,11 +23,7 @@ export default function SidebarToggle({
   }
 
   return show ? (
-    <TooltipArrow
-      placement="right"
-      title={show ? title : null}
-      className="SidebarToggle transition-all"
-    >
+    <TooltipArrow placement="right" title={show ? title : null}>
       <button
         type="button"
         onClick={handleToggle}
