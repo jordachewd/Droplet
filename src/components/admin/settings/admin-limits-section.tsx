@@ -26,7 +26,7 @@ function LimitInput({ label, name, defaultValue }: LimitInputProps) {
       <span className="mb-1 flex items-center gap-1.5 font-medium">
         {label}
         {isUnlimited && (
-          <span className="rounded bg-grass-100 px-1.5 py-0.5 text-xs font-semibold text-grass-700 dark:bg-grass-1000 dark:text-grass-400">
+          <span className="rounded bg-twilightPurple-100 px-1.5 py-0.5 text-xs font-semibold text-twilightPurple-700 dark:bg-dustyBlue-1000 dark:text-dustyBlue-400">
             Unlimited
           </span>
         )}
@@ -40,7 +40,7 @@ function LimitInput({ label, name, defaultValue }: LimitInputProps) {
         className={`w-full rounded-lg border px-3 py-2 text-sm ${
           changedFromUnlimited
             ? "border-amber-500 bg-amber-50 dark:border-amber-400 dark:bg-amber-950"
-            : "border-slate-400 bg-lightBackground-100 dark:border-slate-500 dark:bg-darkBackground-1000"
+            : "border-slate-400 bg-lavenderHaze-100 dark:border-slate-500 dark:bg-nightIndigo-1000"
         }`}
       />
       {changedFromUnlimited && (
@@ -65,7 +65,7 @@ export function AdminLimitsSection({
     <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
       <AdminManagedForm
         action={updateAdminSettingAction}
-        className="rounded-2xl border border-slate-300 bg-lightBackground-100/80 p-5 dark:border-slate-500 dark:bg-darkBackground-900/70"
+        className="rounded-2xl border border-slate-300 bg-lavenderHaze-100/80 p-5 dark:border-slate-500 dark:bg-nightIndigo-900/70"
       >
         <input type="hidden" name="key" value="admin.limits" />
         <input type="hidden" name="category" value="limits" />
@@ -129,7 +129,7 @@ export function AdminLimitsSection({
 
       <AdminManagedForm
         action={updateAdminSettingAction}
-        className="rounded-2xl border border-slate-300 bg-lightBackground-100/80 p-5 dark:border-slate-500 dark:bg-darkBackground-900/70"
+        className="rounded-2xl border border-slate-300 bg-lavenderHaze-100/80 p-5 dark:border-slate-500 dark:bg-nightIndigo-900/70"
       >
         <input type="hidden" name="key" value="admin.trialLimits" />
         <input type="hidden" name="category" value="trial" />
@@ -147,7 +147,7 @@ export function AdminLimitsSection({
               min={0}
               name="trialPrompts"
               defaultValue={trialLimitsValue.promptsPerConversation}
-              className="w-full rounded-lg border border-slate-400 bg-lightBackground-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-darkBackground-1000"
+              className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
             />
           </label>
           <label className="text-sm">
@@ -157,7 +157,7 @@ export function AdminLimitsSection({
               min={0}
               name="trialImages"
               defaultValue={trialLimitsValue.images}
-              className="w-full rounded-lg border border-slate-400 bg-lightBackground-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-darkBackground-1000"
+              className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
             />
           </label>
           <label className="text-sm">
@@ -167,7 +167,7 @@ export function AdminLimitsSection({
               min={0}
               name="trialAudio"
               defaultValue={trialLimitsValue.audio}
-              className="w-full rounded-lg border border-slate-400 bg-lightBackground-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-darkBackground-1000"
+              className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
             />
           </label>
           <label className="text-sm">
@@ -177,7 +177,7 @@ export function AdminLimitsSection({
               min={0}
               name="trialVideo"
               defaultValue={trialLimitsValue.video}
-              className="w-full rounded-lg border border-slate-400 bg-lightBackground-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-darkBackground-1000"
+              className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
             />
           </label>
         </div>

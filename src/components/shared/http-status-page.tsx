@@ -33,7 +33,7 @@ export default function HttpStatusPage({
 
   return (
     <PageWrapper className="HttpStatusPage items-center justify-center gap-10 px-4">
-      <p className="text-sm font-semibold uppercase tracking-[0.24em] text-lightText-600 dark:text-darkText-700">
+      <p className="text-sm font-semibold uppercase tracking-[0.24em] text-midnightBlue-600 dark:text-lavenderHaze-700">
         HTTP {code}
       </p>
 

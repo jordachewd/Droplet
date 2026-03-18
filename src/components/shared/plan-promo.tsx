@@ -23,13 +23,13 @@ export default async function PlanPromo() {
 
   const promoCardClass = classNames(
     "PlanPromo relative flex w-full flex-col items-center gap-1 overflow-hidden rounded-lg p-4 shadow-md",
-    "bg-grass-500 text-grass-1000",
-    "dark:bg-grass-500 dark:text-grass-1000",
+    "bg-twilightPurple-500 text-twilightPurple-1000",
+    "dark:bg-dustyBlue-500 dark:text-dustyBlue-1000",
   );
 
   const promoAccentClass = classNames(
     "absolute -top-1/2 right-1/3 z-0 flex h-[150%] w-full -rotate-45 items-center justify-center rounded-lg opacity-50",
-    "bg-grass-700/60 dark:bg-grass-700/70",
+    "bg-twilightPurple-700/60 dark:bg-dustyBlue-700/70",
   );
 
   return (
@@ -41,8 +41,8 @@ export default async function PlanPromo() {
           <span
             className={classNames(
               "rounded-[5px] px-1 py-1 text-2xs uppercase leading-none tracking-wider",
-              "bg-grass-900 text-grass-300",
-              "dark:bg-grass-1000 dark:text-grass-400",
+              "bg-twilightPurple-900 text-twilightPurple-300",
+              "dark:bg-dustyBlue-1000 dark:text-dustyBlue-400",
               { "min-w-20.5": !isLite },
             )}
           >
@@ -50,7 +50,7 @@ export default async function PlanPromo() {
           </span>
         </div>
 
-        <h2 className="heading-6 flex items-center justify-center gap-4 capitalize text-grass-1000">
+        <h2 className="heading-6 flex items-center justify-center gap-4 capitalize text-twilightPurple-1000 dark:text-dustyBlue-1000">
           <i
             className={classNames(getPlanIcon(name as PlanName), "text-3xl")}
           ></i>
@@ -58,12 +58,12 @@ export default async function PlanPromo() {
         </h2>
 
         {isAdmin ? (
-          <div className="flex w-full items-center justify-center border-t border-dotted border-grass-1000 pt-2.5 text-xs font-semibold uppercase tracking-wide">
+          <div className="flex w-full items-center justify-center border-t border-dotted border-twilightPurple-1000 pt-2.5 text-xs font-semibold uppercase tracking-wide dark:border-dustyBlue-1000">
             Admin access - full permissions
           </div>
         ) : !isPremiumFull ? (
           <>
-            <div className="flex w-full items-center justify-center border-t border-dotted border-grass-1000 pt-2.5 text-xs">
+            <div className="flex w-full items-center justify-center border-t border-dotted border-twilightPurple-1000 pt-2.5 text-xs dark:border-dustyBlue-1000">
               Unlock premium features with an upgrade!
             </div>
             <Link

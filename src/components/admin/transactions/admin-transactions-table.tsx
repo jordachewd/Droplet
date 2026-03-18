@@ -58,7 +58,7 @@ export function AdminTransactionsTable({
   };
 
   return (
-    <div className="AdminTransactionsTable overflow-hidden rounded-2xl border border-slate-300 bg-lightBackground-100/80 dark:border-slate-500 dark:bg-darkBackground-900/70">
+    <div className="AdminTransactionsTable overflow-hidden rounded-2xl border border-slate-300 bg-lavenderHaze-100/80 dark:border-slate-500 dark:bg-nightIndigo-900/70">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-300 px-4 py-3 dark:border-slate-500">
         <label className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide opacity-75">
           <input

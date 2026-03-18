@@ -17,7 +17,7 @@ export function AdminPersonasSection({
   personaAccessValue,
 }: AdminPersonasSectionProps) {
   return (
-    <div className="rounded-2xl border border-slate-300 bg-lightBackground-100/80 p-5 dark:border-slate-500 dark:bg-darkBackground-900/70">
+    <div className="rounded-2xl border border-slate-300 bg-lavenderHaze-100/80 p-5 dark:border-slate-500 dark:bg-nightIndigo-900/70">
       <h2 className="heading-6 mb-2">Persona Access</h2>
       <p className="mb-4 text-sm opacity-70">
         Choose which personas have full access for each plan. Unchecked personas

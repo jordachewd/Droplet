@@ -15,20 +15,20 @@ export default function ToggleTheme() {
 
   const toggleThemeClass = classNames(
     "ToggleTheme inline-flex items-center rounded-lg p-1",
-    "bg-lightBackground-100/70 dark:bg-darkBackground-900/50",
+    "bg-lavenderHaze-100/70 dark:bg-nightIndigo-900/50",
   );
 
   const lightButtonClass = classNames(
     "icon-btn",
     lightActive
-      ? "bg-lightBackground-200 dark:bg-darkBackground-500/50"
+      ? "bg-lavenderHaze-200 dark:bg-nightIndigo-500/50"
       : "bg-transparent",
   );
 
   const darkButtonClass = classNames(
     "icon-btn",
     darkActive
-      ? "bg-lightBackground-200 dark:bg-darkBackground-500/50"
+      ? "bg-lavenderHaze-200 dark:bg-nightIndigo-500/50"
       : "bg-transparent",
   );
 

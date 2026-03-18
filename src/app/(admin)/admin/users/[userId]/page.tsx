@@ -56,7 +56,7 @@ export default async function AdminUserDetailPage({
       />
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.4fr_0.8fr]">
-        <article className="rounded-2xl border border-slate-300 bg-lightBackground-100/80 p-5 dark:border-slate-500 dark:bg-darkBackground-900/70">
+        <article className="rounded-2xl border border-slate-300 bg-lavenderHaze-100/80 p-5 dark:border-slate-500 dark:bg-nightIndigo-900/70">
           <h2 className="heading-6 mb-4">Account Details</h2>
           <dl className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
@@ -123,7 +123,7 @@ export default async function AdminUserDetailPage({
           </dl>
         </article>
 
-        <article className="rounded-2xl border border-slate-300 bg-lightBackground-100/80 p-5 dark:border-slate-500 dark:bg-darkBackground-900/70">
+        <article className="rounded-2xl border border-slate-300 bg-lavenderHaze-100/80 p-5 dark:border-slate-500 dark:bg-nightIndigo-900/70">
           <h2 className="heading-6 mb-4">Usage Snapshot</h2>
           <div className="grid grid-cols-1 gap-3">
             <div className="rounded-xl border border-slate-300 px-4 py-3 dark:border-slate-500">
@@ -133,9 +133,9 @@ export default async function AdminUserDetailPage({
               <p className="heading-5 mt-1">
                 {formatUsageLabel(user.conversationUsage)}
               </p>
-              <div className="mt-2 h-2 overflow-hidden rounded-full bg-lightBackground-300 dark:bg-darkBackground-500/40">
+              <div className="mt-2 h-2 overflow-hidden rounded-full bg-lavenderHaze-300 dark:bg-nightIndigo-500/40">
                 <div
-                  className="h-full bg-lightBackground-500 dark:bg-darkBackground-400"
+                  className="h-full bg-lavenderHaze-500 dark:bg-nightIndigo-400"
                   style={{
                     width: `${getUsagePercent(user.conversationUsage)}%`,
                   }}
@@ -152,9 +152,9 @@ export default async function AdminUserDetailPage({
               <p className="mt-1 text-xs opacity-70">
                 Total prompts across tasks: {user.promptUsage.total}
               </p>
-              <div className="mt-2 h-2 overflow-hidden rounded-full bg-lightBackground-300 dark:bg-darkBackground-500/40">
+              <div className="mt-2 h-2 overflow-hidden rounded-full bg-lavenderHaze-300 dark:bg-nightIndigo-500/40">
                 <div
-                  className="h-full bg-lightBackground-500 dark:bg-darkBackground-400"
+                  className="h-full bg-lavenderHaze-500 dark:bg-nightIndigo-400"
                   style={{ width: `${getUsagePercent(user.promptUsage)}%` }}
                 />
               </div>
@@ -166,9 +166,9 @@ export default async function AdminUserDetailPage({
               <p className="heading-5 mt-1">
                 {formatUsageLabel(user.mediaUsage.images)}
               </p>
-              <div className="mt-2 h-2 overflow-hidden rounded-full bg-lightBackground-300 dark:bg-darkBackground-500/40">
+              <div className="mt-2 h-2 overflow-hidden rounded-full bg-lavenderHaze-300 dark:bg-nightIndigo-500/40">
                 <div
-                  className="h-full bg-lightBackground-500 dark:bg-darkBackground-400"
+                  className="h-full bg-lavenderHaze-500 dark:bg-nightIndigo-400"
                   style={{
                     width: `${getUsagePercent(user.mediaUsage.images)}%`,
                   }}
@@ -182,9 +182,9 @@ export default async function AdminUserDetailPage({
               <p className="heading-5 mt-1">
                 {formatUsageLabel(user.mediaUsage.audio)}
               </p>
-              <div className="mt-2 h-2 overflow-hidden rounded-full bg-lightBackground-300 dark:bg-darkBackground-500/40">
+              <div className="mt-2 h-2 overflow-hidden rounded-full bg-lavenderHaze-300 dark:bg-nightIndigo-500/40">
                 <div
-                  className="h-full bg-lightBackground-500 dark:bg-darkBackground-400"
+                  className="h-full bg-lavenderHaze-500 dark:bg-nightIndigo-400"
                   style={{
                     width: `${getUsagePercent(user.mediaUsage.audio)}%`,
                   }}
@@ -198,9 +198,9 @@ export default async function AdminUserDetailPage({
               <p className="heading-5 mt-1">
                 {formatUsageLabel(user.mediaUsage.video)}
               </p>
-              <div className="mt-2 h-2 overflow-hidden rounded-full bg-lightBackground-300 dark:bg-darkBackground-500/40">
+              <div className="mt-2 h-2 overflow-hidden rounded-full bg-lavenderHaze-300 dark:bg-nightIndigo-500/40">
                 <div
-                  className="h-full bg-lightBackground-500 dark:bg-darkBackground-400"
+                  className="h-full bg-lavenderHaze-500 dark:bg-nightIndigo-400"
                   style={{
                     width: `${getUsagePercent(user.mediaUsage.video)}%`,
                   }}
@@ -221,7 +221,7 @@ export default async function AdminUserDetailPage({
         </article>
       </div>
 
-      <article className="rounded-2xl border border-slate-300 bg-lightBackground-100/80 p-5 dark:border-slate-500 dark:bg-darkBackground-900/70">
+      <article className="rounded-2xl border border-slate-300 bg-lavenderHaze-100/80 p-5 dark:border-slate-500 dark:bg-nightIndigo-900/70">
         <h2 className="heading-6 mb-4">Admin Actions</h2>
         <div className="flex flex-col gap-3 md:flex-row">
           <AdminManagedForm
@@ -255,7 +255,7 @@ export default async function AdminUserDetailPage({
         </div>
       </article>
 
-      <article className="rounded-2xl border border-slate-300 bg-lightBackground-100/80 p-5 dark:border-slate-500 dark:bg-darkBackground-900/70">
+      <article className="rounded-2xl border border-slate-300 bg-lavenderHaze-100/80 p-5 dark:border-slate-500 dark:bg-nightIndigo-900/70">
         <div className="mb-4 flex items-center justify-between gap-4">
           <h2 className="heading-6">Recent Transactions</h2>
           <Link className="btn btn-sm btn-outlined" href="/admin/transactions">
@@ -274,7 +274,7 @@ export default async function AdminUserDetailPage({
             <Link
               key={transaction.id}
               href={`/admin/transactions/${transaction.id}`}
-              className="grid grid-cols-[0.8fr_0.8fr_0.8fr_1fr] gap-3 py-3 text-sm transition-all hover:bg-lightBackground-300/50 dark:hover:bg-darkBackground-500/20"
+              className="grid grid-cols-[0.8fr_0.8fr_0.8fr_1fr] gap-3 py-3 text-sm transition-all hover:bg-lavenderHaze-300/50 dark:hover:bg-nightIndigo-500/20"
             >
               <span>{transaction.plan}</span>
               <span>

@@ -32,15 +32,15 @@ function renderAboutVisual(
 ) {
   const visualClassName = classNames(
     "rounded-[2rem] border p-6 shadow-sm",
-    "border-slate-400/80 bg-lightBackground-100/80",
-    "dark:border-slate-500 dark:bg-darkBackground-900/85",
+    "border-slate-400/80 bg-lavenderHaze-100/80",
+    "dark:border-slate-500 dark:bg-nightIndigo-900/85",
   );
 
   if (visualType === "identity") {
     return (
       <div className={visualClassName}>
         <div className="grid gap-4 sm:grid-cols-3">
-          <article className="rounded-2xl bg-lightBackground-100 p-4 dark:bg-darkBackground-900/70">
+          <article className="rounded-2xl bg-lavenderHaze-100 p-4 dark:bg-nightIndigo-900/70">
             <p className="text-xxs font-semibold uppercase tracking-[0.28em] opacity-70">
               Personas
             </p>
@@ -49,7 +49,7 @@ function renderAboutVisual(
               Guided conversation styles with distinct prompts and boundaries.
             </p>
           </article>
-          <article className="rounded-2xl bg-lightBackground-100 p-4 dark:bg-darkBackground-900/45">
+          <article className="rounded-2xl bg-lavenderHaze-100 p-4 dark:bg-nightIndigo-900/45">
             <p className="text-xxs font-semibold uppercase tracking-[0.28em] opacity-70">
               Plans
             </p>
@@ -58,7 +58,7 @@ function renderAboutVisual(
               Lite, Pro, and Premium with plan-based persona access.
             </p>
           </article>
-          <article className="rounded-2xl bg-grass-100 p-4 dark:bg-grass-1000/80">
+          <article className="rounded-2xl bg-twilightPurple-100 p-4 dark:bg-dustyBlue-1000/80">
             <p className="text-xxs font-semibold uppercase tracking-[0.28em] opacity-70">
               Modes
             </p>
@@ -99,8 +99,8 @@ function renderAboutVisual(
               key={step.step}
               className={classNames(
                 "rounded-2xl border px-4 py-4",
-                "border-slate-300 bg-lightBackground-200/80",
-                "dark:border-slate-500 dark:bg-darkBackground-1000/70",
+                "border-slate-300 bg-lavenderHaze-200/80",
+                "dark:border-slate-500 dark:bg-nightIndigo-1000/70",
               )}
             >
               <div className="flex items-start gap-4">
@@ -123,7 +123,7 @@ function renderAboutVisual(
     return (
       <div className={visualClassName}>
         <div className="grid gap-4 sm:grid-cols-[0.9fr_1.1fr]">
-          <div className="rounded-2xl bg-lightBackground-200/85 p-4 dark:bg-darkBackground-1000/70">
+          <div className="rounded-2xl bg-lavenderHaze-200/85 p-4 dark:bg-nightIndigo-1000/70">
             <p className="text-xxs font-semibold uppercase tracking-[0.28em] opacity-70">
               Categories
             </p>
@@ -134,14 +134,14 @@ function renderAboutVisual(
                   className="flex items-center justify-between"
                 >
                   <span className="body-2 text-sm">{category}</span>
-                  <span className="rounded-full bg-lightBackground-200 px-3 py-1 text-xs font-semibold dark:bg-darkBackground-900/50">
+                  <span className="rounded-full bg-lavenderHaze-200 px-3 py-1 text-xs font-semibold dark:bg-nightIndigo-900/50">
                     {count}
                   </span>
                 </div>
               ))}
             </div>
           </div>
-          <div className="rounded-2xl bg-lightBackground-100/75 p-4 dark:bg-darkBackground-900/70">
+          <div className="rounded-2xl bg-lavenderHaze-100/75 p-4 dark:bg-nightIndigo-900/70">
             <p className="text-xxs font-semibold uppercase tracking-[0.28em] opacity-70">
               Current catalog
             </p>
@@ -151,8 +151,8 @@ function renderAboutVisual(
                   key={persona.id}
                   className={classNames(
                     "rounded-full px-3 py-1.5 text-xs font-semibold shadow-sm",
-                    "bg-lightBackground-100/90 text-lightText-500",
-                    "dark:bg-darkBackground-1000 dark:text-darkText-500",
+                    "bg-lavenderHaze-100/90 text-midnightBlue-500",
+                    "dark:bg-nightIndigo-1000 dark:text-lavenderHaze-500",
                   )}
                 >
                   {persona.label}
@@ -190,8 +190,8 @@ function renderAboutVisual(
               key={card.label}
               className={classNames(
                 "rounded-2xl border px-4 py-5",
-                "border-slate-300 bg-lightBackground-200/85",
-                "dark:border-slate-500 dark:bg-darkBackground-1000/70",
+                "border-slate-300 bg-lavenderHaze-200/85",
+                "dark:border-slate-500 dark:bg-nightIndigo-1000/70",
               )}
             >
               <p className="text-xxs font-semibold uppercase tracking-[0.28em] opacity-70">
@@ -208,7 +208,7 @@ function renderAboutVisual(
   return (
     <div className={visualClassName}>
       <div className="grid gap-4 sm:grid-cols-3">
-        <article className="rounded-2xl bg-lightBackground-200/90 p-4 dark:bg-darkBackground-1000/70">
+        <article className="rounded-2xl bg-lavenderHaze-200/90 p-4 dark:bg-nightIndigo-1000/70">
           <p className="text-xxs font-semibold uppercase tracking-[0.28em] opacity-70">
             Lite
           </p>
@@ -217,7 +217,7 @@ function renderAboutVisual(
             All personas with capped daily conversations and media usage.
           </p>
         </article>
-        <article className="rounded-2xl bg-lightBackground-100/85 p-4 dark:bg-darkBackground-900/45">
+        <article className="rounded-2xl bg-lavenderHaze-100/85 p-4 dark:bg-nightIndigo-900/45">
           <p className="text-xxs font-semibold uppercase tracking-[0.28em] opacity-70">
             Pro
           </p>
@@ -226,7 +226,7 @@ function renderAboutVisual(
             Higher prompt and conversation ceilings for regular work.
           </p>
         </article>
-        <article className="rounded-2xl bg-grass-100/85 p-4 dark:bg-grass-1000/80">
+        <article className="rounded-2xl bg-twilightPurple-100/85 p-4 dark:bg-dustyBlue-1000/80">
           <p className="text-xxs font-semibold uppercase tracking-[0.28em] opacity-70">
             Premium
           </p>
@@ -253,8 +253,8 @@ export default async function AboutPage() {
       <div
         className={classNames(
           "rounded-4xl border px-6 py-10 shadow-sm",
-          "border-slate-400/80 bg-lightBackground-100/72 backdrop-blur-sm",
-          "dark:border-slate-500 dark:bg-darkBackground-900/80",
+          "border-slate-400/80 bg-lavenderHaze-100/72 backdrop-blur-sm",
+          "dark:border-slate-500 dark:bg-nightIndigo-900/80",
         )}
       >
         <PageHead
@@ -274,8 +274,8 @@ export default async function AboutPage() {
           <div
             className={classNames(
               "rounded-4xl border px-6 py-7 shadow-sm",
-              "border-slate-400/80 bg-lightBackground-100/76",
-              "dark:border-slate-500 dark:bg-darkBackground-900/82",
+              "border-slate-400/80 bg-lavenderHaze-100/76",
+              "dark:border-slate-500 dark:bg-nightIndigo-900/82",
             )}
           >
             <p className="text-xxs font-semibold uppercase tracking-[0.3em] opacity-65">
@@ -302,8 +302,8 @@ export default async function AboutPage() {
       <section
         className={classNames(
           "w-full max-w-screen-2xl rounded-4xl border px-6 py-8 shadow-sm",
-          "border-slate-400/80 bg-linear-135 from-lightBackground-100 via-white to-grass-100",
-          "dark:border-slate-500 dark:bg-linear-135 dark:from-darkBackground-1000 dark:via-darkBackground-1000 dark:to-darkBackground-900/55",
+          "border-slate-400/80 bg-linear-135 from-lavenderHaze-100 via-white to-twilightPurple-100",
+          "dark:border-slate-500 dark:bg-linear-135 dark:from-nightIndigo-1000 dark:via-nightIndigo-1000 dark:to-nightIndigo-900/55",
         )}
       >
         <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">

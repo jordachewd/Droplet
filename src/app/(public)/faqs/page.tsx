@@ -29,8 +29,8 @@ export default async function FaqsPage() {
       <div
         className={classNames(
           "rounded-4xl border px-5 py-6 shadow-sm",
-          "border-slate-400/80 bg-lightBackground-100/76",
-          "dark:border-slate-500 dark:bg-darkBackground-900/82",
+          "border-slate-400/80 bg-lavenderHaze-100/76",
+          "dark:border-slate-500 dark:bg-nightIndigo-900/82",
         )}
       >
         <FaqsSection faqsData={faqs} />
@@ -39,8 +39,8 @@ export default async function FaqsPage() {
       <div
         className={classNames(
           "rounded-4xl border px-6 py-8 shadow-sm",
-          "border-slate-400/80 bg-lightBackground-200/85",
-          "dark:border-slate-500 dark:bg-darkBackground-900/82",
+          "border-slate-400/80 bg-lavenderHaze-200/85",
+          "dark:border-slate-500 dark:bg-nightIndigo-900/82",
         )}
       >
         <h2 className="heading-5">Still need help?</h2>

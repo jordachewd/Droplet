@@ -1440,7 +1440,6 @@ These items are not banned forever. They are excluded because they create dispro
 - JSON data files in dedicated folder.
 - Project docs cleaned and archived.
 
-
 ### Milestone 22 — Brand Color Palette v2 Migration (Owner-Directed, 2026-03-18)
 
 > **Status: NOT YET STARTED**
@@ -1507,6 +1506,7 @@ Milestone 21 replaced the old palettes with Navy (#0D3B66), Lemon (#FAF0CA), Gra
 - Light theme: Lavender Haze backgrounds, Midnight Blue text, Twilight Purple accent buttons.
 - Dark theme: Night Indigo backgrounds, Lavender Haze text, Dusty Blue accent buttons.
 - Full validation gateway passed (prettier, lint, type-check, tests, build).
+
 ---
 
 ## 12. What The Team Must Stop Doing

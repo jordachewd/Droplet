@@ -26,13 +26,13 @@ export default function ProfileHero({ userData }: HeroProps) {
 
   const profileCardClass = classNames(
     "flex w-full flex-col items-center justify-between gap-8 rounded-lg border p-6 shadow-md md:flex-row",
-    "border-lightBackground-500 bg-lightBackground-500/50",
-    "dark:border-darkBackground-500 dark:bg-darkBackground-500/30",
+    "border-lavenderHaze-500 bg-lavenderHaze-500/50",
+    "dark:border-nightIndigo-500 dark:bg-nightIndigo-500/30",
   );
 
   const avatarClass = classNames(
     "inline-flex h-20 w-20 items-center justify-center overflow-hidden rounded-full",
-    "bg-lightBackground-500 text-2xl text-white",
+    "bg-lavenderHaze-500 text-2xl text-white",
     "shadow-[0px_0px_5px_0px_rgba(122,75,204,0.3)]",
   );
 

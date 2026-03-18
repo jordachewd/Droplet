@@ -111,8 +111,8 @@ export default function ChatBody({
         isBot ? "bi bi-robot" : "bi bi-person",
         "rounded-full p-2 text-base leading-none shadow-sm",
         isBot
-          ? "bg-lightBackground-100 dark:bg-darkBackground-500/40"
-          : "bg-lightBackground-200 text-lightText-500 dark:bg-darkBackground-500 dark:text-darkText-500",
+          ? "bg-lavenderHaze-100 dark:bg-nightIndigo-500/40"
+          : "bg-lavenderHaze-200 text-midnightBlue-500 dark:bg-nightIndigo-500 dark:text-lavenderHaze-500",
       );
 
       const chatMarkdownClass = classNames("chat-markdown", {
