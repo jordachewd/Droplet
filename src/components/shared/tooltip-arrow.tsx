@@ -4,7 +4,6 @@ import { ReactNode } from "react";
 interface TooltipArrowProps {
   title?: ReactNode | null;
   placement?: "top" | "right" | "bottom" | "left";
-  className?: string;
   children: ReactNode;
 }
 
@@ -27,7 +26,6 @@ const arrowStyles = {
 export const TooltipArrow = ({
   title,
   placement = "top",
-  className = "",
   children,
 }: TooltipArrowProps) => {
   if (!title) {
@@ -35,12 +33,7 @@ export const TooltipArrow = ({
   }
 
   return (
-    <span
-      className={classNames(
-        "TooltipArrow group relative inline-flex",
-        className,
-      )}
-    >
+    <div className="TooltipArrow group relative inline-flex">
       {children}
       <span
         role="tooltip"
@@ -54,6 +47,6 @@ export const TooltipArrow = ({
           className={classNames("absolute h-0 w-0", arrowStyles[placement])}
         />
       </span>
-    </span>
+    </div>
   );
 };

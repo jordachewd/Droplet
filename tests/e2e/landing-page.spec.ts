@@ -46,8 +46,8 @@ test("loads landing page for unauthenticated users", async ({ page }) => {
 test("toggles dark mode and persists it after reload", async ({ page }) => {
   await page.goto("/");
 
-  const darkModeButton = page.getByRole("button", {
-    name: "Switch to dark mode",
+  const darkModeButton = page.getByRole("switch", {
+    name: "Toggle theme mode",
   });
   await darkModeButton.click();
 
