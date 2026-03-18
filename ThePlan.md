@@ -1,4 +1,4 @@
-# Droplet - Completion Plan
+﻿# Droplet - Completion Plan
 
 > Purpose: one execution document for finishing the SaaS without avoidable rework.
 >
@@ -1440,6 +1440,73 @@ These items are not banned forever. They are excluded because they create dispro
 - JSON data files in dedicated folder.
 - Project docs cleaned and archived.
 
+
+### Milestone 22 — Brand Color Palette v2 Migration (Owner-Directed, 2026-03-18)
+
+> **Status: NOT YET STARTED**
+
+**Context:**
+
+Milestone 21 replaced the old palettes with Navy (#0D3B66), Lemon (#FAF0CA), Grass (#27A148). That migration is COMPLETE. The owner has now changed the brand color palette to a new set of 5 colors. This milestone removes all M21 palette tokens and replaces them with the new brand palette.
+
+**New Brand Color Palette:**
+
+| Token Name      | Hex       | Role                                               |
+| --------------- | --------- | -------------------------------------------------- |
+| Night Indigo    | `#1B003F` | Dark theme background                              |
+| Twilight Purple | `#4B0082` | Light theme accent (buttons, interactive elements) |
+| Midnight Blue   | `#191970` | Light theme text                                   |
+| Lavender Haze   | `#E6E6FA` | Light theme background, dark theme text            |
+| Dusty Blue      | `#6495ED` | Dark theme accent (buttons, interactive elements)  |
+
+**Theme Specification:**
+
+- **Light Theme:** Text = Midnight Blue (#191970), Background = Lavender Haze (#E6E6FA), Buttons = bg Twilight Purple (#4B0082) / text Lavender Haze (#E6E6FA)
+- **Dark Theme:** Text = Lavender Haze (#E6E6FA), Background = Night Indigo (#1B003F), Buttons = bg Dusty Blue (#6495ED) / text Lavender Haze (#E6E6FA)
+
+**Migration Mapping (M21 tokens -> M22 tokens):**
+
+| M21 Token (Current)          | M22 Replacement Token | Notes                                                |
+| ---------------------------- | --------------------- | ---------------------------------------------------- |
+| `lightBackground-*` (Lemon)  | `lavenderHaze-*`      | ~70+ files, ~100+ refs                               |
+| `darkBackground-*` (Navy)    | `nightIndigo-*`       | ~70+ files, ~100+ refs                               |
+| `lightText-*` (Navy)         | `midnightBlue-*`      | ~10 files, ~24 refs                                  |
+| `darkText-*` (Lemon)         | `lavenderHaze-*`      | ~10 files, ~21 refs (same token as light background) |
+| `grass-*` (light accent)     | `twilightPurple-*`    | ~15 files, ~64 refs (light theme accent replacement) |
+| `grass-*` (dark accent)      | `dustyBlue-*`         | ~15 files, ~64 refs (dark theme accent replacement)  |
+| `navy-*` (definitions only)  | REMOVE                | Defined but not directly used by components          |
+| `lemon-*` (definitions only) | REMOVE                | Defined but not directly used by components          |
+
+**Scope:**
+
+**Block A — Tailwind Configuration:**
+
+1. Remove all M21 palette definitions from Tailwind config: `lightBackground-*`, `darkBackground-*`, `lightText-*`, `darkText-*`, `grass-*`, `navy-*`, `lemon-*`.
+2. Add new M22 palette definitions: `nightIndigo-*`, `twilightPurple-*`, `midnightBlue-*`, `lavenderHaze-*`, `dustyBlue-*`.
+
+**Block B — Component Migration:**
+
+3. Replace all `lightBackground-*` references with `lavenderHaze-*` across all components.
+4. Replace all `darkBackground-*` references with `nightIndigo-*` across all components.
+5. Replace all `lightText-*` references with `midnightBlue-*` across all components.
+6. Replace all `darkText-*` references with `lavenderHaze-*` across all components.
+7. Replace all `grass-*` references: use `twilightPurple-*` for light theme contexts, `dustyBlue-*` for dark theme contexts.
+8. Remove any remaining `navy-*` and `lemon-*` references.
+
+**Block C — Validation:**
+
+9. Zero references to removed M21 tokens (`lightBackground-*`, `darkBackground-*`, `lightText-*`, `darkText-*`, `grass-*`, `navy-*`, `lemon-*`).
+10. Visual verification: light theme and dark theme render correctly with new palette.
+11. Full validation gateway: prettier, lint, type-check, unit tests, build.
+
+**Success Criteria:**
+
+- New palette tokens (`nightIndigo-*`, `twilightPurple-*`, `midnightBlue-*`, `lavenderHaze-*`, `dustyBlue-*`) defined in Tailwind config.
+- All M21 palette tokens completely removed from Tailwind config and all source files.
+- Zero grep hits for `lightBackground-`, `darkBackground-`, `lightText-`, `darkText-`, `grass-`, `navy-`, `lemon-` in `src/`.
+- Light theme: Lavender Haze backgrounds, Midnight Blue text, Twilight Purple accent buttons.
+- Dark theme: Night Indigo backgrounds, Lavender Haze text, Dusty Blue accent buttons.
+- Full validation gateway passed (prettier, lint, type-check, tests, build).
 ---
 
 ## 12. What The Team Must Stop Doing

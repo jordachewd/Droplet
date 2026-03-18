@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-17 (PM audit #29. Phases 60, 63.1–63.2 COMPLETE. TD-DS-01/02, TD-AUTH-05, TD-UX-06 RESOLVED. Active: TD-UX-05 (MEDIUM), TD-API-09 (LOW). 369 unit tests (65+ suites). Build passing.)
+> Last updated: 2026-03-18 (PM audit #30. Phases 60, 63.1–63.2 COMPLETE. Brand palette v2 planned (Phase 64, TD-DS-03). Active: TD-DS-03 (HIGH), TD-DS-04 (MEDIUM), TD-UX-05 (MEDIUM), TD-API-09 (LOW). 369 unit tests (65+ suites). Build passing.)
 
 ---
 
@@ -680,6 +680,24 @@ All file handling technical debt has been resolved. S3 cleanup on task/user dele
 - Dark/light themes via `data-Droplet-theme` attribute
 - Bootstrap Icons
 
+#### Brand Color Palette (Milestone 22 — pending implementation)
+
+| Token Name       | Base Hex  | Role                                     |
+| ---------------- | --------- | ---------------------------------------- |
+| `nightIndigo`    | `#1B003F` | Dark theme background                    |
+| `twilightPurple` | `#4B0082` | Light theme button accent (bg)           |
+| `midnightBlue`   | `#191970` | Light theme text                         |
+| `lavenderHaze`   | `#E6E6FA` | Light theme background + dark theme text |
+| `dustyBlue`      | `#6495ED` | Dark theme button accent (bg)            |
+
+**Light Theme:** Text = `midnightBlue-500`, Background = `lavenderHaze-500`, Buttons = bg `twilightPurple-*` / text `lavenderHaze-*`.
+
+**Dark Theme:** Text = `lavenderHaze-500`, Background = `nightIndigo-1000`, Buttons = bg `dustyBlue-*` / text `lavenderHaze-*`.
+
+**Borders:** TailwindCSS `slate` palette (unchanged from Milestone 21).
+
+**Previous palette (Milestone 21, superseded):** Navy (#0D3B66), Lemon (#FAF0CA), Grass (#27A148) — being replaced. Semantic tokens `lightBackground`, `darkBackground`, `lightText`, `darkText` → removed. New tokens use brand palette names directly.
+
 ---
 
 ## 12. Admin Dashboard (Target)
@@ -779,6 +797,13 @@ _None._
 | TD-AI-13   | OpenAI  | 5 model pricing entries are placeholders pending OpenAI confirmation          | Low      |
 | TD-PLAN-01 | Billing | No recurring subscriptions (deferred v1)                                      | Low      |
 | TD-AI-18   | OpenAI  | errorMessage forwarding pattern in /api/openai is safe but fragile (advisory) | Low      |
+
+### Active — High Priority (PM Audit #30, Owner-Directed)
+
+| ID       | Area   | Description                                                                                                                                                                                                                     | Severity |
+| -------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| TD-DS-03 | Design | Brand palette v2 migration: replace Navy/Lemon/Grass + semantic tokens (lightBackground, darkBackground, lightText, darkText) with 5 brand palette tokens (nightIndigo, twilightPurple, midnightBlue, lavenderHaze, dustyBlue). | High     |
+| TD-DS-04 | Design | 55+ pre-existing dark mode pairing gaps: light tokens used without `dark:` counterpart or vice versa. Inherited from Milestone 21. Track separately from palette migration.                                                     | Medium   |
 
 ### ~~Active~~ Resolved — Critical Priority (PM Audit #29)
 
