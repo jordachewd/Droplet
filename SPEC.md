@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-18 (PM audit #31. Phases 1–64.7, 63.1–63.2 COMPLETE. Brand palette v2 delivered (TD-DS-03 RESOLVED). Active: TD-MEDIA-01 (CRITICAL), TD-DATA-01 (CRITICAL), TD-DATA-02 (HIGH), TD-DS-04 (MEDIUM), TD-UX-05 (MEDIUM), TD-API-09 (LOW). 369 unit tests (65+ suites). Build passing.)
+> Last updated: 2026-03-18 (PM audit #32. All Phases 1–67.3, 63.1–63.2, 61.1 COMPLETE. Milestone 22 COMPLETE. Brand palette v2 delivered. TD-MEDIA-01 RESOLVED, TD-DATA-01 RESOLVED, TD-DATA-02 RESOLVED, TD-UX-05 RESOLVED, TD-DS-03 RESOLVED. Active: TD-DS-04 (MEDIUM), TD-API-09 (LOW). 369 unit tests (65+ suites). Build passing.)
 
 ---
 
@@ -801,13 +801,13 @@ _None._
 | TD-PLAN-01 | Billing | No recurring subscriptions (deferred v1)                                      | Low      |
 | TD-AI-18   | OpenAI  | errorMessage forwarding pattern in /api/openai is safe but fragile (advisory) | Low      |
 
-### Active — Critical Priority (PM Audit #31, Triple-Audit Confirmed)
+### Active — Critical Priority (PM Audit #31, Triple-Audit Confirmed) — ALL RESOLVED (PM Audit #32)
 
-| ID          | Area | Description                                                                                                                                                                                                                                                                              | Severity |
-| ----------- | ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| TD-MEDIA-01 | API  | Generic `media_limit_reached` stop reason masks per-media-type limiting. Premium users hitting video cap (10/month) see "media generation limit" — implies ALL media is limited when only video is. Must split into `image_limit_reached`, `audio_limit_reached`, `video_limit_reached`. | Critical |
-| TD-DATA-01  | Data | User deletion does NOT cascade to `UsageEvent` records. All 3 deletion paths (self-delete, admin remove, Clerk webhook) miss `UsageEvent.deleteMany`. Orphaned records accumulate forever. GDPR compliance risk.                                                                         | Critical |
-| TD-DATA-02  | Data | Admin `removeUserByAdmin` races `User.findByIdAndDelete` in parallel with child cleanup. If User deletes first but child cleanup fails, orphaned data is unrecoverable. Must match sequential pattern from user self-delete.                                                             | High     |
+| ID          | Area | Description                                                                                                                                                                                                                                                                         | Severity     | Status                                                                                                    |
+| ----------- | ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ | --------------------------------------------------------------------------------------------------------- |
+| TD-MEDIA-01 | API  | Generic `media_limit_reached` stop reason masks per-media-type limiting. Premium users hitting video cap (10/month) see "media generation limit" — implies ALL media is limited when only video is. Split into `image_limit_reached`, `audio_limit_reached`, `video_limit_reached`. | ~~Critical~~ | **RESOLVED (Phase 65.1)** — type-specific stop reasons implemented. Shared constant in `stop-reasons.ts`. |
+| TD-DATA-01  | Data | User deletion does NOT cascade to `UsageEvent` records. All 3 deletion paths miss `UsageEvent.deleteMany`. Orphaned records accumulate forever. GDPR compliance risk.                                                                                                               | ~~Critical~~ | **RESOLVED (Phase 65.2)** — `UsageEvent.deleteMany` in all 3 paths.                                       |
+| TD-DATA-02  | Data | Admin `removeUserByAdmin` races `User.findByIdAndDelete` in parallel with child cleanup. If User deletes first but child cleanup fails, orphaned data is unrecoverable. Must match sequential pattern from user self-delete.                                                        | ~~High~~     | **RESOLVED (Phase 65.3)** — User deleted LAST, sequential operations.                                     |
 
 ### ~~Active — High Priority (PM Audit #30, Owner-Directed)~~ (Resolved — PM Audit #31)
 
@@ -827,12 +827,12 @@ _None._
 | ---------- | ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | -------- |
 | TD-AUTH-05 | Auth | Client self-delete Clerk orphan. FIXED: `deleteUser()` now calls `clerkClient().users.deleteUser()` before MongoDB cleanup. Clerk failure prevents MongoDB deletion. Unit test added. Phase 63.1 COMPLETE. | Critical | RESOLVED |
 
-### Active — Medium Priority (PM Audit #29)
+### ~~Active~~ Resolved — Medium Priority (PM Audit #29)
 
-| ID        | Area | Description                                                                                                                                                                                                                                | Severity |
-| --------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------- |
-| TD-UX-05  | UI   | 4 locations use `window.confirm()` as temporary bridge instead of proper confirmation modal component. AGENTS.md allows as temporary bridge. Phase 61.1 planned.                                                                           | Medium   |
-| TD-API-09 | API  | `messageTextContentSchema` still uses `.strict()` — inner content items could reject extra fields from model responses on conversation resumption. `chatMessageSchema` is passthrough (53.3) but content items are strict. Monitor needed. | Low      |
+| ID        | Area | Description                                                                                                                                                                                                                                | Severity   | Status   |
+| --------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------- | -------- |
+| TD-UX-05  | UI   | 4 locations used `window.confirm()` as temporary bridge instead of proper confirmation modal component. **RESOLVED (Phase 61.1)** — `ConfirmationModal` component created. Zero `window.confirm()` in src/.                                | ~~Medium~~ | RESOLVED |
+| TD-API-09 | API  | `messageTextContentSchema` still uses `.strict()` — inner content items could reject extra fields from model responses on conversation resumption. `chatMessageSchema` is passthrough (53.3) but content items are strict. Monitor needed. | Low        | Active   |
 
 ### ~~Active~~ Resolved — High Priority (PM Audit #29)
 

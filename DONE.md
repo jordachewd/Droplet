@@ -2,7 +2,54 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-18 — PM deep audit #31. Phase 64 archived. All Phases 1–64.7, 63.1–63.2 complete. Milestone 22 substantially complete. 369 unit tests (65+ suites). Build passing.
+> Last updated: 2026-03-18 — PM deep audit #32. Phases 65.1–65.4, 66.1–66.3, 67.1–67.3, 61.1 archived. All Phases 1–67.3, 63.1–63.2, 61.1 complete. Milestone 22 COMPLETE. 369 unit tests (65+ suites). Build passing.
+
+---
+
+## Phase 65.1–65.4 — CRITICAL Bug Fixes + Stop Reason Consolidation — COMPLETED (2026-03-18)
+
+> PM audit #32. Triple-audit verified (PM + Architect + Engineer). All 4 tasks confirmed DONE in code. Owner-reported PREMIUM media error RESOLVED.
+
+- [x] **65.1 CRITICAL** — Split `media_limit_reached` into type-specific stop reasons: `image_limit_reached`, `audio_limit_reached`, `video_limit_reached`. Updated: `TaskData.d.tsx` (type), `tasks.model.tsx` (enum), `task.actions.tsx` (transitions), `generateResponse.tsx` (BlockedReason + handlers), `route.tsx` (stop mapping), `chat-body.tsx` (display). Backward compat: generic `media_limit_reached` retained for existing DB records. Premium user hitting video limit now sees "video generation limit" — not generic "media generation limit." TD-MEDIA-01 RESOLVED.
+- [x] **65.2 CRITICAL** — Added `UsageEvent.deleteMany({ userId })` to all 3 user deletion paths: `user.actions.tsx` (self-delete), `admin.actions.tsx` (admin remove), `clerk/route.tsx` (webhook). No orphaned UsageEvent records after deletion. GDPR compliance risk eliminated. TD-DATA-01 RESOLVED.
+- [x] **65.3 HIGH** — Fixed admin `removeUserByAdmin` deletion order: child data deleted FIRST (Clerk → Tasks → Transactions → UsageEvent → S3), User document deleted LAST. Sequential operations, not parallel. Failure in child cleanup prevents User deletion. TD-DATA-02 RESOLVED.
+- [x] **65.4 HIGH** — Extracted `STOP_REASON_MESSAGES` to shared constant `src/constants/stop-reasons.ts`. Both `route.tsx` and `chat-body.tsx` import from single source of truth. Zero duplicated stop reason definitions.
+
+**Files changed:** `src/types/TaskData.d.tsx`, `src/lib/database/models/tasks.model.tsx`, `src/lib/actions/task.actions.tsx`, `src/lib/utils/openai/generateResponse.tsx`, `src/app/api/openai/route.tsx`, `src/components/chat/chat-body.tsx`, `src/constants/stop-reasons.ts` (new), `src/lib/actions/user.actions.tsx`, `src/lib/actions/admin.actions.tsx`, `src/app/api/webhooks/clerk/route.tsx`
+
+---
+
+## Phase 66.1–66.3 — Profile & Admin Usability — COMPLETED (2026-03-18)
+
+> PM audit #32. Triple-audit verified (PM + Architect + Engineer). All 3 tasks confirmed DONE in code. Owner directives delivered.
+
+- [x] **66.1 HIGH** — Added `ProfileUsage` component to client profile page (`/app/profile`). Displays: current plan name + tier badge, image/audio/video usage counters with progress bars (`{used} / {limit}`), daily conversations (`{used} / {limit}`), "Unlimited" for -1 values, usage period start + reset date. All data fetched server-side via `getEffectivePlanConfig()`, passed as props. Zero client-side fetching.
+- [x] **66.2 HIGH** — Made video generation limit editable in admin settings. Replaced `<input type="hidden">` with `<LimitInput label="Video Generations">` component. Form submission correctly saves video limit changes. Unlimited badge and amber warning reused from existing LimitInput.
+- [x] **66.3 MEDIUM** — Added usage summary columns to admin users list table. `mediaUsage` column: `{used}/{limit} img · {used}/{limit} aud · {used}/{limit} vid`. `conversationUsage` column: `{used}/{limit}`. `∞` for unlimited. Data fetched server-side via `getAdminUsers()`.
+
+**Files changed:** `src/components/sections/profile-usage.tsx` (new), `src/app/(chat)/app/profile/page.tsx`, `src/components/admin/settings/admin-limits-section.tsx`, `src/components/admin/users/admin-users-table.tsx`, `src/lib/utils/admin-queries.ts`
+
+---
+
+## Phase 67.1–67.3 — Admin Configurability & Hardcoded Data Removal — COMPLETED (2026-03-18)
+
+> PM audit #32. Triple-audit verified (PM + Architect + Engineer). All 3 tasks confirmed DONE in code. Owner directives delivered.
+
+- [x] **67.1 HIGH** — Refactored `PlanPromo` from async Server Component with independent `auth()` + `getUserById()` calls to pure data-consuming component receiving `planName`, `role`, and `plan` via props. All parent pages pass required props. Zero independent data fetching inside PlanPromo.
+- [x] **67.2 MEDIUM** — Added `import "server-only"` to `admin-queries.ts`. Also verified present on: `effective-plan-config.ts`, `effective-model-config.ts`, `effective-persona-access.ts`, `ensure-user-synced.ts`. Server logic protected from accidental client import.
+- [x] **67.3 MEDIUM** — Outsourced pure static JSON data to `src/json/` directory: `landing.json`, `cookies.json`, `privacy.json`, `terms.json`. Builder functions remain in `src/constants/` importing from JSON + applying dynamic config interpolation.
+
+**Files changed:** `src/components/shared/plan-promo.tsx`, parent pages, `src/lib/utils/admin-queries.ts`, `src/json/landing.json` (new), `src/json/cookies.json` (new), `src/json/privacy.json` (new), `src/json/terms.json` (new), `src/constants/landing-data.ts`, `src/constants/cookies-data.ts`, `src/constants/privacy-data.ts`, `src/constants/terms-data.ts`
+
+---
+
+## Phase 61.1 — Confirmation Modal Component — COMPLETED (2026-03-18)
+
+> PM audit #32. Triple-audit verified (PM + Architect + Engineer). Task confirmed DONE in code. Zero `window.confirm()` calls remain in src/.
+
+- [x] **61.1 MEDIUM** — Created reusable `ConfirmationModal` component (`src/components/shared/confirmation-modal.tsx`) using app design system. Replaced all 4 `window.confirm()` usages: `admin-managed-form.tsx`, `library-delete-button.tsx`, `chat-sidebar-nav-v2.tsx`, `profile-hero-editor.tsx`. Modal has title, description, confirm/cancel buttons, keyboard support (Escape to close), backdrop click to close. Accessible with `role`, `aria-label`, keyboard event listener with cleanup. TD-UX-05 RESOLVED.
+
+**Files changed:** `src/components/shared/confirmation-modal.tsx` (new), `src/components/admin/admin-managed-form.tsx`, `src/components/chat/library-delete-button.tsx`, `src/components/chat/sidebar/chat-sidebar-nav-v2.tsx`, `src/components/sections/profile-hero-editor.tsx`
 
 ---
 

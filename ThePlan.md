@@ -982,7 +982,7 @@ npm run build
 
 ## 9. Immediate Execution Order
 
-Milestones 0–22 are SUBSTANTIALLY COMPLETE. Phase 64 (brand palette v2) delivered. Remaining work: Phases 61.1–61.3 and 31.4.
+Milestones 0–22 are COMPLETE. All Phases 1–67.3 (incl. 63.1–63.2, 61.1) delivered. Only LOW-priority and ON HOLD items remain.
 
 **Completed (Milestones 0–21):**
 
@@ -999,38 +999,54 @@ Milestones 0–22 are SUBSTANTIALLY COMPLETE. Phase 64 (brand palette v2) delive
 11. ✅ Admin UX safety, bulk actions, design token standardization.
 12. ✅ Brand palette v2 migration (Phase 64), client self-delete cascade (Phase 63.1), admin limits safeguard (Phase 63.2).
 
-**Completed in Milestone 22:**
+**Completed in Milestone 22 (all verified 2026-03-18, PM audit #32):**
 
 1. ✅ Fix client self-delete Clerk orphaning (Phase 63.1) — DONE.
 2. ✅ Admin limits UI safeguard for -1 unlimited values (Phase 63.2) — DONE.
-3. ✅ Brand palette v2 migration (Phase 64.1–64.7) — DONE. New tokens: nightIndigo, twilightPurple, midnightBlue, lavenderHaze, dustyBlue. All M21 legacy tokens removed. Clerk appearance updated.
+3. ✅ Brand palette v2 migration (Phase 64.1–64.7) — DONE.
+4. ✅ Split media_limit_reached into type-specific stop reasons (Phase 65.1) — DONE. TD-MEDIA-01 RESOLVED.
+5. ✅ UsageEvent cascade on all deletion paths (Phase 65.2) — DONE. TD-DATA-01 RESOLVED.
+6. ✅ Admin deletion order fix (Phase 65.3) — DONE. TD-DATA-02 RESOLVED.
+7. ✅ Shared STOP_REASON_MESSAGES constant (Phase 65.4) — DONE.
+8. ✅ Profile usage display section (Phase 66.1) — DONE.
+9. ✅ Video limit editable in admin (Phase 66.2) — DONE.
+10. ✅ Admin users table usage columns (Phase 66.3) — DONE.
+11. ✅ PlanPromo refactored to props (Phase 67.1) — DONE.
+12. ✅ admin-queries.ts server-only guard (Phase 67.2) — DONE.
+13. ✅ JSON data outsourced to src/json/ (Phase 67.3) — DONE.
+14. ✅ Confirmation modal replacing window.confirm (Phase 61.1) — DONE. TD-UX-05 RESOLVED.
 
-**Remaining in Milestone 22:**
+### Owner Directives (March 2026) — Status
 
-4. Proper confirmation modal replacing window.confirm (Phase 61.1) — MEDIUM.
-5. JSON data outsourcing to dedicated folder (Phase 61.2) — MEDIUM.
-6. Admin users table usage/limits columns (Phase 61.3) — MEDIUM.
-7. Phase 31.4 — E2E test updates (LOW).
-
-**Owner-Directed New Requirements (added 2026-03-18):**
-
-8. **CRITICAL** — PREMIUM user media limitations error — needs investigation and fix.
-9. **HIGH** — Client profile page must display plan limitations and current usage.
-10. **HIGH** — Admin panel: Plans, pricing, settings fully configurable — NO hardcoded references in any non-admin code.
-11. **HIGH** — Admin panel layout must respect same design system as /app.
-12. **MEDIUM** — Admin users table must show usage/limits info inline.
-13. **MEDIUM** — JSON data must be outsourced to dedicated json folder.
+| #   | Directive                                                    | Priority | Status                                                                                                                                                                                                          |
+| --- | ------------------------------------------------------------ | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | NO HARDCODED data — everything configurable from ADMIN panel | CRITICAL | ✅ Delivered. Prices, limits, models, currency, persona access, theme all admin-configurable. Remaining gap (v2): persona content (taglines, descriptions, system prompts) not admin-editable — only access is. |
+| 2   | Components must be data consumers                            | CRITICAL | ✅ Delivered. PlanPromo refactored (67.1). All client components receive props from Server Components.                                                                                                          |
+| 3   | Reduce unnecessary renders and resource leaks                | CRITICAL | ✅ Delivered. All useEffect cleanups verified. autoAnimate leak fixed (49.1). Zero resource leaks detected.                                                                                                     |
+| 4   | Utilities and data fetching on server side                   | CRITICAL | ✅ Delivered. 5+ files have `import "server-only"`. All query helpers server-side.                                                                                                                              |
+| 5   | User removal cascades Clerk + DB + all data                  | CRITICAL | ✅ Delivered. All 3 paths cascade fully (65.2 + 65.3).                                                                                                                                                          |
+| 6   | PREMIUM user media limitation error                          | CRITICAL | ✅ RESOLVED. Type-specific stop reasons (65.1).                                                                                                                                                                 |
+| 7   | Profile page displays plan limitations and usage             | HIGH     | ✅ Delivered. ProfileUsage component (66.1).                                                                                                                                                                    |
+| 8   | Admin plans/settings fully configurable                      | HIGH     | ✅ Mostly delivered. Video limit editable (66.2). Remaining gap (v2): persona content.                                                                                                                          |
+| 9   | Admin panel design matches /app design                       | HIGH     | ✅ Delivered. Both use brand palette v2. Consistent design tokens.                                                                                                                                              |
+| 10  | Admin users table shows usage/limits info                    | MEDIUM   | ✅ Delivered. Usage columns (66.3).                                                                                                                                                                             |
+| 11  | JSON data outsourced to json folder                          | MEDIUM   | ✅ Delivered. `src/json/` with 4 files (67.3).                                                                                                                                                                  |
 
 **Owner Components (added 2026-03-18):**
 
 - `DropletGlobe` component added by Owner at `src/components/shared/droplet-globe.tsx` — currently used on `/about` page.
 - `ToggleTheme` component refactored by Owner at `src/components/shared/toggle-theme.tsx`.
 
+**Remaining work (LOW priority):**
+
+1. Phase 31.4 — E2E test updates (LOW).
+2. Phase 46.1 — Admin error boundary (LOW).
+3. Phase 46.2 — Silent catch logging (LOW).
+
 **Remaining deferred work (ON HOLD):**
 
-14. Phase 46.1–46.2 — Admin error boundary + silent catch logging (LOW).
-15. Phase 29.x — Zod/Zustand app-wide modernization (ON HOLD).
-16. Phase 26.x — Persona-aware media prompts, Stripe auto-renewal (ON HOLD).
+4. Phase 29.x — Zod/Zustand app-wide modernization (ON HOLD).
+5. Phase 26.x — Persona-aware media prompts, Stripe auto-renewal (ON HOLD).
 
 ---
 
