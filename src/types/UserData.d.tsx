@@ -39,6 +39,8 @@ export interface UserData {
   updatedAt?: Date;
   userimg?: string;
   suspended?: boolean;
+  dailyConversationsStarted?: number;
+  dailyConversationWindowStart?: Date | null;
   plan: PlanData;
   __v: number;
 }

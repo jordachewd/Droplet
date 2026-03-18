@@ -11,6 +11,7 @@ import AudioPlayer from "@/components/shared/audio-player";
 import VideoPlayer from "@/components/shared/video-player";
 import { TaskEndAction, TaskEndedReason } from "@/types/TaskData.d";
 import { SUPPORT_EMAIL } from "@/constants/support";
+import { STOP_REASON_MESSAGES } from "@/constants/stop-reasons";
 
 interface ChatBodyProps {
   messages: Message[];
@@ -21,19 +22,6 @@ interface ChatBodyProps {
     endAction: TaskEndAction;
   } | null;
 }
-
-const stopReasonTitles: Record<TaskEndedReason, string> = {
-  prompt_limit_reached:
-    "You've reached the message limit for this conversation.",
-  trial_limit_reached:
-    "You've reached the trial limit for this persona conversation.",
-  media_limit_reached: "You've reached your media generation limit.",
-  daily_conversation_limit_reached:
-    "You've reached the daily conversation limit for your plan.",
-  conversation_storage_limit_reached:
-    "This conversation has reached its storage limit.",
-  billing_state_invalid: "Your plan has expired.",
-};
 
 function renderAction(endAction: TaskEndAction) {
   if (endAction === "start_new_conversation") {
@@ -210,7 +198,7 @@ export default function ChatBody({
                   Conversation Ended
                 </span>
                 <p className="font-medium">
-                  {stopReasonTitles[endState.stopReason]}
+                  {STOP_REASON_MESSAGES[endState.stopReason]}
                 </p>
               </div>
 

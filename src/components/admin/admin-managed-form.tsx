@@ -2,6 +2,7 @@
 
 import { ReactNode, useActionState, useEffect, useMemo, useState } from "react";
 import AlertMessage, { AlertParams } from "@/components/shared/alert-message";
+import ConfirmationModal from "@/components/shared/confirmation-modal";
 import {
   ADMIN_ACTION_INITIAL_STATE,
   AdminActionState,
@@ -34,13 +35,31 @@ export function AdminManagedForm({
     ADMIN_ACTION_INITIAL_STATE,
   );
   const [alert, setAlert] = useState<AlertParams | null>(null);
+  const [pendingFormData, setPendingFormData] = useState<FormData | null>(null);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
   const wrappedAction = (formData: FormData) => {
-    if (confirmMessage && !window.confirm(confirmMessage)) {
+    if (confirmMessage) {
+      setPendingFormData(formData);
+      setIsConfirmOpen(true);
       return;
     }
 
     formAction(formData);
+  };
+
+  const handleConfirm = () => {
+    if (pendingFormData) {
+      formAction(pendingFormData);
+    }
+
+    setPendingFormData(null);
+    setIsConfirmOpen(false);
+  };
+
+  const handleCancel = () => {
+    setPendingFormData(null);
+    setIsConfirmOpen(false);
   };
 
   const alertPayload = useMemo(() => {
@@ -80,9 +99,21 @@ export function AdminManagedForm({
   }, [alert, autoDismissSuccessMs]);
 
   return (
-    <form action={wrappedAction} className={className}>
-      {alert ? <AlertMessage message={alert} /> : null}
-      {children}
-    </form>
+    <>
+      <form action={wrappedAction} className={className}>
+        {alert ? <AlertMessage message={alert} /> : null}
+        {children}
+      </form>
+      <ConfirmationModal
+        isOpen={isConfirmOpen}
+        title="Confirm action"
+        description={confirmMessage ?? "Are you sure?"}
+        confirmLabel="Confirm"
+        cancelLabel="Cancel"
+        destructive
+        onConfirm={handleConfirm}
+        onCancel={handleCancel}
+      />
+    </>
   );
 }

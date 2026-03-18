@@ -4,6 +4,7 @@ import { connectToDatabase } from "@/lib/database/mongoose";
 import User from "@/lib/database/models/user.model";
 import Task from "@/lib/database/models/tasks.model";
 import Transaction from "@/lib/database/models/transaction.model";
+import UsageEvent from "@/lib/database/models/usage-event.model";
 import deleteS3Prefix from "@/lib/utils/aws/delete-s3-prefix";
 import { revalidatePath } from "next/cache";
 import {
@@ -46,6 +47,12 @@ vi.mock("@/lib/database/models/transaction.model", () => ({
   },
 }));
 
+vi.mock("@/lib/database/models/usage-event.model", () => ({
+  default: {
+    deleteMany: vi.fn(),
+  },
+}));
+
 vi.mock("@/lib/utils/aws/delete-s3-prefix", () => ({
   default: vi.fn(),
 }));
@@ -80,7 +87,7 @@ describe("getUserById", () => {
     expect(connectToDatabase).toHaveBeenCalledOnce();
     expect(User.findOne).toHaveBeenCalledWith({ clerkId: "clerk_user_1" });
     expect(selectMock).toHaveBeenCalledWith(
-      "clerkId username email role plan firstName lastName userimg registerAt updatedAt",
+      "clerkId username email role plan firstName lastName userimg registerAt updatedAt dailyConversationsStarted dailyConversationWindowStart",
     );
     expect(leanMock).toHaveBeenCalledOnce();
     expect(response).toEqual(
@@ -140,6 +147,9 @@ describe("deleteUser", () => {
     vi.mocked(Transaction.deleteMany).mockResolvedValue({
       deletedCount: 0,
     } as never);
+    vi.mocked(UsageEvent.deleteMany).mockResolvedValue({
+      deletedCount: 0,
+    } as never);
     vi.mocked(deleteS3Prefix).mockResolvedValue(0);
     vi.mocked(User.findByIdAndDelete).mockResolvedValue({
       _id: "mongo_user_1",
@@ -160,6 +170,9 @@ describe("deleteUser", () => {
     vi.mocked(Transaction.deleteMany).mockResolvedValue({
       deletedCount: 2,
     } as never);
+    vi.mocked(UsageEvent.deleteMany).mockResolvedValue({
+      deletedCount: 9,
+    } as never);
     vi.mocked(deleteS3Prefix).mockResolvedValue(7);
 
     const response = await deleteUser("clerk_user_1");
@@ -173,6 +186,9 @@ describe("deleteUser", () => {
     expect(Transaction.deleteMany).toHaveBeenCalledWith({
       clerkId: "clerk_user_1",
     });
+    expect(UsageEvent.deleteMany).toHaveBeenCalledWith({
+      userId: "clerk_user_1",
+    });
     expect(deleteS3Prefix).toHaveBeenCalledWith("clerk_user_1/");
     expect(User.findByIdAndDelete).toHaveBeenCalledWith("mongo_user_1");
     expect(response).toEqual(
@@ -181,6 +197,7 @@ describe("deleteUser", () => {
         message: "User deleted successfully.",
         deletedTasks: 4,
         deletedTransactions: 2,
+        deletedUsageEvents: 9,
         deletedObjectsCount: 7,
       }),
     );
@@ -199,6 +216,7 @@ describe("deleteUser", () => {
     expect(User.findOne).not.toHaveBeenCalled();
     expect(Task.deleteMany).not.toHaveBeenCalled();
     expect(Transaction.deleteMany).not.toHaveBeenCalled();
+    expect(UsageEvent.deleteMany).not.toHaveBeenCalled();
   });
 
   it("returns a 404 response when user does not exist", async () => {
@@ -221,6 +239,7 @@ describe("deleteUser", () => {
     );
     expect(Task.deleteMany).not.toHaveBeenCalled();
     expect(Transaction.deleteMany).not.toHaveBeenCalled();
+    expect(UsageEvent.deleteMany).not.toHaveBeenCalled();
     expect(deleteS3Prefix).not.toHaveBeenCalled();
     expect(User.findByIdAndDelete).not.toHaveBeenCalled();
   });

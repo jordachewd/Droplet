@@ -2,22 +2,17 @@ import classNames from "classnames";
 import { getPlanIcon } from "@/constants/plans";
 import { PlanName } from "@/types/PlanData.d";
 import Link from "next/link";
-import { getUserById } from "@/lib/actions/user.actions";
-import { UserData } from "@/types/UserData.d";
-import { auth } from "@clerk/nextjs/server";
+import { PlanData } from "@/types/PlanData.d";
+import { UserRoles } from "@/types/UserData.d";
 
-export default async function PlanPromo() {
-  const { userId } = await auth();
-  const userData = userId
-    ? ((await getUserById(userId)) as UserData | null)
-    : null;
+interface PlanPromoProps {
+  plan: PlanData;
+  role: UserRoles;
+}
 
-  const userPlan = userData?.plan || null;
-
-  if (!userPlan) return null;
-
-  const isAdmin = userData?.role === "admin";
-  const { name } = userPlan;
+export default function PlanPromo({ plan, role }: PlanPromoProps) {
+  const isAdmin = role === "admin";
+  const { name } = plan;
   const isLite = name === "Lite";
   const isPremiumFull = name === "Premium";
 

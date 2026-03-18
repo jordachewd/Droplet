@@ -3,23 +3,10 @@ export interface CookieCategory {
   description: string;
 }
 
+import cookiesData from "@/json/cookies.json";
+
 export const legalReviewDisclaimer =
   "This policy is provided for informational purposes. Legal review recommended before production publication.";
 
-export const cookieCategories: CookieCategory[] = [
-  {
-    title: "Essential authentication cookies",
-    description:
-      "Clerk-managed session and security cookies are required for sign-in, session continuity, fraud prevention, and protected route access. Without these cookies, authenticated parts of Droplet cannot function.",
-  },
-  {
-    title: "Functional preference storage",
-    description:
-      "Droplet stores UI preferences in browser storage so the experience stays consistent across visits. The current documented keys are `droplet-theme-mode` and `droplet-sidebar-collapsed`, plus the legacy migration keys `cellesseon-theme-mode` and `cellesseon-sidebar-collapsed`.",
-  },
-  {
-    title: "Optional analytics or future tooling",
-    description:
-      "If analytics, experimentation, or additional marketing tools are introduced later, Droplet should document them here before activation and obtain consent where required by applicable law.",
-  },
-];
+export const cookieCategories =
+  cookiesData.cookieCategories as CookieCategory[];

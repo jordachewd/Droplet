@@ -4,6 +4,7 @@ import classNames from "classnames";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import AlertMessage from "@/components/shared/alert-message";
+import ConfirmationModal from "@/components/shared/confirmation-modal";
 import { deleteTask } from "@/lib/actions/task.actions";
 
 interface LibraryDeleteButtonProps {
@@ -26,16 +27,10 @@ export default function LibraryDeleteButton({
     severity: "success" | "error";
     variant: "outlined";
   } | null>(null);
+  const [isConfirmOpen, setIsConfirmOpen] = useState<boolean>(false);
 
-  async function handleDelete() {
+  async function handleDeleteConfirmed() {
     if (isDemo || isDeleting) {
-      return;
-    }
-
-    const shouldDelete = window.confirm(
-      `Delete "${conversationTitle}"? This cannot be undone.`,
-    );
-    if (!shouldDelete) {
       return;
     }
 
@@ -81,6 +76,14 @@ export default function LibraryDeleteButton({
     }
   }
 
+  function handleDeleteRequested() {
+    if (isDemo || isDeleting) {
+      return;
+    }
+
+    setIsConfirmOpen(true);
+  }
+
   return (
     <>
       {alert ? <AlertMessage message={alert} /> : null}
@@ -95,7 +98,7 @@ export default function LibraryDeleteButton({
           (isDeleting || isDemo) &&
             "cursor-not-allowed opacity-45 hover:translate-y-0 hover:bg-lavenderHaze-100/75 dark:hover:bg-nightIndigo-900/75",
         )}
-        onClick={() => void handleDelete()}
+        onClick={handleDeleteRequested}
         disabled={isDeleting || isDemo}
         aria-label={
           isDemo
@@ -115,6 +118,19 @@ export default function LibraryDeleteButton({
           )}
         ></i>
       </button>
+      <ConfirmationModal
+        isOpen={isConfirmOpen}
+        title="Delete conversation"
+        description={`Delete "${conversationTitle}"? This cannot be undone.`}
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        destructive
+        onConfirm={() => {
+          setIsConfirmOpen(false);
+          void handleDeleteConfirmed();
+        }}
+        onCancel={() => setIsConfirmOpen(false)}
+      />
     </>
   );
 }

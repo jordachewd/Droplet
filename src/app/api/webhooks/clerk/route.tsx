@@ -7,6 +7,7 @@ import { connectToDatabase } from "@/lib/database/mongoose";
 import Task from "@/lib/database/models/tasks.model";
 import User from "@/lib/database/models/user.model";
 import Transaction from "@/lib/database/models/transaction.model";
+import UsageEvent from "@/lib/database/models/usage-event.model";
 import deleteS3Prefix from "@/lib/utils/aws/delete-s3-prefix";
 import serializeForClient from "@/lib/utils/serialize-for-client";
 import { nonEmptyStringSchema } from "@/lib/utils/validation-schemas";
@@ -480,6 +481,7 @@ export async function POST(req: NextRequest) {
       let deletedUserCount: number | null = null;
       let deletedTransactionCount: number | null = null;
       let deletedTaskCount: number | null = null;
+      let deletedUsageEventCount: number | null = null;
       let deletedObjectCount: number | null = null;
 
       try {
@@ -509,6 +511,15 @@ export async function POST(req: NextRequest) {
       }
 
       try {
+        const deletedUsageEvents = await UsageEvent.deleteMany({
+          userId: clerkId,
+        });
+        deletedUsageEventCount = deletedUsageEvents.deletedCount ?? 0;
+      } catch {
+        logUserDeletedCleanupFailure("usage-event");
+      }
+
+      try {
         deletedObjectCount = await deleteS3Prefix(`${clerkId}/`);
       } catch {
         logUserDeletedCleanupFailure("s3");
@@ -520,6 +531,10 @@ export async function POST(req: NextRequest) {
         deletedTaskCount,
         deletedObjectCount,
       });
+
+      process.stderr.write(
+        `[clerk-webhook] user.deleted cleanup counts usageEvents=${deletedUsageEventCount ?? "unknown"}\n`,
+      );
 
       return NextResponse.json({ message: "OK" });
     }

@@ -159,7 +159,7 @@ describe("generateResponse", () => {
     expect(payload.generatedImage).toBe(true);
   });
 
-  it("returns media_limit_reached when atomic image slot claim fails", async () => {
+  it("returns image_limit_reached when atomic image slot claim fails", async () => {
     vi.mocked(openAiClient.chat.completions.create).mockResolvedValue({
       choices: [
         {
@@ -210,7 +210,7 @@ describe("generateResponse", () => {
       limitType: "images",
     });
     expect(generateImage).not.toHaveBeenCalled();
-    expect(payload.blockedReason).toBe("media_limit_reached");
+    expect(payload.blockedReason).toBe("image_limit_reached");
     expect(payload.taskData.content[0].text).toContain("limit reached");
   });
 

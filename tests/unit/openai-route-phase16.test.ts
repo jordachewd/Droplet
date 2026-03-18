@@ -309,7 +309,7 @@ describe("POST /api/openai phase16", () => {
   it("ends the conversation when media generation is blocked by plan limits", async () => {
     vi.mocked(generateResponse).mockResolvedValue(
       JSON.stringify({
-        blockedReason: "media_limit_reached",
+        blockedReason: "image_limit_reached",
         taskUsage: 5,
         taskData: {
           whois: "assistant",
@@ -331,7 +331,7 @@ describe("POST /api/openai phase16", () => {
             requestType: "image",
             model: "gpt-image-1-mini",
             blocked: true,
-            blockedReason: "media_limit_reached",
+            blockedReason: "image_limit_reached",
             latencyMs: 0,
           },
         ],
@@ -347,13 +347,13 @@ describe("POST /api/openai phase16", () => {
     const payload = await response.json();
 
     expect(response.status).toBe(403);
-    expect(payload.stopReason).toBe("media_limit_reached");
+    expect(payload.stopReason).toBe("image_limit_reached");
     expect(payload.acceptedPrompt).toBe(true);
     expect(updateTask).toHaveBeenCalledWith(
       EXISTING_TASK_ID,
       expect.objectContaining({
         status: "ended",
-        endedReason: "media_limit_reached",
+        endedReason: "image_limit_reached",
         endAction: "upgrade_plan",
       }),
     );
@@ -365,7 +365,7 @@ describe("POST /api/openai phase16", () => {
           expect.objectContaining({ requestType: "chat" }),
           expect.objectContaining({
             requestType: "image",
-            blockedReason: "media_limit_reached",
+            blockedReason: "image_limit_reached",
           }),
         ]),
       }),

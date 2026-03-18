@@ -295,13 +295,13 @@ describe("generateResponse phase16", () => {
     const payload = JSON.parse(result as string);
 
     expect(generateImage).not.toHaveBeenCalled();
-    expect(payload.blockedReason).toBe("media_limit_reached");
+    expect(payload.blockedReason).toBe("image_limit_reached");
     expect(payload.requestMetrics).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           requestType: "image",
           blocked: true,
-          blockedReason: "media_limit_reached",
+          blockedReason: "image_limit_reached",
         }),
       ]),
     );

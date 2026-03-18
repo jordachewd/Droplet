@@ -187,10 +187,13 @@ test.describe("conversation lifecycle", () => {
       await expect(page.getByText(prompt)).toBeVisible();
 
       await page.goto("/app/library");
-      page.once("dialog", (dialog) => dialog.accept());
       await page
         .locator("#LibraryPage")
         .getByRole("button", { name: `Delete ${conversationTitle}` })
+        .click();
+      await page
+        .locator(".ConfirmationModal")
+        .getByRole("button", { name: "Delete", exact: true })
         .click();
 
       await expect(

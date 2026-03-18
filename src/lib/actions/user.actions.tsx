@@ -5,6 +5,7 @@ import { UpdateUserParams } from "@/types/UserData.d";
 import User from "@/lib/database/models/user.model";
 import Task from "@/lib/database/models/tasks.model";
 import Transaction from "@/lib/database/models/transaction.model";
+import UsageEvent from "@/lib/database/models/usage-event.model";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import { handleError } from "@/lib/utils/handleError";
 import deleteS3Prefix from "@/lib/utils/aws/delete-s3-prefix";
@@ -125,10 +126,12 @@ export async function deleteUser(clerkId: string) {
       });
     }
 
-    const [deletedTasks, deletedTransactions] = await Promise.all([
-      Task.deleteMany({ userId: parsedClerkId.data }),
-      Transaction.deleteMany({ clerkId: parsedClerkId.data }),
-    ]);
+    const [deletedTasks, deletedTransactions, deletedUsageEvents] =
+      await Promise.all([
+        Task.deleteMany({ userId: parsedClerkId.data }),
+        Transaction.deleteMany({ clerkId: parsedClerkId.data }),
+        UsageEvent.deleteMany({ userId: parsedClerkId.data }),
+      ]);
 
     const deletedObjectsCount = await deleteS3Prefix(`${parsedClerkId.data}/`);
 
@@ -152,6 +155,7 @@ export async function deleteUser(clerkId: string) {
       status: 200,
       deletedTasks: deletedTasks.deletedCount ?? 0,
       deletedTransactions: deletedTransactions.deletedCount ?? 0,
+      deletedUsageEvents: deletedUsageEvents.deletedCount ?? 0,
       deletedObjectsCount,
     });
   } catch (error) {
@@ -173,7 +177,7 @@ export async function getUserById(userId: string) {
 
     const user = await User.findOne({ clerkId: parsedUserId.data })
       .select(
-        "clerkId username email role plan firstName lastName userimg registerAt updatedAt",
+        "clerkId username email role plan firstName lastName userimg registerAt updatedAt dailyConversationsStarted dailyConversationWindowStart",
       )
       .lean();
 

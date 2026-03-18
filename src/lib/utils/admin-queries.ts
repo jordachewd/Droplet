@@ -1,3 +1,5 @@
+import "server-only";
+
 import {
   DEFAULT_PLAN_PRICING,
   PERSONA_TRIAL_LIMITS,
@@ -97,6 +99,8 @@ function toIsoString(value?: Date | string): string | null {
 }
 
 function toAdminUserListItem(user: UserRecord) {
+  const planName = user.plan?.name ?? "Lite";
+
   return {
     id: String(user._id),
     clerkId: user.clerkId,
@@ -104,7 +108,7 @@ function toAdminUserListItem(user: UserRecord) {
     email: user.email,
     role: user.role,
     suspended: Boolean(user.suspended),
-    planName: user.plan?.name ?? "Lite",
+    planName,
     registerAt: toIsoString(user.registerAt),
   };
 }
@@ -188,14 +192,45 @@ export async function getAdminUsers(search?: string) {
         ],
       }
     : {};
-  const users = (await User.find(filter)
-    .sort({ registerAt: -1 })
-    .select(
-      "clerkId username email role suspended registerAt plan.name firstName lastName",
-    )
-    .lean()) as UserRecord[];
+  const [users, effectivePlanConfig] = await Promise.all([
+    User.find(filter)
+      .sort({ registerAt: -1 })
+      .select(
+        "clerkId username email role suspended registerAt dailyConversationsStarted plan.name plan.imageGenerations plan.audioGenerations plan.videoGenerations firstName lastName",
+      )
+      .lean(),
+    getEffectivePlanConfig(),
+  ]);
 
-  return users.map(toAdminUserListItem);
+  const typedUsers = users as UserRecord[];
+
+  return typedUsers.map((user) => {
+    const baseItem = toAdminUserListItem(user);
+    const planName = user.plan?.name ?? "Lite";
+    const planLimits = effectivePlanConfig.limits[planName];
+
+    return {
+      ...baseItem,
+      mediaUsage: {
+        images: {
+          used: user.plan?.imageGenerations ?? 0,
+          limit: planLimits.images,
+        },
+        audio: {
+          used: user.plan?.audioGenerations ?? 0,
+          limit: planLimits.audio,
+        },
+        video: {
+          used: user.plan?.videoGenerations ?? 0,
+          limit: planLimits.video,
+        },
+      },
+      conversationUsage: {
+        used: user.dailyConversationsStarted ?? 0,
+        limit: planLimits.conversationsPerDay,
+      },
+    };
+  });
 }
 
 export async function getAdminUserDetail(userId: string) {

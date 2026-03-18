@@ -88,7 +88,7 @@ export default function ProfileHero({ userData }: HeroProps) {
         </div>
 
         <div className="flex w-full lg:max-w-[25%]">
-          <PlanPromo />
+          <PlanPromo plan={plan} role={userData.role} />
         </div>
       </div>
 

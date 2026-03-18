@@ -1,8 +1,10 @@
 import ProfileBilling from "@/components/sections/profile-billing";
 import ProfileHero from "@/components/sections/profile-hero";
+import ProfileUsage from "@/components/sections/profile-usage";
 import PageWrapper from "@/components/layout/page-wrapper";
 import { getAllTransactions } from "@/lib/actions/transaction.action";
 import { ensureUserSynced } from "@/lib/utils/ensure-user-synced";
+import { getEffectivePlanConfig } from "@/lib/utils/effective-plan-config";
 import { SUPPORT_EMAIL } from "@/constants/support";
 import { Transaction } from "@/types/TransactionData.d";
 import { auth } from "@clerk/nextjs/server";
@@ -12,15 +14,35 @@ export default async function AppProfilePage() {
   const userData = userId ? await ensureUserSynced(userId) : null;
   let userTxns: Transaction[] | null = null;
 
+  const effectivePlanConfig = await getEffectivePlanConfig();
+
   if (userData?.plan) {
     userTxns = (await getAllTransactions(userId!)) || null;
   }
 
   const stripeId = userData?.plan?.stripeId || null;
+  const planName = userData?.plan?.name ?? "Lite";
+  const planLimits = effectivePlanConfig.limits[planName];
+  const imageUsed = userData?.plan?.imageGenerations ?? 0;
+  const audioUsed = userData?.plan?.audioGenerations ?? 0;
+  const videoUsed = userData?.plan?.videoGenerations ?? 0;
+  const dailyConversationsUsed = userData?.dailyConversationsStarted ?? 0;
+  const usagePeriodStart = userData?.plan?.usagePeriodStart
+    ? new Date(userData.plan.usagePeriodStart)
+    : undefined;
 
   return userData ? (
     <PageWrapper id="AppProfilePage" scrollable>
       <ProfileHero userData={userData} />
+      <ProfileUsage
+        planName={planName}
+        planLimits={planLimits}
+        imageUsed={imageUsed}
+        audioUsed={audioUsed}
+        videoUsed={videoUsed}
+        dailyConversationsUsed={dailyConversationsUsed}
+        usagePeriodStart={usagePeriodStart}
+      />
       <ProfileBilling stripeId={stripeId} userTxns={userTxns} />
     </PageWrapper>
   ) : (
