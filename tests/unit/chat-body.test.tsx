@@ -35,6 +35,21 @@ const stopReasonCases: Array<{
     expectedTitle: "You've reached your media generation limit.",
   },
   {
+    stopReason: "image_limit_reached",
+    expectedTitle:
+      "You've reached your image generation limit for this billing period.",
+  },
+  {
+    stopReason: "audio_limit_reached",
+    expectedTitle:
+      "You've reached your audio generation limit for this billing period.",
+  },
+  {
+    stopReason: "video_limit_reached",
+    expectedTitle:
+      "You've reached your video generation limit for this billing period.",
+  },
+  {
     stopReason: "daily_conversation_limit_reached",
     expectedTitle: "You've reached the daily conversation limit for your plan.",
   },

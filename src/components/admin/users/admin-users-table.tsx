@@ -17,6 +17,24 @@ interface AdminUsersTableItem {
   planName: string;
   registerAt: string | null;
   suspended: boolean;
+  mediaUsage: {
+    images: {
+      used: number;
+      limit: number;
+    };
+    audio: {
+      used: number;
+      limit: number;
+    };
+    video: {
+      used: number;
+      limit: number;
+    };
+  };
+  conversationUsage: {
+    used: number;
+    limit: number;
+  };
 }
 
 interface AdminUsersTableProps {
@@ -25,6 +43,8 @@ interface AdminUsersTableProps {
 
 export function AdminUsersTable({ users }: AdminUsersTableProps) {
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+
+  const formatLimit = (limit: number) => (limit === -1 ? "∞" : String(limit));
 
   const selectedSet = useMemo(
     () => new Set(selectedUserIds),
@@ -112,12 +132,14 @@ export function AdminUsersTable({ users }: AdminUsersTableProps) {
         ) : null}
       </div>
 
-      <div className="grid grid-cols-[0.35fr_1.2fr_1.5fr_0.7fr_0.7fr_0.8fr_0.7fr] gap-3 border-b border-slate-300 px-4 py-3 text-xs font-semibold uppercase tracking-wide opacity-70 dark:border-slate-500">
+      <div className="grid grid-cols-[0.35fr_1.05fr_1.35fr_0.6fr_0.6fr_1.25fr_0.7fr_0.8fr_0.7fr] gap-3 border-b border-slate-300 px-4 py-3 text-xs font-semibold uppercase tracking-wide opacity-70 dark:border-slate-500">
         <span></span>
         <span>Username</span>
         <span>Email</span>
         <span>Role</span>
         <span>Plan</span>
+        <span>Media Used</span>
+        <span>Convos Today</span>
         <span>Registered</span>
         <span>State</span>
       </div>
@@ -132,7 +154,7 @@ export function AdminUsersTable({ users }: AdminUsersTableProps) {
         {users.map((user) => (
           <div
             key={user.id}
-            className="grid grid-cols-[0.35fr_1.2fr_1.5fr_0.7fr_0.7fr_0.8fr_0.7fr] gap-3 px-4 py-4 text-sm"
+            className="grid grid-cols-[0.35fr_1.05fr_1.35fr_0.6fr_0.6fr_1.25fr_0.7fr_0.8fr_0.7fr] gap-3 px-4 py-4 text-sm"
           >
             <label className="flex items-center">
               <input
@@ -151,6 +173,12 @@ export function AdminUsersTable({ users }: AdminUsersTableProps) {
             <span className="truncate">{user.email}</span>
             <span className="capitalize">{user.role}</span>
             <span>{user.planName}</span>
+            <span className="truncate text-xs opacity-85">
+              {`${user.mediaUsage.images.used}/${formatLimit(user.mediaUsage.images.limit)} img · ${user.mediaUsage.audio.used}/${formatLimit(user.mediaUsage.audio.limit)} aud · ${user.mediaUsage.video.used}/${formatLimit(user.mediaUsage.video.limit)} vid`}
+            </span>
+            <span className="text-xs font-medium">
+              {`${user.conversationUsage.used}/${formatLimit(user.conversationUsage.limit)}`}
+            </span>
             <span>
               {user.registerAt
                 ? new Date(user.registerAt).toLocaleDateString()

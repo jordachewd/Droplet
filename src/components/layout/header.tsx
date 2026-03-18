@@ -1,4 +1,5 @@
 "use client";
+
 import { useEffect, useState } from "react";
 import classNames from "classnames";
 import Link from "next/link";
@@ -34,25 +35,25 @@ export default function Header() {
           "bg-lavenderHaze-100/50 shadow-sm backdrop-blur-lg dark:bg-nightIndigo-900/50",
       )}
     >
-      <div className="mx-auto flex w-full max-w-screen-2xl items-center justify-between gap-4 py-3">
-        <div className="flex items-center gap-10">
-          <Logo size={26} />
+      <div className="mx-auto flex w-full max-w-screen-2xl items-center justify-between py-3">
+        <div className="flex items-center gap-18">
+          <Logo size={30} />
 
-          <nav className="hidden items-center gap-1 md:flex">
-            <Link className="btn btn-text btn-sm" href="/about">
+          <nav className="hidden items-center gap-10 md:flex">
+            <Link className="menu-item text-lg" href="/about">
               About
             </Link>
-            <Link className="btn btn-text btn-sm" href="/personas">
+            <Link className="menu-item text-lg" href="/personas">
               Personas
             </Link>
-            <Link className="btn btn-text btn-sm" href="/plans">
+            <Link className="menu-item text-lg" href="/plans">
               Plans
             </Link>
-            <Link className="btn btn-text btn-sm" href="/faqs">
+            <Link className="menu-item text-lg" href="/faqs">
               FAQs
             </Link>
             {isSignedIn && (
-              <Link className="btn btn-text btn-sm" href="/app">
+              <Link className="menu-item text-lg" href="/app">
                 App
               </Link>
             )}
@@ -65,9 +66,9 @@ export default function Header() {
             </Link>
           )}
 
-          {isSignedIn && <AvatarMenu />}
-
           <ToggleTheme />
+
+          {isSignedIn && <AvatarMenu />}
         </div>
       </div>
     </section>

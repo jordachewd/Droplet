@@ -1,4 +1,5 @@
 import { PlanPricing } from "@/constants/plans";
+import termsData from "@/json/terms.json";
 
 export interface LegalSection {
   title: string;
@@ -8,6 +9,17 @@ export interface LegalSection {
 export const legalReviewDisclaimer =
   "This policy is provided for informational purposes. Legal review recommended before production publication.";
 
+function interpolateTermsParagraph(
+  paragraph: string,
+  pricing: PlanPricing,
+  currencySymbol: string,
+): string {
+  return paragraph
+    .replaceAll("{{CURRENCY}}", currencySymbol)
+    .replaceAll("{{PRO_PRICE}}", String(pricing.Pro))
+    .replaceAll("{{PREMIUM_PRICE}}", String(pricing.Premium));
+}
+
 export function buildTermsSections({
   pricing,
   currencySymbol = pricing.currencySymbol,
@@ -15,48 +27,10 @@ export function buildTermsSections({
   pricing: PlanPricing;
   currencySymbol?: string;
 }): LegalSection[] {
-  return [
-    {
-      title: "Service description",
-      paragraphs: [
-        "Droplet is an account-required SaaS product that provides persona-driven AI conversations together with plan-based access to supported media workflows and account features.",
-        "The service may evolve over time, but any public capability claim, pricing promise, or entitlement rule should match the approved product specification and published plan details.",
-      ],
-    },
-    {
-      title: "Account responsibilities",
-      paragraphs: [
-        "Users are responsible for maintaining the security of their account credentials, providing accurate information, and using the service lawfully. Sharing accounts, attempting to bypass usage limits, or interfering with platform security controls may result in suspension or termination.",
-        "Because Droplet is account-required, access to chat and protected product areas depends on maintaining an active account and complying with the service rules.",
-      ],
-    },
-    {
-      title: "AI-generated content disclaimer",
-      paragraphs: [
-        "AI-generated output can be incomplete, inaccurate, biased, or unsuitable for a specific use case. Users are responsible for reviewing and validating responses before relying on them for business, legal, medical, financial, or other high-stakes decisions.",
-        "Droplet should not be treated as a substitute for licensed professional advice, and generated outputs remain subject to provider limitations and applicable law.",
-      ],
-    },
-    {
-      title: "Payment terms",
-      paragraphs: [
-        `The current approved public prices are Lite for free, Pro for ${currencySymbol}${pricing.Pro}, and Premium for ${currencySymbol}${pricing.Premium}. Paid tiers are available only after successful payment processing through Stripe or another approved billing provider.`,
-        "Draft product policy currently treats Pro and Premium as paid access periods rather than auto-renewing subscriptions. Exact renewal, refund, and billing-state handling should be reviewed and finalized before publication.",
-      ],
-    },
-    {
-      title: "Refunds, suspension, and termination",
-      paragraphs: [
-        "Refunds, credits, or billing adjustments are subject to the operator's published policy and applicable law. If a refund policy is offered, it should be stated clearly in production documentation before the service is launched publicly.",
-        "Droplet may suspend or terminate access for fraud, abuse, payment issues, security threats, policy violations, or other conduct that creates material risk to the service or its users.",
-      ],
-    },
-    {
-      title: "Limitation of liability and governing law",
-      paragraphs: [
-        "To the maximum extent allowed by law, Droplet and its operators should disclaim indirect, incidental, special, consequential, and punitive damages arising from service use, outages, data loss, or reliance on AI-generated output. Any liability cap and exceptions should be confirmed through legal review before publication.",
-        "The governing law and forum for disputes are not defined in the approved repository documents. Those clauses must be finalized by Droplet's legal review process before these draft terms are published as production terms.",
-      ],
-    },
-  ];
+  return (termsData.termsSections as LegalSection[]).map((section) => ({
+    title: section.title,
+    paragraphs: section.paragraphs.map((paragraph) =>
+      interpolateTermsParagraph(paragraph, pricing, currencySymbol),
+    ),
+  }));
 }

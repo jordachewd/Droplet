@@ -6,7 +6,7 @@ import serializeForClient from "@/lib/utils/serialize-for-client";
 import type { UserData } from "@/types/UserData.d";
 
 const USER_SYNC_PROJECTION =
-  "clerkId username email role plan firstName lastName userimg registerAt updatedAt";
+  "clerkId username email role plan firstName lastName userimg registerAt updatedAt dailyConversationsStarted dailyConversationWindowStart";
 
 function isMongoDuplicateKeyError(error: unknown): error is { code: number } {
   return (

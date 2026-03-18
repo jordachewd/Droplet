@@ -8,6 +8,7 @@ import AppSetting from "@/lib/database/models/app-setting.model";
 import PublicPage from "@/lib/database/models/public-page.model";
 import Task from "@/lib/database/models/tasks.model";
 import Transaction from "@/lib/database/models/transaction.model";
+import UsageEvent from "@/lib/database/models/usage-event.model";
 import User from "@/lib/database/models/user.model";
 import { createAdminAuditLogEntry } from "@/lib/utils/admin-audit";
 import { requireAdminActionAccess } from "@/lib/utils/admin-auth";
@@ -123,8 +124,9 @@ async function removeUserByAdmin({
   clerkId: string;
   deletedTasks: number;
   deletedTransactions: number;
+  deletedUsageEvents: number;
   deletedObjectsCount: number;
-  assetCleanupStatus: "completed" | "failed";
+  assetCleanupStatus: "completed";
 }> {
   const targetUser = await User.findById(targetUserId)
     .select("clerkId email username")
@@ -137,20 +139,21 @@ async function removeUserByAdmin({
   const client = await clerkClient();
   await client.users.deleteUser(targetUser.clerkId);
 
-  const [deletedTasks, deletedTransactions, deletedUser] = await Promise.all([
-    Task.deleteMany({ userId: targetUser.clerkId }),
-    Transaction.deleteMany({ clerkId: targetUser.clerkId }),
-    User.findByIdAndDelete(targetUserId),
-  ]);
+  const deletedTasks = await Task.deleteMany({ userId: targetUser.clerkId });
+  const deletedTransactions = await Transaction.deleteMany({
+    clerkId: targetUser.clerkId,
+  });
+  const deletedUsageEvents = await UsageEvent.deleteMany({
+    userId: targetUser.clerkId,
+  });
+  const deletedObjectsCount = await deleteS3Prefix(`${targetUser.clerkId}/`);
+  const deletedUser = await User.findByIdAndDelete(targetUserId);
 
-  let deletedObjectsCount = 0;
-  let assetCleanupStatus: "completed" | "failed" = "completed";
-
-  try {
-    deletedObjectsCount = await deleteS3Prefix(`${targetUser.clerkId}/`);
-  } catch {
-    assetCleanupStatus = "failed";
+  if (!deletedUser) {
+    throw new Error("User deletion failed.");
   }
+
+  const assetCleanupStatus = "completed" as const;
 
   await createAdminAuditLogEntry({
     adminId,
@@ -163,6 +166,7 @@ async function removeUserByAdmin({
       username: targetUser.username,
       deletedTasks: deletedTasks.deletedCount ?? 0,
       deletedTransactions: deletedTransactions.deletedCount ?? 0,
+      deletedUsageEvents: deletedUsageEvents.deletedCount ?? 0,
       deletedObjectsCount,
       assetCleanupStatus,
       deletedUser: Boolean(deletedUser),
@@ -174,6 +178,7 @@ async function removeUserByAdmin({
     clerkId: targetUser.clerkId,
     deletedTasks: deletedTasks.deletedCount ?? 0,
     deletedTransactions: deletedTransactions.deletedCount ?? 0,
+    deletedUsageEvents: deletedUsageEvents.deletedCount ?? 0,
     deletedObjectsCount,
     assetCleanupStatus,
   };

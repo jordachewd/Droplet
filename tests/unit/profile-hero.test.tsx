@@ -150,15 +150,12 @@ describe("ProfileHeroEditor", () => {
   });
 
   it("deletes account after confirmation and signs out", async () => {
-    const confirmMock = vi.fn(() => true);
-    vi.stubGlobal("confirm", confirmMock);
-
     render(<ProfileHeroEditor userData={baseUserData} />);
 
     fireEvent.click(screen.getByRole("button", { name: "Delete My Account" }));
+    fireEvent.click(screen.getByRole("button", { name: "Delete account" }));
 
     await waitFor(() => {
-      expect(confirmMock).toHaveBeenCalledOnce();
       expect(deleteUser).toHaveBeenCalledWith("clerk_user_1");
       expect(signOutMock).toHaveBeenCalledWith({ redirectUrl: "/" });
     });

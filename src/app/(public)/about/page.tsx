@@ -269,7 +269,7 @@ export default async function AboutPage() {
           <div
             className={classNames(
               "rounded-4xl px-6 py-7 shadow-sm",
-              "bg-lavenderHaze-100/76 dark:bg-midnightBlue-900/80",
+              "bg-lavenderHaze-100/70 dark:bg-midnightBlue-900/80",
             )}
           >
             <p className="text-xxs font-semibold uppercase tracking-[0.3em] opacity-65">

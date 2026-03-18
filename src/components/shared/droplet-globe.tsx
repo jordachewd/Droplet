@@ -12,7 +12,7 @@ export default function DropletGlobe({
   const normalizedSize = Math.max(32, size);
   const shadowScale = normalizedSize / 900;
   const innerSize = Math.round(normalizedSize * 0.625);
-  const iconSize = Math.max(10, Math.round(normalizedSize * 0.4));
+  const iconSize = Math.max(10, Math.round(normalizedSize * 0.425));
 
   const scalePx = (value: number): string => {
     const px = Number((value * shadowScale).toFixed(2));

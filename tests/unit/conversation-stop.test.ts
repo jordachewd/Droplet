@@ -265,7 +265,7 @@ describe("conversation stop enforcement", () => {
     );
   });
 
-  it("sets media_limit_reached when image usage equals the Lite quota", async () => {
+  it("sets image_limit_reached when image usage equals the Lite quota", async () => {
     vi.mocked(getUserById).mockResolvedValue({
       clerkId: "user_123",
       plan: {
@@ -278,7 +278,7 @@ describe("conversation stop enforcement", () => {
     } as never);
     vi.mocked(generateResponse).mockResolvedValue(
       JSON.stringify({
-        blockedReason: "media_limit_reached",
+        blockedReason: "image_limit_reached",
         taskData: {
           whois: "assistant",
           role: "assistant",
@@ -296,7 +296,7 @@ describe("conversation stop enforcement", () => {
     const payload = await response.json();
 
     expect(response.status).toBe(403);
-    expect(payload.stopReason).toBe("media_limit_reached");
+    expect(payload.stopReason).toBe("image_limit_reached");
     expect(payload.endAction).toBe("upgrade_plan");
     expect(generateResponse).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -310,13 +310,13 @@ describe("conversation stop enforcement", () => {
       EXISTING_TASK_ID,
       expect.objectContaining({
         status: "ended",
-        endedReason: "media_limit_reached",
+        endedReason: "image_limit_reached",
         endAction: "upgrade_plan",
       }),
     );
   });
 
-  it("sets media_limit_reached when audio usage equals the Pro quota", async () => {
+  it("sets audio_limit_reached when audio usage equals the Pro quota", async () => {
     vi.mocked(getUserById).mockResolvedValue({
       clerkId: "user_123",
       plan: {
@@ -329,7 +329,7 @@ describe("conversation stop enforcement", () => {
     } as never);
     vi.mocked(generateResponse).mockResolvedValue(
       JSON.stringify({
-        blockedReason: "media_limit_reached",
+        blockedReason: "audio_limit_reached",
         taskData: {
           whois: "assistant",
           role: "assistant",
@@ -347,7 +347,7 @@ describe("conversation stop enforcement", () => {
     const payload = await response.json();
 
     expect(response.status).toBe(403);
-    expect(payload.stopReason).toBe("media_limit_reached");
+    expect(payload.stopReason).toBe("audio_limit_reached");
     expect(payload.endAction).toBe("upgrade_plan");
     expect(generateResponse).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -355,6 +355,58 @@ describe("conversation stop enforcement", () => {
           audioLimitReached: true,
           supportsAudioGeneration: true,
         }),
+      }),
+    );
+  });
+
+  it("sets video_limit_reached when video usage equals the Premium quota", async () => {
+    vi.mocked(getUserById).mockResolvedValue({
+      clerkId: "user_123",
+      plan: {
+        name: "Premium",
+        expiresOn: new Date(Date.now() + 86_400_000),
+        imageGenerations: 0,
+        audioGenerations: 0,
+        videoGenerations: 10,
+        usagePeriodStart: new Date(),
+      },
+    } as never);
+    vi.mocked(generateResponse).mockResolvedValue(
+      JSON.stringify({
+        blockedReason: "video_limit_reached",
+        taskData: {
+          whois: "assistant",
+          role: "assistant",
+          content: [{ type: "text", text: "Video limit reached." }],
+        },
+      }),
+    );
+
+    const response = await POST(
+      buildRequest({
+        taskId: EXISTING_TASK_ID,
+        messages: [{ role: "user", whois: "user", content: "generate video" }],
+      }),
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(payload.stopReason).toBe("video_limit_reached");
+    expect(payload.endAction).toBe("contact_support");
+    expect(generateResponse).toHaveBeenCalledWith(
+      expect.objectContaining({
+        entitlements: expect.objectContaining({
+          videoLimitReached: true,
+          supportsVideoGeneration: true,
+        }),
+      }),
+    );
+    expect(updateTask).toHaveBeenCalledWith(
+      EXISTING_TASK_ID,
+      expect.objectContaining({
+        status: "ended",
+        endedReason: "video_limit_reached",
+        endAction: "contact_support",
       }),
     );
   });

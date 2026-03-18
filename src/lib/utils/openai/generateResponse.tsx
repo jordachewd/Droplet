@@ -61,6 +61,9 @@ export type OpenAIErrorType =
 
 type BlockedReason =
   | "media_limit_reached"
+  | "image_limit_reached"
+  | "audio_limit_reached"
+  | "video_limit_reached"
   | "image_disabled"
   | "audio_disabled"
   | "video_disabled";
@@ -427,7 +430,7 @@ async function buildOpenAIResponsePayload({
 
       if (!entitlements.supportsImageGeneration || imagePolicy.hardBlocked) {
         const blockedReason: BlockedReason = entitlements.imageLimitReached
-          ? "media_limit_reached"
+          ? "image_limit_reached"
           : "image_disabled";
 
         maybeAddBlockedMetric({
@@ -439,7 +442,7 @@ async function buildOpenAIResponsePayload({
 
         return createBlockedResponsePayload({
           message:
-            blockedReason === "media_limit_reached"
+            blockedReason === "image_limit_reached"
               ? "Image generation limit reached for your current plan."
               : "Image generation is not enabled for the current plan.",
           taskUsage,
@@ -460,13 +463,13 @@ async function buildOpenAIResponsePayload({
             requestMetrics,
             policy: imagePolicy,
             requestType: "image",
-            blockedReason: "media_limit_reached",
+            blockedReason: "image_limit_reached",
           });
 
           return createBlockedResponsePayload({
             message: "Image generation limit reached for your current plan.",
             taskUsage,
-            blockedReason: "media_limit_reached",
+            blockedReason: "image_limit_reached",
             requestMetrics,
           });
         }
@@ -539,7 +542,7 @@ async function buildOpenAIResponsePayload({
 
       if (!entitlements.supportsAudioGeneration || audioPolicy.hardBlocked) {
         const blockedReason: BlockedReason = entitlements.audioLimitReached
-          ? "media_limit_reached"
+          ? "audio_limit_reached"
           : "audio_disabled";
 
         maybeAddBlockedMetric({
@@ -551,7 +554,7 @@ async function buildOpenAIResponsePayload({
 
         return createBlockedResponsePayload({
           message:
-            blockedReason === "media_limit_reached"
+            blockedReason === "audio_limit_reached"
               ? "Audio generation limit reached for your current plan."
               : "Audio generation is not enabled for the current plan.",
           taskUsage,
@@ -572,13 +575,13 @@ async function buildOpenAIResponsePayload({
             requestMetrics,
             policy: audioPolicy,
             requestType: "audio",
-            blockedReason: "media_limit_reached",
+            blockedReason: "audio_limit_reached",
           });
 
           return createBlockedResponsePayload({
             message: "Audio generation limit reached for your current plan.",
             taskUsage,
-            blockedReason: "media_limit_reached",
+            blockedReason: "audio_limit_reached",
             requestMetrics,
           });
         }
@@ -653,7 +656,7 @@ async function buildOpenAIResponsePayload({
 
       if (!entitlements.supportsVideoGeneration || videoPolicy.hardBlocked) {
         const blockedReason: BlockedReason = entitlements.videoLimitReached
-          ? "media_limit_reached"
+          ? "video_limit_reached"
           : "video_disabled";
 
         maybeAddBlockedMetric({
@@ -665,7 +668,7 @@ async function buildOpenAIResponsePayload({
 
         return createBlockedResponsePayload({
           message:
-            blockedReason === "media_limit_reached"
+            blockedReason === "video_limit_reached"
               ? "Video generation limit reached for your current plan."
               : "Video generation is not enabled for the current plan.",
           taskUsage,
@@ -686,13 +689,13 @@ async function buildOpenAIResponsePayload({
             requestMetrics,
             policy: videoPolicy,
             requestType: "video",
-            blockedReason: "media_limit_reached",
+            blockedReason: "video_limit_reached",
           });
 
           return createBlockedResponsePayload({
             message: "Video generation limit reached for your current plan.",
             taskUsage,
-            blockedReason: "media_limit_reached",
+            blockedReason: "video_limit_reached",
             requestMetrics,
           });
         }

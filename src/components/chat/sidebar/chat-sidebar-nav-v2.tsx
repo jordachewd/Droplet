@@ -5,6 +5,7 @@ import classNames from "classnames";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import AlertMessage from "@/components/shared/alert-message";
+import ConfirmationModal from "@/components/shared/confirmation-modal";
 import { ConversationListItem } from "@/types/PersonaData.d";
 import { getPersona } from "@/constants/assistant-personas";
 import { deleteTask } from "@/lib/actions/task.actions";
@@ -72,6 +73,8 @@ export default function ChatSidebarNavV2({
   const [deletingConversationId, setDeletingConversationId] = useState<
     string | null
   >(null);
+  const [pendingDeleteItem, setPendingDeleteItem] =
+    useState<ConversationListItem | null>(null);
   const [alert, setAlert] = useState<{
     id: number;
     title: string;
@@ -90,13 +93,6 @@ export default function ChatSidebarNavV2({
 
   async function handleDeleteConversation(item: ConversationListItem) {
     if (item.isDemo || deletingConversationId) {
-      return;
-    }
-
-    const shouldDelete = window.confirm(
-      `Delete "${item.title}"? This cannot be undone.`,
-    );
-    if (!shouldDelete) {
       return;
     }
 
@@ -156,6 +152,14 @@ export default function ChatSidebarNavV2({
     } finally {
       setDeletingConversationId(null);
     }
+  }
+
+  function requestDeleteConversation(item: ConversationListItem) {
+    if (item.isDemo || deletingConversationId) {
+      return;
+    }
+
+    setPendingDeleteItem(item);
   }
 
   return (
@@ -238,7 +242,7 @@ export default function ChatSidebarNavV2({
                     isDeleteDisabled &&
                       "cursor-not-allowed opacity-35 hover:border-transparent hover:bg-transparent",
                   )}
-                  onClick={() => void handleDeleteConversation(item)}
+                  onClick={() => requestDeleteConversation(item)}
                   disabled={isDeleteDisabled}
                   aria-label={deleteLabel}
                   title={
@@ -261,6 +265,27 @@ export default function ChatSidebarNavV2({
           })}
         </div>
       </section>
+      <ConfirmationModal
+        isOpen={Boolean(pendingDeleteItem)}
+        title="Delete conversation"
+        description={
+          pendingDeleteItem
+            ? `Delete "${pendingDeleteItem.title}"? This cannot be undone.`
+            : "Delete this conversation?"
+        }
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        destructive
+        onConfirm={() => {
+          const item = pendingDeleteItem;
+          setPendingDeleteItem(null);
+
+          if (item) {
+            void handleDeleteConversation(item);
+          }
+        }}
+        onCancel={() => setPendingDeleteItem(null)}
+      />
     </nav>
   );
 }

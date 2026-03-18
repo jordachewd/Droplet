@@ -16,6 +16,7 @@ import AppSetting from "@/lib/database/models/app-setting.model";
 import PublicPage from "@/lib/database/models/public-page.model";
 import Task from "@/lib/database/models/tasks.model";
 import Transaction from "@/lib/database/models/transaction.model";
+import UsageEvent from "@/lib/database/models/usage-event.model";
 import User from "@/lib/database/models/user.model";
 import { createAdminAuditLogEntry } from "@/lib/utils/admin-audit";
 import { requireAdminActionAccess } from "@/lib/utils/admin-auth";
@@ -56,6 +57,12 @@ vi.mock("@/lib/database/models/tasks.model", () => ({
 }));
 
 vi.mock("@/lib/database/models/transaction.model", () => ({
+  default: {
+    deleteMany: vi.fn(),
+  },
+}));
+
+vi.mock("@/lib/database/models/usage-event.model", () => ({
   default: {
     deleteMany: vi.fn(),
   },
@@ -127,6 +134,9 @@ describe("admin actions audit trail completeness", () => {
     vi.mocked(connectToDatabase).mockResolvedValue(undefined as never);
     vi.mocked(createAdminAuditLogEntry).mockResolvedValue(undefined as never);
     vi.mocked(deleteS3Prefix).mockResolvedValue(4);
+    vi.mocked(UsageEvent.deleteMany).mockResolvedValue({
+      deletedCount: 0,
+    } as never);
   });
 
   it("logs audit entry for toggleUserSuspensionAction", async () => {
@@ -172,6 +182,9 @@ describe("admin actions audit trail completeness", () => {
     vi.mocked(Transaction.deleteMany).mockResolvedValue({
       deletedCount: 1,
     } as never);
+    vi.mocked(UsageEvent.deleteMany).mockResolvedValue({
+      deletedCount: 3,
+    } as never);
     vi.mocked(User.findByIdAndDelete).mockResolvedValue({
       _id: targetUserId,
     } as never);
@@ -184,6 +197,9 @@ describe("admin actions audit trail completeness", () => {
 
     expect(User.findById).toHaveBeenCalledTimes(1);
     expect(deleteUserMock).toHaveBeenCalledWith("client_clerk_1");
+    expect(UsageEvent.deleteMany).toHaveBeenCalledWith({
+      userId: "client_clerk_1",
+    });
     expect(User.findByIdAndDelete).toHaveBeenCalledWith(targetUserId);
 
     const payload = getAuditPayload();

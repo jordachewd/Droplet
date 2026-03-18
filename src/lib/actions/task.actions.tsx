@@ -21,7 +21,11 @@ import { z } from "zod";
 const taskStatusSchema = z.enum(["active", "ended"]);
 const taskEndedReasonSchema = z.enum([
   "prompt_limit_reached",
+  "trial_limit_reached",
   "media_limit_reached",
+  "image_limit_reached",
+  "audio_limit_reached",
+  "video_limit_reached",
   "daily_conversation_limit_reached",
   "conversation_storage_limit_reached",
   "billing_state_invalid",

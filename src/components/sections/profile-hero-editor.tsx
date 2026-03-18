@@ -7,6 +7,7 @@ import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useClerk } from "@clerk/nextjs";
 import { UploadRouteResponse } from "@/types/UploadData.d";
+import ConfirmationModal from "@/components/shared/confirmation-modal";
 
 type ProfileActionResponse = {
   status?: number;
@@ -36,6 +37,8 @@ export default function ProfileHeroEditor({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] =
+    useState<boolean>(false);
   const displayAvatarUrl = avatarPreviewUrl ?? avatarUrl;
 
   const profileInputClass = classNames(
@@ -138,13 +141,6 @@ export default function ProfileHeroEditor({
 
   async function handleDeleteAccount() {
     if (isDeleting || isSaving) {
-      return;
-    }
-
-    const shouldDelete = window.confirm(
-      "Delete your account and all associated conversations, transactions, and uploaded files? This cannot be undone.",
-    );
-    if (!shouldDelete) {
       return;
     }
 
@@ -304,12 +300,25 @@ export default function ProfileHeroEditor({
             "bg-red-600 text-white transition hover:bg-red-500",
             "disabled:cursor-not-allowed disabled:opacity-60",
           )}
-          onClick={() => void handleDeleteAccount()}
+          onClick={() => setIsDeleteConfirmOpen(true)}
           disabled={isDeleting || isSaving}
         >
           {isDeleting ? "Deleting..." : "Delete My Account"}
         </button>
       </div>
+      <ConfirmationModal
+        isOpen={isDeleteConfirmOpen}
+        title="Delete account"
+        description="Delete your account and all associated conversations, transactions, and uploaded files? This cannot be undone."
+        confirmLabel="Delete account"
+        cancelLabel="Cancel"
+        destructive
+        onConfirm={() => {
+          setIsDeleteConfirmOpen(false);
+          void handleDeleteAccount();
+        }}
+        onCancel={() => setIsDeleteConfirmOpen(false)}
+      />
     </>
   );
 }

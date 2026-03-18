@@ -41,6 +41,7 @@ import { getTaskByIdForUser } from "@/lib/utils/task-queries";
 import { filterAssistantMsg } from "@/lib/utils/openai/filterAssistantMsg";
 import { PlanLimits } from "@/constants/plans";
 import { SUPPORT_EMAIL } from "@/constants/support";
+import { STOP_REASON_MESSAGES } from "@/constants/stop-reasons";
 import { PlanName } from "@/types/PlanData.d";
 import { PersonaId } from "@/types/PersonaData.d";
 import {
@@ -91,19 +92,6 @@ const OPENAI_ERROR_MESSAGES: Record<OpenAIErrorType, string> = {
   policy_blocked:
     "This request is not available for your current plan or request context.",
   unknown: "An error occurred while processing your request.",
-};
-
-const STOP_REASON_MESSAGES: Record<TaskEndedReason, string> = {
-  prompt_limit_reached:
-    "You've reached the message limit for this conversation.",
-  trial_limit_reached:
-    "You've reached the trial limit for this persona conversation.",
-  media_limit_reached: "You've reached your media generation limit.",
-  daily_conversation_limit_reached:
-    "You've reached the daily conversation limit for your plan.",
-  conversation_storage_limit_reached:
-    "This conversation has reached its storage limit.",
-  billing_state_invalid: "Your plan has expired.",
 };
 
 const END_ACTION_INSTRUCTIONS: Record<TaskEndAction, string> = {
@@ -249,6 +237,21 @@ function getPlanBoundEndAction({
 
 function createUsageTaskId(taskId?: string): string {
   return taskId ?? `request_${crypto.randomUUID()}`;
+}
+
+function isMediaLimitStopReason(
+  value: OpenAIResponsePayload["blockedReason"],
+): value is
+  | "media_limit_reached"
+  | "image_limit_reached"
+  | "audio_limit_reached"
+  | "video_limit_reached" {
+  return (
+    value === "media_limit_reached" ||
+    value === "image_limit_reached" ||
+    value === "audio_limit_reached" ||
+    value === "video_limit_reached"
+  );
 }
 
 function resolveMediaCounterField(
@@ -567,10 +570,10 @@ async function finalizeAIResponse({
 
   const { taskData, taskUsage } = aiPayload;
 
-  if (aiPayload.blockedReason === "media_limit_reached") {
+  if (isMediaLimitStopReason(aiPayload.blockedReason)) {
     const stopReason: TaskEndedReason = isTrialPersona
       ? "trial_limit_reached"
-      : "media_limit_reached";
+      : aiPayload.blockedReason;
     const endAction: TaskEndAction = isTrialPersona
       ? "upgrade_plan"
       : getPlanBoundEndAction({ planName, planLimits });

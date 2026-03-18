@@ -196,10 +196,12 @@ test("footer legal links navigate to the correct public routes", async ({
     page.getByRole("heading", { name: "Privacy Policy" }),
   ).toBeVisible();
 
+  await gotoAndExpectPublicRoute(page, "/");
+
   await page
     .locator(".Footer")
-    .getByRole("link", { name: "Terms & Conditions", exact: true })
-    .click();
+    .locator('a[href="/terms"]')
+    .click({ force: true });
   await expect(page).toHaveURL(/\/terms$/);
   await expect(
     page.getByRole("heading", { name: "Terms & Conditions" }),

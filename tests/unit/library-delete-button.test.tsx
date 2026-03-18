@@ -20,7 +20,6 @@ vi.mock("@/lib/actions/task.actions", () => ({
 describe("LibraryDeleteButton", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.spyOn(window, "confirm").mockReturnValue(true);
     vi.spyOn(window, "alert").mockImplementation(() => undefined);
   });
 
@@ -40,20 +39,16 @@ describe("LibraryDeleteButton", () => {
     fireEvent.click(
       screen.getByRole("button", { name: "Delete Investor Notes" }),
     );
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
 
     await waitFor(() => {
       expect(deleteTask).toHaveBeenCalledWith("task_99");
     });
 
-    expect(window.confirm).toHaveBeenCalledWith(
-      'Delete "Investor Notes"? This cannot be undone.',
-    );
     expect(refreshMock).toHaveBeenCalledOnce();
   });
 
   it("does not call deleteTask when the user cancels the confirmation", () => {
-    vi.mocked(window.confirm).mockReturnValue(false);
-
     render(
       <LibraryDeleteButton
         conversationId="task_99"
@@ -64,6 +59,7 @@ describe("LibraryDeleteButton", () => {
     fireEvent.click(
       screen.getByRole("button", { name: "Delete Investor Notes" }),
     );
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
 
     expect(deleteTask).not.toHaveBeenCalled();
     expect(refreshMock).not.toHaveBeenCalled();

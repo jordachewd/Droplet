@@ -108,12 +108,12 @@ export function AdminLimitsSection({
                     name={`${fieldPrefix}Audio`}
                     defaultValue={planLimits.audio}
                   />
+                  <LimitInput
+                    label="Video Generations"
+                    name={`${fieldPrefix}Video`}
+                    defaultValue={planLimits.video}
+                  />
                 </div>
-                <input
-                  type="hidden"
-                  name={`${fieldPrefix}Video`}
-                  value={planLimits.video}
-                />
               </fieldset>
             );
           })}
