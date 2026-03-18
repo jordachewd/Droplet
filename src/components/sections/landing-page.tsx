@@ -43,9 +43,7 @@ export default async function LandingPage() {
           <article
             key={card.title}
             className={classNames(
-              "rounded-4xl border px-6 py-8 shadow-sm",
-              "border-slate-400/80 bg-lavenderHaze-100/78",
-              "dark:border-slate-500 dark:bg-nightIndigo-900/82",
+              "rounded-4xl px-6 py-8 shadow-sm bg-lavenderHaze-100/78 dark:bg-nightIndigo-900/82",
             )}
           >
             <div className="inline-flex rounded-full bg-lavenderHaze-100 px-3 py-2 text-lg dark:bg-nightIndigo-900/50">
@@ -62,9 +60,7 @@ export default async function LandingPage() {
       <section className="Workflow mx-auto grid w-full max-w-screen-2xl gap-6 px-4 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:px-0">
         <div
           className={classNames(
-            "rounded-4xl border px-6 py-8 shadow-sm",
-            "border-slate-400/80 bg-lavenderHaze-100/78",
-            "dark:border-slate-500 dark:bg-nightIndigo-900/82",
+            "rounded-4xl px-6 py-8 shadow-sm bg-lavenderHaze-100/78 dark:bg-nightIndigo-900/82",
           )}
         >
           <p className="text-xxs font-semibold uppercase tracking-[0.3em] opacity-65">
@@ -84,9 +80,7 @@ export default async function LandingPage() {
               <article
                 key={step.step}
                 className={classNames(
-                  "rounded-2xl border px-4 py-4",
-                  "border-slate-300 bg-lavenderHaze-200/80",
-                  "dark:border-slate-500 dark:bg-nightIndigo-1000/70",
+                  "rounded-2xl px-4 py-4 bg-lavenderHaze-200/80 dark:bg-nightIndigo-1000/70",
                 )}
               >
                 <div className="flex items-start gap-4">
@@ -105,9 +99,8 @@ export default async function LandingPage() {
 
         <div
           className={classNames(
-            "rounded-4xl border px-6 py-8 shadow-sm",
-            "border-slate-400/80 bg-linear-135 from-lavenderHaze-100 via-white to-lavenderHaze-100",
-            "dark:border-slate-500 dark:bg-linear-135 dark:from-nightIndigo-1000 dark:via-nightIndigo-1000 dark:to-nightIndigo-900/60",
+            "rounded-4xl px-6 py-8 shadow-sm bg-linear-135 from-lavenderHaze-100 via-white to-lavenderHaze-100",
+            "dark:bg-linear-135 dark:from-nightIndigo-1000 dark:via-nightIndigo-1000 dark:to-nightIndigo-900/60",
           )}
         >
           <p className="text-xxs font-semibold uppercase tracking-[0.3em] opacity-65">
@@ -166,9 +159,7 @@ export default async function LandingPage() {
             <article
               key={persona.id}
               className={classNames(
-                "rounded-4xl border px-6 py-7 shadow-sm",
-                "border-slate-400/80 bg-lavenderHaze-100/78",
-                "dark:border-slate-500 dark:bg-nightIndigo-900/82",
+                "rounded-4xl px-6 py-7 shadow-sm bg-lavenderHaze-100/78 dark:bg-nightIndigo-900/82",
               )}
             >
               <div className="flex items-center justify-between gap-4">
@@ -196,9 +187,8 @@ export default async function LandingPage() {
       <section className="CtaBanner mx-auto w-full max-w-screen-2xl px-4 sm:px-6 lg:px-0">
         <div
           className={classNames(
-            "rounded-4xl border px-6 py-8 shadow-sm",
-            "border-slate-400/80 bg-linear-135 from-lavenderHaze-100 via-white to-twilightPurple-100",
-            "dark:border-slate-500 dark:bg-linear-135 dark:from-nightIndigo-1000 dark:via-nightIndigo-1000 dark:to-nightIndigo-900/55",
+            "rounded-4xl px-6 py-8 shadow-sm bg-linear-135 from-lavenderHaze-100 via-white to-twilightPurple-100",
+            "dark:bg-linear-135 dark:from-nightIndigo-1000 dark:via-nightIndigo-1000 dark:to-nightIndigo-900/55",
           )}
         >
           <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
