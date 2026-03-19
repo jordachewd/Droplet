@@ -2,7 +2,57 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-19 — PM deep audit #34. Phases 69.1, 68.1–68.3, 70.1 archived this cycle. All Phases 1–70.1 complete (incl. 63.1–63.2, 61.1). Milestone 22 COMPLETE. 374 unit tests (65 suites). Build passing. Correction phase 68.4 open for button text color fix.
+> Last updated: 2026-03-19 — PM deep audit #35. Phases 68.4, 71.1, 71.2, 70.2 archived this cycle. All Phases 1–71.2 complete (incl. 63.1–63.2, 61.1, 68.1–68.4, 69.1, 70.1–70.2, 71.1–71.2). Milestone 22 COMPLETE. Milestone 23 Block A COMPLETE. 379 unit tests (66 suites). Build passing. Node.js 20.20.1 verified.
+
+---
+
+## Phase 68.4 — Button Text Color Correction — COMPLETED (2026-03-19)
+
+> PM audit #35. Engineer work report confirmed. TD-DS-07 RESOLVED.
+
+- [x] **68.4 HIGH** — `.btn-text` hover corrected: `limeGreen-500` → `limeGreen-800`. `.btn-contained` text corrected: `lavenderHaze-500/800` → `midnightBlue-500` (both default and hover). `.icon-btn` unchanged. Owner correction from PM audit #34 applied.
+
+**Files changed:** `src/app/globals.css`
+
+---
+
+## Phase 71.1 — Effective Persona Config Resolver — COMPLETED (2026-03-19)
+
+> PM audit #35. Engineer work report confirmed. TD-ADMIN-15 partially resolved.
+
+- [x] **71.1 HIGH** — Created `getEffectivePersonaConfig()` in `src/lib/utils/effective-persona-config.ts`. Reads `AppSetting("admin.personaOverrides")` and merges with hardcoded persona defaults by `id`. Override fields: `label`, `tagline`, `description`, `starterPrompts`. System prompts and hero images remain code-controlled (v2). `import "server-only"` guard present. Added `getPersonaFromConfig()` helper.
+
+**Files changed:** `src/lib/utils/effective-persona-config.ts` (new)
+
+---
+
+## Phase 71.2 — Admin Persona Content Editing + Surface Rewiring — COMPLETED (2026-03-19)
+
+> PM audit #35. Engineer work report confirmed. TD-ADMIN-15 RESOLVED.
+
+- [x] **71.2 HIGH** — Extended admin settings with persona content editing: label, tagline, description, starterPrompts (textarea) per persona. Persisted to `AppSetting("admin.personaOverrides")` via admin action. All persona-consuming surfaces rewired to use `getEffectivePersonaConfig()` instead of raw `PERSONAS` constant: `/app/new`, `/app/personas`, `/app` (chat), `/app/c/[conversationId]`, `/app/library`, `/personas` (public), `/about`, chat layout, chat header, chat wrapper, chat sidebar, personas-section, landing-page. Audit trail logged.
+
+**Files changed:** `src/components/admin/settings/admin-personas-section.tsx`, `src/components/admin/settings/types.ts`, `src/components/admin/settings/normalize-admin-settings.ts`, `src/lib/utils/admin-queries.ts`, `src/app/(admin)/admin/settings/page.tsx`, `src/lib/actions/admin.actions.tsx`, persona-consuming pages (10+), `src/types/PersonaData.d.tsx`
+
+---
+
+## Phase 70.2 — Admin Panel Design Polish — COMPLETED (2026-03-19)
+
+> PM audit #35. Engineer work report confirmed.
+
+- [x] **70.2 HIGH** — Full admin panel design alignment with `/app`. Added shared admin surface CSS classes in globals.css. Brand identity added to admin sidebar header. Applied consistent card/table styles across all admin pages: dashboard, users, user detail, transactions, transaction detail, usage, settings (all sections), website, website page detail. Both light and dark themes consistent.
+
+**Files changed:** `src/app/globals.css`, `src/components/admin/admin-sidebar.tsx`, `src/components/admin/admin-layout-shell.tsx`, admin page files (8+), admin component files (10+)
+
+---
+
+## Node.js 20.20.1 Build Blocker Fix — COMPLETED (2026-03-19)
+
+> PM audit #35. Engineer work report confirmed.
+
+- [x] **CRITICAL** — `/terms` prerender failed under Node 20.20.1 build path due to MongoDB connection failure during static generation. Made plan config resolvers fail-safe on DB failure in `effective-plan-config.ts`. Added regression coverage in `effective-plan-config.test.ts`.
+
+**Files changed:** `src/lib/utils/effective-plan-config.ts`, `tests/unit/effective-plan-config.test.ts`
 
 ---
 

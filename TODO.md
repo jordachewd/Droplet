@@ -5,111 +5,267 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: Milestone 22 COMPLETE. All Phases 1–70.1 complete (incl. 63.1–63.2, 61.1). 374 unit tests (65 suites). Build passing.**
-> **PM deep audit #34 (2026-03-19): Triple-audit (PM + Architect + Engineer). Owner button color corrections. Phases 69.1, 68.1–68.3, 70.1 archived.**
-> **Priority order: 68.4 → 71.1 → 71.2 → 70.2 → 31.4 → 46.x → 29.x → 26.x**
-> **HIGH: Phase 68.4 (button text correction). HIGH: Phase 71 (admin persona configurability). HIGH: Phase 70.2 (admin design polish). LOW: remaining.**
+> **STATUS: Milestone 22 COMPLETE. Milestone 23 Block A COMPLETE. All Phases 1–71.2 complete (incl. 63.1–63.2, 61.1, 68.1–68.4, 69.1, 70.1–70.2, 71.1–71.2). 379 unit tests (66 suites). Build passing. Node.js 20.20.1 verified.**
+> **PM deep audit #35 (2026-03-19): Triple-audit (PM + Architect + Engineer). Phases 68.4, 71.1, 71.2, 70.2 archived. New priority sequence from owner instructions.**
+> **Priority order: 76.1 → 76.2 → 76.3 → 72.x → 73.x → 74.x → 31.4 → 75 → 46.x → 29.x → 26.x**
+> **HIGH: Phase 76 (Node.js/build hardening). HIGH: Phase 72 (WCAG 2.2 AA). CRITICAL: Phase 73 (server-only guards + codebase quality). CRITICAL: Phase 74 (admin configurability audit). LOW: remaining.**
 
 ---
 
-## Phase 68.4: Button Text Color Correction — HIGH
+## Phase 76: Node.js 20.20.1 Hardening — HIGH
 
-### 68.4 HIGH — Fix `.btn-text` hover and `.btn-contained` text color
+### 76.1 HIGH — Pin `@types/node` to match runtime
 
-**Ref:** PM audit #34 — Owner correction: `.btn-contained` text must be Midnight Blue (500) not Lavender Haze. `.btn-text` hover must be Lime Green (800) not 500. Engineer's Phase 68.2 implemented per original spec; owner subsequently provided corrections.
+**Ref:** PM audit #35 — Triple-audit finding: `@types/node@^25.3.3` provides Node 25.x type definitions but runtime is Node 20.20.1. TypeScript allows Node 25-only APIs that don't exist at runtime.
 
-**Files:** `src/app/globals.css`
-
-**What to do:**
-
-1. `.btn-text`: Change `hover:text-limeGreen-500` → `hover:text-limeGreen-800`
-2. `.btn-contained`: Change `text-lavenderHaze-500` → `text-midnightBlue-500`
-3. `.btn-contained`: Change `hover:text-lavenderHaze-800` → `hover:text-midnightBlue-500`
-4. Verify visual contrast: midnightBlue-500 (#191970) on limeGreen-500 (#B8F60D) = high contrast. Good.
-5. `.icon-btn` — DO NOT CHANGE.
-
-**Acceptance criteria:**
-
-- [ ] `.btn-text` hover color is `limeGreen-800`
-- [ ] `.btn-contained` text color is `midnightBlue-500` (both default and hover)
-- [ ] `.icon-btn` unchanged
-- [ ] No `dark:` prefix on button color properties (same for both themes)
-- [ ] Build passes, lint passes
-
----
-
-## Phase 71: Admin Persona Content Configurability — HIGH
-
-### 71.1 HIGH — Create persona override AppSetting model and resolution layer
-
-**Ref:** PM audit #34 — Owner directive: "NO HARDCODED data — everything MUST be fully configurable from ADMIN panel." Triple-audit confirmed: persona names, descriptions, taglines, system prompts, starter prompts, hero images are ALL hardcoded in `src/constants/assistant-personas.tsx`. Admin personas tab only controls plan-gated access checkboxes.
-
-**Files:** `src/lib/utils/effective-persona-config.ts` (new), `src/constants/assistant-personas.tsx`
+**Files:** `package.json`
 
 **What to do:**
 
-1. Create `getEffectivePersonaConfig()` utility that reads `AppSetting("admin.personaOverrides")` and merges with hardcoded persona defaults.
-2. Override fields: `label`, `tagline`, `description`, `starterPrompts[]` (at minimum).
-3. System prompts remain in code for v1 (complex, versioned, safety-critical — admin override deferred to v2).
-4. Hero images remain in code for v1 (requires file upload flow — deferred to v2).
-5. Add `import "server-only"` guard.
-6. Return merged persona array with overrides applied on matching `id`.
+1. Change `@types/node` from `^25.3.3` to `^20.17.0` (latest 20.x types).
+2. Run `npm install` to update lockfile.
+3. Run `npx tsc --noEmit` to verify no Node 25-only APIs are used.
+4. Run `npm run test` to verify all tests pass.
+5. Run `npm run build` to verify build passes.
 
 **Acceptance criteria:**
 
-- [ ] `getEffectivePersonaConfig()` exists and works
-- [ ] Returns personas with admin overrides merged
-- [ ] Falls back to hardcoded defaults when no overrides exist
-- [ ] `import "server-only"` present
-- [ ] Unit test for merge behavior
-
----
-
-### 71.2 HIGH — Add persona content editing to admin settings
-
-**Ref:** Phase 71.1 must be complete first.
-
-**Files:** `src/components/admin/settings/admin-personas-section.tsx`, `src/lib/actions/admin.actions.tsx`
-
-**What to do:**
-
-1. Extend existing admin personas section with editable fields per persona: `label`, `tagline`, `description`, `starterPrompts` (textarea, one per line).
-2. Save to `AppSetting("admin.personaOverrides")` as JSON.
-3. Wire all persona-consuming pages to use `getEffectivePersonaConfig()` instead of raw `PERSONAS` constant.
-4. Audit trail: log admin persona content changes to AdminAuditLog.
-
-**Acceptance criteria:**
-
-- [ ] Admin can edit persona labels, taglines, descriptions, starter prompts from `/admin/settings`
-- [ ] Changes persist and propagate to all persona surfaces
-- [ ] Fallback to defaults when no overrides set
-- [ ] Audit trail logged
+- [ ] `@types/node` is `^20.17.0` in `package.json`
+- [ ] `tsc --noEmit` passes
+- [ ] All tests pass
 - [ ] Build passes
 
 ---
 
-## Phase 70.2: Admin Panel Design Polish — HIGH
+### 76.2 HIGH — Add Node.js version pinning
 
-### 70.2 HIGH — Full admin panel design alignment with /app
+**Ref:** PM audit #35 — No `engines` field or `.nvmrc` file. Any environment could use wrong Node version.
 
-**Ref:** PM audit #34 — Owner still reports "old design." Triple-audit found: shell is aligned (same tokens), but card styling, form sections, and overall polish may differ. Content cards use boxy `rounded-2xl` pattern without glassmorphism. No brand identity in admin sidebar header.
-
-**Files:** Admin page files, admin component files
+**Files:** `package.json`, `.nvmrc` (new)
 
 **What to do:**
 
-1. Audit all admin pages (dashboard, users, transactions, usage, settings, website) for visual consistency with `/app` patterns.
-2. Apply consistent card elevation, backdrop blur, or other polish elements matching chat panels.
-3. Add Droplet brand identity to admin sidebar header (logo or icon).
-4. Ensure form sections have the same spacing, font sizes, and border radius as chat-side components.
-5. Both light and dark themes must be consistent.
+1. Add `"engines": { "node": ">=20.20.1" }` to `package.json`.
+2. Create `.nvmrc` with `20.20.1`.
+3. Verify no CI/deployment impact.
 
 **Acceptance criteria:**
 
-- [ ] Admin panel passes owner visual review
-- [ ] Both themes consistent
-- [ ] No functional regression
+- [ ] `engines.node` in `package.json`
+- [ ] `.nvmrc` exists with `20.20.1`
 - [ ] Build passes
+
+---
+
+### 76.3 HIGH — Add `import "server-only"` to unguarded server utilities
+
+**Ref:** PM audit #35 — Triple-audit consensus: 6+ files with direct DB/API access lack `import "server-only"` guard.
+
+**Files:** `src/lib/utils/task-queries.tsx`, `src/lib/utils/admin-audit.ts`, `src/lib/utils/admin-auth.ts`, `src/lib/utils/rate-limit.ts`, `src/lib/utils/usage-event-utils.ts`, `src/lib/utils/check-daily-conversations.ts`, `src/lib/utils/handleError.ts`
+
+**What to do:**
+
+1. Add `import "server-only";` as line 1 to each file listed above.
+2. Run `npx tsc --noEmit` to verify no client components import these.
+3. Run `npm run build` to verify.
+
+**Acceptance criteria:**
+
+- [ ] All 7 files have `import "server-only"` guard
+- [ ] No compilation errors (no client components import these)
+- [ ] Build passes
+
+---
+
+## Phase 72: WCAG 2.2 AA Accessibility Pass — HIGH
+
+### 72.1 HIGH — Navigation and landmark accessibility
+
+**Ref:** Owner instruction: "Entire app must be WCAG 2.2 AA accessibility standards compliant."
+
+**Files:** `src/components/layout/header.tsx`, `src/components/layout/footer.tsx`, `src/app/(chat)/layout.tsx`
+
+**What to do:**
+
+1. Add `aria-label="Main navigation"` to `<nav>` in header.
+2. Add responsive mobile navigation (hamburger menu for `md:hidden`).
+3. Wrap footer links in `<nav aria-label="Footer navigation">`.
+4. Add skip-to-content link at the top of the page layout.
+5. Ensure semantic `<footer>` element is used (not `<section>`).
+
+**Acceptance criteria:**
+
+- [ ] All `<nav>` elements have `aria-label`
+- [ ] Mobile navigation exists and is keyboard-accessible
+- [ ] Skip-to-content link present
+- [ ] Footer uses semantic element
+- [ ] Build passes
+
+---
+
+### 72.2 HIGH — Image alt text and focus indicators
+
+**Files:** `src/components/sections/hero-section.tsx`, `src/components/shared/persona-card.tsx`, all components with `<Image>`
+
+**What to do:**
+
+1. Replace `alt="hero"` with descriptive alt text in hero section.
+2. Audit all `<Image>` components for meaningful alt text.
+3. Verify all interactive elements have visible focus indicators (`:focus-visible`).
+4. Verify color contrast ratios meet WCAG AA (4.5:1 for text, 3:1 for large text).
+
+**Acceptance criteria:**
+
+- [ ] No generic alt text (`alt="hero"`, `alt="image"`)
+- [ ] All interactive elements have visible focus ring
+- [ ] Key color combinations pass contrast ratio check
+- [ ] Build passes
+
+---
+
+### 72.3 MEDIUM — Form label and ARIA audit
+
+**Files:** All form components in `src/components/`
+
+**What to do:**
+
+1. Audit all `<input>`, `<select>`, `<textarea>` for associated `<label>` or `aria-label`.
+2. Verify all required fields have `aria-required="true"`.
+3. Verify form error messages are announced via `aria-live="polite"` or `role="alert"`.
+4. Verify all dialog/modal components have `aria-modal="true"` and focus trap.
+
+**Acceptance criteria:**
+
+- [ ] All form controls have labels
+- [ ] Error messages accessible to screen readers
+- [ ] Modal focus trapping works
+- [ ] Build passes
+
+---
+
+## Phase 73: Codebase Quality & Server-Side Operations — CRITICAL
+
+### 73.1 CRITICAL — Verify all client components are data consumers
+
+**Ref:** Owner instruction: "Components must be data consumers, especially 'use client' ones."
+
+**Files:** All `"use client"` components
+
+**What to do:**
+
+1. Verify `chat-persona-picker.tsx` receives personas as props (currently imports `PERSONAS` directly from constants).
+2. Verify `chat-header.tsx` always receives `personas` prop and does not fall back to hardcoded `PERSONAS`.
+3. Verify `chat-wrapper.tsx` receives effective persona data from parent Server Component.
+4. Verify `plans-section.tsx` always receives `plansData` prop.
+5. Verify `faqs-section.tsx` always receives `faqsData` prop.
+6. Remove hardcoded fallback constants from client components where callers always pass resolved data.
+
+**Acceptance criteria:**
+
+- [ ] Zero direct `PERSONAS` imports in client components (effective config passed as props)
+- [ ] All client components receive data as props from Server Components
+- [ ] Build passes, all tests pass
+
+---
+
+### 73.2 MEDIUM — Minor re-render and code quality fixes
+
+**Files:** `src/components/chat/sidebar/chat-sidebar-nav-v2.tsx`, `src/components/shared/plan-count-down.tsx`
+
+**What to do:**
+
+1. `chat-sidebar-nav-v2.tsx`: Evaluate if `useEffect → setConversationItems(historyItems)` can be replaced with direct prop usage (eliminate unnecessary state copy).
+2. `plan-count-down.tsx`: Verify countdown uses current time reference correctly for each tick.
+
+**Acceptance criteria:**
+
+- [ ] No unnecessary state duplication
+- [ ] Countdown displays correctly
+- [ ] Build passes
+
+---
+
+## Phase 74: Admin Configurability Deepening — CRITICAL
+
+### 74.1 HIGH — Support email admin-configurable
+
+**Ref:** Owner instruction: "NO HARDCODED data." Triple-audit finding: support email hardcoded in `src/constants/support.ts`.
+
+**Files:** `src/constants/support.ts`, `src/lib/utils/effective-plan-config.ts` or new utility, admin settings
+
+**What to do:**
+
+1. Add `admin.supportEmail` to AppSetting.
+2. Create or extend resolver to read from AppSetting with fallback to constant.
+3. Wire admin settings UI to edit support email.
+4. Replace hardcoded usage with resolver in all consuming files.
+
+**Acceptance criteria:**
+
+- [ ] Support email admin-configurable
+- [ ] Fallback to constant when no override
+- [ ] Build passes
+
+---
+
+### 74.2 MEDIUM — FAQ content admin-configurable
+
+**Ref:** Owner instruction: "NO HARDCODED data." FAQ questions/answers are hardcoded in `src/constants/faqs.tsx`.
+
+**Files:** `src/constants/faqs.tsx`, admin settings
+
+**What to do:**
+
+1. Add `admin.faqOverrides` to AppSetting.
+2. Create `getEffectiveFaqConfig()` that merges admin overrides with defaults.
+3. Wire admin settings UI to edit FAQ questions and answers.
+4. Audit trail for FAQ changes.
+
+**Acceptance criteria:**
+
+- [ ] FAQ content admin-editable
+- [ ] Fallback to defaults
+- [ ] Build passes
+
+---
+
+### 74.3 LOW — Content layer admin-configurability assessment
+
+**Ref:** Triple-audit identified remaining hardcoded content: hero copy, landing page cards, about page narrative, navigation labels, footer links, stop reason messages.
+
+**Files:** Assessment only — no code changes.
+
+**What to do:**
+
+1. Assess each content area: can it use the existing `PublicPage` model or does it need AppSetting?
+2. Identify which content areas provide the highest admin value.
+3. Propose a phased approach for remaining content configurability.
+
+**Acceptance criteria:**
+
+- [ ] Written assessment with recommendation per content area
+- [ ] PM-approved priority for each area
+
+---
+
+## Phase 75: `/faqs` Documentation Cleanup — LOW
+
+### 75.1 LOW — Remove stale `/faqs` references from docs and tests
+
+**Ref:** PM audit #35 — `/faqs` route removed. References remain in E2E tests.
+
+**Files:** `tests/e2e/auth-boundaries.spec.ts`, `tests/e2e/public-pages.spec.ts`
+
+**What to do:**
+
+1. Remove or update `/faqs` navigation test in `auth-boundaries.spec.ts`.
+2. Remove or update `/faqs` assertions in `public-pages.spec.ts`.
+3. Verify no other stale `/faqs` references in test files.
+
+**Acceptance criteria:**
+
+- [ ] Zero `/faqs` references in test assertions
+- [ ] E2E tests pass (for non-connectivity-related specs)
 
 ---
 
@@ -165,7 +321,7 @@
 
 ## Phase 29: App-Wide Modernization — ON HOLD
 
-> **ON HOLD until all HIGH-priority phases complete.**
+> **ON HOLD until all HIGH/CRITICAL-priority phases complete.**
 
 ### 29.1 Implement Zod schema validation across the app
 
@@ -182,5 +338,5 @@
 ---
 
 > **Completed phases** are archived in [`DONE.md`](DONE.md).
-> All phases through 70.1 complete (incl. 63.1–63.2, 61.1, 68.1–68.3, 69.1). All Milestones 0–22 COMPLETE.
+> All phases through 71.2 complete (incl. 63.1–63.2, 61.1, 68.1–68.4, 69.1, 70.1–70.2, 71.1–71.2). All Milestones 0–22 COMPLETE. Milestone 23 Block A COMPLETE.
 > Phase 10–12 superseded (see DONE.md for mapping).

@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-19 (PM audit #34. All Phases 1–70.1 complete (incl. 63.1–63.2, 61.1, 68.1–68.3, 69.1). Milestone 22 COMPLETE. Lime Green accent IMPLEMENTED (Phase 68). Non-terminal media stops IMPLEMENTED (Phase 69.1). TD-UX-07 RESOLVED. TD-DS-05 RESOLVED. Button text correction pending (Phase 68.4). New: TD-DS-07 (HIGH, btn-contained text color), TD-ADMIN-15 (HIGH, persona content not admin-editable). Active: TD-DS-04 (MEDIUM), TD-API-09 (LOW). 374 unit tests (65 suites). Build passing.)
+> Last updated: 2026-03-19 (PM audit #35. All Phases 1–71.2 complete (incl. 63.1–63.2, 61.1, 68.1–68.4, 69.1, 70.1–70.2, 71.1–71.2). Milestone 22 COMPLETE. Milestone 23 Block A COMPLETE. Node.js 20.20.1 verified. `/faqs` route removed — FAQs in `/plans`. TD-DS-07 RESOLVED (Phase 68.4). TD-ADMIN-15 RESOLVED (Phase 71.1–71.2). Active: TD-DS-04 (MEDIUM), TD-API-09 (LOW), TD-NODE-01 (HIGH, @types/node mismatch), TD-SEC-04 (HIGH, missing server-only guards). 379 unit tests (66 suites). Build passing.)
 
 ---
 
@@ -60,7 +60,7 @@ The product monetises through tiered subscription plans paid via Stripe.
 
 | Role          | Access                                                                                                    |
 | ------------- | --------------------------------------------------------------------------------------------------------- |
-| **Anonymous** | Public pages only: `/`, `/about`, `/plans`, `/faqs`, `/personas`, `/privacy`, `/cookies`, `/terms`        |
+| **Anonymous** | Public pages only: `/`, `/about`, `/plans`, `/personas`, `/privacy`, `/cookies`, `/terms`                 |
 | **Client**    | All public pages + chat (`/app`), conversation resume, library, new conversation, profile, plans, billing |
 | **Admin**     | All client access + admin dashboard (`/admin/*`)                                                          |
 
@@ -645,7 +645,6 @@ All file handling technical debt has been resolved. S3 cleanup on task/user dele
 | `/`                                   | Public    | Landing (Hero + product sections + CTAs)                                                              |
 | `/about`                              | Public    | How app works (stacked sections)                                                                      |
 | `/plans`                              | Public    | Pricing (plan cards)                                                                                  |
-| `/faqs`                               | Public    | FAQ accordion                                                                                         |
 | `/personas`                           | Public    | Personas showcase                                                                                     |
 | `/privacy`                            | Public    | Privacy & Cookie Policy                                                                               |
 | `/cookies`                            | Public    | Cookie Policy                                                                                         |
@@ -672,8 +671,7 @@ All file handling technical debt has been resolved. S3 cleanup on task/user dele
 
 - **`/`**: Hero + product sections + CTAs. Not just another chatbot.
 - **`/about`**: How app works. Stacked sections with text + image.
-- **`/plans`**: Plan cards (public pricing).
-- **`/faqs`**: FAQ accordion.
+- **`/plans`**: Plan cards (public pricing) + FAQ accordion.
 - **`/privacy`**, **`/cookies`**, **`/terms`**: Real legal content, adapted for Droplet.
 
 ### Design System
@@ -848,12 +846,19 @@ _None._
 | TD-DS-05 | Design | Lime Green palette + button restyle.                    | **RESOLVED (Phase 68.1–68.3)** — Palette added, buttons restyled. Text color correction tracked as TD-DS-07.                    |
 | TD-DS-06 | Design | Admin panel layout alignment with `/app` design system. | **RESOLVED (Phase 70.1)** — Admin shell structurally aligned (same tokens, sidebar, header). Polish pass tracked as Phase 70.2. |
 
-### Active — High Priority (PM Audit #34, Owner-Directed)
+### ~~Active — High Priority (PM Audit #34, Owner-Directed)~~ (Resolved — PM Audit #35)
 
-| ID          | Area   | Description                                                                                                                                                                                                           | Severity |
-| ----------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| TD-DS-07    | Design | `.btn-contained` text color is `lavenderHaze-500/800` — must be `midnightBlue-500` (both default and hover). `.btn-text` hover is `limeGreen-500` — must be `limeGreen-800`. Owner correction from PM audit #34.      | High     |
-| TD-ADMIN-15 | Admin  | Persona content (names, descriptions, taglines, starter prompts) is hardcoded in `assistant-personas.tsx`. Not admin-editable from `/admin/settings`. Owner requires full admin configurability. Phase 71 tracks fix. | High     |
+| ID          | Area   | Description                                                                                                                                 | Severity | Status                                                                                  |
+| ----------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------- | -------- | --------------------------------------------------------------------------------------- |
+| TD-DS-07    | Design | `.btn-contained` text color was `lavenderHaze-500/800` — corrected to `midnightBlue-500`. `.btn-text` hover corrected to `limeGreen-800`.   | ~~High~~ | **RESOLVED (Phase 68.4)** — Button text/hover corrections applied.                      |
+| TD-ADMIN-15 | Admin  | Persona content (names, descriptions, taglines, starter prompts) was hardcoded. Now admin-editable via `admin.personaOverrides` AppSetting. | ~~High~~ | **RESOLVED (Phase 71.1–71.2)** — Effective persona config + admin editing UI delivered. |
+
+### Active — High Priority (PM Audit #35, Triple-Audit)
+
+| ID         | Area     | Description                                                                                                                                                                                                                                             | Severity |
+| ---------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| TD-NODE-01 | Build    | `@types/node@^25.3.3` provides type definitions for Node 25.x APIs but runtime is Node 20.20.1. No `engines` field or `.nvmrc` file. Type/runtime mismatch risk.                                                                                        | High     |
+| TD-SEC-05  | Security | 6+ server-side utility files with direct DB/API access lack `import "server-only"` guard: `task-queries.tsx`, `admin-audit.ts`, `admin-auth.ts`, `rate-limit.ts`, `usage-event-utils.ts`, `check-daily-conversations.ts`. Latent risk of client import. | High     |
 
 ### Active — Medium Priority (PM Audit #31)
 

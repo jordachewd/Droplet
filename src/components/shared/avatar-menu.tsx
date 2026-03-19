@@ -150,7 +150,7 @@ export default function AvatarMenu() {
 
           <hr className="my-1 border-nightIndigo-100/20" />
 
-          <div className="flex min-w-[180px] items-center px-5 py-2 text-sm">
+          <div className="flex min-w-45 items-center px-5 py-2 text-sm">
             <LogoutBtn />
           </div>
         </div>
