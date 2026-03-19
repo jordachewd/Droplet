@@ -39,7 +39,7 @@ export default function HeroSection() {
           </p>
 
           <Link
-            className="btn btn-lg btn-outlined w-full max-w-75 p-5 uppercase"
+            className="btn btn-lg btn-contained w-full max-w-75 p-5 uppercase"
             href="/app/new"
           >
             Try it for free

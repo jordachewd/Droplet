@@ -155,6 +155,57 @@ describe("ChatWrapper", () => {
     expect(screen.queryByRole("alert")).toBeNull();
   });
 
+  it("keeps the conversation active for non-terminal media stop payloads", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          taskData: {
+            whois: "assistant",
+            role: "assistant",
+            content: [
+              {
+                type: "text",
+                text: "You've reached your video generation limit for this billing period. You can continue chatting. Start a new conversation to keep going.",
+              },
+            ],
+          },
+          stopReason: "video_limit_reached",
+          endAction: "start_new_conversation",
+          taskStatus: "active",
+          acceptedPrompt: true,
+        }),
+        {
+          status: 403,
+          statusText: "Forbidden",
+          headers: { "Content-Type": "application/json" },
+        },
+      ),
+    );
+
+    render(
+      <ChatWrapper
+        initialMessages={[{ role: "user", whois: "user", content: "prior" }]}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Send message" }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("chat-body").textContent).toContain("active");
+    });
+
+    expect(screen.getByTestId("chat-body").textContent).not.toContain("ended");
+    expect(screen.getByTestId("chat-body-messages").textContent).toContain(
+      "You've reached your video generation limit for this billing period.",
+    );
+    expect(
+      screen
+        .getByRole("button", { name: "Send message" })
+        .hasAttribute("disabled"),
+    ).toBe(false);
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+
   it("shows a generic alert when the chat request fails before a response returns", async () => {
     vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("Network down"));
 

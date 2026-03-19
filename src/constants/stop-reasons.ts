@@ -5,13 +5,14 @@ export const STOP_REASON_MESSAGES: Record<TaskEndedReason, string> = {
     "You've reached the message limit for this conversation.",
   trial_limit_reached:
     "You've reached the trial limit for this persona conversation.",
-  media_limit_reached: "You've reached your media generation limit.",
+  media_limit_reached:
+    "You've reached your media generation limit. You can continue chatting. Start a new conversation to keep going.",
   image_limit_reached:
-    "You've reached your image generation limit for this billing period.",
+    "You've reached your image generation limit for this billing period. You can continue chatting. Start a new conversation to keep going.",
   audio_limit_reached:
-    "You've reached your audio generation limit for this billing period.",
+    "You've reached your audio generation limit for this billing period. You can continue chatting. Start a new conversation to keep going.",
   video_limit_reached:
-    "You've reached your video generation limit for this billing period.",
+    "You've reached your video generation limit for this billing period. You can continue chatting. Start a new conversation to keep going.",
   daily_conversation_limit_reached:
     "You've reached the daily conversation limit for your plan.",
   conversation_storage_limit_reached:

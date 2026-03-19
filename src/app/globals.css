@@ -59,6 +59,17 @@
   --color-dustyBlue-900: #36588b;
   --color-dustyBlue-1000: #2b4973;
 
+  --color-limeGreen-100: #f6fddf;
+  --color-limeGreen-200: #eefcc3;
+  --color-limeGreen-300: #e5faa7;
+  --color-limeGreen-400: #ddf98b;
+  --color-limeGreen-500: #b8f60d;
+  --color-limeGreen-600: #a6dd0c;
+  --color-limeGreen-700: #93c40a;
+  --color-limeGreen-800: #81ac09;
+  --color-limeGreen-900: #6f9308;
+  --color-limeGreen-1000: #5c7a06;
+
   --breakpoint-xxl: 1440px;
   --breakpoint-3xl: 1600px;
 
@@ -199,19 +210,15 @@ a.menu-item {
   }
 
   .btn-text {
-    @apply border-transparent text-twilightPurple-700 hover:text-twilightPurple-800 dark:text-dustyBlue-500 dark:hover:text-dustyBlue-400;
+    @apply border-transparent text-limeGreen-500 hover:text-limeGreen-500;
   }
 
   .btn-outlined {
-    @apply border-twilightPurple-500 text-twilightPurple-500 hover:border-dustyBlue-500 hover:text-dustyBlue-500
-    dark:border-dustyBlue-500 dark:text-dustyBlue-500 dark:hover:border-dustyBlue-400 dark:hover:text-dustyBlue-400;
+    @apply border-limeGreen-500 bg-transparent text-limeGreen-500 hover:border-limeGreen-800 hover:bg-transparent hover:text-limeGreen-800;
   }
 
   .btn-contained {
-    @apply border-twilightPurple-500 bg-twilightPurple-500 text-lavenderHaze-500 shadow-[0px_1px_4px_0px_rgba(75,0,130,0.35)]
-    hover:bg-dustyBlue-500 hover:border-dustyBlue-500 hover:shadow-[0px_1px_4px_0px_rgba(75,0,130,0.45)] 
-    dark:border-dustyBlue-500 dark:bg-dustyBlue-500 dark:hover:bg-twilightPurple-500 dark:hover:border-twilightPurple-500
-    dark:shadow-[0px_1px_4px_0px_rgba(100,149,237,0.35)] dark:hover:shadow-[0px_1px_4px_0px_rgba(100,149,237,0.45)];
+    @apply border-limeGreen-500 bg-limeGreen-500 text-lavenderHaze-500 hover:border-limeGreen-800 hover:bg-limeGreen-800 hover:text-lavenderHaze-800;
   }
 
   .icon-btn {

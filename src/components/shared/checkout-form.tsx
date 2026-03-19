@@ -28,8 +28,8 @@ const Checkout = ({ plan, planStatus }: CheckoutProps) => {
 
   const disabledStyle = isIncluded
     ? isCurrent
-      ? "disabled:text-twilightPurple-1000/50 dark:disabled:text-dustyBlue-1000/50"
-      : "disabled:text-twilightPurple-700/50 dark:disabled:text-dustyBlue-500/50"
+      ? "disabled:text-limeGreen-1000/50"
+      : "disabled:text-limeGreen-700/50"
     : "";
 
   return (

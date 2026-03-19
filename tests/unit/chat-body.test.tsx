@@ -32,22 +32,23 @@ const stopReasonCases: Array<{
   },
   {
     stopReason: "media_limit_reached",
-    expectedTitle: "You've reached your media generation limit.",
+    expectedTitle:
+      "You've reached your media generation limit. You can continue chatting. Start a new conversation to keep going.",
   },
   {
     stopReason: "image_limit_reached",
     expectedTitle:
-      "You've reached your image generation limit for this billing period.",
+      "You've reached your image generation limit for this billing period. You can continue chatting. Start a new conversation to keep going.",
   },
   {
     stopReason: "audio_limit_reached",
     expectedTitle:
-      "You've reached your audio generation limit for this billing period.",
+      "You've reached your audio generation limit for this billing period. You can continue chatting. Start a new conversation to keep going.",
   },
   {
     stopReason: "video_limit_reached",
     expectedTitle:
-      "You've reached your video generation limit for this billing period.",
+      "You've reached your video generation limit for this billing period. You can continue chatting. Start a new conversation to keep going.",
   },
   {
     stopReason: "daily_conversation_limit_reached",

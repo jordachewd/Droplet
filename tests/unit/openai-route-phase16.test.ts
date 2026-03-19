@@ -306,7 +306,7 @@ describe("POST /api/openai phase16", () => {
     );
   });
 
-  it("ends the conversation when media generation is blocked by plan limits", async () => {
+  it("keeps the conversation active when media generation is blocked by plan limits", async () => {
     vi.mocked(generateResponse).mockResolvedValue(
       JSON.stringify({
         blockedReason: "image_limit_reached",
@@ -348,15 +348,16 @@ describe("POST /api/openai phase16", () => {
 
     expect(response.status).toBe(403);
     expect(payload.stopReason).toBe("image_limit_reached");
+    expect(payload.endAction).toBe("start_new_conversation");
+    expect(payload.taskStatus).toBe("active");
     expect(payload.acceptedPrompt).toBe(true);
-    expect(updateTask).toHaveBeenCalledWith(
-      EXISTING_TASK_ID,
-      expect.objectContaining({
-        status: "ended",
-        endedReason: "image_limit_reached",
-        endAction: "upgrade_plan",
-      }),
-    );
+    const updatePayload = vi.mocked(updateTask).mock.calls.at(-1)?.[1];
+    expect(updatePayload).toMatchObject({
+      personaId: "strategist",
+    });
+    expect(updatePayload).not.toMatchObject({
+      status: "ended",
+    });
     expect(emitUsageEvents).toHaveBeenCalledWith(
       expect.objectContaining({
         userId: "user_123",

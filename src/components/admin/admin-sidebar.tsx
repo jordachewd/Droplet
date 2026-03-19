@@ -93,11 +93,11 @@ export default function AdminSidebar() {
                   href={link.href}
                   title={!isOpen ? link.label : undefined}
                   className={classNames(
-                    "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all",
+                    "flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-sm transition-all",
                     "hover:bg-lavenderHaze-300/70 dark:hover:bg-nightIndigo-500/30",
                     isActive &&
                       "bg-lavenderHaze-100 font-semibold dark:bg-nightIndigo-500/25",
-                    !isOpen && "lg:justify-center lg:px-0",
+                    !isOpen && "lg:w-auto lg:justify-center lg:px-2",
                   )}
                 >
                   <i className={classNames(link.icon, "text-base")}></i>

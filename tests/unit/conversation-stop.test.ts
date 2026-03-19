@@ -297,7 +297,8 @@ describe("conversation stop enforcement", () => {
 
     expect(response.status).toBe(403);
     expect(payload.stopReason).toBe("image_limit_reached");
-    expect(payload.endAction).toBe("upgrade_plan");
+    expect(payload.endAction).toBe("start_new_conversation");
+    expect(payload.taskStatus).toBe("active");
     expect(generateResponse).toHaveBeenCalledWith(
       expect.objectContaining({
         entitlements: expect.objectContaining({
@@ -306,14 +307,13 @@ describe("conversation stop enforcement", () => {
         }),
       }),
     );
-    expect(updateTask).toHaveBeenCalledWith(
-      EXISTING_TASK_ID,
-      expect.objectContaining({
-        status: "ended",
-        endedReason: "image_limit_reached",
-        endAction: "upgrade_plan",
-      }),
-    );
+    const updatePayload = vi.mocked(updateTask).mock.calls.at(-1)?.[1];
+    expect(updatePayload).toMatchObject({
+      personaId: "strategist",
+    });
+    expect(updatePayload).not.toMatchObject({
+      status: "ended",
+    });
   });
 
   it("sets audio_limit_reached when audio usage equals the Pro quota", async () => {
@@ -348,7 +348,8 @@ describe("conversation stop enforcement", () => {
 
     expect(response.status).toBe(403);
     expect(payload.stopReason).toBe("audio_limit_reached");
-    expect(payload.endAction).toBe("upgrade_plan");
+    expect(payload.endAction).toBe("start_new_conversation");
+    expect(payload.taskStatus).toBe("active");
     expect(generateResponse).toHaveBeenCalledWith(
       expect.objectContaining({
         entitlements: expect.objectContaining({
@@ -392,7 +393,8 @@ describe("conversation stop enforcement", () => {
 
     expect(response.status).toBe(403);
     expect(payload.stopReason).toBe("video_limit_reached");
-    expect(payload.endAction).toBe("contact_support");
+    expect(payload.endAction).toBe("start_new_conversation");
+    expect(payload.taskStatus).toBe("active");
     expect(generateResponse).toHaveBeenCalledWith(
       expect.objectContaining({
         entitlements: expect.objectContaining({
@@ -401,14 +403,13 @@ describe("conversation stop enforcement", () => {
         }),
       }),
     );
-    expect(updateTask).toHaveBeenCalledWith(
-      EXISTING_TASK_ID,
-      expect.objectContaining({
-        status: "ended",
-        endedReason: "video_limit_reached",
-        endAction: "contact_support",
-      }),
-    );
+    const updatePayload = vi.mocked(updateTask).mock.calls.at(-1)?.[1];
+    expect(updatePayload).toMatchObject({
+      personaId: "strategist",
+    });
+    expect(updatePayload).not.toMatchObject({
+      status: "ended",
+    });
   });
 
   it("sets billing_state_invalid with upgrade_plan when paid plan expires", async () => {

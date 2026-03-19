@@ -54,43 +54,45 @@ export default function AdminLayoutShell({ children }: AdminLayoutShellProps) {
     : mobileSidebarOpen;
 
   return (
-    <section className="AdminLayoutShell flex min-h-dvh w-full bg-lavenderHaze-200 dark:bg-nightIndigo-1000">
+    <section className="AdminLayoutShell relative flex min-h-dvh w-full">
       <AdminSidebar />
 
-      <div className="flex min-h-dvh flex-1 flex-col">
+      <div className="relative flex min-h-dvh flex-1 flex-col">
         <header
           className={classNames(
-            "AdminLayoutHeader flex items-center justify-between px-3",
+            "AdminLayoutHeader sticky left-0 right-0 top-0 z-20 flex w-full px-3",
             "border-b border-slate-300/70 bg-lavenderHaze-100/85 backdrop-blur-lg",
             "dark:border-slate-500 dark:bg-nightIndigo-900/55",
           )}
         >
-          <div className="flex items-center gap-2">
-            <SidebarToggle
-              icon="bi-layout-sidebar"
-              title={sidebarExpanded ? "Hide menu" : "Show menu"}
-              toggleSidebar={handleToggleSidebar}
-              expanded={sidebarExpanded}
-              controlsId="admin-sidebar"
-            />
-            <div className="flex flex-col gap-0.5">
-              <p className="text-xxs font-semibold uppercase tracking-[0.28em] opacity-60">
-                Operations
-              </p>
-              <h1 className="text-sm font-semibold">Admin Panel</h1>
+          <div className="mx-auto flex w-full items-center justify-between gap-4 py-2.5">
+            <div className="flex items-center gap-2">
+              <SidebarToggle
+                icon="bi-layout-sidebar"
+                title={sidebarExpanded ? "Hide menu" : "Show menu"}
+                toggleSidebar={handleToggleSidebar}
+                expanded={sidebarExpanded}
+                controlsId="admin-sidebar"
+              />
+              <div className="flex flex-col gap-0.5">
+                <p className="text-xxs font-semibold uppercase tracking-[0.28em] opacity-60">
+                  Operations
+                </p>
+                <h1 className="text-sm font-semibold">Admin Panel</h1>
+              </div>
             </div>
-          </div>
 
-          <div className="flex items-center gap-3 py-2.5">
-            <Link className="btn btn-sm btn-outlined" href="/app">
-              Open App
-            </Link>
-            <ToggleTheme />
-            <AvatarMenu />
+            <div className="ml-auto flex items-center gap-3">
+              <Link className="btn btn-sm btn-outlined" href="/app">
+                Open App
+              </Link>
+              <ToggleTheme />
+              <AvatarMenu />
+            </div>
           </div>
         </header>
 
-        <main className="AdminLayoutMain droplet-scrollbar flex-1 overflow-y-auto px-4 py-6 md:px-6">
+        <main className="AdminLayoutMain droplet-scrollbar relative z-10 flex-1 overflow-y-auto px-4 pb-10 pt-6 md:px-6">
           {children}
         </main>
       </div>

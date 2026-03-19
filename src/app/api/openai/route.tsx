@@ -182,13 +182,21 @@ function createStopTaskData({
   stopReason: TaskEndedReason;
   endAction: TaskEndAction;
 }): Message {
+  const shouldAppendInstruction =
+    stopReason !== "image_limit_reached" &&
+    stopReason !== "audio_limit_reached" &&
+    stopReason !== "video_limit_reached";
+  const endActionInstruction = shouldAppendInstruction
+    ? ` ${END_ACTION_INSTRUCTIONS[endAction]}`
+    : "";
+
   return {
     whois: "assistant",
     role: "assistant",
     content: [
       {
         type: "text",
-        text: `${STOP_REASON_MESSAGES[stopReason]} ${END_ACTION_INSTRUCTIONS[endAction]}`,
+        text: `${STOP_REASON_MESSAGES[stopReason]}${endActionInstruction}`,
       },
     ],
   };
@@ -200,6 +208,7 @@ function createStopResponsePayload({
   personaId,
   stopReason,
   endAction,
+  taskStatus,
   acceptedPrompt,
 }: {
   taskData: Message;
@@ -207,6 +216,7 @@ function createStopResponsePayload({
   personaId: PersonaId;
   stopReason: TaskEndedReason;
   endAction: TaskEndAction;
+  taskStatus?: TaskStatus;
   acceptedPrompt: boolean;
 }): ConversationStopPayload {
   return {
@@ -216,7 +226,7 @@ function createStopResponsePayload({
     error: STOP_REASON_MESSAGES[stopReason],
     stopReason,
     endAction,
-    taskStatus: "ended",
+    taskStatus: taskStatus ?? "ended",
     acceptedPrompt,
   };
 }
@@ -248,6 +258,19 @@ function isMediaLimitStopReason(
   | "video_limit_reached" {
   return (
     value === "media_limit_reached" ||
+    value === "image_limit_reached" ||
+    value === "audio_limit_reached" ||
+    value === "video_limit_reached"
+  );
+}
+
+function isMediaSpecificLimitStopReason(
+  value: OpenAIResponsePayload["blockedReason"],
+): value is
+  | "image_limit_reached"
+  | "audio_limit_reached"
+  | "video_limit_reached" {
+  return (
     value === "image_limit_reached" ||
     value === "audio_limit_reached" ||
     value === "video_limit_reached"
@@ -523,6 +546,36 @@ async function persistConversationStop({
   return stopTaskData;
 }
 
+async function persistConversationNotice({
+  taskId,
+  personaId,
+  currentMessages,
+  noticeTaskData,
+  estimatedBytes,
+}: {
+  taskId: string;
+  personaId: PersonaId;
+  currentMessages: Message[];
+  noticeTaskData: Message;
+  estimatedBytes?: number;
+}): Promise<void> {
+  const messagesWithNotice = [...currentMessages, noticeTaskData];
+  const estimatedBytesWithNotice =
+    estimateConversationBytes(messagesWithNotice);
+  const canPersistNotice =
+    estimatedBytesWithNotice <= TASK_STORAGE_WARNING_BYTES;
+
+  await updateTask(taskId, {
+    messages: canPersistNotice ? messagesWithNotice : currentMessages,
+    personaId,
+    estimatedBytes: canPersistNotice
+      ? estimatedBytesWithNotice
+      : typeof estimatedBytes === "number"
+        ? estimatedBytes
+        : estimateConversationBytes(currentMessages),
+  });
+}
+
 async function finalizeAIResponse({
   aiPayload,
   taskId,
@@ -574,17 +627,38 @@ async function finalizeAIResponse({
     const stopReason: TaskEndedReason = isTrialPersona
       ? "trial_limit_reached"
       : aiPayload.blockedReason;
+    const isNonTerminalMediaLimit =
+      !isTrialPersona &&
+      isMediaSpecificLimitStopReason(aiPayload.blockedReason);
     const endAction: TaskEndAction = isTrialPersona
       ? "upgrade_plan"
-      : getPlanBoundEndAction({ planName, planLimits });
-    const taskDataToPersist = await persistConversationStop({
-      taskId,
-      personaId: selectedPersonaId,
-      currentMessages: storedMessagesWithIncomingPrompt,
-      stopReason,
-      endAction,
-      estimatedBytes: estimatedBytesWithIncomingPrompt,
-    });
+      : isNonTerminalMediaLimit
+        ? "start_new_conversation"
+        : getPlanBoundEndAction({ planName, planLimits });
+    let taskDataToPersist: Message;
+
+    if (isNonTerminalMediaLimit) {
+      taskDataToPersist = createStopTaskData({
+        stopReason,
+        endAction,
+      });
+      await persistConversationNotice({
+        taskId,
+        personaId: selectedPersonaId,
+        currentMessages: storedMessagesWithIncomingPrompt,
+        noticeTaskData: taskDataToPersist,
+        estimatedBytes: estimatedBytesWithIncomingPrompt,
+      });
+    } else {
+      taskDataToPersist = await persistConversationStop({
+        taskId,
+        personaId: selectedPersonaId,
+        currentMessages: storedMessagesWithIncomingPrompt,
+        stopReason,
+        endAction,
+        estimatedBytes: estimatedBytesWithIncomingPrompt,
+      });
+    }
 
     return {
       status: 403,
@@ -594,6 +668,7 @@ async function finalizeAIResponse({
         personaId: selectedPersonaId,
         stopReason,
         endAction,
+        taskStatus: isNonTerminalMediaLimit ? "active" : "ended",
         acceptedPrompt: true,
       }),
     };

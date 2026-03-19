@@ -256,7 +256,7 @@ export default async function AboutPage() {
         subtitle="A persona-driven AI assistant built for structured conversations, practical output, and media-aware workflows."
       />
 
-      <DropletGlobe />
+      <DropletGlobe size={96} />
 
       {aboutSections.map((section, index) => (
         <article
