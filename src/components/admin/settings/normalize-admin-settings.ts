@@ -4,6 +4,7 @@ import { PersonaId } from "@/types/PersonaData.d";
 import {
   LimitsSettingsFormValue,
   PersonaAccessSettingsFormValue,
+  PersonaContentSettingsFormValue,
   PricingSettingsFormValue,
   ThemeSettingsFormValue,
   TrialLimitsSettingsFormValue,
@@ -226,6 +227,42 @@ function normalizePersonaAccessValue(
   );
 }
 
+function normalizeStarterPrompts({
+  value,
+  fallback,
+}: {
+  value: unknown;
+  fallback: string[];
+}): string[] {
+  if (!Array.isArray(value)) {
+    return fallback;
+  }
+
+  const normalizedStarterPrompts = value
+    .filter((entry): entry is string => typeof entry === "string")
+    .map((entry) => entry.trim())
+    .filter((entry) => entry.length > 0);
+
+  return normalizedStarterPrompts.length > 0
+    ? normalizedStarterPrompts
+    : fallback;
+}
+
+function normalizePersonaContentText({
+  value,
+  fallback,
+}: {
+  value: unknown;
+  fallback: string;
+}): string {
+  if (typeof value !== "string") {
+    return fallback;
+  }
+
+  const trimmedValue = value.trim();
+  return trimmedValue.length > 0 ? trimmedValue : fallback;
+}
+
 export function normalizePersonaAccessSettings(
   settingsByKey: Record<string, { value: unknown }>,
   defaults: PersonaAccessSettingsFormValue,
@@ -244,4 +281,41 @@ export function normalizePersonaAccessSettings(
       defaults.Premium,
     ),
   };
+}
+
+export function normalizePersonaContentSettings(
+  value: unknown,
+  defaults: PersonaContentSettingsFormValue,
+): PersonaContentSettingsFormValue {
+  if (!isObjectRecord(value)) {
+    return defaults;
+  }
+
+  return PERSONAS.reduce((accumulator, persona) => {
+    const defaultValue = defaults[persona.id];
+    const personaValue = isObjectRecord(value[persona.id])
+      ? (value[persona.id] as Record<string, unknown>)
+      : ({} as Record<string, unknown>);
+
+    accumulator[persona.id] = {
+      label: normalizePersonaContentText({
+        value: personaValue.label,
+        fallback: defaultValue.label,
+      }),
+      tagline: normalizePersonaContentText({
+        value: personaValue.tagline,
+        fallback: defaultValue.tagline,
+      }),
+      description: normalizePersonaContentText({
+        value: personaValue.description,
+        fallback: defaultValue.description,
+      }),
+      starterPrompts: normalizeStarterPrompts({
+        value: personaValue.starterPrompts,
+        fallback: defaultValue.starterPrompts,
+      }),
+    };
+
+    return accumulator;
+  }, {} as PersonaContentSettingsFormValue);
 }

@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import classNames from "classnames";
 import Link from "next/link";
 import PageHead from "@/components/layout/page-head";
-import { PERSONAS } from "@/constants/assistant-personas";
 import {
   AboutVisualType,
   buildAboutSections,
@@ -10,6 +9,7 @@ import {
 } from "@/constants/about-data";
 import { PlanPricing } from "@/constants/plans";
 import { getEffectivePersonaAccessByPlan } from "@/lib/utils/effective-persona-access";
+import { getEffectivePersonaConfig } from "@/lib/utils/effective-persona-config";
 import { getEffectivePlanConfig } from "@/lib/utils/effective-plan-config";
 import DropletGlobe from "@/components/shared/droplet-globe";
 
@@ -19,17 +19,12 @@ export const metadata: Metadata = {
     "Learn how Droplet combines persona-led AI guidance, media workflows, and plan-based access for focused conversations.",
 };
 
-const personaCategories = Object.entries(
-  PERSONAS.reduce<Record<string, number>>((accumulator, persona) => {
-    accumulator[persona.category] = (accumulator[persona.category] ?? 0) + 1;
-    return accumulator;
-  }, {}),
-);
-
 function renderAboutVisual(
   visualType: AboutVisualType,
   pricing: PlanPricing,
   currencySymbol: string,
+  personaCategories: Array<[string, number]>,
+  personaCatalog: Array<{ id: string; label: string }>,
 ) {
   const visualClassName = classNames(
     "rounded-[2rem] border p-6 shadow-sm",
@@ -45,7 +40,7 @@ function renderAboutVisual(
             <p className="text-xxs font-semibold uppercase tracking-[0.28em] opacity-70">
               Personas
             </p>
-            <p className="heading-4 mt-3">{PERSONAS.length}</p>
+            <p className="heading-4 mt-3">{personaCatalog.length}</p>
             <p className="body-2 mt-2 text-sm">
               Guided conversation styles with distinct prompts and boundaries.
             </p>
@@ -147,7 +142,7 @@ function renderAboutVisual(
               Current catalog
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
-              {PERSONAS.map((persona) => (
+              {personaCatalog.map((persona) => (
                 <span
                   key={persona.id}
                   className={classNames(
@@ -242,15 +237,33 @@ function renderAboutVisual(
 }
 
 export default async function AboutPage() {
-  const [effectivePlanConfig, personaAccessByPlan] = await Promise.all([
-    getEffectivePlanConfig(),
-    getEffectivePersonaAccessByPlan(),
-  ]);
-  const personaAccessSummary = buildPersonaAccessSummary(personaAccessByPlan);
+  const [effectivePlanConfig, personaAccessByPlan, effectivePersonas] =
+    await Promise.all([
+      getEffectivePlanConfig(),
+      getEffectivePersonaAccessByPlan(),
+      getEffectivePersonaConfig(),
+    ]);
+  const personaLabelById = Object.fromEntries(
+    effectivePersonas.map((persona) => [persona.id, persona.label]),
+  );
+  const personaAccessSummary = buildPersonaAccessSummary(
+    personaAccessByPlan,
+    personaLabelById,
+  );
+  const personaCategories = Object.entries(
+    effectivePersonas.reduce<Record<string, number>>((accumulator, persona) => {
+      accumulator[persona.category] = (accumulator[persona.category] ?? 0) + 1;
+      return accumulator;
+    }, {}),
+  );
+  const personaCatalog = effectivePersonas.map((persona) => ({
+    id: persona.id,
+    label: persona.label,
+  }));
   const aboutSections = buildAboutSections({ personaAccessSummary });
 
   return (
-    <section className="AboutPage mx-auto flex w-full max-w-screen-2xl flex-col gap-10 px-4 pb-16 pt-24 sm:px-6 lg:px-8">
+    <section className="AboutPage mx-auto flex w-full max-w-screen-2xl flex-col gap-10 px-4 py-16 pt-24 sm:px-6 lg:px-8">
       <PageHead
         title="About Droplet"
         subtitle="A persona-driven AI assistant built for structured conversations, practical output, and media-aware workflows."
@@ -289,6 +302,8 @@ export default async function AboutPage() {
             section.visualType,
             effectivePlanConfig.pricing,
             effectivePlanConfig.pricing.currencySymbol,
+            personaCategories,
+            personaCatalog,
           )}
         </article>
       ))}

@@ -2,7 +2,89 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-19 — PM deep audit #33. No new phases archived this cycle. Phases 65.1–65.4, 66.1–66.3, 67.1–67.3, 61.1 remain latest archived. All Phases 1–67.3, 63.1–63.2, 61.1 complete. Milestone 22 COMPLETE. 369 unit tests (65+ suites). Build passing. New work: Phase 68 (Lime Green), Phase 69 (Premium error UX), Phase 70 (Admin layout).
+> Last updated: 2026-03-19 — PM deep audit #35. Phases 68.4, 71.1, 71.2, 70.2 archived this cycle. All Phases 1–71.2 complete (incl. 63.1–63.2, 61.1, 68.1–68.4, 69.1, 70.1–70.2, 71.1–71.2). Milestone 22 COMPLETE. Milestone 23 Block A COMPLETE. 379 unit tests (66 suites). Build passing. Node.js 20.20.1 verified.
+
+---
+
+## Phase 68.4 — Button Text Color Correction — COMPLETED (2026-03-19)
+
+> PM audit #35. Engineer work report confirmed. TD-DS-07 RESOLVED.
+
+- [x] **68.4 HIGH** — `.btn-text` hover corrected: `limeGreen-500` → `limeGreen-800`. `.btn-contained` text corrected: `lavenderHaze-500/800` → `midnightBlue-500` (both default and hover). `.icon-btn` unchanged. Owner correction from PM audit #34 applied.
+
+**Files changed:** `src/app/globals.css`
+
+---
+
+## Phase 71.1 — Effective Persona Config Resolver — COMPLETED (2026-03-19)
+
+> PM audit #35. Engineer work report confirmed. TD-ADMIN-15 partially resolved.
+
+- [x] **71.1 HIGH** — Created `getEffectivePersonaConfig()` in `src/lib/utils/effective-persona-config.ts`. Reads `AppSetting("admin.personaOverrides")` and merges with hardcoded persona defaults by `id`. Override fields: `label`, `tagline`, `description`, `starterPrompts`. System prompts and hero images remain code-controlled (v2). `import "server-only"` guard present. Added `getPersonaFromConfig()` helper.
+
+**Files changed:** `src/lib/utils/effective-persona-config.ts` (new)
+
+---
+
+## Phase 71.2 — Admin Persona Content Editing + Surface Rewiring — COMPLETED (2026-03-19)
+
+> PM audit #35. Engineer work report confirmed. TD-ADMIN-15 RESOLVED.
+
+- [x] **71.2 HIGH** — Extended admin settings with persona content editing: label, tagline, description, starterPrompts (textarea) per persona. Persisted to `AppSetting("admin.personaOverrides")` via admin action. All persona-consuming surfaces rewired to use `getEffectivePersonaConfig()` instead of raw `PERSONAS` constant: `/app/new`, `/app/personas`, `/app` (chat), `/app/c/[conversationId]`, `/app/library`, `/personas` (public), `/about`, chat layout, chat header, chat wrapper, chat sidebar, personas-section, landing-page. Audit trail logged.
+
+**Files changed:** `src/components/admin/settings/admin-personas-section.tsx`, `src/components/admin/settings/types.ts`, `src/components/admin/settings/normalize-admin-settings.ts`, `src/lib/utils/admin-queries.ts`, `src/app/(admin)/admin/settings/page.tsx`, `src/lib/actions/admin.actions.tsx`, persona-consuming pages (10+), `src/types/PersonaData.d.tsx`
+
+---
+
+## Phase 70.2 — Admin Panel Design Polish — COMPLETED (2026-03-19)
+
+> PM audit #35. Engineer work report confirmed.
+
+- [x] **70.2 HIGH** — Full admin panel design alignment with `/app`. Added shared admin surface CSS classes in globals.css. Brand identity added to admin sidebar header. Applied consistent card/table styles across all admin pages: dashboard, users, user detail, transactions, transaction detail, usage, settings (all sections), website, website page detail. Both light and dark themes consistent.
+
+**Files changed:** `src/app/globals.css`, `src/components/admin/admin-sidebar.tsx`, `src/components/admin/admin-layout-shell.tsx`, admin page files (8+), admin component files (10+)
+
+---
+
+## Node.js 20.20.1 Build Blocker Fix — COMPLETED (2026-03-19)
+
+> PM audit #35. Engineer work report confirmed.
+
+- [x] **CRITICAL** — `/terms` prerender failed under Node 20.20.1 build path due to MongoDB connection failure during static generation. Made plan config resolvers fail-safe on DB failure in `effective-plan-config.ts`. Added regression coverage in `effective-plan-config.test.ts`.
+
+**Files changed:** `src/lib/utils/effective-plan-config.ts`, `tests/unit/effective-plan-config.test.ts`
+
+---
+
+## Phase 69.1 — Non-Terminal Media-Specific Stops — COMPLETED (2026-03-19)
+
+> PM audit #34. Triple-audit verified (PM + Architect + Engineer). TD-UX-07 RESOLVED.
+
+- [x] **69.1 CRITICAL** — Media-specific limits (`image_limit_reached`, `audio_limit_reached`, `video_limit_reached`) are now **non-terminal**. Returns `endAction: "start_new_conversation"` with `taskStatus: "active"` instead of ending the task. Client distinguishes terminal vs non-terminal stop payloads and keeps chat active for non-terminal media stops. Messages explicitly say chat can continue. Uses `persistConversationNotice` (not `persistConversationStop`) — does NOT set `status: "ended"` on task document. Admin bypasses unchanged.
+
+**Files changed:** `src/app/api/openai/route.tsx`, `src/constants/stop-reasons.ts`, `src/components/chat/chat-wrapper.tsx`
+
+---
+
+## Phase 68.1–68.3 — Lime Green Palette + Button Restyle — COMPLETED (2026-03-19)
+
+> PM audit #34. Triple-audit verified (PM + Architect + Engineer). TD-DS-05 RESOLVED (palette + button structure). Button text color correction tracked separately as Phase 68.4.
+
+- [x] **68.1 HIGH** — Added `limeGreen` palette scale (100–1000) to `@theme` block in globals.css. Base hex 500 = `#B8F60D`. `bg-limeGreen-500`, `text-limeGreen-500`, etc. work in Tailwind classes. No existing palette tokens removed.
+- [x] **68.2 HIGH** — Restyled `.btn-text`, `.btn-outlined`, `.btn-contained` with Lime Green for both dark and light themes. Removed separate `dark:` prefix button color variants. `.icon-btn` unchanged. **Note:** `.btn-contained` text color used `lavenderHaze-500` and `.btn-text` hover used `limeGreen-500` — owner subsequently corrected these (Phase 68.4).
+- [x] **68.3 HIGH** — Clerk appearance kept as `twilightPurple` (#4B0082) per PM decision (auth forms, not app buttons). Removed remaining twilight/dusty button-context references in `checkout-form.tsx` and `toggle-theme.tsx`. Both themes visually consistent.
+
+**Files changed:** `src/app/globals.css`, `src/components/shared/checkout-form.tsx`, `src/components/shared/toggle-theme.tsx`
+
+---
+
+## Phase 70.1 — Admin Shell Alignment — COMPLETED (2026-03-19)
+
+> PM audit #34. Triple-audit verified (PM + Architect + Engineer). Admin shell structurally and visually aligned with `/app` patterns. Both use same color tokens, border colors, sidebar toggle pattern via shared Zustand store, and shared components (SidebarToggle, ToggleTheme, AvatarMenu). TD-DS-06 RESOLVED for shell/header/sidebar structure.
+
+- [x] **70.1 MEDIUM** — Aligned admin shell background, header, and sidebar with `/app` design system. Removed hard outer solid background from admin shell so global body gradient is preserved. Admin header uses same `lavenderHaze-100/85` / `nightIndigo-900/55` tokens as chat header. Admin sidebar uses same `lavenderHaze-200` / `nightIndigo-1000` tokens as chat sidebar.
+
+**Files changed:** `src/components/admin/admin-layout-shell.tsx`, `src/components/admin/admin-sidebar.tsx`
 
 ---
 

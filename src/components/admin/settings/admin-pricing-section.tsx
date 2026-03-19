@@ -16,7 +16,7 @@ export function AdminPricingSection({
     <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
       <AdminManagedForm
         action={updateAdminSettingAction}
-        className="rounded-2xl border border-slate-300 bg-lavenderHaze-100/80 p-5 dark:border-slate-500 dark:bg-nightIndigo-900/70"
+        className="admin-surface"
       >
         <input type="hidden" name="key" value="admin.pricing" />
         <input type="hidden" name="category" value="plans" />
@@ -59,7 +59,7 @@ export function AdminPricingSection({
 
       <AdminManagedForm
         action={updateAdminSettingAction}
-        className="rounded-2xl border border-slate-300 bg-lavenderHaze-100/80 p-5 dark:border-slate-500 dark:bg-nightIndigo-900/70"
+        className="admin-surface"
       >
         <input type="hidden" name="key" value="admin.currencySymbol" />
         <input type="hidden" name="category" value="plans" />

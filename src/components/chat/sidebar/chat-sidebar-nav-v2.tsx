@@ -7,7 +7,6 @@ import { usePathname, useRouter } from "next/navigation";
 import AlertMessage from "@/components/shared/alert-message";
 import ConfirmationModal from "@/components/shared/confirmation-modal";
 import { ConversationListItem } from "@/types/PersonaData.d";
-import { getPersona } from "@/constants/assistant-personas";
 import { deleteTask } from "@/lib/actions/task.actions";
 
 interface ChatSidebarNavV2Props {
@@ -191,7 +190,6 @@ export default function ChatSidebarNavV2({
             </p>
           )}
           {conversationItems.slice(0, 6).map((item) => {
-            const persona = getPersona(item.personaId);
             const isActive = pathname === item.href;
             const isDeleting = deletingConversationId === item.id;
             const isDeleteDisabled =
@@ -219,14 +217,14 @@ export default function ChatSidebarNavV2({
                   )}
                 >
                   <i
-                    className={classNames(persona.icon, "shrink-0 text-sm")}
+                    className={classNames(item.personaIcon, "shrink-0 text-sm")}
                   ></i>
                   <div
                     className={classNames("min-w-0", !isOpen && "lg:hidden")}
                   >
                     <p className="truncate text-xs font-medium">{item.title}</p>
                     <p className="truncate text-xxs opacity-70">
-                      {persona.label} - {item.updatedAtLabel}
+                      {item.personaLabel} - {item.updatedAtLabel}
                     </p>
                   </div>
                 </Link>

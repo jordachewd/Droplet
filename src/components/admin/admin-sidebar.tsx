@@ -55,23 +55,27 @@ export default function AdminSidebar() {
         <div className="flex flex-col px-4 py-6">
           <div
             className={classNames(
-              "mb-8 flex flex-col gap-1 px-2",
+              "mb-8 flex items-start gap-3 rounded-2xl border border-slate-300/70 bg-lavenderHaze-100/85 px-3 py-3 dark:border-slate-500 dark:bg-nightIndigo-900/80",
               !isOpen && "lg:items-center lg:px-0",
             )}
           >
-            <p
+            <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-linear-135 from-limeGreen-500/90 to-limeGreen-800/90 text-midnightBlue-500 shadow-sm">
+              <i className="bi bi-droplet-fill text-lg"></i>
+            </span>
+            <div
               className={classNames(
-                "text-xs font-semibold uppercase tracking-[0.28em] opacity-60",
+                "flex flex-col gap-1",
                 !isOpen && "lg:hidden",
               )}
             >
-              Droplet
-            </p>
-            <h2 className={classNames("heading-5", !isOpen && "lg:hidden")}>
-              Admin Panel
-            </h2>
+              <p className="text-xxs font-semibold uppercase tracking-[0.28em] opacity-60">
+                Droplet
+              </p>
+              <h2 className="heading-6 leading-tight">Admin Control</h2>
+              <p className="text-xs opacity-70">Operational command center</p>
+            </div>
             {!isOpen && (
-              <span className="hidden text-lg font-bold lg:block">D</span>
+              <span className="hidden text-lg font-bold lg:block">DC</span>
             )}
           </div>
 

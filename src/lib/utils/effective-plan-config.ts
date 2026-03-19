@@ -221,61 +221,77 @@ function normalizeTrialLimitsValue(value: unknown): PersonaTrialLimits {
 }
 
 export async function getEffectivePlanConfig(): Promise<EffectivePlanConfig> {
-  await connectToDatabase();
+  try {
+    await connectToDatabase();
 
-  const settings = (await AppSetting.find({
-    key: {
-      $in: [
-        "admin.pricing",
-        "admin.limits",
-        "admin.trialLimits",
-        "admin.currencySymbol",
-      ],
-    },
-  })
-    .select("key value")
-    .lean()) as AppSettingRecord[];
-  const settingsMap = new Map(
-    settings.map((setting) => [setting.key, setting]),
-  );
+    const settings = (await AppSetting.find({
+      key: {
+        $in: [
+          "admin.pricing",
+          "admin.limits",
+          "admin.trialLimits",
+          "admin.currencySymbol",
+        ],
+      },
+    })
+      .select("key value")
+      .lean()) as AppSettingRecord[];
+    const settingsMap = new Map(
+      settings.map((setting) => [setting.key, setting]),
+    );
 
-  const pricingValue = settingsMap.get("admin.pricing")?.value;
-  const currencySymbolValue = settingsMap.get("admin.currencySymbol")?.value;
-  const limitsValue = settingsMap.get("admin.limits")?.value;
-  const trialLimitsValue = settingsMap.get("admin.trialLimits")?.value;
-  const normalizedPricing = normalizePricingValue(pricingValue);
+    const pricingValue = settingsMap.get("admin.pricing")?.value;
+    const currencySymbolValue = settingsMap.get("admin.currencySymbol")?.value;
+    const limitsValue = settingsMap.get("admin.limits")?.value;
+    const trialLimitsValue = settingsMap.get("admin.trialLimits")?.value;
+    const normalizedPricing = normalizePricingValue(pricingValue);
 
-  return {
-    pricing: {
-      ...normalizedPricing,
-      currencySymbol:
-        currencySymbolValue !== undefined
-          ? normalizeCurrencySymbol(currencySymbolValue)
-          : normalizedPricing.currencySymbol,
-    },
-    limits: normalizePlanLimitsValue(limitsValue),
-    trialLimits: normalizeTrialLimitsValue(trialLimitsValue),
-  };
+    return {
+      pricing: {
+        ...normalizedPricing,
+        currencySymbol:
+          currencySymbolValue !== undefined
+            ? normalizeCurrencySymbol(currencySymbolValue)
+            : normalizedPricing.currencySymbol,
+      },
+      limits: normalizePlanLimitsValue(limitsValue),
+      trialLimits: normalizeTrialLimitsValue(trialLimitsValue),
+    };
+  } catch {
+    return {
+      pricing: { ...DEFAULT_PLAN_PRICING },
+      limits: structuredClone(PLAN_LIMITS),
+      trialLimits: { ...PERSONA_TRIAL_LIMITS },
+    };
+  }
 }
 
 export async function getEffectiveCurrencySymbol(): Promise<string> {
-  await connectToDatabase();
+  try {
+    await connectToDatabase();
 
-  const setting = (await AppSetting.findOne({ key: "admin.currencySymbol" })
-    .select("value")
-    .lean()) as AppSettingRecord | null;
+    const setting = (await AppSetting.findOne({ key: "admin.currencySymbol" })
+      .select("value")
+      .lean()) as AppSettingRecord | null;
 
-  return normalizeCurrencySymbol(setting?.value);
+    return normalizeCurrencySymbol(setting?.value);
+  } catch {
+    return DEFAULT_PLAN_PRICING.currencySymbol;
+  }
 }
 
 export async function getEffectiveTrialLimits(): Promise<PersonaTrialLimits> {
-  await connectToDatabase();
+  try {
+    await connectToDatabase();
 
-  const setting = (await AppSetting.findOne({ key: "admin.trialLimits" })
-    .select("value")
-    .lean()) as AppSettingRecord | null;
+    const setting = (await AppSetting.findOne({ key: "admin.trialLimits" })
+      .select("value")
+      .lean()) as AppSettingRecord | null;
 
-  return normalizeTrialLimitsValue(setting?.value);
+    return normalizeTrialLimitsValue(setting?.value);
+  } catch {
+    return { ...PERSONA_TRIAL_LIMITS };
+  }
 }
 
 export function getPlanLimit({

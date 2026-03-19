@@ -29,7 +29,7 @@ export default async function AdminWebsiteEditorPage({
 
       <AdminManagedForm
         action={savePublicPageAction}
-        className="flex flex-col gap-4 rounded-2xl border border-slate-300 bg-lavenderHaze-100/80 p-5 dark:border-slate-500 dark:bg-nightIndigo-900/70"
+        className="admin-surface flex flex-col gap-4"
       >
         <input type="hidden" name="pageId" value={page.id} />
 
@@ -45,13 +45,13 @@ export default async function AdminWebsiteEditorPage({
         </label>
 
         <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-          <div className="rounded-xl border border-slate-300 px-4 py-3 dark:border-slate-500">
+          <div className="admin-surface-subtle">
             <p className="text-xs font-semibold uppercase tracking-wide opacity-60">
               Slug
             </p>
             <p className="mt-1 text-sm">/{page.slug}</p>
           </div>
-          <div className="rounded-xl border border-slate-300 px-4 py-3 dark:border-slate-500">
+          <div className="admin-surface-subtle">
             <p className="text-xs font-semibold uppercase tracking-wide opacity-60">
               Status
             </p>
@@ -59,7 +59,7 @@ export default async function AdminWebsiteEditorPage({
               {page.isPublished ? "Published" : "Draft"}
             </p>
           </div>
-          <div className="rounded-xl border border-slate-300 px-4 py-3 dark:border-slate-500">
+          <div className="admin-surface-subtle">
             <p className="text-xs font-semibold uppercase tracking-wide opacity-60">
               Sort Order
             </p>

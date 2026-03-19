@@ -65,7 +65,7 @@ export function AdminLimitsSection({
     <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
       <AdminManagedForm
         action={updateAdminSettingAction}
-        className="rounded-2xl border border-slate-300 bg-lavenderHaze-100/80 p-5 dark:border-slate-500 dark:bg-nightIndigo-900/70"
+        className="admin-surface"
       >
         <input type="hidden" name="key" value="admin.limits" />
         <input type="hidden" name="category" value="limits" />
@@ -129,7 +129,7 @@ export function AdminLimitsSection({
 
       <AdminManagedForm
         action={updateAdminSettingAction}
-        className="rounded-2xl border border-slate-300 bg-lavenderHaze-100/80 p-5 dark:border-slate-500 dark:bg-nightIndigo-900/70"
+        className="admin-surface"
       >
         <input type="hidden" name="key" value="admin.trialLimits" />
         <input type="hidden" name="category" value="trial" />

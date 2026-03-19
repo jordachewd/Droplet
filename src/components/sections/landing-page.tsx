@@ -2,23 +2,24 @@ import Plans from "./plans-section";
 import Faqs from "./faqs-section";
 import classNames from "classnames";
 import Link from "next/link";
-import { PERSONAS } from "@/constants/assistant-personas";
 import { featureCards, howItWorksSteps } from "@/constants/landing-data";
 import { getEffectivePlanConfig } from "@/lib/utils/effective-plan-config";
 import { getEffectivePersonaAccessByPlan } from "@/lib/utils/effective-persona-access";
+import { getEffectivePersonaConfig } from "@/lib/utils/effective-persona-config";
 import { buildPlans } from "@/constants/plans";
 import { buildFaqs } from "@/constants/faqs";
 import HeroSection from "./hero-section";
 
-const featuredPersonas = PERSONAS.filter((persona) =>
-  ["strategist", "teacher", "creator"].includes(persona.id),
-);
-
 export default async function LandingPage() {
-  const [effectivePlanConfig, personaAccessByPlan] = await Promise.all([
-    getEffectivePlanConfig(),
-    getEffectivePersonaAccessByPlan(),
-  ]);
+  const [effectivePlanConfig, personaAccessByPlan, effectivePersonas] =
+    await Promise.all([
+      getEffectivePlanConfig(),
+      getEffectivePersonaAccessByPlan(),
+      getEffectivePersonaConfig(),
+    ]);
+  const featuredPersonas = effectivePersonas.filter((persona) =>
+    ["strategist", "teacher", "creator"].includes(persona.id),
+  );
   const plans = buildPlans({
     pricing: effectivePlanConfig.pricing,
     limits: effectivePlanConfig.limits,

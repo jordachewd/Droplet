@@ -17,6 +17,8 @@ import Transaction from "@/lib/database/models/transaction.model";
 import UsageEvent from "@/lib/database/models/usage-event.model";
 import User from "@/lib/database/models/user.model";
 import { getEffectivePlanConfig } from "@/lib/utils/effective-plan-config";
+import { getEffectivePersonaConfig } from "@/lib/utils/effective-persona-config";
+import { PersonaId } from "@/types/PersonaData.d";
 import { PlanName } from "@/types/PlanData.d";
 import { isValidObjectId } from "mongoose";
 
@@ -483,6 +485,7 @@ export async function getAdminUsageAnalytics() {
     byRequestType,
     byDay,
     byProvider,
+    effectivePersonas,
   ] = await Promise.all([
     UsageEvent.aggregate([
       {
@@ -600,6 +603,7 @@ export async function getAdminUsageAnalytics() {
       },
       { $sort: { count: -1 } },
     ]),
+    getEffectivePersonaConfig(),
   ]);
   const typedTopUsers = topUsersAggregate as UsageAggregateRecord[];
   const topUserIds = typedTopUsers.map((item) => item._id);
@@ -621,6 +625,9 @@ export async function getAdminUsageAnalytics() {
   };
   const totalEvents = summary.totalEvents || 0;
   const typedTopPersonas = topPersonasAggregate as UsageAggregateRecord[];
+  const effectivePersonaLabelById = new Map(
+    effectivePersonas.map((persona) => [persona.id, persona.label]),
+  );
 
   return {
     summary,
@@ -633,7 +640,9 @@ export async function getAdminUsageAnalytics() {
     })),
     topPersonas: typedTopPersonas.map((item) => ({
       personaId: item._id,
-      label: getPersona(item._id).label,
+      label:
+        effectivePersonaLabelById.get(item._id as PersonaId) ??
+        getPersona(item._id).label,
       count: item.count,
       percentage: totalEvents > 0 ? (item.count / totalEvents) * 100 : 0,
     })),
@@ -697,6 +706,26 @@ export async function getAdminSettingsSnapshot() {
         Pro: [...DEFAULT_FULL_PERSONA_ACCESS_BY_PLAN.Pro],
         Premium: [...DEFAULT_FULL_PERSONA_ACCESS_BY_PLAN.Premium],
       },
+      personaContent: PERSONAS.reduce(
+        (accumulator, persona) => {
+          accumulator[persona.id] = {
+            label: persona.label,
+            tagline: persona.tagline,
+            description: persona.description,
+            starterPrompts: [...persona.starterPrompts],
+          };
+          return accumulator;
+        },
+        {} as Record<
+          PersonaId,
+          {
+            label: string;
+            tagline: string;
+            description: string;
+            starterPrompts: string[];
+          }
+        >,
+      ),
       theme: {
         defaultMode: "light",
       },

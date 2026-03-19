@@ -102,4 +102,15 @@ describe("getEffectivePlanConfig", () => {
 
     expect(config.pricing.currencySymbol).toBe("€");
   });
+
+  it("returns defaults when database access fails", async () => {
+    vi.mocked(connectToDatabase).mockRejectedValueOnce(
+      new Error("querySrv ECONNREFUSED"),
+    );
+
+    const config = await getEffectivePlanConfig();
+
+    expect(config.pricing).toEqual(DEFAULT_PLAN_PRICING);
+    expect(config.limits).toEqual(PLAN_LIMITS);
+  });
 });

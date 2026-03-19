@@ -5,126 +5,267 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: Milestone 22 COMPLETE. All Phases 1–67.3, 63.1–63.2, 61.1 complete. 369 unit tests passing (65+ suites). Build passing.**
-> **PM deep audit #33 (2026-03-19): Triple-audit (PM + Architect + Engineer). New owner directives: Lime Green accent color, button restyle, Premium video error UX fix. 6 owner items verified DONE (archived).**
-> **Priority order: 69.1 → 68.1 → 68.2 → 68.3 → 70.1 → 31.4 → 46.x → 29.x → 26.x**
-> **CRITICAL: Phase 69 (Premium error UX). HIGH: Phase 68 (Lime Green palette + button restyle). MEDIUM: Phase 70 (Admin layout alignment).**
+> **STATUS: Milestone 22 COMPLETE. Milestone 23 Block A COMPLETE. All Phases 1–71.2 complete (incl. 63.1–63.2, 61.1, 68.1–68.4, 69.1, 70.1–70.2, 71.1–71.2). 379 unit tests (66 suites). Build passing. Node.js 20.20.1 verified.**
+> **PM deep audit #35 (2026-03-19): Triple-audit (PM + Architect + Engineer). Phases 68.4, 71.1, 71.2, 70.2 archived. New priority sequence from owner instructions.**
+> **Priority order: 76.1 → 76.2 → 76.3 → 72.x → 73.x → 74.x → 31.4 → 75 → 46.x → 29.x → 26.x**
+> **HIGH: Phase 76 (Node.js/build hardening). HIGH: Phase 72 (WCAG 2.2 AA). CRITICAL: Phase 73 (server-only guards + codebase quality). CRITICAL: Phase 74 (admin configurability audit). LOW: remaining.**
 
 ---
 
-## Phase 69: Premium Video Error UX Fix — CRITICAL
+## Phase 76: Node.js 20.20.1 Hardening — HIGH
 
-### 69.1 CRITICAL — Fix media-specific limit end action + improve stop messages
+### 76.1 HIGH — Pin `@types/node` to match runtime
 
-**Ref:** PM audit #33 — Owner reported: "PREMIUM user has media limitations - gets error message about that - why?" Root cause: `getPlanBoundEndAction()` returns `"contact_support"` for Premium (unlimited conversations → contact_support). Premium users hitting video cap (10/month) see generic "video generation limit" + "Contact support" — confusing for $39/month user.
+**Ref:** PM audit #35 — Triple-audit finding: `@types/node@^25.3.3` provides Node 25.x type definitions but runtime is Node 20.20.1. TypeScript allows Node 25-only APIs that don't exist at runtime.
 
-**Files:** `src/app/api/openai/route.tsx`, `src/constants/stop-reasons.ts`
-
-**What to do:**
-
-1. In `route.tsx`, when a media-specific limit is hit (`image_limit_reached`, `audio_limit_reached`, `video_limit_reached`), the `endAction` should be `"start_new_conversation"` instead of using `getPlanBoundEndAction()`. The conversation should NOT end — only the media generation is blocked. User can still chat.
-2. Update `stop-reasons.ts` messages for media limits to be more informative. Include: "You can continue chatting. Start a new conversation to keep going."
-3. Verify that admin role still bypasses all limits (no regression from Phase 53.1).
-
-**Acceptance criteria:**
-
-- [ ] Premium user hitting video cap sees clear, non-alarming message
-- [ ] End action for media limits is `start_new_conversation`, not `contact_support`
-- [ ] Messages explain that other features are still available
-- [ ] Admin bypasses unchanged
-- [ ] Existing unit tests pass, new test for Premium video limit behavior
-
----
-
-## Phase 68: Brand Color Palette v3 — Lime Green Accent — HIGH
-
-### 68.1 HIGH — Add limeGreen palette scale to globals.css @theme
-
-**Ref:** PM audit #33 — Owner directive: Lime Green (#B8F60D) as new accent color. Must generate 10-step shade scale (100–1000) anchored at 500 = #B8F60D.
-
-**Files:** `src/app/globals.css`
+**Files:** `package.json`
 
 **What to do:**
 
-1. Add `--color-limeGreen-100` through `--color-limeGreen-1000` to the `@theme` block.
-2. Base hex for 500: `#B8F60D`. Generate lighter shades (100–400) and darker shades (600–1000).
-3. Do NOT remove any existing palette tokens (nightIndigo, twilightPurple, midnightBlue, lavenderHaze, dustyBlue) — they remain for non-button uses.
+1. Change `@types/node` from `^25.3.3` to `^20.17.0` (latest 20.x types).
+2. Run `npm install` to update lockfile.
+3. Run `npx tsc --noEmit` to verify no Node 25-only APIs are used.
+4. Run `npm run test` to verify all tests pass.
+5. Run `npm run build` to verify build passes.
 
 **Acceptance criteria:**
 
-- [ ] `limeGreen` palette (10 shades) exists in `@theme`
-- [ ] `bg-limeGreen-500`, `text-limeGreen-500`, etc. work in Tailwind classes
-- [ ] No existing palette tokens removed
+- [ ] `@types/node` is `^20.17.0` in `package.json`
+- [ ] `tsc --noEmit` passes
+- [ ] All tests pass
 - [ ] Build passes
 
 ---
 
-### 68.2 HIGH — Restyle .btn-text, .btn-outlined, .btn-contained with Lime Green
+### 76.2 HIGH — Add Node.js version pinning
 
-**Ref:** PM audit #33 — Owner directive: All button styles use Lime Green for BOTH dark and light themes. `.icon-btn` stays unchanged.
+**Ref:** PM audit #35 — No `engines` field or `.nvmrc` file. Any environment could use wrong Node version.
 
-**Files:** `src/app/globals.css`
-
-**What to do:**
-
-1. Update `.btn-text`: `text-limeGreen-500 hover:text-limeGreen-500` (both themes, same color). Remove separate light/dark variants.
-2. Update `.btn-outlined`: `text-limeGreen-500 border-limeGreen-500 hover:text-limeGreen-800 hover:border-limeGreen-800 bg-transparent hover:bg-transparent` (both themes). Remove separate light/dark variants.
-3. Update `.btn-contained`: `text-lavenderHaze-500 border-limeGreen-500 bg-limeGreen-500 hover:text-lavenderHaze-800 hover:border-limeGreen-800 hover:bg-limeGreen-800` (both themes). Remove shadow definitions that reference twilightPurple/dustyBlue hex.
-4. `.icon-btn` — DO NOT CHANGE.
-
-**Acceptance criteria:**
-
-- [ ] `.btn-text` uses limeGreen-500 for both themes
-- [ ] `.btn-outlined` uses limeGreen-500/800 for both themes, transparent bg
-- [ ] `.btn-contained` uses limeGreen bg, lavenderHaze text for both themes
-- [ ] `.icon-btn` is identical to current version (unchanged)
-- [ ] No `dark:` prefix on button color properties (same for both themes)
-- [ ] Build passes, lint passes
-
----
-
-### 68.3 HIGH — Update Clerk appearance and verify visual consistency
-
-**Ref:** PM audit #33 — Clerk appearance and any hardcoded color references must reflect new accent.
-
-**Files:** `src/app/layout.tsx` (Clerk provider), any file referencing `twilightPurple` or `dustyBlue` in button contexts
+**Files:** `package.json`, `.nvmrc` (new)
 
 **What to do:**
 
-1. Check Clerk `appearance` config — if `colorPrimary` uses twilightPurple, consider updating to limeGreen or keeping twilightPurple for sign-in forms (PM decision: keep twilightPurple for Clerk — it's auth, not app buttons).
-2. Grep for any inline twilightPurple/dustyBlue references specifically in button contexts (not all uses — only button-related). These should now use limeGreen.
-3. Verify no visual regressions in both light and dark themes.
+1. Add `"engines": { "node": ">=20.20.1" }` to `package.json`.
+2. Create `.nvmrc` with `20.20.1`.
+3. Verify no CI/deployment impact.
 
 **Acceptance criteria:**
 
-- [ ] No button-context references to twilightPurple/dustyBlue remain (structural/non-button uses OK)
-- [ ] Clerk appearance decision documented
-- [ ] Both themes visually consistent
-- [ ] Full validation gateway passes (prettier, lint, tsc, unit tests, build)
-
----
-
-## Phase 70: Admin Panel Design Alignment — MEDIUM
-
-### 70.1 MEDIUM — Align admin layout with /app design system
-
-**Ref:** PM audit #33 — Owner reports admin panel "still old design." Admin uses `AdminLayoutShell` with different background, header, and spacing vs `/app`'s `PageWrapper`.
-
-**Files:** `src/components/admin/admin-layout-shell.tsx`, `src/app/(admin)/layout.tsx`
-
-**What to do:**
-
-1. Align admin background gradient/colors with the body gradient from globals.css (currently admin hardcodes `bg-lavenderHaze-200 dark:bg-nightIndigo-1000`).
-2. Ensure admin header styling matches chat header visual weight (fonts, spacing, colors).
-3. Ensure admin sidebar styling matches chat sidebar visual patterns.
-4. Card backgrounds, border radius, and spacing should match `/app` patterns.
-
-**Acceptance criteria:**
-
-- [ ] Admin panel visually matches `/app` design system (colors, fonts, spacing)
-- [ ] No functional regression in admin features
-- [ ] Both light and dark themes consistent
+- [ ] `engines.node` in `package.json`
+- [ ] `.nvmrc` exists with `20.20.1`
 - [ ] Build passes
+
+---
+
+### 76.3 HIGH — Add `import "server-only"` to unguarded server utilities
+
+**Ref:** PM audit #35 — Triple-audit consensus: 6+ files with direct DB/API access lack `import "server-only"` guard.
+
+**Files:** `src/lib/utils/task-queries.tsx`, `src/lib/utils/admin-audit.ts`, `src/lib/utils/admin-auth.ts`, `src/lib/utils/rate-limit.ts`, `src/lib/utils/usage-event-utils.ts`, `src/lib/utils/check-daily-conversations.ts`, `src/lib/utils/handleError.ts`
+
+**What to do:**
+
+1. Add `import "server-only";` as line 1 to each file listed above.
+2. Run `npx tsc --noEmit` to verify no client components import these.
+3. Run `npm run build` to verify.
+
+**Acceptance criteria:**
+
+- [ ] All 7 files have `import "server-only"` guard
+- [ ] No compilation errors (no client components import these)
+- [ ] Build passes
+
+---
+
+## Phase 72: WCAG 2.2 AA Accessibility Pass — HIGH
+
+### 72.1 HIGH — Navigation and landmark accessibility
+
+**Ref:** Owner instruction: "Entire app must be WCAG 2.2 AA accessibility standards compliant."
+
+**Files:** `src/components/layout/header.tsx`, `src/components/layout/footer.tsx`, `src/app/(chat)/layout.tsx`
+
+**What to do:**
+
+1. Add `aria-label="Main navigation"` to `<nav>` in header.
+2. Add responsive mobile navigation (hamburger menu for `md:hidden`).
+3. Wrap footer links in `<nav aria-label="Footer navigation">`.
+4. Add skip-to-content link at the top of the page layout.
+5. Ensure semantic `<footer>` element is used (not `<section>`).
+
+**Acceptance criteria:**
+
+- [ ] All `<nav>` elements have `aria-label`
+- [ ] Mobile navigation exists and is keyboard-accessible
+- [ ] Skip-to-content link present
+- [ ] Footer uses semantic element
+- [ ] Build passes
+
+---
+
+### 72.2 HIGH — Image alt text and focus indicators
+
+**Files:** `src/components/sections/hero-section.tsx`, `src/components/shared/persona-card.tsx`, all components with `<Image>`
+
+**What to do:**
+
+1. Replace `alt="hero"` with descriptive alt text in hero section.
+2. Audit all `<Image>` components for meaningful alt text.
+3. Verify all interactive elements have visible focus indicators (`:focus-visible`).
+4. Verify color contrast ratios meet WCAG AA (4.5:1 for text, 3:1 for large text).
+
+**Acceptance criteria:**
+
+- [ ] No generic alt text (`alt="hero"`, `alt="image"`)
+- [ ] All interactive elements have visible focus ring
+- [ ] Key color combinations pass contrast ratio check
+- [ ] Build passes
+
+---
+
+### 72.3 MEDIUM — Form label and ARIA audit
+
+**Files:** All form components in `src/components/`
+
+**What to do:**
+
+1. Audit all `<input>`, `<select>`, `<textarea>` for associated `<label>` or `aria-label`.
+2. Verify all required fields have `aria-required="true"`.
+3. Verify form error messages are announced via `aria-live="polite"` or `role="alert"`.
+4. Verify all dialog/modal components have `aria-modal="true"` and focus trap.
+
+**Acceptance criteria:**
+
+- [ ] All form controls have labels
+- [ ] Error messages accessible to screen readers
+- [ ] Modal focus trapping works
+- [ ] Build passes
+
+---
+
+## Phase 73: Codebase Quality & Server-Side Operations — CRITICAL
+
+### 73.1 CRITICAL — Verify all client components are data consumers
+
+**Ref:** Owner instruction: "Components must be data consumers, especially 'use client' ones."
+
+**Files:** All `"use client"` components
+
+**What to do:**
+
+1. Verify `chat-persona-picker.tsx` receives personas as props (currently imports `PERSONAS` directly from constants).
+2. Verify `chat-header.tsx` always receives `personas` prop and does not fall back to hardcoded `PERSONAS`.
+3. Verify `chat-wrapper.tsx` receives effective persona data from parent Server Component.
+4. Verify `plans-section.tsx` always receives `plansData` prop.
+5. Verify `faqs-section.tsx` always receives `faqsData` prop.
+6. Remove hardcoded fallback constants from client components where callers always pass resolved data.
+
+**Acceptance criteria:**
+
+- [ ] Zero direct `PERSONAS` imports in client components (effective config passed as props)
+- [ ] All client components receive data as props from Server Components
+- [ ] Build passes, all tests pass
+
+---
+
+### 73.2 MEDIUM — Minor re-render and code quality fixes
+
+**Files:** `src/components/chat/sidebar/chat-sidebar-nav-v2.tsx`, `src/components/shared/plan-count-down.tsx`
+
+**What to do:**
+
+1. `chat-sidebar-nav-v2.tsx`: Evaluate if `useEffect → setConversationItems(historyItems)` can be replaced with direct prop usage (eliminate unnecessary state copy).
+2. `plan-count-down.tsx`: Verify countdown uses current time reference correctly for each tick.
+
+**Acceptance criteria:**
+
+- [ ] No unnecessary state duplication
+- [ ] Countdown displays correctly
+- [ ] Build passes
+
+---
+
+## Phase 74: Admin Configurability Deepening — CRITICAL
+
+### 74.1 HIGH — Support email admin-configurable
+
+**Ref:** Owner instruction: "NO HARDCODED data." Triple-audit finding: support email hardcoded in `src/constants/support.ts`.
+
+**Files:** `src/constants/support.ts`, `src/lib/utils/effective-plan-config.ts` or new utility, admin settings
+
+**What to do:**
+
+1. Add `admin.supportEmail` to AppSetting.
+2. Create or extend resolver to read from AppSetting with fallback to constant.
+3. Wire admin settings UI to edit support email.
+4. Replace hardcoded usage with resolver in all consuming files.
+
+**Acceptance criteria:**
+
+- [ ] Support email admin-configurable
+- [ ] Fallback to constant when no override
+- [ ] Build passes
+
+---
+
+### 74.2 MEDIUM — FAQ content admin-configurable
+
+**Ref:** Owner instruction: "NO HARDCODED data." FAQ questions/answers are hardcoded in `src/constants/faqs.tsx`.
+
+**Files:** `src/constants/faqs.tsx`, admin settings
+
+**What to do:**
+
+1. Add `admin.faqOverrides` to AppSetting.
+2. Create `getEffectiveFaqConfig()` that merges admin overrides with defaults.
+3. Wire admin settings UI to edit FAQ questions and answers.
+4. Audit trail for FAQ changes.
+
+**Acceptance criteria:**
+
+- [ ] FAQ content admin-editable
+- [ ] Fallback to defaults
+- [ ] Build passes
+
+---
+
+### 74.3 LOW — Content layer admin-configurability assessment
+
+**Ref:** Triple-audit identified remaining hardcoded content: hero copy, landing page cards, about page narrative, navigation labels, footer links, stop reason messages.
+
+**Files:** Assessment only — no code changes.
+
+**What to do:**
+
+1. Assess each content area: can it use the existing `PublicPage` model or does it need AppSetting?
+2. Identify which content areas provide the highest admin value.
+3. Propose a phased approach for remaining content configurability.
+
+**Acceptance criteria:**
+
+- [ ] Written assessment with recommendation per content area
+- [ ] PM-approved priority for each area
+
+---
+
+## Phase 75: `/faqs` Documentation Cleanup — LOW
+
+### 75.1 LOW — Remove stale `/faqs` references from docs and tests
+
+**Ref:** PM audit #35 — `/faqs` route removed. References remain in E2E tests.
+
+**Files:** `tests/e2e/auth-boundaries.spec.ts`, `tests/e2e/public-pages.spec.ts`
+
+**What to do:**
+
+1. Remove or update `/faqs` navigation test in `auth-boundaries.spec.ts`.
+2. Remove or update `/faqs` assertions in `public-pages.spec.ts`.
+3. Verify no other stale `/faqs` references in test files.
+
+**Acceptance criteria:**
+
+- [ ] Zero `/faqs` references in test assertions
+- [ ] E2E tests pass (for non-connectivity-related specs)
 
 ---
 
@@ -180,7 +321,7 @@
 
 ## Phase 29: App-Wide Modernization — ON HOLD
 
-> **ON HOLD until all HIGH-priority phases complete.**
+> **ON HOLD until all HIGH/CRITICAL-priority phases complete.**
 
 ### 29.1 Implement Zod schema validation across the app
 
@@ -197,5 +338,5 @@
 ---
 
 > **Completed phases** are archived in [`DONE.md`](DONE.md).
-> All phases through 67.3 complete (incl. 63.1–63.2, 61.1). All Milestones 0–22 COMPLETE.
+> All phases through 71.2 complete (incl. 63.1–63.2, 61.1, 68.1–68.4, 69.1, 70.1–70.2, 71.1–71.2). All Milestones 0–22 COMPLETE. Milestone 23 Block A COMPLETE.
 > Phase 10–12 superseded (see DONE.md for mapping).
