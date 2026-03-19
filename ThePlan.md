@@ -1,4 +1,4 @@
-﻿# Droplet - Completion Plan
+# Droplet - Completion Plan
 
 > Purpose: one execution document for finishing the SaaS without avoidable rework.
 >
@@ -36,27 +36,27 @@ The correct strategy is to freeze product rules, build one canonical policy laye
 
 The points below are verified from the current codebase.
 
-| Area                 | Verified Current State                                                                                                                                                                                                                                                                                                             | Impact                                                                               | Evidence                                                                                        |
-| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
-| Lite lifecycle       | Lite is permanent and free — no expiry, no trial                                                                                                                                                                                                                                                                                   | ✅ Matches product contract                                                          | `src/constants/plans.tsx`, `src/lib/database/models/user.model.tsx`                             |
-| Pricing              | Pro is 19, Premium is 39                                                                                                                                                                                                                                                                                                           | ✅ Matches requested pricing                                                         | `src/constants/plans.tsx`, admin settings propagation                                           |
-| Public usage access  | `/api/openai` requires auth                                                                                                                                                                                                                                                                                                        | ✅ Supports account-required chat direction                                          | `src/app/api/openai/route.tsx`                                                                  |
-| Route boundaries     | Clean `/app(.*)` and `/admin(.*)` namespaces, orphan directories removed                                                                                                                                                                                                                                                           | ✅ Product and auth boundaries are clean                                             | `src/proxy.tsx`, `src/app/**`                                                                   |
-| Admin scope          | Full admin control plane: users, transactions, usage, settings, website                                                                                                                                                                                                                                                            | ✅ Requested admin capabilities delivered                                            | `src/app/(admin)/admin/**`                                                                      |
-| Entitlements         | 6 personas with three-tier gating (full/limited/blocked), trial access system, admin overrides                                                                                                                                                                                                                                     | ✅ Matches product contract                                                          | `src/lib/utils/resolve-entitlements.tsx`, `src/constants/assistant-personas.tsx`                |
-| Model routing        | Central AI policy via `resolveModelPolicy()` — plan-aware, feature-aware, task-class-aware                                                                                                                                                                                                                                         | ✅ No hardcoded model routing                                                        | `src/lib/utils/a`a``ai-model-policy.ts````                                                      |
-| Conversation storage | `Task` stores message history in one document with `estimatedBytes` guardrails                                                                                                                                                                                                                                                     | ⚠️ Operational — guardrails active, but single-document growth remains a future risk | `src/lib/database/models/tasks.model.tsx`                                                       |
-| Usage accounting     | `UsageEvent` model logs every AI request; durable counters for daily/monthly limits; atomic enforcement                                                                                                                                                                                                                            | ✅ Admin analytics, cost governance, and quota enforcement operational               | `src/lib/database/models/usage-event.model.tsx`, `src/app/api/openai/route.tsx`                 |
-| Rate limiting        | MongoDB-backed rate limiting (durable, multi-instance safe)                                                                                                                                                                                                                                                                        | ✅ Survives restarts and multiple instances                                          | Rate limit implementation                                                                       |
-| Billing mode         | Stripe recurring subscriptions with webhook processing and server-side price re-verification                                                                                                                                                                                                                                       | ✅ SaaS billing semantics frozen and operational                                     | `SPEC.md`, Stripe webhook code, `checkoutPlan()`                                                |
-| Streaming            | Streaming chat implemented and stable                                                                                                                                                                                                                                                                                              | ✅ Chat UX target delivered                                                          | `src/app/api/openai/route.tsx`, chat components                                                 |
-| Video generation     | Video generation fully operational via Sora API (`sora-2`/`sora-2-pro`), S3 storage, plan-gated limits, Sora output controls (seconds/size), VideoPlayer component with playsInline, library integration. Phase 34.9 quality fixes COMPLETE. Phase 51.1 prompt fix COMPLETE (media-tool awareness added to persona system prompts) | ✅ Video implemented and operational for all plans                                   | `src/lib/utils/generateVideo.tsx`, `src/components/chat/video-player.tsx`, `ai-model-policy.ts` |
-| Public pages         | All required public routes complete: `/`, `/about`, `/plans`, `/faqs`, `/personas`, `/privacy`, `/cookies`, `/terms`                                                                                                                                                                                                               | ✅ Public surface complete                                                           | `src/app/(public)/**`                                                                           |
-| FAQ copy             | FAQ content aligned with current product rules (no trial references)                                                                                                                                                                                                                                                               | ✅ Product messaging consistent                                                      | `src/constants/faqs.tsx`                                                                        |
-| Theme control        | Admin settings include theme management                                                                                                                                                                                                                                                                                            | ✅ Settings control operational                                                      | Admin settings panel                                                                            |
-| Tiptap               | Not installed (admin content editing uses form controls)                                                                                                                                                                                                                                                                           | Deferred — admin forms use proper controls without rich-text editor                  | `package.json`                                                                                  |
-| Admin UX safety      | Confirmation dialogs on all destructive admin actions, AlertMessage feedback on all 14 admin forms, loading indicators, bulk actions on users/transactions/website tables                                                                                                                                                          | ✅ Admin UX safety directives fully implemented                                      | Admin pages, AdminActionButton, AlertMessage integration                                        |
-| Color palette        | Brand palette v2 delivered: nightIndigo (#1B003F), twilightPurple (#4B0082), midnightBlue (#191970), lavenderHaze (#E6E6FA), dustyBlue (#6495ED). All M21 legacy tokens (lightBackground, darkBackground, lightText, darkText, grass, navy, lemon) removed. Clerk appearance updated.                                              | ✅ Brand identity v2 finalized and fully propagated                                  | Phase 64, `src/app/globals.css`, 58+ migrated files                                             |
+| Area                 | Verified Current State                                                                                                                                                                                                                                                                                                                                   | Impact                                                                               | Evidence                                                                                        |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
+| Lite lifecycle       | Lite is permanent and free — no expiry, no trial                                                                                                                                                                                                                                                                                                         | ✅ Matches product contract                                                          | `src/constants/plans.tsx`, `src/lib/database/models/user.model.tsx`                             |
+| Pricing              | Pro is 19, Premium is 39                                                                                                                                                                                                                                                                                                                                 | ✅ Matches requested pricing                                                         | `src/constants/plans.tsx`, admin settings propagation                                           |
+| Public usage access  | `/api/openai` requires auth                                                                                                                                                                                                                                                                                                                              | ✅ Supports account-required chat direction                                          | `src/app/api/openai/route.tsx`                                                                  |
+| Route boundaries     | Clean `/app(.*)` and `/admin(.*)` namespaces, orphan directories removed                                                                                                                                                                                                                                                                                 | ✅ Product and auth boundaries are clean                                             | `src/proxy.tsx`, `src/app/**`                                                                   |
+| Admin scope          | Full admin control plane: users, transactions, usage, settings, website                                                                                                                                                                                                                                                                                  | ✅ Requested admin capabilities delivered                                            | `src/app/(admin)/admin/**`                                                                      |
+| Entitlements         | 6 personas with three-tier gating (full/limited/blocked), trial access system, admin overrides                                                                                                                                                                                                                                                           | ✅ Matches product contract                                                          | `src/lib/utils/resolve-entitlements.tsx`, `src/constants/assistant-personas.tsx`                |
+| Model routing        | Central AI policy via `resolveModelPolicy()` — plan-aware, feature-aware, task-class-aware                                                                                                                                                                                                                                                               | ✅ No hardcoded model routing                                                        | `src/lib/utils/a`a``ai-model-policy.ts````                                                      |
+| Conversation storage | `Task` stores message history in one document with `estimatedBytes` guardrails                                                                                                                                                                                                                                                                           | ⚠️ Operational — guardrails active, but single-document growth remains a future risk | `src/lib/database/models/tasks.model.tsx`                                                       |
+| Usage accounting     | `UsageEvent` model logs every AI request; durable counters for daily/monthly limits; atomic enforcement                                                                                                                                                                                                                                                  | ✅ Admin analytics, cost governance, and quota enforcement operational               | `src/lib/database/models/usage-event.model.tsx`, `src/app/api/openai/route.tsx`                 |
+| Rate limiting        | MongoDB-backed rate limiting (durable, multi-instance safe)                                                                                                                                                                                                                                                                                              | ✅ Survives restarts and multiple instances                                          | Rate limit implementation                                                                       |
+| Billing mode         | Stripe recurring subscriptions with webhook processing and server-side price re-verification                                                                                                                                                                                                                                                             | ✅ SaaS billing semantics frozen and operational                                     | `SPEC.md`, Stripe webhook code, `checkoutPlan()`                                                |
+| Streaming            | Streaming chat implemented and stable                                                                                                                                                                                                                                                                                                                    | ✅ Chat UX target delivered                                                          | `src/app/api/openai/route.tsx`, chat components                                                 |
+| Video generation     | Video generation fully operational via Sora API (`sora-2`/`sora-2-pro`), S3 storage, plan-gated limits, Sora output controls (seconds/size), VideoPlayer component with playsInline, library integration. Phase 34.9 quality fixes COMPLETE. Phase 51.1 prompt fix COMPLETE (media-tool awareness added to persona system prompts)                       | ✅ Video implemented and operational for all plans                                   | `src/lib/utils/generateVideo.tsx`, `src/components/chat/video-player.tsx`, `ai-model-policy.ts` |
+| Public pages         | All required public routes complete: `/`, `/about`, `/plans`, `/faqs`, `/personas`, `/privacy`, `/cookies`, `/terms`                                                                                                                                                                                                                                     | ✅ Public surface complete                                                           | `src/app/(public)/**`                                                                           |
+| FAQ copy             | FAQ content aligned with current product rules (no trial references)                                                                                                                                                                                                                                                                                     | ✅ Product messaging consistent                                                      | `src/constants/faqs.tsx`                                                                        |
+| Theme control        | Admin settings include theme management. **Light Theme:** Text (Primary) = Midnight Blue (#191970), BG (Secondary) = Lavender Haze (#E6E6FA). **Dark Theme:** Text (Primary) = Lavender Haze (#E6E6FA), BG (Secondary) = Night Indigo (#1B003F). **Button accent = Lime Green (#B8F60D) in both themes.** See Milestone 22 for button style definitions. | ✅ Settings control operational + theme definitions updated                          | Admin settings panel                                                                            |
+| Tiptap               | Not installed (admin content editing uses form controls)                                                                                                                                                                                                                                                                                                 | Deferred — admin forms use proper controls without rich-text editor                  | `package.json`                                                                                  |
+| Admin UX safety      | Confirmation dialogs on all destructive admin actions, AlertMessage feedback on all 14 admin forms, loading indicators, bulk actions on users/transactions/website tables                                                                                                                                                                                | ✅ Admin UX safety directives fully implemented                                      | Admin pages, AdminActionButton, AlertMessage integration                                        |
+| Color palette        | Brand palette v2 delivered: nightIndigo (#1B003F), twilightPurple (#4B0082), midnightBlue (#191970), lavenderHaze (#E6E6FA), dustyBlue (#6495ED), **limeGreen (#B8F60D, NEW accent color)**. All M21 legacy tokens (lightBackground, darkBackground, lightText, darkText, grass, navy, lemon) removed. Clerk appearance updated.                         | ✅ Brand identity v2 + Lime Green accent                                             | Phase 64, `src/app/globals.css`, 58+ migrated files                                             |
 
 ### Practical conclusions
 
@@ -982,7 +982,7 @@ npm run build
 
 ## 9. Immediate Execution Order
 
-Milestones 0–22 are SUBSTANTIALLY COMPLETE. Phase 64 (brand palette v2) delivered. Remaining work: Phases 61.1–61.3 and 31.4.
+Milestones 0–22 are COMPLETE. All Phases 1–67.3 (incl. 63.1–63.2, 61.1) delivered. Only LOW-priority and ON HOLD items remain.
 
 **Completed (Milestones 0–21):**
 
@@ -999,38 +999,64 @@ Milestones 0–22 are SUBSTANTIALLY COMPLETE. Phase 64 (brand palette v2) delive
 11. ✅ Admin UX safety, bulk actions, design token standardization.
 12. ✅ Brand palette v2 migration (Phase 64), client self-delete cascade (Phase 63.1), admin limits safeguard (Phase 63.2).
 
-**Completed in Milestone 22:**
+**Completed in Milestone 22 (all verified 2026-03-18, PM audit #32):**
 
 1. ✅ Fix client self-delete Clerk orphaning (Phase 63.1) — DONE.
 2. ✅ Admin limits UI safeguard for -1 unlimited values (Phase 63.2) — DONE.
-3. ✅ Brand palette v2 migration (Phase 64.1–64.7) — DONE. New tokens: nightIndigo, twilightPurple, midnightBlue, lavenderHaze, dustyBlue. All M21 legacy tokens removed. Clerk appearance updated.
+3. ✅ Brand palette v2 migration (Phase 64.1–64.7) — DONE.
+4. ✅ Split media_limit_reached into type-specific stop reasons (Phase 65.1) — DONE. TD-MEDIA-01 RESOLVED.
+5. ✅ UsageEvent cascade on all deletion paths (Phase 65.2) — DONE. TD-DATA-01 RESOLVED.
+6. ✅ Admin deletion order fix (Phase 65.3) — DONE. TD-DATA-02 RESOLVED.
+7. ✅ Shared STOP_REASON_MESSAGES constant (Phase 65.4) — DONE.
+8. ✅ Profile usage display section (Phase 66.1) — DONE.
+9. ✅ Video limit editable in admin (Phase 66.2) — DONE.
+10. ✅ Admin users table usage columns (Phase 66.3) — DONE.
+11. ✅ PlanPromo refactored to props (Phase 67.1) — DONE.
+12. ✅ admin-queries.ts server-only guard (Phase 67.2) — DONE.
+13. ✅ JSON data outsourced to src/json/ (Phase 67.3) — DONE.
+14. ✅ Confirmation modal replacing window.confirm (Phase 61.1) — DONE. TD-UX-05 RESOLVED.
 
-**Remaining in Milestone 22:**
+### Owner Directives (March 2026) — Status
 
-4. Proper confirmation modal replacing window.confirm (Phase 61.1) — MEDIUM.
-5. JSON data outsourcing to dedicated folder (Phase 61.2) — MEDIUM.
-6. Admin users table usage/limits columns (Phase 61.3) — MEDIUM.
-7. Phase 31.4 — E2E test updates (LOW).
+| #   | Directive                                                    | Priority | Status                                                                                                                                                                                                          |
+| --- | ------------------------------------------------------------ | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | NO HARDCODED data — everything configurable from ADMIN panel | CRITICAL | ✅ Delivered. Prices, limits, models, currency, persona access, theme all admin-configurable. Remaining gap (v2): persona content (taglines, descriptions, system prompts) not admin-editable — only access is. |
+| 2   | Components must be data consumers                            | CRITICAL | ✅ Delivered. PlanPromo refactored (67.1). All client components receive props from Server Components.                                                                                                          |
+| 3   | Reduce unnecessary renders and resource leaks                | CRITICAL | ✅ Delivered. All useEffect cleanups verified. autoAnimate leak fixed (49.1). Zero resource leaks detected.                                                                                                     |
+| 4   | Utilities and data fetching on server side                   | CRITICAL | ✅ Delivered. 5+ files have `import "server-only"`. All query helpers server-side.                                                                                                                              |
+| 5   | User removal cascades Clerk + DB + all data                  | CRITICAL | ✅ Delivered. All 3 paths cascade fully (65.2 + 65.3).                                                                                                                                                          |
+| 6   | PREMIUM user media limitation error                          | CRITICAL | ✅ RESOLVED. Type-specific stop reasons (65.1).                                                                                                                                                                 |
+| 7   | Profile page displays plan limitations and usage             | HIGH     | ✅ Delivered. ProfileUsage component (66.1).                                                                                                                                                                    |
+| 8   | Admin plans/settings fully configurable                      | HIGH     | ✅ Mostly delivered. Video limit editable (66.2). Remaining gap (v2): persona content.                                                                                                                          |
+| 9   | Admin panel design matches /app design                       | HIGH     | ✅ Delivered. Both use brand palette v2. Consistent design tokens.                                                                                                                                              |
+| 10  | Admin users table shows usage/limits info                    | MEDIUM   | ✅ Delivered. Usage columns (66.3).                                                                                                                                                                             |
+| 11  | JSON data outsourced to json folder                          | MEDIUM   | ✅ Delivered. `src/json/` with 4 files (67.3).                                                                                                                                                                  |
 
-**Owner-Directed New Requirements (added 2026-03-18):**
+**Owner Directive Updates (March 2026 — Palette & Button Styles):**
 
-8. **CRITICAL** — PREMIUM user media limitations error — needs investigation and fix.
-9. **HIGH** — Client profile page must display plan limitations and current usage.
-10. **HIGH** — Admin panel: Plans, pricing, settings fully configurable — NO hardcoded references in any non-admin code.
-11. **HIGH** — Admin panel layout must respect same design system as /app.
-12. **MEDIUM** — Admin users table must show usage/limits info inline.
-13. **MEDIUM** — JSON data must be outsourced to dedicated json folder.
+| #   | Directive                                                                    | Priority | Status                                                                                                                                                                 |
+| --- | ---------------------------------------------------------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 12  | Brand color palette: add Lime Green (#B8F60D) as NEW accent                  | HIGH     | PENDING IMPLEMENTATION. Added to ThePlan.md palette table, theme spec, and button styles. Tailwind config + component migration required.                              |
+| 13  | Button styles: `.btn-text`, `.btn-outlined`, `.btn-contained` use Lime Green | HIGH     | PENDING IMPLEMENTATION. Full spec in Milestone 22 Theme Specification. Replaces Twilight Purple / Dusty Blue for button styling.                                       |
+| 14  | Theme definitions: Text (Primary) / BG (Secondary) naming                    | HIGH     | PENDING IMPLEMENTATION. Light: Text = Midnight Blue, BG = Lavender Haze. Dark: Text = Lavender Haze, BG = Night Indigo. Updated in ThePlan.md.                         |
+| 15  | Admin panel layout — owner reports still old design                          | HIGH     | NEEDS RE-AUDIT. Previous M17/M19 work marked complete. Owner feedback indicates admin panel still does not match /app design. Requires fresh audit and alignment pass. |
+| 16  | Admin /admin/users — show remained vs included limits                        | HIGH     | NEEDS VERIFICATION. Phase 66.3 delivered usage columns. Owner wants explicit remained/included display on both table and single user page.                             |
 
 **Owner Components (added 2026-03-18):**
 
 - `DropletGlobe` component added by Owner at `src/components/shared/droplet-globe.tsx` — currently used on `/about` page.
 - `ToggleTheme` component refactored by Owner at `src/components/shared/toggle-theme.tsx`.
 
+**Remaining work (LOW priority):**
+
+1. Phase 31.4 — E2E test updates (LOW).
+2. Phase 46.1 — Admin error boundary (LOW).
+3. Phase 46.2 — Silent catch logging (LOW).
+
 **Remaining deferred work (ON HOLD):**
 
-14. Phase 46.1–46.2 — Admin error boundary + silent catch logging (LOW).
-15. Phase 29.x — Zod/Zustand app-wide modernization (ON HOLD).
-16. Phase 26.x — Persona-aware media prompts, Stripe auto-renewal (ON HOLD).
+4. Phase 29.x — Zod/Zustand app-wide modernization (ON HOLD).
+5. Phase 26.x — Persona-aware media prompts, Stripe auto-renewal (ON HOLD).
 
 ---
 
@@ -1472,18 +1498,34 @@ Milestone 21 replaced the old palettes with Navy (#0D3B66), Lemon (#FAF0CA), Gra
 
 **New Brand Color Palette:**
 
-| Token Name      | Hex       | Role                                               |
-| --------------- | --------- | -------------------------------------------------- |
-| Night Indigo    | `#1B003F` | Dark theme background                              |
-| Twilight Purple | `#4B0082` | Light theme accent (buttons, interactive elements) |
-| Midnight Blue   | `#191970` | Light theme text                                   |
-| Lavender Haze   | `#E6E6FA` | Light theme background, dark theme text            |
-| Dusty Blue      | `#6495ED` | Dark theme accent (buttons, interactive elements)  |
+| Token Name      | Hex       | Role                                                |
+| --------------- | --------- | --------------------------------------------------- |
+| Night Indigo    | `#1B003F` | Dark theme background                               |
+| Twilight Purple | `#4B0082` | Light theme accent (buttons, interactive elements)  |
+| Midnight Blue   | `#191970` | Light theme text                                    |
+| Lavender Haze   | `#E6E6FA` | Light theme background, dark theme text             |
+| Dusty Blue      | `#6495ED` | Dark theme accent (buttons, interactive elements)   |
+| **Lime Green**  | `#B8F60D` | **NEW accent color** (buttons, CTAs) in both themes |
 
 **Theme Specification:**
 
-- **Light Theme:** Text = Midnight Blue (#191970), Background = Lavender Haze (#E6E6FA), Buttons = bg Twilight Purple (#4B0082) / text Lavender Haze (#E6E6FA)
-- **Dark Theme:** Text = Lavender Haze (#E6E6FA), Background = Night Indigo (#1B003F), Buttons = bg Dusty Blue (#6495ED) / text Lavender Haze (#E6E6FA)
+- **Light Theme:** Text (Primary) = Midnight Blue (#191970), Background (Secondary) = Lavender Haze (#E6E6FA)
+- **Dark Theme:** Text (Primary) = Lavender Haze (#E6E6FA), Background (Secondary) = Night Indigo (#1B003F)
+
+**Button Style Definitions (applies to BOTH dark and light themes):**
+
+| Class            | Property   | Default State       | Hover State         |
+| ---------------- | ---------- | ------------------- | ------------------- |
+| `.btn-text`      | Color      | Lime Green (500)    | Lime Green (500)    |
+| `.btn-outlined`  | Text       | Lime Green (500)    | Lime Green (800)    |
+| `.btn-outlined`  | Border     | Lime Green (500)    | Lime Green (800)    |
+| `.btn-outlined`  | Background | Transparent         | Transparent         |
+| `.btn-contained` | Text       | Lavender Haze (500) | Lavender Haze (800) |
+| `.btn-contained` | Border     | Lime Green (500)    | Lime Green (800)    |
+| `.btn-contained` | Background | Lime Green (500)    | Lime Green (800)    |
+| `.icon-btn`      | ---        | Unchanged           | Unchanged           |
+
+> **Note:** Lime Green (#B8F60D) is the NEW accent color used for button interactions across both themes. Previous accent colors (Twilight Purple for light, Dusty Blue for dark) are superseded for button styling by Lime Green.
 
 **Migration Mapping (M21 tokens -> M22 tokens):**
 

@@ -5,316 +5,126 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: Milestone 22 substantially COMPLETE. Phases 1–64.7, 63.1–63.2 complete. 369 unit tests passing (65+ suites). Build passing.**
-> **PM deep audit #31 (2026-03-18): Triple-audit (PM + Architect + Engineer). 2 CRITICAL bugs found. Owner directives integrated.**
-> **Priority order: 65.1 → 65.2 → 65.3 → 65.4 → 66.1 → 66.2 → 66.3 → 67.1 → 67.2 → 67.3 → 61.1 → 61.2 → 61.3 → 31.4 → 46.x → 29.x → 26.x**
-> **CRITICAL bugs (Phase 65) MUST be resolved before any other work. All Phase 26+ deferred work is ON HOLD until PM-approved.**
+> **STATUS: Milestone 22 COMPLETE. All Phases 1–67.3, 63.1–63.2, 61.1 complete. 369 unit tests passing (65+ suites). Build passing.**
+> **PM deep audit #33 (2026-03-19): Triple-audit (PM + Architect + Engineer). New owner directives: Lime Green accent color, button restyle, Premium video error UX fix. 6 owner items verified DONE (archived).**
+> **Priority order: 69.1 → 68.1 → 68.2 → 68.3 → 70.1 → 31.4 → 46.x → 29.x → 26.x**
+> **CRITICAL: Phase 69 (Premium error UX). HIGH: Phase 68 (Lime Green palette + button restyle). MEDIUM: Phase 70 (Admin layout alignment).**
 
 ---
 
-## ~~Phase 64: Brand Color Palette v2 Migration~~ — ✅ DONE (Archived to DONE.md)
+## Phase 69: Premium Video Error UX Fix — CRITICAL
 
-**Completed 2026-03-18.** All 7 sub-tasks (64.1–64.7) delivered. ~60 files, ~538 references migrated. Brand palette v2 operational.
+### 69.1 CRITICAL — Fix media-specific limit end action + improve stop messages
 
----
+**Ref:** PM audit #33 — Owner reported: "PREMIUM user has media limitations - gets error message about that - why?" Root cause: `getPlanBoundEndAction()` returns `"contact_support"` for Premium (unlimited conversations → contact_support). Premium users hitting video cap (10/month) see generic "video generation limit" + "Contact support" — confusing for $39/month user.
 
-## ~~Phase 63: Critical Bug Fixes~~ — ✅ DONE (Archived to DONE.md)
-
-**Completed 2026-03-17.** 63.1 (Client self-delete Clerk cascade) + 63.2 (Admin limits UI safeguard) delivered.
-
----
-
-## Phase 65: CRITICAL Bug Fixes — CRITICAL (PM Audit #31, Triple-Audit Confirmed)
-
-> **CRITICAL priority. Triple-audit (PM + Architect + Engineer) all confirmed these bugs independently.**
-> **MUST be resolved before any other work. Premium users are affected.**
-
----
-
-### 65.1 CRITICAL — Split `media_limit_reached` into type-specific stop reasons (image/audio/video)
-
-**Ref:** PM audit #31. Owner report: "PREMIUM user has media limitations — gets error message about that — why?" Root cause: Premium has unlimited images + audio, but video is capped at 10/month. When video limit is hit, the error says "You've reached your media generation limit" (generic) — Premium user thinks ALL media is limited.
-
-**Files:** `src/types/TaskData.d.tsx`, `src/lib/database/models/tasks.model.tsx`, `src/lib/actions/task.actions.tsx`, `src/lib/utils/openai/generateResponse.tsx`, `src/app/api/openai/route.tsx`, `src/components/chat/chat-body.tsx`, `tests/unit/conversation-stop.test.ts`, `tests/unit/chat-body.test.tsx`
+**Files:** `src/app/api/openai/route.tsx`, `src/constants/stop-reasons.ts`
 
 **What to do:**
 
-1. Add three new `TaskEndedReason` variants: `"image_limit_reached"`, `"audio_limit_reached"`, `"video_limit_reached"` alongside existing `"media_limit_reached"` (keep for backward compat with existing DB records).
-2. Add three new `BlockedReason` variants in `generateResponse.tsx`: `"image_limit_reached"`, `"audio_limit_reached"`, `"video_limit_reached"`.
-3. Update `generateResponse.tsx` blocked handlers to return type-specific `blockedReason` instead of generic `"media_limit_reached"`.
-4. Update `STOP_REASON_MESSAGES` in `route.tsx` with type-specific messages:
-   - `image_limit_reached: "You've reached your image generation limit for this billing period."`
-   - `audio_limit_reached: "You've reached your audio generation limit for this billing period."`
-   - `video_limit_reached: "You've reached your video generation limit for this billing period."`
-5. Update `stopReasonTitles` in `chat-body.tsx` with matching messages.
-6. Update `finalizeAIResponse()` in route to map type-specific blocked reasons.
-7. Update Mongoose `endedReason` enum to include new values.
-8. Update `VALID_STATUS_TRANSITIONS` in `task.actions.tsx`.
-9. Update unit tests for all three new stop reason types.
+1. In `route.tsx`, when a media-specific limit is hit (`image_limit_reached`, `audio_limit_reached`, `video_limit_reached`), the `endAction` should be `"start_new_conversation"` instead of using `getPlanBoundEndAction()`. The conversation should NOT end — only the media generation is blocked. User can still chat.
+2. Update `stop-reasons.ts` messages for media limits to be more informative. Include: "You can continue chatting. Start a new conversation to keep going."
+3. Verify that admin role still bypasses all limits (no regression from Phase 53.1).
 
 **Acceptance criteria:**
 
-- [ ] Premium user hitting video limit sees "video generation limit" not "media generation limit"
-- [ ] Each media type has its own specific stop reason and user-facing message
-- [ ] Existing `media_limit_reached` records in DB still render correctly (backward compat)
-- [ ] Unit tests cover all three new stop reason types
-- [ ] `npx tsc --noEmit` passes
-- [ ] `npm run test` passes
+- [ ] Premium user hitting video cap sees clear, non-alarming message
+- [ ] End action for media limits is `start_new_conversation`, not `contact_support`
+- [ ] Messages explain that other features are still available
+- [ ] Admin bypasses unchanged
+- [ ] Existing unit tests pass, new test for Premium video limit behavior
 
 ---
 
-### 65.2 CRITICAL — Add UsageEvent cascade to all user deletion paths
+## Phase 68: Brand Color Palette v3 — Lime Green Accent — HIGH
 
-**Ref:** PM audit #31. UsageEvent records orphaned forever when users are deleted. GDPR compliance risk — user data retained after deletion.
+### 68.1 HIGH — Add limeGreen palette scale to globals.css @theme
 
-**Files:** `src/lib/actions/user.actions.tsx`, `src/lib/actions/admin.actions.tsx`, `src/app/api/webhooks/clerk/route.tsx`
+**Ref:** PM audit #33 — Owner directive: Lime Green (#B8F60D) as new accent color. Must generate 10-step shade scale (100–1000) anchored at 500 = #B8F60D.
+
+**Files:** `src/app/globals.css`
 
 **What to do:**
 
-1. Add `UsageEvent.deleteMany({ userId: clerkId })` to user self-delete in `user.actions.tsx`.
-2. Add `UsageEvent.deleteMany({ userId: targetUser.clerkId })` to admin `removeUserByAdmin` in `admin.actions.tsx`.
-3. Add `UsageEvent.deleteMany({ userId: clerkId })` to Clerk webhook `user.deleted` handler.
-4. Optionally add `RateLimitEntry.deleteMany({ key: { $regex: clerkId } })` — lower priority since TTL auto-expires, but cleaner.
-5. Do NOT delete AdminAuditLog entries — audit trail must persist beyond user lifecycle.
+1. Add `--color-limeGreen-100` through `--color-limeGreen-1000` to the `@theme` block.
+2. Base hex for 500: `#B8F60D`. Generate lighter shades (100–400) and darker shades (600–1000).
+3. Do NOT remove any existing palette tokens (nightIndigo, twilightPurple, midnightBlue, lavenderHaze, dustyBlue) — they remain for non-button uses.
 
 **Acceptance criteria:**
 
-- [ ] All three deletion paths include `UsageEvent.deleteMany`
-- [ ] No orphaned UsageEvent records after user deletion
-- [ ] AdminAuditLog entries preserved (not deleted)
-- [ ] `npx tsc --noEmit` passes
-- [ ] Existing unit tests still pass
+- [ ] `limeGreen` palette (10 shades) exists in `@theme`
+- [ ] `bg-limeGreen-500`, `text-limeGreen-500`, etc. work in Tailwind classes
+- [ ] No existing palette tokens removed
+- [ ] Build passes
 
 ---
 
-### 65.3 HIGH — Fix admin removeUserByAdmin deletion order (race condition)
+### 68.2 HIGH — Restyle .btn-text, .btn-outlined, .btn-contained with Lime Green
 
-**Ref:** PM audit #31. `User.findByIdAndDelete` runs in parallel with `Task.deleteMany` and `Transaction.deleteMany`. If User deletes first but child cleanup fails, orphaned data remains with no way to retry.
+**Ref:** PM audit #33 — Owner directive: All button styles use Lime Green for BOTH dark and light themes. `.icon-btn` stays unchanged.
 
-**Files:** `src/lib/actions/admin.actions.tsx`
+**Files:** `src/app/globals.css`
 
 **What to do:**
 
-1. Change admin `removeUserByAdmin` to delete child data FIRST, then User document LAST.
-2. Match the pattern used in user self-delete (`user.actions.tsx`) — sequential, not parallel.
-3. Order: Clerk delete → Tasks delete → Transactions delete → UsageEvent delete → S3 cleanup → User delete.
+1. Update `.btn-text`: `text-limeGreen-500 hover:text-limeGreen-500` (both themes, same color). Remove separate light/dark variants.
+2. Update `.btn-outlined`: `text-limeGreen-500 border-limeGreen-500 hover:text-limeGreen-800 hover:border-limeGreen-800 bg-transparent hover:bg-transparent` (both themes). Remove separate light/dark variants.
+3. Update `.btn-contained`: `text-lavenderHaze-500 border-limeGreen-500 bg-limeGreen-500 hover:text-lavenderHaze-800 hover:border-limeGreen-800 hover:bg-limeGreen-800` (both themes). Remove shadow definitions that reference twilightPurple/dustyBlue hex.
+4. `.icon-btn` — DO NOT CHANGE.
 
 **Acceptance criteria:**
 
-- [ ] `User.findByIdAndDelete` runs AFTER child data cleanup
-- [ ] Failure in any child cleanup step prevents User deletion (returns error)
-- [ ] `npx tsc --noEmit` passes
+- [ ] `.btn-text` uses limeGreen-500 for both themes
+- [ ] `.btn-outlined` uses limeGreen-500/800 for both themes, transparent bg
+- [ ] `.btn-contained` uses limeGreen bg, lavenderHaze text for both themes
+- [ ] `.icon-btn` is identical to current version (unchanged)
+- [ ] No `dark:` prefix on button color properties (same for both themes)
+- [ ] Build passes, lint passes
 
 ---
 
-### 65.4 HIGH — Extract STOP_REASON_MESSAGES to shared constant
+### 68.3 HIGH — Update Clerk appearance and verify visual consistency
 
-**Ref:** PM audit #31. Stop reason messages are duplicated in `route.tsx` and `chat-body.tsx`. If one changes and the other doesn't, user sees inconsistent messages.
+**Ref:** PM audit #33 — Clerk appearance and any hardcoded color references must reflect new accent.
 
-**Files:** `src/constants/openai.tsx` (or new `src/constants/stop-reasons.ts`), `src/app/api/openai/route.tsx`, `src/components/chat/chat-body.tsx`
+**Files:** `src/app/layout.tsx` (Clerk provider), any file referencing `twilightPurple` or `dustyBlue` in button contexts
 
 **What to do:**
 
-1. Create a shared `STOP_REASON_MESSAGES` constant in `src/constants/`.
-2. Import and use in both `route.tsx` and `chat-body.tsx`.
-3. Remove the duplicated definitions.
+1. Check Clerk `appearance` config — if `colorPrimary` uses twilightPurple, consider updating to limeGreen or keeping twilightPurple for sign-in forms (PM decision: keep twilightPurple for Clerk — it's auth, not app buttons).
+2. Grep for any inline twilightPurple/dustyBlue references specifically in button contexts (not all uses — only button-related). These should now use limeGreen.
+3. Verify no visual regressions in both light and dark themes.
 
 **Acceptance criteria:**
 
-- [ ] Single source of truth for stop reason messages
-- [ ] Both route.tsx and chat-body.tsx import from shared constant
-- [ ] `npx tsc --noEmit` passes
+- [ ] No button-context references to twilightPurple/dustyBlue remain (structural/non-button uses OK)
+- [ ] Clerk appearance decision documented
+- [ ] Both themes visually consistent
+- [ ] Full validation gateway passes (prettier, lint, tsc, unit tests, build)
 
 ---
 
-## Phase 66: Profile & Admin Usability — HIGH (PM Audit #31, Owner-Directed)
+## Phase 70: Admin Panel Design Alignment — MEDIUM
 
-> **HIGH priority. Owner directives: "client profile page must display plan limitations and usage" and "admin/users table must provide usage and limits info."**
+### 70.1 MEDIUM — Align admin layout with /app design system
 
----
+**Ref:** PM audit #33 — Owner reports admin panel "still old design." Admin uses `AdminLayoutShell` with different background, header, and spacing vs `/app`'s `PageWrapper`.
 
-### 66.1 HIGH — Add usage display section to client profile page
-
-**Ref:** Owner directive. Profile page has `userData.plan` with `imageGenerations`, `audioGenerations`, `videoGenerations`, `usagePeriodStart` — but never displays them.
-
-**Files:** `src/app/(chat)/app/profile/page.tsx`, `src/components/sections/profile-hero.tsx` (or new `profile-usage.tsx`)
+**Files:** `src/components/admin/admin-layout-shell.tsx`, `src/app/(admin)/layout.tsx`
 
 **What to do:**
 
-1. Fetch effective plan limits server-side via `getEffectivePlanConfig()`.
-2. Compute usage data: images used/limit, audio used/limit, video used/limit, daily conversations used/limit.
-3. Display a "Usage" section (below profile info, above billing) showing:
-   - Current plan name + tier badge
-   - Media generation counters: `{used} / {limit}` with progress bars (or "Unlimited" for -1)
-   - Daily conversations: `{used} / {limit}` (fetch daily count from User model)
-   - Usage period start + reset date
-4. Data fetched server-side, passed as props. No client-side fetching.
+1. Align admin background gradient/colors with the body gradient from globals.css (currently admin hardcodes `bg-lavenderHaze-200 dark:bg-nightIndigo-1000`).
+2. Ensure admin header styling matches chat header visual weight (fonts, spacing, colors).
+3. Ensure admin sidebar styling matches chat sidebar visual patterns.
+4. Card backgrounds, border radius, and spacing should match `/app` patterns.
 
 **Acceptance criteria:**
 
-- [ ] Profile page shows image/audio/video usage counters with limits
-- [ ] Profile page shows daily conversation usage
-- [ ] "Unlimited" displayed for -1 limit values
-- [ ] All data from server-side, no useEffect fetching
-- [ ] `npx tsc --noEmit` passes
-
----
-
-### 66.2 HIGH — Make video generation limit editable in admin settings
-
-**Ref:** PM audit #31. Video limit uses `<input type="hidden">` — admin cannot change it.
-
-**Files:** `src/components/admin/settings/admin-limits-section.tsx`
-
-**What to do:**
-
-1. Replace `<input type="hidden" name="${fieldPrefix}Video" value={planLimits.video} />` with `<LimitInput label="Video Generations" name="${fieldPrefix}Video" defaultValue={planLimits.video} />`.
-2. Verify the form submission parses `${plan}Video` correctly in `admin.actions.tsx`.
-
-**Acceptance criteria:**
-
-- [ ] Video generation limits editable via admin UI for all plans
-- [ ] Existing LimitInput component reused (shows Unlimited badge for -1)
-- [ ] Form submission correctly saves video limit changes
-- [ ] `npx tsc --noEmit` passes
-
----
-
-### 66.3 MEDIUM — Add usage summary columns to admin users list table
-
-**Ref:** Owner directive: "In /admin/users table must provide information about usage and limits."
-
-**Files:** `src/app/(admin)/admin/users/page.tsx`, `src/components/admin/users/admin-users-table.tsx`, `src/lib/utils/admin-queries.ts`
-
-**What to do:**
-
-1. Extend admin users list query to include plan limits and basic usage data (images/audio/video used, conversations today).
-2. Add concise usage columns to the users table: "Plan" (already exists), "Media Used" (e.g., "3/50 img · 2/50 aud · 0/10 vid"), "Convos Today" (e.g., "3/50").
-3. Keep table concise — full detail available on user detail page click-through.
-4. Data fetched server-side, passed as props to table component.
-
-**Acceptance criteria:**
-
-- [ ] Users list table shows media usage summary per user
-- [ ] Users list table shows daily conversation count
-- [ ] Data fetched server-side, not client-side
-- [ ] Unlimited values shown as "∞"
-- [ ] `npx tsc --noEmit` passes
-
----
-
-## Phase 67: Admin Configurability & Hardcoded Data Removal — HIGH (PM Audit #31, Owner-Directed)
-
-> **HIGH priority. Owner directive: "NO HARDCODED data — everything MUST be fully configurable from the ADMIN panel."**
-
----
-
-### 67.1 HIGH — Refactor PlanPromo to accept data as props (remove independent fetch)
-
-**Ref:** PM audit #31. `PlanPromo` calls `auth()` + `getUserById()` independently despite being rendered inside pages that already have user data. Redundant DB query. Violates "components must be data consumers" rule.
-
-**Files:** `src/components/shared/plan-promo.tsx`, all parent pages that render `PlanPromo`
-
-**What to do:**
-
-1. Change `PlanPromo` from async Server Component that fetches its own data to a pure data-consuming component that receives `planName`, `role`, and `plan` data as props.
-2. Update all parent pages to pass the required props.
-3. Remove the independent `auth()` + `getUserById()` calls from PlanPromo.
-
-**Acceptance criteria:**
-
-- [ ] PlanPromo receives all data via props
-- [ ] Zero independent data fetching inside PlanPromo
-- [ ] All parent pages pass required props
-- [ ] `npx tsc --noEmit` passes
-
----
-
-### 67.2 MEDIUM — Add `"server-only"` import to admin-queries.ts
-
-**Ref:** PM audit #31. `admin-queries.ts` has no `"server-only"` guard — if accidentally imported from a client component, it would leak server-side DB logic.
-
-**Files:** `src/lib/utils/admin-queries.ts`
-
-**What to do:**
-
-1. Add `import "server-only";` as the first import in `admin-queries.ts`.
-
-**Acceptance criteria:**
-
-- [ ] `import "server-only"` present
-- [ ] `npx tsc --noEmit` passes
-
----
-
-### 67.3 MEDIUM — Outsource pure static JSON data to dedicated folder
-
-**Ref:** Owner directive: "JSON data inside app files/components must be outsourced to a folder named json or similar."
-
-**Files:** `src/constants/landing-data.ts`, `src/constants/cookies-data.ts`, `src/constants/privacy-data.ts`, `src/constants/terms-data.ts`
-
-**What to do:**
-
-1. Create `src/json/` directory.
-2. Move pure static data arrays from files that have NO dynamic logic:
-   - `landing-data.ts` → `src/json/landing.json` (featureCards, howItWorksSteps)
-   - `cookies-data.ts` → `src/json/cookies.json` (cookieCategories)
-   - `privacy-data.ts` → `src/json/privacy.json` (privacy sections)
-   - `terms-data.ts` → `src/json/terms.json` (terms sections — BUT `buildTermsSections` uses pricing interpolation, so only static parts)
-3. Keep builder functions that use dynamic config interpolation in `src/constants/` — they import from JSON + apply config.
-4. Update imports in consuming components.
-
-**Acceptance criteria:**
-
-- [ ] `src/json/` directory exists with static data files
-- [ ] Builder functions remain in `src/constants/` importing from json
-- [ ] No runtime logic in JSON files
-- [ ] `npx tsc --noEmit` passes
-
----
-
-## Phase 61: Admin Design Alignment & UX — MEDIUM (PM Audit #28, Owner Directives)
-
-> **MEDIUM priority. Run after Phase 65-67. Admin design must match /app design.**
-
----
-
-### 61.1 MEDIUM — Proper confirmation modal component (replace window.confirm bridge)
-
-**Ref:** AGENTS.md UX Safety Rules: "No window.confirm() in production UI." Currently 4 locations use window.confirm as temporary bridge.
-
-**Files:** `src/components/admin/admin-managed-form.tsx`, `src/components/chat/library-delete-button.tsx`, `src/components/chat/sidebar/chat-sidebar-nav-v2.tsx`, `src/components/sections/profile-hero-editor.tsx`
-
-**What to do:**
-
-1. Create a reusable `ConfirmationModal` component using the app's design system (not browser native dialog).
-2. Replace all 4 `window.confirm()` usages with the new modal.
-3. Modal must show title, description, confirm/cancel buttons with appropriate styling.
-
-**Acceptance criteria:**
-
-- [ ] Zero `window.confirm()` calls in src/
-- [ ] Reusable `ConfirmationModal` component created
-- [ ] All destructive actions use the modal
-- [ ] Modal accessible (keyboard, screen reader)
-- [ ] `npx tsc --noEmit` passes
-
----
-
-### 61.2 MEDIUM — Outsource remaining static data constants to JSON folder
-
-**Ref:** If Phase 67.3 is complete, evaluate if additional constants can be moved. If already sufficient, mark as N/A.
-
-**Acceptance criteria:**
-
-- [ ] All pure static data arrays live in `src/json/`
-- [ ] Builder functions that use dynamic config remain in `src/constants/`
-
----
-
-### 61.3 MEDIUM — Admin user detail usage columns in users list table
-
-**Ref:** Superseded by Phase 66.3. If 66.3 is complete, mark this as N/A.
+- [ ] Admin panel visually matches `/app` design system (colors, fonts, spacing)
+- [ ] No functional regression in admin features
+- [ ] Both light and dark themes consistent
+- [ ] Build passes
 
 ---
 
@@ -387,5 +197,5 @@
 ---
 
 > **Completed phases** are archived in [`DONE.md`](DONE.md).
-> All phases through 64.7 complete. All Milestones 0–21 COMPLETED. Milestone 22 substantially complete.
+> All phases through 67.3 complete (incl. 63.1–63.2, 61.1). All Milestones 0–22 COMPLETE.
 > Phase 10–12 superseded (see DONE.md for mapping).

@@ -23,7 +23,7 @@ export default function ToggleTheme() {
         aria-checked={darkActive}
         aria-label="Toggle theme mode"
         onClick={handleToggleTheme}
-        className="ToggleTheme relative inline-flex h-9 w-17 items-center rounded-full bg-lavenderHaze-100/90 p-1 text-midnightBlue-600 transition-all duration-300 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-dustyBlue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-lavenderHaze-500 motion-reduce:transition-none dark:bg-nightIndigo-500 dark:text-lavenderHaze-500 dark:focus-visible:ring-dustyBlue-400 dark:focus-visible:ring-offset-nightIndigo-1000"
+        className="ToggleTheme relative inline-flex h-9 w-17 items-center rounded-full bg-lavenderHaze-100/90 p-1 text-midnightBlue-600 transition-all duration-300 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-limeGreen-500 focus-visible:ring-offset-2 focus-visible:ring-offset-lavenderHaze-500 motion-reduce:transition-none dark:bg-nightIndigo-500 dark:text-lavenderHaze-500 dark:focus-visible:ring-limeGreen-500 dark:focus-visible:ring-offset-nightIndigo-1000"
       >
         <span className="sr-only">{tooltipTitle}</span>
 
@@ -59,8 +59,8 @@ export default function ToggleTheme() {
           aria-hidden="true"
           className={`pointer-events-none absolute left-1 top-1 size-7 rounded-full shadow-[0_2px_8px_rgba(11,0,26,0.25)] transition-transform duration-300 ease-in-out motion-reduce:transition-none ${
             darkActive
-              ? "translate-x-8.5 bg-dustyBlue-600"
-              : "translate-x-0 bg-twilightPurple-600"
+              ? "translate-x-8.5 bg-limeGreen-600"
+              : "translate-x-0 bg-limeGreen-600"
           }`}
         >
           <span className="grid size-full place-items-center text-lavenderHaze-100">

@@ -222,6 +222,21 @@ export default function ChatWrapper({
     setIsLoading(false);
   }
 
+  function handleNonTerminalConversationStop(responseData: ChatApiResponse) {
+    syncMessagesWithResponse({
+      taskData: responseData.taskData,
+      acceptedPrompt: responseData.acceptedPrompt,
+    });
+    setTaskStatus("active");
+    setEndState(null);
+
+    if (responseData.taskId) {
+      setTaskId(responseData.taskId);
+    }
+
+    setIsLoading(false);
+  }
+
   function syncStreamingMessage(snapshot: string) {
     const streamingTaskData: Message = {
       whois: "assistant",
@@ -292,7 +307,11 @@ export default function ChatWrapper({
       finalEventReceived = true;
 
       if (event.payload.stopReason && event.payload.endAction) {
-        handleConversationStop(event.payload);
+        if (event.payload.taskStatus === "active") {
+          handleNonTerminalConversationStop(event.payload);
+        } else {
+          handleConversationStop(event.payload);
+        }
         return;
       }
 
@@ -389,7 +408,11 @@ export default function ChatWrapper({
         .catch(() => null)) as ChatApiResponse | null;
 
       if (responseData?.stopReason && responseData?.endAction) {
-        handleConversationStop(responseData);
+        if (responseData.taskStatus === "active") {
+          handleNonTerminalConversationStop(responseData);
+        } else {
+          handleConversationStop(responseData);
+        }
         return;
       }
 
