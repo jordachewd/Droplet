@@ -5,125 +5,110 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: Milestone 22 COMPLETE. All Phases 1–67.3, 63.1–63.2, 61.1 complete. 369 unit tests passing (65+ suites). Build passing.**
-> **PM deep audit #33 (2026-03-19): Triple-audit (PM + Architect + Engineer). New owner directives: Lime Green accent color, button restyle, Premium video error UX fix. 6 owner items verified DONE (archived).**
-> **Priority order: 69.1 → 68.1 → 68.2 → 68.3 → 70.1 → 31.4 → 46.x → 29.x → 26.x**
-> **CRITICAL: Phase 69 (Premium error UX). HIGH: Phase 68 (Lime Green palette + button restyle). MEDIUM: Phase 70 (Admin layout alignment).**
+> **STATUS: Milestone 22 COMPLETE. All Phases 1–70.1 complete (incl. 63.1–63.2, 61.1). 374 unit tests (65 suites). Build passing.**
+> **PM deep audit #34 (2026-03-19): Triple-audit (PM + Architect + Engineer). Owner button color corrections. Phases 69.1, 68.1–68.3, 70.1 archived.**
+> **Priority order: 68.4 → 71.1 → 71.2 → 70.2 → 31.4 → 46.x → 29.x → 26.x**
+> **HIGH: Phase 68.4 (button text correction). HIGH: Phase 71 (admin persona configurability). HIGH: Phase 70.2 (admin design polish). LOW: remaining.**
 
 ---
 
-## Phase 69: Premium Video Error UX Fix — CRITICAL
+## Phase 68.4: Button Text Color Correction — HIGH
 
-### 69.1 CRITICAL — Fix media-specific limit end action + improve stop messages
+### 68.4 HIGH — Fix `.btn-text` hover and `.btn-contained` text color
 
-**Ref:** PM audit #33 — Owner reported: "PREMIUM user has media limitations - gets error message about that - why?" Root cause: `getPlanBoundEndAction()` returns `"contact_support"` for Premium (unlimited conversations → contact_support). Premium users hitting video cap (10/month) see generic "video generation limit" + "Contact support" — confusing for $39/month user.
-
-**Files:** `src/app/api/openai/route.tsx`, `src/constants/stop-reasons.ts`
-
-**What to do:**
-
-1. In `route.tsx`, when a media-specific limit is hit (`image_limit_reached`, `audio_limit_reached`, `video_limit_reached`), the `endAction` should be `"start_new_conversation"` instead of using `getPlanBoundEndAction()`. The conversation should NOT end — only the media generation is blocked. User can still chat.
-2. Update `stop-reasons.ts` messages for media limits to be more informative. Include: "You can continue chatting. Start a new conversation to keep going."
-3. Verify that admin role still bypasses all limits (no regression from Phase 53.1).
-
-**Acceptance criteria:**
-
-- [ ] Premium user hitting video cap sees clear, non-alarming message
-- [ ] End action for media limits is `start_new_conversation`, not `contact_support`
-- [ ] Messages explain that other features are still available
-- [ ] Admin bypasses unchanged
-- [ ] Existing unit tests pass, new test for Premium video limit behavior
-
----
-
-## Phase 68: Brand Color Palette v3 — Lime Green Accent — HIGH
-
-### 68.1 HIGH — Add limeGreen palette scale to globals.css @theme
-
-**Ref:** PM audit #33 — Owner directive: Lime Green (#B8F60D) as new accent color. Must generate 10-step shade scale (100–1000) anchored at 500 = #B8F60D.
+**Ref:** PM audit #34 — Owner correction: `.btn-contained` text must be Midnight Blue (500) not Lavender Haze. `.btn-text` hover must be Lime Green (800) not 500. Engineer's Phase 68.2 implemented per original spec; owner subsequently provided corrections.
 
 **Files:** `src/app/globals.css`
 
 **What to do:**
 
-1. Add `--color-limeGreen-100` through `--color-limeGreen-1000` to the `@theme` block.
-2. Base hex for 500: `#B8F60D`. Generate lighter shades (100–400) and darker shades (600–1000).
-3. Do NOT remove any existing palette tokens (nightIndigo, twilightPurple, midnightBlue, lavenderHaze, dustyBlue) — they remain for non-button uses.
+1. `.btn-text`: Change `hover:text-limeGreen-500` → `hover:text-limeGreen-800`
+2. `.btn-contained`: Change `text-lavenderHaze-500` → `text-midnightBlue-500`
+3. `.btn-contained`: Change `hover:text-lavenderHaze-800` → `hover:text-midnightBlue-500`
+4. Verify visual contrast: midnightBlue-500 (#191970) on limeGreen-500 (#B8F60D) = high contrast. Good.
+5. `.icon-btn` — DO NOT CHANGE.
 
 **Acceptance criteria:**
 
-- [ ] `limeGreen` palette (10 shades) exists in `@theme`
-- [ ] `bg-limeGreen-500`, `text-limeGreen-500`, etc. work in Tailwind classes
-- [ ] No existing palette tokens removed
-- [ ] Build passes
-
----
-
-### 68.2 HIGH — Restyle .btn-text, .btn-outlined, .btn-contained with Lime Green
-
-**Ref:** PM audit #33 — Owner directive: All button styles use Lime Green for BOTH dark and light themes. `.icon-btn` stays unchanged.
-
-**Files:** `src/app/globals.css`
-
-**What to do:**
-
-1. Update `.btn-text`: `text-limeGreen-500 hover:text-limeGreen-500` (both themes, same color). Remove separate light/dark variants.
-2. Update `.btn-outlined`: `text-limeGreen-500 border-limeGreen-500 hover:text-limeGreen-800 hover:border-limeGreen-800 bg-transparent hover:bg-transparent` (both themes). Remove separate light/dark variants.
-3. Update `.btn-contained`: `text-lavenderHaze-500 border-limeGreen-500 bg-limeGreen-500 hover:text-lavenderHaze-800 hover:border-limeGreen-800 hover:bg-limeGreen-800` (both themes). Remove shadow definitions that reference twilightPurple/dustyBlue hex.
-4. `.icon-btn` — DO NOT CHANGE.
-
-**Acceptance criteria:**
-
-- [ ] `.btn-text` uses limeGreen-500 for both themes
-- [ ] `.btn-outlined` uses limeGreen-500/800 for both themes, transparent bg
-- [ ] `.btn-contained` uses limeGreen bg, lavenderHaze text for both themes
-- [ ] `.icon-btn` is identical to current version (unchanged)
+- [ ] `.btn-text` hover color is `limeGreen-800`
+- [ ] `.btn-contained` text color is `midnightBlue-500` (both default and hover)
+- [ ] `.icon-btn` unchanged
 - [ ] No `dark:` prefix on button color properties (same for both themes)
 - [ ] Build passes, lint passes
 
 ---
 
-### 68.3 HIGH — Update Clerk appearance and verify visual consistency
+## Phase 71: Admin Persona Content Configurability — HIGH
 
-**Ref:** PM audit #33 — Clerk appearance and any hardcoded color references must reflect new accent.
+### 71.1 HIGH — Create persona override AppSetting model and resolution layer
 
-**Files:** `src/app/layout.tsx` (Clerk provider), any file referencing `twilightPurple` or `dustyBlue` in button contexts
+**Ref:** PM audit #34 — Owner directive: "NO HARDCODED data — everything MUST be fully configurable from ADMIN panel." Triple-audit confirmed: persona names, descriptions, taglines, system prompts, starter prompts, hero images are ALL hardcoded in `src/constants/assistant-personas.tsx`. Admin personas tab only controls plan-gated access checkboxes.
+
+**Files:** `src/lib/utils/effective-persona-config.ts` (new), `src/constants/assistant-personas.tsx`
 
 **What to do:**
 
-1. Check Clerk `appearance` config — if `colorPrimary` uses twilightPurple, consider updating to limeGreen or keeping twilightPurple for sign-in forms (PM decision: keep twilightPurple for Clerk — it's auth, not app buttons).
-2. Grep for any inline twilightPurple/dustyBlue references specifically in button contexts (not all uses — only button-related). These should now use limeGreen.
-3. Verify no visual regressions in both light and dark themes.
+1. Create `getEffectivePersonaConfig()` utility that reads `AppSetting("admin.personaOverrides")` and merges with hardcoded persona defaults.
+2. Override fields: `label`, `tagline`, `description`, `starterPrompts[]` (at minimum).
+3. System prompts remain in code for v1 (complex, versioned, safety-critical — admin override deferred to v2).
+4. Hero images remain in code for v1 (requires file upload flow — deferred to v2).
+5. Add `import "server-only"` guard.
+6. Return merged persona array with overrides applied on matching `id`.
 
 **Acceptance criteria:**
 
-- [ ] No button-context references to twilightPurple/dustyBlue remain (structural/non-button uses OK)
-- [ ] Clerk appearance decision documented
-- [ ] Both themes visually consistent
-- [ ] Full validation gateway passes (prettier, lint, tsc, unit tests, build)
+- [ ] `getEffectivePersonaConfig()` exists and works
+- [ ] Returns personas with admin overrides merged
+- [ ] Falls back to hardcoded defaults when no overrides exist
+- [ ] `import "server-only"` present
+- [ ] Unit test for merge behavior
 
 ---
 
-## Phase 70: Admin Panel Design Alignment — MEDIUM
+### 71.2 HIGH — Add persona content editing to admin settings
 
-### 70.1 MEDIUM — Align admin layout with /app design system
+**Ref:** Phase 71.1 must be complete first.
 
-**Ref:** PM audit #33 — Owner reports admin panel "still old design." Admin uses `AdminLayoutShell` with different background, header, and spacing vs `/app`'s `PageWrapper`.
-
-**Files:** `src/components/admin/admin-layout-shell.tsx`, `src/app/(admin)/layout.tsx`
+**Files:** `src/components/admin/settings/admin-personas-section.tsx`, `src/lib/actions/admin.actions.tsx`
 
 **What to do:**
 
-1. Align admin background gradient/colors with the body gradient from globals.css (currently admin hardcodes `bg-lavenderHaze-200 dark:bg-nightIndigo-1000`).
-2. Ensure admin header styling matches chat header visual weight (fonts, spacing, colors).
-3. Ensure admin sidebar styling matches chat sidebar visual patterns.
-4. Card backgrounds, border radius, and spacing should match `/app` patterns.
+1. Extend existing admin personas section with editable fields per persona: `label`, `tagline`, `description`, `starterPrompts` (textarea, one per line).
+2. Save to `AppSetting("admin.personaOverrides")` as JSON.
+3. Wire all persona-consuming pages to use `getEffectivePersonaConfig()` instead of raw `PERSONAS` constant.
+4. Audit trail: log admin persona content changes to AdminAuditLog.
 
 **Acceptance criteria:**
 
-- [ ] Admin panel visually matches `/app` design system (colors, fonts, spacing)
-- [ ] No functional regression in admin features
-- [ ] Both light and dark themes consistent
+- [ ] Admin can edit persona labels, taglines, descriptions, starter prompts from `/admin/settings`
+- [ ] Changes persist and propagate to all persona surfaces
+- [ ] Fallback to defaults when no overrides set
+- [ ] Audit trail logged
+- [ ] Build passes
+
+---
+
+## Phase 70.2: Admin Panel Design Polish — HIGH
+
+### 70.2 HIGH — Full admin panel design alignment with /app
+
+**Ref:** PM audit #34 — Owner still reports "old design." Triple-audit found: shell is aligned (same tokens), but card styling, form sections, and overall polish may differ. Content cards use boxy `rounded-2xl` pattern without glassmorphism. No brand identity in admin sidebar header.
+
+**Files:** Admin page files, admin component files
+
+**What to do:**
+
+1. Audit all admin pages (dashboard, users, transactions, usage, settings, website) for visual consistency with `/app` patterns.
+2. Apply consistent card elevation, backdrop blur, or other polish elements matching chat panels.
+3. Add Droplet brand identity to admin sidebar header (logo or icon).
+4. Ensure form sections have the same spacing, font sizes, and border radius as chat-side components.
+5. Both light and dark themes must be consistent.
+
+**Acceptance criteria:**
+
+- [ ] Admin panel passes owner visual review
+- [ ] Both themes consistent
+- [ ] No functional regression
 - [ ] Build passes
 
 ---
@@ -197,5 +182,5 @@
 ---
 
 > **Completed phases** are archived in [`DONE.md`](DONE.md).
-> All phases through 67.3 complete (incl. 63.1–63.2, 61.1). All Milestones 0–22 COMPLETE.
+> All phases through 70.1 complete (incl. 63.1–63.2, 61.1, 68.1–68.3, 69.1). All Milestones 0–22 COMPLETE.
 > Phase 10–12 superseded (see DONE.md for mapping).

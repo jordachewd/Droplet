@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-19 (PM audit #33. All Phases 1–67.3, 63.1–63.2, 61.1 COMPLETE. Milestone 22 COMPLETE. Brand palette v2 delivered. Lime Green accent pending implementation (Phase 68). TD-MEDIA-01 RESOLVED, TD-DATA-01 RESOLVED, TD-DATA-02 RESOLVED, TD-UX-05 RESOLVED, TD-DS-03 RESOLVED. New: TD-DS-05 (HIGH, Lime Green palette + button restyle), TD-UX-07 (CRITICAL, Premium video error UX). Active: TD-DS-04 (MEDIUM), TD-API-09 (LOW). 369 unit tests (65+ suites). Build passing.)
+> Last updated: 2026-03-19 (PM audit #34. All Phases 1–70.1 complete (incl. 63.1–63.2, 61.1, 68.1–68.3, 69.1). Milestone 22 COMPLETE. Lime Green accent IMPLEMENTED (Phase 68). Non-terminal media stops IMPLEMENTED (Phase 69.1). TD-UX-07 RESOLVED. TD-DS-05 RESOLVED. Button text correction pending (Phase 68.4). New: TD-DS-07 (HIGH, btn-contained text color), TD-ADMIN-15 (HIGH, persona content not admin-editable). Active: TD-DS-04 (MEDIUM), TD-API-09 (LOW). 374 unit tests (65 suites). Build passing.)
 
 ---
 
@@ -685,33 +685,35 @@ All file handling technical debt has been resolved. S3 cleanup on task/user dele
 
 #### Brand Color Palette (Milestone 22 — IMPLEMENTED Phase 64; Milestone 23 — Lime Green accent PENDING Phase 68)
 
-| Token Name       | Base Hex  | Role                                     | Status      |
-| ---------------- | --------- | ---------------------------------------- | ----------- |
-| `nightIndigo`    | `#1B003F` | Dark theme background                    | Implemented |
-| `twilightPurple` | `#4B0082` | Structural accent (non-button contexts)  | Implemented |
-| `midnightBlue`   | `#191970` | Light theme text                         | Implemented |
-| `lavenderHaze`   | `#E6E6FA` | Light theme background + dark theme text | Implemented |
-| `dustyBlue`      | `#6495ED` | Structural accent (non-button contexts)  | Implemented |
-| `limeGreen`      | `#B8F60D` | **NEW accent color** (buttons, CTAs)     | **PENDING** |
+| Token Name       | Base Hex  | Role                                     | Status                 |
+| ---------------- | --------- | ---------------------------------------- | ---------------------- |
+| `nightIndigo`    | `#1B003F` | Dark theme background                    | Implemented            |
+| `twilightPurple` | `#4B0082` | Structural accent (non-button contexts)  | Implemented            |
+| `midnightBlue`   | `#191970` | Light theme text                         | Implemented            |
+| `lavenderHaze`   | `#E6E6FA` | Light theme background + dark theme text | Implemented            |
+| `dustyBlue`      | `#6495ED` | Structural accent (non-button contexts)  | Implemented            |
+| `limeGreen`      | `#B8F60D` | **Accent color** (buttons, CTAs)         | Implemented (Phase 68) |
 
 **Light Theme:** Text (Primary) = `midnightBlue-500`, Background (Secondary) = `lavenderHaze-500`.
 
 **Dark Theme:** Text (Primary) = `lavenderHaze-500`, Background (Secondary) = `nightIndigo-700`.
 
-#### Button Style Definitions (PENDING — Phase 68)
+#### Button Style Definitions (IMPLEMENTED Phase 68 — Correction Phase 68.4 pending)
 
 All button styles use Lime Green as the accent color in **both** light and dark themes:
 
 | Class            | Property   | Default State       | Hover State         |
 | ---------------- | ---------- | ------------------- | ------------------- |
-| `.btn-text`      | Color      | Lime Green (500)    | Lime Green (500)    |
+| `.btn-text`      | Color      | Lime Green (500)    | Lime Green (800)    |
 | `.btn-outlined`  | Text       | Lime Green (500)    | Lime Green (800)    |
 | `.btn-outlined`  | Border     | Lime Green (500)    | Lime Green (800)    |
 | `.btn-outlined`  | Background | Transparent         | Transparent         |
-| `.btn-contained` | Text       | Lavender Haze (500) | Lavender Haze (800) |
+| `.btn-contained` | Text       | Midnight Blue (500) | Midnight Blue (500) |
 | `.btn-contained` | Border     | Lime Green (500)    | Lime Green (800)    |
 | `.btn-contained` | Background | Lime Green (500)    | Lime Green (800)    |
 | `.icon-btn`      | —          | **UNCHANGED**       | **UNCHANGED**       |
+
+> **CORRECTION (PM audit #34):** `.btn-contained` text is Midnight Blue (500), NOT Lavender Haze. Both default and hover use Midnight Blue (500). `.btn-text` hover is Lime Green (800), not 500. Phase 68.4 tracks this fix.
 
 > **Note:** Lime Green supersedes Twilight Purple (light) and Dusty Blue (dark) for button styling. Those tokens remain in the palette for non-button structural uses.
 
@@ -743,7 +745,7 @@ All button styles use Lime Green as the accent color in **both** light and dark 
 
 ## 13. Testing
 
-- **Unit tests**: 65+ suites, 369 tests (Vitest) — includes streaming, webhook, chat-wrapper, chat-body stop-state, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, persona prompt, rate limiting, task complexity classification, conversation stop enforcement, entitlement resolver full coverage (including admin override tests), checkout-success page, admin audit trail, OpenAI route tests, atomic prompt limit, daily conversation limit, media error handling, universal feature access, trial access tests, effective model config, effective plan config, checkout price bypass regression, video generation.
+- **Unit tests**: 65 suites, 374 tests (Vitest) — includes streaming, webhook, chat-wrapper, chat-body stop-state, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, persona prompt, rate limiting, task complexity classification, conversation stop enforcement, entitlement resolver full coverage (including admin override tests), checkout-success page, admin audit trail, OpenAI route tests, atomic prompt limit, daily conversation limit, media error handling, universal feature access, trial access tests, effective model config, effective plan config, checkout price bypass regression, video generation.
 - **E2E tests**: 13 Playwright spec files across browser projects (chat-app-shell, auth-boundaries, public-pages with 70+ tests, conversation-lifecycle, user-profile, admin-users, admin-features, landing-page, plans-public, pricing-public, authenticated-flows, persona-trial-access). 228 total. **165 passing, 5 failed (stale Clerk auth session + DB connectivity), 48 skipped** (explained: Chromium-only trial spec × 6 non-Chromium projects = 24 new skips, all intentional). Note: `pricing-public.spec.ts` is a duplicate of `plans-public.spec.ts` — to be removed (Phase 31.4).
 - **Coverage**: Configured (Phase 24.1) — v8 provider, thresholds: 70% statements / 60% branches / 70% functions / 70% lines. Current: 82/71/88/82.
 - **Gap**: No dedicated E2E spec for streamed chunk-by-chunk rendering (manually verified via Playwright MCP). Persona selector E2E (35.2) pending.
@@ -833,18 +835,25 @@ _None._
 | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------- | -------- |
 | TD-DS-03 | Design | Brand palette v2 migration — **RESOLVED (Phase 64.1–64.7)**. All 5 brand tokens operational. Zero legacy references remain. | Resolved |
 
-### Active — Critical Priority (PM Audit #33, Owner-Directed)
+### ~~Active — Critical Priority (PM Audit #33)~~ (Resolved — PM Audit #34)
 
-| ID       | Area | Description                                                                                                                                                                                                                                                                                                                                                                                                       | Severity |
-| -------- | ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| TD-UX-07 | UX   | Premium users hitting video cap (10/month) see generic "video generation limit" + `contact_support` end action. Confusing for $39/month users — implies something is broken. `getPlanBoundEndAction()` maps unlimited-conversation plans to `contact_support`. For media-specific limits, end action should be `start_new_conversation` (user can still chat). Message should include limit count and reset date. | Critical |
+| ID       | Area | Description                                                                                                                         | Status                                                                                                                                                                                           |
+| -------- | ---- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| TD-UX-07 | UX   | Premium users hitting video cap saw generic "video generation limit" + `contact_support` end action. Confusing for $39/month users. | **RESOLVED (Phase 69.1)** — Media-specific limits are now non-terminal. `endAction: "start_new_conversation"`, `taskStatus: "active"`. Messages say chat can continue. Admin bypasses unchanged. |
 
-### Active — High Priority (PM Audit #33, Owner-Directed)
+### ~~Active — High Priority (PM Audit #33)~~ (Resolved / Partially Resolved — PM Audit #34)
 
-| ID       | Area   | Description                                                                                                                                                                                                                               | Severity |
-| -------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| TD-DS-05 | Design | Lime Green (#B8F60D) accent color not yet in codebase. Must add `limeGreen` palette scale to `@theme` in globals.css and restyle `.btn-text`, `.btn-outlined`, `.btn-contained` to use Lime Green for both themes. `.icon-btn` unchanged. | High     |
-| TD-DS-06 | Design | Admin panel layout uses different shell than `/app` (AdminLayoutShell vs PageWrapper). Backgrounds, header, and spacing differ. Must align admin design with `/app` design system.                                                        | High     |
+| ID       | Area   | Description                                             | Status                                                                                                                          |
+| -------- | ------ | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| TD-DS-05 | Design | Lime Green palette + button restyle.                    | **RESOLVED (Phase 68.1–68.3)** — Palette added, buttons restyled. Text color correction tracked as TD-DS-07.                    |
+| TD-DS-06 | Design | Admin panel layout alignment with `/app` design system. | **RESOLVED (Phase 70.1)** — Admin shell structurally aligned (same tokens, sidebar, header). Polish pass tracked as Phase 70.2. |
+
+### Active — High Priority (PM Audit #34, Owner-Directed)
+
+| ID          | Area   | Description                                                                                                                                                                                                           | Severity |
+| ----------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| TD-DS-07    | Design | `.btn-contained` text color is `lavenderHaze-500/800` — must be `midnightBlue-500` (both default and hover). `.btn-text` hover is `limeGreen-500` — must be `limeGreen-800`. Owner correction from PM audit #34.      | High     |
+| TD-ADMIN-15 | Admin  | Persona content (names, descriptions, taglines, starter prompts) is hardcoded in `assistant-personas.tsx`. Not admin-editable from `/admin/settings`. Owner requires full admin configurability. Phase 71 tracks fix. | High     |
 
 ### Active — Medium Priority (PM Audit #31)
 
