@@ -6,33 +6,125 @@
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
 > **STATUS: Milestone 22 COMPLETE. All Phases 1–67.3, 63.1–63.2, 61.1 complete. 369 unit tests passing (65+ suites). Build passing.**
-> **PM deep audit #32 (2026-03-18): Triple-audit (PM + Architect + Engineer). 11 previously-listed TODO phases verified DONE in code and archived. All CRITICAL/HIGH owner directives delivered.**
-> **Priority order: 31.4 → 46.1 → 46.2 → 29.x → 26.x**
-> **Only LOW-priority and ON HOLD items remain. No CRITICAL or HIGH work outstanding.**
+> **PM deep audit #33 (2026-03-19): Triple-audit (PM + Architect + Engineer). New owner directives: Lime Green accent color, button restyle, Premium video error UX fix. 6 owner items verified DONE (archived).**
+> **Priority order: 69.1 → 68.1 → 68.2 → 68.3 → 70.1 → 31.4 → 46.x → 29.x → 26.x**
+> **CRITICAL: Phase 69 (Premium error UX). HIGH: Phase 68 (Lime Green palette + button restyle). MEDIUM: Phase 70 (Admin layout alignment).**
 
 ---
 
-## ~~Phase 65: CRITICAL Bug Fixes~~ — ✅ DONE (Archived to DONE.md)
+## Phase 69: Premium Video Error UX Fix — CRITICAL
 
-**Completed 2026-03-18.** 65.1 (type-specific stop reasons) + 65.2 (UsageEvent cascade) + 65.3 (admin delete order fix) + 65.4 (shared stop-reasons constant) delivered. TD-MEDIA-01, TD-DATA-01, TD-DATA-02 RESOLVED.
+### 69.1 CRITICAL — Fix media-specific limit end action + improve stop messages
+
+**Ref:** PM audit #33 — Owner reported: "PREMIUM user has media limitations - gets error message about that - why?" Root cause: `getPlanBoundEndAction()` returns `"contact_support"` for Premium (unlimited conversations → contact_support). Premium users hitting video cap (10/month) see generic "video generation limit" + "Contact support" — confusing for $39/month user.
+
+**Files:** `src/app/api/openai/route.tsx`, `src/constants/stop-reasons.ts`
+
+**What to do:**
+
+1. In `route.tsx`, when a media-specific limit is hit (`image_limit_reached`, `audio_limit_reached`, `video_limit_reached`), the `endAction` should be `"start_new_conversation"` instead of using `getPlanBoundEndAction()`. The conversation should NOT end — only the media generation is blocked. User can still chat.
+2. Update `stop-reasons.ts` messages for media limits to be more informative. Include: "You can continue chatting. Start a new conversation to keep going."
+3. Verify that admin role still bypasses all limits (no regression from Phase 53.1).
+
+**Acceptance criteria:**
+
+- [ ] Premium user hitting video cap sees clear, non-alarming message
+- [ ] End action for media limits is `start_new_conversation`, not `contact_support`
+- [ ] Messages explain that other features are still available
+- [ ] Admin bypasses unchanged
+- [ ] Existing unit tests pass, new test for Premium video limit behavior
 
 ---
 
-## ~~Phase 66: Profile & Admin Usability~~ — ✅ DONE (Archived to DONE.md)
+## Phase 68: Brand Color Palette v3 — Lime Green Accent — HIGH
 
-**Completed 2026-03-18.** 66.1 (profile usage display) + 66.2 (video limit editable) + 66.3 (admin users table usage columns) delivered.
+### 68.1 HIGH — Add limeGreen palette scale to globals.css @theme
+
+**Ref:** PM audit #33 — Owner directive: Lime Green (#B8F60D) as new accent color. Must generate 10-step shade scale (100–1000) anchored at 500 = #B8F60D.
+
+**Files:** `src/app/globals.css`
+
+**What to do:**
+
+1. Add `--color-limeGreen-100` through `--color-limeGreen-1000` to the `@theme` block.
+2. Base hex for 500: `#B8F60D`. Generate lighter shades (100–400) and darker shades (600–1000).
+3. Do NOT remove any existing palette tokens (nightIndigo, twilightPurple, midnightBlue, lavenderHaze, dustyBlue) — they remain for non-button uses.
+
+**Acceptance criteria:**
+
+- [ ] `limeGreen` palette (10 shades) exists in `@theme`
+- [ ] `bg-limeGreen-500`, `text-limeGreen-500`, etc. work in Tailwind classes
+- [ ] No existing palette tokens removed
+- [ ] Build passes
 
 ---
 
-## ~~Phase 67: Admin Configurability & Hardcoded Data Removal~~ — ✅ DONE (Archived to DONE.md)
+### 68.2 HIGH — Restyle .btn-text, .btn-outlined, .btn-contained with Lime Green
 
-**Completed 2026-03-18.** 67.1 (PlanPromo props-only) + 67.2 (server-only guard) + 67.3 (JSON outsourcing) delivered.
+**Ref:** PM audit #33 — Owner directive: All button styles use Lime Green for BOTH dark and light themes. `.icon-btn` stays unchanged.
+
+**Files:** `src/app/globals.css`
+
+**What to do:**
+
+1. Update `.btn-text`: `text-limeGreen-500 hover:text-limeGreen-500` (both themes, same color). Remove separate light/dark variants.
+2. Update `.btn-outlined`: `text-limeGreen-500 border-limeGreen-500 hover:text-limeGreen-800 hover:border-limeGreen-800 bg-transparent hover:bg-transparent` (both themes). Remove separate light/dark variants.
+3. Update `.btn-contained`: `text-lavenderHaze-500 border-limeGreen-500 bg-limeGreen-500 hover:text-lavenderHaze-800 hover:border-limeGreen-800 hover:bg-limeGreen-800` (both themes). Remove shadow definitions that reference twilightPurple/dustyBlue hex.
+4. `.icon-btn` — DO NOT CHANGE.
+
+**Acceptance criteria:**
+
+- [ ] `.btn-text` uses limeGreen-500 for both themes
+- [ ] `.btn-outlined` uses limeGreen-500/800 for both themes, transparent bg
+- [ ] `.btn-contained` uses limeGreen bg, lavenderHaze text for both themes
+- [ ] `.icon-btn` is identical to current version (unchanged)
+- [ ] No `dark:` prefix on button color properties (same for both themes)
+- [ ] Build passes, lint passes
 
 ---
 
-## ~~Phase 61.1: Confirmation Modal~~ — ✅ DONE (Archived to DONE.md)
+### 68.3 HIGH — Update Clerk appearance and verify visual consistency
 
-**Completed 2026-03-18.** ConfirmationModal component created. Zero `window.confirm()` in src/. TD-UX-05 RESOLVED.
+**Ref:** PM audit #33 — Clerk appearance and any hardcoded color references must reflect new accent.
+
+**Files:** `src/app/layout.tsx` (Clerk provider), any file referencing `twilightPurple` or `dustyBlue` in button contexts
+
+**What to do:**
+
+1. Check Clerk `appearance` config — if `colorPrimary` uses twilightPurple, consider updating to limeGreen or keeping twilightPurple for sign-in forms (PM decision: keep twilightPurple for Clerk — it's auth, not app buttons).
+2. Grep for any inline twilightPurple/dustyBlue references specifically in button contexts (not all uses — only button-related). These should now use limeGreen.
+3. Verify no visual regressions in both light and dark themes.
+
+**Acceptance criteria:**
+
+- [ ] No button-context references to twilightPurple/dustyBlue remain (structural/non-button uses OK)
+- [ ] Clerk appearance decision documented
+- [ ] Both themes visually consistent
+- [ ] Full validation gateway passes (prettier, lint, tsc, unit tests, build)
+
+---
+
+## Phase 70: Admin Panel Design Alignment — MEDIUM
+
+### 70.1 MEDIUM — Align admin layout with /app design system
+
+**Ref:** PM audit #33 — Owner reports admin panel "still old design." Admin uses `AdminLayoutShell` with different background, header, and spacing vs `/app`'s `PageWrapper`.
+
+**Files:** `src/components/admin/admin-layout-shell.tsx`, `src/app/(admin)/layout.tsx`
+
+**What to do:**
+
+1. Align admin background gradient/colors with the body gradient from globals.css (currently admin hardcodes `bg-lavenderHaze-200 dark:bg-nightIndigo-1000`).
+2. Ensure admin header styling matches chat header visual weight (fonts, spacing, colors).
+3. Ensure admin sidebar styling matches chat sidebar visual patterns.
+4. Card backgrounds, border radius, and spacing should match `/app` patterns.
+
+**Acceptance criteria:**
+
+- [ ] Admin panel visually matches `/app` design system (colors, fonts, spacing)
+- [ ] No functional regression in admin features
+- [ ] Both light and dark themes consistent
+- [ ] Build passes
 
 ---
 

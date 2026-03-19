@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-18 (PM audit #32. All Phases 1–67.3, 63.1–63.2, 61.1 COMPLETE. Milestone 22 COMPLETE. Brand palette v2 delivered. TD-MEDIA-01 RESOLVED, TD-DATA-01 RESOLVED, TD-DATA-02 RESOLVED, TD-UX-05 RESOLVED, TD-DS-03 RESOLVED. Active: TD-DS-04 (MEDIUM), TD-API-09 (LOW). 369 unit tests (65+ suites). Build passing.)
+> Last updated: 2026-03-19 (PM audit #33. All Phases 1–67.3, 63.1–63.2, 61.1 COMPLETE. Milestone 22 COMPLETE. Brand palette v2 delivered. Lime Green accent pending implementation (Phase 68). TD-MEDIA-01 RESOLVED, TD-DATA-01 RESOLVED, TD-DATA-02 RESOLVED, TD-UX-05 RESOLVED, TD-DS-03 RESOLVED. New: TD-DS-05 (HIGH, Lime Green palette + button restyle), TD-UX-07 (CRITICAL, Premium video error UX). Active: TD-DS-04 (MEDIUM), TD-API-09 (LOW). 369 unit tests (65+ suites). Build passing.)
 
 ---
 
@@ -683,19 +683,37 @@ All file handling technical debt has been resolved. S3 cleanup on task/user dele
 - Dark/light themes via `data-Droplet-theme` attribute
 - Bootstrap Icons
 
-#### Brand Color Palette (Milestone 22 — IMPLEMENTED, Phase 64)
+#### Brand Color Palette (Milestone 22 — IMPLEMENTED Phase 64; Milestone 23 — Lime Green accent PENDING Phase 68)
 
-| Token Name       | Base Hex  | Role                                     |
-| ---------------- | --------- | ---------------------------------------- |
-| `nightIndigo`    | `#1B003F` | Dark theme background                    |
-| `twilightPurple` | `#4B0082` | Light theme button accent (bg)           |
-| `midnightBlue`   | `#191970` | Light theme text                         |
-| `lavenderHaze`   | `#E6E6FA` | Light theme background + dark theme text |
-| `dustyBlue`      | `#6495ED` | Dark theme button accent (bg)            |
+| Token Name       | Base Hex  | Role                                     | Status      |
+| ---------------- | --------- | ---------------------------------------- | ----------- |
+| `nightIndigo`    | `#1B003F` | Dark theme background                    | Implemented |
+| `twilightPurple` | `#4B0082` | Structural accent (non-button contexts)  | Implemented |
+| `midnightBlue`   | `#191970` | Light theme text                         | Implemented |
+| `lavenderHaze`   | `#E6E6FA` | Light theme background + dark theme text | Implemented |
+| `dustyBlue`      | `#6495ED` | Structural accent (non-button contexts)  | Implemented |
+| `limeGreen`      | `#B8F60D` | **NEW accent color** (buttons, CTAs)     | **PENDING** |
 
-**Light Theme:** Text = `midnightBlue-500`, Background = `lavenderHaze-500`, Buttons = bg `twilightPurple-*` / text `lavenderHaze-*`.
+**Light Theme:** Text (Primary) = `midnightBlue-500`, Background (Secondary) = `lavenderHaze-500`.
 
-**Dark Theme:** Text = `lavenderHaze-500`, Background = `nightIndigo-1000`, Buttons = bg `dustyBlue-*` / text `lavenderHaze-*`.
+**Dark Theme:** Text (Primary) = `lavenderHaze-500`, Background (Secondary) = `nightIndigo-700`.
+
+#### Button Style Definitions (PENDING — Phase 68)
+
+All button styles use Lime Green as the accent color in **both** light and dark themes:
+
+| Class            | Property   | Default State       | Hover State         |
+| ---------------- | ---------- | ------------------- | ------------------- |
+| `.btn-text`      | Color      | Lime Green (500)    | Lime Green (500)    |
+| `.btn-outlined`  | Text       | Lime Green (500)    | Lime Green (800)    |
+| `.btn-outlined`  | Border     | Lime Green (500)    | Lime Green (800)    |
+| `.btn-outlined`  | Background | Transparent         | Transparent         |
+| `.btn-contained` | Text       | Lavender Haze (500) | Lavender Haze (800) |
+| `.btn-contained` | Border     | Lime Green (500)    | Lime Green (800)    |
+| `.btn-contained` | Background | Lime Green (500)    | Lime Green (800)    |
+| `.icon-btn`      | —          | **UNCHANGED**       | **UNCHANGED**       |
+
+> **Note:** Lime Green supersedes Twilight Purple (light) and Dusty Blue (dark) for button styling. Those tokens remain in the palette for non-button structural uses.
 
 **Borders:** TailwindCSS `slate` palette (unchanged from Milestone 21).
 
@@ -814,6 +832,19 @@ _None._
 | ID       | Area   | Description                                                                                                                 | Status   |
 | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------- | -------- |
 | TD-DS-03 | Design | Brand palette v2 migration — **RESOLVED (Phase 64.1–64.7)**. All 5 brand tokens operational. Zero legacy references remain. | Resolved |
+
+### Active — Critical Priority (PM Audit #33, Owner-Directed)
+
+| ID       | Area | Description                                                                                                                                                                                                                                                                                                                                                                                                       | Severity |
+| -------- | ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| TD-UX-07 | UX   | Premium users hitting video cap (10/month) see generic "video generation limit" + `contact_support` end action. Confusing for $39/month users — implies something is broken. `getPlanBoundEndAction()` maps unlimited-conversation plans to `contact_support`. For media-specific limits, end action should be `start_new_conversation` (user can still chat). Message should include limit count and reset date. | Critical |
+
+### Active — High Priority (PM Audit #33, Owner-Directed)
+
+| ID       | Area   | Description                                                                                                                                                                                                                               | Severity |
+| -------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| TD-DS-05 | Design | Lime Green (#B8F60D) accent color not yet in codebase. Must add `limeGreen` palette scale to `@theme` in globals.css and restyle `.btn-text`, `.btn-outlined`, `.btn-contained` to use Lime Green for both themes. `.icon-btn` unchanged. | High     |
+| TD-DS-06 | Design | Admin panel layout uses different shell than `/app` (AdminLayoutShell vs PageWrapper). Backgrounds, header, and spacing differ. Must align admin design with `/app` design system.                                                        | High     |
 
 ### Active — Medium Priority (PM Audit #31)
 
