@@ -49,9 +49,6 @@ export default function Header() {
             <Link className="menu-item text-lg" href="/plans">
               Plans
             </Link>
-            <Link className="menu-item text-lg" href="/faqs">
-              FAQs
-            </Link>
             {isSignedIn && (
               <Link className="menu-item text-lg" href="/app">
                 App

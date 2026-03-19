@@ -38,17 +38,14 @@ export default function HeroSection() {
             image, and audio generation.
           </p>
 
-          <Link
-            className="btn btn-lg btn-contained w-full max-w-75 p-5 uppercase"
-            href="/app/new"
-          >
+          <Link className="btn btn-lg btn-contained px-16" href="/app/new">
             Try it for free
           </Link>
         </div>
 
         <div className={heroImageClass}>
           <Image
-            src="/images/lp-hero-image.png"
+            src="/images/lp-hero-image-flipped.png"
             alt="hero"
             width={700}
             height={700}

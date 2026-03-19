@@ -119,11 +119,19 @@
 
   body {
     font-family: var(--font-jwd-albertsans), sans-serif;
-    @apply scroll-smooth antialiased bg-fixed transition-all ease-in;
-    @apply bg-lavenderHaze-500/30 text-midnightBlue-600 dark:bg-nightIndigo-700 dark:text-lavenderHaze-500;
-    @apply bg-linear-30 from-lavenderHaze-500/0 from-20% via-dustyBlue-500/50 via-70% to-twilightPurple-500/80 to-100%;
+    @apply scroll-smooth antialiased transition-all ease-in;
+    @apply bg-lavenderHaze-300 text-midnightBlue-600 dark:bg-nightIndigo-800 dark:text-lavenderHaze-500;
     @apply pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] text-base leading-tight;
   }
+}
+
+.AppGradientBg {
+  @apply fixed inset-0 -z-10 opacity-50 w-full h-full transition-all animate-ease-in-out duration-1000;
+  @apply bg-lavenderHaze-300 text-midnightBlue-600 dark:bg-nightIndigo-800 dark:text-lavenderHaze-500;
+
+  @apply bg-radial-[at_100%_0%] from-[400px] via-[1400px] to-[2600px];
+  @apply from-twilightPurple-400 via-dustyBlue-400 to-lavenderHaze-100/0 ;
+  @apply dark:from-twilightPurple-400/50 dark:via-dustyBlue-600/50;
 }
 
 /*  all media elements set to block and full width */
@@ -193,32 +201,33 @@ a.menu-item {
 
   .btn {
     font-family: var(--font-jwd-dosis), sans-serif;
-    @apply inline-flex min-w-0 items-center justify-center rounded-lg border px-1 py-1  
-    transition-all duration-300 ease-in-out disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex min-w-0 items-center justify-center border px-4 rounded-lg py-3 uppercase leading-none tracking-wide
+    transition-all duration-300 ease-in-out disabled:cursor-not-allowed disabled:opacity-50 text-base font-medium;
   }
 
   .btn-sm {
-    @apply px-3 py-1 text-base leading-none;
+    @apply text-xs px-3 py-2 rounded-md font-semibold;
   }
 
   .btn-md {
-    @apply px-4 py-1.5 text-xl leading-none;
+    @apply text-xl px-8 py-4;
   }
 
   .btn-lg {
-    @apply px-6 py-2.5 text-2xl leading-none;
+    @apply text-2xl px-12 py-5;
   }
 
   .btn-text {
-    @apply border-transparent text-limeGreen-500 hover:text-limeGreen-800;
+    @apply border-transparent text-midnightBlue-500 hover:text-dustyBlue-500 dark:text-dustyBlue-400 dark:hover:text-dustyBlue-500 hover:bg-transparent;
   }
 
   .btn-outlined {
-    @apply border-limeGreen-500 bg-transparent text-limeGreen-500 hover:border-limeGreen-800 hover:bg-transparent hover:text-limeGreen-800;
+    @apply border-midnightBlue-500 text-midnightBlue-500 hover:border-dustyBlue-500 hover:text-dustyBlue-500 bg-transparent hover:bg-transparent
+    dark:border-dustyBlue-400 dark:text-dustyBlue-400 dark:hover:border-dustyBlue-500 dark:hover:text-dustyBlue-500;
   }
 
   .btn-contained {
-    @apply border-limeGreen-500 bg-limeGreen-500 text-midnightBlue-500 hover:border-limeGreen-800 hover:bg-limeGreen-800 hover:text-midnightBlue-500;
+    @apply border-limeGreen-500 bg-limeGreen-500 text-midnightBlue-500 hover:border-limeGreen-600 hover:bg-limeGreen-600 hover:text-midnightBlue-500;
   }
 
   .icon-btn {

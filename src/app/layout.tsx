@@ -7,6 +7,7 @@ import "bootstrap-icons/font/bootstrap-icons.css";
 import "@/app/globals.css";
 import MainWrapper from "@/components/layout/main-wrapper";
 import { Analytics } from "@vercel/analytics/next";
+import AppGradientBg from "@/components/shared/app-gradient-bg";
 
 export const metadata: Metadata = {
   title: "Droplet",
@@ -81,6 +82,7 @@ export default function RootLayout({
             <MainWrapper>{children}</MainWrapper>
           </DropletTheme>
         </ClerkProvider>
+        <AppGradientBg />
         <Analytics />
       </body>
     </html>

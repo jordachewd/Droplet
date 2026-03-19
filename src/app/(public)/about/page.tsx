@@ -263,7 +263,7 @@ export default async function AboutPage() {
   const aboutSections = buildAboutSections({ personaAccessSummary });
 
   return (
-    <section className="AboutPage mx-auto flex w-full max-w-screen-2xl flex-col gap-10 px-4 pb-16 pt-24 sm:px-6 lg:px-8">
+    <section className="AboutPage mx-auto flex w-full max-w-screen-2xl flex-col gap-10 px-4 py-16 pt-24 sm:px-6 lg:px-8">
       <PageHead
         title="About Droplet"
         subtitle="A persona-driven AI assistant built for structured conversations, practical output, and media-aware workflows."

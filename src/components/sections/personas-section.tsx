@@ -1,12 +1,10 @@
 import PageHead from "@/components/layout/page-head";
 import PersonaCard from "@/components/shared/persona-card";
 import { Persona, PersonaAccessLevel, PersonaId } from "@/types/PersonaData.d";
-import classNames from "classnames";
 
 interface PersonasSectionProps {
   personas: Persona[];
   isAppMode?: boolean;
-  maxWidthClass?: string;
   allowedPersonaIds?: PersonaId[];
   showLockedPersonas?: boolean;
   personaAccess?: Partial<Record<PersonaId, PersonaAccessLevel>>;
@@ -16,21 +14,16 @@ interface PersonasSectionProps {
 export default function PersonasSection({
   personas,
   isAppMode = false,
-  maxWidthClass = "max-w-6xl",
   allowedPersonaIds,
   showLockedPersonas = true,
   personaAccess,
   personaRequiredPlan,
 }: PersonasSectionProps) {
-  const sectionClassName = classNames(
-    "PersonasSection mx-auto flex w-full flex-col gap-6 p-4",
-    maxWidthClass,
-  );
   const allowedPersonaIdSet = new Set(allowedPersonaIds ?? []);
   const enforcePlanFilter = isAppMode && allowedPersonaIds !== undefined;
 
   return (
-    <section className={sectionClassName}>
+    <section className="PersonasSection mx-auto flex w-full max-w-screen-2xl flex-col gap-10 px-4 py-16 pt-24 sm:px-6 lg:px-8">
       <PageHead
         title={isAppMode ? "AI Personas" : "Choose Your AI Persona"}
         subtitle="Explore the Droplet persona catalog. Each persona shapes the assistant's tone, guidance, and tool availability."
