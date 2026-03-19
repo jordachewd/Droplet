@@ -1,4 +1,3 @@
-import { PERSONAS } from "@/constants/assistant-personas";
 import type { FullPersonaAccessByPlan } from "@/lib/utils/effective-persona-access";
 
 export type AboutVisualType =
@@ -15,12 +14,15 @@ export interface AboutSection {
   visualType: AboutVisualType;
 }
 
-function formatPersonaList(personaIds: string[]): string {
+function formatPersonaList({
+  personaIds,
+  personaLabelById,
+}: {
+  personaIds: string[];
+  personaLabelById: Record<string, string>;
+}): string {
   const labels = personaIds
-    .map(
-      (personaId) =>
-        PERSONAS.find((persona) => persona.id === personaId)?.label,
-    )
+    .map((personaId) => personaLabelById[personaId])
     .filter((label): label is string => Boolean(label));
 
   if (labels.length === 0) {
@@ -40,8 +42,9 @@ function formatPersonaList(personaIds: string[]): string {
 
 export function buildPersonaAccessSummary(
   personaAccessByPlan: FullPersonaAccessByPlan,
+  personaLabelById: Record<string, string>,
 ): string {
-  return `Lite includes ${formatPersonaList(personaAccessByPlan.Lite)}. Pro includes ${formatPersonaList(personaAccessByPlan.Pro)}. Premium includes ${formatPersonaList(personaAccessByPlan.Premium)}.`;
+  return `Lite includes ${formatPersonaList({ personaIds: personaAccessByPlan.Lite, personaLabelById })}. Pro includes ${formatPersonaList({ personaIds: personaAccessByPlan.Pro, personaLabelById })}. Premium includes ${formatPersonaList({ personaIds: personaAccessByPlan.Premium, personaLabelById })}.`;
 }
 
 export function buildAboutSections({

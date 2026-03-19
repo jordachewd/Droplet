@@ -56,7 +56,7 @@ export default async function AdminUserDetailPage({
       />
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.4fr_0.8fr]">
-        <article className="rounded-2xl border border-slate-300 bg-lavenderHaze-100/80 p-5 dark:border-slate-500 dark:bg-nightIndigo-900/70">
+        <article className="admin-surface">
           <h2 className="heading-6 mb-4">Account Details</h2>
           <dl className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
@@ -123,10 +123,10 @@ export default async function AdminUserDetailPage({
           </dl>
         </article>
 
-        <article className="rounded-2xl border border-slate-300 bg-lavenderHaze-100/80 p-5 dark:border-slate-500 dark:bg-nightIndigo-900/70">
+        <article className="admin-surface">
           <h2 className="heading-6 mb-4">Usage Snapshot</h2>
           <div className="grid grid-cols-1 gap-3">
-            <div className="rounded-xl border border-slate-300 px-4 py-3 dark:border-slate-500">
+            <div className="admin-surface-subtle">
               <p className="text-xs font-semibold uppercase tracking-wide opacity-60">
                 Daily Conversations
               </p>
@@ -142,7 +142,7 @@ export default async function AdminUserDetailPage({
                 />
               </div>
             </div>
-            <div className="rounded-xl border border-slate-300 px-4 py-3 dark:border-slate-500">
+            <div className="admin-surface-subtle">
               <p className="text-xs font-semibold uppercase tracking-wide opacity-60">
                 Prompts / Conversation (Peak)
               </p>
@@ -159,7 +159,7 @@ export default async function AdminUserDetailPage({
                 />
               </div>
             </div>
-            <div className="rounded-xl border border-slate-300 px-4 py-3 dark:border-slate-500">
+            <div className="admin-surface-subtle">
               <p className="text-xs font-semibold uppercase tracking-wide opacity-60">
                 Image Generations
               </p>
@@ -175,7 +175,7 @@ export default async function AdminUserDetailPage({
                 />
               </div>
             </div>
-            <div className="rounded-xl border border-slate-300 px-4 py-3 dark:border-slate-500">
+            <div className="admin-surface-subtle">
               <p className="text-xs font-semibold uppercase tracking-wide opacity-60">
                 Audio Generations
               </p>
@@ -191,7 +191,7 @@ export default async function AdminUserDetailPage({
                 />
               </div>
             </div>
-            <div className="rounded-xl border border-slate-300 px-4 py-3 dark:border-slate-500">
+            <div className="admin-surface-subtle">
               <p className="text-xs font-semibold uppercase tracking-wide opacity-60">
                 Video Generations
               </p>
@@ -207,7 +207,7 @@ export default async function AdminUserDetailPage({
                 />
               </div>
             </div>
-            <div className="rounded-xl border border-slate-300 px-4 py-3 dark:border-slate-500">
+            <div className="admin-surface-subtle">
               <p className="text-xs font-semibold uppercase tracking-wide opacity-60">
                 Trial Usage (Img / Audio / Video)
               </p>
@@ -221,7 +221,7 @@ export default async function AdminUserDetailPage({
         </article>
       </div>
 
-      <article className="rounded-2xl border border-slate-300 bg-lavenderHaze-100/80 p-5 dark:border-slate-500 dark:bg-nightIndigo-900/70">
+      <article className="admin-surface">
         <h2 className="heading-6 mb-4">Admin Actions</h2>
         <div className="flex flex-col gap-3 md:flex-row">
           <AdminManagedForm
@@ -255,7 +255,7 @@ export default async function AdminUserDetailPage({
         </div>
       </article>
 
-      <article className="rounded-2xl border border-slate-300 bg-lavenderHaze-100/80 p-5 dark:border-slate-500 dark:bg-nightIndigo-900/70">
+      <article className="admin-surface">
         <div className="mb-4 flex items-center justify-between gap-4">
           <h2 className="heading-6">Recent Transactions</h2>
           <Link className="btn btn-sm btn-outlined" href="/admin/transactions">

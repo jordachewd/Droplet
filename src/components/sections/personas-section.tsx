@@ -1,10 +1,10 @@
-import { PERSONAS } from "@/constants/assistant-personas";
 import PageHead from "@/components/layout/page-head";
 import PersonaCard from "@/components/shared/persona-card";
-import { PersonaAccessLevel, PersonaId } from "@/types/PersonaData.d";
+import { Persona, PersonaAccessLevel, PersonaId } from "@/types/PersonaData.d";
 import classNames from "classnames";
 
 interface PersonasSectionProps {
+  personas: Persona[];
   isAppMode?: boolean;
   maxWidthClass?: string;
   allowedPersonaIds?: PersonaId[];
@@ -14,6 +14,7 @@ interface PersonasSectionProps {
 }
 
 export default function PersonasSection({
+  personas,
   isAppMode = false,
   maxWidthClass = "max-w-6xl",
   allowedPersonaIds,
@@ -36,7 +37,7 @@ export default function PersonasSection({
       />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {PERSONAS.map((persona) => {
+        {personas.map((persona) => {
           const isLocked =
             enforcePlanFilter && !allowedPersonaIdSet.has(persona.id);
 

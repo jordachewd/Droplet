@@ -19,6 +19,16 @@ export type PersonaAccessSettingsFormValue = Record<
   PersonaId[]
 >;
 
+export type PersonaContentSettingsFormValue = Record<
+  PersonaId,
+  {
+    label: string;
+    tagline: string;
+    description: string;
+    starterPrompts: string[];
+  }
+>;
+
 export const PERSONA_ACCESS_KEY_BY_PLAN = {
   Lite: "persona_access_lite",
   Pro: "persona_access_pro",

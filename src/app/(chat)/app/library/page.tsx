@@ -1,6 +1,5 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { getPersona } from "@/constants/assistant-personas";
 import PageWrapper from "@/components/layout/page-wrapper";
 import PageHead from "@/components/layout/page-head";
 import LibraryTabs from "@/components/chat/library-tabs";
@@ -14,6 +13,10 @@ import {
   getRecentTasksByUserId,
 } from "@/lib/utils/task-queries";
 import { mapDateToLabel } from "@/lib/utils/map-date-to-label";
+import {
+  getEffectivePersonaConfig,
+  getPersonaFromConfig,
+} from "@/lib/utils/effective-persona-config";
 
 type LibraryTabId = "chats" | "images" | "audios" | "videos";
 
@@ -94,12 +97,8 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
   }
 
   try {
-    const taskHistory = await getRecentTasksByUserId(
-      userId,
-      CHAT_PAGE_SIZE + 1,
-      conversationsOffset,
-    );
-    const [images, audios, videos] = await Promise.all([
+    const [taskHistory, images, audios, videos, personas] = await Promise.all([
+      getRecentTasksByUserId(userId, CHAT_PAGE_SIZE + 1, conversationsOffset),
       getMediaItemsByUserId(
         userId,
         "image_url",
@@ -118,6 +117,7 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
         MEDIA_PAGE_SIZE + 1,
         videosOffset,
       ),
+      getEffectivePersonaConfig(),
     ]);
 
     const pagedTaskHistory = taskHistory.slice(0, CHAT_PAGE_SIZE);
@@ -146,38 +146,66 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
       hasNextPage: videos.length > MEDIA_PAGE_SIZE,
     };
 
-    conversations = pagedTaskHistory.map((task) => ({
-      id: task._id,
-      title: task.title,
-      personaLabel: getPersona(task.personaId).label,
-      personaIcon: getPersona(task.personaId).icon,
-      updatedAtLabel: mapDateToLabel(task.updatedAt),
-      href: `/app/c/${task._id}`,
-    }));
+    conversations = pagedTaskHistory.map((task) => {
+      const persona = getPersonaFromConfig({
+        personas,
+        personaId: task.personaId,
+      });
 
-    imageItems = pagedImages.map((item) => ({
-      ...item,
-      personaLabel: getPersona(item.personaId).label,
-      personaIcon: getPersona(item.personaId).icon,
-      createdAtLabel: mapDateToLabel(item.createdAt),
-      href: `/app/c/${item.taskId}`,
-    }));
+      return {
+        id: task._id,
+        title: task.title,
+        personaLabel: persona.label,
+        personaIcon: persona.icon,
+        updatedAtLabel: mapDateToLabel(task.updatedAt),
+        href: `/app/c/${task._id}`,
+      };
+    });
 
-    audioItems = pagedAudios.map((item) => ({
-      ...item,
-      personaLabel: getPersona(item.personaId).label,
-      personaIcon: getPersona(item.personaId).icon,
-      createdAtLabel: mapDateToLabel(item.createdAt),
-      href: `/app/c/${item.taskId}`,
-    }));
+    imageItems = pagedImages.map((item) => {
+      const persona = getPersonaFromConfig({
+        personas,
+        personaId: item.personaId,
+      });
 
-    videoItems = pagedVideos.map((item) => ({
-      ...item,
-      personaLabel: getPersona(item.personaId).label,
-      personaIcon: getPersona(item.personaId).icon,
-      createdAtLabel: mapDateToLabel(item.createdAt),
-      href: `/app/c/${item.taskId}`,
-    }));
+      return {
+        ...item,
+        personaLabel: persona.label,
+        personaIcon: persona.icon,
+        createdAtLabel: mapDateToLabel(item.createdAt),
+        href: `/app/c/${item.taskId}`,
+      };
+    });
+
+    audioItems = pagedAudios.map((item) => {
+      const persona = getPersonaFromConfig({
+        personas,
+        personaId: item.personaId,
+      });
+
+      return {
+        ...item,
+        personaLabel: persona.label,
+        personaIcon: persona.icon,
+        createdAtLabel: mapDateToLabel(item.createdAt),
+        href: `/app/c/${item.taskId}`,
+      };
+    });
+
+    videoItems = pagedVideos.map((item) => {
+      const persona = getPersonaFromConfig({
+        personas,
+        personaId: item.personaId,
+      });
+
+      return {
+        ...item,
+        personaLabel: persona.label,
+        personaIcon: persona.icon,
+        createdAtLabel: mapDateToLabel(item.createdAt),
+        href: `/app/c/${item.taskId}`,
+      };
+    });
   } catch (error) {
     hasLoadError = true;
     const message = error instanceof Error ? error.message : "Unknown error";

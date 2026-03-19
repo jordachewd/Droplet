@@ -2,8 +2,8 @@ import { auth } from "@clerk/nextjs/server";
 import { notFound } from "next/navigation";
 import PageWrapper from "@/components/layout/page-wrapper";
 import PersonasSection from "@/components/sections/personas-section";
-import { PERSONAS } from "@/constants/assistant-personas";
 import { getEffectivePersonaAccessByPlan } from "@/lib/utils/effective-persona-access";
+import { getEffectivePersonaConfig } from "@/lib/utils/effective-persona-config";
 import { ensureUserSynced } from "@/lib/utils/ensure-user-synced";
 import {
   getRequiredPlanForPersona,
@@ -20,7 +20,10 @@ export default async function AppPersonasPage() {
   }
 
   const isAdmin = userData.role === "admin";
-  const fullPersonaAccessByPlan = await getEffectivePersonaAccessByPlan();
+  const [fullPersonaAccessByPlan, personas] = await Promise.all([
+    getEffectivePersonaAccessByPlan(),
+    getEffectivePersonaConfig(),
+  ]);
   const entitlements = resolveEntitlements(userData.plan?.name ?? "Lite", {
     isAdmin,
     fullPersonaAccessByPlan,
@@ -29,7 +32,7 @@ export default async function AppPersonasPage() {
   const personaRequiredPlan: Partial<
     Record<PersonaId, "Pro" | "Premium" | null>
   > = {};
-  for (const persona of PERSONAS) {
+  for (const persona of personas) {
     personaRequiredPlan[persona.id] = getRequiredPlanForPersona(
       persona.id,
       fullPersonaAccessByPlan,
@@ -39,6 +42,7 @@ export default async function AppPersonasPage() {
   return (
     <PageWrapper id="AppPersonasPage" scrollable>
       <PersonasSection
+        personas={personas}
         isAppMode
         allowedPersonaIds={entitlements.allowedPersonaIds}
         showLockedPersonas

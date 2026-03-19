@@ -1,10 +1,10 @@
 import { auth } from "@clerk/nextjs/server";
 import { notFound } from "next/navigation";
-import { PERSONAS } from "@/constants/assistant-personas";
 import PageHead from "@/components/layout/page-head";
 import PageWrapper from "@/components/layout/page-wrapper";
 import PersonaCard from "@/components/shared/persona-card";
 import { getEffectivePersonaAccessByPlan } from "@/lib/utils/effective-persona-access";
+import { getEffectivePersonaConfig } from "@/lib/utils/effective-persona-config";
 import { ensureUserSynced } from "@/lib/utils/ensure-user-synced";
 import {
   getRequiredPlanForPersona,
@@ -20,7 +20,10 @@ export default async function NewConversationPage() {
   }
 
   const isAdmin = userData.role === "admin";
-  const fullPersonaAccessByPlan = await getEffectivePersonaAccessByPlan();
+  const [fullPersonaAccessByPlan, personas] = await Promise.all([
+    getEffectivePersonaAccessByPlan(),
+    getEffectivePersonaConfig(),
+  ]);
   const entitlements = resolveEntitlements(userData.plan?.name ?? "Lite", {
     isAdmin,
     fullPersonaAccessByPlan,
@@ -36,7 +39,7 @@ export default async function NewConversationPage() {
         />
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {PERSONAS.map((persona) => {
+          {personas.map((persona) => {
             const isLocked = !allowedPersonaIdSet.has(persona.id);
             const isTrialPersona =
               entitlements.personaAccess?.[persona.id] === "limited";

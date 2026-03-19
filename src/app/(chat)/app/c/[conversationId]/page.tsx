@@ -2,6 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { notFound } from "next/navigation";
 import ChatWrapper from "@/components/chat/chat-wrapper";
 import { getEffectivePersonaAccessByPlan } from "@/lib/utils/effective-persona-access";
+import { getEffectivePersonaConfig } from "@/lib/utils/effective-persona-config";
 import { getTaskByIdForUser } from "@/lib/utils/task-queries";
 import { ensureUserSynced } from "@/lib/utils/ensure-user-synced";
 import { resolveEntitlements } from "@/lib/utils/resolve-entitlements";
@@ -35,7 +36,10 @@ export default async function ConversationPage({
   }
 
   const isAdmin = userData.role === "admin";
-  const fullPersonaAccessByPlan = await getEffectivePersonaAccessByPlan();
+  const [fullPersonaAccessByPlan, personas] = await Promise.all([
+    getEffectivePersonaAccessByPlan(),
+    getEffectivePersonaConfig(),
+  ]);
   const entitlements = resolveEntitlements(userData.plan?.name ?? "Lite", {
     isAdmin,
     fullPersonaAccessByPlan,
@@ -43,6 +47,7 @@ export default async function ConversationPage({
 
   return (
     <ChatWrapper
+      personas={personas}
       initialMessages={task.messages}
       initialTaskId={task._id}
       initialPersonaId={task.personaId}

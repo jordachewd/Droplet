@@ -54,6 +54,17 @@ function parseJsonValue(rawValue: string): unknown {
   }
 }
 
+function parseStarterPromptLines(rawValue: unknown): string[] {
+  if (typeof rawValue !== "string") {
+    return [];
+  }
+
+  return rawValue
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+}
+
 function getNumericField(formData: FormData, fieldName: string): number {
   const rawValue = getStringField(formData, fieldName);
   const parsedValue = numericFieldSchema.safeParse(rawValue);
@@ -294,6 +305,51 @@ function parseStructuredAdminSettingValue({
       );
   }
 
+  if (key === "admin.personaOverrides") {
+    return PERSONAS.reduce(
+      (accumulator, persona) => {
+        const labelField = formData.get(`label_${persona.id}`);
+        const taglineField = formData.get(`tagline_${persona.id}`);
+        const descriptionField = formData.get(`description_${persona.id}`);
+        const starterPromptsField = formData.get(
+          `starterPrompts_${persona.id}`,
+        );
+        const starterPrompts = parseStarterPromptLines(starterPromptsField);
+
+        accumulator[persona.id] = {
+          label:
+            typeof labelField === "string" && labelField.trim().length > 0
+              ? labelField.trim()
+              : persona.label,
+          tagline:
+            typeof taglineField === "string" && taglineField.trim().length > 0
+              ? taglineField.trim()
+              : persona.tagline,
+          description:
+            typeof descriptionField === "string" &&
+            descriptionField.trim().length > 0
+              ? descriptionField.trim()
+              : persona.description,
+          starterPrompts:
+            starterPrompts.length > 0
+              ? starterPrompts
+              : [...persona.starterPrompts],
+        };
+
+        return accumulator;
+      },
+      {} as Record<
+        PersonaId,
+        {
+          label: string;
+          tagline: string;
+          description: string;
+          starterPrompts: string[];
+        }
+      >,
+    );
+  }
+
   return null;
 }
 
@@ -451,6 +507,17 @@ export async function updateAdminSettingAction(
       revalidatePath("/app");
       revalidatePath("/app/new");
       revalidatePath("/app/personas");
+    }
+
+    if (key === "admin.personaOverrides") {
+      revalidatePath("/");
+      revalidatePath("/about");
+      revalidatePath("/personas");
+      revalidatePath("/app");
+      revalidatePath("/app/new");
+      revalidatePath("/app/personas");
+      revalidatePath("/app/library");
+      revalidatePath("/admin/usage");
     }
 
     return successState("Settings updated.");

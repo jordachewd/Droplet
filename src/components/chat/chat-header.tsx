@@ -7,18 +7,20 @@ import { useShallow } from "zustand/react/shallow";
 import ToggleTheme from "@/components/shared/toggle-theme";
 import AvatarMenu from "@/components/shared/avatar-menu";
 import SidebarToggle from "@/components/shared/sidebar-toggle";
+import { PERSONAS } from "@/constants/assistant-personas";
 import { useChatStore } from "@/lib/hooks/use-chat-store";
 import { useUiStore } from "@/lib/hooks/use-ui-store";
-import { PERSONAS } from "@/constants/assistant-personas";
-import { PersonaId } from "@/types/PersonaData.d";
+import { Persona, PersonaId } from "@/types/PersonaData.d";
 import { usePreferencesStore } from "@/lib/hooks/use-preferences-store";
 
 interface ChatHeaderProps {
+  personas?: Persona[];
   className?: string;
   allowedPersonaIds?: PersonaId[];
 }
 
 export default function ChatHeader({
+  personas = PERSONAS,
   className: style = "",
   allowedPersonaIds,
 }: ChatHeaderProps) {
@@ -74,9 +76,9 @@ export default function ChatHeader({
 
   const selectablePersonaIds =
     allowedPersonaIds === undefined
-      ? (PERSONAS.map((persona) => persona.id) as PersonaId[])
+      ? (personas.map((persona) => persona.id) as PersonaId[])
       : allowedPersonaIds;
-  const selectablePersonas = PERSONAS.filter((persona) =>
+  const selectablePersonas = personas.filter((persona) =>
     selectablePersonaIds.includes(persona.id),
   );
   const activePersonaId = (personaId ??

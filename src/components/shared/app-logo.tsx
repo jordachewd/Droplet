@@ -29,7 +29,9 @@ export default function Logo({
         </g>
       </svg>
 
-      {!iconOnly && <span className="relative text-lg font-medium">droplet</span>}
+      {!iconOnly && (
+        <span className="relative text-lg font-medium">droplet</span>
+      )}
     </Link>
   );
 }

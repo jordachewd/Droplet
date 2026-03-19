@@ -57,7 +57,7 @@ export function AdminWebsiteManager({ pages }: AdminWebsiteManagerProps) {
     <div className="AdminWebsiteManager flex flex-col gap-6">
       <AdminManagedForm
         action={createPublicPageAction}
-        className="grid grid-cols-1 gap-3 rounded-2xl border border-slate-300 bg-lavenderHaze-100/80 p-4 dark:border-slate-500 dark:bg-nightIndigo-900/70 md:grid-cols-[1fr_1fr_auto]"
+        className="admin-surface-subtle grid grid-cols-1 gap-3 md:grid-cols-[1fr_1fr_auto]"
       >
         <label className="flex flex-col gap-2 text-sm">
           <span className="font-medium">Title</span>
@@ -88,7 +88,7 @@ export function AdminWebsiteManager({ pages }: AdminWebsiteManagerProps) {
         </div>
       </AdminManagedForm>
 
-      <div className="overflow-hidden rounded-2xl border border-slate-300 bg-lavenderHaze-100/80 dark:border-slate-500 dark:bg-nightIndigo-900/70">
+      <div className="admin-table-shell">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-300 px-4 py-3 dark:border-slate-500">
           <label className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide opacity-75">
             <input

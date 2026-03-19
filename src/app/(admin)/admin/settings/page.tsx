@@ -11,6 +11,7 @@ import {
   normalizeLimitsSettingsValue,
   normalizeModelSettingsValue,
   normalizePersonaAccessSettings,
+  normalizePersonaContentSettings,
   normalizePricingSettingsValue,
   normalizeThemeSettingsValue,
   normalizeTrialLimitsSettingsValue,
@@ -18,6 +19,7 @@ import {
 import {
   LimitsSettingsFormValue,
   PersonaAccessSettingsFormValue,
+  PersonaContentSettingsFormValue,
   PricingSettingsFormValue,
   ThemeSettingsFormValue,
   TrialLimitsSettingsFormValue,
@@ -33,6 +35,8 @@ export default async function AdminSettingsPage() {
   const themeDefaults = snapshot.defaults.theme as ThemeSettingsFormValue;
   const personaAccessDefaults = snapshot.defaults
     .personaAccess as PersonaAccessSettingsFormValue;
+  const personaContentDefaults = snapshot.defaults
+    .personaContent as PersonaContentSettingsFormValue;
 
   const modelValue = normalizeModelSettingsValue(
     snapshot.settingsByKey["admin.models"]?.value,
@@ -58,12 +62,16 @@ export default async function AdminSettingsPage() {
     snapshot.settingsByKey as Record<string, { value: unknown }>,
     personaAccessDefaults,
   );
+  const personaContentValue = normalizePersonaContentSettings(
+    snapshot.settingsByKey["admin.personaOverrides"]?.value,
+    personaContentDefaults,
+  );
 
   return (
     <section className="AdminSettingsPage mx-auto flex w-full max-w-6xl flex-col gap-6">
       <PageHead
         title="Settings"
-        subtitle="Persist mutable operational settings for models, pricing, limits, persona access, and default theme."
+        subtitle="Persist mutable operational settings for models, pricing, limits, persona content/access, and default theme."
       />
 
       <AdminSettingsTabs
@@ -92,7 +100,10 @@ export default async function AdminSettingsPage() {
             id: "personas",
             label: "Personas",
             content: (
-              <AdminPersonasSection personaAccessValue={personaAccessValue} />
+              <AdminPersonasSection
+                personaAccessValue={personaAccessValue}
+                personaContentValue={personaContentValue}
+              />
             ),
           },
           {

@@ -33,6 +33,8 @@ export interface ConversationListItem {
   id: string;
   title: string;
   personaId: PersonaId;
+  personaLabel: string;
+  personaIcon: string;
   updatedAtLabel: string;
   href: string;
   isDemo?: boolean;

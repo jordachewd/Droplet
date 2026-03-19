@@ -21,7 +21,7 @@ export default async function AdminUsersPage({
       />
 
       <form
-        className="flex flex-col gap-3 rounded-2xl border border-slate-300 bg-lavenderHaze-100/80 p-4 dark:border-slate-500 dark:bg-nightIndigo-900/70 md:flex-row"
+        className="admin-surface-subtle flex flex-col gap-3 md:flex-row"
         method="get"
       >
         <label className="flex flex-1 flex-col gap-2 text-sm">

@@ -8,19 +8,20 @@ import ChatIntro from "@/components/chat/chat-intro";
 import ChatBody from "@/components/chat/chat-body";
 import ChatInput from "@/components/chat/chat-input";
 import AlertMessage from "@/components/shared/alert-message";
-import { AlertParams } from "@/types/AlertData.d";
-import { filterAssistantMsg } from "@/lib/utils/openai/filterAssistantMsg";
 import {
   DEFAULT_PERSONA_ID,
   PERSONAS,
   getPersona,
 } from "@/constants/assistant-personas";
-import { PersonaId } from "@/types/PersonaData.d";
+import { AlertParams } from "@/types/AlertData.d";
+import { filterAssistantMsg } from "@/lib/utils/openai/filterAssistantMsg";
+import { Persona, PersonaId } from "@/types/PersonaData.d";
 import { TaskEndAction, TaskEndedReason, TaskStatus } from "@/types/TaskData.d";
 import { useChatStore } from "@/lib/hooks/use-chat-store";
 import { usePreferencesStore } from "@/lib/hooks/use-preferences-store";
 
 interface ChatWrapperProps {
+  personas?: Persona[];
   initialPersonaId?: string;
   allowedPersonaIds?: PersonaId[];
   initialTaskId?: string | null;
@@ -62,6 +63,7 @@ type ChatStreamEvent =
     };
 
 export default function ChatWrapper({
+  personas = PERSONAS,
   initialPersonaId,
   allowedPersonaIds,
   initialTaskId = null,
@@ -74,25 +76,42 @@ export default function ChatWrapper({
     () => initialMessagesProp ?? [],
     [initialMessagesProp],
   );
+  const fallbackPersona = personas[0] ?? getPersona(DEFAULT_PERSONA_ID);
+  const fallbackPersonaId = fallbackPersona.id;
+  const personaMap = useMemo(
+    () =>
+      personas.reduce(
+        (accumulator, persona) => {
+          accumulator[persona.id] = persona;
+          return accumulator;
+        },
+        {} as Record<PersonaId, Persona>,
+      ),
+    [personas],
+  );
   const normalizedAllowedPersonaIds = useMemo(() => {
     if (allowedPersonaIds !== undefined) {
       return allowedPersonaIds;
     }
 
-    return PERSONAS.map((persona) => persona.id);
-  }, [allowedPersonaIds]);
+    return personas.map((persona) => persona.id);
+  }, [allowedPersonaIds, personas]);
 
   const resolveSelectablePersonaId = useCallback(
     (candidatePersonaId?: string | null): PersonaId => {
-      const resolvedPersonaId = getPersona(candidatePersonaId).id;
+      const resolvedPersonaId =
+        (candidatePersonaId as PersonaId | undefined) &&
+        personaMap[candidatePersonaId as PersonaId]
+          ? (candidatePersonaId as PersonaId)
+          : fallbackPersonaId;
 
       if (normalizedAllowedPersonaIds.includes(resolvedPersonaId)) {
         return resolvedPersonaId;
       }
 
-      return normalizedAllowedPersonaIds[0] ?? DEFAULT_PERSONA_ID;
+      return normalizedAllowedPersonaIds[0] ?? fallbackPersonaId;
     },
-    [normalizedAllowedPersonaIds],
+    [fallbackPersonaId, normalizedAllowedPersonaIds, personaMap],
   );
 
   const {
@@ -150,8 +169,8 @@ export default function ChatWrapper({
   const isNewTask = task.length === 0 && !isConversationEnded;
 
   const selectedPersona = useMemo(
-    () => getPersona(selectedPersonaId),
-    [selectedPersonaId],
+    () => personaMap[selectedPersonaId] ?? fallbackPersona,
+    [personaMap, selectedPersonaId, fallbackPersona],
   );
 
   useEffect(() => {

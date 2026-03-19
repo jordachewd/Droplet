@@ -3,6 +3,7 @@ import ChatHeader from "@/components/chat/chat-header";
 import PageWrapper from "@/components/layout/page-wrapper";
 import { auth } from "@clerk/nextjs/server";
 import { getEffectivePersonaAccessByPlan } from "@/lib/utils/effective-persona-access";
+import { getEffectivePersonaConfig } from "@/lib/utils/effective-persona-config";
 import { ensureUserSynced } from "@/lib/utils/ensure-user-synced";
 import { resolveEntitlements } from "@/lib/utils/resolve-entitlements";
 
@@ -16,7 +17,10 @@ export default async function ChatRouteLayout({
   const { userId } = await auth();
   const userData = userId ? await ensureUserSynced(userId) : null;
   const isAdmin = userData?.role === "admin";
-  const fullPersonaAccessByPlan = await getEffectivePersonaAccessByPlan();
+  const [fullPersonaAccessByPlan, personas] = await Promise.all([
+    getEffectivePersonaAccessByPlan(),
+    getEffectivePersonaConfig(),
+  ]);
   const entitlements = resolveEntitlements(userData?.plan?.name ?? "Lite", {
     isAdmin,
     fullPersonaAccessByPlan,
@@ -30,7 +34,10 @@ export default async function ChatRouteLayout({
       <ChatSidebar />
 
       <section className="ChatRouteLayoutMain relative flex h-full min-w-0 flex-1">
-        <ChatHeader allowedPersonaIds={entitlements.allowedPersonaIds} />
+        <ChatHeader
+          personas={personas}
+          allowedPersonaIds={entitlements.allowedPersonaIds}
+        />
         {children}
       </section>
     </PageWrapper>
