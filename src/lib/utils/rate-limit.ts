@@ -1,3 +1,5 @@
+import "server-only";
+
 import { connectToDatabase } from "@/lib/database/mongoose";
 import RateLimitEntry from "@/lib/database/models/rate-limit-entry.model";
 

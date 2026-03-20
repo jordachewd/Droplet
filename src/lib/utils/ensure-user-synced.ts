@@ -7,6 +7,14 @@ import type { UserData } from "@/types/UserData.d";
 
 const USER_SYNC_PROJECTION =
   "clerkId username email role plan firstName lastName userimg registerAt updatedAt dailyConversationsStarted dailyConversationWindowStart";
+const RECENT_RESULT_TTL_MS = 5_000;
+const FAILURE_LOG_WINDOW_MS = 30_000;
+const recentEnsureUserSyncResults = new Map<
+  string,
+  { value: UserData | null; expiresAt: number }
+>();
+const inFlightEnsureUserSync = new Map<string, Promise<UserData | null>>();
+const lastFailureLogAtByUser = new Map<string, number>();
 
 function isMongoDuplicateKeyError(error: unknown): error is { code: number } {
   return (
@@ -35,7 +43,7 @@ async function findSyncedUserByClerkId(
  *
  * Returns serialized user data, or null if self-healing fails.
  */
-export async function ensureUserSynced(
+async function ensureUserSyncedUncached(
   clerkUserId: string,
 ): Promise<UserData | null> {
   try {
@@ -117,11 +125,54 @@ export async function ensureUserSynced(
 
     return created ? (serializeForClient(created) as UserData) : null;
   } catch (error) {
-    process.stderr.write(
-      `[ensure-user-synced] Failed for ${clerkUserId}: ${error instanceof Error ? error.message : String(error)}\n`,
-    );
+    const now = Date.now();
+    const lastLoggedAt = lastFailureLogAtByUser.get(clerkUserId) ?? 0;
+
+    if (now - lastLoggedAt >= FAILURE_LOG_WINDOW_MS) {
+      process.stderr.write(
+        `[ensure-user-synced] Failed for ${clerkUserId}: ${error instanceof Error ? error.message : String(error)}\n`,
+      );
+      lastFailureLogAtByUser.set(clerkUserId, now);
+    }
+
     return null;
   }
+}
+
+export async function ensureUserSynced(
+  clerkUserId: string,
+): Promise<UserData | null> {
+  if (process.env.NODE_ENV === "test") {
+    return ensureUserSyncedUncached(clerkUserId);
+  }
+
+  const now = Date.now();
+  const recentResult = recentEnsureUserSyncResults.get(clerkUserId);
+
+  if (recentResult && recentResult.expiresAt > now) {
+    return recentResult.value;
+  }
+
+  const activeRequest = inFlightEnsureUserSync.get(clerkUserId);
+  if (activeRequest) {
+    return activeRequest;
+  }
+
+  const request = ensureUserSyncedUncached(clerkUserId)
+    .then((value) => {
+      recentEnsureUserSyncResults.set(clerkUserId, {
+        value,
+        expiresAt: Date.now() + RECENT_RESULT_TTL_MS,
+      });
+
+      return value;
+    })
+    .finally(() => {
+      inFlightEnsureUserSync.delete(clerkUserId);
+    });
+
+  inFlightEnsureUserSync.set(clerkUserId, request);
+  return request;
 }
 
 function resolveClerkEmail(

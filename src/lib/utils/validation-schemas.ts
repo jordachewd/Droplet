@@ -13,18 +13,15 @@ export const messageTextContentSchema = z
     video_url: z.string().nullable().optional(),
   })
   .strict();
-export const messageContentItemSchema = messageTextContentSchema;
 
 export const chatMessageSchema = z
   .object({
     role: z.enum(["user", "assistant", "system", "developer"]),
     whois: z.enum(["user", "assistant", "system", "developer"]).optional(),
-    content: z.union([z.string(), z.array(messageContentItemSchema), z.null()]),
+    content: z.union([z.string(), z.array(messageTextContentSchema), z.null()]),
   })
   .passthrough();
 
 export const chatMessageArraySchema = z.array(chatMessageSchema);
 
 export const nonEmptyStringSchema = z.string().trim().min(1);
-
-export type ChatMessageInput = z.infer<typeof chatMessageSchema>;

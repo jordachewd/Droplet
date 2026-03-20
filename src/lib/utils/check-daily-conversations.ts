@@ -1,3 +1,5 @@
+import "server-only";
+
 import { PLAN_LIMITS, PlanLimits } from "@/constants/plans";
 import User from "@/lib/database/models/user.model";
 import { connectToDatabase } from "@/lib/database/mongoose";
