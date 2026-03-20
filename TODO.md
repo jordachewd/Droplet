@@ -5,58 +5,57 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: Milestone 22 COMPLETE. Milestone 23 Block A COMPLETE. All Phases 1–76 complete (incl. 63.1–63.2, 61.1, 68.1–68.4, 69.1, 70.1–70.2, 71.1–71.2, 76). 379 unit tests (66 suites). Build passing. Node.js 20.20.1 verified. Phases 76–78 archived to DONE (2026-03-20).**
-> **PM deep audit #36 (2026-03-20): Triple-audit (PM + Architect + Engineer). Phase 76 archived. Premium video limit root cause confirmed. New priority sequence from owner instructions.**
-> **Priority order: 80 (CRITICAL) → 73.x (CRITICAL) → 74.x (CRITICAL/HIGH) → 72.x (HIGH) → 31.4 → 75 → 46.x → 29.x → 26.x**
+> **STATUS: Milestone 22 COMPLETE. Milestone 23 Block A COMPLETE. All Phases 1–84, 80.1, 73.1, 74.1, 72.1 complete. 382 unit tests (66 suites). Build passing. Node.js 24.12.0 runtime.**
+> **PM deep audit #38 (2026-03-20): Triple-audit (PM + Architect + Engineer). Phases 82, 83, 84, 74.1, 72.1 archived to DONE. TD-SEC-05 FULLY RESOLVED. Zero critical issues. Zero knip findings.**
+> **Priority order: 75 (HIGH — unblocks E2E gate) → 72.2 (HIGH — WCAG) → 72.3 (HIGH — WCAG) → 72.4 (MEDIUM — WCAG) → 73.3 (MEDIUM) → 74.2 (MEDIUM) → 73.2 (MEDIUM) → 31.4 → 46.x → 29.x → 26.x**
 
 ---
 
-## Phase 80: Premium Video Limit Fix — CRITICAL
+## Phase 73: Codebase Quality — MEDIUM
 
-### 80.1 CRITICAL — Fix `PLAN_LIMITS.Premium.video` default
+> Phase 73.1 COMPLETE — archived to DONE.md (PM audit #37).
 
-**Ref:** Owner instruction: "PREMIUM user has media limitations — gets error message about that — why?" Triple-audit root cause: `PLAN_LIMITS.Premium.video = 10` (same as Pro). Premium images = `-1` (unlimited), audio = `-1`, but video = `10`. This is a bug — Premium video should be `-1` (unlimited).
+### 73.2 MEDIUM — Minor re-render and code quality fixes
 
-**Files:** `src/constants/plans.tsx`
+**Files:** `src/components/chat/sidebar/chat-sidebar-nav-v2.tsx`, `src/components/shared/plan-count-down.tsx`
 
 **What to do:**
 
-1. Change `PLAN_LIMITS.Premium.video` from `10` to `-1`.
-2. Update SPEC.md Premium plan limits table to show `Unlimited` for video.
-3. Run `npm run test` to verify no test regressions.
+1. `chat-sidebar-nav-v2.tsx`: Evaluate if `useEffect → setConversationItems(historyItems)` can be replaced with direct prop usage (eliminate unnecessary state copy).
+2. `plan-count-down.tsx`: Verify countdown uses current time reference correctly for each tick.
 
 **Acceptance criteria:**
 
-- [ ] `PLAN_LIMITS.Premium.video` is `-1`
-- [ ] Premium video is now unlimited (matching images/audio)
-- [ ] All tests pass
+- [ ] No unnecessary state duplication
+- [ ] Countdown displays correctly
+- [ ] Build passes
+
+---
+
+### 73.3 MEDIUM — Admin client component data-consumer violations
+
+**Ref:** PM audit #37 + Engineer audit: 3 admin client components import constants directly instead of receiving via props.
+
+**Files:** `src/components/admin/admin-sidebar.tsx`, `src/components/admin/settings/admin-personas-section.tsx`, `src/components/admin/settings/admin-models-section.tsx`
+
+**What to do:**
+
+1. `admin-sidebar.tsx`: Remove `ADMIN_LINKS` constant import. Pass admin links from server parent layout.
+2. `admin-personas-section.tsx`: Remove `PERSONAS` constant import. Pass persona base list from server parent.
+3. `admin-models-section.tsx`: Remove model option constant imports. Pass model options from server parent.
+4. Update admin layout/settings pages to pass required data as props.
+
+**Acceptance criteria:**
+
+- [ ] Zero direct constant imports for dynamic data in admin client components
+- [ ] Server parents pass required data
 - [ ] Build passes
 
 ---
 
 ## Phase 72: WCAG 2.2 AA Accessibility Pass — HIGH
 
-### 72.1 HIGH — Navigation and landmark accessibility
-
-**Ref:** Owner instruction: "Entire app must be WCAG 2.2 AA accessibility standards compliant."
-
-**Files:** `src/app/(admin)/layout.tsx`, `src/components/admin/admin-layout-shell.tsx`
-
-**What to do:**
-
-1. Add skip-to-content link in admin layout (missing — present in chat and public layouts).
-2. Add `<main>` landmark element in admin layout.
-3. Verify all layouts have proper landmark hierarchy (`<header>`, `<nav>`, `<main>`, `<footer>`).
-4. Add `aria-current="page"` on active navigation links in header and sidebar.
-
-**Acceptance criteria:**
-
-- [ ] Skip-to-content link present in admin layout
-- [ ] `<main>` landmark in admin layout
-- [ ] `aria-current="page"` on active nav links
-- [ ] Build passes
-
----
+> Phase 72.1 COMPLETE — archived to DONE.md (PM audit #38).
 
 ### 72.2 HIGH — Color contrast and opacity violations
 
@@ -121,71 +120,9 @@
 
 ---
 
-## Phase 73: Codebase Quality & Server-Side Operations — CRITICAL
+## Phase 74: Admin Configurability Deepening — HIGH
 
-### 73.1 CRITICAL — Fix all client component data-consumer violations
-
-**Ref:** Owner instruction: "Components must be data consumers, especially 'use client' ones." Triple-audit found 5 violations.
-
-**Files:** `src/components/chat/chat-header.tsx`, `src/components/chat/chat-wrapper.tsx`, `src/components/sections/plans-section.tsx`, `src/components/sections/faqs-section.tsx`, `src/components/chat/chat-body.tsx`
-
-**What to do:**
-
-1. `chat-header.tsx`: Remove `PERSONAS` import fallback. Ensure all parent Server Components always pass `personas` prop with effective config data. Make the prop required (no default).
-2. `chat-wrapper.tsx`: Remove `PERSONAS`, `DEFAULT_PERSONA_ID`, `getPersona` imports. Receive full effective persona config as props from parent Server Component.
-3. `plans-section.tsx`: Remove `plans as defaultPlans` import fallback. Make `plansData` prop required.
-4. `faqs-section.tsx`: Remove hardcoded FAQ data import fallback. Make `faqsData` prop required.
-5. `chat-body.tsx`: Remove `SUPPORT_EMAIL` and `STOP_REASON_MESSAGES` direct imports. Receive these values as props from parent (`chat-wrapper.tsx`), which receives them from parent Server Component.
-6. Verify all parent Server Components pass the required effective config data.
-
-**Acceptance criteria:**
-
-- [ ] Zero direct constant imports in the 5 listed client components
-- [ ] All data flows: Server Component → effective config resolver → prop → client component
-- [ ] All props are required (no fallbacks to hardcoded constants)
-- [ ] Build passes, all 379+ tests pass
-
----
-
-### 73.2 MEDIUM — Minor re-render and code quality fixes
-
-**Files:** `src/components/chat/sidebar/chat-sidebar-nav-v2.tsx`, `src/components/shared/plan-count-down.tsx`
-
-**What to do:**
-
-1. `chat-sidebar-nav-v2.tsx`: Evaluate if `useEffect → setConversationItems(historyItems)` can be replaced with direct prop usage (eliminate unnecessary state copy).
-2. `plan-count-down.tsx`: Verify countdown uses current time reference correctly for each tick.
-
-**Acceptance criteria:**
-
-- [ ] No unnecessary state duplication
-- [ ] Countdown displays correctly
-- [ ] Build passes
-
----
-
-## Phase 74: Admin Configurability Deepening — CRITICAL
-
-### 74.1 HIGH — Support email admin-configurable
-
-**Ref:** Owner instruction: "NO HARDCODED data." Triple-audit finding: support email hardcoded in `src/constants/support.ts`.
-
-**Files:** `src/constants/support.ts`, `src/lib/utils/effective-plan-config.ts` or new utility, admin settings
-
-**What to do:**
-
-1. Add `admin.supportEmail` to AppSetting.
-2. Create or extend resolver to read from AppSetting with fallback to constant.
-3. Wire admin settings UI to edit support email.
-4. Replace hardcoded usage with resolver in all consuming files.
-
-**Acceptance criteria:**
-
-- [ ] Support email admin-configurable
-- [ ] Fallback to constant when no override
-- [ ] Build passes
-
----
+> Phase 74.1 COMPLETE — archived to DONE.md (PM audit #38).
 
 ### 74.2 MEDIUM — FAQ content admin-configurable
 
@@ -227,11 +164,11 @@
 
 ---
 
-## Phase 75: `/faqs` Documentation Cleanup — LOW
+## Phase 75: Stale E2E Test Cleanup — HIGH (FIRST PRIORITY — unblocks Gate F)
 
-### 75.1 LOW — Remove stale `/faqs` references from docs and tests
+### 75.1 HIGH — Remove stale `/faqs` references from E2E tests
 
-**Ref:** PM audit #35 — `/faqs` route removed. References remain in E2E tests.
+**Ref:** PM audit #37 — `/faqs` route removed. 3 references remain in 2 E2E test files. These cause test failures.
 
 **Files:** `tests/e2e/auth-boundaries.spec.ts`, `tests/e2e/public-pages.spec.ts`
 
@@ -252,20 +189,18 @@
 
 ### 31.4 LOW — Update E2E tests for current UI structure
 
-**Ref:** PM audit #28 — Engineer analysis: E2E failures caused by stale Clerk auth session and DB connectivity. `pricing-public.spec.ts` is a confirmed duplicate of `plans-public.spec.ts`.
+**Ref:** PM audit #28 — Engineer analysis: E2E failures caused by stale Clerk auth session and DB connectivity. `pricing-public.spec.ts` already deleted (confirmed PM audit #38).
 
-**Files:** `tests/e2e/chat-app-shell.spec.ts`, `tests/e2e/plans-public.spec.ts`, `tests/e2e/pricing-public.spec.ts`, `tests/e2e/public-pages.spec.ts`, `tests/e2e/user-profile.spec.ts`
+**Files:** `tests/e2e/chat-app-shell.spec.ts`, `tests/e2e/plans-public.spec.ts`, `tests/e2e/public-pages.spec.ts`, `tests/e2e/user-profile.spec.ts`
 
 **What to do:**
 
-1. Delete `pricing-public.spec.ts` (confirmed duplicate of `plans-public.spec.ts`).
-2. Fix auth session refresh logic in E2E global setup.
-3. Update selectors/assertions in remaining failing specs.
-4. Add DB connectivity check in E2E setup.
+1. Fix auth session refresh logic in E2E global setup.
+2. Update selectors/assertions in remaining failing specs.
+3. Add DB connectivity check in E2E setup.
 
 **Acceptance criteria:**
 
-- [ ] `pricing-public.spec.ts` deleted
 - [ ] `npm run test:e2e` passes with 0 failures (excluding intentionally skipped)
 - [ ] No duplicate test files
 
@@ -317,5 +252,5 @@
 ---
 
 > **Completed phases** are archived in [`DONE.md`](DONE.md).
-> All phases through 76 complete (incl. 63.1–63.2, 61.1, 68.1–68.4, 69.1, 70.1–70.2, 71.1–71.2, 76). All Milestones 0–22 COMPLETE. Milestone 23 Block A COMPLETE.
+> All phases through 84 complete, plus 80.1, 73.1, 74.1, 72.1 (incl. 63.1–63.2, 61.1, 68.1–68.4, 69.1, 70.1–70.2, 71.1–71.2, 76, 80.1, 73.1, 82, 83, 84, 74.1, 72.1). All Milestones 0–22 COMPLETE. Milestone 23 Block A COMPLETE.
 > Phase 10–12 superseded (see DONE.md for mapping).

@@ -6,6 +6,7 @@ import { AdminPricingSection } from "@/components/admin/settings/admin-pricing-s
 import { AdminLimitsSection } from "@/components/admin/settings/admin-limits-section";
 import { AdminPersonasSection } from "@/components/admin/settings/admin-personas-section";
 import { AdminThemeSection } from "@/components/admin/settings/admin-theme-section";
+import { AdminSupportSection } from "@/components/admin/settings/admin-support-section";
 import { AdminSettingsTabs } from "@/components/admin/settings/admin-settings-tabs";
 import {
   normalizeLimitsSettingsValue,
@@ -13,6 +14,7 @@ import {
   normalizePersonaAccessSettings,
   normalizePersonaContentSettings,
   normalizePricingSettingsValue,
+  normalizeSupportSettingsValue,
   normalizeThemeSettingsValue,
   normalizeTrialLimitsSettingsValue,
 } from "@/components/admin/settings/normalize-admin-settings";
@@ -21,6 +23,7 @@ import {
   PersonaAccessSettingsFormValue,
   PersonaContentSettingsFormValue,
   PricingSettingsFormValue,
+  SupportSettingsFormValue,
   ThemeSettingsFormValue,
   TrialLimitsSettingsFormValue,
 } from "@/components/admin/settings/types";
@@ -33,6 +36,7 @@ export default async function AdminSettingsPage() {
   const trialLimitsDefaults = snapshot.defaults
     .trialLimits as TrialLimitsSettingsFormValue;
   const themeDefaults = snapshot.defaults.theme as ThemeSettingsFormValue;
+  const supportDefaults = snapshot.defaults.support as SupportSettingsFormValue;
   const personaAccessDefaults = snapshot.defaults
     .personaAccess as PersonaAccessSettingsFormValue;
   const personaContentDefaults = snapshot.defaults
@@ -57,6 +61,10 @@ export default async function AdminSettingsPage() {
   const themeValue = normalizeThemeSettingsValue(
     snapshot.settingsByKey["admin.theme"]?.value,
     themeDefaults,
+  );
+  const supportValue = normalizeSupportSettingsValue(
+    snapshot.settingsByKey["admin.supportEmail"]?.value,
+    supportDefaults,
   );
   const personaAccessValue = normalizePersonaAccessSettings(
     snapshot.settingsByKey as Record<string, { value: unknown }>,
@@ -110,6 +118,11 @@ export default async function AdminSettingsPage() {
             id: "theme",
             label: "Theme",
             content: <AdminThemeSection themeValue={themeValue} />,
+          },
+          {
+            id: "support",
+            label: "Support",
+            content: <AdminSupportSection supportValue={supportValue} />,
           },
         ]}
       />

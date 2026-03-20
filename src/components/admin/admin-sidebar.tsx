@@ -80,6 +80,7 @@ export default function AdminSidebar() {
           </div>
 
           <nav
+            aria-label="Admin navigation"
             className={classNames(
               "droplet-scrollbar flex flex-col gap-2 overflow-y-auto",
               !isOpen && "lg:items-center",
@@ -96,6 +97,7 @@ export default function AdminSidebar() {
                   key={link.href}
                   href={link.href}
                   title={!isOpen ? link.label : undefined}
+                  aria-current={isActive ? "page" : undefined}
                   className={classNames(
                     "flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-sm transition-all",
                     "hover:bg-lavenderHaze-300/70 dark:hover:bg-nightIndigo-500/30",

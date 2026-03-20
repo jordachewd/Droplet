@@ -10,20 +10,26 @@ import ImageHolder from "@/components/shared/image-holder";
 import AudioPlayer from "@/components/shared/audio-player";
 import VideoPlayer from "@/components/shared/video-player";
 import { TaskEndAction, TaskEndedReason } from "@/types/TaskData.d";
-import { SUPPORT_EMAIL } from "@/constants/support";
-import { STOP_REASON_MESSAGES } from "@/constants/stop-reasons";
 
 interface ChatBodyProps {
   messages: Message[];
   personaLabel?: string;
   conversationEnded?: boolean;
+  supportEmail: string;
+  stopReasonMessages: Record<TaskEndedReason, string>;
   endState?: {
     stopReason: TaskEndedReason;
     endAction: TaskEndAction;
   } | null;
 }
 
-function renderAction(endAction: TaskEndAction) {
+function renderAction({
+  endAction,
+  supportEmail,
+}: {
+  endAction: TaskEndAction;
+  supportEmail: string;
+}) {
   if (endAction === "start_new_conversation") {
     return (
       <Link
@@ -48,7 +54,7 @@ function renderAction(endAction: TaskEndAction) {
 
   return (
     <a
-      href={`mailto:${SUPPORT_EMAIL}`}
+      href={`mailto:${supportEmail}`}
       className="inline-flex items-center rounded-full border border-amber-500/60 px-3 py-1.5 text-sm font-semibold text-amber-900 transition-colors hover:bg-amber-100 dark:text-amber-100 dark:hover:bg-amber-500/10"
     >
       Contact support
@@ -60,6 +66,8 @@ export default function ChatBody({
   messages,
   personaLabel,
   conversationEnded = false,
+  supportEmail,
+  stopReasonMessages,
   endState = null,
 }: ChatBodyProps) {
   const parent = useRef<HTMLDivElement | null>(null);
@@ -198,14 +206,17 @@ export default function ChatBody({
                   Conversation Ended
                 </span>
                 <p className="font-medium">
-                  {STOP_REASON_MESSAGES[endState.stopReason]}
+                  {stopReasonMessages[endState.stopReason]}
                 </p>
               </div>
 
               <div className="flex flex-wrap items-center gap-3">
-                {renderAction(endState.endAction)}
+                {renderAction({
+                  endAction: endState.endAction,
+                  supportEmail,
+                })}
                 {endState.endAction === "contact_support" && (
-                  <span className="text-xs opacity-80">{SUPPORT_EMAIL}</span>
+                  <span className="text-xs opacity-80">{supportEmail}</span>
                 )}
               </div>
             </div>

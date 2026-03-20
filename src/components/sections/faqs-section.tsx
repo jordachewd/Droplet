@@ -1,12 +1,11 @@
-import { FaqItem, faqs } from "@/constants/faqs";
+import type { FaqItem } from "@/constants/faqs";
 import classNames from "classnames";
 
 interface FaqsProps {
-  faqsData?: FaqItem[];
+  faqsData: FaqItem[];
 }
 
 export default function Faqs({ faqsData }: FaqsProps) {
-  const faqItems = faqsData ?? faqs;
   const faqCardClass = classNames(
     "group rounded-lg bg-lavenderHaze-400 px-4 py-3 shadow-sm transition-all",
     "dark:bg-nightIndigo-900 open:bg-lavenderHaze-100 dark:open:bg-nightIndigo-900/50",
@@ -30,7 +29,7 @@ export default function Faqs({ faqsData }: FaqsProps) {
         </p>
       </div>
       <div className="flex flex-col gap-2.5">
-        {faqItems.map((faq) => (
+        {faqsData.map((faq) => (
           <details key={faq.id} className={faqCardClass}>
             <summary
               aria-controls={`panel${faq.id}-content`}

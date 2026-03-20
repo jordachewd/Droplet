@@ -4,8 +4,10 @@ import ProfileUsage from "@/components/sections/profile-usage";
 import PageWrapper from "@/components/layout/page-wrapper";
 import { getAllTransactions } from "@/lib/actions/transaction.action";
 import { ensureUserSynced } from "@/lib/utils/ensure-user-synced";
-import { getEffectivePlanConfig } from "@/lib/utils/effective-plan-config";
-import { SUPPORT_EMAIL } from "@/constants/support";
+import {
+  getEffectivePlanConfig,
+  getEffectiveSupportEmail,
+} from "@/lib/utils/effective-plan-config";
 import { Transaction } from "@/types/TransactionData.d";
 import { auth } from "@clerk/nextjs/server";
 
@@ -14,7 +16,10 @@ export default async function AppProfilePage() {
   const userData = userId ? await ensureUserSynced(userId) : null;
   let userTxns: Transaction[] | null = null;
 
-  const effectivePlanConfig = await getEffectivePlanConfig();
+  const [effectivePlanConfig, supportEmail] = await Promise.all([
+    getEffectivePlanConfig(),
+    getEffectiveSupportEmail(),
+  ]);
 
   if (userData?.plan) {
     userTxns = (await getAllTransactions(userId!)) || null;
@@ -54,7 +59,7 @@ export default async function AppProfilePage() {
         </p>
         <div className="flex items-center justify-center gap-4">
           <a
-            href={`mailto:${SUPPORT_EMAIL}`}
+            href={`mailto:${supportEmail}`}
             className="text-sm text-blue-600 underline dark:text-blue-400"
           >
             Contact Support

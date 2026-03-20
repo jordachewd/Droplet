@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-20 (PM audit #36. All Phases 1–76 complete. Milestone 22 COMPLETE. Milestone 23 Block A COMPLETE. Phase 76 COMPLETE (Node.js 20.20.1 fully stabilized, knip clean, server-only guards). TD-NODE-01 RESOLVED (Phase 76). TD-SEC-05 RESOLVED (Phase 76). Active: TD-PREM-01 (CRITICAL, Premium video=10 not -1), TD-DS-04 (MEDIUM), TD-API-09 (LOW). 379 unit tests (66 suites). Build passing.)
+> Last updated: 2026-03-20 (PM audit #38. All Phases 1–84, 80.1, 73.1, 74.1, 72.1 complete. Milestone 22 COMPLETE. Milestone 23 Block A COMPLETE. TD-SEC-05 FULLY RESOLVED (Phase 84). TD-PREM-01 RESOLVED (Phase 80.1). Phase 73.1 COMPLETE. Phase 74.1 COMPLETE (support email). Phase 72.1 COMPLETE (admin a11y). Active: TD-DS-04 (MEDIUM), TD-API-09 (LOW). 382 unit tests (66 suites). Build passing. Node.js 24.12.0 runtime.)
 
 ---
 
@@ -683,14 +683,14 @@ All file handling technical debt has been resolved. S3 cleanup on task/user dele
 
 #### Brand Color Palette (Milestone 22 — IMPLEMENTED Phase 64; Milestone 23 — Lime Green accent PENDING Phase 68)
 
-| Token Name       | Base Hex  | Role                                     | Status                 |
-| ---------------- | --------- | ---------------------------------------- | ---------------------- |
-| `nightIndigo`    | `#1B003F` | Dark theme background                    | Implemented            |
-| `twilightPurple` | `#4B0082` | Structural accent (non-button contexts)  | Implemented            |
-| `midnightBlue`   | `#191970` | Light theme text                         | Implemented            |
-| `lavenderHaze`   | `#E6E6FA` | Light theme background + dark theme text | Implemented            |
-| `dustyBlue`      | `#6495ED` | Structural accent (non-button contexts)  | Implemented            |
-| `limeGreen`      | `#B8F60D` | **Accent color** (buttons, CTAs)         | Implemented (Phase 68) |
+| Token Name       | Base Hex  | Role                                     | Status                                   |
+| ---------------- | --------- | ---------------------------------------- | ---------------------------------------- |
+| `nightIndigo`    | `#1B003F` | Dark theme background                    | Implemented                              |
+| `twilightPurple` | `#4B0082` | Structural accent (non-button contexts)  | Implemented                              |
+| `midnightBlue`   | `#191970` | Light theme text                         | Implemented                              |
+| `lavenderHaze`   | `#E6E6FA` | Light theme background + dark theme text | Implemented                              |
+| `dustyBlue`      | `#6495ED` | Structural accent (non-button contexts)  | Implemented                              |
+| `limeGreen`      | `#D9F20C` | **Accent color** (buttons, CTAs)         | Implemented (Phase 68, updated Phase 82) |
 
 **Light Theme:** Text (Primary) = `midnightBlue-500`, Background (Secondary) = `lavenderHaze-500`.
 
@@ -856,16 +856,16 @@ _None._
 
 ### Active — High Priority (PM Audit #35, Triple-Audit)
 
-| ID         | Area     | Description                                                                                                                                                                                                                                                           | Severity          |
-| ---------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
-| TD-NODE-01 | Build    | ~~`@types/node@^25.3.3` provides type definitions for Node 25.x APIs but runtime is Node 20.20.1. No `engines` field or `.nvmrc` file. Type/runtime mismatch risk.~~ **RESOLVED (Phase 76).** `@types/node@^20.17.0`, `engines.node >=20.20.1`, `.nvmrc 20.20.1`.     | ~~High~~ Resolved |
-| TD-SEC-05  | Security | ~~6+ server-side utility files with direct DB/API access lack `import "server-only"` guard.~~ **RESOLVED (Phase 76).** Guards added to `admin-audit.ts`, `admin-auth.ts`, `rate-limit.ts`, `usage-event-utils.ts`, `check-daily-conversations.ts`, `handleError.tsx`. | ~~High~~ Resolved |
+| ID         | Area     | Description                                                                                                                                                                                                                                              | Severity          |
+| ---------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
+| TD-NODE-01 | Build    | ~~`@types/node@^25.3.3` provides type definitions for Node 25.x APIs but runtime is Node 20.20.1.~~ **RESOLVED.** Runtime upgraded to Node 24.12.0 (`@types/node@^25.5.0`). `.nvmrc`/`engines` not required — stack works without them (owner decision). | ~~High~~ Resolved |
+| TD-SEC-05  | Security | ~~6+ server-side utility files with direct DB/API access lack `import "server-only"` guard.~~ **FULLY RESOLVED (Phase 76 + Phase 84).** Guards added to all 8 files. `ai-model-policy.ts` and `check-usage-limit.ts` now guarded.                        | ✅ Resolved       |
 
-### Active — Critical Priority (PM Audit #36, Triple-Audit)
+### ~~Active — Critical Priority (PM Audit #36, Triple-Audit)~~ (Resolved — PM Audit #37)
 
-| ID         | Area  | Description                                                                                                                                                                                                | Severity |
-| ---------- | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| TD-PREM-01 | Plans | `PLAN_LIMITS.Premium.video` defaults to `10` (same as Pro), not `-1` (unlimited). Root cause of owner-reported Premium media-limitation error. Premium images and audio are unlimited but video is capped. | Critical |
+| ID         | Area  | Description                                                                                                                                                                                                | Severity              | Status                                                                    |
+| ---------- | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------- | ------------------------------------------------------------------------- |
+| TD-PREM-01 | Plans | `PLAN_LIMITS.Premium.video` defaults to `10` (same as Pro), not `-1` (unlimited). Root cause of owner-reported Premium media-limitation error. Premium images and audio are unlimited but video is capped. | ~~Critical~~ Resolved | **RESOLVED (Phase 80.1)** — Changed to `-1`. Premium video now unlimited. |
 
 ### Active — Medium Priority (PM Audit #31)
 

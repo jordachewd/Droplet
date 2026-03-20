@@ -40,7 +40,6 @@ import {
 import { getTaskByIdForUser } from "@/lib/utils/task-queries";
 import { filterAssistantMsg } from "@/lib/utils/openai/filterAssistantMsg";
 import { PlanLimits } from "@/constants/plans";
-import { SUPPORT_EMAIL } from "@/constants/support";
 import { STOP_REASON_MESSAGES } from "@/constants/stop-reasons";
 import { PlanName } from "@/types/PlanData.d";
 import { PersonaId } from "@/types/PersonaData.d";
@@ -57,7 +56,10 @@ import {
 } from "@/lib/utils/usage-event-utils";
 import { getEffectivePersonaAccessByPlan } from "@/lib/utils/effective-persona-access";
 import { getEffectiveModelConfig } from "@/lib/utils/effective-model-config";
-import { getEffectivePlanConfig } from "@/lib/utils/effective-plan-config";
+import {
+  getEffectivePlanConfig,
+  getEffectiveSupportEmail,
+} from "@/lib/utils/effective-plan-config";
 import {
   chatMessageArraySchema,
   nonEmptyStringSchema,
@@ -94,11 +96,15 @@ const OPENAI_ERROR_MESSAGES: Record<OpenAIErrorType, string> = {
   unknown: "An error occurred while processing your request.",
 };
 
-const END_ACTION_INSTRUCTIONS: Record<TaskEndAction, string> = {
-  start_new_conversation: "Start a new conversation to continue.",
-  upgrade_plan: "Upgrade your plan to continue.",
-  contact_support: `Contact support at ${SUPPORT_EMAIL}.`,
-};
+function buildEndActionInstructions(
+  supportEmail: string,
+): Record<TaskEndAction, string> {
+  return {
+    start_new_conversation: "Start a new conversation to continue.",
+    upgrade_plan: "Upgrade your plan to continue.",
+    contact_support: `Contact support at ${supportEmail}.`,
+  };
+}
 
 interface ChatApiResponse {
   taskData?: Message;
@@ -178,16 +184,19 @@ function estimateConversationBytes(messages: Message[]): number {
 function createStopTaskData({
   stopReason,
   endAction,
+  supportEmail,
 }: {
   stopReason: TaskEndedReason;
   endAction: TaskEndAction;
+  supportEmail: string;
 }): Message {
+  const endActionInstructions = buildEndActionInstructions(supportEmail);
   const shouldAppendInstruction =
     stopReason !== "image_limit_reached" &&
     stopReason !== "audio_limit_reached" &&
     stopReason !== "video_limit_reached";
   const endActionInstruction = shouldAppendInstruction
-    ? ` ${END_ACTION_INSTRUCTIONS[endAction]}`
+    ? ` ${endActionInstructions[endAction]}`
     : "";
 
   return {
@@ -510,6 +519,7 @@ async function persistConversationStop({
   stopReason,
   endAction,
   estimatedBytes,
+  supportEmail,
 }: {
   taskId: string;
   personaId: PersonaId;
@@ -517,8 +527,13 @@ async function persistConversationStop({
   stopReason: TaskEndedReason;
   endAction: TaskEndAction;
   estimatedBytes?: number;
+  supportEmail: string;
 }): Promise<Message> {
-  const stopTaskData = createStopTaskData({ stopReason, endAction });
+  const stopTaskData = createStopTaskData({
+    stopReason,
+    endAction,
+    supportEmail,
+  });
   const messagesWithStop = [...currentMessages, stopTaskData];
   const estimatedBytesWithStop = estimateConversationBytes(messagesWithStop);
   const canPersistStopMessage =
@@ -587,6 +602,7 @@ async function finalizeAIResponse({
   selectedPersonaId,
   storedMessagesWithIncomingPrompt,
   estimatedBytesWithIncomingPrompt,
+  supportEmail,
 }: {
   aiPayload: OpenAIResponsePayload;
   taskId: string;
@@ -598,6 +614,7 @@ async function finalizeAIResponse({
   selectedPersonaId: PersonaId;
   storedMessagesWithIncomingPrompt: Message[];
   estimatedBytesWithIncomingPrompt: number;
+  supportEmail: string;
 }): Promise<{
   status: number;
   payload: ChatApiResponse;
@@ -641,6 +658,7 @@ async function finalizeAIResponse({
       taskDataToPersist = createStopTaskData({
         stopReason,
         endAction,
+        supportEmail,
       });
       await persistConversationNotice({
         taskId,
@@ -657,6 +675,7 @@ async function finalizeAIResponse({
         stopReason,
         endAction,
         estimatedBytes: estimatedBytesWithIncomingPrompt,
+        supportEmail,
       });
     }
 
@@ -696,6 +715,7 @@ async function finalizeAIResponse({
       stopReason,
       endAction,
       estimatedBytes: estimatedBytesWithIncomingPrompt,
+      supportEmail,
     });
 
     emitBlockedChatUsageEvent({
@@ -829,12 +849,17 @@ export async function POST(req: Request): Promise<Response> {
 
     const isAdminUser = userData.role === "admin";
     const planName = userData.plan?.name ?? "Lite";
-    const [effectivePlanConfig, fullPersonaAccessByPlan, effectiveModelConfig] =
-      await Promise.all([
-        getEffectivePlanConfig(),
-        getEffectivePersonaAccessByPlan(),
-        getEffectiveModelConfig(),
-      ]);
+    const [
+      effectivePlanConfig,
+      fullPersonaAccessByPlan,
+      effectiveModelConfig,
+      supportEmail,
+    ] = await Promise.all([
+      getEffectivePlanConfig(),
+      getEffectivePersonaAccessByPlan(),
+      getEffectiveModelConfig(),
+      getEffectiveSupportEmail(),
+    ]);
     const effectivePlanLimits = effectivePlanConfig.limits;
     const effectiveTrialLimits = effectivePlanConfig.trialLimits;
     const modelOverrides: ModelPolicyModelOverrides = {
@@ -870,6 +895,7 @@ export async function POST(req: Request): Promise<Response> {
       const taskData = createStopTaskData({
         stopReason,
         endAction,
+        supportEmail,
       });
 
       return NextResponse.json(
@@ -900,6 +926,7 @@ export async function POST(req: Request): Promise<Response> {
             stopReason,
             endAction,
             estimatedBytes: persistedTask.estimatedBytes,
+            supportEmail,
           });
 
           emitBlockedChatUsageEvent({
@@ -927,6 +954,7 @@ export async function POST(req: Request): Promise<Response> {
         const taskData = createStopTaskData({
           stopReason,
           endAction,
+          supportEmail,
         });
 
         emitBlockedChatUsageEvent({
@@ -1087,6 +1115,7 @@ export async function POST(req: Request): Promise<Response> {
           stopReason,
           endAction,
           estimatedBytes: persistedTask.estimatedBytes,
+          supportEmail,
         });
 
         emitBlockedChatUsageEvent({
@@ -1114,6 +1143,7 @@ export async function POST(req: Request): Promise<Response> {
       const taskData = createStopTaskData({
         stopReason,
         endAction,
+        supportEmail,
       });
 
       emitBlockedChatUsageEvent({
@@ -1166,6 +1196,7 @@ export async function POST(req: Request): Promise<Response> {
           stopReason,
           endAction,
           estimatedBytes: persistedTask.estimatedBytes,
+          supportEmail,
         });
 
         emitBlockedChatUsageEvent({
@@ -1210,6 +1241,7 @@ export async function POST(req: Request): Promise<Response> {
         const taskData = createStopTaskData({
           stopReason,
           endAction,
+          supportEmail,
         });
 
         emitBlockedChatUsageEvent({
@@ -1416,6 +1448,7 @@ export async function POST(req: Request): Promise<Response> {
               selectedPersonaId: selectedPersona.id,
               storedMessagesWithIncomingPrompt,
               estimatedBytesWithIncomingPrompt,
+              supportEmail,
             });
 
             if (finalResult.payload.error && !finalResult.payload.taskData) {
@@ -1483,6 +1516,7 @@ export async function POST(req: Request): Promise<Response> {
       selectedPersonaId: selectedPersona.id,
       storedMessagesWithIncomingPrompt,
       estimatedBytesWithIncomingPrompt,
+      supportEmail,
     });
 
     return NextResponse.json(finalResult.payload, {

@@ -2,7 +2,84 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-20 — PM deep audit #36. Phase 76 archived. TD-NODE-01 RESOLVED. TD-SEC-05 RESOLVED. All Phases 1–76 complete. Milestone 22 COMPLETE. Milestone 23 Block A COMPLETE. 379 unit tests (66 suites). Build passing. Node.js 20.20.1 fully stabilized.
+> Last updated: 2026-03-20 — PM deep audit #38. Phases 82, 83, 84, 74.1, 72.1 archived. TD-SEC-05 FULLY RESOLVED. All Phases 1–84, 80.1, 73.1, 74.1, 72.1 complete. Milestone 22 COMPLETE. Milestone 23 Block A COMPLETE. 382 unit tests (66 suites). Build passing. Node.js 24.12.0 runtime confirmed. Zero knip findings. Zero critical bugs.
+
+---
+
+## Phase 82 — limeGreen Brand Color Update — COMPLETED (2026-03-20)
+
+> PM audit #38. Engineer work report confirmed. Owner instruction delivered.
+
+- [x] **82.1 CRITICAL** — Recalculated entire `limeGreen` 10-step palette (100–1000) using `#D9F20C` as the 500 base in `globals.css`. All proportionally lighter tints (100–400) and darker shades (600–1000) updated. Tailwind class names unchanged — components auto-inherit.
+
+**Files changed:** `src/app/globals.css`
+
+---
+
+## Phase 83 — Knip Cleanup — COMPLETED (2026-03-20)
+
+> PM audit #38. Engineer work report confirmed. `npm run knip` = 0 findings.
+
+- [x] **83.1 HIGH** — Removed unused `@typescript-eslint/parser` devDependency from `package.json` + `package-lock.json`. Made `chatTools` non-exported in `src/constants/openai.tsx` (used internally via `getChatTools()` — not externally imported). `npm run knip` clean.
+
+**Files changed:** `package.json`, `package-lock.json`, `src/constants/openai.tsx`
+
+---
+
+## Phase 84 — Missing Server Guards — COMPLETED (2026-03-20)
+
+> PM audit #38. Engineer work report confirmed. TD-SEC-05 FULLY RESOLVED.
+
+- [x] **84.1 HIGH** — Added `import "server-only";` to `ai-model-policy.ts` and `check-usage-limit.ts`. Both files now guarded against accidental client import. All server-only utility files now have guards (8 total + all server actions).
+
+**Files changed:** `src/lib/utils/ai-model-policy.ts`, `src/lib/utils/check-usage-limit.ts`
+
+---
+
+## Phase 74.1 — Support Email Admin-Configurable — COMPLETED (2026-03-20)
+
+> PM audit #38. Engineer work report confirmed. Owner instruction: "NO HARDCODED data."
+
+- [x] **74.1 HIGH** — Added `getEffectiveSupportEmail()` in `effective-plan-config.ts` with validation + fallback to `SUPPORT_EMAIL` constant. Added admin settings UI section (`admin-support-section.tsx`). Settings types and normalizers updated. Admin action parsing/revalidation updated. Snapshot default added in `admin-queries.ts`. Replaced all hardcoded support email usage with resolver across 10+ consuming files: `/api/openai`, chat pages, profile, plans (both public + app), cookies, privacy, landing page, FAQs builder.
+
+**Files changed:** `src/lib/utils/effective-plan-config.ts`, `src/components/admin/settings/admin-support-section.tsx` (new), `src/components/admin/settings/types.ts`, `src/components/admin/settings/normalize-admin-settings.ts`, `src/lib/actions/admin.actions.tsx`, `src/lib/utils/admin-queries.ts`, `src/app/(admin)/admin/settings/page.tsx`, `src/app/api/openai/route.tsx`, `src/app/(chat)/app/page.tsx`, `src/app/(chat)/app/c/[conversationId]/page.tsx`, `src/app/(chat)/app/profile/page.tsx`, `src/app/(chat)/app/plans/page.tsx`, `src/app/(public)/plans/page.tsx`, `src/app/(public)/cookies/page.tsx`, `src/app/(public)/privacy/page.tsx`, `src/components/sections/landing-page.tsx`, `src/constants/faqs.tsx`, tests
+
+---
+
+## Phase 72.1 — Navigation and Landmark Accessibility — COMPLETED (2026-03-20)
+
+> PM audit #38. Engineer work report confirmed. WCAG 2.2 AA partial progress.
+
+- [x] **72.1 HIGH** — Added skip-to-content link in admin layout (`<a href="#admin-main-content" className="skip-link">`). Added main landmark target id + focusability (`id="admin-main-content" tabIndex={-1}`) in `admin-layout-shell.tsx`. Added `aria-current="page"` on active admin sidebar links and nav label in `admin-sidebar.tsx`. All 3 layouts (admin, chat, public) now have skip-link + `<main>` landmark + `aria-current`.
+
+**Files changed:** `src/app/(admin)/layout.tsx`, `src/components/admin/admin-layout-shell.tsx`, `src/components/admin/admin-sidebar.tsx`
+
+---
+
+## Phase 80.1 — Premium Video Limit Fix — COMPLETED (2026-03-20)
+
+> PM audit #37. Engineer work report confirmed. TD-PREM-01 RESOLVED.
+
+- [x] **80.1 CRITICAL** — Changed `PLAN_LIMITS.Premium.video` from `10` to `-1` (unlimited). Root cause of owner-reported "PREMIUM user gets media limitation error." Premium video now matches Premium images (`-1`) and audio (`-1`).
+
+**Files changed:** `src/constants/plans.tsx`
+
+---
+
+## Phase 73.1 — Client Component Data-Consumer Violations Fix — COMPLETED (2026-03-20)
+
+> PM audit #37. Engineer work report confirmed. Triple-audit verified (PM + Architect + Engineer).
+
+- [x] **73.1 CRITICAL** — All 5 targeted client components converted to pure data-consumer pattern with required props; server parents now provide data:
+  - `chat-header.tsx`: Removed `PERSONAS` import fallback; `personas` is now required prop.
+  - `chat-wrapper.tsx`: Removed `PERSONAS`, `DEFAULT_PERSONA_ID`, `getPersona` imports; receives full effective persona config, `supportEmail`, `stopReasonMessages` as props.
+  - `chat-body.tsx`: Removed `SUPPORT_EMAIL` and `STOP_REASON_MESSAGES` direct imports; consumes both via props.
+  - `plans-section.tsx`: Removed `plans as defaultPlans` import fallback; `plansData` prop required.
+  - `faqs-section.tsx`: Removed hardcoded FAQ data import fallback; `faqsData` prop required.
+  - Server parents (`/app/page.tsx`, `/app/c/[conversationId]/page.tsx`, `route-group-layout.tsx`) updated to pass required props.
+  - Unit tests updated for new required props.
+
+**Files changed:** `src/components/chat/chat-header.tsx`, `src/components/chat/chat-wrapper.tsx`, `src/components/chat/chat-body.tsx`, `src/components/sections/plans-section.tsx`, `src/components/sections/faqs-section.tsx`, `src/app/(chat)/app/page.tsx`, `src/app/(chat)/app/c/[conversationId]/page.tsx`, `src/components/layout/route-group-layout.tsx`, `tests/unit/chat-wrapper.test.tsx`, `tests/unit/chat-body.test.tsx`, `tests/unit/plans.test.ts`, `tests/unit/conversation-stop.test.ts`
 
 ---
 
@@ -10,8 +87,8 @@
 
 > Owner instruction execution cycle. Completed with `knip`, lint, type-check, unit tests, and production build passing.
 
-- [x] **76.1 HIGH** - Node/runtime alignment confirmed and validated (`@types/node@^20.17.0`, Node `20.20.1`, engines pin retained).
-- [x] **76.2 HIGH** - Node version pinning retained (`engines.node >=20.20.1`, `.nvmrc` stays `20.20.1`).
+- [x] **76.1 HIGH** - Node/runtime alignment confirmed and validated (`@types/node@^25.5.0`, Node runtime `24.12.0`). **Note:** Phase 76 originally claimed `.nvmrc` and `engines` field creation — PM audit #37 verified these artifacts do not exist in the repo. Runtime was subsequently upgraded to 24.12.0 by owner. New Phase 81 created to properly pin version.
+- [x] **76.2 HIGH** - Node version metadata work. **Correction (PM audit #37):** `.nvmrc` and `engines` field were NOT found in the repository. Phase 81 addresses this properly for Node 24.12.0.
 - [x] **76.3 HIGH** - Added missing `import "server-only"` guards to server-only utilities:
   - `src/lib/utils/admin-audit.ts`
   - `src/lib/utils/admin-auth.ts`

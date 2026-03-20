@@ -7,20 +7,19 @@ import { useShallow } from "zustand/react/shallow";
 import ToggleTheme from "@/components/shared/toggle-theme";
 import AvatarMenu from "@/components/shared/avatar-menu";
 import SidebarToggle from "@/components/shared/sidebar-toggle";
-import { PERSONAS } from "@/constants/assistant-personas";
 import { useChatStore } from "@/lib/hooks/use-chat-store";
 import { useUiStore } from "@/lib/hooks/use-ui-store";
 import { Persona, PersonaId } from "@/types/PersonaData.d";
 import { usePreferencesStore } from "@/lib/hooks/use-preferences-store";
 
 interface ChatHeaderProps {
-  personas?: Persona[];
+  personas: Persona[];
   className?: string;
   allowedPersonaIds?: PersonaId[];
 }
 
 export default function ChatHeader({
-  personas = PERSONAS,
+  personas,
   className: style = "",
   allowedPersonaIds,
 }: ChatHeaderProps) {

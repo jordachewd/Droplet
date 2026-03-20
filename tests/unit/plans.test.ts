@@ -68,7 +68,7 @@ describe("plans constants", () => {
     expect(PLAN_LIMITS.Premium).toEqual({
       images: -1,
       audio: -1,
-      video: 10,
+      video: -1,
       conversationsPerDay: -1,
       promptsPerConversation: -1,
     });
@@ -162,7 +162,7 @@ describe("plans constants", () => {
               isIncluded: true,
             }),
             expect.objectContaining({
-              label: "10 video generations per month",
+              label: "Unlimited video generations per month",
               isIncluded: true,
             }),
           ]),

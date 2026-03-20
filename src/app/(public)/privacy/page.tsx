@@ -6,7 +6,7 @@ import {
   legalReviewDisclaimer,
   privacySections,
 } from "@/constants/privacy-data";
-import { SUPPORT_EMAIL } from "@/constants/support";
+import { getEffectiveSupportEmail } from "@/lib/utils/effective-plan-config";
 
 export const metadata: Metadata = {
   title: "Privacy Policy | Droplet",
@@ -14,14 +14,15 @@ export const metadata: Metadata = {
     "Review how Droplet handles account data, conversations, files, billing records, cookies, and third-party service providers.",
 };
 
-export default function PrivacyPage() {
+export default async function PrivacyPage() {
+  const supportEmail = await getEffectiveSupportEmail();
   const privacySectionsWithContact = [
     ...privacySections,
     {
       title: "User rights and contact",
       paragraphs: [
         "Users should have a way to request access, correction, deletion, or export of data subject to legal, billing, fraud-prevention, and security constraints. Exact response timelines and jurisdiction-specific rights should be finalized before production use.",
-        `For privacy inquiries, support requests, or escalation related to account data, contact \`${SUPPORT_EMAIL}\` unless and until Droplet publishes a different official privacy contact.`,
+        `For privacy inquiries, support requests, or escalation related to account data, contact \`${supportEmail}\` unless and until Droplet publishes a different official privacy contact.`,
       ],
     },
   ];

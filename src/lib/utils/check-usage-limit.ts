@@ -1,3 +1,5 @@
+import "server-only";
+
 import { PLAN_LIMITS, PlanLimits } from "@/constants/plans";
 import { PlanName } from "@/types/PlanData.d";
 

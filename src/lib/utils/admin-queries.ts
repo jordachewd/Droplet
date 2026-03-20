@@ -6,6 +6,7 @@ import {
   PLAN_LIMITS,
   PlanLimits,
 } from "@/constants/plans";
+import { SUPPORT_EMAIL } from "@/constants/support";
 import { DEFAULT_FULL_PERSONA_ACCESS_BY_PLAN } from "@/lib/utils/resolve-entitlements";
 import { getPersona, PERSONAS } from "@/constants/assistant-personas";
 import { MODEL_POLICY_MATRIX } from "@/lib/utils/ai-model-policy";
@@ -728,6 +729,9 @@ export async function getAdminSettingsSnapshot() {
       ),
       theme: {
         defaultMode: "light",
+      },
+      support: {
+        supportEmail: SUPPORT_EMAIL,
       },
     },
   };
