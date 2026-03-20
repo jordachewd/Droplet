@@ -755,6 +755,7 @@ All button styles use Lime Green as the accent color in **both** light and dark 
 | Variable                            | Purpose                                                                                 |
 | ----------------------------------- | --------------------------------------------------------------------------------------- |
 | `MONGODB_URL`                       | MongoDB connection string                                                               |
+| `MONGODB_URL_FALLBACK`              | Optional non-SRV MongoDB URI used when SRV DNS resolution fails in local environments   |
 | `MONGODB_DB_NAME`                   | MongoDB database name                                                                   |
 | `NEXT_PUBLIC_API_BASE_URL`          | App base URL                                                                            |
 | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk public key                                                                        |

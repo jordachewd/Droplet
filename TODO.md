@@ -5,75 +5,10 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: Milestone 22 COMPLETE. Milestone 23 Block A COMPLETE. All Phases 1–71.2 complete (incl. 63.1–63.2, 61.1, 68.1–68.4, 69.1, 70.1–70.2, 71.1–71.2). 379 unit tests (66 suites). Build passing. Node.js 20.20.1 verified.**
+> **STATUS: Milestone 22 COMPLETE. Milestone 23 Block A COMPLETE. All Phases 1–71.2 complete (incl. 63.1–63.2, 61.1, 68.1–68.4, 69.1, 70.1–70.2, 71.1–71.2). 379 unit tests (66 suites). Build passing. Node.js 20.20.1 verified. Phase 76 archived to DONE (2026-03-20).**
 > **PM deep audit #35 (2026-03-19): Triple-audit (PM + Architect + Engineer). Phases 68.4, 71.1, 71.2, 70.2 archived. New priority sequence from owner instructions.**
-> **Priority order: 76.1 → 76.2 → 76.3 → 72.x → 73.x → 74.x → 31.4 → 75 → 46.x → 29.x → 26.x**
-> **HIGH: Phase 76 (Node.js/build hardening). HIGH: Phase 72 (WCAG 2.2 AA). CRITICAL: Phase 73 (server-only guards + codebase quality). CRITICAL: Phase 74 (admin configurability audit). LOW: remaining.**
-
----
-
-## Phase 76: Node.js 20.20.1 Hardening — HIGH
-
-### 76.1 HIGH — Pin `@types/node` to match runtime
-
-**Ref:** PM audit #35 — Triple-audit finding: `@types/node@^25.3.3` provides Node 25.x type definitions but runtime is Node 20.20.1. TypeScript allows Node 25-only APIs that don't exist at runtime.
-
-**Files:** `package.json`
-
-**What to do:**
-
-1. Change `@types/node` from `^25.3.3` to `^20.17.0` (latest 20.x types).
-2. Run `npm install` to update lockfile.
-3. Run `npx tsc --noEmit` to verify no Node 25-only APIs are used.
-4. Run `npm run test` to verify all tests pass.
-5. Run `npm run build` to verify build passes.
-
-**Acceptance criteria:**
-
-- [ ] `@types/node` is `^20.17.0` in `package.json`
-- [ ] `tsc --noEmit` passes
-- [ ] All tests pass
-- [ ] Build passes
-
----
-
-### 76.2 HIGH — Add Node.js version pinning
-
-**Ref:** PM audit #35 — No `engines` field or `.nvmrc` file. Any environment could use wrong Node version.
-
-**Files:** `package.json`, `.nvmrc` (new)
-
-**What to do:**
-
-1. Add `"engines": { "node": ">=20.20.1" }` to `package.json`.
-2. Create `.nvmrc` with `20.20.1`.
-3. Verify no CI/deployment impact.
-
-**Acceptance criteria:**
-
-- [ ] `engines.node` in `package.json`
-- [ ] `.nvmrc` exists with `20.20.1`
-- [ ] Build passes
-
----
-
-### 76.3 HIGH — Add `import "server-only"` to unguarded server utilities
-
-**Ref:** PM audit #35 — Triple-audit consensus: 6+ files with direct DB/API access lack `import "server-only"` guard.
-
-**Files:** `src/lib/utils/task-queries.tsx`, `src/lib/utils/admin-audit.ts`, `src/lib/utils/admin-auth.ts`, `src/lib/utils/rate-limit.ts`, `src/lib/utils/usage-event-utils.ts`, `src/lib/utils/check-daily-conversations.ts`, `src/lib/utils/handleError.ts`
-
-**What to do:**
-
-1. Add `import "server-only";` as line 1 to each file listed above.
-2. Run `npx tsc --noEmit` to verify no client components import these.
-3. Run `npm run build` to verify.
-
-**Acceptance criteria:**
-
-- [ ] All 7 files have `import "server-only"` guard
-- [ ] No compilation errors (no client components import these)
-- [ ] Build passes
+> **Priority order: 72.x → 73.x → 74.x → 31.4 → 75 → 46.x → 29.x → 26.x**
+> **HIGH: Phase 72 (WCAG 2.2 AA). CRITICAL: Phase 73 (codebase quality/data-consumer discipline). CRITICAL: Phase 74 (admin configurability audit). LOW: remaining.**
 
 ---
 
@@ -153,12 +88,11 @@
 
 **What to do:**
 
-1. Verify `chat-persona-picker.tsx` receives personas as props (currently imports `PERSONAS` directly from constants).
-2. Verify `chat-header.tsx` always receives `personas` prop and does not fall back to hardcoded `PERSONAS`.
-3. Verify `chat-wrapper.tsx` receives effective persona data from parent Server Component.
-4. Verify `plans-section.tsx` always receives `plansData` prop.
-5. Verify `faqs-section.tsx` always receives `faqsData` prop.
-6. Remove hardcoded fallback constants from client components where callers always pass resolved data.
+1. Verify `chat-header.tsx` always receives `personas` prop and does not fall back to hardcoded `PERSONAS`.
+2. Verify `chat-wrapper.tsx` receives effective persona data from parent Server Component.
+3. Verify `plans-section.tsx` always receives `plansData` prop.
+4. Verify `faqs-section.tsx` always receives `faqsData` prop.
+5. Remove hardcoded fallback constants from client components where callers always pass resolved data.
 
 **Acceptance criteria:**
 

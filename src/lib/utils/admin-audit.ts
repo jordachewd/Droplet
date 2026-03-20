@@ -1,3 +1,5 @@
+import "server-only";
+
 import { connectToDatabase } from "@/lib/database/mongoose";
 import AdminAuditLog from "@/lib/database/models/admin-audit-log.model";
 

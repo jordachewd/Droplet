@@ -6,7 +6,7 @@
     "src/components/layout/route-group-layout.tsx",
     "tests/unit/test-support/server-only.ts"
   ],
-  "ignoreDependencies": ["prettier", "zustand"],
+  "ignoreDependencies": ["prettier"],
   "ignoreBinaries": ["codex"],
   "ignoreExportsUsedInFile": {
     "interface": true,

@@ -10,14 +10,12 @@ import {
 } from "@/constants/plans";
 import AppSetting from "@/lib/database/models/app-setting.model";
 import { connectToDatabase } from "@/lib/database/mongoose";
-import { PlanName } from "@/types/PlanData.d";
 
 type AppSettingRecord = {
   key: string;
   value: unknown;
 };
 
-const PLAN_NAMES: PlanName[] = ["Lite", "Pro", "Premium"];
 const DEFAULT_CURRENCY_SYMBOL = "$";
 
 export interface EffectivePlanConfig {
@@ -278,34 +276,4 @@ export async function getEffectiveCurrencySymbol(): Promise<string> {
   } catch {
     return DEFAULT_PLAN_PRICING.currencySymbol;
   }
-}
-
-export async function getEffectiveTrialLimits(): Promise<PersonaTrialLimits> {
-  try {
-    await connectToDatabase();
-
-    const setting = (await AppSetting.findOne({ key: "admin.trialLimits" })
-      .select("value")
-      .lean()) as AppSettingRecord | null;
-
-    return normalizeTrialLimitsValue(setting?.value);
-  } catch {
-    return { ...PERSONA_TRIAL_LIMITS };
-  }
-}
-
-export function getPlanLimit({
-  limits,
-  planName,
-  limitType,
-}: {
-  limits: PlanLimits;
-  planName: PlanName;
-  limitType: keyof PlanLimits[PlanName];
-}): number {
-  if (!PLAN_NAMES.includes(planName)) {
-    return PLAN_LIMITS.Lite[limitType];
-  }
-
-  return limits[planName][limitType];
 }

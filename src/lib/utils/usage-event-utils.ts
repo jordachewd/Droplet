@@ -1,3 +1,5 @@
+import "server-only";
+
 import { estimateModelCostCents } from "@/lib/utils/ai-model-policy";
 import UsageEvent from "@/lib/database/models/usage-event.model";
 import { PersonaId } from "@/types/PersonaData.d";

@@ -6,6 +6,43 @@
 
 ---
 
+## Phase 76 - Node Runtime + Hygiene Hardening - COMPLETED (2026-03-20)
+
+> Owner instruction execution cycle. Completed with `knip`, lint, type-check, unit tests, and production build passing.
+
+- [x] **76.1 HIGH** - Node/runtime alignment confirmed and validated (`@types/node@^20.17.0`, Node `20.20.1`, engines pin retained).
+- [x] **76.2 HIGH** - Node version pinning retained (`engines.node >=20.20.1`, `.nvmrc` stays `20.20.1`).
+- [x] **76.3 HIGH** - Added missing `import "server-only"` guards to server-only utilities:
+  - `src/lib/utils/admin-audit.ts`
+  - `src/lib/utils/admin-auth.ts`
+  - `src/lib/utils/rate-limit.ts`
+  - `src/lib/utils/usage-event-utils.ts`
+  - `src/lib/utils/check-daily-conversations.ts`
+  - `src/lib/utils/handleError.tsx`
+- [x] **HIGH** - `knip` cleanup completed with item-by-item verification:
+  - Added explicit dependency declarations: `zod`, `mongodb`
+  - Removed unused Tiptap dependencies (`@tiptap/pm`, `@tiptap/react`, `@tiptap/starter-kit`)
+  - Added npm script entries for manual maintenance/testing scripts:
+    - `test:live:audio-models`
+    - `test:live:image-models`
+    - `migrate:removed-personas`
+  - Removed dead component file: `src/components/chat/chat-persona-picker.tsx`
+  - Removed dead exports from config/validation utilities
+  - Removed stale `zustand` ignore from `knip.json`
+  - Result: `npm run knip` clean (0 findings)
+- [x] **HIGH** - Added Mongo SRV-failure resilience path in DB connector:
+  - `connectToDatabase()` now resets cached promise on failure so process can recover without restart
+  - Optional fallback URI support via `MONGODB_URL_FALLBACK` for SRV DNS failure scenarios
+- [x] **HIGH** - Reduced repeated self-heal failure amplification:
+  - Added in-flight dedupe + short-lived result cache in `ensure-user-synced`
+  - Added failure log throttling to avoid repeated stderr flood during outages
+  - Test mode bypass preserves deterministic unit tests
+- [x] **HIGH** - Fixed Next.js smooth-scroll warning by adding `data-scroll-behavior="smooth"` to root `<html>` in `src/app/layout.tsx`.
+
+**Files changed:** `package.json`, `package-lock.json`, `knip.json`, `src/app/layout.tsx`, `src/lib/database/mongoose.tsx`, `src/lib/utils/ensure-user-synced.ts`, `src/lib/utils/admin-audit.ts`, `src/lib/utils/admin-auth.ts`, `src/lib/utils/rate-limit.ts`, `src/lib/utils/usage-event-utils.ts`, `src/lib/utils/check-daily-conversations.ts`, `src/lib/utils/handleError.tsx`, `src/lib/utils/effective-plan-config.ts`, `src/lib/utils/validation-schemas.ts`, `src/components/chat/chat-persona-picker.tsx` (deleted).
+
+---
+
 ## Phase 68.4 — Button Text Color Correction — COMPLETED (2026-03-19)
 
 > PM audit #35. Engineer work report confirmed. TD-DS-07 RESOLVED.

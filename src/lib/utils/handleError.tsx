@@ -1,3 +1,5 @@
+import "server-only";
+
 // ERROR HANDLER
 
 interface HdlErrorProps {
