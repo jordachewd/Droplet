@@ -5,6 +5,7 @@ import type { AnchorHTMLAttributes, ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 import ChatBody from "@/components/chat/chat-body";
 import { SUPPORT_EMAIL } from "@/constants/support";
+import { STOP_REASON_MESSAGES } from "@/constants/stop-reasons";
 import type { TaskEndAction, TaskEndedReason } from "@/types/TaskData.d";
 
 vi.mock("next/link", () => ({
@@ -72,6 +73,8 @@ function renderChatBodyEndState(
     <ChatBody
       messages={[]}
       conversationEnded
+      supportEmail={SUPPORT_EMAIL}
+      stopReasonMessages={STOP_REASON_MESSAGES}
       endState={{ stopReason, endAction }}
     />,
   );
@@ -121,7 +124,13 @@ describe("ChatBody", () => {
 
   it("applies amber ended-conversation styling only when the conversation is ended", () => {
     const { container, rerender } = render(
-      <ChatBody messages={[]} conversationEnded={false} endState={null} />,
+      <ChatBody
+        messages={[]}
+        conversationEnded={false}
+        supportEmail={SUPPORT_EMAIL}
+        stopReasonMessages={STOP_REASON_MESSAGES}
+        endState={null}
+      />,
     );
 
     const activeChatBody = container.querySelector(".ChatBody");
@@ -136,6 +145,8 @@ describe("ChatBody", () => {
       <ChatBody
         messages={[]}
         conversationEnded
+        supportEmail={SUPPORT_EMAIL}
+        stopReasonMessages={STOP_REASON_MESSAGES}
         endState={{
           stopReason: "prompt_limit_reached",
           endAction: "start_new_conversation",

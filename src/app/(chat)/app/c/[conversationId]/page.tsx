@@ -1,6 +1,8 @@
 import { auth } from "@clerk/nextjs/server";
 import { notFound } from "next/navigation";
 import ChatWrapper from "@/components/chat/chat-wrapper";
+import { STOP_REASON_MESSAGES } from "@/constants/stop-reasons";
+import { SUPPORT_EMAIL } from "@/constants/support";
 import { getEffectivePersonaAccessByPlan } from "@/lib/utils/effective-persona-access";
 import { getEffectivePersonaConfig } from "@/lib/utils/effective-persona-config";
 import { getTaskByIdForUser } from "@/lib/utils/task-queries";
@@ -48,6 +50,8 @@ export default async function ConversationPage({
   return (
     <ChatWrapper
       personas={personas}
+      supportEmail={SUPPORT_EMAIL}
+      stopReasonMessages={STOP_REASON_MESSAGES}
       initialMessages={task.messages}
       initialTaskId={task._id}
       initialPersonaId={task.personaId}

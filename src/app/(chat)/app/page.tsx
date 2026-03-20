@@ -1,6 +1,8 @@
 import { auth } from "@clerk/nextjs/server";
 import { notFound } from "next/navigation";
 import ChatWrapper from "@/components/chat/chat-wrapper";
+import { STOP_REASON_MESSAGES } from "@/constants/stop-reasons";
+import { SUPPORT_EMAIL } from "@/constants/support";
 import { getEffectivePersonaAccessByPlan } from "@/lib/utils/effective-persona-access";
 import { getEffectivePersonaConfig } from "@/lib/utils/effective-persona-config";
 import { ensureUserSynced } from "@/lib/utils/ensure-user-synced";
@@ -32,6 +34,8 @@ export default async function ChatPage({ searchParams }: ChatPageProps) {
   return (
     <ChatWrapper
       personas={personas}
+      supportEmail={SUPPORT_EMAIL}
+      stopReasonMessages={STOP_REASON_MESSAGES}
       initialPersonaId={persona}
       allowedPersonaIds={entitlements.allowedPersonaIds}
     />

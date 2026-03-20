@@ -8,11 +8,6 @@ import ChatIntro from "@/components/chat/chat-intro";
 import ChatBody from "@/components/chat/chat-body";
 import ChatInput from "@/components/chat/chat-input";
 import AlertMessage from "@/components/shared/alert-message";
-import {
-  DEFAULT_PERSONA_ID,
-  PERSONAS,
-  getPersona,
-} from "@/constants/assistant-personas";
 import { AlertParams } from "@/types/AlertData.d";
 import { filterAssistantMsg } from "@/lib/utils/openai/filterAssistantMsg";
 import { Persona, PersonaId } from "@/types/PersonaData.d";
@@ -21,7 +16,9 @@ import { useChatStore } from "@/lib/hooks/use-chat-store";
 import { usePreferencesStore } from "@/lib/hooks/use-preferences-store";
 
 interface ChatWrapperProps {
-  personas?: Persona[];
+  personas: Persona[];
+  supportEmail: string;
+  stopReasonMessages: Record<TaskEndedReason, string>;
   initialPersonaId?: string;
   allowedPersonaIds?: PersonaId[];
   initialTaskId?: string | null;
@@ -63,7 +60,9 @@ type ChatStreamEvent =
     };
 
 export default function ChatWrapper({
-  personas = PERSONAS,
+  personas,
+  supportEmail,
+  stopReasonMessages,
   initialPersonaId,
   allowedPersonaIds,
   initialTaskId = null,
@@ -76,7 +75,10 @@ export default function ChatWrapper({
     () => initialMessagesProp ?? [],
     [initialMessagesProp],
   );
-  const fallbackPersona = personas[0] ?? getPersona(DEFAULT_PERSONA_ID);
+  const fallbackPersona = personas[0];
+  if (!fallbackPersona) {
+    throw new Error("ChatWrapper requires at least one persona.");
+  }
   const fallbackPersonaId = fallbackPersona.id;
   const personaMap = useMemo(
     () =>
@@ -497,6 +499,8 @@ export default function ChatWrapper({
             messages={task}
             personaLabel={selectedPersona.label}
             conversationEnded={isConversationEnded}
+            supportEmail={supportEmail}
+            stopReasonMessages={stopReasonMessages}
             endState={endState}
           />
         )}

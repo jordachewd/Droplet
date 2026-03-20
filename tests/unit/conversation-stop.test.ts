@@ -360,11 +360,11 @@ describe("conversation stop enforcement", () => {
     );
   });
 
-  it("sets video_limit_reached when video usage equals the Premium quota", async () => {
+  it("sets video_limit_reached when video usage equals the Pro quota", async () => {
     vi.mocked(getUserById).mockResolvedValue({
       clerkId: "user_123",
       plan: {
-        name: "Premium",
+        name: "Pro",
         expiresOn: new Date(Date.now() + 86_400_000),
         imageGenerations: 0,
         audioGenerations: 0,

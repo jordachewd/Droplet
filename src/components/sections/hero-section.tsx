@@ -20,7 +20,7 @@ export default function HeroSection() {
 
   const heroGlowClass = classNames(
     "absolute -bottom-28 left-1/2 z-0 h-[90%] w-[50%] -translate-x-1/2",
-    "bg-lavenderHaze-200 dark:bg-twilightPurple-600 rounded-full blur-3xl opacity-70" ,
+    "bg-lavenderHaze-200 dark:bg-twilightPurple-600 rounded-full blur-3xl opacity-70",
   );
 
   return (

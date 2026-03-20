@@ -44,7 +44,7 @@ export const PLAN_LIMITS: PlanLimits = {
   Premium: {
     images: -1,
     audio: -1,
-    video: 10,
+    video: -1,
     conversationsPerDay: -1,
     promptsPerConversation: -1,
   },

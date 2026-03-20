@@ -4,6 +4,8 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { Message } from "@/types";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import ChatWrapper from "@/components/chat/chat-wrapper";
+import { PERSONAS } from "@/constants/assistant-personas";
+import { STOP_REASON_MESSAGES } from "@/constants/stop-reasons";
 
 vi.mock("@/components/chat/chat-header", () => ({
   default: () => <div data-testid="chat-header" />,
@@ -78,6 +80,12 @@ vi.mock("@/lib/utils/openai/filterAssistantMsg", () => ({
 }));
 
 describe("ChatWrapper", () => {
+  const chatWrapperProps = {
+    personas: PERSONAS,
+    supportEmail: "support@example.com",
+    stopReasonMessages: STOP_REASON_MESSAGES,
+  };
+
   beforeEach(() => {
     vi.restoreAllMocks();
   });
@@ -96,7 +104,7 @@ describe("ChatWrapper", () => {
       ),
     );
 
-    render(<ChatWrapper />);
+    render(<ChatWrapper {...chatWrapperProps} />);
 
     fireEvent.click(screen.getByRole("button", { name: "Send message" }));
 
@@ -135,6 +143,7 @@ describe("ChatWrapper", () => {
 
     render(
       <ChatWrapper
+        {...chatWrapperProps}
         initialMessages={[{ role: "user", whois: "user", content: "prior" }]}
       />,
     );
@@ -184,6 +193,7 @@ describe("ChatWrapper", () => {
 
     render(
       <ChatWrapper
+        {...chatWrapperProps}
         initialMessages={[{ role: "user", whois: "user", content: "prior" }]}
       />,
     );
@@ -209,7 +219,7 @@ describe("ChatWrapper", () => {
   it("shows a generic alert when the chat request fails before a response returns", async () => {
     vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("Network down"));
 
-    render(<ChatWrapper />);
+    render(<ChatWrapper {...chatWrapperProps} />);
 
     fireEvent.click(screen.getByRole("button", { name: "Send message" }));
 
@@ -249,7 +259,7 @@ describe("ChatWrapper", () => {
       }),
     );
 
-    render(<ChatWrapper />);
+    render(<ChatWrapper {...chatWrapperProps} />);
 
     fireEvent.click(screen.getByRole("button", { name: "Send message" }));
 

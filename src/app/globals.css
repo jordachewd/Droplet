@@ -125,7 +125,7 @@
   }
 
   .AppGradientBg {
-    @apply fixed inset-0 -z-10 opacity-50 w-dvw h-dvh transition-all animate-ease-in-out duration-1000 ;
+    @apply fixed inset-0 -z-10 opacity-50 w-dvw h-dvh transition-all animate-ease-in-out duration-1000;
     @apply bg-lavenderHaze-300 text-midnightBlue-600 dark:bg-nightIndigo-800 dark:text-lavenderHaze-500;
 
     @apply bg-radial-[at_100%_0%] from-[400px] via-[1400px] to-[2700px];

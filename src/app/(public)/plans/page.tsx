@@ -37,7 +37,6 @@ export default async function PlansPage() {
 
       <section className="flex w-full p-4 max-w-screen-2xl mx-auto">
         <div className="flex w-full flex-col p-8 gap-4 rounded-2xl border shadow-sm bg-lavenderHaze-200/85 dark:bg-nightIndigo-900/82">
-         
           <h2 className="heading-5">Still need help?</h2>
           <p className="body-2 mt-3 max-w-2xl text-sm md:text-base">
             Review the public plans page for limits and pricing, or reach out to
@@ -58,7 +57,6 @@ export default async function PlansPage() {
           </div>
         </div>
       </section>
-
     </section>
   );
 }
