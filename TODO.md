@@ -5,10 +5,32 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: Milestone 22 COMPLETE. Milestone 23 Block A COMPLETE. All Phases 1–71.2 complete (incl. 63.1–63.2, 61.1, 68.1–68.4, 69.1, 70.1–70.2, 71.1–71.2). 379 unit tests (66 suites). Build passing. Node.js 20.20.1 verified. Phase 76 archived to DONE (2026-03-20).**
-> **PM deep audit #35 (2026-03-19): Triple-audit (PM + Architect + Engineer). Phases 68.4, 71.1, 71.2, 70.2 archived. New priority sequence from owner instructions.**
-> **Priority order: 72.x → 73.x → 74.x → 31.4 → 75 → 46.x → 29.x → 26.x**
-> **HIGH: Phase 72 (WCAG 2.2 AA). CRITICAL: Phase 73 (codebase quality/data-consumer discipline). CRITICAL: Phase 74 (admin configurability audit). LOW: remaining.**
+> **STATUS: Milestone 22 COMPLETE. Milestone 23 Block A COMPLETE. All Phases 1–76 complete (incl. 63.1–63.2, 61.1, 68.1–68.4, 69.1, 70.1–70.2, 71.1–71.2, 76). 379 unit tests (66 suites). Build passing. Node.js 20.20.1 verified. Phases 76–78 archived to DONE (2026-03-20).**
+> **PM deep audit #36 (2026-03-20): Triple-audit (PM + Architect + Engineer). Phase 76 archived. Premium video limit root cause confirmed. New priority sequence from owner instructions.**
+> **Priority order: 80 (CRITICAL) → 73.x (CRITICAL) → 74.x (CRITICAL/HIGH) → 72.x (HIGH) → 31.4 → 75 → 46.x → 29.x → 26.x**
+
+---
+
+## Phase 80: Premium Video Limit Fix — CRITICAL
+
+### 80.1 CRITICAL — Fix `PLAN_LIMITS.Premium.video` default
+
+**Ref:** Owner instruction: "PREMIUM user has media limitations — gets error message about that — why?" Triple-audit root cause: `PLAN_LIMITS.Premium.video = 10` (same as Pro). Premium images = `-1` (unlimited), audio = `-1`, but video = `10`. This is a bug — Premium video should be `-1` (unlimited).
+
+**Files:** `src/constants/plans.tsx`
+
+**What to do:**
+
+1. Change `PLAN_LIMITS.Premium.video` from `10` to `-1`.
+2. Update SPEC.md Premium plan limits table to show `Unlimited` for video.
+3. Run `npm run test` to verify no test regressions.
+
+**Acceptance criteria:**
+
+- [ ] `PLAN_LIMITS.Premium.video` is `-1`
+- [ ] Premium video is now unlimited (matching images/audio)
+- [ ] All tests pass
+- [ ] Build passes
 
 ---
 
@@ -18,87 +40,110 @@
 
 **Ref:** Owner instruction: "Entire app must be WCAG 2.2 AA accessibility standards compliant."
 
-**Files:** `src/components/layout/header.tsx`, `src/components/layout/footer.tsx`, `src/app/(chat)/layout.tsx`
+**Files:** `src/app/(admin)/layout.tsx`, `src/components/admin/admin-layout-shell.tsx`
 
 **What to do:**
 
-1. Add `aria-label="Main navigation"` to `<nav>` in header.
-2. Add responsive mobile navigation (hamburger menu for `md:hidden`).
-3. Wrap footer links in `<nav aria-label="Footer navigation">`.
-4. Add skip-to-content link at the top of the page layout.
-5. Ensure semantic `<footer>` element is used (not `<section>`).
+1. Add skip-to-content link in admin layout (missing — present in chat and public layouts).
+2. Add `<main>` landmark element in admin layout.
+3. Verify all layouts have proper landmark hierarchy (`<header>`, `<nav>`, `<main>`, `<footer>`).
+4. Add `aria-current="page"` on active navigation links in header and sidebar.
 
 **Acceptance criteria:**
 
-- [ ] All `<nav>` elements have `aria-label`
-- [ ] Mobile navigation exists and is keyboard-accessible
-- [ ] Skip-to-content link present
-- [ ] Footer uses semantic element
+- [ ] Skip-to-content link present in admin layout
+- [ ] `<main>` landmark in admin layout
+- [ ] `aria-current="page"` on active nav links
 - [ ] Build passes
 
 ---
 
-### 72.2 HIGH — Image alt text and focus indicators
+### 72.2 HIGH — Color contrast and opacity violations
 
-**Files:** `src/components/sections/hero-section.tsx`, `src/components/shared/persona-card.tsx`, all components with `<Image>`
+**Ref:** Triple-audit finding: `opacity-60`, `opacity-65`, `opacity-70` on text elements likely fail WCAG AA 4.5:1 contrast ratio.
+
+**Files:** Admin pages, landing page, sidebar, footer, settings descriptions, profile usage labels — all files with `opacity-60`/`opacity-65`/`opacity-70`/`opacity-85` on text
 
 **What to do:**
 
-1. Replace `alt="hero"` with descriptive alt text in hero section.
-2. Audit all `<Image>` components for meaningful alt text.
-3. Verify all interactive elements have visible focus indicators (`:focus-visible`).
-4. Verify color contrast ratios meet WCAG AA (4.5:1 for text, 3:1 for large text).
+1. Audit all `opacity-60`, `opacity-65`, `opacity-70` on text elements across the codebase.
+2. Replace opacity-based text dimming with explicit color tokens that maintain AA contrast (e.g., `text-midnightBlue-300 dark:text-lavenderHaze-300` instead of `opacity-60`).
+3. Verify key color combinations pass 4.5:1 for normal text, 3:1 for large text.
+4. Test with a contrast checker tool.
 
 **Acceptance criteria:**
 
-- [ ] No generic alt text (`alt="hero"`, `alt="image"`)
-- [ ] All interactive elements have visible focus ring
-- [ ] Key color combinations pass contrast ratio check
+- [ ] No `opacity-60` or `opacity-65` on text-bearing elements
+- [ ] All text meets 4.5:1 contrast on its background
 - [ ] Build passes
 
 ---
 
-### 72.3 MEDIUM — Form label and ARIA audit
+### 72.3 HIGH — Form label, ARIA, and semantic HTML audit
 
-**Files:** All form components in `src/components/`
+**Files:** All form components, modals, interactive elements
 
 **What to do:**
 
-1. Audit all `<input>`, `<select>`, `<textarea>` for associated `<label>` or `aria-label`.
-2. Verify all required fields have `aria-required="true"`.
-3. Verify form error messages are announced via `aria-live="polite"` or `role="alert"`.
-4. Verify all dialog/modal components have `aria-modal="true"` and focus trap.
+1. Fix `AvatarMenu` `aria-expanded`: use `aria-expanded={open}` instead of `aria-expanded={open ? "true" : undefined}`.
+2. Fix `ConfirmationModal` duplicate IDs: use `useId()` hook for unique `aria-labelledby`/`aria-describedby` IDs.
+3. Add `aria-hidden="true"` to decorative Logo SVG in `app-logo.tsx` when text label is visible.
+4. Audit all admin form inputs for proper `<label>` association.
+5. Verify all `required` fields have `aria-required="true"`.
+6. Verify error messages use `aria-live="polite"` or `role="alert"`.
 
 **Acceptance criteria:**
 
-- [ ] All form controls have labels
-- [ ] Error messages accessible to screen readers
-- [ ] Modal focus trapping works
+- [ ] `aria-expanded` always has a value (not `undefined`)
+- [ ] No duplicate element IDs across simultaneous components
+- [ ] All form controls have associated labels
+- [ ] Build passes
+
+---
+
+### 72.4 MEDIUM — Admin table semantics
+
+**Ref:** Triple-audit finding: Admin tables use grid divs, not `<table>` — screen readers cannot navigate as table.
+
+**Files:** `src/components/admin/users/admin-users-table.tsx`, `src/components/admin/transactions/admin-transactions-table.tsx`, `src/components/admin/website/admin-website-manager.tsx`
+
+**What to do:**
+
+1. Evaluate whether admin tables should use semantic `<table>`, `<thead>`, `<tbody>`, `<tr>`, `<th>`, `<td>` elements.
+2. If using div-based grid, add ARIA table roles: `role="table"`, `role="row"`, `role="columnheader"`, `role="cell"`.
+3. Add table caption/aria-label for context.
+
+**Acceptance criteria:**
+
+- [ ] Admin tables navigable by screen readers as data tables
+- [ ] Column headers associated with cells
 - [ ] Build passes
 
 ---
 
 ## Phase 73: Codebase Quality & Server-Side Operations — CRITICAL
 
-### 73.1 CRITICAL — Verify all client components are data consumers
+### 73.1 CRITICAL — Fix all client component data-consumer violations
 
-**Ref:** Owner instruction: "Components must be data consumers, especially 'use client' ones."
+**Ref:** Owner instruction: "Components must be data consumers, especially 'use client' ones." Triple-audit found 5 violations.
 
-**Files:** All `"use client"` components
+**Files:** `src/components/chat/chat-header.tsx`, `src/components/chat/chat-wrapper.tsx`, `src/components/sections/plans-section.tsx`, `src/components/sections/faqs-section.tsx`, `src/components/chat/chat-body.tsx`
 
 **What to do:**
 
-1. Verify `chat-header.tsx` always receives `personas` prop and does not fall back to hardcoded `PERSONAS`.
-2. Verify `chat-wrapper.tsx` receives effective persona data from parent Server Component.
-3. Verify `plans-section.tsx` always receives `plansData` prop.
-4. Verify `faqs-section.tsx` always receives `faqsData` prop.
-5. Remove hardcoded fallback constants from client components where callers always pass resolved data.
+1. `chat-header.tsx`: Remove `PERSONAS` import fallback. Ensure all parent Server Components always pass `personas` prop with effective config data. Make the prop required (no default).
+2. `chat-wrapper.tsx`: Remove `PERSONAS`, `DEFAULT_PERSONA_ID`, `getPersona` imports. Receive full effective persona config as props from parent Server Component.
+3. `plans-section.tsx`: Remove `plans as defaultPlans` import fallback. Make `plansData` prop required.
+4. `faqs-section.tsx`: Remove hardcoded FAQ data import fallback. Make `faqsData` prop required.
+5. `chat-body.tsx`: Remove `SUPPORT_EMAIL` and `STOP_REASON_MESSAGES` direct imports. Receive these values as props from parent (`chat-wrapper.tsx`), which receives them from parent Server Component.
+6. Verify all parent Server Components pass the required effective config data.
 
 **Acceptance criteria:**
 
-- [ ] Zero direct `PERSONAS` imports in client components (effective config passed as props)
-- [ ] All client components receive data as props from Server Components
-- [ ] Build passes, all tests pass
+- [ ] Zero direct constant imports in the 5 listed client components
+- [ ] All data flows: Server Component → effective config resolver → prop → client component
+- [ ] All props are required (no fallbacks to hardcoded constants)
+- [ ] Build passes, all 379+ tests pass
 
 ---
 
@@ -272,5 +317,5 @@
 ---
 
 > **Completed phases** are archived in [`DONE.md`](DONE.md).
-> All phases through 71.2 complete (incl. 63.1–63.2, 61.1, 68.1–68.4, 69.1, 70.1–70.2, 71.1–71.2). All Milestones 0–22 COMPLETE. Milestone 23 Block A COMPLETE.
+> All phases through 76 complete (incl. 63.1–63.2, 61.1, 68.1–68.4, 69.1, 70.1–70.2, 71.1–71.2, 76). All Milestones 0–22 COMPLETE. Milestone 23 Block A COMPLETE.
 > Phase 10–12 superseded (see DONE.md for mapping).

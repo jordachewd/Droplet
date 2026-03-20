@@ -56,7 +56,7 @@ Each persona is an independent AI agent — pragmatic, direct, and grounded in r
 | **Prompts/Conversation** | 10           | 100       | Unlimited |
 | **Image Generation**     | 3/month      | 50/month  | Unlimited |
 | **Audio Generation**     | 3/month      | 50/month  | Unlimited |
-| **Video Generation**     | 1/month      | 10/month  | 10/month  |
+| **Video Generation**     | 1/month      | 10/month  | Unlimited |
 
 All plans include all features — differentiated by usage limits, not by feature lockout. Personas not fully included in your plan are available as trials with reduced limits.
 

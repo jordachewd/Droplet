@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-19 (PM audit #35. All Phases 1–71.2 complete (incl. 63.1–63.2, 61.1, 68.1–68.4, 69.1, 70.1–70.2, 71.1–71.2). Milestone 22 COMPLETE. Milestone 23 Block A COMPLETE. Node.js 20.20.1 verified. `/faqs` route removed — FAQs in `/plans`. TD-DS-07 RESOLVED (Phase 68.4). TD-ADMIN-15 RESOLVED (Phase 71.1–71.2). Active: TD-DS-04 (MEDIUM), TD-API-09 (LOW), TD-NODE-01 (HIGH, @types/node mismatch), TD-SEC-04 (HIGH, missing server-only guards). 379 unit tests (66 suites). Build passing.)
+> Last updated: 2026-03-20 (PM audit #36. All Phases 1–76 complete. Milestone 22 COMPLETE. Milestone 23 Block A COMPLETE. Phase 76 COMPLETE (Node.js 20.20.1 fully stabilized, knip clean, server-only guards). TD-NODE-01 RESOLVED (Phase 76). TD-SEC-05 RESOLVED (Phase 76). Active: TD-PREM-01 (CRITICAL, Premium video=10 not -1), TD-DS-04 (MEDIUM), TD-API-09 (LOW). 379 unit tests (66 suites). Build passing.)
 
 ---
 
@@ -174,7 +174,7 @@ Prompts are versioned and separated from request handlers. `buildPersonaAwareSys
 | ----------- | ----- | ------------- | ------------------------------- | ---------------------------------------------------------------------------------------------- |
 | **Lite**    | Free  | **Permanent** | `gpt-4o-mini`                   | 5 conversations/day, 10 prompts/conversation, 3 image/month, 3 audio/month, 1 video/month      |
 | **Pro**     | $19   | Monthly       | `gpt-4.1`                       | 50 conversations/day, 100 prompts/conversation, 50 image/month, 50 audio/month, 10 video/month |
-| **Premium** | $39   | Monthly       | `gpt-4.1` / `gpt-5.4` (complex) | Unlimited conversations, unlimited prompts, unlimited image + audio, 10 video/month            |
+| **Premium** | $39   | Monthly       | `gpt-4.1` / `gpt-5.4` (complex) | Unlimited conversations, unlimited prompts, unlimited image + audio, unlimited video           |
 
 > Full model policy (all features � plans � task classes) in **Section 8**.
 
@@ -211,13 +211,13 @@ Prompts are versioned and separated from request handlers. `buildPersonaAwareSys
 
 ### Premium Plan Limits (Detailed)
 
-| Limit                         | Value     | Reset Window          |
-| ----------------------------- | --------- | --------------------- |
-| Conversations per day         | Unlimited | N/A                   |
-| User prompts per conversation | Unlimited | N/A                   |
-| Image generations             | Unlimited | N/A                   |
-| Audio generations             | Unlimited | N/A                   |
-| Video generations             | 10        | 30-day rolling window |
+| Limit                         | Value     | Reset Window |
+| ----------------------------- | --------- | ------------ |
+| Conversations per day         | Unlimited | N/A          |
+| User prompts per conversation | Unlimited | N/A          |
+| Image generations             | Unlimited | N/A          |
+| Audio generations             | Unlimited | N/A          |
+| Video generations             | Unlimited | N/A          |
 
 ### Plan Lifecycle
 
@@ -743,7 +743,7 @@ All button styles use Lime Green as the accent color in **both** light and dark 
 
 ## 13. Testing
 
-- **Unit tests**: 65 suites, 374 tests (Vitest) — includes streaming, webhook, chat-wrapper, chat-body stop-state, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, persona prompt, rate limiting, task complexity classification, conversation stop enforcement, entitlement resolver full coverage (including admin override tests), checkout-success page, admin audit trail, OpenAI route tests, atomic prompt limit, daily conversation limit, media error handling, universal feature access, trial access tests, effective model config, effective plan config, checkout price bypass regression, video generation.
+- **Unit tests**: 66 suites, 379 tests (Vitest) — includes streaming, webhook, chat-wrapper, chat-body stop-state, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, persona prompt, rate limiting, task complexity classification, conversation stop enforcement, entitlement resolver full coverage (including admin override tests), checkout-success page, admin audit trail, OpenAI route tests, atomic prompt limit, daily conversation limit, media error handling, universal feature access, trial access tests, effective model config, effective plan config, checkout price bypass regression, video generation.
 - **E2E tests**: 13 Playwright spec files across browser projects (chat-app-shell, auth-boundaries, public-pages with 70+ tests, conversation-lifecycle, user-profile, admin-users, admin-features, landing-page, plans-public, pricing-public, authenticated-flows, persona-trial-access). 228 total. **165 passing, 5 failed (stale Clerk auth session + DB connectivity), 48 skipped** (explained: Chromium-only trial spec × 6 non-Chromium projects = 24 new skips, all intentional). Note: `pricing-public.spec.ts` is a duplicate of `plans-public.spec.ts` — to be removed (Phase 31.4).
 - **Coverage**: Configured (Phase 24.1) — v8 provider, thresholds: 70% statements / 60% branches / 70% functions / 70% lines. Current: 82/71/88/82.
 - **Gap**: No dedicated E2E spec for streamed chunk-by-chunk rendering (manually verified via Playwright MCP). Persona selector E2E (35.2) pending.
@@ -856,10 +856,16 @@ _None._
 
 ### Active — High Priority (PM Audit #35, Triple-Audit)
 
-| ID         | Area     | Description                                                                                                                                                                                                                                             | Severity |
-| ---------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| TD-NODE-01 | Build    | `@types/node@^25.3.3` provides type definitions for Node 25.x APIs but runtime is Node 20.20.1. No `engines` field or `.nvmrc` file. Type/runtime mismatch risk.                                                                                        | High     |
-| TD-SEC-05  | Security | 6+ server-side utility files with direct DB/API access lack `import "server-only"` guard: `task-queries.tsx`, `admin-audit.ts`, `admin-auth.ts`, `rate-limit.ts`, `usage-event-utils.ts`, `check-daily-conversations.ts`. Latent risk of client import. | High     |
+| ID         | Area     | Description                                                                                                                                                                                                                                                           | Severity          |
+| ---------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
+| TD-NODE-01 | Build    | ~~`@types/node@^25.3.3` provides type definitions for Node 25.x APIs but runtime is Node 20.20.1. No `engines` field or `.nvmrc` file. Type/runtime mismatch risk.~~ **RESOLVED (Phase 76).** `@types/node@^20.17.0`, `engines.node >=20.20.1`, `.nvmrc 20.20.1`.     | ~~High~~ Resolved |
+| TD-SEC-05  | Security | ~~6+ server-side utility files with direct DB/API access lack `import "server-only"` guard.~~ **RESOLVED (Phase 76).** Guards added to `admin-audit.ts`, `admin-auth.ts`, `rate-limit.ts`, `usage-event-utils.ts`, `check-daily-conversations.ts`, `handleError.tsx`. | ~~High~~ Resolved |
+
+### Active — Critical Priority (PM Audit #36, Triple-Audit)
+
+| ID         | Area  | Description                                                                                                                                                                                                | Severity |
+| ---------- | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| TD-PREM-01 | Plans | `PLAN_LIMITS.Premium.video` defaults to `10` (same as Pro), not `-1` (unlimited). Root cause of owner-reported Premium media-limitation error. Premium images and audio are unlimited but video is capped. | Critical |
 
 ### Active — Medium Priority (PM Audit #31)
 
