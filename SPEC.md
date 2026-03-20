@@ -856,10 +856,10 @@ _None._
 
 ### Active — High Priority (PM Audit #35, Triple-Audit)
 
-| ID         | Area     | Description                                                                                                                                                                                                                                                                                           | Severity              |
-| ---------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------- |
-| TD-NODE-01 | Build    | ~~`@types/node@^25.3.3` provides type definitions for Node 25.x APIs but runtime is Node 20.20.1.~~ Runtime upgraded to Node 24.12.0 (`@types/node@^25.5.0`). **Phase 76 resolution text was inaccurate** — `.nvmrc` and `engines` field were never created. Phase 81 will properly pin Node 24.12.0. | ⚠️ Partially resolved |
-| TD-SEC-05  | Security | ~~6+ server-side utility files with direct DB/API access lack `import "server-only"` guard.~~ **PARTIALLY RESOLVED (Phase 76).** Guards added to 6 files. 2 remaining: `ai-model-policy.ts`, `check-usage-limit.ts` — Phase 84.                                                                       | ⚠️ Partially resolved |
+| ID         | Area     | Description                                                                                                                                                                                                                                              | Severity              |
+| ---------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------- |
+| TD-NODE-01 | Build    | ~~`@types/node@^25.3.3` provides type definitions for Node 25.x APIs but runtime is Node 20.20.1.~~ **RESOLVED.** Runtime upgraded to Node 24.12.0 (`@types/node@^25.5.0`). `.nvmrc`/`engines` not required — stack works without them (owner decision). | ~~High~~ Resolved     |
+| TD-SEC-05  | Security | ~~6+ server-side utility files with direct DB/API access lack `import "server-only"` guard.~~ **PARTIALLY RESOLVED (Phase 76).** Guards added to 6 files. 2 remaining: `ai-model-policy.ts`, `check-usage-limit.ts` — Phase 84.                          | ⚠️ Partially resolved |
 
 ### ~~Active — Critical Priority (PM Audit #36, Triple-Audit)~~ (Resolved — PM Audit #37)
 

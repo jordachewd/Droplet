@@ -7,31 +7,7 @@
 >
 > **STATUS: Milestone 22 COMPLETE. Milestone 23 Block A COMPLETE. All Phases 1–76, 80.1, 73.1 complete. 379 unit tests (66 suites). Build passing. Node.js 24.12.0 runtime.**
 > **PM deep audit #37 (2026-03-20): Triple-audit (PM + Architect + Engineer). Phases 80.1, 73.1 archived to DONE. Phase 76 documentation corrected. New owner directives: Node 24.12.0, limeGreen #D9F20C, WCAG 2.2 AA, admin-configurable everything.**
-> **Priority order: 81 (CRITICAL) → 82 (CRITICAL) → 83 (HIGH) → 84 (HIGH) → 74.x (HIGH) → 72.x (HIGH) → 75 (HIGH) → 73.2 (MEDIUM) → 31.4 → 46.x → 29.x → 26.x**
-
----
-
-## Phase 81: Node.js 24.12.0 Version Pin — CRITICAL
-
-### 81.1 CRITICAL — Create version pin artifacts for Node.js 24.12.0
-
-**Ref:** Owner instruction: "node.js version updated to 24.12.0." PM audit #37: `.nvmrc` does not exist, `engines` field missing from `package.json`. Phase 76 claimed these existed but they don't.
-
-**Files:** `.nvmrc` (new), `package.json`
-
-**What to do:**
-
-1. Create `.nvmrc` file with content `24.12.0`.
-2. Add `"engines": { "node": ">=24" }` to `package.json`.
-3. Verify `@types/node` is `^25.5.0` (compatible with Node 24.x — types are forward-compatible superset). No change needed unless issues arise.
-4. Run full validation gateway.
-
-**Acceptance criteria:**
-
-- [ ] `.nvmrc` exists with `24.12.0`
-- [ ] `package.json` has `engines.node` field
-- [ ] `node --version` matches 24.12.0
-- [ ] All validation gates pass
+> **Priority order: 82 (CRITICAL) → 83 (HIGH) → 84 (HIGH) → 74.x (HIGH) → 72.x (HIGH) → 75 (HIGH) → 73.2 (MEDIUM) → 31.4 → 46.x → 29.x → 26.x**
 
 ---
 
