@@ -52,6 +52,7 @@ export function AdminPersonasSection({
                       name={`label_${persona.id}`}
                       defaultValue={contentValue.label}
                       required
+                      aria-required="true"
                     />
                   </label>
 
@@ -62,6 +63,7 @@ export function AdminPersonasSection({
                       name={`tagline_${persona.id}`}
                       defaultValue={contentValue.tagline}
                       required
+                      aria-required="true"
                     />
                   </label>
 
@@ -72,6 +74,7 @@ export function AdminPersonasSection({
                       name={`description_${persona.id}`}
                       defaultValue={contentValue.description}
                       required
+                      aria-required="true"
                     />
                   </label>
 
@@ -84,6 +87,7 @@ export function AdminPersonasSection({
                       name={`starterPrompts_${persona.id}`}
                       defaultValue={contentValue.starterPrompts.join("\n")}
                       required
+                      aria-required="true"
                     />
                   </label>
                 </div>

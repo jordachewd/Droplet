@@ -15,13 +15,13 @@ export default function Footer() {
   );
 
   return (
-    <section className={footerClass}>
+    <footer className={footerClass}>
       <div className={footerContentClass}>
         <div className="flex items-center gap-4 text-xs">
           <div className="flex border-r border-black/25 pr-4 dark:border-white/10">
             <Image
               src="/images/jwd_light.png"
-              alt="JWD"
+              alt="JordacheWD logo"
               width={32}
               height={32}
               className="z-10"
@@ -34,11 +34,14 @@ export default function Footer() {
             <span>All rights reserved.</span>
           </div>
         </div>
-        <div className="flex items-center gap-4 text-xs opacity-60">
+        <nav
+          aria-label="Footer navigation"
+          className="flex items-center gap-4 text-xs opacity-60"
+        >
           <Link href="/privacy">Privacy &amp; Cookie Policy</Link>
           <Link href="/terms">Terms &amp; Conditions</Link>
-        </div>
+        </nav>
       </div>
-    </section>
+    </footer>
   );
 }

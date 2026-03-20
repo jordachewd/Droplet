@@ -1,4 +1,5 @@
 "use server";
+import "server-only";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 import { UpdateUserParams } from "@/types/UserData.d";

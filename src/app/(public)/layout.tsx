@@ -8,8 +8,13 @@ export default function PublicLayout({
 }>) {
   return (
     <div className="PublicLayout relative flex min-h-dvh flex-col">
+      <a href="#public-main-content" className="skip-link">
+        Skip to main content
+      </a>
       <Header />
-      <main className="flex flex-1 flex-col">{children}</main>
+      <main id="public-main-content" className="flex flex-1 flex-col">
+        {children}
+      </main>
       <Footer />
     </div>
   );

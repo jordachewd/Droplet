@@ -1,7 +1,7 @@
 "use client";
 
 import classNames from "classnames";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 interface ConfirmationModalProps {
   isOpen: boolean;
@@ -24,14 +24,63 @@ export default function ConfirmationModal({
   onConfirm,
   onCancel,
 }: ConfirmationModalProps) {
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+  const previouslyFocusedElementRef = useRef<HTMLElement | null>(null);
+
   useEffect(() => {
     if (!isOpen) {
       return;
     }
 
+    previouslyFocusedElementRef.current =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+
+    const dialogElement = dialogRef.current;
+    const focusableSelector =
+      'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+    const getFocusableElements = (): HTMLElement[] =>
+      dialogElement
+        ? Array.from(
+            dialogElement.querySelectorAll<HTMLElement>(focusableSelector),
+          )
+        : [];
+
+    const [firstFocusableElement] = getFocusableElements();
+    firstFocusableElement?.focus();
+
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
+        event.preventDefault();
         onCancel();
+        return;
+      }
+
+      if (event.key !== "Tab") {
+        return;
+      }
+
+      const focusableElements = getFocusableElements();
+      if (focusableElements.length === 0) {
+        event.preventDefault();
+        dialogElement?.focus();
+        return;
+      }
+
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+      const activeElement =
+        document.activeElement instanceof HTMLElement
+          ? document.activeElement
+          : null;
+
+      if (event.shiftKey && activeElement === firstElement) {
+        event.preventDefault();
+        lastElement.focus();
+      } else if (!event.shiftKey && activeElement === lastElement) {
+        event.preventDefault();
+        firstElement.focus();
       }
     };
 
@@ -39,6 +88,7 @@ export default function ConfirmationModal({
 
     return () => {
       window.removeEventListener("keydown", onKeyDown);
+      previouslyFocusedElementRef.current?.focus();
     };
   }, [isOpen, onCancel]);
 
@@ -59,6 +109,8 @@ export default function ConfirmationModal({
         aria-labelledby="confirmation-modal-title"
         aria-describedby="confirmation-modal-description"
         onClick={(event) => event.stopPropagation()}
+        tabIndex={-1}
+        ref={dialogRef}
       >
         <h3 id="confirmation-modal-title" className="heading-6">
           {title}

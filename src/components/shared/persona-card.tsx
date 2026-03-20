@@ -21,16 +21,14 @@ export default function PersonaCard({
   requiredPlan,
 }: PersonaCardProps) {
   const cardClass = classNames(
-    "PersonaCard flex h-full flex-col rounded-xl border p-4 transition-all duration-300",
-    "border-slate-400/70 bg-lavenderHaze-100/70 shadow-sm",
-    "hover:-translate-y-1 hover:shadow-md",
-    "dark:border-slate-500 dark:bg-nightIndigo-900/70",
-    locked && "border-dashed opacity-85",
+    "PersonaCard flex h-full flex-col rounded-xl  p-4 transition-all duration-300",
+    "bg-lavenderHaze-100/70 shadow-sm hover:-translate-y-1 hover:shadow-md dark:bg-nightIndigo-900/70",
+    locked && "border border-dashed opacity-85",
     compact ? "gap-2" : "gap-3",
   );
 
   const titleClass = classNames(
-    "heading-6 flex items-center gap-2 leading-tight",
+    "heading-5 flex items-center gap-2 leading-tight",
     compact ? "text-lg" : "text-xl",
   );
 

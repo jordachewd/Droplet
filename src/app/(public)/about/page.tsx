@@ -27,9 +27,8 @@ function renderAboutVisual(
   personaCatalog: Array<{ id: string; label: string }>,
 ) {
   const visualClassName = classNames(
-    "rounded-[2rem] border p-6 shadow-sm",
-    "border-slate-400/80 bg-lavenderHaze-100/80",
-    "dark:border-slate-500 dark:bg-nightIndigo-900/85",
+    "rounded-[2rem] p-6 shadow-sm",
+    "bg-lavenderHaze-100/80 dark:bg-nightIndigo-900/85",
   );
 
   if (visualType === "identity") {
@@ -40,7 +39,7 @@ function renderAboutVisual(
             <p className="text-xxs font-semibold uppercase tracking-[0.28em] opacity-70">
               Personas
             </p>
-            <p className="heading-4 mt-3">{personaCatalog.length}</p>
+            <p className="heading-5 mt-3">{personaCatalog.length}</p>
             <p className="body-2 mt-2 text-sm">
               Guided conversation styles with distinct prompts and boundaries.
             </p>
@@ -49,7 +48,7 @@ function renderAboutVisual(
             <p className="text-xxs font-semibold uppercase tracking-[0.28em] opacity-70">
               Plans
             </p>
-            <p className="heading-4 mt-3">3</p>
+            <p className="heading-5 mt-3">3</p>
             <p className="body-2 mt-2 text-sm">
               Lite, Pro, and Premium with plan-based persona access.
             </p>
@@ -58,7 +57,7 @@ function renderAboutVisual(
             <p className="text-xxs font-semibold uppercase tracking-[0.28em] opacity-70">
               Modes
             </p>
-            <p className="heading-4 mt-3">Text + Media</p>
+            <p className="heading-5 mt-3">Text + Media</p>
             <p className="body-2 mt-2 text-sm">
               Conversations stay central while media tools extend the workflow.
             </p>
@@ -268,8 +267,9 @@ export default async function AboutPage() {
         title="About Droplet"
         subtitle="A persona-driven AI assistant built for structured conversations, practical output, and media-aware workflows."
       />
-
-      <DropletGlobe size={96} />
+      <div className="flex justify-center m-4">
+        <DropletGlobe size={128} />
+      </div>
 
       {aboutSections.map((section, index) => (
         <article
@@ -281,14 +281,14 @@ export default async function AboutPage() {
         >
           <div
             className={classNames(
-              "rounded-4xl px-6 py-7 shadow-sm",
+              "rounded-2xl px-6 py-7 shadow-sm",
               "bg-lavenderHaze-100/70 dark:bg-midnightBlue-900/80",
             )}
           >
             <p className="text-xxs font-semibold uppercase tracking-[0.3em] opacity-65">
               {section.eyebrow}
             </p>
-            <h2 className="heading-4 mt-3 leading-tight">{section.title}</h2>
+            <h2 className="heading-5 mt-3 leading-tight">{section.title}</h2>
             <div className="mt-4 flex flex-col gap-4">
               {section.paragraphs.map((paragraph) => (
                 <p key={paragraph} className="body-2 text-sm md:text-base">
@@ -310,14 +310,14 @@ export default async function AboutPage() {
 
       <section
         className={classNames(
-          "w-full max-w-screen-2xl rounded-4xl  px-6 py-8 shadow-sm",
+          "w-full max-w-screen-2xl rounded-2xl  px-6 py-8 shadow-sm",
           "bg-linear-135 from-lavenderHaze-100 via-white to-twilightPurple-100",
           "dark:bg-linear-135 dark:from-nightIndigo-1000 dark:via-nightIndigo-1000 dark:to-nightIndigo-900/55",
         )}
       >
         <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
           <div className="max-w-2xl">
-            <h2 className="heading-4 leading-tight">
+            <h2 className="heading-5 leading-tight">
               Want the full breakdown of pricing and plan limits?
             </h2>
             <p className="body-2 mt-3 text-sm md:text-base">

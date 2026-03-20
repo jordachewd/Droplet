@@ -183,7 +183,8 @@ export default function ChatInput({
   const textareaClass = classNames(
     "mb-[0.35rem] flex min-h-11 w-full resize-none rounded-md bg-transparent py-2 text-sm leading-tight",
     "placeholder:text-sm placeholder:opacity-70",
-    "focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-limeGreen-500/70 focus-visible:ring-offset-1",
+    "disabled:cursor-not-allowed disabled:opacity-50",
   );
 
   const removeFileIconClass = classNames(
@@ -207,6 +208,7 @@ export default function ChatInput({
             rows={2}
             className={textareaClass}
             onKeyDown={handlePromptKeyDown}
+            aria-label="Message input"
           />
 
           <TooltipArrow
@@ -256,7 +258,7 @@ export default function ChatInput({
                 width={40}
                 height={40}
                 className="max-h-10 max-w-10 rounded-sm"
-                alt="Selected image"
+                alt="Preview of selected image"
                 src={previewUrl}
               />
             </button>
