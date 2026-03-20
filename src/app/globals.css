@@ -123,15 +123,45 @@
     @apply bg-lavenderHaze-300 text-midnightBlue-600 dark:bg-nightIndigo-800 dark:text-lavenderHaze-500;
     @apply pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] text-base leading-tight;
   }
-}
 
-.AppGradientBg {
-  @apply fixed inset-0 -z-10 opacity-50 w-full h-full transition-all animate-ease-in-out duration-1000;
-  @apply bg-lavenderHaze-300 text-midnightBlue-600 dark:bg-nightIndigo-800 dark:text-lavenderHaze-500;
+  .AppGradientBg {
+    @apply fixed inset-0 -z-10 opacity-50 w-dvw h-dvh transition-all animate-ease-in-out duration-1000 ;
+    @apply bg-lavenderHaze-300 text-midnightBlue-600 dark:bg-nightIndigo-800 dark:text-lavenderHaze-500;
 
-  @apply bg-radial-[at_100%_0%] from-[400px] via-[1400px] to-[2600px];
-  @apply from-twilightPurple-400 via-dustyBlue-400 to-lavenderHaze-100/0 ;
-  @apply dark:from-twilightPurple-400/50 dark:via-dustyBlue-600/50;
+    @apply bg-radial-[at_100%_0%] from-[400px] via-[1400px] to-[2700px];
+    @apply from-twilightPurple-300 via-dustyBlue-500 to-lavenderHaze-100/0;
+    @apply dark:from-twilightPurple-500 dark:via-dustyBlue-500 opacity-50;
+  }
+
+  :where(
+    a,
+    button,
+    input,
+    textarea,
+    select,
+    summary,
+    [role="button"],
+    [role="tab"],
+    [tabindex]:not([tabindex="-1"])
+  ):focus-visible {
+    outline: 2px solid var(--color-limeGreen-700);
+    outline-offset: 2px;
+  }
+
+  [data-droplet-theme="dark"]
+    :where(
+      a,
+      button,
+      input,
+      textarea,
+      select,
+      summary,
+      [role="button"],
+      [role="tab"],
+      [tabindex]:not([tabindex="-1"])
+    ):focus-visible {
+    outline-color: var(--color-limeGreen-400);
+  }
 }
 
 /*  all media elements set to block and full width */
@@ -154,6 +184,16 @@ a:not(.btn):not(.icon-btn) {
 
 a.menu-item {
   font-family: var(--font-jwd-dosis), sans-serif;
+}
+
+.skip-link {
+  @apply fixed left-3 top-3 z-50 rounded-md bg-midnightBlue-600 px-3 py-2 text-sm font-semibold text-lavenderHaze-100;
+  transform: translateY(-200%);
+  transition: transform 120ms ease-in-out;
+}
+
+.skip-link:focus-visible {
+  transform: translateY(0);
 }
 
 @layer components {
@@ -188,7 +228,7 @@ a.menu-item {
   }
 
   .heading-6 {
-    @apply text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl;
+    @apply text-base sm:text-lg md:text-xl lg:text-2xl;
   }
 
   .body-1 {

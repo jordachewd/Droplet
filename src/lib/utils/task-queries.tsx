@@ -1,3 +1,4 @@
+import "server-only";
 import { DEFAULT_PERSONA_ID, getPersona } from "@/constants/assistant-personas";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import Task from "@/lib/database/models/tasks.model";

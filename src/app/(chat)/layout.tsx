@@ -31,15 +31,21 @@ export default async function ChatRouteLayout({
       id="ChatRouteLayoutWrapper"
       className="ChatRouteLayout flex-row!"
     >
+      <a href="#chat-main-content" className="skip-link">
+        Skip to main content
+      </a>
       <ChatSidebar />
 
-      <section className="ChatRouteLayoutMain relative flex h-full min-w-0 flex-1">
+      <main
+        id="chat-main-content"
+        className="ChatRouteLayoutMain relative flex h-full min-w-0 flex-1"
+      >
         <ChatHeader
           personas={personas}
           allowedPersonaIds={entitlements.allowedPersonaIds}
         />
         {children}
-      </section>
+      </main>
     </PageWrapper>
   );
 }

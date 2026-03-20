@@ -41,6 +41,7 @@ export default async function AdminWebsiteEditorPage({
             name="title"
             defaultValue={page.title}
             required
+            aria-required="true"
           />
         </label>
 

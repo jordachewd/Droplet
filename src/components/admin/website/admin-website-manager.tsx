@@ -67,6 +67,7 @@ export function AdminWebsiteManager({ pages }: AdminWebsiteManagerProps) {
             name="title"
             placeholder="About Droplet"
             required
+            aria-required="true"
           />
         </label>
         <label className="flex flex-col gap-2 text-sm">
@@ -77,6 +78,7 @@ export function AdminWebsiteManager({ pages }: AdminWebsiteManagerProps) {
             name="slug"
             placeholder="about"
             required
+            aria-required="true"
           />
         </label>
         <div className="flex items-end">

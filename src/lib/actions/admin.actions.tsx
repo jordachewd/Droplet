@@ -1,5 +1,6 @@
 "use server";
 
+import "server-only";
 import { clerkClient } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 import { connectToDatabase } from "@/lib/database/mongoose";

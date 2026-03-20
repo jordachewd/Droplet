@@ -232,6 +232,7 @@ export default function ProfileHeroEditor({
             className={profileInputClass}
             autoComplete="email"
             required
+            aria-required="true"
           />
         </label>
 
@@ -251,13 +252,16 @@ export default function ProfileHeroEditor({
         </label>
 
         {feedbackMessage && (
-          <p className="text-sm text-emerald-700 dark:text-emerald-300">
+          <p
+            aria-live="polite"
+            className="text-sm text-emerald-700 dark:text-emerald-300"
+          >
             {feedbackMessage}
           </p>
         )}
 
         {errorMessage && (
-          <p className="text-sm text-red-700 dark:text-red-300">
+          <p role="alert" className="text-sm text-red-700 dark:text-red-300">
             {errorMessage}
           </p>
         )}

@@ -5,7 +5,7 @@ import Link from "next/link";
 export default function HeroSection() {
   const heroSectionClass = classNames(
     "Hero flex w-full items-center justify-between px-4 pt-14 shadow-2xl",
-    "bg-lavenderHaze-100/40 sm:px-6 lg:px-0 dark:bg-nightIndigo-900/40",
+    "bg-lavenderHaze-500/20 sm:px-6 lg:px-0 dark:bg-nightIndigo-900/40",
   );
 
   const heroTextClass = classNames(
@@ -19,8 +19,8 @@ export default function HeroSection() {
   );
 
   const heroGlowClass = classNames(
-    "absolute -bottom-28 left-1/2 z-0 h-[90%] w-[60%] -translate-x-1/2 ",
-    "bg-lavenderHaze-500 dark:bg-nightIndigo-500 rounded-full blur-3xl",
+    "absolute -bottom-28 left-1/2 z-0 h-[90%] w-[50%] -translate-x-1/2",
+    "bg-lavenderHaze-200 dark:bg-twilightPurple-600 rounded-full blur-3xl opacity-70" ,
   );
 
   return (
@@ -46,7 +46,7 @@ export default function HeroSection() {
         <div className={heroImageClass}>
           <Image
             src="/images/lp-hero-image-flipped.png"
-            alt="hero"
+            alt="Droplet assistant visual with floating chat and media creation elements"
             width={700}
             height={700}
             priority

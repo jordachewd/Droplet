@@ -44,7 +44,7 @@ export default async function LandingPage() {
           <article
             key={card.title}
             className={classNames(
-              "rounded-4xl px-6 py-8 shadow-sm bg-lavenderHaze-100/78 dark:bg-nightIndigo-900/82",
+              "rounded-2xl px-6 py-8 shadow-sm bg-lavenderHaze-100/78 dark:bg-nightIndigo-900/82",
             )}
           >
             <div className="inline-flex rounded-full bg-lavenderHaze-100 px-3 py-2 text-lg dark:bg-nightIndigo-900/50">
@@ -61,7 +61,7 @@ export default async function LandingPage() {
       <section className="Workflow mx-auto grid w-full max-w-screen-2xl gap-6 px-4 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:px-0">
         <div
           className={classNames(
-            "rounded-4xl px-6 py-8 shadow-sm bg-lavenderHaze-100/78 dark:bg-nightIndigo-900/82",
+            "rounded-2xl px-6 py-8 shadow-sm bg-lavenderHaze-100/78 dark:bg-nightIndigo-900/82",
           )}
         >
           <p className="text-xxs font-semibold uppercase tracking-[0.3em] opacity-65">
@@ -100,7 +100,7 @@ export default async function LandingPage() {
 
         <div
           className={classNames(
-            "rounded-4xl px-6 py-8 shadow-sm bg-linear-135 from-lavenderHaze-100 via-white to-lavenderHaze-100",
+            "rounded-2xl px-6 py-8 shadow-sm bg-linear-135 from-lavenderHaze-100 via-white to-lavenderHaze-100",
             "dark:bg-linear-135 dark:from-nightIndigo-1000 dark:via-nightIndigo-1000 dark:to-nightIndigo-900/60",
           )}
         >
@@ -160,7 +160,7 @@ export default async function LandingPage() {
             <article
               key={persona.id}
               className={classNames(
-                "rounded-4xl px-6 py-7 shadow-sm bg-lavenderHaze-100/78 dark:bg-nightIndigo-900/82",
+                "rounded-2xl px-6 py-7 shadow-sm bg-lavenderHaze-100/78 dark:bg-nightIndigo-900/82",
               )}
             >
               <div className="flex items-center justify-between gap-4">
@@ -188,20 +188,17 @@ export default async function LandingPage() {
       <section className="CtaBanner mx-auto w-full max-w-screen-2xl px-4 sm:px-6 lg:px-0">
         <div
           className={classNames(
-            "rounded-4xl px-6 py-8 shadow-sm bg-linear-135 from-lavenderHaze-100 via-white to-twilightPurple-100",
-            "dark:bg-linear-135 dark:from-nightIndigo-1000 dark:via-nightIndigo-1000 dark:to-nightIndigo-900/55",
+            "rounded-2xl px-6 py-8 shadow-sm bg-linear-245 from-limeGreen-100 via-lavenderHaze-100 to-white",
+            "dark:bg-linear-135 dark:from-twilightPurple-1000 dark:via-twilightPurple-800 dark:to-twilightPurple-600",
           )}
         >
           <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-            <div className="max-w-2xl">
-              <p className="text-xxs font-semibold uppercase tracking-[0.3em] opacity-65">
-                Start with clarity
-              </p>
-              <h2 className="heading-4 mt-3 leading-tight">
+            <div className="flex flex-col max-w-2xl gap-6">
+              <h2 className="heading-5 leading-tight">
                 Create an account, pick a persona, and let the conversation stay
                 focused.
               </h2>
-              <p className="body-2 mt-4 text-sm md:text-base">
+              <p className="body-2 text-sm md:text-base">
                 Explore the persona catalog first, or compare the plan limits if
                 you already know how much capacity you need.
               </p>

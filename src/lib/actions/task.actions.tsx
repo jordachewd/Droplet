@@ -1,4 +1,5 @@
 "use server";
+import "server-only";
 import { CreateTaskInput, UpdateTaskParams } from "@/types/TaskData.d";
 import { Message } from "@/types";
 import { isValidObjectId } from "mongoose";
