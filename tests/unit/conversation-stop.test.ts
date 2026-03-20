@@ -18,7 +18,10 @@ import { getTaskByIdForUser } from "@/lib/utils/task-queries";
 import { enforceSlidingWindowRateLimit } from "@/lib/utils/rate-limit";
 import { ensureUserSynced } from "@/lib/utils/ensure-user-synced";
 import { PLAN_LIMITS } from "@/constants/plans";
-import { getEffectivePlanConfig } from "@/lib/utils/effective-plan-config";
+import {
+  getEffectivePlanConfig,
+  getEffectiveSupportEmail,
+} from "@/lib/utils/effective-plan-config";
 
 vi.mock("@/lib/utils/openai/generateResponse", () => ({
   generateResponse: vi.fn(),
@@ -68,6 +71,7 @@ vi.mock("@/lib/utils/ensure-user-synced", () => ({
 
 vi.mock("@/lib/utils/effective-plan-config", () => ({
   getEffectivePlanConfig: vi.fn(),
+  getEffectiveSupportEmail: vi.fn(),
 }));
 
 const EXISTING_TASK_ID = "507f1f77bcf86cd799439011";
@@ -147,6 +151,9 @@ describe("conversation stop enforcement", () => {
         video: 1,
       },
     });
+    vi.mocked(getEffectiveSupportEmail).mockResolvedValue(
+      "support@example.com",
+    );
     vi.mocked(getTaskByIdForUser).mockResolvedValue(
       createExistingTask() as never,
     );

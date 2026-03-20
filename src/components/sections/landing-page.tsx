@@ -3,7 +3,10 @@ import Faqs from "./faqs-section";
 import classNames from "classnames";
 import Link from "next/link";
 import { featureCards, howItWorksSteps } from "@/constants/landing-data";
-import { getEffectivePlanConfig } from "@/lib/utils/effective-plan-config";
+import {
+  getEffectivePlanConfig,
+  getEffectiveSupportEmail,
+} from "@/lib/utils/effective-plan-config";
 import { getEffectivePersonaAccessByPlan } from "@/lib/utils/effective-persona-access";
 import { getEffectivePersonaConfig } from "@/lib/utils/effective-persona-config";
 import { buildPlans } from "@/constants/plans";
@@ -11,12 +14,17 @@ import { buildFaqs } from "@/constants/faqs";
 import HeroSection from "./hero-section";
 
 export default async function LandingPage() {
-  const [effectivePlanConfig, personaAccessByPlan, effectivePersonas] =
-    await Promise.all([
-      getEffectivePlanConfig(),
-      getEffectivePersonaAccessByPlan(),
-      getEffectivePersonaConfig(),
-    ]);
+  const [
+    effectivePlanConfig,
+    personaAccessByPlan,
+    effectivePersonas,
+    supportEmail,
+  ] = await Promise.all([
+    getEffectivePlanConfig(),
+    getEffectivePersonaAccessByPlan(),
+    getEffectivePersonaConfig(),
+    getEffectiveSupportEmail(),
+  ]);
   const featuredPersonas = effectivePersonas.filter((persona) =>
     ["strategist", "teacher", "creator"].includes(persona.id),
   );
@@ -30,6 +38,7 @@ export default async function LandingPage() {
     pricing: effectivePlanConfig.pricing,
     personaAccessByPlan,
     currencySymbol: effectivePlanConfig.pricing.currencySymbol,
+    supportEmail,
   });
 
   return (

@@ -81,11 +81,10 @@ const videoGenerationTool = {
   },
 };
 
-export const chatTools = [
-  imageGenerationTool,
-  audioGenerationTool,
-  videoGenerationTool,
-];
+type ChatTool =
+  | typeof imageGenerationTool
+  | typeof audioGenerationTool
+  | typeof videoGenerationTool;
 
 export function getChatTools({
   supportsImageGeneration,
@@ -96,7 +95,7 @@ export function getChatTools({
   supportsAudioGeneration: boolean;
   supportsVideoGeneration: boolean;
 }) {
-  const tools: typeof chatTools = [];
+  const tools: ChatTool[] = [];
 
   if (supportsImageGeneration) {
     tools.push(imageGenerationTool);

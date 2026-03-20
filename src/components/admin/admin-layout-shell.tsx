@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import classNames from "classnames";
 import AdminSidebar from "@/components/admin/admin-sidebar";
 import ToggleTheme from "@/components/shared/toggle-theme";
@@ -15,6 +16,7 @@ interface AdminLayoutShellProps {
 }
 
 export default function AdminLayoutShell({ children }: AdminLayoutShellProps) {
+  const pathname = usePathname();
   const {
     desktopSidebarCollapsed,
     mobileSidebarOpen,
@@ -52,6 +54,7 @@ export default function AdminLayoutShell({ children }: AdminLayoutShellProps) {
   const sidebarExpanded = isDesktop
     ? !desktopSidebarCollapsed
     : mobileSidebarOpen;
+  const isAdminDashboardPath = pathname === "/admin";
 
   return (
     <section className="AdminLayoutShell relative flex min-h-dvh w-full">
@@ -78,7 +81,13 @@ export default function AdminLayoutShell({ children }: AdminLayoutShellProps) {
                 <p className="text-xxs font-semibold uppercase tracking-[0.28em] opacity-60">
                   Operations
                 </p>
-                <h1 className="text-sm font-semibold">Admin Panel</h1>
+                <Link
+                  href="/admin"
+                  aria-current={isAdminDashboardPath ? "page" : undefined}
+                  className="text-sm font-semibold"
+                >
+                  Admin Panel
+                </Link>
               </div>
             </div>
 
@@ -92,7 +101,11 @@ export default function AdminLayoutShell({ children }: AdminLayoutShellProps) {
           </div>
         </header>
 
-        <main className="AdminLayoutMain droplet-scrollbar relative z-10 flex-1 overflow-y-auto px-4 pb-10 pt-6 md:px-6 lg:px-8">
+        <main
+          id="admin-main-content"
+          tabIndex={-1}
+          className="AdminLayoutMain droplet-scrollbar relative z-10 flex-1 overflow-y-auto px-4 pb-10 pt-6 md:px-6 lg:px-8"
+        >
           {children}
         </main>
       </div>

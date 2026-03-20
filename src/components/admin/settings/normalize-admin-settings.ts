@@ -6,6 +6,7 @@ import {
   PersonaAccessSettingsFormValue,
   PersonaContentSettingsFormValue,
   PricingSettingsFormValue,
+  SupportSettingsFormValue,
   ThemeSettingsFormValue,
   TrialLimitsSettingsFormValue,
   PERSONA_ACCESS_KEY_BY_PLAN,
@@ -191,6 +192,22 @@ export function normalizeThemeSettingsValue(
   return {
     defaultMode: value.defaultMode === "dark" ? "dark" : defaults.defaultMode,
   };
+}
+
+export function normalizeSupportSettingsValue(
+  value: unknown,
+  defaults: SupportSettingsFormValue,
+): SupportSettingsFormValue {
+  if (typeof value !== "string") {
+    return defaults;
+  }
+
+  const trimmedValue = value.trim().toLowerCase();
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  return emailPattern.test(trimmedValue)
+    ? { supportEmail: trimmedValue }
+    : defaults;
 }
 
 export function normalizeTrialLimitsSettingsValue(

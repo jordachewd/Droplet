@@ -1,3 +1,5 @@
+import "server-only";
+
 import { PlanName } from "@/types/PlanData.d";
 
 interface TokenPricing {

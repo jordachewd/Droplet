@@ -13,12 +13,14 @@ interface BuildFaqsConfig {
   pricing?: PlanPricing;
   personaAccessByPlan?: FullPersonaAccessByPlan;
   currencySymbol?: string;
+  supportEmail?: string;
 }
 
 export function buildFaqs({
   pricing = DEFAULT_PLAN_PRICING,
   personaAccessByPlan = DEFAULT_FULL_PERSONA_ACCESS_BY_PLAN,
   currencySymbol = pricing.currencySymbol,
+  supportEmail = SUPPORT_EMAIL,
 }: BuildFaqsConfig = {}): FaqItem[] {
   const liteCount = personaAccessByPlan.Lite.length;
   const proCount = personaAccessByPlan.Pro.length;
@@ -37,14 +39,14 @@ export function buildFaqs({
     {
       id: 1,
       question: "Who should I reach out to for assistance or inquiries?",
-      answer: `For any questions or support needs, please contact our customer support team at ${SUPPORT_EMAIL}.`,
+      answer: `For any questions or support needs, please contact our customer support team at ${supportEmail}.`,
     },
     {
       id: 2,
       question: "What is the process to cancel my subscription?",
       answer:
         "Droplet currently treats paid plans as one-time purchases for the active access period rather than auto-renewing subscriptions. " +
-        `If you need billing help or a manual review, contact ${SUPPORT_EMAIL}.`,
+        `If you need billing help or a manual review, contact ${supportEmail}.`,
     },
     {
       id: 3,

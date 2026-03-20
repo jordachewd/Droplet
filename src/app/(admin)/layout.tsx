@@ -8,5 +8,12 @@ interface AdminLayoutProps {
 export default async function AdminLayout({ children }: AdminLayoutProps) {
   await requireAdminPageAccess();
 
-  return <AdminLayoutShell>{children}</AdminLayoutShell>;
+  return (
+    <>
+      <a href="#admin-main-content" className="skip-link">
+        Skip to main content
+      </a>
+      <AdminLayoutShell>{children}</AdminLayoutShell>
+    </>
+  );
 }

@@ -2,20 +2,24 @@ import Faqs from "@/components/sections/faqs-section";
 import PageWrapper from "@/components/layout/page-wrapper";
 import Plans from "@/components/sections/plans-section";
 import { ensureUserSynced } from "@/lib/utils/ensure-user-synced";
-import { SUPPORT_EMAIL } from "@/constants/support";
 import { auth } from "@clerk/nextjs/server";
 import { buildPlans } from "@/constants/plans";
 import { buildFaqs } from "@/constants/faqs";
-import { getEffectivePlanConfig } from "@/lib/utils/effective-plan-config";
+import {
+  getEffectivePlanConfig,
+  getEffectiveSupportEmail,
+} from "@/lib/utils/effective-plan-config";
 import { getEffectivePersonaAccessByPlan } from "@/lib/utils/effective-persona-access";
 
 export default async function AppPlansPage() {
   const { userId } = await auth();
   const userData = userId ? await ensureUserSynced(userId) : null;
-  const [effectivePlanConfig, personaAccessByPlan] = await Promise.all([
-    getEffectivePlanConfig(),
-    getEffectivePersonaAccessByPlan(),
-  ]);
+  const [effectivePlanConfig, personaAccessByPlan, supportEmail] =
+    await Promise.all([
+      getEffectivePlanConfig(),
+      getEffectivePersonaAccessByPlan(),
+      getEffectiveSupportEmail(),
+    ]);
   const plans = buildPlans({
     pricing: effectivePlanConfig.pricing,
     limits: effectivePlanConfig.limits,
@@ -26,6 +30,7 @@ export default async function AppPlansPage() {
     pricing: effectivePlanConfig.pricing,
     personaAccessByPlan,
     currencySymbol: effectivePlanConfig.pricing.currencySymbol,
+    supportEmail,
   });
 
   return userData ? (
@@ -47,7 +52,7 @@ export default async function AppPlansPage() {
         </p>
         <div className="flex items-center justify-center gap-4">
           <a
-            href={`mailto:${SUPPORT_EMAIL}`}
+            href={`mailto:${supportEmail}`}
             className="text-sm text-blue-600 underline dark:text-blue-400"
           >
             Contact Support

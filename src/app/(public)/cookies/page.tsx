@@ -6,7 +6,7 @@ import {
   cookieCategories,
   legalReviewDisclaimer,
 } from "@/constants/cookies-data";
-import { SUPPORT_EMAIL } from "@/constants/support";
+import { getEffectiveSupportEmail } from "@/lib/utils/effective-plan-config";
 
 export const metadata: Metadata = {
   title: "Cookie Policy | Droplet",
@@ -14,7 +14,9 @@ export const metadata: Metadata = {
     "Review the essential cookies and browser storage preferences used by Droplet, including Clerk auth cookies and legacy migration keys.",
 };
 
-export default function CookiesPage() {
+export default async function CookiesPage() {
+  const supportEmail = await getEffectiveSupportEmail();
+
   return (
     <section className="CookiesPage mx-auto flex w-full max-w-screen-2xl flex-col gap-8 px-4 pb-16 pt-24 sm:px-6 lg:px-8">
       <div
@@ -68,7 +70,7 @@ export default function CookiesPage() {
           </Link>
           <Link
             className="btn btn-lg btn-outlined uppercase"
-            href={`mailto:${SUPPORT_EMAIL}`}
+            href={`mailto:${supportEmail}`}
           >
             Ask a question
           </Link>

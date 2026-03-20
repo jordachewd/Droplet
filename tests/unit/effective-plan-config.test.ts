@@ -4,9 +4,13 @@ import {
   PLAN_LIMITS,
   PlanLimits,
 } from "@/constants/plans";
+import { SUPPORT_EMAIL } from "@/constants/support";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import AppSetting from "@/lib/database/models/app-setting.model";
-import { getEffectivePlanConfig } from "@/lib/utils/effective-plan-config";
+import {
+  getEffectivePlanConfig,
+  getEffectiveSupportEmail,
+} from "@/lib/utils/effective-plan-config";
 
 vi.mock("@/lib/database/mongoose", () => ({
   connectToDatabase: vi.fn(),
@@ -15,6 +19,7 @@ vi.mock("@/lib/database/mongoose", () => ({
 vi.mock("@/lib/database/models/app-setting.model", () => ({
   default: {
     find: vi.fn(),
+    findOne: vi.fn(),
   },
 }));
 
@@ -22,6 +27,14 @@ function mockSettings(settings: Array<{ key: string; value: unknown }>) {
   const leanMock = vi.fn().mockResolvedValue(settings);
   const selectMock = vi.fn().mockReturnValue({ lean: leanMock });
   vi.mocked(AppSetting.find).mockReturnValue({ select: selectMock } as never);
+}
+
+function mockSupportSetting(value: unknown) {
+  const leanMock = vi.fn().mockResolvedValue({ value });
+  const selectMock = vi.fn().mockReturnValue({ lean: leanMock });
+  vi.mocked(AppSetting.findOne).mockReturnValue({
+    select: selectMock,
+  } as never);
 }
 
 describe("getEffectivePlanConfig", () => {
@@ -112,5 +125,38 @@ describe("getEffectivePlanConfig", () => {
 
     expect(config.pricing).toEqual(DEFAULT_PLAN_PRICING);
     expect(config.limits).toEqual(PLAN_LIMITS);
+  });
+});
+
+describe("getEffectiveSupportEmail", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(connectToDatabase).mockResolvedValue(undefined as never);
+  });
+
+  it("returns the default support email when no override is present", async () => {
+    mockSupportSetting(undefined);
+
+    const supportEmail = await getEffectiveSupportEmail();
+
+    expect(supportEmail).toBe(SUPPORT_EMAIL);
+  });
+
+  it("returns a normalized persisted support email override", async () => {
+    mockSupportSetting(" Support@Example.com ");
+
+    const supportEmail = await getEffectiveSupportEmail();
+
+    expect(supportEmail).toBe("support@example.com");
+  });
+
+  it("falls back to default support email when db access fails", async () => {
+    vi.mocked(connectToDatabase).mockRejectedValueOnce(
+      new Error("querySrv ECONNREFUSED"),
+    );
+
+    const supportEmail = await getEffectiveSupportEmail();
+
+    expect(supportEmail).toBe(SUPPORT_EMAIL);
   });
 });

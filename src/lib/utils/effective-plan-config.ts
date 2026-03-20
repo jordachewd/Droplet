@@ -8,6 +8,7 @@ import {
   PlanLimits,
   PlanPricing,
 } from "@/constants/plans";
+import { SUPPORT_EMAIL } from "@/constants/support";
 import AppSetting from "@/lib/database/models/app-setting.model";
 import { connectToDatabase } from "@/lib/database/mongoose";
 
@@ -110,6 +111,17 @@ function normalizeCurrencySymbol(value: unknown): string {
   }
 
   return DEFAULT_CURRENCY_SYMBOL;
+}
+
+function normalizeSupportEmail(value: unknown): string {
+  if (typeof value !== "string") {
+    return SUPPORT_EMAIL;
+  }
+
+  const trimmedValue = value.trim().toLowerCase();
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  return emailPattern.test(trimmedValue) ? trimmedValue : SUPPORT_EMAIL;
 }
 
 function normalizePlanLimitsValue(value: unknown): PlanLimits {
@@ -275,5 +287,19 @@ export async function getEffectiveCurrencySymbol(): Promise<string> {
     return normalizeCurrencySymbol(setting?.value);
   } catch {
     return DEFAULT_PLAN_PRICING.currencySymbol;
+  }
+}
+
+export async function getEffectiveSupportEmail(): Promise<string> {
+  try {
+    await connectToDatabase();
+
+    const setting = (await AppSetting.findOne({ key: "admin.supportEmail" })
+      .select("value")
+      .lean()) as AppSettingRecord | null;
+
+    return normalizeSupportEmail(setting?.value);
+  } catch {
+    return SUPPORT_EMAIL;
   }
 }

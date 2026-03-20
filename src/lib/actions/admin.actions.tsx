@@ -20,6 +20,7 @@ import { z } from "zod";
 
 const requiredStringSchema = z.string().trim().min(1);
 const numericFieldSchema = z.coerce.number().finite();
+const supportEmailSchema = z.string().trim().email();
 const adminSettingCategorySchema = z.enum([
   "plans",
   "models",
@@ -296,6 +297,18 @@ function parseStructuredAdminSettingValue({
     return { defaultMode };
   }
 
+  if (key === "admin.supportEmail") {
+    const parsedSupportEmail = supportEmailSchema.safeParse(
+      getStringField(formData, "supportEmail"),
+    );
+
+    if (!parsedSupportEmail.success) {
+      throw new Error("Invalid support email.");
+    }
+
+    return parsedSupportEmail.data.toLowerCase();
+  }
+
   if (PERSONA_ACCESS_KEYS.has(key)) {
     return formData
       .getAll("personaIds")
@@ -519,6 +532,17 @@ export async function updateAdminSettingAction(
       revalidatePath("/app/personas");
       revalidatePath("/app/library");
       revalidatePath("/admin/usage");
+    }
+
+    if (key === "admin.supportEmail") {
+      revalidatePath("/");
+      revalidatePath("/plans");
+      revalidatePath("/privacy");
+      revalidatePath("/cookies");
+      revalidatePath("/app");
+      revalidatePath("/app/new");
+      revalidatePath("/app/plans");
+      revalidatePath("/app/profile");
     }
 
     return successState("Settings updated.");

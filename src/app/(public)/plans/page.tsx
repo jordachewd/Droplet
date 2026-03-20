@@ -2,18 +2,22 @@ import Plans from "@/components/sections/plans-section";
 import Faqs from "@/components/sections/faqs-section";
 import { buildPlans } from "@/constants/plans";
 import { buildFaqs } from "@/constants/faqs";
-import { getEffectivePlanConfig } from "@/lib/utils/effective-plan-config";
+import {
+  getEffectivePlanConfig,
+  getEffectiveSupportEmail,
+} from "@/lib/utils/effective-plan-config";
 import { getEffectivePersonaAccessByPlan } from "@/lib/utils/effective-persona-access";
-import { SUPPORT_EMAIL } from "@/constants/support";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
 export default async function PlansPage() {
-  const [effectivePlanConfig, personaAccessByPlan] = await Promise.all([
-    getEffectivePlanConfig(),
-    getEffectivePersonaAccessByPlan(),
-  ]);
+  const [effectivePlanConfig, personaAccessByPlan, supportEmail] =
+    await Promise.all([
+      getEffectivePlanConfig(),
+      getEffectivePersonaAccessByPlan(),
+      getEffectiveSupportEmail(),
+    ]);
   const plans = buildPlans({
     pricing: effectivePlanConfig.pricing,
     limits: effectivePlanConfig.limits,
@@ -24,6 +28,7 @@ export default async function PlansPage() {
     pricing: effectivePlanConfig.pricing,
     personaAccessByPlan,
     currencySymbol: effectivePlanConfig.pricing.currencySymbol,
+    supportEmail,
   });
 
   return (
@@ -50,7 +55,7 @@ export default async function PlansPage() {
             </Link>
             <Link
               className="btn btn-lg btn-outlined uppercase"
-              href={`mailto:${SUPPORT_EMAIL}`}
+              href={`mailto:${supportEmail}`}
             >
               Contact support
             </Link>

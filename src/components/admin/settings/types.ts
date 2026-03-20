@@ -11,6 +11,10 @@ export interface ThemeSettingsFormValue {
   defaultMode: "light" | "dark";
 }
 
+export interface SupportSettingsFormValue {
+  supportEmail: string;
+}
+
 export type LimitsSettingsFormValue = PlanLimits;
 export type TrialLimitsSettingsFormValue = PersonaTrialLimits;
 
