@@ -5,94 +5,9 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: Milestone 22 COMPLETE. Milestone 23 Block A COMPLETE. All Phases 1–76, 80.1, 73.1 complete. 379 unit tests (66 suites). Build passing. Node.js 24.12.0 runtime.**
-> **PM deep audit #37 (2026-03-20): Triple-audit (PM + Architect + Engineer). Phases 80.1, 73.1 archived to DONE. Phase 76 documentation corrected. New owner directives: Node 24.12.0, limeGreen #D9F20C, WCAG 2.2 AA, admin-configurable everything.**
-> **Priority order: 82 (CRITICAL) → 83 (HIGH) → 84 (HIGH) → 74.x (HIGH) → 72.x (HIGH) → 75 (HIGH) → 73.2 (MEDIUM) → 31.4 → 46.x → 29.x → 26.x**
-
----
-
-## Phase 82: limeGreen Brand Color Update — CRITICAL
-
-### 82.1 CRITICAL — Update limeGreen palette from #B8F60D to #D9F20C
-
-**Ref:** Owner instruction: "limeGreen brand access color is changing to #D9F20C."
-
-**Files:** `src/app/globals.css`
-
-**What to do:**
-
-1. Recalculate the entire `limeGreen` 10-step palette (100–1000) using `#D9F20C` as the 500 base. Generate proportionally lighter tints (100–400) and darker shades (600–1000).
-2. Update all 10 CSS custom properties in the `@theme` block (lines 62–71).
-3. No logic changes — Tailwind class names (`limeGreen-*`) remain the same, components auto-inherit.
-4. Visual verify both light and dark themes render correctly.
-5. Run full validation gateway.
-
-**Suggested recalculated palette (from #D9F20C base):**
-
-```
---color-limeGreen-100: #f9fdd9;
---color-limeGreen-200: #f3fbb6;
---color-limeGreen-300: #edf993;
---color-limeGreen-400: #e7f770;
---color-limeGreen-500: #d9f20c;
---color-limeGreen-600: #c3da0b;
---color-limeGreen-700: #adc20a;
---color-limeGreen-800: #97a908;
---color-limeGreen-900: #819107;
---color-limeGreen-1000: #6b7906;
-```
-
-**Acceptance criteria:**
-
-- [ ] `--color-limeGreen-500` is `#d9f20c`
-- [ ] All 10 shades recalculated proportionally
-- [ ] Buttons, CTAs, focus rings render with new color
-- [ ] Light and dark themes look correct
-- [ ] Build passes
-
----
-
-## Phase 83: Knip Cleanup — HIGH
-
-### 83.1 HIGH — Resolve 2 knip findings
-
-**Ref:** PM audit #37: `npm run knip` reports 2 issues.
-
-**Files:** `package.json`, `src/constants/openai.tsx`, `knip.json`
-
-**What to do:**
-
-1. **`@typescript-eslint/parser`**: Verify if ESLint config uses it. If truly unused, remove from devDependencies. If used indirectly by eslint-config-next, add to `knip.json` ignore with justification.
-2. **`chatTools` export**: This const is used internally in the same file as `typeof chatTools` type reference by `getChatTools()`. It's not externally imported. Make it non-exported (remove `export` keyword) OR add to `knip.json` if it must remain exported.
-3. Run `npm run knip` to verify 0 findings.
-
-**Acceptance criteria:**
-
-- [ ] `npm run knip` returns 0 findings
-- [ ] No useful code removed
-- [ ] Build passes
-
----
-
-## Phase 84: Missing Server Guards — HIGH
-
-### 84.1 HIGH — Add `server-only` guards to 2 server utilities
-
-**Ref:** PM audit #37: `ai-model-policy.ts` and `check-usage-limit.ts` lack `import "server-only"` guard. Both access plan constants and resolve server-side policies.
-
-**Files:** `src/lib/utils/ai-model-policy.ts`, `src/lib/utils/check-usage-limit.ts`
-
-**What to do:**
-
-1. Add `import "server-only";` as line 1 to both files.
-2. Verify no client component imports either file (should break build if so — which is correct).
-3. Run `npx tsc --noEmit` and `npm run build`.
-
-**Acceptance criteria:**
-
-- [ ] Both files have `server-only` guard
-- [ ] Build passes (no client import violations)
-- [ ] tsc passes
+> **STATUS: Milestone 22 COMPLETE. Milestone 23 Block A COMPLETE. All Phases 1–84, 80.1, 73.1, 74.1, 72.1 complete. 382 unit tests (66 suites). Build passing. Node.js 24.12.0 runtime.**
+> **PM deep audit #38 (2026-03-20): Triple-audit (PM + Architect + Engineer). Phases 82, 83, 84, 74.1, 72.1 archived to DONE. TD-SEC-05 FULLY RESOLVED. Zero critical issues. Zero knip findings.**
+> **Priority order: 75 (HIGH — unblocks E2E gate) → 72.2 (HIGH — WCAG) → 72.3 (HIGH — WCAG) → 72.4 (MEDIUM — WCAG) → 73.3 (MEDIUM) → 74.2 (MEDIUM) → 73.2 (MEDIUM) → 31.4 → 46.x → 29.x → 26.x**
 
 ---
 
@@ -140,27 +55,7 @@
 
 ## Phase 72: WCAG 2.2 AA Accessibility Pass — HIGH
 
-### 72.1 HIGH — Navigation and landmark accessibility
-
-**Ref:** Owner instruction: "Entire app must be WCAG 2.2 AA accessibility standards compliant."
-
-**Files:** `src/app/(admin)/layout.tsx`, `src/components/admin/admin-layout-shell.tsx`
-
-**What to do:**
-
-1. Add skip-to-content link in admin layout (missing — present in chat and public layouts).
-2. Add `<main>` landmark element in admin layout.
-3. Verify all layouts have proper landmark hierarchy (`<header>`, `<nav>`, `<main>`, `<footer>`).
-4. Add `aria-current="page"` on active navigation links in header and sidebar.
-
-**Acceptance criteria:**
-
-- [ ] Skip-to-content link present in admin layout
-- [ ] `<main>` landmark in admin layout
-- [ ] `aria-current="page"` on active nav links
-- [ ] Build passes
-
----
+> Phase 72.1 COMPLETE — archived to DONE.md (PM audit #38).
 
 ### 72.2 HIGH — Color contrast and opacity violations
 
@@ -225,28 +120,9 @@
 
 ---
 
-## Phase 74: Admin Configurability Deepening — CRITICAL
+## Phase 74: Admin Configurability Deepening — HIGH
 
-### 74.1 HIGH — Support email admin-configurable
-
-**Ref:** Owner instruction: "NO HARDCODED data." Triple-audit finding: support email hardcoded in `src/constants/support.ts`.
-
-**Files:** `src/constants/support.ts`, `src/lib/utils/effective-plan-config.ts` or new utility, admin settings
-
-**What to do:**
-
-1. Add `admin.supportEmail` to AppSetting.
-2. Create or extend resolver to read from AppSetting with fallback to constant.
-3. Wire admin settings UI to edit support email.
-4. Replace hardcoded usage with resolver in all consuming files.
-
-**Acceptance criteria:**
-
-- [ ] Support email admin-configurable
-- [ ] Fallback to constant when no override
-- [ ] Build passes
-
----
+> Phase 74.1 COMPLETE — archived to DONE.md (PM audit #38).
 
 ### 74.2 MEDIUM — FAQ content admin-configurable
 
@@ -288,7 +164,7 @@
 
 ---
 
-## Phase 75: Stale E2E Test Cleanup — HIGH
+## Phase 75: Stale E2E Test Cleanup — HIGH (FIRST PRIORITY — unblocks Gate F)
 
 ### 75.1 HIGH — Remove stale `/faqs` references from E2E tests
 
@@ -313,20 +189,18 @@
 
 ### 31.4 LOW — Update E2E tests for current UI structure
 
-**Ref:** PM audit #28 — Engineer analysis: E2E failures caused by stale Clerk auth session and DB connectivity. `pricing-public.spec.ts` is a confirmed duplicate of `plans-public.spec.ts`.
+**Ref:** PM audit #28 — Engineer analysis: E2E failures caused by stale Clerk auth session and DB connectivity. `pricing-public.spec.ts` already deleted (confirmed PM audit #38).
 
-**Files:** `tests/e2e/chat-app-shell.spec.ts`, `tests/e2e/plans-public.spec.ts`, `tests/e2e/pricing-public.spec.ts`, `tests/e2e/public-pages.spec.ts`, `tests/e2e/user-profile.spec.ts`
+**Files:** `tests/e2e/chat-app-shell.spec.ts`, `tests/e2e/plans-public.spec.ts`, `tests/e2e/public-pages.spec.ts`, `tests/e2e/user-profile.spec.ts`
 
 **What to do:**
 
-1. Delete `pricing-public.spec.ts` (confirmed duplicate of `plans-public.spec.ts`).
-2. Fix auth session refresh logic in E2E global setup.
-3. Update selectors/assertions in remaining failing specs.
-4. Add DB connectivity check in E2E setup.
+1. Fix auth session refresh logic in E2E global setup.
+2. Update selectors/assertions in remaining failing specs.
+3. Add DB connectivity check in E2E setup.
 
 **Acceptance criteria:**
 
-- [ ] `pricing-public.spec.ts` deleted
 - [ ] `npm run test:e2e` passes with 0 failures (excluding intentionally skipped)
 - [ ] No duplicate test files
 
@@ -378,5 +252,5 @@
 ---
 
 > **Completed phases** are archived in [`DONE.md`](DONE.md).
-> All phases through 76 complete, plus 80.1 and 73.1 (incl. 63.1–63.2, 61.1, 68.1–68.4, 69.1, 70.1–70.2, 71.1–71.2, 76, 80.1, 73.1). All Milestones 0–22 COMPLETE. Milestone 23 Block A COMPLETE.
+> All phases through 84 complete, plus 80.1, 73.1, 74.1, 72.1 (incl. 63.1–63.2, 61.1, 68.1–68.4, 69.1, 70.1–70.2, 71.1–71.2, 76, 80.1, 73.1, 82, 83, 84, 74.1, 72.1). All Milestones 0–22 COMPLETE. Milestone 23 Block A COMPLETE.
 > Phase 10–12 superseded (see DONE.md for mapping).

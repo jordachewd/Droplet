@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-20 (PM audit #37. All Phases 1–76, 80.1, 73.1 complete. Milestone 22 COMPLETE. Milestone 23 Block A COMPLETE. TD-PREM-01 RESOLVED (Phase 80.1). Phase 73.1 COMPLETE (5 data-consumer violations fixed). Active: TD-DS-04 (MEDIUM), TD-API-09 (LOW). 379 unit tests (66 suites). Build passing. Node.js 24.12.0 runtime.)
+> Last updated: 2026-03-20 (PM audit #38. All Phases 1–84, 80.1, 73.1, 74.1, 72.1 complete. Milestone 22 COMPLETE. Milestone 23 Block A COMPLETE. TD-SEC-05 FULLY RESOLVED (Phase 84). TD-PREM-01 RESOLVED (Phase 80.1). Phase 73.1 COMPLETE. Phase 74.1 COMPLETE (support email). Phase 72.1 COMPLETE (admin a11y). Active: TD-DS-04 (MEDIUM), TD-API-09 (LOW). 382 unit tests (66 suites). Build passing. Node.js 24.12.0 runtime.)
 
 ---
 
@@ -856,10 +856,10 @@ _None._
 
 ### Active — High Priority (PM Audit #35, Triple-Audit)
 
-| ID         | Area     | Description                                                                                                                                                                                                                                              | Severity              |
-| ---------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------- |
-| TD-NODE-01 | Build    | ~~`@types/node@^25.3.3` provides type definitions for Node 25.x APIs but runtime is Node 20.20.1.~~ **RESOLVED.** Runtime upgraded to Node 24.12.0 (`@types/node@^25.5.0`). `.nvmrc`/`engines` not required — stack works without them (owner decision). | ~~High~~ Resolved     |
-| TD-SEC-05  | Security | ~~6+ server-side utility files with direct DB/API access lack `import "server-only"` guard.~~ **PARTIALLY RESOLVED (Phase 76).** Guards added to 6 files. 2 remaining: `ai-model-policy.ts`, `check-usage-limit.ts` — Phase 84.                          | ⚠️ Partially resolved |
+| ID         | Area     | Description                                                                                                                                                                                                                                              | Severity          |
+| ---------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
+| TD-NODE-01 | Build    | ~~`@types/node@^25.3.3` provides type definitions for Node 25.x APIs but runtime is Node 20.20.1.~~ **RESOLVED.** Runtime upgraded to Node 24.12.0 (`@types/node@^25.5.0`). `.nvmrc`/`engines` not required — stack works without them (owner decision). | ~~High~~ Resolved |
+| TD-SEC-05  | Security | ~~6+ server-side utility files with direct DB/API access lack `import "server-only"` guard.~~ **FULLY RESOLVED (Phase 76 + Phase 84).** Guards added to all 8 files. `ai-model-policy.ts` and `check-usage-limit.ts` now guarded.                        | ✅ Resolved       |
 
 ### ~~Active — Critical Priority (PM Audit #36, Triple-Audit)~~ (Resolved — PM Audit #37)
 

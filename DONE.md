@@ -2,7 +2,57 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-20 — PM deep audit #37. Phases 76, 80.1, 73.1 archived. TD-NODE-01 RESOLVED. TD-SEC-05 RESOLVED. TD-PREM-01 RESOLVED. All Phases 1–76, 80.1, 73.1 complete. Milestone 22 COMPLETE. Milestone 23 Block A COMPLETE. 379 unit tests (66 suites). Build passing. Node.js 24.12.0 runtime confirmed.
+> Last updated: 2026-03-20 — PM deep audit #38. Phases 82, 83, 84, 74.1, 72.1 archived. TD-SEC-05 FULLY RESOLVED. All Phases 1–84, 80.1, 73.1, 74.1, 72.1 complete. Milestone 22 COMPLETE. Milestone 23 Block A COMPLETE. 382 unit tests (66 suites). Build passing. Node.js 24.12.0 runtime confirmed. Zero knip findings. Zero critical bugs.
+
+---
+
+## Phase 82 — limeGreen Brand Color Update — COMPLETED (2026-03-20)
+
+> PM audit #38. Engineer work report confirmed. Owner instruction delivered.
+
+- [x] **82.1 CRITICAL** — Recalculated entire `limeGreen` 10-step palette (100–1000) using `#D9F20C` as the 500 base in `globals.css`. All proportionally lighter tints (100–400) and darker shades (600–1000) updated. Tailwind class names unchanged — components auto-inherit.
+
+**Files changed:** `src/app/globals.css`
+
+---
+
+## Phase 83 — Knip Cleanup — COMPLETED (2026-03-20)
+
+> PM audit #38. Engineer work report confirmed. `npm run knip` = 0 findings.
+
+- [x] **83.1 HIGH** — Removed unused `@typescript-eslint/parser` devDependency from `package.json` + `package-lock.json`. Made `chatTools` non-exported in `src/constants/openai.tsx` (used internally via `getChatTools()` — not externally imported). `npm run knip` clean.
+
+**Files changed:** `package.json`, `package-lock.json`, `src/constants/openai.tsx`
+
+---
+
+## Phase 84 — Missing Server Guards — COMPLETED (2026-03-20)
+
+> PM audit #38. Engineer work report confirmed. TD-SEC-05 FULLY RESOLVED.
+
+- [x] **84.1 HIGH** — Added `import "server-only";` to `ai-model-policy.ts` and `check-usage-limit.ts`. Both files now guarded against accidental client import. All server-only utility files now have guards (8 total + all server actions).
+
+**Files changed:** `src/lib/utils/ai-model-policy.ts`, `src/lib/utils/check-usage-limit.ts`
+
+---
+
+## Phase 74.1 — Support Email Admin-Configurable — COMPLETED (2026-03-20)
+
+> PM audit #38. Engineer work report confirmed. Owner instruction: "NO HARDCODED data."
+
+- [x] **74.1 HIGH** — Added `getEffectiveSupportEmail()` in `effective-plan-config.ts` with validation + fallback to `SUPPORT_EMAIL` constant. Added admin settings UI section (`admin-support-section.tsx`). Settings types and normalizers updated. Admin action parsing/revalidation updated. Snapshot default added in `admin-queries.ts`. Replaced all hardcoded support email usage with resolver across 10+ consuming files: `/api/openai`, chat pages, profile, plans (both public + app), cookies, privacy, landing page, FAQs builder.
+
+**Files changed:** `src/lib/utils/effective-plan-config.ts`, `src/components/admin/settings/admin-support-section.tsx` (new), `src/components/admin/settings/types.ts`, `src/components/admin/settings/normalize-admin-settings.ts`, `src/lib/actions/admin.actions.tsx`, `src/lib/utils/admin-queries.ts`, `src/app/(admin)/admin/settings/page.tsx`, `src/app/api/openai/route.tsx`, `src/app/(chat)/app/page.tsx`, `src/app/(chat)/app/c/[conversationId]/page.tsx`, `src/app/(chat)/app/profile/page.tsx`, `src/app/(chat)/app/plans/page.tsx`, `src/app/(public)/plans/page.tsx`, `src/app/(public)/cookies/page.tsx`, `src/app/(public)/privacy/page.tsx`, `src/components/sections/landing-page.tsx`, `src/constants/faqs.tsx`, tests
+
+---
+
+## Phase 72.1 — Navigation and Landmark Accessibility — COMPLETED (2026-03-20)
+
+> PM audit #38. Engineer work report confirmed. WCAG 2.2 AA partial progress.
+
+- [x] **72.1 HIGH** — Added skip-to-content link in admin layout (`<a href="#admin-main-content" className="skip-link">`). Added main landmark target id + focusability (`id="admin-main-content" tabIndex={-1}`) in `admin-layout-shell.tsx`. Added `aria-current="page"` on active admin sidebar links and nav label in `admin-sidebar.tsx`. All 3 layouts (admin, chat, public) now have skip-link + `<main>` landmark + `aria-current`.
+
+**Files changed:** `src/app/(admin)/layout.tsx`, `src/components/admin/admin-layout-shell.tsx`, `src/components/admin/admin-sidebar.tsx`
 
 ---
 
