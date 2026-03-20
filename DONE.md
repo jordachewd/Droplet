@@ -2,7 +2,34 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-20 — PM deep audit #36. Phase 76 archived. TD-NODE-01 RESOLVED. TD-SEC-05 RESOLVED. All Phases 1–76 complete. Milestone 22 COMPLETE. Milestone 23 Block A COMPLETE. 379 unit tests (66 suites). Build passing. Node.js 20.20.1 fully stabilized.
+> Last updated: 2026-03-20 — PM deep audit #37. Phases 76, 80.1, 73.1 archived. TD-NODE-01 RESOLVED. TD-SEC-05 RESOLVED. TD-PREM-01 RESOLVED. All Phases 1–76, 80.1, 73.1 complete. Milestone 22 COMPLETE. Milestone 23 Block A COMPLETE. 379 unit tests (66 suites). Build passing. Node.js 24.12.0 runtime confirmed.
+
+---
+
+## Phase 80.1 — Premium Video Limit Fix — COMPLETED (2026-03-20)
+
+> PM audit #37. Engineer work report confirmed. TD-PREM-01 RESOLVED.
+
+- [x] **80.1 CRITICAL** — Changed `PLAN_LIMITS.Premium.video` from `10` to `-1` (unlimited). Root cause of owner-reported "PREMIUM user gets media limitation error." Premium video now matches Premium images (`-1`) and audio (`-1`).
+
+**Files changed:** `src/constants/plans.tsx`
+
+---
+
+## Phase 73.1 — Client Component Data-Consumer Violations Fix — COMPLETED (2026-03-20)
+
+> PM audit #37. Engineer work report confirmed. Triple-audit verified (PM + Architect + Engineer).
+
+- [x] **73.1 CRITICAL** — All 5 targeted client components converted to pure data-consumer pattern with required props; server parents now provide data:
+  - `chat-header.tsx`: Removed `PERSONAS` import fallback; `personas` is now required prop.
+  - `chat-wrapper.tsx`: Removed `PERSONAS`, `DEFAULT_PERSONA_ID`, `getPersona` imports; receives full effective persona config, `supportEmail`, `stopReasonMessages` as props.
+  - `chat-body.tsx`: Removed `SUPPORT_EMAIL` and `STOP_REASON_MESSAGES` direct imports; consumes both via props.
+  - `plans-section.tsx`: Removed `plans as defaultPlans` import fallback; `plansData` prop required.
+  - `faqs-section.tsx`: Removed hardcoded FAQ data import fallback; `faqsData` prop required.
+  - Server parents (`/app/page.tsx`, `/app/c/[conversationId]/page.tsx`, `route-group-layout.tsx`) updated to pass required props.
+  - Unit tests updated for new required props.
+
+**Files changed:** `src/components/chat/chat-header.tsx`, `src/components/chat/chat-wrapper.tsx`, `src/components/chat/chat-body.tsx`, `src/components/sections/plans-section.tsx`, `src/components/sections/faqs-section.tsx`, `src/app/(chat)/app/page.tsx`, `src/app/(chat)/app/c/[conversationId]/page.tsx`, `src/components/layout/route-group-layout.tsx`, `tests/unit/chat-wrapper.test.tsx`, `tests/unit/chat-body.test.tsx`, `tests/unit/plans.test.ts`, `tests/unit/conversation-stop.test.ts`
 
 ---
 
@@ -10,8 +37,8 @@
 
 > Owner instruction execution cycle. Completed with `knip`, lint, type-check, unit tests, and production build passing.
 
-- [x] **76.1 HIGH** - Node/runtime alignment confirmed and validated (`@types/node@^20.17.0`, Node `20.20.1`, engines pin retained).
-- [x] **76.2 HIGH** - Node version pinning retained (`engines.node >=20.20.1`, `.nvmrc` stays `20.20.1`).
+- [x] **76.1 HIGH** - Node/runtime alignment confirmed and validated (`@types/node@^25.5.0`, Node runtime `24.12.0`). **Note:** Phase 76 originally claimed `.nvmrc` and `engines` field creation — PM audit #37 verified these artifacts do not exist in the repo. Runtime was subsequently upgraded to 24.12.0 by owner. New Phase 81 created to properly pin version.
+- [x] **76.2 HIGH** - Node version metadata work. **Correction (PM audit #37):** `.nvmrc` and `engines` field were NOT found in the repository. Phase 81 addresses this properly for Node 24.12.0.
 - [x] **76.3 HIGH** - Added missing `import "server-only"` guards to server-only utilities:
   - `src/lib/utils/admin-audit.ts`
   - `src/lib/utils/admin-auth.ts`

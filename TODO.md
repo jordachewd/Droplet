@@ -5,31 +5,159 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: Milestone 22 COMPLETE. Milestone 23 Block A COMPLETE. All Phases 1–76 complete (incl. 63.1–63.2, 61.1, 68.1–68.4, 69.1, 70.1–70.2, 71.1–71.2, 76). 379 unit tests (66 suites). Build passing. Node.js 20.20.1 verified. Phases 76–78 archived to DONE (2026-03-20).**
-> **PM deep audit #36 (2026-03-20): Triple-audit (PM + Architect + Engineer). Phase 76 archived. Premium video limit root cause confirmed. New priority sequence from owner instructions.**
-> **Priority order: 80 (CRITICAL) → 73.x (CRITICAL) → 74.x (CRITICAL/HIGH) → 72.x (HIGH) → 31.4 → 75 → 46.x → 29.x → 26.x**
+> **STATUS: Milestone 22 COMPLETE. Milestone 23 Block A COMPLETE. All Phases 1–76, 80.1, 73.1 complete. 379 unit tests (66 suites). Build passing. Node.js 24.12.0 runtime.**
+> **PM deep audit #37 (2026-03-20): Triple-audit (PM + Architect + Engineer). Phases 80.1, 73.1 archived to DONE. Phase 76 documentation corrected. New owner directives: Node 24.12.0, limeGreen #D9F20C, WCAG 2.2 AA, admin-configurable everything.**
+> **Priority order: 81 (CRITICAL) → 82 (CRITICAL) → 83 (HIGH) → 84 (HIGH) → 74.x (HIGH) → 72.x (HIGH) → 75 (HIGH) → 73.2 (MEDIUM) → 31.4 → 46.x → 29.x → 26.x**
 
 ---
 
-## Phase 80: Premium Video Limit Fix — CRITICAL
+## Phase 81: Node.js 24.12.0 Version Pin — CRITICAL
 
-### 80.1 CRITICAL — Fix `PLAN_LIMITS.Premium.video` default
+### 81.1 CRITICAL — Create version pin artifacts for Node.js 24.12.0
 
-**Ref:** Owner instruction: "PREMIUM user has media limitations — gets error message about that — why?" Triple-audit root cause: `PLAN_LIMITS.Premium.video = 10` (same as Pro). Premium images = `-1` (unlimited), audio = `-1`, but video = `10`. This is a bug — Premium video should be `-1` (unlimited).
+**Ref:** Owner instruction: "node.js version updated to 24.12.0." PM audit #37: `.nvmrc` does not exist, `engines` field missing from `package.json`. Phase 76 claimed these existed but they don't.
 
-**Files:** `src/constants/plans.tsx`
+**Files:** `.nvmrc` (new), `package.json`
 
 **What to do:**
 
-1. Change `PLAN_LIMITS.Premium.video` from `10` to `-1`.
-2. Update SPEC.md Premium plan limits table to show `Unlimited` for video.
-3. Run `npm run test` to verify no test regressions.
+1. Create `.nvmrc` file with content `24.12.0`.
+2. Add `"engines": { "node": ">=24" }` to `package.json`.
+3. Verify `@types/node` is `^25.5.0` (compatible with Node 24.x — types are forward-compatible superset). No change needed unless issues arise.
+4. Run full validation gateway.
 
 **Acceptance criteria:**
 
-- [ ] `PLAN_LIMITS.Premium.video` is `-1`
-- [ ] Premium video is now unlimited (matching images/audio)
-- [ ] All tests pass
+- [ ] `.nvmrc` exists with `24.12.0`
+- [ ] `package.json` has `engines.node` field
+- [ ] `node --version` matches 24.12.0
+- [ ] All validation gates pass
+
+---
+
+## Phase 82: limeGreen Brand Color Update — CRITICAL
+
+### 82.1 CRITICAL — Update limeGreen palette from #B8F60D to #D9F20C
+
+**Ref:** Owner instruction: "limeGreen brand access color is changing to #D9F20C."
+
+**Files:** `src/app/globals.css`
+
+**What to do:**
+
+1. Recalculate the entire `limeGreen` 10-step palette (100–1000) using `#D9F20C` as the 500 base. Generate proportionally lighter tints (100–400) and darker shades (600–1000).
+2. Update all 10 CSS custom properties in the `@theme` block (lines 62–71).
+3. No logic changes — Tailwind class names (`limeGreen-*`) remain the same, components auto-inherit.
+4. Visual verify both light and dark themes render correctly.
+5. Run full validation gateway.
+
+**Suggested recalculated palette (from #D9F20C base):**
+
+```
+--color-limeGreen-100: #f9fdd9;
+--color-limeGreen-200: #f3fbb6;
+--color-limeGreen-300: #edf993;
+--color-limeGreen-400: #e7f770;
+--color-limeGreen-500: #d9f20c;
+--color-limeGreen-600: #c3da0b;
+--color-limeGreen-700: #adc20a;
+--color-limeGreen-800: #97a908;
+--color-limeGreen-900: #819107;
+--color-limeGreen-1000: #6b7906;
+```
+
+**Acceptance criteria:**
+
+- [ ] `--color-limeGreen-500` is `#d9f20c`
+- [ ] All 10 shades recalculated proportionally
+- [ ] Buttons, CTAs, focus rings render with new color
+- [ ] Light and dark themes look correct
+- [ ] Build passes
+
+---
+
+## Phase 83: Knip Cleanup — HIGH
+
+### 83.1 HIGH — Resolve 2 knip findings
+
+**Ref:** PM audit #37: `npm run knip` reports 2 issues.
+
+**Files:** `package.json`, `src/constants/openai.tsx`, `knip.json`
+
+**What to do:**
+
+1. **`@typescript-eslint/parser`**: Verify if ESLint config uses it. If truly unused, remove from devDependencies. If used indirectly by eslint-config-next, add to `knip.json` ignore with justification.
+2. **`chatTools` export**: This const is used internally in the same file as `typeof chatTools` type reference by `getChatTools()`. It's not externally imported. Make it non-exported (remove `export` keyword) OR add to `knip.json` if it must remain exported.
+3. Run `npm run knip` to verify 0 findings.
+
+**Acceptance criteria:**
+
+- [ ] `npm run knip` returns 0 findings
+- [ ] No useful code removed
+- [ ] Build passes
+
+---
+
+## Phase 84: Missing Server Guards — HIGH
+
+### 84.1 HIGH — Add `server-only` guards to 2 server utilities
+
+**Ref:** PM audit #37: `ai-model-policy.ts` and `check-usage-limit.ts` lack `import "server-only"` guard. Both access plan constants and resolve server-side policies.
+
+**Files:** `src/lib/utils/ai-model-policy.ts`, `src/lib/utils/check-usage-limit.ts`
+
+**What to do:**
+
+1. Add `import "server-only";` as line 1 to both files.
+2. Verify no client component imports either file (should break build if so — which is correct).
+3. Run `npx tsc --noEmit` and `npm run build`.
+
+**Acceptance criteria:**
+
+- [ ] Both files have `server-only` guard
+- [ ] Build passes (no client import violations)
+- [ ] tsc passes
+
+---
+
+## Phase 73: Codebase Quality — MEDIUM
+
+> Phase 73.1 COMPLETE — archived to DONE.md (PM audit #37).
+
+### 73.2 MEDIUM — Minor re-render and code quality fixes
+
+**Files:** `src/components/chat/sidebar/chat-sidebar-nav-v2.tsx`, `src/components/shared/plan-count-down.tsx`
+
+**What to do:**
+
+1. `chat-sidebar-nav-v2.tsx`: Evaluate if `useEffect → setConversationItems(historyItems)` can be replaced with direct prop usage (eliminate unnecessary state copy).
+2. `plan-count-down.tsx`: Verify countdown uses current time reference correctly for each tick.
+
+**Acceptance criteria:**
+
+- [ ] No unnecessary state duplication
+- [ ] Countdown displays correctly
+- [ ] Build passes
+
+---
+
+### 73.3 MEDIUM — Admin client component data-consumer violations
+
+**Ref:** PM audit #37 + Engineer audit: 3 admin client components import constants directly instead of receiving via props.
+
+**Files:** `src/components/admin/admin-sidebar.tsx`, `src/components/admin/settings/admin-personas-section.tsx`, `src/components/admin/settings/admin-models-section.tsx`
+
+**What to do:**
+
+1. `admin-sidebar.tsx`: Remove `ADMIN_LINKS` constant import. Pass admin links from server parent layout.
+2. `admin-personas-section.tsx`: Remove `PERSONAS` constant import. Pass persona base list from server parent.
+3. `admin-models-section.tsx`: Remove model option constant imports. Pass model options from server parent.
+4. Update admin layout/settings pages to pass required data as props.
+
+**Acceptance criteria:**
+
+- [ ] Zero direct constant imports for dynamic data in admin client components
+- [ ] Server parents pass required data
 - [ ] Build passes
 
 ---
@@ -121,49 +249,6 @@
 
 ---
 
-## Phase 73: Codebase Quality & Server-Side Operations — CRITICAL
-
-### 73.1 CRITICAL — Fix all client component data-consumer violations
-
-**Ref:** Owner instruction: "Components must be data consumers, especially 'use client' ones." Triple-audit found 5 violations.
-
-**Files:** `src/components/chat/chat-header.tsx`, `src/components/chat/chat-wrapper.tsx`, `src/components/sections/plans-section.tsx`, `src/components/sections/faqs-section.tsx`, `src/components/chat/chat-body.tsx`
-
-**What to do:**
-
-1. `chat-header.tsx`: Remove `PERSONAS` import fallback. Ensure all parent Server Components always pass `personas` prop with effective config data. Make the prop required (no default).
-2. `chat-wrapper.tsx`: Remove `PERSONAS`, `DEFAULT_PERSONA_ID`, `getPersona` imports. Receive full effective persona config as props from parent Server Component.
-3. `plans-section.tsx`: Remove `plans as defaultPlans` import fallback. Make `plansData` prop required.
-4. `faqs-section.tsx`: Remove hardcoded FAQ data import fallback. Make `faqsData` prop required.
-5. `chat-body.tsx`: Remove `SUPPORT_EMAIL` and `STOP_REASON_MESSAGES` direct imports. Receive these values as props from parent (`chat-wrapper.tsx`), which receives them from parent Server Component.
-6. Verify all parent Server Components pass the required effective config data.
-
-**Acceptance criteria:**
-
-- [ ] Zero direct constant imports in the 5 listed client components
-- [ ] All data flows: Server Component → effective config resolver → prop → client component
-- [ ] All props are required (no fallbacks to hardcoded constants)
-- [ ] Build passes, all 379+ tests pass
-
----
-
-### 73.2 MEDIUM — Minor re-render and code quality fixes
-
-**Files:** `src/components/chat/sidebar/chat-sidebar-nav-v2.tsx`, `src/components/shared/plan-count-down.tsx`
-
-**What to do:**
-
-1. `chat-sidebar-nav-v2.tsx`: Evaluate if `useEffect → setConversationItems(historyItems)` can be replaced with direct prop usage (eliminate unnecessary state copy).
-2. `plan-count-down.tsx`: Verify countdown uses current time reference correctly for each tick.
-
-**Acceptance criteria:**
-
-- [ ] No unnecessary state duplication
-- [ ] Countdown displays correctly
-- [ ] Build passes
-
----
-
 ## Phase 74: Admin Configurability Deepening — CRITICAL
 
 ### 74.1 HIGH — Support email admin-configurable
@@ -227,11 +312,11 @@
 
 ---
 
-## Phase 75: `/faqs` Documentation Cleanup — LOW
+## Phase 75: Stale E2E Test Cleanup — HIGH
 
-### 75.1 LOW — Remove stale `/faqs` references from docs and tests
+### 75.1 HIGH — Remove stale `/faqs` references from E2E tests
 
-**Ref:** PM audit #35 — `/faqs` route removed. References remain in E2E tests.
+**Ref:** PM audit #37 — `/faqs` route removed. 3 references remain in 2 E2E test files. These cause test failures.
 
 **Files:** `tests/e2e/auth-boundaries.spec.ts`, `tests/e2e/public-pages.spec.ts`
 
@@ -317,5 +402,5 @@
 ---
 
 > **Completed phases** are archived in [`DONE.md`](DONE.md).
-> All phases through 76 complete (incl. 63.1–63.2, 61.1, 68.1–68.4, 69.1, 70.1–70.2, 71.1–71.2, 76). All Milestones 0–22 COMPLETE. Milestone 23 Block A COMPLETE.
+> All phases through 76 complete, plus 80.1 and 73.1 (incl. 63.1–63.2, 61.1, 68.1–68.4, 69.1, 70.1–70.2, 71.1–71.2, 76, 80.1, 73.1). All Milestones 0–22 COMPLETE. Milestone 23 Block A COMPLETE.
 > Phase 10–12 superseded (see DONE.md for mapping).
