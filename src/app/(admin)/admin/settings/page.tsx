@@ -9,6 +9,12 @@ import { AdminThemeSection } from "@/components/admin/settings/admin-theme-secti
 import { AdminSupportSection } from "@/components/admin/settings/admin-support-section";
 import { AdminSettingsTabs } from "@/components/admin/settings/admin-settings-tabs";
 import {
+  AUDIO_MODEL_OPTIONS,
+  CHAT_MODEL_OPTIONS,
+  IMAGE_MODEL_OPTIONS,
+  VIDEO_MODEL_OPTIONS,
+} from "@/constants/admin-options";
+import {
   normalizeLimitsSettingsValue,
   normalizeModelSettingsValue,
   normalizePersonaAccessSettings,
@@ -27,6 +33,7 @@ import {
   ThemeSettingsFormValue,
   TrialLimitsSettingsFormValue,
 } from "@/components/admin/settings/types";
+import { PersonaId } from "@/types/PersonaData.d";
 
 export default async function AdminSettingsPage() {
   const snapshot = await getAdminSettingsSnapshot();
@@ -74,6 +81,7 @@ export default async function AdminSettingsPage() {
     snapshot.settingsByKey["admin.personaOverrides"]?.value,
     personaContentDefaults,
   );
+  const personaIds = Object.keys(personaContentDefaults) as PersonaId[];
 
   return (
     <section className="AdminSettingsPage mx-auto flex w-full max-w-6xl flex-col gap-6">
@@ -87,7 +95,17 @@ export default async function AdminSettingsPage() {
           {
             id: "models",
             label: "Models",
-            content: <AdminModelsSection modelValue={modelValue} />,
+            content: (
+              <AdminModelsSection
+                modelValue={modelValue}
+                modelOptions={{
+                  chat: CHAT_MODEL_OPTIONS,
+                  image: IMAGE_MODEL_OPTIONS,
+                  audio: AUDIO_MODEL_OPTIONS,
+                  video: VIDEO_MODEL_OPTIONS,
+                }}
+              />
+            ),
           },
           {
             id: "plans-pricing",
@@ -111,6 +129,7 @@ export default async function AdminSettingsPage() {
               <AdminPersonasSection
                 personaAccessValue={personaAccessValue}
                 personaContentValue={personaContentValue}
+                personaIds={personaIds}
               />
             ),
           },

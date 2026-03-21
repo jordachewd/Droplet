@@ -4,11 +4,21 @@ import { useEffect } from "react";
 import classNames from "classnames";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ADMIN_LINKS } from "@/constants/admin";
 import { useUiStore } from "@/lib/hooks/use-ui-store";
 import { useShallow } from "zustand/react/shallow";
 
-export default function AdminSidebar() {
+interface AdminSidebarLink {
+  href: string;
+  label: string;
+  icon: string;
+  exact?: boolean;
+}
+
+interface AdminSidebarProps {
+  links: AdminSidebarLink[];
+}
+
+export default function AdminSidebar({ links }: AdminSidebarProps) {
   const pathname = usePathname();
   const {
     desktopSidebarCollapsed: desktopCollapsed,
@@ -88,7 +98,7 @@ export default function AdminSidebar() {
               !isOpen && "lg:items-center",
             )}
           >
-            {ADMIN_LINKS.map((link) => {
+            {links.map((link) => {
               const isActive = link.exact
                 ? pathname === link.href
                 : pathname === link.href ||

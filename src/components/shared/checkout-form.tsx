@@ -3,10 +3,36 @@ import classNames from "classnames";
 import { checkoutPlan } from "@/lib/actions/transaction.action";
 import { CheckoutTransactionParams } from "@/types/TransactionData.d";
 import { CheckoutPlanParams, PlanStatus } from "@/types/PlanData.d";
+import { useFormStatus } from "react-dom";
 
 interface CheckoutProps {
   plan: CheckoutPlanParams;
   planStatus: PlanStatus;
+}
+
+interface CheckoutSubmitButtonProps {
+  isIncluded: boolean;
+  isCurrent: boolean;
+  className: string;
+}
+
+function CheckoutSubmitButton({
+  isIncluded,
+  isCurrent,
+  className,
+}: CheckoutSubmitButtonProps) {
+  const { pending } = useFormStatus();
+  const isDisabled = isIncluded || pending;
+
+  const buttonLabel = pending
+    ? "Processing..."
+    : (isCurrent && "Current") || (isIncluded && "Included") || "Subscribe";
+
+  return (
+    <button type="submit" disabled={isDisabled} className={className}>
+      {buttonLabel}
+    </button>
+  );
 }
 
 const Checkout = ({ plan, planStatus }: CheckoutProps) => {
@@ -34,17 +60,15 @@ const Checkout = ({ plan, planStatus }: CheckoutProps) => {
 
   return (
     <form action={onCheckout} className="Checkout">
-      <button
-        type="submit"
-        disabled={isIncluded}
+      <CheckoutSubmitButton
+        isIncluded={isIncluded}
+        isCurrent={isCurrent}
         className={classNames(
           "btn btn-md w-full min-w-48 sm:min-w-55",
           buttonVariant,
           disabledStyle,
         )}
-      >
-        {(isCurrent && "Current") || (isIncluded && "Included") || "Subscribe"}
-      </button>
+      />
     </form>
   );
 };

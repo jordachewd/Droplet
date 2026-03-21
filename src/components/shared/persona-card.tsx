@@ -40,10 +40,10 @@ export default function PersonaCard({
   const cardBody = (
     <>
       <div className="flex items-center justify-between gap-3">
-        <h3 className={titleClass}>
+        <h2 className={titleClass}>
           <i className={classNames(persona.icon, "text-base")}></i>
           <span>{persona.label}</span>
-        </h3>
+        </h2>
         <div className="flex items-center gap-2">
           <span className="rounded-full border border-dotted px-2 py-1 text-xs">
             {persona.category}

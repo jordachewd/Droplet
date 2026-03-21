@@ -14,22 +14,16 @@ const PUBLIC_ROUTES = [
   "/terms",
 ] as const;
 
-const SHARED_KNOWN_PUBLIC_VIOLATION_IDS = [
-  "landmark-main-is-top-level",
-  "landmark-no-duplicate-main",
-  "landmark-unique",
-] as const;
-
 const KNOWN_PUBLIC_VIOLATION_IDS: Record<
   (typeof PUBLIC_ROUTES)[number],
   string[]
-> = Object.fromEntries(
-  PUBLIC_ROUTES.map((route) => [route, [...SHARED_KNOWN_PUBLIC_VIOLATION_IDS]]),
-) as Record<(typeof PUBLIC_ROUTES)[number], string[]>;
-
-KNOWN_PUBLIC_VIOLATION_IDS["/"].push("color-contrast");
-KNOWN_PUBLIC_VIOLATION_IDS["/plans"].push("color-contrast");
-KNOWN_PUBLIC_VIOLATION_IDS["/personas"].push("heading-order");
+> = PUBLIC_ROUTES.reduce(
+  (accumulator, route) => {
+    accumulator[route] = [];
+    return accumulator;
+  },
+  {} as Record<(typeof PUBLIC_ROUTES)[number], string[]>,
+);
 
 function formatViolationsForError(
   route: string,

@@ -2,7 +2,7 @@ import type { Message } from "@/types";
 
 let fallbackMessageCounter = 0;
 
-export function createMessageId(): string {
+function createMessageId(): string {
   if (
     typeof globalThis.crypto !== "undefined" &&
     typeof globalThis.crypto.randomUUID === "function"

@@ -45,28 +45,6 @@ type TestTask = {
   endAction?: string;
 };
 
-type TestTransaction = {
-  _id: string;
-  userId: string;
-  planName: string;
-  amount: number;
-  currency: string;
-  status: string;
-  stripeId: string;
-  createdAt: Date;
-};
-
-type TestEntitlements = {
-  planName: string;
-  supportsImageGeneration: boolean;
-  supportsAudioGeneration: boolean;
-  supportsVideoGeneration: boolean;
-  imageLimitReached: boolean;
-  audioLimitReached: boolean;
-  videoLimitReached: boolean;
-  allowedPersonaIds: string[];
-};
-
 export function createTestUser(
   overrides: Omit<Partial<TestUser>, "plan"> & {
     plan?: Partial<TestUserPlan>;
@@ -122,38 +100,6 @@ export function createTestTask(overrides: Partial<TestTask> = {}): TestTask {
     estimatedBytes: 512,
     status: "active",
     updatedAt: "2026-03-11T00:00:00.000Z",
-    ...overrides,
-  };
-}
-
-export function createTestTransaction(
-  overrides: Partial<TestTransaction> = {},
-): TestTransaction {
-  return {
-    _id: "txn_507f1f77bcf86cd799439011",
-    userId: "user_123",
-    planName: "Pro",
-    amount: 1900,
-    currency: "USD",
-    status: "completed",
-    stripeId: "pi_test_123",
-    createdAt: new Date("2026-03-11T00:00:00.000Z"),
-    ...overrides,
-  };
-}
-
-export function createTestEntitlements(
-  overrides: Partial<TestEntitlements> = {},
-): TestEntitlements {
-  return {
-    planName: "Lite",
-    supportsImageGeneration: true,
-    supportsAudioGeneration: true,
-    supportsVideoGeneration: true,
-    imageLimitReached: false,
-    audioLimitReached: false,
-    videoLimitReached: false,
-    allowedPersonaIds: ["strategist", "developer"],
     ...overrides,
   };
 }
