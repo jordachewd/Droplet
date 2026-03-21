@@ -1000,7 +1000,7 @@ npm run build
 
 ## 9. Immediate Execution Order
 
-Milestones 0–22 are COMPLETE. All Phases 1–71.2 (incl. 63.1–63.2, 61.1, 68.1–68.4, 69.1, 70.1–70.2, 71.1–71.2) remain archived as delivered work. Milestone 23 Block B is in progress, and Milestone 24 is now open. Phases 82, 83, 84, 74.1, and 72.1 are COMPLETE.
+Milestones 0–22 are COMPLETE. All Phases 1–71.2 (incl. 63.1–63.2, 61.1, 68.1–68.4, 69.1, 70.1–70.2, 71.1–71.2) remain archived as delivered work. Milestone 23 Block A COMPLETE. Block B in progress. Milestone 24 now open. Phases 82, 83, 84, 74.1, 72.1, 75 are COMPLETE. Three new phases added by PM audit #39: 85 (admin pagination), 86 (server-only guards), 87 (createTaskSchema strict).
 
 **Completed (Milestones 0–21):**
 
@@ -1070,6 +1070,7 @@ Milestones 0–22 are COMPLETE. All Phases 1–71.2 (incl. 63.1–63.2, 61.1, 68
 | 11  | Admin plans/settings fully configurable                      | HIGH     | ⚠️ Core operational. Support email DONE (Phase 74.1). Remaining: FAQ content (74.2), hero/about/landing copy (74.3), system prompts, hero images.                                             |
 | 12  | Admin panel design matches /app design                       | HIGH     | ✅ COMPLETE (Phase 70.1 + 70.2).                                                                                                                                                              |
 | 13  | Admin users table shows usage/limits (remained vs included)  | MEDIUM   | ✅ DELIVERED (Phase 66.3 + 59.1). Users table + detail page with progress bars.                                                                                                               |
+| 14  | RE-USE repetitive code as much as possible                   | HIGH     | ⚠️ NEEDS TRACKING. No systematic code-reuse audit completed. To be tracked as ongoing architectural concern.                                                                                  |
 
 **Owner Directive Updates (March 2026 — Palette & Button Styles):**
 
@@ -1096,15 +1097,19 @@ Milestones 0–22 are COMPLETE. All Phases 1–71.2 (incl. 63.1–63.2, 61.1, 68
 20. ✅ Admin persona content editing UI (Phase 71.2) — DONE. Persona labels, taglines, descriptions, starter prompts editable from admin settings.
 21. ✅ Admin panel full design alignment (Phase 70.2) — DONE. All admin pages polished to match `/app` design system.
 
-**Current priority (Milestone 23 Block B + Milestone 24):**
+**Current priority (Milestone 23 Block B + Milestone 24 — updated PM audit #39):**
 
 | Priority     | Phase  | Description                                                                                                              |
 | ------------ | ------ | ------------------------------------------------------------------------------------------------------------------------ |
 | ~~CRITICAL~~ | ~~80~~ | ~~Fix `PLAN_LIMITS.Premium.video` from `10` to `-1`~~ — DONE (Phase 80.1)                                                |
 | ~~CRITICAL~~ | ~~73~~ | ~~Codebase quality: 5 client component data-consumer violations~~ — DONE (Phase 73.1). 3 admin remain (73.3)             |
-| HIGH         | 74     | Full admin configurability: support email DONE (74.1). FAQ content (74.2), hero/about/landing copy (74.3) remain         |
 | HIGH         | 72     | WCAG 2.2 AA accessibility: skip-link DONE (72.1). Remaining: contrast (72.2), form labels (72.3), table semantics (72.4) |
-| LOW          | 75     | `/faqs` route removal from all documentation and navigation references                                                   |
+| HIGH         | 85     | Admin query pagination — `getAdminUsers()` and `getAdminTransactions()` unbounded (NEW — PM audit #39)                   |
+| HIGH         | 74     | Full admin configurability: support email DONE (74.1). FAQ content (74.2), hero/about/landing copy (74.3) remain         |
+| MEDIUM       | 86     | Server-only guards on 20 files: 8 Mongoose models, 7 OpenAI utils, 5 AWS utils (NEW — PM audit #39)                      |
+| MEDIUM       | 73.3   | 3 remaining admin client component data-consumer violations                                                              |
+| LOW          | 87     | `createTaskSchema` `.passthrough()` → `.strict()` (NEW — PM audit #39)                                                   |
+| ~~LOW~~      | ~~75~~ | ~~`/faqs` route removal~~ — CLOSED (PM audit #39: zero /faqs refs found in E2E — already clean)                          |
 
 **Required validation gates before calling this milestone set complete:**
 
@@ -1142,7 +1147,24 @@ These items are not banned forever. They are excluded because they create dispro
 
 ## 11. Owner-Directed New Work (Added 2026-03-16, Updated 2026-03-18)
 
-> **All Milestones 0–22 COMPLETE. Milestone 23 Block A COMPLETE (Phases 68.4, 71.1, 71.2, 70.2). All Phases 1–71.2 delivered. 382 unit tests (66 suites) passing. Build passing.**
+> **All Milestones 0–22 COMPLETE. Milestone 23 Block A COMPLETE (Phases 68.4, 71.1, 71.2, 70.2). Phase 75 CLOSED (PM audit #39). All Phases 1–71.2 + 72.1 + 74.1 + 82 + 83 + 84 + 75 delivered. 382 unit tests (66 suites) passing. Build passing.**
+
+### Owner Instructions (Canonical Reference — March 2026)
+
+These instructions are **non-negotiable owner directives** that govern all implementation decisions:
+
+| #   | Instruction                                                                    | Priority | Status                                                                                             |
+| --- | ------------------------------------------------------------------------------ | -------- | -------------------------------------------------------------------------------------------------- |
+| 1   | NO HARDCODED data — everything configurable from ADMIN panel                   | CRITICAL | ⚠️ PARTIALLY DELIVERED. Core done (74.1). Remaining: FAQ (74.2), landing copy (74.3).              |
+| 2   | RE-USE repetitive code as much as possible                                     | HIGH     | ⚠️ NEEDS TRACKING. No systematic audit completed.                                                  |
+| 3   | WCAG 2.2 AA accessibility compliance for entire app                            | HIGH     | ⚠️ PARTIALLY DONE. Phase 72.1 complete. Remaining: 72.2 (contrast), 72.3 (forms), 72.4 (tables).   |
+| 4   | Components must be data consumers (especially `"use client"`)                  | CRITICAL | ✅ COMPLETE (Phase 73.1). 5 core components converted.                                             |
+| 5   | Good practices — reduce unnecessary renders and resource leaks                 | CRITICAL | ✅ COMPLETE. All useEffect cleanups verified. No resource leaks.                                   |
+| 6   | Utilities, functions, data fetching on server side                             | CRITICAL | ✅ COMPLETE. Server-only guards on utility files. No violations.                                   |
+| 7   | User removal must cascade: Clerk + DB + all related data                       | CRITICAL | ✅ COMPLETE. All 3 paths: Clerk → Tasks → Transactions → UsageEvents → S3 → User.                  |
+| 8   | `npm run knip` — unused code audit workflow                                    | HIGH     | ✅ COMPLETE (Phase 83). 0 findings remaining.                                                      |
+| 9   | Profile page (`/app/profile`) displays plan limitations and usage              | HIGH     | ✅ COMPLETE (Phase 66.1). ProfileUsage with progress bars.                                         |
+| 10  | Admin plans/prices/features/settings fully configurable from `/admin/settings` | HIGH     | ⚠️ PARTIALLY DONE. Core operational (74.1). Remaining: FAQ (74.2), hero/about/landing copy (74.3). |
 
 ### Milestone 10 — Layout, Navigation & Library Enhancement
 

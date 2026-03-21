@@ -2,7 +2,17 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-20 — PM deep audit #38. Phases 82, 83, 84, 74.1, 72.1 archived. TD-SEC-05 FULLY RESOLVED. All Phases 1–84, 80.1, 73.1, 74.1, 72.1 complete. Milestone 22 COMPLETE. Milestone 23 Block A COMPLETE. 382 unit tests (66 suites). Build passing. Node.js 24.12.0 runtime confirmed. Zero knip findings. Zero critical bugs.
+> Last updated: 2026-03-21 — PM deep audit #39. Phase 75 closed (zero /faqs refs in E2E tests). New phases 85/86/87 created. All Phases 1–84, 80.1, 73.1, 74.1, 72.1, 75 complete. Milestone 22 COMPLETE. Milestone 23 Block A COMPLETE. 382 unit tests (66 suites). Build passing. Node.js 24.12.0 runtime confirmed.
+
+---
+
+## Phase 75 — Stale E2E /faqs References — CLOSED (2026-03-21)
+
+> PM audit #39. Triple-audit verified: zero `/faqs` references exist in any E2E test file. The references documented in PM audit #37 (auth-boundaries.spec.ts, public-pages.spec.ts) were either already removed in a prior phase or never existed in the current codebase state. No work needed.
+
+- [x] **75.1 HIGH** — Verified zero `/faqs` references in E2E tests. Phase closed as already resolved.
+
+**Files changed:** None — already clean.
 
 ---
 

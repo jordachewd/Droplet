@@ -5,9 +5,9 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: Milestone 22 COMPLETE. Milestone 23 Block A COMPLETE. All Phases 1–84, 80.1, 73.1, 74.1, 72.1 complete. 382 unit tests (66 suites). Build passing. Node.js 24.12.0 runtime.**
-> **PM deep audit #38 (2026-03-20): Triple-audit (PM + Architect + Engineer). Phases 82, 83, 84, 74.1, 72.1 archived to DONE. TD-SEC-05 FULLY RESOLVED. Zero critical issues. Zero knip findings.**
-> **Priority order: 75 (HIGH — unblocks E2E gate) → 72.2 (HIGH — WCAG) → 72.3 (HIGH — WCAG) → 72.4 (MEDIUM — WCAG) → 73.3 (MEDIUM) → 74.2 (MEDIUM) → 73.2 (MEDIUM) → 31.4 → 46.x → 29.x → 26.x**
+> **STATUS: Milestone 22 COMPLETE. Milestone 23 Block A COMPLETE. All Phases 1–84, 80.1, 73.1, 74.1, 72.1, 75 complete. 382 unit tests (66 suites). Build passing. Node.js 24.12.0 runtime.**
+> **PM deep audit #39 (2026-03-21): Triple-audit (PM + Architect + Engineer). Phase 75 CLOSED (zero /faqs refs found in E2E). New phases: 85 (admin pagination), 86 (server-only guards on models/OpenAI/AWS), 87 (createTaskSchema strict). Zero critical issues. Orphan `_update_plan.cjs` needs manual deletion.**
+> **Priority order: 72.2 (HIGH — WCAG) → 72.3 (HIGH — WCAG) → 85 (HIGH — admin pagination) → 72.4 (MEDIUM — WCAG) → 86 (MEDIUM — server-only) → 73.3 (MEDIUM) → 87 (LOW) → 74.2 (MEDIUM) → 73.2 (MEDIUM) → 31.4 → 46.x → 29.x → 26.x**
 
 ---
 
@@ -164,24 +164,108 @@
 
 ---
 
-## Phase 75: Stale E2E Test Cleanup — HIGH (FIRST PRIORITY — unblocks Gate F)
+## Phase 85: Admin Query Pagination — HIGH (NEW — PM audit #39)
 
-### 75.1 HIGH — Remove stale `/faqs` references from E2E tests
+### 85.1 HIGH — Add server-side pagination to admin users and transactions queries
 
-**Ref:** PM audit #37 — `/faqs` route removed. 3 references remain in 2 E2E test files. These cause test failures.
+**Ref:** PM audit #39 — Architect finding: `getAdminUsers()` and `getAdminTransactions()` fetch ALL records with no `.limit()` or `.skip()`. Unbounded queries cause performance degradation at scale (10k+ records).
 
-**Files:** `tests/e2e/auth-boundaries.spec.ts`, `tests/e2e/public-pages.spec.ts`
+**Files:** `src/lib/utils/admin-queries.ts`, `src/components/admin/users/admin-users-table.tsx`, `src/components/admin/transactions/admin-transactions-table.tsx`, `src/app/(admin)/admin/users/page.tsx`, `src/app/(admin)/admin/transactions/page.tsx`
 
 **What to do:**
 
-1. Remove or update `/faqs` navigation test in `auth-boundaries.spec.ts`.
-2. Remove or update `/faqs` assertions in `public-pages.spec.ts`.
-3. Verify no other stale `/faqs` references in test files.
+1. Add `page` and `pageSize` parameters to `getAdminUsers()` and `getAdminTransactions()`.
+2. Use `.skip((page - 1) * pageSize).limit(pageSize)` with a separate `countDocuments()` for total count.
+3. Return `{ items, total, page, pageSize, totalPages }` from each query.
+4. Add pagination UI controls to admin users and transactions tables.
+5. Default `pageSize = 25`.
 
 **Acceptance criteria:**
 
-- [ ] Zero `/faqs` references in test assertions
-- [ ] E2E tests pass (for non-connectivity-related specs)
+- [ ] Admin users and transactions queries paginated
+- [ ] Pagination controls visible on both tables
+- [ ] Build passes
+- [ ] Unit tests updated
+
+---
+
+## Phase 86: Server-Only Guards — Mongoose Models, OpenAI, AWS — MEDIUM (NEW — PM audit #39)
+
+### 86.1 MEDIUM — Add `import "server-only"` to all Mongoose model files
+
+**Ref:** PM audit #39 — Engineer finding: 8 Mongoose model files lack `server-only` guard. Defense-in-depth — these import `mongoose` which is server-only, but explicit guard prevents accidental client import.
+
+**Files:** All 8 files in `src/lib/database/models/`
+
+**What to do:**
+
+1. Add `import "server-only";` as first line to all 8 model files.
+2. Verify no client component directly imports any model file.
+
+**Acceptance criteria:**
+
+- [ ] All 8 model files have `import "server-only"` guard
+- [ ] Build passes
+
+---
+
+### 86.2 MEDIUM — Add `import "server-only"` to OpenAI utility files
+
+**Ref:** PM audit #39 — Engineer finding: 5 OpenAI utility files lack guard (excludes `filterAssistantMsg.tsx` which is a pure utility and `message-policy.ts` which may be client-usable).
+
+**Files:** `src/lib/utils/openai/generateAudio.tsx`, `generateImage.tsx`, `generateResponse.tsx`, `generateTitle.tsx`, `generateVideo.tsx`
+
+**What to do:**
+
+1. Add `import "server-only";` to the 5 OpenAI generation utility files.
+2. Verify `classify-task-complexity.ts` and `message-policy.ts` — add guard only if they import server deps.
+3. `filterAssistantMsg.tsx` is a pure array utility — do NOT add guard.
+
+**Acceptance criteria:**
+
+- [ ] All OpenAI generation utilities have `import "server-only"` guard
+- [ ] `filterAssistantMsg.tsx` remains unguarded (pure utility)
+- [ ] Build passes
+
+---
+
+### 86.3 MEDIUM — Add `import "server-only"` to AWS utility files
+
+**Ref:** PM audit #39 — Engineer finding: 5 AWS utility files lack guard.
+
+**Files:** All 5 files in `src/lib/utils/aws/`
+
+**What to do:**
+
+1. Add `import "server-only";` to all 5 AWS utility files.
+2. Verify no client component directly imports any AWS file.
+
+**Acceptance criteria:**
+
+- [ ] All 5 AWS utility files have `import "server-only"` guard
+- [ ] Build passes
+
+---
+
+## Phase 87: createTaskSchema Strict Mode — LOW (NEW — PM audit #39)
+
+### 87.1 LOW — Change createTaskSchema from `.passthrough()` to `.strict()`
+
+**Ref:** PM audit #39 — Architect finding: `createTaskSchema` in `task.actions.tsx` allows arbitrary additional fields via `.passthrough()`. Should use `.strict()` for defense-in-depth consistency.
+
+**Files:** `src/lib/actions/task.actions.tsx`
+
+**What to do:**
+
+1. Change `createTaskSchema` from `.passthrough()` to `.strict()`.
+2. Verify no caller passes extra fields to `createTask()`.
+3. Run unit tests.
+
+**Acceptance criteria:**
+
+- [ ] `createTaskSchema` uses `.strict()`
+- [ ] Unit tests pass
+- [ ] Build passes
 
 ---
 
@@ -252,5 +336,5 @@
 ---
 
 > **Completed phases** are archived in [`DONE.md`](DONE.md).
-> All phases through 84 complete, plus 80.1, 73.1, 74.1, 72.1 (incl. 63.1–63.2, 61.1, 68.1–68.4, 69.1, 70.1–70.2, 71.1–71.2, 76, 80.1, 73.1, 82, 83, 84, 74.1, 72.1). All Milestones 0–22 COMPLETE. Milestone 23 Block A COMPLETE.
+> All phases through 84 complete, plus 80.1, 73.1, 74.1, 72.1, 75 (incl. 63.1–63.2, 61.1, 68.1–68.4, 69.1, 70.1–70.2, 71.1–71.2, 76, 80.1, 73.1, 82, 83, 84, 74.1, 72.1, 75). All Milestones 0–22 COMPLETE. Milestone 23 Block A COMPLETE.
 > Phase 10–12 superseded (see DONE.md for mapping).
