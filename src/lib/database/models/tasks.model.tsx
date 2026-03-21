@@ -1,3 +1,4 @@
+import "server-only";
 import { ContentItem, Message } from "@/types";
 import { TaskEndAction, TaskEndedReason, TaskStatus } from "@/types/TaskData.d";
 import { Schema, model, models, Document } from "mongoose";

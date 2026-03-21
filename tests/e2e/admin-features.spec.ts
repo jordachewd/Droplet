@@ -4,9 +4,11 @@ import {
   getE2EAdminUser,
   missingAdminCredentialsError,
 } from "./utils/e2e-test-user";
+import { withMongoConnection } from "./utils/mongo";
 
 const adminAuthFile = path.join(__dirname, ".clerk/admin.json");
 const e2eAdminUser = getE2EAdminUser();
+const createdPublicPageSlugs = new Set<string>();
 
 test.describe("admin transactions, usage, settings, and website", () => {
   test.skip(!e2eAdminUser, missingAdminCredentialsError);
@@ -15,6 +17,19 @@ test.describe("admin transactions, usage, settings, and website", () => {
       testInfo.project.name !== "chromium",
       "Admin website editor flow is currently stabilized on Chromium only.",
     );
+  });
+
+  test.afterAll(async () => {
+    if (createdPublicPageSlugs.size === 0) {
+      return;
+    }
+
+    await withMongoConnection(async (connection) => {
+      await connection.collection("publicpages").deleteMany({
+        slug: { $in: [...createdPublicPageSlugs] },
+      });
+    });
+    createdPublicPageSlugs.clear();
   });
   test.use({ storageState: adminAuthFile });
 
@@ -53,6 +68,7 @@ test.describe("admin transactions, usage, settings, and website", () => {
 
     const pageTitle = `E2E Admin Page ${Date.now()}`;
     const pageSlug = `e2e-admin-${Date.now()}`;
+    createdPublicPageSlugs.add(pageSlug);
 
     await page.getByLabel("Title").fill(pageTitle);
     await page.getByLabel("Slug").fill(pageSlug);

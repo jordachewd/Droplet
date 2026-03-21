@@ -1,3 +1,4 @@
+import "server-only";
 import { awsS3Client } from "@/constants/aws";
 import { normalizeS3ObjectKey } from "@/lib/utils/aws/s3-file-reference";
 import {
