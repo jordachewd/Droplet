@@ -1,8 +1,8 @@
-# Droplet — Application Specification
+﻿# Droplet — Application Specification
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-21 (PM audit #46. All Phases 1–102 complete (including 72.4, 96.4, 97.1, 99.5, 100.4, 101, 102). Milestone 24 COMPLETE. Milestone 25 IN PROGRESS — testing infrastructure rebuild. TD-REUSE-01 FULLY RESOLVED (Phase 100.4). TD-REUSE-02 RESOLVED (Phase 100.2). TD-REUSE-03 RESOLVED (Phase 100.3). TD-WCAG-03 RESOLVED (Phase 101 — viewport zoom). TD-LEAK-01 RESOLVED (Phase 102 — AbortController). TD-WCAG-04 RESOLVED (Phase 99.5 — AudioPlayer ARIA). TD-WCAG-02 RESOLVED (Phase 97.1 — axe-core E2E). Active: TD-TEST-07 (MEDIUM — Phase 96.6), TD-API-09 (LOW), TD-TASK-PASSTHROUGH (LOW — Phase 87). 400 unit tests (65 suites). E2E: 108 passed, 0 failed, 25 skipped. All 6 gates GREEN. Coverage: 76.27/65.31/79.64/76.67 vs 76/65/79/76 (MET). Build passing. Node.js 24.12.0 runtime.)
+> Last updated: 2026-03-21 (PM audit #47. All Phases 1–103.4 complete (including 73.3, 96.5–96.8, 99.2, 99.4, 103.1–103.4). Milestone 24 COMPLETE. Milestone 25 IN PROGRESS — testing infrastructure rebuild + admin configurability closure. TD-REUSE-01 FULLY RESOLVED (Phase 100.4). TD-WCAG-01 RESOLVED (Phase 103.1–103.4 — color contrast, heading order, landmarks). TD-KNIP-01 RESOLVED (Phase 99.4 — knip clean). TD-TEST-07 RESOLVED (Phase 96.6 — Zustand store tests). NEW: TD-SEC-09 (HIGH — missing server-only guards on 2 files, Phase 105). TD-REUSE-04 (MEDIUM — ChatApiResponse type duplication, Phase 106). TD-HARDCODE-01 (HIGH — stop reason messages not admin-configurable, Phase 107). TD-WCAG-05 (MEDIUM — library tabs arrow-key navigation, Phase 108). Active: TD-SEC-09 (HIGH), TD-HARDCODE-01 (HIGH), TD-REUSE-04 (MEDIUM), TD-WCAG-05 (MEDIUM), TD-API-09 (LOW), TD-TASK-PASSTHROUGH (LOW — Phase 87). 433 unit tests (72 suites). E2E: 108 passed, 0 failed, 25 skipped. All 7 gates GREEN. Coverage: 78.18/65.94/83.01/78.51 vs 76/65/79/76 (MET). Build passing. Node.js 24.12.0 runtime.)
 
 ---
 
@@ -743,11 +743,11 @@ All button styles use Lime Green as the accent color in **both** light and dark 
 
 ## 13. Testing
 
-- **Unit tests**: 65 suites, 400 tests (Vitest) — organized by domain in `tests/unit/{actions,components,routes,utils,models,constants}/`. Includes streaming, webhook, chat-wrapper, chat-body stop-state, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, persona prompt, rate limiting, task complexity classification, conversation stop enforcement (merged into openai-route tests Phase 96.1), entitlement resolver full coverage (including admin override tests), checkout-success page, admin audit trail (including authorization enforcement tests Phase 96.4), OpenAI route tests, atomic prompt limit, daily conversation limit, media error handling (failure paths), universal feature access, trial access tests, effective model config, effective plan config, checkout price bypass regression, video generation, validation schema security injection tests (XSS, long strings, null bytes), AudioPlayer ARIA tests, abort behavior tests. Shared test factories in `tests/unit/test-support/factories.ts` (Phase 94.5).
-- **E2E tests**: 15 Playwright spec files. 108 passed, 25 skipped, 0 failed. Default 3 browsers (Chromium, Firefox, WebKit); full 7-browser matrix via `PLAYWRIGHT_FULL_MATRIX=1`. Specs: accessibility (Phase 97.1), auth-boundaries, public-pages, error-handling, chat-app-shell, conversation-lifecycle, user-profile, admin-users, admin-features, admin-bulk-actions, plans-public, authenticated-flows, persona-trial-access, live-image-generation. 25 skips are intentional: credential-gated tests without E2E env vars + Chromium-only tests on Firefox/WebKit. All E2E assertions are structural (no hardcoded prices/copy — Phase 95). WCAG E2E via @axe-core/playwright scanning all 7 public routes with known violation tracking.
-- **Coverage**: v8 provider, thresholds: 76% statements / 65% branches / 79% functions / 76% lines. Actual: 76.27/65.31/79.64/76.67. Gate PASSES. Reporters: text, json-summary, lcov. Setup file: `tests/unit/vitest.setup.ts` (global mock cleanup). Phase 98 targets raising thresholds to 82/78/82/82+.
+- **Unit tests**: 72 suites, 433 tests (Vitest) — organized by domain in `tests/unit/{actions,components,routes,utils,models,constants,stores}/`. Includes streaming, webhook, chat-wrapper, chat-body stop-state, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, persona prompt, rate limiting, task complexity classification, conversation stop enforcement (merged into openai-route tests Phase 96.1), entitlement resolver full coverage (including admin override tests), checkout-success page, admin audit trail (including authorization enforcement tests Phase 96.4), OpenAI route tests, atomic prompt limit, daily conversation limit, media error handling (failure paths), universal feature access, trial access tests, effective model config, effective plan config, checkout price bypass regression, video generation, validation schema security injection tests (XSS, long strings, null bytes), AudioPlayer ARIA tests, abort behavior tests, Zustand store tests (Phase 96.6 — use-chat-store, use-preferences-store, use-ui-store), upload file size validation (Phase 96.5), component tests for confirmation-modal/plan-card/persona-card/checkout-form (Phase 96.7), user model tests (Phase 96.8). Shared test factories in `tests/unit/test-support/factories.ts` (Phase 94.5).
+- **E2E tests**: 15 Playwright spec files. 108 passed, 25 skipped, 0 failed. Default 3 browsers (Chromium, Firefox, WebKit); full 7-browser matrix via `PLAYWRIGHT_FULL_MATRIX=1`. Specs: accessibility (Phase 97.1), auth-boundaries, public-pages, error-handling, chat-app-shell, conversation-lifecycle, user-profile, admin-users, admin-features, admin-bulk-actions, plans-public, authenticated-flows, persona-trial-access, live-image-generation. 25 skips are intentional: credential-gated tests without E2E env vars + Chromium-only tests on Firefox/WebKit. All E2E assertions are structural (no hardcoded prices/copy — Phase 95). WCAG E2E via @axe-core/playwright scanning all 7 public routes — all WCAG violations fixed (Phase 103.1–103.4), known violations list reduced to zero.
+- **Coverage**: v8 provider, thresholds: 76% statements / 65% branches / 79% functions / 76% lines. Actual: 78.18/65.94/83.01/78.51. Gate PASSES. Reporters: text, json-summary, lcov. Setup file: `tests/unit/vitest.setup.ts` (global mock cleanup). Phase 98 targets raising thresholds to 82/78/82/82+.
 - **Config**: Vitest `environmentMatchGlobs` for auto-jsdom on `.tsx`. Playwright `actionTimeout: 10s`, `expect.timeout: 5s`. ESLint `no-console` (error), `no-restricted-globals` (alert/confirm). TS `noFallthroughCasesInSwitch`, `forceConsistentCasingInFileNames`.
-- **Gaps**: Zero Zustand store tests (TD-TEST-07). No E2E for Stripe checkout flow. No admin action behavioral tests. No E2E for user deletion cascade. Branch coverage 65% is lowest metric. 5 unused root migration scripts (knip). 3 unused exports: `createTestTransaction`, `createTestEntitlements` (test factories not consumed), `createMessageId` (internal only) — tracked in Phase 99.4. E2E: 108 passed, 0 failed, 25 skipped — all GREEN. WCAG axe-core known violations tracked: color-contrast on `/` and `/plans`, heading-order on `/personas`, landmark issues on all public routes (Phase 103).
+- **Gaps**: No E2E for Stripe checkout flow. No admin action behavioral tests. No E2E for user deletion cascade. Branch coverage 65.94% is lowest metric — worst files: effective-persona-access.ts (0%), deleteFileFromAWS.tsx (0%), chat-body.tsx (14%), mongoose.tsx (21.73%), admin-queries.ts (20.14%), admin.actions.tsx (27.81%). Knip clean (0 findings — Phase 99.4). E2E: 108 passed, 0 failed, 25 skipped — all GREEN. WCAG axe-core violations all fixed (Phase 103.1–103.4).
 
 ---
 
@@ -820,6 +820,16 @@ _None._
 | TD-AI-13   | OpenAI  | 5 model pricing entries are placeholders pending OpenAI confirmation          | Low      |
 | TD-PLAN-01 | Billing | No recurring subscriptions (deferred v1)                                      | Low      |
 | TD-AI-18   | OpenAI  | errorMessage forwarding pattern in /api/openai is safe but fragile (advisory) | Low      |
+
+### Active — HIGH/MEDIUM Priority (PM Audit #47, Triple-Audit — New Findings)
+
+| ID             | Area     | Description                                                                                                                                                                                              | Severity |
+| -------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| TD-SEC-09      | Security | `classify-task-complexity.ts` and `message-policy.ts` are server-only utilities consumed only by `/api/openai` route but lack `import "server-only"` guard. Risk of accidental client import. Phase 105. | HIGH     |
+| TD-HARDCODE-01 | Content  | Stop reason messages in `src/constants/stop-reasons.ts` are hardcoded user-facing copy. Must be admin-configurable via `effective-*` pattern to comply with owner directive. Phase 107.                  | HIGH     |
+| TD-REUSE-04    | Code     | `ChatApiResponse` interface defined identically in `src/app/api/openai/route.tsx` and `src/components/chat/chat-wrapper.tsx`. `OpenAIStreamEvent`/`ChatStreamEvent` structurally identical. Phase 106.   | MEDIUM   |
+| TD-WCAG-05     | A11y     | Library tabs (`library-tabs.tsx`) have `role="tablist"` + `aria-selected` but no arrow-key navigation handler. WCAG tablist pattern requires Left/Right arrow key focus movement. Phase 108.             | MEDIUM   |
+| TD-WCAG-06     | A11y     | Landing page feature card icons lack `aria-hidden="true"`. Screen readers may announce CSS class names. Phase 109.                                                                                       | LOW      |
 
 ### Active — Critical Priority (PM Audit #31, Triple-Audit Confirmed) — ALL RESOLVED (PM Audit #32)
 
@@ -907,21 +917,21 @@ _None._
 | TD-TEST-02          | Test     | ~~`openai-route.test.ts` mocks 12 dependencies causing tautological tests.~~ **PARTIALLY RESOLVED (Phase 96.2):** Pure utilities un-mocked (`resolveEntitlements`, `PLAN_LIMITS`, `checkUsageLimit`, `resolveModelPolicy`). IO boundary mocks retained (appropriate). Tests now validate behavioral outcomes, not mock wiring. | ~~HIGH~~ Partially Resolved |
 | TD-TASK-PASSTHROUGH | API      | `createTaskSchema` in `task.actions.tsx` uses `.passthrough()` instead of `.strict()`. Inconsistent with project convention. Phase 87.                                                                                                                                                                                         | LOW                         |
 
-### ~~Active~~ Partially Resolved — HIGH Priority (PM Audit #44 → Updated PM Audit #45, Triple-Audit — Code Reuse)
+### ~~Active~~ Fully Resolved — HIGH Priority (PM Audit #44 → Resolved PM Audit #47, Code Reuse)
 
-| ID          | Area | Description                                                                                                                                                                                                            | Severity                    |
-| ----------- | ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------- |
-| TD-REUSE-01 | Code | ~~`isObjectRecord()` function duplicated in 3 files.~~ **PARTIALLY RESOLVED (Phase 100.1)** — Extracted to `type-guards.ts`. 3 of 4 files deduplicated. 4th copy remains in `effective-model-config.ts` (Phase 100.4). | ~~HIGH~~ Partially Resolved |
-| TD-REUSE-02 | Code | ~~`VALID_PERSONA_ID_SET` duplicated in 4 files.~~ **RESOLVED (Phase 100.2)** — Exported from `assistant-personas.tsx`. All 4 files deduplicated.                                                                       | ~~HIGH~~ Resolved           |
-| TD-REUSE-03 | Code | ~~`legalReviewDisclaimer` string duplicated in 3 files.~~ **RESOLVED (Phase 100.3)** — Extracted to `legal-shared.ts`. All 3 files deduplicated.                                                                       | ~~HIGH~~ Resolved           |
+| ID          | Area | Description                                                                                                                                                | Severity          |
+| ----------- | ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
+| TD-REUSE-01 | Code | ~~`isObjectRecord()` function duplicated in 3 files.~~ **FULLY RESOLVED (Phase 100.1 + 100.4)** — Extracted to `type-guards.ts`. All 4 files deduplicated. | ~~HIGH~~ Resolved |
+| TD-REUSE-02 | Code | ~~`VALID_PERSONA_ID_SET` duplicated in 4 files.~~ **RESOLVED (Phase 100.2)** — Exported from `assistant-personas.tsx`. All 4 files deduplicated.           | ~~HIGH~~ Resolved |
+| TD-REUSE-03 | Code | ~~`legalReviewDisclaimer` string duplicated in 3 files.~~ **RESOLVED (Phase 100.3)** — Extracted to `legal-shared.ts`. All 3 files deduplicated.           | ~~HIGH~~ Resolved |
 
-### Active — CRITICAL/HIGH Priority (PM Audit #45, Triple-Audit — New Findings)
+### ~~Active~~ Resolved — CRITICAL/HIGH Priority (PM Audit #45, Triple-Audit)
 
-| ID         | Area | Description                                                                                                                                                                                            | Severity |
-| ---------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------- |
-| TD-WCAG-03 | A11y | Viewport metadata in `layout.tsx` sets `maximumScale: 1` and `userScalable: false` — prevents mobile zoom. WCAG 2.2 AA SC 1.4.4 (Resize Text) FAILURE. Legal/accessibility release blocker. Phase 101. | CRITICAL |
-| TD-LEAK-01 | Perf | Chat streaming `fetch("/api/openai")` in `chat-wrapper.tsx` has no `AbortController`. Navigation during stream leaks HTTP connection. Phase 102.                                                       | HIGH     |
-| TD-WCAG-04 | A11y | AudioPlayer (`audio-player.tsx`) play/pause button has no `aria-label`. Progress bar has no ARIA semantics. 11 ESLint `set-state-in-effect` warnings. Phase 99.5.                                      | HIGH     |
+| ID         | Area | Description                                                                                                                                                                           | Severity              |
+| ---------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------- |
+| TD-WCAG-03 | A11y | ~~Viewport metadata in `layout.tsx` sets `maximumScale: 1` and `userScalable: false`.~~ **RESOLVED (Phase 101)** — viewport zoom restriction removed. WCAG 2.2 AA SC 1.4.4 compliant. | ~~CRITICAL~~ Resolved |
+| TD-LEAK-01 | Perf | ~~Chat streaming has no `AbortController`.~~ **RESOLVED (Phase 102)** — AbortController added to chat-wrapper.tsx. Navigation during stream no longer leaks.                          | ~~HIGH~~ Resolved     |
+| TD-WCAG-04 | A11y | ~~AudioPlayer play/pause button has no `aria-label`. Progress bar has no ARIA semantics.~~ **RESOLVED (Phase 99.5)** — ARIA labels and semantics added.                               | ~~HIGH~~ Resolved     |
 
 ### ~~Active~~ Resolved — CRITICAL/HIGH Priority (PM Audit #42 → Resolved PM Audit #43)
 
@@ -933,12 +943,12 @@ _None._
 | TD-CONFIG-06 | Config | ~~TypeScript `tsconfig.json` missing `noFallthroughCasesInSwitch` and `forceConsistentCasingInFileNames`.~~ **RESOLVED (Phase 94.4)** — Both options enabled.                                                                               | ~~HIGH~~ Resolved     |
 | TD-TEST-06   | Test   | ~~Coverage gate semantically bypassed: thresholds 80/75/80/80 but actual below.~~ **RESOLVED (Phase 94.1)** — Thresholds realigned to 76/65/79/76. Gate passes.                                                                             | ~~HIGH~~ Resolved     |
 
-### Active — HIGH/MEDIUM Priority (PM Audit #43)
+### ~~Active~~ Resolved — HIGH/MEDIUM Priority (PM Audit #43)
 
-| ID         | Area | Description                                                                                                                                             | Severity |
-| ---------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| TD-WCAG-02 | A11y | Zero automated WCAG E2E tests. No `@axe-core/playwright` installed. Public pages and app pages have no accessibility regression protection. Phase 97.1. | HIGH     |
-| TD-TEST-07 | Test | Zero Zustand store tests. 3 stores (`use-chat-store`, `use-preferences-store`, `use-ui-store`), 0 test files. Phase 96.6.                               | MEDIUM   |
+| ID         | Area | Description                                                                                                                                                                                                                                | Severity            |
+| ---------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------- |
+| TD-WCAG-02 | A11y | ~~Zero automated WCAG E2E tests.~~ **RESOLVED (Phase 97.1 + 103.1–103.4)** — @axe-core/playwright installed, 7 public routes scanned, all WCAG violations fixed (color-contrast, heading-order, landmarks). Known violations list at zero. | ~~HIGH~~ Resolved   |
+| TD-TEST-07 | Test | ~~Zero Zustand store tests.~~ **RESOLVED (Phase 96.6)** — 3 store test files created (use-chat-store, use-preferences-store, use-ui-store).                                                                                                | ~~MEDIUM~~ Resolved |
 
 ### ~~Active~~ Resolved — Critical Priority (PM Audit #29)
 

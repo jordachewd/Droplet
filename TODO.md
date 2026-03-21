@@ -5,347 +5,177 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #46 (2026-03-21). All Phases 1–102 complete (including 72.4, 96.4, 97.1, 99.5, 100.4, 101, 102). 400 unit tests (65 suites). All 6 gates GREEN. Build passing. Node.js 24.12.0 runtime.**
+> **STATUS: PM audit #47 (2026-03-21). All Phases 1–103.4 complete (including 73.3, 96.5–96.8, 99.2, 99.4). 433 unit tests (72 suites). All 7 gates GREEN. Build passing. Node.js 24.12.0 runtime.**
 > **E2E: 108 passed, 0 failed, 25 skipped.**
-> **Coverage: 76.27/65.31/79.64/76.67 vs 76/65/79/76 (MET).**
+> **Coverage: 78.18/65.94/83.01/78.51. Phase 98 IN PROGRESS.**
 > **Owner directive: FULL TESTING INFRASTRUCTURE REBUILD from scratch. TDD methodology. No hardcoded data. Code reuse maximized. WCAG 2.2 AA compliance. Full admin configurability.**
-> **Priority order: 99.4 (HIGH knip) → 103 (HIGH WCAG color contrast) → 96.5 (HIGH TDD) → 96.6 (MEDIUM Zustand tests) → 96.7 (MEDIUM component tests) → 96.8 (MEDIUM user model tests) → 73.3 (MEDIUM data-consumer) → 99.2 (MEDIUM native dialog) → 98 (HIGH coverage) → 74.2 (MEDIUM FAQ admin) → 104 (MEDIUM landing admin) → 87 (LOW) → 29.x → 26.x**
+> **Priority order: 105 (HIGH server-only guards) → 106 (HIGH shared types) → 107 (HIGH stop-reason admin config) → 98 (HIGH coverage) → 74.2 (MEDIUM FAQ admin) → 104 (MEDIUM landing/hero admin) → 108 (MEDIUM WCAG tabs keyboard) → 109 (MEDIUM WCAG icon a11y) → 97.2 (MEDIUM E2E admin settings) → 97.3 (LOW E2E dedup) → 87 (LOW) → 29.x → 26.x**
 
 ---
 
-## ~~COMPLETED — Phases 94–102~~
+## ~~COMPLETED — Phases 94–103.4~~
 
-> All moved to DONE.md. Phases 94 (config hardening), 95 (E2E spec remediation), 95-R (E2E Chromium fix), 96.1 (merge conversation-stop), 96.2 (reduce mock scope), 96.3 (webhook edge-case tests), 96.4 (admin auth tests), 97.1 (WCAG E2E), 99.1 (aria-live), 99.3 (stable keys), 99.5 (AudioPlayer ARIA), 100.1–100.4 (code deduplication), 101 (viewport zoom), 102 (AbortController).
+> All moved to DONE.md. Phases 94–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4, 73.3.
 
 ---
 
-## HIGH — Knip Cleanup (Owner directive: keep clean)
+## HIGH — Security Hardening (PM audit #47, Triple-Audit finding)
 
-### Phase 99.4: Knip cleanup — dead exports + unused files — HIGH
+### Phase 105: Add missing `server-only` guards — HIGH
 
-> `npm run knip` reports 5 unused files and 3 unused exports. Owner directive: knip must stay clean.
+> `classify-task-complexity.ts` and `message-policy.ts` are server-only utilities consumed only by `/api/openai` route. Missing `import "server-only"` guard creates risk of accidental client import.
 
-**Files:**
+#### 105.1 HIGH — Add `server-only` to `classify-task-complexity.ts`
 
-- Root: `_update-plan.mjs`, `_update-step1.js`, `_update-step2.js`, `_update-step3.js`, `_update-step4.js` (old DB migration scripts)
-- `tests/unit/test-support/factories.ts` (unused exports: `createTestTransaction`, `createTestEntitlements`)
-- `src/lib/utils/message-id.ts` (unused export: `createMessageId`)
+**File:** `src/lib/utils/openai/classify-task-complexity.ts`
 
 **What to do:**
 
-1. Delete 5 unused root migration scripts (or move to `scripts/archive/` if historical value).
-2. Remove `export` from `createTestTransaction` and `createTestEntitlements` in `factories.ts` — OR consume them in upcoming Phase 96.5+ tests.
-3. Remove `export` from `createMessageId` in `message-id.ts` — only used internally by `ensureMessageHasId`.
-4. Verify `npm run knip` reports 0 findings.
+1. Add `import "server-only";` at line 1.
+2. Verify build passes.
 
 **Acceptance criteria:**
 
-- [ ] `npm run knip` reports 0 unused files and 0 unused exports
+- [ ] `import "server-only"` present
+- [ ] Build passes, tests pass
+
+#### 105.2 HIGH — Add `server-only` to `message-policy.ts`
+
+**File:** `src/lib/utils/openai/message-policy.ts`
+
+**What to do:**
+
+1. Add `import "server-only";` at line 1.
+2. Verify build passes.
+
+**Acceptance criteria:**
+
+- [ ] `import "server-only"` present
 - [ ] Build passes, tests pass
 
 ---
 
-## HIGH — WCAG Color Contrast Fixes (PM audit #46, axe-core findings)
+## HIGH — Code Reuse: Extract shared types (PM audit #47, Triple-Audit finding)
 
-### Phase 103: Fix WCAG color contrast violations — HIGH
+### Phase 106: Extract `ChatApiResponse` / `ChatStreamEvent` to shared types — HIGH
 
-> axe-core E2E (Phase 97.1) identified `color-contrast` violations on `/` and `/plans` pages, and `heading-order` on `/personas`. These are tracked as known violations but must be fixed for WCAG 2.2 AA compliance (release blocker).
+> `ChatApiResponse` interface is defined identically in both `src/app/api/openai/route.tsx` and `src/components/chat/chat-wrapper.tsx`. `OpenAIStreamEvent` (route) and `ChatStreamEvent` (wrapper) are structurally identical. Violates code reuse rule.
 
-#### 103.1 HIGH — Fix color contrast on landing page (`/`)
-
-**File:** `src/components/sections/landing-page.tsx`, `src/app/globals.css`
+**Files:** `src/types/chat-api.d.ts` (new), `src/app/api/openai/route.tsx`, `src/components/chat/chat-wrapper.tsx`
 
 **What to do:**
 
-1. Run axe analysis to identify exact elements with contrast failures.
-2. Adjust text/background color combinations to meet WCAG AA 4.5:1 ratio for normal text, 3:1 for large text.
-3. Update known violations in `accessibility.spec.ts` — remove `color-contrast` from `/` once fixed.
+1. Create `src/types/chat-api.d.ts` with shared `ChatApiResponse` and `ChatStreamEvent` types.
+2. Import from shared location in both files.
+3. Remove local type definitions.
 
 **Acceptance criteria:**
 
-- [ ] `/` passes axe color-contrast check
-- [ ] WCAG AA contrast ratios met
-- [ ] Build passes
-
-#### 103.2 HIGH — Fix color contrast on plans page (`/plans`)
-
-**File:** `src/app/(public)/plans/page.tsx`, related section components
-
-**What to do:**
-
-1. Same approach as 103.1 for `/plans` route.
-2. Update known violations in `accessibility.spec.ts`.
-
-**Acceptance criteria:**
-
-- [ ] `/plans` passes axe color-contrast check
-- [ ] Build passes
-
-#### 103.3 MEDIUM — Fix heading order on personas page (`/personas`)
-
-**File:** `src/app/(public)/personas/page.tsx`, persona card components
-
-**What to do:**
-
-1. Ensure heading levels are sequential (no skipping from h2 to h4, etc.).
-2. Update known violations in `accessibility.spec.ts`.
-
-**Acceptance criteria:**
-
-- [ ] `/personas` passes axe heading-order check
-- [ ] Build passes
-
-#### 103.4 MEDIUM — Fix duplicate landmark violations
-
-**Files:** Layout components (`src/app/layout.tsx`, route layouts)
-
-**What to do:**
-
-1. Investigate `landmark-main-is-top-level`, `landmark-no-duplicate-main`, `landmark-unique` violations.
-2. Ensure only one `<main>` element exists per page.
-3. Update known violations in `accessibility.spec.ts`.
-
-**Acceptance criteria:**
-
-- [ ] All public routes pass landmark axe checks
-- [ ] `accessibility.spec.ts` known violations list reduced to zero (or justified exceptions only)
-- [ ] Build passes
+- [ ] Zero duplicate type definitions
+- [ ] Build passes, tests pass
 
 ---
 
-## HIGH — Unit Test Quality (TDD Rebuild Continues)
+## HIGH — Admin Configurability: Stop Reason Messages (PM audit #47, Triple-Audit finding)
 
-### Phase 96: Unit Test Depth Improvement — HIGH
+### Phase 107: Stop reason messages admin-configurable — HIGH
 
-> ~~Phases 96.1–96.4 COMPLETE (moved to DONE.md).~~ Remaining: 96.5–96.8.
-> All new tests MUST follow TDD methodology.
+> Owner directive: "NO HARDCODED data." Stop reason messages in `src/constants/stop-reasons.ts` are user-facing copy displayed when limits are hit. These are a core product touchpoint and must be admin-editable. Follows the established `effective-*` pattern.
 
-#### 96.5 HIGH — Add upload file size validation test
+#### 107.1 HIGH — Create `getEffectiveStopReasonMessages()` resolver
 
-**File:** `tests/unit/routes/upload-route.test.ts`
-
-**What to do (TDD):**
-
-1. Test: oversized file (> limit) → rejected with proper error.
-2. Test: exactly-at-limit file → accepted.
-3. Test: empty file → rejected.
-
-**Acceptance criteria:**
-
-- [ ] Size boundary tests added
-- [ ] Tests pass
-
-#### 96.6 MEDIUM — Add Zustand store tests
-
-**Files:** New: `tests/unit/stores/` — one file per store
-
-**What to do (TDD):**
-
-1. Test each store's initial state.
-2. Test each store's actions (set, reset, toggle).
-3. Test state transitions and edge cases.
-
-**Acceptance criteria:**
-
-- [ ] All Zustand stores tested
-- [ ] State transitions verified
-- [ ] Tests pass
-
-#### 96.7 MEDIUM — Add component tests for untested components
-
-**Files:** New tests for: `confirmation-modal`, `plan-card`, `persona-card`, `checkout-form`
-
-**What to do (TDD):**
-
-1. `confirmation-modal.test.tsx`: open/close, confirm/cancel callbacks, Escape key, backdrop click.
-2. `plan-card.test.tsx` (or expand `plans.test.ts`): renders price, title, features list, CTA.
-3. `persona-card.test.tsx`: renders persona info, trial badge, click handler.
-4. `checkout-form.test.tsx`: renders, submit handler, loading state.
-
-**Acceptance criteria:**
-
-- [ ] 4 new component test files
-- [ ] Behavioral tests (user interaction), not just render checks
-- [ ] Tests pass
-
-#### 96.8 MEDIUM — Expand user model tests
-
-**File:** `tests/unit/models/user-model.test.ts`
-
-**What to do (TDD):**
-
-1. Test required field validation (clerkId, username, email, role).
-2. Test plan subdoc defaults (Lite plan).
-3. Test index existence (clerkId unique, email indexed).
-4. Test plan transition rules if applicable.
-
-**Acceptance criteria:**
-
-- [ ] At least 6 tests (up from 1)
-- [ ] All schema constraints validated
-- [ ] Tests pass
-
----
-
-## HIGH — E2E Quality Rebuild (PM audit #42, Triple-Audit)
-
-### Phase 97: E2E Test Depth Improvement — MEDIUM
-
-> ~~97.1 COMPLETE (moved to DONE.md).~~ Remaining: 97.2, 97.3.
-
-#### 97.2 MEDIUM — Add admin settings → app propagation E2E
-
-**File:** New: `tests/e2e/admin-settings-propagation.spec.ts`
+**Files:** `src/lib/utils/effective-stop-reasons.ts` (new), `src/constants/stop-reasons.ts` (fallback source)
 
 **What to do:**
 
-1. Test: Admin changes support email in settings → public plans page shows new email.
-2. Test: Admin changes plan price → plans page shows new price.
-3. Revert changes in `afterAll`.
+1. Create `getEffectiveStopReasonMessages()` following the `effective-*` pattern.
+2. Read from `AppSetting("admin.stopReasonMessages")`.
+3. Fallback to current hardcoded `STOP_REASON_MESSAGES` constant.
+4. Add `import "server-only"` guard.
 
 **Acceptance criteria:**
 
-- [ ] Settings-to-app propagation verified end-to-end
-- [ ] Test data cleaned up
+- [ ] Resolver created and tested
+- [ ] Falls back to current constants when no admin override exists
+- [ ] Build passes
 
-#### 97.3 MEDIUM — Deduplicate withMongoConnection in conversation-lifecycle
+#### 107.2 HIGH — Admin UI for stop reason message editing
 
-**File:** `tests/e2e/conversation-lifecycle.spec.ts`
+**Files:** Admin settings page, new section component
 
 **What to do:**
 
-1. Replace local `withMongoConnection` with import from `tests/e2e/utils/mongo.ts`.
+1. Create `admin-stop-reasons-section.tsx` in admin settings.
+2. One textarea per stop reason code.
+3. Save to `AppSetting` via admin action. Audit trail logged.
 
 **Acceptance criteria:**
 
-- [ ] Zero local Mongo helper duplication
-- [ ] Tests pass
+- [ ] All 9 stop reason messages editable from `/admin/settings`
+- [ ] Build passes
+
+#### 107.3 HIGH — Wire consumers to use effective resolver
+
+**Files:** `src/app/(chat)/app/page.tsx`, `src/app/(chat)/app/c/[conversationId]/page.tsx`, `src/app/api/openai/route.tsx`
+
+**What to do:**
+
+1. Replace `STOP_REASON_MESSAGES` import with `getEffectiveStopReasonMessages()` call.
+2. Pass resolved messages as props to consuming components.
+
+**Acceptance criteria:**
+
+- [ ] Zero hardcoded stop reason message imports in consumer files
+- [ ] Build passes, tests pass
 
 ---
 
-## HIGH — Coverage Gate Achievement (PM audit #42)
+## HIGH — Coverage Gate Achievement (PM audit #47)
 
 ### Phase 98: Coverage Improvement — HIGH
 
-> Drive coverage from 76.28/65.32/79.75/76.68 toward 82/78/82/82+. Branch coverage (65%) is the biggest gap.
+> Coverage baseline: 78.18/65.94/83.01/78.51. Branch coverage (65.94%) remains the biggest gap. Target: 82/78/82/82+.
+> **Priority files for branch coverage (0% or <30%):** effective-persona-access.ts (0%), deleteFileFromAWS.tsx (0%), chat-body.tsx (14%), mongoose.tsx (21.73%), admin.actions.tsx (27.81%), handleError.tsx (33.33%), admin-queries.ts (20.14%).
 
-#### 98.1 HIGH — Close branch coverage gap
+#### 98.1 HIGH — Close branch coverage gap — target 78%+
 
-**Approach:** Run `npm run test:coverage` with `lcov` reporter (after Phase 94.1), identify files with lowest branch coverage, add targeted tests. Priority files: route handlers (many conditional branches), action files (error handling branches), utility functions with switch/ternary logic.
+**Approach:** Focus on the 7 files listed above. Iterative: run coverage → write behavioral tests → repeat.
 
-**Method:** Iterative. Run coverage → identify gaps → write tests → repeat. Target: branches 78%+.
+**Priority targets (most business-critical first):**
+
+1. `effective-persona-access.ts` — 0% branch. Core entitlement logic. MUST be tested.
+2. `admin.actions.tsx` — 27.81% branch. All admin mutations. Critical security surface.
+3. `chat-body.tsx` — 14% branch. Core chat display component.
+4. `admin-queries.ts` — 20.14% branch. Admin data access layer.
+5. `mongoose.tsx` — 21.73% branch. DB connection manager.
+6. `handleError.tsx` — 33.33% branch. Error utility.
+7. `deleteFileFromAWS.tsx` — 0% branch. S3 cleanup.
 
 **Acceptance criteria:**
 
 - [ ] Branch coverage >= 78%
-- [ ] No coverage gained through mock-wiring tests
-- [ ] Tests validate actual branching behavior
+- [ ] Tests validate actual branching behavior, not mock wiring
+- [ ] All 7 priority files have >= 60% branch coverage
 
-#### 98.2 HIGH — Close statement/line coverage gap
-
-**Approach:** Same iterative method. Target: statements 82%+, lines 82%+.
+#### 98.2 HIGH — Close statement/line coverage gap — target 82%+
 
 **Acceptance criteria:**
 
 - [ ] Statement coverage >= 82%
 - [ ] Line coverage >= 82%
-- [ ] `npm run test:coverage` passes
 
 #### 98.3 HIGH — Raise thresholds to match achieved coverage
 
 **File:** `vitest.config.mts`
 
-**What to do:** After 98.1 and 98.2 are done, raise thresholds to match new coverage floor.
-
 **Acceptance criteria:**
 
 - [ ] Thresholds raised to match or exceed achieved coverage
 - [ ] `npm run test:coverage` passes with new thresholds
-- [ ] Gate F validation includes both `npm run test` and `npm run test:coverage`
-
----
-
-## MEDIUM — Code Quality
-
-### Phase 73.3 MEDIUM — Admin client component data-consumer violations
-
-**Files:** `src/components/admin/admin-sidebar.tsx`, `src/components/admin/settings/admin-personas-section.tsx`, `src/components/admin/settings/admin-models-section.tsx`
-
-**What to do:**
-
-1. Remove direct constant imports for dynamic data.
-2. Pass data from server parent layout/page as props.
-
-**Acceptance criteria:**
-
-- [ ] Zero direct constant imports for dynamic data in admin client components
-- [ ] Build passes
-
----
-
-## MEDIUM — Triple-Audit Findings (PM audit #43–#46)
-
-### Phase 99: Code Quality Fixes — MEDIUM
-
-> Findings from PM audit #43–#46 triple-audits. ~~99.1, 99.3, 99.5 COMPLETE (moved to DONE.md).~~ Remaining: 99.2.
-
-#### 99.2 MEDIUM — Migrate ConfirmationModal to native `<dialog>`
-
-**File:** `src/components/shared/confirmation-modal.tsx`
-
-**What to do:**
-
-1. Replace custom `role="dialog"` div with native `<dialog>` element using `showModal()`/`close()`.
-2. Native `<dialog>` provides: focus trapping, ESC to close, modal backdrop, inert background.
-3. Remove manual focus trap code, manual ESC handler, manual backdrop click handler.
-4. Test with keyboard navigation and screen reader.
-
-**Acceptance criteria:**
-
-- [ ] Uses native `<dialog>` element
-- [ ] Manual focus trap removed
-- [ ] Keyboard and screen reader accessible
-- [ ] Build passes, existing tests pass
 
 ---
 
 ## MEDIUM — Admin Configurability (Owner directive: NO hardcoded data)
-
-### Phase 104: Landing page content admin-configurable — MEDIUM
-
-> Owner directive: "NO HARDCODED data — everything MUST be fully configurable from ADMIN panel." Landing page feature cards, how-it-works steps, and hero copy are currently loaded from static JSON/constants, not admin-editable.
-
-#### 104.1 MEDIUM — Landing page feature cards admin-editable
-
-**Files:** Admin settings, `src/lib/utils/effective-website-config.ts` (new or extend), landing page Server Component
-
-**What to do:**
-
-1. Add `admin.landingFeatureCards` AppSetting field.
-2. Create `getEffectiveLandingFeatureCards()` resolver with fallback to current constants.
-3. Admin settings UI for editing feature card titles/descriptions/icons.
-4. Landing page Server Component reads from resolver instead of static import.
-
-**Acceptance criteria:**
-
-- [ ] Feature cards admin-editable from `/admin/settings`
-- [ ] Fallback to defaults if no admin override
-- [ ] Build passes
-
-#### 104.2 MEDIUM — Hero and about copy admin-editable
-
-**Files:** Same pattern as 104.1
-
-**What to do:**
-
-1. Add `admin.heroCopy` and `admin.aboutCopy` AppSetting fields.
-2. Resolvers with fallback to current static content.
-3. Admin UI for editing.
-
-**Acceptance criteria:**
-
-- [ ] Hero and about text admin-editable
-- [ ] Build passes
 
 ### Phase 74.2 MEDIUM — FAQ content admin-configurable
 
@@ -363,6 +193,137 @@
 - [ ] Fallback to defaults
 - [ ] Build passes
 
+### Phase 104: Landing page and hero content admin-configurable — MEDIUM
+
+#### 104.1 MEDIUM — Landing page feature cards + how-it-works admin-editable
+
+**Files:** Admin settings, `src/lib/utils/effective-website-config.ts` (new), landing page Server Component
+
+**What to do:**
+
+1. Add `admin.landingFeatureCards` and `admin.howItWorksSteps` AppSetting fields.
+2. Create `getEffectiveLandingContent()` resolver with fallback to `src/json/landing.json`.
+3. Admin settings UI for editing.
+4. Landing page reads from resolver instead of static import.
+
+**Acceptance criteria:**
+
+- [ ] Feature cards and how-it-works steps admin-editable from `/admin/settings`
+- [ ] Fallback to defaults if no admin override
+- [ ] Build passes
+
+#### 104.2 MEDIUM — Hero copy admin-editable
+
+**What to do:**
+
+1. Add `admin.heroCopy` AppSetting field (headline, subtitle, CTA text).
+2. Resolver with fallback to current static text in `hero-section.tsx`.
+3. Admin UI for editing. Server parent passes resolved copy as props.
+
+**Acceptance criteria:**
+
+- [ ] Hero headline, subtitle, CTA text admin-editable
+- [ ] Build passes
+
+#### 104.3 MEDIUM — About page copy admin-editable
+
+**What to do:**
+
+1. Add `admin.aboutCopy` AppSetting field.
+2. Resolver with fallback to `buildAboutSections()`.
+3. Admin UI for editing section titles and body text.
+
+**Acceptance criteria:**
+
+- [ ] About page section text admin-editable
+- [ ] Build passes
+
+---
+
+## MEDIUM — WCAG 2.2 AA Remaining Gaps (PM audit #47, Triple-Audit)
+
+### Phase 108: Library tabs arrow-key keyboard navigation — MEDIUM
+
+> WCAG requires arrow-key focus movement between tabs in a tablist pattern. Currently tabs are `button` elements with `role="tablist"` and `aria-selected` but no arrow-key handler.
+
+**File:** `src/components/chat/library-tabs.tsx`
+
+**What to do:**
+
+1. Add `onKeyDown` handler to tablist that moves focus with Left/Right arrow keys.
+2. Tab key should move focus out of tablist (not between tabs).
+
+**Acceptance criteria:**
+
+- [ ] Arrow-key navigation between library tabs works
+- [ ] Keyboard-only users can switch tabs
+- [ ] Build passes
+
+### Phase 109: Landing page feature card icon accessibility — MEDIUM
+
+> Feature card icons use `<i className={card.icon}></i>` with no `aria-hidden="true"`. Screen readers may announce class names.
+
+**File:** `src/components/sections/landing-page.tsx`
+
+**What to do:**
+
+1. Add `aria-hidden="true"` to decorative `<i>` icon elements.
+2. Ensure the heading adequately describes each card (icon is decorative, not informational).
+
+**Acceptance criteria:**
+
+- [ ] Icons have `aria-hidden="true"`
+- [ ] Build passes
+
+### Phase 110: Mobile header hamburger `aria-expanded` — LOW
+
+**File:** `src/components/layout/header.tsx`
+
+**What to do:**
+
+1. Add `aria-expanded={isMenuOpen}` to hamburger button.
+
+**Acceptance criteria:**
+
+- [ ] Hamburger button announces open/close state to screen readers
+- [ ] Build passes
+
+---
+
+## MEDIUM — E2E Test Quality
+
+### Phase 97: E2E Test Depth Improvement
+
+> ~~97.1 COMPLETE (DONE.md).~~ Remaining: 97.2, 97.3.
+
+#### 97.2 MEDIUM — Add admin settings → app propagation E2E
+
+**File:** New: `tests/e2e/admin-settings-propagation.spec.ts`
+
+**What to do:**
+
+1. Test: Admin changes support email in settings → public plans page shows new email.
+2. Test: Admin changes plan price → plans page shows new price.
+3. Revert changes in `afterAll`.
+
+**Acceptance criteria:**
+
+- [ ] Settings-to-app propagation verified end-to-end
+- [ ] Test data cleaned up
+
+#### 97.3 LOW — Deduplicate withMongoConnection in conversation-lifecycle
+
+**File:** `tests/e2e/conversation-lifecycle.spec.ts`
+
+**What to do:**
+
+1. Replace local `withMongoConnection` with import from `tests/e2e/utils/mongo.ts`.
+
+**Acceptance criteria:**
+
+- [ ] Zero local Mongo helper duplication
+- [ ] Tests pass
+
 ---
 
 ## LOW — Remaining Work
@@ -374,8 +335,6 @@
 ### Phase 73.2 LOW — Minor re-render and code quality fixes
 
 **Files:** `src/components/chat/sidebar/chat-sidebar-nav-v2.tsx`, `src/components/shared/plan-count-down.tsx`
-
-### Phase 74.3 LOW — Content layer admin-configurability assessment
 
 ### Phase 46.1 LOW — Admin error boundary
 
@@ -389,8 +348,20 @@
 
 ### Phase 26.x — Persona-aware media prompts, Stripe auto-renewal
 
+### Legal page admin configurability — Deferred to v2
+
+> Legal pages (privacy, cookies, terms) content in static JSON. Intentionally code-managed for compliance reasons. Admin editing deferred until rich text editor (Tiptap) is re-evaluated.
+
+### Nav/footer admin configurability — Deferred to v2
+
+> Header nav links and footer content are hardcoded. Low user-impact, internal concern. Deferred.
+
+### Admin nav configurability — Deferred to v2
+
+> `ADMIN_LINKS` hardcoded. Internal admin concern only. No user impact. Deferred.
+
 ---
 
 > **Completed phases** archived in [`DONE.md`](DONE.md).
-> All phases through 102 complete (including 72.4, 86, 88–96.4, 97.1, 99.1, 99.3, 99.5, 100.1–100.4, 101, 102).
+> All phases through 103.4 complete (including 73.3, 86, 88–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102).
 > All Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS.

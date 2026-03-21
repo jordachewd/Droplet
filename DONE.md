@@ -2,7 +2,117 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-21 — PM audit #46. All Phases 1–85, 80.1, 73.1, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.4, 97.1, 99.1, 99.3, 99.5, 100.1–100.4, 101, 102 complete. Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS. 400 unit tests (65 suites). 108 E2E passed, 25 skipped, 0 failed. All 6 validation gates GREEN. Build passing. Node.js 24.12.0 runtime. Coverage: 76.27/65.31/79.64/76.67 vs 76/65/79/76 (MET).
+> Last updated: 2026-03-21 — PM audit #47. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4 complete. Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS. 433 unit tests (72 suites). 108 E2E passed, 25 skipped, 0 failed. All 7 validation gates GREEN. Build passing. Node.js 24.12.0 runtime. Coverage: 78.18/65.94/83.01/78.51.
+
+---
+
+## Phase 103.1 — Fix color contrast on landing page — COMPLETED (2026-03-21)
+
+> Engineer delivered (PM audit #47). WCAG AA color-contrast violations on `/` resolved.
+
+- [x] **103.1 HIGH** — Fixed plan ribbon badge color contrast in `plan-card.tsx`. axe-core color-contrast check now passes for `/`.
+
+**Files changed:** `src/components/shared/plan-card.tsx`
+
+---
+
+## Phase 103.2 — Fix color contrast on plans page — COMPLETED (2026-03-21)
+
+> Engineer delivered (PM audit #47). WCAG AA color-contrast violations on `/plans` resolved.
+
+- [x] **103.2 HIGH** — Plans page now passes axe color-contrast check.
+
+**Files changed:** Related plan card/section components
+
+---
+
+## Phase 103.3 — Fix heading order on personas page — COMPLETED (2026-03-21)
+
+> Engineer delivered (PM audit #47). Heading order violation on `/personas` resolved.
+
+- [x] **103.3 MEDIUM** — Fixed h1 → h2 progression on persona cards.
+
+**Files changed:** `src/components/shared/persona-card.tsx`
+
+---
+
+## Phase 103.4 — Fix duplicate landmark violations — COMPLETED (2026-03-21)
+
+> Engineer delivered (PM audit #47). Duplicate `<main>` elements removed.
+
+- [x] **103.4 MEDIUM** — Removed top-level extra `<main>` wrapper in `main-wrapper.tsx`. Accessibility E2E known violations list now clean.
+
+**Files changed:** `src/components/layout/main-wrapper.tsx`, `tests/e2e/accessibility.spec.ts`
+
+---
+
+## Phase 99.4 — Knip cleanup: dead exports + unused files — COMPLETED (2026-03-21)
+
+> Engineer delivered (PM audit #47). `npm run knip` = 0 findings.
+
+- [x] **99.4 HIGH** — Removed unused exports from `factories.ts` and `message-id.ts`. `npm run knip` clean.
+
+**Files changed:** `tests/unit/test-support/factories.ts`, `src/lib/utils/message-id.ts`
+
+---
+
+## Phase 96.5 — Upload file size validation tests — COMPLETED (2026-03-21)
+
+> Engineer delivered (PM audit #47). TDD methodology.
+
+- [x] **96.5 HIGH** — Added route tests: oversized file rejected, exact max size accepted, empty file rejected. Implemented empty-file rejection in validator.
+
+**Files changed:** `tests/unit/routes/upload-route.test.ts`, `src/lib/utils/upload-file-validation.ts`, `tests/unit/utils/upload-file-validation.test.ts`
+
+---
+
+## Phase 96.6 — Zustand store tests — COMPLETED (2026-03-21)
+
+> Engineer delivered (PM audit #47). TD-TEST-07 RESOLVED. TDD methodology.
+
+- [x] **96.6 MEDIUM** — Added tests for all 3 Zustand stores: `use-chat-store`, `use-ui-store`, `use-preferences-store`. Initial state, actions, transitions tested.
+
+**Files changed:** `tests/unit/stores/use-chat-store.test.ts`, `tests/unit/stores/use-ui-store.test.ts`, `tests/unit/stores/use-preferences-store.test.tsx`
+
+---
+
+## Phase 96.7 — Component tests for untested components — COMPLETED (2026-03-21)
+
+> Engineer delivered (PM audit #47). TDD methodology.
+
+- [x] **96.7 MEDIUM** — Added behavioral tests for `confirmation-modal`, `plan-card`, `persona-card`, `checkout-form`. Added `useFormStatus` loading state support to checkout form.
+
+**Files changed:** `tests/unit/components/confirmation-modal.test.tsx`, `tests/unit/components/plan-card.test.tsx`, `tests/unit/components/persona-card.test.tsx`, `tests/unit/components/checkout-form.test.tsx`, `src/components/shared/checkout-form.tsx`
+
+---
+
+## Phase 96.8 — Expand user model tests — COMPLETED (2026-03-21)
+
+> Engineer delivered (PM audit #47). TDD methodology.
+
+- [x] **96.8 MEDIUM** — Expanded user model tests: required fields, enum validation, defaults, indexes.
+
+**Files changed:** `tests/unit/models/user-model.test.ts`
+
+---
+
+## Phase 73.3 — Admin client component data-consumer violations — COMPLETED (2026-03-21)
+
+> Engineer delivered (PM audit #47). All admin client components now receive dynamic data as props from server.
+
+- [x] **73.3 MEDIUM** — Removed direct constant imports for dynamic data from `admin-sidebar.tsx`, `admin-models-section.tsx`, `admin-personas-section.tsx`. Data passed from server page/layout props.
+
+**Files changed:** `src/components/admin/admin-sidebar.tsx`, `src/components/admin/admin-layout-shell.tsx`, `src/app/(admin)/layout.tsx`, `src/components/admin/settings/admin-models-section.tsx`, `src/components/admin/settings/admin-personas-section.tsx`, `src/app/(admin)/admin/settings/page.tsx`
+
+---
+
+## Phase 99.2 — Migrate ConfirmationModal to native `<dialog>` — COMPLETED (2026-03-21)
+
+> Engineer delivered (PM audit #47). Native dialog semantics with jsdom-safe fallback.
+
+- [x] **99.2 MEDIUM** — Replaced custom `role="dialog"` with native `<dialog>` element using `showModal()`/`close()`. Removed manual focus trap. Native backdrop, ESC to close, focus trapping all handled natively.
+
+**Files changed:** `src/components/shared/confirmation-modal.tsx`
 
 ---
 
