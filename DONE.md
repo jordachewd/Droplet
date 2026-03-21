@@ -2,7 +2,99 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-21 — PM audit #41. All Phases 1–85, 80.1, 73.1, 74.1, 72.1, 72.2, 72.3, 75, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.7, 91.1, 91.5 complete. Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS. 390 unit tests (63 suites). 81 E2E passed. Build passing. Node.js 24.12.0 runtime.
+> Last updated: 2026-03-21 — PM audit #42. All Phases 1–85, 80.1, 73.1, 74.1, 72.1, 72.2, 72.3, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2 complete. Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS. 394 unit tests (65 suites). 81 E2E passed. Build passing. Node.js 24.12.0 runtime. Coverage gate NOT met (76.28/65.32/79.75/76.68 vs 80/75/80/80).
+
+---
+
+## Phase 93.2 — Re-enable ESLint `set-state-in-effect` Rule — COMPLETED (2026-03-21)
+
+> Engineer delivered (PM audit #42). Rule set to `"warn"`.
+
+- [x] **93.2 MEDIUM** — Changed `react-hooks/set-state-in-effect` from `"off"` to `"warn"` in `eslint.config.mjs`. 11 warnings flagged (all MediaQuery init or similar valid patterns). `npm run lint` passes.
+
+**Files changed:** `eslint.config.mjs`
+
+---
+
+## Phase 93.1 — Raise Vitest Coverage Thresholds — COMPLETED (2026-03-21)
+
+> Engineer delivered (PM audit #42). Thresholds raised but coverage gate NOT met.
+
+- [x] **93.1 HIGH** — Raised thresholds to 80/75/80/80 in `vitest.config.mts`. Coverage gate fails: actual is 76.28/65.32/79.75/76.68. Gate intentionally raised to drive coverage improvement. `npm run test:coverage` will fail until coverage improves.
+
+**Files changed:** `vitest.config.mts`
+
+---
+
+## Phase 92.2 — Server-Only Guards for Entitlements and Allowlist — COMPLETED (2026-03-21)
+
+> Engineer delivered (PM audit #42). TD-SEC-08 RESOLVED.
+
+- [x] **92.2 CRITICAL** — Added `import "server-only";` to `resolve-entitlements.tsx` and `download-url-allowlist.ts`. Business logic and infrastructure patterns protected from client bundle.
+
+**Files changed:** `src/lib/utils/resolve-entitlements.tsx`, `src/lib/utils/download-url-allowlist.ts`
+
+---
+
+## Phase 92.1 — Server-Only Guards for OpenAI and AWS Constants — COMPLETED (2026-03-21)
+
+> Engineer delivered (PM audit #42). TD-SEC-07 RESOLVED.
+
+- [x] **92.1 CRITICAL** — Added `import "server-only";` to `openai.tsx` and `aws.tsx` constants. Credential-bearing modules (`OPENAI_KEY`, `AWS_S3_SECRET_KEY`) now guarded. Build passes.
+
+**Files changed:** `src/constants/openai.tsx`, `src/constants/aws.tsx`
+
+---
+
+## Phase 91.4 — Admin Users Behavioral E2E — COMPLETED (2026-03-21)
+
+> Engineer delivered (PM audit #42).
+
+- [x] **91.4 MEDIUM** — Upgraded `admin-users.spec.ts` from smoke to behavioral. Added search for test user verification, user detail usage data rendering tests. Seed/search/verify pattern.
+
+**Files changed:** `tests/e2e/admin-users.spec.ts`
+
+---
+
+## Phase 91.3 — Admin Features E2E Cleanup — COMPLETED (2026-03-21)
+
+> Engineer delivered (PM audit #42).
+
+- [x] **91.3 HIGH** — Added `test.afterAll` to `admin-features.spec.ts` to delete E2E-created public pages via direct MongoDB cleanup.
+
+**Files changed:** `tests/e2e/admin-features.spec.ts`
+
+---
+
+## Phase 91.2 — Admin Bulk Actions E2E — COMPLETED (2026-03-21)
+
+> Engineer delivered (PM audit #42).
+
+- [x] **91.2 HIGH** — Added `admin-bulk-actions.spec.ts` testing: admin select user → suspend → confirmation dialog, select transaction → delete → confirmation, pagination → selection reset (P1 fix validation). Mongo helper in `tests/e2e/utils/mongo.ts`.
+
+**Files changed:** `tests/e2e/admin-bulk-actions.spec.ts` (new), `tests/e2e/utils/mongo.ts` (new)
+
+---
+
+## Phase 90.6 — Admin Table Selection Clearing Tests — COMPLETED (2026-03-21)
+
+> Engineer delivered (PM audit #42). TDD approach.
+
+- [x] **90.6 MEDIUM** — Added `admin-users-table.test.tsx` and `admin-transactions-table.test.tsx` validating selection reset on prop change and `allSelected` reset. Tests validate Phase 88 P1 fix.
+
+**Files changed:** `tests/unit/components/admin-users-table.test.tsx` (new), `tests/unit/components/admin-transactions-table.test.tsx` (new)
+
+---
+
+## Phase 86 — Server-Only Guards Extended — COMPLETED (2026-03-21)
+
+> Engineer delivered (PM audit #42). TD-SEC-06 RESOLVED.
+
+- [x] **86.1 MEDIUM** — Added `import "server-only";` to all 8 Mongoose model files.
+- [x] **86.2 MEDIUM** — Added `import "server-only";` to 5 OpenAI generation utilities. `filterAssistantMsg.tsx` unguarded (client-side use).
+- [x] **86.3 MEDIUM** — Added `import "server-only";` to 4 AWS utility files. `s3-file-reference.ts` unguarded (intentionally shared with client components).
+
+**Files changed:** 8 model files, 5 OpenAI utils, 4 AWS utils. Exception: `s3-file-reference.ts` (Phase 86 policy exception — client import chain).
 
 ---
 

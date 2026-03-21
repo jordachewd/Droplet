@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-21 (PM audit #41. All Phases 1–85, 80.1, 73.1, 74.1, 72.1, 72.2, 72.3, 75, 88, 89, 90.1–90.3, 90.7, 91.1, 91.5 complete. Milestone 24 COMPLETE. Milestone 25 IN PROGRESS — credential guards + coverage hardening + remaining test rebuild. Active: TD-SEC-07 (CRITICAL — Phase 92.1), TD-SEC-08 (CRITICAL — Phase 92.2), TD-SEC-06 (MEDIUM — Phase 86), TD-API-09 (LOW), TD-TASK-PASSTHROUGH (LOW — Phase 87). 390 unit tests (63 suites). 81 E2E passed, 19 skipped. Build passing. Node.js 24.12.0 runtime.)
+> Last updated: 2026-03-21 (PM audit #42. All Phases 1–93 complete (including 86, 90.6, 91.2–91.4, 92.1–92.2, 93.1–93.2). Milestone 24 COMPLETE. Milestone 25 IN PROGRESS — testing infrastructure rebuild. TD-SEC-06 RESOLVED (Phase 86), TD-SEC-07 RESOLVED (Phase 92.1), TD-SEC-08 RESOLVED (Phase 92.2). Active: TD-TEST-02 (HIGH — Phase 96.2), TD-TEST-04 (HIGH — Phase 96.1), TD-TEST-05 (CRITICAL — Phase 95), TD-CONFIG-05 (HIGH — Phase 94.3), TD-CONFIG-06 (HIGH — Phase 94.4), TD-WCAG-02 (HIGH — Phase 97.1), TD-API-09 (LOW), TD-TASK-PASSTHROUGH (LOW — Phase 87). 394 unit tests (65 suites). 81 E2E passed, 19 skipped, 4 failing. Coverage: 76.28/65.32/79.75/76.68 vs 80/75/80/80 (NOT MET). Build passing. Node.js 24.12.0 runtime.)
 
 ---
 
@@ -879,12 +879,12 @@ _None._
 | ------------------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
 | TD-ADMIN-PAGINATION | Admin | ~~`getAdminUsers()` and `getAdminTransactions()` fetch ALL records with no `.limit()` or `.skip()`.~~ **RESOLVED (Phase 85).** `resolveAdminPagination()` helper, bounded `pageSize` (max 100), `countDocuments()` + `.skip().limit()`, pagination UI on both tables. 4 new unit tests. | ~~HIGH~~ Resolved |
 
-### Active — CRITICAL Priority (PM Audit #41, Triple-Audit)
+### ~~Active~~ Resolved — CRITICAL Priority (PM Audit #41 → Resolved PM Audit #42)
 
-| ID        | Area     | Description                                                                                                                                                                                                                                                       | Severity |
-| --------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| TD-SEC-07 | Security | `src/constants/openai.tsx` and `src/constants/aws.tsx` instantiate OpenAI and S3 clients with secret env vars (`OPENAI_KEY`, `AWS_S3_SECRET_KEY`) but have NO `import "server-only"`. One mistaken client import = credential exposure in browser JS. Phase 92.1. | CRITICAL |
-| TD-SEC-08 | Security | `src/lib/utils/resolve-entitlements.tsx` and `src/lib/utils/download-url-allowlist.ts` are server-only business logic / infra pattern files with NO `import "server-only"` guard. Phase 92.2.                                                                     | CRITICAL |
+| ID        | Area     | Description                                                                                                                                                           | Severity              | Status                                                                  |
+| --------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------- | ----------------------------------------------------------------------- |
+| TD-SEC-07 | Security | ~~`src/constants/openai.tsx` and `src/constants/aws.tsx` instantiate OpenAI and S3 clients with secret env vars but have NO `import "server-only"`.~~                 | ~~CRITICAL~~ Resolved | **RESOLVED (Phase 92.1)** — `import "server-only"` added to both files. |
+| TD-SEC-08 | Security | ~~`src/lib/utils/resolve-entitlements.tsx` and `src/lib/utils/download-url-allowlist.ts` are server-only business logic files with NO `import "server-only"` guard.~~ | ~~CRITICAL~~ Resolved | **RESOLVED (Phase 92.2)** — `import "server-only"` added to both files. |
 
 ### ~~Active — CRITICAL Priority (PM Audit #40)~~ (All Resolved — PM Audit #41)
 
@@ -900,11 +900,23 @@ _None._
 
 ### Active — MEDIUM Priority (PM Audit #39, Triple-Audit)
 
-| ID                  | Area     | Description                                                                                                                                                                                                                                               | Severity |
-| ------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| TD-SEC-06           | Security | 18 server-side files (8 Mongoose models, 5 OpenAI generation utils, 5 AWS utils) lack `import "server-only"` guard. Defense-in-depth gap. Constants (openai.tsx, aws.tsx) elevated to CRITICAL TD-SEC-07 (Phase 92). Remaining files tracked in Phase 86. | MEDIUM   |
-| TD-TEST-02          | Test     | `openai-route.test.ts` mocks 14 dependencies causing tautological tests. Tests validate mock setup, not actual route behavior. Reduce mock scope. Phase 90.5.                                                                                             | HIGH     |
-| TD-TASK-PASSTHROUGH | API      | `createTaskSchema` in `task.actions.tsx` uses `.passthrough()` instead of `.strict()`. Inconsistent with project convention. Phase 87.                                                                                                                    | LOW      |
+| ID                  | Area     | Description                                                                                                                                                                                                                                              | Severity            |
+| ------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
+| TD-SEC-06           | Security | ~~18 server-side files (8 Mongoose models, 5 OpenAI generation utils, 5 AWS utils) lack `import "server-only"` guard.~~ **RESOLVED (Phase 86).** 17 files guarded. `s3-file-reference.ts` excepted (client import chain via library-tabs/media-players). | ~~MEDIUM~~ Resolved |
+| TD-TEST-02          | Test     | `openai-route.test.ts` mocks 14 dependencies causing tautological tests. Tests validate mock setup, not actual route behavior. Reduce mock scope. Phase 96.2.                                                                                            | HIGH                |
+| TD-TASK-PASSTHROUGH | API      | `createTaskSchema` in `task.actions.tsx` uses `.passthrough()` instead of `.strict()`. Inconsistent with project convention. Phase 87.                                                                                                                   | LOW                 |
+
+### Active — CRITICAL/HIGH Priority (PM Audit #42, Triple-Audit)
+
+| ID           | Area   | Description                                                                                                                                                                                              | Severity |
+| ------------ | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| TD-TEST-05   | Test   | 4 E2E specs fail (chat-app-shell, plans-public, public-pages, user-profile) due to hardcoded content assertions (prices, heading text, FAQ copy). Violates owner directive: NO HARDCODED data. Phase 95. | CRITICAL |
+| TD-TEST-04   | Test   | `conversation-stop.test.ts` is near-duplicate of `openai-route.test.ts` — same 13-mock setup duplicated. Phase 96.1.                                                                                     | HIGH     |
+| TD-CONFIG-05 | Config | ESLint has only 1 custom rule. Missing: `no-console` (prevents console.log in prod), `no-restricted-globals` for `alert`/`confirm` (prevents window.alert/confirm regression). Phase 94.3.               | HIGH     |
+| TD-CONFIG-06 | Config | TypeScript `tsconfig.json` missing `noFallthroughCasesInSwitch` and `forceConsistentCasingInFileNames`. Phase 94.4.                                                                                      | HIGH     |
+| TD-WCAG-02   | A11y   | Zero automated WCAG E2E tests. No `@axe-core/playwright` installed. Public pages and app pages have no accessibility regression protection. Phase 97.1.                                                  | HIGH     |
+| TD-TEST-06   | Test   | Coverage gate semantically bypassed: `npm run test` (Gate F) passes but `npm run test:coverage` fails. Thresholds 80/75/80/80 but actual 76.28/65.32/79.75/76.68. Phase 94.1.                            | HIGH     |
+| TD-TEST-07   | Test   | Zero Zustand store tests. 3 stores (`use-chat-store`, `use-preferences-store`, `use-ui-store`), 0 test files. Phase 96.6.                                                                                | MEDIUM   |
 
 ### ~~Active~~ Resolved — Critical Priority (PM Audit #29)
 
