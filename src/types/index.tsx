@@ -9,6 +9,7 @@ export interface ContentItem {
 export type MessageRole = "user" | "assistant" | "system" | "developer";
 
 export interface Message {
+  id?: string;
   whois?: MessageRole;
   role: MessageRole;
   content: ContentItem[] | string | null;

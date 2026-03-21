@@ -182,7 +182,7 @@ export default function ChatInput({
 
   const textareaClass = classNames(
     "mb-[0.35rem] flex min-h-11 w-full resize-none rounded-md bg-transparent py-2 text-sm leading-tight",
-    "placeholder:text-sm placeholder:opacity-70",
+    "placeholder:text-sm placeholder:text-midnightBlue-600 dark:placeholder:text-lavenderHaze-700",
     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-limeGreen-500/70 focus-visible:ring-offset-1",
     "disabled:cursor-not-allowed disabled:opacity-50",
   );
@@ -284,7 +284,7 @@ export default function ChatInput({
             {uploadError}
           </p>
         )}
-        <div className="opacity-70">
+        <div className="text-midnightBlue-600 dark:text-lavenderHaze-600">
           {disabled
             ? "This conversation is read-only. Use the action above to continue."
             : isUploading

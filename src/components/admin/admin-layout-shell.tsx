@@ -13,9 +13,18 @@ import { useShallow } from "zustand/react/shallow";
 
 interface AdminLayoutShellProps {
   children: React.ReactNode;
+  adminLinks: Array<{
+    href: string;
+    label: string;
+    icon: string;
+    exact?: boolean;
+  }>;
 }
 
-export default function AdminLayoutShell({ children }: AdminLayoutShellProps) {
+export default function AdminLayoutShell({
+  children,
+  adminLinks,
+}: AdminLayoutShellProps) {
   const pathname = usePathname();
   const {
     desktopSidebarCollapsed,
@@ -58,7 +67,7 @@ export default function AdminLayoutShell({ children }: AdminLayoutShellProps) {
 
   return (
     <section className="AdminLayoutShell relative flex min-h-dvh w-full">
-      <AdminSidebar />
+      <AdminSidebar links={adminLinks} />
 
       <div className="relative flex min-h-dvh flex-1 flex-col">
         <header
@@ -78,7 +87,7 @@ export default function AdminLayoutShell({ children }: AdminLayoutShellProps) {
                 controlsId="admin-sidebar"
               />
               <div className="flex flex-col gap-0.5">
-                <p className="text-xxs font-semibold uppercase tracking-[0.28em] opacity-60">
+                <p className="text-xxs font-semibold uppercase tracking-[0.28em] text-midnightBlue-700 dark:text-lavenderHaze-700">
                   Operations
                 </p>
                 <Link

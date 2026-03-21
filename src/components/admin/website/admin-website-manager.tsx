@@ -92,7 +92,7 @@ export function AdminWebsiteManager({ pages }: AdminWebsiteManagerProps) {
 
       <div className="admin-table-shell">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-300 px-4 py-3 dark:border-slate-500">
-          <label className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide opacity-75">
+          <label className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
             <input
               type="checkbox"
               checked={allSelected}
@@ -104,7 +104,7 @@ export function AdminWebsiteManager({ pages }: AdminWebsiteManagerProps) {
 
           {selectedPageIds.length > 0 ? (
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs font-semibold uppercase tracking-wide opacity-70">
+              <span className="text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
                 {selectedPageIds.length} selected
               </span>
 
@@ -171,7 +171,7 @@ export function AdminWebsiteManager({ pages }: AdminWebsiteManagerProps) {
           ) : null}
         </div>
 
-        <div className="grid grid-cols-[0.35fr_1.2fr_1fr_0.7fr_0.7fr_1.2fr] gap-3 border-b border-slate-300 px-4 py-3 text-xs font-semibold uppercase tracking-wide opacity-70 dark:border-slate-500">
+        <div className="grid grid-cols-[0.35fr_1.2fr_1fr_0.7fr_0.7fr_1.2fr] gap-3 border-b border-slate-300 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:border-slate-500 dark:text-lavenderHaze-700">
           <span></span>
           <span>Title</span>
           <span>Slug</span>
@@ -182,7 +182,7 @@ export function AdminWebsiteManager({ pages }: AdminWebsiteManagerProps) {
 
         <div className="divide-y divide-slate-300 dark:divide-slate-500">
           {pages.length === 0 ? (
-            <p className="px-4 py-6 text-sm opacity-70">
+            <p className="px-4 py-6 text-sm text-midnightBlue-600 dark:text-lavenderHaze-600">
               No public pages created yet.
             </p>
           ) : null}
@@ -215,6 +215,7 @@ export function AdminWebsiteManager({ pages }: AdminWebsiteManagerProps) {
                   type="number"
                   name="sortOrder"
                   defaultValue={page.sortOrder}
+                  aria-label={`Sort order for ${page.title}`}
                 />
                 <AdminFormSubmitButton
                   className="btn btn-sm btn-outlined"

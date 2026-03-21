@@ -4,7 +4,7 @@ const originalAllowedDevOrigins = process.env.NEXT_ALLOWED_DEV_ORIGINS;
 
 async function importNextConfig() {
   vi.resetModules();
-  return import("../../next.config");
+  return import("../../../next.config");
 }
 
 describe("next.config", () => {

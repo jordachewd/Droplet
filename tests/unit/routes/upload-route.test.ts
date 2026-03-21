@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 import { POST } from "@/app/api/upload/route";
 import uploadFileToAWS from "@/lib/utils/aws/uploadFileToAWS";
 import { auth } from "@clerk/nextjs/server";
+import { MAX_UPLOAD_SIZE_BYTES } from "@/lib/utils/upload-file-validation";
 
 vi.mock("@clerk/nextjs/server", () => ({
   auth: vi.fn(),
@@ -65,6 +66,60 @@ describe("POST /api/upload", () => {
 
     expect(response.status).toBe(400);
     expect(payload.error).toContain("Invalid file type");
+  });
+
+  it("returns 400 when file exceeds max upload size", async () => {
+    const formData = new FormData();
+    formData.set(
+      "file",
+      new File(
+        [new Uint8Array(MAX_UPLOAD_SIZE_BYTES + 1)],
+        "oversized-image.png",
+        {
+          type: "image/png",
+        },
+      ),
+    );
+
+    const response = await POST(buildRequestWithFormData(formData));
+    const payload = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(payload.error).toContain("File is too large");
+  });
+
+  it("accepts file exactly at max upload size", async () => {
+    vi.spyOn(Date, "now").mockReturnValue(1_700_000_000_111);
+    const formData = new FormData();
+    formData.set(
+      "file",
+      new File([new Uint8Array(MAX_UPLOAD_SIZE_BYTES)], "image.png", {
+        type: "image/png",
+      }),
+    );
+
+    const response = await POST(buildRequestWithFormData(formData));
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.fileName).toBe("uploaded_file_1700000000111.png");
+    expect(uploadFileToAWS).toHaveBeenCalledWith(
+      expect.any(Buffer),
+      "uploaded_file_1700000000111.png",
+      "image/png",
+      "user_123/uploads",
+    );
+  });
+
+  it("returns 400 for empty file", async () => {
+    const formData = new FormData();
+    formData.set("file", new File([], "empty.png", { type: "image/png" }));
+
+    const response = await POST(buildRequestWithFormData(formData));
+    const payload = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(payload.error).toContain("File is empty");
   });
 
   it("uploads valid file to S3 and returns filename and URL", async () => {

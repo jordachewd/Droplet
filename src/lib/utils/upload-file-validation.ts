@@ -48,6 +48,14 @@ export function validateUploadFile(
     };
   }
 
+  if (file.size <= 0) {
+    return {
+      isValid: false,
+      message: "File is empty.",
+      status: 400,
+    };
+  }
+
   if (file.size > MAX_UPLOAD_SIZE_BYTES) {
     return {
       isValid: false,

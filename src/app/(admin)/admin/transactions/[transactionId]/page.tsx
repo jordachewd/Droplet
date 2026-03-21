@@ -30,31 +30,31 @@ export default async function AdminTransactionDetailPage({
       <article className="admin-surface">
         <dl className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>
-            <dt className="text-xs font-semibold uppercase tracking-wide opacity-60">
+            <dt className="text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
               Stripe Session
             </dt>
             <dd className="mt-1 text-sm">{transaction.stripeId}</dd>
           </div>
           <div>
-            <dt className="text-xs font-semibold uppercase tracking-wide opacity-60">
+            <dt className="text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
               Clerk ID
             </dt>
             <dd className="mt-1 text-sm">{transaction.clerkId}</dd>
           </div>
           <div>
-            <dt className="text-xs font-semibold uppercase tracking-wide opacity-60">
+            <dt className="text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
               Plan
             </dt>
             <dd className="mt-1 text-sm">{transaction.plan}</dd>
           </div>
           <div>
-            <dt className="text-xs font-semibold uppercase tracking-wide opacity-60">
+            <dt className="text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
               Billing
             </dt>
             <dd className="mt-1 text-sm">{transaction.billing}</dd>
           </div>
           <div>
-            <dt className="text-xs font-semibold uppercase tracking-wide opacity-60">
+            <dt className="text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
               Amount
             </dt>
             <dd className="mt-1 text-sm">
@@ -63,7 +63,7 @@ export default async function AdminTransactionDetailPage({
             </dd>
           </div>
           <div>
-            <dt className="text-xs font-semibold uppercase tracking-wide opacity-60">
+            <dt className="text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
               Purchased
             </dt>
             <dd className="mt-1 text-sm">
@@ -73,7 +73,7 @@ export default async function AdminTransactionDetailPage({
             </dd>
           </div>
           <div>
-            <dt className="text-xs font-semibold uppercase tracking-wide opacity-60">
+            <dt className="text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
               Expires
             </dt>
             <dd className="mt-1 text-sm">
@@ -90,19 +90,19 @@ export default async function AdminTransactionDetailPage({
         {transaction.user ? (
           <dl className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
-              <dt className="text-xs font-semibold uppercase tracking-wide opacity-60">
+              <dt className="text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
                 Username
               </dt>
               <dd className="mt-1 text-sm">{transaction.user.username}</dd>
             </div>
             <div>
-              <dt className="text-xs font-semibold uppercase tracking-wide opacity-60">
+              <dt className="text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
                 Email
               </dt>
               <dd className="mt-1 text-sm">{transaction.user.email}</dd>
             </div>
             <div>
-              <dt className="text-xs font-semibold uppercase tracking-wide opacity-60">
+              <dt className="text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
                 Role
               </dt>
               <dd className="mt-1 text-sm capitalize">
@@ -110,14 +110,14 @@ export default async function AdminTransactionDetailPage({
               </dd>
             </div>
             <div>
-              <dt className="text-xs font-semibold uppercase tracking-wide opacity-60">
+              <dt className="text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
                 Current Plan
               </dt>
               <dd className="mt-1 text-sm">{transaction.user.currentPlan}</dd>
             </div>
           </dl>
         ) : (
-          <p className="text-sm opacity-70">
+          <p className="text-sm text-midnightBlue-600 dark:text-lavenderHaze-600">
             The associated user record could not be loaded.
           </p>
         )}

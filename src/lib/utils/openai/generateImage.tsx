@@ -1,3 +1,4 @@
+import "server-only";
 import { openAiClient } from "@/constants/openai";
 import { PlanName } from "@/types/PlanData.d";
 import { ContentItem, Message, MessageRole } from "@/types";

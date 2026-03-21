@@ -1,3 +1,4 @@
+import "server-only";
 import { ContentItem, Message } from "@/types";
 import { TaskEndAction, TaskEndedReason, TaskStatus } from "@/types/TaskData.d";
 import { Schema, model, models, Document } from "mongoose";
@@ -34,6 +35,7 @@ const ContentItemSchema = new Schema<ContentItem>(
 
 const MessageSchema = new Schema<Message>(
   {
+    id: { type: String },
     whois: {
       type: String,
       enum: ["user", "assistant", "system", "developer"],

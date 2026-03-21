@@ -1,3 +1,4 @@
+import "server-only";
 import { getPersona } from "@/constants/assistant-personas";
 import {
   buildPersonaAwareSystemPrompt,

@@ -2,6 +2,7 @@
 
 import { create } from "zustand";
 import { Message } from "@/types";
+import { ensureMessagesHaveId } from "@/lib/utils/message-id";
 import { PersonaId } from "@/types/PersonaData.d";
 import { TaskEndAction, TaskEndedReason, TaskStatus } from "@/types/TaskData.d";
 
@@ -54,7 +55,7 @@ export const useChatStore = create<ChatStoreState>()((set) => ({
     set({
       taskId,
       personaId,
-      messages,
+      messages: ensureMessagesHaveId(messages),
       taskStatus,
       endState,
       isLoading: false,
@@ -72,8 +73,11 @@ export const useChatStore = create<ChatStoreState>()((set) => ({
   setPersonaId: (personaId) => set({ personaId }),
   setMessages: (messages) =>
     set((state) => ({
+      // Keep keys stable by ensuring every message has a durable ID.
       messages:
-        typeof messages === "function" ? messages(state.messages) : messages,
+        typeof messages === "function"
+          ? ensureMessagesHaveId(messages(state.messages))
+          : ensureMessagesHaveId(messages),
     })),
   setIsLoading: (isLoading) => set({ isLoading }),
   setTaskStatus: (taskStatus) => set({ taskStatus }),

@@ -70,7 +70,7 @@ export function AdminLimitsSection({
         <input type="hidden" name="key" value="admin.limits" />
         <input type="hidden" name="category" value="limits" />
         <h2 className="heading-6 mb-2">Limits</h2>
-        <p className="mb-4 text-sm opacity-70">
+        <p className="mb-4 text-sm text-midnightBlue-600 dark:text-lavenderHaze-600">
           Adjust plan ceilings for conversations, prompts, and media generation.
           Use <strong>-1</strong> for unlimited.
         </p>
@@ -134,7 +134,7 @@ export function AdminLimitsSection({
         <input type="hidden" name="key" value="admin.trialLimits" />
         <input type="hidden" name="category" value="trial" />
         <h2 className="heading-6 mb-2">Trial Limits</h2>
-        <p className="mb-4 text-sm opacity-70">
+        <p className="mb-4 text-sm text-midnightBlue-600 dark:text-lavenderHaze-600">
           Set limits for limited-access persona trials across 30-day windows.
         </p>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">

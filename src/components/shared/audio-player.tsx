@@ -49,6 +49,12 @@ export default function AudioPlayer({ audioSrc }: AudioPlayerProps) {
   const [playbackUrl, setPlaybackUrl] = useState<string | null>(null);
   const [currentTime, setCurrentTime] = useState("0:00");
   const [duration, setDuration] = useState("0:00");
+  const safeProgress = Number.isFinite(progress)
+    ? Math.min(100, Math.max(0, progress))
+    : 0;
+  const playbackControlLabel = isPlaying
+    ? "Pause audio playback"
+    : "Play audio playback";
 
   useEffect(() => {
     setAudio(null);
@@ -89,7 +95,10 @@ export default function AudioPlayer({ audioSrc }: AudioPlayerProps) {
         audioElement.pause();
         audioElement.onloadedmetadata = null;
       };
-    } catch {}
+    } catch {
+      setAudio(null);
+      setPlaybackUrl(null);
+    }
   }, [audioSrc]);
 
   useEffect(() => {
@@ -151,24 +160,35 @@ export default function AudioPlayer({ audioSrc }: AudioPlayerProps) {
           onClick={togglePlay}
           className="btn btn-sm btn-outlined"
           disabled={!playbackUrl}
+          aria-label={playbackControlLabel}
         >
           <i
             className={classNames(
               "bi mr-2",
               isPlaying ? "bi-pause" : "bi-play",
             )}
+            aria-hidden="true"
           ></i>
           {isPlaying ? "Pause" : "Play"}
         </button>
 
-        <div className={progressTrackClass}>
+        <div
+          className={progressTrackClass}
+          role="progressbar"
+          aria-label="Audio playback progress"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={Math.round(safeProgress)}
+          aria-valuetext={`${currentTime} of ${duration}`}
+        >
           <div
             className="h-full bg-nightIndigo-600 transition-all duration-150"
-            style={{ width: `${progress}%` }}
+            style={{ width: `${safeProgress}%` }}
+            aria-hidden="true"
           />
         </div>
 
-        <p className="text-sm">
+        <p className="text-sm" role="status" aria-live="polite">
           {currentTime} / {duration}
         </p>
       </div>

@@ -20,11 +20,16 @@ import {
 } from "@/lib/utils/check-daily-conversations";
 import { getTaskByIdForUser } from "@/lib/utils/task-queries";
 import { enforceSlidingWindowRateLimit } from "@/lib/utils/rate-limit";
+import { emitUsageEvents } from "@/lib/utils/usage-event-utils";
 import { PLAN_LIMITS } from "@/constants/plans";
+import * as aiModelPolicy from "@/lib/utils/ai-model-policy";
+import * as usageLimitUtils from "@/lib/utils/check-usage-limit";
+import * as entitlementsUtils from "@/lib/utils/resolve-entitlements";
 import {
-  getEffectivePlanConfig,
-  getEffectiveSupportEmail,
-} from "@/lib/utils/effective-plan-config";
+  buildMockRequest,
+  createTestTask,
+  createTestUser,
+} from "../test-support/factories";
 
 vi.mock("@/lib/utils/openai/generateResponse", () => ({
   generateResponse: vi.fn(),
@@ -68,13 +73,12 @@ vi.mock("@/lib/utils/rate-limit", () => ({
   enforceSlidingWindowRateLimit: vi.fn(),
 }));
 
-vi.mock("@/lib/utils/ensure-user-synced", () => ({
-  ensureUserSynced: vi.fn(),
+vi.mock("@/lib/utils/usage-event-utils", () => ({
+  emitUsageEvents: vi.fn(),
 }));
 
-vi.mock("@/lib/utils/effective-plan-config", () => ({
-  getEffectivePlanConfig: vi.fn(),
-  getEffectiveSupportEmail: vi.fn(),
+vi.mock("@/lib/utils/ensure-user-synced", () => ({
+  ensureUserSynced: vi.fn(),
 }));
 
 const EXISTING_TASK_ID = "507f1f77bcf86cd799439011";
@@ -84,49 +88,35 @@ function buildRequest(
   payload: unknown,
   headers: Record<string, string> = {},
 ): Request {
-  return new Request("http://localhost:3000/api/openai", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...headers },
-    body: JSON.stringify(payload),
+  return buildMockRequest({
+    payload,
+    headers,
   });
 }
 
 function createExistingTask(overrides: Record<string, unknown> = {}) {
-  return {
+  return createTestTask({
     _id: EXISTING_TASK_ID,
-    title: "Conversation",
-    personaId: "strategist",
-    messages: [
-      {
-        role: "user",
-        whois: "user",
-        content: [{ type: "text", text: "Earlier prompt" }],
-      },
-    ],
-    usage: 3,
-    promptCount: 1,
-    mediaCount: 0,
     estimatedBytes: 256,
-    status: "active",
-    updatedAt: "2026-03-11T00:00:00.000Z",
     ...overrides,
-  };
+  });
 }
 
 describe("POST /api/openai", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(auth).mockResolvedValue({ userId: "user_123" } as never);
-    vi.mocked(getUserById).mockResolvedValue({
-      clerkId: "user_123",
-      plan: {
-        name: "Lite",
-        expiresOn: new Date(Date.now() + 86_400_000),
-        imageGenerations: 0,
-        audioGenerations: 0,
-        usagePeriodStart: new Date(),
-      },
-    } as never);
+    vi.mocked(getUserById).mockResolvedValue(
+      createTestUser({
+        plan: {
+          name: "Lite",
+          expiresOn: new Date(Date.now() + 86_400_000),
+          imageGenerations: 0,
+          audioGenerations: 0,
+          usagePeriodStart: new Date(),
+        },
+      }) as never,
+    );
     vi.mocked(checkDailyConversationLimit).mockResolvedValue({
       allowed: true,
       limit: 5,
@@ -146,24 +136,21 @@ describe("POST /api/openai", () => {
       resetAt: Date.now() + 60_000,
       retryAfterMs: 0,
     });
-    vi.mocked(getEffectivePlanConfig).mockResolvedValue({
-      pricing: { Lite: 0, Pro: 19, Premium: 39, currencySymbol: "$" },
-      limits: PLAN_LIMITS,
-      trialLimits: {
-        promptsPerConversation: 5,
-        images: 3,
-        audio: 2,
-        video: 1,
-      },
-    });
-    vi.mocked(getEffectiveSupportEmail).mockResolvedValue(
-      "support@example.com",
-    );
     vi.mocked(getTaskByIdForUser).mockResolvedValue(
       createExistingTask() as never,
     );
     vi.mocked(generateTitle).mockResolvedValue(
-      JSON.stringify({ title: "Generated title", usage: 7 }),
+      JSON.stringify({
+        title: "Generated title",
+        usage: 7,
+        requestMetric: {
+          requestType: "title",
+          model: "gpt-4.1-nano",
+          tokensIn: 5,
+          tokensOut: 2,
+          latencyMs: 12,
+        },
+      }),
     );
     vi.mocked(createTask).mockResolvedValue({ _id: NEW_TASK_ID } as never);
     vi.mocked(incrementPromptCountIfBelowLimit).mockResolvedValue(true);
@@ -177,6 +164,15 @@ describe("POST /api/openai", () => {
         taskUsage: 11,
         generatedImage: false,
         generatedAudio: false,
+        requestMetrics: [
+          {
+            requestType: "chat",
+            model: "gpt-4o-mini",
+            tokensIn: 8,
+            tokensOut: 3,
+            latencyMs: 24,
+          },
+        ],
       }),
     );
     vi.mocked(generateStreamingResponse).mockResolvedValue({
@@ -188,6 +184,15 @@ describe("POST /api/openai", () => {
       taskUsage: 11,
       generatedImage: false,
       generatedAudio: false,
+      requestMetrics: [
+        {
+          requestType: "chat",
+          model: "gpt-4o-mini",
+          tokensIn: 8,
+          tokensOut: 3,
+          latencyMs: 24,
+        },
+      ],
     } as never);
     vi.mocked(updateTask).mockResolvedValue({} as never);
     vi.mocked(User.findOneAndUpdate).mockResolvedValue({} as never);
@@ -245,7 +250,10 @@ describe("POST /api/openai", () => {
     const payload = await response.json();
 
     expect(response.status).toBe(403);
-    expect(payload.error).toContain("plan has expired");
+    expect(payload.stopReason).toBe("billing_state_invalid");
+    expect(payload.endAction).toBe("upgrade_plan");
+    expect(payload.acceptedPrompt).toBe(false);
+    expect(payload.error).toContain("expired");
   });
 
   it("allows limited personas on Lite plan as trial access", async () => {
@@ -353,9 +361,35 @@ describe("POST /api/openai", () => {
       PLAN_LIMITS,
     );
     expect(generateTitle).toHaveBeenCalledOnce();
+    expect(generateTitle).toHaveBeenCalledWith(
+      [
+        expect.objectContaining({
+          id: expect.any(String),
+          role: "user",
+          whois: "user",
+          content: "new chat",
+        }),
+      ],
+      "Lite",
+      "strategist",
+      expect.objectContaining({
+        chat: expect.objectContaining({
+          lite: expect.any(String),
+          pro: expect.any(String),
+          premium: expect.any(String),
+        }),
+      }),
+    );
     expect(createTask).toHaveBeenCalledWith({
       title: "Generated title",
-      messages: [{ role: "user", whois: "user", content: "new chat" }],
+      messages: [
+        expect.objectContaining({
+          id: expect.any(String),
+          role: "user",
+          whois: "user",
+          content: "new chat",
+        }),
+      ],
       usage: 7,
       personaId: "strategist",
       promptCount: 1,
@@ -363,7 +397,14 @@ describe("POST /api/openai", () => {
     });
     expect(generateResponse).toHaveBeenCalledWith(
       expect.objectContaining({
-        messages: [{ role: "user", whois: "user", content: "new chat" }],
+        messages: [
+          expect.objectContaining({
+            id: expect.any(String),
+            role: "user",
+            whois: "user",
+            content: "new chat",
+          }),
+        ],
         taskId: NEW_TASK_ID,
         userId: "user_123",
         personaId: "strategist",
@@ -380,15 +421,39 @@ describe("POST /api/openai", () => {
       NEW_TASK_ID,
       expect.objectContaining({
         messages: [
-          { role: "user", whois: "user", content: "new chat" },
-          {
+          expect.objectContaining({
+            id: expect.any(String),
+            role: "user",
+            whois: "user",
+            content: "new chat",
+          }),
+          expect.objectContaining({
+            id: expect.any(String),
             whois: "assistant",
             role: "assistant",
             content: [{ type: "text", text: "Hello from AI" }],
-          },
+          }),
         ],
         usage: 11,
         personaId: "strategist",
+      }),
+    );
+    expect(emitUsageEvents).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        userId: "user_123",
+        taskId: NEW_TASK_ID,
+        personaId: "strategist",
+        metrics: [expect.objectContaining({ requestType: "title" })],
+      }),
+    );
+    expect(emitUsageEvents).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        userId: "user_123",
+        taskId: NEW_TASK_ID,
+        personaId: "strategist",
+        metrics: [expect.objectContaining({ requestType: "chat" })],
       }),
     );
     expect(payload.taskId).toBe(NEW_TASK_ID);
@@ -503,6 +568,12 @@ describe("POST /api/openai", () => {
   });
 
   it("uses the persisted task state and persona for existing conversations", async () => {
+    const resolveEntitlementsSpy = vi.spyOn(
+      entitlementsUtils,
+      "resolveEntitlements",
+    );
+    const checkUsageLimitSpy = vi.spyOn(usageLimitUtils, "checkUsageLimit");
+
     const response = await POST(
       buildRequest({
         taskId: EXISTING_TASK_ID,
@@ -522,15 +593,49 @@ describe("POST /api/openai", () => {
       taskId: EXISTING_TASK_ID,
       limit: 10,
     });
+    expect(resolveEntitlementsSpy).toHaveBeenCalledWith(
+      "Lite",
+      expect.objectContaining({
+        isAdmin: false,
+      }),
+    );
+    expect(checkUsageLimitSpy).toHaveBeenCalledTimes(3);
+    expect(checkUsageLimitSpy).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        planName: "Lite",
+        limitType: "images",
+      }),
+    );
+    expect(checkUsageLimitSpy).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        planName: "Lite",
+        limitType: "audio",
+      }),
+    );
+    expect(checkUsageLimitSpy).toHaveBeenNthCalledWith(
+      3,
+      expect.objectContaining({
+        planName: "Lite",
+        limitType: "video",
+      }),
+    );
     expect(generateResponse).toHaveBeenCalledWith(
       expect.objectContaining({
         messages: [
-          {
+          expect.objectContaining({
+            id: expect.any(String),
             role: "user",
             whois: "user",
             content: [{ type: "text", text: "Earlier prompt" }],
-          },
-          { role: "user", whois: "user", content: "continue" },
+          }),
+          expect.objectContaining({
+            id: expect.any(String),
+            role: "user",
+            whois: "user",
+            content: "continue",
+          }),
         ],
         taskId: EXISTING_TASK_ID,
         userId: "user_123",
@@ -549,17 +654,24 @@ describe("POST /api/openai", () => {
       expect.objectContaining({
         personaId: "strategist",
         messages: [
-          {
+          expect.objectContaining({
+            id: expect.any(String),
             role: "user",
             whois: "user",
             content: [{ type: "text", text: "Earlier prompt" }],
-          },
-          { role: "user", whois: "user", content: "continue" },
-          {
+          }),
+          expect.objectContaining({
+            id: expect.any(String),
+            role: "user",
+            whois: "user",
+            content: "continue",
+          }),
+          expect.objectContaining({
+            id: expect.any(String),
             whois: "assistant",
             role: "assistant",
             content: [{ type: "text", text: "Hello from AI" }],
-          },
+          }),
         ],
       }),
     );
@@ -607,6 +719,8 @@ describe("POST /api/openai", () => {
   });
 
   it("ends the conversation when the prompt limit has already been reached", async () => {
+    const resolveModelPolicySpy = vi.spyOn(aiModelPolicy, "resolveModelPolicy");
+
     vi.mocked(incrementPromptCountIfBelowLimit).mockResolvedValue(false);
     vi.mocked(checkDailyConversationLimit).mockResolvedValue({
       allowed: true,
@@ -638,6 +752,30 @@ describe("POST /api/openai", () => {
         status: "ended",
         endedReason: "prompt_limit_reached",
         endAction: "start_new_conversation",
+      }),
+    );
+    expect(resolveModelPolicySpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        plan: "lite",
+        feature: "chat",
+        taskClass: "standard",
+      }),
+    );
+    const resolvedPolicy = resolveModelPolicySpy.mock.results.at(-1)?.value;
+    expect(resolvedPolicy).toBeDefined();
+    expect(emitUsageEvents).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: "user_123",
+        taskId: EXISTING_TASK_ID,
+        personaId: "strategist",
+        metrics: [
+          expect.objectContaining({
+            requestType: "chat",
+            blocked: true,
+            blockedReason: "prompt_limit_reached",
+            model: resolvedPolicy?.model,
+          }),
+        ],
       }),
     );
   });
@@ -736,6 +874,20 @@ describe("POST /api/openai", () => {
                 },
               ],
             },
+            requestMetrics: [
+              {
+                requestType: "chat",
+                model: "gpt-4o-mini",
+                latencyMs: 10,
+              },
+              {
+                requestType: "image",
+                model: "gpt-image-1-mini",
+                blocked: true,
+                blockedReason: "image_limit_reached",
+                latencyMs: 0,
+              },
+            ],
           });
         }
 
@@ -770,6 +922,19 @@ describe("POST /api/openai", () => {
     expect(updatePayload).not.toMatchObject({
       status: "ended",
     });
+    expect(emitUsageEvents).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: "user_123",
+        taskId: EXISTING_TASK_ID,
+        metrics: expect.arrayContaining([
+          expect.objectContaining({ requestType: "chat" }),
+          expect.objectContaining({
+            requestType: "image",
+            blockedReason: "image_limit_reached",
+          }),
+        ]),
+      }),
+    );
   });
 
   it("uses trial media counters for limited personas and ends with trial limit reason", async () => {
@@ -1004,6 +1169,220 @@ describe("POST /api/openai", () => {
     expect(response.status).toBe(500);
     expect(payload.error).toBeTypeOf("string");
     expect(updateTask).not.toHaveBeenCalled();
+  });
+
+  describe("conversation stop behavior", () => {
+    it("sets audio_limit_reached when audio usage equals the Pro quota", async () => {
+      vi.mocked(getUserById).mockResolvedValue(
+        createTestUser({
+          plan: {
+            name: "Pro",
+            expiresOn: new Date(Date.now() + 86_400_000),
+            imageGenerations: 0,
+            audioGenerations: 50,
+            usagePeriodStart: new Date(),
+          },
+        }) as never,
+      );
+      vi.mocked(generateResponse).mockResolvedValue(
+        JSON.stringify({
+          blockedReason: "audio_limit_reached",
+          taskData: {
+            whois: "assistant",
+            role: "assistant",
+            content: [{ type: "text", text: "Audio limit reached." }],
+          },
+        }),
+      );
+
+      const response = await POST(
+        buildRequest({
+          taskId: EXISTING_TASK_ID,
+          messages: [
+            { role: "user", whois: "user", content: "generate audio" },
+          ],
+        }),
+      );
+      const payload = await response.json();
+
+      expect(response.status).toBe(403);
+      expect(payload.stopReason).toBe("audio_limit_reached");
+      expect(payload.endAction).toBe("start_new_conversation");
+      expect(payload.taskStatus).toBe("active");
+      expect(generateResponse).toHaveBeenCalledWith(
+        expect.objectContaining({
+          entitlements: expect.objectContaining({
+            audioLimitReached: true,
+            supportsAudioGeneration: true,
+          }),
+        }),
+      );
+    });
+
+    it("sets video_limit_reached when video usage equals the Pro quota", async () => {
+      vi.mocked(getUserById).mockResolvedValue(
+        createTestUser({
+          plan: {
+            name: "Pro",
+            expiresOn: new Date(Date.now() + 86_400_000),
+            imageGenerations: 0,
+            audioGenerations: 0,
+            videoGenerations: 10,
+            usagePeriodStart: new Date(),
+          },
+        }) as never,
+      );
+      vi.mocked(generateResponse).mockResolvedValue(
+        JSON.stringify({
+          blockedReason: "video_limit_reached",
+          taskData: {
+            whois: "assistant",
+            role: "assistant",
+            content: [{ type: "text", text: "Video limit reached." }],
+          },
+        }),
+      );
+
+      const response = await POST(
+        buildRequest({
+          taskId: EXISTING_TASK_ID,
+          messages: [
+            { role: "user", whois: "user", content: "generate video" },
+          ],
+        }),
+      );
+      const payload = await response.json();
+
+      expect(response.status).toBe(403);
+      expect(payload.stopReason).toBe("video_limit_reached");
+      expect(payload.endAction).toBe("start_new_conversation");
+      expect(payload.taskStatus).toBe("active");
+      expect(generateResponse).toHaveBeenCalledWith(
+        expect.objectContaining({
+          entitlements: expect.objectContaining({
+            videoLimitReached: true,
+            supportsVideoGeneration: true,
+          }),
+        }),
+      );
+      const updatePayload = vi.mocked(updateTask).mock.calls.at(-1)?.[1];
+      expect(updatePayload).toMatchObject({
+        personaId: "strategist",
+      });
+      expect(updatePayload).not.toMatchObject({
+        status: "ended",
+      });
+    });
+
+    it("sets billing_state_invalid with upgrade_plan when paid plan expires", async () => {
+      const resolveModelPolicySpy = vi.spyOn(
+        aiModelPolicy,
+        "resolveModelPolicy",
+      );
+
+      vi.mocked(getUserById).mockResolvedValue(
+        createTestUser({
+          plan: {
+            name: "Pro",
+            expiresOn: new Date(Date.now() - 86_400_000),
+            imageGenerations: 0,
+            audioGenerations: 0,
+            usagePeriodStart: new Date(),
+          },
+        }) as never,
+      );
+
+      const response = await POST(
+        buildRequest({
+          taskId: EXISTING_TASK_ID,
+          messages: [{ role: "user", whois: "user", content: "continue" }],
+        }),
+      );
+      const payload = await response.json();
+
+      expect(response.status).toBe(403);
+      expect(payload.stopReason).toBe("billing_state_invalid");
+      expect(payload.endAction).toBe("upgrade_plan");
+      expect(updateTask).toHaveBeenCalledWith(
+        EXISTING_TASK_ID,
+        expect.objectContaining({
+          status: "ended",
+          endedReason: "billing_state_invalid",
+          endAction: "upgrade_plan",
+        }),
+      );
+      expect(resolveModelPolicySpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          plan: "pro",
+          feature: "chat",
+          taskClass: "standard",
+        }),
+      );
+      const resolvedPolicy = resolveModelPolicySpy.mock.results.at(-1)?.value;
+      expect(resolvedPolicy).toBeDefined();
+      expect(emitUsageEvents).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: "user_123",
+          taskId: EXISTING_TASK_ID,
+          personaId: "strategist",
+          metrics: [
+            expect.objectContaining({
+              requestType: "chat",
+              blocked: true,
+              blockedReason: "billing_state_invalid",
+              model: resolvedPolicy?.model,
+            }),
+          ],
+        }),
+      );
+    });
+
+    it("bypasses finite-limit stop checks for Premium unlimited limits", async () => {
+      vi.mocked(getUserById).mockResolvedValue(
+        createTestUser({
+          plan: {
+            name: "Premium",
+            expiresOn: new Date(Date.now() + 86_400_000),
+            imageGenerations: 10_000,
+            audioGenerations: 10_000,
+            usagePeriodStart: new Date(),
+          },
+        }) as never,
+      );
+      vi.mocked(getTaskByIdForUser).mockResolvedValue(
+        createExistingTask({
+          promptCount: 5_000,
+        }) as never,
+      );
+
+      const response = await POST(
+        buildRequest({
+          taskId: EXISTING_TASK_ID,
+          messages: [{ role: "user", whois: "user", content: "continue" }],
+        }),
+      );
+      const payload = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(payload.stopReason).toBeUndefined();
+      expect(generateResponse).toHaveBeenCalledWith(
+        expect.objectContaining({
+          planName: "Premium",
+          entitlements: expect.objectContaining({
+            imageLimitReached: false,
+            audioLimitReached: false,
+            supportsImageGeneration: true,
+            supportsAudioGeneration: true,
+          }),
+        }),
+      );
+      expect(updateTask).not.toHaveBeenCalledWith(
+        EXISTING_TASK_ID,
+        expect.objectContaining({
+          status: "ended",
+        }),
+      );
+    });
   });
 
   it("self-heals when getUserById returns null and ensureUserSynced succeeds", async () => {

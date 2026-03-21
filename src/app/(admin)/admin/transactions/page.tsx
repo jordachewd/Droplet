@@ -3,9 +3,26 @@ import { AdminTransactionsTable } from "@/components/admin/transactions/admin-tr
 import { getAdminTransactions } from "@/lib/utils/admin-queries";
 import { getEffectiveCurrencySymbol } from "@/lib/utils/effective-plan-config";
 
-export default async function AdminTransactionsPage() {
-  const [transactions, currencySymbol] = await Promise.all([
-    getAdminTransactions(),
+interface AdminTransactionsPageProps {
+  searchParams: Promise<{ page?: string }>;
+}
+
+function parsePositivePage(value?: string): number {
+  const parsed = Number.parseInt(value ?? "", 10);
+
+  if (!Number.isFinite(parsed) || parsed < 1) {
+    return 1;
+  }
+
+  return parsed;
+}
+
+export default async function AdminTransactionsPage({
+  searchParams,
+}: AdminTransactionsPageProps) {
+  const { page } = await searchParams;
+  const [transactionsResponse, currencySymbol] = await Promise.all([
+    getAdminTransactions(parsePositivePage(page)),
     getEffectiveCurrencySymbol(),
   ]);
 
@@ -17,8 +34,14 @@ export default async function AdminTransactionsPage() {
       />
 
       <AdminTransactionsTable
-        transactions={transactions}
+        transactions={transactionsResponse.items}
         currencySymbol={currencySymbol}
+        pagination={{
+          total: transactionsResponse.total,
+          page: transactionsResponse.page,
+          pageSize: transactionsResponse.pageSize,
+          totalPages: transactionsResponse.totalPages,
+        }}
       />
     </section>
   );

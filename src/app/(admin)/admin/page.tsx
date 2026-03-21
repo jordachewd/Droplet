@@ -19,7 +19,7 @@ export default async function AdminDashboardPage() {
             href={stat.href}
             className="admin-surface transition-all hover:-translate-y-0.5 hover:shadow-md"
           >
-            <p className="mb-2 flex items-center gap-2 text-sm opacity-70">
+            <p className="mb-2 flex items-center gap-2 text-sm text-midnightBlue-600 dark:text-lavenderHaze-600">
               <i className={stat.icon}></i>
               <span>{stat.label}</span>
             </p>

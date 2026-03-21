@@ -383,3 +383,82 @@ describe("admin actions audit trail completeness", () => {
     expect(revalidatePath).toHaveBeenCalled();
   });
 });
+
+describe("admin actions authorization enforcement", () => {
+  const targetUserId = "507f1f77bcf86cd799439101";
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(connectToDatabase).mockResolvedValue(undefined as never);
+    vi.mocked(createAdminAuditLogEntry).mockResolvedValue(undefined as never);
+  });
+
+  it("rejects unauthenticated access to admin actions", async () => {
+    vi.mocked(requireAdminActionAccess).mockRejectedValueOnce(
+      new Error("Unauthorized"),
+    );
+
+    const result = await toggleUserSuspensionAction(
+      buildFormData({
+        userId: targetUserId,
+        suspended: "true",
+      }),
+    );
+
+    expect(result).toEqual({
+      status: "error",
+      message: "Unable to update user state.",
+      severity: "error",
+    });
+    expect(connectToDatabase).not.toHaveBeenCalled();
+    expect(User.findByIdAndUpdate).not.toHaveBeenCalled();
+    expect(createAdminAuditLogEntry).not.toHaveBeenCalled();
+  });
+
+  it("rejects non-admin access to admin actions", async () => {
+    vi.mocked(requireAdminActionAccess).mockRejectedValueOnce(
+      new Error("Forbidden"),
+    );
+
+    const result = await toggleUserSuspensionAction(
+      buildFormData({
+        userId: targetUserId,
+        suspended: "true",
+      }),
+    );
+
+    expect(result).toEqual({
+      status: "error",
+      message: "Unable to update user state.",
+      severity: "error",
+    });
+    expect(connectToDatabase).not.toHaveBeenCalled();
+    expect(User.findByIdAndUpdate).not.toHaveBeenCalled();
+    expect(createAdminAuditLogEntry).not.toHaveBeenCalled();
+  });
+
+  it("allows admin access and logs audit entries for admin actions", async () => {
+    vi.mocked(requireAdminActionAccess).mockResolvedValueOnce("admin_clerk_2");
+    vi.mocked(User.findByIdAndUpdate).mockResolvedValue({
+      clerkId: "client_clerk_2",
+      suspended: true,
+    } as never);
+
+    const result = await toggleUserSuspensionAction(
+      buildFormData({
+        userId: targetUserId,
+        suspended: "true",
+      }),
+    );
+
+    expect(result).toEqual({
+      status: "success",
+      message: "User suspended.",
+      severity: "success",
+    });
+    expect(requireAdminActionAccess).toHaveBeenCalledTimes(1);
+    expect(connectToDatabase).toHaveBeenCalledTimes(1);
+    expect(User.findByIdAndUpdate).toHaveBeenCalledTimes(1);
+    expect(createAdminAuditLogEntry).toHaveBeenCalledTimes(1);
+  });
+});

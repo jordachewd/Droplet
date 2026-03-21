@@ -47,13 +47,13 @@ export default async function AdminWebsiteEditorPage({
 
         <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
           <div className="admin-surface-subtle">
-            <p className="text-xs font-semibold uppercase tracking-wide opacity-60">
+            <p className="text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
               Slug
             </p>
             <p className="mt-1 text-sm">/{page.slug}</p>
           </div>
           <div className="admin-surface-subtle">
-            <p className="text-xs font-semibold uppercase tracking-wide opacity-60">
+            <p className="text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
               Status
             </p>
             <p className="mt-1 text-sm">
@@ -61,7 +61,7 @@ export default async function AdminWebsiteEditorPage({
             </p>
           </div>
           <div className="admin-surface-subtle">
-            <p className="text-xs font-semibold uppercase tracking-wide opacity-60">
+            <p className="text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
               Sort Order
             </p>
             <p className="mt-1 text-sm">{page.sortOrder}</p>

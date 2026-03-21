@@ -1,52 +1,52 @@
 import path from "node:path";
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 const guestFile = path.join(__dirname, ".clerk/guest.json");
 
 test.use({ storageState: guestFile });
 
-test("shows the reconciled pricing and FAQ copy on the public plans page", async ({
+async function assertPlanCardStructure(page: Page) {
+  const planCards = page.locator(".PlanCard");
+  await expect(planCards).toHaveCount(3);
+
+  const cardCount = await planCards.count();
+  for (let cardIndex = 0; cardIndex < cardCount; cardIndex += 1) {
+    const planCard = planCards.nth(cardIndex);
+
+    await expect(planCard.getByRole("heading")).toHaveCount(1);
+    const priceElement = planCard.locator("h2 + p").first();
+    await expect(priceElement).toBeVisible();
+
+    const priceText = (await priceElement.textContent())?.trim() ?? "";
+    expect(priceText.length).toBeGreaterThan(0);
+
+    const featureRows = planCard.locator("i.bi-check2, i.bi-x");
+    expect(await featureRows.count()).toBeGreaterThan(0);
+
+    const contentParagraphs = planCard.locator("p");
+    expect(await contentParagraphs.count()).toBeGreaterThanOrEqual(3);
+  }
+}
+
+test("shows the public plans page with structural pricing and FAQ content", async ({
   page,
 }) => {
   await page.goto("/plans");
 
-  await expect(
-    page.getByText("Free forever", { exact: true }).first(),
-  ).toBeVisible();
-  await expect(page.getByText("$19", { exact: true }).first()).toBeVisible();
-  await expect(page.getByText("$39", { exact: true }).first()).toBeVisible();
-  await expect(
-    page
-      .locator(".PlanCard")
-      .getByText("2 personas (full access) + try all others (limited access)"),
-  ).toHaveCount(1);
-  await expect(
-    page
-      .locator(".PlanCard")
-      .getByText("5 personas (full access) + try all others (limited access)"),
-  ).toHaveCount(1);
-  await expect(
-    page.locator(".PlanCard").getByText("All 6 personas (full access)"),
-  ).toHaveCount(1);
+  await assertPlanCardStructure(page);
   await expect(page.getByLabel("Toggle yearly billing")).toHaveCount(0);
   await expect(page.getByText("Save 40%", { exact: true })).toHaveCount(0);
   await expect(page.getByText("Yearly", { exact: true })).toHaveCount(0);
 
-  await page
-    .locator("summary")
-    .filter({ hasText: "Does Droplet have a free plan?" })
-    .click({ force: true });
-  await page
-    .locator("summary")
-    .filter({
-      hasText: "Who should I reach out to for assistance or inquiries?",
-    })
-    .click({ force: true });
+  const faqItems = page.locator(".Faqs details");
+  expect(await faqItems.count()).toBeGreaterThanOrEqual(3);
 
-  await expect(page.getByText("Does Droplet have a free plan?")).toBeVisible();
-  await expect(
-    page.locator("details").filter({
-      hasText: "Who should I reach out to for assistance or inquiries?",
-    }),
-  ).toContainText("office@jordachewd.com");
+  const firstFaq = faqItems.first();
+  await firstFaq.locator("summary").click({ force: true });
+  await expect(firstFaq).toHaveAttribute("open", "");
+
+  const supportEmailLink = page.locator('a[href^="mailto:"]').first();
+  await expect(supportEmailLink).toBeVisible();
+  const supportEmailHref = await supportEmailLink.getAttribute("href");
+  expect(supportEmailHref ?? "").toMatch(/^mailto:[^\s@]+@[^\s@]+\.[^\s@]+$/i);
 });

@@ -71,8 +71,15 @@ describe("generateAudio", () => {
 
     const payload = JSON.parse(result as string);
 
+    expect(payload.model).toBe("gpt-4o-mini-tts");
     expect(payload.taskUsage).toBe(0);
     expect(payload.generatedAudio).toBe(true);
+    expect(payload.requestMetric).toEqual(
+      expect.objectContaining({
+        requestType: "audio",
+        model: "gpt-4o-mini-tts",
+      }),
+    );
     expect(payload.taskData).toEqual({
       whois: "assistant",
       role: "assistant",
@@ -104,10 +111,12 @@ describe("generateAudio", () => {
       ],
       usage: {
         total_tokens: 14,
+        prompt_tokens: 10,
+        completion_tokens: 4,
       },
     } as never);
 
-    await generateAudio({
+    const result = await generateAudio({
       messages: [
         {
           role: "user",
@@ -129,5 +138,120 @@ describe("generateAudio", () => {
       }),
     );
     expect(openAiClient.audio.speech.create).not.toHaveBeenCalled();
+
+    const payload = JSON.parse(result as string);
+    expect(payload.model).toBe("gpt-audio-mini");
+    expect(payload.taskUsage).toBe(14);
+    expect(payload.requestMetric).toEqual(
+      expect.objectContaining({
+        requestType: "audio",
+        model: "gpt-audio-mini",
+        tokensIn: 10,
+        tokensOut: 4,
+      }),
+    );
+  });
+
+  it("throws when TTS mode has no usable text input", async () => {
+    await expect(
+      generateAudio({
+        messages: [],
+        role: "assistant",
+        taskId: "task_audio",
+        userId: "user_123",
+        planName: "Pro",
+      }),
+    ).rejects.toThrow(
+      "No text input available for TTS audio generation. | generateAudio",
+    );
+
+    expect(openAiClient.audio.speech.create).not.toHaveBeenCalled();
+    expect(uploadFileToAWS).not.toHaveBeenCalled();
+  });
+
+  it("throws when the TTS provider request fails", async () => {
+    vi.mocked(openAiClient.audio.speech.create).mockRejectedValue(
+      new Error("Audio provider failed"),
+    );
+
+    await expect(
+      generateAudio({
+        messages: [
+          {
+            role: "user",
+            whois: "user",
+            content: [{ type: "text", text: "Create audio." }],
+          },
+        ],
+        role: "assistant",
+        taskId: "task_audio",
+        userId: "user_123",
+        planName: "Pro",
+      }),
+    ).rejects.toThrow("Audio provider failed | generateAudio");
+  });
+
+  it("throws when audio_in_out mode returns malformed audio data", async () => {
+    vi.mocked(openAiClient.chat.completions.create).mockResolvedValue({
+      choices: [
+        {
+          message: {
+            audio: {
+              data: "   ",
+              transcript: "Read this aloud.",
+            },
+          },
+        },
+      ],
+      usage: {
+        total_tokens: 14,
+        prompt_tokens: 10,
+        completion_tokens: 4,
+      },
+    } as never);
+
+    await expect(
+      generateAudio({
+        messages: [
+          {
+            role: "user",
+            whois: "user",
+            content: [{ type: "text", text: "Create audio." }],
+          },
+        ],
+        role: "assistant",
+        taskId: "task_audio",
+        userId: "user_123",
+        planName: "Pro",
+        audioMode: "audio_in_out",
+      }),
+    ).rejects.toThrow(
+      "Audio Generator API returned empty audio data. | generateAudio",
+    );
+  });
+
+  it("throws when uploading generated audio fails", async () => {
+    vi.mocked(openAiClient.audio.speech.create).mockResolvedValue({
+      arrayBuffer: vi.fn().mockResolvedValue(Buffer.from("audio-bytes")),
+    } as never);
+    vi.mocked(uploadFileToAWS).mockRejectedValueOnce(
+      new Error("S3 upload failed for generated audio"),
+    );
+
+    await expect(
+      generateAudio({
+        messages: [
+          {
+            role: "user",
+            whois: "user",
+            content: [{ type: "text", text: "Create audio." }],
+          },
+        ],
+        role: "assistant",
+        taskId: "task_audio",
+        userId: "user_123",
+        planName: "Pro",
+      }),
+    ).rejects.toThrow("S3 upload failed for generated audio | generateAudio");
   });
 });

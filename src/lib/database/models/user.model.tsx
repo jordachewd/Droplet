@@ -1,3 +1,4 @@
+import "server-only";
 import { getExpiresOn } from "@/constants/plans";
 import { PlanData } from "@/types/PlanData.d";
 import { UserRoles } from "@/types/UserData.d";

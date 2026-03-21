@@ -131,6 +131,10 @@ function toPlainMessages(messages: unknown): Message[] {
       content: toPlainContent(entry.content),
     };
 
+    if (typeof entry.id === "string" && entry.id.trim().length > 0) {
+      message.id = entry.id;
+    }
+
     if (isMessageRole(entry.whois)) {
       message.whois = entry.whois;
     }

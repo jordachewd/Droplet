@@ -1,6 +1,6 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const browserProjects = [
+const defaultBrowserProjects = [
   {
     name: "chromium",
     use: { ...devices["Desktop Chrome"] },
@@ -13,6 +13,9 @@ const browserProjects = [
     name: "webkit",
     use: { ...devices["Desktop Safari"] },
   },
+];
+
+const fullMatrixOnlyProjects = [
   {
     name: "Mobile Chrome",
     use: { ...devices["Pixel 5"] },
@@ -31,16 +34,39 @@ const browserProjects = [
   },
 ];
 
+const browserProjects =
+  process.env.PLAYWRIGHT_FULL_MATRIX === "1"
+    ? [...defaultBrowserProjects, ...fullMatrixOnlyProjects]
+    : defaultBrowserProjects;
+
+function resolvePlaywrightWorkers(): number {
+  const rawWorkers = process.env.PLAYWRIGHT_WORKERS;
+  if (!rawWorkers) {
+    return 1;
+  }
+
+  const parsedWorkers = Number.parseInt(rawWorkers, 10);
+  if (Number.isNaN(parsedWorkers) || parsedWorkers < 1) {
+    return 1;
+  }
+
+  return parsedWorkers;
+}
+
 export default defineConfig({
   testDir: "./tests/e2e",
   outputDir: "./tests/e2e/test-results",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  workers: process.env.CI ? 1 : resolvePlaywrightWorkers(),
   reporter: "list",
+  expect: {
+    timeout: 5_000,
+  },
   use: {
     baseURL: process.env.PLAYWRIGHT_BASE_URL || "http://127.0.0.1:3000",
+    actionTimeout: 10_000,
     screenshot: "only-on-failure",
     trace: "on-first-retry",
     video: "retain-on-failure",

@@ -3,10 +3,9 @@ export interface CookieCategory {
   description: string;
 }
 
+import { legalReviewDisclaimer } from "@/constants/legal-shared";
 import cookiesData from "@/json/cookies.json";
 
-export const legalReviewDisclaimer =
-  "This policy is provided for informational purposes. Legal review recommended before production publication.";
-
+export { legalReviewDisclaimer };
 export const cookieCategories =
   cookiesData.cookieCategories as CookieCategory[];

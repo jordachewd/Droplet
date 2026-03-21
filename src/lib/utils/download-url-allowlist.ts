@@ -1,3 +1,4 @@
+import "server-only";
 const DEFAULT_ALLOWED_DOWNLOAD_HOSTS = [
   "oaidalleapiprodscus.blob.core.windows.net",
   "img.clerk.com",

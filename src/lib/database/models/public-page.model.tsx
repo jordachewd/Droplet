@@ -1,3 +1,4 @@
+import "server-only";
 import { Document, Schema, model, models } from "mongoose";
 
 interface IPublicPage extends Document {

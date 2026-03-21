@@ -16,6 +16,7 @@ export const messageTextContentSchema = z
 
 export const chatMessageSchema = z
   .object({
+    id: z.string().trim().min(1).optional(),
     role: z.enum(["user", "assistant", "system", "developer"]),
     whois: z.enum(["user", "assistant", "system", "developer"]).optional(),
     content: z.union([z.string(), z.array(messageTextContentSchema), z.null()]),

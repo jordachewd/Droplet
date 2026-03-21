@@ -1,4 +1,5 @@
-import { PERSONAS } from "@/constants/assistant-personas";
+import { PERSONAS, VALID_PERSONA_ID_SET } from "@/constants/assistant-personas";
+import { isObjectRecord } from "@/lib/utils/type-guards";
 import { ModelSettingsFormValue } from "@/types/AdminData.d";
 import { PersonaId } from "@/types/PersonaData.d";
 import {
@@ -11,12 +12,6 @@ import {
   TrialLimitsSettingsFormValue,
   PERSONA_ACCESS_KEY_BY_PLAN,
 } from "@/components/admin/settings/types";
-
-const VALID_PERSONA_ID_SET = new Set(PERSONAS.map((persona) => persona.id));
-
-function isObjectRecord(value: unknown): value is Record<string, unknown> {
-  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
-}
 
 function readNumericValue(
   source: Record<string, unknown>,

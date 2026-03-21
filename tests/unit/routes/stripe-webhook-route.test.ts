@@ -378,4 +378,39 @@ describe("POST /api/webhooks/stripe", () => {
     expect(Transaction.create).not.toHaveBeenCalled();
     expect(User.findOneAndUpdate).not.toHaveBeenCalled();
   });
+
+  it("short-circuits replayed checkout events before user lookups", async () => {
+    vi.mocked(getExpiresOn).mockReturnValue(
+      new Date("2026-04-05T10:00:00.000Z"),
+    );
+    constructEventMock.mockReturnValue({
+      type: "checkout.session.completed",
+      data: {
+        object: {
+          id: "cs_test_duplicate_short_circuit",
+          amount_total: 1900,
+          metadata: {
+            userId: "mongo_user_deleted",
+            clerkId: "clerk_user_deleted",
+            planId: "1",
+            plan: "Pro",
+            billing: "Monthly",
+          },
+        },
+      },
+    });
+    vi.mocked(Transaction.findOne).mockResolvedValue({
+      stripeId: "cs_test_duplicate_short_circuit",
+    } as never);
+    vi.mocked(User.findOne).mockResolvedValue(null as never);
+
+    const response = await POST(buildRequest('{"valid":"payload"}', "sig_123"));
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.message).toBe("Already processed");
+    expect(User.findOne).not.toHaveBeenCalled();
+    expect(Transaction.create).not.toHaveBeenCalled();
+    expect(User.findOneAndUpdate).not.toHaveBeenCalled();
+  });
 });

@@ -4,18 +4,23 @@ import { updateAdminSettingAction } from "@/lib/actions/admin.actions";
 import { AdminManagedForm } from "@/components/admin/admin-managed-form";
 import { AdminFormSubmitButton } from "@/components/admin/admin-form-submit-button";
 import { ModelSettingsFormValue } from "@/types/AdminData.d";
-import {
-  AUDIO_MODEL_OPTIONS,
-  CHAT_MODEL_OPTIONS,
-  IMAGE_MODEL_OPTIONS,
-  VIDEO_MODEL_OPTIONS,
-} from "@/constants/admin-options";
+
+interface AdminModelOptions {
+  chat: string[];
+  image: string[];
+  audio: string[];
+  video: string[];
+}
 
 interface AdminModelsSectionProps {
   modelValue: ModelSettingsFormValue;
+  modelOptions: AdminModelOptions;
 }
 
-export function AdminModelsSection({ modelValue }: AdminModelsSectionProps) {
+export function AdminModelsSection({
+  modelValue,
+  modelOptions,
+}: AdminModelsSectionProps) {
   return (
     <AdminManagedForm
       action={updateAdminSettingAction}
@@ -24,7 +29,7 @@ export function AdminModelsSection({ modelValue }: AdminModelsSectionProps) {
       <input type="hidden" name="key" value="admin.models" />
       <input type="hidden" name="category" value="models" />
       <h2 className="heading-6 mb-2">AI Models</h2>
-      <p className="mb-4 text-sm opacity-70">
+      <p className="mb-4 text-sm text-midnightBlue-600 dark:text-lavenderHaze-600">
         Choose model defaults by plan and media type.
       </p>
       <div className="grid grid-cols-1 gap-3">
@@ -35,7 +40,7 @@ export function AdminModelsSection({ modelValue }: AdminModelsSectionProps) {
             defaultValue={modelValue.liteChatModel}
             className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
           >
-            {CHAT_MODEL_OPTIONS.map((modelId) => (
+            {modelOptions.chat.map((modelId) => (
               <option key={`lite-chat-${modelId}`} value={modelId}>
                 {modelId}
               </option>
@@ -49,7 +54,7 @@ export function AdminModelsSection({ modelValue }: AdminModelsSectionProps) {
             defaultValue={modelValue.proChatModel}
             className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
           >
-            {CHAT_MODEL_OPTIONS.map((modelId) => (
+            {modelOptions.chat.map((modelId) => (
               <option key={`pro-chat-${modelId}`} value={modelId}>
                 {modelId}
               </option>
@@ -63,7 +68,7 @@ export function AdminModelsSection({ modelValue }: AdminModelsSectionProps) {
             defaultValue={modelValue.premiumChatModel}
             className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
           >
-            {CHAT_MODEL_OPTIONS.map((modelId) => (
+            {modelOptions.chat.map((modelId) => (
               <option key={`premium-chat-${modelId}`} value={modelId}>
                 {modelId}
               </option>
@@ -77,7 +82,7 @@ export function AdminModelsSection({ modelValue }: AdminModelsSectionProps) {
             defaultValue={modelValue.imageModel}
             className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
           >
-            {IMAGE_MODEL_OPTIONS.map((modelId) => (
+            {modelOptions.image.map((modelId) => (
               <option key={`image-${modelId}`} value={modelId}>
                 {modelId}
               </option>
@@ -91,7 +96,7 @@ export function AdminModelsSection({ modelValue }: AdminModelsSectionProps) {
             defaultValue={modelValue.audioModel}
             className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
           >
-            {AUDIO_MODEL_OPTIONS.map((modelId) => (
+            {modelOptions.audio.map((modelId) => (
               <option key={`audio-${modelId}`} value={modelId}>
                 {modelId}
               </option>
@@ -105,7 +110,7 @@ export function AdminModelsSection({ modelValue }: AdminModelsSectionProps) {
             defaultValue={modelValue.videoModel}
             className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
           >
-            {VIDEO_MODEL_OPTIONS.map((modelId) => (
+            {modelOptions.video.map((modelId) => (
               <option key={`video-${modelId}`} value={modelId}>
                 {modelId}
               </option>

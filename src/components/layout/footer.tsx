@@ -36,7 +36,7 @@ export default function Footer() {
         </div>
         <nav
           aria-label="Footer navigation"
-          className="flex items-center gap-4 text-xs opacity-60"
+          className="flex items-center gap-4 text-xs text-midnightBlue-700 dark:text-lavenderHaze-700"
         >
           <Link href="/privacy">Privacy &amp; Cookie Policy</Link>
           <Link href="/terms">Terms &amp; Conditions</Link>

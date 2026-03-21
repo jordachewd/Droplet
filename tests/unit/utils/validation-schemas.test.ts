@@ -145,4 +145,40 @@ describe("messageTextContentSchema", () => {
     });
     expect(result.success).toBe(false);
   });
+
+  it("accepts potential XSS payloads as plain text values", () => {
+    const result = messageTextContentSchema.safeParse({
+      type: "text",
+      text: `<img src=x onerror="alert('xss')"><script>alert('xss')</script>`,
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.text).toContain("<script>");
+    }
+  });
+
+  it("accepts very long string payloads", () => {
+    const result = messageTextContentSchema.safeParse({
+      type: "text",
+      text: "a".repeat(100_000),
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.text?.length).toBe(100_000);
+    }
+  });
+
+  it("accepts null bytes in text payloads without crashing", () => {
+    const result = messageTextContentSchema.safeParse({
+      type: "text",
+      text: "hello\u0000world",
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.text).toBe("hello\u0000world");
+    }
+  });
 });

@@ -1,3 +1,4 @@
+import "server-only";
 import { awsS3Client } from "@/constants/aws";
 import { DeleteObjectsCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
 

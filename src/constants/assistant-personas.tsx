@@ -138,6 +138,10 @@ export const PERSONAS: Persona[] = [
   },
 ];
 
+export const VALID_PERSONA_ID_SET: ReadonlySet<PersonaId> = new Set(
+  PERSONAS.map((persona) => persona.id),
+);
+
 const PERSONA_MAP: Record<PersonaId, Persona> = PERSONAS.reduce(
   (accumulator, persona) => {
     accumulator[persona.id] = persona;

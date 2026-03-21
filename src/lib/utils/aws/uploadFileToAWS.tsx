@@ -1,3 +1,4 @@
+import "server-only";
 import { awsS3Client } from "@/constants/aws";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import {

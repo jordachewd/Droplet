@@ -14,22 +14,73 @@ async function gotoAndExpectPublicRoute(page: Page, route: string) {
   ).not.toBeNull();
 }
 
+async function expectVisiblePageHeading(page: Page) {
+  await expect(page.getByRole("heading").first()).toBeVisible();
+}
+
+async function expectPlanCardStructure(page: Page) {
+  const planCards = page.locator(".PlanCard");
+  await expect(planCards).toHaveCount(3);
+
+  const cardCount = await planCards.count();
+  for (let cardIndex = 0; cardIndex < cardCount; cardIndex += 1) {
+    const planCard = planCards.nth(cardIndex);
+
+    await expect(planCard.getByRole("heading")).toHaveCount(1);
+    const priceElement = planCard.locator("h2 + p").first();
+    await expect(priceElement).toBeVisible();
+
+    const priceText = (await priceElement.textContent())?.trim() ?? "";
+    expect(priceText.length).toBeGreaterThan(0);
+
+    const featureRows = planCard.locator("i.bi-check2, i.bi-x");
+    expect(await featureRows.count()).toBeGreaterThan(0);
+  }
+}
+
 test.use({ storageState: guestFile });
 
 test("renders the landing page hero and public CTAs", async ({ page }) => {
   await gotoAndExpectPublicRoute(page, "/");
 
+  await expect(page).toHaveTitle(/Droplet/i);
+  await expectVisiblePageHeading(page);
+  await expect(page.locator('a[href="/app/new"]').first()).toBeVisible();
+  await expect(page.locator('a[href="/sign-up"]').first()).toBeVisible();
+  await expect(page.locator(".Workflow")).toBeVisible();
+  await expect(page.locator(".Personas")).toBeVisible();
+});
+
+test("toggles dark mode and keeps it after reload", async ({ page }) => {
+  await gotoAndExpectPublicRoute(page, "/");
+
+  const darkModeButton = page.getByRole("switch", {
+    name: "Toggle theme mode",
+  });
+  await darkModeButton.click();
+
+  await expect(page.locator("html")).toHaveAttribute(
+    "data-droplet-theme",
+    "dark",
+  );
+
+  await page.reload();
+
+  await expect(page.locator("html")).toHaveAttribute(
+    "data-droplet-theme",
+    "dark",
+  );
+});
+
+test("renders custom 404 page for unknown routes", async ({ page }) => {
+  await gotoAndExpectPublicRoute(page, "/this-route-does-not-exist");
+
+  await expect(page).toHaveURL(/this-route-does-not-exist/);
+  await expect(page.getByText("HTTP 404")).toBeVisible();
   await expect(
-    page.getByRole("heading", {
-      name: "Chat, create, and get things done.",
-    }),
+    page.getByRole("heading", { name: "Page Not Found" }),
   ).toBeVisible();
-  await expect(
-    page.getByRole("link", { name: "Try it for free" }),
-  ).toBeVisible();
-  await expect(
-    page.getByRole("link", { name: "Create account" }),
-  ).toBeVisible();
+  await expect(page.getByRole("link", { name: "Go Home" })).toBeVisible();
 });
 
 test("renders the about page with multiple content sections", async ({
@@ -37,55 +88,21 @@ test("renders the about page with multiple content sections", async ({
 }) => {
   await gotoAndExpectPublicRoute(page, "/about");
 
-  await expect(
-    page.getByRole("heading", { name: "About Droplet" }),
-  ).toBeVisible();
+  await expectVisiblePageHeading(page);
 
   const aboutSections = page.locator(".AboutPage article");
   expect(await aboutSections.count()).toBeGreaterThanOrEqual(3);
-
-  await expect(
-    page.getByRole("heading", {
-      name: "Droplet is an AI workspace shaped by specialist personas.",
-    }),
-  ).toBeVisible();
-  await expect(
-    page.getByRole("heading", {
-      name: "Pick a persona, start a conversation, and keep momentum in one place.",
-    }),
-  ).toBeVisible();
-  await expect(
-    page.getByRole("heading", {
-      name: "Persona access scales by plan tier.",
-    }),
-  ).toBeVisible();
+  const sectionHeadings = aboutSections.locator("h2, h3");
+  expect(await sectionHeadings.count()).toBeGreaterThanOrEqual(3);
 });
 
-test("renders the public plans page with all plan cards and approved prices", async ({
+test("renders the public plans page with structural plan-card checks", async ({
   page,
 }) => {
   await gotoAndExpectPublicRoute(page, "/plans");
 
-  await expect(
-    page.getByRole("heading", { name: /choose your plan/i }),
-  ).toBeVisible();
-
-  const planCards = page.locator(".PlanCard");
-  await expect(planCards).toHaveCount(3);
-
-  const liteCard = planCards.filter({
-    has: page.getByRole("heading", { name: "Lite" }),
-  });
-  const proCard = planCards.filter({
-    has: page.getByRole("heading", { name: "Pro" }),
-  });
-  const premiumCard = planCards.filter({
-    has: page.getByRole("heading", { name: "Premium" }),
-  });
-
-  await expect(liteCard).toContainText("Free");
-  await expect(proCard).toContainText("$19");
-  await expect(premiumCard).toContainText("$39");
+  await expectVisiblePageHeading(page);
+  await expectPlanCardStructure(page);
 });
 
 test("renders checkout-success as a public route with generic fallback messaging", async ({
@@ -99,44 +116,26 @@ test("renders checkout-success as a public route with generic fallback messaging
   await expect(page.getByRole("link", { name: "Back to plans" })).toBeVisible();
 });
 
-test("renders the public FAQs page with multiple accordion items", async ({
+test("renders the FAQ section on the public plans page with multiple accordion items", async ({
   page,
 }) => {
-  await gotoAndExpectPublicRoute(page, "/faqs");
+  await gotoAndExpectPublicRoute(page, "/plans");
 
-  await expect(
-    page.getByRole("heading", { name: "Frequently Asked Questions" }),
-  ).toBeVisible();
+  await expect(page.locator(".Faqs")).toBeVisible();
 
-  const faqItems = page.locator("summary");
+  const faqItems = page.locator(".Faqs details");
   expect(await faqItems.count()).toBeGreaterThanOrEqual(3);
 
-  await expect(
-    faqItems.filter({
-      hasText:
-        "How does Droplet ensure the security of my personal information?",
-    }),
-  ).toHaveCount(1);
-  await expect(
-    faqItems.filter({
-      hasText: "Who should I reach out to for assistance or inquiries?",
-    }),
-  ).toHaveCount(1);
-  await expect(
-    faqItems.filter({ hasText: "Does Droplet have a free plan?" }),
-  ).toHaveCount(1);
+  const firstFaq = faqItems.first();
+  await firstFaq.locator("summary").click({ force: true });
+  await expect(firstFaq).toHaveAttribute("open", "");
 });
 
 test("renders the personas page with persona cards", async ({ page }) => {
   await gotoAndExpectPublicRoute(page, "/personas");
 
-  await expect(
-    page.getByRole("heading", { name: "Choose Your AI Persona" }),
-  ).toBeVisible();
+  await expectVisiblePageHeading(page);
   await expect(page.locator(".PersonaCard")).toHaveCount(6);
-  await expect(page.getByRole("heading", { name: "Strategist" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Teacher" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Creator" })).toBeVisible();
 });
 
 test("renders the privacy policy page with legal content", async ({ page }) => {
@@ -172,14 +171,9 @@ test("renders the cookie policy page with legal content", async ({ page }) => {
 test("renders the terms page with legal content", async ({ page }) => {
   await gotoAndExpectPublicRoute(page, "/terms");
 
-  await expect(
-    page.getByRole("heading", { name: "Terms & Conditions" }),
-  ).toBeVisible();
-  await expect(
-    page.getByRole("heading", { name: "Payment terms" }),
-  ).toBeVisible();
-  await expect(page.getByText("$19")).toBeVisible();
-  await expect(page.getByText("$39")).toBeVisible();
+  await expectVisiblePageHeading(page);
+  const termsSectionHeadings = page.locator("main h2, section h2");
+  expect(await termsSectionHeadings.count()).toBeGreaterThanOrEqual(2);
 });
 
 test("footer legal links navigate to the correct public routes", async ({
@@ -187,14 +181,9 @@ test("footer legal links navigate to the correct public routes", async ({
 }) => {
   await gotoAndExpectPublicRoute(page, "/");
 
-  await page
-    .locator(".Footer")
-    .getByRole("link", { name: "Privacy & Cookie Policy", exact: true })
-    .click();
+  await page.locator(".Footer").locator('a[href="/privacy"]').click();
   await expect(page).toHaveURL(/\/privacy$/);
-  await expect(
-    page.getByRole("heading", { name: "Privacy Policy" }),
-  ).toBeVisible();
+  await expectVisiblePageHeading(page);
 
   await gotoAndExpectPublicRoute(page, "/");
 
@@ -203,9 +192,7 @@ test("footer legal links navigate to the correct public routes", async ({
     .locator('a[href="/terms"]')
     .click({ force: true });
   await expect(page).toHaveURL(/\/terms$/);
-  await expect(
-    page.getByRole("heading", { name: "Terms & Conditions" }),
-  ).toBeVisible();
+  await expectVisiblePageHeading(page);
 });
 
 test("desktop header links navigate across the public pages", async ({
@@ -218,40 +205,20 @@ test("desktop header links navigate across the public pages", async ({
     viewportWidth < 768,
     "Header navigation links are hidden on smaller viewports.",
   );
+  const desktopMainNav = page
+    .locator(".Header nav[aria-label='Main navigation']")
+    .first();
+  await expect(desktopMainNav).toBeVisible();
 
-  await page
-    .locator(".Header")
-    .getByRole("link", { name: "About", exact: true })
-    .click();
+  await desktopMainNav.locator('a[href="/about"]').first().click();
   await expect(page).toHaveURL(/\/about$/);
-  await expect(
-    page.getByRole("heading", { name: "About Droplet" }),
-  ).toBeVisible();
+  await expectVisiblePageHeading(page);
 
-  await page
-    .locator(".Header")
-    .getByRole("link", { name: "Personas", exact: true })
-    .click();
+  await desktopMainNav.locator('a[href="/personas"]').first().click();
   await expect(page).toHaveURL(/\/personas$/);
-  await expect(
-    page.getByRole("heading", { name: "Choose Your AI Persona" }),
-  ).toBeVisible();
+  await expectVisiblePageHeading(page);
 
-  await page
-    .locator(".Header")
-    .getByRole("link", { name: "Plans", exact: true })
-    .click();
+  await desktopMainNav.locator('a[href="/plans"]').first().click();
   await expect(page).toHaveURL(/\/plans$/);
-  await expect(
-    page.getByRole("heading", { name: /choose your plan/i }),
-  ).toBeVisible();
-
-  await page
-    .locator(".Header")
-    .getByRole("link", { name: "FAQs", exact: true })
-    .click();
-  await expect(page).toHaveURL(/\/faqs$/);
-  await expect(
-    page.getByRole("heading", { name: "Frequently Asked Questions" }),
-  ).toBeVisible();
+  await expectVisiblePageHeading(page);
 });

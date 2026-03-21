@@ -33,6 +33,17 @@ describe("upload-file-validation", () => {
     expect(result.status).toBe(400);
   });
 
+  it("rejects empty files", () => {
+    const result = validateUploadFile({
+      type: "image/png",
+      size: 0,
+    });
+
+    expect(result.isValid).toBe(false);
+    expect(result.status).toBe(400);
+    expect(result.message).toContain("File is empty");
+  });
+
   it("accepts valid image uploads", () => {
     const result = validateUploadFile({
       type: "image/webp",

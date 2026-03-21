@@ -23,7 +23,7 @@ const publicRoutes = [
   { route: "/", heading: "Chat, create, and get things done." },
   { route: "/about", heading: "About Droplet" },
   { route: "/plans", heading: /choose your plan/i },
-  { route: "/faqs", heading: "Frequently Asked Questions" },
+  { route: "/personas", heading: "Choose Your AI Persona" },
 ] as const;
 
 function isClerkAuthRedirect(url: string) {

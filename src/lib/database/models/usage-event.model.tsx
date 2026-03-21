@@ -1,3 +1,4 @@
+import "server-only";
 import type { UsageEventData } from "@/types/UsageEventData.d";
 import { Schema, model, models } from "mongoose";
 

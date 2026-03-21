@@ -23,10 +23,10 @@ describe("generateTitle", () => {
     vi.clearAllMocks();
   });
 
-  it("returns generated title and usage", async () => {
+  it("returns generated title, usage, and request metadata", async () => {
     vi.mocked(openAiClient.chat.completions.create).mockResolvedValue({
       choices: [{ message: { content: "Weekly Product Plan" } }],
-      usage: { total_tokens: 19 },
+      usage: { total_tokens: 19, prompt_tokens: 12, completion_tokens: 7 },
     } as never);
 
     const response = await generateTitle(
@@ -44,6 +44,15 @@ describe("generateTitle", () => {
     const payload = JSON.parse(response as string);
     expect(payload.title).toBe("Weekly Product Plan");
     expect(payload.usage).toBe(19);
+    expect(payload.model).toBe("gpt-4.1-nano");
+    expect(payload.requestMetric).toEqual(
+      expect.objectContaining({
+        requestType: "title",
+        model: "gpt-4.1-nano",
+        tokensIn: 12,
+        tokensOut: 7,
+      }),
+    );
   });
 
   it("throws when OpenAI returns no choices", async () => {

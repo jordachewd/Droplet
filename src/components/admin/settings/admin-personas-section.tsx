@@ -1,6 +1,5 @@
 "use client";
 
-import { PERSONAS } from "@/constants/assistant-personas";
 import { updateAdminSettingAction } from "@/lib/actions/admin.actions";
 import { AdminManagedForm } from "@/components/admin/admin-managed-form";
 import { AdminFormSubmitButton } from "@/components/admin/admin-form-submit-button";
@@ -9,15 +8,18 @@ import {
   PersonaContentSettingsFormValue,
   PERSONA_ACCESS_KEY_BY_PLAN,
 } from "@/components/admin/settings/types";
+import { PersonaId } from "@/types/PersonaData.d";
 
 interface AdminPersonasSectionProps {
   personaAccessValue: PersonaAccessSettingsFormValue;
   personaContentValue: PersonaContentSettingsFormValue;
+  personaIds: PersonaId[];
 }
 
 export function AdminPersonasSection({
   personaAccessValue,
   personaContentValue,
+  personaIds,
 }: AdminPersonasSectionProps) {
   return (
     <div className="AdminPersonasSection grid grid-cols-1 gap-4">
@@ -29,19 +31,22 @@ export function AdminPersonasSection({
         <input type="hidden" name="category" value="features" />
 
         <h2 className="heading-6 mb-2">Persona Content</h2>
-        <p className="mb-4 text-sm opacity-70">
+        <p className="mb-4 text-sm text-midnightBlue-600 dark:text-lavenderHaze-600">
           Edit persona labels, taglines, descriptions, and starter prompts. One
           starter prompt per line.
         </p>
 
         <div className="grid grid-cols-1 gap-4">
-          {PERSONAS.map((persona) => {
-            const contentValue = personaContentValue[persona.id];
+          {personaIds.map((personaId) => {
+            const contentValue = personaContentValue[personaId];
+            if (!contentValue) {
+              return null;
+            }
 
             return (
-              <fieldset key={persona.id} className="admin-surface-subtle">
+              <fieldset key={personaId} className="admin-surface-subtle">
                 <legend className="px-1 text-sm font-semibold">
-                  {contentValue.label} ({persona.id})
+                  {contentValue.label} ({personaId})
                 </legend>
 
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
@@ -49,7 +54,7 @@ export function AdminPersonasSection({
                     <span className="mb-1 block font-medium">Label</span>
                     <input
                       className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
-                      name={`label_${persona.id}`}
+                      name={`label_${personaId}`}
                       defaultValue={contentValue.label}
                       required
                       aria-required="true"
@@ -60,7 +65,7 @@ export function AdminPersonasSection({
                     <span className="mb-1 block font-medium">Tagline</span>
                     <input
                       className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
-                      name={`tagline_${persona.id}`}
+                      name={`tagline_${personaId}`}
                       defaultValue={contentValue.tagline}
                       required
                       aria-required="true"
@@ -71,7 +76,7 @@ export function AdminPersonasSection({
                     <span className="mb-1 block font-medium">Description</span>
                     <textarea
                       className="min-h-24 w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
-                      name={`description_${persona.id}`}
+                      name={`description_${personaId}`}
                       defaultValue={contentValue.description}
                       required
                       aria-required="true"
@@ -84,7 +89,7 @@ export function AdminPersonasSection({
                     </span>
                     <textarea
                       className="min-h-32 w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
-                      name={`starterPrompts_${persona.id}`}
+                      name={`starterPrompts_${personaId}`}
                       defaultValue={contentValue.starterPrompts.join("\n")}
                       required
                       aria-required="true"
@@ -107,7 +112,7 @@ export function AdminPersonasSection({
 
       <div className="admin-surface">
         <h2 className="heading-6 mb-2">Persona Access</h2>
-        <p className="mb-4 text-sm opacity-70">
+        <p className="mb-4 text-sm text-midnightBlue-600 dark:text-lavenderHaze-600">
           Choose which personas have full access for each plan. Unchecked
           personas become limited trial access unless blocked elsewhere.
         </p>
@@ -133,18 +138,18 @@ export function AdminPersonasSection({
                     {planName}
                   </legend>
                   <div className="mt-2 grid grid-cols-2 gap-2 md:grid-cols-3">
-                    {PERSONAS.map((persona) => (
+                    {personaIds.map((personaId) => (
                       <label
-                        key={`${planName}-${persona.id}`}
+                        key={`${planName}-${personaId}`}
                         className="flex items-center gap-2 rounded-md border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-500"
                       >
                         <input
                           type="checkbox"
                           name="personaIds"
-                          value={persona.id}
-                          defaultChecked={selectedPersonaIdSet.has(persona.id)}
+                          value={personaId}
+                          defaultChecked={selectedPersonaIdSet.has(personaId)}
                         />
-                        <span>{personaContentValue[persona.id].label}</span>
+                        <span>{personaContentValue[personaId]?.label}</span>
                       </label>
                     ))}
                   </div>

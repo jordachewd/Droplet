@@ -1,3 +1,4 @@
+import "server-only";
 import { awsS3Client } from "@/constants/aws";
 import {
   GetObjectCommand,

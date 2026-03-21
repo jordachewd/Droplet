@@ -1,3 +1,4 @@
+import "server-only";
 import { BillingCycle, PlanName } from "@/types/PlanData.d";
 import { Schema, model, models, ObjectId, Document } from "mongoose";
 

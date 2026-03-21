@@ -1,3 +1,4 @@
+import "server-only";
 import { getPersona } from "@/constants/assistant-personas";
 import { openAiClient, titleSystemMsg } from "@/constants/openai";
 import { PlanName } from "@/types/PlanData.d";

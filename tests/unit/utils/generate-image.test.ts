@@ -3,6 +3,7 @@ import { generateImage } from "@/lib/utils/openai/generateImage";
 import { openAiClient } from "@/constants/openai";
 import uploadFileToAWS from "@/lib/utils/aws/uploadFileToAWS";
 import { generateString } from "@/lib/utils/generateString";
+import sharp from "sharp";
 
 vi.mock("@/constants/openai", () => ({
   openAiClient: {
@@ -90,5 +91,92 @@ describe("generateImage", () => {
         },
       ],
     });
+  });
+
+  it("throws when the image API call fails", async () => {
+    vi.mocked(openAiClient.images.generate).mockRejectedValue(
+      new Error("OpenAI images API unavailable"),
+    );
+
+    await expect(
+      generateImage({
+        prompt: "Draw a blue droplet",
+        role: "assistant",
+        taskId: "task_1",
+        userId: "user_123",
+        planName: "Pro",
+      }),
+    ).rejects.toThrow("OpenAI images API unavailable | generateImage");
+    expect(uploadFileToAWS).not.toHaveBeenCalled();
+  });
+
+  it("throws when the image API returns an empty payload", async () => {
+    vi.mocked(openAiClient.images.generate).mockResolvedValue({
+      created: 1773647602,
+      data: [],
+    } as never);
+
+    await expect(
+      generateImage({
+        prompt: "Draw a blue droplet",
+        role: "assistant",
+        taskId: "task_1",
+        userId: "user_123",
+        planName: "Pro",
+      }),
+    ).rejects.toThrow(
+      "The Image Generator API did not return any images. | generateImage",
+    );
+  });
+
+  it("throws when image conversion fails", async () => {
+    vi.mocked(openAiClient.images.generate).mockResolvedValue({
+      created: 1773647602,
+      data: [
+        {
+          b64_json: Buffer.from("raw-image-bytes").toString("base64"),
+          revised_prompt: "Adjusted droplet prompt",
+        },
+      ],
+    } as never);
+    vi.mocked(sharp).mockImplementationOnce(() => {
+      throw new Error("Sharp conversion failed");
+    });
+
+    await expect(
+      generateImage({
+        prompt: "Draw a blue droplet",
+        role: "assistant",
+        taskId: "task_1",
+        userId: "user_123",
+        planName: "Pro",
+      }),
+    ).rejects.toThrow("Sharp conversion failed | convertToPng | generateImage");
+    expect(uploadFileToAWS).not.toHaveBeenCalled();
+  });
+
+  it("throws when uploading generated image fails", async () => {
+    vi.mocked(openAiClient.images.generate).mockResolvedValue({
+      created: 1773647602,
+      data: [
+        {
+          b64_json: Buffer.from("raw-image-bytes").toString("base64"),
+          revised_prompt: "Adjusted droplet prompt",
+        },
+      ],
+    } as never);
+    vi.mocked(uploadFileToAWS).mockRejectedValueOnce(
+      new Error("S3 upload failed for generated image"),
+    );
+
+    await expect(
+      generateImage({
+        prompt: "Draw a blue droplet",
+        role: "assistant",
+        taskId: "task_1",
+        userId: "user_123",
+        planName: "Pro",
+      }),
+    ).rejects.toThrow("S3 upload failed for generated image | generateImage");
   });
 });

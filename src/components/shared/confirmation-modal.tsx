@@ -1,7 +1,7 @@
 "use client";
 
 import classNames from "classnames";
-import { useEffect, useRef } from "react";
+import { useEffect, useId, useRef } from "react";
 
 interface ConfirmationModalProps {
   isOpen: boolean;
@@ -24,100 +24,84 @@ export default function ConfirmationModal({
   onConfirm,
   onCancel,
 }: ConfirmationModalProps) {
-  const dialogRef = useRef<HTMLDivElement | null>(null);
+  const dialogRef = useRef<HTMLDialogElement | null>(null);
   const previouslyFocusedElementRef = useRef<HTMLElement | null>(null);
+  const titleId = useId();
+  const descriptionId = useId();
 
   useEffect(() => {
-    if (!isOpen) {
+    const dialogElement = dialogRef.current;
+    if (!dialogElement) {
       return;
     }
 
-    previouslyFocusedElementRef.current =
-      document.activeElement instanceof HTMLElement
-        ? document.activeElement
-        : null;
-
-    const dialogElement = dialogRef.current;
-    const focusableSelector =
-      'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
-    const getFocusableElements = (): HTMLElement[] =>
-      dialogElement
-        ? Array.from(
-            dialogElement.querySelectorAll<HTMLElement>(focusableSelector),
-          )
-        : [];
-
-    const [firstFocusableElement] = getFocusableElements();
-    firstFocusableElement?.focus();
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        onCancel();
-        return;
-      }
-
-      if (event.key !== "Tab") {
-        return;
-      }
-
-      const focusableElements = getFocusableElements();
-      if (focusableElements.length === 0) {
-        event.preventDefault();
-        dialogElement?.focus();
-        return;
-      }
-
-      const firstElement = focusableElements[0];
-      const lastElement = focusableElements[focusableElements.length - 1];
-      const activeElement =
+    if (isOpen) {
+      previouslyFocusedElementRef.current =
         document.activeElement instanceof HTMLElement
           ? document.activeElement
           : null;
 
-      if (event.shiftKey && activeElement === firstElement) {
-        event.preventDefault();
-        lastElement.focus();
-      } else if (!event.shiftKey && activeElement === lastElement) {
-        event.preventDefault();
-        firstElement.focus();
+      if (!dialogElement.open) {
+        if (typeof dialogElement.showModal === "function") {
+          dialogElement.showModal();
+        } else {
+          dialogElement.setAttribute("open", "true");
+        }
       }
-    };
+      return;
+    }
 
-    window.addEventListener("keydown", onKeyDown);
+    if (dialogElement.open) {
+      if (typeof dialogElement.close === "function") {
+        dialogElement.close();
+      } else {
+        dialogElement.removeAttribute("open");
+      }
+    }
+    previouslyFocusedElementRef.current?.focus();
+  }, [isOpen]);
+
+  useEffect(() => {
+    const dialogElement = dialogRef.current;
 
     return () => {
-      window.removeEventListener("keydown", onKeyDown);
-      previouslyFocusedElementRef.current?.focus();
+      if (dialogElement?.open) {
+        if (typeof dialogElement.close === "function") {
+          dialogElement.close();
+        } else {
+          dialogElement.removeAttribute("open");
+        }
+      }
     };
-  }, [isOpen, onCancel]);
+  }, []);
 
   if (!isOpen) {
     return null;
   }
 
   return (
-    <div
-      className="ConfirmationModal fixed inset-0 z-50 flex items-center justify-center bg-midnightBlue-1000/55 px-4"
-      onClick={onCancel}
-      role="presentation"
+    <dialog
+      ref={dialogRef}
+      className="ConfirmationModal fixed inset-0 z-50 m-auto w-[min(100%-2rem,28rem)] rounded-xl border border-slate-300 bg-lavenderHaze-100 p-5 shadow-lg backdrop:bg-midnightBlue-1000/55 dark:border-slate-500 dark:bg-nightIndigo-900"
+      aria-labelledby={titleId}
+      aria-describedby={descriptionId}
+      onCancel={(event) => {
+        event.preventDefault();
+        onCancel();
+      }}
+      onClick={(event) => {
+        if (event.target === event.currentTarget) {
+          onCancel();
+        }
+      }}
     >
-      <div
-        className="w-full max-w-md rounded-xl border border-slate-300 bg-lavenderHaze-100 p-5 shadow-lg dark:border-slate-500 dark:bg-nightIndigo-900"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="confirmation-modal-title"
-        aria-describedby="confirmation-modal-description"
-        onClick={(event) => event.stopPropagation()}
-        tabIndex={-1}
-        ref={dialogRef}
-      >
-        <h3 id="confirmation-modal-title" className="heading-6">
+      <div className="w-full">
+        <h3 id={titleId} className="heading-6">
           {title}
         </h3>
         <p
-          id="confirmation-modal-description"
-          className="mt-2 text-sm opacity-85"
+          id={descriptionId}
+          className="mt-2 text-sm text-midnightBlue-600 dark:text-lavenderHaze-600"
         >
           {description}
         </p>
@@ -145,6 +129,6 @@ export default function ConfirmationModal({
           </button>
         </div>
       </div>
-    </div>
+    </dialog>
   );
 }
