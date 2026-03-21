@@ -5,53 +5,152 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #43 (2026-03-21). All Phases 1–96.1 complete. 390 unit tests (64 suites). 87 E2E passed, 25 skipped, 0 failed. Build passing. Node.js 24.12.0 runtime.**
-> **Coverage: 76.27/65.31/79.64/76.67 vs 76/65/79/76 (MET). All 6 validation gates GREEN.**
-> **Owner directive: FULL TESTING INFRASTRUCTURE REBUILD continues. TDD approach. Aggressive test quality.**
-> **Priority order: 96.2 (CRITICAL) → 96.3 (CRITICAL) → 96.4 (CRITICAL) → 97.1 (HIGH) → 96.5–96.8 (HIGH) → 98 (HIGH) → 72.4 (HIGH) → 99.1–99.4 (HIGH/MEDIUM) → 73.3 → 74.2 → 87 → 73.2 → 29.x → 26.x**
+> **STATUS: PM audit #44 (2026-03-21). All Phases 1–96.2 complete. 390 unit tests (64 suites). Build passing. Node.js 24.12.0 runtime.**
+> **Coverage: 76.27/65.31/79.64/76.67 vs 76/65/79/76 (MET). Gates 1–4 + 6 GREEN. Gate 5 (E2E) NEEDS INVESTIGATION — 4 Chromium failures reported.**
+> **Owner directive: FULL TESTING INFRASTRUCTURE REBUILD from scratch. TDD methodology. No hardcoded data. Code reuse maximized. WCAG 2.2 AA compliance.**
+> **Priority order: E2E Investigation (BLOCKER) → 100.1–100.3 (HIGH quick wins) → 99.1 + 99.3 (HIGH WCAG) → 96.3 (HIGH TDD) → 96.4 (HIGH TDD) → 97.1 (HIGH) → 96.5–96.8 (HIGH/MEDIUM) → 99.2 (MEDIUM) → 72.4 (MEDIUM) → 73.3 (MEDIUM) → 98 (HIGH) → 74.2 → 87 → 29.x → 26.x**
 
 ---
 
-## ~~CRITICAL — Testing Foundation Rebuild (PM audit #42, Triple-Audit)~~ COMPLETED
+## ~~COMPLETED — Phases 94–96.2~~
 
-### ~~Phase 94: Testing Config & Toolchain Hardening~~ — COMPLETED (PM audit #43)
-
-> All 5 sub-phases delivered (94.1–94.5). Moved to DONE.md.
-
-### ~~Phase 95: E2E Spec Remediation~~ — COMPLETED (PM audit #43)
-
-> All 4 sub-phases delivered (95.1–95.4). Moved to DONE.md.
+> All moved to DONE.md. Phase 94 (config hardening), Phase 95 (E2E spec remediation), Phase 96.1 (merge conversation-stop), Phase 96.2 (reduce mock scope — pure utilities un-mocked).
 
 ---
 
-## CRITICAL — Unit Test Quality (PM audit #43, Triple-Audit)
+## BLOCKER — E2E Regression Investigation (PM audit #44)
 
-### Phase 96: Unit Test Depth Improvement — CRITICAL/HIGH
+### Phase 95-R: Investigate 4 E2E Chromium Failures — BLOCKER
 
-> ~~Phase 96.1 COMPLETE (merged to DONE.md).~~ Remaining: 96.2–96.8.
-> Targets the over-mocking epidemic (Architect P1-01), missing critical path tests (Engineer Findings 3-4), and coverage gap drivers.
-
-#### ~~96.1 HIGH~~ — ~~Merge conversation-stop.test.ts~~ — COMPLETED (PM audit #43)
-
-> Moved to DONE.md.
-
-#### 96.2 CRITICAL — Reduce mock scope in OpenAI route tests
-
-**Files:** `tests/unit/routes/openai-route.test.ts`
+> 4 E2E specs reported failing: `chat-app-shell`, `error-handling`, `plans-public`, `public-pages`. These were fixed in Phase 95.1–95.4 and verified passing (87 E2E, 0 failed). Phase 96.2 only changed unit test files — cannot be source of E2E regression. Must determine: environment issue, test flakiness, or actual regression.
 
 **What to do:**
 
-1. Stop mocking: `resolveEntitlements`, `PLAN_LIMITS`, `checkUsageLimit`, `resolveModelPolicy` — let pure functions run with test data.
-2. Keep mocking: `connectToDatabase`, Mongoose model methods (`User.findOne`, `Task.findOne`, etc.), `auth()`, media generation functions.
-3. Fix tests that now rightfully fail because mocks were hiding real issues.
-4. This is the most important quality improvement — turns mock-wiring tests into behavioral tests.
+1. Run `npm run test:e2e` with `--reporter=list` to capture exact failure messages.
+2. Compare failures against Phase 95 structural assertion changes.
+3. If environment/timing: fix with Playwright timeout/retry config or test stability improvements.
+4. If actual regression: identify source, fix it.
+5. All 6 validation gates must be GREEN before any new work proceeds.
 
 **Acceptance criteria:**
 
-- [ ] Pure functions run un-mocked
-- [ ] Tests validate actual limit enforcement behavior
-- [ ] Tests catch real bugs (e.g., wrong plan → wrong model)
-- [ ] Tests pass
+- [ ] Root cause identified for all 4 failures
+- [ ] All 4 specs passing again
+- [ ] `npm run test:e2e` shows 0 failures
+
+---
+
+## HIGH — Code Deduplication (PM audit #44, Owner Directive: Reuse Code)
+
+### Phase 100: Extract Duplicated Code — HIGH
+
+> Triple-audit independently confirmed 3 patterns duplicated 3-4x each. Owner directive: "RE-USE repetitive code as much as possible."
+
+#### 100.1 HIGH — Extract `isObjectRecord` to shared utility
+
+**Files:** `src/lib/utils/effective-plan-config.ts`, `src/lib/utils/effective-persona-config.ts`, `src/components/admin/settings/normalize-admin-settings.ts`
+
+**What to do:**
+
+1. Create `src/lib/utils/type-guards.ts` with shared `isObjectRecord()` function.
+2. Replace all 3 local definitions with import from shared utility.
+3. Add `import "server-only"` if file is server-only (check usage in client components — `normalize-admin-settings.ts` is used client-side, so extract to a non-server-only shared file).
+
+**Acceptance criteria:**
+
+- [ ] Single definition of `isObjectRecord`
+- [ ] All 3 files import from shared location
+- [ ] Build passes, tests pass
+
+#### 100.2 HIGH — Extract `VALID_PERSONA_ID_SET` to shared export
+
+**Files:** `src/lib/actions/admin.actions.tsx`, `src/lib/utils/effective-persona-access.ts`, `src/lib/utils/effective-persona-config.ts`, `src/components/admin/settings/normalize-admin-settings.ts`
+
+**What to do:**
+
+1. Export `VALID_PERSONA_ID_SET` from `src/constants/assistant-personas.tsx` (already imports PERSONAS).
+2. Replace all 4 local `new Set(PERSONAS.map(...))` with import from shared export.
+
+**Acceptance criteria:**
+
+- [ ] Single `VALID_PERSONA_ID_SET` definition
+- [ ] All 4 files import from shared location
+- [ ] Build passes, tests pass
+
+#### 100.3 HIGH — Extract `legalReviewDisclaimer` to shared constant
+
+**Files:** `src/constants/privacy-data.ts`, `src/constants/cookies-data.ts`, `src/constants/terms-data.ts`
+
+**What to do:**
+
+1. Create shared export in `src/constants/legal-shared.ts` (or add to one of the existing files as the canonical source).
+2. Import from shared location in all 3 files.
+
+**Acceptance criteria:**
+
+- [ ] Single definition of `legalReviewDisclaimer`
+- [ ] All 3 consumer files import from shared location
+- [ ] Build passes, tests pass
+
+---
+
+## HIGH — WCAG Quick Wins (PM audit #44, Owner Directive: WCAG 2.2 AA)
+
+### Phase 99: WCAG Quick Fixes — HIGH
+
+> Findings from PM audit #44 triple-audit. Quick wins with high WCAG impact.
+
+#### 99.1 HIGH — Add `aria-live` region to chat messages
+
+**File:** `src/components/chat/chat-body.tsx`
+
+**What to do:**
+
+1. Add `aria-live="polite"` to the chat message container so screen readers announce incoming AI responses.
+2. WCAG 2.2 AA 4.1.3 (Status Messages) — currently violated.
+
+**Acceptance criteria:**
+
+- [ ] Chat message container has `aria-live="polite"`
+- [ ] Build passes
+
+#### 99.3 HIGH — Use stable message keys in ChatBody
+
+**File:** `src/components/chat/chat-body.tsx`
+
+**What to do:**
+
+1. Replace `key={\`${message.role}-${index}\`}` with a stable unique ID per message.
+2. Assign a unique `id` to each `Message` object at creation time (e.g., `crypto.randomUUID()` or counter).
+3. Also fix `chat-intro.tsx` index-based key if trivially combined.
+
+**Acceptance criteria:**
+
+- [ ] No array index in React key for messages
+- [ ] Each message has a stable unique key
+- [ ] Build passes
+
+#### 99.5 MEDIUM — Add `aria-label` to AudioPlayer play/pause button
+
+**File:** `src/components/shared/audio-player.tsx`
+
+**What to do:**
+
+1. Add `aria-label="Play"` / `aria-label="Pause"` (toggle based on state) to the icon-only play/pause button.
+
+**Acceptance criteria:**
+
+- [ ] Button has accessible name
+- [ ] Build passes
+
+---
+
+## HIGH — Unit Test Quality (TDD Rebuild Continues)
+
+### Phase 96: Unit Test Depth Improvement — HIGH
+
+> ~~Phase 96.1 + 96.2 COMPLETE (moved to DONE.md).~~ Remaining: 96.3–96.8.
+> All new tests MUST follow TDD methodology: write failing test first, then verify behavior.
 
 #### 96.3 HIGH — Add webhook idempotency and edge case tests
 
@@ -282,26 +381,11 @@
 
 ---
 
-## HIGH — Triple-Audit Findings (PM audit #43)
+## HIGH — Triple-Audit Findings (PM audit #43 → Updated PM audit #44)
 
-### Phase 99: Code Quality & WCAG Fixes — HIGH/MEDIUM
+### Phase 99: Code Quality & WCAG Fixes — MEDIUM
 
-> New findings from PM audit #43 triple-audit (Architect + Engineer + PM independent).
-
-#### 99.1 HIGH — Add `aria-live` region to chat messages
-
-**File:** `src/components/chat/chat-body.tsx`
-
-**What to do:**
-
-1. Add `aria-live="polite"` to the chat message container so screen readers announce incoming AI responses.
-2. Verify with screen reader or axe-core that new messages are announced.
-
-**Acceptance criteria:**
-
-- [ ] Chat message container has `aria-live="polite"`
-- [ ] Screen readers announce new messages
-- [ ] Build passes
+> Findings from PM audit #43 + #44 triple-audits. HIGH items (99.1, 99.3) promoted to WCAG Quick Wins section above.
 
 #### 99.2 MEDIUM — Migrate ConfirmationModal to native `<dialog>`
 
@@ -320,22 +404,6 @@
 - [ ] Manual focus trap removed
 - [ ] Keyboard and screen reader accessible
 - [ ] Build passes, existing tests pass
-
-#### 99.3 MEDIUM — Use stable message keys in ChatBody
-
-**File:** `src/components/chat/chat-body.tsx`
-
-**What to do:**
-
-1. Replace `key={`${message.role}-${index}`}` with a stable unique ID per message.
-2. Assign a unique `id` to each `Message` object at creation time (e.g., `crypto.randomUUID()` or a counter).
-3. Or use a hash of message content + timestamp if message objects don't have IDs.
-
-**Acceptance criteria:**
-
-- [ ] No array index in React key
-- [ ] Each message has a stable unique key
-- [ ] Build passes
 
 #### 99.4 MEDIUM — Remove dead `faqs` export + fix buildFaqs test
 
@@ -387,5 +455,5 @@
 ---
 
 > **Completed phases** archived in [`DONE.md`](DONE.md).
-> All phases through 96.1 complete (including 86, 88–96.1).
+> All phases through 96.2 complete (including 86, 88–96.2).
 > All Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS.

@@ -1,8 +1,8 @@
-# Droplet � Application Specification
+# Droplet — Application Specification
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-22 (PM audit #43. All Phases 1–96.1 complete. Milestone 24 COMPLETE. Milestone 25 IN PROGRESS — testing infrastructure rebuild. TD-TEST-05 RESOLVED (Phase 95), TD-TEST-04 RESOLVED (Phase 96.1), TD-TEST-06 RESOLVED (Phase 94.1), TD-CONFIG-05 RESOLVED (Phase 94.3), TD-CONFIG-06 RESOLVED (Phase 94.4). Active: TD-TEST-02 (HIGH — Phase 96.2), TD-TEST-07 (MEDIUM — Phase 96.6), TD-WCAG-02 (HIGH — Phase 97.1), TD-API-09 (LOW), TD-TASK-PASSTHROUGH (LOW — Phase 87). 390 unit tests (64 suites). 87 E2E passed, 25 skipped, 0 failing. Coverage: 76.27/65.31/79.64/76.67 vs 76/65/79/76 (MET). Build passing. Node.js 24.12.0 runtime.)
+> Last updated: 2026-03-21 (PM audit #44. All Phases 1–96.2 complete. Milestone 24 COMPLETE. Milestone 25 IN PROGRESS — testing infrastructure rebuild. TD-TEST-02 PARTIALLY RESOLVED (Phase 96.2 — pure utilities un-mocked, IO boundary mocks remain). Active: TD-TEST-07 (MEDIUM — Phase 96.6), TD-WCAG-02 (HIGH — Phase 97.1), TD-API-09 (LOW), TD-TASK-PASSTHROUGH (LOW — Phase 87). New: TD-REUSE-01/02/03 (HIGH — Phase 100). 390 unit tests (64 suites). E2E: 87 passed at last green state, 4 Chromium failures under investigation. Coverage: 76.27/65.31/79.64/76.67 vs 76/65/79/76 (MET). Build passing. Node.js 24.12.0 runtime.)
 
 ---
 
@@ -747,7 +747,7 @@ All button styles use Lime Green as the accent color in **both** light and dark 
 - **E2E tests**: 13 Playwright spec files. 87 passed, 25 skipped, 0 failed. Default 3 browsers (Chromium, Firefox, WebKit); full 7-browser matrix via `PLAYWRIGHT_FULL_MATRIX=1`. Specs: auth-boundaries, public-pages, error-handling, chat-app-shell, conversation-lifecycle, user-profile, admin-users, admin-features, admin-bulk-actions, plans-public, authenticated-flows, persona-trial-access, live-image-generation. 25 skips are intentional: credential-gated tests without E2E env vars + Chromium-only tests on Firefox/WebKit. All E2E assertions are structural (no hardcoded prices/copy — Phase 95).
 - **Coverage**: v8 provider, thresholds: 76% statements / 65% branches / 79% functions / 76% lines. Actual: 76.27/65.31/79.64/76.67. Gate PASSES. Reporters: text, json-summary, lcov. Setup file: `tests/unit/vitest.setup.ts` (global mock cleanup). Phase 98 targets raising thresholds to 82/78/82/82+.
 - **Config**: Vitest `environmentMatchGlobs` for auto-jsdom on `.tsx`. Playwright `actionTimeout: 10s`, `expect.timeout: 5s`. ESLint `no-console` (error), `no-restricted-globals` (alert/confirm). TS `noFallthroughCasesInSwitch`, `forceConsistentCasingInFileNames`.
-- **Gaps**: Over-mocking in openai-route.test.ts (12 vi.mock() — TD-TEST-02). Zero Zustand store tests (TD-TEST-07). Zero WCAG E2E via axe-core (TD-WCAG-02). No E2E for Stripe checkout flow. No admin action behavioral tests. No E2E for user deletion cascade. Branch coverage 65% is lowest metric.
+- **Gaps**: Zero Zustand store tests (TD-TEST-07). Zero WCAG E2E via axe-core (TD-WCAG-02). No E2E for Stripe checkout flow. No admin action behavioral tests. No E2E for user deletion cascade. Branch coverage 65% is lowest metric. Code duplication: `isObjectRecord` (3x), `VALID_PERSONA_ID_SET` (4x), `legalReviewDisclaimer` (3x) — tracked as TD-REUSE-01/02/03 (Phase 100). 2 unused test factory exports (`createTestTransaction`, `createTestEntitlements`) — will be consumed by Phase 96.3. 4 Chromium E2E failures reported post-Phase 96.2 (under investigation — Phase 95-R).
 
 ---
 
@@ -901,11 +901,19 @@ _None._
 
 ### Active — MEDIUM Priority (PM Audit #39, Triple-Audit)
 
-| ID                  | Area     | Description                                                                                                                                                                                                                                              | Severity            |
-| ------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
-| TD-SEC-06           | Security | ~~18 server-side files (8 Mongoose models, 5 OpenAI generation utils, 5 AWS utils) lack `import "server-only"` guard.~~ **RESOLVED (Phase 86).** 17 files guarded. `s3-file-reference.ts` excepted (client import chain via library-tabs/media-players). | ~~MEDIUM~~ Resolved |
-| TD-TEST-02          | Test     | `openai-route.test.ts` mocks 12 dependencies causing tautological tests. Tests validate mock setup, not actual route behavior. Reduce mock scope. Phase 96.2.                                                                                            | HIGH                |
-| TD-TASK-PASSTHROUGH | API      | `createTaskSchema` in `task.actions.tsx` uses `.passthrough()` instead of `.strict()`. Inconsistent with project convention. Phase 87.                                                                                                                   | LOW                 |
+| ID                  | Area     | Description                                                                                                                                                                                                                                                                                                                    | Severity                    |
+| ------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------- |
+| TD-SEC-06           | Security | ~~18 server-side files (8 Mongoose models, 5 OpenAI generation utils, 5 AWS utils) lack `import "server-only"` guard.~~ **RESOLVED (Phase 86).** 17 files guarded. `s3-file-reference.ts` excepted (client import chain via library-tabs/media-players).                                                                       | ~~MEDIUM~~ Resolved         |
+| TD-TEST-02          | Test     | ~~`openai-route.test.ts` mocks 12 dependencies causing tautological tests.~~ **PARTIALLY RESOLVED (Phase 96.2):** Pure utilities un-mocked (`resolveEntitlements`, `PLAN_LIMITS`, `checkUsageLimit`, `resolveModelPolicy`). IO boundary mocks retained (appropriate). Tests now validate behavioral outcomes, not mock wiring. | ~~HIGH~~ Partially Resolved |
+| TD-TASK-PASSTHROUGH | API      | `createTaskSchema` in `task.actions.tsx` uses `.passthrough()` instead of `.strict()`. Inconsistent with project convention. Phase 87.                                                                                                                                                                                         | LOW                         |
+
+### Active — HIGH Priority (PM Audit #44, Triple-Audit — Code Reuse)
+
+| ID          | Area | Description                                                                                                                                                                                                                          | Severity |
+| ----------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------- |
+| TD-REUSE-01 | Code | `isObjectRecord()` function duplicated in 3 files: `effective-plan-config.ts`, `effective-persona-config.ts`, `normalize-admin-settings.ts`. Extract to shared `type-guards.ts`.                                                     | HIGH     |
+| TD-REUSE-02 | Code | `VALID_PERSONA_ID_SET` (`new Set(PERSONAS.map(...))`) duplicated in 4 files: `admin.actions.tsx`, `effective-persona-access.ts`, `effective-persona-config.ts`, `normalize-admin-settings.ts`. Export from `assistant-personas.tsx`. | HIGH     |
+| TD-REUSE-03 | Code | `legalReviewDisclaimer` string duplicated in 3 files: `privacy-data.ts`, `cookies-data.ts`, `terms-data.ts`. Extract to shared `legal-shared.ts`.                                                                                    | HIGH     |
 
 ### ~~Active~~ Resolved — CRITICAL/HIGH Priority (PM Audit #42 → Resolved PM Audit #43)
 

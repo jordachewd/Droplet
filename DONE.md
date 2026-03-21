@@ -2,7 +2,19 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-21 — PM audit #43. All Phases 1–85, 80.1, 73.1, 74.1, 72.1, 72.2, 72.3, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 96.1 complete. Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS. 390 unit tests (64 suites). 87 E2E passed, 25 skipped, 0 failed. Build passing. Node.js 24.12.0 runtime. Coverage: 76.27/65.31/79.64/76.67 vs 76/65/79/76 (MET).
+> Last updated: 2026-03-21 — PM audit #44. All Phases 1–85, 80.1, 73.1, 74.1, 72.1, 72.2, 72.3, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 96.1, 96.2 complete. Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS. 390 unit tests (64 suites). 87 E2E passed, 25 skipped, 0 failed (last green state — 4 Chromium failures reported post-96.2, under investigation). Build passing. Node.js 24.12.0 runtime. Coverage: 76.27/65.31/79.64/76.67 vs 76/65/79/76 (MET).
+
+---
+
+## Phase 96.2 — Reduce mock scope in OpenAI route tests — COMPLETED (2026-03-21)
+
+> Engineer delivered (PM audit #44). TD-TEST-02 PARTIALLY RESOLVED (pure utilities un-mocked, IO boundary mocks remain — appropriate).
+
+- [x] **96.2 CRITICAL** — Removed mocks for `resolveEntitlements`, `PLAN_LIMITS`, `checkUsageLimit`, `resolveModelPolicy` — pure functions now run with real test data. Added behavioral assertions: real entitlement/usage-limit function execution verified, model-policy input/output assertions strengthened, blocked metric model matches resolved policy. DB/auth/media boundary mocks retained (appropriate for IO).
+
+**Files changed:** `tests/unit/routes/openai-route.test.ts`
+
+**Note:** 4 Chromium E2E failures reported in same run (chat-app-shell, error-handling, plans-public, public-pages). Phase 96.2 only changed unit test files — NOT a regression from this change. Investigation required.
 
 ---
 
