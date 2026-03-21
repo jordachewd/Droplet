@@ -2,7 +2,7 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-21 — PM audit #39-B. Phases 72.2, 72.3, 85 completed by Engineer (commit `8c4c942`). 386 unit tests (67 suites). All Phases 1–85, 80.1, 73.1, 74.1, 72.1, 72.2, 72.3, 75 complete. Milestone 22 COMPLETE. Milestone 23 Block A COMPLETE. Build passing. Node.js 24.12.0 runtime.
+> Last updated: 2026-03-21 — PM audit #40. All Phases 1–85, 80.1, 73.1, 74.1, 72.1, 72.2, 72.3, 75 complete. Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS. 386 unit tests (67 suites). Build passing. Node.js 24.12.0 runtime.
 
 ---
 

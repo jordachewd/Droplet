@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-21 (PM audit #39-B. All Phases 1–85, 80.1, 73.1, 74.1, 72.1, 72.2, 72.3, 75 complete. Milestone 22 COMPLETE. Milestone 23 Block A COMPLETE. TD-SEC-05 FULLY RESOLVED (Phase 84). TD-PREM-01 RESOLVED (Phase 80.1). TD-DS-04 RESOLVED (Phase 72.2). TD-ADMIN-PAGINATION RESOLVED (Phase 85). Phase 75 CLOSED. Active: TD-API-09 (LOW), TD-SEC-06 (MEDIUM — Phase 86), TD-TASK-PASSTHROUGH (LOW — Phase 87). 386 unit tests (67 suites). Build passing. Node.js 24.12.0 runtime.)
+> Last updated: 2026-03-21 (PM audit #40. All Phases 1–85, 80.1, 73.1, 74.1, 72.1, 72.2, 72.3, 75 complete. Milestone 24 COMPLETE. Milestone 25 IN PROGRESS — P1 bug fixes + config hardening + testing rebuild. Active: TD-STALE-SELECT (P1 — Phase 88), TD-CONFIG-01 (CRITICAL — Phase 89.1), TD-CONFIG-02 (CRITICAL — Phase 89.2), TD-SEC-06 (MEDIUM — Phase 86), TD-API-09 (LOW), TD-TASK-PASSTHROUGH (LOW — Phase 87). 386 unit tests (67 suites). Build passing. Node.js 24.12.0 runtime.)
 
 ---
 
@@ -878,6 +878,19 @@ _None._
 | ID                  | Area  | Description                                                                                                                                                                                                                                                                             | Severity          |
 | ------------------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
 | TD-ADMIN-PAGINATION | Admin | ~~`getAdminUsers()` and `getAdminTransactions()` fetch ALL records with no `.limit()` or `.skip()`.~~ **RESOLVED (Phase 85).** `resolveAdminPagination()` helper, bounded `pageSize` (max 100), `countDocuments()` + `.skip().limit()`, pagination UI on both tables. 4 new unit tests. | ~~HIGH~~ Resolved |
+
+### Active — CRITICAL Priority (PM Audit #40, Triple-Audit)
+
+| ID              | Area   | Description                                                                                                                                                                                                         | Severity |
+| --------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| TD-STALE-SELECT | Admin  | Admin users table and transactions table `useState` selection persists across pagination. Bulk actions can target wrong records from previous page. P1 — confirmed by Architect + Engineer + PM. Phase 88.          | CRITICAL |
+| TD-CONFIG-01    | Config | Dead `.eslintrc.json` file exists alongside active `eslint.config.mjs` (ESLint 10 flat config). Confusing; could cause issues with tooling. Phase 89.1.                                                             | CRITICAL |
+| TD-CONFIG-02    | Config | `react`, `react-dom`, `@clerk/nextjs` in `devDependencies` instead of `dependencies` in `package.json`. Production build would break with `npm install --omit=dev`. Phase 89.2.                                     | CRITICAL |
+| TD-CONFIG-03    | Config | Vitest `environment: "node"` global with manual `@vitest-environment jsdom` pragma in each `.tsx` test file. Fragile — new `.tsx` tests silently run in wrong environment. Add `environmentMatchGlobs`. Phase 89.3. | HIGH     |
+| TD-CONFIG-04    | Config | Playwright config has 7 browser projects (Chromium, Firefox, WebKit, Mobile Chrome, Mobile Safari, Edge, Chrome channel). Excessive for dev. Reduce to 3 default, env var for full matrix. Phase 89.4.              | MEDIUM   |
+| TD-TEST-01      | Test   | 5 phase-suffixed duplicate test files (`*-phase16.test.ts`, `*-phase17.test.ts`). Duplicate coverage, confusing names. Consolidate into base files. Phase 90.2.                                                     | HIGH     |
+| TD-TEST-02      | Test   | `openai-route.test.ts` mocks all 12 dependencies causing tautological tests. Tests validate mock setup, not actual route behavior. Reduce mock scope. Phase 90.5.                                                   | HIGH     |
+| TD-TEST-03      | Test   | Zero failure path tests for media generation utilities (`generateImage`, `generateAudio`, `generateVideo`). Only success paths covered. Phase 90.3.                                                                 | HIGH     |
 
 ### Active — MEDIUM Priority (PM Audit #39, Triple-Audit)
 

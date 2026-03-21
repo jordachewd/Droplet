@@ -1095,21 +1095,19 @@ Milestones 0–22 are COMPLETE. All Phases 1–71.2 (incl. 63.1–63.2, 61.1, 68
 20. ✅ Admin persona content editing UI (Phase 71.2) — DONE. Persona labels, taglines, descriptions, starter prompts editable from admin settings.
 21. ✅ Admin panel full design alignment (Phase 70.2) — DONE. All admin pages polished to match `/app` design system.
 
-**Current priority (Milestone 23 Block B + Milestone 24 — updated PM audit #39-B):**
+**Current priority (Milestone 25 — PM audit #40):**
 
-| Priority     | Phase    | Description                                                                                                                    |
-| ------------ | -------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| ~~CRITICAL~~ | ~~80~~   | ~~Fix `PLAN_LIMITS.Premium.video` from `10` to `-1`~~ — DONE (Phase 80.1)                                                      |
-| ~~CRITICAL~~ | ~~73~~   | ~~Codebase quality: 5 client component data-consumer violations~~ — DONE (Phase 73.1). 3 admin remain (73.3)                   |
-| ~~HIGH~~     | ~~72.2~~ | ~~WCAG contrast: 94 text-opacity violations replaced with color tokens~~ — DONE (Phase 72.2). TD-DS-04 RESOLVED                |
-| ~~HIGH~~     | ~~72.3~~ | ~~WCAG ARIA: useId modal, aria-expanded avatar, aria-hidden logo, checkbox labels~~ — DONE (Phase 72.3)                        |
-| ~~HIGH~~     | ~~85~~   | ~~Admin pagination: resolveAdminPagination, skip/limit, bounded pageSize, UI~~ — DONE (Phase 85). TD-ADMIN-PAGINATION RESOLVED |
-| MEDIUM       | 72.4     | WCAG table semantics: admin tables need `<table>` or ARIA `role="table"` for screen readers                                    |
-| MEDIUM       | 86       | Server-only guards on 20 files: 8 Mongoose models, 7 OpenAI utils, 5 AWS utils                                                 |
-| MEDIUM       | 73.3     | 3 remaining admin client component data-consumer violations                                                                    |
-| LOW          | 87       | `createTaskSchema` `.passthrough()` → `.strict()`                                                                              |
-| MEDIUM       | 74       | Full admin configurability: support email DONE (74.1). FAQ content (74.2), hero/about/landing copy (74.3) remain               |
-| ~~LOW~~      | ~~75~~   | ~~`/faqs` route removal~~ — CLOSED (PM audit #39: zero /faqs refs found)                                                       |
+| Priority | Phase | Description                                                                                     |
+| -------- | ----- | ----------------------------------------------------------------------------------------------- |
+| CRITICAL | 88    | P1 — Admin table stale selection on pagination (users + transactions)                           |
+| CRITICAL | 89    | Config hardening: dead .eslintrc.json, wrong devDeps, fragile vitest env, 7 Playwright browsers |
+| HIGH     | 90    | Unit test rebuild: directory structure, consolidate duplicates, failure paths, TDD              |
+| HIGH     | 91    | E2E test rebuild: consolidate specs, admin bulk E2E, behavioral testing                         |
+| MEDIUM   | 86    | Server-only guards on 20 files: 8 Mongoose models, 7 OpenAI utils, 5 AWS utils                  |
+| MEDIUM   | 72.4  | WCAG table semantics: admin tables need `<table>` or ARIA `role="table"`                        |
+| MEDIUM   | 73.3  | 3 remaining admin client component data-consumer violations                                     |
+| LOW      | 87    | `createTaskSchema` `.passthrough()` → `.strict()`                                               |
+| MEDIUM   | 74    | Full admin configurability: FAQ content (74.2), hero/about/landing copy (74.3)                  |
 
 **Required validation gates before calling this milestone set complete:**
 
@@ -1122,14 +1120,13 @@ Milestones 0–22 are COMPLETE. All Phases 1–71.2 (incl. 63.1–63.2, 61.1, 68
 
 **Remaining work (LOW priority):**
 
-1. Phase 31.4 — E2E test updates (LOW).
-2. Phase 46.1 — Admin error boundary (LOW).
-3. Phase 46.2 — Silent catch logging (LOW).
+1. Phase 46.1 — Admin error boundary (LOW).
+2. Phase 46.2 — Silent catch logging (LOW).
 
 **Remaining deferred work (ON HOLD):**
 
-4. Phase 29.x — Zod/Zustand app-wide modernization (ON HOLD).
-5. Phase 26.x — Persona-aware media prompts, Stripe auto-renewal (ON HOLD).
+3. Phase 29.x — Zod/Zustand app-wide modernization (ON HOLD).
+4. Phase 26.x — Persona-aware media prompts, Stripe auto-renewal (ON HOLD).
 
 ---
 
@@ -1145,26 +1142,29 @@ These items are not banned forever. They are excluded because they create dispro
 
 ---
 
-## 11. Owner-Directed New Work (Added 2026-03-16, Updated 2026-03-18)
+## 11. Owner-Directed New Work (Added 2026-03-16, Updated 2026-03-21)
 
-> **All Milestones 0–22 COMPLETE. Milestone 23 Block A COMPLETE. Phases 72.2, 72.3, 85 COMPLETE (PM audit #39-B). All Phases 1–85 + 72.1–72.3 + 74.1 + 75 delivered. 386 unit tests (67 suites) passing. Build passing.**
+> **All Milestones 0–24 COMPLETE. All Phases 1–85 + 72.1–72.3 + 74.1 + 75 delivered. 386 unit tests (67 suites) passing. Build passing. Milestone 25 IN PROGRESS (PM audit #40) — full testing infrastructure rebuild + P1 bug fixes + config hardening.**
 
 ### Owner Instructions (Canonical Reference — March 2026)
 
 These instructions are **non-negotiable owner directives** that govern all implementation decisions:
 
-| #   | Instruction                                                                    | Priority | Status                                                                                             |
-| --- | ------------------------------------------------------------------------------ | -------- | -------------------------------------------------------------------------------------------------- |
-| 1   | NO HARDCODED data — everything configurable from ADMIN panel                   | CRITICAL | ⚠️ PARTIALLY DELIVERED. Core done (74.1). Remaining: FAQ (74.2), landing copy (74.3).              |
-| 2   | RE-USE repetitive code as much as possible                                     | HIGH     | ⚠️ NEEDS TRACKING. Architecture Rule #9 added to AGENTS.md. No systematic audit yet.               |
-| 3   | WCAG 2.2 AA accessibility compliance for entire app                            | HIGH     | ⚠️ MOSTLY DONE. 72.1 ✅ 72.2 ✅ 72.3 ✅. Remaining: 72.4 (table semantics — MEDIUM).               |
-| 4   | Components must be data consumers (especially `"use client"`)                  | CRITICAL | ✅ COMPLETE (Phase 73.1). 5 core components converted.                                             |
-| 5   | Good practices — reduce unnecessary renders and resource leaks                 | CRITICAL | ✅ COMPLETE. All useEffect cleanups verified. No resource leaks.                                   |
-| 6   | Utilities, functions, data fetching on server side                             | CRITICAL | ✅ COMPLETE. Server-only guards on utility files. No violations.                                   |
-| 7   | User removal must cascade: Clerk + DB + all related data                       | CRITICAL | ✅ COMPLETE. All 3 paths: Clerk → Tasks → Transactions → UsageEvents → S3 → User.                  |
-| 8   | `npm run knip` — unused code audit workflow                                    | HIGH     | ✅ COMPLETE (Phase 83). 0 findings remaining.                                                      |
-| 9   | Profile page (`/app/profile`) displays plan limitations and usage              | HIGH     | ✅ COMPLETE (Phase 66.1). ProfileUsage with progress bars.                                         |
-| 10  | Admin plans/prices/features/settings fully configurable from `/admin/settings` | HIGH     | ⚠️ PARTIALLY DONE. Core operational (74.1). Remaining: FAQ (74.2), hero/about/landing copy (74.3). |
+| #   | Instruction                                                                    | Priority | Status                                                                                                        |
+| --- | ------------------------------------------------------------------------------ | -------- | ------------------------------------------------------------------------------------------------------------- |
+| 1   | NO HARDCODED data — everything configurable from ADMIN panel                   | CRITICAL | ⚠️ PARTIALLY DELIVERED. Core done (74.1). Remaining: FAQ (74.2), landing copy (74.3).                         |
+| 2   | RE-USE repetitive code as much as possible                                     | HIGH     | ⚠️ NEEDS TRACKING. Architecture Rule #9 added to AGENTS.md. No systematic audit yet.                          |
+| 3   | WCAG 2.2 AA accessibility compliance for entire app                            | HIGH     | ⚠️ MOSTLY DONE. 72.1 ✅ 72.2 ✅ 72.3 ✅. Remaining: 72.4 (table semantics — MEDIUM).                          |
+| 4   | Components must be data consumers (especially `"use client"`)                  | CRITICAL | ✅ COMPLETE (Phase 73.1). 5 core components converted.                                                        |
+| 5   | Good practices — reduce unnecessary renders and resource leaks                 | CRITICAL | ✅ COMPLETE. All useEffect cleanups verified. No resource leaks.                                              |
+| 6   | Utilities, functions, data fetching on server side                             | CRITICAL | ✅ COMPLETE. Server-only guards on utility files. No violations.                                              |
+| 7   | User removal must cascade: Clerk + DB + all related data                       | CRITICAL | ✅ COMPLETE. All 3 paths: Clerk → Tasks → Transactions → UsageEvents → S3 → User.                             |
+| 8   | `npm run knip` — unused code audit workflow                                    | HIGH     | ✅ COMPLETE (Phase 83). 0 findings remaining.                                                                 |
+| 9   | Profile page (`/app/profile`) displays plan limitations and usage              | HIGH     | ✅ COMPLETE (Phase 66.1). ProfileUsage with progress bars.                                                    |
+| 10  | Admin plans/prices/features/settings fully configurable from `/admin/settings` | HIGH     | ⚠️ PARTIALLY DONE. Core operational (74.1). Remaining: FAQ (74.2), hero/about/landing copy (74.3).            |
+| 11  | DEEP techstack config check, Playwright/Vitest config audit                    | CRITICAL | 🔄 IN PROGRESS (PM audit #40 — Phase 89). Dead .eslintrc.json, wrong devDeps, fragile vitest env, 7 browsers. |
+| 12  | Full testing infrastructure rebuild — TDD approach, aggressive testing         | CRITICAL | 🔄 IN PROGRESS (PM audit #40 — Phases 90–91). Unit test rebuild + E2E rebuild.                                |
+| 13  | Fix P1 stale selection bug in admin tables                                     | CRITICAL | 🔄 PENDING (PM audit #40 — Phase 88). Triple-audit confirmed. First priority for Engineer.                    |
 
 ### Milestone 10 — Layout, Navigation & Library Enhancement
 
@@ -1708,7 +1708,7 @@ Milestone 21 replaced the old palettes with Navy (#0D3B66), Lemon (#FAF0CA), Gra
 
 ### Milestone 24 — Owner Runtime Stabilization, Knip Audit & Re-Verification (2026-03-20)
 
-> **Status: MOSTLY COMPLETE** — Phase 76 delivered core hardening. Runtime upgraded to Node 24.12.0 (PM audit #37). Phase 83 COMPLETE (knip clean). Phase 84 COMPLETE (server-only guards, TD-SEC-05 FULLY RESOLVED). Phase 74.1 COMPLETE (support email). Phase 72.1 COMPLETE (admin a11y).
+> **Status: COMPLETE** — Phase 76 delivered core hardening. Runtime upgraded to Node 24.12.0 (PM audit #37). Phase 83 COMPLETE (knip clean). Phase 84 COMPLETE (server-only guards, TD-SEC-05 FULLY RESOLVED). Phase 74.1 COMPLETE (support email). Phase 72.1 COMPLETE (admin a11y). All validation gates green. 386 unit tests (67 suites) passing.
 
 **Objective:** Stabilize the app on Node 24.12.0, investigate the currently reported development/runtime errors, run a full unused-code audit with item-by-item judgment, and re-verify the owner-reported problem areas that were previously marked delivered in code.
 
@@ -1743,6 +1743,57 @@ Milestone 21 replaced the old palettes with Navy (#0D3B66), Lemon (#FAF0CA), Gra
 - `knip` output is fully triaged item-by-item; no unreviewed findings remain.
 - Premium media-limit behavior, `/app/profile` usage visibility, and admin usage displays are verified in live flows.
 - Milestones 23 and 24 can be closed without contradicting owner-reported current behavior.
+
+### Milestone 25 — Testing Infrastructure Rebuild & Config Hardening (Owner-Directed, 2026-03-21)
+
+> **Status: NEW** — PM audit #40. Owner directive: "DEEP check of all techstack config and setup. DEEP check on PlayWright configs and all testing infrastructure for misconfigs. DEEP analysis of entire unit testing flow — AGGRESSIVE testing process. DEEP analysis of entire e2e testing flow — AGGRESSIVE testing process. Refactor all unit and e2e tests from scratch; Remove old flow and rebuild entire testing process!" TDD approach mandated.
+
+**Objective:** Fix P1 stale-selection bugs in admin tables, harden all tech stack configurations, and rebuild the entire testing infrastructure from scratch with aggressive behavioral coverage and TDD discipline.
+
+**Dependencies:** Milestones 0–24 (all complete).
+
+**Block A — P1 Bug Fixes (CRITICAL):**
+
+1. **CRITICAL** — Phase 88.1: Fix stale `selectedUserIds` in `admin-users-table.tsx` — clear selection on pagination/search.
+2. **CRITICAL** — Phase 88.2: Fix stale `selectedTransactionIds` in `admin-transactions-table.tsx` — same pattern.
+
+**Block B — Config Hardening (CRITICAL):**
+
+3. **CRITICAL** — Phase 89.1: Delete dead `.eslintrc.json` (ESLint 10 uses flat config only).
+4. **CRITICAL** — Phase 89.2: Move `react`, `react-dom`, `@clerk/nextjs` from devDependencies to dependencies.
+5. **HIGH** — Phase 89.3: Add `environmentMatchGlobs` to vitest config — auto-jsdom for `.tsx` tests.
+6. **MEDIUM** — Phase 89.4: Reduce Playwright from 7 to 3 browser projects (env var for full matrix).
+
+**Block C — Unit Test Rebuild (HIGH):**
+
+7. **HIGH** — Phase 90.1: Create unit test directory structure by domain.
+8. **HIGH** — Phase 90.2: Consolidate 5 phase-suffixed duplicate test files.
+9. **HIGH** — Phase 90.3: Add failure path tests to media generation utilities (TDD).
+10. **HIGH** — Phase 90.4: Add webhook idempotency and edge case tests (TDD).
+11. **HIGH** — Phase 90.5: Reduce mock scope in OpenAI route tests.
+12. **MEDIUM** — Phase 90.6: Admin table selection clearing tests (TDD for Phase 88).
+13. **MEDIUM** — Phase 90.7: Security injection tests for validation schemas (TDD).
+
+**Block D — E2E Test Rebuild (HIGH):**
+
+14. **HIGH** — Phase 91.1: Consolidate overlapping public page specs.
+15. **HIGH** — Phase 91.2: Admin bulk actions + pagination selection reset E2E spec.
+16. **HIGH** — Phase 91.3: Add cleanup to admin-features.spec.ts.
+17. **MEDIUM** — Phase 91.4: Convert admin-users.spec.ts from smoke to behavioral.
+18. **MEDIUM** — Phase 91.5: Error state E2E testing.
+
+**Success Criteria:**
+
+- P1 stale selection bug eliminated — verified by unit tests and E2E.
+- Dead `.eslintrc.json` removed. Runtime dependencies in `dependencies`.
+- Vitest auto-jsdom for `.tsx` tests without per-file pragma requirement.
+- Playwright default 3 browsers, full matrix via env var.
+- Zero phase-suffixed duplicate test files.
+- All media generation utilities have failure path tests.
+- Webhook idempotency tested for both Clerk and Stripe.
+- OpenAI route tests exercise real entitlement/limit logic (not all-mocked).
+- Admin bulk actions tested end-to-end.
+- All six validation gates pass.
 
 ---
 
