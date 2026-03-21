@@ -2,7 +2,127 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-21 — PM audit #40. All Phases 1–85, 80.1, 73.1, 74.1, 72.1, 72.2, 72.3, 75 complete. Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS. 386 unit tests (67 suites). Build passing. Node.js 24.12.0 runtime.
+> Last updated: 2026-03-21 — PM audit #41. All Phases 1–85, 80.1, 73.1, 74.1, 72.1, 72.2, 72.3, 75, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.7, 91.1, 91.5 complete. Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS. 390 unit tests (63 suites). 81 E2E passed. Build passing. Node.js 24.12.0 runtime.
+
+---
+
+## Phase 91.5 — E2E Error State Testing — COMPLETED (2026-03-21)
+
+> Engineer delivered. New E2E spec for error states.
+
+- [x] **91.5 MEDIUM** — Added `error-handling.spec.ts` with tests: API 500 error UI verification, 401 redirect to sign-in. E2E error state coverage added.
+
+**Files changed:** `tests/e2e/error-handling.spec.ts` (new)
+
+---
+
+## Phase 91.1 — Consolidate Overlapping Public Page Specs — COMPLETED (2026-03-21)
+
+> Engineer delivered. Landing page coverage merged into public-pages spec.
+
+- [x] **91.1 HIGH** — Merged `landing-page.spec.ts` into `public-pages.spec.ts`. Removed duplicate assertions. Deleted `landing-page.spec.ts`.
+
+**Files changed:** `tests/e2e/public-pages.spec.ts`, `tests/e2e/landing-page.spec.ts` (deleted)
+
+---
+
+## Phase 90.7 — Security Injection Tests for Validation Schemas — COMPLETED (2026-03-21)
+
+> Engineer delivered. TDD approach.
+
+- [x] **90.7 MEDIUM** — Added XSS-like payload tests, very long string (100K chars) tests, and null-byte input tests to `validation-schemas.test.ts`.
+
+**Files changed:** `tests/unit/utils/validation-schemas.test.ts`
+
+---
+
+## Phase 90.3 — Failure Path Tests for Media Generation — COMPLETED (2026-03-21)
+
+> Engineer delivered. TDD approach — failure paths tested for image, audio, video generation.
+
+- [x] **90.3 HIGH** — Added failure path tests: OpenAI API throws, S3 upload fails, empty/malformed API response. Tests for `generateImage`, `generateAudio`, `generateVideo`.
+
+**Files changed:** `tests/unit/utils/generate-image.test.ts`, `tests/unit/utils/generate-audio.test.ts`, `tests/unit/utils/generate-video.test.ts`
+
+---
+
+## Phase 90.2 — Consolidate Phase-Suffixed Duplicate Test Files — COMPLETED (2026-03-21)
+
+> Engineer delivered. 5 phase-suffixed test files merged into canonical files and deleted.
+
+- [x] **90.2 HIGH** — Merged unique test cases from `openai-route-phase16.test.ts`, `generate-response-phase16.test.ts`, `generate-audio-phase16.test.ts`, `generate-title-phase16.test.ts`, `checkout-plan-phase17.test.ts` into base files. Deleted all phase-suffixed duplicates.
+
+**Files changed:** `tests/unit/routes/openai-route.test.ts`, `tests/unit/utils/generate-response.test.ts`, `tests/unit/utils/generate-audio.test.ts`, `tests/unit/utils/generate-title.test.ts`, `tests/unit/actions/checkout-plan.test.ts`
+
+---
+
+## Phase 90.1 — Unit Test Directory Structure — COMPLETED (2026-03-21)
+
+> Engineer delivered. Tests organized by domain.
+
+- [x] **90.1 HIGH** — Created subdirectories: `tests/unit/actions/`, `tests/unit/components/`, `tests/unit/routes/`, `tests/unit/utils/`, `tests/unit/models/`, `tests/unit/constants/`. Moved all existing test files into appropriate subdirectories. All 390 tests pass.
+
+**Files changed:** All 63 test files moved to subdirectories under `tests/unit/`
+
+---
+
+## Phase 89.4 — Reduce Playwright Browser Projects — COMPLETED (2026-03-21)
+
+> Engineer delivered. 3 default browsers, full matrix behind env flag.
+
+- [x] **89.4 MEDIUM** — Default: 3 browsers (Chromium, Firefox, WebKit). `PLAYWRIGHT_FULL_MATRIX=1` restores all 7. E2E tests pass with reduced set.
+
+**Files changed:** `playwright.config.ts`
+
+---
+
+## Phase 89.3 — Add `environmentMatchGlobs` to Vitest — COMPLETED (2026-03-21)
+
+> Engineer delivered. `.tsx` tests auto-get jsdom.
+
+- [x] **89.3 HIGH** — Added `environmentMatchGlobs: [["**/*.test.tsx", "jsdom"]]` to vitest config. No more per-file pragma required for new `.tsx` tests.
+
+**Files changed:** `vitest.config.mts`
+
+---
+
+## Phase 89.2 — Move Runtime Dependencies — COMPLETED (2026-03-21)
+
+> Engineer delivered. Production build safe with `--omit=dev`.
+
+- [x] **89.2 CRITICAL** — Moved `react`, `react-dom`, `@clerk/nextjs` from `devDependencies` to `dependencies`. Lock file regenerated.
+
+**Files changed:** `package.json`, `package-lock.json`
+
+---
+
+## Phase 89.1 — Delete Dead `.eslintrc.json` — COMPLETED (2026-03-21)
+
+> Engineer delivered. ESLint 10 flat config only.
+
+- [x] **89.1 CRITICAL** — Deleted `.eslintrc.json`. `eslint.config.mjs` is the active flat config. `npm run lint` passes.
+
+**Files changed:** `.eslintrc.json` (deleted)
+
+---
+
+## Phase 88.2 — Clear Transaction Selection on Pagination — COMPLETED (2026-03-21)
+
+> Engineer delivered. P1 stale selection fix.
+
+- [x] **88.2 CRITICAL** — Added `useEffect` to clear `selectedTransactionIds` when `transactions` prop reference changes. Bulk actions safe across pagination.
+
+**Files changed:** `src/components/admin/transactions/admin-transactions-table.tsx`
+
+---
+
+## Phase 88.1 — Clear User Selection on Pagination — COMPLETED (2026-03-21)
+
+> Engineer delivered. P1 stale selection fix.
+
+- [x] **88.1 CRITICAL** — Added `useEffect` to clear `selectedUserIds` when `users` prop reference changes. Bulk actions safe across pagination.
+
+**Files changed:** `src/components/admin/users/admin-users-table.tsx`
 
 ---
 

@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-21 (PM audit #40. All Phases 1–85, 80.1, 73.1, 74.1, 72.1, 72.2, 72.3, 75 complete. Milestone 24 COMPLETE. Milestone 25 IN PROGRESS — P1 bug fixes + config hardening + testing rebuild. Active: TD-STALE-SELECT (P1 — Phase 88), TD-CONFIG-01 (CRITICAL — Phase 89.1), TD-CONFIG-02 (CRITICAL — Phase 89.2), TD-SEC-06 (MEDIUM — Phase 86), TD-API-09 (LOW), TD-TASK-PASSTHROUGH (LOW — Phase 87). 386 unit tests (67 suites). Build passing. Node.js 24.12.0 runtime.)
+> Last updated: 2026-03-21 (PM audit #41. All Phases 1–85, 80.1, 73.1, 74.1, 72.1, 72.2, 72.3, 75, 88, 89, 90.1–90.3, 90.7, 91.1, 91.5 complete. Milestone 24 COMPLETE. Milestone 25 IN PROGRESS — credential guards + coverage hardening + remaining test rebuild. Active: TD-SEC-07 (CRITICAL — Phase 92.1), TD-SEC-08 (CRITICAL — Phase 92.2), TD-SEC-06 (MEDIUM — Phase 86), TD-API-09 (LOW), TD-TASK-PASSTHROUGH (LOW — Phase 87). 390 unit tests (63 suites). 81 E2E passed, 19 skipped. Build passing. Node.js 24.12.0 runtime.)
 
 ---
 
@@ -743,10 +743,10 @@ All button styles use Lime Green as the accent color in **both** light and dark 
 
 ## 13. Testing
 
-- **Unit tests**: 66 suites, 379 tests (Vitest) — includes streaming, webhook, chat-wrapper, chat-body stop-state, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, persona prompt, rate limiting, task complexity classification, conversation stop enforcement, entitlement resolver full coverage (including admin override tests), checkout-success page, admin audit trail, OpenAI route tests, atomic prompt limit, daily conversation limit, media error handling, universal feature access, trial access tests, effective model config, effective plan config, checkout price bypass regression, video generation.
-- **E2E tests**: 13 Playwright spec files across browser projects (chat-app-shell, auth-boundaries, public-pages with 70+ tests, conversation-lifecycle, user-profile, admin-users, admin-features, landing-page, plans-public, pricing-public, authenticated-flows, persona-trial-access). 228 total. **165 passing, 5 failed (stale Clerk auth session + DB connectivity), 48 skipped** (explained: Chromium-only trial spec × 6 non-Chromium projects = 24 new skips, all intentional). Note: `pricing-public.spec.ts` is a duplicate of `plans-public.spec.ts` — to be removed (Phase 31.4).
-- **Coverage**: Configured (Phase 24.1) — v8 provider, thresholds: 70% statements / 60% branches / 70% functions / 70% lines. Current: 82/71/88/82.
-- **Gap**: No dedicated E2E spec for streamed chunk-by-chunk rendering (manually verified via Playwright MCP). Persona selector E2E (35.2) pending.
+- **Unit tests**: 63 suites, 390 tests (Vitest) — organized by domain in `tests/unit/{actions,components,routes,utils,models,constants}/`. Includes streaming, webhook, chat-wrapper, chat-body stop-state, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, persona prompt, rate limiting, task complexity classification, conversation stop enforcement, entitlement resolver full coverage (including admin override tests), checkout-success page, admin audit trail, OpenAI route tests, atomic prompt limit, daily conversation limit, media error handling (failure paths), universal feature access, trial access tests, effective model config, effective plan config, checkout price bypass regression, video generation, validation schema security injection tests (XSS, long strings, null bytes).
+- **E2E tests**: 12 Playwright spec files. 81 passed, 19 skipped. Default 3 browsers (Chromium, Firefox, WebKit); full 7-browser matrix via `PLAYWRIGHT_FULL_MATRIX=1`. Specs: auth-boundaries, public-pages, error-handling, chat-app-shell, conversation-lifecycle, user-profile, admin-users, admin-features, plans-public, authenticated-flows, persona-trial-access, live-image-generation. 19 skips are intentional: credential-gated tests without E2E env vars + Chromium-only tests on Firefox/WebKit.
+- **Coverage**: Configured (Phase 24.1) — v8 provider, thresholds: 70% statements / 60% branches / 70% functions / 70% lines. Current: 82/71/88/82. Phase 93.1 will raise to 80/75/80/80.
+- **Gap**: No dedicated E2E spec for Stripe checkout flow. No E2E test for user deletion cascade. Admin E2E specs are mostly smoke tests (page renders, not behavioral). Phase 90.5 will reduce mock scope. Phase 91.2–91.4 will add admin behavioral E2E.
 
 ---
 
@@ -879,25 +879,32 @@ _None._
 | ------------------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
 | TD-ADMIN-PAGINATION | Admin | ~~`getAdminUsers()` and `getAdminTransactions()` fetch ALL records with no `.limit()` or `.skip()`.~~ **RESOLVED (Phase 85).** `resolveAdminPagination()` helper, bounded `pageSize` (max 100), `countDocuments()` + `.skip().limit()`, pagination UI on both tables. 4 new unit tests. | ~~HIGH~~ Resolved |
 
-### Active — CRITICAL Priority (PM Audit #40, Triple-Audit)
+### Active — CRITICAL Priority (PM Audit #41, Triple-Audit)
 
-| ID              | Area   | Description                                                                                                                                                                                                         | Severity |
-| --------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| TD-STALE-SELECT | Admin  | Admin users table and transactions table `useState` selection persists across pagination. Bulk actions can target wrong records from previous page. P1 — confirmed by Architect + Engineer + PM. Phase 88.          | CRITICAL |
-| TD-CONFIG-01    | Config | Dead `.eslintrc.json` file exists alongside active `eslint.config.mjs` (ESLint 10 flat config). Confusing; could cause issues with tooling. Phase 89.1.                                                             | CRITICAL |
-| TD-CONFIG-02    | Config | `react`, `react-dom`, `@clerk/nextjs` in `devDependencies` instead of `dependencies` in `package.json`. Production build would break with `npm install --omit=dev`. Phase 89.2.                                     | CRITICAL |
-| TD-CONFIG-03    | Config | Vitest `environment: "node"` global with manual `@vitest-environment jsdom` pragma in each `.tsx` test file. Fragile — new `.tsx` tests silently run in wrong environment. Add `environmentMatchGlobs`. Phase 89.3. | HIGH     |
-| TD-CONFIG-04    | Config | Playwright config has 7 browser projects (Chromium, Firefox, WebKit, Mobile Chrome, Mobile Safari, Edge, Chrome channel). Excessive for dev. Reduce to 3 default, env var for full matrix. Phase 89.4.              | MEDIUM   |
-| TD-TEST-01      | Test   | 5 phase-suffixed duplicate test files (`*-phase16.test.ts`, `*-phase17.test.ts`). Duplicate coverage, confusing names. Consolidate into base files. Phase 90.2.                                                     | HIGH     |
-| TD-TEST-02      | Test   | `openai-route.test.ts` mocks all 12 dependencies causing tautological tests. Tests validate mock setup, not actual route behavior. Reduce mock scope. Phase 90.5.                                                   | HIGH     |
-| TD-TEST-03      | Test   | Zero failure path tests for media generation utilities (`generateImage`, `generateAudio`, `generateVideo`). Only success paths covered. Phase 90.3.                                                                 | HIGH     |
+| ID        | Area     | Description                                                                                                                                                                                                                                                       | Severity |
+| --------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| TD-SEC-07 | Security | `src/constants/openai.tsx` and `src/constants/aws.tsx` instantiate OpenAI and S3 clients with secret env vars (`OPENAI_KEY`, `AWS_S3_SECRET_KEY`) but have NO `import "server-only"`. One mistaken client import = credential exposure in browser JS. Phase 92.1. | CRITICAL |
+| TD-SEC-08 | Security | `src/lib/utils/resolve-entitlements.tsx` and `src/lib/utils/download-url-allowlist.ts` are server-only business logic / infra pattern files with NO `import "server-only"` guard. Phase 92.2.                                                                     | CRITICAL |
+
+### ~~Active — CRITICAL Priority (PM Audit #40)~~ (All Resolved — PM Audit #41)
+
+| ID              | Area   | Description                                                                                                 | Severity              | Status                                                                               |
+| --------------- | ------ | ----------------------------------------------------------------------------------------------------------- | --------------------- | ------------------------------------------------------------------------------------ |
+| TD-STALE-SELECT | Admin  | ~~Admin users/transactions table selection persists across pagination. Bulk actions target wrong records.~~ | ~~CRITICAL~~ Resolved | **RESOLVED (Phase 88.1 + 88.2)** — Selection cleared on prop change via `useEffect`. |
+| TD-CONFIG-01    | Config | ~~Dead `.eslintrc.json` alongside active `eslint.config.mjs`.~~                                             | ~~CRITICAL~~ Resolved | **RESOLVED (Phase 89.1)** — `.eslintrc.json` deleted.                                |
+| TD-CONFIG-02    | Config | ~~`react`, `react-dom`, `@clerk/nextjs` in `devDependencies` instead of `dependencies`.~~                   | ~~CRITICAL~~ Resolved | **RESOLVED (Phase 89.2)** — Moved to `dependencies`.                                 |
+| TD-CONFIG-03    | Config | ~~Vitest missing `environmentMatchGlobs` — `.tsx` tests silently run in wrong environment.~~                | ~~HIGH~~ Resolved     | **RESOLVED (Phase 89.3)** — `environmentMatchGlobs` configured.                      |
+| TD-CONFIG-04    | Config | ~~7 Playwright browser projects excessive for dev.~~                                                        | ~~MEDIUM~~ Resolved   | **RESOLVED (Phase 89.4)** — 3 default browsers, full matrix behind env flag.         |
+| TD-TEST-01      | Test   | ~~5 phase-suffixed duplicate test files.~~                                                                  | ~~HIGH~~ Resolved     | **RESOLVED (Phase 90.2)** — Consolidated into canonical files.                       |
+| TD-TEST-03      | Test   | ~~Zero failure path tests for media generation utilities.~~                                                 | ~~HIGH~~ Resolved     | **RESOLVED (Phase 90.3)** — Failure path tests added.                                |
 
 ### Active — MEDIUM Priority (PM Audit #39, Triple-Audit)
 
-| ID                  | Area     | Description                                                                                                                                                                  | Severity |
-| ------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| TD-SEC-06           | Security | 20 server-side files (8 Mongoose models, 5 OpenAI generation utils, 5 AWS utils, 2 OpenAI analysis utils) lack `import "server-only"` guard. Defense-in-depth gap. Phase 86. | MEDIUM   |
-| TD-TASK-PASSTHROUGH | API      | `createTaskSchema` in `task.actions.tsx` uses `.passthrough()` instead of `.strict()`. Inconsistent with project convention. Phase 87.                                       | LOW      |
+| ID                  | Area     | Description                                                                                                                                                                                                                                               | Severity |
+| ------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| TD-SEC-06           | Security | 18 server-side files (8 Mongoose models, 5 OpenAI generation utils, 5 AWS utils) lack `import "server-only"` guard. Defense-in-depth gap. Constants (openai.tsx, aws.tsx) elevated to CRITICAL TD-SEC-07 (Phase 92). Remaining files tracked in Phase 86. | MEDIUM   |
+| TD-TEST-02          | Test     | `openai-route.test.ts` mocks 14 dependencies causing tautological tests. Tests validate mock setup, not actual route behavior. Reduce mock scope. Phase 90.5.                                                                                             | HIGH     |
+| TD-TASK-PASSTHROUGH | API      | `createTaskSchema` in `task.actions.tsx` uses `.passthrough()` instead of `.strict()`. Inconsistent with project convention. Phase 87.                                                                                                                    | LOW      |
 
 ### ~~Active~~ Resolved — Critical Priority (PM Audit #29)
 
