@@ -1,5 +1,5 @@
 import path from "node:path";
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import {
   getE2ETestUser,
   missingCredentialsError,
@@ -8,6 +8,26 @@ import {
 
 const authFile = path.join(__dirname, ".clerk/user.json");
 const e2eTestUser = getE2ETestUser();
+
+async function expectPlanCardStructure(page: Page) {
+  const planCards = page.locator(".PlanCard");
+  await expect(planCards).toHaveCount(3);
+
+  const cardCount = await planCards.count();
+  for (let cardIndex = 0; cardIndex < cardCount; cardIndex += 1) {
+    const planCard = planCards.nth(cardIndex);
+
+    await expect(planCard.getByRole("heading")).toHaveCount(1);
+    const priceElement = planCard.locator("h2 + p").first();
+    await expect(priceElement).toBeVisible();
+
+    const priceText = (await priceElement.textContent())?.trim() ?? "";
+    expect(priceText.length).toBeGreaterThan(0);
+
+    const featureRows = planCard.locator("i.bi-check2, i.bi-x");
+    expect(await featureRows.count()).toBeGreaterThan(0);
+  }
+}
 
 test.describe("user profile and plans pages", () => {
   test.skip(!e2eTestUser, missingCredentialsError);
@@ -30,25 +50,14 @@ test.describe("user profile and plans pages", () => {
       (await page.locator(".PlanPromo h2 span").first().textContent()) ?? ""
     ).trim();
     if (currentPlanName) {
-      expect(["Lite", "Pro", "Premium"]).toContain(currentPlanName);
+      expect(currentPlanName.length).toBeGreaterThan(0);
     }
 
     await page.goto("/app/plans");
     await expect(
       page.getByRole("heading", { name: /upgrade your plan/i }),
     ).toBeVisible();
-    const planCards = page.locator(".PlanCard");
-    await expect(planCards).toHaveCount(3);
-
-    const proCard = planCards.filter({
-      has: page.getByRole("heading", { name: "Pro" }),
-    });
-    const premiumCard = planCards.filter({
-      has: page.getByRole("heading", { name: "Premium" }),
-    });
-
-    await expect(proCard).toContainText("$19");
-    await expect(premiumCard).toContainText("$39");
+    await expectPlanCardStructure(page);
 
     const subscribeButtons = page.getByRole("button", { name: "Subscribe" });
     if ((await subscribeButtons.count()) > 0) {

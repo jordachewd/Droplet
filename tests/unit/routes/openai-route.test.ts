@@ -26,6 +26,11 @@ import {
   getEffectivePlanConfig,
   getEffectiveSupportEmail,
 } from "@/lib/utils/effective-plan-config";
+import {
+  buildMockRequest,
+  createTestTask,
+  createTestUser,
+} from "../test-support/factories";
 
 vi.mock("@/lib/utils/openai/generateResponse", () => ({
   generateResponse: vi.fn(),
@@ -89,49 +94,35 @@ function buildRequest(
   payload: unknown,
   headers: Record<string, string> = {},
 ): Request {
-  return new Request("http://localhost:3000/api/openai", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...headers },
-    body: JSON.stringify(payload),
+  return buildMockRequest({
+    payload,
+    headers,
   });
 }
 
 function createExistingTask(overrides: Record<string, unknown> = {}) {
-  return {
+  return createTestTask({
     _id: EXISTING_TASK_ID,
-    title: "Conversation",
-    personaId: "strategist",
-    messages: [
-      {
-        role: "user",
-        whois: "user",
-        content: [{ type: "text", text: "Earlier prompt" }],
-      },
-    ],
-    usage: 3,
-    promptCount: 1,
-    mediaCount: 0,
     estimatedBytes: 256,
-    status: "active",
-    updatedAt: "2026-03-11T00:00:00.000Z",
     ...overrides,
-  };
+  });
 }
 
 describe("POST /api/openai", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(auth).mockResolvedValue({ userId: "user_123" } as never);
-    vi.mocked(getUserById).mockResolvedValue({
-      clerkId: "user_123",
-      plan: {
-        name: "Lite",
-        expiresOn: new Date(Date.now() + 86_400_000),
-        imageGenerations: 0,
-        audioGenerations: 0,
-        usagePeriodStart: new Date(),
-      },
-    } as never);
+    vi.mocked(getUserById).mockResolvedValue(
+      createTestUser({
+        plan: {
+          name: "Lite",
+          expiresOn: new Date(Date.now() + 86_400_000),
+          imageGenerations: 0,
+          audioGenerations: 0,
+          usagePeriodStart: new Date(),
+        },
+      }) as never,
+    );
     vi.mocked(checkDailyConversationLimit).mockResolvedValue({
       allowed: true,
       limit: 5,
@@ -1097,6 +1088,191 @@ describe("POST /api/openai", () => {
     expect(response.status).toBe(500);
     expect(payload.error).toBeTypeOf("string");
     expect(updateTask).not.toHaveBeenCalled();
+  });
+
+  describe("conversation stop behavior", () => {
+    it("sets audio_limit_reached when audio usage equals the Pro quota", async () => {
+      vi.mocked(getUserById).mockResolvedValue(
+        createTestUser({
+          plan: {
+            name: "Pro",
+            expiresOn: new Date(Date.now() + 86_400_000),
+            imageGenerations: 0,
+            audioGenerations: 50,
+            usagePeriodStart: new Date(),
+          },
+        }) as never,
+      );
+      vi.mocked(generateResponse).mockResolvedValue(
+        JSON.stringify({
+          blockedReason: "audio_limit_reached",
+          taskData: {
+            whois: "assistant",
+            role: "assistant",
+            content: [{ type: "text", text: "Audio limit reached." }],
+          },
+        }),
+      );
+
+      const response = await POST(
+        buildRequest({
+          taskId: EXISTING_TASK_ID,
+          messages: [
+            { role: "user", whois: "user", content: "generate audio" },
+          ],
+        }),
+      );
+      const payload = await response.json();
+
+      expect(response.status).toBe(403);
+      expect(payload.stopReason).toBe("audio_limit_reached");
+      expect(payload.endAction).toBe("start_new_conversation");
+      expect(payload.taskStatus).toBe("active");
+      expect(generateResponse).toHaveBeenCalledWith(
+        expect.objectContaining({
+          entitlements: expect.objectContaining({
+            audioLimitReached: true,
+            supportsAudioGeneration: true,
+          }),
+        }),
+      );
+    });
+
+    it("sets video_limit_reached when video usage equals the Pro quota", async () => {
+      vi.mocked(getUserById).mockResolvedValue(
+        createTestUser({
+          plan: {
+            name: "Pro",
+            expiresOn: new Date(Date.now() + 86_400_000),
+            imageGenerations: 0,
+            audioGenerations: 0,
+            videoGenerations: 10,
+            usagePeriodStart: new Date(),
+          },
+        }) as never,
+      );
+      vi.mocked(generateResponse).mockResolvedValue(
+        JSON.stringify({
+          blockedReason: "video_limit_reached",
+          taskData: {
+            whois: "assistant",
+            role: "assistant",
+            content: [{ type: "text", text: "Video limit reached." }],
+          },
+        }),
+      );
+
+      const response = await POST(
+        buildRequest({
+          taskId: EXISTING_TASK_ID,
+          messages: [
+            { role: "user", whois: "user", content: "generate video" },
+          ],
+        }),
+      );
+      const payload = await response.json();
+
+      expect(response.status).toBe(403);
+      expect(payload.stopReason).toBe("video_limit_reached");
+      expect(payload.endAction).toBe("start_new_conversation");
+      expect(payload.taskStatus).toBe("active");
+      expect(generateResponse).toHaveBeenCalledWith(
+        expect.objectContaining({
+          entitlements: expect.objectContaining({
+            videoLimitReached: true,
+            supportsVideoGeneration: true,
+          }),
+        }),
+      );
+      const updatePayload = vi.mocked(updateTask).mock.calls.at(-1)?.[1];
+      expect(updatePayload).toMatchObject({
+        personaId: "strategist",
+      });
+      expect(updatePayload).not.toMatchObject({
+        status: "ended",
+      });
+    });
+
+    it("sets billing_state_invalid with upgrade_plan when paid plan expires", async () => {
+      vi.mocked(getUserById).mockResolvedValue(
+        createTestUser({
+          plan: {
+            name: "Pro",
+            expiresOn: new Date(Date.now() - 86_400_000),
+            imageGenerations: 0,
+            audioGenerations: 0,
+            usagePeriodStart: new Date(),
+          },
+        }) as never,
+      );
+
+      const response = await POST(
+        buildRequest({
+          taskId: EXISTING_TASK_ID,
+          messages: [{ role: "user", whois: "user", content: "continue" }],
+        }),
+      );
+      const payload = await response.json();
+
+      expect(response.status).toBe(403);
+      expect(payload.stopReason).toBe("billing_state_invalid");
+      expect(payload.endAction).toBe("upgrade_plan");
+      expect(updateTask).toHaveBeenCalledWith(
+        EXISTING_TASK_ID,
+        expect.objectContaining({
+          status: "ended",
+          endedReason: "billing_state_invalid",
+          endAction: "upgrade_plan",
+        }),
+      );
+    });
+
+    it("bypasses finite-limit stop checks for Premium unlimited limits", async () => {
+      vi.mocked(getUserById).mockResolvedValue(
+        createTestUser({
+          plan: {
+            name: "Premium",
+            expiresOn: new Date(Date.now() + 86_400_000),
+            imageGenerations: 10_000,
+            audioGenerations: 10_000,
+            usagePeriodStart: new Date(),
+          },
+        }) as never,
+      );
+      vi.mocked(getTaskByIdForUser).mockResolvedValue(
+        createExistingTask({
+          promptCount: 5_000,
+        }) as never,
+      );
+
+      const response = await POST(
+        buildRequest({
+          taskId: EXISTING_TASK_ID,
+          messages: [{ role: "user", whois: "user", content: "continue" }],
+        }),
+      );
+      const payload = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(payload.stopReason).toBeUndefined();
+      expect(generateResponse).toHaveBeenCalledWith(
+        expect.objectContaining({
+          planName: "Premium",
+          entitlements: expect.objectContaining({
+            imageLimitReached: false,
+            audioLimitReached: false,
+            supportsImageGeneration: true,
+            supportsAudioGeneration: true,
+          }),
+        }),
+      );
+      expect(updateTask).not.toHaveBeenCalledWith(
+        EXISTING_TASK_ID,
+        expect.objectContaining({
+          status: "ended",
+        }),
+      );
+    });
   });
 
   it("self-heals when getUserById returns null and ensureUserSynced succeeds", async () => {

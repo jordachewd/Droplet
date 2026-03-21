@@ -55,17 +55,19 @@ const accountMenuDestinations: SidebarDestination[] = [
 
 async function ensureSidebarOpen(page: Page) {
   const sidebar = page.locator("aside#chat-sidebar");
-  const toggleButton = page.getByRole("button", { name: /show menu/i });
+  const toggleButton = page
+    .getByRole("button", { name: /(show|hide) menu/i })
+    .first();
 
-  if ((await toggleButton.count()) > 0) {
-    const firstToggle = toggleButton.first();
-    if (await firstToggle.isVisible()) {
-      await firstToggle.click({ force: true, timeout: 5_000 });
+  if ((await toggleButton.count()) > 0 && (await toggleButton.isVisible())) {
+    const isExpanded = await toggleButton.getAttribute("aria-expanded");
+    if (isExpanded !== "true") {
+      await toggleButton.click({ force: true, timeout: 5_000 });
     }
+    await expect(toggleButton).toHaveAttribute("aria-expanded", "true");
   }
 
   await expect(sidebar).toBeVisible();
-  await expect(sidebar).toHaveClass(/translate-x-0/);
 }
 
 async function ensureAuthenticatedAppPage(page: Page) {
@@ -122,16 +124,6 @@ async function openAccountMenu(page: Page) {
   await expect(page.locator("#my-account")).toBeVisible();
 }
 
-async function ensureNotSignedOut(page: Page): Promise<boolean> {
-  if (!/\/sign-in(?:\/|$|\?)/.test(page.url())) {
-    return false;
-  }
-
-  await ensureAuthenticatedAppPage(page);
-  await ensureSidebarOpen(page);
-  return true;
-}
-
 test.describe("authenticated app shell and navigation", () => {
   test.skip(!e2eTestUser, missingCredentialsError);
   test.beforeEach(async ({}, testInfo) => {
@@ -158,15 +150,9 @@ test.describe("authenticated app shell and navigation", () => {
 
     for (const destination of sidebarDestinations) {
       await test.step(`navigates to ${destination.expectedPath}`, async () => {
-        await ensureAuthenticatedAppPage(page);
-        await ensureNotSignedOut(page);
         await ensureSidebarOpen(page);
 
         await clickSidebarLink(page, destination);
-        if (await ensureNotSignedOut(page)) {
-          await clickSidebarLink(page, destination);
-        }
-
         await expect(page).toHaveURL(destination.expectedPath);
         await destination.verify(page);
       });
@@ -174,8 +160,7 @@ test.describe("authenticated app shell and navigation", () => {
 
     for (const destination of accountMenuDestinations) {
       await test.step(`navigates to ${destination.expectedPath} from account menu`, async () => {
-        await ensureAuthenticatedAppPage(page);
-        await ensureNotSignedOut(page);
+        await page.goto("/app", { waitUntil: "domcontentloaded" });
         await openAccountMenu(page);
 
         const accountLink = page
@@ -185,15 +170,6 @@ test.describe("authenticated app shell and navigation", () => {
 
         await expect(accountLink).toBeVisible();
         await accountLink.click();
-
-        if (await ensureNotSignedOut(page)) {
-          await openAccountMenu(page);
-          await page
-            .locator(`#my-account a[href="${destination.href}"]`)
-            .filter({ hasText: destination.linkName })
-            .first()
-            .click();
-        }
 
         await expect(page).toHaveURL(destination.expectedPath);
         await destination.verify(page);

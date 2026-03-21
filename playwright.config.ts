@@ -47,8 +47,12 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
   reporter: "list",
+  expect: {
+    timeout: 5_000,
+  },
   use: {
     baseURL: process.env.PLAYWRIGHT_BASE_URL || "http://127.0.0.1:3000",
+    actionTimeout: 10_000,
     screenshot: "only-on-failure",
     trace: "on-first-retry",
     video: "retain-on-failure",
