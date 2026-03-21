@@ -99,10 +99,10 @@ test("renders checkout-success as a public route with generic fallback messaging
   await expect(page.getByRole("link", { name: "Back to plans" })).toBeVisible();
 });
 
-test("renders the public FAQs page with multiple accordion items", async ({
+test("renders the FAQ section on the public plans page with multiple accordion items", async ({
   page,
 }) => {
-  await gotoAndExpectPublicRoute(page, "/faqs");
+  await gotoAndExpectPublicRoute(page, "/plans");
 
   await expect(
     page.getByRole("heading", { name: "Frequently Asked Questions" }),
@@ -244,14 +244,5 @@ test("desktop header links navigate across the public pages", async ({
   await expect(page).toHaveURL(/\/plans$/);
   await expect(
     page.getByRole("heading", { name: /choose your plan/i }),
-  ).toBeVisible();
-
-  await page
-    .locator(".Header")
-    .getByRole("link", { name: "FAQs", exact: true })
-    .click();
-  await expect(page).toHaveURL(/\/faqs$/);
-  await expect(
-    page.getByRole("heading", { name: "Frequently Asked Questions" }),
   ).toBeVisible();
 });

@@ -27,7 +27,7 @@ test("loads landing page for unauthenticated users", async ({ page }) => {
       page.getByRole("link", { name: "Plans", exact: true }),
     ).toBeVisible();
     await expect(
-      page.getByRole("link", { name: "FAQs", exact: true }),
+      page.getByRole("link", { name: "Personas", exact: true }),
     ).toBeVisible();
   }
   await expect(
