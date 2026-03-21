@@ -3,6 +3,7 @@ import "server-only";
 import AppSetting from "@/lib/database/models/app-setting.model";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import { MODEL_POLICY_MATRIX } from "@/lib/utils/ai-model-policy";
+import { isObjectRecord } from "@/lib/utils/type-guards";
 import { ModelSettingsFormValue } from "@/types/AdminData.d";
 
 type AppSettingRecord = {
@@ -18,10 +19,6 @@ const DEFAULT_MODEL_SETTINGS: ModelSettingsFormValue = {
   videoModel:
     MODEL_POLICY_MATRIX.pro.video_generation.taskClasses.preview.model,
 };
-
-function isObjectRecord(value: unknown): value is Record<string, unknown> {
-  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
-}
 
 function readStringValue({
   source,

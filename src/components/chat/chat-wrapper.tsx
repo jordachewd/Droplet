@@ -63,6 +63,13 @@ type ChatStreamEvent =
       error: string;
     };
 
+function isAbortError(error: unknown): boolean {
+  return (
+    (error instanceof DOMException && error.name === "AbortError") ||
+    (error instanceof Error && error.name === "AbortError")
+  );
+}
+
 export default function ChatWrapper({
   personas,
   supportEmail,
@@ -171,6 +178,7 @@ export default function ChatWrapper({
     resolveSelectablePersonaId(initialPersonaId ?? preferredPersonaId),
   );
   const nextAlertId = useRef<number>(0);
+  const activeRequestControllerRef = useRef<AbortController | null>(null);
   const isConversationEnded = taskStatus === "ended";
   const isNewTask = task.length === 0 && !isConversationEnded;
 
@@ -208,6 +216,14 @@ export default function ChatWrapper({
     setPersonaId(selectedPersonaId);
     return () => setPersonaId(null);
   }, [selectedPersonaId, setPersonaId]);
+
+  useEffect(
+    () => () => {
+      activeRequestControllerRef.current?.abort();
+      activeRequestControllerRef.current = null;
+    },
+    [],
+  );
 
   function syncMessagesWithResponse({
     taskData,
@@ -418,6 +434,9 @@ export default function ChatWrapper({
       tempPromptWithId,
     ]);
 
+    const requestAbortController = new AbortController();
+    activeRequestControllerRef.current = requestAbortController;
+
     try {
       const taskMessages = filterAssistantMsg([
         ...task,
@@ -436,6 +455,7 @@ export default function ChatWrapper({
           taskId: dbTaskId,
           personaId: selectedPersona.id,
         }),
+        signal: requestAbortController.signal,
       });
       const responseContentType = response.headers.get("Content-Type") ?? "";
 
@@ -484,8 +504,33 @@ export default function ChatWrapper({
         showAlert("Error", error);
         return;
       }
-    } catch {
+    } catch (error) {
+      if (isAbortError(error)) {
+        setMessages((previousMessages) => {
+          const lastMessage = previousMessages[previousMessages.length - 1];
+
+          if (!lastMessage || !Array.isArray(lastMessage.content)) {
+            return previousMessages;
+          }
+
+          if (
+            lastMessage.content.length !== 1 ||
+            lastMessage.content[0]?.type !== "temp"
+          ) {
+            return previousMessages;
+          }
+
+          return previousMessages.slice(0, -1);
+        });
+        setIsLoading(false);
+        return;
+      }
+
       showAlert("Error", "Unable to send your message right now.");
+    } finally {
+      if (activeRequestControllerRef.current === requestAbortController) {
+        activeRequestControllerRef.current = null;
+      }
     }
 
     setIsLoading(false);

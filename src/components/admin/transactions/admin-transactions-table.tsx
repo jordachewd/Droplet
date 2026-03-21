@@ -114,57 +114,84 @@ export function AdminTransactionsTable({
         ) : null}
       </div>
 
-      <div className="grid grid-cols-[0.35fr_1fr_1.5fr_0.6fr_0.8fr_0.8fr_0.8fr] gap-3 border-b border-slate-300 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:border-slate-500 dark:text-lavenderHaze-700">
-        <span></span>
-        <span>User</span>
-        <span>Email</span>
-        <span>Plan</span>
-        <span>Amount</span>
-        <span>Date</span>
-        <span>Status</span>
-      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[920px] table-fixed border-collapse">
+          <thead className="border-b border-slate-300 dark:border-slate-500">
+            <tr className="text-left text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
+              <th scope="col" className="w-12 px-4 py-3">
+                <span className="sr-only">Select</span>
+              </th>
+              <th scope="col" className="w-[18%] px-3 py-3">
+                User
+              </th>
+              <th scope="col" className="w-[24%] px-3 py-3">
+                Email
+              </th>
+              <th scope="col" className="w-[12%] px-3 py-3">
+                Plan
+              </th>
+              <th scope="col" className="w-[16%] px-3 py-3">
+                Amount
+              </th>
+              <th scope="col" className="w-[14%] px-3 py-3">
+                Date
+              </th>
+              <th scope="col" className="w-[12%] px-3 py-3">
+                Status
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-300 dark:divide-slate-500">
+            {transactions.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={7}
+                  className="px-4 py-6 text-sm text-midnightBlue-600 dark:text-lavenderHaze-600"
+                >
+                  No transactions recorded yet.
+                </td>
+              </tr>
+            ) : null}
 
-      <div className="divide-y divide-slate-300 dark:divide-slate-500">
-        {transactions.length === 0 ? (
-          <p className="px-4 py-6 text-sm text-midnightBlue-600 dark:text-lavenderHaze-600">
-            No transactions recorded yet.
-          </p>
-        ) : null}
-
-        {transactions.map((transaction) => (
-          <div
-            key={transaction.id}
-            className="grid grid-cols-[0.35fr_1fr_1.5fr_0.6fr_0.8fr_0.8fr_0.8fr] gap-3 px-4 py-4 text-sm"
-          >
-            <label className="flex items-center">
-              <input
-                type="checkbox"
-                checked={selectedSet.has(transaction.id)}
-                onChange={() => handleToggleTransaction(transaction.id)}
-                aria-label={`Select transaction ${transaction.id}`}
-              />
-            </label>
-            <Link
-              href={`/admin/transactions/${transaction.id}`}
-              className="font-medium transition-all hover:underline"
-            >
-              {transaction.username}
-            </Link>
-            <span className="truncate">{transaction.email}</span>
-            <span>{transaction.plan}</span>
-            <span>
-              {currencySymbol}
-              {transaction.amount} /{" "}
-              {transaction.billing === "Monthly" ? "Mo" : "Yr"}
-            </span>
-            <span>
-              {transaction.createdAt
-                ? new Date(transaction.createdAt).toLocaleDateString()
-                : "-"}
-            </span>
-            <span>{transaction.status}</span>
-          </div>
-        ))}
+            {transactions.map((transaction) => (
+              <tr key={transaction.id} className="text-sm">
+                <td className="px-4 py-4 align-middle">
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={selectedSet.has(transaction.id)}
+                      onChange={() => handleToggleTransaction(transaction.id)}
+                      aria-label={`Select transaction ${transaction.id}`}
+                    />
+                  </label>
+                </td>
+                <td className="px-3 py-4 align-middle">
+                  <Link
+                    href={`/admin/transactions/${transaction.id}`}
+                    className="font-medium transition-all hover:underline"
+                  >
+                    {transaction.username}
+                  </Link>
+                </td>
+                <td className="truncate px-3 py-4 align-middle">
+                  {transaction.email}
+                </td>
+                <td className="px-3 py-4 align-middle">{transaction.plan}</td>
+                <td className="px-3 py-4 align-middle">
+                  {currencySymbol}
+                  {transaction.amount} /{" "}
+                  {transaction.billing === "Monthly" ? "Mo" : "Yr"}
+                </td>
+                <td className="px-3 py-4 align-middle">
+                  {transaction.createdAt
+                    ? new Date(transaction.createdAt).toLocaleDateString()
+                    : "-"}
+                </td>
+                <td className="px-3 py-4 align-middle">{transaction.status}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
       {pagination.totalPages > 1 && (

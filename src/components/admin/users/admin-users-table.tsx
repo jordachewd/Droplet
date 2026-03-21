@@ -162,61 +162,96 @@ export function AdminUsersTable({
         ) : null}
       </div>
 
-      <div className="grid grid-cols-[0.35fr_1.05fr_1.35fr_0.6fr_0.6fr_1.25fr_0.7fr_0.8fr_0.7fr] gap-3 border-b border-slate-300 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:border-slate-500 dark:text-lavenderHaze-700">
-        <span></span>
-        <span>Username</span>
-        <span>Email</span>
-        <span>Role</span>
-        <span>Plan</span>
-        <span>Media Used</span>
-        <span>Convos Today</span>
-        <span>Registered</span>
-        <span>State</span>
-      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[1080px] table-fixed border-collapse">
+          <thead className="border-b border-slate-300 dark:border-slate-500">
+            <tr className="text-left text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
+              <th scope="col" className="w-12 px-4 py-3">
+                <span className="sr-only">Select</span>
+              </th>
+              <th scope="col" className="w-[12%] px-3 py-3">
+                Username
+              </th>
+              <th scope="col" className="w-[16%] px-3 py-3">
+                Email
+              </th>
+              <th scope="col" className="w-[8%] px-3 py-3">
+                Role
+              </th>
+              <th scope="col" className="w-[8%] px-3 py-3">
+                Plan
+              </th>
+              <th scope="col" className="w-[20%] px-3 py-3">
+                Media Used
+              </th>
+              <th scope="col" className="w-[10%] px-3 py-3">
+                Convos Today
+              </th>
+              <th scope="col" className="w-[10%] px-3 py-3">
+                Registered
+              </th>
+              <th scope="col" className="w-[8%] px-3 py-3">
+                State
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-300 dark:divide-slate-500">
+            {users.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={9}
+                  className="px-4 py-6 text-sm text-midnightBlue-600 dark:text-lavenderHaze-600"
+                >
+                  No users matched this search.
+                </td>
+              </tr>
+            ) : null}
 
-      <div className="divide-y divide-slate-300 dark:divide-slate-500">
-        {users.length === 0 ? (
-          <p className="px-4 py-6 text-sm text-midnightBlue-600 dark:text-lavenderHaze-600">
-            No users matched this search.
-          </p>
-        ) : null}
-
-        {users.map((user) => (
-          <div
-            key={user.id}
-            className="grid grid-cols-[0.35fr_1.05fr_1.35fr_0.6fr_0.6fr_1.25fr_0.7fr_0.8fr_0.7fr] gap-3 px-4 py-4 text-sm"
-          >
-            <label className="flex items-center">
-              <input
-                type="checkbox"
-                checked={selectedSet.has(user.id)}
-                onChange={() => handleToggleUser(user.id)}
-                aria-label={`Select ${user.username}`}
-              />
-            </label>
-            <Link
-              href={`/admin/users/${user.id}`}
-              className="font-medium transition-all hover:underline"
-            >
-              {user.username}
-            </Link>
-            <span className="truncate">{user.email}</span>
-            <span className="capitalize">{user.role}</span>
-            <span>{user.planName}</span>
-            <span className="truncate text-xs text-midnightBlue-600 dark:text-lavenderHaze-600">
-              {`${user.mediaUsage.images.used}/${formatLimit(user.mediaUsage.images.limit)} img | ${user.mediaUsage.audio.used}/${formatLimit(user.mediaUsage.audio.limit)} aud | ${user.mediaUsage.video.used}/${formatLimit(user.mediaUsage.video.limit)} vid`}
-            </span>
-            <span className="text-xs font-medium">
-              {`${user.conversationUsage.used}/${formatLimit(user.conversationUsage.limit)}`}
-            </span>
-            <span>
-              {user.registerAt
-                ? new Date(user.registerAt).toLocaleDateString()
-                : "-"}
-            </span>
-            <span>{user.suspended ? "Suspended" : "Active"}</span>
-          </div>
-        ))}
+            {users.map((user) => (
+              <tr key={user.id} className="text-sm">
+                <td className="px-4 py-4 align-middle">
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={selectedSet.has(user.id)}
+                      onChange={() => handleToggleUser(user.id)}
+                      aria-label={`Select ${user.username}`}
+                    />
+                  </label>
+                </td>
+                <td className="px-3 py-4 align-middle">
+                  <Link
+                    href={`/admin/users/${user.id}`}
+                    className="font-medium transition-all hover:underline"
+                  >
+                    {user.username}
+                  </Link>
+                </td>
+                <td className="truncate px-3 py-4 align-middle">
+                  {user.email}
+                </td>
+                <td className="px-3 py-4 align-middle capitalize">
+                  {user.role}
+                </td>
+                <td className="px-3 py-4 align-middle">{user.planName}</td>
+                <td className="truncate px-3 py-4 text-xs text-midnightBlue-600 dark:text-lavenderHaze-600">
+                  {`${user.mediaUsage.images.used}/${formatLimit(user.mediaUsage.images.limit)} img | ${user.mediaUsage.audio.used}/${formatLimit(user.mediaUsage.audio.limit)} aud | ${user.mediaUsage.video.used}/${formatLimit(user.mediaUsage.video.limit)} vid`}
+                </td>
+                <td className="px-3 py-4 text-xs font-medium">
+                  {`${user.conversationUsage.used}/${formatLimit(user.conversationUsage.limit)}`}
+                </td>
+                <td className="px-3 py-4">
+                  {user.registerAt
+                    ? new Date(user.registerAt).toLocaleDateString()
+                    : "-"}
+                </td>
+                <td className="px-3 py-4">
+                  {user.suspended ? "Suspended" : "Active"}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
       {pagination.totalPages > 1 && (

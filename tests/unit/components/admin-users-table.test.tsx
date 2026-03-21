@@ -130,6 +130,8 @@ describe("AdminUsersTable", () => {
 
     fireEvent.click(getSelectAllCheckbox());
 
+    expect(screen.getByRole("table")).toBeTruthy();
+    expect(screen.getAllByRole("columnheader")).toHaveLength(9);
     expect(getSelectAllCheckbox().checked).toBe(true);
     expect(screen.getByText("2 selected")).toBeTruthy();
 

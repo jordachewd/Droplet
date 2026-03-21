@@ -277,4 +277,49 @@ describe("ChatWrapper", () => {
 
     expect(screen.queryByRole("alert")).toBeNull();
   });
+
+  it("passes an AbortSignal to fetch and aborts in-flight requests on unmount", async () => {
+    let receivedSignal: AbortSignal | undefined;
+
+    vi.spyOn(globalThis, "fetch").mockImplementation((_input, init) => {
+      receivedSignal = init?.signal as AbortSignal | undefined;
+
+      return new Promise<Response>((_resolve, reject) => {
+        receivedSignal?.addEventListener("abort", () => {
+          reject(new DOMException("Aborted", "AbortError"));
+        });
+      });
+    });
+
+    const { unmount } = render(<ChatWrapper {...chatWrapperProps} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Send message" }));
+
+    await waitFor(() => {
+      expect(receivedSignal).toBeDefined();
+    });
+
+    expect(receivedSignal?.aborted).toBe(false);
+
+    unmount();
+
+    expect(receivedSignal?.aborted).toBe(true);
+  });
+
+  it("does not show an alert when the chat request is aborted", async () => {
+    vi.spyOn(globalThis, "fetch").mockRejectedValue(
+      new DOMException("Aborted", "AbortError"),
+    );
+
+    render(<ChatWrapper {...chatWrapperProps} />);
+
+    const sendButton = screen.getByRole("button", { name: "Send message" });
+    fireEvent.click(sendButton);
+
+    await waitFor(() => {
+      expect(sendButton.hasAttribute("disabled")).toBe(false);
+    });
+
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
 });

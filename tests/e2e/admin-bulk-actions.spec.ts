@@ -221,7 +221,7 @@ test.describe("admin bulk actions and pagination selection reset", () => {
     await confirmationDialog.getByRole("button", { name: "Confirm" }).click();
 
     const userRow = page
-      .locator(".AdminUsersTable .divide-y > div")
+      .locator(".AdminUsersTable tbody tr")
       .filter({ has: page.getByRole("link", { name: targetUser.username }) });
     await expect(userRow).toContainText("Suspended");
   });
