@@ -10,6 +10,10 @@ import ChatInput from "@/components/chat/chat-input";
 import AlertMessage from "@/components/shared/alert-message";
 import { AlertParams } from "@/types/AlertData.d";
 import { filterAssistantMsg } from "@/lib/utils/openai/filterAssistantMsg";
+import {
+  ensureMessageHasId,
+  ensureMessagesHaveId,
+} from "@/lib/utils/message-id";
 import { Persona, PersonaId } from "@/types/PersonaData.d";
 import { TaskEndAction, TaskEndedReason, TaskStatus } from "@/types/TaskData.d";
 import { useChatStore } from "@/lib/hooks/use-chat-store";
@@ -72,7 +76,7 @@ export default function ChatWrapper({
   initialEndAction,
 }: ChatWrapperProps) {
   const initialMessages = useMemo(
-    () => initialMessagesProp ?? [],
+    () => ensureMessagesHaveId(initialMessagesProp ?? []),
     [initialMessagesProp],
   );
   const fallbackPersona = personas[0];
@@ -217,8 +221,11 @@ export default function ChatWrapper({
       const baseMessages = acceptedPrompt
         ? withoutTemp
         : withoutTemp.slice(0, -1);
+      const normalizedTaskData = taskData ? ensureMessageHasId(taskData) : null;
 
-      return taskData ? [...baseMessages, taskData] : baseMessages;
+      return normalizedTaskData
+        ? [...baseMessages, normalizedTaskData]
+        : baseMessages;
     });
   }
 
@@ -259,18 +266,26 @@ export default function ChatWrapper({
   }
 
   function syncStreamingMessage(snapshot: string) {
-    const streamingTaskData: Message = {
-      whois: "assistant",
-      role: "assistant",
-      content: [{ type: "text", text: snapshot }],
-    };
-
     setMessages((previousMessages) => {
       if (previousMessages.length === 0) {
-        return [streamingTaskData];
+        return [
+          ensureMessageHasId({
+            whois: "assistant",
+            role: "assistant",
+            content: [{ type: "text", text: snapshot }],
+          }),
+        ];
       }
 
       const updatedMessages = [...previousMessages];
+      const previousStreamingMessage =
+        updatedMessages[updatedMessages.length - 1];
+      const streamingTaskData: Message = {
+        id: previousStreamingMessage?.id,
+        whois: "assistant",
+        role: "assistant",
+        content: [{ type: "text", text: snapshot }],
+      };
       updatedMessages[updatedMessages.length - 1] = streamingTaskData;
 
       return updatedMessages;
@@ -389,20 +404,25 @@ export default function ChatWrapper({
     setIsLoading(true);
     setStartMsg("");
 
+    const promptWithId = ensureMessageHasId(prompt);
     const tempPrompt: Message = {
       whois: "assistant",
       role: "assistant",
       content: [{ type: "temp", text: "Thinking ..." }],
     };
+    const tempPromptWithId = ensureMessageHasId(tempPrompt);
 
     setMessages((previousMessages) => [
       ...previousMessages,
-      prompt,
-      tempPrompt,
+      promptWithId,
+      tempPromptWithId,
     ]);
 
     try {
-      const taskMessages = filterAssistantMsg([...task, prompt] as Message[]);
+      const taskMessages = filterAssistantMsg([
+        ...task,
+        promptWithId,
+      ] as Message[]);
 
       const response = await fetch("/api/openai", {
         method: "POST",

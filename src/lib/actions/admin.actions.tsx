@@ -4,7 +4,7 @@ import "server-only";
 import { clerkClient } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 import { connectToDatabase } from "@/lib/database/mongoose";
-import { PERSONAS } from "@/constants/assistant-personas";
+import { PERSONAS, VALID_PERSONA_ID_SET } from "@/constants/assistant-personas";
 import AppSetting from "@/lib/database/models/app-setting.model";
 import PublicPage from "@/lib/database/models/public-page.model";
 import Task from "@/lib/database/models/tasks.model";
@@ -35,7 +35,6 @@ const PERSONA_ACCESS_KEYS = new Set([
   "persona_access_pro",
   "persona_access_premium",
 ]);
-const VALID_PERSONA_ID_SET = new Set(PERSONAS.map((persona) => persona.id));
 
 function getStringField(formData: FormData, fieldName: string): string {
   const value = formData.get(fieldName);

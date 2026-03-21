@@ -35,6 +35,7 @@ const ContentItemSchema = new Schema<ContentItem>(
 
 const MessageSchema = new Schema<Message>(
   {
+    id: { type: String },
     whois: {
       type: String,
       enum: ["user", "assistant", "system", "developer"],

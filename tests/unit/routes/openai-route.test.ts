@@ -362,7 +362,14 @@ describe("POST /api/openai", () => {
     );
     expect(generateTitle).toHaveBeenCalledOnce();
     expect(generateTitle).toHaveBeenCalledWith(
-      [{ role: "user", whois: "user", content: "new chat" }],
+      [
+        expect.objectContaining({
+          id: expect.any(String),
+          role: "user",
+          whois: "user",
+          content: "new chat",
+        }),
+      ],
       "Lite",
       "strategist",
       expect.objectContaining({
@@ -375,7 +382,14 @@ describe("POST /api/openai", () => {
     );
     expect(createTask).toHaveBeenCalledWith({
       title: "Generated title",
-      messages: [{ role: "user", whois: "user", content: "new chat" }],
+      messages: [
+        expect.objectContaining({
+          id: expect.any(String),
+          role: "user",
+          whois: "user",
+          content: "new chat",
+        }),
+      ],
       usage: 7,
       personaId: "strategist",
       promptCount: 1,
@@ -383,7 +397,14 @@ describe("POST /api/openai", () => {
     });
     expect(generateResponse).toHaveBeenCalledWith(
       expect.objectContaining({
-        messages: [{ role: "user", whois: "user", content: "new chat" }],
+        messages: [
+          expect.objectContaining({
+            id: expect.any(String),
+            role: "user",
+            whois: "user",
+            content: "new chat",
+          }),
+        ],
         taskId: NEW_TASK_ID,
         userId: "user_123",
         personaId: "strategist",
@@ -400,12 +421,18 @@ describe("POST /api/openai", () => {
       NEW_TASK_ID,
       expect.objectContaining({
         messages: [
-          { role: "user", whois: "user", content: "new chat" },
-          {
+          expect.objectContaining({
+            id: expect.any(String),
+            role: "user",
+            whois: "user",
+            content: "new chat",
+          }),
+          expect.objectContaining({
+            id: expect.any(String),
             whois: "assistant",
             role: "assistant",
             content: [{ type: "text", text: "Hello from AI" }],
-          },
+          }),
         ],
         usage: 11,
         personaId: "strategist",
@@ -597,12 +624,18 @@ describe("POST /api/openai", () => {
     expect(generateResponse).toHaveBeenCalledWith(
       expect.objectContaining({
         messages: [
-          {
+          expect.objectContaining({
+            id: expect.any(String),
             role: "user",
             whois: "user",
             content: [{ type: "text", text: "Earlier prompt" }],
-          },
-          { role: "user", whois: "user", content: "continue" },
+          }),
+          expect.objectContaining({
+            id: expect.any(String),
+            role: "user",
+            whois: "user",
+            content: "continue",
+          }),
         ],
         taskId: EXISTING_TASK_ID,
         userId: "user_123",
@@ -621,17 +654,24 @@ describe("POST /api/openai", () => {
       expect.objectContaining({
         personaId: "strategist",
         messages: [
-          {
+          expect.objectContaining({
+            id: expect.any(String),
             role: "user",
             whois: "user",
             content: [{ type: "text", text: "Earlier prompt" }],
-          },
-          { role: "user", whois: "user", content: "continue" },
-          {
+          }),
+          expect.objectContaining({
+            id: expect.any(String),
+            role: "user",
+            whois: "user",
+            content: "continue",
+          }),
+          expect.objectContaining({
+            id: expect.any(String),
             whois: "assistant",
             role: "assistant",
             content: [{ type: "text", text: "Hello from AI" }],
-          },
+          }),
         ],
       }),
     );

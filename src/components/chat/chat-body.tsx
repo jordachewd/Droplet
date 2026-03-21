@@ -1,6 +1,6 @@
 import classNames from "classnames";
 import Link from "next/link";
-import { Message } from "@/types";
+import { ContentItem, Message } from "@/types";
 import { useEffect, useMemo, useRef } from "react";
 import autoAnimate from "@formkit/auto-animate";
 import ReactMarkdown from "react-markdown";
@@ -62,6 +62,54 @@ function renderAction({
   );
 }
 
+function buildMessageFallbackKey(message: Message): string {
+  const normalizedContent = Array.isArray(message.content)
+    ? message.content
+        .map((item) => {
+          if (item.type === "text" || item.type === "temp") {
+            return `${item.type}:${item.text ?? ""}`;
+          }
+
+          if (item.type === "image_url") {
+            return `${item.type}:${item.image_url?.url ?? ""}`;
+          }
+
+          if (item.type === "audio_url") {
+            return `${item.type}:${item.audio_url ?? ""}`;
+          }
+
+          if (item.type === "video_url") {
+            return `${item.type}:${item.video_url ?? ""}`;
+          }
+
+          return item.type;
+        })
+        .join("|")
+    : `${message.content ?? ""}`;
+
+  return `${message.role}:${message.whois ?? "unknown"}:${normalizedContent}`;
+}
+
+function buildContentFallbackKey(content: ContentItem): string {
+  if (content.type === "text" || content.type === "temp") {
+    return `${content.type}:${content.text ?? ""}`;
+  }
+
+  if (content.type === "image_url") {
+    return `${content.type}:${content.image_url?.url ?? ""}`;
+  }
+
+  if (content.type === "audio_url") {
+    return `${content.type}:${content.audio_url ?? ""}`;
+  }
+
+  if (content.type === "video_url") {
+    return `${content.type}:${content.video_url ?? ""}`;
+  }
+
+  return content.type;
+}
+
 export default function ChatBody({
   messages,
   personaLabel,
@@ -93,10 +141,19 @@ export default function ChatBody({
   }, [messages]);
 
   const listMessages = useMemo(() => {
-    return messages.map((message, index) => {
+    const messageKeyCount = new Map<string, number>();
+
+    return messages.map((message) => {
       const { whois, content } = message;
       const isBot = whois !== "user";
       const messageOwner = isBot ? personaLabel || "Assistant" : "You";
+      const messageKeyBase = message.id ?? buildMessageFallbackKey(message);
+      const messageKeyIndex = messageKeyCount.get(messageKeyBase) ?? 0;
+      messageKeyCount.set(messageKeyBase, messageKeyIndex + 1);
+      const messageKey =
+        messageKeyIndex === 0
+          ? messageKeyBase
+          : `${messageKeyBase}:${messageKeyIndex}`;
 
       const articleClass = classNames(
         "ChatBodyMessage flex items-start gap-3",
@@ -116,7 +173,7 @@ export default function ChatBody({
       });
 
       return (
-        <article key={`${message.role}-${index}`} className={articleClass}>
+        <article key={messageKey} className={articleClass}>
           <i className={avatarClass}></i>
 
           <div className="flex max-w-[92%] flex-col gap-1">
@@ -126,54 +183,67 @@ export default function ChatBody({
 
             <div className={chatMarkdownClass}>
               {Array.isArray(content) ? (
-                content.map((reply, contentIndex) => {
-                  if (reply.type === "text") {
-                    return (
-                      <ReactMarkdown
-                        key={contentIndex}
-                        remarkPlugins={[remarkGfm]}
-                      >
-                        {reply.text}
-                      </ReactMarkdown>
-                    );
-                  }
+                (() => {
+                  const contentKeyCount = new Map<string, number>();
 
-                  if (reply.type === "image_url") {
-                    return (
-                      <ImageHolder
-                        key={contentIndex}
-                        hasTools={isBot}
-                        src={reply.image_url?.url || ""}
-                        width={isBot ? 320 : 128}
-                        height={isBot ? 320 : 128}
-                      />
-                    );
-                  }
+                  return content.map((reply) => {
+                    const contentKeyBase = buildContentFallbackKey(reply);
+                    const contentKeyIndex =
+                      contentKeyCount.get(contentKeyBase) ?? 0;
+                    contentKeyCount.set(contentKeyBase, contentKeyIndex + 1);
+                    const contentKey =
+                      contentKeyIndex === 0
+                        ? contentKeyBase
+                        : `${contentKeyBase}:${contentKeyIndex}`;
 
-                  if (reply.type === "audio_url") {
-                    return (
-                      <AudioPlayer
-                        key={contentIndex}
-                        audioSrc={reply.audio_url || null}
-                      />
-                    );
-                  }
+                    if (reply.type === "text") {
+                      return (
+                        <ReactMarkdown
+                          key={contentKey}
+                          remarkPlugins={[remarkGfm]}
+                        >
+                          {reply.text}
+                        </ReactMarkdown>
+                      );
+                    }
 
-                  if (reply.type === "video_url") {
-                    return (
-                      <VideoPlayer
-                        key={contentIndex}
-                        videoSrc={reply.video_url || null}
-                      />
-                    );
-                  }
+                    if (reply.type === "image_url") {
+                      return (
+                        <ImageHolder
+                          key={contentKey}
+                          hasTools={isBot}
+                          src={reply.image_url?.url || ""}
+                          width={isBot ? 320 : 128}
+                          height={isBot ? 320 : 128}
+                        />
+                      );
+                    }
 
-                  if (reply.type === "temp") {
-                    return <LoadingBubbles key={contentIndex} size="small" />;
-                  }
+                    if (reply.type === "audio_url") {
+                      return (
+                        <AudioPlayer
+                          key={contentKey}
+                          audioSrc={reply.audio_url || null}
+                        />
+                      );
+                    }
 
-                  return null;
-                })
+                    if (reply.type === "video_url") {
+                      return (
+                        <VideoPlayer
+                          key={contentKey}
+                          videoSrc={reply.video_url || null}
+                        />
+                      );
+                    }
+
+                    if (reply.type === "temp") {
+                      return <LoadingBubbles key={contentKey} size="small" />;
+                    }
+
+                    return null;
+                  });
+                })()
               ) : (
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
                   {content}
@@ -195,7 +265,7 @@ export default function ChatBody({
 
   return (
     <>
-      <div className={chatBodyClass} ref={parent}>
+      <div className={chatBodyClass} ref={parent} aria-live="polite">
         {listMessages}
 
         {endState && (

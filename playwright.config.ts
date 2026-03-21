@@ -39,13 +39,27 @@ const browserProjects =
     ? [...defaultBrowserProjects, ...fullMatrixOnlyProjects]
     : defaultBrowserProjects;
 
+function resolvePlaywrightWorkers(): number {
+  const rawWorkers = process.env.PLAYWRIGHT_WORKERS;
+  if (!rawWorkers) {
+    return 1;
+  }
+
+  const parsedWorkers = Number.parseInt(rawWorkers, 10);
+  if (Number.isNaN(parsedWorkers) || parsedWorkers < 1) {
+    return 1;
+  }
+
+  return parsedWorkers;
+}
+
 export default defineConfig({
   testDir: "./tests/e2e",
   outputDir: "./tests/e2e/test-results",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  workers: process.env.CI ? 1 : resolvePlaywrightWorkers(),
   reporter: "list",
   expect: {
     timeout: 5_000,

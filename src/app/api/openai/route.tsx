@@ -39,6 +39,10 @@ import {
 } from "@/lib/utils/check-daily-conversations";
 import { getTaskByIdForUser } from "@/lib/utils/task-queries";
 import { filterAssistantMsg } from "@/lib/utils/openai/filterAssistantMsg";
+import {
+  ensureMessageHasId,
+  ensureMessagesHaveId,
+} from "@/lib/utils/message-id";
 import { PlanLimits } from "@/constants/plans";
 import { STOP_REASON_MESSAGES } from "@/constants/stop-reasons";
 import { PlanName } from "@/types/PlanData.d";
@@ -199,7 +203,7 @@ function createStopTaskData({
     ? ` ${endActionInstructions[endAction]}`
     : "";
 
-  return {
+  return ensureMessageHasId({
     whois: "assistant",
     role: "assistant",
     content: [
@@ -208,7 +212,7 @@ function createStopTaskData({
         text: `${STOP_REASON_MESSAGES[stopReason]}${endActionInstruction}`,
       },
     ],
-  };
+  });
 }
 
 function createStopResponsePayload({
@@ -529,23 +533,26 @@ async function persistConversationStop({
   estimatedBytes?: number;
   supportEmail: string;
 }): Promise<Message> {
+  const normalizedCurrentMessages = ensureMessagesHaveId(currentMessages);
   const stopTaskData = createStopTaskData({
     stopReason,
     endAction,
     supportEmail,
   });
-  const messagesWithStop = [...currentMessages, stopTaskData];
+  const messagesWithStop = [...normalizedCurrentMessages, stopTaskData];
   const estimatedBytesWithStop = estimateConversationBytes(messagesWithStop);
   const canPersistStopMessage =
     estimatedBytesWithStop <= TASK_STORAGE_WARNING_BYTES;
 
   const updatePayload: UpdateTaskParams = {
-    messages: canPersistStopMessage ? messagesWithStop : currentMessages,
+    messages: canPersistStopMessage
+      ? messagesWithStop
+      : normalizedCurrentMessages,
     personaId,
     estimatedBytes:
       typeof estimatedBytes === "number"
         ? estimatedBytes
-        : estimateConversationBytes(currentMessages),
+        : estimateConversationBytes(normalizedCurrentMessages),
     status: "ended",
     endedAt: new Date(),
     endedReason: stopReason,
@@ -574,20 +581,25 @@ async function persistConversationNotice({
   noticeTaskData: Message;
   estimatedBytes?: number;
 }): Promise<void> {
-  const messagesWithNotice = [...currentMessages, noticeTaskData];
+  const normalizedCurrentMessages = ensureMessagesHaveId(currentMessages);
+  const normalizedNoticeTaskData = ensureMessageHasId(noticeTaskData);
+  const messagesWithNotice = [
+    ...normalizedCurrentMessages,
+    normalizedNoticeTaskData,
+  ];
   const estimatedBytesWithNotice =
     estimateConversationBytes(messagesWithNotice);
   const canPersistNotice =
     estimatedBytesWithNotice <= TASK_STORAGE_WARNING_BYTES;
 
   await updateTask(taskId, {
-    messages: canPersistNotice ? messagesWithNotice : currentMessages,
+    messages: canPersistNotice ? messagesWithNotice : normalizedCurrentMessages,
     personaId,
     estimatedBytes: canPersistNotice
       ? estimatedBytesWithNotice
       : typeof estimatedBytes === "number"
         ? estimatedBytes
-        : estimateConversationBytes(currentMessages),
+        : estimateConversationBytes(normalizedCurrentMessages),
   });
 }
 
@@ -638,6 +650,9 @@ async function finalizeAIResponse({
     };
   }
 
+  const normalizedStoredMessagesWithIncomingPrompt = ensureMessagesHaveId(
+    storedMessagesWithIncomingPrompt,
+  );
   const { taskData, taskUsage } = aiPayload;
 
   if (isMediaLimitStopReason(aiPayload.blockedReason)) {
@@ -663,7 +678,7 @@ async function finalizeAIResponse({
       await persistConversationNotice({
         taskId,
         personaId: selectedPersonaId,
-        currentMessages: storedMessagesWithIncomingPrompt,
+        currentMessages: normalizedStoredMessagesWithIncomingPrompt,
         noticeTaskData: taskDataToPersist,
         estimatedBytes: estimatedBytesWithIncomingPrompt,
       });
@@ -671,7 +686,7 @@ async function finalizeAIResponse({
       taskDataToPersist = await persistConversationStop({
         taskId,
         personaId: selectedPersonaId,
-        currentMessages: storedMessagesWithIncomingPrompt,
+        currentMessages: normalizedStoredMessagesWithIncomingPrompt,
         stopReason,
         endAction,
         estimatedBytes: estimatedBytesWithIncomingPrompt,
@@ -697,9 +712,10 @@ async function finalizeAIResponse({
     throw new Error("AI response payload is missing task data.");
   }
 
+  const normalizedTaskData = ensureMessageHasId(taskData);
   const storedMessagesWithAssistant = [
-    ...storedMessagesWithIncomingPrompt,
-    taskData,
+    ...normalizedStoredMessagesWithIncomingPrompt,
+    normalizedTaskData,
   ];
   const estimatedBytesWithAssistant = estimateConversationBytes(
     storedMessagesWithAssistant,
@@ -750,7 +766,7 @@ async function finalizeAIResponse({
   return {
     status: 200,
     payload: {
-      taskData,
+      taskData: normalizedTaskData,
       taskId,
       personaId: selectedPersonaId,
       acceptedPrompt: true,
@@ -786,10 +802,11 @@ export async function POST(req: Request): Promise<Response> {
     }
 
     const {
-      messages: requestMessages,
+      messages: parsedRequestMessages,
       taskId: providedTaskId,
       personaId,
     }: OpenAiRequestBody = parsedRequestBody.data;
+    const requestMessages = ensureMessagesHaveId(parsedRequestMessages);
     const { userId } = await auth();
 
     if (!userId) {
@@ -1092,7 +1109,9 @@ export async function POST(req: Request): Promise<Response> {
       videoLimitReached,
     };
 
-    const storedMessagesBeforePrompt = persistedTask?.messages ?? [];
+    const storedMessagesBeforePrompt = ensureMessagesHaveId(
+      persistedTask?.messages ?? [],
+    );
     const storedMessagesWithIncomingPrompt = providedTaskId
       ? [...storedMessagesBeforePrompt, latestUserMessage]
       : requestMessages;

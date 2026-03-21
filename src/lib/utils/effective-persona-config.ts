@@ -1,8 +1,13 @@
 import "server-only";
 
-import { DEFAULT_PERSONA_ID, PERSONAS } from "@/constants/assistant-personas";
+import {
+  DEFAULT_PERSONA_ID,
+  PERSONAS,
+  VALID_PERSONA_ID_SET,
+} from "@/constants/assistant-personas";
 import AppSetting from "@/lib/database/models/app-setting.model";
 import { connectToDatabase } from "@/lib/database/mongoose";
+import { isObjectRecord } from "@/lib/utils/type-guards";
 import { Persona, PersonaId } from "@/types/PersonaData.d";
 
 type PersonaOverrideValue = {
@@ -18,7 +23,6 @@ type AppSettingRecord = {
   value?: unknown;
 };
 
-const VALID_PERSONA_ID_SET = new Set(PERSONAS.map((persona) => persona.id));
 const DEFAULT_PERSONA_MAP: Record<PersonaId, Persona> = PERSONAS.reduce(
   (accumulator, persona) => {
     accumulator[persona.id] = persona;
@@ -32,10 +36,6 @@ function clonePersona(persona: Persona): Persona {
     ...persona,
     starterPrompts: [...persona.starterPrompts],
   };
-}
-
-function isObjectRecord(value: unknown): value is Record<string, unknown> {
-  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
 
 function normalizeNonEmptyString({

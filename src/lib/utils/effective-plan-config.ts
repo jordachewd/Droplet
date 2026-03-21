@@ -11,6 +11,7 @@ import {
 import { SUPPORT_EMAIL } from "@/constants/support";
 import AppSetting from "@/lib/database/models/app-setting.model";
 import { connectToDatabase } from "@/lib/database/mongoose";
+import { isObjectRecord } from "@/lib/utils/type-guards";
 
 type AppSettingRecord = {
   key: string;
@@ -23,10 +24,6 @@ export interface EffectivePlanConfig {
   pricing: PlanPricing;
   limits: PlanLimits;
   trialLimits: PersonaTrialLimits;
-}
-
-function isObjectRecord(value: unknown): value is Record<string, unknown> {
-  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
 
 function normalizePositiveInteger({

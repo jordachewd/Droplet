@@ -47,9 +47,9 @@ export default function ChatIntro({ persona, sendPrompt }: ChatIntroProps) {
       </div>
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-        {persona.starterPrompts.map((prompt, index) => (
+        {persona.starterPrompts.map((prompt) => (
           <button
-            key={`${persona.id}-${index}`}
+            key={`${persona.id}-${prompt}`}
             type="button"
             onClick={() => handleSendPrompt(prompt)}
             className={introPromptButtonClass}

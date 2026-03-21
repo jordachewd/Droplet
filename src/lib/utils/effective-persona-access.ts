@@ -1,6 +1,6 @@
 import "server-only";
 
-import { PERSONAS } from "@/constants/assistant-personas";
+import { VALID_PERSONA_ID_SET } from "@/constants/assistant-personas";
 import AppSetting from "@/lib/database/models/app-setting.model";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import { DEFAULT_FULL_PERSONA_ACCESS_BY_PLAN } from "@/lib/utils/resolve-entitlements";
@@ -19,8 +19,6 @@ const PERSONA_ACCESS_KEY_BY_PLAN: Record<PlanName, string> = {
   Pro: "persona_access_pro",
   Premium: "persona_access_premium",
 };
-
-const VALID_PERSONA_ID_SET = new Set(PERSONAS.map((persona) => persona.id));
 
 function normalizePersonaIdArray(
   value: unknown,

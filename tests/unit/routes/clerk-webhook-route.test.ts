@@ -216,6 +216,45 @@ describe("POST /api/webhooks/clerk", () => {
     expect(payload).toEqual({ message: "OK" });
   });
 
+  it("handles duplicate-key races for replayed user.created events", async () => {
+    verifyWebhookMock.mockResolvedValue({
+      type: "user.created",
+      data: {
+        id: "clerk_user_1",
+        email_addresses: [{ email_address: "clerk-user@example.com" }],
+        created_at: "2026-01-01T00:00:00.000Z",
+        first_name: "Ada",
+        last_name: "Lovelace",
+        username: "adal",
+        image_url: "https://cdn.example.com/u1.png",
+      },
+    });
+    vi.mocked(User.findOne)
+      .mockResolvedValueOnce(null as never)
+      .mockResolvedValueOnce({
+        _id: "mongo_user_existing",
+        clerkId: "clerk_user_1",
+        role: "client",
+      } as never);
+    vi.mocked(User.create).mockRejectedValueOnce({
+      code: 11000,
+    } as never);
+
+    const response = await POST(buildRequest({ event: "user.created" }));
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(User.create).toHaveBeenCalledTimes(1);
+    expect(updateUserMetadataMock).toHaveBeenCalledWith("clerk_user_1", {
+      publicMetadata: {
+        userId: "mongo_user_existing",
+        role: "client",
+        userImg: "https://cdn.example.com/u1.png",
+      },
+    });
+    expect(payload).toEqual({ message: "OK" });
+  });
+
   it("resolves the primary email and generates a fallback username locally when Clerk omits username", async () => {
     verifyWebhookMock.mockResolvedValue({
       type: "user.created",
@@ -550,6 +589,47 @@ describe("POST /api/webhooks/clerk", () => {
     );
     expect(stderrWriteMock).toHaveBeenCalledWith(
       "[clerk-webhook] user.deleted cleanup counts usageEvents=0\n",
+    );
+  });
+
+  it("returns 200 when usage-event cleanup fails and logs partial cleanup", async () => {
+    verifyWebhookMock.mockResolvedValue({
+      type: "user.deleted",
+      data: {
+        id: "clerk_user_1",
+      },
+    });
+    vi.mocked(Task.deleteMany).mockResolvedValue({
+      deletedCount: 2,
+    } as never);
+    vi.mocked(UsageEvent.deleteMany).mockRejectedValue(
+      new Error("Usage cleanup failed"),
+    );
+    vi.mocked(deleteS3Prefix).mockResolvedValue(3);
+
+    const response = await POST(buildRequest({ event: "user.deleted" }));
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(Transaction.deleteMany).toHaveBeenCalledWith({
+      clerkId: "clerk_user_1",
+    });
+    expect(Task.deleteMany).toHaveBeenCalledWith({
+      userId: "clerk_user_1",
+    });
+    expect(UsageEvent.deleteMany).toHaveBeenCalledWith({
+      userId: "clerk_user_1",
+    });
+    expect(deleteS3Prefix).toHaveBeenCalledWith("clerk_user_1/");
+    expect(payload).toEqual({ message: "OK" });
+    expect(stderrWriteMock).toHaveBeenCalledWith(
+      "[clerk-webhook] user.deleted usage-event cleanup failed.\n",
+    );
+    expect(stderrWriteMock).toHaveBeenCalledWith(
+      "[clerk-webhook] user.deleted cleanup counts user=0 transactions=0 tasks=2 s3Objects=3\n",
+    );
+    expect(stderrWriteMock).toHaveBeenCalledWith(
+      "[clerk-webhook] user.deleted cleanup counts usageEvents=unknown\n",
     );
   });
 

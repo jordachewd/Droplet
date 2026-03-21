@@ -1,4 +1,5 @@
 import { PlanPricing } from "@/constants/plans";
+import { legalReviewDisclaimer } from "@/constants/legal-shared";
 import termsData from "@/json/terms.json";
 
 export interface LegalSection {
@@ -6,8 +7,7 @@ export interface LegalSection {
   paragraphs: string[];
 }
 
-export const legalReviewDisclaimer =
-  "This policy is provided for informational purposes. Legal review recommended before production publication.";
+export { legalReviewDisclaimer };
 
 function interpolateTermsParagraph(
   paragraph: string,
