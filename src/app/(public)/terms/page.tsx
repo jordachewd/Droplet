@@ -24,9 +24,7 @@ export default async function TermsPage() {
     <section className="TermsPage mx-auto flex w-full max-w-screen-2xl flex-col gap-8 px-4 pb-16 pt-24 sm:px-6 lg:px-8">
       <div
         className={classNames(
-          "rounded-4xl border px-6 py-10 shadow-sm",
-          "border-slate-400/80 bg-lavenderHaze-100/76",
-          "dark:border-slate-500 dark:bg-nightIndigo-900/82",
+          "rounded-4xl px-6 py-10 shadow-sm bg-lavenderHaze-100/76 dark:bg-nightIndigo-900/82",
         )}
       >
         <PageHead
