@@ -5,142 +5,81 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #44 (2026-03-21). All Phases 1–96.2 complete. 390 unit tests (64 suites). Build passing. Node.js 24.12.0 runtime.**
-> **Coverage: 76.27/65.31/79.64/76.67 vs 76/65/79/76 (MET). Gates 1–4 + 6 GREEN. Gate 5 (E2E) NEEDS INVESTIGATION — 4 Chromium failures reported.**
+> **STATUS: PM audit #45 (2026-03-21). All Phases 1–96.3, 99.1, 99.3, 100.1–100.3, 95-R complete. 393 unit tests (64 suites). All 6 gates GREEN. Build passing. Node.js 24.12.0 runtime.**
+> **Coverage: 76.27/65.31/79.64/76.67 vs 76/65/79/76 (MET).**
 > **Owner directive: FULL TESTING INFRASTRUCTURE REBUILD from scratch. TDD methodology. No hardcoded data. Code reuse maximized. WCAG 2.2 AA compliance.**
-> **Priority order: E2E Investigation (BLOCKER) → 100.1–100.3 (HIGH quick wins) → 99.1 + 99.3 (HIGH WCAG) → 96.3 (HIGH TDD) → 96.4 (HIGH TDD) → 97.1 (HIGH) → 96.5–96.8 (HIGH/MEDIUM) → 99.2 (MEDIUM) → 72.4 (MEDIUM) → 73.3 (MEDIUM) → 98 (HIGH) → 74.2 → 87 → 29.x → 26.x**
+> **Priority order: 101 (CRITICAL WCAG viewport) → 100.4 (HIGH isObjectRecord) → 102 (HIGH resource leak) → 96.4 (HIGH TDD) → 99.5 (HIGH WCAG) → 72.4 (HIGH WCAG) → 97.1 (HIGH WCAG E2E) → 96.5–96.8 (HIGH/MEDIUM TDD) → 99.2 (MEDIUM) → 99.4 (MEDIUM knip) → 73.3 (MEDIUM) → 98 (HIGH coverage) → 74.2 → 87 → 29.x → 26.x**
 
 ---
 
-## ~~COMPLETED — Phases 94–96.2~~
+## ~~COMPLETED — Phases 94–100.3~~
 
-> All moved to DONE.md. Phase 94 (config hardening), Phase 95 (E2E spec remediation), Phase 96.1 (merge conversation-stop), Phase 96.2 (reduce mock scope — pure utilities un-mocked).
-
----
-
-## BLOCKER — E2E Regression Investigation (PM audit #44)
-
-### Phase 95-R: Investigate 4 E2E Chromium Failures — BLOCKER
-
-> 4 E2E specs reported failing: `chat-app-shell`, `error-handling`, `plans-public`, `public-pages`. These were fixed in Phase 95.1–95.4 and verified passing (87 E2E, 0 failed). Phase 96.2 only changed unit test files — cannot be source of E2E regression. Must determine: environment issue, test flakiness, or actual regression.
-
-**What to do:**
-
-1. Run `npm run test:e2e` with `--reporter=list` to capture exact failure messages.
-2. Compare failures against Phase 95 structural assertion changes.
-3. If environment/timing: fix with Playwright timeout/retry config or test stability improvements.
-4. If actual regression: identify source, fix it.
-5. All 6 validation gates must be GREEN before any new work proceeds.
-
-**Acceptance criteria:**
-
-- [ ] Root cause identified for all 4 failures
-- [ ] All 4 specs passing again
-- [ ] `npm run test:e2e` shows 0 failures
+> All moved to DONE.md. Phase 94 (config hardening), Phase 95 (E2E spec remediation), Phase 95-R (E2E Chromium fix), Phase 96.1 (merge conversation-stop), Phase 96.2 (reduce mock scope), Phase 96.3 (webhook edge-case tests), Phase 99.1 (aria-live), Phase 99.3 (stable keys), Phase 100.1–100.3 (code deduplication).
 
 ---
 
-## HIGH — Code Deduplication (PM audit #44, Owner Directive: Reuse Code)
+## CRITICAL — WCAG Viewport Zoom Restriction (PM audit #45, Triple-Audit)
 
-### Phase 100: Extract Duplicated Code — HIGH
+### Phase 101: Remove viewport zoom restriction — CRITICAL
 
-> Triple-audit independently confirmed 3 patterns duplicated 3-4x each. Owner directive: "RE-USE repetitive code as much as possible."
+> All 3 audits independently confirmed: `maximumScale: 1` and `userScalable: false` in `layout.tsx` prevents mobile zoom — WCAG 2.2 AA SC 1.4.4 (Resize Text) FAILURE. Legal and accessibility release blocker.
 
-#### 100.1 HIGH — Extract `isObjectRecord` to shared utility
-
-**Files:** `src/lib/utils/effective-plan-config.ts`, `src/lib/utils/effective-persona-config.ts`, `src/components/admin/settings/normalize-admin-settings.ts`
+**File:** `src/app/layout.tsx`
 
 **What to do:**
 
-1. Create `src/lib/utils/type-guards.ts` with shared `isObjectRecord()` function.
-2. Replace all 3 local definitions with import from shared utility.
-3. Add `import "server-only"` if file is server-only (check usage in client components — `normalize-admin-settings.ts` is used client-side, so extract to a non-server-only shared file).
+1. Remove `maximumScale: 1` and `userScalable: false` from the viewport metadata.
+2. Or change to `maximumScale: 5` and `userScalable: true`.
 
 **Acceptance criteria:**
 
-- [ ] Single definition of `isObjectRecord`
-- [ ] All 3 files import from shared location
-- [ ] Build passes, tests pass
-
-#### 100.2 HIGH — Extract `VALID_PERSONA_ID_SET` to shared export
-
-**Files:** `src/lib/actions/admin.actions.tsx`, `src/lib/utils/effective-persona-access.ts`, `src/lib/utils/effective-persona-config.ts`, `src/components/admin/settings/normalize-admin-settings.ts`
-
-**What to do:**
-
-1. Export `VALID_PERSONA_ID_SET` from `src/constants/assistant-personas.tsx` (already imports PERSONAS).
-2. Replace all 4 local `new Set(PERSONAS.map(...))` with import from shared export.
-
-**Acceptance criteria:**
-
-- [ ] Single `VALID_PERSONA_ID_SET` definition
-- [ ] All 4 files import from shared location
-- [ ] Build passes, tests pass
-
-#### 100.3 HIGH — Extract `legalReviewDisclaimer` to shared constant
-
-**Files:** `src/constants/privacy-data.ts`, `src/constants/cookies-data.ts`, `src/constants/terms-data.ts`
-
-**What to do:**
-
-1. Create shared export in `src/constants/legal-shared.ts` (or add to one of the existing files as the canonical source).
-2. Import from shared location in all 3 files.
-
-**Acceptance criteria:**
-
-- [ ] Single definition of `legalReviewDisclaimer`
-- [ ] All 3 consumer files import from shared location
-- [ ] Build passes, tests pass
-
----
-
-## HIGH — WCAG Quick Wins (PM audit #44, Owner Directive: WCAG 2.2 AA)
-
-### Phase 99: WCAG Quick Fixes — HIGH
-
-> Findings from PM audit #44 triple-audit. Quick wins with high WCAG impact.
-
-#### 99.1 HIGH — Add `aria-live` region to chat messages
-
-**File:** `src/components/chat/chat-body.tsx`
-
-**What to do:**
-
-1. Add `aria-live="polite"` to the chat message container so screen readers announce incoming AI responses.
-2. WCAG 2.2 AA 4.1.3 (Status Messages) — currently violated.
-
-**Acceptance criteria:**
-
-- [ ] Chat message container has `aria-live="polite"`
+- [ ] Viewport allows user zoom on mobile
+- [ ] WCAG 2.2 AA SC 1.4.4 satisfied
 - [ ] Build passes
 
-#### 99.3 HIGH — Use stable message keys in ChatBody
+---
 
-**File:** `src/components/chat/chat-body.tsx`
+## HIGH — Code Deduplication Missed File (PM audit #45, Triple-Audit)
 
-**What to do:**
+### Phase 100.4: Fix 4th `isObjectRecord` duplicate — HIGH
 
-1. Replace `key={\`${message.role}-${index}\`}` with a stable unique ID per message.
-2. Assign a unique `id` to each `Message` object at creation time (e.g., `crypto.randomUUID()` or counter).
-3. Also fix `chat-intro.tsx` index-based key if trivially combined.
+> Phase 100.1 extracted `isObjectRecord` to `type-guards.ts` but missed a 4th local copy in `effective-model-config.ts`. TD-REUSE-01 not fully resolved until this is fixed.
 
-**Acceptance criteria:**
-
-- [ ] No array index in React key for messages
-- [ ] Each message has a stable unique key
-- [ ] Build passes
-
-#### 99.5 MEDIUM — Add `aria-label` to AudioPlayer play/pause button
-
-**File:** `src/components/shared/audio-player.tsx`
+**File:** `src/lib/utils/effective-model-config.ts`
 
 **What to do:**
 
-1. Add `aria-label="Play"` / `aria-label="Pause"` (toggle based on state) to the icon-only play/pause button.
+1. Import `isObjectRecord` from `@/lib/utils/type-guards`.
+2. Delete the local `function isObjectRecord(...)` definition (~line 22).
 
 **Acceptance criteria:**
 
-- [ ] Button has accessible name
+- [ ] Zero local `isObjectRecord` definitions remain
+- [ ] TD-REUSE-01 fully resolved
+- [ ] Build passes, tests pass
+
+---
+
+## HIGH — Resource Leak Fix (PM audit #45, Engineer Audit)
+
+### Phase 102: Add AbortController to chat streaming fetch — HIGH
+
+> Chat streaming `fetch("/api/openai")` in `chat-wrapper.tsx` has no `AbortController`. If user navigates away during stream, `ReadableStreamDefaultReader` continues consuming indefinitely, leaking HTTP connections.
+
+**File:** `src/components/chat/chat-wrapper.tsx`
+
+**What to do:**
+
+1. Create `AbortController` before fetch call.
+2. Pass `signal: controller.signal` to `fetch()` options.
+3. Add cleanup: call `controller.abort()` in the `useEffect` return or component unmount path.
+4. Handle `AbortError` in catch block (do not treat as user-visible error).
+
+**Acceptance criteria:**
+
+- [ ] Streaming fetch uses AbortController
+- [ ] Navigation during streaming cleanly cancels the fetch
+- [ ] No resource leak on unmount
 - [ ] Build passes
 
 ---
@@ -149,26 +88,8 @@
 
 ### Phase 96: Unit Test Depth Improvement — HIGH
 
-> ~~Phase 96.1 + 96.2 COMPLETE (moved to DONE.md).~~ Remaining: 96.3–96.8.
-> All new tests MUST follow TDD methodology: write failing test first, then verify behavior.
-
-#### 96.3 HIGH — Add webhook idempotency and edge case tests
-
-**Files:** `tests/unit/routes/stripe-webhook-route.test.ts`, `tests/unit/routes/clerk-webhook-route.test.ts`
-
-**What to do (TDD):**
-
-1. Stripe: Test duplicate `stripeId` — idempotency prevents double-processing (returns 200, no duplicate Transaction).
-2. Stripe: Test `User.findOne` returning null (user deleted between checkout and webhook).
-3. Clerk: Test `user.created` replay — no duplicate User, no throw.
-4. Clerk: Test `user.deleted` with already-deleted user — returns 200, no throw.
-5. Clerk: Test cascade cleanup partial failure — webhook returns 200, partial cleanup logged.
-
-**Acceptance criteria:**
-
-- [ ] Idempotency tested for both webhooks
-- [ ] All edge cases tested
-- [ ] Tests pass
+> ~~Phases 96.1–96.3 COMPLETE (moved to DONE.md).~~ Remaining: 96.4–96.8.
+> All new tests MUST follow TDD methodology.
 
 #### 96.4 HIGH — Add admin authorization failure tests
 
@@ -349,7 +270,7 @@
 
 ## MEDIUM — WCAG & Code Quality
 
-### Phase 72.4 MEDIUM — Admin table semantics
+### Phase 72.4 HIGH — Admin table semantics (promoted PM audit #45)
 
 **Files:** `src/components/admin/users/admin-users-table.tsx`, `src/components/admin/transactions/admin-transactions-table.tsx`, `src/components/admin/website/admin-website-manager.tsx`
 
@@ -381,11 +302,11 @@
 
 ---
 
-## HIGH — Triple-Audit Findings (PM audit #43 → Updated PM audit #44)
+## HIGH — Triple-Audit Findings (PM audit #43 → Updated PM audit #45)
 
-### Phase 99: Code Quality & WCAG Fixes — MEDIUM
+### Phase 99: Code Quality & WCAG Fixes — HIGH/MEDIUM
 
-> Findings from PM audit #43 + #44 triple-audits. HIGH items (99.1, 99.3) promoted to WCAG Quick Wins section above.
+> Findings from PM audit #43–#45 triple-audits. ~~99.1, 99.3 COMPLETE (moved to DONE.md).~~ Remaining: 99.2, 99.4, 99.5.
 
 #### 99.2 MEDIUM — Migrate ConfirmationModal to native `<dialog>`
 
@@ -405,22 +326,41 @@
 - [ ] Keyboard and screen reader accessible
 - [ ] Build passes, existing tests pass
 
-#### 99.4 MEDIUM — Remove dead `faqs` export + fix buildFaqs test
+#### 99.4 MEDIUM — Knip cleanup: dead exports + unused test factories (PM audit #45)
 
-**Files:** `src/constants/faqs.tsx`, `tests/unit/constants/faqs.test.ts`
+**Files:** `src/constants/faqs.tsx`, `tests/unit/constants/faqs.test.ts`, `tests/unit/factories.ts`
 
 **What to do:**
 
-1. Remove `export const faqs = buildFaqs()` from `src/constants/faqs.tsx` (dead export — only test imports it).
+1. Remove `export const faqs = buildFaqs()` from `src/constants/faqs.tsx` (dead export).
 2. Update `faqs.test.ts` to call `buildFaqs()` directly with test data and verify interpolation.
-3. Add test for `buildFaqs()` with custom pricing/persona configs to verify admin override injection.
+3. Remove or consume unused test factory exports: `createTestTransaction`, `createTestEntitlements` (Phase 96.3 tests do not consume these despite availability).
+4. Remove `export` from `createMessageId` in `message-id.ts` — it is only used internally by `ensureMessageHasId`.
 
 **Acceptance criteria:**
 
 - [ ] Dead `faqs` export removed
-- [ ] Test calls `buildFaqs()` directly
-- [ ] Test verifies override injection works
-- [ ] `npm run knip` still clean
+- [ ] Unused test factory exports removed or consumed
+- [ ] `createMessageId` no longer exported
+- [ ] `npm run knip` reports 0 unused exports
+- [ ] Tests pass
+
+#### 99.5 HIGH — AudioPlayer ARIA improvements (PM audit #45, Triple-Audit)
+
+**File:** `src/components/shared/audio-player.tsx`
+
+**What to do:**
+
+1. Add `aria-label="Play"` / `aria-label="Pause"` (toggle based on state) to the icon-only play/pause button.
+2. Add ARIA semantics to progress bar (role, aria-valuenow, aria-valuemin, aria-valuemax, aria-label).
+3. Fix 11 ESLint warnings (all `set-state-in-effect` in this file) — extract state updates into stable callbacks.
+
+**Acceptance criteria:**
+
+- [ ] Play/pause button has accessible name
+- [ ] Progress bar has ARIA semantics (role="progressbar" or role="slider")
+- [ ] ESLint warnings in audio-player.tsx resolved
+- [ ] Build passes
 
 ---
 
@@ -455,5 +395,5 @@
 ---
 
 > **Completed phases** archived in [`DONE.md`](DONE.md).
-> All phases through 96.2 complete (including 86, 88–96.2).
+> All phases through 100.3 complete (including 86, 88–96.3, 99.1, 99.3, 100.1–100.3, 95-R).
 > All Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS.

@@ -2,7 +2,77 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-21 — PM audit #44. All Phases 1–85, 80.1, 73.1, 74.1, 72.1, 72.2, 72.3, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 96.1, 96.2 complete. Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS. 390 unit tests (64 suites). 87 E2E passed, 25 skipped, 0 failed (last green state — 4 Chromium failures reported post-96.2, under investigation). Build passing. Node.js 24.12.0 runtime. Coverage: 76.27/65.31/79.64/76.67 vs 76/65/79/76 (MET).
+> Last updated: 2026-03-21 — PM audit #45. All Phases 1–85, 80.1, 73.1, 74.1, 72.1, 72.2, 72.3, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1, 96.2, 96.3, 99.1, 99.3, 100.1, 100.2, 100.3 complete. Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS. 393 unit tests (64 suites). 87 E2E passed, 25 skipped, 0 failed. All 6 validation gates GREEN. Build passing. Node.js 24.12.0 runtime. Coverage: 76.27/65.31/79.64/76.67 vs 76/65/79/76 (MET).
+
+---
+
+## Phase 100.3 — Extract `legalReviewDisclaimer` to shared constant — COMPLETED (2026-03-21)
+
+> Engineer delivered (PM audit #45). TD-REUSE-03 RESOLVED.
+
+- [x] **100.3 HIGH** — Created `src/constants/legal-shared.ts` with shared `legalReviewDisclaimer` constant. All 3 consumer files now import from shared location.
+
+**Files changed:** `src/constants/legal-shared.ts` (new), `src/constants/privacy-data.ts`, `src/constants/cookies-data.ts`, `src/constants/terms-data.ts`
+
+---
+
+## Phase 100.2 — Extract `VALID_PERSONA_ID_SET` to shared export — COMPLETED (2026-03-21)
+
+> Engineer delivered (PM audit #45). TD-REUSE-02 RESOLVED.
+
+- [x] **100.2 HIGH** — Exported `VALID_PERSONA_ID_SET` from `src/constants/assistant-personas.tsx`. All 4 local `new Set(PERSONAS.map(...))` replaced with shared import.
+
+**Files changed:** `src/constants/assistant-personas.tsx`, `src/lib/actions/admin.actions.tsx`, `src/lib/utils/effective-persona-access.ts`, `src/lib/utils/effective-persona-config.ts`, `src/components/admin/settings/normalize-admin-settings.ts`
+
+---
+
+## Phase 100.1 — Extract `isObjectRecord` to shared utility — COMPLETED (2026-03-21)
+
+> Engineer delivered (PM audit #45). TD-REUSE-01 PARTIALLY RESOLVED — 3 of 4 files migrated. 4th duplicate in `effective-model-config.ts` missed (tracked as Phase 100.4).
+
+- [x] **100.1 HIGH** — Created `src/lib/utils/type-guards.ts` with shared `isObjectRecord()`. Replaced 3 local definitions. ⚠️ `effective-model-config.ts` still has a 4th local copy — not in original scope.
+
+**Files changed:** `src/lib/utils/type-guards.ts` (new), `src/lib/utils/effective-plan-config.ts`, `src/lib/utils/effective-persona-config.ts`, `src/components/admin/settings/normalize-admin-settings.ts`
+
+---
+
+## Phase 99.3 — Stable message keys in ChatBody — COMPLETED (2026-03-21)
+
+> Engineer delivered (PM audit #45). Index-based React keys eliminated.
+
+- [x] **99.3 HIGH** — Replaced `key={\`${message.role}-${index}\`}`with stable unique ID per message. Created`src/lib/utils/message-id.ts`with`createMessageId()`and`ensureMessageHasId()`. Applied ID normalization in `use-chat-store.ts`, `chat-wrapper.tsx`, openai route persistence. Updated Message type, Task model schema, validation schemas, task queries. Fixed `chat-intro.tsx` index-based key.
+
+**Files changed:** `src/lib/utils/message-id.ts` (new), `src/types/index.tsx`, `src/lib/database/models/tasks.model.tsx`, `src/lib/utils/validation-schemas.ts`, `src/lib/utils/task-queries.tsx`, `src/lib/hooks/use-chat-store.ts`, `src/components/chat/chat-wrapper.tsx`, `src/components/chat/chat-body.tsx`, `src/components/chat/chat-intro.tsx`, `src/app/api/openai/route.tsx`
+
+---
+
+## Phase 99.1 — Add `aria-live` to chat messages — COMPLETED (2026-03-21)
+
+> Engineer delivered (PM audit #45). WCAG 2.2 AA 4.1.3 (Status Messages) compliance.
+
+- [x] **99.1 HIGH** — Added `aria-live="polite"` to chat message container in `chat-body.tsx`. Screen readers now announce incoming AI responses.
+
+**Files changed:** `src/components/chat/chat-body.tsx`
+
+---
+
+## Phase 96.3 — Webhook idempotency and edge-case tests — COMPLETED (2026-03-21)
+
+> Engineer delivered (PM audit #45). Webhook edge cases covered.
+
+- [x] **96.3 HIGH** — Stripe: duplicate `stripeId` replay short-circuit. Clerk: duplicate-key replay race. Clerk: partial cleanup failure logging. OpenAI route tests updated to expect message IDs.
+
+**Files changed:** `tests/unit/routes/stripe-webhook-route.test.ts`, `tests/unit/routes/clerk-webhook-route.test.ts`, `tests/unit/routes/openai-route.test.ts`
+
+---
+
+## Phase 95-R — E2E Chromium Failure Investigation + Fix — COMPLETED (2026-03-21)
+
+> Engineer delivered (PM audit #45). Root cause: Clerk rate-limit flakiness under Playwright worker concurrency.
+
+- [x] **95-R BLOCKER** — Added `resolvePlaywrightWorkers()` utility. Defaulted non-CI workers to `1` (override via `PLAYWRIGHT_WORKERS` env var). Reproduced and confirmed Clerk `too_many_requests` as root cause. All 87 E2E specs passing after fix.
+
+**Files changed:** `playwright.config.ts`
 
 ---
 
