@@ -22,10 +22,9 @@ import { getTaskByIdForUser } from "@/lib/utils/task-queries";
 import { enforceSlidingWindowRateLimit } from "@/lib/utils/rate-limit";
 import { emitUsageEvents } from "@/lib/utils/usage-event-utils";
 import { PLAN_LIMITS } from "@/constants/plans";
-import {
-  getEffectivePlanConfig,
-  getEffectiveSupportEmail,
-} from "@/lib/utils/effective-plan-config";
+import * as aiModelPolicy from "@/lib/utils/ai-model-policy";
+import * as usageLimitUtils from "@/lib/utils/check-usage-limit";
+import * as entitlementsUtils from "@/lib/utils/resolve-entitlements";
 import {
   buildMockRequest,
   createTestTask,
@@ -80,11 +79,6 @@ vi.mock("@/lib/utils/usage-event-utils", () => ({
 
 vi.mock("@/lib/utils/ensure-user-synced", () => ({
   ensureUserSynced: vi.fn(),
-}));
-
-vi.mock("@/lib/utils/effective-plan-config", () => ({
-  getEffectivePlanConfig: vi.fn(),
-  getEffectiveSupportEmail: vi.fn(),
 }));
 
 const EXISTING_TASK_ID = "507f1f77bcf86cd799439011";
@@ -142,19 +136,6 @@ describe("POST /api/openai", () => {
       resetAt: Date.now() + 60_000,
       retryAfterMs: 0,
     });
-    vi.mocked(getEffectivePlanConfig).mockResolvedValue({
-      pricing: { Lite: 0, Pro: 19, Premium: 39, currencySymbol: "$" },
-      limits: PLAN_LIMITS,
-      trialLimits: {
-        promptsPerConversation: 5,
-        images: 3,
-        audio: 2,
-        video: 1,
-      },
-    });
-    vi.mocked(getEffectiveSupportEmail).mockResolvedValue(
-      "support@example.com",
-    );
     vi.mocked(getTaskByIdForUser).mockResolvedValue(
       createExistingTask() as never,
     );
@@ -560,6 +541,12 @@ describe("POST /api/openai", () => {
   });
 
   it("uses the persisted task state and persona for existing conversations", async () => {
+    const resolveEntitlementsSpy = vi.spyOn(
+      entitlementsUtils,
+      "resolveEntitlements",
+    );
+    const checkUsageLimitSpy = vi.spyOn(usageLimitUtils, "checkUsageLimit");
+
     const response = await POST(
       buildRequest({
         taskId: EXISTING_TASK_ID,
@@ -579,6 +566,34 @@ describe("POST /api/openai", () => {
       taskId: EXISTING_TASK_ID,
       limit: 10,
     });
+    expect(resolveEntitlementsSpy).toHaveBeenCalledWith(
+      "Lite",
+      expect.objectContaining({
+        isAdmin: false,
+      }),
+    );
+    expect(checkUsageLimitSpy).toHaveBeenCalledTimes(3);
+    expect(checkUsageLimitSpy).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        planName: "Lite",
+        limitType: "images",
+      }),
+    );
+    expect(checkUsageLimitSpy).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        planName: "Lite",
+        limitType: "audio",
+      }),
+    );
+    expect(checkUsageLimitSpy).toHaveBeenNthCalledWith(
+      3,
+      expect.objectContaining({
+        planName: "Lite",
+        limitType: "video",
+      }),
+    );
     expect(generateResponse).toHaveBeenCalledWith(
       expect.objectContaining({
         messages: [
@@ -664,6 +679,8 @@ describe("POST /api/openai", () => {
   });
 
   it("ends the conversation when the prompt limit has already been reached", async () => {
+    const resolveModelPolicySpy = vi.spyOn(aiModelPolicy, "resolveModelPolicy");
+
     vi.mocked(incrementPromptCountIfBelowLimit).mockResolvedValue(false);
     vi.mocked(checkDailyConversationLimit).mockResolvedValue({
       allowed: true,
@@ -695,6 +712,30 @@ describe("POST /api/openai", () => {
         status: "ended",
         endedReason: "prompt_limit_reached",
         endAction: "start_new_conversation",
+      }),
+    );
+    expect(resolveModelPolicySpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        plan: "lite",
+        feature: "chat",
+        taskClass: "standard",
+      }),
+    );
+    const resolvedPolicy = resolveModelPolicySpy.mock.results.at(-1)?.value;
+    expect(resolvedPolicy).toBeDefined();
+    expect(emitUsageEvents).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: "user_123",
+        taskId: EXISTING_TASK_ID,
+        personaId: "strategist",
+        metrics: [
+          expect.objectContaining({
+            requestType: "chat",
+            blocked: true,
+            blockedReason: "prompt_limit_reached",
+            model: resolvedPolicy?.model,
+          }),
+        ],
       }),
     );
   });
@@ -1194,6 +1235,11 @@ describe("POST /api/openai", () => {
     });
 
     it("sets billing_state_invalid with upgrade_plan when paid plan expires", async () => {
+      const resolveModelPolicySpy = vi.spyOn(
+        aiModelPolicy,
+        "resolveModelPolicy",
+      );
+
       vi.mocked(getUserById).mockResolvedValue(
         createTestUser({
           plan: {
@@ -1223,6 +1269,30 @@ describe("POST /api/openai", () => {
           status: "ended",
           endedReason: "billing_state_invalid",
           endAction: "upgrade_plan",
+        }),
+      );
+      expect(resolveModelPolicySpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          plan: "pro",
+          feature: "chat",
+          taskClass: "standard",
+        }),
+      );
+      const resolvedPolicy = resolveModelPolicySpy.mock.results.at(-1)?.value;
+      expect(resolvedPolicy).toBeDefined();
+      expect(emitUsageEvents).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: "user_123",
+          taskId: EXISTING_TASK_ID,
+          personaId: "strategist",
+          metrics: [
+            expect.objectContaining({
+              requestType: "chat",
+              blocked: true,
+              blockedReason: "billing_state_invalid",
+              model: resolvedPolicy?.model,
+            }),
+          ],
         }),
       );
     });
