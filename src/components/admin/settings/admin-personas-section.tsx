@@ -29,7 +29,7 @@ export function AdminPersonasSection({
         <input type="hidden" name="category" value="features" />
 
         <h2 className="heading-6 mb-2">Persona Content</h2>
-        <p className="mb-4 text-sm opacity-70">
+        <p className="mb-4 text-sm text-midnightBlue-600 dark:text-lavenderHaze-600">
           Edit persona labels, taglines, descriptions, and starter prompts. One
           starter prompt per line.
         </p>
@@ -107,7 +107,7 @@ export function AdminPersonasSection({
 
       <div className="admin-surface">
         <h2 className="heading-6 mb-2">Persona Access</h2>
-        <p className="mb-4 text-sm opacity-70">
+        <p className="mb-4 text-sm text-midnightBlue-600 dark:text-lavenderHaze-600">
           Choose which personas have full access for each plan. Unchecked
           personas become limited trial access unless blocked elsewhere.
         </p>

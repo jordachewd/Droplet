@@ -78,7 +78,7 @@ export default function AdminLayoutShell({ children }: AdminLayoutShellProps) {
                 controlsId="admin-sidebar"
               />
               <div className="flex flex-col gap-0.5">
-                <p className="text-xxs font-semibold uppercase tracking-[0.28em] opacity-60">
+                <p className="text-xxs font-semibold uppercase tracking-[0.28em] text-midnightBlue-700 dark:text-lavenderHaze-700">
                   Operations
                 </p>
                 <Link

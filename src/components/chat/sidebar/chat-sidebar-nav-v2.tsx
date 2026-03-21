@@ -82,7 +82,7 @@ export default function ChatSidebarNavV2({
     variant: "outlined";
   } | null>(null);
   const headingClass = classNames(
-    "px-2.5 text-xxs font-semibold uppercase tracking-wide opacity-65",
+    "px-2.5 text-xxs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700",
     !isOpen && "lg:hidden",
   );
 
@@ -182,7 +182,7 @@ export default function ChatSidebarNavV2({
           {conversationItems.length === 0 && (
             <p
               className={classNames(
-                "px-2.5 py-2 text-xs opacity-65",
+                "px-2.5 py-2 text-xs text-midnightBlue-600 dark:text-lavenderHaze-600",
                 !isOpen && "lg:hidden",
               )}
             >
@@ -223,7 +223,7 @@ export default function ChatSidebarNavV2({
                     className={classNames("min-w-0", !isOpen && "lg:hidden")}
                   >
                     <p className="truncate text-xs font-medium">{item.title}</p>
-                    <p className="truncate text-xxs opacity-70">
+                    <p className="truncate text-xxs text-midnightBlue-600 dark:text-lavenderHaze-600">
                       {item.personaLabel} - {item.updatedAtLabel}
                     </p>
                   </div>
@@ -232,7 +232,7 @@ export default function ChatSidebarNavV2({
                 <button
                   type="button"
                   className={classNames(
-                    "SidebarDeleteBtn inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-transparent text-xs opacity-65 transition-all",
+                    "SidebarDeleteBtn inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-transparent text-xs text-midnightBlue-700 transition-all dark:text-lavenderHaze-700",
                     "hover:border-slate-400 hover:bg-lavenderHaze-300/70 hover:opacity-100",
                     "focus-visible:border-lavenderHaze-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lavenderHaze-300/60",
                     "dark:hover:border-slate-500 dark:hover:bg-nightIndigo-500/30",

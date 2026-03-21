@@ -272,7 +272,7 @@ export default function ProfileHeroEditor({
             className={classNames(
               "inline-flex min-w-36 items-center justify-center rounded-md px-4 py-2 text-sm font-semibold",
               "bg-lavenderHaze-500 text-white transition hover:opacity-90",
-              "disabled:cursor-not-allowed disabled:opacity-60",
+              "disabled:cursor-not-allowed disabled:bg-lavenderHaze-700 disabled:text-lavenderHaze-300",
             )}
             disabled={isSaving || isDeleting}
           >
@@ -302,7 +302,7 @@ export default function ProfileHeroEditor({
           className={classNames(
             "mt-4 inline-flex min-w-40 items-center justify-center rounded-md px-4 py-2 text-sm font-semibold",
             "bg-red-600 text-white transition hover:bg-red-500",
-            "disabled:cursor-not-allowed disabled:opacity-60",
+            "disabled:cursor-not-allowed disabled:bg-red-800 disabled:text-red-200",
           )}
           onClick={() => setIsDeleteConfirmOpen(true)}
           disabled={isDeleting || isSaving}

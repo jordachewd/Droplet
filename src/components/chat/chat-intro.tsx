@@ -41,7 +41,7 @@ export default function ChatIntro({ persona, sendPrompt }: ChatIntroProps) {
         <h1 className="heading-5">
           Hello {user?.firstName || "there"}, welcome to your chat dashboard.
         </h1>
-        <p className="body-2 opacity-85">
+        <p className="body-2">
           Active persona: <strong>{persona.label}</strong> - {persona.tagline}
         </p>
       </div>

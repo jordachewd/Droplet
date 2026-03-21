@@ -93,6 +93,53 @@ type UsageAggregateRecord = {
   tokensOut?: number;
 };
 
+const DEFAULT_ADMIN_PAGE_SIZE = 25;
+const MAX_ADMIN_PAGE_SIZE = 100;
+
+type AdminPaginationResult = {
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  skip: number;
+};
+
+function normalizePositiveInt(value: number | undefined, fallback: number) {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return fallback;
+  }
+
+  const normalized = Math.trunc(value);
+
+  if (normalized < 1) {
+    return fallback;
+  }
+
+  return normalized;
+}
+
+function resolveAdminPagination(
+  total: number,
+  page?: number,
+  pageSize = DEFAULT_ADMIN_PAGE_SIZE,
+): AdminPaginationResult {
+  const safePageSize = Math.min(
+    MAX_ADMIN_PAGE_SIZE,
+    normalizePositiveInt(pageSize, DEFAULT_ADMIN_PAGE_SIZE),
+  );
+  const totalPages = Math.max(1, Math.ceil(total / safePageSize));
+  const requestedPage = normalizePositiveInt(page, 1);
+  const safePage = Math.min(requestedPage, totalPages);
+
+  return {
+    total,
+    page: safePage,
+    pageSize: safePageSize,
+    totalPages,
+    skip: (safePage - 1) * safePageSize,
+  };
+}
+
 function toIsoString(value?: Date | string): string | null {
   if (!value) {
     return null;
@@ -183,7 +230,11 @@ export async function getAdminDashboardStats() {
   ];
 }
 
-export async function getAdminUsers(search?: string) {
+export async function getAdminUsers(
+  search?: string,
+  page = 1,
+  pageSize = DEFAULT_ADMIN_PAGE_SIZE,
+) {
   await connectToDatabase();
 
   const trimmedSearch = search?.trim();
@@ -195,45 +246,55 @@ export async function getAdminUsers(search?: string) {
         ],
       }
     : {};
-  const [users, effectivePlanConfig] = await Promise.all([
-    User.find(filter)
-      .sort({ registerAt: -1 })
-      .select(
-        "clerkId username email role suspended registerAt dailyConversationsStarted plan.name plan.imageGenerations plan.audioGenerations plan.videoGenerations firstName lastName",
-      )
-      .lean(),
+  const [total, effectivePlanConfig] = await Promise.all([
+    User.countDocuments(filter),
     getEffectivePlanConfig(),
   ]);
+  const pagination = resolveAdminPagination(total, page, pageSize);
+  const users = await User.find(filter)
+    .sort({ registerAt: -1 })
+    .skip(pagination.skip)
+    .limit(pagination.pageSize)
+    .select(
+      "clerkId username email role suspended registerAt dailyConversationsStarted plan.name plan.imageGenerations plan.audioGenerations plan.videoGenerations firstName lastName",
+    )
+    .lean();
 
   const typedUsers = users as UserRecord[];
 
-  return typedUsers.map((user) => {
-    const baseItem = toAdminUserListItem(user);
-    const planName = user.plan?.name ?? "Lite";
-    const planLimits = effectivePlanConfig.limits[planName];
+  return {
+    items: typedUsers.map((user) => {
+      const baseItem = toAdminUserListItem(user);
+      const planName = user.plan?.name ?? "Lite";
+      const planLimits = effectivePlanConfig.limits[planName];
 
-    return {
-      ...baseItem,
-      mediaUsage: {
-        images: {
-          used: user.plan?.imageGenerations ?? 0,
-          limit: planLimits.images,
+      return {
+        ...baseItem,
+        mediaUsage: {
+          images: {
+            used: user.plan?.imageGenerations ?? 0,
+            limit: planLimits.images,
+          },
+          audio: {
+            used: user.plan?.audioGenerations ?? 0,
+            limit: planLimits.audio,
+          },
+          video: {
+            used: user.plan?.videoGenerations ?? 0,
+            limit: planLimits.video,
+          },
         },
-        audio: {
-          used: user.plan?.audioGenerations ?? 0,
-          limit: planLimits.audio,
+        conversationUsage: {
+          used: user.dailyConversationsStarted ?? 0,
+          limit: planLimits.conversationsPerDay,
         },
-        video: {
-          used: user.plan?.videoGenerations ?? 0,
-          limit: planLimits.video,
-        },
-      },
-      conversationUsage: {
-        used: user.dailyConversationsStarted ?? 0,
-        limit: planLimits.conversationsPerDay,
-      },
-    };
-  });
+      };
+    }),
+    total: pagination.total,
+    page: pagination.page,
+    pageSize: pagination.pageSize,
+    totalPages: pagination.totalPages,
+  };
 }
 
 export async function getAdminUserDetail(userId: string) {
@@ -385,19 +446,29 @@ export async function getAdminUserDetail(userId: string) {
   };
 }
 
-export async function getAdminTransactions() {
+export async function getAdminTransactions(
+  page = 1,
+  pageSize = DEFAULT_ADMIN_PAGE_SIZE,
+) {
   await connectToDatabase();
 
+  const total = await Transaction.countDocuments({});
+  const pagination = resolveAdminPagination(total, page, pageSize);
   const transactions = (await Transaction.find({})
     .sort({ createdAt: -1 })
+    .skip(pagination.skip)
+    .limit(pagination.pageSize)
     .select("userId clerkId stripeId createdAt expiresOn amount plan billing")
     .lean()) as TransactionRecord[];
   const userIds = [
     ...new Set(transactions.map((transaction) => String(transaction.userId))),
   ];
-  const users = (await User.find({ _id: { $in: userIds } })
-    .select("username email")
-    .lean()) as Array<{ _id: unknown; username: string; email: string }>;
+  const users =
+    userIds.length === 0
+      ? []
+      : ((await User.find({ _id: { $in: userIds } })
+          .select("username email")
+          .lean()) as Array<{ _id: unknown; username: string; email: string }>);
   const userMap = new Map(
     users.map((user) => [
       String(user._id),
@@ -405,25 +476,31 @@ export async function getAdminTransactions() {
     ]),
   );
 
-  return transactions.map((transaction) => {
-    const user = userMap.get(String(transaction.userId));
-    const isActive =
-      transaction.expiresOn && new Date(transaction.expiresOn) > new Date();
+  return {
+    items: transactions.map((transaction) => {
+      const user = userMap.get(String(transaction.userId));
+      const isActive =
+        transaction.expiresOn && new Date(transaction.expiresOn) > new Date();
 
-    return {
-      id: String(transaction._id),
-      clerkId: transaction.clerkId,
-      stripeId: transaction.stripeId,
-      createdAt: toIsoString(transaction.createdAt),
-      expiresOn: toIsoString(transaction.expiresOn),
-      amount: transaction.amount ?? 0,
-      plan: transaction.plan ?? "Lite",
-      billing: transaction.billing ?? "Monthly",
-      status: isActive ? "Active" : "Expired",
-      username: user?.username ?? "Unknown user",
-      email: user?.email ?? "Unknown email",
-    };
-  });
+      return {
+        id: String(transaction._id),
+        clerkId: transaction.clerkId,
+        stripeId: transaction.stripeId,
+        createdAt: toIsoString(transaction.createdAt),
+        expiresOn: toIsoString(transaction.expiresOn),
+        amount: transaction.amount ?? 0,
+        plan: transaction.plan ?? "Lite",
+        billing: transaction.billing ?? "Monthly",
+        status: isActive ? "Active" : "Expired",
+        username: user?.username ?? "Unknown user",
+        email: user?.email ?? "Unknown email",
+      };
+    }),
+    total: pagination.total,
+    page: pagination.page,
+    pageSize: pagination.pageSize,
+    totalPages: pagination.totalPages,
+  };
 }
 
 export async function getAdminTransactionDetail(transactionId: string) {

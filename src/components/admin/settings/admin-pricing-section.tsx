@@ -21,7 +21,7 @@ export function AdminPricingSection({
         <input type="hidden" name="key" value="admin.pricing" />
         <input type="hidden" name="category" value="plans" />
         <h2 className="heading-6 mb-2">Pricing</h2>
-        <p className="mb-4 text-sm opacity-70">
+        <p className="mb-4 text-sm text-midnightBlue-600 dark:text-lavenderHaze-600">
           Manage Pro and Premium monthly prices.
         </p>
         <div className="grid grid-cols-1 gap-3">
@@ -64,7 +64,7 @@ export function AdminPricingSection({
         <input type="hidden" name="key" value="admin.currencySymbol" />
         <input type="hidden" name="category" value="plans" />
         <h2 className="heading-6 mb-2">Currency</h2>
-        <p className="mb-4 text-sm opacity-70">
+        <p className="mb-4 text-sm text-midnightBlue-600 dark:text-lavenderHaze-600">
           Configure the currency symbol used across pricing surfaces.
         </p>
         <label className="text-sm">

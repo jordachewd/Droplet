@@ -36,7 +36,7 @@ function renderAboutVisual(
       <div className={visualClassName}>
         <div className="grid gap-4 sm:grid-cols-3">
           <article className="rounded-2xl bg-lavenderHaze-100 p-4 dark:bg-nightIndigo-900/70">
-            <p className="text-xxs font-semibold uppercase tracking-[0.28em] opacity-70">
+            <p className="text-xxs font-semibold uppercase tracking-[0.28em] text-midnightBlue-700 dark:text-lavenderHaze-700">
               Personas
             </p>
             <p className="heading-5 mt-3">{personaCatalog.length}</p>
@@ -45,7 +45,7 @@ function renderAboutVisual(
             </p>
           </article>
           <article className="rounded-2xl bg-lavenderHaze-100 p-4 dark:bg-nightIndigo-900/45">
-            <p className="text-xxs font-semibold uppercase tracking-[0.28em] opacity-70">
+            <p className="text-xxs font-semibold uppercase tracking-[0.28em] text-midnightBlue-700 dark:text-lavenderHaze-700">
               Plans
             </p>
             <p className="heading-5 mt-3">3</p>
@@ -54,7 +54,7 @@ function renderAboutVisual(
             </p>
           </article>
           <article className="rounded-2xl bg-twilightPurple-100 p-4 dark:bg-dustyBlue-1000/80">
-            <p className="text-xxs font-semibold uppercase tracking-[0.28em] opacity-70">
+            <p className="text-xxs font-semibold uppercase tracking-[0.28em] text-midnightBlue-700 dark:text-lavenderHaze-700">
               Modes
             </p>
             <p className="heading-5 mt-3">Text + Media</p>
@@ -99,7 +99,7 @@ function renderAboutVisual(
               )}
             >
               <div className="flex items-start gap-4">
-                <span className="heading-5 min-w-12 opacity-60">
+                <span className="heading-5 min-w-12 text-midnightBlue-600 dark:text-lavenderHaze-600">
                   {step.step}
                 </span>
                 <div>
@@ -119,7 +119,7 @@ function renderAboutVisual(
       <div className={visualClassName}>
         <div className="grid gap-4 sm:grid-cols-[0.9fr_1.1fr]">
           <div className="rounded-2xl bg-lavenderHaze-200/85 p-4 dark:bg-nightIndigo-1000/70">
-            <p className="text-xxs font-semibold uppercase tracking-[0.28em] opacity-70">
+            <p className="text-xxs font-semibold uppercase tracking-[0.28em] text-midnightBlue-700 dark:text-lavenderHaze-700">
               Categories
             </p>
             <div className="mt-4 flex flex-col gap-3">
@@ -137,7 +137,7 @@ function renderAboutVisual(
             </div>
           </div>
           <div className="rounded-2xl bg-lavenderHaze-100/75 p-4 dark:bg-nightIndigo-900/70">
-            <p className="text-xxs font-semibold uppercase tracking-[0.28em] opacity-70">
+            <p className="text-xxs font-semibold uppercase tracking-[0.28em] text-midnightBlue-700 dark:text-lavenderHaze-700">
               Current catalog
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
@@ -189,7 +189,7 @@ function renderAboutVisual(
                 "dark:border-slate-500 dark:bg-nightIndigo-1000/70",
               )}
             >
-              <p className="text-xxs font-semibold uppercase tracking-[0.28em] opacity-70">
+              <p className="text-xxs font-semibold uppercase tracking-[0.28em] text-midnightBlue-700 dark:text-lavenderHaze-700">
                 {card.label}
               </p>
               <p className="body-2 mt-3 text-sm">{card.detail}</p>
@@ -204,7 +204,7 @@ function renderAboutVisual(
     <div className={visualClassName}>
       <div className="grid gap-4 sm:grid-cols-3">
         <article className="rounded-2xl bg-lavenderHaze-200/90 p-4 dark:bg-nightIndigo-1000/70">
-          <p className="text-xxs font-semibold uppercase tracking-[0.28em] opacity-70">
+          <p className="text-xxs font-semibold uppercase tracking-[0.28em] text-midnightBlue-700 dark:text-lavenderHaze-700">
             Lite
           </p>
           <p className="heading-5 mt-3">Free forever</p>
@@ -213,7 +213,7 @@ function renderAboutVisual(
           </p>
         </article>
         <article className="rounded-2xl bg-lavenderHaze-100/85 p-4 dark:bg-nightIndigo-900/45">
-          <p className="text-xxs font-semibold uppercase tracking-[0.28em] opacity-70">
+          <p className="text-xxs font-semibold uppercase tracking-[0.28em] text-midnightBlue-700 dark:text-lavenderHaze-700">
             Pro
           </p>
           <p className="heading-5 mt-3">{`${currencySymbol}${pricing.Pro}`}</p>
@@ -222,7 +222,7 @@ function renderAboutVisual(
           </p>
         </article>
         <article className="rounded-2xl bg-twilightPurple-100/85 p-4 dark:bg-dustyBlue-1000/80">
-          <p className="text-xxs font-semibold uppercase tracking-[0.28em] opacity-70">
+          <p className="text-xxs font-semibold uppercase tracking-[0.28em] text-midnightBlue-700 dark:text-lavenderHaze-700">
             Premium
           </p>
           <p className="heading-5 mt-3">{`${currencySymbol}${pricing.Premium}`}</p>
@@ -285,7 +285,7 @@ export default async function AboutPage() {
               "bg-lavenderHaze-100/70 dark:bg-midnightBlue-900/80",
             )}
           >
-            <p className="text-xxs font-semibold uppercase tracking-[0.3em] opacity-65">
+            <p className="text-xxs font-semibold uppercase tracking-[0.3em] text-midnightBlue-700 dark:text-lavenderHaze-700">
               {section.eyebrow}
             </p>
             <h2 className="heading-5 mt-3 leading-tight">{section.title}</h2>

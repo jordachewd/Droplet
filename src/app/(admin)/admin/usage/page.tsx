@@ -21,19 +21,19 @@ export default async function AdminUsagePage() {
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
         <article className="admin-surface">
-          <p className="text-xs font-semibold uppercase tracking-wide opacity-60">
+          <p className="text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
             Total Events
           </p>
           <p className="heading-4 mt-2">{analytics.summary.totalEvents}</p>
         </article>
         <article className="admin-surface">
-          <p className="text-xs font-semibold uppercase tracking-wide opacity-60">
+          <p className="text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
             Blocked Events
           </p>
           <p className="heading-4 mt-2">{analytics.summary.blockedEvents}</p>
         </article>
         <article className="admin-surface">
-          <p className="text-xs font-semibold uppercase tracking-wide opacity-60">
+          <p className="text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
             Estimated Cost
           </p>
           <p className="heading-4 mt-2">
@@ -41,7 +41,7 @@ export default async function AdminUsagePage() {
           </p>
         </article>
         <article className="admin-surface">
-          <p className="text-xs font-semibold uppercase tracking-wide opacity-60">
+          <p className="text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
             Token Throughput
           </p>
           <p className="heading-6 mt-2">
@@ -50,17 +50,19 @@ export default async function AdminUsagePage() {
           </p>
         </article>
         <article className="admin-surface">
-          <p className="text-xs font-semibold uppercase tracking-wide opacity-60">
+          <p className="text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
             Top Personas
           </p>
           <div className="mt-2 flex flex-col gap-1.5 text-xs">
             {analytics.topPersonas.length === 0 && (
-              <p className="opacity-70">No persona usage data yet.</p>
+              <p className="text-midnightBlue-600 dark:text-lavenderHaze-600">
+                No persona usage data yet.
+              </p>
             )}
             {analytics.topPersonas.map((persona) => (
               <p key={persona.personaId} className="flex items-center gap-2">
                 <span className="truncate font-medium">{persona.label}</span>
-                <span className="ml-auto whitespace-nowrap opacity-75">
+                <span className="ml-auto whitespace-nowrap text-midnightBlue-600 dark:text-lavenderHaze-600">
                   {persona.count} ({persona.percentage.toFixed(1)}%)
                 </span>
               </p>

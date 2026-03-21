@@ -138,7 +138,9 @@ export default function ChatHeader({
                   </option>
                 ))}
               </select>
-              <span className="opacity-65">Persona</span>
+              <span className="text-midnightBlue-700 dark:text-lavenderHaze-700">
+                Persona
+              </span>
             </div>
           )}
 

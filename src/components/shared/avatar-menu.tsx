@@ -79,7 +79,7 @@ export default function AvatarMenu() {
           onClick={handleToggleUserMenu}
           className="inline-flex rounded-full bg-transparent p-0"
           aria-haspopup="true"
-          aria-expanded={open ? "true" : undefined}
+          aria-expanded={open}
           aria-controls={open ? "my-account" : undefined}
           aria-label="Account menu"
         >

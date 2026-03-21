@@ -27,7 +27,7 @@ export default function ChatSidebarPromo({
             "border-slate-400 bg-lavenderHaze-100/70 dark:border-slate-500 dark:bg-nightIndigo-900/70",
           )}
         >
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide opacity-70">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
             Admin Access
           </p>
           <p className="text-sm">Full permissions enabled for admin users.</p>
@@ -55,7 +55,7 @@ export default function ChatSidebarPromo({
           "border-slate-400 bg-lavenderHaze-100/70 dark:border-slate-500 dark:bg-nightIndigo-900/70",
         )}
       >
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wide opacity-70">
+        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
           Plan Status
         </p>
         <p className="mb-3 text-sm">{promoMessage}</p>

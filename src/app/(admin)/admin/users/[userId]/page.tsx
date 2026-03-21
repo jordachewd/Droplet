@@ -60,25 +60,25 @@ export default async function AdminUserDetailPage({
           <h2 className="heading-6 mb-4">Account Details</h2>
           <dl className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
-              <dt className="text-xs font-semibold uppercase tracking-wide opacity-60">
+              <dt className="text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
                 Email
               </dt>
               <dd className="mt-1 text-sm">{user.email}</dd>
             </div>
             <div>
-              <dt className="text-xs font-semibold uppercase tracking-wide opacity-60">
+              <dt className="text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
                 Clerk ID
               </dt>
               <dd className="mt-1 text-sm">{user.clerkId}</dd>
             </div>
             <div>
-              <dt className="text-xs font-semibold uppercase tracking-wide opacity-60">
+              <dt className="text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
                 Role
               </dt>
               <dd className="mt-1 text-sm capitalize">{user.role}</dd>
             </div>
             <div>
-              <dt className="text-xs font-semibold uppercase tracking-wide opacity-60">
+              <dt className="text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
                 State
               </dt>
               <dd className="mt-1 text-sm">
@@ -86,7 +86,7 @@ export default async function AdminUserDetailPage({
               </dd>
             </div>
             <div>
-              <dt className="text-xs font-semibold uppercase tracking-wide opacity-60">
+              <dt className="text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
                 Plan
               </dt>
               <dd className="mt-1 text-sm">
@@ -95,13 +95,13 @@ export default async function AdminUserDetailPage({
               </dd>
             </div>
             <div>
-              <dt className="text-xs font-semibold uppercase tracking-wide opacity-60">
+              <dt className="text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
                 Billing
               </dt>
               <dd className="mt-1 text-sm">{user.billing}</dd>
             </div>
             <div>
-              <dt className="text-xs font-semibold uppercase tracking-wide opacity-60">
+              <dt className="text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
                 Plan Expires
               </dt>
               <dd className="mt-1 text-sm">
@@ -111,7 +111,7 @@ export default async function AdminUserDetailPage({
               </dd>
             </div>
             <div>
-              <dt className="text-xs font-semibold uppercase tracking-wide opacity-60">
+              <dt className="text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
                 Registered
               </dt>
               <dd className="mt-1 text-sm">
@@ -127,7 +127,7 @@ export default async function AdminUserDetailPage({
           <h2 className="heading-6 mb-4">Usage Snapshot</h2>
           <div className="grid grid-cols-1 gap-3">
             <div className="admin-surface-subtle">
-              <p className="text-xs font-semibold uppercase tracking-wide opacity-60">
+              <p className="text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
                 Daily Conversations
               </p>
               <p className="heading-5 mt-1">
@@ -143,13 +143,13 @@ export default async function AdminUserDetailPage({
               </div>
             </div>
             <div className="admin-surface-subtle">
-              <p className="text-xs font-semibold uppercase tracking-wide opacity-60">
+              <p className="text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
                 Prompts / Conversation (Peak)
               </p>
               <p className="heading-5 mt-1">
                 {formatUsageLabel(user.promptUsage)}
               </p>
-              <p className="mt-1 text-xs opacity-70">
+              <p className="mt-1 text-xs text-midnightBlue-600 dark:text-lavenderHaze-600">
                 Total prompts across tasks: {user.promptUsage.total}
               </p>
               <div className="mt-2 h-2 overflow-hidden rounded-full bg-lavenderHaze-300 dark:bg-nightIndigo-500/40">
@@ -160,7 +160,7 @@ export default async function AdminUserDetailPage({
               </div>
             </div>
             <div className="admin-surface-subtle">
-              <p className="text-xs font-semibold uppercase tracking-wide opacity-60">
+              <p className="text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
                 Image Generations
               </p>
               <p className="heading-5 mt-1">
@@ -176,7 +176,7 @@ export default async function AdminUserDetailPage({
               </div>
             </div>
             <div className="admin-surface-subtle">
-              <p className="text-xs font-semibold uppercase tracking-wide opacity-60">
+              <p className="text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
                 Audio Generations
               </p>
               <p className="heading-5 mt-1">
@@ -192,7 +192,7 @@ export default async function AdminUserDetailPage({
               </div>
             </div>
             <div className="admin-surface-subtle">
-              <p className="text-xs font-semibold uppercase tracking-wide opacity-60">
+              <p className="text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
                 Video Generations
               </p>
               <p className="heading-5 mt-1">
@@ -208,7 +208,7 @@ export default async function AdminUserDetailPage({
               </div>
             </div>
             <div className="admin-surface-subtle">
-              <p className="text-xs font-semibold uppercase tracking-wide opacity-60">
+              <p className="text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
                 Trial Usage (Img / Audio / Video)
               </p>
               <p className="mt-1 text-sm">
@@ -265,7 +265,7 @@ export default async function AdminUserDetailPage({
 
         <div className="divide-y divide-slate-300 dark:divide-slate-500">
           {user.transactions.length === 0 && (
-            <p className="py-4 text-sm opacity-70">
+            <p className="py-4 text-sm text-midnightBlue-600 dark:text-lavenderHaze-600">
               No transactions found for this user.
             </p>
           )}

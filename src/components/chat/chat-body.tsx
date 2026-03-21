@@ -120,7 +120,7 @@ export default function ChatBody({
           <i className={avatarClass}></i>
 
           <div className="flex max-w-[92%] flex-col gap-1">
-            <span className="px-1 text-xxs font-semibold uppercase opacity-65">
+            <span className="px-1 text-xxs font-semibold uppercase text-midnightBlue-700 dark:text-lavenderHaze-700">
               {messageOwner}
             </span>
 

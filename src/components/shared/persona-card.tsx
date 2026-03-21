@@ -23,7 +23,7 @@ export default function PersonaCard({
   const cardClass = classNames(
     "PersonaCard flex h-full flex-col rounded-xl  p-4 transition-all duration-300",
     "bg-lavenderHaze-100/70 shadow-sm hover:-translate-y-1 hover:shadow-md dark:bg-nightIndigo-900/70",
-    locked && "border border-dashed opacity-85",
+    locked && "border border-dashed",
     compact ? "gap-2" : "gap-3",
   );
 
@@ -66,7 +66,9 @@ export default function PersonaCard({
         </div>
       </div>
 
-      <p className="text-sm font-medium opacity-80">{persona.tagline}</p>
+      <p className="text-sm font-medium text-midnightBlue-600 dark:text-lavenderHaze-600">
+        {persona.tagline}
+      </p>
       <div className="relative mt-1 h-36 w-full overflow-hidden rounded-lg border border-slate-400/60 dark:border-slate-500">
         <Image
           src={persona.heroImage}

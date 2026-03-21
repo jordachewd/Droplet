@@ -37,14 +37,29 @@ interface AdminUsersTableItem {
   };
 }
 
-interface AdminUsersTableProps {
-  users: AdminUsersTableItem[];
+interface AdminUsersPagination {
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
 }
 
-export function AdminUsersTable({ users }: AdminUsersTableProps) {
-  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+interface AdminUsersTableProps {
+  users: AdminUsersTableItem[];
+  searchQuery?: string;
+  pagination: AdminUsersPagination;
+}
 
-  const formatLimit = (limit: number) => (limit === -1 ? "∞" : String(limit));
+export function AdminUsersTable({
+  users,
+  searchQuery,
+  pagination,
+}: AdminUsersTableProps) {
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+  const trimmedSearchQuery = searchQuery?.trim() ?? "";
+
+  const formatLimit = (limit: number) =>
+    limit === -1 ? "Unlimited" : String(limit);
 
   const selectedSet = useMemo(
     () => new Set(selectedUserIds),
@@ -70,10 +85,21 @@ export function AdminUsersTable({ users }: AdminUsersTableProps) {
     setSelectedUserIds(users.map((user) => user.id));
   };
 
+  const buildPageHref = (nextPage: number) => {
+    const searchParams = new URLSearchParams();
+    searchParams.set("page", String(nextPage));
+
+    if (trimmedSearchQuery.length > 0) {
+      searchParams.set("q", trimmedSearchQuery);
+    }
+
+    return `/admin/users?${searchParams.toString()}`;
+  };
+
   return (
     <div className="AdminUsersTable admin-table-shell">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-300 px-4 py-3 dark:border-slate-500">
-        <label className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide opacity-75">
+        <label className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
           <input
             type="checkbox"
             checked={allSelected}
@@ -85,7 +111,7 @@ export function AdminUsersTable({ users }: AdminUsersTableProps) {
 
         {selectedUserIds.length > 0 ? (
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs font-semibold uppercase tracking-wide opacity-70">
+            <span className="text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
               {selectedUserIds.length} selected
             </span>
 
@@ -132,7 +158,7 @@ export function AdminUsersTable({ users }: AdminUsersTableProps) {
         ) : null}
       </div>
 
-      <div className="grid grid-cols-[0.35fr_1.05fr_1.35fr_0.6fr_0.6fr_1.25fr_0.7fr_0.8fr_0.7fr] gap-3 border-b border-slate-300 px-4 py-3 text-xs font-semibold uppercase tracking-wide opacity-70 dark:border-slate-500">
+      <div className="grid grid-cols-[0.35fr_1.05fr_1.35fr_0.6fr_0.6fr_1.25fr_0.7fr_0.8fr_0.7fr] gap-3 border-b border-slate-300 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:border-slate-500 dark:text-lavenderHaze-700">
         <span></span>
         <span>Username</span>
         <span>Email</span>
@@ -146,7 +172,7 @@ export function AdminUsersTable({ users }: AdminUsersTableProps) {
 
       <div className="divide-y divide-slate-300 dark:divide-slate-500">
         {users.length === 0 ? (
-          <p className="px-4 py-6 text-sm opacity-70">
+          <p className="px-4 py-6 text-sm text-midnightBlue-600 dark:text-lavenderHaze-600">
             No users matched this search.
           </p>
         ) : null}
@@ -173,8 +199,8 @@ export function AdminUsersTable({ users }: AdminUsersTableProps) {
             <span className="truncate">{user.email}</span>
             <span className="capitalize">{user.role}</span>
             <span>{user.planName}</span>
-            <span className="truncate text-xs opacity-85">
-              {`${user.mediaUsage.images.used}/${formatLimit(user.mediaUsage.images.limit)} img · ${user.mediaUsage.audio.used}/${formatLimit(user.mediaUsage.audio.limit)} aud · ${user.mediaUsage.video.used}/${formatLimit(user.mediaUsage.video.limit)} vid`}
+            <span className="truncate text-xs text-midnightBlue-600 dark:text-lavenderHaze-600">
+              {`${user.mediaUsage.images.used}/${formatLimit(user.mediaUsage.images.limit)} img | ${user.mediaUsage.audio.used}/${formatLimit(user.mediaUsage.audio.limit)} aud | ${user.mediaUsage.video.used}/${formatLimit(user.mediaUsage.video.limit)} vid`}
             </span>
             <span className="text-xs font-medium">
               {`${user.conversationUsage.used}/${formatLimit(user.conversationUsage.limit)}`}
@@ -188,6 +214,50 @@ export function AdminUsersTable({ users }: AdminUsersTableProps) {
           </div>
         ))}
       </div>
+
+      {pagination.totalPages > 1 && (
+        <nav
+          aria-label="Users pagination"
+          className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-300 px-4 py-3 dark:border-slate-500"
+        >
+          <p className="text-xs text-midnightBlue-600 dark:text-lavenderHaze-600">
+            Page {pagination.page} of {pagination.totalPages} -{" "}
+            {pagination.total} users
+          </p>
+          <div className="flex items-center gap-2">
+            {pagination.page > 1 ? (
+              <Link
+                href={buildPageHref(pagination.page - 1)}
+                className="btn btn-sm btn-outlined"
+              >
+                Previous
+              </Link>
+            ) : (
+              <span
+                className="btn btn-sm btn-outlined cursor-not-allowed opacity-50"
+                aria-hidden
+              >
+                Previous
+              </span>
+            )}
+            {pagination.page < pagination.totalPages ? (
+              <Link
+                href={buildPageHref(pagination.page + 1)}
+                className="btn btn-sm btn-outlined"
+              >
+                Next
+              </Link>
+            ) : (
+              <span
+                className="btn btn-sm btn-outlined cursor-not-allowed opacity-50"
+                aria-hidden
+              >
+                Next
+              </span>
+            )}
+          </div>
+        </nav>
+      )}
     </div>
   );
 }

@@ -4,14 +4,24 @@ import { AdminUsersTable } from "@/components/admin/users/admin-users-table";
 import { getAdminUsers } from "@/lib/utils/admin-queries";
 
 interface AdminUsersPageProps {
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{ q?: string; page?: string }>;
+}
+
+function parsePositivePage(value?: string): number {
+  const parsed = Number.parseInt(value ?? "", 10);
+
+  if (!Number.isFinite(parsed) || parsed < 1) {
+    return 1;
+  }
+
+  return parsed;
 }
 
 export default async function AdminUsersPage({
   searchParams,
 }: AdminUsersPageProps) {
-  const { q } = await searchParams;
-  const users = await getAdminUsers(q);
+  const { q, page } = await searchParams;
+  const usersResponse = await getAdminUsers(q, parsePositivePage(page));
 
   return (
     <section className="AdminUsersPage mx-auto flex w-full max-w-7xl flex-col gap-6">
@@ -44,7 +54,16 @@ export default async function AdminUsersPage({
         </div>
       </form>
 
-      <AdminUsersTable users={users} />
+      <AdminUsersTable
+        users={usersResponse.items}
+        searchQuery={q}
+        pagination={{
+          total: usersResponse.total,
+          page: usersResponse.page,
+          pageSize: usersResponse.pageSize,
+          totalPages: usersResponse.totalPages,
+        }}
+      />
     </section>
   );
 }

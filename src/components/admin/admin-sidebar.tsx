@@ -68,11 +68,13 @@ export default function AdminSidebar() {
                 !isOpen && "lg:hidden",
               )}
             >
-              <p className="text-xxs font-semibold uppercase tracking-[0.28em] opacity-60">
+              <p className="text-xxs font-semibold uppercase tracking-[0.28em] text-midnightBlue-700 dark:text-lavenderHaze-700">
                 Droplet
               </p>
               <h2 className="heading-6 leading-tight">Admin Control</h2>
-              <p className="text-xs opacity-70">Operational command center</p>
+              <p className="text-xs text-midnightBlue-600 dark:text-lavenderHaze-600">
+                Operational command center
+              </p>
             </div>
             {!isOpen && (
               <span className="hidden text-lg font-bold lg:block">DC</span>
@@ -118,7 +120,7 @@ export default function AdminSidebar() {
 
         <div
           className={classNames(
-            "px-6 pb-6 text-xs opacity-70",
+            "px-6 pb-6 text-xs text-midnightBlue-600 dark:text-lavenderHaze-600",
             !isOpen && "lg:hidden",
           )}
         >

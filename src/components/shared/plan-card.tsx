@@ -76,7 +76,7 @@ export default function PlanCard({
             )}
           </p>
         </div>
-        <div className="flex w-full items-center justify-between pl-0.5 text-xs opacity-70">
+        <div className="flex w-full items-center justify-between pl-0.5 text-xs">
           <span className="flex">{plan.desc}</span>
         </div>
       </div>

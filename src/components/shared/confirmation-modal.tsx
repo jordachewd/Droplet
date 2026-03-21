@@ -1,7 +1,7 @@
 "use client";
 
 import classNames from "classnames";
-import { useEffect, useRef } from "react";
+import { useEffect, useId, useRef } from "react";
 
 interface ConfirmationModalProps {
   isOpen: boolean;
@@ -26,6 +26,8 @@ export default function ConfirmationModal({
 }: ConfirmationModalProps) {
   const dialogRef = useRef<HTMLDivElement | null>(null);
   const previouslyFocusedElementRef = useRef<HTMLElement | null>(null);
+  const titleId = useId();
+  const descriptionId = useId();
 
   useEffect(() => {
     if (!isOpen) {
@@ -106,18 +108,18 @@ export default function ConfirmationModal({
         className="w-full max-w-md rounded-xl border border-slate-300 bg-lavenderHaze-100 p-5 shadow-lg dark:border-slate-500 dark:bg-nightIndigo-900"
         role="dialog"
         aria-modal="true"
-        aria-labelledby="confirmation-modal-title"
-        aria-describedby="confirmation-modal-description"
+        aria-labelledby={titleId}
+        aria-describedby={descriptionId}
         onClick={(event) => event.stopPropagation()}
         tabIndex={-1}
         ref={dialogRef}
       >
-        <h3 id="confirmation-modal-title" className="heading-6">
+        <h3 id={titleId} className="heading-6">
           {title}
         </h3>
         <p
-          id="confirmation-modal-description"
-          className="mt-2 text-sm opacity-85"
+          id={descriptionId}
+          className="mt-2 text-sm text-midnightBlue-600 dark:text-lavenderHaze-600"
         >
           {description}
         </p>

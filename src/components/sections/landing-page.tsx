@@ -73,7 +73,7 @@ export default async function LandingPage() {
             "rounded-2xl px-6 py-8 shadow-sm bg-lavenderHaze-100/78 dark:bg-nightIndigo-900/82",
           )}
         >
-          <p className="text-xxs font-semibold uppercase tracking-[0.3em] opacity-65">
+          <p className="text-xxs font-semibold uppercase tracking-[0.3em] text-midnightBlue-700 dark:text-lavenderHaze-700">
             How it works
           </p>
           <h2 className="heading-4 mt-3 leading-tight">
@@ -94,7 +94,7 @@ export default async function LandingPage() {
                 )}
               >
                 <div className="flex items-start gap-4">
-                  <span className="heading-5 min-w-12 opacity-60">
+                  <span className="heading-5 min-w-12 text-midnightBlue-600 dark:text-lavenderHaze-600">
                     {step.step}
                   </span>
                   <div>
@@ -113,12 +113,12 @@ export default async function LandingPage() {
             "dark:bg-linear-135 dark:from-nightIndigo-1000 dark:via-nightIndigo-1000 dark:to-nightIndigo-900/60",
           )}
         >
-          <p className="text-xxs font-semibold uppercase tracking-[0.3em] opacity-65">
+          <p className="text-xxs font-semibold uppercase tracking-[0.3em] text-midnightBlue-700 dark:text-lavenderHaze-700">
             Conversation rhythm
           </p>
           <div className="mt-5 flex flex-col gap-4">
             <article className="rounded-2xl bg-lavenderHaze-100/90 p-4 shadow-sm dark:bg-nightIndigo-1000/80">
-              <p className="text-xxs font-semibold uppercase tracking-[0.24em] opacity-60">
+              <p className="text-xxs font-semibold uppercase tracking-[0.24em] text-midnightBlue-700 dark:text-lavenderHaze-700">
                 You
               </p>
               <p className="body-2 mt-2 text-sm">
@@ -127,7 +127,7 @@ export default async function LandingPage() {
               </p>
             </article>
             <article className="rounded-2xl bg-lavenderHaze-100/80 p-4 shadow-sm dark:bg-nightIndigo-900/72">
-              <p className="text-xxs font-semibold uppercase tracking-[0.24em] opacity-60">
+              <p className="text-xxs font-semibold uppercase tracking-[0.24em] text-midnightBlue-700 dark:text-lavenderHaze-700">
                 Strategist
               </p>
               <p className="body-2 mt-2 text-sm">
@@ -137,7 +137,7 @@ export default async function LandingPage() {
               </p>
             </article>
             <article className="rounded-2xl bg-twilightPurple-100/85 p-4 shadow-sm dark:bg-dustyBlue-1000/78">
-              <p className="text-xxs font-semibold uppercase tracking-[0.24em] opacity-60">
+              <p className="text-xxs font-semibold uppercase tracking-[0.24em] text-midnightBlue-700 dark:text-lavenderHaze-700">
                 Result
               </p>
               <p className="body-2 mt-2 text-sm">
@@ -151,7 +151,7 @@ export default async function LandingPage() {
 
       <section className="Personas mx-auto flex w-full max-w-screen-2xl flex-col gap-6 px-4 sm:px-6 lg:px-0">
         <div className="flex flex-col gap-3 text-center">
-          <p className="text-xxs font-semibold uppercase tracking-[0.3em] opacity-65">
+          <p className="text-xxs font-semibold uppercase tracking-[0.3em] text-midnightBlue-700 dark:text-lavenderHaze-700">
             Persona spotlight
           </p>
           <h2 className="heading-4 leading-tight">
@@ -174,7 +174,7 @@ export default async function LandingPage() {
             >
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <p className="text-xxs font-semibold uppercase tracking-[0.24em] opacity-60">
+                  <p className="text-xxs font-semibold uppercase tracking-[0.24em] text-midnightBlue-700 dark:text-lavenderHaze-700">
                     {persona.category}
                   </p>
                   <h3 className="heading-5 mt-2">{persona.label}</h3>
