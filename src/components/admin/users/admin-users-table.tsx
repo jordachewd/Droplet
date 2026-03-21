@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   bulkRemoveUsersAction,
   bulkSuspendUsersAction,
@@ -55,12 +55,25 @@ export function AdminUsersTable({
   searchQuery,
   pagination,
 }: AdminUsersTableProps) {
+  const selectionResetKey = users.map((user) => user.id).join("|");
+
+  return (
+    <AdminUsersTableContent
+      key={selectionResetKey}
+      users={users}
+      searchQuery={searchQuery}
+      pagination={pagination}
+    />
+  );
+}
+
+function AdminUsersTableContent({
+  users,
+  searchQuery,
+  pagination,
+}: AdminUsersTableProps) {
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
   const trimmedSearchQuery = searchQuery?.trim() ?? "";
-
-  useEffect(() => {
-    setSelectedUserIds([]);
-  }, [users]);
 
   const formatLimit = (limit: number) =>
     limit === -1 ? "Unlimited" : String(limit);
@@ -163,7 +176,7 @@ export function AdminUsersTable({
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[1080px] table-fixed border-collapse">
+        <table className="w-full min-w-270 table-fixed border-collapse">
           <thead className="border-b border-slate-300 dark:border-slate-500">
             <tr className="text-left text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
               <th scope="col" className="w-12 px-4 py-3">

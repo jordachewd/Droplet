@@ -5,81 +5,110 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #45 (2026-03-21). All Phases 1–96.3, 99.1, 99.3, 100.1–100.3, 95-R complete. 393 unit tests (64 suites). All 6 gates GREEN. Build passing. Node.js 24.12.0 runtime.**
+> **STATUS: PM audit #46 (2026-03-21). All Phases 1–102 complete (including 72.4, 96.4, 97.1, 99.5, 100.4, 101, 102). 400 unit tests (65 suites). All 6 gates GREEN. Build passing. Node.js 24.12.0 runtime.**
+> **E2E: 108 passed, 0 failed, 25 skipped.**
 > **Coverage: 76.27/65.31/79.64/76.67 vs 76/65/79/76 (MET).**
-> **Owner directive: FULL TESTING INFRASTRUCTURE REBUILD from scratch. TDD methodology. No hardcoded data. Code reuse maximized. WCAG 2.2 AA compliance.**
-> **Priority order: 101 (CRITICAL WCAG viewport) → 100.4 (HIGH isObjectRecord) → 102 (HIGH resource leak) → 96.4 (HIGH TDD) → 99.5 (HIGH WCAG) → 72.4 (HIGH WCAG) → 97.1 (HIGH WCAG E2E) → 96.5–96.8 (HIGH/MEDIUM TDD) → 99.2 (MEDIUM) → 99.4 (MEDIUM knip) → 73.3 (MEDIUM) → 98 (HIGH coverage) → 74.2 → 87 → 29.x → 26.x**
+> **Owner directive: FULL TESTING INFRASTRUCTURE REBUILD from scratch. TDD methodology. No hardcoded data. Code reuse maximized. WCAG 2.2 AA compliance. Full admin configurability.**
+> **Priority order: 99.4 (HIGH knip) → 103 (HIGH WCAG color contrast) → 96.5 (HIGH TDD) → 96.6 (MEDIUM Zustand tests) → 96.7 (MEDIUM component tests) → 96.8 (MEDIUM user model tests) → 73.3 (MEDIUM data-consumer) → 99.2 (MEDIUM native dialog) → 98 (HIGH coverage) → 74.2 (MEDIUM FAQ admin) → 104 (MEDIUM landing admin) → 87 (LOW) → 29.x → 26.x**
 
 ---
 
-## ~~COMPLETED — Phases 94–100.3~~
+## ~~COMPLETED — Phases 94–102~~
 
-> All moved to DONE.md. Phase 94 (config hardening), Phase 95 (E2E spec remediation), Phase 95-R (E2E Chromium fix), Phase 96.1 (merge conversation-stop), Phase 96.2 (reduce mock scope), Phase 96.3 (webhook edge-case tests), Phase 99.1 (aria-live), Phase 99.3 (stable keys), Phase 100.1–100.3 (code deduplication).
+> All moved to DONE.md. Phases 94 (config hardening), 95 (E2E spec remediation), 95-R (E2E Chromium fix), 96.1 (merge conversation-stop), 96.2 (reduce mock scope), 96.3 (webhook edge-case tests), 96.4 (admin auth tests), 97.1 (WCAG E2E), 99.1 (aria-live), 99.3 (stable keys), 99.5 (AudioPlayer ARIA), 100.1–100.4 (code deduplication), 101 (viewport zoom), 102 (AbortController).
 
 ---
 
-## CRITICAL — WCAG Viewport Zoom Restriction (PM audit #45, Triple-Audit)
+## HIGH — Knip Cleanup (Owner directive: keep clean)
 
-### Phase 101: Remove viewport zoom restriction — CRITICAL
+### Phase 99.4: Knip cleanup — dead exports + unused files — HIGH
 
-> All 3 audits independently confirmed: `maximumScale: 1` and `userScalable: false` in `layout.tsx` prevents mobile zoom — WCAG 2.2 AA SC 1.4.4 (Resize Text) FAILURE. Legal and accessibility release blocker.
+> `npm run knip` reports 5 unused files and 3 unused exports. Owner directive: knip must stay clean.
 
-**File:** `src/app/layout.tsx`
+**Files:**
+
+- Root: `_update-plan.mjs`, `_update-step1.js`, `_update-step2.js`, `_update-step3.js`, `_update-step4.js` (old DB migration scripts)
+- `tests/unit/test-support/factories.ts` (unused exports: `createTestTransaction`, `createTestEntitlements`)
+- `src/lib/utils/message-id.ts` (unused export: `createMessageId`)
 
 **What to do:**
 
-1. Remove `maximumScale: 1` and `userScalable: false` from the viewport metadata.
-2. Or change to `maximumScale: 5` and `userScalable: true`.
+1. Delete 5 unused root migration scripts (or move to `scripts/archive/` if historical value).
+2. Remove `export` from `createTestTransaction` and `createTestEntitlements` in `factories.ts` — OR consume them in upcoming Phase 96.5+ tests.
+3. Remove `export` from `createMessageId` in `message-id.ts` — only used internally by `ensureMessageHasId`.
+4. Verify `npm run knip` reports 0 findings.
 
 **Acceptance criteria:**
 
-- [ ] Viewport allows user zoom on mobile
-- [ ] WCAG 2.2 AA SC 1.4.4 satisfied
-- [ ] Build passes
-
----
-
-## HIGH — Code Deduplication Missed File (PM audit #45, Triple-Audit)
-
-### Phase 100.4: Fix 4th `isObjectRecord` duplicate — HIGH
-
-> Phase 100.1 extracted `isObjectRecord` to `type-guards.ts` but missed a 4th local copy in `effective-model-config.ts`. TD-REUSE-01 not fully resolved until this is fixed.
-
-**File:** `src/lib/utils/effective-model-config.ts`
-
-**What to do:**
-
-1. Import `isObjectRecord` from `@/lib/utils/type-guards`.
-2. Delete the local `function isObjectRecord(...)` definition (~line 22).
-
-**Acceptance criteria:**
-
-- [ ] Zero local `isObjectRecord` definitions remain
-- [ ] TD-REUSE-01 fully resolved
+- [ ] `npm run knip` reports 0 unused files and 0 unused exports
 - [ ] Build passes, tests pass
 
 ---
 
-## HIGH — Resource Leak Fix (PM audit #45, Engineer Audit)
+## HIGH — WCAG Color Contrast Fixes (PM audit #46, axe-core findings)
 
-### Phase 102: Add AbortController to chat streaming fetch — HIGH
+### Phase 103: Fix WCAG color contrast violations — HIGH
 
-> Chat streaming `fetch("/api/openai")` in `chat-wrapper.tsx` has no `AbortController`. If user navigates away during stream, `ReadableStreamDefaultReader` continues consuming indefinitely, leaking HTTP connections.
+> axe-core E2E (Phase 97.1) identified `color-contrast` violations on `/` and `/plans` pages, and `heading-order` on `/personas`. These are tracked as known violations but must be fixed for WCAG 2.2 AA compliance (release blocker).
 
-**File:** `src/components/chat/chat-wrapper.tsx`
+#### 103.1 HIGH — Fix color contrast on landing page (`/`)
+
+**File:** `src/components/sections/landing-page.tsx`, `src/app/globals.css`
 
 **What to do:**
 
-1. Create `AbortController` before fetch call.
-2. Pass `signal: controller.signal` to `fetch()` options.
-3. Add cleanup: call `controller.abort()` in the `useEffect` return or component unmount path.
-4. Handle `AbortError` in catch block (do not treat as user-visible error).
+1. Run axe analysis to identify exact elements with contrast failures.
+2. Adjust text/background color combinations to meet WCAG AA 4.5:1 ratio for normal text, 3:1 for large text.
+3. Update known violations in `accessibility.spec.ts` — remove `color-contrast` from `/` once fixed.
 
 **Acceptance criteria:**
 
-- [ ] Streaming fetch uses AbortController
-- [ ] Navigation during streaming cleanly cancels the fetch
-- [ ] No resource leak on unmount
+- [ ] `/` passes axe color-contrast check
+- [ ] WCAG AA contrast ratios met
+- [ ] Build passes
+
+#### 103.2 HIGH — Fix color contrast on plans page (`/plans`)
+
+**File:** `src/app/(public)/plans/page.tsx`, related section components
+
+**What to do:**
+
+1. Same approach as 103.1 for `/plans` route.
+2. Update known violations in `accessibility.spec.ts`.
+
+**Acceptance criteria:**
+
+- [ ] `/plans` passes axe color-contrast check
+- [ ] Build passes
+
+#### 103.3 MEDIUM — Fix heading order on personas page (`/personas`)
+
+**File:** `src/app/(public)/personas/page.tsx`, persona card components
+
+**What to do:**
+
+1. Ensure heading levels are sequential (no skipping from h2 to h4, etc.).
+2. Update known violations in `accessibility.spec.ts`.
+
+**Acceptance criteria:**
+
+- [ ] `/personas` passes axe heading-order check
+- [ ] Build passes
+
+#### 103.4 MEDIUM — Fix duplicate landmark violations
+
+**Files:** Layout components (`src/app/layout.tsx`, route layouts)
+
+**What to do:**
+
+1. Investigate `landmark-main-is-top-level`, `landmark-no-duplicate-main`, `landmark-unique` violations.
+2. Ensure only one `<main>` element exists per page.
+3. Update known violations in `accessibility.spec.ts`.
+
+**Acceptance criteria:**
+
+- [ ] All public routes pass landmark axe checks
+- [ ] `accessibility.spec.ts` known violations list reduced to zero (or justified exceptions only)
 - [ ] Build passes
 
 ---
@@ -88,24 +117,8 @@
 
 ### Phase 96: Unit Test Depth Improvement — HIGH
 
-> ~~Phases 96.1–96.3 COMPLETE (moved to DONE.md).~~ Remaining: 96.4–96.8.
+> ~~Phases 96.1–96.4 COMPLETE (moved to DONE.md).~~ Remaining: 96.5–96.8.
 > All new tests MUST follow TDD methodology.
-
-#### 96.4 HIGH — Add admin authorization failure tests
-
-**Files:** `tests/unit/actions/admin-audit-trail.test.ts` or new file
-
-**What to do (TDD):**
-
-1. Test: non-admin user calling admin action → rejected (throws or returns error).
-2. Test: unauthenticated user calling admin action → rejected.
-3. Test: admin user calling admin action → succeeds (audit logged).
-
-**Acceptance criteria:**
-
-- [ ] Authorization rejection tested
-- [ ] All 3 paths (no auth, wrong role, correct role) tested
-- [ ] Tests pass
 
 #### 96.5 HIGH — Add upload file size validation test
 
@@ -176,25 +189,9 @@
 
 ## HIGH — E2E Quality Rebuild (PM audit #42, Triple-Audit)
 
-### Phase 97: E2E Test Depth Improvement — HIGH
+### Phase 97: E2E Test Depth Improvement — MEDIUM
 
-#### 97.1 HIGH — Add WCAG accessibility E2E via @axe-core/playwright
-
-**Files:** New: `tests/e2e/accessibility.spec.ts`, `package.json`
-
-**What to do:**
-
-1. Install `@axe-core/playwright` as devDependency.
-2. Create `accessibility.spec.ts` that runs axe against: `/`, `/about`, `/plans`, `/personas`, `/privacy`, `/cookies`, `/terms`.
-3. Each route check: `const results = await new AxeBuilder({ page }).analyze()` then `expect(results.violations).toEqual([])`.
-4. Start with public pages. App pages can be added later.
-
-**Acceptance criteria:**
-
-- [ ] `@axe-core/playwright` installed
-- [ ] All 7 public routes scanned
-- [ ] Results reported (violations list)
-- [ ] Known violations documented (not silently passing)
+> ~~97.1 COMPLETE (moved to DONE.md).~~ Remaining: 97.2, 97.3.
 
 #### 97.2 MEDIUM — Add admin settings → app propagation E2E
 
@@ -268,23 +265,7 @@
 
 ---
 
-## MEDIUM — WCAG & Code Quality
-
-### Phase 72.4 HIGH — Admin table semantics (promoted PM audit #45)
-
-**Files:** `src/components/admin/users/admin-users-table.tsx`, `src/components/admin/transactions/admin-transactions-table.tsx`, `src/components/admin/website/admin-website-manager.tsx`
-
-**What to do:**
-
-1. Convert div-based grid tables to semantic `<table>` or add ARIA table roles (`role="grid"`, `role="row"`, `role="columnheader"`, `role="cell"`).
-2. Add table caption/aria-label.
-3. Maintain existing styling with Tailwind on semantic elements.
-
-**Acceptance criteria:**
-
-- [ ] Admin tables navigable by screen readers as data tables
-- [ ] WCAG 2.2 AA Success Criterion 1.3.1 satisfied
-- [ ] Build passes and visual appearance unchanged
+## MEDIUM — Code Quality
 
 ### Phase 73.3 MEDIUM — Admin client component data-consumer violations
 
@@ -302,11 +283,11 @@
 
 ---
 
-## HIGH — Triple-Audit Findings (PM audit #43 → Updated PM audit #45)
+## MEDIUM — Triple-Audit Findings (PM audit #43–#46)
 
-### Phase 99: Code Quality & WCAG Fixes — HIGH/MEDIUM
+### Phase 99: Code Quality Fixes — MEDIUM
 
-> Findings from PM audit #43–#45 triple-audits. ~~99.1, 99.3 COMPLETE (moved to DONE.md).~~ Remaining: 99.2, 99.4, 99.5.
+> Findings from PM audit #43–#46 triple-audits. ~~99.1, 99.3, 99.5 COMPLETE (moved to DONE.md).~~ Remaining: 99.2.
 
 #### 99.2 MEDIUM — Migrate ConfirmationModal to native `<dialog>`
 
@@ -326,49 +307,65 @@
 - [ ] Keyboard and screen reader accessible
 - [ ] Build passes, existing tests pass
 
-#### 99.4 MEDIUM — Knip cleanup: dead exports + unused test factories (PM audit #45)
+---
 
-**Files:** `src/constants/faqs.tsx`, `tests/unit/constants/faqs.test.ts`, `tests/unit/factories.ts`
+## MEDIUM — Admin Configurability (Owner directive: NO hardcoded data)
 
-**What to do:**
+### Phase 104: Landing page content admin-configurable — MEDIUM
 
-1. Remove `export const faqs = buildFaqs()` from `src/constants/faqs.tsx` (dead export).
-2. Update `faqs.test.ts` to call `buildFaqs()` directly with test data and verify interpolation.
-3. Remove or consume unused test factory exports: `createTestTransaction`, `createTestEntitlements` (Phase 96.3 tests do not consume these despite availability).
-4. Remove `export` from `createMessageId` in `message-id.ts` — it is only used internally by `ensureMessageHasId`.
+> Owner directive: "NO HARDCODED data — everything MUST be fully configurable from ADMIN panel." Landing page feature cards, how-it-works steps, and hero copy are currently loaded from static JSON/constants, not admin-editable.
 
-**Acceptance criteria:**
+#### 104.1 MEDIUM — Landing page feature cards admin-editable
 
-- [ ] Dead `faqs` export removed
-- [ ] Unused test factory exports removed or consumed
-- [ ] `createMessageId` no longer exported
-- [ ] `npm run knip` reports 0 unused exports
-- [ ] Tests pass
-
-#### 99.5 HIGH — AudioPlayer ARIA improvements (PM audit #45, Triple-Audit)
-
-**File:** `src/components/shared/audio-player.tsx`
+**Files:** Admin settings, `src/lib/utils/effective-website-config.ts` (new or extend), landing page Server Component
 
 **What to do:**
 
-1. Add `aria-label="Play"` / `aria-label="Pause"` (toggle based on state) to the icon-only play/pause button.
-2. Add ARIA semantics to progress bar (role, aria-valuenow, aria-valuemin, aria-valuemax, aria-label).
-3. Fix 11 ESLint warnings (all `set-state-in-effect` in this file) — extract state updates into stable callbacks.
+1. Add `admin.landingFeatureCards` AppSetting field.
+2. Create `getEffectiveLandingFeatureCards()` resolver with fallback to current constants.
+3. Admin settings UI for editing feature card titles/descriptions/icons.
+4. Landing page Server Component reads from resolver instead of static import.
 
 **Acceptance criteria:**
 
-- [ ] Play/pause button has accessible name
-- [ ] Progress bar has ARIA semantics (role="progressbar" or role="slider")
-- [ ] ESLint warnings in audio-player.tsx resolved
+- [ ] Feature cards admin-editable from `/admin/settings`
+- [ ] Fallback to defaults if no admin override
+- [ ] Build passes
+
+#### 104.2 MEDIUM — Hero and about copy admin-editable
+
+**Files:** Same pattern as 104.1
+
+**What to do:**
+
+1. Add `admin.heroCopy` and `admin.aboutCopy` AppSetting fields.
+2. Resolvers with fallback to current static content.
+3. Admin UI for editing.
+
+**Acceptance criteria:**
+
+- [ ] Hero and about text admin-editable
+- [ ] Build passes
+
+### Phase 74.2 MEDIUM — FAQ content admin-configurable
+
+**Files:** `src/constants/faqs.tsx`, admin settings
+
+**What to do:**
+
+1. Add `admin.faqContent` AppSetting field.
+2. Create `getEffectiveFaqContent()` resolver with fallback to `buildFaqs()`.
+3. Admin UI for adding/editing/removing FAQ entries.
+
+**Acceptance criteria:**
+
+- [ ] FAQ questions and answers admin-editable from `/admin/settings`
+- [ ] Fallback to defaults
 - [ ] Build passes
 
 ---
 
 ## LOW — Remaining Work
-
-### Phase 74.2 MEDIUM — FAQ content admin-configurable
-
-**Files:** `src/constants/faqs.tsx`, admin settings
 
 ### Phase 87 LOW — createTaskSchema strict mode
 
@@ -395,5 +392,5 @@
 ---
 
 > **Completed phases** archived in [`DONE.md`](DONE.md).
-> All phases through 100.3 complete (including 86, 88–96.3, 99.1, 99.3, 100.1–100.3, 95-R).
+> All phases through 102 complete (including 72.4, 86, 88–96.4, 97.1, 99.1, 99.3, 99.5, 100.1–100.4, 101, 102).
 > All Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS.

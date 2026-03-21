@@ -2,7 +2,77 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-21 — PM audit #45. All Phases 1–85, 80.1, 73.1, 74.1, 72.1, 72.2, 72.3, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1, 96.2, 96.3, 99.1, 99.3, 100.1, 100.2, 100.3 complete. Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS. 393 unit tests (64 suites). 87 E2E passed, 25 skipped, 0 failed. All 6 validation gates GREEN. Build passing. Node.js 24.12.0 runtime. Coverage: 76.27/65.31/79.64/76.67 vs 76/65/79/76 (MET).
+> Last updated: 2026-03-21 — PM audit #46. All Phases 1–85, 80.1, 73.1, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.4, 97.1, 99.1, 99.3, 99.5, 100.1–100.4, 101, 102 complete. Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS. 400 unit tests (65 suites). 108 E2E passed, 25 skipped, 0 failed. All 6 validation gates GREEN. Build passing. Node.js 24.12.0 runtime. Coverage: 76.27/65.31/79.64/76.67 vs 76/65/79/76 (MET).
+
+---
+
+## Phase 101 — Remove viewport zoom restriction — COMPLETED (2026-03-21)
+
+> Engineer delivered (PM audit #46). TD-WCAG-03 RESOLVED. WCAG 2.2 AA SC 1.4.4 (Resize Text) fixed.
+
+- [x] **101 CRITICAL** — Removed `maximumScale: 1` and `userScalable: false` from viewport metadata in `layout.tsx`. Mobile users can now pinch-to-zoom.
+
+**Files changed:** `src/app/layout.tsx`
+
+---
+
+## Phase 100.4 — Fix 4th `isObjectRecord` duplicate — COMPLETED (2026-03-21)
+
+> Engineer delivered (PM audit #46). TD-REUSE-01 FULLY RESOLVED. All 4 files now import from shared `type-guards.ts`.
+
+- [x] **100.4 HIGH** — Replaced local `isObjectRecord` definition in `effective-model-config.ts` with import from `@/lib/utils/type-guards`.
+
+**Files changed:** `src/lib/utils/effective-model-config.ts`
+
+---
+
+## Phase 102 — Add AbortController to chat streaming fetch — COMPLETED (2026-03-21)
+
+> Engineer delivered (PM audit #46). TD-LEAK-01 RESOLVED. HTTP connection leak on navigation eliminated.
+
+- [x] **102 HIGH** — Added `activeRequestControllerRef` (AbortController ref) to `chat-wrapper.tsx`. Signal passed to `fetch()`. Cleanup on unmount aborts active stream. AbortError handled silently. Unit tests added for abort behavior.
+
+**Files changed:** `src/components/chat/chat-wrapper.tsx`, `tests/unit/components/chat-wrapper.test.tsx`
+
+---
+
+## Phase 96.4 — Admin authorization failure tests — COMPLETED (2026-03-21)
+
+> Engineer delivered (PM audit #46). TDD methodology. All 3 auth paths tested.
+
+- [x] **96.4 HIGH** — Added `describe("admin actions authorization enforcement")` block to `admin-audit-trail.test.ts`. Tests: unauthenticated access rejected, non-admin role rejected (Forbidden), admin role succeeds with audit log.
+
+**Files changed:** `tests/unit/actions/admin-audit-trail.test.ts`
+
+---
+
+## Phase 99.5 — AudioPlayer ARIA improvements — COMPLETED (2026-03-21)
+
+> Engineer delivered (PM audit #46). TD-WCAG-04 RESOLVED. Screen reader accessibility for audio playback.
+
+- [x] **99.5 HIGH** — Added `aria-label` toggle ("Play audio playback" / "Pause audio playback") to play/pause button. Progress bar has `role="progressbar"`, `aria-valuemin`, `aria-valuemax`, `aria-valuenow`, `aria-valuetext`. Icon marked `aria-hidden="true"`. Time display has `role="status"` and `aria-live="polite"`. Unit tests added.
+
+**Files changed:** `src/components/shared/audio-player.tsx`, `tests/unit/components/audio-player.test.tsx`
+
+---
+
+## Phase 72.4 — Admin table semantic HTML — COMPLETED (2026-03-21)
+
+> Engineer delivered (PM audit #46). WCAG 2.2 AA SC 1.3.1 (Info and Relationships) satisfied.
+
+- [x] **72.4 HIGH** — Converted admin users table and admin transactions table from div-based grid to semantic `<table>`, `<thead>`, `<tbody>`, `<tr>`, `<th scope="col">`, `<td>` elements. Maintained Tailwind styling. Updated related unit test expectations for semantic headers.
+
+**Files changed:** `src/components/admin/users/admin-users-table.tsx`, `src/components/admin/transactions/admin-transactions-table.tsx`, `tests/unit/components/admin-users-table.test.tsx`, `tests/unit/components/admin-transactions-table.test.tsx`
+
+---
+
+## Phase 97.1 — WCAG accessibility E2E via @axe-core/playwright — COMPLETED (2026-03-21)
+
+> Engineer delivered (PM audit #46). TD-WCAG-02 RESOLVED. All 7 public routes scanned. Known violations explicitly documented.
+
+- [x] **97.1 HIGH** — Installed `@axe-core/playwright` as devDependency. Created `tests/e2e/accessibility.spec.ts` scanning all 7 public routes (`/`, `/about`, `/plans`, `/personas`, `/privacy`, `/cookies`, `/terms`). Known violations documented by route: landmark issues (all routes), color-contrast (`/`, `/plans`), heading-order (`/personas`). Unexpected violations cause test failure.
+
+**Files changed:** `tests/e2e/accessibility.spec.ts` (new), `package.json`, `tests/e2e/admin-bulk-actions.spec.ts` (selector update for semantic tables)
 
 ---
 
