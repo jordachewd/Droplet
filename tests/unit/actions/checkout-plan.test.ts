@@ -46,7 +46,7 @@ vi.mock("@/lib/utils/effective-plan-config", () => ({
   getEffectivePlanConfig: vi.fn(),
 }));
 
-describe("checkoutPlan phase17", () => {
+describe("checkoutPlan", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     process.env.NEXT_PUBLIC_API_BASE_URL = "http://localhost:3000";

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { bulkDeleteTransactionsAction } from "@/lib/actions/admin.actions";
 import { AdminManagedForm } from "@/components/admin/admin-managed-form";
 import { AdminFormSubmitButton } from "@/components/admin/admin-form-submit-button";
@@ -38,6 +38,10 @@ export function AdminTransactionsTable({
   const [selectedTransactionIds, setSelectedTransactionIds] = useState<
     string[]
   >([]);
+
+  useEffect(() => {
+    setSelectedTransactionIds([]);
+  }, [transactions]);
 
   const selectedSet = useMemo(
     () => new Set(selectedTransactionIds),

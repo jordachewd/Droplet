@@ -58,7 +58,10 @@ async function ensureSidebarOpen(page: Page) {
   const toggleButton = page.getByRole("button", { name: /show menu/i });
 
   if ((await toggleButton.count()) > 0) {
-    await toggleButton.first().click({ force: true, timeout: 5_000 });
+    const firstToggle = toggleButton.first();
+    if (await firstToggle.isVisible()) {
+      await firstToggle.click({ force: true, timeout: 5_000 });
+    }
   }
 
   await expect(sidebar).toBeVisible();

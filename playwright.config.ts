@@ -1,6 +1,6 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const browserProjects = [
+const defaultBrowserProjects = [
   {
     name: "chromium",
     use: { ...devices["Desktop Chrome"] },
@@ -13,6 +13,9 @@ const browserProjects = [
     name: "webkit",
     use: { ...devices["Desktop Safari"] },
   },
+];
+
+const fullMatrixOnlyProjects = [
   {
     name: "Mobile Chrome",
     use: { ...devices["Pixel 5"] },
@@ -30,6 +33,11 @@ const browserProjects = [
     use: { ...devices["Desktop Chrome"], channel: "chrome" },
   },
 ];
+
+const browserProjects =
+  process.env.PLAYWRIGHT_FULL_MATRIX === "1"
+    ? [...defaultBrowserProjects, ...fullMatrixOnlyProjects]
+    : defaultBrowserProjects;
 
 export default defineConfig({
   testDir: "./tests/e2e",

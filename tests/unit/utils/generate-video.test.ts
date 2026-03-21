@@ -191,4 +191,47 @@ describe("generateVideo", () => {
       "Video Generator API returned empty content. | generateVideo",
     );
   });
+
+  it("throws when video creation API call fails", async () => {
+    vi.mocked(openAiClient.videos.create).mockRejectedValue(
+      new Error("Video API unavailable"),
+    );
+
+    await expect(
+      generateVideo({
+        prompt: "api failure",
+        role: "assistant",
+        taskId: "task_6",
+        userId: "user_123",
+        planName: "Pro",
+      }),
+    ).rejects.toThrow("Video API unavailable | generateVideo");
+  });
+
+  it("throws when uploading generated video fails", async () => {
+    vi.mocked(openAiClient.videos.create).mockResolvedValue({
+      id: "video_upload_fail",
+      status: "queued",
+    } as never);
+    vi.mocked(openAiClient.videos.retrieve).mockResolvedValue({
+      id: "video_upload_fail",
+      status: "completed",
+    } as never);
+    vi.mocked(openAiClient.videos.downloadContent).mockResolvedValue({
+      arrayBuffer: vi.fn().mockResolvedValue(Buffer.from("video-bytes").buffer),
+    } as never);
+    vi.mocked(uploadFileToAWS).mockRejectedValueOnce(
+      new Error("S3 upload failed for generated video"),
+    );
+
+    await expect(
+      generateVideo({
+        prompt: "upload failure",
+        role: "assistant",
+        taskId: "task_7",
+        userId: "user_123",
+        planName: "Pro",
+      }),
+    ).rejects.toThrow("S3 upload failed for generated video | generateVideo");
+  });
 });

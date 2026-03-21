@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.744.0",
+    "@clerk/nextjs": "^7.0.1",
     "@clerk/backend": "^3.2.0",
     "@formkit/auto-animate": "^0.9.0",
     "@vercel/analytics": "^2.0.1",
@@ -29,6 +30,8 @@
     "mongoose": "^9.0.1",
     "next": "^16.1.6",
     "openai": "^6.10.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
     "react-markdown": "^10.1.0",
     "remark-gfm": "^4.0.0",
     "server-only": "^0.0.1",
@@ -39,7 +42,6 @@
     "zustand": "^5.0.11"
   },
   "devDependencies": {
-    "@clerk/nextjs": "^7.0.1",
     "@clerk/testing": "^2.0.1",
     "@mikegarde/dotenv-cli": "^0.6.1",
     "@playwright/test": "^1.58.2",
@@ -56,8 +58,6 @@
     "knip": "^6.0.0",
     "postcss": "^8.5.1",
     "prettier": "^3.4.2",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
     "tailwindcss": "^4.2.1",
     "typescript": "^5.7.3",
     "vitest": "^4.0.18"

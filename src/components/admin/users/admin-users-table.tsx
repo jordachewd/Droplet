@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   bulkRemoveUsersAction,
   bulkSuspendUsersAction,
@@ -57,6 +57,10 @@ export function AdminUsersTable({
 }: AdminUsersTableProps) {
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
   const trimmedSearchQuery = searchQuery?.trim() ?? "";
+
+  useEffect(() => {
+    setSelectedUserIds([]);
+  }, [users]);
 
   const formatLimit = (limit: number) =>
     limit === -1 ? "Unlimited" : String(limit);

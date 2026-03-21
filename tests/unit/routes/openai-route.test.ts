@@ -20,6 +20,7 @@ import {
 } from "@/lib/utils/check-daily-conversations";
 import { getTaskByIdForUser } from "@/lib/utils/task-queries";
 import { enforceSlidingWindowRateLimit } from "@/lib/utils/rate-limit";
+import { emitUsageEvents } from "@/lib/utils/usage-event-utils";
 import { PLAN_LIMITS } from "@/constants/plans";
 import {
   getEffectivePlanConfig,
@@ -66,6 +67,10 @@ vi.mock("@/lib/utils/task-queries", () => ({
 
 vi.mock("@/lib/utils/rate-limit", () => ({
   enforceSlidingWindowRateLimit: vi.fn(),
+}));
+
+vi.mock("@/lib/utils/usage-event-utils", () => ({
+  emitUsageEvents: vi.fn(),
 }));
 
 vi.mock("@/lib/utils/ensure-user-synced", () => ({
@@ -163,7 +168,17 @@ describe("POST /api/openai", () => {
       createExistingTask() as never,
     );
     vi.mocked(generateTitle).mockResolvedValue(
-      JSON.stringify({ title: "Generated title", usage: 7 }),
+      JSON.stringify({
+        title: "Generated title",
+        usage: 7,
+        requestMetric: {
+          requestType: "title",
+          model: "gpt-4.1-nano",
+          tokensIn: 5,
+          tokensOut: 2,
+          latencyMs: 12,
+        },
+      }),
     );
     vi.mocked(createTask).mockResolvedValue({ _id: NEW_TASK_ID } as never);
     vi.mocked(incrementPromptCountIfBelowLimit).mockResolvedValue(true);
@@ -177,6 +192,15 @@ describe("POST /api/openai", () => {
         taskUsage: 11,
         generatedImage: false,
         generatedAudio: false,
+        requestMetrics: [
+          {
+            requestType: "chat",
+            model: "gpt-4o-mini",
+            tokensIn: 8,
+            tokensOut: 3,
+            latencyMs: 24,
+          },
+        ],
       }),
     );
     vi.mocked(generateStreamingResponse).mockResolvedValue({
@@ -188,6 +212,15 @@ describe("POST /api/openai", () => {
       taskUsage: 11,
       generatedImage: false,
       generatedAudio: false,
+      requestMetrics: [
+        {
+          requestType: "chat",
+          model: "gpt-4o-mini",
+          tokensIn: 8,
+          tokensOut: 3,
+          latencyMs: 24,
+        },
+      ],
     } as never);
     vi.mocked(updateTask).mockResolvedValue({} as never);
     vi.mocked(User.findOneAndUpdate).mockResolvedValue({} as never);
@@ -245,7 +278,10 @@ describe("POST /api/openai", () => {
     const payload = await response.json();
 
     expect(response.status).toBe(403);
-    expect(payload.error).toContain("plan has expired");
+    expect(payload.stopReason).toBe("billing_state_invalid");
+    expect(payload.endAction).toBe("upgrade_plan");
+    expect(payload.acceptedPrompt).toBe(false);
+    expect(payload.error).toContain("expired");
   });
 
   it("allows limited personas on Lite plan as trial access", async () => {
@@ -353,6 +389,18 @@ describe("POST /api/openai", () => {
       PLAN_LIMITS,
     );
     expect(generateTitle).toHaveBeenCalledOnce();
+    expect(generateTitle).toHaveBeenCalledWith(
+      [{ role: "user", whois: "user", content: "new chat" }],
+      "Lite",
+      "strategist",
+      expect.objectContaining({
+        chat: expect.objectContaining({
+          lite: expect.any(String),
+          pro: expect.any(String),
+          premium: expect.any(String),
+        }),
+      }),
+    );
     expect(createTask).toHaveBeenCalledWith({
       title: "Generated title",
       messages: [{ role: "user", whois: "user", content: "new chat" }],
@@ -389,6 +437,24 @@ describe("POST /api/openai", () => {
         ],
         usage: 11,
         personaId: "strategist",
+      }),
+    );
+    expect(emitUsageEvents).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        userId: "user_123",
+        taskId: NEW_TASK_ID,
+        personaId: "strategist",
+        metrics: [expect.objectContaining({ requestType: "title" })],
+      }),
+    );
+    expect(emitUsageEvents).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        userId: "user_123",
+        taskId: NEW_TASK_ID,
+        personaId: "strategist",
+        metrics: [expect.objectContaining({ requestType: "chat" })],
       }),
     );
     expect(payload.taskId).toBe(NEW_TASK_ID);
@@ -736,6 +802,20 @@ describe("POST /api/openai", () => {
                 },
               ],
             },
+            requestMetrics: [
+              {
+                requestType: "chat",
+                model: "gpt-4o-mini",
+                latencyMs: 10,
+              },
+              {
+                requestType: "image",
+                model: "gpt-image-1-mini",
+                blocked: true,
+                blockedReason: "image_limit_reached",
+                latencyMs: 0,
+              },
+            ],
           });
         }
 
@@ -770,6 +850,19 @@ describe("POST /api/openai", () => {
     expect(updatePayload).not.toMatchObject({
       status: "ended",
     });
+    expect(emitUsageEvents).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: "user_123",
+        taskId: EXISTING_TASK_ID,
+        metrics: expect.arrayContaining([
+          expect.objectContaining({ requestType: "chat" }),
+          expect.objectContaining({
+            requestType: "image",
+            blockedReason: "image_limit_reached",
+          }),
+        ]),
+      }),
+    );
   });
 
   it("uses trial media counters for limited personas and ends with trial limit reason", async () => {

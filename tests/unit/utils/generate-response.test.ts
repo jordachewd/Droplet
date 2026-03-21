@@ -65,6 +65,8 @@ describe("generateResponse", () => {
       ],
       usage: {
         total_tokens: 24,
+        prompt_tokens: 18,
+        completion_tokens: 6,
       },
     } as never);
 
@@ -94,6 +96,16 @@ describe("generateResponse", () => {
     expect(payload.taskData).toBeTruthy();
     expect(payload.taskData.content[0].text).toContain("concise plan");
     expect(payload.taskUsage).toBe(24);
+    expect(payload.requestMetrics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          requestType: "chat",
+          model: "gpt-4.1",
+          tokensIn: 18,
+          tokensOut: 6,
+        }),
+      ]),
+    );
   });
 
   it("dispatches image tool calls to generateImage", async () => {
@@ -119,6 +131,8 @@ describe("generateResponse", () => {
       ],
       usage: {
         total_tokens: 33,
+        prompt_tokens: 20,
+        completion_tokens: 13,
       },
     } as never);
 
@@ -130,6 +144,11 @@ describe("generateResponse", () => {
           content: [{ type: "text", text: "Image generated." }],
         },
         generatedImage: true,
+        requestMetric: {
+          requestType: "image",
+          model: "gpt-image-1.5",
+          latencyMs: 42,
+        },
       }),
     );
 
@@ -157,6 +176,7 @@ describe("generateResponse", () => {
     });
     const payload = JSON.parse(result as string);
     expect(payload.generatedImage).toBe(true);
+    expect(payload.requestMetrics).toHaveLength(2);
   });
 
   it("returns image_limit_reached when atomic image slot claim fails", async () => {
@@ -450,6 +470,8 @@ describe("generateResponse", () => {
       ],
       usage: {
         total_tokens: 21,
+        prompt_tokens: 14,
+        completion_tokens: 7,
       },
     } as never);
 
@@ -461,6 +483,11 @@ describe("generateResponse", () => {
           content: [{ type: "text", text: "Audio generated." }],
         },
         generatedAudio: true,
+        requestMetric: {
+          requestType: "audio",
+          model: "gpt-audio-mini",
+          latencyMs: 18,
+        },
       }),
     );
 
@@ -489,6 +516,7 @@ describe("generateResponse", () => {
     });
     const payload = JSON.parse(result as string);
     expect(payload.generatedAudio).toBe(true);
+    expect(payload.requestMetrics).toHaveLength(2);
   });
 
   it("dispatches video tool calls to generateVideo", async () => {
@@ -714,6 +742,65 @@ describe("generateResponse", () => {
     expect(payload.taskData.content[0].text).toContain("not enabled");
   });
 
+  it("returns image_limit_reached when image capability is disabled and usage limit is already reached", async () => {
+    vi.mocked(openAiClient.chat.completions.create).mockResolvedValue({
+      choices: [
+        {
+          message: {
+            role: "assistant",
+            content: null,
+            tool_calls: [
+              {
+                type: "function",
+                function: {
+                  name: "getGeneratedImage",
+                  arguments: JSON.stringify({ prompt: "A city skyline" }),
+                },
+              },
+            ],
+          },
+        },
+      ],
+      usage: {
+        total_tokens: 18,
+        prompt_tokens: 11,
+        completion_tokens: 7,
+      },
+    } as never);
+
+    const result = await generateResponse({
+      messages: [
+        {
+          role: "user",
+          whois: "user",
+          content: [{ type: "text", text: "Generate image." }],
+        },
+      ],
+      taskId: "task_blocked_limit",
+      userId: "clerk_1",
+      personaId: "strategist",
+      planName: "Pro",
+      entitlements: {
+        ...defaultEntitlements,
+        supportsImageGeneration: false,
+        imageLimitReached: true,
+      },
+    });
+
+    const payload = JSON.parse(result as string);
+    expect(generateImage).not.toHaveBeenCalled();
+    expect(payload.blockedReason).toBe("image_limit_reached");
+    expect(payload.requestMetrics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          requestType: "image",
+          blocked: true,
+          blockedReason: "image_limit_reached",
+        }),
+      ]),
+    );
+  });
+
   it("fails immediately for non-retryable OpenAI 400 errors", async () => {
     vi.mocked(openAiClient.chat.completions.create).mockRejectedValue(
       new APIError(400, {}, "Bad request", new Headers()),
@@ -728,6 +815,31 @@ describe("generateResponse", () => {
         },
       ],
       taskId: "task_error",
+      userId: "clerk_1",
+      personaId: "strategist",
+      planName: "Pro",
+      entitlements: defaultEntitlements,
+    });
+
+    const payload = JSON.parse(result as string);
+    expect(payload.errorType).toBe("unknown");
+    expect(openAiClient.chat.completions.create).toHaveBeenCalledTimes(1);
+  });
+
+  it("fails immediately for non-retryable OpenAI 401 errors", async () => {
+    vi.mocked(openAiClient.chat.completions.create).mockRejectedValue(
+      new APIError(401, {}, "Unauthorized", new Headers()),
+    );
+
+    const result = await generateResponse({
+      messages: [
+        {
+          role: "user",
+          whois: "user",
+          content: [{ type: "text", text: "Hello" }],
+        },
+      ],
+      taskId: "task_error_401",
       userId: "clerk_1",
       personaId: "strategist",
       planName: "Pro",

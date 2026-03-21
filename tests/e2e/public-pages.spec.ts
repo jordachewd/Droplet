@@ -19,6 +19,7 @@ test.use({ storageState: guestFile });
 test("renders the landing page hero and public CTAs", async ({ page }) => {
   await gotoAndExpectPublicRoute(page, "/");
 
+  await expect(page).toHaveTitle(/Droplet/i);
   await expect(
     page.getByRole("heading", {
       name: "Chat, create, and get things done.",
@@ -30,6 +31,46 @@ test("renders the landing page hero and public CTAs", async ({ page }) => {
   await expect(
     page.getByRole("link", { name: "Create account" }),
   ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Not another empty prompt box." }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", {
+      name: "Different jobs need different voices.",
+    }),
+  ).toBeVisible();
+});
+
+test("toggles dark mode and keeps it after reload", async ({ page }) => {
+  await gotoAndExpectPublicRoute(page, "/");
+
+  const darkModeButton = page.getByRole("switch", {
+    name: "Toggle theme mode",
+  });
+  await darkModeButton.click();
+
+  await expect(page.locator("html")).toHaveAttribute(
+    "data-droplet-theme",
+    "dark",
+  );
+
+  await page.reload();
+
+  await expect(page.locator("html")).toHaveAttribute(
+    "data-droplet-theme",
+    "dark",
+  );
+});
+
+test("renders custom 404 page for unknown routes", async ({ page }) => {
+  await gotoAndExpectPublicRoute(page, "/this-route-does-not-exist");
+
+  await expect(page).toHaveURL(/this-route-does-not-exist/);
+  await expect(page.getByText("HTTP 404")).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Page Not Found" }),
+  ).toBeVisible();
+  await expect(page.getByRole("link", { name: "Go Home" })).toBeVisible();
 });
 
 test("renders the about page with multiple content sections", async ({
