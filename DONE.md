@@ -2,7 +2,37 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-21 — PM deep audit #39. Phase 75 closed (zero /faqs refs in E2E tests). New phases 85/86/87 created. All Phases 1–84, 80.1, 73.1, 74.1, 72.1, 75 complete. Milestone 22 COMPLETE. Milestone 23 Block A COMPLETE. 382 unit tests (66 suites). Build passing. Node.js 24.12.0 runtime confirmed.
+> Last updated: 2026-03-21 — PM audit #39-B. Phases 72.2, 72.3, 85 completed by Engineer (commit `8c4c942`). 386 unit tests (67 suites). All Phases 1–85, 80.1, 73.1, 74.1, 72.1, 72.2, 72.3, 75 complete. Milestone 22 COMPLETE. Milestone 23 Block A COMPLETE. Build passing. Node.js 24.12.0 runtime.
+
+---
+
+## Phase 85 — Admin Query Pagination — COMPLETED (2026-03-21)
+
+> Engineer delivered in commit `8c4c942`. TD-ADMIN-PAGINATION RESOLVED.
+
+- [x] **85.1 HIGH** — `resolveAdminPagination()` helper with bounded inputs (`normalizePositiveInt`, `MAX_ADMIN_PAGE_SIZE = 100`, default `25`). `getAdminUsers()` and `getAdminTransactions()` use `countDocuments()` + `.skip().limit()`. Return `{ items, total, page, pageSize, totalPages }`. Pagination UI controls on both admin tables with `<nav aria-label>`. `buildPageHref()` preserves search `q` param in users table. 4 new unit tests covering pagination edge cases.
+
+**Files changed:** `src/lib/utils/admin-queries.ts`, `src/components/admin/users/admin-users-table.tsx`, `src/components/admin/transactions/admin-transactions-table.tsx`, `src/app/(admin)/admin/users/page.tsx`, `src/app/(admin)/admin/transactions/page.tsx`, `tests/unit/admin-queries.test.ts`
+
+---
+
+## Phase 72.3 — Form Label, ARIA, and Semantic HTML — COMPLETED (2026-03-21)
+
+> Engineer delivered in commit `8c4c942`.
+
+- [x] **72.3 HIGH** — `ConfirmationModal`: static IDs replaced with `useId()` hook — prevents duplicate IDs when multiple modals render. `AvatarMenu`: `aria-expanded={open}` (always boolean, never `undefined`). `AppLogo`: SVG gets `aria-hidden={true}` and `focusable={false}` when text label is visible. Admin table checkboxes: `aria-label="Select all users"`, `aria-label="Select {username}"`. Upload input: accessible label added. Pagination `<nav>` elements with `aria-label`.
+
+**Files changed:** `src/components/shared/confirmation-modal.tsx`, `src/components/shared/avatar-menu.tsx`, `src/components/shared/app-logo.tsx`, `src/components/shared/upload-file-input.tsx`, `src/components/admin/users/admin-users-table.tsx`, `src/components/admin/transactions/admin-transactions-table.tsx`
+
+---
+
+## Phase 72.2 — Color Contrast and Opacity Violations — COMPLETED (2026-03-21)
+
+> Engineer delivered in commit `8c4c942`. TD-DS-04 RESOLVED (97 → 3 remaining; all 3 are non-text decorative opacity on background blurs/bars).
+
+- [x] **72.2 HIGH** — Replaced `opacity-60`/`opacity-65`/`opacity-70`/`opacity-85` on text-bearing elements with explicit color tokens (`text-midnightBlue-600 dark:text-lavenderHaze-600`, `text-midnightBlue-700 dark:text-lavenderHaze-700`). 94 text-opacity violations fixed. 3 remaining instances are non-text decorative (`library-tabs.tsx` bars, `hero-section.tsx` background blur) — correctly untouched.
+
+**Files changed:** 20+ component files across admin, chat, public, layout, and shared surfaces.
 
 ---
 

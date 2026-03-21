@@ -5,9 +5,9 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: Milestone 22 COMPLETE. Milestone 23 Block A COMPLETE. All Phases 1–84, 80.1, 73.1, 74.1, 72.1, 75 complete. 382 unit tests (66 suites). Build passing. Node.js 24.12.0 runtime.**
-> **PM deep audit #39 (2026-03-21): Triple-audit (PM + Architect + Engineer). Phase 75 CLOSED (zero /faqs refs found in E2E). New phases: 85 (admin pagination), 86 (server-only guards on models/OpenAI/AWS), 87 (createTaskSchema strict). Zero critical issues. Orphan `_update_plan.cjs` needs manual deletion.**
-> **Priority order: 72.2 (HIGH — WCAG) → 72.3 (HIGH — WCAG) → 85 (HIGH — admin pagination) → 72.4 (MEDIUM — WCAG) → 86 (MEDIUM — server-only) → 73.3 (MEDIUM) → 87 (LOW) → 74.2 (MEDIUM) → 73.2 (MEDIUM) → 31.4 → 46.x → 29.x → 26.x**
+> **STATUS: Milestone 22 COMPLETE. Milestone 23 Block A COMPLETE. All Phases 1–85, 80.1, 73.1, 74.1, 72.1, 72.2, 72.3, 75 complete. 386 unit tests (67 suites). Build passing. Node.js 24.12.0 runtime.**
+> **PM audit #39-B (2026-03-21): Engineer delivered Phases 72.2 (opacity→tokens, 97→3 remaining — all 3 non-text decorative), 72.3 (ARIA: useId modal, aria-expanded avatar, aria-hidden logo SVG, checkbox labels), 85 (admin pagination: resolveAdminPagination, skip/limit, bounded pageSize, pagination UI). 4 new unit tests. tsc ✅ lint ✅ 386 tests ✅. E2E failed due to stale Chromium process accumulation (infrastructure, not code). Browser crash was resource exhaustion from 30+ orphan Chrome processes.**
+> **Priority order: 72.4 (MEDIUM — WCAG table semantics) → 86 (MEDIUM — server-only guards) → 73.3 (MEDIUM — admin data consumers) → 87 (LOW — createTaskSchema strict) → 74.2 (MEDIUM — FAQ admin) → 73.2 (MEDIUM — sidebar state) → 31.4 → 46.x → 29.x → 26.x**
 
 ---
 
@@ -56,49 +56,8 @@
 ## Phase 72: WCAG 2.2 AA Accessibility Pass — HIGH
 
 > Phase 72.1 COMPLETE — archived to DONE.md (PM audit #38).
-
-### 72.2 HIGH — Color contrast and opacity violations
-
-**Ref:** Triple-audit finding: `opacity-60`, `opacity-65`, `opacity-70` on text elements likely fail WCAG AA 4.5:1 contrast ratio.
-
-**Files:** Admin pages, landing page, sidebar, footer, settings descriptions, profile usage labels — all files with `opacity-60`/`opacity-65`/`opacity-70`/`opacity-85` on text
-
-**What to do:**
-
-1. Audit all `opacity-60`, `opacity-65`, `opacity-70` on text elements across the codebase.
-2. Replace opacity-based text dimming with explicit color tokens that maintain AA contrast (e.g., `text-midnightBlue-300 dark:text-lavenderHaze-300` instead of `opacity-60`).
-3. Verify key color combinations pass 4.5:1 for normal text, 3:1 for large text.
-4. Test with a contrast checker tool.
-
-**Acceptance criteria:**
-
-- [ ] No `opacity-60` or `opacity-65` on text-bearing elements
-- [ ] All text meets 4.5:1 contrast on its background
-- [ ] Build passes
-
----
-
-### 72.3 HIGH — Form label, ARIA, and semantic HTML audit
-
-**Files:** All form components, modals, interactive elements
-
-**What to do:**
-
-1. Fix `AvatarMenu` `aria-expanded`: use `aria-expanded={open}` instead of `aria-expanded={open ? "true" : undefined}`.
-2. Fix `ConfirmationModal` duplicate IDs: use `useId()` hook for unique `aria-labelledby`/`aria-describedby` IDs.
-3. Add `aria-hidden="true"` to decorative Logo SVG in `app-logo.tsx` when text label is visible.
-4. Audit all admin form inputs for proper `<label>` association.
-5. Verify all `required` fields have `aria-required="true"`.
-6. Verify error messages use `aria-live="polite"` or `role="alert"`.
-
-**Acceptance criteria:**
-
-- [ ] `aria-expanded` always has a value (not `undefined`)
-- [ ] No duplicate element IDs across simultaneous components
-- [ ] All form controls have associated labels
-- [ ] Build passes
-
----
+> Phase 72.2 COMPLETE — archived to DONE.md (PM audit #39-B).
+> Phase 72.3 COMPLETE — archived to DONE.md (PM audit #39-B).
 
 ### 72.4 MEDIUM — Admin table semantics
 
@@ -164,28 +123,9 @@
 
 ---
 
-## Phase 85: Admin Query Pagination — HIGH (NEW — PM audit #39)
+## Phase 85: Admin Query Pagination — HIGH (COMPLETE — PM audit #39-B)
 
-### 85.1 HIGH — Add server-side pagination to admin users and transactions queries
-
-**Ref:** PM audit #39 — Architect finding: `getAdminUsers()` and `getAdminTransactions()` fetch ALL records with no `.limit()` or `.skip()`. Unbounded queries cause performance degradation at scale (10k+ records).
-
-**Files:** `src/lib/utils/admin-queries.ts`, `src/components/admin/users/admin-users-table.tsx`, `src/components/admin/transactions/admin-transactions-table.tsx`, `src/app/(admin)/admin/users/page.tsx`, `src/app/(admin)/admin/transactions/page.tsx`
-
-**What to do:**
-
-1. Add `page` and `pageSize` parameters to `getAdminUsers()` and `getAdminTransactions()`.
-2. Use `.skip((page - 1) * pageSize).limit(pageSize)` with a separate `countDocuments()` for total count.
-3. Return `{ items, total, page, pageSize, totalPages }` from each query.
-4. Add pagination UI controls to admin users and transactions tables.
-5. Default `pageSize = 25`.
-
-**Acceptance criteria:**
-
-- [ ] Admin users and transactions queries paginated
-- [ ] Pagination controls visible on both tables
-- [ ] Build passes
-- [ ] Unit tests updated
+> Phase 85.1 COMPLETE — archived to DONE.md (PM audit #39-B). `resolveAdminPagination()` helper, bounded `pageSize` (max 100), `getAdminUsers()` + `getAdminTransactions()` paginated, pagination UI on both tables, 4 new unit tests. Commit `8c4c942`.
 
 ---
 
@@ -336,5 +276,5 @@
 ---
 
 > **Completed phases** are archived in [`DONE.md`](DONE.md).
-> All phases through 84 complete, plus 80.1, 73.1, 74.1, 72.1, 75 (incl. 63.1–63.2, 61.1, 68.1–68.4, 69.1, 70.1–70.2, 71.1–71.2, 76, 80.1, 73.1, 82, 83, 84, 74.1, 72.1, 75). All Milestones 0–22 COMPLETE. Milestone 23 Block A COMPLETE.
+> All phases through 85 complete, plus 80.1, 73.1, 74.1, 72.1, 72.2, 72.3, 75 (incl. 63.1–63.2, 61.1, 68.1–68.4, 69.1, 70.1–70.2, 71.1–71.2, 76, 80.1, 73.1, 82, 83, 84, 74.1, 72.1, 72.2, 72.3, 75, 85). All Milestones 0–22 COMPLETE. Milestone 23 Block A COMPLETE.
 > Phase 10–12 superseded (see DONE.md for mapping).

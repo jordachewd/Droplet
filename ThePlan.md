@@ -1000,7 +1000,7 @@ npm run build
 
 ## 9. Immediate Execution Order
 
-Milestones 0–22 are COMPLETE. All Phases 1–71.2 (incl. 63.1–63.2, 61.1, 68.1–68.4, 69.1, 70.1–70.2, 71.1–71.2) remain archived as delivered work. Milestone 23 Block A COMPLETE. Block B in progress. Milestone 24 now open. Phases 82, 83, 84, 74.1, 72.1, 75 are COMPLETE. Three new phases added by PM audit #39: 85 (admin pagination), 86 (server-only guards), 87 (createTaskSchema strict).
+Milestones 0–22 are COMPLETE. All Phases 1–71.2 (incl. 63.1–63.2, 61.1, 68.1–68.4, 69.1, 70.1–70.2, 71.1–71.2) remain archived as delivered work. Milestone 23 Block A COMPLETE. Block B in progress. Milestone 24 now open. Phases 72.1, 72.2, 72.3, 74.1, 75, 82, 83, 84, 85 are COMPLETE. Remaining new phases: 86 (server-only guards), 87 (createTaskSchema strict).
 
 **Completed (Milestones 0–21):**
 
@@ -1027,11 +1027,9 @@ Milestones 0–22 are COMPLETE. All Phases 1–71.2 (incl. 63.1–63.2, 61.1, 68
 21. ✅ `import "server-only"` added to `ai-model-policy.ts` and `check-usage-limit.ts`. TD-SEC-05 FULLY RESOLVED (Phase 84 COMPLETE).
 22. ✅ Support email admin-configurable via `getEffectiveSupportEmail()` with DB-backed fallback. Admin settings UI section added (Phase 74.1 COMPLETE).
 23. ✅ Admin skip-link, main landmark, `aria-current="page"` on active sidebar links + nav label (Phase 72.1 COMPLETE).
-24. ✅ limeGreen palette updated from #B8F60D to #D9F20C in globals.css. All 10 steps recalculated (Phase 82 COMPLETE).
-25. ✅ Knip cleanup: `@typescript-eslint/parser` removed from devDeps, `chatTools` made non-exported. `npm run knip` clean (Phase 83 COMPLETE).
-26. ✅ `import "server-only"` added to `ai-model-policy.ts` and `check-usage-limit.ts`. TD-SEC-05 FULLY RESOLVED (Phase 84 COMPLETE).
-27. ✅ Support email admin-configurable via `getEffectiveSupportEmail()` with DB-backed fallback. Admin settings UI section added (Phase 74.1 COMPLETE).
-28. ✅ Admin skip-link, main landmark, `aria-current="page"` on active sidebar links + nav label (Phase 72.1 COMPLETE).
+24. ✅ Color contrast: 94 text-opacity violations replaced with explicit color tokens. TD-DS-04 RESOLVED (Phase 72.2 COMPLETE).
+25. ✅ ARIA/labels: `useId()` in ConfirmationModal, `aria-expanded` fix in AvatarMenu, `aria-hidden` on AppLogo SVG, checkbox labels on admin tables (Phase 72.3 COMPLETE).
+26. ✅ Admin pagination: `resolveAdminPagination()`, bounded `pageSize`, `getAdminUsers()` + `getAdminTransactions()` paginated, pagination UI, 4 new unit tests. TD-ADMIN-PAGINATION RESOLVED (Phase 85 COMPLETE).
 
 **Completed in Milestone 22 (all verified 2026-03-18, PM audit #32):**
 
@@ -1053,24 +1051,24 @@ Milestones 0–22 are COMPLETE. All Phases 1–71.2 (incl. 63.1–63.2, 61.1, 68
 16. ✅ Lime Green button palette (Phases 68.1–68.3) — DONE. TD-DS-05 RESOLVED. Added `limeGreen` palette 100–1000 in theme tokens. Restyled `.btn-text`, `.btn-outlined`, `.btn-contained` with Lime Green. Clerk appearance kept as twilightPurple.
 17. ✅ Admin shell/header/sidebar alignment (Phase 70.1) — DONE. TD-DS-06 RESOLVED (Phase 70.1 + 70.2). Full admin design alignment complete.
 
-### Owner Directives (March 2026) — Status (Updated PM audit #36 — 2026-03-20)
+### Owner Directives (March 2026) — Status (Updated PM audit #39-B — 2026-03-21)
 
-| #   | Directive                                                    | Priority | Status                                                                                                                                                                                        |
-| --- | ------------------------------------------------------------ | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | Node.js 24.12.0 compatibility                                | CRITICAL | ✅ COMPLETE. Runtime is 24.12.0. `.nvmrc`/`engines` not required (owner decision).                                                                                                            |
-| 2   | NO HARDCODED data — everything configurable from ADMIN panel | CRITICAL | ⚠️ PARTIALLY DELIVERED. Core settings admin-configurable. Support email DONE (Phase 74.1). Remaining gaps: FAQ content (74.2), hero/about/landing copy, stop-reason messages, nav/footer.     |
-| 3   | Components must be data consumers                            | CRITICAL | ✅ COMPLETE (Phase 73.1) for 5 core components. 3 admin client components remain (Phase 73.3).                                                                                                |
-| 4   | Reduce unnecessary renders and resource leaks                | CRITICAL | ✅ No resource leaks. All useEffect cleanups verified. 1 minor state duplication in chat-sidebar-nav-v2 (Phase 73.2).                                                                         |
-| 5   | Utilities and data fetching on server side                   | CRITICAL | ✅ DELIVERED. Server-only guards on utility files. No client-side data fetching violations.                                                                                                   |
-| 6   | User removal cascades Clerk + DB + all data                  | CRITICAL | ✅ COMPLETE. All 3 paths cascade: Clerk → Tasks → Transactions → UsageEvents → S3 → User.                                                                                                     |
-| 7   | PREMIUM user gets media limitation error — why?              | CRITICAL | ✅ RESOLVED (Phase 80.1). `PLAN_LIMITS.Premium.video` changed from `10` to `-1` (unlimited).                                                                                                  |
-| 8   | WCAG 2.2 AA accessibility compliance                         | HIGH     | ⚠️ PARTIALLY IMPLEMENTED. Phase 72.1 DONE: admin skip-link, main landmark, aria-current on sidebar. Remaining gaps: table semantics (72.4), opacity contrast (72.2), form labels/ARIA (72.3). |
-| 9   | npm run knip — unused code audit                             | HIGH     | ✅ COMPLETE (Phase 83). 0 findings. `@typescript-eslint/parser` removed, `chatTools` made non-exported.                                                                                       |
-| 10  | Profile page displays plan limitations and usage             | HIGH     | ✅ DELIVERED (Phase 66.1). ProfileUsage with progress bars and "used / limit" format.                                                                                                         |
-| 11  | Admin plans/settings fully configurable                      | HIGH     | ⚠️ Core operational. Support email DONE (Phase 74.1). Remaining: FAQ content (74.2), hero/about/landing copy (74.3), system prompts, hero images.                                             |
-| 12  | Admin panel design matches /app design                       | HIGH     | ✅ COMPLETE (Phase 70.1 + 70.2).                                                                                                                                                              |
-| 13  | Admin users table shows usage/limits (remained vs included)  | MEDIUM   | ✅ DELIVERED (Phase 66.3 + 59.1). Users table + detail page with progress bars.                                                                                                               |
-| 14  | RE-USE repetitive code as much as possible                   | HIGH     | ⚠️ NEEDS TRACKING. No systematic code-reuse audit completed. To be tracked as ongoing architectural concern.                                                                                  |
+| #   | Directive                                                    | Priority | Status                                                                                                                                                                                    |
+| --- | ------------------------------------------------------------ | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Node.js 24.12.0 compatibility                                | CRITICAL | ✅ COMPLETE. Runtime is 24.12.0. `.nvmrc`/`engines` not required (owner decision).                                                                                                        |
+| 2   | NO HARDCODED data — everything configurable from ADMIN panel | CRITICAL | ⚠️ PARTIALLY DELIVERED. Core settings admin-configurable. Support email DONE (Phase 74.1). Remaining gaps: FAQ content (74.2), hero/about/landing copy, stop-reason messages, nav/footer. |
+| 3   | Components must be data consumers                            | CRITICAL | ✅ COMPLETE (Phase 73.1) for 5 core components. 3 admin client components remain (Phase 73.3).                                                                                            |
+| 4   | Reduce unnecessary renders and resource leaks                | CRITICAL | ✅ No resource leaks. All useEffect cleanups verified. 1 minor state duplication in chat-sidebar-nav-v2 (Phase 73.2).                                                                     |
+| 5   | Utilities and data fetching on server side                   | CRITICAL | ✅ DELIVERED. Server-only guards on utility files. No client-side data fetching violations.                                                                                               |
+| 6   | User removal cascades Clerk + DB + all data                  | CRITICAL | ✅ COMPLETE. All 3 paths cascade: Clerk → Tasks → Transactions → UsageEvents → S3 → User.                                                                                                 |
+| 7   | PREMIUM user gets media limitation error — why?              | CRITICAL | ✅ RESOLVED (Phase 80.1). `PLAN_LIMITS.Premium.video` changed from `10` to `-1` (unlimited).                                                                                              |
+| 8   | WCAG 2.2 AA accessibility compliance                         | HIGH     | ⚠️ MOSTLY DONE. 72.1 ✅ 72.2 ✅ 72.3 ✅. Remaining: table semantics (72.4 — MEDIUM).                                                                                                      |
+| 9   | npm run knip — unused code audit                             | HIGH     | ✅ COMPLETE (Phase 83). 0 findings. `@typescript-eslint/parser` removed, `chatTools` made non-exported.                                                                                   |
+| 10  | Profile page displays plan limitations and usage             | HIGH     | ✅ DELIVERED (Phase 66.1). ProfileUsage with progress bars and "used / limit" format.                                                                                                     |
+| 11  | Admin plans/settings fully configurable                      | HIGH     | ⚠️ Core operational. Support email DONE (Phase 74.1). Remaining: FAQ content (74.2), hero/about/landing copy (74.3), system prompts, hero images.                                         |
+| 12  | Admin panel design matches /app design                       | HIGH     | ✅ COMPLETE (Phase 70.1 + 70.2).                                                                                                                                                          |
+| 13  | Admin users table shows usage/limits (remained vs included)  | MEDIUM   | ✅ DELIVERED (Phase 66.3 + 59.1). Users table + detail page with progress bars. Now paginated (Phase 85).                                                                                 |
+| 14  | RE-USE repetitive code as much as possible                   | HIGH     | ⚠️ NEEDS TRACKING. Architecture Rule #9 added to AGENTS.md. No systematic audit completed yet.                                                                                            |
 
 **Owner Directive Updates (March 2026 — Palette & Button Styles):**
 
@@ -1097,19 +1095,21 @@ Milestones 0–22 are COMPLETE. All Phases 1–71.2 (incl. 63.1–63.2, 61.1, 68
 20. ✅ Admin persona content editing UI (Phase 71.2) — DONE. Persona labels, taglines, descriptions, starter prompts editable from admin settings.
 21. ✅ Admin panel full design alignment (Phase 70.2) — DONE. All admin pages polished to match `/app` design system.
 
-**Current priority (Milestone 23 Block B + Milestone 24 — updated PM audit #39):**
+**Current priority (Milestone 23 Block B + Milestone 24 — updated PM audit #39-B):**
 
-| Priority     | Phase  | Description                                                                                                              |
-| ------------ | ------ | ------------------------------------------------------------------------------------------------------------------------ |
-| ~~CRITICAL~~ | ~~80~~ | ~~Fix `PLAN_LIMITS.Premium.video` from `10` to `-1`~~ — DONE (Phase 80.1)                                                |
-| ~~CRITICAL~~ | ~~73~~ | ~~Codebase quality: 5 client component data-consumer violations~~ — DONE (Phase 73.1). 3 admin remain (73.3)             |
-| HIGH         | 72     | WCAG 2.2 AA accessibility: skip-link DONE (72.1). Remaining: contrast (72.2), form labels (72.3), table semantics (72.4) |
-| HIGH         | 85     | Admin query pagination — `getAdminUsers()` and `getAdminTransactions()` unbounded (NEW — PM audit #39)                   |
-| HIGH         | 74     | Full admin configurability: support email DONE (74.1). FAQ content (74.2), hero/about/landing copy (74.3) remain         |
-| MEDIUM       | 86     | Server-only guards on 20 files: 8 Mongoose models, 7 OpenAI utils, 5 AWS utils (NEW — PM audit #39)                      |
-| MEDIUM       | 73.3   | 3 remaining admin client component data-consumer violations                                                              |
-| LOW          | 87     | `createTaskSchema` `.passthrough()` → `.strict()` (NEW — PM audit #39)                                                   |
-| ~~LOW~~      | ~~75~~ | ~~`/faqs` route removal~~ — CLOSED (PM audit #39: zero /faqs refs found in E2E — already clean)                          |
+| Priority     | Phase    | Description                                                                                                                    |
+| ------------ | -------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| ~~CRITICAL~~ | ~~80~~   | ~~Fix `PLAN_LIMITS.Premium.video` from `10` to `-1`~~ — DONE (Phase 80.1)                                                      |
+| ~~CRITICAL~~ | ~~73~~   | ~~Codebase quality: 5 client component data-consumer violations~~ — DONE (Phase 73.1). 3 admin remain (73.3)                   |
+| ~~HIGH~~     | ~~72.2~~ | ~~WCAG contrast: 94 text-opacity violations replaced with color tokens~~ — DONE (Phase 72.2). TD-DS-04 RESOLVED                |
+| ~~HIGH~~     | ~~72.3~~ | ~~WCAG ARIA: useId modal, aria-expanded avatar, aria-hidden logo, checkbox labels~~ — DONE (Phase 72.3)                        |
+| ~~HIGH~~     | ~~85~~   | ~~Admin pagination: resolveAdminPagination, skip/limit, bounded pageSize, UI~~ — DONE (Phase 85). TD-ADMIN-PAGINATION RESOLVED |
+| MEDIUM       | 72.4     | WCAG table semantics: admin tables need `<table>` or ARIA `role="table"` for screen readers                                    |
+| MEDIUM       | 86       | Server-only guards on 20 files: 8 Mongoose models, 7 OpenAI utils, 5 AWS utils                                                 |
+| MEDIUM       | 73.3     | 3 remaining admin client component data-consumer violations                                                                    |
+| LOW          | 87       | `createTaskSchema` `.passthrough()` → `.strict()`                                                                              |
+| MEDIUM       | 74       | Full admin configurability: support email DONE (74.1). FAQ content (74.2), hero/about/landing copy (74.3) remain               |
+| ~~LOW~~      | ~~75~~   | ~~`/faqs` route removal~~ — CLOSED (PM audit #39: zero /faqs refs found)                                                       |
 
 **Required validation gates before calling this milestone set complete:**
 
@@ -1147,7 +1147,7 @@ These items are not banned forever. They are excluded because they create dispro
 
 ## 11. Owner-Directed New Work (Added 2026-03-16, Updated 2026-03-18)
 
-> **All Milestones 0–22 COMPLETE. Milestone 23 Block A COMPLETE (Phases 68.4, 71.1, 71.2, 70.2). Phase 75 CLOSED (PM audit #39). All Phases 1–71.2 + 72.1 + 74.1 + 82 + 83 + 84 + 75 delivered. 382 unit tests (66 suites) passing. Build passing.**
+> **All Milestones 0–22 COMPLETE. Milestone 23 Block A COMPLETE. Phases 72.2, 72.3, 85 COMPLETE (PM audit #39-B). All Phases 1–85 + 72.1–72.3 + 74.1 + 75 delivered. 386 unit tests (67 suites) passing. Build passing.**
 
 ### Owner Instructions (Canonical Reference — March 2026)
 
@@ -1156,8 +1156,8 @@ These instructions are **non-negotiable owner directives** that govern all imple
 | #   | Instruction                                                                    | Priority | Status                                                                                             |
 | --- | ------------------------------------------------------------------------------ | -------- | -------------------------------------------------------------------------------------------------- |
 | 1   | NO HARDCODED data — everything configurable from ADMIN panel                   | CRITICAL | ⚠️ PARTIALLY DELIVERED. Core done (74.1). Remaining: FAQ (74.2), landing copy (74.3).              |
-| 2   | RE-USE repetitive code as much as possible                                     | HIGH     | ⚠️ NEEDS TRACKING. No systematic audit completed.                                                  |
-| 3   | WCAG 2.2 AA accessibility compliance for entire app                            | HIGH     | ⚠️ PARTIALLY DONE. Phase 72.1 complete. Remaining: 72.2 (contrast), 72.3 (forms), 72.4 (tables).   |
+| 2   | RE-USE repetitive code as much as possible                                     | HIGH     | ⚠️ NEEDS TRACKING. Architecture Rule #9 added to AGENTS.md. No systematic audit yet.               |
+| 3   | WCAG 2.2 AA accessibility compliance for entire app                            | HIGH     | ⚠️ MOSTLY DONE. 72.1 ✅ 72.2 ✅ 72.3 ✅. Remaining: 72.4 (table semantics — MEDIUM).               |
 | 4   | Components must be data consumers (especially `"use client"`)                  | CRITICAL | ✅ COMPLETE (Phase 73.1). 5 core components converted.                                             |
 | 5   | Good practices — reduce unnecessary renders and resource leaks                 | CRITICAL | ✅ COMPLETE. All useEffect cleanups verified. No resource leaks.                                   |
 | 6   | Utilities, functions, data fetching on server side                             | CRITICAL | ✅ COMPLETE. Server-only guards on utility files. No violations.                                   |

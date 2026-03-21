@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-21 (PM audit #39. All Phases 1–84, 80.1, 73.1, 74.1, 72.1, 75 complete. Milestone 22 COMPLETE. Milestone 23 Block A COMPLETE. TD-SEC-05 FULLY RESOLVED (Phase 84). TD-PREM-01 RESOLVED (Phase 80.1). Phase 75 CLOSED (zero /faqs refs). Active: TD-DS-04 (MEDIUM — absorbed by Phase 72.2), TD-API-09 (LOW), TD-ADMIN-PAGINATION (HIGH — Phase 85), TD-SEC-06 (MEDIUM — Phase 86), TD-TASK-PASSTHROUGH (LOW — Phase 87). 382 unit tests (66 suites). Build passing. Node.js 24.12.0 runtime.)
+> Last updated: 2026-03-21 (PM audit #39-B. All Phases 1–85, 80.1, 73.1, 74.1, 72.1, 72.2, 72.3, 75 complete. Milestone 22 COMPLETE. Milestone 23 Block A COMPLETE. TD-SEC-05 FULLY RESOLVED (Phase 84). TD-PREM-01 RESOLVED (Phase 80.1). TD-DS-04 RESOLVED (Phase 72.2). TD-ADMIN-PAGINATION RESOLVED (Phase 85). Phase 75 CLOSED. Active: TD-API-09 (LOW), TD-SEC-06 (MEDIUM — Phase 86), TD-TASK-PASSTHROUGH (LOW — Phase 87). 386 unit tests (67 suites). Build passing. Node.js 24.12.0 runtime.)
 
 ---
 
@@ -869,15 +869,15 @@ _None._
 
 ### Active — Medium Priority (PM Audit #31)
 
-| ID       | Area   | Description                                                                                                                                                                                                                                                                                          | Severity |
-| -------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| TD-DS-04 | Design | 55+ pre-existing dark mode pairing gaps: light tokens used without `dark:` counterpart or vice versa. Inherited from Milestone 21. Architect audit #39 assessment: majority are the opacity-60/65/70 issue (Phase 72.2), not genuinely missing `dark:` variants. Effectively absorbed by Phase 72.2. | Medium   |
+| ID       | Area   | Description                                                                                                                                                                                                                                                                                            | Severity            |
+| -------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------- |
+| TD-DS-04 | Design | ~~55+ pre-existing dark mode pairing gaps: light tokens used without `dark:` counterpart or vice versa. Inherited from Milestone 21.~~ **RESOLVED (Phase 72.2).** 94 text-opacity violations replaced with explicit color tokens. 3 remaining instances are non-text decorative (correctly untouched). | ~~Medium~~ Resolved |
 
-### Active — HIGH Priority (PM Audit #39, Triple-Audit)
+### ~~Active~~ Resolved — HIGH Priority (PM Audit #39, Triple-Audit)
 
-| ID                  | Area  | Description                                                                                                                                                                                      | Severity |
-| ------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------- |
-| TD-ADMIN-PAGINATION | Admin | `getAdminUsers()` and `getAdminTransactions()` fetch ALL records with no `.limit()` or `.skip()`. Unbounded queries cause performance degradation and potential server crash at scale. Phase 85. | HIGH     |
+| ID                  | Area  | Description                                                                                                                                                                                                                                                                             | Severity          |
+| ------------------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
+| TD-ADMIN-PAGINATION | Admin | ~~`getAdminUsers()` and `getAdminTransactions()` fetch ALL records with no `.limit()` or `.skip()`.~~ **RESOLVED (Phase 85).** `resolveAdminPagination()` helper, bounded `pageSize` (max 100), `countDocuments()` + `.skip().limit()`, pagination UI on both tables. 4 new unit tests. | ~~HIGH~~ Resolved |
 
 ### Active — MEDIUM Priority (PM Audit #39, Triple-Audit)
 
