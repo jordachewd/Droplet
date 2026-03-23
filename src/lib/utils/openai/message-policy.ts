@@ -1,3 +1,5 @@
+import "server-only";
+
 import { ContentItem, Message } from "@/types";
 
 const APPROX_CHARS_PER_TOKEN = 4;
