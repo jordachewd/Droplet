@@ -2,7 +2,38 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-23 — PM audit #48. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4 complete. Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS. 433 unit tests (72 suites). 108 E2E passed, 25 skipped, 0 failed. 5 of 7 gates GREEN (lint + knip FAIL — Phase 111 BLOCKER). Build passing. Node.js 24.12.0 runtime. Coverage: 78.18/65.94/83.01/78.51.
+> Last updated: 2026-03-23 — PM audit #49. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4, 105.1, 105.2, 111.1, 112.1 complete. Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS. 433 unit tests (72 suites). 108 E2E passed, 25 skipped, 0 failed. All 7 gates GREEN. Build passing. Node.js 24.12.0 runtime. Coverage: 78.18/65.94/83.01/78.51.
+
+---
+
+## Phase 112.1 — Audit and classify all 72 unit test files — COMPLETED (2026-03-23)
+
+> Engineer delivered (PM audit #49). Full test-suite classification for TDD rebuild.
+
+- [x] **112.1 CRITICAL** — All 72 unit test files classified: 51 KEEP, 19 REFACTOR, 2 REBUILD. Missing test suites documented (9 files). Audit artifact at `tests/unit/phase-112.1-test-audit.md`.
+
+**Deliverable:** `tests/unit/phase-112.1-test-audit.md`
+
+---
+
+## Phase 111.1 — Remove orphan dev scripts — COMPLETED (2026-03-23)
+
+> Engineer delivered (PM audit #49). BLOCKER RESOLVED. All 7 validation gates GREEN.
+
+- [x] **111.1 BLOCKER** — Deleted `_up.js` and `_update_plan.js` from project root. `npm run lint` passes (0 errors). `npm run knip` passes (0 findings). All 7 gates GREEN.
+
+**Files deleted:** `_up.js`, `_update_plan.js`
+
+---
+
+## Phase 105 — Add missing `server-only` guards — COMPLETED (2026-03-23)
+
+> Engineer delivered (PM audit #49). TD-SEC-09 RESOLVED.
+
+- [x] **105.1 HIGH** — Added `import "server-only"` to `src/lib/utils/openai/classify-task-complexity.ts`.
+- [x] **105.2 HIGH** — Added `import "server-only"` to `src/lib/utils/openai/message-policy.ts`.
+
+**Files changed:** `src/lib/utils/openai/classify-task-complexity.ts`, `src/lib/utils/openai/message-policy.ts`
 
 ---
 
