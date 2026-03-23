@@ -5,64 +5,25 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #49 (2026-03-23). All Phases 1–112.1 complete. 433 unit tests (72 suites). Build passes. TSC passes. Node.js 24.12.0 runtime.**
-> **GATE STATUS: ALL 7 gates GREEN. Lint (0 errors, 9 warnings), knip (0 findings), TSC, build, unit tests (72/433), E2E (108 passed, 25 skipped, 0 failed) — all pass.**
-> **Coverage: 78.18/65.94/83.01/78.51.**
+> **STATUS: PM audit #50 (2026-03-23). All Phases 1–113.2 complete. 443 unit tests (74 suites). Build passes. TSC passes. Node.js 24.12.0 runtime.**
+> **GATE STATUS: ALL 7 gates GREEN. Lint (0 errors, 6 warnings), knip (0 findings), TSC, build, unit tests (74/443), E2E (108 passed, 25 skipped, 0 failed) — all pass.**
+> **Coverage: 78.55/66.3/83.53/78.85.**
 > **Owner directive (CRITICAL): FULL TDD TESTING REBUILD from scratch. NO hardcoded data. WCAG 2.2 AA. Code reuse. Full admin configurability. Components as data consumers. Server-side utilities.**
-> **Priority order: 113 (CRITICAL security — createTaskSchema + checkout-success auth) → 112.2 (CRITICAL TDD rebuild core utils) → 112.3 (CRITICAL server actions) → 112.4 (CRITICAL API routes) → 109 (HIGH WCAG icons) → 112.5 (HIGH component rebuild) → 106 (HIGH shared types) → 107 (HIGH stop-reason config) → 108 (MEDIUM WCAG tabs) → 74.2 (MEDIUM FAQ admin) → 104 (MEDIUM landing/hero admin) → 112.6 (HIGH E2E expansion) → 112.7 (HIGH coverage thresholds) → 110 (LOW) → 87 (LOW)**
+> **Priority order: 112.2 (CRITICAL TDD rebuild core utils) → 112.3 (CRITICAL server actions) → 112.4 (CRITICAL API routes) → 109 (HIGH WCAG icons) → 112.5 (HIGH component rebuild) → 106 (HIGH shared types) → 107 (HIGH stop-reason config) → 108 (MEDIUM WCAG tabs) → 114 (MEDIUM WCAG avatar menu) → 74.2 (MEDIUM FAQ admin) → 104 (MEDIUM landing/hero admin) → 112.6 (HIGH E2E expansion) → 112.7 (HIGH coverage thresholds) → 110 (LOW) → 87 (LOW)**
 
 ---
 
-## CRITICAL — Security Fixes (PM audit #49 — Triple-Audit Confirmed)
+## CRITICAL — TDD Testing Rebuild (Owner directive — Primary work stream)
 
-### Phase 113: Fix security vulnerabilities — CRITICAL
+### Phase 112.2 CRITICAL — Rebuild core utility unit tests (TDD) — IN PROGRESS
 
-> Two security issues confirmed by Architect audit. Must be fixed before TDD rebuild.
+> Started: effective-persona-access.ts (100% branch ✅), handleError.tsx (100% branch ✅). Remaining 8 utilities need TDD rebuild.
 
-#### 113.1 CRITICAL — Change `createTaskSchema` from `.passthrough()` to `.strict()`
+**Target files (pure logic — remaining low branch coverage):**
 
-**File:** `src/lib/actions/task.actions.tsx`
-
-**What to do:**
-
-1. Change `createTaskSchema` from `.passthrough()` to `.strict()`.
-2. This prevents arbitrary field injection (e.g., `userId`, `status`) through untrusted input.
-3. Mongoose `strict: true` provides a second barrier, but Zod should catch it first.
-4. Verify `npm run test` passes — if tests break, fix the test data (remove extra fields).
-5. Verify build passes.
-
-**Risk:** Without this fix, an attacker could potentially inject `userId` into task creation payload and create tasks attributed to other users. Mongoose `strict: true` mitigates but Zod should be the first defense.
-
-**Acceptance criteria:**
-
-- [ ] `createTaskSchema` uses `.strict()` not `.passthrough()`
-- [ ] All tests pass
-- [ ] Build passes
-
-#### 113.2 HIGH — Add auth check to `checkout-success` page
-
-**File:** `src/app/(public)/checkout-success/page.tsx`
-
-**What to do:**
-
-1. This page accepts an arbitrary `session_id` parameter and calls `stripe.checkout.sessions.retrieve()` with no auth check.
-2. While it only displays "payment verified" text (no sensitive data leak), it allows Stripe session ID enumeration.
-3. Move the page to `src/app/(chat)/app/checkout-success/page.tsx` under auth protection, OR add `auth()` check at the top.
-4. Simpler approach: add `const { userId } = await auth()` and redirect to `/sign-in` if not authenticated.
-
-**Acceptance criteria:**
-
-- [ ] Checkout-success page requires authentication
-- [ ] Unauthenticated visitors cannot probe Stripe session IDs
-- [ ] Build passes, E2E passes
-
-#### 112.2 CRITICAL — Rebuild core utility unit tests (TDD)
-
-**Target files (pure logic — 0% or low branch coverage):**
-
-1. `effective-persona-access.ts` — **0% branch** — core entitlement logic, MUST test
-2. `handleError.tsx` — **33% branch** — error utility
-3. `deleteFileFromAWS.tsx` — **0% branch** — S3 cleanup
+1. ~~`effective-persona-access.ts`~~ — **100% branch** — DONE
+2. ~~`handleError.tsx`~~ — **100% branch** — DONE
+3. `deleteFileFromAWS.tsx` — **0% branch** — S3 cleanup, MUST test
 4. `mongoose.tsx` — **21.73% branch** — DB connection manager
 5. `check-usage-limit.ts` — verify/improve existing tests
 6. `check-daily-conversations.ts` — verify/improve existing tests

@@ -2,7 +2,27 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-23 — PM audit #49. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4, 105.1, 105.2, 111.1, 112.1 complete. Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS. 433 unit tests (72 suites). 108 E2E passed, 25 skipped, 0 failed. All 7 gates GREEN. Build passing. Node.js 24.12.0 runtime. Coverage: 78.18/65.94/83.01/78.51.
+> Last updated: 2026-03-23 — PM audit #50. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4, 105.1, 105.2, 111.1, 112.1, 113.1, 113.2 complete. Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS. 443 unit tests (74 suites). 108 E2E passed, 25 skipped, 0 failed. All 7 gates GREEN. Build passing. Node.js 24.12.0 runtime. Coverage: 78.55/66.3/83.53/78.85.
+
+---
+
+## Phase 113.2 — Add auth check to checkout-success page — COMPLETED (2026-03-23)
+
+> Engineer delivered (PM audit #50). TD-SEC-11 RESOLVED.
+
+- [x] **113.2 HIGH** — Added Clerk `auth()` guard to checkout-success page. Unauthenticated visitors redirected to `/sign-in`. Prevents Stripe session ID enumeration. Unit test added for redirect behavior. E2E assertion added in `public-pages.spec.ts`.
+
+**Files changed:** `src/app/(public)/checkout-success/page.tsx`, `tests/unit/components/checkout-success-page.test.tsx`, `tests/e2e/public-pages.spec.ts`
+
+---
+
+## Phase 113.1 — Change createTaskSchema from .passthrough() to .strict() — COMPLETED (2026-03-23)
+
+> Engineer delivered (PM audit #50). TD-SEC-10 RESOLVED.
+
+- [x] **113.1 CRITICAL** — Changed `createTaskSchema` from `.passthrough()` to `.strict()` in `task.actions.tsx`. Prevents arbitrary field injection (e.g., `userId`, `status`) through untrusted input. Unit tests updated to reflect strict unknown-key rejection.
+
+**Files changed:** `src/lib/actions/task.actions.tsx`, `tests/unit/actions/task-actions.test.ts`
 
 ---
 
