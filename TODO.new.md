@@ -91,6 +91,7 @@
 > 5. Coverage target after rebuild: statements ≥82%, branches ≥78%, functions ≥82%, lines ≥82%.
 >
 > **Rebuild order (highest ROI first):**
+>
 > 1. Core utility tests (pure functions — fastest, most deterministic)
 > 2. Server action tests (mutation paths)
 > 3. API route tests (integration-level)
@@ -107,6 +108,7 @@
 4. Identify test files that are MISSING entirely (components, routes, utilities with 0% coverage).
 
 **Known high-value KEEP candidates:**
+
 - `openai-route.test.ts` (30+ behavioral scenarios — split into sub-files, keep scenarios)
 - `admin-audit-trail.test.ts` (auth + audit coverage)
 - `check-daily-conversations.test.ts`, `check-usage-limit.test.ts`, `rate-limit.test.ts` (core business logic)
@@ -114,6 +116,7 @@
 - `validation-schemas.test.ts` (input boundary + security injection tests)
 
 **Known REBUILD candidates:**
+
 - Component tests with only "renders without crashing" assertions
 - Tests with 10+ `as never` casts on mocks
 - Tests asserting mock call counts as primary validation
@@ -181,6 +184,7 @@
 6. Stripe webhook route tests — verify idempotency + plan update
 
 **Missing edge cases to add:**
+
 - Malformed JSON body handling
 - `ensureUserSynced` failure path (503 response)
 - `emitUsageEvents` failure being non-fatal

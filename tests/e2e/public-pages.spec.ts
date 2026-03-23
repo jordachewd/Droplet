@@ -18,6 +18,14 @@ async function expectVisiblePageHeading(page: Page) {
   await expect(page.getByRole("heading").first()).toBeVisible();
 }
 
+function isClerkAuthRedirect(url: string) {
+  return (
+    /\/sign-in/.test(url) ||
+    /clerk\.accounts\.dev\/v1\/client\/handshake/.test(url) ||
+    /clerk\.accounts\.dev\/.*\/sign-in/.test(url)
+  );
+}
+
 async function expectPlanCardStructure(page: Page) {
   const planCards = page.locator(".PlanCard");
   await expect(planCards).toHaveCount(3);
@@ -105,15 +113,16 @@ test("renders the public plans page with structural plan-card checks", async ({
   await expectPlanCardStructure(page);
 });
 
-test("renders checkout-success as a public route with generic fallback messaging", async ({
+test("redirects unauthenticated users away from checkout-success into sign-in", async ({
   page,
 }) => {
   await gotoAndExpectPublicRoute(page, "/checkout-success");
 
-  await expect(
-    page.getByRole("heading", { name: "Payment confirmation unavailable" }),
-  ).toBeVisible();
-  await expect(page.getByRole("link", { name: "Back to plans" })).toBeVisible();
+  await expect
+    .poll(() => isClerkAuthRedirect(page.url()), {
+      message: `Expected /checkout-success to enter Clerk sign-in flow. Current URL: ${page.url()}`,
+    })
+    .toBe(true);
 });
 
 test("renders the FAQ section on the public plans page with multiple accordion items", async ({

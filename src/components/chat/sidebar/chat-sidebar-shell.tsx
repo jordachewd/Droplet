@@ -120,10 +120,7 @@ export default function ChatSidebarShell({
         <SidebarHead isDesktopCollapsed={desktopCollapsed} />
 
         <div className={navWrapperClass}>
-          <ChatSidebarNav
-            isOpen={isSidebarOpen}
-            historyItems={historyItems}
-          />
+          <ChatSidebarNav isOpen={isSidebarOpen} historyItems={historyItems} />
         </div>
 
         <ChatSidebarPromo

@@ -1,4 +1,6 @@
+import { auth } from "@clerk/nextjs/server";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import Stripe from "stripe";
 
 type CheckoutSearchParams = {
@@ -53,6 +55,12 @@ export const dynamic = "force-dynamic";
 export default async function CheckoutSuccessPage({
   searchParams,
 }: CheckoutSuccessPageProps) {
+  const { userId } = await auth();
+
+  if (!userId) {
+    redirect("/sign-in");
+  }
+
   const resolvedSearchParams = await searchParams;
   const sessionId = resolveSessionId(resolvedSearchParams.session_id);
 

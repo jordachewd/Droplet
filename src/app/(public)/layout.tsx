@@ -12,7 +12,7 @@ export default function PublicLayout({
         Skip to main content
       </a>
       <Header />
-      
+
       <main id="public-main-content" className="flex flex-col w-full">
         {children}
       </main>

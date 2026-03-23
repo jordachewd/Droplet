@@ -3,6 +3,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import type { AnchorHTMLAttributes, ReactNode } from "react";
+import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 import CheckoutSuccessPage from "@/app/(public)/checkout-success/page";
 
 const retrieveSessionMock = vi.hoisted(() => vi.fn());
@@ -22,6 +24,16 @@ vi.mock("stripe", () => {
     default: StripeMock,
   };
 });
+
+vi.mock("@clerk/nextjs/server", () => ({
+  auth: vi.fn(),
+}));
+
+vi.mock("next/navigation", () => ({
+  redirect: vi.fn((path: string) => {
+    throw new Error(`NEXT_REDIRECT:${path}`);
+  }),
+}));
 
 vi.mock("next/link", () => ({
   default: ({
@@ -52,7 +64,23 @@ describe("checkout-success page", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     process.env.STRIPE_SECRET_KEY = "sk_test_123";
+    vi.mocked(auth).mockResolvedValue({ userId: "clerk_user_1" } as never);
     retrieveSessionMock.mockResolvedValue({ payment_status: "paid" });
+  });
+
+  it("redirects unauthenticated visitors to sign-in before Stripe session checks", async () => {
+    vi.mocked(auth).mockResolvedValue({ userId: null } as never);
+
+    await expect(
+      CheckoutSuccessPage({
+        searchParams: Promise.resolve({
+          session_id: "cs_test_paid_123",
+        }),
+      }),
+    ).rejects.toThrow("NEXT_REDIRECT:/sign-in");
+
+    expect(redirect).toHaveBeenCalledWith("/sign-in");
+    expect(retrieveSessionMock).not.toHaveBeenCalled();
   });
 
   it("shows success UI when Stripe session is paid", async () => {
