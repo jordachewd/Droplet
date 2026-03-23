@@ -90,10 +90,10 @@ export default function LibraryDeleteButton({
       <button
         type="button"
         className={classNames(
-          "LibraryDeleteBtn inline-flex h-10 w-10 items-center justify-center rounded-lg border text-sm transition-all",
-          "border-slate-400 bg-lavenderHaze-100/75 text-midnightBlue-900 hover:-translate-y-0.5 hover:bg-lavenderHaze-300/70",
+          "LibraryDeleteBtn inline-flex h-10 w-10 items-center justify-center rounded-full transition-all",
+          "bg-lavenderHaze-100/75 text-midnightBlue-900 hover:-translate-y-0.5 hover:bg-lavenderHaze-300/70",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lavenderHaze-300/60",
-          "dark:border-slate-500 dark:bg-nightIndigo-900/75 dark:text-white dark:hover:bg-nightIndigo-500/30",
+          "dark:bg-nightIndigo-900/75 dark:text-white dark:hover:bg-nightIndigo-500/30 shadow-sm",
           "dark:focus-visible:ring-nightIndigo-500/40",
           (isDeleting || isDemo) &&
             "cursor-not-allowed opacity-45 hover:translate-y-0 hover:bg-lavenderHaze-100/75 dark:hover:bg-nightIndigo-900/75",
@@ -114,7 +114,7 @@ export default function LibraryDeleteButton({
         <i
           className={classNames(
             isDeleting ? "bi bi-arrow-repeat animate-spin" : "bi bi-trash3",
-            "text-base",
+            "text-sm",
           )}
         ></i>
       </button>

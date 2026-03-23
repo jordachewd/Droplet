@@ -18,9 +18,10 @@ const MAIN_NAV_LINKS = [
 
 export default function Header() {
   const [scrolled, setScrolled] = useState<boolean>(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
+  const [openMenuPathname, setOpenMenuPathname] = useState<string | null>(null);
   const pathname = usePathname();
   const { isSignedIn } = useUser();
+  const mobileMenuOpen = openMenuPathname === pathname;
   const visibleMainLinks = useMemo(
     () =>
       MAIN_NAV_LINKS.filter(
@@ -28,6 +29,14 @@ export default function Header() {
       ),
     [isSignedIn],
   );
+  const handleMobileMenuToggle = () => {
+    setOpenMenuPathname((currentPathname) =>
+      currentPathname === pathname ? null : pathname,
+    );
+  };
+  const handleMobileMenuClose = () => {
+    setOpenMenuPathname(null);
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -44,16 +53,14 @@ export default function Header() {
     };
   }, []);
 
-  useEffect(() => {
-    setMobileMenuOpen(false);
-  }, [pathname]);
+  const scrolledHeader =
+    "bg-lavenderHaze-100/50 shadow-sm backdrop-blur-lg dark:bg-nightIndigo-900/50";
 
   return (
     <header
       className={classNames(
         "Header sticky left-0 right-0 top-0 z-20 flex w-full px-4 transition-all duration-300 ease-in-out",
-        scrolled &&
-          "bg-lavenderHaze-100/50 shadow-sm backdrop-blur-lg dark:bg-nightIndigo-900/50",
+        scrolled && scrolledHeader,
       )}
     >
       <div className="mx-auto flex w-full max-w-screen-2xl flex-col">
@@ -84,7 +91,7 @@ export default function Header() {
               aria-expanded={mobileMenuOpen}
               aria-controls="mobile-main-navigation"
               className="icon-btn md:hidden"
-              onClick={() => setMobileMenuOpen((open) => !open)}
+              onClick={handleMobileMenuToggle}
             >
               <i className={mobileMenuOpen ? "bi bi-x-lg" : "bi bi-list"}></i>
             </button>
@@ -117,7 +124,7 @@ export default function Header() {
                 key={`mobile-${link.href}`}
                 className="menu-item rounded-md px-2 py-2 text-base"
                 href={link.href}
-                onClick={() => setMobileMenuOpen(false)}
+                onClick={handleMobileMenuClose}
               >
                 {link.label}
               </Link>

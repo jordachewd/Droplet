@@ -56,14 +56,13 @@ export default function LibraryTabs({
   );
 
   return (
-    <section className="LibraryTabs flex flex-col gap-5">
+    <section className="LibraryTabs flex flex-col gap-6">
       <div
         role="tablist"
         aria-label="Library content tabs"
         className={classNames(
-          "flex w-full flex-wrap items-center gap-2 rounded-xl border p-2",
-          "border-slate-400 bg-lavenderHaze-100/80",
-          "dark:border-slate-500 dark:bg-nightIndigo-900/70",
+          "flex w-full flex-wrap items-center gap-2 rounded-xl p-2",
+          "bg-lavenderHaze-100/80 dark:bg-nightIndigo-900/70 shadow-sm",
         )}
       >
         {tabs.map((tab) => {
@@ -78,17 +77,16 @@ export default function LibraryTabs({
               aria-selected={selected}
               aria-controls={`library-panel-${tab.id}`}
               className={classNames(
-                "inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm transition-all",
-                "border-slate-400 hover:-translate-y-0.5",
-                "dark:border-slate-500",
+                "inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm transition-all",
+                "hover:-translate-y-0.5",              
                 selected
-                  ? "bg-lavenderHaze-200/80 font-semibold dark:bg-nightIndigo-500/30"
-                  : "bg-lavenderHaze-100/80 dark:bg-nightIndigo-900/80",
+                  ? "bg-dustyBlue-400/80 font-semibold dark:bg-twilightPurple-500/80"
+                  : "bg-lavenderHaze-500/80 dark:bg-twilightPurple-900/80",
               )}
               onClick={() => setActiveTabId(tab.id)}
             >
               <span>{tab.label}</span>
-              <span className="rounded-full border border-dotted px-2 py-0.5 text-xxs opacity-75">
+              <span className="rounded-full px-1.5 py-0.5 text-xxs opacity-75 bg-twilightPurple-200 dark:bg-nightIndigo-1000">
                 {tab.count}
               </span>
             </button>
@@ -116,14 +114,13 @@ export default function LibraryTabs({
           />
         ) : (
           <>
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
               {conversations.map((conversation) => (
                 <article
                   key={conversation.id}
                   className={classNames(
-                    "flex items-start gap-3 rounded-xl border p-4 transition-all duration-300",
-                    "border-slate-400 bg-lavenderHaze-100/70 shadow-sm",
-                    "dark:border-slate-500 dark:bg-nightIndigo-900/70",
+                    "flex items-start gap-3 rounded-xl p-4 transition-all duration-300",
+                    "bg-lavenderHaze-100/70 shadow-sm dark:bg-nightIndigo-900/70",
                   )}
                 >
                   <Link
@@ -467,13 +464,13 @@ function EmptyState({
   return (
     <article
       className={classNames(
-        "rounded-2xl border border-dashed p-8 text-center shadow-sm",
-        "border-slate-400 bg-lavenderHaze-100/70",
-        "dark:border-slate-500 dark:bg-nightIndigo-900/70",
+        "rounded-2xl border border-dashed p-10 text-center shadow-sm",
+        "bg-lavenderHaze-100/70 dark:bg-nightIndigo-900/70",
       )}
     >
       <h2 className="heading-5">{title}</h2>
       <p className="body-2 mt-3">{text}</p>
+      
       {ctaHref && ctaLabel && (
         <Link
           href={ctaHref}

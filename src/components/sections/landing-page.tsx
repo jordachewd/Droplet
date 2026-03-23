@@ -1,45 +1,15 @@
-import Plans from "./plans-section";
-import Faqs from "./faqs-section";
 import classNames from "classnames";
 import Link from "next/link";
 import { featureCards, howItWorksSteps } from "@/constants/landing-data";
-import {
-  getEffectivePlanConfig,
-  getEffectiveSupportEmail,
-} from "@/lib/utils/effective-plan-config";
-import { getEffectivePersonaAccessByPlan } from "@/lib/utils/effective-persona-access";
 import { getEffectivePersonaConfig } from "@/lib/utils/effective-persona-config";
-import { buildPlans } from "@/constants/plans";
-import { buildFaqs } from "@/constants/faqs";
+
 import HeroSection from "./hero-section";
 
 export default async function LandingPage() {
-  const [
-    effectivePlanConfig,
-    personaAccessByPlan,
-    effectivePersonas,
-    supportEmail,
-  ] = await Promise.all([
-    getEffectivePlanConfig(),
-    getEffectivePersonaAccessByPlan(),
-    getEffectivePersonaConfig(),
-    getEffectiveSupportEmail(),
-  ]);
+  const effectivePersonas = await getEffectivePersonaConfig();
   const featuredPersonas = effectivePersonas.filter((persona) =>
     ["strategist", "teacher", "creator"].includes(persona.id),
   );
-  const plans = buildPlans({
-    pricing: effectivePlanConfig.pricing,
-    limits: effectivePlanConfig.limits,
-    personaAccess: personaAccessByPlan,
-    trialLimits: effectivePlanConfig.trialLimits,
-  });
-  const faqs = buildFaqs({
-    pricing: effectivePlanConfig.pricing,
-    personaAccessByPlan,
-    currencySymbol: effectivePlanConfig.pricing.currencySymbol,
-    supportEmail,
-  });
 
   return (
     <section
@@ -48,7 +18,7 @@ export default async function LandingPage() {
     >
       <HeroSection />
 
-      <section className="Features mx-auto grid w-full max-w-screen-2xl gap-4 px-4 sm:px-6 lg:grid-cols-3 lg:px-0">
+      <section className="Features mx-auto grid w-full max-w-screen-2xl gap-4 px-4 lg:grid-cols-3">
         {featureCards.map((card) => (
           <article
             key={card.title}
@@ -67,7 +37,7 @@ export default async function LandingPage() {
         ))}
       </section>
 
-      <section className="Workflow mx-auto grid w-full max-w-screen-2xl gap-6 px-4 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:px-0">
+      <section className="Workflow mx-auto grid w-full max-w-screen-2xl gap-6 px-4 lg:grid-cols-[1.1fr_0.9fr]">
         <div
           className={classNames(
             "rounded-2xl px-6 py-8 shadow-sm bg-lavenderHaze-100/78 dark:bg-nightIndigo-900/82",
@@ -149,7 +119,7 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      <section className="Personas mx-auto flex w-full max-w-screen-2xl flex-col gap-6 px-4 sm:px-6 lg:px-0">
+      <section className="Personas mx-auto flex w-full max-w-screen-2xl flex-col gap-6 px-4">
         <div className="flex flex-col gap-3 text-center">
           <p className="text-xxs font-semibold uppercase tracking-[0.3em] text-midnightBlue-700 dark:text-lavenderHaze-700">
             Persona spotlight
@@ -194,7 +164,7 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      <section className="CtaBanner mx-auto w-full max-w-screen-2xl px-4 sm:px-6 lg:px-0">
+      <section className="CtaBanner mx-auto w-full max-w-screen-2xl px-4">
         <div
           className={classNames(
             "rounded-2xl px-6 py-8 shadow-sm bg-linear-245 from-limeGreen-100 via-lavenderHaze-100 to-white",
@@ -226,12 +196,6 @@ export default async function LandingPage() {
           </div>
         </div>
       </section>
-
-      <Plans
-        plansData={plans}
-        currencySymbol={effectivePlanConfig.pricing.currencySymbol}
-      />
-      <Faqs faqsData={faqs} />
     </section>
   );
 }
