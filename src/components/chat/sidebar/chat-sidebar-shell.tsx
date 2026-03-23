@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useSyncExternalStore } from "react";
 import classNames from "classnames";
 import SidebarHead from "@/components/chat/sidebar/sidebar-head";
-import ChatSidebarNavV2 from "@/components/chat/sidebar/chat-sidebar-nav-v2";
+import ChatSidebarNav from "@/components/chat/sidebar/chat-sidebar-nav";
 import ChatSidebarPromo from "@/components/chat/sidebar/chat-sidebar-promo";
 import { ConversationListItem } from "@/types/PersonaData.d";
 import { PlanName } from "@/types/PlanData.d";
@@ -25,7 +25,22 @@ export default function ChatSidebarShell({
 }: ChatSidebarShellProps) {
   const sidebarStorageKey = "droplet-sidebar-collapsed";
   const legacySidebarStorageKey = "cellesseon-sidebar-collapsed";
-  const [isDesktopViewport, setIsDesktopViewport] = useState<boolean>(false);
+
+  const subscribeToDesktopQuery = useCallback((callback: () => void) => {
+    const mql = window.matchMedia("(min-width: 1024px)");
+    mql.addEventListener("change", callback);
+    return () => mql.removeEventListener("change", callback);
+  }, []);
+  const getDesktopSnapshot = useCallback(
+    () => window.matchMedia("(min-width: 1024px)").matches,
+    [],
+  );
+  const getDesktopServerSnapshot = useCallback(() => false, []);
+  const isDesktopViewport = useSyncExternalStore(
+    subscribeToDesktopQuery,
+    getDesktopSnapshot,
+    getDesktopServerSnapshot,
+  );
   const {
     desktopSidebarCollapsed: desktopCollapsed,
     mobileSidebarOpen: mobileOpen,
@@ -59,22 +74,10 @@ export default function ChatSidebarShell({
   }, [desktopCollapsed, sidebarStorageKey]);
 
   useEffect(() => {
-    const desktopQuery = window.matchMedia("(min-width: 1024px)");
-    setIsDesktopViewport(desktopQuery.matches);
-
-    const handleBreakpointChange = (event: MediaQueryListEvent) => {
-      setIsDesktopViewport(event.matches);
-      if (event.matches) {
-        setMobileSidebarOpen(false);
-      }
-    };
-
-    desktopQuery.addEventListener("change", handleBreakpointChange);
-
-    return () => {
-      desktopQuery.removeEventListener("change", handleBreakpointChange);
-    };
-  }, [setMobileSidebarOpen]);
+    if (isDesktopViewport) {
+      setMobileSidebarOpen(false);
+    }
+  }, [isDesktopViewport, setMobileSidebarOpen]);
 
   useEffect(() => {
     setMobileSidebarOpen(false);
@@ -88,9 +91,8 @@ export default function ChatSidebarShell({
 
   const chatSidebarClass = classNames(
     "ChatSidebar fixed bottom-0 left-0 top-0 z-30 flex w-72 flex-col justify-between",
-    "border-r border-slate-300/70 bg-lavenderHaze-200 shadow-xl transition-all duration-300",
-    "lg:relative lg:z-10 lg:translate-x-0 lg:shadow-none",
-    "dark:border-slate-500 dark:bg-nightIndigo-1000",
+    "bg-lavenderHaze-100/50 shadow-sm transition-all duration-300 backdrop-blur-lg",
+    "lg:relative lg:z-10 lg:translate-x-0 dark:bg-nightIndigo-1000/50",
     mobileOpen ? "translate-x-0" : "-translate-x-full",
     desktopCollapsed ? "lg:w-[78px]" : "lg:w-72",
   );
@@ -118,7 +120,7 @@ export default function ChatSidebarShell({
         <SidebarHead isDesktopCollapsed={desktopCollapsed} />
 
         <div className={navWrapperClass}>
-          <ChatSidebarNavV2
+          <ChatSidebarNav
             isOpen={isSidebarOpen}
             historyItems={historyItems}
           />

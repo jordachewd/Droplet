@@ -5,56 +5,124 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #49 (2026-03-23). All Phases 1–112.1 complete. 433 unit tests (72 suites). Build passes. TSC passes. Node.js 24.12.0 runtime.**
-> **GATE STATUS: ALL 7 gates GREEN. Lint (0 errors, 9 warnings), knip (0 findings), TSC, build, unit tests (72/433), E2E (108 passed, 25 skipped, 0 failed) — all pass.**
+> **STATUS: PM audit #48 (2026-03-23). All Phases 1–103.4 complete. 433 unit tests (72 suites). Build passes. TSC passes. Node.js 24.12.0 runtime.**
+> **GATE STATUS: lint FAILS (29 errors from orphan `_update_plan.js`), knip FAILS (2 orphan files). TSC/build/unit tests/E2E pass.**
+> **E2E: 108 passed, 0 failed, 25 skipped.**
 > **Coverage: 78.18/65.94/83.01/78.51.**
 > **Owner directive (CRITICAL): FULL TDD TESTING REBUILD from scratch. NO hardcoded data. WCAG 2.2 AA. Code reuse. Full admin configurability. Components as data consumers. Server-side utilities.**
-> **Priority order: 113 (CRITICAL security — createTaskSchema + checkout-success auth) → 112.2 (CRITICAL TDD rebuild core utils) → 112.3 (CRITICAL server actions) → 112.4 (CRITICAL API routes) → 109 (HIGH WCAG icons) → 112.5 (HIGH component rebuild) → 106 (HIGH shared types) → 107 (HIGH stop-reason config) → 108 (MEDIUM WCAG tabs) → 74.2 (MEDIUM FAQ admin) → 104 (MEDIUM landing/hero admin) → 112.6 (HIGH E2E expansion) → 112.7 (HIGH coverage thresholds) → 110 (LOW) → 87 (LOW)**
+> **Priority order: 111 (BLOCKER gate fix) → 105 (HIGH security) → 112 (CRITICAL TDD rebuild) → 106 (HIGH shared types) → 107 (HIGH stop-reason config) → 74.2 (MEDIUM FAQ admin) → 104 (MEDIUM landing/hero admin) → 108 (MEDIUM WCAG tabs) → 109 (MEDIUM WCAG icons) → 110 (LOW hamburger aria) → 97.2 (MEDIUM E2E admin) → 97.3 (LOW) → 87 (LOW)**
 
 ---
 
-## CRITICAL — Security Fixes (PM audit #49 — Triple-Audit Confirmed)
+## BLOCKER — Gate Fix (PM audit #48 — lint + knip currently FAILING)
 
-### Phase 113: Fix security vulnerabilities — CRITICAL
+### Phase 111: Clean orphan dev scripts — BLOCKER
 
-> Two security issues confirmed by Architect audit. Must be fixed before TDD rebuild.
+> `_update_plan.js` and `_up.js` are root-level dev utility scripts. They cause ALL 29 lint errors (`no-console`, `no-require-imports`) and both knip findings. **Lint and knip gates are RED because of these files.**
 
-#### 113.1 CRITICAL — Change `createTaskSchema` from `.passthrough()` to `.strict()`
+#### 111.1 BLOCKER — Remove or ignore orphan dev scripts
 
-**File:** `src/lib/actions/task.actions.tsx`
-
-**What to do:**
-
-1. Change `createTaskSchema` from `.passthrough()` to `.strict()`.
-2. This prevents arbitrary field injection (e.g., `userId`, `status`) through untrusted input.
-3. Mongoose `strict: true` provides a second barrier, but Zod should catch it first.
-4. Verify `npm run test` passes — if tests break, fix the test data (remove extra fields).
-5. Verify build passes.
-
-**Risk:** Without this fix, an attacker could potentially inject `userId` into task creation payload and create tasks attributed to other users. Mongoose `strict: true` mitigates but Zod should be the first defense.
-
-**Acceptance criteria:**
-
-- [ ] `createTaskSchema` uses `.strict()` not `.passthrough()`
-- [ ] All tests pass
-- [ ] Build passes
-
-#### 113.2 HIGH — Add auth check to `checkout-success` page
-
-**File:** `src/app/(public)/checkout-success/page.tsx`
+**Files:** `_update_plan.js`, `_up.js` (project root)
 
 **What to do:**
 
-1. This page accepts an arbitrary `session_id` parameter and calls `stripe.checkout.sessions.retrieve()` with no auth check.
-2. While it only displays "payment verified" text (no sensitive data leak), it allows Stripe session ID enumeration.
-3. Move the page to `src/app/(chat)/app/checkout-success/page.tsx` under auth protection, OR add `auth()` check at the top.
-4. Simpler approach: add `const { userId } = await auth()` and redirect to `/sign-in` if not authenticated.
+1. Check if these scripts are used by any npm script, CI pipeline, or developer workflow.
+2. If NOT used: delete both files.
+3. If used occasionally: add both to eslint `ignores` array in `eslint.config.mjs` AND add to `knip.json` ignore list.
+4. Verify `npm run lint` passes (0 errors).
+5. Verify `npm run knip` passes (0 findings).
 
 **Acceptance criteria:**
 
-- [ ] Checkout-success page requires authentication
-- [ ] Unauthenticated visitors cannot probe Stripe session IDs
-- [ ] Build passes, E2E passes
+- [ ] `npm run lint` passes with 0 errors (warnings acceptable)
+- [ ] `npm run knip` passes with 0 findings
+- [ ] All 7 validation gates GREEN
+
+---
+
+## HIGH — Security Hardening (PM audit #47+48, confirmed)
+
+### Phase 105: Add missing `server-only` guards — HIGH
+
+> TD-SEC-09. `classify-task-complexity.ts` and `message-policy.ts` are server-only utilities consumed only by `/api/openai` route. Missing `import "server-only"` guard. PM-verified both files lack the guard.
+
+#### 105.1 HIGH — Add `server-only` to `classify-task-complexity.ts`
+
+**File:** `src/lib/utils/openai/classify-task-complexity.ts`
+
+**What to do:**
+
+1. Add `import "server-only";` at line 1.
+2. Verify build passes.
+
+**Acceptance criteria:**
+
+- [ ] `import "server-only"` present
+- [ ] Build passes, tests pass
+
+#### 105.2 HIGH — Add `server-only` to `message-policy.ts`
+
+**File:** `src/lib/utils/openai/message-policy.ts`
+
+**What to do:**
+
+1. Add `import "server-only";` at line 1.
+2. Verify build passes.
+
+**Acceptance criteria:**
+
+- [ ] `import "server-only"` present
+- [ ] Build passes, tests pass
+
+---
+
+## CRITICAL — Full TDD Testing Rebuild (Owner directive — March 2026)
+
+### Phase 112: Full unit and E2E test rebuild from scratch — CRITICAL
+
+> Owner mandate: "Refactor ALL unit and e2e tests from scratch. Remove old flow and rebuild entire testing process. TDD methodology." This is the primary work directive for Milestone 25.
+>
+> **Rebuild strategy (PM-approved):**
+>
+> 1. Do NOT blindly delete all tests. Assess each test file for quality.
+> 2. Tests that validate BEHAVIOR (observable outputs, HTTP responses, rendered DOM, stored state) are KEPT and refactored.
+> 3. Tests that only validate WIRING (mock call counts, `as never` casts, "renders without crashing") are REBUILT from scratch using TDD.
+> 4. All new/rebuilt tests must follow TDD: write failing test → write minimum code to pass → refactor.
+> 5. Coverage target after rebuild: statements ≥82%, branches ≥78%, functions ≥82%, lines ≥82%.
+>
+> **Rebuild order (highest ROI first):**
+> 1. Core utility tests (pure functions — fastest, most deterministic)
+> 2. Server action tests (mutation paths)
+> 3. API route tests (integration-level)
+> 4. Component tests (behavior + a11y focused)
+> 5. E2E test expansion (admin settings, chat lifecycle, authenticated a11y)
+
+#### 112.1 CRITICAL — Audit and classify all 72 unit test files
+
+**What to do:**
+
+1. Read every unit test file in `tests/unit/`.
+2. Classify each as: **KEEP** (behavior-focused, high-value), **REFACTOR** (structure ok, needs mock reduction / split), or **REBUILD** (tautological, mock-heavy, renders-without-crashing).
+3. Document classification.
+4. Identify test files that are MISSING entirely (components, routes, utilities with 0% coverage).
+
+**Known high-value KEEP candidates:**
+- `openai-route.test.ts` (30+ behavioral scenarios — split into sub-files, keep scenarios)
+- `admin-audit-trail.test.ts` (auth + audit coverage)
+- `check-daily-conversations.test.ts`, `check-usage-limit.test.ts`, `rate-limit.test.ts` (core business logic)
+- `resolve-entitlements.test.ts`, `ai-model-policy.test.ts` (plan gating matrix)
+- `validation-schemas.test.ts` (input boundary + security injection tests)
+
+**Known REBUILD candidates:**
+- Component tests with only "renders without crashing" assertions
+- Tests with 10+ `as never` casts on mocks
+- Tests asserting mock call counts as primary validation
+
+**Acceptance criteria:**
+
+- [ ] Every unit test file classified (KEEP/REFACTOR/REBUILD)
+- [ ] Missing test files identified
+- [ ] Classification documented
 
 #### 112.2 CRITICAL — Rebuild core utility unit tests (TDD)
 
@@ -113,7 +181,6 @@
 6. Stripe webhook route tests — verify idempotency + plan update
 
 **Missing edge cases to add:**
-
 - Malformed JSON body handling
 - `ensureUserSynced` failure path (503 response)
 - `emitUsageEvents` failure being non-fatal
@@ -270,63 +337,19 @@ See SPEC.md for full requirements on each.
 
 ---
 
-## HIGH — WCAG 2.2 AA Remaining Gaps
+## MEDIUM — WCAG 2.2 AA Remaining Gaps
 
-### Phase 109 HIGH — Decorative icon `aria-hidden` across ~20 components (TD-WCAG-06)
+### Phase 108 MEDIUM — Library tabs arrow-key navigation (TD-WCAG-05)
 
-> Architect audit confirmed: ~20 components with `<i className="bi bi-*">` icons missing `aria-hidden="true"`. Screen readers announce empty or meaningless content. Affects: logout-btn, avatar-menu, image-holder, alert-message, library-tabs, chat-input, chat-body, chat-intro, plan-card, persona-card, profile-billing, faqs-section, admin-sidebar, chat-sidebar-nav-v2, sidebar-toggle.
-
-**What to do:**
-
-1. Add `aria-hidden="true"` to all decorative `<i>` Bootstrap Icons across the codebase.
-2. Grep for `<i className="bi ` and verify each — if decorative, add `aria-hidden="true"`.
-3. Icons that convey meaning (e.g., icon-only buttons without text labels) need `aria-label` on the parent instead.
-
-**Acceptance criteria:**
-
-- [ ] All decorative `<i>` icons have `aria-hidden="true"`
-- [ ] Icon-only interactive elements have `aria-label`
-- [ ] Build passes, axe-core E2E passes
-
-### Phase 108 MEDIUM — Library tabs + admin settings tabs arrow-key navigation (TD-WCAG-05)
-
-> Both `library-tabs.tsx` and `admin-settings-tabs.tsx` have `role="tablist"` but no arrow-key keyboard navigation. WCAG tablist pattern requires Left/Right arrow key focus movement with roving tabindex.
-
-**What to do:**
-
-1. Add `onKeyDown` handler to tablist for ArrowLeft/ArrowRight focus management.
-2. Implement roving `tabIndex` (active tab = 0, others = -1).
-3. Add Home/End key support for first/last tab.
-
-**Acceptance criteria:**
-
-- [ ] Arrow keys move focus between tabs in both components
-- [ ] Roving tabindex implemented
-- [ ] Build passes
-
-### Phase 114 MEDIUM — AvatarMenu keyboard navigation
-
-> Architect audit: AvatarMenu dropdown has no keyboard navigation. No Escape handler, no Arrow key navigation, no `role="menu"`/`role="menuitem"`.
-
-**What to do:**
-
-1. Add `role="menu"` to dropdown, `role="menuitem"` to links.
-2. Add `Escape` key handler to close menu.
-3. Add `ArrowDown`/`ArrowUp` key navigation within menu items.
-4. Focus management: focus first item on open, return focus to trigger on close.
-
-**Acceptance criteria:**
-
-- [ ] Menu keyboard-navigable
-- [ ] Escape closes menu
-- [ ] ARIA roles present
-- [ ] Build passes
+### Phase 109 MEDIUM — Decorative icon `aria-hidden` across ~15 components (TD-WCAG-06 expanded)
 
 ### Phase 110 LOW — Mobile header hamburger `aria-expanded`
 
 ---
 
 ## LOW — Remaining Work
+
+### Phase 87 LOW — createTaskSchema strict mode (TD-TASK-PASSTHROUGH)
 
 ### Phase 73.2 LOW — Minor re-render and code quality fixes
 
@@ -347,5 +370,5 @@ See SPEC.md for full requirements on each.
 ---
 
 > **Completed phases** archived in [`DONE.md`](DONE.md).
-> All phases through 112.1 complete.
+> All phases through 103.4 complete.
 > All Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS.

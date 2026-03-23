@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useSyncExternalStore } from "react";
 import classNames from "classnames";
 import { usePathname } from "next/navigation";
 import { useShallow } from "zustand/react/shallow";
@@ -54,16 +54,16 @@ export default function ChatHeader({
   );
 
   const desktopQueryRef = useRef<MediaQueryList | null>(null);
-  const [isDesktop, setIsDesktop] = useState(false);
-
-  useEffect(() => {
-    const mql = window.matchMedia("(min-width: 1024px)");
-    desktopQueryRef.current = mql;
-    setIsDesktop(mql.matches);
-    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
-    mql.addEventListener("change", handler);
-    return () => mql.removeEventListener("change", handler);
-  }, []);
+  const isDesktop = useSyncExternalStore(
+    (callback) => {
+      const mql = window.matchMedia("(min-width: 1024px)");
+      desktopQueryRef.current = mql;
+      mql.addEventListener("change", callback);
+      return () => mql.removeEventListener("change", callback);
+    },
+    () => window.matchMedia("(min-width: 1024px)").matches,
+    () => false,
+  );
 
   function handleToggleSidebar() {
     if (desktopQueryRef.current?.matches) {
@@ -102,9 +102,7 @@ export default function ChatHeader({
   }
 
   const chatHeaderClass = classNames(
-    "ChatHeader absolute left-0 right-0 top-0 z-20 flex w-full px-3",
-    "border-b border-slate-300/70 bg-lavenderHaze-100/85 backdrop-blur-lg",
-    "dark:border-slate-500 dark:bg-nightIndigo-900/55",
+    "ChatHeader absolute left-0 right-0 top-0 z-20 flex w-full px-4",
     style,
   );
 

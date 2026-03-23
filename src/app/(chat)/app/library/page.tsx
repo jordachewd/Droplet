@@ -216,7 +216,7 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
 
   return (
     <PageWrapper id="LibraryPage" scrollable>
-      <section className="LibraryPage mx-auto flex w-full max-w-6xl flex-col gap-6 p-4">
+      <section className="LibraryPage mx-auto flex w-full max-w-screen-2xl flex-col gap-6 p-4">
         <PageHead
           title="Conversation Library"
           subtitle="Saved sessions grouped by persona."

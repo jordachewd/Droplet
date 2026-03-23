@@ -27,7 +27,7 @@ function renderAboutVisual(
   personaCatalog: Array<{ id: string; label: string }>,
 ) {
   const visualClassName = classNames(
-    "rounded-[2rem] p-6 shadow-sm",
+    "rounded-2xl p-6 shadow-sm",
     "bg-lavenderHaze-100/80 dark:bg-nightIndigo-900/85",
   );
 
@@ -129,7 +129,7 @@ function renderAboutVisual(
                   className="flex items-center justify-between"
                 >
                   <span className="body-2 text-sm">{category}</span>
-                  <span className="rounded-full bg-lavenderHaze-200 px-3 py-1 text-xs font-semibold dark:bg-nightIndigo-900/50">
+                  <span className="rounded-2xl bg-lavenderHaze-200 px-3 py-1 text-xs font-semibold dark:bg-nightIndigo-900/50">
                     {count}
                   </span>
                 </div>
@@ -145,7 +145,7 @@ function renderAboutVisual(
                 <span
                   key={persona.id}
                   className={classNames(
-                    "rounded-full px-3 py-1.5 text-xs font-semibold shadow-sm",
+                    "rounded-2xl px-3 py-1.5 text-xs font-semibold shadow-sm",
                     "bg-lavenderHaze-100/90 text-midnightBlue-500",
                     "dark:bg-nightIndigo-1000 dark:text-lavenderHaze-500",
                   )}
@@ -262,7 +262,7 @@ export default async function AboutPage() {
   const aboutSections = buildAboutSections({ personaAccessSummary });
 
   return (
-    <section className="AboutPage mx-auto flex w-full max-w-screen-2xl flex-col gap-10 px-4 py-16 pt-24 sm:px-6 lg:px-8">
+    <section className="AboutPage mx-auto flex w-full max-w-screen-2xl flex-col gap-10 px-4 py-16 pt-24">
       <PageHead
         title="About Droplet"
         subtitle="A persona-driven AI assistant built for structured conversations, practical output, and media-aware workflows."

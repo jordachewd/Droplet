@@ -26,7 +26,7 @@ export default function PlanCard({
 
   const { isCurrent, isPopular } = planStatus as PlanStatus;
   const accentStyles = isCurrent
-    ? "bg-twilightPurple-500 text-twilightPurple-1000 dark:bg-dustyBlue-500 dark:text-dustyBlue-1000"
+    ? "bg-twilightPurple-400/50 text-twilightPurple-1000 dark:bg-dustyBlue-500 dark:text-dustyBlue-1000"
     : isPopular
       ? "bg-nightIndigo-600 text-white"
       : "bg-lavenderHaze-500/50 text-midnightBlue-500 dark:bg-nightIndigo-500/30 dark:text-lavenderHaze-500";
@@ -47,8 +47,9 @@ export default function PlanCard({
       {(isPopular || isCurrent) && (
         <div
           className={classNames(
-            "absolute -left-8 top-3.5 flex -rotate-45 bg-orange-700 p-1.5 px-8 text-2xs font-bold uppercase leading-none tracking-widest text-white shadow-md",
-            isCurrent && "bg-blue-600 dark:bg-green-700",
+            "absolute -left-8 top-3.5 flex -rotate-45 p-1.5 px-8 text-2xs font-bold uppercase leading-none tracking-widest text-white shadow-md",
+            isCurrent && "bg-dustyBlue-500 dark:bg-green-700",
+            isPopular && "bg-orange-700",
           )}
         >
           {isCurrent ? "Current" : "Popular"}

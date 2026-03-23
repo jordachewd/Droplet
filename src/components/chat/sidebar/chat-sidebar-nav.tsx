@@ -9,7 +9,7 @@ import ConfirmationModal from "@/components/shared/confirmation-modal";
 import { ConversationListItem } from "@/types/PersonaData.d";
 import { deleteTask } from "@/lib/actions/task.actions";
 
-interface ChatSidebarNavV2Props {
+interface ChatSidebarNavProps {
   isOpen: boolean;
   historyItems: ConversationListItem[];
 }
@@ -61,10 +61,10 @@ function SidebarNavLink({
   );
 }
 
-export default function ChatSidebarNavV2({
+export default function ChatSidebarNav({
   isOpen,
   historyItems,
-}: ChatSidebarNavV2Props) {
+}: ChatSidebarNavProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [conversationItems, setConversationItems] =
@@ -162,9 +162,9 @@ export default function ChatSidebarNavV2({
   }
 
   return (
-    <nav className="ChatSidebarNavV2 mb-auto flex flex-col gap-6 px-3 py-4">
+    <nav className="ChatSidebarNav mb-auto flex flex-col gap-6 px-3 py-4">
       {alert ? <AlertMessage message={alert} /> : null}
-      <section className="ChatSidebarNavV2Section flex flex-col gap-1.5">
+      <section className="ChatSidebarNavSection flex flex-col gap-1.5">
         <p className={headingClass}>Workspace</p>
         {WORKSPACE_LINKS.map((link) => (
           <SidebarNavLink
@@ -176,7 +176,7 @@ export default function ChatSidebarNavV2({
         ))}
       </section>
 
-      <section className="ChatSidebarNavV2Section flex flex-col gap-1.5">
+      <section className="ChatSidebarNavSection flex flex-col gap-1.5">
         <p className={headingClass}>Recent</p>
         <div className="flex flex-col gap-1">
           {conversationItems.length === 0 && (
