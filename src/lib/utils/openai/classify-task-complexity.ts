@@ -1,3 +1,5 @@
+import "server-only";
+
 import { Message } from "@/types";
 import { TaskClass } from "@/lib/utils/ai-model-policy";
 
