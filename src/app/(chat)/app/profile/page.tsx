@@ -1,6 +1,6 @@
-import ProfileBilling from "@/components/sections/profile-billing";
-import ProfileHero from "@/components/sections/profile-hero";
-import ProfileUsage from "@/components/sections/profile-usage";
+import ProfileBilling from "@/components/sections/profile/profile-billing";
+import ProfileHero from "@/components/sections/profile/profile-hero";
+import ProfileUsage from "@/components/sections/profile/profile-usage";
 import PageWrapper from "@/components/layout/page-wrapper";
 import { getAllTransactions } from "@/lib/actions/transaction.action";
 import { ensureUserSynced } from "@/lib/utils/ensure-user-synced";

@@ -1,102 +1,128 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { connectToDatabase } from "@/lib/database/mongoose";
-import AppSetting from "@/lib/database/models/app-setting.model";
+import {
+  DEFAULT_PERSONA_ID,
+  PERSONAS,
+  getPersona,
+} from "@/constants/assistant-personas";
 import {
   getEffectivePersonaConfig,
   getPersonaFromConfig,
 } from "@/lib/utils/effective-persona-config";
+import { createTestUser } from "../test-support";
+
+const { connectToDatabaseMock, findOneMock } = vi.hoisted(() => ({
+  connectToDatabaseMock: vi.fn(),
+  findOneMock: vi.fn(),
+}));
 
 vi.mock("@/lib/database/mongoose", () => ({
-  connectToDatabase: vi.fn(),
+  connectToDatabase: connectToDatabaseMock,
 }));
 
 vi.mock("@/lib/database/models/app-setting.model", () => ({
   default: {
-    findOne: vi.fn(),
+    findOne: findOneMock,
   },
 }));
 
-function mockPersonaOverrides(value: unknown) {
-  const leanMock = vi.fn().mockResolvedValue(value ? { value } : null);
-  const selectMock = vi.fn().mockReturnValue({ lean: leanMock });
-  vi.mocked(AppSetting.findOne).mockReturnValue({
-    select: selectMock,
-  } as never);
+function mockPersonaOverrideValue(value: unknown): void {
+  findOneMock.mockReturnValue({
+    select: vi.fn().mockReturnValue({
+      lean: vi
+        .fn()
+        .mockResolvedValue(
+          value === undefined ? null : ({ value } satisfies { value: unknown }),
+        ),
+    }),
+  });
 }
 
-describe("getEffectivePersonaConfig", () => {
+describe("effective-persona-config", () => {
+  const user = createTestUser({ plan: { name: "Pro" } });
+
   beforeEach(() => {
-    vi.clearAllMocks();
-    vi.mocked(connectToDatabase).mockResolvedValue(undefined as never);
+    connectToDatabaseMock.mockResolvedValue(undefined);
+    findOneMock.mockReset();
   });
 
-  it("falls back to default persona content when overrides are missing", async () => {
-    mockPersonaOverrides(null);
+  it("applies valid admin overrides and normalizes invalid fields", async () => {
+    const strategistDefault = getPersona("strategist");
 
-    const personas = await getEffectivePersonaConfig();
-    const strategist = personas.find((persona) => persona.id === "strategist");
-
-    expect(strategist?.label).toBe("Strategist");
-    expect(strategist?.starterPrompts.length).toBeGreaterThan(0);
-  });
-
-  it("applies admin persona content overrides for supported fields", async () => {
-    mockPersonaOverrides({
+    mockPersonaOverrideValue({
       strategist: {
-        label: "Execution Strategist",
-        tagline: "Plan less, ship more.",
-        description: "Execution-focused planning and prioritization partner.",
-        starterPrompts: ["Plan this sprint", "Review my roadmap"],
+        label: " Strategic Guide ",
+        tagline: " ",
+        description: " Revised strategist description ",
+        starterPrompts: ["  Prompt one  ", "", "Prompt two", 123],
+      },
+      invalidPersona: {
+        label: "Ignored",
       },
     });
 
     const personas = await getEffectivePersonaConfig();
     const strategist = personas.find((persona) => persona.id === "strategist");
+    const teacher = personas.find((persona) => persona.id === "teacher");
 
-    expect(strategist?.label).toBe("Execution Strategist");
-    expect(strategist?.tagline).toBe("Plan less, ship more.");
-    expect(strategist?.description).toBe(
-      "Execution-focused planning and prioritization partner.",
+    expect(strategist).toBeDefined();
+    expect(strategist?.label).toBe("Strategic Guide");
+    expect(strategist?.tagline).toBe(strategistDefault.tagline);
+    expect(strategist?.description).toBe("Revised strategist description");
+    expect(strategist?.starterPrompts).toEqual(["Prompt one", "Prompt two"]);
+    expect(teacher?.label).toBe(getPersona("teacher").label);
+    expect(personas).toHaveLength(PERSONAS.length);
+    expect(user.plan.name).toBe("Pro");
+  });
+
+  it("returns cloned defaults when no overrides exist", async () => {
+    mockPersonaOverrideValue(undefined);
+
+    const personas = await getEffectivePersonaConfig();
+
+    expect(personas).toEqual(PERSONAS);
+    expect(personas[0]).not.toBe(PERSONAS[0]);
+    expect(personas[0].starterPrompts).not.toBe(PERSONAS[0].starterPrompts);
+  });
+
+  it("returns cloned defaults when data access fails", async () => {
+    connectToDatabaseMock.mockRejectedValueOnce(new Error("db unavailable"));
+
+    const personas = await getEffectivePersonaConfig();
+
+    expect(personas).toEqual(PERSONAS);
+    personas[0].starterPrompts.push("New prompt");
+    expect(PERSONAS[0].starterPrompts).not.toContain("New prompt");
+  });
+
+  it("resolves default persona when personaId is missing", () => {
+    const persona = getPersonaFromConfig({
+      personas: PERSONAS,
+      personaId: null,
+    });
+
+    expect(persona.id).toBe(DEFAULT_PERSONA_ID);
+  });
+
+  it("resolves requested persona when it exists in config", () => {
+    const persona = getPersonaFromConfig({
+      personas: PERSONAS,
+      personaId: "teacher",
+    });
+
+    expect(persona.id).toBe("teacher");
+  });
+
+  it("falls back safely when requested persona is unavailable", () => {
+    const personasWithoutDefault = PERSONAS.filter(
+      (persona) => persona.id !== DEFAULT_PERSONA_ID,
     );
-    expect(strategist?.starterPrompts).toEqual([
-      "Plan this sprint",
-      "Review my roadmap",
-    ]);
-    expect(strategist?.heroImage).toBe("/personas/strategist.svg");
-  });
-
-  it("ignores invalid override entries and preserves defaults", async () => {
-    mockPersonaOverrides({
-      strategist: {
-        label: "   ",
-        starterPrompts: [],
-      },
-      invalidPersonaId: {
-        label: "Should be ignored",
-      },
-    });
-
-    const personas = await getEffectivePersonaConfig();
-    const strategist = personas.find((persona) => persona.id === "strategist");
-
-    expect(strategist?.label).toBe("Strategist");
-    expect(strategist?.starterPrompts.length).toBeGreaterThan(0);
-    expect(
-      personas.find((persona) => persona.label === "Should be ignored"),
-    ).toBeUndefined();
-  });
-});
-
-describe("getPersonaFromConfig", () => {
-  it("falls back to strategist when persona id is unknown", async () => {
-    mockPersonaOverrides(null);
-    const personas = await getEffectivePersonaConfig();
 
     const persona = getPersonaFromConfig({
-      personas,
-      personaId: "unknown",
+      personas: personasWithoutDefault,
+      personaId: DEFAULT_PERSONA_ID,
     });
 
-    expect(persona.id).toBe("strategist");
+    expect(persona.id).toBe(DEFAULT_PERSONA_ID);
+    expect(persona).toEqual(PERSONAS[0]);
   });
 });

@@ -1,6 +1,6 @@
-import Faqs from "@/components/sections/faqs-section";
+import Faqs from "@/components/sections/shared/faqs-section";
 import PageWrapper from "@/components/layout/page-wrapper";
-import Plans from "@/components/sections/plans-section";
+import Plans from "@/components/sections/shared/plans-section";
 import { ensureUserSynced } from "@/lib/utils/ensure-user-synced";
 import { auth } from "@clerk/nextjs/server";
 import { buildPlans } from "@/constants/plans";

@@ -53,7 +53,7 @@ const createTaskSchema = z
     createdAt: z.date().optional(),
     updatedAt: z.date().optional(),
   })
-  .passthrough();
+  .strict();
 
 const updateTaskSchema = z
   .object({

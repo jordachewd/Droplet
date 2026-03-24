@@ -59,11 +59,11 @@ export default function Header() {
   return (
     <header
       className={classNames(
-        "Header sticky left-0 right-0 top-0 z-20 flex w-full px-4 transition-all duration-300 ease-in-out",
+        "Header sticky left-0 right-0 top-0 z-20 flex w-full transition-all duration-300 ease-in-out",
         scrolled && scrolledHeader,
       )}
     >
-      <div className="mx-auto flex w-full max-w-screen-2xl flex-col">
+      <div className="mx-auto flex w-full max-w-screen-2xl flex-col px-4">
         <div className="flex items-center justify-between py-3">
           <div className="flex items-center gap-4 lg:gap-18">
             <Logo size={30} />
@@ -93,7 +93,10 @@ export default function Header() {
               className="icon-btn md:hidden"
               onClick={handleMobileMenuToggle}
             >
-              <i className={mobileMenuOpen ? "bi bi-x-lg" : "bi bi-list"}></i>
+              <i
+                className={mobileMenuOpen ? "bi bi-x-lg" : "bi bi-list"}
+                aria-hidden="true"
+              ></i>
             </button>
 
             {!isSignedIn && (

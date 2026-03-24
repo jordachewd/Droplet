@@ -11,8 +11,7 @@ When parsing data that might have some invalid fields but you want to accept wha
 
 **Incorrect (all-or-nothing parsing):**
 
-```typescript
-import { z } from "zod";
+```typescriptimport { z } from "zod";
 
 const userPrefsSchema = z.object({
   theme: z.enum(["light", "dark"]),
@@ -29,15 +28,13 @@ const stored = {
   notifications: "yes", // Bad - should be boolean
 };
 
-userPrefsSchema.parse(stored);
-// ZodError: Invalid enum value at "theme"
+userPrefsSchema.parse(stored);// ZodError: Invalid enum value at "theme"
 // User loses ALL their preferences because one field is bad
 ```
 
 **Correct (fault-tolerant with catch):**
 
-```typescript
-import { z } from "zod";
+```typescriptimport { z } from "zod";
 
 const userPrefsSchema = z.object({
   theme: z.enum(["light", "dark"]).catch("light"),
@@ -54,8 +51,7 @@ const stored = {
   notifications: "yes",
 };
 
-const prefs = userPrefsSchema.parse(stored);
-// {
+const prefs = userPrefsSchema.parse(stored);// {
 //   theme: 'light',      // Fallback used
 //   fontSize: 16,        // Fallback used
 //   language: 'en',      // Original value preserved
@@ -69,12 +65,10 @@ const prefs = userPrefsSchema.parse(stored);
 ```typescript
 // Factory function receives the caught error
 const schema = z.object({
-  data: z.array(z.number()).catch((ctx) => {
-    console.warn("Invalid data array:", ctx.error);
+  data: z.array(z.number()).catch((ctx) => {    console.warn("Invalid data array:", ctx.error);
     return []; // Return empty array as fallback
   }),
-});
-```
+});```
 
 **Use case: API response resilience:**
 
@@ -83,8 +77,7 @@ const productSchema = z.object({
   id: z.string(),
   name: z.string(),
   price: z.number().positive(),
-  // Legacy field that might be missing or wrong format
-  legacyCode: z.string().catch("UNKNOWN"),
+  // Legacy field that might be missing or wrong format  legacyCode: z.string().catch("UNKNOWN"),
   // External data that might be malformed
   metadata: z.record(z.string()).catch({}),
 });
@@ -98,22 +91,17 @@ const apiResponse = {
   metadata: "invalid", // Bad - should be object
 };
 
-const product = productSchema.parse(apiResponse);
-// Works! Returns product with fallbacks for bad fields
+const product = productSchema.parse(apiResponse);// Works! Returns product with fallbacks for bad fields
 ```
 
 **Difference between catch() and default():**
 
 ```typescript
-// .default() - only fills in undefined
-z.string().default("fallback");
-// undefined -> 'fallback'
+// .default() - only fills in undefinedz.string().default("fallback");// undefined -> 'fallback'
 // null -> ZodError
 // '' -> '' (empty string is valid)
 
-// .catch() - fallback for ANY parse failure
-z.string().catch("fallback");
-// undefined -> 'fallback'
+// .catch() - fallback for ANY parse failurez.string().catch("fallback");// undefined -> 'fallback'
 // null -> 'fallback'
 // 123 -> 'fallback'
 // Even valid strings pass through unchanged
@@ -123,16 +111,31 @@ z.string().catch("fallback");
 
 ```typescript
 // Catch only specific validation failures
+const schema = z.string()
+  .email()
+  .catch('invalid@example.com')  // Fallback if not valid email
+
+// Chain for complex defaults
+const ageSchema = z.coerce.number()
+  .int()
+  .min(0)
+  .max(120)
+  .catch(0)  // Invalid ages become 0
+```
+
+# **When NOT to use this pattern:**
+
 const schema = z.string().email().catch("invalid@example.com"); // Fallback if not valid email
 
 // Chain for complex defaults
 const ageSchema = z.coerce.number().int().min(0).max(120).catch(0); // Invalid ages become 0
+
 ```
 
 **When NOT to use this pattern:**
-
 - When invalid data should cause errors (strict validation)
 - When you need to know which fields failed (use safeParse)
 - Critical fields that must be valid
 
 Reference: [Zod API - catch](https://zod.dev/api#catch)
+```

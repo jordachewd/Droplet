@@ -463,7 +463,7 @@ function emitBlockedChatUsageEvent({
     return;
   }
 
-  emitUsageEvents({
+  emitUsageEventsSafely({
     userId,
     taskId: createUsageTaskId(taskId),
     personaId,
@@ -477,6 +477,18 @@ function emitBlockedChatUsageEvent({
       },
     ],
   });
+}
+
+function emitUsageEventsSafely(
+  payload: Parameters<typeof emitUsageEvents>[0],
+): void {
+  try {
+    emitUsageEvents(payload);
+  } catch (error) {
+    process.stderr.write(
+      `[openai/route] emitUsageEvents failed: ${error instanceof Error ? error.message : "unknown"}\n`,
+    );
+  }
 }
 
 async function resolvePromptLimitEndAction({
@@ -632,7 +644,7 @@ async function finalizeAIResponse({
   payload: ChatApiResponse;
 }> {
   if (aiPayload.requestMetrics?.length) {
-    emitUsageEvents({
+    emitUsageEventsSafely({
       userId,
       taskId,
       personaId: selectedPersonaId,
@@ -1335,7 +1347,7 @@ export async function POST(req: Request): Promise<Response> {
       taskId = createdTaskId;
 
       if (titleRequestMetric) {
-        emitUsageEvents({
+        emitUsageEventsSafely({
           userId,
           taskId: createdTaskId,
           personaId: selectedPersona.id,
@@ -1374,7 +1386,7 @@ export async function POST(req: Request): Promise<Response> {
       taskId = createdTaskId;
 
       if (titleRequestMetric) {
-        emitUsageEvents({
+        emitUsageEventsSafely({
           userId,
           taskId: createdTaskId,
           personaId: selectedPersona.id,

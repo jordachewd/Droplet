@@ -12,15 +12,12 @@ When the same schema pattern appears in multiple places, extract it into a share
 **Incorrect (duplicating schemas):**
 
 ```typescript
-// api/users.ts
-import { z } from "zod";
-
+// api/users.tsimport { z } from "zod";
 const userSchema = z.object({
   id: z.string().uuid(),
   email: z.string().email(),
   name: z.string().min(1),
-  createdAt: z.date(),
-});
+  createdAt: z.date(),});
 
 // api/orders.ts
 import { z } from "zod";
@@ -45,24 +42,20 @@ const commentSchema = z.object({
   userId: z.string().uuid(),
   content: z.string().min(1),
   createdAt: z.date(), // Inconsistency risk
-});
-```
+});```
 
 **Correct (shared schema modules):**
 
 ```typescript
-// schemas/common.ts
-import { z } from "zod";
+// schemas/common.tsimport { z } from "zod";
 
 // Reusable ID types
 export const uuid = z.string().uuid();
 export type UUID = z.infer<typeof uuid>;
-
 // Timestamps
 export const timestamps = z.object({
   createdAt: z.date(),
-  updatedAt: z.date(),
-});
+  updatedAt: z.date(),});
 
 // Base entity with ID
 export const baseEntity = z
@@ -72,45 +65,32 @@ export const baseEntity = z
   .merge(timestamps);
 
 export type BaseEntity = z.infer<typeof baseEntity>;
-
 // Pagination
 export const paginationParams = z.object({
   page: z.coerce.number().int().positive().default(1),
-  limit: z.coerce.number().int().min(1).max(100).default(20),
-});
-```
+  limit: z.coerce.number().int().min(1).max(100).default(20),});```
 
 ```typescript
-// schemas/user.ts
-import { z } from "zod";
+// schemas/user.tsimport { z } from "zod";
 import { baseEntity, uuid } from "./common";
-
 export const userSchema = baseEntity.extend({
   email: z.string().email(),
-  name: z.string().min(1),
-});
+  name: z.string().min(1),});
 
-export type User = z.infer<typeof userSchema>;
-```
+export type User = z.infer<typeof userSchema>;```
 
 ```typescript
-// schemas/order.ts
-import { z } from "zod";
+// schemas/order.tsimport { z } from "zod";
 import { baseEntity, uuid } from "./common";
-
 const orderItemSchema = z.object({
   productId: uuid,
-  quantity: z.number().int().positive(),
-});
-
+  quantity: z.number().int().positive(),});
 export const orderSchema = baseEntity.extend({
   userId: uuid,
   items: z.array(orderItemSchema).min(1),
-  total: z.number().positive(),
-});
+  total: z.number().positive(),});
 
-export type Order = z.infer<typeof orderSchema>;
-```
+export type Order = z.infer<typeof orderSchema>;```
 
 **Organizing schema modules:**
 
@@ -125,18 +105,30 @@ schemas/
 
 ```typescript
 // schemas/index.ts
-export * from "./common";
-export * from "./user";
-export * from "./order";
-export * from "./product";
+export * from './common'
+export * from './user'
+export * from './order'
+export * from './product'
+
+// Usage
+import { userSchema, orderSchema, uuid, type User } from '@/schemas'
+```
+
+# **When NOT to use this pattern:**
+
+export _ from "./common";
+export _ from "./user";
+export _ from "./order";
+export _ from "./product";
 
 // Usage
 import { userSchema, orderSchema, uuid, type User } from "@/schemas";
+
 ```
 
 **When NOT to use this pattern:**
-
 - One-off schemas used only in a single file
 - When schemas look similar but have different semantics (don't over-abstract)
 
 Reference: [Zod - Type Inference](https://zod.dev/api#type-inference)
+```

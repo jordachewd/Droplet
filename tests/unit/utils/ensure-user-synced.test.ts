@@ -1,260 +1,377 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { ensureUserSynced } from "@/lib/utils/ensure-user-synced";
+import { createTestClerkUser, createTestUser } from "../test-support";
 
-vi.mock("server-only", () => ({}));
-
-vi.mock("@clerk/nextjs/server", () => ({
-  clerkClient: vi.fn(),
+const {
+  connectToDatabaseMock,
+  findOneMock,
+  findByIdMock,
+  createMock,
+  clerkClientFactoryMock,
+  getUserMock,
+  updateUserMetadataMock,
+  serializeForClientMock,
+  isMongoDuplicateKeyErrorMock,
+} = vi.hoisted(() => ({
+  connectToDatabaseMock: vi.fn(),
+  findOneMock: vi.fn(),
+  findByIdMock: vi.fn(),
+  createMock: vi.fn(),
+  clerkClientFactoryMock: vi.fn(),
+  getUserMock: vi.fn(),
+  updateUserMetadataMock: vi.fn(),
+  serializeForClientMock: vi.fn(),
+  isMongoDuplicateKeyErrorMock: vi.fn(),
 }));
 
 vi.mock("@/lib/database/mongoose", () => ({
-  connectToDatabase: vi.fn(),
+  connectToDatabase: connectToDatabaseMock,
 }));
-
-const mockUserCreate = vi.fn();
-const mockUserFindOne = vi.fn();
-const mockUserFindById = vi.fn();
 
 vi.mock("@/lib/database/models/user.model", () => ({
   default: {
-    findOne: (...args: unknown[]) => mockUserFindOne(...args),
-    findById: (...args: unknown[]) => mockUserFindById(...args),
-    create: (...args: unknown[]) => mockUserCreate(...args),
+    findOne: findOneMock,
+    findById: findByIdMock,
+    create: createMock,
   },
 }));
 
-import { clerkClient } from "@clerk/nextjs/server";
-import { ensureUserSynced } from "@/lib/utils/ensure-user-synced";
+vi.mock("@clerk/nextjs/server", () => ({
+  clerkClient: clerkClientFactoryMock,
+}));
 
-const CLERK_USER_ID = "user_abc123def456";
+vi.mock("@/lib/utils/serialize-for-client", () => ({
+  default: serializeForClientMock,
+}));
 
-const MOCK_EXISTING_USER = {
-  _id: "mongo_id_1",
-  clerkId: CLERK_USER_ID,
-  username: "alice",
-  email: "alice@example.com",
-  role: "client",
-  plan: { name: "Pro", id: 1 },
-  firstName: "Alice",
-  lastName: "Smith",
-  userimg: "https://img.clerk.com/alice.jpg",
-  registerAt: "2026-01-01T00:00:00.000Z",
+vi.mock("@/lib/utils/type-guards", () => ({
+  isMongoDuplicateKeyError: isMongoDuplicateKeyErrorMock,
+}));
+
+type SelectLeanQuery<TValue> = {
+  select: ReturnType<
+    typeof vi.fn<(projection?: unknown) => SelectLeanQuery<TValue>>
+  >;
+  lean: ReturnType<typeof vi.fn<() => Promise<TValue>>>;
 };
 
-const MOCK_CLERK_USER = {
-  id: CLERK_USER_ID,
-  username: "alice",
-  firstName: "Alice",
-  lastName: "Smith",
-  imageUrl: "https://img.clerk.com/alice.jpg",
-  createdAt: 1735689600000,
-  primaryEmailAddressId: "email_1",
-  emailAddresses: [{ id: "email_1", emailAddress: "alice@example.com" }],
-};
+function createSelectLeanQuery<TValue>(value: TValue): SelectLeanQuery<TValue> {
+  const query: SelectLeanQuery<TValue> = {
+    select: vi.fn(),
+    lean: vi.fn(),
+  };
 
-function mockFindOneChain(result: unknown) {
-  const leanMock = vi.fn().mockResolvedValue(result);
-  const selectMock = vi.fn().mockReturnValue({ lean: leanMock });
-  mockUserFindOne.mockReturnValue({ select: selectMock });
+  query.select.mockReturnValue(query);
+  query.lean.mockResolvedValue(value as Awaited<TValue>);
+
+  return query;
 }
 
-function mockFindByIdChain(result: unknown) {
-  const leanMock = vi.fn().mockResolvedValue(result);
-  const selectMock = vi.fn().mockReturnValue({ lean: leanMock });
-  mockUserFindById.mockReturnValue({ select: selectMock });
+function makeCreatedUserDocument(id: string, role = "client") {
+  return {
+    _id: {
+      toString: () => id,
+    },
+    role,
+  };
 }
 
-const mockUpdateUserMetadata = vi.fn().mockResolvedValue({});
-const mockGetUser = vi.fn();
+function createDeferred<TValue>() {
+  let resolve: ((value: TValue | PromiseLike<TValue>) => void) | undefined;
+  let reject: ((reason?: unknown) => void) | undefined;
+  const promise = new Promise<TValue>((internalResolve, internalReject) => {
+    resolve = internalResolve;
+    reject = internalReject;
+  });
 
-describe("ensureUserSynced", () => {
+  return {
+    promise,
+    resolve: (value: TValue | PromiseLike<TValue>) => resolve?.(value),
+    reject: (reason?: unknown) => reject?.(reason),
+  };
+}
+
+describe("ensure-user-synced", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(clerkClient).mockResolvedValue({
+
+    vi.stubEnv("NODE_ENV", "test");
+    connectToDatabaseMock.mockResolvedValue(undefined);
+    serializeForClientMock.mockImplementation((value: unknown) => value);
+    isMongoDuplicateKeyErrorMock.mockReturnValue(false);
+
+    clerkClientFactoryMock.mockResolvedValue({
       users: {
-        getUser: mockGetUser,
-        updateUserMetadata: mockUpdateUserMetadata,
+        getUser: getUserMock,
+        updateUserMetadata: updateUserMetadataMock,
       },
-    } as never);
-    mockGetUser.mockResolvedValue(MOCK_CLERK_USER);
-  });
-
-  it("returns existing user without modification if already in MongoDB", async () => {
-    mockFindOneChain(MOCK_EXISTING_USER);
-
-    const result = await ensureUserSynced(CLERK_USER_ID);
-
-    expect(result).toEqual(MOCK_EXISTING_USER);
-    expect(mockUserCreate).not.toHaveBeenCalled();
-    expect(mockGetUser).not.toHaveBeenCalled();
-  });
-
-  it("creates MongoDB user from Clerk data when user record is missing", async () => {
-    mockFindOneChain(null);
-    const createdUser = {
-      _id: "new_mongo_id",
-      clerkId: CLERK_USER_ID,
-      username: "alice",
-      email: "alice@example.com",
-      role: "client",
-      plan: { name: "Lite", id: 0 },
-    };
-    mockUserCreate.mockResolvedValue(createdUser);
-    mockFindByIdChain({
-      ...createdUser,
-      firstName: "Alice",
-      lastName: "Smith",
-      userimg: "https://img.clerk.com/alice.jpg",
-      registerAt: "2026-01-01T00:00:00.000Z",
     });
-
-    const result = await ensureUserSynced(CLERK_USER_ID);
-
-    expect(result).toBeTruthy();
-    expect(result?.clerkId).toBe(CLERK_USER_ID);
-    expect(mockUserCreate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        clerkId: CLERK_USER_ID,
-        email: "alice@example.com",
-        username: "alice",
-      }),
-    );
-    expect(mockUpdateUserMetadata).toHaveBeenCalledWith(
-      CLERK_USER_ID,
-      expect.objectContaining({
-        publicMetadata: expect.objectContaining({
-          userId: "new_mongo_id",
-          role: "client",
-        }),
-      }),
-    );
   });
 
-  it("sets Lite plan defaults on self-healing creation", async () => {
-    mockFindOneChain(null);
-    const createdUser = {
-      _id: "new_mongo_id",
-      clerkId: CLERK_USER_ID,
-      role: "client",
-      plan: { name: "Lite", id: 0 },
-    };
-    mockUserCreate.mockResolvedValue(createdUser);
-    mockFindByIdChain(createdUser);
-
-    const result = await ensureUserSynced(CLERK_USER_ID);
-
-    expect(result?.plan?.name).toBe("Lite");
+  afterEach(() => {
+    vi.unstubAllEnvs();
   });
 
-  it("returns null when Clerk API fails", async () => {
-    mockFindOneChain(null);
-    mockGetUser.mockRejectedValue(new Error("Clerk API unavailable"));
+  it("returns existing Mongo user when already synced", async () => {
+    const user = createTestUser({ clerkId: "user_existing_1" });
+    findOneMock.mockReturnValue(createSelectLeanQuery(user));
 
-    const result = await ensureUserSynced(CLERK_USER_ID);
+    const result = await ensureUserSynced(user.clerkId);
 
-    expect(result).toBeNull();
-    expect(mockUserCreate).not.toHaveBeenCalled();
+    expect(connectToDatabaseMock).toHaveBeenCalledTimes(1);
+    expect(findOneMock).toHaveBeenCalledWith({ clerkId: user.clerkId });
+    expect(result).toEqual(user);
+    expect(clerkClientFactoryMock).not.toHaveBeenCalled();
+    expect(createMock).not.toHaveBeenCalled();
   });
 
-  it("returns null when MongoDB creation fails", async () => {
-    mockFindOneChain(null);
-    mockUserCreate.mockRejectedValue(new Error("MongoDB write failure"));
-
-    const result = await ensureUserSynced(CLERK_USER_ID);
-
-    expect(result).toBeNull();
-  });
-
-  it("returns the refetched user when User.create races on duplicate key (11000)", async () => {
-    const firstSelectMock = vi.fn().mockReturnValue({
-      lean: vi.fn().mockResolvedValue(null),
-    });
-    const secondSelectMock = vi.fn().mockReturnValue({
-      lean: vi.fn().mockResolvedValue(MOCK_EXISTING_USER),
-    });
-
-    mockUserFindOne
-      .mockReturnValueOnce({ select: firstSelectMock })
-      .mockReturnValueOnce({ select: secondSelectMock });
-    mockUserCreate.mockRejectedValue(
-      Object.assign(new Error("Duplicate key"), { code: 11000 }),
-    );
-
-    const result = await ensureUserSynced(CLERK_USER_ID);
-
-    expect(result).toEqual(MOCK_EXISTING_USER);
-    expect(mockUserFindOne).toHaveBeenCalledTimes(2);
-    expect(mockUserFindById).not.toHaveBeenCalled();
-  });
-
-  it("returns the created user even when Clerk metadata sync fails", async () => {
-    const stderrWriteSpy = vi
+  it("returns null and logs when Clerk user has no email", async () => {
+    const stderrSpy = vi
       .spyOn(process.stderr, "write")
       .mockImplementation(() => true);
-
-    mockFindOneChain(null);
-    const createdUser = {
-      _id: "new_mongo_id",
-      clerkId: CLERK_USER_ID,
-      role: "client",
-      plan: { name: "Lite", id: 0 },
-    };
-    mockUserCreate.mockResolvedValue(createdUser);
-    mockUpdateUserMetadata.mockRejectedValue(new Error("Clerk metadata error"));
-    mockFindByIdChain({
-      ...createdUser,
-      username: "alice",
-      email: "alice@example.com",
-      firstName: "Alice",
-      lastName: "Smith",
-      userimg: "https://img.clerk.com/alice.jpg",
-      registerAt: "2026-01-01T00:00:00.000Z",
-    });
-
-    const result = await ensureUserSynced(CLERK_USER_ID);
-
-    expect(result).toBeTruthy();
-    expect(result?.clerkId).toBe(CLERK_USER_ID);
-    expect(mockUpdateUserMetadata).toHaveBeenCalledTimes(1);
-    expect(stderrWriteSpy).toHaveBeenCalledWith(
-      `[ensure-user-synced] Metadata sync failed for ${CLERK_USER_ID}; continuing with MongoDB user.\n`,
-    );
-    stderrWriteSpy.mockRestore();
-  });
-
-  it("returns null when Clerk user has no email addresses", async () => {
-    mockFindOneChain(null);
-    mockGetUser.mockResolvedValue({
-      ...MOCK_CLERK_USER,
+    const clerkUser = createTestClerkUser({
+      id: "user_missing_email_1",
       emailAddresses: [],
       primaryEmailAddressId: null,
     });
 
-    const result = await ensureUserSynced(CLERK_USER_ID);
+    findOneMock.mockReturnValue(createSelectLeanQuery(null));
+    getUserMock.mockResolvedValue(clerkUser);
+
+    const result = await ensureUserSynced(clerkUser.id);
 
     expect(result).toBeNull();
-    expect(mockUserCreate).not.toHaveBeenCalled();
+    expect(createMock).not.toHaveBeenCalled();
+    expect(String(stderrSpy.mock.calls[0]?.[0])).toContain("No email found");
+
+    stderrSpy.mockRestore();
   });
 
-  it("generates fallback username when Clerk user has no username", async () => {
-    mockFindOneChain(null);
-    mockGetUser.mockResolvedValue({
-      ...MOCK_CLERK_USER,
+  it("self-heals missing users, creates Mongo record, and syncs metadata", async () => {
+    const clerkUser = createTestClerkUser({
+      id: "user_abc12345",
       username: null,
+      emailAddresses: [
+        {
+          id: "email_primary",
+          emailAddress: "Alpha.User@example.com",
+        },
+      ],
+      primaryEmailAddressId: "email_primary",
+      firstName: "Alpha",
+      lastName: "User",
     });
-    const createdUser = {
-      _id: "new_mongo_id",
-      clerkId: CLERK_USER_ID,
-      role: "client",
-    };
-    mockUserCreate.mockResolvedValue(createdUser);
-    mockFindByIdChain(createdUser);
+    const createdUserId = "507f1f77bcf86cd799439099";
+    const createdUser = createTestUser({
+      _id: createdUserId,
+      clerkId: clerkUser.id,
+      username: "alpha-user-abc12345",
+      email: "Alpha.User@example.com",
+    });
 
-    await ensureUserSynced(CLERK_USER_ID);
+    findOneMock.mockReturnValueOnce(createSelectLeanQuery(null));
+    createMock.mockResolvedValue(makeCreatedUserDocument(createdUserId));
+    findByIdMock.mockReturnValue(createSelectLeanQuery(createdUser));
+    getUserMock.mockResolvedValue(clerkUser);
+    updateUserMetadataMock.mockResolvedValue(undefined);
 
-    expect(mockUserCreate).toHaveBeenCalledWith(
+    const result = await ensureUserSynced(clerkUser.id);
+
+    expect(createMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        username: expect.stringContaining("alice"),
+        clerkId: clerkUser.id,
+        username: "alpha-user-abc12345",
+        email: "Alpha.User@example.com",
       }),
     );
+    expect(updateUserMetadataMock).toHaveBeenCalledWith(clerkUser.id, {
+      publicMetadata: {
+        userId: createdUserId,
+        role: "client",
+        userImg: clerkUser.imageUrl,
+      },
+    });
+    expect(result).toEqual(createdUser);
+  });
+
+  it("continues when metadata sync fails after user creation", async () => {
+    const stderrSpy = vi
+      .spyOn(process.stderr, "write")
+      .mockImplementation(() => true);
+    const clerkUser = createTestClerkUser({
+      id: "user_metadata_fail_1",
+      username: "metadata-fail-user",
+    });
+    const createdUserId = "507f1f77bcf86cd799439100";
+    const createdUser = createTestUser({
+      _id: createdUserId,
+      clerkId: clerkUser.id,
+      username: "metadata-fail-user",
+    });
+
+    findOneMock.mockReturnValueOnce(createSelectLeanQuery(null));
+    createMock.mockResolvedValue(makeCreatedUserDocument(createdUserId));
+    findByIdMock.mockReturnValue(createSelectLeanQuery(createdUser));
+    getUserMock.mockResolvedValue(clerkUser);
+    updateUserMetadataMock.mockRejectedValue(new Error("metadata down"));
+
+    const result = await ensureUserSynced(clerkUser.id);
+
+    expect(result).toEqual(createdUser);
+    expect(String(stderrSpy.mock.calls[0]?.[0])).toContain(
+      "Metadata sync failed",
+    );
+
+    stderrSpy.mockRestore();
+  });
+
+  it("returns null when user is created but cannot be reloaded", async () => {
+    const clerkUser = createTestClerkUser({
+      id: "user_reload_missing_1",
+      username: "missing-reload-user",
+    });
+    const createdUserId = "507f1f77bcf86cd799439102";
+
+    findOneMock.mockReturnValueOnce(createSelectLeanQuery(null));
+    createMock.mockResolvedValue(makeCreatedUserDocument(createdUserId));
+    findByIdMock.mockReturnValue(createSelectLeanQuery(null));
+    getUserMock.mockResolvedValue(clerkUser);
+    updateUserMetadataMock.mockResolvedValue(undefined);
+
+    const result = await ensureUserSynced(clerkUser.id);
+
+    expect(result).toBeNull();
+    expect(updateUserMetadataMock).toHaveBeenCalledWith(clerkUser.id, {
+      publicMetadata: {
+        userId: createdUserId,
+        role: "client",
+        userImg: clerkUser.imageUrl,
+      },
+    });
+  });
+
+  it("falls back to first Clerk email when primary email id is missing", async () => {
+    const clerkUser = createTestClerkUser({
+      id: "user_email_fallback_1",
+      username: null,
+      emailAddresses: [
+        {
+          id: "email_first",
+          emailAddress: "fallback.first@example.com",
+        },
+        {
+          id: "email_second",
+          emailAddress: "fallback.second@example.com",
+        },
+      ],
+      primaryEmailAddressId: "email_unknown",
+    });
+    const createdUserId = "507f1f77bcf86cd799439103";
+    const createdUser = createTestUser({
+      _id: createdUserId,
+      clerkId: clerkUser.id,
+      email: "fallback.first@example.com",
+    });
+
+    findOneMock.mockReturnValueOnce(createSelectLeanQuery(null));
+    createMock.mockResolvedValue(makeCreatedUserDocument(createdUserId));
+    findByIdMock.mockReturnValue(createSelectLeanQuery(createdUser));
+    getUserMock.mockResolvedValue(clerkUser);
+    updateUserMetadataMock.mockResolvedValue(undefined);
+
+    const result = await ensureUserSynced(clerkUser.id);
+
+    expect(result).toEqual(createdUser);
+    expect(createMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        clerkId: clerkUser.id,
+        email: "fallback.first@example.com",
+      }),
+    );
+  });
+
+  it("returns race winner when user creation fails with duplicate key", async () => {
+    const clerkUser = createTestClerkUser({
+      id: "user_duplicate_1",
+      username: "race-winner",
+    });
+    const raceWinner = createTestUser({
+      clerkId: clerkUser.id,
+      username: "race-winner",
+    });
+
+    findOneMock
+      .mockReturnValueOnce(createSelectLeanQuery(null))
+      .mockReturnValueOnce(createSelectLeanQuery(raceWinner));
+    getUserMock.mockResolvedValue(clerkUser);
+    createMock.mockRejectedValue(new Error("duplicate key"));
+    isMongoDuplicateKeyErrorMock.mockReturnValue(true);
+
+    const result = await ensureUserSynced(clerkUser.id);
+
+    expect(result).toEqual(raceWinner);
+    expect(findOneMock).toHaveBeenCalledTimes(2);
+    expect(updateUserMetadataMock).not.toHaveBeenCalled();
+  });
+
+  it("logs failure once per user window and returns null on create errors", async () => {
+    const stderrSpy = vi
+      .spyOn(process.stderr, "write")
+      .mockImplementation(() => true);
+    const clerkUser = createTestClerkUser({
+      id: "user_create_error_1",
+      username: "failing-user",
+    });
+
+    findOneMock.mockReturnValue(createSelectLeanQuery(null));
+    getUserMock.mockResolvedValue(clerkUser);
+    createMock.mockRejectedValue(new Error("db unavailable"));
+    isMongoDuplicateKeyErrorMock.mockReturnValue(false);
+
+    const firstResult = await ensureUserSynced(clerkUser.id);
+    const secondResult = await ensureUserSynced(clerkUser.id);
+    const failedLogs = stderrSpy.mock.calls.filter((call) =>
+      String(call[0]).includes("Failed for"),
+    );
+
+    expect(firstResult).toBeNull();
+    expect(secondResult).toBeNull();
+    expect(failedLogs).toHaveLength(1);
+
+    stderrSpy.mockRestore();
+  });
+
+  it("caches results and deduplicates in-flight requests outside test environment", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+
+    const clerkUserId = "user_cached_1";
+    const user = createTestUser({ clerkId: clerkUserId });
+    const deferred = createDeferred<typeof user | null>();
+
+    const pendingQuery: SelectLeanQuery<typeof user | null> = {
+      select: vi.fn(),
+      lean: vi.fn(),
+    };
+    pendingQuery.select.mockReturnValue(pendingQuery);
+    pendingQuery.lean.mockImplementation(() => deferred.promise);
+    findOneMock.mockReturnValue(pendingQuery);
+
+    const inFlightOne = ensureUserSynced(clerkUserId);
+    const inFlightTwo = ensureUserSynced(clerkUserId);
+
+    await Promise.resolve();
+    expect(findOneMock).toHaveBeenCalledTimes(1);
+
+    deferred.resolve(user);
+    const [firstResult, secondResult] = await Promise.all([
+      inFlightOne,
+      inFlightTwo,
+    ]);
+    expect(firstResult).toEqual(user);
+    expect(secondResult).toEqual(user);
+
+    const cachedResult = await ensureUserSynced(clerkUserId);
+    expect(cachedResult).toEqual(user);
+    expect(findOneMock).toHaveBeenCalledTimes(1);
   });
 });

@@ -41,7 +41,10 @@ export default function PersonaCard({
     <>
       <div className="flex items-center justify-between gap-3">
         <h2 className={titleClass}>
-          <i className={classNames(persona.icon, "text-base")}></i>
+          <i
+            className={classNames(persona.icon, "text-base")}
+            aria-hidden="true"
+          ></i>
           <span>{persona.label}</span>
         </h2>
         <div className="flex items-center gap-2">

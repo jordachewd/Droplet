@@ -223,7 +223,7 @@ export default function ChatInput({
                 onClick={handleSendButtonClick}
                 aria-label="Send message"
               >
-                <i className="bi bi-send text-base"></i>
+                <i className="bi bi-send text-base" aria-hidden="true"></i>
               </button>
             </span>
           </TooltipArrow>
@@ -242,7 +242,10 @@ export default function ChatInput({
                 aria-label="Attach media"
                 disabled={loading || disabled || isUploading}
               >
-                <i className="bi bi-cloud-upload text-base"></i>
+                <i
+                  className="bi bi-cloud-upload text-base"
+                  aria-hidden="true"
+                ></i>
               </button>
             </TooltipArrow>
           ) : previewUrl ? (
@@ -252,7 +255,7 @@ export default function ChatInput({
               onClick={handleRemoveFile}
               aria-label="Remove selected image"
             >
-              <i className={removeFileIconClass}></i>
+              <i className={removeFileIconClass} aria-hidden="true"></i>
               <Image
                 priority
                 width={40}

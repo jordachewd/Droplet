@@ -3,6 +3,7 @@ import { clerkClient } from "@clerk/nextjs/server";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import User from "@/lib/database/models/user.model";
 import serializeForClient from "@/lib/utils/serialize-for-client";
+import { isMongoDuplicateKeyError } from "@/lib/utils/type-guards";
 import type { UserData } from "@/types/UserData.d";
 
 const USER_SYNC_PROJECTION =
@@ -15,15 +16,6 @@ const recentEnsureUserSyncResults = new Map<
 >();
 const inFlightEnsureUserSync = new Map<string, Promise<UserData | null>>();
 const lastFailureLogAtByUser = new Map<string, number>();
-
-function isMongoDuplicateKeyError(error: unknown): error is { code: number } {
-  return (
-    typeof error === "object" &&
-    error !== null &&
-    "code" in error &&
-    (error as { code?: number }).code === 11000
-  );
-}
 
 async function findSyncedUserByClerkId(
   clerkUserId: string,

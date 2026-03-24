@@ -12,8 +12,7 @@ tags: parse, json, security, type-safety
 **Incorrect (trusting JSON.parse):**
 
 ```typescript
-// JSON.parse returns any - no type safety
-const config = JSON.parse(fs.readFileSync("config.json", "utf-8"));
+// JSON.parse returns any - no type safetyconst config = JSON.parse(fs.readFileSync("config.json", "utf-8"));
 // config is 'any' - TypeScript allows anything
 
 // This might crash at runtime if structure changed
@@ -22,14 +21,11 @@ console.log(config.database.host); // TypeError: Cannot read property 'host' of 
 // API response - also unvalidated
 const response = await fetch("/api/user");
 const user = await response.json(); // any type
-console.log(user.name.toUpperCase()); // Crash if name is null/undefined
-```
+console.log(user.name.toUpperCase()); // Crash if name is null/undefined```
 
 **Correct (validate after JSON.parse):**
 
-```typescript
-import { z } from "zod";
-
+```typescriptimport { z } from "zod";
 const configSchema = z.object({
   database: z.object({
     host: z.string(),
@@ -39,37 +35,30 @@ const configSchema = z.object({
   api: z.object({
     key: z.string(),
     timeout: z.number().default(5000),
-  }),
-});
+  }),});
 
 // Parse JSON then validate
 const rawConfig = JSON.parse(fs.readFileSync("config.json", "utf-8"));
-const config = configSchema.parse(rawConfig);
-// config is fully typed: { database: { host: string, ... }, ... }
+const config = configSchema.parse(rawConfig);// config is fully typed: { database: { host: string, ... }, ... }
 
 // API response validation
 const userSchema = z.object({
   id: z.string(),
   name: z.string(),
-  email: z.string().email(),
-});
+  email: z.string().email(),});
 
 const response = await fetch("/api/user");
 const rawUser = await response.json();
-const user = userSchema.parse(rawUser);
-// user is fully typed and validated
+const user = userSchema.parse(rawUser);// user is fully typed and validated
 ```
 
 **Helper for validated JSON parsing:**
 
 ```typescript
-function parseJSON<T>(schema: z.ZodType<T>, json: string): T {
-  return schema.parse(JSON.parse(json));
-}
+function parseJSON<T>(schema: z.ZodType<T>, json: string): T {  return schema.parse(JSON.parse(json));}
 
 function safeParseJSON<T>(schema: z.ZodType<T>, json: string) {
-  try {
-    return { success: true as const, data: schema.parse(JSON.parse(json)) };
+  try {    return { success: true as const, data: schema.parse(JSON.parse(json)) };
   } catch (error) {
     if (error instanceof SyntaxError) {
       return { success: false as const, error: "Invalid JSON" };
@@ -77,18 +66,14 @@ function safeParseJSON<T>(schema: z.ZodType<T>, json: string) {
     if (error instanceof z.ZodError) {
       return { success: false as const, error: error.issues };
     }
-    throw error;
-  }
+    throw error;  }
 }
 
-// Usage
-const config = parseJSON(configSchema, fs.readFileSync("config.json", "utf-8"));
-```
+// Usageconst config = parseJSON(configSchema, fs.readFileSync("config.json", "utf-8"));```
 
 **Validate localStorage/sessionStorage:**
 
-```typescript
-const cartSchema = z.array(
+```typescriptconst cartSchema = z.array(
   z.object({
     productId: z.string(),
     quantity: z.number().int().positive(),
@@ -105,11 +90,11 @@ function getCart() {
     localStorage.removeItem("cart");
     return [];
   }
-  return result.data;
-}
+  return result.data;}
 ```
 
 **When NOT to use this pattern:**
+
 
 - When you genuinely need to pass through arbitrary JSON without processing
 

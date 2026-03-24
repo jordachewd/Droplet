@@ -57,7 +57,7 @@ export default function PlanCard({
       )}
 
       <div className="flex flex-col items-center justify-between">
-        <i className={classNames(plan.icon, "text-7xl")}></i>
+        <i className={classNames(plan.icon, "text-7xl")} aria-hidden="true"></i>
 
         <div className="flex w-full items-center justify-between">
           <h2 className={classNames("heading-4", titleStyles)}>{plan.name}</h2>
@@ -92,6 +92,7 @@ export default function PlanCard({
                 "bi",
                 incl.isIncluded ? "bi-check2" : "bi-x",
               )}
+              aria-hidden="true"
             ></i>
             <p>{incl.label}</p>
           </div>

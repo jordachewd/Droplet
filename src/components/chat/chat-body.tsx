@@ -174,7 +174,7 @@ export default function ChatBody({
 
       return (
         <article key={messageKey} className={articleClass}>
-          <i className={avatarClass}></i>
+          <i className={avatarClass} aria-hidden="true"></i>
 
           <div className="flex max-w-[92%] flex-col gap-1">
             <span className="px-1 text-xxs font-semibold uppercase text-midnightBlue-700 dark:text-lavenderHaze-700">

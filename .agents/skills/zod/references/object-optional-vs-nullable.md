@@ -11,13 +11,10 @@ tags: object, optional, nullable, undefined
 
 **Incorrect (confusing optional and nullable):**
 
-```typescript
-import { z } from "zod";
-
+```typescriptimport { z } from "zod";
 const userSchema = z.object({
   name: z.string(),
-  // Intended: field might not exist
-  nickname: z.string().nullable(), // Wrong! Requires field to be present
+  // Intended: field might not exist  nickname: z.string().nullable(), // Wrong! Requires field to be present
   // Intended: field exists but might be null
   deletedAt: z.date().optional(), // Wrong! Allows field to be missing
 });
@@ -27,15 +24,12 @@ userSchema.parse({ name: "John" });
 // ZodError: Required at "nickname"
 
 // This passes but loses semantic meaning
-userSchema.parse({ name: "John", nickname: null, deletedAt: undefined });
-// Is deletedAt undefined because not deleted, or because data is incomplete?
+userSchema.parse({ name: "John", nickname: null, deletedAt: undefined });// Is deletedAt undefined because not deleted, or because data is incomplete?
 ```
 
 **Correct (using optional and nullable deliberately):**
 
-```typescript
-import { z } from "zod";
-
+```typescriptimport { z } from "zod";
 const userSchema = z.object({
   name: z.string(),
 
@@ -45,56 +39,45 @@ const userSchema = z.object({
 
   // nullable() - field must exist, but value can be null
   deletedAt: z.date().nullable(),
-  // Type: Date | null
-});
+  // Type: Date | null});
 
 // Field can be omitted
 userSchema.parse({ name: "John", deletedAt: null }); // Valid
 
 // Field must be present (even if null)
-userSchema.parse({ name: "John", nickname: "Johnny" });
-// ZodError: Required at "deletedAt"
+userSchema.parse({ name: "John", nickname: "Johnny" });// ZodError: Required at "deletedAt"
 
 // Correct usage
-userSchema.parse({
-  name: "John",
+userSchema.parse({  name: "John",
   nickname: "Johnny", // Or omit entirely
   deletedAt: null, // Must be present, null means "not deleted"
-});
-```
+});```
 
 **When to use each:**
 
 ```typescript
 // optional() - field may not exist
 // Use for: Optional form fields, sparse updates, optional config
-z.object({
-  bio: z.string().optional(), // User might not have filled this
+z.object({  bio: z.string().optional(), // User might not have filled this
   middleName: z.string().optional(), // Not everyone has one
 });
-
 // nullable() - field exists but value can be null
 // Use for: Database nullable columns, "cleared" values, explicit absence
-z.object({
-  deletedAt: z.date().nullable(), // null = not deleted, Date = when deleted
+z.object({  deletedAt: z.date().nullable(), // null = not deleted, Date = when deleted
   parentId: z.string().nullable(), // null = root node, string = has parent
   approvedBy: z.string().nullable(), // null = pending, string = approver
 });
-
 // nullish() - either undefined or null
 // Use for: Lenient APIs, legacy data, optional nullable DB columns
-z.object({
-  legacyField: z.string().nullish(), // string | null | undefined
-});
-```
+z.object({  legacyField: z.string().nullish(), // string | null | undefined
+});```
 
 **API response patterns:**
 
 ```typescript
 // API includes null for "no value" (good for explicit absence)
 const apiResponseSchema = z.object({
-  data: z.object({
-    user: z
+  data: z.object({    user: z
       .object({
         name: z.string(),
         avatar: z.string().nullable(), // null = no avatar set
@@ -102,19 +85,26 @@ const apiResponseSchema = z.object({
       .nullable(), // null = user not found
   }),
 });
-
 // Type: { data: { user: { name: string; avatar: string | null } | null } }
 
 // Partial updates send only changed fields
 const updateSchema = z.object({
-  name: z.string().optional(), // Omitted = don't change
-  avatar: z.string().nullable().optional(), // null = clear avatar
+  name: z.string().optional(),  // Omitted = don't change
+  avatar: z.string().nullable().optional(),  // null = clear avatar
+})
+```
+
+# **When NOT to use this pattern:**
+
+name: z.string().optional(), // Omitted = don't change
+avatar: z.string().nullable().optional(), // null = clear avatar
 });
+
 ```
 
 **When NOT to use this pattern:**
-
 - When interacting with systems that treat null and undefined as equivalent
 - When using nullish() for maximum flexibility is acceptable
 
 Reference: [Zod API - optional/nullable](https://zod.dev/api#optional)
+```

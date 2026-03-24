@@ -38,7 +38,7 @@ describe("createTask", () => {
     vi.mocked(connectToDatabase).mockResolvedValue(undefined as never);
   });
 
-  it("uses the authenticated user id instead of any caller-supplied user id", async () => {
+  it("uses the authenticated user id for valid task payloads", async () => {
     vi.mocked(Task.create).mockResolvedValue({
       _id: "task_1",
       userId: "auth_user_1",
@@ -48,10 +48,9 @@ describe("createTask", () => {
     } as never);
 
     await createTask({
-      userId: "spoofed_user",
       title: "Generated title",
       messages: [],
-    } as never);
+    });
 
     expect(connectToDatabase).toHaveBeenCalledOnce();
     expect(Task.create).toHaveBeenCalledWith({
@@ -62,6 +61,19 @@ describe("createTask", () => {
       promptCount: 0,
       estimatedBytes: 0,
     });
+  });
+
+  it("rejects unknown fields in task payloads to prevent injection", async () => {
+    await expect(
+      createTask({
+        userId: "spoofed_user",
+        title: "Generated title",
+        messages: [],
+      } as never),
+    ).rejects.toThrow("Invalid task payload. | createTask");
+
+    expect(connectToDatabase).not.toHaveBeenCalled();
+    expect(Task.create).not.toHaveBeenCalled();
   });
 
   it("initializes promptCount and estimatedBytes from the first user message", async () => {

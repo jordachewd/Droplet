@@ -28,9 +28,7 @@
       "response": {
         "created": 1773651325,
         "dataLength": 1,
-        "firstItemKeys": [
-          "b64_json"
-        ],
+        "firstItemKeys": ["b64_json"],
         "hasB64Json": true,
         "revisedPrompt": null
       }
@@ -61,9 +59,7 @@
       "response": {
         "created": 1773651338,
         "dataLength": 1,
-        "firstItemKeys": [
-          "b64_json"
-        ],
+        "firstItemKeys": ["b64_json"],
         "hasB64Json": true,
         "revisedPrompt": null
       }
@@ -102,4 +98,3 @@
     }
   ]
 }
-

@@ -1,66 +1,112 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { connectToDatabase } from "@/lib/database/mongoose";
-import AppSetting from "@/lib/database/models/app-setting.model";
+import { MODEL_POLICY_MATRIX } from "@/lib/utils/ai-model-policy";
 import { getEffectiveModelConfig } from "@/lib/utils/effective-model-config";
+import type { ModelSettingsFormValue } from "@/types/AdminData.d";
+import { createTestUser } from "../test-support";
+
+const { connectToDatabaseMock, findOneMock } = vi.hoisted(() => ({
+  connectToDatabaseMock: vi.fn(),
+  findOneMock: vi.fn(),
+}));
 
 vi.mock("@/lib/database/mongoose", () => ({
-  connectToDatabase: vi.fn(),
+  connectToDatabase: connectToDatabaseMock,
 }));
 
 vi.mock("@/lib/database/models/app-setting.model", () => ({
   default: {
-    findOne: vi.fn(),
+    findOne: findOneMock,
   },
 }));
 
-function mockModelSetting(value: unknown) {
-  const leanMock = vi.fn().mockResolvedValue(value ? { value } : null);
-  const selectMock = vi.fn().mockReturnValue({ lean: leanMock });
-  vi.mocked(AppSetting.findOne).mockReturnValue({
-    select: selectMock,
-  } as never);
+const DEFAULT_MODEL_SETTINGS: ModelSettingsFormValue = {
+  liteChatModel: MODEL_POLICY_MATRIX.lite.chat.taskClasses.standard.model,
+  proChatModel: MODEL_POLICY_MATRIX.pro.chat.taskClasses.standard.model,
+  premiumChatModel: MODEL_POLICY_MATRIX.premium.chat.taskClasses.standard.model,
+  imageModel: MODEL_POLICY_MATRIX.pro.image_generation.taskClasses.final.model,
+  audioModel: MODEL_POLICY_MATRIX.pro.audio_generation.taskClasses.final.model,
+  videoModel:
+    MODEL_POLICY_MATRIX.pro.video_generation.taskClasses.preview.model,
+};
+
+function mockModelsSetting(value: unknown): void {
+  findOneMock.mockReturnValue({
+    select: vi.fn().mockReturnValue({
+      lean: vi
+        .fn()
+        .mockResolvedValue(
+          value === undefined ? null : ({ value } satisfies { value: unknown }),
+        ),
+    }),
+  });
 }
 
-describe("getEffectiveModelConfig", () => {
+describe("effective-model-config", () => {
+  const premiumUser = createTestUser({ plan: { name: "Premium" } });
+
   beforeEach(() => {
-    vi.clearAllMocks();
-    vi.mocked(connectToDatabase).mockResolvedValue(undefined as never);
+    connectToDatabaseMock.mockResolvedValue(undefined);
+    findOneMock.mockReset();
   });
 
-  it("returns default model settings when admin.models is missing", async () => {
-    mockModelSetting(null);
-
-    const config = await getEffectiveModelConfig();
-
-    expect(config).toEqual({
-      liteChatModel: "gpt-4o-mini",
-      proChatModel: "gpt-4.1",
-      premiumChatModel: "gpt-4.1",
-      imageModel: "gpt-image-1.5",
-      audioModel: "gpt-audio-mini",
-      videoModel: "sora-2",
-    });
-  });
-
-  it("uses persisted admin model settings", async () => {
-    mockModelSetting({
-      liteChatModel: "gpt-4.1-mini",
-      proChatModel: "gpt-4.1",
-      premiumChatModel: "gpt-5.4",
-      imageModel: "gpt-image-1",
-      audioModel: "gpt-4o-mini-tts",
-      videoModel: "sora-2-pro",
+  it("uses admin model settings when valid strings are provided", async () => {
+    mockModelsSetting({
+      liteChatModel: "gpt-lite-custom",
+      proChatModel: "gpt-pro-custom",
+      premiumChatModel: "gpt-premium-custom",
+      imageModel: "gpt-image-custom",
+      audioModel: "gpt-audio-custom",
+      videoModel: "sora-custom",
     });
 
     const config = await getEffectiveModelConfig();
 
     expect(config).toEqual({
-      liteChatModel: "gpt-4.1-mini",
-      proChatModel: "gpt-4.1",
-      premiumChatModel: "gpt-5.4",
-      imageModel: "gpt-image-1",
-      audioModel: "gpt-4o-mini-tts",
-      videoModel: "sora-2-pro",
+      liteChatModel: "gpt-lite-custom",
+      proChatModel: "gpt-pro-custom",
+      premiumChatModel: "gpt-premium-custom",
+      imageModel: "gpt-image-custom",
+      audioModel: "gpt-audio-custom",
+      videoModel: "sora-custom",
     });
+    expect(premiumUser.plan.name).toBe("Premium");
+  });
+
+  it("falls back to defaults for empty or invalid field values", async () => {
+    mockModelsSetting({
+      liteChatModel: "",
+      proChatModel: 123,
+      premiumChatModel: "gpt-premium-custom",
+      imageModel: null,
+      audioModel: "gpt-audio-custom",
+      videoModel: "",
+    });
+
+    const config = await getEffectiveModelConfig();
+
+    expect(config).toEqual({
+      liteChatModel: DEFAULT_MODEL_SETTINGS.liteChatModel,
+      proChatModel: DEFAULT_MODEL_SETTINGS.proChatModel,
+      premiumChatModel: "gpt-premium-custom",
+      imageModel: DEFAULT_MODEL_SETTINGS.imageModel,
+      audioModel: "gpt-audio-custom",
+      videoModel: DEFAULT_MODEL_SETTINGS.videoModel,
+    });
+  });
+
+  it("returns defaults when the stored setting is not an object", async () => {
+    mockModelsSetting("invalid");
+
+    const config = await getEffectiveModelConfig();
+
+    expect(config).toEqual(DEFAULT_MODEL_SETTINGS);
+  });
+
+  it("returns defaults when database access fails", async () => {
+    connectToDatabaseMock.mockRejectedValueOnce(new Error("db unavailable"));
+
+    const config = await getEffectiveModelConfig();
+
+    expect(config).toEqual(DEFAULT_MODEL_SETTINGS);
   });
 });

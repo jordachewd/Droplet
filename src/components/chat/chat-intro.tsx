@@ -54,7 +54,10 @@ export default function ChatIntro({ persona, sendPrompt }: ChatIntroProps) {
             onClick={() => handleSendPrompt(prompt)}
             className={introPromptButtonClass}
           >
-            <i className={classNames("bi bi-lightning-charge text-base")}></i>
+            <i
+              className={classNames("bi bi-lightning-charge text-base")}
+              aria-hidden="true"
+            ></i>
             <span>{prompt}</span>
           </button>
         ))}

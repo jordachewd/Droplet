@@ -11,8 +11,7 @@ If your schema uses `refine()` or `superRefine()` with async validation (like da
 
 **Incorrect (sync parse with async refinement):**
 
-```typescript
-import { z } from "zod";
+```typescriptimport { z } from "zod";
 
 const userSchema = z
   .object({
@@ -29,15 +28,13 @@ const userSchema = z
   );
 
 // This throws an error!
-const user = userSchema.parse(formData);
-// Error: Async refinement encountered during synchronous parse operation.
+const user = userSchema.parse(formData);// Error: Async refinement encountered during synchronous parse operation.
 // Use .parseAsync instead.
 ```
 
 **Correct (using parseAsync):**
 
-```typescript
-import { z } from "zod";
+```typescriptimport { z } from "zod";
 
 const userSchema = z
   .object({
@@ -58,14 +55,12 @@ const user = await userSchema.parseAsync(formData);
 // Or safeParseAsync for error handling
 const result = await userSchema.safeParseAsync(formData);
 if (!result.success) {
-  console.log(result.error.issues);
-}
+  console.log(result.error.issues);}
 ```
 
 **Async transforms also require parseAsync:**
 
-```typescript
-const enrichedUserSchema = z
+```typescriptconst enrichedUserSchema = z
   .object({
     userId: z.string().uuid(),
   })
@@ -80,13 +75,11 @@ const enrichedUserSchema = z
   });
 
 // Must use parseAsync
-const enrichedUser = await enrichedUserSchema.parseAsync({ userId: "123" });
-```
+const enrichedUser = await enrichedUserSchema.parseAsync({ userId: "123" });```
 
 **Pattern for API routes:**
 
-```typescript
-import { z } from "zod";
+```typescriptimport { z } from "zod";
 import { NextRequest, NextResponse } from "next/server";
 
 const registerSchema = z
@@ -112,14 +105,14 @@ export async function POST(req: NextRequest) {
   const result = await registerSchema.safeParseAsync(body);
 
   if (!result.success) {
-    return NextResponse.json({ errors: result.error.issues }, { status: 400 });
-  }
+    return NextResponse.json({ errors: result.error.issues }, { status: 400 });  }
 
   // Proceed with registration
 }
 ```
 
 **When NOT to use this pattern:**
+
 
 - Schemas with only synchronous validation (use parse/safeParse)
 - When async validation can be moved outside Zod (validate, then check)

@@ -1,7 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { notFound } from "next/navigation";
 import PageWrapper from "@/components/layout/page-wrapper";
-import PersonasSection from "@/components/sections/personas-section";
+import PersonasSection from "@/components/sections/shared/personas-section";
 import { getEffectivePersonaAccessByPlan } from "@/lib/utils/effective-persona-access";
 import { getEffectivePersonaConfig } from "@/lib/utils/effective-persona-config";
 import { ensureUserSynced } from "@/lib/utils/ensure-user-synced";

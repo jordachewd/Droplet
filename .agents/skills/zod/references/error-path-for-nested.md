@@ -11,8 +11,7 @@ When validating nested objects or arrays, `issue.path` tells you exactly where t
 
 **Incorrect (ignoring path information):**
 
-```typescript
-import { z } from "zod";
+```typescriptimport { z } from "zod";
 
 const orderSchema = z.object({
   customer: z.object({
@@ -40,14 +39,12 @@ if (!result.success) {
   result.error.issues.forEach((issue) => {
     console.log(issue.message); // 'Name required', 'Street required', 'Quantity must be positive'
     // User: "Which quantity? Which field?"
-  });
-}
+  });}
 ```
 
 **Correct (using path information):**
 
-```typescript
-import { z } from "zod";
+```typescriptimport { z } from "zod";
 
 const orderSchema = z.object({
   customer: z.object({
@@ -73,20 +70,16 @@ const result = orderSchema.safeParse({
 if (!result.success) {
   result.error.issues.forEach((issue) => {
     // path is an array of keys/indices
-    console.log(`${issue.path.join(".")}: ${issue.message}`);
-    // 'customer.name: Name required'
+    console.log(`${issue.path.join(".")}: ${issue.message}`);    // 'customer.name: Name required'
     // 'customer.address.street: Street required'
     // 'customer.address.city: City required'
-    // 'items.0.quantity: Quantity must be positive'
-  });
-}
+    // 'items.0.quantity: Quantity must be positive'  });}
 ```
 
 **Building field-specific error mapping:**
 
 ```typescript
-function mapErrorsToFields(error: z.ZodError) {
-  const fieldErrors: Map<string, string[]> = new Map();
+function mapErrorsToFields(error: z.ZodError) {  const fieldErrors: Map<string, string[]> = new Map();
 
   for (const issue of error.issues) {
     const fieldPath = issue.path.join(".");
@@ -100,36 +93,43 @@ function mapErrorsToFields(error: z.ZodError) {
 // Usage
 const errors = mapErrorsToFields(result.error);
 errors.get("customer.name"); // ['Name required']
-errors.get("items.0.quantity"); // ['Quantity must be positive']
-```
+errors.get("items.0.quantity"); // ['Quantity must be positive']```
 
 **For array items, get index from path:**
 
-```typescript
-const itemsWithErrors: Set<number> = new Set();
+```typescriptconst itemsWithErrors: Set<number> = new Set();
 
 result.error.issues.forEach((issue) => {
   if (issue.path[0] === "items" && typeof issue.path[1] === "number") {
     itemsWithErrors.add(issue.path[1]);
   }
 });
-
 // Highlight items at indices: Set { 0 }
 ```
 
 **Using path with format():**
 
 ```typescript
+const formatted = result.error.format()
+
+// Access errors at any path level
+formatted.customer?.address?.city?._errors  // ['City required']
+formatted.items?.[0]?.quantity?._errors  // ['Quantity must be positive']
+```
+
+# **When NOT to use this pattern:**
+
 const formatted = result.error.format();
 
 // Access errors at any path level
-formatted.customer?.address?.city?._errors; // ['City required']
-formatted.items?.[0]?.quantity?._errors; // ['Quantity must be positive']
+formatted.customer?.address?.city?.\_errors; // ['City required']
+formatted.items?.[0]?.quantity?.\_errors; // ['Quantity must be positive']
+
 ```
 
 **When NOT to use this pattern:**
-
 - Flat objects where field name is obvious
 - When using form libraries that handle path mapping
 
 Reference: [Zod Error Handling](https://zod.dev/error-handling)
+```

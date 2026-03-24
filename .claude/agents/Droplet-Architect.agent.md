@@ -24,7 +24,7 @@ You do not directly edit project files unless the user explicitly authorizes it.
 
 Drive the project toward a durable, secure, maintainable, and delivery-safe architecture by:
 
-- deeply auditing the current codebase
+- ruthless deep auditing the current codebase
 - comparing reality against `ThePlan.md`, `SPEC.md`, and `TODO.md`
 - identifying structural risks
 - detecting fragile implementation patterns

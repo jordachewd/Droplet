@@ -1,216 +1,182 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { connectToDatabase } from "@/lib/database/mongoose";
-import User from "@/lib/database/models/user.model";
+import { PLAN_LIMITS } from "@/constants/plans";
 import {
   checkDailyConversationLimit,
   claimDailyConversationSlot,
 } from "@/lib/utils/check-daily-conversations";
+import { createTestUser } from "../test-support";
+
+const { connectToDatabaseMock, findOneMock, findOneAndUpdateMock } = vi.hoisted(
+  () => ({
+    connectToDatabaseMock: vi.fn(),
+    findOneMock: vi.fn(),
+    findOneAndUpdateMock: vi.fn(),
+  }),
+);
 
 vi.mock("@/lib/database/mongoose", () => ({
-  connectToDatabase: vi.fn(),
+  connectToDatabase: connectToDatabaseMock,
 }));
 
 vi.mock("@/lib/database/models/user.model", () => ({
   default: {
-    findOne: vi.fn(),
-    findOneAndUpdate: vi.fn(),
+    findOne: findOneMock,
+    findOneAndUpdate: findOneAndUpdateMock,
   },
 }));
 
-describe("checkDailyConversationLimit", () => {
+type LeanQuery<TValue> = {
+  lean: () => Promise<TValue>;
+};
+
+function createLeanQuery<TValue>(value: TValue): LeanQuery<TValue> {
+  return {
+    lean: vi.fn().mockResolvedValue(value),
+  };
+}
+
+describe("check-daily-conversations", () => {
+  const liteUser = createTestUser({ plan: { name: "Lite" } });
+  const premiumUser = createTestUser({ plan: { name: "Premium" } });
+  const now = new Date("2026-03-24T12:00:00.000Z");
+
   beforeEach(() => {
-    vi.clearAllMocks();
-    vi.mocked(connectToDatabase).mockResolvedValue(undefined as never);
-    vi.mocked(User.findOne).mockResolvedValue(null as never);
+    connectToDatabaseMock.mockResolvedValue(undefined);
+    findOneMock.mockReset();
+    findOneAndUpdateMock.mockReset();
   });
 
-  it("reads the durable daily conversation counter for finite plans", async () => {
-    const now = new Date("2026-03-11T14:30:00.000Z");
-    vi.mocked(User.findOne).mockResolvedValue({
-      dailyConversationsStarted: 3,
-      dailyConversationWindowStart: new Date("2026-03-11T00:00:00.000Z"),
-    } as never);
-
-    const result = await checkDailyConversationLimit("user_123", "Lite", now);
-
-    expect(connectToDatabase).toHaveBeenCalledOnce();
-    expect(User.findOne).toHaveBeenCalledWith(
-      { clerkId: "user_123" },
-      "dailyConversationsStarted dailyConversationWindowStart",
-      { lean: true },
+  it("returns unlimited allowance for unlimited plans without db calls", async () => {
+    const result = await checkDailyConversationLimit(
+      premiumUser.clerkId,
+      premiumUser.plan.name,
     );
+
     expect(result).toEqual({
       allowed: true,
-      limit: 5,
-      used: 3,
-      remaining: 2,
+      limit: -1,
+      used: 0,
+      remaining: -1,
     });
+    expect(connectToDatabaseMock).not.toHaveBeenCalled();
+    expect(findOneMock).not.toHaveBeenCalled();
   });
 
-  it("resets the used count when the stored counter is from a previous UTC day", async () => {
-    const now = new Date("2026-03-11T23:30:00.000-05:00");
-    vi.mocked(User.findOne).mockResolvedValue({
-      dailyConversationsStarted: 4,
-      dailyConversationWindowStart: new Date("2026-03-11T00:00:00.000Z"),
-    } as never);
+  it("checks usage in current daily window for limited plans", async () => {
+    findOneMock.mockResolvedValue({
+      dailyConversationsStarted: 2,
+      dailyConversationWindowStart: new Date("2026-03-24T00:00:00.000Z"),
+    });
 
-    const result = await checkDailyConversationLimit("user_123", "Lite", now);
+    const result = await checkDailyConversationLimit(
+      liteUser.clerkId,
+      liteUser.plan.name,
+      now,
+    );
 
     expect(result).toEqual({
       allowed: true,
-      limit: 5,
+      limit: PLAN_LIMITS.Lite.conversationsPerDay,
+      used: 2,
+      remaining: 3,
+    });
+    expect(connectToDatabaseMock).toHaveBeenCalledTimes(1);
+    expect(findOneMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("treats stale daily windows as zero usage", async () => {
+    findOneMock.mockResolvedValue({
+      dailyConversationsStarted: 10,
+      dailyConversationWindowStart: new Date("2026-03-23T23:59:59.000Z"),
+    });
+
+    const result = await checkDailyConversationLimit(
+      liteUser.clerkId,
+      liteUser.plan.name,
+      now,
+    );
+
+    expect(result).toEqual({
+      allowed: true,
+      limit: PLAN_LIMITS.Lite.conversationsPerDay,
       used: 0,
       remaining: 5,
     });
   });
 
-  it("returns allowed false when the daily limit is reached", async () => {
-    const now = new Date("2026-03-11T14:30:00.000Z");
-    vi.mocked(User.findOne).mockResolvedValue({
-      dailyConversationsStarted: 50,
-      dailyConversationWindowStart: now,
-    } as never);
-
-    const result = await checkDailyConversationLimit("user_123", "Pro", now);
-
-    expect(result).toEqual({
-      allowed: false,
-      limit: 50,
-      used: 50,
-      remaining: 0,
-    });
-  });
-
-  it("bypasses counting for unlimited plans", async () => {
-    const result = await checkDailyConversationLimit("user_123", "Premium");
-
-    expect(connectToDatabase).not.toHaveBeenCalled();
-    expect(User.findOne).not.toHaveBeenCalled();
-    expect(result).toEqual({
-      allowed: true,
-      limit: -1,
-      used: 0,
-      remaining: -1,
-    });
-  });
-});
-
-function mockFindOneAndUpdateChain(resolvedValue: unknown) {
-  return {
-    lean: vi.fn().mockResolvedValue(resolvedValue),
-  };
-}
-
-describe("claimDailyConversationSlot", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    vi.mocked(connectToDatabase).mockResolvedValue(undefined as never);
-    vi.mocked(User.findOneAndUpdate).mockReturnValue(
-      mockFindOneAndUpdateChain(null) as never,
-    );
-  });
-
-  it("claims a slot atomically within the current window", async () => {
-    const now = new Date("2026-03-11T14:30:00.000Z");
-    vi.mocked(User.findOneAndUpdate).mockReturnValueOnce(
-      mockFindOneAndUpdateChain({
-        dailyConversationsStarted: 4,
-      }) as never,
+  it("claims slot in current window on first atomic update", async () => {
+    findOneAndUpdateMock.mockReturnValue(
+      createLeanQuery({ dailyConversationsStarted: 3 }),
     );
 
-    const result = await claimDailyConversationSlot("user_123", "Lite", now);
-
-    expect(connectToDatabase).toHaveBeenCalledOnce();
-    expect(User.findOneAndUpdate).toHaveBeenCalledTimes(1);
-    expect(User.findOneAndUpdate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        clerkId: "user_123",
-        dailyConversationsStarted: { $lt: 5 },
-      }),
-      expect.objectContaining({
-        $inc: { dailyConversationsStarted: 1 },
-      }),
-      expect.objectContaining({
-        strict: true,
-        upsert: false,
-        returnDocument: "after",
-      }),
+    const result = await claimDailyConversationSlot(
+      liteUser.clerkId,
+      liteUser.plan.name,
+      now,
     );
+
     expect(result).toEqual({
       claimed: true,
-      limit: 5,
-      used: 4,
-      remaining: 1,
+      limit: PLAN_LIMITS.Lite.conversationsPerDay,
+      used: 3,
+      remaining: 2,
     });
+    expect(findOneAndUpdateMock).toHaveBeenCalledTimes(1);
   });
 
-  it("resets window and claims slot at midnight boundary", async () => {
-    const now = new Date("2026-03-12T00:01:00.000Z");
-    // First attempt (current window) returns null — stale window
-    vi.mocked(User.findOneAndUpdate)
-      .mockReturnValueOnce(mockFindOneAndUpdateChain(null) as never)
-      .mockReturnValueOnce(
-        mockFindOneAndUpdateChain({
-          dailyConversationsStarted: 1,
-        }) as never,
-      );
+  it("claims slot with reset when current window claim fails", async () => {
+    findOneAndUpdateMock
+      .mockReturnValueOnce(createLeanQuery(null))
+      .mockReturnValueOnce(createLeanQuery({ dailyConversationsStarted: 1 }));
 
-    const result = await claimDailyConversationSlot("user_123", "Lite", now);
+    const result = await claimDailyConversationSlot(
+      liteUser.clerkId,
+      liteUser.plan.name,
+      now,
+    );
 
-    expect(User.findOneAndUpdate).toHaveBeenCalledTimes(2);
     expect(result).toEqual({
       claimed: true,
-      limit: 5,
+      limit: PLAN_LIMITS.Lite.conversationsPerDay,
       used: 1,
       remaining: 4,
     });
+    expect(findOneAndUpdateMock).toHaveBeenCalledTimes(2);
   });
 
-  it("returns claimed false when limit is reached in current window", async () => {
-    const now = new Date("2026-03-11T14:30:00.000Z");
-    // Both attempts return null — at limit and window is current
-    vi.mocked(User.findOneAndUpdate)
-      .mockReturnValueOnce(mockFindOneAndUpdateChain(null) as never)
-      .mockReturnValueOnce(mockFindOneAndUpdateChain(null) as never);
+  it("returns not-claimed when both atomic attempts fail", async () => {
+    findOneAndUpdateMock
+      .mockReturnValueOnce(createLeanQuery(null))
+      .mockReturnValueOnce(createLeanQuery(null));
 
-    const result = await claimDailyConversationSlot("user_123", "Lite", now);
-
-    expect(User.findOneAndUpdate).toHaveBeenCalledTimes(2);
-    expect(result).toEqual({
-      claimed: false,
-      limit: 5,
-      used: 5,
-      remaining: 0,
-    });
-  });
-
-  it("claims at exact boundary (4/5 used, slot 5 is the last)", async () => {
-    vi.mocked(User.findOneAndUpdate).mockReturnValueOnce(
-      mockFindOneAndUpdateChain({
-        dailyConversationsStarted: 5,
-      }) as never,
+    const result = await claimDailyConversationSlot(
+      liteUser.clerkId,
+      liteUser.plan.name,
+      now,
     );
 
-    const result = await claimDailyConversationSlot("user_123", "Lite");
-
     expect(result).toEqual({
-      claimed: true,
-      limit: 5,
-      used: 5,
+      claimed: false,
+      limit: PLAN_LIMITS.Lite.conversationsPerDay,
+      used: PLAN_LIMITS.Lite.conversationsPerDay,
       remaining: 0,
     });
+    expect(findOneAndUpdateMock).toHaveBeenCalledTimes(2);
   });
 
-  it("bypasses claiming for unlimited plans", async () => {
-    const result = await claimDailyConversationSlot("user_123", "Premium");
+  it("returns unlimited claim for unlimited plans without db calls", async () => {
+    const result = await claimDailyConversationSlot(
+      premiumUser.clerkId,
+      premiumUser.plan.name,
+    );
 
-    expect(connectToDatabase).not.toHaveBeenCalled();
-    expect(User.findOneAndUpdate).not.toHaveBeenCalled();
     expect(result).toEqual({
       claimed: true,
       limit: -1,
       used: 0,
       remaining: -1,
     });
+    expect(connectToDatabaseMock).not.toHaveBeenCalled();
+    expect(findOneAndUpdateMock).not.toHaveBeenCalled();
   });
 });

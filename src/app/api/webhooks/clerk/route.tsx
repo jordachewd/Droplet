@@ -10,6 +10,7 @@ import Transaction from "@/lib/database/models/transaction.model";
 import UsageEvent from "@/lib/database/models/usage-event.model";
 import deleteS3Prefix from "@/lib/utils/aws/delete-s3-prefix";
 import serializeForClient from "@/lib/utils/serialize-for-client";
+import { isMongoDuplicateKeyError } from "@/lib/utils/type-guards";
 import { nonEmptyStringSchema } from "@/lib/utils/validation-schemas";
 import { z } from "zod";
 
@@ -97,15 +98,6 @@ async function findUserByClerkId(clerkId: string) {
     { lean: true },
   );
   return existingUser ? serializeForClient(existingUser) : null;
-}
-
-function isMongoDuplicateKeyError(error: unknown): error is { code: number } {
-  return (
-    typeof error === "object" &&
-    error !== null &&
-    "code" in error &&
-    (error as { code?: number }).code === 11000
-  );
 }
 
 function logUserDeletedCleanupFailure(step: string) {

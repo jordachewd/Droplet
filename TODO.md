@@ -5,177 +5,158 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #49 (2026-03-23). All Phases 1–112.1 complete. 433 unit tests (72 suites). Build passes. TSC passes. Node.js 24.12.0 runtime.**
-> **GATE STATUS: ALL 7 gates GREEN. Lint (0 errors, 9 warnings), knip (0 findings), TSC, build, unit tests (72/433), E2E (108 passed, 25 skipped, 0 failed) — all pass.**
-> **Coverage: 78.18/65.94/83.01/78.51.**
-> **Owner directive (CRITICAL): FULL TDD TESTING REBUILD from scratch. NO hardcoded data. WCAG 2.2 AA. Code reuse. Full admin configurability. Components as data consumers. Server-side utilities.**
-> **Priority order: 113 (CRITICAL security — createTaskSchema + checkout-success auth) → 112.2 (CRITICAL TDD rebuild core utils) → 112.3 (CRITICAL server actions) → 112.4 (CRITICAL API routes) → 109 (HIGH WCAG icons) → 112.5 (HIGH component rebuild) → 106 (HIGH shared types) → 107 (HIGH stop-reason config) → 108 (MEDIUM WCAG tabs) → 74.2 (MEDIUM FAQ admin) → 104 (MEDIUM landing/hero admin) → 112.6 (HIGH E2E expansion) → 112.7 (HIGH coverage thresholds) → 110 (LOW) → 87 (LOW)**
+> **STATUS: PM audit #59 (2026-03-24). Phases 1–126 complete (incl. 120.1, 120.2-A). 120.2 in progress (26/~40 utility files). 419 unit tests (68 suites). Build passes. TSC passes. Node.js 24.12.0 runtime. Phase 126 COMPLETE — 47 zod skill conflict markers resolved from devel branch.**
+> **GATE STATUS: All 7 gates GREEN. Lint (0 errors, 6 warnings), Knip (0 findings), TSC, build, unit tests (68/419), E2E (108 passed, 25 skipped, 0 failed) — all pass.**
+> **Owner directive (CRITICAL): FULL TDD TESTING REBUILD from scratch. NO hardcoded data. WCAG 2.2 AA. Code reuse. Full admin configurability.**
+> **Coverage: 83.87 / 70.99 / 87.98 / 84.07 (stmt/branch/func/lines). Thresholds: 76/65/79/76.**
+> **Priority order: 120.2-B (CRITICAL TDD utility rebuild — 14 remaining) → 120.3 (CRITICAL TDD action rebuild) → 106 (HIGH shared types) → 120.4 (CRITICAL TDD route rebuild) → 120.5 (HIGH TDD component rebuild) → 120.6 (HIGH TDD E2E rebuild) → 120.7 (HIGH coverage thresholds) → 125.1 (MEDIUM schema strict:true) → 125.2 (MEDIUM transaction query hardening) → 126.1 (MEDIUM handleError sanitization) → 107 (HIGH stop-reason config) → 108 (MEDIUM WCAG tabs) → 114 (MEDIUM WCAG avatar menu) → 126.2 (LOW lint warnings) → 74.2 (MEDIUM FAQ admin) → 104 (MEDIUM landing/hero admin)**
 
 ---
 
-## CRITICAL — Security Fixes (PM audit #49 — Triple-Audit Confirmed)
+## CRITICAL — Full TDD Testing Rebuild (Owner directive — Primary work stream)
 
-### Phase 113: Fix security vulnerabilities — CRITICAL
+### Phase 120 CRITICAL — Full TDD test rebuild from scratch
 
-> Two security issues confirmed by Architect audit. Must be fixed before TDD rebuild.
+> **Owner directive (2026-03-24 — ESCALATED):** Remove ALL existing unit and E2E tests and rebuild the entire testing process from scratch using strict Test-Driven Development methodology. Write failing tests FIRST, then write just enough code to make them pass. This prevents over-engineering and ensures only necessary code is written.
+>
+> **Phase 120.1 COMPLETE** — TDD test infrastructure built (factories, mock helpers, vitest.setup, tests/README.md). See `DONE.md`.
+> **Phase 120.2 Batch A COMPLETE** — 6 IO/business-critical utility test files hardened. Tests: 409 → 419.
+> **Phase 120.2 Batch B+C IN PROGRESS** — 26 of ~40 utility test files rebuilt. 14 remaining.
+>
+> **Current state:** 419 tests (68 suites). 203 `as never` casts remaining in 18 NON-rebuilt files. 27/68 files use shared factories. E2E: 14 specs, 108 passed, 25 skipped.
+>
+> **Key rule:** Every new/rebuilt test file MUST use shared factories from `tests/unit/test-support/`. Zero `as never` casts allowed. Follow TDD workflow in `tests/README.md`.
 
-#### 113.1 CRITICAL — Change `createTaskSchema` from `.passthrough()` to `.strict()`
+#### 120.2 CRITICAL — Continue utility test rebuild (TDD)
 
-**File:** `src/lib/actions/task.actions.tsx`
+**Status: IN PROGRESS — 26/~40 files done.**
+
+**Already rebuilt (26 files):** `admin-auth`, `admin-audit`, `delete-s3-prefix`, `get-file-from-aws`, `message-id`, `task-queries`, `type-guards`, `usage-event-utils`, `download-url-allowlist`, `get-formatted-date`, `message-policy`, `validation-schemas`, `ai-model-policy`, `resolve-entitlements`, `check-usage-limit`, `check-daily-conversations`, `effective-plan-config`, `effective-persona-access`, `effective-persona-config`, `effective-model-config`, `ensure-user-synced`, `rate-limit`, `generate-response`, `generate-image`, `generate-audio`, `generate-video`.
+
+**Remaining files to rebuild (~14):**
+
+**Batch B — HIGH (worst coverage + business impact, do first):**
+
+1. `getFullName.tsx` — 22% stmt coverage, worst in codebase (HIGH)
+2. `openai/filterAssistantMsg.tsx` — 60% stmt, message filtering (HIGH)
+3. `handleError.tsx` — 62.5% stmt, error sanitization path (HIGH)
+4. `openai/classify-task-complexity.ts` — 77.7% stmt / 61.7% branch (HIGH)
+5. `aws/s3-file-reference.ts` — 73.8% stmt, URL parsing branches (HIGH)
+6. `upload-file-validation.ts` — 87.5% stmt, boundary validation (HIGH)
+7. `admin-queries.ts` — admin data queries, untested (HIGH)
+8. `openai/generateTitle.tsx` — title generation, no test exists (HIGH)
+
+**Batch C — MEDIUM (smaller pure utilities):**
+
+9. `database/mongoose.tsx` — DB connection (MEDIUM)
+10. `normalize-public-asset-url.ts` — URL normalization (MEDIUM)
+11. `serialize-for-client.ts` — serialization (MEDIUM)
+12. `map-date-to-label.ts` — date labels (MEDIUM)
+13. `getPlanStatus.tsx` — plan status (MEDIUM)
+14. `generateString.tsx` — random string generation (MEDIUM)
+
+**Per-file TDD workflow:**
+
+1. Delete existing test file if present
+2. Write failing tests FIRST covering all branches
+3. Verify existing code passes
+4. Target: 100% branch on pure functions, ≥85% on IO utilities
+5. Use shared factories — zero `as never`
+
+**Acceptance criteria:**
+
+- [ ] All ~40 utility test files rebuilt from scratch using TDD
+- [ ] Zero `as never` casts in utility tests
+- [ ] Pure functions: 100% branch coverage
+- [ ] IO utilities: ≥85% branch coverage
+- [ ] All tests use shared factories
+
+#### 120.3 CRITICAL — Rebuild server action tests (TDD)
 
 **What to do:**
 
-1. Change `createTaskSchema` from `.passthrough()` to `.strict()`.
-2. This prevents arbitrary field injection (e.g., `userId`, `status`) through untrusted input.
-3. Mongoose `strict: true` provides a second barrier, but Zod should catch it first.
-4. Verify `npm run test` passes — if tests break, fix the test data (remove extra fields).
-5. Verify build passes.
+1. Delete ALL existing action test files in `tests/unit/actions/`
+2. For each exported server action, write failing tests FIRST covering: auth failure, forbidden, success, edge cases, audit trail, ownership enforcement
+3. Target: ≥75% branch coverage on all action files
 
-**Risk:** Without this fix, an attacker could potentially inject `userId` into task creation payload and create tasks attributed to other users. Mongoose `strict: true` mitigates but Zod should be the first defense.
+**Target files:** `admin.actions.tsx`, `task.actions.tsx`, `user.actions.tsx`, `transaction.action.tsx`
 
 **Acceptance criteria:**
 
-- [ ] `createTaskSchema` uses `.strict()` not `.passthrough()`
-- [ ] All tests pass
-- [ ] Build passes
-
-#### 113.2 HIGH — Add auth check to `checkout-success` page
-
-**File:** `src/app/(public)/checkout-success/page.tsx`
-
-**What to do:**
-
-1. This page accepts an arbitrary `session_id` parameter and calls `stripe.checkout.sessions.retrieve()` with no auth check.
-2. While it only displays "payment verified" text (no sensitive data leak), it allows Stripe session ID enumeration.
-3. Move the page to `src/app/(chat)/app/checkout-success/page.tsx` under auth protection, OR add `auth()` check at the top.
-4. Simpler approach: add `const { userId } = await auth()` and redirect to `/sign-in` if not authenticated.
-
-**Acceptance criteria:**
-
-- [ ] Checkout-success page requires authentication
-- [ ] Unauthenticated visitors cannot probe Stripe session IDs
-- [ ] Build passes, E2E passes
-
-#### 112.2 CRITICAL — Rebuild core utility unit tests (TDD)
-
-**Target files (pure logic — 0% or low branch coverage):**
-
-1. `effective-persona-access.ts` — **0% branch** — core entitlement logic, MUST test
-2. `handleError.tsx` — **33% branch** — error utility
-3. `deleteFileFromAWS.tsx` — **0% branch** — S3 cleanup
-4. `mongoose.tsx` — **21.73% branch** — DB connection manager
-5. `check-usage-limit.ts` — verify/improve existing tests
-6. `check-daily-conversations.ts` — verify/improve existing tests
-7. `resolve-entitlements.ts` — verify/improve existing tests
-8. `ai-model-policy.ts` — verify/improve existing tests
-9. `classify-task-complexity.ts` — verify/improve existing tests
-10. `message-policy.ts` — verify/improve existing tests
-
-**Approach:** Write behavioral tests covering all branches. Test edge cases, error paths, boundary conditions. No mocking of pure logic — only mock IO boundaries (DB, network).
-
-**Acceptance criteria:**
-
-- [ ] `effective-persona-access.ts` branch coverage ≥80%
-- [ ] `handleError.tsx` branch coverage ≥60%
-- [ ] `deleteFileFromAWS.tsx` branch coverage ≥60%
-- [ ] `mongoose.tsx` branch coverage ≥40%
-- [ ] All 10 utility files have behavioral tests
-- [ ] Tests validate observable outputs, not mock calls
-
-#### 112.3 CRITICAL — Rebuild server action tests (TDD)
-
-**Target files:**
-
-1. `admin.actions.tsx` — **27.81% branch** — all admin mutations, critical security surface
-2. `admin-queries.ts` — **20.14% branch** — admin data access layer
-3. `task.actions.tsx` — task CRUD (verify existing coverage)
-4. `user.actions.tsx` — user mutations + deletion cascade (verify existing)
-5. `transaction.action.tsx` — transaction operations (verify existing)
-
-**Approach:** Test each exported action: auth failure, forbidden, success, edge cases. Verify audit trail. Verify ownership enforcement.
-
-**Acceptance criteria:**
-
-- [ ] `admin.actions.tsx` branch coverage ≥60%
-- [ ] `admin-queries.ts` branch coverage ≥50%
+- [ ] All action test files rebuilt from scratch using TDD
+- [ ] `admin.actions.tsx` branch coverage ≥75%
 - [ ] Auth/ownership enforcement tested on every action
 - [ ] Admin audit trail verified on every admin mutation
+- [ ] Zero `as never` casts
 
-#### 112.4 CRITICAL — Rebuild API route tests (TDD)
+#### 120.4 CRITICAL — Rebuild API route tests (TDD)
 
-**Target files:**
+**What to do:**
 
-1. `openai-route.test.ts` — REFACTOR: split into ≤300-line focused modules, keep scenarios, reduce `as never` casts
-2. `/api/upload` route tests — verify/improve
-3. `/api/download` route tests — verify/improve
-4. `/api/aws` route tests — verify/improve
-5. Clerk webhook Route tests — verify idempotency + edge cases
-6. Stripe webhook route tests — verify idempotency + plan update
+1. Delete ALL existing route test files in `tests/unit/routes/`
+2. Split `openai-route` tests into focused ≤300-line modules by concern (auth, streaming, media, conversation-stop, rate-limit)
+3. For each route, write failing tests FIRST
+4. Cover: auth failure, malformed input, success paths, edge cases, webhook idempotency
 
-**Missing edge cases to add:**
-
-- Malformed JSON body handling
-- `ensureUserSynced` failure path (503 response)
-- `emitUsageEvents` failure being non-fatal
-- Concurrent request race conditions
+**Target files:** All files in `src/app/api/` (openai, upload, download, aws, webhooks/clerk, webhooks/stripe)
 
 **Acceptance criteria:**
 
-- [ ] `openai-route.test.ts` split into focused sub-files
-- [ ] Missing edge cases covered
-- [ ] `as never` casts reduced to zero (use typed factories)
+- [ ] All route test files rebuilt from scratch using TDD
+- [ ] `openai-route` split into ≤300-line focused test modules
+- [ ] Missing edge cases covered (malformed JSON, 503 self-heal failure, non-fatal usage-event)
+- [ ] Zero `as never` casts
 
-#### 112.5 HIGH — Rebuild component tests (TDD + a11y)
+#### 120.5 HIGH — Rebuild component tests (TDD + a11y)
 
-**Target files (0% or thin coverage):**
+**What to do:**
 
-1. `chat-body.tsx` — **14% branch** — core chat display
-2. `chat-wrapper.tsx` — main chat client (streaming + state)
-3. `library-tabs.tsx` — tab management + keyboard nav
-4. `header.tsx` — mobile menu toggle + scroll
-5. `chat-sidebar-shell.tsx` — resize + localStorage
-6. `admin-settings-tabs.tsx` — tab management
+1. Delete ALL existing component test files in `tests/unit/components/`
+2. For each component, write failing behavioral tests FIRST
+3. Focus: user interactions, conditional rendering, a11y attributes, keyboard navigation
+4. Every test must answer: "What observable behavior changes if this code breaks?"
+5. NO "renders without crashing" tests
 
-**Approach:** Test user interactions, conditional rendering, a11y attributes. NOT "renders without crashing". Every test must answer: "What observable behavior changes if this code breaks?"
+**Target files:** All tested components PLUS untested ones: `landing-page.tsx`, `hero-section.tsx`, `faqs-section.tsx`, `plans-section.tsx`, `personas-section.tsx`, `admin-settings-tabs.tsx`, `profile-hero-editor.tsx`
 
 **Acceptance criteria:**
 
-- [ ] All target components have behavioral tests
-- [ ] `chat-body.tsx` branch coverage ≥50%
+- [ ] All component test files rebuilt from scratch using TDD
 - [ ] Keyboard navigation tested for tabs and modals
+- [ ] All components with user interactions have tests
+- [ ] Zero smoke tests ("renders without crashing")
 
-#### 112.6 HIGH — Expand E2E test suite
+#### 120.6 HIGH — Rebuild E2E tests (TDD)
 
-**New/improved specs:**
+**What to do:**
 
-1. Admin settings → app propagation E2E (Phase 97.2)
-2. Chat conversation flow (send prompt → receive response → continue) — currently MISSING
-3. Authenticated route a11y scan (extend `accessibility.spec.ts` to `/app/*` routes)
-4. Remove local `withMongoConnection` duplication (Phase 97.3)
+1. Delete ALL existing E2E test files in `tests/e2e/`
+2. Rebuild with structural assertions (no hardcoded copy/prices)
+3. Add missing specs: chat conversation flow, admin settings propagation, authenticated a11y scan
+4. Keep Playwright workers=1 for Clerk stability
 
 **Acceptance criteria:**
 
-- [ ] Admin settings propagation verified E2E
+- [ ] All E2E test files rebuilt from scratch
 - [ ] Basic chat flow E2E exists
+- [ ] Admin settings propagation verified E2E
 - [ ] Authenticated route a11y scanning added
-- [ ] Zero local Mongo helper duplication
+- [ ] All assertions structural (no hardcoded content)
 
-#### 112.7 HIGH — Raise coverage thresholds post-rebuild
+#### 120.7 HIGH — Raise coverage thresholds post-rebuild
 
-**File:** `vitest.config.mts`
-
-**What to do:** After 112.2–112.5, raise thresholds to match achieved coverage (target: 82/78/82/82+).
+**What to do:** After 120.2–120.5, raise vitest thresholds to match achieved coverage (target: 85/80/85/85+).
 
 **Acceptance criteria:**
 
-- [ ] Thresholds raised to ≥82/78/82/82
+- [ ] Thresholds raised to ≥85/80/85/85
 - [ ] `npm run test:coverage` passes
 
 ---
 
 ## HIGH — Code Reuse: Extract shared types (PM audit #47)
 
-### Phase 106: Extract `ChatApiResponse` / `ChatStreamEvent` to shared types — HIGH
+### Phase 106 HIGH — Extract `ChatApiResponse` / `ChatStreamEvent` to shared types
 
 > TD-REUSE-04.
 
@@ -196,7 +177,7 @@
 
 ## HIGH — Admin Configurability: Stop Reason Messages (PM audit #47)
 
-### Phase 107: Stop reason messages admin-configurable — HIGH
+### Phase 107 HIGH — Stop reason messages admin-configurable
 
 > TD-HARDCODE-01. 9 user-facing strings hardcoded.
 
@@ -244,49 +225,7 @@
 
 ---
 
-## MEDIUM — Admin Configurability (Owner directive)
-
-### Phase 74.2 MEDIUM — FAQ content admin-configurable
-
-**What to do:**
-
-1. `admin.faqContent` AppSetting + `getEffectiveFaqContent()` resolver.
-2. Admin UI for FAQ entries. Fallback to `buildFaqs()`.
-
-**Acceptance criteria:**
-
-- [ ] FAQ admin-editable from `/admin/settings`
-- [ ] Build passes
-
-### Phase 104: Landing/hero/about content admin-configurable — MEDIUM
-
-#### 104.1 — Landing feature cards + how-it-works
-
-#### 104.2 — Hero copy
-
-#### 104.3 — About page copy
-
-See SPEC.md for full requirements on each.
-
----
-
-## HIGH — WCAG 2.2 AA Remaining Gaps
-
-### Phase 109 HIGH — Decorative icon `aria-hidden` across ~20 components (TD-WCAG-06)
-
-> Architect audit confirmed: ~20 components with `<i className="bi bi-*">` icons missing `aria-hidden="true"`. Screen readers announce empty or meaningless content. Affects: logout-btn, avatar-menu, image-holder, alert-message, library-tabs, chat-input, chat-body, chat-intro, plan-card, persona-card, profile-billing, faqs-section, admin-sidebar, chat-sidebar-nav-v2, sidebar-toggle.
-
-**What to do:**
-
-1. Add `aria-hidden="true"` to all decorative `<i>` Bootstrap Icons across the codebase.
-2. Grep for `<i className="bi ` and verify each — if decorative, add `aria-hidden="true"`.
-3. Icons that convey meaning (e.g., icon-only buttons without text labels) need `aria-label` on the parent instead.
-
-**Acceptance criteria:**
-
-- [ ] All decorative `<i>` icons have `aria-hidden="true"`
-- [ ] Icon-only interactive elements have `aria-label`
-- [ ] Build passes, axe-core E2E passes
+## MEDIUM — WCAG 2.2 AA Remaining Gaps
 
 ### Phase 108 MEDIUM — Library tabs + admin settings tabs arrow-key navigation (TD-WCAG-05)
 
@@ -304,9 +243,9 @@ See SPEC.md for full requirements on each.
 - [ ] Roving tabindex implemented
 - [ ] Build passes
 
-### Phase 114 MEDIUM — AvatarMenu keyboard navigation
+### Phase 114 MEDIUM — AvatarMenu keyboard navigation (TD-WCAG-07)
 
-> Architect audit: AvatarMenu dropdown has no keyboard navigation. No Escape handler, no Arrow key navigation, no `role="menu"`/`role="menuitem"`.
+> AvatarMenu dropdown has no keyboard navigation. No Escape handler, no Arrow key navigation, no `role="menu"`/`role="menuitem"`.
 
 **What to do:**
 
@@ -322,7 +261,118 @@ See SPEC.md for full requirements on each.
 - [ ] ARIA roles present
 - [ ] Build passes
 
-### Phase 110 LOW — Mobile header hamburger `aria-expanded`
+---
+
+## MEDIUM — Admin Configurability (Owner directive)
+
+### Phase 74.2 MEDIUM — FAQ content admin-configurable
+
+**What to do:**
+
+1. `admin.faqContent` AppSetting + `getEffectiveFaqContent()` resolver.
+2. Admin UI for FAQ entries. Fallback to `buildFaqs()`.
+
+**Acceptance criteria:**
+
+- [ ] FAQ admin-editable from `/admin/settings`
+- [ ] Build passes
+
+### Phase 104 MEDIUM — Landing/hero/about content admin-configurable
+
+#### 104.1 — Landing feature cards + how-it-works
+
+#### 104.2 — Hero copy
+
+#### 104.3 — About page copy
+
+See SPEC.md for full requirements on each.
+
+---
+
+## MEDIUM — Database & Query Hardening (PM audit #58 findings)
+
+### Phase 125.1 MEDIUM — Add explicit `strict: true` to User, Task, Transaction schemas
+
+> Architect finding MEDIUM-01. Mongoose defaults to strict, so no active vulnerability. This is a governance/auditability fix.
+
+**Files:** `src/lib/database/models/user.model.tsx`, `src/lib/database/models/tasks.model.tsx`, `src/lib/database/models/transaction.model.tsx`
+
+**What to do:**
+
+1. Add `{ strict: true }` to schema options for all 3 models.
+2. Verify build + tests pass.
+
+**Acceptance criteria:**
+
+- [ ] All 9 Mongoose models have explicit `strict: true` in schema options
+- [ ] Build passes, tests pass
+
+### Phase 125.2 MEDIUM — Harden `getAllTransactions()` query
+
+> Engineer finding: unbounded `.find()` without `.limit()`, `.lean()`, or `.select()`.
+
+**File:** `src/lib/actions/transaction.action.tsx` L114
+
+**What to do:**
+
+1. Add `.select("plan amount billing createdAt expiresOn")` projection.
+2. Add `.lean()`.
+3. Add `.limit(100)`.
+
+**Acceptance criteria:**
+
+- [ ] Query uses `.select()`, `.lean()`, `.limit()`
+- [ ] Build passes, tests pass
+
+### Phase 125.3 LOW — Add `rate-limit.ts` bypass comment
+
+> Architect finding MEDIUM-02. Rate limiter uses `.collection.findOneAndUpdate()` which bypasses Mongoose strict mode — this is intentional for atomic sliding-window logic.
+
+**File:** `src/lib/utils/rate-limit.ts` L69
+
+**What to do:** Add code comment explaining the MongoDB driver bypass is intentional.
+
+---
+
+## MEDIUM — Error Handling Hardening (SWOT threat — PM audit #59)
+
+### Phase 126.1 MEDIUM — Sanitize `handleError` message propagation
+
+> SWOT Threat: `handleError.tsx` re-throws with raw `error.message`. If any server action’s `handleError` call goes uncaught before the UI boundary, internal DB/provider messages could leak to the client. All current call sites catch, but pattern is fragile.
+
+**File:** `src/lib/utils/handleError.tsx`
+
+**What to do:**
+
+1. Strip internal details from the re-thrown `Error.message` — keep original in `cause` only.
+2. Return generic "An unexpected error occurred" for non-whitelisted error messages.
+3. Maintain `stderr` logging of full error details for debugging.
+
+**Acceptance criteria:**
+
+- [ ] `handleError` never propagates raw internal error messages
+- [ ] Full error detail preserved in `error.cause` for server-side debugging
+- [ ] All server action callers still function correctly
+- [ ] Build passes, tests pass
+
+---
+
+## LOW — Lint Warning Cleanup (SWOT weakness — PM audit #59)
+
+### Phase 126.2 LOW — Fix 6 `setState-in-effect` lint warnings
+
+> 6 warnings across admin-layout-shell, admin-managed-form, admin-settings-tabs, admin-transactions-table, droplet-theme, audio-player. All are `react-hooks/set-state-in-effect`. Fixable with `key` prop pattern or derived state.
+
+**What to do:**
+
+1. Each component: replace setState-in-useEffect with `key` prop reset pattern or derived state.
+2. Target: 0 lint warnings total.
+
+**Acceptance criteria:**
+
+- [ ] `npm run lint` reports 0 warnings
+- [ ] No behavioral regressions
+- [ ] Build passes, tests pass
 
 ---
 
@@ -347,5 +397,5 @@ See SPEC.md for full requirements on each.
 ---
 
 > **Completed phases** archived in [`DONE.md`](DONE.md).
-> All phases through 112.1 complete.
+> All phases through 126 complete (includes 120.1, 120.2-A, 121–126).
 > All Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS.

@@ -2,7 +2,195 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-23 — PM audit #49. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4, 105.1, 105.2, 111.1, 112.1 complete. Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS. 433 unit tests (72 suites). 108 E2E passed, 25 skipped, 0 failed. All 7 gates GREEN. Build passing. Node.js 24.12.0 runtime. Coverage: 78.18/65.94/83.01/78.51.
+> Last updated: 2026-03-24 — PM audit #59. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4, 105.1, 105.2, 110, 111.1, 112.1, 112.2, 109, 113.1, 113.2, 115, 116, 117, 120.1, 120.2-A, 121, 122, 123, 124, 125, 126 complete. Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS — TDD rebuild active. 419 unit tests (68 suites). E2E: 108 passed, 25 skipped, 0 failed. All 7 gates GREEN. Build passing. Node.js 24.12.0 runtime.
+
+---
+
+## Phase 126 — Resolve committed conflict markers in zod skill files — COMPLETED (2026-03-24)
+
+> PM audit #59. 47 zod skill files in `.agents/skills/zod/` had committed (nested) conflict markers from two successive failed merges. Restored all 47 files from clean `devel` branch using `git checkout devel -- .agents/skills/zod/`. Verified zero conflict markers in entire repo via `git grep`.
+
+- [x] **126 CRITICAL** — Restored 47 zod skill files from devel branch (SKILL.md, README.md, AGENTS.md, template, 43 reference files).
+- [x] Verified zero `<<<<<<< HEAD` markers in entire tracked repo.
+
+**Files changed:** 47 files in `.agents/skills/zod/`
+
+---
+
+## Phase 120.2 Batch A — TDD rebuild of 6 IO/business-critical utility test files — COMPLETED (2026-03-24)
+
+> Engineer delivered (PM audit #59). 6 critical utility test suites hardened with TDD methodology. All use shared factories, zero `as never` casts. Tests: 409 → 419.
+
+- [x] `ensure-user-synced.test.ts` — 9 tests. Self-heal, duplicate key race, cache dedup, missing email.
+- [x] `rate-limit.test.ts` — 4 tests. Accept, block, invalid timestamps, empty requests.
+- [x] `generate-response.test.tsx` — 14 tests. Policy blocked, tool calls (image/audio/video), limits, rollbacks, streaming.
+- [x] `generate-image.test.tsx` — 7 tests. Base64 path, URL fetch path, policy block, error paths.
+- [x] `generate-audio.test.tsx` — 9 tests. TTS and audio_in_out modes, policy block, missing payload.
+- [x] `generate-video.test.tsx` — 8 tests. Polling, timeout, failed status, empty content.
+
+**Files changed:** 6 test files in `tests/unit/utils/`
+
+---
+
+## Phase 125 — Resolve merge conflicts round 2 (failed `git merge devel`) — COMPLETED (2026-03-24)
+
+> PM audit #58. Failed `git merge devel` left 52 unmerged files (UU status). AGENTS.md, .gitignore, .claude/agents/Droplet-PM.agent.md, .claude/agents/Droplet-Engineer.agent.md manually resolved. 46 zod/zustand/breakdown-test skill files accepted from devel. memories/repo/AUDIT-REPORT.md cleaned of committed conflict markers from prior bad merge.
+
+- [x] **125 CRITICAL** — Resolved 52 unmerged files from failed `git merge devel`.
+- [x] Manually fixed: `AGENTS.md`, `.gitignore`, `.claude/agents/Droplet-PM.agent.md`, `.claude/agents/Droplet-Engineer.agent.md`, `.agents/skills/zustand/SKILL.md`.
+- [x] Accepted devel: 46 zod/breakdown-test skill reference files.
+- [x] Cleaned: `memories/repo/AUDIT-REPORT.md` (stripped committed conflict markers from prior merge).
+
+**Files changed:** 52 files total — AGENTS.md, .gitignore, 2 claude agent configs, 46 skill files, 1 memory file, 1 json memory file.
+
+---
+
+## Phase 124 — Fix merge conflict leftovers — COMPLETED (2026-03-24)
+
+> PM audit #57. Merge conflict markers left in 48 files from previous sloppy merge resolutions. AGENTS.md had active conflict in route boundaries table. 47 files in `.agents/skills/` and `memories/repo/` had committed conflict markers (formatting differences: quotes, semicolons, table padding).
+
+- [x] **124 CRITICAL** — Resolved merge conflict in `AGENTS.md` route boundaries table (active conflict markers).
+- [x] **124 CRITICAL** — Auto-resolved merge conflicts in 47 `.agents/skills/*.md` and `memories/repo/AUDIT-REPORT.md` files (committed conflict markers from previous merges).
+
+**Files changed:** `AGENTS.md`, 47 files in `.agents/skills/` and `memories/repo/`
+
+---
+
+## Phase 123 — Add `type="button"` to error page buttons — COMPLETED (2026-03-24)
+
+> Engineer delivered (PM audit #56). Button semantics fix.
+
+- [x] **123 LOW** — Added `type="button"` to error boundary buttons in `src/app/error.tsx` and `src/app/(chat)/error.tsx`. Prevents unexpected form submissions.
+
+**Files changed:** `src/app/error.tsx`, `src/app/(chat)/error.tsx`
+
+---
+
+## Phase 122 — Delete orphan `_update_plan.js` — COMPLETED (2026-03-24)
+
+> Engineer delivered (PM audit #56). Knip now clean (0 findings).
+
+- [x] **122 CRITICAL** — Deleted orphan `_update_plan.js` from project root. `npm run knip` exits 0 with 0 findings.
+
+**Files deleted:** `_update_plan.js`
+
+---
+
+## Phase 121 — Fix raw `error.message` leak in profile-hero-editor — COMPLETED (2026-03-24)
+
+> Engineer delivered (PM audit #56). TD-SEC-12 RESOLVED. Security leak fix — generic error messages replace raw `error.message` in UI.
+
+- [x] **121 CRITICAL** — Replaced raw `error.message` with generic error strings in `profile-hero-editor.tsx` (lines 135, 162). Zero internal error details now leak to client.
+
+**Files changed:** `src/components/sections/profile-hero-editor.tsx`
+
+---
+
+## Phase 120.2 (Partial) — Rebuild utility tests (TDD) — IN PROGRESS (2026-03-24)
+
+> Engineer delivered partial batches (PM audit #55 + #56 + #59). 26 of ~40 utility test files rebuilt from scratch with TDD methodology. No `as never` casts in rebuilt files. Shared factories used.
+
+- [x] Rebuilt utility test files (26 files): `admin-auth`, `admin-audit`, `delete-s3-prefix`, `get-file-from-aws`, `message-id`, `task-queries`, `type-guards`, `usage-event-utils`, `download-url-allowlist`, `get-formatted-date`, `message-policy`, `validation-schemas`, `ai-model-policy`, `resolve-entitlements`, `check-usage-limit`, `check-daily-conversations`, `effective-plan-config`, `effective-persona-access`, `effective-persona-config`, `effective-model-config`, `ensure-user-synced`, `rate-limit`, `generate-response`, `generate-image`, `generate-audio`, `generate-video`
+- [ ] ~14 remaining utility files still needed (handleError, getFullName, filterAssistantMsg, classify-task-complexity, s3-file-reference, upload-file-validation, admin-queries, generateTitle, normalize-public-asset-url, serialize-for-client, map-date-to-label, getPlanStatus, generateString, mongoose)
+- [x] Zero `as never` in rebuilt utility tests
+- [x] All rebuilt tests use shared factories from `tests/unit/test-support/`
+
+**Status:** PARTIAL — 12/~35 files. Remaining files to be rebuilt in next session.
+
+---
+
+## Phase 120.1 — Create TDD test infrastructure — COMPLETED (2026-03-24)
+
+> Engineer delivered (PM audit #54). TDD infrastructure built: typed factories, mock helpers, vitest.setup, tests/README.md.
+
+- [x] **120.1 CRITICAL** — Created typed reusable test-support factories/helpers for User, Task, Transaction, Clerk, HTTP patterns. Built shared helpers: `mockAuth()`, `mockAdminAuth()`, `mockClerkUser()`, `mockMongooseModel()`. Strengthened global test cleanup in `vitest.setup.ts`. Added test infra docs + TDD workflow documentation. Added infra verification tests.
+
+**Files changed:** `tests/unit/test-support/factories.ts`, `tests/unit/test-support/mock-helpers.ts`, `tests/unit/test-support/index.ts`, `tests/unit/vitest.setup.ts`, `tests/README.md`, `tests/unit/test-support/test-support.test.ts`
+
+---
+
+## Phase 117 — Extract `isMongoDuplicateKeyError` to shared utility — COMPLETED (2026-03-24)
+
+> Engineer delivered (PM audit #54). TD-REUSE-05 RESOLVED. Duplicate type-guard function extracted to shared `type-guards.ts`.
+
+- [x] **117 HIGH** — Added `isMongoDuplicateKeyError()` to existing `src/lib/utils/type-guards.ts`. Imported from shared location in both consumer files. Deleted local definitions.
+
+**Files changed:** `src/lib/utils/type-guards.ts`, `src/app/api/webhooks/clerk/route.tsx`, `src/lib/utils/ensure-user-synced.ts`
+
+---
+
+## Phase 115 — Fix ESLint gate failure — COMPLETED (2026-03-24)
+
+> Engineer resolved `react-hooks` plugin registration in `eslint.config.mjs`. ESLint now passes: 0 errors, 6 warnings (all `react-hooks/set-state-in-effect` — valid patterns).
+
+- [x] `eslint.config.mjs` — Registered `react-hooks` plugin in standalone config object
+- [x] `npm run lint` exits 0
+
+---
+
+## Phase 116 — Delete orphan dev scripts and build artifacts — COMPLETED (2026-03-24)
+
+> Engineer deleted all 6 orphan files from project root. Knip and Prettier gates now pass clean.
+
+- [x] Deleted: `_e.js`, `_edit.js`, `_edit_plan.js`, `parse-results.cjs`, `parse-results.mjs`, `vitest-results.json`
+- [x] `npm run knip` exits 0
+- [x] `npx prettier --check` exits 0
+
+---
+
+## Phase 110 — Mobile header hamburger `aria-expanded` — COMPLETED (already implemented)
+
+> PM audit #53 confirmed `aria-expanded={mobileMenuOpen}` already present at `header.tsx` line 91. No code change needed — closed as already implemented.
+
+---
+
+## Phase 112.2 — Rebuild core utility unit tests (TDD) — COMPLETED (2026-03-24)
+
+> Engineer delivered (PM audit #52). All 10 utility TDD rebuilds complete.
+
+- [x] **112.2 CRITICAL** — Full TDD rebuild of 10 core utility test suites with behavioral coverage:
+  - `effective-persona-access.ts` — 100% branch ✅
+  - `handleError.tsx` — 100% branch ✅
+  - `deleteFileFromAWS.tsx` — 100% branch ✅ (new suite)
+  - `mongoose.tsx` — 86.95% branch ✅ (new suite)
+  - `check-usage-limit.ts` — 94.44% branch ✅ (expanded)
+  - `check-daily-conversations.ts` — 88.88% branch ✅ (expanded)
+  - `resolve-entitlements.ts` — 89.18% branch ✅ (expanded)
+  - `ai-model-policy.ts` — 95.9% branch ✅ (expanded)
+  - `classify-task-complexity.ts` — 91.17% branch ✅ (expanded)
+  - `message-policy.ts` — 87.5% branch ✅ (expanded)
+
+**Files changed:** `tests/unit/utils/delete-file-from-aws.test.ts` (new), `tests/unit/utils/mongoose.test.ts` (new), `tests/unit/utils/check-usage-limit.test.ts`, `tests/unit/utils/check-daily-conversations.test.ts`, `tests/unit/utils/resolve-entitlements.test.ts`, `tests/unit/utils/ai-model-policy.test.ts`, `tests/unit/utils/classify-task-complexity.test.ts`, `tests/unit/utils/message-policy.test.ts`
+
+---
+
+## Phase 109 — Decorative icon `aria-hidden` across ~20 components — COMPLETED (2026-03-24)
+
+> Engineer delivered (PM audit #52). TD-WCAG-06 RESOLVED. All decorative `<i>` Bootstrap Icons now have `aria-hidden="true"`.
+
+- [x] **109 HIGH** — Added `aria-hidden="true"` to all decorative `<i>` Bootstrap Icon elements across ~20 components. Repo-wide regex audit confirmed zero `<i>` tags remain without `aria-hidden`. Runtime DOM checks returned `missingAriaHidden: 0`.
+
+**Files changed:** `src/app/(admin)/admin/page.tsx`, `src/components/admin/admin-sidebar.tsx`, `src/components/chat/chat-body.tsx`, `src/components/chat/chat-input.tsx`, `src/components/chat/chat-intro.tsx`, `src/components/chat/library-delete-button.tsx`, `src/components/chat/library-tabs.tsx`, `src/components/chat/sidebar/chat-sidebar-nav.tsx`, `src/components/layout/header.tsx`, `src/components/sections/faqs-section.tsx`, `src/components/sections/landing-page.tsx`, `src/components/sections/profile-billing.tsx`, `src/components/shared/alert-message.tsx`, `src/components/shared/avatar-menu.tsx`, `src/components/shared/droplet-globe.tsx`, `src/components/shared/image-holder.tsx`, `src/components/shared/logout-btn.tsx`, `src/components/shared/persona-card.tsx`, `src/components/shared/plan-card.tsx`, `src/components/shared/plan-promo.tsx`, `src/components/shared/sidebar-toggle.tsx`
+
+---
+
+## Phase 113.2 — Add auth check to checkout-success page — COMPLETED (2026-03-23)
+
+> Engineer delivered (PM audit #50). TD-SEC-11 RESOLVED.
+
+- [x] **113.2 HIGH** — Added Clerk `auth()` guard to checkout-success page. Unauthenticated visitors redirected to `/sign-in`. Prevents Stripe session ID enumeration. Unit test added for redirect behavior. E2E assertion added in `public-pages.spec.ts`.
+
+**Files changed:** `src/app/(public)/checkout-success/page.tsx`, `tests/unit/components/checkout-success-page.test.tsx`, `tests/e2e/public-pages.spec.ts`
+
+---
+
+## Phase 113.1 — Change createTaskSchema from .passthrough() to .strict() — COMPLETED (2026-03-23)
+
+> Engineer delivered (PM audit #50). TD-SEC-10 RESOLVED.
+
+- [x] **113.1 CRITICAL** — Changed `createTaskSchema` from `.passthrough()` to `.strict()` in `task.actions.tsx`. Prevents arbitrary field injection (e.g., `userId`, `status`) through untrusted input. Unit tests updated to reflect strict unknown-key rejection.
+
+**Files changed:** `src/lib/actions/task.actions.tsx`, `tests/unit/actions/task-actions.test.ts`
 
 ---
 

@@ -70,7 +70,7 @@ export default function AdminSidebar({ links }: AdminSidebarProps) {
             )}
           >
             <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-linear-135 from-limeGreen-500/90 to-limeGreen-800/90 text-midnightBlue-500 shadow-sm">
-              <i className="bi bi-droplet-fill text-lg"></i>
+              <i className="bi bi-droplet-fill text-lg" aria-hidden="true"></i>
             </span>
             <div
               className={classNames(
@@ -118,7 +118,10 @@ export default function AdminSidebar({ links }: AdminSidebarProps) {
                     !isOpen && "lg:w-auto lg:justify-center lg:px-2",
                   )}
                 >
-                  <i className={classNames(link.icon, "text-base")}></i>
+                  <i
+                    className={classNames(link.icon, "text-base")}
+                    aria-hidden="true"
+                  ></i>
                   <span className={classNames(!isOpen && "lg:hidden")}>
                     {link.label}
                   </span>

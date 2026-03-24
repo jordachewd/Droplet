@@ -32,7 +32,7 @@ export default function SidebarToggle({
         aria-controls={controlsId}
         aria-expanded={expanded}
       >
-        <i className={classNames("bi", icon)}></i>
+        <i className={classNames("bi", icon)} aria-hidden="true"></i>
       </button>
     </TooltipArrow>
   ) : null;

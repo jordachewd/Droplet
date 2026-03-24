@@ -83,7 +83,7 @@ export default function AlertMessage({ message }: AlertMessageProps) {
             onClick={() => setDismissedAlert(currentAlertKey)}
             aria-label="Close alert"
           >
-            <i className="bi bi-x-lg" />
+            <i className="bi bi-x-lg" aria-hidden="true" />
           </button>
         </div>
       </div>

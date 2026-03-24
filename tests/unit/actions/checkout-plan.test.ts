@@ -135,4 +135,56 @@ describe("checkoutPlan", () => {
     expect(createSessionMock).not.toHaveBeenCalled();
     expect(redirect).not.toHaveBeenCalled();
   });
+
+  it("throws unauthorized when there is no authenticated user", async () => {
+    vi.mocked(auth).mockResolvedValue({ userId: null } as never);
+
+    await expect(
+      checkoutPlan({
+        plan: {
+          id: 1,
+          billing: "Monthly",
+          name: "Pro",
+          price: 19,
+        },
+      }),
+    ).rejects.toThrow("Unauthorized");
+
+    expect(User.findOne).not.toHaveBeenCalled();
+    expect(createSessionMock).not.toHaveBeenCalled();
+  });
+
+  it("throws when the Mongo user cannot be found", async () => {
+    vi.mocked(User.findOne).mockResolvedValue(null as never);
+
+    await expect(
+      checkoutPlan({
+        plan: {
+          id: 1,
+          billing: "Monthly",
+          name: "Pro",
+          price: 19,
+        },
+      }),
+    ).rejects.toThrow("User not found");
+
+    expect(createSessionMock).not.toHaveBeenCalled();
+    expect(redirect).not.toHaveBeenCalled();
+  });
+
+  it("rejects invalid checkout payloads before database access", async () => {
+    await expect(
+      checkoutPlan({
+        plan: {
+          id: 1,
+          billing: "Monthly",
+          name: "Pro",
+          price: -19,
+        },
+      }),
+    ).rejects.toThrow("Invalid checkout payload.");
+
+    expect(connectToDatabase).not.toHaveBeenCalled();
+    expect(createSessionMock).not.toHaveBeenCalled();
+  });
 });

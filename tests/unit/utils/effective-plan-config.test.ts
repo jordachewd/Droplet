@@ -1,162 +1,204 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   DEFAULT_PLAN_PRICING,
+  PERSONA_TRIAL_LIMITS,
   PLAN_LIMITS,
-  PlanLimits,
 } from "@/constants/plans";
 import { SUPPORT_EMAIL } from "@/constants/support";
-import { connectToDatabase } from "@/lib/database/mongoose";
-import AppSetting from "@/lib/database/models/app-setting.model";
 import {
+  getEffectiveCurrencySymbol,
   getEffectivePlanConfig,
   getEffectiveSupportEmail,
 } from "@/lib/utils/effective-plan-config";
+import { createTestUser } from "../test-support";
+
+const { connectToDatabaseMock, findMock, findOneMock } = vi.hoisted(() => ({
+  connectToDatabaseMock: vi.fn(),
+  findMock: vi.fn(),
+  findOneMock: vi.fn(),
+}));
 
 vi.mock("@/lib/database/mongoose", () => ({
-  connectToDatabase: vi.fn(),
+  connectToDatabase: connectToDatabaseMock,
 }));
 
 vi.mock("@/lib/database/models/app-setting.model", () => ({
   default: {
-    find: vi.fn(),
-    findOne: vi.fn(),
+    find: findMock,
+    findOne: findOneMock,
   },
 }));
 
-function mockSettings(settings: Array<{ key: string; value: unknown }>) {
-  const leanMock = vi.fn().mockResolvedValue(settings);
-  const selectMock = vi.fn().mockReturnValue({ lean: leanMock });
-  vi.mocked(AppSetting.find).mockReturnValue({ select: selectMock } as never);
+type AppSettingRecord = {
+  key: string;
+  value: unknown;
+};
+
+function mockFindSettings(settings: AppSettingRecord[]): void {
+  findMock.mockReturnValue({
+    select: vi.fn().mockReturnValue({
+      lean: vi.fn().mockResolvedValue(settings),
+    }),
+  });
 }
 
-function mockSupportSetting(value: unknown) {
-  const leanMock = vi.fn().mockResolvedValue({ value });
-  const selectMock = vi.fn().mockReturnValue({ lean: leanMock });
-  vi.mocked(AppSetting.findOne).mockReturnValue({
-    select: selectMock,
-  } as never);
+function mockFindOneValue(value: unknown): void {
+  findOneMock.mockReturnValue({
+    select: vi.fn().mockReturnValue({
+      lean: vi
+        .fn()
+        .mockResolvedValue(
+          value === undefined ? null : { key: "setting", value },
+        ),
+    }),
+  });
 }
 
-describe("getEffectivePlanConfig", () => {
+describe("effective-plan-config", () => {
+  const liteUser = createTestUser({ plan: { name: "Lite" } });
+
   beforeEach(() => {
-    vi.clearAllMocks();
-    vi.mocked(connectToDatabase).mockResolvedValue(undefined as never);
+    connectToDatabaseMock.mockResolvedValue(undefined);
+    findMock.mockReset();
+    findOneMock.mockReset();
   });
 
-  it("falls back to defaults when admin settings are missing", async () => {
-    mockSettings([]);
-
-    const config = await getEffectivePlanConfig();
-
-    expect(connectToDatabase).toHaveBeenCalledOnce();
-    expect(config.pricing).toEqual(DEFAULT_PLAN_PRICING);
-    expect(config.limits).toEqual(PLAN_LIMITS);
-  });
-
-  it("uses persisted admin pricing and limits when available", async () => {
-    const customLimits: PlanLimits = {
-      Lite: {
-        conversationsPerDay: 8,
-        promptsPerConversation: 16,
-        images: 7,
-        audio: 6,
-        video: 2,
-      },
-      Pro: {
-        conversationsPerDay: 80,
-        promptsPerConversation: 160,
-        images: 70,
-        audio: 65,
-        video: 14,
-      },
-      Premium: {
-        conversationsPerDay: -1,
-        promptsPerConversation: -1,
-        images: -1,
-        audio: -1,
-        video: 24,
-      },
-    };
-
-    mockSettings([
+  it("normalizes admin settings for pricing, limits, and trial limits", async () => {
+    mockFindSettings([
       {
         key: "admin.pricing",
         value: {
-          proPrice: 23,
-          premiumPrice: 47,
+          proPrice: 29.9,
+          premiumPrice: 59.2,
+          currencySymbol: "$",
         },
       },
       {
+        key: "admin.currencySymbol",
+        value: "$",
+      },
+      {
         key: "admin.limits",
-        value: customLimits,
+        value: {
+          Lite: {
+            conversationsPerDay: 7.8,
+            promptsPerConversation: 15.2,
+            images: 4,
+            audio: -2,
+            video: 2,
+          },
+        },
+      },
+      {
+        key: "admin.trialLimits",
+        value: {
+          promptsPerConversation: 6.9,
+          images: 4,
+          audio: 3,
+          video: 2,
+        },
       },
     ]);
 
     const config = await getEffectivePlanConfig();
 
     expect(config.pricing).toEqual({
-      Lite: 0,
-      Pro: 23,
-      Premium: 47,
+      Lite: DEFAULT_PLAN_PRICING.Lite,
+      Pro: 29,
+      Premium: 59,
       currencySymbol: "$",
     });
-    expect(config.limits).toEqual(customLimits);
+    expect(config.limits[liteUser.plan.name]).toEqual({
+      conversationsPerDay: 7,
+      promptsPerConversation: 15,
+      images: 4,
+      audio: PLAN_LIMITS.Lite.audio,
+      video: 2,
+    });
+    expect(config.trialLimits).toEqual({
+      promptsPerConversation: 6,
+      images: 4,
+      audio: 3,
+      video: 2,
+    });
   });
 
-  it("uses persisted currency symbol setting when available", async () => {
-    mockSettings([
+  it("supports legacy array pricing format and defaults currency symbol", async () => {
+    mockFindSettings([
       {
-        key: "admin.currencySymbol",
-        value: "€",
+        key: "admin.pricing",
+        value: [
+          { name: "Pro", price: 25.4 },
+          { name: "Premium", price: 49 },
+        ],
       },
     ]);
 
     const config = await getEffectivePlanConfig();
 
-    expect(config.pricing.currencySymbol).toBe("€");
+    expect(config.pricing).toEqual({
+      Lite: DEFAULT_PLAN_PRICING.Lite,
+      Pro: 25,
+      Premium: 49,
+      currencySymbol: DEFAULT_PLAN_PRICING.currencySymbol,
+    });
+    expect(config.limits).toEqual(PLAN_LIMITS);
+    expect(config.trialLimits).toEqual(PERSONA_TRIAL_LIMITS);
   });
 
-  it("returns defaults when database access fails", async () => {
-    vi.mocked(connectToDatabase).mockRejectedValueOnce(
-      new Error("querySrv ECONNREFUSED"),
-    );
+  it("falls back to defaults when settings are malformed", async () => {
+    mockFindSettings([
+      { key: "admin.pricing", value: "invalid" },
+      { key: "admin.limits", value: null },
+      { key: "admin.trialLimits", value: { images: -10 } },
+    ]);
 
     const config = await getEffectivePlanConfig();
 
     expect(config.pricing).toEqual(DEFAULT_PLAN_PRICING);
     expect(config.limits).toEqual(PLAN_LIMITS);
-  });
-});
-
-describe("getEffectiveSupportEmail", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    vi.mocked(connectToDatabase).mockResolvedValue(undefined as never);
+    expect(config.trialLimits).toEqual(PERSONA_TRIAL_LIMITS);
   });
 
-  it("returns the default support email when no override is present", async () => {
-    mockSupportSetting(undefined);
+  it("returns defaults when database access fails", async () => {
+    connectToDatabaseMock.mockRejectedValueOnce(new Error("db unavailable"));
 
-    const supportEmail = await getEffectiveSupportEmail();
+    const config = await getEffectivePlanConfig();
 
-    expect(supportEmail).toBe(SUPPORT_EMAIL);
+    expect(config.pricing).toEqual(DEFAULT_PLAN_PRICING);
+    expect(config.limits).toEqual(PLAN_LIMITS);
+    expect(config.trialLimits).toEqual(PERSONA_TRIAL_LIMITS);
   });
 
-  it("returns a normalized persisted support email override", async () => {
-    mockSupportSetting(" Support@Example.com ");
+  it("resolves effective currency symbol and falls back on invalid values", async () => {
+    mockFindOneValue(" $ ");
+    await expect(getEffectiveCurrencySymbol()).resolves.toBe("$");
 
-    const supportEmail = await getEffectiveSupportEmail();
-
-    expect(supportEmail).toBe("support@example.com");
+    mockFindOneValue("invalid");
+    await expect(getEffectiveCurrencySymbol()).resolves.toBe("$");
   });
 
-  it("falls back to default support email when db access fails", async () => {
-    vi.mocked(connectToDatabase).mockRejectedValueOnce(
-      new Error("querySrv ECONNREFUSED"),
+  it("returns default currency symbol on data access failure", async () => {
+    connectToDatabaseMock.mockRejectedValueOnce(new Error("db unavailable"));
+
+    await expect(getEffectiveCurrencySymbol()).resolves.toBe(
+      DEFAULT_PLAN_PRICING.currencySymbol,
+    );
+  });
+
+  it("normalizes support email and falls back when invalid", async () => {
+    mockFindOneValue(" Support@Droplet.ai ");
+    await expect(getEffectiveSupportEmail()).resolves.toBe(
+      "support@droplet.ai",
     );
 
-    const supportEmail = await getEffectiveSupportEmail();
+    mockFindOneValue("invalid-email");
+    await expect(getEffectiveSupportEmail()).resolves.toBe(SUPPORT_EMAIL);
+  });
 
-    expect(supportEmail).toBe(SUPPORT_EMAIL);
+  it("returns default support email on data access failure", async () => {
+    connectToDatabaseMock.mockRejectedValueOnce(new Error("db unavailable"));
+
+    await expect(getEffectiveSupportEmail()).resolves.toBe(SUPPORT_EMAIL);
   });
 });
