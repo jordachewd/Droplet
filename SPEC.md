@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-24 (PM audit #57). Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS — Full TDD testing rebuild (Phase 120). **All 7 gates GREEN.** 370 unit tests (62 suites). E2E: 108 passed, 0 failed, 25 skipped. Coverage: ~78.5/~66/~83.5/~79. Active TDs: TD-HARDCODE-01 (HIGH), TD-REUSE-04/WCAG-05/WCAG-07/TEST-02 (MEDIUM). Build passing. Node.js 24.12.0. Merge conflict leftovers resolved (48 files).
+> Last updated: 2026-03-24 (PM audit #59). Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS — Full TDD testing rebuild (Phase 120). **All 7 gates GREEN.** 419 unit tests (68 suites). E2E: 108 passed, 0 failed, 25 skipped. Coverage: 83.87/70.99/87.98/84.07. Active TDs: TD-HARDCODE-01 (HIGH), TD-REUSE-04/WCAG-05/WCAG-07/TEST-02 (MEDIUM). Build passing. Node.js 24.12.0. Merge conflicts fully resolved (Phases 124–126).
 
 ---
 
@@ -781,14 +781,14 @@ All button styles use Lime Green as the accent color in **both** light and dark 
 ## 15. Technical Debt Summary
 
 > Only unresolved items live here. All resolved TDs are archived in `DONE.md`.
-> Last updated: PM audit #55 (2026-03-24).
+> Last updated: PM audit #59 (2026-03-24).
 
 ### Active — HIGH Priority
 
-| ID             | Area    | Description                                                                                                                                                                      | Phase |
-| -------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
-| TD-HARDCODE-01 | Content | Stop reason messages in `src/constants/stop-reasons.ts` are hardcoded user-facing copy. Must be admin-configurable via `effective-*` pattern.                                    | 107   |
-| TD-TEST-03     | Test    | Full TDD test rebuild from scratch required (Owner directive). ~200 `as never` casts remain in 18 non-rebuilt files, ~20+ components untested, 21/62 files use shared factories. | 120   |
+| ID             | Area    | Description                                                                                                                                                                                                        | Phase |
+| -------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----- |
+| TD-HARDCODE-01 | Content | Stop reason messages in `src/constants/stop-reasons.ts` are hardcoded user-facing copy. Must be admin-configurable via `effective-*` pattern.                                                                      | 107   |
+| TD-TEST-03     | Test    | Full TDD test rebuild from scratch required (Owner directive). 203 `as never` casts remain in 18 non-rebuilt files, ~20+ components untested, 27/68 files use shared factories. Coverage: 83.87/70.99/87.98/84.07. | 120   |
 
 ### Active — MEDIUM Priority
 

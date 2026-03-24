@@ -5,10 +5,11 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #57 (2026-03-24). Phases 1–123 complete (incl. 120.1). 120.2 partially complete (20/~40 utility files). 370 unit tests (62 suites). Build passes. TSC passes. Node.js 24.12.0 runtime. Phase 124 COMPLETE — merge conflict leftovers resolved (48 files).**
-> **GATE STATUS: All 7 gates GREEN. Lint (0 errors, 6 warnings), Knip (0 findings), TSC, build, unit tests (62/370), E2E (108 passed, 25 skipped, 0 failed) — all pass.**
+> **STATUS: PM audit #59 (2026-03-24). Phases 1–126 complete (incl. 120.1, 120.2-A). 120.2 in progress (26/~40 utility files). 419 unit tests (68 suites). Build passes. TSC passes. Node.js 24.12.0 runtime. Phase 126 COMPLETE — 47 zod skill conflict markers resolved from devel branch.**
+> **GATE STATUS: All 7 gates GREEN. Lint (0 errors, 6 warnings), Knip (0 findings), TSC, build, unit tests (68/419), E2E (108 passed, 25 skipped, 0 failed) — all pass.**
 > **Owner directive (CRITICAL): FULL TDD TESTING REBUILD from scratch. NO hardcoded data. WCAG 2.2 AA. Code reuse. Full admin configurability.**
-> **Priority order: 120.2 (CRITICAL TDD utility rebuild — continue) → 120.3 (CRITICAL TDD action rebuild) → 106 (HIGH shared types) → 120.4 (CRITICAL TDD route rebuild) → 120.5 (HIGH TDD component rebuild) → 120.6 (HIGH TDD E2E rebuild) → 120.7 (HIGH coverage thresholds) → 107 (HIGH stop-reason config) → 108 (MEDIUM WCAG tabs) → 114 (MEDIUM WCAG avatar menu) → 74.2 (MEDIUM FAQ admin) → 104 (MEDIUM landing/hero admin)**
+> **Coverage: 83.87 / 70.99 / 87.98 / 84.07 (stmt/branch/func/lines). Thresholds: 76/65/79/76.**
+> **Priority order: 120.2-B (CRITICAL TDD utility rebuild — 14 remaining) → 120.3 (CRITICAL TDD action rebuild) → 106 (HIGH shared types) → 120.4 (CRITICAL TDD route rebuild) → 120.5 (HIGH TDD component rebuild) → 120.6 (HIGH TDD E2E rebuild) → 120.7 (HIGH coverage thresholds) → 125.1 (MEDIUM schema strict:true) → 125.2 (MEDIUM transaction query hardening) → 126.1 (MEDIUM handleError sanitization) → 107 (HIGH stop-reason config) → 108 (MEDIUM WCAG tabs) → 114 (MEDIUM WCAG avatar menu) → 126.2 (LOW lint warnings) → 74.2 (MEDIUM FAQ admin) → 104 (MEDIUM landing/hero admin)**
 
 ---
 
@@ -19,48 +20,40 @@
 > **Owner directive (2026-03-24 — ESCALATED):** Remove ALL existing unit and E2E tests and rebuild the entire testing process from scratch using strict Test-Driven Development methodology. Write failing tests FIRST, then write just enough code to make them pass. This prevents over-engineering and ensures only necessary code is written.
 >
 > **Phase 120.1 COMPLETE** — TDD test infrastructure built (factories, mock helpers, vitest.setup, tests/README.md). See `DONE.md`.
-> **Phase 120.2 IN PROGRESS** — 20 of ~40 utility test files rebuilt. Continue from here.
+> **Phase 120.2 Batch A COMPLETE** — 6 IO/business-critical utility test files hardened. Tests: 409 → 419.
+> **Phase 120.2 Batch B+C IN PROGRESS** — 26 of ~40 utility test files rebuilt. 14 remaining.
 >
-> **Current state:** 370 tests (62 suites). ~200 `as never` casts remaining in 18 NON-rebuilt files. 21/62 files use shared factories. E2E: 14 specs, 108 passed, 25 skipped.
+> **Current state:** 419 tests (68 suites). 203 `as never` casts remaining in 18 NON-rebuilt files. 27/68 files use shared factories. E2E: 14 specs, 108 passed, 25 skipped.
 >
 > **Key rule:** Every new/rebuilt test file MUST use shared factories from `tests/unit/test-support/`. Zero `as never` casts allowed. Follow TDD workflow in `tests/README.md`.
 
 #### 120.2 CRITICAL — Continue utility test rebuild (TDD)
 
-**Status: IN PROGRESS — 20/~40 files done.**
+**Status: IN PROGRESS — 26/~40 files done.**
 
-**Already rebuilt (20 files):** `admin-auth`, `admin-audit`, `delete-s3-prefix`, `get-file-from-aws`, `message-id`, `task-queries`, `type-guards`, `usage-event-utils`, `download-url-allowlist`, `get-formatted-date`, `message-policy`, `validation-schemas`, `ai-model-policy`, `resolve-entitlements`, `check-usage-limit`, `check-daily-conversations`, `effective-plan-config`, `effective-persona-access`, `effective-persona-config`, `effective-model-config`.
+**Already rebuilt (26 files):** `admin-auth`, `admin-audit`, `delete-s3-prefix`, `get-file-from-aws`, `message-id`, `task-queries`, `type-guards`, `usage-event-utils`, `download-url-allowlist`, `get-formatted-date`, `message-policy`, `validation-schemas`, `ai-model-policy`, `resolve-entitlements`, `check-usage-limit`, `check-daily-conversations`, `effective-plan-config`, `effective-persona-access`, `effective-persona-config`, `effective-model-config`, `ensure-user-synced`, `rate-limit`, `generate-response`, `generate-image`, `generate-audio`, `generate-video`.
 
-**Remaining files to rebuild (~20):**
+**Remaining files to rebuild (~14):**
 
-**Batch A — CRITICAL (IO/business logic, do first):**
+**Batch B — HIGH (worst coverage + business impact, do first):**
 
-1. `ensure-user-synced.ts` — self-healing user sync (CRITICAL)
-2. `rate-limit.ts` — rate limiting (CRITICAL)
-3. `openai/generateResponse.tsx` — core AI response generation (CRITICAL)
-4. `openai/generateImage.tsx` — image generation (CRITICAL)
-5. `openai/generateAudio.tsx` — audio generation (CRITICAL)
-6. `openai/generateVideo.tsx` — video generation (CRITICAL)
-
-**Batch B — HIGH (important utilities):**
-
-7. `admin-queries.ts` — admin data queries
-8. `openai/generateTitle.tsx` — title generation
-9. `openai/classify-task-complexity.ts` — task complexity classifier
-10. `upload-file-validation.ts` — file upload validation
-11. `database/mongoose.tsx` — DB connection
-12. `handleError.tsx` — error handler
+1. `getFullName.tsx` — 22% stmt coverage, worst in codebase (HIGH)
+2. `openai/filterAssistantMsg.tsx` — 60% stmt, message filtering (HIGH)
+3. `handleError.tsx` — 62.5% stmt, error sanitization path (HIGH)
+4. `openai/classify-task-complexity.ts` — 77.7% stmt / 61.7% branch (HIGH)
+5. `aws/s3-file-reference.ts` — 73.8% stmt, URL parsing branches (HIGH)
+6. `upload-file-validation.ts` — 87.5% stmt, boundary validation (HIGH)
+7. `admin-queries.ts` — admin data queries, untested (HIGH)
+8. `openai/generateTitle.tsx` — title generation, no test exists (HIGH)
 
 **Batch C — MEDIUM (smaller pure utilities):**
 
-13. `openai/filterAssistantMsg.tsx` — message filter
-14. `aws/s3-file-reference.ts` — S3 URL reference
-15. `normalize-public-asset-url.ts` — URL normalization
-16. `serialize-for-client.ts` — serialization
-17. `map-date-to-label.ts` — date labels
-18. `getPlanStatus.tsx` — plan status
-19. `getFullName.tsx` — user name
-20. `generateString.tsx` — random string generation
+9. `database/mongoose.tsx` — DB connection (MEDIUM)
+10. `normalize-public-asset-url.ts` — URL normalization (MEDIUM)
+11. `serialize-for-client.ts` — serialization (MEDIUM)
+12. `map-date-to-label.ts` — date labels (MEDIUM)
+13. `getPlanStatus.tsx` — plan status (MEDIUM)
+14. `generateString.tsx` — random string generation (MEDIUM)
 
 **Per-file TDD workflow:**
 
@@ -296,6 +289,93 @@ See SPEC.md for full requirements on each.
 
 ---
 
+## MEDIUM — Database & Query Hardening (PM audit #58 findings)
+
+### Phase 125.1 MEDIUM — Add explicit `strict: true` to User, Task, Transaction schemas
+
+> Architect finding MEDIUM-01. Mongoose defaults to strict, so no active vulnerability. This is a governance/auditability fix.
+
+**Files:** `src/lib/database/models/user.model.tsx`, `src/lib/database/models/tasks.model.tsx`, `src/lib/database/models/transaction.model.tsx`
+
+**What to do:**
+
+1. Add `{ strict: true }` to schema options for all 3 models.
+2. Verify build + tests pass.
+
+**Acceptance criteria:**
+
+- [ ] All 9 Mongoose models have explicit `strict: true` in schema options
+- [ ] Build passes, tests pass
+
+### Phase 125.2 MEDIUM — Harden `getAllTransactions()` query
+
+> Engineer finding: unbounded `.find()` without `.limit()`, `.lean()`, or `.select()`.
+
+**File:** `src/lib/actions/transaction.action.tsx` L114
+
+**What to do:**
+
+1. Add `.select("plan amount billing createdAt expiresOn")` projection.
+2. Add `.lean()`.
+3. Add `.limit(100)`.
+
+**Acceptance criteria:**
+
+- [ ] Query uses `.select()`, `.lean()`, `.limit()`
+- [ ] Build passes, tests pass
+
+### Phase 125.3 LOW — Add `rate-limit.ts` bypass comment
+
+> Architect finding MEDIUM-02. Rate limiter uses `.collection.findOneAndUpdate()` which bypasses Mongoose strict mode — this is intentional for atomic sliding-window logic.
+
+**File:** `src/lib/utils/rate-limit.ts` L69
+
+**What to do:** Add code comment explaining the MongoDB driver bypass is intentional.
+
+---
+
+## MEDIUM — Error Handling Hardening (SWOT threat — PM audit #59)
+
+### Phase 126.1 MEDIUM — Sanitize `handleError` message propagation
+
+> SWOT Threat: `handleError.tsx` re-throws with raw `error.message`. If any server action’s `handleError` call goes uncaught before the UI boundary, internal DB/provider messages could leak to the client. All current call sites catch, but pattern is fragile.
+
+**File:** `src/lib/utils/handleError.tsx`
+
+**What to do:**
+
+1. Strip internal details from the re-thrown `Error.message` — keep original in `cause` only.
+2. Return generic "An unexpected error occurred" for non-whitelisted error messages.
+3. Maintain `stderr` logging of full error details for debugging.
+
+**Acceptance criteria:**
+
+- [ ] `handleError` never propagates raw internal error messages
+- [ ] Full error detail preserved in `error.cause` for server-side debugging
+- [ ] All server action callers still function correctly
+- [ ] Build passes, tests pass
+
+---
+
+## LOW — Lint Warning Cleanup (SWOT weakness — PM audit #59)
+
+### Phase 126.2 LOW — Fix 6 `setState-in-effect` lint warnings
+
+> 6 warnings across admin-layout-shell, admin-managed-form, admin-settings-tabs, admin-transactions-table, droplet-theme, audio-player. All are `react-hooks/set-state-in-effect`. Fixable with `key` prop pattern or derived state.
+
+**What to do:**
+
+1. Each component: replace setState-in-useEffect with `key` prop reset pattern or derived state.
+2. Target: 0 lint warnings total.
+
+**Acceptance criteria:**
+
+- [ ] `npm run lint` reports 0 warnings
+- [ ] No behavioral regressions
+- [ ] Build passes, tests pass
+
+---
+
 ## LOW — Remaining Work
 
 ### Phase 73.2 LOW — Minor re-render and code quality fixes
@@ -317,5 +397,5 @@ See SPEC.md for full requirements on each.
 ---
 
 > **Completed phases** archived in [`DONE.md`](DONE.md).
-> All phases through 116 complete (includes 113.2, 112.2, 112.1, 109, 110, 115, 116).
+> All phases through 126 complete (includes 120.1, 120.2-A, 121–126).
 > All Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS.

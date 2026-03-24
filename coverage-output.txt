@@ -1,0 +1,8 @@
+﻿
+> droplet@1.0.0 test:coverage
+> vitest run --coverage
+
+
+[1m[46m RUN [49m[22m [36mv4.1.1 [39m[90mD:/Work/Projects/Droplet[39m
+      [2mCoverage enabled with [22m[33mv8[39m
+
