@@ -1,4 +1,4 @@
-import ProfileHeroEditor from "@/components/sections/profile-hero-editor";
+import ProfileHeroEditor from "@/components/sections/profile/profile-hero-editor";
 import PlanPromo from "@/components/shared/plan-promo";
 import PlanCountDown from "@/components/shared/plan-count-down";
 import PageHead from "@/components/layout/page-head";

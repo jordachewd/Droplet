@@ -2,7 +2,7 @@
 
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import ProfileHeroEditor from "@/components/sections/profile-hero-editor";
+import ProfileHeroEditor from "@/components/sections/profile/profile-hero-editor";
 import type { UserData } from "@/types/UserData.d";
 import { useClerk } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";

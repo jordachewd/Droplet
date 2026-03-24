@@ -1,0 +1,39 @@
+import classNames from "classnames";
+import Link from "next/link";
+
+export default function CtaBanner() {
+  return (
+    <section className="CtaBanner mx-auto w-full max-w-screen-2xl px-4">
+      <div
+        className={classNames(
+          "rounded-2xl px-6 py-8 shadow-sm bg-linear-245 from-limeGreen-100 via-lavenderHaze-100 to-white",
+          "dark:bg-linear-135 dark:from-twilightPurple-1000 dark:via-twilightPurple-800 dark:to-twilightPurple-600",
+        )}
+      >
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-col max-w-2xl gap-6">
+            <h2 className="heading-5 leading-tight">
+              Create an account, pick a persona, and let the conversation stay
+              focused.
+            </h2>
+            <p className="body-2 text-sm md:text-base">
+              Explore the persona catalog first, or compare the plan limits if
+              you already know how much capacity you need.
+            </p>
+          </div>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Link
+              className="btn btn-lg btn-contained uppercase"
+              href="/sign-up"
+            >
+              Create account
+            </Link>
+            <Link className="btn btn-lg btn-outlined uppercase" href="/plans">
+              Explore plans
+            </Link>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}

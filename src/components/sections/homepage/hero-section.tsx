@@ -4,8 +4,8 @@ import Link from "next/link";
 
 export default function HeroSection() {
   const heroSectionClass = classNames(
-    "Hero flex w-full items-center justify-between px-4 pt-14 shadow-2xl",
-    "bg-lavenderHaze-500/20 dark:bg-nightIndigo-900/40",
+    "Hero flex w-full items-center justify-between pt-14 shadow-2xl",
+    "bg-lavenderHaze-500/40 dark:bg-nightIndigo-900/40 backdrop-blur-lg",
   );
 
   const heroTextClass = classNames(
@@ -25,7 +25,7 @@ export default function HeroSection() {
 
   return (
     <section className={heroSectionClass}>
-      <div className="mx-auto flex w-full max-w-screen-2xl flex-col items-center justify-between lg:flex-row">
+      <div className="mx-auto flex w-full max-w-screen-2xl px-4 flex-col items-center justify-between lg:flex-row">
         <div className={heroTextClass}>
           <h1 className="heading-2">
             Chat, create, <br />

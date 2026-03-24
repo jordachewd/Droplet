@@ -1,5 +1,5 @@
-import Plans from "@/components/sections/plans-section";
-import Faqs from "@/components/sections/faqs-section";
+import Plans from "@/components/sections/shared/plans-section";
+import Faqs from "@/components/sections/shared/faqs-section";
 import { buildPlans } from "@/constants/plans";
 import { buildFaqs } from "@/constants/faqs";
 import {

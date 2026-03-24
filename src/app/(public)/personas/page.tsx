@@ -1,4 +1,4 @@
-import PersonasSection from "@/components/sections/personas-section";
+import PersonasSection from "@/components/sections/shared/personas-section";
 import { getEffectivePersonaConfig } from "@/lib/utils/effective-persona-config";
 
 export default async function PersonasPage() {

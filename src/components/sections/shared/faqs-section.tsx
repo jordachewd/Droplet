@@ -1,3 +1,4 @@
+import PageHead from "@/components/layout/page-head";
 import type { FaqItem } from "@/constants/faqs";
 import classNames from "classnames";
 
@@ -17,17 +18,17 @@ export default function Faqs({ faqsData }: FaqsProps) {
     "group-open:grid-rows-[1fr] group-open:opacity-100",
   );
   const wrapperClassName = classNames(
-    "Faqs mx-auto flex w-full flex-col gap-8 p-4 sm:gap-10 max-w-screen-2xl",
+    "Faqs mx-auto flex w-full flex-col gap-16 p-4 max-w-screen-2xl",
   );
 
   return (
     <section className={wrapperClassName}>
-      <div className="flex flex-col items-center justify-center gap-2 text-center">
-        <h2 className="heading-4 leading-tight">Frequently Asked Questions</h2>
-        <p className="body-2 max-w-2xl">
-          Find answers to the most frequently asked questions below.
-        </p>
-      </div>
+      <PageHead
+        title="Frequently Asked Questions"
+        subtitle="Find answers to the most frequently asked questions below."
+        align="center"
+      />
+
       <div className="flex flex-col gap-2.5">
         {faqsData.map((faq) => (
           <details key={faq.id} className={faqCardClass}>

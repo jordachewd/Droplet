@@ -262,17 +262,19 @@ export default async function AboutPage() {
   const aboutSections = buildAboutSections({ personaAccessSummary });
 
   return (
-    <section className="AboutPage mx-auto flex w-full max-w-screen-2xl flex-col gap-10 px-4 py-16 pt-24">
+    <section className="AboutPage mx-auto flex w-full max-w-screen-2xl flex-col gap-10 px-4 py-24">
       <PageHead
         title="About Droplet"
         subtitle="A persona-driven AI assistant built for structured conversations, practical output, and media-aware workflows."
+        align="center"
       />
-      <div className="flex justify-center m-4">
+
+      <div className="flex justify-center my-4">
         <DropletGlobe size={128} />
       </div>
 
       {aboutSections.map((section, index) => (
-        <article
+        <div
           key={section.title}
           className={classNames(
             "grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)]",
@@ -305,10 +307,10 @@ export default async function AboutPage() {
             personaCategories,
             personaCatalog,
           )}
-        </article>
+        </div>
       ))}
 
-      <section
+      <div
         className={classNames(
           "w-full max-w-screen-2xl rounded-2xl  px-6 py-8 shadow-sm",
           "bg-linear-135 from-lavenderHaze-100 via-white to-twilightPurple-100",
@@ -337,7 +339,7 @@ export default async function AboutPage() {
             </Link>
           </div>
         </div>
-      </section>
+      </div>
     </section>
   );
 }
