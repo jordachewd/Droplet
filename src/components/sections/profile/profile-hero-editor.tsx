@@ -169,31 +169,12 @@ export default function ProfileHeroEditor({
     <>
       <form
         className={classNames(
-          "ProfileHeroEditor flex w-full flex-col gap-4 rounded-lg border p-6 shadow-md",
-          "border-slate-500 bg-lavenderHaze-100/80",
-          "dark:border-slate-500 dark:bg-nightIndigo-1000/80",
+          "ProfileHeroEditor flex w-full flex-col gap-4 rounded-lg border p-6 shadow-sm",
+          "bg-lavenderHaze-100/80 dark:bg-nightIndigo-1000/80",
         )}
         onSubmit={(event) => void handleSaveProfile(event)}
       >
         <h3 className="heading-5">Edit account details</h3>
-
-        <div className="flex items-center gap-4">
-          <span className="inline-flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-lavenderHaze-500 text-sm font-semibold text-white dark:bg-nightIndigo-500">
-            {displayAvatarUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={displayAvatarUrl}
-                alt="Profile avatar preview"
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              "IMG"
-            )}
-          </span>
-          <div className="text-xs opacity-80">
-            Uploading a new image updates your profile avatar URL.
-          </div>
-        </div>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <label className="flex flex-col gap-2">
@@ -221,33 +202,76 @@ export default function ProfileHeroEditor({
           </label>
         </div>
 
-        <label className="flex flex-col gap-2">
-          <span className="text-sm font-semibold">Email address</span>
-          <input
-            type="email"
-            value={emailInput}
-            onChange={(event) => setEmailInput(event.target.value)}
-            className={profileInputClass}
-            autoComplete="email"
-            required
-            aria-required="true"
-          />
-        </label>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <label className="flex flex-col gap-2">
+            <span className="text-sm font-semibold">Email address</span>
+            <input
+              type="email"
+              value={emailInput}
+              onChange={(event) => setEmailInput(event.target.value)}
+              className={profileInputClass}
+              autoComplete="email"
+              required
+              aria-required="true"
+            />
+          </label>
 
-        <label className="flex flex-col gap-2">
-          <span className="text-sm font-semibold">Avatar image</span>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleAvatarChange}
-            className={classNames(
-              "block w-full cursor-pointer text-sm",
-              "file:mr-4 file:rounded-md file:border file:px-3 file:py-2 file:text-sm file:font-medium",
-              "file:border-slate-500 file:bg-lavenderHaze-300/40 file:text-midnightBlue-900",
-              "dark:file:border-slate-500 dark:file:bg-nightIndigo-500/30 dark:file:text-white",
+          <label className="flex flex-col gap-2">
+            <span className="text-sm font-semibold">Username</span>
+            <input
+              type="text"
+              value={userData.username}
+              disabled
+              aria-disabled="true"
+              className={classNames(
+                profileInputClass,
+                "cursor-not-allowed opacity-60",
+              )}
+            />
+            <span className="text-xs opacity-60">
+              Username cannot be changed
+            </span>
+          </label>
+        </div>
+
+        <div className="flex items-center gap-4">
+          <div className="inline-flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-lavenderHaze-500 text-sm font-semibold text-white dark:bg-nightIndigo-500">
+            {displayAvatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={displayAvatarUrl}
+                alt="Profile avatar preview"
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              "IMG"
             )}
-          />
-        </label>
+          </div>
+          <label className="flex flex-col gap-2">
+            <span className="text-sm font-semibold">Avatar image</span>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleAvatarChange}
+              className={classNames(
+                "block w-full cursor-pointer text-sm",
+                "file:mr-4 file:rounded-md file:border file:px-3 file:py-2 file:text-sm file:font-medium",
+                "file:border-slate-500 file:bg-lavenderHaze-300/40 file:text-midnightBlue-900",
+                "dark:file:border-slate-500 dark:file:bg-nightIndigo-500/30 dark:file:text-white",
+              )}
+            />
+          </label>
+        </div>
+
+        <div className="flex justify-end">
+          <button
+            type="submit"
+            className={classNames("btn btn-contained")}
+            disabled={isSaving || isDeleting}
+          >
+            {isSaving ? "Saving..." : "Save profile"}
+          </button>
+        </div>
 
         {feedbackMessage && (
           <p
@@ -263,23 +287,6 @@ export default function ProfileHeroEditor({
             {errorMessage}
           </p>
         )}
-
-        <div className="flex flex-wrap items-center gap-3">
-          <button
-            type="submit"
-            className={classNames(
-              "inline-flex min-w-36 items-center justify-center rounded-md px-4 py-2 text-sm font-semibold",
-              "bg-lavenderHaze-500 text-white transition hover:opacity-90",
-              "disabled:cursor-not-allowed disabled:bg-lavenderHaze-700 disabled:text-lavenderHaze-300",
-            )}
-            disabled={isSaving || isDeleting}
-          >
-            {isSaving ? "Saving..." : "Save profile"}
-          </button>
-          <span className="text-xs opacity-80">
-            Email updates are applied to your Droplet profile.
-          </span>
-        </div>
       </form>
 
       <div
@@ -308,6 +315,7 @@ export default function ProfileHeroEditor({
           {isDeleting ? "Deleting..." : "Delete My Account"}
         </button>
       </div>
+      
       <ConfirmationModal
         isOpen={isDeleteConfirmOpen}
         title="Delete account"
