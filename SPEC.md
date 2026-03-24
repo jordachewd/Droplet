@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-24 (PM audit #54). Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS — Full TDD testing rebuild (Phase 120). **All 7 gates GREEN.** 532 unit tests (79 suites). E2E: 108 passed, 0 failed, 25 skipped. Coverage: 78.55/66.3/83.53/78.85. Active TDs: TD-HARDCODE-01 (HIGH), TD-REUSE-04/WCAG-05/WCAG-07/TEST-02 (MEDIUM), TD-SEC-12 (MEDIUM). Build passing. Node.js 24.12.0.
+> Last updated: 2026-03-24 (PM audit #55). Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS — Full TDD testing rebuild (Phase 120). **All 7 gates GREEN.** 316 unit tests (54 suites). E2E: 108 passed, 0 failed, 25 skipped. Coverage: ~78.5/~66/~83.5/~79. Active TDs: TD-HARDCODE-01 (HIGH), TD-REUSE-04/WCAG-05/WCAG-07/TEST-02 (MEDIUM), TD-SEC-12 (CRITICAL — error leak). Build passing. Node.js 24.12.0.
 
 ---
 
@@ -743,11 +743,11 @@ All button styles use Lime Green as the accent color in **both** light and dark 
 
 ## 13. Testing
 
-- **Unit tests**: 79 suites, 532 tests (Vitest) — organized by domain in `tests/unit/{actions,components,routes,utils,models,constants,stores}/`. Phase 112.2 TDD rebuild completed 10 core utilities with 100% branch coverage: effective-persona-access, handleError, resolve-entitlements, format-date, format-number, sanitize-filename, get-or-create-user, ai-model-policy, effective-plan-config, effective-model-config. Phase 120.1 TDD infrastructure: typed factories (`createTestUser`, `createTestTask`, `createTestTransaction`, `createTestClerkUser`), mock helpers (`mockAuth`, `mockAdminAuth`, `mockClerkUser`, `mockMongooseModel`), `vitest.setup.ts` global cleanup, `tests/README.md` TDD workflow docs. Includes streaming, webhook, chat-wrapper, chat-body stop-state, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, persona prompt, rate limiting, task complexity classification, conversation stop enforcement (merged into openai-route tests Phase 96.1), entitlement resolver full coverage (including admin override tests), checkout-success page (including auth redirect Phase 113.2), admin audit trail (including authorization enforcement tests Phase 96.4), OpenAI route tests, atomic prompt limit, daily conversation limit, media error handling (failure paths), universal feature access, trial access tests, checkout price bypass regression, video generation, validation schema security injection tests (XSS, long strings, null bytes), AudioPlayer ARIA tests, abort behavior tests, Zustand store tests (Phase 96.6), upload file size validation (Phase 96.5), component tests for confirmation-modal/plan-card/persona-card/checkout-form (Phase 96.7), user model tests (Phase 96.8). Shared test factories in `tests/unit/test-support/` (Phase 94.5 + 120.1).
+- **Unit tests**: 54 suites, 316 tests (Vitest) — organized by domain in `tests/unit/{actions,components,routes,utils,models,constants,stores}/`. TDD rebuild IN PROGRESS (Phase 120). Phase 120.1 COMPLETE (TDD infrastructure). Phase 120.2 partially complete (12/~35 utility test files rebuilt from scratch with zero `as never`). Includes streaming, webhook, chat-wrapper, chat-body stop-state, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, persona prompt, rate limiting, task complexity classification, conversation stop enforcement, entitlement resolver, checkout-success page, admin audit trail, OpenAI route tests, atomic prompt limit, daily conversation limit, media error handling, universal feature access, trial access tests, video generation, validation schema security injection tests, AudioPlayer ARIA tests, abort behavior tests, Zustand store tests, upload file size validation, component tests for confirmation-modal/plan-card/persona-card/checkout-form, user model tests. Shared test factories in `tests/unit/test-support/` (Phase 94.5 + 120.1). **203 `as never` casts remain in non-rebuilt test files** — will be eliminated as each test file is rebuilt per TDD methodology. 13 of 54 files currently use shared factories.
 - **E2E tests**: 14 Playwright spec files. 108 passed, 25 skipped, 0 failed. Default 3 browsers (Chromium, Firefox, WebKit); full 7-browser matrix via `PLAYWRIGHT_FULL_MATRIX=1`. Specs: accessibility (Phase 97.1), auth-boundaries, public-pages (incl. checkout-success redirect Phase 113.2), error-handling, chat-app-shell, conversation-lifecycle, user-profile, admin-users, admin-features, admin-bulk-actions, plans-public, authenticated-flows, persona-trial-access, live-image-generation. 25 skips are intentional: credential-gated tests without E2E env vars + Chromium-only tests on Firefox/WebKit. All E2E assertions are structural (no hardcoded prices/copy — Phase 95). WCAG E2E via @axe-core/playwright scanning all 7 public routes — all WCAG violations fixed (Phase 103.1–103.4), known violations list reduced to zero.
-- **Coverage**: v8 provider, thresholds: 76% statements / 65% branches / 79% functions / 76% lines. Actual: 78.55/66.3/83.53/78.85. Gate PASSES. Reporters: text, json-summary, lcov. Setup file: `tests/unit/vitest.setup.ts` (global mock cleanup).
+- **Coverage**: v8 provider, thresholds: 76% statements / 65% branches / 79% functions / 76% lines. Actual: ~78.5/~66/~83.5/~79. Gate PASSES. Reporters: text, json-summary, lcov. Setup file: `tests/unit/vitest.setup.ts` (global mock cleanup).
 - **Config**: Vitest `environmentMatchGlobs` for auto-jsdom on `.tsx`. Playwright `actionTimeout: 10s`, `expect.timeout: 5s`. ESLint `no-console` (error), `no-restricted-globals` (alert/confirm). TS `noFallthroughCasesInSwitch`, `forceConsistentCasingInFileNames`. All 7 validation gates GREEN (lint, knip, tsc, unit, E2E, build, prettier).
-- **Gaps**: No E2E for Stripe checkout flow. No admin action behavioral tests. No E2E for user deletion cascade. Branch coverage 66.3% is lowest metric — worst files: chat-body.tsx (14%), admin-queries.ts (20.14%), admin.actions.tsx (27.81%). ~48 of 64 components have zero test files. ~200 `as never` casts in test files. Only 1 of 79 test files uses shared factory infrastructure. Phase 112.1 test audit COMPLETE — 51 KEEP, 19 REFACTOR, 2 REBUILD, 9 missing test suites identified. Phase 112.2 COMPLETE (10/10 utils, 100% branch). Phase 120.1 COMPLETE (TDD infrastructure). Phase 117 COMPLETE (TD-REUSE-05 resolved). **Phase 120 is primary work directive: full TDD test rebuild from scratch** (replaces Phases 112.3–112.7). TD-SEC-10 RESOLVED (Phase 113.1). TD-SEC-11 RESOLVED (Phase 113.2).
+- **Gaps**: No E2E for Stripe checkout flow. No admin action behavioral tests. No E2E for user deletion cascade. Branch coverage ~66% is lowest metric — worst files: chat-body.tsx, admin-queries.ts, admin.actions.tsx. ~29+ components have zero test files. 203 `as never` casts in non-rebuilt tests (tracked for elimination). Only 13 of 54 test files use shared factory infrastructure. **Phase 120 is primary work directive: full TDD test rebuild from scratch** (owner mandate). TD-SEC-10 RESOLVED (Phase 113.1). TD-SEC-11 RESOLVED (Phase 113.2).
 
 ---
 
@@ -781,24 +781,24 @@ All button styles use Lime Green as the accent color in **both** light and dark 
 ## 15. Technical Debt Summary
 
 > Only unresolved items live here. All resolved TDs are archived in `DONE.md`.
-> Last updated: PM audit #53 (2026-03-25).
+> Last updated: PM audit #55 (2026-03-24).
 
 ### Active — HIGH Priority
 
-| ID             | Area    | Description                                                                                                                                        | Phase |
-| -------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
-| TD-HARDCODE-01 | Content | Stop reason messages in `src/constants/stop-reasons.ts` are hardcoded user-facing copy. Must be admin-configurable via `effective-*` pattern.      | 107   |
-| TD-TEST-03     | Test    | Full TDD test rebuild from scratch required (Owner directive). ~200 `as never` casts, ~48/64 components untested, 1/79 files use shared factories. | 120   |
+| ID             | Area    | Description                                                                                                                                                                  | Phase |
+| -------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| TD-HARDCODE-01 | Content | Stop reason messages in `src/constants/stop-reasons.ts` are hardcoded user-facing copy. Must be admin-configurable via `effective-*` pattern.                                | 107   |
+| TD-TEST-03     | Test    | Full TDD test rebuild from scratch required (Owner directive). 203 `as never` casts remain in non-rebuilt files, ~29+ components untested, 13/54 files use shared factories. | 120   |
 
 ### Active — MEDIUM Priority
 
-| ID          | Area | Description                                                                                                                                                           | Phase |
-| ----------- | ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
-| TD-REUSE-04 | Code | `ChatApiResponse` interface defined identically in `src/app/api/openai/route.tsx` and `src/components/chat/chat-wrapper.tsx`. Phase 106.                              | 106   |
-| TD-WCAG-05  | A11y | Library tabs and admin settings tabs have `role="tablist"` but no arrow-key navigation. WCAG tablist pattern requires Left/Right arrow key focus movement. Phase 108. | 108   |
-| TD-WCAG-07  | A11y | `AvatarMenu` dropdown lacks keyboard navigation: no Escape handler, no Arrow key navigation, no `role="menu"`/`role="menuitem"`. Phase 114.                           | 114   |
-| TD-TEST-02  | Test | `openai-route.test.ts` retains IO boundary mocks (appropriate). Pure utilities un-mocked (Phase 96.2). Further refinement deferred to TDD rebuild (Phase 112.4).      | 112.4 |
-| TD-SEC-12   | Sec  | `profile-hero-editor.tsx` passes raw `error.message` to UI in 2 catch blocks (lines 125, 149). Could leak internal error details. Use generic messages.               | 121   |
+| ID          | Area | Description                                                                                                                                                                                        | Phase |
+| ----------- | ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| TD-REUSE-04 | Code | `ChatApiResponse` interface defined identically in `src/app/api/openai/route.tsx` and `src/components/chat/chat-wrapper.tsx`. Phase 106.                                                           | 106   |
+| TD-WCAG-05  | A11y | Library tabs and admin settings tabs have `role="tablist"` but no arrow-key navigation. WCAG tablist pattern requires Left/Right arrow key focus movement. Phase 108.                              | 108   |
+| TD-WCAG-07  | A11y | `AvatarMenu` dropdown lacks keyboard navigation: no Escape handler, no Arrow key navigation, no `role="menu"`/`role="menuitem"`. Phase 114.                                                        | 114   |
+| TD-TEST-02  | Test | `openai-route.test.ts` retains IO boundary mocks (appropriate). Pure utilities un-mocked (Phase 96.2). Further refinement deferred to TDD rebuild (Phase 112.4).                                   | 112.4 |
+| TD-SEC-12   | Sec  | `profile-hero-editor.tsx` passes raw `error.message` to UI in 2 catch blocks (lines 135, 163). Could leak internal error details. Use generic messages. **CRITICAL — must fix before deployment.** | 121   |
 
 ### Active — Low Priority
 

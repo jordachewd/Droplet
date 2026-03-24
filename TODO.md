@@ -5,10 +5,60 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #54 (2026-03-24). Phases 1–117, 120.1 complete. 532 unit tests (79 suites). Build passes. TSC passes. Node.js 24.12.0 runtime.**
-> **GATE STATUS: All 7 gates GREEN. Lint (0 errors, 6 warnings), Knip (clean), TSC, build, unit tests (79/532), E2E (108 passed, 25 skipped, 0 failed) — all pass.**
+> **STATUS: PM audit #55 (2026-03-24). Phases 1–117, 120.1 complete. 120.2 partially complete (12/~35 utility files). 316 unit tests (54 suites). Build passes. TSC passes. Node.js 24.12.0 runtime.**
+> **GATE STATUS: All 7 gates GREEN. Lint (0 errors, 6 warnings), Knip (1 finding: `_update_plan.js` orphan), TSC, build, unit tests (54/316), E2E (108 passed, 25 skipped, 0 failed) — all pass.**
 > **Owner directive (CRITICAL): FULL TDD TESTING REBUILD from scratch. NO hardcoded data. WCAG 2.2 AA. Code reuse. Full admin configurability.**
-> **Priority order: 120.2 (CRITICAL TDD utility rebuild) → 120.3 (CRITICAL TDD action rebuild) → 106 (HIGH shared types) → 120.4 (CRITICAL TDD route rebuild) → 120.5 (HIGH TDD component rebuild) → 120.6 (HIGH TDD E2E rebuild) → 120.7 (HIGH coverage thresholds) → 121 (MEDIUM error message leak fix) → 107 (HIGH stop-reason config) → 108 (MEDIUM WCAG tabs) → 114 (MEDIUM WCAG avatar menu) → 74.2 (MEDIUM FAQ admin) → 104 (MEDIUM landing/hero admin)**
+> **Priority order: 122 (CRITICAL orphan cleanup) → 121 (CRITICAL error leak fix) → 120.2 (CRITICAL TDD utility rebuild — continue) → 120.3 (CRITICAL TDD action rebuild) → 106 (HIGH shared types) → 120.4 (CRITICAL TDD route rebuild) → 120.5 (HIGH TDD component rebuild) → 120.6 (HIGH TDD E2E rebuild) → 120.7 (HIGH coverage thresholds) → 123 (LOW button type fix) → 107 (HIGH stop-reason config) → 108 (MEDIUM WCAG tabs) → 114 (MEDIUM WCAG avatar menu) → 74.2 (MEDIUM FAQ admin) → 104 (MEDIUM landing/hero admin)**
+
+---
+
+## CRITICAL — Quick Fixes (Before TDD continues)
+
+### Phase 122 CRITICAL — Delete orphan `_update_plan.js`
+
+> Knip reports 1 unused file. This is a one-time automation script in the project root that was either missed or recreated. Must be deleted.
+
+**What to do:**
+
+1. Delete `_update_plan.js` from project root.
+2. Run `npm run knip` — verify 0 findings.
+
+**Acceptance criteria:**
+
+- [ ] `_update_plan.js` deleted
+- [ ] `npm run knip` exits 0 with 0 findings
+
+### Phase 121 CRITICAL — Fix raw `error.message` leak in profile-hero-editor
+
+> PM audit #55 finding (upgraded from MEDIUM to CRITICAL — security issue): `profile-hero-editor.tsx` lines 135 and 163 pass raw `error.message` from server action catch blocks to the UI. If server actions throw Mongoose/DB/AWS errors, internal details leak to client. Violates OWASP error handling rules.
+
+**Files:** `src/components/sections/profile-hero-editor.tsx`
+
+**What to do:**
+
+1. Replace `error instanceof Error ? error.message : "Failed to update profile."` with `"Failed to update profile. Please try again."` (line 135).
+2. Replace `error instanceof Error ? error.message : "Failed to delete account."` with `"Failed to delete account. Please try again."` (line 163).
+
+**Acceptance criteria:**
+
+- [ ] Zero raw `error.message` displayed to user in profile editor
+- [ ] Generic error messages shown instead
+- [ ] Build passes
+
+### Phase 123 LOW — Add `type="button"` to error page buttons
+
+> 2 error page buttons missing explicit `type="button"`. Buttons default to `type="submit"` in HTML spec which could cause unexpected form submissions. Minor WCAG/semantic issue.
+
+**Files:** `src/app/error.tsx`, `src/app/(chat)/error.tsx`
+
+**What to do:**
+
+1. Add `type="button"` to the `<button>` in both error boundary files.
+
+**Acceptance criteria:**
+
+- [ ] Both error buttons have `type="button"`
+- [ ] Build passes
 
 ---
 
@@ -18,25 +68,57 @@
 
 > **Owner directive (2026-03-24 — ESCALATED):** Remove ALL existing unit and E2E tests and rebuild the entire testing process from scratch using strict Test-Driven Development methodology. Write failing tests FIRST, then write just enough code to make them pass. This prevents over-engineering and ensures only necessary code is written.
 >
-> The current 532 tests (79 suites) and 108 E2E tests serve as behavioral reference — they document WHAT the code should do. The rebuild replaces HOW they test it.
->
 > **Phase 120.1 COMPLETE** — TDD test infrastructure built (factories, mock helpers, vitest.setup, tests/README.md). See `DONE.md`.
+> **Phase 120.2 IN PROGRESS** — 12 of ~35 utility test files rebuilt. Continue from here.
+>
+> **Current state:** 316 tests (54 suites). 203 `as never` casts remaining in NON-rebuilt files. 13/54 files use shared factories. E2E: 14 specs, 108 passed, 25 skipped.
+>
+> **Key rule:** Every new/rebuilt test file MUST use shared factories from `tests/unit/test-support/`. Zero `as never` casts allowed. Follow TDD workflow in `tests/README.md`.
 
-#### 120.2 CRITICAL — Rebuild utility tests (TDD)
+#### 120.2 CRITICAL — Continue utility test rebuild (TDD)
 
-**What to do:**
+**Status: IN PROGRESS — 12/~35 files done.**
 
-1. Delete ALL existing utility test files in `tests/unit/utils/`
-2. For each utility in `src/lib/utils/`, write failing tests FIRST, then verify existing code passes
-3. Target: 100% branch coverage on pure functions, ≥85% on IO utilities
-4. Every test must answer: "What observable behavior changes if this code breaks?"
+**Already rebuilt (12 files):** `admin-auth`, `admin-audit`, `delete-s3-prefix`, `get-file-from-aws`, `message-id`, `task-queries`, `type-guards`, `usage-event-utils`, `download-url-allowlist`, `get-formatted-date`, `message-policy`, `validation-schemas`.
 
-**Target files (35 utilities):** All files in `src/lib/utils/` and `src/lib/utils/openai/`
+**Remaining files to rebuild (~23):**
+
+1. `ai-model-policy.ts` — AI model resolution (CRITICAL business logic, ~95% branch prior)
+2. `resolve-entitlements.tsx` — plan entitlement resolver (CRITICAL, ~89% branch prior)
+3. `check-usage-limit.ts` — media quota enforcement (CRITICAL)
+4. `check-daily-conversations.ts` — daily limit enforcement (CRITICAL)
+5. `effective-plan-config.ts` — admin-override plan config
+6. `effective-persona-access.ts` — persona access gating
+7. `effective-persona-config.ts` — persona config resolution
+8. `effective-model-config.ts` — model config resolution
+9. `ensure-user-synced.ts` — self-healing user sync
+10. `rate-limit.ts` — rate limiting
+11. `upload-file-validation.ts` — file upload validation
+12. `s3-file-reference.ts` — S3 URL reference
+13. `admin-queries.ts` — admin data queries
+14. `handleError.tsx` — error handler
+15. `openai/generateResponse.tsx` — core AI response generation
+16. `openai/generateImage.tsx` — image generation
+17. `openai/generateAudio.tsx` — audio generation
+18. `openai/generateVideo.tsx` — video generation
+19. `openai/generateTitle.tsx` — title generation
+20. `openai/classify-task-complexity.ts` — task complexity classifier
+21. `openai/message-policy.ts` — message token management (already rebuilt but verify coverage)
+22. `openai/filterAssistantMsg.tsx` — message filter
+23. `mongoose.tsx` — DB connection
+
+**What to do (per file):**
+
+1. Delete existing test file if present
+2. Write failing tests FIRST covering all branches
+3. Verify existing code passes
+4. Target: 100% branch on pure functions, ≥85% on IO utilities
+5. Use shared factories — zero `as never`
 
 **Acceptance criteria:**
 
-- [ ] All utility test files rebuilt from scratch using TDD
-- [ ] Zero `as never` casts
+- [ ] All ~35 utility test files rebuilt from scratch using TDD
+- [ ] Zero `as never` casts in utility tests
 - [ ] Pure functions: 100% branch coverage
 - [ ] IO utilities: ≥85% branch coverage
 - [ ] All tests use shared factories
@@ -256,28 +338,6 @@
 #### 104.3 — About page copy
 
 See SPEC.md for full requirements on each.
-
----
-
-## MEDIUM — Security: Error Message Leak (PM audit #54)
-
-### Phase 121 MEDIUM — Fix raw `error.message` leak in profile-hero-editor
-
-> PM audit #54 finding: `profile-hero-editor.tsx` lines 125 and 149 pass raw `error.message` from server action catch blocks to the UI. If server actions throw Mongoose/DB errors, internal details could leak to client.
-
-**Files:** `src/components/sections/profile-hero-editor.tsx`
-
-**What to do:**
-
-1. Replace `error.message` in catch blocks with generic user-facing fallback messages.
-2. Pattern: `error instanceof Error ? "An error occurred. Please try again." : "An unexpected error occurred."`
-3. Log original error server-side if needed.
-
-**Acceptance criteria:**
-
-- [ ] Zero raw `error.message` displayed to user in profile editor
-- [ ] Generic error messages shown instead
-- [ ] Build passes
 
 ---
 

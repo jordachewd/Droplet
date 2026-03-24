@@ -2,7 +2,20 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-24 — PM audit #54. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4, 105.1, 105.2, 110, 111.1, 112.1, 112.2, 109, 113.1, 113.2, 115, 116, 117, 120.1 complete. Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS. 532 unit tests (79 suites). 108 E2E passed, 25 skipped, 0 failed. All 7 gates GREEN. Build passing. Node.js 24.12.0 runtime.
+> Last updated: 2026-03-24 — PM audit #55. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4, 105.1, 105.2, 110, 111.1, 112.1, 112.2, 109, 113.1, 113.2, 115, 116, 117, 120.1 complete. Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS — TDD rebuild active. 316 unit tests (54 suites). E2E: 108 passed, 25 skipped, 0 failed. All 7 gates GREEN. Build passing. Node.js 24.12.0 runtime.
+
+---
+
+## Phase 120.2 (Partial) — Rebuild utility tests (TDD) — IN PROGRESS (2026-03-24)
+
+> Engineer delivered partial batch (PM audit #55). 12 of ~35 utility test files rebuilt from scratch with TDD methodology. No `as never` casts in rebuilt files. Shared factories used.
+
+- [x] Rebuilt utility test files (12 files): `admin-auth.test.ts`, `admin-audit.test.ts`, `delete-s3-prefix.test.ts`, `get-file-from-aws.test.ts`, `message-id.test.ts`, `task-queries.test.ts`, `type-guards.test.ts`, `usage-event-utils.test.ts`, `download-url-allowlist.test.ts`, `get-formatted-date.test.ts`, `message-policy.test.ts`, `validation-schemas.test.ts`
+- [ ] ~23 remaining utility files still needed (ai-model-policy, effective-\*, check-\*, openai generate\*, resolve-entitlements, rate-limit, s3-file-reference, upload-file-\*, etc.)
+- [x] Zero `as never` in rebuilt utility tests
+- [x] All rebuilt tests use shared factories from `tests/unit/test-support/`
+
+**Status:** PARTIAL — 12/~35 files. Remaining files to be rebuilt in next session.
 
 ---
 
