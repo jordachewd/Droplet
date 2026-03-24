@@ -56,11 +56,5 @@ node_modules/
 /test-results/
 
 # Project specific
-skills-lock.json
 /.github/
-/.agents/
-/.claude/
-/.codex/
-/.copilot/
-AGENTS.md
-/memories
+ 
