@@ -428,7 +428,9 @@ describe("admin.actions behavior coverage", () => {
 
   describe("bulk admin actions", () => {
     it("suspends selected users and logs audit details", async () => {
-      vi.mocked(User.updateMany).mockResolvedValue({ modifiedCount: 2 } as never);
+      vi.mocked(User.updateMany).mockResolvedValue({
+        modifiedCount: 2,
+      } as never);
 
       const result = await bulkSuspendUsersAction(
         buildFormData({
@@ -617,7 +619,9 @@ describe("admin.actions behavior coverage", () => {
         return buildFindByIdSelectLean(value) as never;
       });
 
-      vi.mocked(Task.deleteMany).mockResolvedValue({ deletedCount: 2 } as never);
+      vi.mocked(Task.deleteMany).mockResolvedValue({
+        deletedCount: 2,
+      } as never);
       vi.mocked(Transaction.deleteMany).mockResolvedValue({
         deletedCount: 1,
       } as never);

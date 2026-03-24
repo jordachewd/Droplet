@@ -1,3 +1,9 @@
+import type { NextRequest } from "next/server";
+import type { BillingCycle, PlanData, PlanName } from "@/types/PlanData.d";
+import type { PersonaId } from "@/types/PersonaData.d";
+import type { TaskConversation } from "@/types/TaskData.d";
+import type { UserData, UserRoles } from "@/types/UserData.d";
+
 type MockRequestOptions = {
   payload?: unknown;
   headers?: Record<string, string>;
@@ -5,102 +11,187 @@ type MockRequestOptions = {
   url?: string;
 };
 
-type TestUserPlan = {
-  name: string;
-  expiresOn: Date;
-  imageGenerations: number;
-  audioGenerations: number;
-  videoGenerations: number;
-  usagePeriodStart: Date;
-  trialUsage: {
-    trialImageGenerations: number;
-    trialAudioGenerations: number;
-    trialVideoGenerations: number;
-    trialUsagePeriodStart: Date;
-  };
+type MockNextRequestOptions = MockRequestOptions & {
+  formData?: FormData;
+  nextUrl?: string;
 };
 
-type TestUser = {
-  clerkId: string;
-  role: string;
-  plan: TestUserPlan;
+type TestUserPlanOverrides = Omit<Partial<PlanData>, "trialUsage"> & {
+  trialUsage?: Partial<NonNullable<PlanData["trialUsage"]>>;
 };
 
-type TestTask = {
+type TestUserOverrides = Omit<Partial<UserData>, "plan"> & {
+  plan?: TestUserPlanOverrides;
+};
+
+export type TestTransaction = {
   _id: string;
-  title: string;
-  personaId: string;
-  messages: Array<{
-    role: string;
-    whois: string;
-    content: unknown;
-  }>;
-  usage: number;
-  promptCount: number;
-  mediaCount: number;
-  estimatedBytes: number;
-  status: string;
-  updatedAt: string;
-  endedReason?: string;
-  endAction?: string;
+  stripeId: string;
+  userId: string;
+  clerkId: string;
+  createdAt: Date;
+  expiresOn: Date;
+  amount: number;
+  plan: PlanName;
+  billing: BillingCycle;
 };
 
-export function createTestUser(
-  overrides: Omit<Partial<TestUser>, "plan"> & {
-    plan?: Partial<TestUserPlan>;
-  } = {},
-): TestUser {
-  const defaultPlan: TestUserPlan = {
-    name: "Lite",
-    expiresOn: new Date(Date.now() + 86_400_000),
-    imageGenerations: 0,
-    audioGenerations: 0,
-    videoGenerations: 0,
-    usagePeriodStart: new Date(),
-    trialUsage: {
-      trialImageGenerations: 0,
-      trialAudioGenerations: 0,
-      trialVideoGenerations: 0,
-      trialUsagePeriodStart: new Date(),
-    },
-  };
+export type TestClerkUser = {
+  id: string;
+  emailAddresses: Array<{
+    id: string;
+    emailAddress: string;
+  }>;
+  primaryEmailAddressId: string | null;
+  username: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  imageUrl: string;
+  createdAt: number;
+};
 
-  const { plan, ...rest } = overrides;
+const DEFAULT_PLAN_DATA: PlanData = {
+  id: "0",
+  name: "Lite",
+  amount: 0,
+  billing: "Monthly",
+  startedOn: new Date(),
+  expiresOn: new Date(Date.now() + 86_400_000),
+  stripeId: undefined,
+  imageGenerations: 0,
+  audioGenerations: 0,
+  videoGenerations: 0,
+  usagePeriodStart: new Date(),
+  trialUsage: {
+    trialImageGenerations: 0,
+    trialAudioGenerations: 0,
+    trialVideoGenerations: 0,
+    trialUsagePeriodStart: new Date(),
+  },
+};
+
+const DEFAULT_USER_DATA: UserData = {
+  _id: "507f1f77bcf86cd799439011",
+  clerkId: "user_123",
+  username: "test-user",
+  email: "test.user@example.com",
+  role: "client",
+  registerAt: new Date("2026-01-01T00:00:00.000Z"),
+  firstName: "Test",
+  lastName: "User",
+  updatedAt: new Date("2026-01-01T00:00:00.000Z"),
+  userimg: "https://example.com/avatar.png",
+  suspended: false,
+  dailyConversationsStarted: 0,
+  dailyConversationWindowStart: null,
+  plan: DEFAULT_PLAN_DATA,
+  __v: 0,
+};
+
+const DEFAULT_TASK_DATA: TaskConversation = {
+  _id: "507f1f77bcf86cd799439012",
+  title: "Conversation",
+  personaId: "strategist",
+  messages: [
+    {
+      id: "msg_1",
+      role: "user",
+      whois: "user",
+      content: [{ type: "text", text: "Earlier prompt" }],
+    },
+  ],
+  usage: 1,
+  promptCount: 1,
+  mediaCount: 0,
+  estimatedBytes: 512,
+  status: "active",
+  endedAt: undefined,
+  endedReason: undefined,
+  endAction: undefined,
+  updatedAt: "2026-03-11T00:00:00.000Z",
+};
+
+const DEFAULT_TRANSACTION_DATA: TestTransaction = {
+  _id: "507f1f77bcf86cd799439013",
+  stripeId: "stripe_txn_123",
+  userId: "507f1f77bcf86cd799439011",
+  clerkId: "user_123",
+  createdAt: new Date("2026-01-01T00:00:00.000Z"),
+  expiresOn: new Date("2026-02-01T00:00:00.000Z"),
+  amount: 0,
+  plan: "Lite",
+  billing: "Monthly",
+};
+
+const DEFAULT_CLERK_USER: TestClerkUser = {
+  id: "user_123",
+  emailAddresses: [
+    {
+      id: "email_123",
+      emailAddress: "test.user@example.com",
+    },
+  ],
+  primaryEmailAddressId: "email_123",
+  username: "test-user",
+  firstName: "Test",
+  lastName: "User",
+  imageUrl: "https://example.com/avatar.png",
+  createdAt: Date.parse("2026-01-01T00:00:00.000Z"),
+};
+
+function mergePlanData(overrides: TestUserPlanOverrides = {}): PlanData {
+  const defaultTrialUsage = DEFAULT_PLAN_DATA.trialUsage ?? {};
 
   return {
-    clerkId: "user_123",
-    role: "client",
-    plan: {
-      ...defaultPlan,
-      ...plan,
-      trialUsage: {
-        ...defaultPlan.trialUsage,
-        ...(plan?.trialUsage ?? {}),
-      },
+    ...DEFAULT_PLAN_DATA,
+    ...overrides,
+    trialUsage: {
+      ...defaultTrialUsage,
+      ...(overrides.trialUsage ?? {}),
     },
-    ...rest,
   };
 }
 
-export function createTestTask(overrides: Partial<TestTask> = {}): TestTask {
+export function createTestUser(overrides: TestUserOverrides = {}): UserData {
+  const { plan, ...rest } = overrides;
+
   return {
-    _id: "507f1f77bcf86cd799439011",
-    title: "Conversation",
-    personaId: "strategist",
-    messages: [
-      {
-        role: "user",
-        whois: "user",
-        content: [{ type: "text", text: "Earlier prompt" }],
-      },
-    ],
-    usage: 3,
-    promptCount: 1,
-    mediaCount: 0,
-    estimatedBytes: 512,
-    status: "active",
-    updatedAt: "2026-03-11T00:00:00.000Z",
+    ...DEFAULT_USER_DATA,
+    ...rest,
+    role: (rest.role ?? DEFAULT_USER_DATA.role) as UserRoles,
+    plan: mergePlanData(plan),
+  };
+}
+
+export function createTestTask(
+  overrides: Partial<TaskConversation> = {},
+): TaskConversation {
+  return {
+    ...DEFAULT_TASK_DATA,
     ...overrides,
+    personaId: (overrides.personaId ??
+      DEFAULT_TASK_DATA.personaId) as PersonaId,
+    messages: overrides.messages ?? DEFAULT_TASK_DATA.messages,
+  };
+}
+
+export function createTestTransaction(
+  overrides: Partial<TestTransaction> = {},
+): TestTransaction {
+  return {
+    ...DEFAULT_TRANSACTION_DATA,
+    ...overrides,
+  };
+}
+
+export function createTestClerkUser(
+  overrides: Partial<TestClerkUser> = {},
+): TestClerkUser {
+  return {
+    ...DEFAULT_CLERK_USER,
+    ...overrides,
+    emailAddresses:
+      overrides.emailAddresses ?? DEFAULT_CLERK_USER.emailAddresses,
   };
 }
 
@@ -119,4 +210,29 @@ export function buildMockRequest({
       : headers,
     body: hasJsonBody ? JSON.stringify(payload) : undefined,
   });
+}
+
+export function buildMockNextRequest({
+  payload,
+  formData,
+  headers = {},
+  method = "POST",
+  url = "http://localhost:3000/api/openai",
+  nextUrl,
+}: MockNextRequestOptions = {}): NextRequest {
+  const request = buildMockRequest({ payload, headers, method, url });
+
+  if (!formData) {
+    return request as NextRequest;
+  }
+
+  return {
+    ...request,
+    nextUrl: new URL(nextUrl ?? url),
+    formData: async () => formData,
+  } as unknown as NextRequest;
+}
+
+export async function readJsonResponse<T>(response: Response): Promise<T> {
+  return (await response.json()) as T;
 }
