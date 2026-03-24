@@ -11,13 +11,7 @@ Zod collects all validation failures, not just the first one. When displaying er
 
 **Incorrect (showing only first error):**
 
-<<<<<<< HEAD
-```typescript
-<<<<<<< HEAD
-import { z } from "zod";
-=======
 ```typescriptimport { z } from "zod";
->>>>>>> devel
 
 const formSchema = z.object({
   email: z.string().email("Invalid email"),
@@ -38,36 +32,7 @@ function validateForm(data: unknown) {
 }
 
 // User submits empty form
-<<<<<<< HEAD
-validateForm({});
-=======
-import { z } from 'zod'
-
-const formSchema = z.object({
-  email: z.string().email('Invalid email'),
-  password: z.string().min(8, 'Password must be 8+ characters'),
-  confirmPassword: z.string(),
-  age: z.number().min(18, 'Must be 18 or older'),
-})
-
-function validateForm(data: unknown) {
-  const result = formSchema.safeParse(data)
-
-  if (!result.success) {
-    // Only shows first error - terrible UX
-    return { error: result.error.issues[0].message }
-  }
-
-  return { data: result.data }
-}
-
-// User submits empty form
-validateForm({})
->>>>>>> devel
-// Returns: { error: 'Invalid email' }
-=======
 validateForm({});// Returns: { error: 'Invalid email' }
->>>>>>> devel
 // User fixes email, submits again
 // Returns: { error: 'Password must be 8+ characters' }
 // User fixes password, submits again...
@@ -76,13 +41,7 @@ validateForm({});// Returns: { error: 'Invalid email' }
 
 **Correct (showing all errors):**
 
-<<<<<<< HEAD
-```typescript
-<<<<<<< HEAD
-import { z } from "zod";
-=======
 ```typescriptimport { z } from "zod";
->>>>>>> devel
 
 const formSchema = z.object({
   email: z.string().email("Invalid email"),
@@ -113,46 +72,7 @@ function validateForm(data: unknown) {
 }
 
 // User submits empty form
-<<<<<<< HEAD
-validateForm({});
-=======
-import { z } from 'zod'
-
-const formSchema = z.object({
-  email: z.string().email('Invalid email'),
-  password: z.string().min(8, 'Password must be 8+ characters'),
-  confirmPassword: z.string(),
-  age: z.number().min(18, 'Must be 18 or older'),
-})
-
-function validateForm(data: unknown) {
-  const result = formSchema.safeParse(data)
-
-  if (!result.success) {
-    // Collect errors by field for form display
-    const fieldErrors: Record<string, string[]> = {}
-
-    for (const issue of result.error.issues) {
-      const field = issue.path.join('.')
-      if (!fieldErrors[field]) {
-        fieldErrors[field] = []
-      }
-      fieldErrors[field].push(issue.message)
-    }
-
-    return { errors: fieldErrors }
-  }
-
-  return { data: result.data }
-}
-
-// User submits empty form
-validateForm({})
->>>>>>> devel
-// Returns: {
-=======
 validateForm({});// Returns: {
->>>>>>> devel
 //   errors: {
 //     email: ['Invalid email'],
 //     password: ['Password must be 8+ characters'],
@@ -165,62 +85,21 @@ validateForm({});// Returns: {
 
 **Using flatten() for simpler error structure:**
 
-<<<<<<< HEAD
-```typescript
-<<<<<<< HEAD
-const result = formSchema.safeParse(data);
-
-if (!result.success) {
-  const flattened = result.error.flatten();
-=======
-const result = formSchema.safeParse(data)
-
-if (!result.success) {
-  const flattened = result.error.flatten()
->>>>>>> devel
-  // {
-=======
 ```typescriptconst result = formSchema.safeParse(data);
 
 if (!result.success) {
   const flattened = result.error.flatten();  // {
->>>>>>> devel
   //   formErrors: [],  // Top-level errors
   //   fieldErrors: {
   //     email: ['Invalid email'],
   //     password: ['Password must be 8+ characters'],
   //     ...
   //   }
-<<<<<<< HEAD
-  // }
-<<<<<<< HEAD
-  return { errors: flattened.fieldErrors };
-=======
-  return { errors: flattened.fieldErrors }
->>>>>>> devel
-}
-=======
   // }  return { errors: flattened.fieldErrors };}
->>>>>>> devel
 ```
 
 **With React Hook Form integration:**
 
-<<<<<<< HEAD
-```typescript
-<<<<<<< HEAD
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-=======
-import { zodResolver } from '@hookform/resolvers/zod'
-import { useForm } from 'react-hook-form'
->>>>>>> devel
-
-const form = useForm({
-  resolver: zodResolver(formSchema),
-  // All errors are automatically collected and displayed
-<<<<<<< HEAD
-=======
 ```typescriptimport { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 const form = useForm({
@@ -231,23 +110,11 @@ const form = useForm({
 
 # **When NOT to use this pattern:**
 
->>>>>>> devel
 });
 
 ```
 
 **When NOT to use this pattern:**
-<<<<<<< HEAD
-
-=======
-})
-
-```
-
-**When NOT to use this pattern:**
->>>>>>> devel
-=======
->>>>>>> devel
 - Rate-limited APIs where you want to fail fast on first error
 - Large batch processing where full validation is expensive
 

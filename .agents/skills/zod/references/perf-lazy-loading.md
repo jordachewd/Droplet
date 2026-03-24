@@ -12,13 +12,7 @@ For applications with many complex schemas, importing all of them upfront increa
 **Incorrect (importing all schemas upfront):**
 
 ```typescript
-<<<<<<< HEAD
-// schemas/index.ts - barrel file with everything
-<<<<<<< HEAD
-export * from "./user";
-=======
 // schemas/index.ts - barrel file with everythingexport * from "./user";
->>>>>>> devel
 export * from "./order";
 export * from "./product";
 export * from "./analytics"; // Large, complex schema
@@ -31,56 +25,12 @@ import {
   orderSchema,
   analyticsSchema,
   reportsSchema,
-<<<<<<< HEAD
-} from "@/schemas";
-=======
-export * from './user'
-export * from './order'
-export * from './product'
-export * from './analytics'  // Large, complex schema
-export * from './reports'    // Another large schema
-export * from './admin'      // Admin-only schemas
-
-// app/page.tsx
-import { userSchema, orderSchema, analyticsSchema, reportsSchema } from '@/schemas'
->>>>>>> devel
-// All schemas loaded even if not used on this page
-=======
 } from "@/schemas";// All schemas loaded even if not used on this page
->>>>>>> devel
 ```
 
 **Correct (lazy loading schemas):**
 
 ```typescript
-<<<<<<< HEAD
-// Only import what's immediately needed
-<<<<<<< HEAD
-import { userSchema } from "@/schemas/user";
-
-async function loadAnalyticsSchema() {
-  const { analyticsSchema } = await import("@/schemas/analytics");
-  return analyticsSchema;
-=======
-import { userSchema } from '@/schemas/user'
-
-async function loadAnalyticsSchema() {
-  const { analyticsSchema } = await import('@/schemas/analytics')
-  return analyticsSchema
->>>>>>> devel
-}
-
-// Use when needed
-async function handleAnalyticsData(data: unknown) {
-<<<<<<< HEAD
-  const schema = await loadAnalyticsSchema();
-  return schema.safeParse(data);
-=======
-  const schema = await loadAnalyticsSchema()
-  return schema.safeParse(data)
->>>>>>> devel
-}
-=======
 // Only import what's immediately neededimport { userSchema } from "@/schemas/user";
 
 async function loadAnalyticsSchema() {
@@ -90,7 +40,6 @@ async function loadAnalyticsSchema() {
 // Use when needed
 async function handleAnalyticsData(data: unknown) {  const schema = await loadAnalyticsSchema();
   return schema.safeParse(data);}
->>>>>>> devel
 ```
 
 **Route-based schema loading:**
@@ -154,13 +103,6 @@ export default function ReportsForm() {
 ```typescript
 // schemas/registry.ts
 const schemaLoaders = {
-<<<<<<< HEAD
-<<<<<<< HEAD
-  user: () => import("./user").then((m) => m.userSchema),
-  order: () => import("./order").then((m) => m.orderSchema),
-  analytics: () => import("./analytics").then((m) => m.analyticsSchema),
-  reports: () => import("./reports").then((m) => m.reportsSchema),
-=======
   user: () => import('./user').then(m => m.userSchema),
   order: () => import('./order').then(m => m.orderSchema),
   analytics: () => import('./analytics').then(m => m.analyticsSchema),
@@ -190,7 +132,6 @@ user: () => import("./user").then((m) => m.userSchema),
 order: () => import("./order").then((m) => m.orderSchema),
 analytics: () => import("./analytics").then((m) => m.analyticsSchema),
 reports: () => import("./reports").then((m) => m.reportsSchema),
->>>>>>> devel
 } as const;
 
 type SchemaName = keyof typeof schemaLoaders;
@@ -212,37 +153,6 @@ schema.parse(data);
 ```
 
 **When NOT to use this pattern:**
-<<<<<<< HEAD
-
-=======
-user: () => import('./user').then(m => m.userSchema),
-order: () => import('./order').then(m => m.orderSchema),
-analytics: () => import('./analytics').then(m => m.analyticsSchema),
-reports: () => import('./reports').then(m => m.reportsSchema),
-} as const
-
-type SchemaName = keyof typeof schemaLoaders
-
-const schemaCache = new Map<SchemaName, z.ZodType>()
-
-export async function getSchema(name: SchemaName) {
-if (!schemaCache.has(name)) {
-const schema = await schemaLoaders[name]()
-schemaCache.set(name, schema)
-}
-return schemaCache.get(name)!
-}
-
-// Usage
-const schema = await getSchema('analytics')
-schema.parse(data)
-
-```
-
-**When NOT to use this pattern:**
->>>>>>> devel
-=======
->>>>>>> devel
 - Server-side rendering where all code is available
 - Small applications with few schemas
 - Schemas used on every page (defeats purpose)

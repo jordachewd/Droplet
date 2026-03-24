@@ -57,13 +57,7 @@ function UserForm() {
 
 **For dynamic schemas, use useMemo:**
 
-<<<<<<< HEAD
-```typescript
-<<<<<<< HEAD
-import { z } from "zod";
-=======
 ```typescriptimport { z } from "zod";
->>>>>>> devel
 import { useMemo } from "react";
 
 function DynamicForm({ minAge }: { minAge: number }) {
@@ -76,24 +70,6 @@ function DynamicForm({ minAge }: { minAge: number }) {
       }),
     [minAge],
   );
-<<<<<<< HEAD
-=======
-import { z } from 'zod'
-import { useMemo } from 'react'
-
-function DynamicForm({ minAge }: { minAge: number }) {
-  // Schema only recreated when minAge changes
-  const userSchema = useMemo(() =>
-    z.object({
-      name: z.string().min(1),
-      age: z.number().min(minAge),
-    }),
-    [minAge]
-  )
->>>>>>> devel
-
-=======
->>>>>>> devel
   // ...
 }
 ```
@@ -101,47 +77,17 @@ function DynamicForm({ minAge }: { minAge: number }) {
 **For server-side, use module cache:**
 
 ```typescript
-<<<<<<< HEAD
-// schemas/user.ts - created once per process
-<<<<<<< HEAD
-import { z } from "zod";
-=======
-import { z } from 'zod'
->>>>>>> devel
-
-export const userSchema = z.object({
-  id: z.string().uuid(),
-  email: z.string().email(),
-<<<<<<< HEAD
-});
-=======
 // schemas/user.ts - created once per processimport { z } from "zod";
 export const userSchema = z.object({
   id: z.string().uuid(),
   email: z.string().email(),});
->>>>>>> devel
 
 // api/users.ts
 import { userSchema } from "@/schemas/user";
 
 export async function POST(req: Request) {
   const body = await req.json();
-<<<<<<< HEAD
-  const result = userSchema.safeParse(body); // Reuses cached schema
-=======
-})
-
-// api/users.ts
-import { userSchema } from '@/schemas/user'
-
-export async function POST(req: Request) {
-  const body = await req.json()
-  const result = userSchema.safeParse(body)  // Reuses cached schema
->>>>>>> devel
-  // ...
-=======
   const result = userSchema.safeParse(body); // Reuses cached schema  // ...
->>>>>>> devel
 }
 ```
 
@@ -153,10 +99,6 @@ function createUserSchema(role: string) {
   return z.object({
     name: z.string(),
     permissions: z.array(z.string()),
-<<<<<<< HEAD
-<<<<<<< HEAD
-  });
-=======
   })
 }
 
@@ -187,7 +129,6 @@ users.forEach(user => {
 # **When NOT to use this pattern:**
 
 });
->>>>>>> devel
 }
 
 // Called in hot loop
@@ -219,41 +160,6 @@ getUserSchema(user.role).parse(user);
 ```
 
 **When NOT to use this pattern:**
-<<<<<<< HEAD
-
-=======
-})
-}
-
-// Called in hot loop
-users.forEach(user => {
-createUserSchema(user.role).parse(user) // New schema every iteration!
-})
-
-// GOOD: Cache by key
-const schemaCache = new Map<string, z.ZodObject<any>>()
-
-function getUserSchema(role: string) {
-if (!schemaCache.has(role)) {
-schemaCache.set(role, z.object({
-name: z.string(),
-permissions: z.array(z.string()),
-}))
-}
-return schemaCache.get(role)!
-}
-
-// Reuses cached schemas
-users.forEach(user => {
-getUserSchema(user.role).parse(user)
-})
-
-```
-
-**When NOT to use this pattern:**
->>>>>>> devel
-=======
->>>>>>> devel
 - One-off validation where schema is used once
 - Test files where performance doesn't matter
 

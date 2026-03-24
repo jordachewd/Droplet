@@ -11,13 +11,7 @@ When validating nested objects or arrays, `issue.path` tells you exactly where t
 
 **Incorrect (ignoring path information):**
 
-<<<<<<< HEAD
-```typescript
-<<<<<<< HEAD
-import { z } from "zod";
-=======
 ```typescriptimport { z } from "zod";
->>>>>>> devel
 
 const orderSchema = z.object({
   customer: z.object({
@@ -45,52 +39,12 @@ if (!result.success) {
   result.error.issues.forEach((issue) => {
     console.log(issue.message); // 'Name required', 'Street required', 'Quantity must be positive'
     // User: "Which quantity? Which field?"
-<<<<<<< HEAD
-  });
-=======
-import { z } from 'zod'
-
-const orderSchema = z.object({
-  customer: z.object({
-    name: z.string().min(1, 'Name required'),
-    address: z.object({
-      street: z.string().min(1, 'Street required'),
-      city: z.string().min(1, 'City required'),
-    }),
-  }),
-  items: z.array(z.object({
-    productId: z.string(),
-    quantity: z.number().positive('Quantity must be positive'),
-  })),
-})
-
-const result = orderSchema.safeParse({
-  customer: { name: '', address: { street: '', city: '' } },
-  items: [{ productId: 'abc', quantity: -1 }],
-})
-
-if (!result.success) {
-  // Only showing message, not WHERE the error is
-  result.error.issues.forEach(issue => {
-    console.log(issue.message)  // 'Name required', 'Street required', 'Quantity must be positive'
-    // User: "Which quantity? Which field?"
-  })
->>>>>>> devel
-}
-=======
   });}
->>>>>>> devel
 ```
 
 **Correct (using path information):**
 
-<<<<<<< HEAD
-```typescript
-<<<<<<< HEAD
-import { z } from "zod";
-=======
 ```typescriptimport { z } from "zod";
->>>>>>> devel
 
 const orderSchema = z.object({
   customer: z.object({
@@ -116,63 +70,16 @@ const result = orderSchema.safeParse({
 if (!result.success) {
   result.error.issues.forEach((issue) => {
     // path is an array of keys/indices
-<<<<<<< HEAD
-    console.log(`${issue.path.join(".")}: ${issue.message}`);
-=======
-import { z } from 'zod'
-
-const orderSchema = z.object({
-  customer: z.object({
-    name: z.string().min(1, 'Name required'),
-    address: z.object({
-      street: z.string().min(1, 'Street required'),
-      city: z.string().min(1, 'City required'),
-    }),
-  }),
-  items: z.array(z.object({
-    productId: z.string(),
-    quantity: z.number().positive('Quantity must be positive'),
-  })),
-})
-
-const result = orderSchema.safeParse({
-  customer: { name: '', address: { street: '', city: '' } },
-  items: [{ productId: 'abc', quantity: -1 }],
-})
-
-if (!result.success) {
-  result.error.issues.forEach(issue => {
-    // path is an array of keys/indices
-    console.log(`${issue.path.join('.')}: ${issue.message}`)
->>>>>>> devel
-    // 'customer.name: Name required'
-    // 'customer.address.street: Street required'
-    // 'customer.address.city: City required'
-    // 'items.0.quantity: Quantity must be positive'
-<<<<<<< HEAD
-  });
-=======
-  })
->>>>>>> devel
-}
-=======
     console.log(`${issue.path.join(".")}: ${issue.message}`);    // 'customer.name: Name required'
     // 'customer.address.street: Street required'
     // 'customer.address.city: City required'
     // 'items.0.quantity: Quantity must be positive'  });}
->>>>>>> devel
 ```
 
 **Building field-specific error mapping:**
 
 ```typescript
-<<<<<<< HEAD
-function mapErrorsToFields(error: z.ZodError) {
-<<<<<<< HEAD
-  const fieldErrors: Map<string, string[]> = new Map();
-=======
 function mapErrorsToFields(error: z.ZodError) {  const fieldErrors: Map<string, string[]> = new Map();
->>>>>>> devel
 
   for (const issue of error.issues) {
     const fieldPath = issue.path.join(".");
@@ -186,67 +93,23 @@ function mapErrorsToFields(error: z.ZodError) {  const fieldErrors: Map<string, 
 // Usage
 const errors = mapErrorsToFields(result.error);
 errors.get("customer.name"); // ['Name required']
-<<<<<<< HEAD
-errors.get("items.0.quantity"); // ['Quantity must be positive']
-=======
-  const fieldErrors: Map<string, string[]> = new Map()
-
-  for (const issue of error.issues) {
-    const fieldPath = issue.path.join('.')
-    const existing = fieldErrors.get(fieldPath) ?? []
-    fieldErrors.set(fieldPath, [...existing, issue.message])
-  }
-
-  return fieldErrors
-}
-
-// Usage
-const errors = mapErrorsToFields(result.error)
-errors.get('customer.name')  // ['Name required']
-errors.get('items.0.quantity')  // ['Quantity must be positive']
->>>>>>> devel
-```
-
-**For array items, get index from path:**
-
-```typescript
-<<<<<<< HEAD
-const itemsWithErrors: Set<number> = new Set();
-=======
 errors.get("items.0.quantity"); // ['Quantity must be positive']```
 
 **For array items, get index from path:**
 
 ```typescriptconst itemsWithErrors: Set<number> = new Set();
->>>>>>> devel
 
 result.error.issues.forEach((issue) => {
   if (issue.path[0] === "items" && typeof issue.path[1] === "number") {
     itemsWithErrors.add(issue.path[1]);
   }
 });
-<<<<<<< HEAD
-=======
-const itemsWithErrors: Set<number> = new Set()
-
-result.error.issues.forEach(issue => {
-  if (issue.path[0] === 'items' && typeof issue.path[1] === 'number') {
-    itemsWithErrors.add(issue.path[1])
-  }
-})
->>>>>>> devel
-
-=======
->>>>>>> devel
 // Highlight items at indices: Set { 0 }
 ```
 
 **Using path with format():**
 
 ```typescript
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
 const formatted = result.error.format()
 
 // Access errors at any path level
@@ -256,7 +119,6 @@ formatted.items?.[0]?.quantity?._errors  // ['Quantity must be positive']
 
 # **When NOT to use this pattern:**
 
->>>>>>> devel
 const formatted = result.error.format();
 
 // Access errors at any path level
@@ -266,21 +128,6 @@ formatted.items?.[0]?.quantity?.\_errors; // ['Quantity must be positive']
 ```
 
 **When NOT to use this pattern:**
-<<<<<<< HEAD
-
-=======
-const formatted = result.error.format()
-
-// Access errors at any path level
-formatted.customer?.address?.city?.\_errors // ['City required']
-formatted.items?.[0]?.quantity?.\_errors // ['Quantity must be positive']
-
-```
-
-**When NOT to use this pattern:**
->>>>>>> devel
-=======
->>>>>>> devel
 - Flat objects where field name is obvious
 - When using form libraries that handle path mapping
 

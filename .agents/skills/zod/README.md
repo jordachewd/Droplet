@@ -51,22 +51,6 @@ zod/
 ```
 
 ## Rule Categories
-<<<<<<< HEAD
-
-<<<<<<< HEAD
-| Priority | Category | Rules | Impact |
-| -------- | ------------------------ | ----- | ----------- |
-| 1 | Schema Definition | 6 | CRITICAL |
-| 2 | Parsing & Validation | 6 | CRITICAL |
-| 3 | Type Inference | 5 | HIGH |
-| 4 | Error Handling | 5 | HIGH |
-| 5 | Object Schemas | 6 | MEDIUM-HIGH |
-| 6 | Schema Composition | 5 | MEDIUM |
-| 7 | Refinements & Transforms | 5 | MEDIUM |
-| 8 | Performance & Bundle | 5 | LOW-MEDIUM |
-=======
-=======
->>>>>>> devel
 | Priority | Category | Rules | Impact |
 |----------|----------|-------|--------|
 | 1 | Schema Definition | 6 | CRITICAL |
@@ -77,10 +61,6 @@ zod/
 | 6 | Schema Composition | 5 | MEDIUM |
 | 7 | Refinements & Transforms | 5 | MEDIUM |
 | 8 | Performance & Bundle | 5 | LOW-MEDIUM |
-<<<<<<< HEAD
-
-> > > > > > > devel
-=======
 | Priority | Category | Rules | Impact |
 | -------- | ------------------------ | ----- | ----------- |
 | 1 | Schema Definition | 6 | CRITICAL |
@@ -92,7 +72,6 @@ zod/
 | 7 | Refinements & Transforms | 5 | MEDIUM |
 | 8 | Performance & Bundle | 5 | LOW-MEDIUM |
 
->>>>>>> devel
 
 ## Key Principles
 

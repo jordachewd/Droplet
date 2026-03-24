@@ -12,27 +12,11 @@ When defining schemas in shared modules, export both the schema and its inferred
 **Incorrect (exporting only schema):**
 
 ```typescript
-<<<<<<< HEAD
-// schemas/user.ts
-<<<<<<< HEAD
-import { z } from "zod";
-=======
-import { z } from 'zod'
->>>>>>> devel
-
-export const userSchema = z.object({
-  id: z.string().uuid(),
-  email: z.string().email(),
-  name: z.string(),
-<<<<<<< HEAD
-  role: z.enum(["admin", "user"]),
-=======
 // schemas/user.tsimport { z } from "zod";
 export const userSchema = z.object({
   id: z.string().uuid(),
   email: z.string().email(),
   name: z.string(),  role: z.enum(["admin", "user"]),
->>>>>>> devel
 });
 
 // Every consumer must derive the type
@@ -46,75 +30,11 @@ type User = z.infer<typeof userSchema>; // Repeated everywhere
 import { userSchema } from "@/schemas/user";
 import type { z } from "zod";
 
-<<<<<<< HEAD
-type User = z.infer<typeof userSchema>; // Same boilerplate again
-=======
-  role: z.enum(['admin', 'user']),
-})
-
-// Every consumer must derive the type
-// api/users.ts
-import { userSchema } from '@/schemas/user'
-import type { z } from 'zod'
-
-type User = z.infer<typeof userSchema>  // Repeated everywhere
-
-// components/UserCard.tsx
-import { userSchema } from '@/schemas/user'
-import type { z } from 'zod'
-
-type User = z.infer<typeof userSchema>  // Same boilerplate again
->>>>>>> devel
-```
-=======
 type User = z.infer<typeof userSchema>; // Same boilerplate again```
->>>>>>> devel
 
 **Correct (exporting schema and type):**
 
 ```typescript
-<<<<<<< HEAD
-// schemas/user.ts
-<<<<<<< HEAD
-import { z } from "zod";
-=======
-import { z } from 'zod'
->>>>>>> devel
-
-export const userSchema = z.object({
-  id: z.string().uuid(),
-  email: z.string().email(),
-  name: z.string(),
-<<<<<<< HEAD
-  role: z.enum(["admin", "user"]),
-});
-
-export type User = z.infer<typeof userSchema>;
-=======
-  role: z.enum(['admin', 'user']),
-})
-
-export type User = z.infer<typeof userSchema>
->>>>>>> devel
-
-// For schemas with transforms, export both
-export const apiUserSchema = z.object({
-  id: z.string(),
-<<<<<<< HEAD
-  created_at: z.string().transform((s) => new Date(s)),
-});
-
-export type ApiUserInput = z.input<typeof apiUserSchema>;
-export type ApiUser = z.infer<typeof apiUserSchema>;
-=======
-  created_at: z.string().transform(s => new Date(s)),
-})
-
-export type ApiUserInput = z.input<typeof apiUserSchema>
-export type ApiUser = z.infer<typeof apiUserSchema>
->>>>>>> devel
-```
-=======
 // schemas/user.tsimport { z } from "zod";
 export const userSchema = z.object({
   id: z.string().uuid(),
@@ -130,7 +50,6 @@ export const apiUserSchema = z.object({
 
 export type ApiUserInput = z.input<typeof apiUserSchema>;
 export type ApiUser = z.infer<typeof apiUserSchema>;```
->>>>>>> devel
 
 ```typescript
 // api/users.ts - clean import
@@ -152,50 +71,16 @@ function UserCard({ user }: { user: User }) {
 **Organizing schema exports:**
 
 ```typescript
-<<<<<<< HEAD
-// schemas/index.ts - barrel file for schemas
-<<<<<<< HEAD
-export { userSchema, type User, type UserInput } from "./user";
-=======
 // schemas/index.ts - barrel file for schemasexport { userSchema, type User, type UserInput } from "./user";
->>>>>>> devel
 export { orderSchema, type Order } from "./order";
 export { productSchema, type Product } from "./product";
 
 // Usage
-<<<<<<< HEAD
-import { userSchema, type User, type Order } from "@/schemas";
-=======
-export { userSchema, type User, type UserInput } from './user'
-export { orderSchema, type Order } from './order'
-export { productSchema, type Product } from './product'
-
-// Usage
-import { userSchema, type User, type Order } from '@/schemas'
->>>>>>> devel
-```
-=======
 import { userSchema, type User, type Order } from "@/schemas";```
->>>>>>> devel
 
 **With enums, export the enum values too:**
 
 ```typescript
-<<<<<<< HEAD
-// schemas/user.ts
-<<<<<<< HEAD
-export const UserRole = z.enum(["admin", "user", "guest"]);
-export type UserRole = z.infer<typeof UserRole>;
-=======
-export const UserRole = z.enum(['admin', 'user', 'guest'])
-export type UserRole = z.infer<typeof UserRole>
->>>>>>> devel
-
-export const userSchema = z.object({
-  id: z.string(),
-  role: UserRole,
-<<<<<<< HEAD
-=======
 // schemas/user.tsexport const UserRole = z.enum(["admin", "user", "guest"]);
 export type UserRole = z.infer<typeof UserRole>;
 export const userSchema = z.object({
@@ -212,7 +97,6 @@ UserRole.enum.admin  // 'admin'
 
 # **When NOT to use this pattern:**
 
->>>>>>> devel
 });
 
 export type User = z.infer<typeof userSchema>;
@@ -224,23 +108,6 @@ UserRole.enum.admin; // 'admin'
 ```
 
 **When NOT to use this pattern:**
-<<<<<<< HEAD
-
-=======
-})
-
-export type User = z.infer<typeof userSchema>
-
-// Access enum values
-UserRole.options // ['admin', 'user', 'guest']
-UserRole.enum.admin // 'admin'
-
-```
-
-**When NOT to use this pattern:**
->>>>>>> devel
-=======
->>>>>>> devel
 - Internal schemas that won't be used outside the module
 - Transient schemas used only for validation (not as types)
 

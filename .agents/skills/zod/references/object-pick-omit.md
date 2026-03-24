@@ -11,17 +11,7 @@ When you need different views of the same data (public vs private, create vs res
 
 **Incorrect (duplicating for variants):**
 
-<<<<<<< HEAD
-```typescript
-<<<<<<< HEAD
-import { z } from "zod";
-=======
-import { z } from 'zod'
->>>>>>> devel
-
-=======
 ```typescriptimport { z } from "zod";
->>>>>>> devel
 // Full user schema
 const userSchema = z.object({
   id: z.string().uuid(),
@@ -29,57 +19,13 @@ const userSchema = z.object({
   passwordHash: z.string(),
   name: z.string(),
   createdAt: z.date(),
-<<<<<<< HEAD
-  isAdmin: z.boolean(),
-<<<<<<< HEAD
-});
-=======
-})
->>>>>>> devel
-
-=======
   isAdmin: z.boolean(),});
->>>>>>> devel
 // Public view - manually duplicated
 const publicUserSchema = z.object({
   id: z.string().uuid(),
   name: z.string(),
   // Forgot email - now users can't see it
   // Added avatar field - doesn't exist in base schema
-<<<<<<< HEAD
-  avatar: z.string().optional(),
-<<<<<<< HEAD
-});
-=======
-})
->>>>>>> devel
-
-// Create input - manually duplicated
-const createUserSchema = z.object({
-  email: z.string().email(),
-<<<<<<< HEAD
-  password: z.string().min(8), // Different from passwordHash
-  name: z.string(),
-  // Missing isAdmin - can't set on create? Intentional?
-});
-=======
-  password: z.string().min(8),  // Different from passwordHash
-  name: z.string(),
-  // Missing isAdmin - can't set on create? Intentional?
-})
->>>>>>> devel
-```
-
-**Correct (using pick and omit):**
-
-```typescript
-<<<<<<< HEAD
-import { z } from "zod";
-=======
-import { z } from 'zod'
->>>>>>> devel
-
-=======
   avatar: z.string().optional(),});
 // Create input - manually duplicated
 const createUserSchema = z.object({
@@ -91,7 +37,6 @@ const createUserSchema = z.object({
 **Correct (using pick and omit):**
 
 ```typescriptimport { z } from "zod";
->>>>>>> devel
 // Full user schema - single source of truth
 const userSchema = z.object({
   id: z.string().uuid(),
@@ -99,48 +44,11 @@ const userSchema = z.object({
   passwordHash: z.string(),
   name: z.string(),
   createdAt: z.date(),
-<<<<<<< HEAD
-  isAdmin: z.boolean(),
-<<<<<<< HEAD
-});
-=======
-})
->>>>>>> devel
-
-=======
   isAdmin: z.boolean(),});
->>>>>>> devel
 // Public view - explicitly pick public fields
 const publicUserSchema = userSchema.pick({
   id: true,
   email: true,
-<<<<<<< HEAD
-  name: true,
-<<<<<<< HEAD
-});
-
-type PublicUser = z.infer<typeof publicUserSchema>;
-=======
-})
-
-type PublicUser = z.infer<typeof publicUserSchema>
->>>>>>> devel
-// { id: string; email: string; name: string }
-
-// API response - omit sensitive fields
-const userResponseSchema = userSchema.omit({
-  passwordHash: true,
-<<<<<<< HEAD
-});
-
-type UserResponse = z.infer<typeof userResponseSchema>;
-=======
-})
-
-type UserResponse = z.infer<typeof userResponseSchema>
->>>>>>> devel
-// { id: string; email: string; name: string; createdAt: Date; isAdmin: boolean }
-=======
   name: true,});
 
 type PublicUser = z.infer<typeof publicUserSchema>;// { id: string; email: string; name: string }
@@ -150,31 +58,14 @@ const userResponseSchema = userSchema.omit({
   passwordHash: true,});
 
 type UserResponse = z.infer<typeof userResponseSchema>;// { id: string; email: string; name: string; createdAt: Date; isAdmin: boolean }
->>>>>>> devel
 
 // Create input - omit generated fields
 const createUserInputSchema = userSchema
   .omit({ id: true, createdAt: true, passwordHash: true })
-<<<<<<< HEAD
-  .extend({
-<<<<<<< HEAD
-    password: z.string().min(8), // Add password (different from hash)
-  });
-
-type CreateUserInput = z.infer<typeof createUserInputSchema>;
-=======
-    password: z.string().min(8),  // Add password (different from hash)
-  })
-
-type CreateUserInput = z.infer<typeof createUserInputSchema>
->>>>>>> devel
-// { email: string; name: string; isAdmin: boolean; password: string }
-=======
   .extend({    password: z.string().min(8), // Add password (different from hash)
   });
 
 type CreateUserInput = z.infer<typeof createUserInputSchema>;// { email: string; name: string; isAdmin: boolean; password: string }
->>>>>>> devel
 ```
 
 **Common patterns:**
@@ -187,61 +78,22 @@ const dbRowSchema = z.object({
   email: z.string(),
   password_hash: z.string(),
   internal_notes: z.string(),
-<<<<<<< HEAD
-  created_at: z.date(),
-<<<<<<< HEAD
-});
-=======
   created_at: z.date(),});
->>>>>>> devel
 
 const apiResponseSchema = dbRowSchema.omit({
   id: true, // Internal DB id
   password_hash: true, // Sensitive
   internal_notes: true, // Staff only
 });
-<<<<<<< HEAD
-=======
-})
-
-const apiResponseSchema = dbRowSchema.omit({
-  id: true,  // Internal DB id
-  password_hash: true,  // Sensitive
-  internal_notes: true,  // Staff only
-})
->>>>>>> devel
-
-// Form data → Database insert (add generated fields)
-const formSchema = z.object({
-  title: z.string(),
-  content: z.string(),
-<<<<<<< HEAD
-});
-=======
-})
->>>>>>> devel
-
-=======
 // Form data → Database insert (add generated fields)
 const formSchema = z.object({
   title: z.string(),
   content: z.string(),});
->>>>>>> devel
 const dbInsertSchema = formSchema.extend({
   id: z.string().uuid(),
   authorId: z.string().uuid(),
   createdAt: z.date(),
-<<<<<<< HEAD
-  updatedAt: z.date(),
-<<<<<<< HEAD
-});
-=======
-})
->>>>>>> devel
-```
-=======
   updatedAt: z.date(),});```
->>>>>>> devel
 
 **Chaining operations:**
 
@@ -250,11 +102,6 @@ const baseSchema = z.object({
   id: z.string(),
   name: z.string(),
   email: z.string(),
-<<<<<<< HEAD
-<<<<<<< HEAD
-  role: z.enum(["admin", "user"]),
-  secret: z.string(),
-=======
   role: z.enum(['admin', 'user']),
   secret: z.string(),
 })
@@ -272,7 +119,6 @@ const updateSchema = baseSchema
 
 role: z.enum(["admin", "user"]),
 secret: z.string(),
->>>>>>> devel
 });
 
 // Combine pick, omit, partial, extend
@@ -286,27 +132,6 @@ updatedAt: z.date().optional(), // Add update timestamp
 ```
 
 **When NOT to use this pattern:**
-<<<<<<< HEAD
-
-=======
-role: z.enum(['admin', 'user']),
-secret: z.string(),
-})
-
-// Combine pick, omit, partial, extend
-const updateSchema = baseSchema
-.omit({ id: true, secret: true }) // Remove immutable/sensitive
-.partial() // Make all optional for updates
-.extend({
-updatedAt: z.date().optional(), // Add update timestamp
-})
-
-```
-
-**When NOT to use this pattern:**
->>>>>>> devel
-=======
->>>>>>> devel
 - When derived schemas need different validation rules (not just different fields)
 - When the relationship between schemas is not subset/superset
 

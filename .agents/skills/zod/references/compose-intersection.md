@@ -11,43 +11,6 @@ When you need an object that satisfies multiple schemas simultaneously (like com
 
 **Incorrect (manual combination):**
 
-<<<<<<< HEAD
-```typescript
-<<<<<<< HEAD
-import { z } from "zod";
-=======
-import { z } from 'zod'
->>>>>>> devel
-
-const timestampsSchema = z.object({
-  createdAt: z.date(),
-  updatedAt: z.date(),
-<<<<<<< HEAD
-});
-=======
-})
->>>>>>> devel
-
-const softDeleteSchema = z.object({
-  deletedAt: z.date().nullable(),
-  deletedBy: z.string().nullable(),
-<<<<<<< HEAD
-});
-=======
-})
->>>>>>> devel
-
-const userSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  email: z.string().email(),
-<<<<<<< HEAD
-});
-=======
-})
->>>>>>> devel
-
-=======
 ```typescriptimport { z } from "zod";
 const timestampsSchema = z.object({
   createdAt: z.date(),
@@ -59,7 +22,6 @@ const userSchema = z.object({
   id: z.string(),
   name: z.string(),
   email: z.string().email(),});
->>>>>>> devel
 // Manual combination - verbose and error-prone
 const fullUserSchema = z.object({
   id: z.string(),
@@ -68,76 +30,6 @@ const fullUserSchema = z.object({
   createdAt: z.date(),
   updatedAt: z.date(),
   deletedAt: z.date().nullable(),
-<<<<<<< HEAD
-  deletedBy: z.string().nullable(),
-<<<<<<< HEAD
-});
-=======
-})
->>>>>>> devel
-```
-
-**Correct (using intersection):**
-
-```typescript
-<<<<<<< HEAD
-import { z } from "zod";
-=======
-import { z } from 'zod'
->>>>>>> devel
-
-const timestampsSchema = z.object({
-  createdAt: z.date(),
-  updatedAt: z.date(),
-<<<<<<< HEAD
-});
-=======
-})
->>>>>>> devel
-
-const softDeleteSchema = z.object({
-  deletedAt: z.date().nullable(),
-  deletedBy: z.string().nullable(),
-<<<<<<< HEAD
-});
-=======
-})
->>>>>>> devel
-
-const userSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  email: z.string().email(),
-<<<<<<< HEAD
-});
-
-// Using .and() for intersection
-const fullUserSchema = userSchema.and(timestampsSchema).and(softDeleteSchema);
-=======
-})
-
-// Using .and() for intersection
-const fullUserSchema = userSchema
-  .and(timestampsSchema)
-  .and(softDeleteSchema)
->>>>>>> devel
-
-// Or using z.intersection()
-const fullUserSchema2 = z.intersection(
-  z.intersection(userSchema, timestampsSchema),
-<<<<<<< HEAD
-  softDeleteSchema,
-);
-
-type FullUser = z.infer<typeof fullUserSchema>;
-=======
-  softDeleteSchema
-)
-
-type FullUser = z.infer<typeof fullUserSchema>
->>>>>>> devel
-// {
-=======
   deletedBy: z.string().nullable(),});```
 
 **Correct (using intersection):**
@@ -162,7 +54,6 @@ const fullUserSchema2 = z.intersection(
 );
 
 type FullUser = z.infer<typeof fullUserSchema>;// {
->>>>>>> devel
 //   id: string;
 //   name: string;
 //   email: string;
@@ -179,13 +70,7 @@ type FullUser = z.infer<typeof fullUserSchema>;// {
 // Reusable mixins
 const auditable = z.object({
   createdBy: z.string(),
-<<<<<<< HEAD
-  updatedBy: z.string(),
-<<<<<<< HEAD
-});
-=======
   updatedBy: z.string(),});
->>>>>>> devel
 
 const versioned = z.object({
   version: z.number().int().positive(),
@@ -201,61 +86,20 @@ function withAudit<T extends z.ZodRawShape>(schema: z.ZodObject<T>) {
 }
 
 function withVersioning<T extends z.ZodRawShape>(schema: z.ZodObject<T>) {
-<<<<<<< HEAD
-  return schema.and(versioned);
-=======
-})
-
-const versioned = z.object({
-  version: z.number().int().positive(),
-})
-
-const tagged = z.object({
-  tags: z.array(z.string()),
-})
-
-// Apply mixins to any schema
-function withAudit<T extends z.ZodRawShape>(schema: z.ZodObject<T>) {
-  return schema.and(auditable).and(timestampsSchema)
-}
-
-function withVersioning<T extends z.ZodRawShape>(schema: z.ZodObject<T>) {
-  return schema.and(versioned)
->>>>>>> devel
-}
-=======
   return schema.and(versioned);}
->>>>>>> devel
 
 // Usage
 const documentSchema = z.object({
   id: z.string(),
   title: z.string(),
-<<<<<<< HEAD
-  content: z.string(),
-<<<<<<< HEAD
-});
-
-const fullDocumentSchema = withAudit(withVersioning(documentSchema));
-=======
-})
-
-const fullDocumentSchema = withAudit(withVersioning(documentSchema))
->>>>>>> devel
-```
-=======
   content: z.string(),});
 
 const fullDocumentSchema = withAudit(withVersioning(documentSchema));```
->>>>>>> devel
 
 **Intersection vs Merge:**
 
 ```typescript
 // .merge() - replaces fields from first with second
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
 const a = z.object({ x: z.string(), y: z.number() })
 const b = z.object({ y: z.string() })  // y is string, not number
 
@@ -268,7 +112,6 @@ a.and(b)  // Validation will fail - y can't be both number and string
 
 # **When NOT to use this pattern:**
 
->>>>>>> devel
 const a = z.object({ x: z.string(), y: z.number() });
 const b = z.object({ y: z.string() }); // y is string, not number
 
@@ -281,24 +124,6 @@ a.and(b); // Validation will fail - y can't be both number and string
 ```
 
 **When NOT to use this pattern:**
-<<<<<<< HEAD
-
-=======
-const a = z.object({ x: z.string(), y: z.number() })
-const b = z.object({ y: z.string() }) // y is string, not number
-
-a.merge(b) // { x: string, y: string } - b's y wins
-
-// .and() - requires fields to be compatible
-// If both have y with different types, intersection fails at runtime
-a.and(b) // Validation will fail - y can't be both number and string
-
-```
-
-**When NOT to use this pattern:**
->>>>>>> devel
-=======
->>>>>>> devel
 - When schemas have overlapping fields with different types (use merge)
 - When you need to override fields (use extend)
 - Simple cases where extend works fine

@@ -11,13 +11,7 @@ When using `.refine()` on object schemas for cross-field validation, add a `path
 
 **Incorrect (error at object level):**
 
-<<<<<<< HEAD
-```typescript
-<<<<<<< HEAD
-import { z } from "zod";
-=======
 ```typescriptimport { z } from "zod";
->>>>>>> devel
 
 const formSchema = z
   .object({
@@ -35,31 +29,7 @@ const result = formSchema.safeParse({
 });
 
 if (!result.success) {
-<<<<<<< HEAD
-  const flattened = result.error.flatten();
-=======
-import { z } from 'zod'
-
-const formSchema = z.object({
-  password: z.string().min(8),
-  confirmPassword: z.string(),
-}).refine(
-  (data) => data.password === data.confirmPassword,
-  { message: 'Passwords do not match' }  // No path specified
-)
-
-const result = formSchema.safeParse({
-  password: 'secret123',
-  confirmPassword: 'different',
-})
-
-if (!result.success) {
-  const flattened = result.error.flatten()
->>>>>>> devel
-  // {
-=======
   const flattened = result.error.flatten();  // {
->>>>>>> devel
   //   formErrors: ['Passwords do not match'],  // At form level!
   //   fieldErrors: {}  // Empty - no field association
   // }
@@ -70,13 +40,7 @@ if (!result.success) {
 
 **Correct (error with path):**
 
-<<<<<<< HEAD
-```typescript
-<<<<<<< HEAD
-import { z } from "zod";
-=======
 ```typescriptimport { z } from "zod";
->>>>>>> devel
 
 const formSchema = z
   .object({
@@ -94,34 +58,7 @@ const result = formSchema.safeParse({
 });
 
 if (!result.success) {
-<<<<<<< HEAD
-  const flattened = result.error.flatten();
-=======
-import { z } from 'zod'
-
-const formSchema = z.object({
-  password: z.string().min(8),
-  confirmPassword: z.string(),
-}).refine(
-  (data) => data.password === data.confirmPassword,
-  {
-    message: 'Passwords do not match',
-    path: ['confirmPassword'],  // Error appears on this field
-  }
-)
-
-const result = formSchema.safeParse({
-  password: 'secret123',
-  confirmPassword: 'different',
-})
-
-if (!result.success) {
-  const flattened = result.error.flatten()
->>>>>>> devel
-  // {
-=======
   const flattened = result.error.flatten();  // {
->>>>>>> devel
   //   formErrors: [],
   //   fieldErrors: {
   //     confirmPassword: ['Passwords do not match']  // Associated with field
@@ -134,13 +71,7 @@ if (!result.success) {
 
 **Multiple cross-field validations:**
 
-<<<<<<< HEAD
-```typescript
-<<<<<<< HEAD
-const dateRangeSchema = z
-=======
 ```typescriptconst dateRangeSchema = z
->>>>>>> devel
   .object({
     startDate: z.coerce.date(),
     endDate: z.coerce.date(),
@@ -168,44 +99,11 @@ const dateRangeSchema = z
       return days <= data.maxDays;
     },
     { message: "Date range is too long", path: ["endDate"] },
-<<<<<<< HEAD
-  );
-=======
-const dateRangeSchema = z.object({
-  startDate: z.coerce.date(),
-  endDate: z.coerce.date(),
-  minDays: z.number().optional(),
-  maxDays: z.number().optional(),
-}).refine(
-  (data) => data.endDate >= data.startDate,
-  { message: 'End date must be after start date', path: ['endDate'] }
-).refine(
-  (data) => {
-    if (!data.minDays) return true
-    const days = (data.endDate.getTime() - data.startDate.getTime()) / 86400000
-    return days >= data.minDays
-  },
-  { message: 'Date range is too short', path: ['endDate'] }
-).refine(
-  (data) => {
-    if (!data.maxDays) return true
-    const days = (data.endDate.getTime() - data.startDate.getTime()) / 86400000
-    return days <= data.maxDays
-  },
-  { message: 'Date range is too long', path: ['endDate'] }
-)
->>>>>>> devel
-```
-=======
   );```
->>>>>>> devel
 
 **With superRefine for multiple path errors:**
 
 ```typescript
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
 const orderSchema = z.object({
   billingAddress: z.object({
     street: z.string(),
@@ -239,7 +137,6 @@ const orderSchema = z.object({
 
 # **When NOT to use this pattern:**
 
->>>>>>> devel
 const orderSchema = z
 .object({
 billingAddress: z.object({
@@ -275,45 +172,6 @@ path: ["shippingAddress", "city"],
 ```
 
 **When NOT to use this pattern:**
-<<<<<<< HEAD
-
-=======
-const orderSchema = z.object({
-billingAddress: z.object({
-street: z.string(),
-city: z.string(),
-}),
-shippingAddress: z.object({
-street: z.string(),
-city: z.string(),
-}),
-sameAsBilling: z.boolean(),
-}).superRefine((data, ctx) => {
-if (data.sameAsBilling) {
-// If sameAsBilling but addresses differ, show errors on shipping
-if (data.shippingAddress.street !== data.billingAddress.street) {
-ctx.addIssue({
-code: z.ZodIssueCode.custom,
-message: 'Must match billing address',
-path: ['shippingAddress', 'street'], // Nested path
-})
-}
-if (data.shippingAddress.city !== data.billingAddress.city) {
-ctx.addIssue({
-code: z.ZodIssueCode.custom,
-message: 'Must match billing address',
-path: ['shippingAddress', 'city'],
-})
-}
-}
-})
-
-```
-
-**When NOT to use this pattern:**
->>>>>>> devel
-=======
->>>>>>> devel
 - When the error genuinely applies to the whole object
 - Simple single-field refinements (path is implicit)
 

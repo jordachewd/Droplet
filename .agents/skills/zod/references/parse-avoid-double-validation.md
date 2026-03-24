@@ -11,92 +11,16 @@ Once data is validated by Zod, trust the result. Re-validating the same data in 
 
 **Incorrect (validating at every layer):**
 
-<<<<<<< HEAD
-```typescript
-<<<<<<< HEAD
-import { z } from "zod";
-=======
-import { z } from 'zod'
->>>>>>> devel
-
-const userSchema = z.object({
-  id: z.string().uuid(),
-  email: z.string().email(),
-  name: z.string(),
-<<<<<<< HEAD
-});
-=======
 ```typescriptimport { z } from "zod";
 const userSchema = z.object({
   id: z.string().uuid(),
   email: z.string().email(),
   name: z.string(),});
->>>>>>> devel
 
 // Controller validates
 export async function POST(req: NextRequest) {
   const body = await req.json();
   const user = userSchema.parse(body); // First parse
-<<<<<<< HEAD
-  return await userService.create(user);
-=======
-})
-
-// Controller validates
-export async function POST(req: NextRequest) {
-  const body = await req.json()
-  const user = userSchema.parse(body)  // First parse
-  return await userService.create(user)
->>>>>>> devel
-}
-
-// Service validates again
-const userService = {
-  async create(data: unknown) {
-<<<<<<< HEAD
-    const user = userSchema.parse(data); // Second parse - redundant
-    return await userRepository.insert(user);
-  },
-};
-=======
-    const user = userSchema.parse(data)  // Second parse - redundant
-    return await userRepository.insert(user)
-  }
-}
->>>>>>> devel
-
-// Repository validates again
-const userRepository = {
-  async insert(data: unknown) {
-<<<<<<< HEAD
-    const user = userSchema.parse(data); // Third parse - wasteful
-    return await db.users.create({ data: user });
-  },
-};
-=======
-    const user = userSchema.parse(data)  // Third parse - wasteful
-    return await db.users.create({ data: user })
-  }
-}
->>>>>>> devel
-```
-
-**Correct (validate once, pass typed data):**
-
-```typescript
-<<<<<<< HEAD
-import { z } from "zod";
-=======
-import { z } from 'zod'
->>>>>>> devel
-
-const userSchema = z.object({
-  id: z.string().uuid(),
-  email: z.string().email(),
-  name: z.string(),
-<<<<<<< HEAD
-});
-=======
   return await userService.create(user);}
 
 // Service validates again
@@ -119,7 +43,6 @@ const userSchema = z.object({
   id: z.string().uuid(),
   email: z.string().email(),
   name: z.string(),});
->>>>>>> devel
 
 type User = z.infer<typeof userSchema>;
 
@@ -133,59 +56,11 @@ export async function POST(req: NextRequest) {
   }
 
   // Pass validated, typed data
-<<<<<<< HEAD
-  return await userService.create(result.data);
-=======
-})
-
-type User = z.infer<typeof userSchema>
-
-// Controller validates at boundary
-export async function POST(req: NextRequest) {
-  const body = await req.json()
-
-  const result = userSchema.safeParse(body)
-  if (!result.success) {
-    return NextResponse.json({ errors: result.error.issues }, { status: 400 })
-  }
-
-  // Pass validated, typed data
-  return await userService.create(result.data)
->>>>>>> devel
-}
-=======
   return await userService.create(result.data);}
->>>>>>> devel
 
 // Service receives typed data, no re-validation needed
 const userService = {
   async create(user: User) {
-<<<<<<< HEAD
-    // user is guaranteed to match schema
-<<<<<<< HEAD
-    return await userRepository.insert(user);
-  },
-};
-=======
-    return await userRepository.insert(user)
-  }
-}
->>>>>>> devel
-
-// Repository receives typed data
-const userRepository = {
-  async insert(user: User) {
-<<<<<<< HEAD
-    return await db.users.create({ data: user });
-  },
-};
-=======
-    return await db.users.create({ data: user })
-  }
-}
->>>>>>> devel
-```
-=======
     // user is guaranteed to match schema    return await userRepository.insert(user);
   },
 };
@@ -194,57 +69,24 @@ const userRepository = {
   async insert(user: User) {    return await db.users.create({ data: user });
   },
 };```
->>>>>>> devel
 
 **When you might validate at multiple layers:**
 
 ```typescript
 // Different schemas for different layers
 const apiUserSchema = z.object({
-<<<<<<< HEAD
-  email: z.string().email(),
-<<<<<<< HEAD
-  password: z.string().min(8), // Only in API layer
-});
-=======
-  password: z.string().min(8),  // Only in API layer
-})
->>>>>>> devel
-
-const dbUserSchema = z.object({
-  id: z.string().uuid(),
-  email: z.string().email(),
-<<<<<<< HEAD
-  passwordHash: z.string(), // Transformed before storage
-=======
   email: z.string().email(),  password: z.string().min(8), // Only in API layer
 });
 const dbUserSchema = z.object({
   id: z.string().uuid(),
   email: z.string().email(),  passwordHash: z.string(), // Transformed before storage
->>>>>>> devel
 });
 
 // API validates input format
 export async function POST(req: NextRequest) {
   const input = apiUserSchema.parse(await req.json());
   const user = await userService.create(input);
-<<<<<<< HEAD
-  return NextResponse.json(user);
-=======
-  passwordHash: z.string(),  // Transformed before storage
-})
-
-// API validates input format
-export async function POST(req: NextRequest) {
-  const input = apiUserSchema.parse(await req.json())
-  const user = await userService.create(input)
-  return NextResponse.json(user)
->>>>>>> devel
-}
-=======
   return NextResponse.json(user);}
->>>>>>> devel
 
 // Service transforms and validates for storage
 const userService = {
@@ -253,9 +95,6 @@ const userService = {
       id: crypto.randomUUID(),
       email: input.email,
       passwordHash: await hash(input.password),
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
     })
     return await userRepository.insert(dbUser)
   }
@@ -264,7 +103,6 @@ const userService = {
 
 # **When NOT to use this pattern:**
 
->>>>>>> devel
     });
     return await userRepository.insert(dbUser);
 
@@ -274,20 +112,6 @@ const userService = {
 ```
 
 **When NOT to use this pattern:**
-<<<<<<< HEAD
-
-=======
-})
-return await userRepository.insert(dbUser)
-}
-}
-
-```
-
-**When NOT to use this pattern:**
->>>>>>> devel
-=======
->>>>>>> devel
 - When schemas differ between layers (API vs DB shape)
 - When data crosses trust boundaries (external service response)
 - During development when debugging data flow

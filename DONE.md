@@ -2,7 +2,33 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-24 — PM audit #58. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4, 105.1, 105.2, 110, 111.1, 112.1, 112.2, 109, 113.1, 113.2, 115, 116, 117, 120.1, 121, 122, 123, 124, 125 complete. Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS — TDD rebuild active. 409 unit tests (68 suites). E2E: 108 passed, 25 skipped, 0 failed. All 7 gates GREEN. Build passing. Node.js 24.12.0 runtime.
+> Last updated: 2026-03-24 — PM audit #59. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4, 105.1, 105.2, 110, 111.1, 112.1, 112.2, 109, 113.1, 113.2, 115, 116, 117, 120.1, 120.2-A, 121, 122, 123, 124, 125, 126 complete. Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS — TDD rebuild active. 419 unit tests (68 suites). E2E: 108 passed, 25 skipped, 0 failed. All 7 gates GREEN. Build passing. Node.js 24.12.0 runtime.
+
+---
+
+## Phase 126 — Resolve committed conflict markers in zod skill files — COMPLETED (2026-03-24)
+
+> PM audit #59. 47 zod skill files in `.agents/skills/zod/` had committed (nested) conflict markers from two successive failed merges. Restored all 47 files from clean `devel` branch using `git checkout devel -- .agents/skills/zod/`. Verified zero conflict markers in entire repo via `git grep`.
+
+- [x] **126 CRITICAL** — Restored 47 zod skill files from devel branch (SKILL.md, README.md, AGENTS.md, template, 43 reference files).
+- [x] Verified zero `<<<<<<< HEAD` markers in entire tracked repo.
+
+**Files changed:** 47 files in `.agents/skills/zod/`
+
+---
+
+## Phase 120.2 Batch A — TDD rebuild of 6 IO/business-critical utility test files — COMPLETED (2026-03-24)
+
+> Engineer delivered (PM audit #59). 6 critical utility test suites hardened with TDD methodology. All use shared factories, zero `as never` casts. Tests: 409 → 419.
+
+- [x] `ensure-user-synced.test.ts` — 9 tests. Self-heal, duplicate key race, cache dedup, missing email.
+- [x] `rate-limit.test.ts` — 4 tests. Accept, block, invalid timestamps, empty requests.
+- [x] `generate-response.test.tsx` — 14 tests. Policy blocked, tool calls (image/audio/video), limits, rollbacks, streaming.
+- [x] `generate-image.test.tsx` — 7 tests. Base64 path, URL fetch path, policy block, error paths.
+- [x] `generate-audio.test.tsx` — 9 tests. TTS and audio_in_out modes, policy block, missing payload.
+- [x] `generate-video.test.tsx` — 8 tests. Polling, timeout, failed status, empty content.
+
+**Files changed:** 6 test files in `tests/unit/utils/`
 
 ---
 
@@ -62,10 +88,10 @@
 
 ## Phase 120.2 (Partial) — Rebuild utility tests (TDD) — IN PROGRESS (2026-03-24)
 
-> Engineer delivered partial batches (PM audit #55 + #56). 20 of ~40 utility test files rebuilt from scratch with TDD methodology. No `as never` casts in rebuilt files. Shared factories used.
+> Engineer delivered partial batches (PM audit #55 + #56 + #59). 26 of ~40 utility test files rebuilt from scratch with TDD methodology. No `as never` casts in rebuilt files. Shared factories used.
 
-- [x] Rebuilt utility test files (20 files): `admin-auth.test.ts`, `admin-audit.test.ts`, `delete-s3-prefix.test.ts`, `get-file-from-aws.test.ts`, `message-id.test.ts`, `task-queries.test.ts`, `type-guards.test.ts`, `usage-event-utils.test.ts`, `download-url-allowlist.test.ts`, `get-formatted-date.test.ts`, `message-policy.test.ts`, `validation-schemas.test.ts`, `ai-model-policy.test.ts`, `resolve-entitlements.test.ts`, `check-usage-limit.test.ts`, `check-daily-conversations.test.ts`, `effective-plan-config.test.ts`, `effective-persona-access.test.ts`, `effective-persona-config.test.ts`, `effective-model-config.test.ts`
-- [ ] ~20 remaining utility files still needed (ensure-user-synced, rate-limit, upload-file-validation, handleError, admin-queries, s3-file-reference, normalize-public-asset-url, serialize-for-client, map-date-to-label, getPlanStatus, getFullName, generateString, openai/generate\*, openai/classify-task-complexity, openai/filterAssistantMsg, mongoose)
+- [x] Rebuilt utility test files (26 files): `admin-auth`, `admin-audit`, `delete-s3-prefix`, `get-file-from-aws`, `message-id`, `task-queries`, `type-guards`, `usage-event-utils`, `download-url-allowlist`, `get-formatted-date`, `message-policy`, `validation-schemas`, `ai-model-policy`, `resolve-entitlements`, `check-usage-limit`, `check-daily-conversations`, `effective-plan-config`, `effective-persona-access`, `effective-persona-config`, `effective-model-config`, `ensure-user-synced`, `rate-limit`, `generate-response`, `generate-image`, `generate-audio`, `generate-video`
+- [ ] ~14 remaining utility files still needed (handleError, getFullName, filterAssistantMsg, classify-task-complexity, s3-file-reference, upload-file-validation, admin-queries, generateTitle, normalize-public-asset-url, serialize-for-client, map-date-to-label, getPlanStatus, generateString, mongoose)
 - [x] Zero `as never` in rebuilt utility tests
 - [x] All rebuilt tests use shared factories from `tests/unit/test-support/`
 
