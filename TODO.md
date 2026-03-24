@@ -5,11 +5,11 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #50 (2026-03-23). All Phases 1–113.2 complete. 443 unit tests (74 suites). Build passes. TSC passes. Node.js 24.12.0 runtime.**
+> **STATUS: PM audit #51 (2026-03-24). All Phases 1–113.2 complete. 443 unit tests (74 suites). Build passes. TSC passes. Node.js 24.12.0 runtime.**
 > **GATE STATUS: ALL 7 gates GREEN. Lint (0 errors, 6 warnings), knip (0 findings), TSC, build, unit tests (74/443), E2E (108 passed, 25 skipped, 0 failed) — all pass.**
 > **Coverage: 78.55/66.3/83.53/78.85.**
 > **Owner directive (CRITICAL): FULL TDD TESTING REBUILD from scratch. NO hardcoded data. WCAG 2.2 AA. Code reuse. Full admin configurability. Components as data consumers. Server-side utilities.**
-> **Priority order: 112.2 (CRITICAL TDD rebuild core utils) → 112.3 (CRITICAL server actions) → 112.4 (CRITICAL API routes) → 109 (HIGH WCAG icons) → 112.5 (HIGH component rebuild) → 106 (HIGH shared types) → 107 (HIGH stop-reason config) → 108 (MEDIUM WCAG tabs) → 114 (MEDIUM WCAG avatar menu) → 74.2 (MEDIUM FAQ admin) → 104 (MEDIUM landing/hero admin) → 112.6 (HIGH E2E expansion) → 112.7 (HIGH coverage thresholds) → 110 (LOW) → 87 (LOW)**
+> **Priority order: 112.2 (CRITICAL TDD rebuild core utils) → 109 (HIGH WCAG icons — quick win) → 112.3 (CRITICAL server actions) → 114 (MEDIUM WCAG avatar menu) → 112.4 (CRITICAL API routes) → 106 (HIGH shared types) → 107 (HIGH stop-reason config) → 108 (MEDIUM WCAG tabs) → 112.5 (HIGH component rebuild) → 74.2 (MEDIUM FAQ admin) → 104 (MEDIUM landing/hero admin) → 112.6 (HIGH E2E expansion) → 112.7 (HIGH coverage thresholds) → 110 (LOW) → 87 (LOW)**
 
 ---
 
