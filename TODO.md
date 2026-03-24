@@ -5,152 +5,157 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #52 (2026-03-24). Phases 1–113.2, 112.2, 109 complete. 482 unit tests (76 suites). Build passes. TSC passes. Node.js 24.12.0 runtime.**
-> **GATE STATUS: 2 gates RED (Lint + Knip). TSC, build, unit tests (76/482), E2E (108 passed, 25 skipped, 0 failed) — pass.**
+> **STATUS: PM audit #53 (2026-03-24). Phases 1–116 complete. 526 unit tests (78 suites). Build passes. TSC passes. Node.js 24.12.0 runtime.**
+> **GATE STATUS: All 7 gates GREEN. Lint (0 errors, 6 warnings), Knip (clean), TSC, build, unit tests (78/526), E2E (108 passed, 25 skipped, 0 failed) — all pass.**
 > **Owner directive (CRITICAL): FULL TDD TESTING REBUILD from scratch. NO hardcoded data. WCAG 2.2 AA. Code reuse. Full admin configurability.**
-> **Priority order: 115 (BLOCKER lint) → 116 (BLOCKER orphan files) → 112.3 (CRITICAL server actions) → 112.4 (CRITICAL API routes) → 108 (MEDIUM WCAG tabs) → 114 (MEDIUM WCAG avatar menu) → 106 (HIGH shared types) → 107 (HIGH stop-reason config) → 112.5 (HIGH component rebuild) → 74.2 (MEDIUM FAQ admin) → 104 (MEDIUM landing/hero admin) → 112.6 (HIGH E2E expansion) → 112.7 (HIGH coverage thresholds) → 110 (LOW)**
+> **Priority order: 120 (CRITICAL TDD rebuild) → 117 (HIGH shared utility extraction) → 108 (MEDIUM WCAG tabs) → 114 (MEDIUM WCAG avatar menu) → 106 (HIGH shared types) → 107 (HIGH stop-reason config) → 74.2 (MEDIUM FAQ admin) → 104 (MEDIUM landing/hero admin)**
 
 ---
 
-## BLOCKER — Validation Gate Failures (PM audit #52)
+## CRITICAL — Full TDD Testing Rebuild (Owner directive — Primary work stream)
 
-### Phase 115 BLOCKER — Fix ESLint gate failure
+### Phase 120 CRITICAL — Full TDD test rebuild from scratch
 
-> PM audit #52 discovered: ESLint crashes with `could not find plugin "react-hooks"`. Root cause: `react-hooks/set-state-in-effect` rule is referenced in a standalone config object, but the plugin is only registered inside `eslint-config-next`'s config objects. In ESLint flat config, plugins must be available in the same config object that references their rules.
+> **Owner directive (2026-03-24 — ESCALATED):** Remove ALL existing unit and E2E tests and rebuild the entire testing process from scratch using strict Test-Driven Development methodology. Write failing tests FIRST, then write just enough code to make them pass. This prevents over-engineering and ensures only necessary code is written.
+>
+> The current 526 tests (78 suites) and 108 E2E tests serve as behavioral reference — they document WHAT the code should do. The rebuild replaces HOW they test it.
 
-**File:** `eslint.config.mjs`
-
-**What to do:**
-
-1. Import `eslint-plugin-react-hooks` directly from the nested path or install it as a direct dependency.
-2. Register the plugin in the same config object that defines the `react-hooks/set-state-in-effect` rule.
-3. Alternative: move the rule into the `nextCoreWebVitals` spread's config scope, or remove the rule if the plugin version doesn't support it in standalone registration.
-4. Verify `npm run lint` passes with 0 errors.
-
-**Acceptance criteria:**
-
-- [ ] `npm run lint` exits 0 (no errors)
-- [ ] `react-hooks/set-state-in-effect` rule is either properly registered or safely removed
-- [ ] All 7 gates GREEN
-
-### Phase 116 BLOCKER — Delete orphan dev scripts and build artifacts
-
-> PM audit #52 discovered: 6 orphan files in project root left by agent editing sessions. These cause `npm run knip` and `npx prettier --check` to fail.
-
-**Files to delete:**
-
-1. `_e.js` — agent-generated ThePlan.md editing script
-2. `_edit.js` — agent-generated editing script
-3. `_edit_plan.js` — agent-generated editing script
-4. `parse-results.cjs` — vitest result parser script
-5. `parse-results.mjs` — vitest result parser script (duplicate)
-6. `vitest-results.json` — 150KB build artifact
+#### 120.1 CRITICAL — Create TDD test infrastructure
 
 **What to do:**
 
-1. Delete all 6 files.
-2. Verify `npm run knip` passes (0 findings).
-3. Verify `npx prettier --check` passes (0 warnings).
+1. Create typed mock factories in `tests/unit/test-support/` for ALL common patterns (User, Task, Transaction, Mongoose chain, Clerk auth, HTTP request/response). Eliminate ALL `as never` casts.
+2. Create shared test helpers: `mockAuth()`, `mockAdminAuth()`, `mockMongooseModel()`, `mockClerkUser()`.
+3. Update `vitest.setup.ts` with global mock infrastructure.
+4. Document test patterns in `tests/README.md`.
 
 **Acceptance criteria:**
 
-- [ ] All 6 files deleted
-- [ ] `npm run knip` exits 0
-- [ ] `npx prettier --check` exits 0
-- [ ] All 7 gates GREEN
+- [ ] Zero `as never` casts needed in new test code
+- [ ] All mock factories are typed and reusable
+- [ ] `tests/README.md` documents mock patterns and TDD workflow
+- [ ] Build passes
 
----
+#### 120.2 CRITICAL — Rebuild utility tests (TDD)
 
-## CRITICAL — TDD Testing Rebuild (Owner directive — Primary work stream)
+**What to do:**
 
-### Phase 112.3 CRITICAL — Rebuild server action tests (TDD)
+1. Delete ALL existing utility test files in `tests/unit/utils/`
+2. For each utility in `src/lib/utils/`, write failing tests FIRST, then verify existing code passes
+3. Target: 100% branch coverage on pure functions, ≥85% on IO utilities
+4. Every test must answer: "What observable behavior changes if this code breaks?"
 
-**Target files:**
-
-1. `admin.actions.tsx` — **27.81% branch** — all admin mutations, critical security surface
-2. `admin-queries.ts` — **20.14% branch** — admin data access layer
-3. `task.actions.tsx` — task CRUD (verify existing coverage)
-4. `user.actions.tsx` — user mutations + deletion cascade (verify existing)
-5. `transaction.action.tsx` — transaction operations (verify existing)
-
-**Approach:** Test each exported action: auth failure, forbidden, success, edge cases. Verify audit trail. Verify ownership enforcement.
+**Target files (35 utilities):** All files in `src/lib/utils/` and `src/lib/utils/openai/`
 
 **Acceptance criteria:**
 
-- [ ] `admin.actions.tsx` branch coverage ≥60%
-- [ ] `admin-queries.ts` branch coverage ≥50%
+- [ ] All utility test files rebuilt from scratch using TDD
+- [ ] Zero `as never` casts
+- [ ] Pure functions: 100% branch coverage
+- [ ] IO utilities: ≥85% branch coverage
+- [ ] All tests use shared factories
+
+#### 120.3 CRITICAL — Rebuild server action tests (TDD)
+
+**What to do:**
+
+1. Delete ALL existing action test files in `tests/unit/actions/`
+2. For each exported server action, write failing tests FIRST covering: auth failure, forbidden, success, edge cases, audit trail, ownership enforcement
+3. Target: ≥75% branch coverage on all action files
+
+**Target files:** `admin.actions.tsx`, `task.actions.tsx`, `user.actions.tsx`, `transaction.action.tsx`
+
+**Acceptance criteria:**
+
+- [ ] All action test files rebuilt from scratch using TDD
+- [ ] `admin.actions.tsx` branch coverage ≥75%
 - [ ] Auth/ownership enforcement tested on every action
 - [ ] Admin audit trail verified on every admin mutation
+- [ ] Zero `as never` casts
 
-### Phase 112.4 CRITICAL — Rebuild API route tests (TDD)
+#### 120.4 CRITICAL — Rebuild API route tests (TDD)
 
-**Target files:**
+**What to do:**
 
-1. `openai-route.test.ts` — REFACTOR: split into ≤300-line focused modules, keep scenarios, reduce `as never` casts
-2. `/api/upload` route tests — verify/improve
-3. `/api/download` route tests — verify/improve
-4. `/api/aws` route tests — verify/improve
-5. Clerk webhook route tests — verify idempotency + edge cases
-6. Stripe webhook route tests — verify idempotency + plan update
+1. Delete ALL existing route test files in `tests/unit/routes/`
+2. Split `openai-route` tests into focused ≤300-line modules by concern (auth, streaming, media, conversation-stop, rate-limit)
+3. For each route, write failing tests FIRST
+4. Cover: auth failure, malformed input, success paths, edge cases, webhook idempotency
 
-**Missing edge cases to add:**
-
-- Malformed JSON body handling
-- `ensureUserSynced` failure path (503 response)
-- `emitUsageEvents` failure being non-fatal
-- Concurrent request race conditions
+**Target files:** All files in `src/app/api/` (openai, upload, download, aws, webhooks/clerk, webhooks/stripe)
 
 **Acceptance criteria:**
 
-- [ ] `openai-route.test.ts` split into focused sub-files
-- [ ] Missing edge cases covered
-- [ ] `as never` casts reduced to zero (use typed factories)
+- [ ] All route test files rebuilt from scratch using TDD
+- [ ] `openai-route` split into ≤300-line focused test modules
+- [ ] Missing edge cases covered (malformed JSON, 503 self-heal failure, non-fatal usage-event)
+- [ ] Zero `as never` casts
 
-### Phase 112.5 HIGH — Rebuild component tests (TDD + a11y)
+#### 120.5 HIGH — Rebuild component tests (TDD + a11y)
 
-**Target files (0% or thin coverage):**
+**What to do:**
 
-1. `chat-body.tsx` — **14% branch** — core chat display
-2. `chat-wrapper.tsx` — main chat client (streaming + state)
-3. `library-tabs.tsx` — tab management + keyboard nav
-4. `header.tsx` — mobile menu toggle + scroll
-5. `chat-sidebar-shell.tsx` — resize + localStorage
-6. `admin-settings-tabs.tsx` — tab management
+1. Delete ALL existing component test files in `tests/unit/components/`
+2. For each component, write failing behavioral tests FIRST
+3. Focus: user interactions, conditional rendering, a11y attributes, keyboard navigation
+4. Every test must answer: "What observable behavior changes if this code breaks?"
+5. NO "renders without crashing" tests
 
-**Approach:** Test user interactions, conditional rendering, a11y attributes. NOT "renders without crashing". Every test must answer: "What observable behavior changes if this code breaks?"
+**Target files:** All tested components PLUS untested ones: `landing-page.tsx`, `hero-section.tsx`, `faqs-section.tsx`, `plans-section.tsx`, `personas-section.tsx`, `admin-settings-tabs.tsx`, `profile-hero-editor.tsx`
 
 **Acceptance criteria:**
 
-- [ ] All target components have behavioral tests
-- [ ] `chat-body.tsx` branch coverage ≥50%
+- [ ] All component test files rebuilt from scratch using TDD
 - [ ] Keyboard navigation tested for tabs and modals
+- [ ] All components with user interactions have tests
+- [ ] Zero smoke tests ("renders without crashing")
 
-### Phase 112.6 HIGH — Expand E2E test suite
+#### 120.6 HIGH — Rebuild E2E tests (TDD)
 
-**New/improved specs:**
+**What to do:**
 
-1. Admin settings → app propagation E2E (Phase 97.2)
-2. Chat conversation flow (send prompt → receive response → continue) — currently MISSING
-3. Authenticated route a11y scan (extend `accessibility.spec.ts` to `/app/*` routes)
-4. Remove local `withMongoConnection` duplication (Phase 97.3)
+1. Delete ALL existing E2E test files in `tests/e2e/`
+2. Rebuild with structural assertions (no hardcoded copy/prices)
+3. Add missing specs: chat conversation flow, admin settings propagation, authenticated a11y scan
+4. Keep Playwright workers=1 for Clerk stability
 
 **Acceptance criteria:**
 
-- [ ] Admin settings propagation verified E2E
+- [ ] All E2E test files rebuilt from scratch
 - [ ] Basic chat flow E2E exists
+- [ ] Admin settings propagation verified E2E
 - [ ] Authenticated route a11y scanning added
-- [ ] Zero local Mongo helper duplication
+- [ ] All assertions structural (no hardcoded content)
 
-### Phase 112.7 HIGH — Raise coverage thresholds post-rebuild
+#### 120.7 HIGH — Raise coverage thresholds post-rebuild
 
-**File:** `vitest.config.mts`
-
-**What to do:** After 112.3–112.5, raise thresholds to match achieved coverage (target: 82/78/82/82+).
+**What to do:** After 120.2–120.5, raise vitest thresholds to match achieved coverage (target: 85/80/85/85+).
 
 **Acceptance criteria:**
 
-- [ ] Thresholds raised to ≥82/78/82/82
+- [ ] Thresholds raised to ≥85/80/85/85
 - [ ] `npm run test:coverage` passes
+
+---
+
+## HIGH — Code Quality: Extract duplicate utility (PM audit #53)
+
+### Phase 117 HIGH — Extract `isMongoDuplicateKeyError` to shared utility
+
+> PM audit #53 codebase audit: identical 6-line type-guard function duplicated in `clerk/route.tsx` and `ensure-user-synced.ts`.
+
+**Files:** `src/lib/utils/type-guards.ts` (existing), `src/app/api/webhooks/clerk/route.tsx`, `src/lib/utils/ensure-user-synced.ts`
+
+**What to do:**
+
+1. Add `isMongoDuplicateKeyError()` to existing `src/lib/utils/type-guards.ts`.
+2. Import from shared location in both consumer files.
+3. Delete local definitions.
+
+**Acceptance criteria:**
+
+- [ ] Zero duplicate `isMongoDuplicateKeyError` definitions
+- [ ] Build passes, tests pass
 
 ---
 
@@ -261,8 +266,6 @@
 - [ ] ARIA roles present
 - [ ] Build passes
 
-### Phase 110 LOW — Mobile header hamburger `aria-expanded`
-
 ---
 
 ## MEDIUM — Admin Configurability (Owner directive)
@@ -312,5 +315,5 @@ See SPEC.md for full requirements on each.
 ---
 
 > **Completed phases** archived in [`DONE.md`](DONE.md).
-> All phases through 113.2 + 112.2 + 109 complete.
+> All phases through 116 complete (includes 113.2, 112.2, 112.1, 109, 110, 115, 116).
 > All Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS.

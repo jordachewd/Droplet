@@ -2,7 +2,32 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-24 — PM audit #52. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4, 105.1, 105.2, 111.1, 112.1, 112.2, 109, 113.1, 113.2 complete. Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS. 482 unit tests (76 suites). 108 E2E passed, 25 skipped, 0 failed. Build passing. Node.js 24.12.0 runtime.
+> Last updated: 2026-03-25 — PM audit #53. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4, 105.1, 105.2, 110, 111.1, 112.1, 112.2, 109, 113.1, 113.2, 115, 116 complete. Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS. 526 unit tests (78 suites). 108 E2E passed, 25 skipped, 0 failed. All 7 gates GREEN. Build passing. Node.js 24.12.0 runtime.
+
+---
+
+## Phase 115 — Fix ESLint gate failure — COMPLETED (2026-03-24)
+
+> Engineer resolved `react-hooks` plugin registration in `eslint.config.mjs`. ESLint now passes: 0 errors, 6 warnings (all `react-hooks/set-state-in-effect` — valid patterns).
+
+- [x] `eslint.config.mjs` — Registered `react-hooks` plugin in standalone config object
+- [x] `npm run lint` exits 0
+
+---
+
+## Phase 116 — Delete orphan dev scripts and build artifacts — COMPLETED (2026-03-24)
+
+> Engineer deleted all 6 orphan files from project root. Knip and Prettier gates now pass clean.
+
+- [x] Deleted: `_e.js`, `_edit.js`, `_edit_plan.js`, `parse-results.cjs`, `parse-results.mjs`, `vitest-results.json`
+- [x] `npm run knip` exits 0
+- [x] `npx prettier --check` exits 0
+
+---
+
+## Phase 110 — Mobile header hamburger `aria-expanded` — COMPLETED (already implemented)
+
+> PM audit #53 confirmed `aria-expanded={mobileMenuOpen}` already present at `header.tsx` line 91. No code change needed — closed as already implemented.
 
 ---
 
