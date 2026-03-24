@@ -5,45 +5,65 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #51 (2026-03-24). All Phases 1–113.2 complete. 443 unit tests (74 suites). Build passes. TSC passes. Node.js 24.12.0 runtime.**
-> **GATE STATUS: ALL 7 gates GREEN. Lint (0 errors, 6 warnings), knip (0 findings), TSC, build, unit tests (74/443), E2E (108 passed, 25 skipped, 0 failed) — all pass.**
-> **Coverage: 78.55/66.3/83.53/78.85.**
-> **Owner directive (CRITICAL): FULL TDD TESTING REBUILD from scratch. NO hardcoded data. WCAG 2.2 AA. Code reuse. Full admin configurability. Components as data consumers. Server-side utilities.**
-> **Priority order: 112.2 (CRITICAL TDD rebuild core utils) → 109 (HIGH WCAG icons — quick win) → 112.3 (CRITICAL server actions) → 114 (MEDIUM WCAG avatar menu) → 112.4 (CRITICAL API routes) → 106 (HIGH shared types) → 107 (HIGH stop-reason config) → 108 (MEDIUM WCAG tabs) → 112.5 (HIGH component rebuild) → 74.2 (MEDIUM FAQ admin) → 104 (MEDIUM landing/hero admin) → 112.6 (HIGH E2E expansion) → 112.7 (HIGH coverage thresholds) → 110 (LOW) → 87 (LOW)**
+> **STATUS: PM audit #52 (2026-03-24). Phases 1–113.2, 112.2, 109 complete. 482 unit tests (76 suites). Build passes. TSC passes. Node.js 24.12.0 runtime.**
+> **GATE STATUS: 2 gates RED (Lint + Knip). TSC, build, unit tests (76/482), E2E (108 passed, 25 skipped, 0 failed) — pass.**
+> **Owner directive (CRITICAL): FULL TDD TESTING REBUILD from scratch. NO hardcoded data. WCAG 2.2 AA. Code reuse. Full admin configurability.**
+> **Priority order: 115 (BLOCKER lint) → 116 (BLOCKER orphan files) → 112.3 (CRITICAL server actions) → 112.4 (CRITICAL API routes) → 108 (MEDIUM WCAG tabs) → 114 (MEDIUM WCAG avatar menu) → 106 (HIGH shared types) → 107 (HIGH stop-reason config) → 112.5 (HIGH component rebuild) → 74.2 (MEDIUM FAQ admin) → 104 (MEDIUM landing/hero admin) → 112.6 (HIGH E2E expansion) → 112.7 (HIGH coverage thresholds) → 110 (LOW)**
+
+---
+
+## BLOCKER — Validation Gate Failures (PM audit #52)
+
+### Phase 115 BLOCKER — Fix ESLint gate failure
+
+> PM audit #52 discovered: ESLint crashes with `could not find plugin "react-hooks"`. Root cause: `react-hooks/set-state-in-effect` rule is referenced in a standalone config object, but the plugin is only registered inside `eslint-config-next`'s config objects. In ESLint flat config, plugins must be available in the same config object that references their rules.
+
+**File:** `eslint.config.mjs`
+
+**What to do:**
+
+1. Import `eslint-plugin-react-hooks` directly from the nested path or install it as a direct dependency.
+2. Register the plugin in the same config object that defines the `react-hooks/set-state-in-effect` rule.
+3. Alternative: move the rule into the `nextCoreWebVitals` spread's config scope, or remove the rule if the plugin version doesn't support it in standalone registration.
+4. Verify `npm run lint` passes with 0 errors.
+
+**Acceptance criteria:**
+
+- [ ] `npm run lint` exits 0 (no errors)
+- [ ] `react-hooks/set-state-in-effect` rule is either properly registered or safely removed
+- [ ] All 7 gates GREEN
+
+### Phase 116 BLOCKER — Delete orphan dev scripts and build artifacts
+
+> PM audit #52 discovered: 6 orphan files in project root left by agent editing sessions. These cause `npm run knip` and `npx prettier --check` to fail.
+
+**Files to delete:**
+
+1. `_e.js` — agent-generated ThePlan.md editing script
+2. `_edit.js` — agent-generated editing script
+3. `_edit_plan.js` — agent-generated editing script
+4. `parse-results.cjs` — vitest result parser script
+5. `parse-results.mjs` — vitest result parser script (duplicate)
+6. `vitest-results.json` — 150KB build artifact
+
+**What to do:**
+
+1. Delete all 6 files.
+2. Verify `npm run knip` passes (0 findings).
+3. Verify `npx prettier --check` passes (0 warnings).
+
+**Acceptance criteria:**
+
+- [ ] All 6 files deleted
+- [ ] `npm run knip` exits 0
+- [ ] `npx prettier --check` exits 0
+- [ ] All 7 gates GREEN
 
 ---
 
 ## CRITICAL — TDD Testing Rebuild (Owner directive — Primary work stream)
 
-### Phase 112.2 CRITICAL — Rebuild core utility unit tests (TDD) — IN PROGRESS
-
-> Started: effective-persona-access.ts (100% branch ✅), handleError.tsx (100% branch ✅). Remaining 8 utilities need TDD rebuild.
-
-**Target files (pure logic — remaining low branch coverage):**
-
-1. ~~`effective-persona-access.ts`~~ — **100% branch** — DONE
-2. ~~`handleError.tsx`~~ — **100% branch** — DONE
-3. `deleteFileFromAWS.tsx` — **0% branch** — S3 cleanup, MUST test
-4. `mongoose.tsx` — **21.73% branch** — DB connection manager
-5. `check-usage-limit.ts` — verify/improve existing tests
-6. `check-daily-conversations.ts` — verify/improve existing tests
-7. `resolve-entitlements.ts` — verify/improve existing tests
-8. `ai-model-policy.ts` — verify/improve existing tests
-9. `classify-task-complexity.ts` — verify/improve existing tests
-10. `message-policy.ts` — verify/improve existing tests
-
-**Approach:** Write behavioral tests covering all branches. Test edge cases, error paths, boundary conditions. No mocking of pure logic — only mock IO boundaries (DB, network).
-
-**Acceptance criteria:**
-
-- [ ] `effective-persona-access.ts` branch coverage ≥80%
-- [ ] `handleError.tsx` branch coverage ≥60%
-- [ ] `deleteFileFromAWS.tsx` branch coverage ≥60%
-- [ ] `mongoose.tsx` branch coverage ≥40%
-- [ ] All 10 utility files have behavioral tests
-- [ ] Tests validate observable outputs, not mock calls
-
-#### 112.3 CRITICAL — Rebuild server action tests (TDD)
+### Phase 112.3 CRITICAL — Rebuild server action tests (TDD)
 
 **Target files:**
 
@@ -62,7 +82,7 @@
 - [ ] Auth/ownership enforcement tested on every action
 - [ ] Admin audit trail verified on every admin mutation
 
-#### 112.4 CRITICAL — Rebuild API route tests (TDD)
+### Phase 112.4 CRITICAL — Rebuild API route tests (TDD)
 
 **Target files:**
 
@@ -70,7 +90,7 @@
 2. `/api/upload` route tests — verify/improve
 3. `/api/download` route tests — verify/improve
 4. `/api/aws` route tests — verify/improve
-5. Clerk webhook Route tests — verify idempotency + edge cases
+5. Clerk webhook route tests — verify idempotency + edge cases
 6. Stripe webhook route tests — verify idempotency + plan update
 
 **Missing edge cases to add:**
@@ -86,7 +106,7 @@
 - [ ] Missing edge cases covered
 - [ ] `as never` casts reduced to zero (use typed factories)
 
-#### 112.5 HIGH — Rebuild component tests (TDD + a11y)
+### Phase 112.5 HIGH — Rebuild component tests (TDD + a11y)
 
 **Target files (0% or thin coverage):**
 
@@ -105,7 +125,7 @@
 - [ ] `chat-body.tsx` branch coverage ≥50%
 - [ ] Keyboard navigation tested for tabs and modals
 
-#### 112.6 HIGH — Expand E2E test suite
+### Phase 112.6 HIGH — Expand E2E test suite
 
 **New/improved specs:**
 
@@ -121,11 +141,11 @@
 - [ ] Authenticated route a11y scanning added
 - [ ] Zero local Mongo helper duplication
 
-#### 112.7 HIGH — Raise coverage thresholds post-rebuild
+### Phase 112.7 HIGH — Raise coverage thresholds post-rebuild
 
 **File:** `vitest.config.mts`
 
-**What to do:** After 112.2–112.5, raise thresholds to match achieved coverage (target: 82/78/82/82+).
+**What to do:** After 112.3–112.5, raise thresholds to match achieved coverage (target: 82/78/82/82+).
 
 **Acceptance criteria:**
 
@@ -136,7 +156,7 @@
 
 ## HIGH — Code Reuse: Extract shared types (PM audit #47)
 
-### Phase 106: Extract `ChatApiResponse` / `ChatStreamEvent` to shared types — HIGH
+### Phase 106 HIGH — Extract `ChatApiResponse` / `ChatStreamEvent` to shared types
 
 > TD-REUSE-04.
 
@@ -157,7 +177,7 @@
 
 ## HIGH — Admin Configurability: Stop Reason Messages (PM audit #47)
 
-### Phase 107: Stop reason messages admin-configurable — HIGH
+### Phase 107 HIGH — Stop reason messages admin-configurable
 
 > TD-HARDCODE-01. 9 user-facing strings hardcoded.
 
@@ -205,49 +225,7 @@
 
 ---
 
-## MEDIUM — Admin Configurability (Owner directive)
-
-### Phase 74.2 MEDIUM — FAQ content admin-configurable
-
-**What to do:**
-
-1. `admin.faqContent` AppSetting + `getEffectiveFaqContent()` resolver.
-2. Admin UI for FAQ entries. Fallback to `buildFaqs()`.
-
-**Acceptance criteria:**
-
-- [ ] FAQ admin-editable from `/admin/settings`
-- [ ] Build passes
-
-### Phase 104: Landing/hero/about content admin-configurable — MEDIUM
-
-#### 104.1 — Landing feature cards + how-it-works
-
-#### 104.2 — Hero copy
-
-#### 104.3 — About page copy
-
-See SPEC.md for full requirements on each.
-
----
-
-## HIGH — WCAG 2.2 AA Remaining Gaps
-
-### Phase 109 HIGH — Decorative icon `aria-hidden` across ~20 components (TD-WCAG-06)
-
-> Architect audit confirmed: ~20 components with `<i className="bi bi-*">` icons missing `aria-hidden="true"`. Screen readers announce empty or meaningless content. Affects: logout-btn, avatar-menu, image-holder, alert-message, library-tabs, chat-input, chat-body, chat-intro, plan-card, persona-card, profile-billing, faqs-section, admin-sidebar, chat-sidebar-nav-v2, sidebar-toggle.
-
-**What to do:**
-
-1. Add `aria-hidden="true"` to all decorative `<i>` Bootstrap Icons across the codebase.
-2. Grep for `<i className="bi ` and verify each — if decorative, add `aria-hidden="true"`.
-3. Icons that convey meaning (e.g., icon-only buttons without text labels) need `aria-label` on the parent instead.
-
-**Acceptance criteria:**
-
-- [ ] All decorative `<i>` icons have `aria-hidden="true"`
-- [ ] Icon-only interactive elements have `aria-label`
-- [ ] Build passes, axe-core E2E passes
+## MEDIUM — WCAG 2.2 AA Remaining Gaps
 
 ### Phase 108 MEDIUM — Library tabs + admin settings tabs arrow-key navigation (TD-WCAG-05)
 
@@ -265,9 +243,9 @@ See SPEC.md for full requirements on each.
 - [ ] Roving tabindex implemented
 - [ ] Build passes
 
-### Phase 114 MEDIUM — AvatarMenu keyboard navigation
+### Phase 114 MEDIUM — AvatarMenu keyboard navigation (TD-WCAG-07)
 
-> Architect audit: AvatarMenu dropdown has no keyboard navigation. No Escape handler, no Arrow key navigation, no `role="menu"`/`role="menuitem"`.
+> AvatarMenu dropdown has no keyboard navigation. No Escape handler, no Arrow key navigation, no `role="menu"`/`role="menuitem"`.
 
 **What to do:**
 
@@ -284,6 +262,32 @@ See SPEC.md for full requirements on each.
 - [ ] Build passes
 
 ### Phase 110 LOW — Mobile header hamburger `aria-expanded`
+
+---
+
+## MEDIUM — Admin Configurability (Owner directive)
+
+### Phase 74.2 MEDIUM — FAQ content admin-configurable
+
+**What to do:**
+
+1. `admin.faqContent` AppSetting + `getEffectiveFaqContent()` resolver.
+2. Admin UI for FAQ entries. Fallback to `buildFaqs()`.
+
+**Acceptance criteria:**
+
+- [ ] FAQ admin-editable from `/admin/settings`
+- [ ] Build passes
+
+### Phase 104 MEDIUM — Landing/hero/about content admin-configurable
+
+#### 104.1 — Landing feature cards + how-it-works
+
+#### 104.2 — Hero copy
+
+#### 104.3 — About page copy
+
+See SPEC.md for full requirements on each.
 
 ---
 
@@ -308,5 +312,5 @@ See SPEC.md for full requirements on each.
 ---
 
 > **Completed phases** archived in [`DONE.md`](DONE.md).
-> All phases through 112.1 complete.
+> All phases through 113.2 + 112.2 + 109 complete.
 > All Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS.

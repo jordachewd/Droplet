@@ -2,7 +2,37 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-24 — PM audit #51. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4, 105.1, 105.2, 111.1, 112.1, 113.1, 113.2 complete. Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS. 443 unit tests (74 suites). 108 E2E passed, 25 skipped, 0 failed. All 7 gates GREEN. Build passing. Node.js 24.12.0 runtime. Coverage: 78.55/66.3/83.53/78.85.
+> Last updated: 2026-03-24 — PM audit #52. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4, 105.1, 105.2, 111.1, 112.1, 112.2, 109, 113.1, 113.2 complete. Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS. 482 unit tests (76 suites). 108 E2E passed, 25 skipped, 0 failed. Build passing. Node.js 24.12.0 runtime.
+
+---
+
+## Phase 112.2 — Rebuild core utility unit tests (TDD) — COMPLETED (2026-03-24)
+
+> Engineer delivered (PM audit #52). All 10 utility TDD rebuilds complete.
+
+- [x] **112.2 CRITICAL** — Full TDD rebuild of 10 core utility test suites with behavioral coverage:
+  - `effective-persona-access.ts` — 100% branch ✅
+  - `handleError.tsx` — 100% branch ✅
+  - `deleteFileFromAWS.tsx` — 100% branch ✅ (new suite)
+  - `mongoose.tsx` — 86.95% branch ✅ (new suite)
+  - `check-usage-limit.ts` — 94.44% branch ✅ (expanded)
+  - `check-daily-conversations.ts` — 88.88% branch ✅ (expanded)
+  - `resolve-entitlements.ts` — 89.18% branch ✅ (expanded)
+  - `ai-model-policy.ts` — 95.9% branch ✅ (expanded)
+  - `classify-task-complexity.ts` — 91.17% branch ✅ (expanded)
+  - `message-policy.ts` — 87.5% branch ✅ (expanded)
+
+**Files changed:** `tests/unit/utils/delete-file-from-aws.test.ts` (new), `tests/unit/utils/mongoose.test.ts` (new), `tests/unit/utils/check-usage-limit.test.ts`, `tests/unit/utils/check-daily-conversations.test.ts`, `tests/unit/utils/resolve-entitlements.test.ts`, `tests/unit/utils/ai-model-policy.test.ts`, `tests/unit/utils/classify-task-complexity.test.ts`, `tests/unit/utils/message-policy.test.ts`
+
+---
+
+## Phase 109 — Decorative icon `aria-hidden` across ~20 components — COMPLETED (2026-03-24)
+
+> Engineer delivered (PM audit #52). TD-WCAG-06 RESOLVED. All decorative `<i>` Bootstrap Icons now have `aria-hidden="true"`.
+
+- [x] **109 HIGH** — Added `aria-hidden="true"` to all decorative `<i>` Bootstrap Icon elements across ~20 components. Repo-wide regex audit confirmed zero `<i>` tags remain without `aria-hidden`. Runtime DOM checks returned `missingAriaHidden: 0`.
+
+**Files changed:** `src/app/(admin)/admin/page.tsx`, `src/components/admin/admin-sidebar.tsx`, `src/components/chat/chat-body.tsx`, `src/components/chat/chat-input.tsx`, `src/components/chat/chat-intro.tsx`, `src/components/chat/library-delete-button.tsx`, `src/components/chat/library-tabs.tsx`, `src/components/chat/sidebar/chat-sidebar-nav.tsx`, `src/components/layout/header.tsx`, `src/components/sections/faqs-section.tsx`, `src/components/sections/landing-page.tsx`, `src/components/sections/profile-billing.tsx`, `src/components/shared/alert-message.tsx`, `src/components/shared/avatar-menu.tsx`, `src/components/shared/droplet-globe.tsx`, `src/components/shared/image-holder.tsx`, `src/components/shared/logout-btn.tsx`, `src/components/shared/persona-card.tsx`, `src/components/shared/plan-card.tsx`, `src/components/shared/plan-promo.tsx`, `src/components/shared/sidebar-toggle.tsx`
 
 ---
 
