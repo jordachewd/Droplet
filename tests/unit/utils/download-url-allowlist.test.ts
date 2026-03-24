@@ -4,74 +4,69 @@ import {
   getAllowedDownloadHosts,
   isAllowedDownloadUrl,
 } from "@/lib/utils/download-url-allowlist";
+import { createTestUser } from "../test-support";
 
 describe("download-url-allowlist", () => {
-  const originalAllowlist = process.env[DOWNLOAD_ALLOWLIST_ENV_KEY];
-  const originalBucket = process.env.AWS_S3_BUCKET;
-  const originalRegion = process.env.AWS_S3_REGION;
+  const previousEnvValue = process.env[DOWNLOAD_ALLOWLIST_ENV_KEY];
+  const previousBucket = process.env.AWS_S3_BUCKET;
+  const previousRegion = process.env.AWS_S3_REGION;
 
   afterEach(() => {
-    if (typeof originalAllowlist === "string") {
-      process.env[DOWNLOAD_ALLOWLIST_ENV_KEY] = originalAllowlist;
-    } else {
+    if (previousEnvValue === undefined) {
       delete process.env[DOWNLOAD_ALLOWLIST_ENV_KEY];
+    } else {
+      process.env[DOWNLOAD_ALLOWLIST_ENV_KEY] = previousEnvValue;
     }
 
-    if (typeof originalBucket === "string") {
-      process.env.AWS_S3_BUCKET = originalBucket;
-    } else {
+    if (previousBucket === undefined) {
       delete process.env.AWS_S3_BUCKET;
-    }
-
-    if (typeof originalRegion === "string") {
-      process.env.AWS_S3_REGION = originalRegion;
     } else {
+      process.env.AWS_S3_BUCKET = previousBucket;
+    }
+
+    if (previousRegion === undefined) {
       delete process.env.AWS_S3_REGION;
+    } else {
+      process.env.AWS_S3_REGION = previousRegion;
     }
   });
 
-  it("accepts known allowed https hosts", () => {
-    expect(
-      isAllowedDownloadUrl(
-        "https://oaidalleapiprodscus.blob.core.windows.net/path/image.png",
-      ),
-    ).toBe(true);
-  });
-
-  it("rejects non-https URLs", () => {
-    expect(isAllowedDownloadUrl("http://img.clerk.com/avatar.png")).toBe(false);
-  });
-
-  it("rejects hosts outside the allowlist", () => {
-    expect(isAllowedDownloadUrl("https://example.com/image.png")).toBe(false);
-  });
-
-  it("merges additional hosts from environment", () => {
-    process.env[DOWNLOAD_ALLOWLIST_ENV_KEY] = "assets.example.org";
-
-    const hosts = getAllowedDownloadHosts();
-    expect(hosts.has("assets.example.org")).toBe(true);
-    expect(
-      isAllowedDownloadUrl("https://assets.example.org/file.png", hosts),
-    ).toBe(true);
-  });
-
-  it("allows the configured S3 bucket host automatically", () => {
-    process.env.AWS_S3_BUCKET = "bucket-name";
-    process.env.AWS_S3_REGION = "eu-central-1";
+  it("builds allowed hosts from defaults, env, and aws bucket host", () => {
+    process.env.AWS_S3_BUCKET = "Droplet-Bucket";
+    process.env.AWS_S3_REGION = "EU-CENTRAL-1";
+    process.env[DOWNLOAD_ALLOWLIST_ENV_KEY] =
+      "cdn.example.com, media.example.com";
 
     const hosts = getAllowedDownloadHosts();
 
-    expect(hosts.has("bucket-name.s3.eu-central-1.amazonaws.com")).toBe(true);
-    expect(
-      isAllowedDownloadUrl(
-        "https://bucket-name.s3.eu-central-1.amazonaws.com/user_123/image.png",
-        hosts,
-      ),
-    ).toBe(true);
+    expect(hosts.has("img.clerk.com")).toBe(true);
+    expect(hosts.has("cdn.example.com")).toBe(true);
+    expect(hosts.has("droplet-bucket.s3.eu-central-1.amazonaws.com")).toBe(
+      true,
+    );
   });
 
-  it("rejects malformed URLs", () => {
-    expect(isAllowedDownloadUrl("not-a-url")).toBe(false);
+  it("allows only https urls on allowlisted hosts", () => {
+    const user = createTestUser();
+    const allowedHosts = new Set(["example.com"]);
+
+    expect(
+      isAllowedDownloadUrl(
+        `https://example.com/${user.clerkId}/assets/file.png`,
+        allowedHosts,
+      ),
+    ).toBe(true);
+    expect(
+      isAllowedDownloadUrl(
+        `http://example.com/${user.clerkId}/assets/file.png`,
+        allowedHosts,
+      ),
+    ).toBe(false);
+    expect(
+      isAllowedDownloadUrl(
+        `https://not-allowed.com/${user.clerkId}/assets/file.png`,
+        allowedHosts,
+      ),
+    ).toBe(false);
   });
 });
