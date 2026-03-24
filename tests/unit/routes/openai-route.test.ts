@@ -1429,4 +1429,37 @@ describe("POST /api/openai", () => {
     expect(payload.error).toContain("Account not yet provisioned");
     expect(ensureUserSynced).toHaveBeenCalledWith("user_123");
   });
+
+  it("returns 400 when the request body is malformed JSON", async () => {
+    const malformedRequest = {
+      headers: new Headers(),
+      signal: new AbortController().signal,
+      json: vi.fn().mockRejectedValue(new Error("Malformed JSON")),
+    } as unknown as Request;
+
+    const response = await POST(malformedRequest);
+    const payload = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(payload.error).toBe("Invalid request body.");
+  });
+
+  it("continues request handling when emitUsageEvents throws", async () => {
+    vi.mocked(emitUsageEvents).mockImplementation(() => {
+      throw new Error("usage-event store unavailable");
+    });
+
+    const response = await POST(
+      buildRequest({
+        taskId: EXISTING_TASK_ID,
+        messages: [{ role: "user", whois: "user", content: "continue" }],
+      }),
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.taskId).toBe(EXISTING_TASK_ID);
+    expect(payload.acceptedPrompt).toBe(true);
+    expect(emitUsageEvents).toHaveBeenCalled();
+  });
 });

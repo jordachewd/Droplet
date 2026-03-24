@@ -126,6 +126,79 @@ describe("updateUser", () => {
     vi.mocked(connectToDatabase).mockResolvedValue(undefined as never);
   });
 
+  it("updates profile data for the authenticated owner", async () => {
+    vi.mocked(User.findOneAndUpdate).mockResolvedValue({
+      clerkId: "clerk_user_1",
+      username: "alice-updated",
+      firstName: "Alice",
+    } as never);
+
+    const response = await updateUser("clerk_user_1", {
+      username: "alice-updated",
+      firstName: "Alice",
+      updatedAt: new Date("2026-03-13T00:00:00Z"),
+    });
+
+    expect(connectToDatabase).toHaveBeenCalledOnce();
+    expect(User.findOneAndUpdate).toHaveBeenCalledWith(
+      { clerkId: "clerk_user_1" },
+      expect.objectContaining({
+        username: "alice-updated",
+        firstName: "Alice",
+      }),
+      expect.objectContaining({
+        returnDocument: "after",
+        strict: true,
+        upsert: false,
+      }),
+    );
+    expect(response).toEqual(
+      expect.objectContaining({
+        status: 200,
+        message: "User updated successfully (user.actions.tsx)",
+      }),
+    );
+  });
+
+  it("returns a 404 payload when user update target is missing", async () => {
+    vi.mocked(User.findOneAndUpdate).mockResolvedValue(null as never);
+
+    const response = await updateUser("clerk_user_1", {
+      updatedAt: new Date("2026-03-13T00:00:00Z"),
+    });
+
+    expect(response).toEqual(
+      expect.objectContaining({
+        status: 404,
+        message: "User update failed!",
+      }),
+    );
+  });
+
+  it("throws forbidden when an authenticated user updates another account", async () => {
+    await expect(
+      updateUser("clerk_user_2", {
+        updatedAt: new Date("2026-03-13T00:00:00Z"),
+      }),
+    ).rejects.toThrow("Forbidden | updateUser");
+
+    expect(connectToDatabase).not.toHaveBeenCalled();
+    expect(User.findOneAndUpdate).not.toHaveBeenCalled();
+  });
+
+  it("throws unauthorized when no session exists for updateUser", async () => {
+    vi.mocked(auth).mockResolvedValue({ userId: null } as never);
+
+    await expect(
+      updateUser("clerk_user_1", {
+        updatedAt: new Date("2026-03-13T00:00:00Z"),
+      }),
+    ).rejects.toThrow("Unauthorized | updateUser");
+
+    expect(connectToDatabase).not.toHaveBeenCalled();
+    expect(User.findOneAndUpdate).not.toHaveBeenCalled();
+  });
+
   it("throws handled errors with source metadata when update fails", async () => {
     vi.mocked(User.findOneAndUpdate).mockRejectedValue(new Error("db failed"));
 

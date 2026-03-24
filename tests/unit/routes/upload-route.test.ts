@@ -19,9 +19,15 @@ function buildRequestWithFormData(formData: FormData): NextRequest {
   } as unknown as NextRequest;
 }
 
+type AuthResult = Awaited<ReturnType<typeof auth>>;
+
+function mockAuthUser(userId: string | null): void {
+  vi.mocked(auth).mockResolvedValue({ userId } as AuthResult);
+}
+
 describe("POST /api/upload", () => {
   beforeEach(() => {
-    vi.mocked(auth).mockResolvedValue({ userId: "user_123" } as never);
+    mockAuthUser("user_123");
     vi.mocked(uploadFileToAWS).mockResolvedValue(
       "/api/download?key=user_123%2Fuploads%2Fuploaded_file_1700000000000.png",
     );
@@ -32,7 +38,7 @@ describe("POST /api/upload", () => {
   });
 
   it("returns 401 when user is not authenticated", async () => {
-    vi.mocked(auth).mockResolvedValue({ userId: null } as never);
+    mockAuthUser(null);
     const req = buildRequestWithFormData(new FormData());
 
     const response = await POST(req);
