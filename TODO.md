@@ -5,10 +5,10 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #53 (2026-03-24). Phases 1–116 complete. 526 unit tests (78 suites). Build passes. TSC passes. Node.js 24.12.0 runtime.**
-> **GATE STATUS: All 7 gates GREEN. Lint (0 errors, 6 warnings), Knip (clean), TSC, build, unit tests (78/526), E2E (108 passed, 25 skipped, 0 failed) — all pass.**
+> **STATUS: PM audit #54 (2026-03-24). Phases 1–117, 120.1 complete. 532 unit tests (79 suites). Build passes. TSC passes. Node.js 24.12.0 runtime.**
+> **GATE STATUS: All 7 gates GREEN. Lint (0 errors, 6 warnings), Knip (clean), TSC, build, unit tests (79/532), E2E (108 passed, 25 skipped, 0 failed) — all pass.**
 > **Owner directive (CRITICAL): FULL TDD TESTING REBUILD from scratch. NO hardcoded data. WCAG 2.2 AA. Code reuse. Full admin configurability.**
-> **Priority order: 120 (CRITICAL TDD rebuild) → 117 (HIGH shared utility extraction) → 108 (MEDIUM WCAG tabs) → 114 (MEDIUM WCAG avatar menu) → 106 (HIGH shared types) → 107 (HIGH stop-reason config) → 74.2 (MEDIUM FAQ admin) → 104 (MEDIUM landing/hero admin)**
+> **Priority order: 120.2 (CRITICAL TDD utility rebuild) → 120.3 (CRITICAL TDD action rebuild) → 106 (HIGH shared types) → 120.4 (CRITICAL TDD route rebuild) → 120.5 (HIGH TDD component rebuild) → 120.6 (HIGH TDD E2E rebuild) → 120.7 (HIGH coverage thresholds) → 121 (MEDIUM error message leak fix) → 107 (HIGH stop-reason config) → 108 (MEDIUM WCAG tabs) → 114 (MEDIUM WCAG avatar menu) → 74.2 (MEDIUM FAQ admin) → 104 (MEDIUM landing/hero admin)**
 
 ---
 
@@ -18,23 +18,9 @@
 
 > **Owner directive (2026-03-24 — ESCALATED):** Remove ALL existing unit and E2E tests and rebuild the entire testing process from scratch using strict Test-Driven Development methodology. Write failing tests FIRST, then write just enough code to make them pass. This prevents over-engineering and ensures only necessary code is written.
 >
-> The current 526 tests (78 suites) and 108 E2E tests serve as behavioral reference — they document WHAT the code should do. The rebuild replaces HOW they test it.
-
-#### 120.1 CRITICAL — Create TDD test infrastructure
-
-**What to do:**
-
-1. Create typed mock factories in `tests/unit/test-support/` for ALL common patterns (User, Task, Transaction, Mongoose chain, Clerk auth, HTTP request/response). Eliminate ALL `as never` casts.
-2. Create shared test helpers: `mockAuth()`, `mockAdminAuth()`, `mockMongooseModel()`, `mockClerkUser()`.
-3. Update `vitest.setup.ts` with global mock infrastructure.
-4. Document test patterns in `tests/README.md`.
-
-**Acceptance criteria:**
-
-- [ ] Zero `as never` casts needed in new test code
-- [ ] All mock factories are typed and reusable
-- [ ] `tests/README.md` documents mock patterns and TDD workflow
-- [ ] Build passes
+> The current 532 tests (79 suites) and 108 E2E tests serve as behavioral reference — they document WHAT the code should do. The rebuild replaces HOW they test it.
+>
+> **Phase 120.1 COMPLETE** — TDD test infrastructure built (factories, mock helpers, vitest.setup, tests/README.md). See `DONE.md`.
 
 #### 120.2 CRITICAL — Rebuild utility tests (TDD)
 
@@ -135,27 +121,6 @@
 
 - [ ] Thresholds raised to ≥85/80/85/85
 - [ ] `npm run test:coverage` passes
-
----
-
-## HIGH — Code Quality: Extract duplicate utility (PM audit #53)
-
-### Phase 117 HIGH — Extract `isMongoDuplicateKeyError` to shared utility
-
-> PM audit #53 codebase audit: identical 6-line type-guard function duplicated in `clerk/route.tsx` and `ensure-user-synced.ts`.
-
-**Files:** `src/lib/utils/type-guards.ts` (existing), `src/app/api/webhooks/clerk/route.tsx`, `src/lib/utils/ensure-user-synced.ts`
-
-**What to do:**
-
-1. Add `isMongoDuplicateKeyError()` to existing `src/lib/utils/type-guards.ts`.
-2. Import from shared location in both consumer files.
-3. Delete local definitions.
-
-**Acceptance criteria:**
-
-- [ ] Zero duplicate `isMongoDuplicateKeyError` definitions
-- [ ] Build passes, tests pass
 
 ---
 
@@ -291,6 +256,28 @@
 #### 104.3 — About page copy
 
 See SPEC.md for full requirements on each.
+
+---
+
+## MEDIUM — Security: Error Message Leak (PM audit #54)
+
+### Phase 121 MEDIUM — Fix raw `error.message` leak in profile-hero-editor
+
+> PM audit #54 finding: `profile-hero-editor.tsx` lines 125 and 149 pass raw `error.message` from server action catch blocks to the UI. If server actions throw Mongoose/DB errors, internal details could leak to client.
+
+**Files:** `src/components/sections/profile-hero-editor.tsx`
+
+**What to do:**
+
+1. Replace `error.message` in catch blocks with generic user-facing fallback messages.
+2. Pattern: `error instanceof Error ? "An error occurred. Please try again." : "An unexpected error occurred."`
+3. Log original error server-side if needed.
+
+**Acceptance criteria:**
+
+- [ ] Zero raw `error.message` displayed to user in profile editor
+- [ ] Generic error messages shown instead
+- [ ] Build passes
 
 ---
 
