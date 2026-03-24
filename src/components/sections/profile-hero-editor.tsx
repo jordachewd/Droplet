@@ -131,9 +131,8 @@ export default function ProfileHeroEditor({
       setFeedbackMessage("Profile updated successfully.");
       router.refresh();
     } catch (error) {
-      setErrorMessage(
-        error instanceof Error ? error.message : "Failed to update profile.",
-      );
+      void error;
+      setErrorMessage("Failed to update profile. Please try again.");
     } finally {
       setIsSaving(false);
     }
@@ -159,9 +158,8 @@ export default function ProfileHeroEditor({
 
       await clerk.signOut({ redirectUrl: "/" });
     } catch (error) {
-      setErrorMessage(
-        error instanceof Error ? error.message : "Failed to delete account.",
-      );
+      void error;
+      setErrorMessage("Failed to delete account. Please try again.");
     } finally {
       setIsDeleting(false);
     }
