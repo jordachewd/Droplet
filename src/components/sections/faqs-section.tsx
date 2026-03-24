@@ -39,7 +39,10 @@ export default function Faqs({ faqsData }: FaqsProps) {
               <h3 className="heading-6 text-left leading-snug">
                 {faq.question}
               </h3>
-              <i className="bi bi-arrow-down-short text-xl transition-transform group-open:rotate-180"></i>
+              <i
+                className="bi bi-arrow-down-short text-xl transition-transform group-open:rotate-180"
+                aria-hidden="true"
+              ></i>
             </summary>
             <div id={`panel${faq.id}-content`} className={faqContentClass}>
               <p className="body-2 overflow-hidden pt-2 text-sm md:text-base">

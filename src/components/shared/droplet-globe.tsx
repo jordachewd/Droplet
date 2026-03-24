@@ -66,6 +66,7 @@ export default function DropletGlobe({
       <i
         className="DropletGlobeLogo bi bi-droplet relative z-30 block text-lavenderHaze-100 dark:text-lavenderHaze-200"
         style={{ fontSize: "var(--droplet-globe-icon-size)" }}
+        aria-hidden="true"
       />
 
       <div className="DropletGlobeShadow absolute inset-0 z-10 rounded-full animate-spin animate-duration-[1.6s] animate-ease-linear shadow-(--droplet-globe-shadow-light) dark:shadow-(--droplet-globe-shadow-dark)" />

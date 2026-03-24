@@ -136,6 +136,39 @@ describe("resolveEntitlements", () => {
     expect(entitlements.personaAccess!.developer).toBe("limited");
     expect(entitlements.trialPersonaIds).toContain("developer");
   });
+
+  it("keeps paid entitlements when expiresOn is invalid", () => {
+    const entitlements = resolveEntitlements("Pro", {
+      expiresOn: "invalid-date",
+      now: new Date("2026-03-13T00:00:00.000Z"),
+    });
+
+    expect(entitlements.planName).toBe("Pro");
+    expect(entitlements.personaAccess!.teacher).toBe("full");
+    expect(entitlements.personaAccess!.interviewer).toBe("limited");
+  });
+
+  it("treats expiresOn equal to now as still active", () => {
+    const now = new Date("2026-03-13T00:00:00.000Z");
+    const entitlements = resolveEntitlements("Premium", {
+      expiresOn: now.toISOString(),
+      now,
+    });
+
+    expect(entitlements.planName).toBe("Premium");
+    expect(entitlements.personaAccess!.interviewer).toBe("full");
+  });
+
+  it("prioritizes suspension over admin bypass", () => {
+    const entitlements = resolveEntitlements("Premium", {
+      isSuspended: true,
+      isAdmin: true,
+    });
+
+    expect(entitlements.allowedPersonaIds).toEqual([]);
+    expect(entitlements.supportsImageGeneration).toBe(false);
+    expect(entitlements.imageLimitReached).toBe(true);
+  });
 });
 
 describe("getRequiredPlanForPersona", () => {
@@ -176,5 +209,15 @@ describe("getRequiredPlanForPersona", () => {
         DEFAULT_FULL_PERSONA_ACCESS_BY_PLAN,
       ),
     ).toBe("Premium");
+  });
+
+  it("returns null when the persona is absent from all configured access lists", () => {
+    expect(
+      getRequiredPlanForPersona("interviewer", {
+        Lite: ["strategist", "developer"],
+        Pro: ["strategist", "developer", "teacher", "creator", "wellness"],
+        Premium: ["strategist", "developer", "teacher", "creator", "wellness"],
+      }),
+    ).toBeNull();
   });
 });

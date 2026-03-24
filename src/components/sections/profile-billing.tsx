@@ -36,7 +36,10 @@ export default function ProfileBilling({ stripeId, userTxns }: BillingProps) {
             <p className="hidden flex-1 text-center md:flex">Expires</p>
             <p className="min-w-14 text-center">Status</p>
             <TooltipArrow title="Invoice" placement="top">
-              <i className="bi bi-cloud-download ml-4 text-base"></i>
+              <i
+                className="bi bi-cloud-download ml-4 text-base"
+                aria-hidden="true"
+              ></i>
             </TooltipArrow>
           </div>
 
@@ -68,7 +71,10 @@ export default function ProfileBilling({ stripeId, userTxns }: BillingProps) {
                 <p className="min-w-14 text-center text-xxs">
                   <span className={txnColor}>{txnStatus}</span>
                 </p>
-                <i className="bi bi-file-earmark-arrow-down ml-4 cursor-pointer text-base"></i>
+                <i
+                  className="bi bi-file-earmark-arrow-down ml-4 cursor-pointer text-base"
+                  aria-hidden="true"
+                ></i>
               </div>
             );
           })}

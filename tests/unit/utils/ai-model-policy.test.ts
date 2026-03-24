@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   estimateModelCostCents,
   MODEL_POLICY_MATRIX,
+  normalizePlanTier,
   resolveModelPolicy,
 } from "@/lib/utils/ai-model-policy";
 
@@ -15,6 +16,15 @@ const features = [
 ] as const;
 
 describe("ai-model-policy", () => {
+  it("normalizes PlanName and tier values into internal plan tiers", () => {
+    expect(normalizePlanTier("Lite")).toBe("lite");
+    expect(normalizePlanTier("Pro")).toBe("pro");
+    expect(normalizePlanTier("Premium")).toBe("premium");
+    expect(normalizePlanTier("premium")).toBe("premium");
+    expect(normalizePlanTier(undefined)).toBe("lite");
+    expect(normalizePlanTier(null)).toBe("lite");
+  });
+
   it("covers every plan and feature combination in the policy matrix", () => {
     for (const plan of plans) {
       for (const feature of features) {
@@ -469,5 +479,82 @@ describe("ai-model-policy", () => {
         model: "sora-2",
       }),
     ).toBe(10);
+  });
+
+  it("falls back to the feature default task class when an unsupported task class is requested", () => {
+    const imagePolicy = resolveModelPolicy({
+      plan: "lite",
+      feature: "image_generation",
+      taskClass: "complex",
+    });
+
+    expect(imagePolicy.taskClass).toBe("final");
+    expect(imagePolicy.model).toBe("gpt-image-1-mini");
+
+    const videoPolicy = resolveModelPolicy({
+      plan: "pro",
+      feature: "video_generation",
+      taskClass: "complex",
+    });
+
+    expect(videoPolicy.taskClass).toBe("preview");
+    expect(videoPolicy.model).toBe("sora-2");
+  });
+
+  it("honors hardBlocked rules when configured in the model policy matrix", () => {
+    const imageFinalRule = MODEL_POLICY_MATRIX.lite.image_generation.taskClasses
+      .final as {
+      hardBlocked?: boolean;
+    };
+    const previousHardBlocked = imageFinalRule.hardBlocked;
+    imageFinalRule.hardBlocked = true;
+
+    try {
+      const policy = resolveModelPolicy({
+        plan: "lite",
+        feature: "image_generation",
+      });
+
+      expect(policy.hardBlocked).toBe(true);
+      expect(policy.wasDowngraded).toBe(false);
+    } finally {
+      imageFinalRule.hardBlocked = previousHardBlocked;
+    }
+  });
+
+  it("throws when a feature policy has no resolvable task class rule", () => {
+    const chatPolicy = MODEL_POLICY_MATRIX.lite.chat as {
+      defaultTaskClass: string;
+      taskClasses: Record<string, unknown>;
+    };
+    const previousTaskClasses = chatPolicy.taskClasses;
+    chatPolicy.taskClasses = {};
+
+    try {
+      expect(() =>
+        resolveModelPolicy({
+          plan: "lite",
+          feature: "chat",
+        }),
+      ).toThrow("No model policy rule configured");
+    } finally {
+      chatPolicy.taskClasses = previousTaskClasses;
+    }
+  });
+
+  it("returns undefined cost when pricing metadata is unavailable or no tokens were billed", () => {
+    expect(
+      estimateModelCostCents({
+        model: "unknown-model",
+        tokensIn: 1_000,
+        tokensOut: 2_000,
+      }),
+    ).toBeUndefined();
+
+    expect(
+      estimateModelCostCents({
+        model: "gpt-4.1",
+      }),
+    ).toBeUndefined();
   });
 });

@@ -107,7 +107,7 @@ export default function AvatarMenu() {
               className={accountMenuLinkClass}
               onClick={handleCloseUserMenu}
             >
-              <i className="bi bi-speedometer2 mr-4"></i>
+              <i className="bi bi-speedometer2 mr-4" aria-hidden="true"></i>
               <span>Dashboard</span>
             </Link>
           )}
@@ -117,7 +117,7 @@ export default function AvatarMenu() {
             className={accountMenuLinkClass}
             onClick={handleCloseUserMenu}
           >
-            <i className="bi bi-clock-history mr-4"></i>
+            <i className="bi bi-clock-history mr-4" aria-hidden="true"></i>
             <span>Library</span>
           </Link>
 
@@ -126,7 +126,7 @@ export default function AvatarMenu() {
             className={accountMenuLinkClass}
             onClick={handleCloseUserMenu}
           >
-            <i className="bi bi-grid-3x3-gap mr-4"></i>
+            <i className="bi bi-grid-3x3-gap mr-4" aria-hidden="true"></i>
             <span>Personas</span>
           </Link>
 
@@ -135,7 +135,7 @@ export default function AvatarMenu() {
             className={accountMenuLinkClass}
             onClick={handleCloseUserMenu}
           >
-            <i className="bi bi-graph-up mr-4"></i>
+            <i className="bi bi-graph-up mr-4" aria-hidden="true"></i>
             <span>Plans</span>
           </Link>
 
@@ -144,7 +144,7 @@ export default function AvatarMenu() {
             className={accountMenuLinkClass}
             onClick={handleCloseUserMenu}
           >
-            <i className="bi bi-person mr-4"></i>
+            <i className="bi bi-person mr-4" aria-hidden="true"></i>
             <span>Profile</span>
           </Link>
 

@@ -138,7 +138,10 @@ export default function LibraryTabs({
 
                     <div className="flex items-center justify-between gap-3 text-sm opacity-80">
                       <span className="inline-flex items-center gap-2">
-                        <i className={conversation.personaIcon}></i>
+                        <i
+                          className={conversation.personaIcon}
+                          aria-hidden="true"
+                        ></i>
                         {conversation.personaLabel}
                       </span>
                       <span className="shrink-0">
@@ -295,7 +298,7 @@ function LibraryImageCard({ item }: { item: LibraryMediaCardItem }) {
 
         <div className="flex items-center justify-between text-xs opacity-80">
           <span className="inline-flex items-center gap-1.5">
-            <i className={item.personaIcon}></i>
+            <i className={item.personaIcon} aria-hidden="true"></i>
             {item.personaLabel}
           </span>
           <span>{item.createdAtLabel}</span>
@@ -312,7 +315,7 @@ function LibraryImageCard({ item }: { item: LibraryMediaCardItem }) {
               "dark:border-slate-500 dark:hover:bg-nightIndigo-500/30",
             )}
           >
-            <i className="bi bi-arrows-fullscreen"></i>
+            <i className="bi bi-arrows-fullscreen" aria-hidden="true"></i>
             Preview
           </a>
 
@@ -324,7 +327,7 @@ function LibraryImageCard({ item }: { item: LibraryMediaCardItem }) {
               "dark:border-slate-500 dark:hover:bg-nightIndigo-500/30",
             )}
           >
-            <i className="bi bi-download"></i>
+            <i className="bi bi-download" aria-hidden="true"></i>
             Download
           </a>
         </div>
@@ -353,7 +356,7 @@ function LibraryAudioCard({ item }: { item: LibraryMediaCardItem }) {
         )}
       >
         <span className="inline-flex items-center gap-2 text-sm font-medium">
-          <i className="bi bi-mic-fill"></i>
+          <i className="bi bi-mic-fill" aria-hidden="true"></i>
           Audio generation
         </span>
 
@@ -378,7 +381,7 @@ function LibraryAudioCard({ item }: { item: LibraryMediaCardItem }) {
 
       <div className="mt-3 flex items-center justify-between text-xs opacity-80">
         <span className="inline-flex items-center gap-1.5">
-          <i className={item.personaIcon}></i>
+          <i className={item.personaIcon} aria-hidden="true"></i>
           {item.personaLabel}
         </span>
         <span>{item.createdAtLabel}</span>
@@ -393,7 +396,7 @@ function LibraryAudioCard({ item }: { item: LibraryMediaCardItem }) {
             "dark:border-slate-500 dark:hover:bg-nightIndigo-500/30",
           )}
         >
-          <i className="bi bi-download"></i>
+          <i className="bi bi-download" aria-hidden="true"></i>
           Download
         </a>
       </div>
@@ -427,7 +430,7 @@ function LibraryVideoCard({ item }: { item: LibraryMediaCardItem }) {
 
       <div className="mt-3 flex items-center justify-between text-xs opacity-80">
         <span className="inline-flex items-center gap-1.5">
-          <i className={item.personaIcon}></i>
+          <i className={item.personaIcon} aria-hidden="true"></i>
           {item.personaLabel}
         </span>
         <span>{item.createdAtLabel}</span>
@@ -442,7 +445,7 @@ function LibraryVideoCard({ item }: { item: LibraryMediaCardItem }) {
             "dark:border-slate-500 dark:hover:bg-nightIndigo-500/30",
           )}
         >
-          <i className="bi bi-download"></i>
+          <i className="bi bi-download" aria-hidden="true"></i>
           Download
         </a>
       </div>

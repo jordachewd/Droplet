@@ -13,6 +13,14 @@ function createUserMessage(text: string): Message {
   };
 }
 
+function createAssistantMessage(text: string): Message {
+  return {
+    role: "assistant",
+    whois: "assistant",
+    content: [{ type: "text", text }],
+  };
+}
+
 describe("classifyTaskComplexity", () => {
   it("classifies short conversational prompts as simple", () => {
     const latestUserMessage = createUserMessage("What is TypeScript?");
@@ -85,5 +93,73 @@ describe("classifyTaskComplexity", () => {
     });
 
     expect(taskClass).toBe("complex");
+  });
+
+  it("returns standard when the latest message has no text content", () => {
+    const taskClass = classifyTaskComplexity({
+      messages: [
+        {
+          role: "user",
+          whois: "user",
+          content: [{ type: "image_url", image_url: { url: "/image.png" } }],
+        },
+      ],
+    });
+
+    expect(taskClass).toBe("standard");
+  });
+
+  it("classifies very long prompts as complex even without explicit deep-analysis language", () => {
+    const longPrompt = "a".repeat(500);
+
+    const taskClass = classifyTaskComplexity({
+      messages: [createUserMessage(longPrompt)],
+    });
+
+    expect(taskClass).toBe("complex");
+  });
+
+  it("classifies analytical prompts as complex when keyword density and history are moderate", () => {
+    const messages: Message[] = [
+      createUserMessage("Start"),
+      createAssistantMessage("Ack"),
+      createUserMessage("Continue"),
+      createAssistantMessage("Ack"),
+      createUserMessage("Continue"),
+      createAssistantMessage("Ack"),
+      createUserMessage(
+        "I need help with database schema migration and security tradeoff analysis for this technical implementation.",
+      ),
+    ];
+
+    const taskClass = classifyTaskComplexity({
+      messages,
+    });
+
+    expect(taskClass).toBe("complex");
+  });
+
+  it("uses latestUserMessage over messages.at(-1) when explicitly provided", () => {
+    const taskClass = classifyTaskComplexity({
+      messages: [
+        createUserMessage("What is the weather?"),
+        createAssistantMessage("Sunny"),
+      ],
+      latestUserMessage: createUserMessage(
+        "Please do a deep dive into this architecture review.",
+      ),
+    });
+
+    expect(taskClass).toBe("complex");
+  });
+
+  it("detects explicit deep-analysis requests only when text is present", () => {
+    expect(
+      isExplicitDeepAnalysisRequest({
+        role: "user",
+        whois: "user",
+        content: [{ type: "image_url", image_url: { url: "/example.png" } }],
+      }),
+    ).toBe(false);
   });
 });

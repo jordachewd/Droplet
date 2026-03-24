@@ -55,7 +55,7 @@ function SidebarNavLink({
         !isOpen && "lg:w-auto lg:justify-center lg:px-2",
       )}
     >
-      <i className={classNames(item.icon, "text-base")}></i>
+      <i className={classNames(item.icon, "text-base")} aria-hidden="true"></i>
       <span className={classNames(!isOpen && "lg:hidden")}>{item.label}</span>
     </Link>
   );
@@ -218,6 +218,7 @@ export default function ChatSidebarNav({
                 >
                   <i
                     className={classNames(item.personaIcon, "shrink-0 text-sm")}
+                    aria-hidden="true"
                   ></i>
                   <div
                     className={classNames("min-w-0", !isOpen && "lg:hidden")}
@@ -256,6 +257,7 @@ export default function ChatSidebarNav({
                         : "bi bi-trash3",
                       "text-sm",
                     )}
+                    aria-hidden="true"
                   ></i>
                 </button>
               </div>

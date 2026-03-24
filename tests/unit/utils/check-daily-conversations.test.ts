@@ -93,6 +93,46 @@ describe("checkDailyConversationLimit", () => {
       remaining: -1,
     });
   });
+
+  it("defaults to Lite conversation limits when planName is omitted", async () => {
+    vi.mocked(User.findOne).mockResolvedValue({
+      dailyConversationsStarted: 2,
+      dailyConversationWindowStart: new Date("2026-03-11T00:00:00.000Z"),
+    } as never);
+
+    const result = await checkDailyConversationLimit(
+      "user_123",
+      undefined,
+      new Date("2026-03-11T13:00:00.000Z"),
+    );
+
+    expect(result).toEqual({
+      allowed: true,
+      limit: 5,
+      used: 2,
+      remaining: 3,
+    });
+  });
+
+  it("treats invalid window timestamps and negative counters as zero usage", async () => {
+    vi.mocked(User.findOne).mockResolvedValue({
+      dailyConversationsStarted: -10,
+      dailyConversationWindowStart: "invalid-date",
+    } as never);
+
+    const result = await checkDailyConversationLimit(
+      "user_123",
+      "Lite",
+      new Date("2026-03-11T13:00:00.000Z"),
+    );
+
+    expect(result).toEqual({
+      allowed: true,
+      limit: 5,
+      used: 0,
+      remaining: 5,
+    });
+  });
 });
 
 function mockFindOneAndUpdateChain(resolvedValue: unknown) {
@@ -144,6 +184,21 @@ describe("claimDailyConversationSlot", () => {
     });
   });
 
+  it("returns used=1 when the atomic increment returns no explicit counter", async () => {
+    vi.mocked(User.findOneAndUpdate).mockReturnValueOnce(
+      mockFindOneAndUpdateChain({}) as never,
+    );
+
+    const result = await claimDailyConversationSlot("user_123", "Lite");
+
+    expect(result).toEqual({
+      claimed: true,
+      limit: 5,
+      used: 1,
+      remaining: 4,
+    });
+  });
+
   it("resets window and claims slot at midnight boundary", async () => {
     const now = new Date("2026-03-12T00:01:00.000Z");
     // First attempt (current window) returns null — stale window
@@ -182,6 +237,29 @@ describe("claimDailyConversationSlot", () => {
       used: 5,
       remaining: 0,
     });
+  });
+
+  it("uses UTC midnight as the current-window boundary", async () => {
+    const now = new Date("2026-03-11T14:30:00.000Z");
+    vi.mocked(User.findOneAndUpdate).mockReturnValueOnce(
+      mockFindOneAndUpdateChain({
+        dailyConversationsStarted: 2,
+      }) as never,
+    );
+
+    await claimDailyConversationSlot("user_123", "Lite", now);
+
+    expect(User.findOneAndUpdate).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        clerkId: "user_123",
+        dailyConversationWindowStart: {
+          $gte: new Date("2026-03-11T00:00:00.000Z"),
+        },
+      }),
+      expect.any(Object),
+      expect.any(Object),
+    );
   });
 
   it("claims at exact boundary (4/5 used, slot 5 is the last)", async () => {

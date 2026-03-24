@@ -15,7 +15,7 @@ export default function LogoutBtn() {
       className="LogoutBtn flex flex-1 items-center"
       onClick={handleLogout}
     >
-      <i className="bi bi-box-arrow-right mr-4" />
+      <i className="bi bi-box-arrow-right mr-4" aria-hidden="true" />
       Logout
     </button>
   );

@@ -48,6 +48,7 @@ export default function PlanPromo({ plan, role }: PlanPromoProps) {
         <h2 className="heading-6 flex items-center justify-center gap-4 capitalize text-twilightPurple-1000 dark:text-dustyBlue-1000">
           <i
             className={classNames(getPlanIcon(name as PlanName), "text-3xl")}
+            aria-hidden="true"
           ></i>
           <span>{name}</span>
         </h2>

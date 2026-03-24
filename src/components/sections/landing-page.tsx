@@ -27,7 +27,7 @@ export default async function LandingPage() {
             )}
           >
             <div className="inline-flex rounded-full bg-lavenderHaze-100 px-3 py-2 text-lg dark:bg-nightIndigo-900/50">
-              <i className={card.icon}></i>
+              <i className={card.icon} aria-hidden="true"></i>
             </div>
             <h2 className="heading-5 mt-5">{card.title}</h2>
             <p className="body-2 mt-3 text-sm md:text-base">
@@ -150,7 +150,7 @@ export default async function LandingPage() {
                   <h3 className="heading-5 mt-2">{persona.label}</h3>
                 </div>
                 <span className="rounded-full bg-lavenderHaze-100 px-3 py-2 text-lg dark:bg-nightIndigo-900/50">
-                  <i className={persona.icon}></i>
+                  <i className={persona.icon} aria-hidden="true"></i>
                 </span>
               </div>
               <p className="body-2 mt-4 text-sm md:text-base">

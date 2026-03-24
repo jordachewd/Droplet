@@ -93,7 +93,10 @@ export default function Header() {
               className="icon-btn md:hidden"
               onClick={handleMobileMenuToggle}
             >
-              <i className={mobileMenuOpen ? "bi bi-x-lg" : "bi bi-list"}></i>
+              <i
+                className={mobileMenuOpen ? "bi bi-x-lg" : "bi bi-list"}
+                aria-hidden="true"
+              ></i>
             </button>
 
             {!isSignedIn && (

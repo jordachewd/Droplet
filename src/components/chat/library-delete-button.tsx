@@ -116,6 +116,7 @@ export default function LibraryDeleteButton({
             isDeleting ? "bi bi-arrow-repeat animate-spin" : "bi bi-trash3",
             "text-sm",
           )}
+          aria-hidden="true"
         ></i>
       </button>
       <ConfirmationModal

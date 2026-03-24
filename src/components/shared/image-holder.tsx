@@ -81,7 +81,7 @@ export default function ImageHolder({
             {isDownloading ? (
               <LoadingBubbles size="small" className="w-auto! gap-0.5" />
             ) : (
-              <i className="bi bi-download"></i>
+              <i className="bi bi-download" aria-hidden="true"></i>
             )}
           </button>
         )

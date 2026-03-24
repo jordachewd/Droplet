@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildTextToSpeechInput,
   compactMessagesToTokenLimit,
   estimateMessageTokens,
 } from "@/lib/utils/openai/message-policy";
@@ -113,5 +114,99 @@ describe("message-policy", () => {
     expect(typeof compacted[1]?.content).toBe("string");
     expect((compacted[1]?.content as string).startsWith("... ")).toBe(true);
     expect(compacted[2]).toEqual(messages[2]);
+  });
+
+  it("returns input unchanged when maxInputTokens is zero or undefined", () => {
+    const messages: Message[] = [
+      { role: "system", content: "System context." },
+      { role: "user", content: "Hello" },
+    ];
+
+    expect(compactMessagesToTokenLimit(messages, 0)).toEqual(messages);
+    expect(compactMessagesToTokenLimit(messages)).toEqual(messages);
+  });
+
+  it("keeps only leading context messages when they already exceed the token budget", () => {
+    const messages: Message[] = [
+      {
+        role: "system",
+        content: "a".repeat(200),
+      },
+      {
+        role: "developer",
+        content: "b".repeat(200),
+      },
+      {
+        role: "user",
+        content: "latest prompt",
+      },
+    ];
+
+    const compacted = compactMessagesToTokenLimit(messages, 20);
+
+    expect(compacted).toEqual([messages[0], messages[1]]);
+  });
+
+  it("retains the most recent user message even when there are no remaining tokens", () => {
+    const messages: Message[] = [
+      {
+        role: "assistant",
+        content: "Old assistant response",
+      },
+      {
+        role: "user",
+        content: "This latest user message should be retained after trim.",
+      },
+    ];
+
+    const compacted = compactMessagesToTokenLimit(messages, 2);
+
+    expect(compacted.at(-1)?.role).toBe("user");
+    expect(typeof compacted.at(-1)?.content).toBe("string");
+    expect(compacted.at(-1)?.content as string).toMatch(/^\.\.\.\s/);
+  });
+
+  it("estimates zero tokens for empty content payloads", () => {
+    expect(
+      estimateMessageTokens({
+        role: "assistant",
+        content: "",
+      } as Message),
+    ).toBe(0);
+
+    expect(
+      estimateMessageTokens({
+        role: "assistant",
+        content: null,
+      } as Message),
+    ).toBe(0);
+  });
+
+  it("builds text-to-speech input from text fragments only", () => {
+    const ttsInput = buildTextToSpeechInput([
+      {
+        role: "assistant",
+        content: "Intro",
+      },
+      {
+        role: "user",
+        content: [
+          { type: "text", text: "Line one" },
+          {
+            type: "image_url",
+            image_url: { url: "https://example.com/1.png" },
+          },
+          { type: "text", text: "Line two" },
+        ],
+      },
+      {
+        role: "assistant",
+        content: [
+          { type: "audio_url", audio_url: "https://example.com/audio.mp3" },
+        ],
+      },
+    ]);
+
+    expect(ttsInput).toBe("Intro\n\nLine one\nLine two");
   });
 });
