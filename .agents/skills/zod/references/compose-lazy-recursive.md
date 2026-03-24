@@ -11,6 +11,7 @@ TypeScript can't infer recursive Zod schema types automatically. Use `z.lazy()` 
 
 **Incorrect (direct self-reference):**
 
+<<<<<<< HEAD
 ```typescript
 <<<<<<< HEAD
 import { z } from "zod";
@@ -36,11 +37,24 @@ const categorySchema = z.object({
 ```typescript
 <<<<<<< HEAD
 import { z } from "zod";
+=======
+```typescriptimport { z } from "zod";
+// This fails - categorySchema used before it's defined
+const categorySchema = z.object({
+  id: z.string(),
+  name: z.string(),  children: z.array(categorySchema), // Error: Block-scoped variable used before declaration
+});```
+
+**Correct (using z.lazy with type annotation):**
+
+```typescriptimport { z } from "zod";
+>>>>>>> devel
 
 // Define the type manually
 interface Category {
   id: string;
   name: string;
+<<<<<<< HEAD
   children: Category[];
 =======
 import { z } from 'zod'
@@ -52,14 +66,21 @@ interface Category {
   children: Category[]
 >>>>>>> devel
 }
+=======
+  children: Category[];}
+>>>>>>> devel
 
 // Use z.lazy() to defer schema reference
 const categorySchema: z.ZodType<Category> = z.object({
   id: z.string(),
   name: z.string(),
+<<<<<<< HEAD
   children: z.lazy(() => z.array(categorySchema)),
 <<<<<<< HEAD
 });
+=======
+  children: z.lazy(() => z.array(categorySchema)),});
+>>>>>>> devel
 
 // Now it works
 const tree = categorySchema.parse({
@@ -75,6 +96,7 @@ const tree = categorySchema.parse({
       ],
     },
   ],
+<<<<<<< HEAD
 });
 =======
 })
@@ -96,11 +118,15 @@ const tree = categorySchema.parse({
 })
 >>>>>>> devel
 ```
+=======
+});```
+>>>>>>> devel
 
 **Common recursive patterns:**
 
 ```typescript
 // Comments with replies
+<<<<<<< HEAD
 interface Comment {
 <<<<<<< HEAD
   id: string;
@@ -114,19 +140,30 @@ interface Comment {
   replies: Comment[]
 >>>>>>> devel
 }
+=======
+interface Comment {  id: string;
+  content: string;
+  author: string;
+  replies: Comment[];}
+>>>>>>> devel
 
 const commentSchema: z.ZodType<Comment> = z.object({
   id: z.string(),
   content: z.string(),
   author: z.string(),
+<<<<<<< HEAD
   replies: z.lazy(() => z.array(commentSchema)),
 <<<<<<< HEAD
 });
+=======
+  replies: z.lazy(() => z.array(commentSchema)),});
+>>>>>>> devel
 
 // Binary tree
 interface TreeNode {
   value: number;
   left: TreeNode | null;
+<<<<<<< HEAD
   right: TreeNode | null;
 =======
 })
@@ -138,18 +175,26 @@ interface TreeNode {
   right: TreeNode | null
 >>>>>>> devel
 }
+=======
+  right: TreeNode | null;}
+>>>>>>> devel
 
 const treeNodeSchema: z.ZodType<TreeNode> = z.object({
   value: z.number(),
   left: z.lazy(() => treeNodeSchema.nullable()),
+<<<<<<< HEAD
   right: z.lazy(() => treeNodeSchema.nullable()),
 <<<<<<< HEAD
 });
+=======
+  right: z.lazy(() => treeNodeSchema.nullable()),});
+>>>>>>> devel
 
 // Nested menu structure
 interface MenuItem {
   label: string;
   href?: string;
+<<<<<<< HEAD
   children?: MenuItem[];
 =======
 })
@@ -161,10 +206,14 @@ interface MenuItem {
   children?: MenuItem[]
 >>>>>>> devel
 }
+=======
+  children?: MenuItem[];}
+>>>>>>> devel
 
 const menuItemSchema: z.ZodType<MenuItem> = z.object({
   label: z.string(),
   href: z.string().url().optional(),
+<<<<<<< HEAD
   children: z.lazy(() => z.array(menuItemSchema)).optional(),
 <<<<<<< HEAD
 });
@@ -172,6 +221,9 @@ const menuItemSchema: z.ZodType<MenuItem> = z.object({
 })
 >>>>>>> devel
 ```
+=======
+  children: z.lazy(() => z.array(menuItemSchema)).optional(),});```
+>>>>>>> devel
 
 **JSON Schema (any valid JSON):**
 
@@ -181,6 +233,7 @@ type JSONValue =
   | number
   | boolean
   | null
+<<<<<<< HEAD
   | JSONValue[]
 <<<<<<< HEAD
   | { [key: string]: JSONValue };
@@ -188,6 +241,9 @@ type JSONValue =
   | { [key: string]: JSONValue }
 >>>>>>> devel
 
+=======
+  | JSONValue[]  | { [key: string]: JSONValue };
+>>>>>>> devel
 const jsonValueSchema: z.ZodType<JSONValue> = z.lazy(() =>
   z.union([
     z.string(),
@@ -195,6 +251,7 @@ const jsonValueSchema: z.ZodType<JSONValue> = z.lazy(() =>
     z.boolean(),
     z.null(),
     z.array(jsonValueSchema),
+<<<<<<< HEAD
     z.record(jsonValueSchema),
 <<<<<<< HEAD
   ]),
@@ -204,6 +261,10 @@ const jsonValueSchema: z.ZodType<JSONValue> = z.lazy(() =>
 )
 >>>>>>> devel
 ```
+=======
+    z.record(jsonValueSchema),  ]),
+);```
+>>>>>>> devel
 
 **Performance consideration:**
 
@@ -217,11 +278,16 @@ const jsonValueSchema: z.ZodType<JSONValue> = z.lazy(() =>
 
 **When NOT to use this pattern:**
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
 
 > > > > > > > devel
 
+=======
+
+
+>>>>>>> devel
 - Non-recursive schemas (lazy adds unnecessary indirection)
 - When you can flatten the structure instead
 

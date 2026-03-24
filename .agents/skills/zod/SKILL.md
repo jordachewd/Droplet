@@ -11,10 +11,13 @@ Comprehensive schema validation guide for Zod in TypeScript applications. Contai
 
 Reference these guidelines when:
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
 
 > > > > > > > devel
+=======
+>>>>>>> devel
 
 - Writing new Zod schemas
 - Choosing between parse() and safeParse()
@@ -27,6 +30,7 @@ Reference these guidelines when:
 
 ## Rule Categories by Priority
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 | Priority | Category | Impact | Prefix |
 | -------- | ------------------------ | ----------- | ---------- |
@@ -51,6 +55,18 @@ Reference these guidelines when:
 | 8 | Performance & Bundle | LOW-MEDIUM | `perf-` |
 
 > > > > > > > devel
+=======
+| Priority | Category                 | Impact      | Prefix     |
+| -------- | ------------------------ | ----------- | ---------- |
+| 1        | Schema Definition        | CRITICAL    | `schema-`  |
+| 2        | Parsing & Validation     | CRITICAL    | `parse-`   |
+| 3        | Type Inference           | HIGH        | `type-`    |
+| 4        | Error Handling           | HIGH        | `error-`   |
+| 5        | Object Schemas           | MEDIUM-HIGH | `object-`  |
+| 6        | Schema Composition       | MEDIUM      | `compose-` |
+| 7        | Refinements & Transforms | MEDIUM      | `refine-`  |
+| 8        | Performance & Bundle     | LOW-MEDIUM  | `perf-`    |
+>>>>>>> devel
 
 ## Quick Reference
 

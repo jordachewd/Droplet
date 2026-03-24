@@ -11,6 +11,7 @@ Validating large arrays (thousands of items) can become a performance bottleneck
 
 **Baseline performance:**
 
+<<<<<<< HEAD
 ```typescript
 <<<<<<< HEAD
 import { z } from "zod";
@@ -23,11 +24,18 @@ const itemSchema = z.object({
   value: z.number(),
 <<<<<<< HEAD
 });
+=======
+```typescriptimport { z } from "zod";
+const itemSchema = z.object({
+  id: z.string(),
+  value: z.number(),});
+>>>>>>> devel
 
 const arraySchema = z.array(itemSchema);
 
 // 10,000 items: ~100ms
 // 100,000 items: ~1000ms
+<<<<<<< HEAD
 arraySchema.parse(largeArray);
 =======
 })
@@ -45,6 +53,13 @@ arraySchema.parse(largeArray)
 ```typescript
 <<<<<<< HEAD
 import { z } from "zod";
+=======
+arraySchema.parse(largeArray);```
+
+**Early exit on first error:**
+
+```typescriptimport { z } from "zod";
+>>>>>>> devel
 
 function validateArrayFastFail<T>(
   schema: z.ZodType<T>,
@@ -62,6 +77,7 @@ function validateArrayFastFail<T>(
     validated.push(result.data);
   }
 
+<<<<<<< HEAD
   return { success: true, data: validated };
 =======
 import { z } from 'zod'
@@ -83,6 +99,9 @@ function validateArrayFastFail<T>(
   return { success: true, data: validated }
 >>>>>>> devel
 }
+=======
+  return { success: true, data: validated };}
+>>>>>>> devel
 
 // Stops at first invalid item instead of validating all
 ```
@@ -92,9 +111,13 @@ function validateArrayFastFail<T>(
 ```typescript
 function validateSample<T>(
   schema: z.ZodType<T>,
+<<<<<<< HEAD
   items: unknown[],
 <<<<<<< HEAD
   sampleSize: number = 100,
+=======
+  items: unknown[],  sampleSize: number = 100,
+>>>>>>> devel
 ): { valid: boolean; sampleErrors?: z.ZodIssue[] } {
   // Validate random sample
   const indices = new Set<number>();
@@ -107,6 +130,7 @@ function validateSample<T>(
   for (const i of indices) {
     const result = schema.safeParse(items[i]);
     if (!result.success) {
+<<<<<<< HEAD
       errors.push(...result.error.issues);
 =======
   sampleSize: number = 100
@@ -143,6 +167,17 @@ const check = validateSample(itemSchema, hugeArray);
 const check = validateSample(itemSchema, hugeArray)
 >>>>>>> devel
 ```
+=======
+      errors.push(...result.error.issues);    }
+  }
+
+  return errors.length > 0
+    ? { valid: false, sampleErrors: errors }    : { valid: true };
+}
+
+// Check 100 random items from 100,000 - very fast
+const check = validateSample(itemSchema, hugeArray);```
+>>>>>>> devel
 
 **Batched validation with progress:**
 
@@ -150,9 +185,13 @@ const check = validateSample(itemSchema, hugeArray)
 async function validateInBatches<T>(
   schema: z.ZodType<T>,
   items: unknown[],
+<<<<<<< HEAD
   batchSize: number = 1000,
 <<<<<<< HEAD
   onProgress?: (percent: number) => void,
+=======
+  batchSize: number = 1000,  onProgress?: (percent: number) => void,
+>>>>>>> devel
 ): Promise<z.SafeParseReturnType<unknown, T[]>> {
   const validated: T[] = [];
   const errors: z.ZodIssue[] = [];
@@ -171,6 +210,7 @@ async function validateInBatches<T>(
             ...issue,
             path: [i + j, ...issue.path],
           })),
+<<<<<<< HEAD
         );
 =======
   onProgress?: (percent: number) => void
@@ -198,12 +238,19 @@ async function validateInBatches<T>(
     // Report progress and yield to event loop
 <<<<<<< HEAD
     onProgress?.(Math.min(100, ((i + batchSize) / items.length) * 100));
+=======
+        );      }
+    }
+
+    // Report progress and yield to event loop    onProgress?.(Math.min(100, ((i + batchSize) / items.length) * 100));
+>>>>>>> devel
     await new Promise((resolve) => setTimeout(resolve, 0));
   }
 
   if (errors.length > 0) {
     return { success: false, error: new z.ZodError(errors) };
   }
+<<<<<<< HEAD
   return { success: true, data: validated };
 =======
     onProgress?.(Math.min(100, ((i + batchSize) / items.length) * 100))
@@ -227,11 +274,19 @@ await validateInBatches(itemSchema, largeArray, 1000, (percent) => {
 })
 >>>>>>> devel
 ```
+=======
+  return { success: true, data: validated };}
+
+// Use with progress reporting
+await validateInBatches(itemSchema, largeArray, 1000, (percent) => {  console.log(`Validating: ${percent.toFixed(1)}%`);
+});```
+>>>>>>> devel
 
 **Streaming validation:**
 
 ```typescript
 async function* validateStream<T>(
+<<<<<<< HEAD
   schema: z.ZodType<T>,
 <<<<<<< HEAD
   items: AsyncIterable<unknown>,
@@ -264,6 +319,21 @@ for await (const validItem of validateStream(itemSchema, dataStream)) {
 
 > > > > > > > devel
 
+=======
+  schema: z.ZodType<T>,  items: AsyncIterable<unknown>,
+): AsyncGenerator<T, void, unknown> {
+  for await (const item of items) {
+    yield schema.parse(item); // Throws on invalid  }
+}
+
+// Process items as they arrive
+for await (const validItem of validateStream(itemSchema, dataStream)) {  await processItem(validItem);}
+```
+
+**When NOT to use this pattern:**
+
+
+>>>>>>> devel
 - Small arrays (< 1000 items) - standard validation is fine
 - When all items must be validated for correctness guarantees
 

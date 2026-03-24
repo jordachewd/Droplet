@@ -11,9 +11,13 @@ When using `.refine()` for custom validation, return `false` for invalid data in
 
 **Incorrect (throwing in refine):**
 
+<<<<<<< HEAD
 ```typescript
 <<<<<<< HEAD
 import { z } from "zod";
+=======
+```typescriptimport { z } from "zod";
+>>>>>>> devel
 
 const passwordSchema = z
   .object({
@@ -27,6 +31,7 @@ const passwordSchema = z
     }
     return true;
   });
+<<<<<<< HEAD
 =======
 import { z } from 'zod'
 
@@ -47,6 +52,11 @@ const formSchema = z.object({
   passwords: passwordSchema,
 <<<<<<< HEAD
   terms: z.boolean().refine((v) => v === true, "Must accept terms"),
+=======
+const formSchema = z.object({
+  email: z.string().email(),
+  passwords: passwordSchema,  terms: z.boolean().refine((v) => v === true, "Must accept terms"),
+>>>>>>> devel
 });
 
 // If passwords don't match, user never learns about other errors
@@ -54,6 +64,7 @@ formSchema.safeParse({
   email: "bad-email",
   passwords: { password: "12345678", confirmPassword: "different" },
   terms: false,
+<<<<<<< HEAD
 });
 =======
   terms: z.boolean().refine((v) => v === true, 'Must accept terms'),
@@ -67,14 +78,21 @@ formSchema.safeParse({
 })
 >>>>>>> devel
 // Only shows: "Passwords do not match"
+=======
+});// Only shows: "Passwords do not match"
+>>>>>>> devel
 // Hidden: "Invalid email", "Must accept terms"
 ```
 
 **Correct (returning false in refine):**
 
+<<<<<<< HEAD
 ```typescript
 <<<<<<< HEAD
 import { z } from "zod";
+=======
+```typescriptimport { z } from "zod";
+>>>>>>> devel
 
 const passwordSchema = z
   .object({
@@ -85,6 +103,7 @@ const passwordSchema = z
     message: "Passwords do not match",
     path: ["confirmPassword"],
   });
+<<<<<<< HEAD
 =======
 import { z } from 'zod'
 
@@ -102,6 +121,11 @@ const formSchema = z.object({
   passwords: passwordSchema,
 <<<<<<< HEAD
   terms: z.boolean().refine((v) => v === true, "Must accept terms"),
+=======
+const formSchema = z.object({
+  email: z.string().email(),
+  passwords: passwordSchema,  terms: z.boolean().refine((v) => v === true, "Must accept terms"),
+>>>>>>> devel
 });
 
 // All errors are collected
@@ -109,6 +133,7 @@ formSchema.safeParse({
   email: "bad-email",
   passwords: { password: "12345678", confirmPassword: "different" },
   terms: false,
+<<<<<<< HEAD
 });
 =======
   terms: z.boolean().refine((v) => v === true, 'Must accept terms'),
@@ -122,6 +147,9 @@ formSchema.safeParse({
 })
 >>>>>>> devel
 // Shows all errors:
+=======
+});// Shows all errors:
+>>>>>>> devel
 // - "Invalid email"
 // - "Passwords do not match"
 // - "Must accept terms"
@@ -134,6 +162,7 @@ const passwordSchema = z.string().superRefine((password, ctx) => {
   // Check multiple rules, report all failures
   if (password.length < 8) {
     ctx.addIssue({
+<<<<<<< HEAD
       code: z.ZodIssueCode.custom,
 <<<<<<< HEAD
       message: "Password must be at least 8 characters",
@@ -161,12 +190,26 @@ const passwordSchema = z.string().superRefine((password, ctx) => {
       code: z.ZodIssueCode.custom,
 <<<<<<< HEAD
       message: "Password must contain a number",
+=======
+      code: z.ZodIssueCode.custom,      message: "Password must be at least 8 characters",
+    });  }
+
+  if (!/[A-Z]/.test(password)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,      message: "Password must contain an uppercase letter",
+    });  }
+
+  if (!/[0-9]/.test(password)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,      message: "Password must contain a number",
+>>>>>>> devel
     });
   }
 
   // Don't return anything - issues are added via ctx
 });
 
+<<<<<<< HEAD
 passwordSchema.safeParse("weak");
 =======
       message: 'Password must contain a number',
@@ -179,27 +222,49 @@ passwordSchema.safeParse("weak");
 passwordSchema.safeParse('weak')
 >>>>>>> devel
 // All three errors reported at once
+=======
+passwordSchema.safeParse("weak");// All three errors reported at once
+>>>>>>> devel
 ```
 
 **Correct pattern for async validation:**
 
 ```typescript
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+const schema = z.object({
+  email: z.string().email(),
+}).refine(
+  async (data) => {
+    // Return boolean, don't throw
+    const exists = await checkEmailExists(data.email)
+    return !exists
+  },
+  { message: 'Email already registered', path: ['email'] }
+)
+```
+
+# **When NOT to use this pattern:**
+
+>>>>>>> devel
 const schema = z
-  .object({
-    email: z.string().email(),
-  })
-  .refine(
-    async (data) => {
-      // Return boolean, don't throw
-      const exists = await checkEmailExists(data.email);
-      return !exists;
-    },
-    { message: "Email already registered", path: ["email"] },
-  );
+.object({
+email: z.string().email(),
+})
+.refine(
+async (data) => {
+// Return boolean, don't throw
+const exists = await checkEmailExists(data.email);
+return !exists;
+},
+{ message: "Email already registered", path: ["email"] },
+);
+
 ```
 
 **When NOT to use this pattern:**
+<<<<<<< HEAD
 
 =======
 const schema = z.object({
@@ -216,6 +281,8 @@ return !exists
 ```
 
 **When NOT to use this pattern:**
+>>>>>>> devel
+=======
 >>>>>>> devel
 - When you need to abort validation entirely (security issues)
 - When subsequent validations depend on current check passing

@@ -11,6 +11,7 @@ When incoming data needs normalization before validation (trimming whitespace, p
 
 **Incorrect (validation fails on unnormalized data):**
 
+<<<<<<< HEAD
 ```typescript
 <<<<<<< HEAD
 import { z } from "zod";
@@ -18,14 +19,21 @@ import { z } from "zod";
 import { z } from 'zod'
 >>>>>>> devel
 
+=======
+```typescriptimport { z } from "zod";
+>>>>>>> devel
 const userSchema = z.object({
   name: z.string().min(1),
   email: z.string().email(),
   config: z.object({
     theme: z.string(),
+<<<<<<< HEAD
   }),
 <<<<<<< HEAD
 });
+=======
+  }),});
+>>>>>>> devel
 
 // Raw form data
 const formData = {
@@ -34,6 +42,7 @@ const formData = {
   config: '{"theme": "dark"}', // JSON string, not object
 };
 
+<<<<<<< HEAD
 userSchema.parse(formData);
 =======
 })
@@ -48,13 +57,20 @@ const formData = {
 userSchema.parse(formData)
 >>>>>>> devel
 // ZodError: Expected object, received string at "config"
+=======
+userSchema.parse(formData);// ZodError: Expected object, received string at "config"
+>>>>>>> devel
 ```
 
 **Correct (using preprocess):**
 
+<<<<<<< HEAD
 ```typescript
 <<<<<<< HEAD
 import { z } from "zod";
+=======
+```typescriptimport { z } from "zod";
+>>>>>>> devel
 
 // Preprocess normalizes before validation
 const trimmedString = z.preprocess(
@@ -80,6 +96,7 @@ const jsonObject = z.preprocess(
   },
   z.object({ theme: z.string() }),
 );
+<<<<<<< HEAD
 =======
 import { z } from 'zod'
 
@@ -115,6 +132,12 @@ const userSchema = z.object({
   config: jsonObject,
 <<<<<<< HEAD
 });
+=======
+const userSchema = z.object({
+  name: trimmedString.pipe(z.string().min(1)),
+  email: lowercaseEmail,
+  config: jsonObject,});
+>>>>>>> devel
 
 const formData = {
   name: "  John Doe  ",
@@ -122,6 +145,7 @@ const formData = {
   config: '{"theme": "dark"}',
 };
 
+<<<<<<< HEAD
 const user = userSchema.parse(formData);
 =======
 })
@@ -135,15 +159,22 @@ const formData = {
 const user = userSchema.parse(formData)
 >>>>>>> devel
 // { name: 'John Doe', email: 'john@example.com', config: { theme: 'dark' } }
+=======
+const user = userSchema.parse(formData);// { name: 'John Doe', email: 'john@example.com', config: { theme: 'dark' } }
+>>>>>>> devel
 ```
 
 **Common preprocessing patterns:**
 
 ```typescript
 // Trim all strings
+<<<<<<< HEAD
 const trimmedString = z.preprocess(
 <<<<<<< HEAD
   (val) => (typeof val === "string" ? val.trim() : val),
+=======
+const trimmedString = z.preprocess(  (val) => (typeof val === "string" ? val.trim() : val),
+>>>>>>> devel
   z.string(),
 );
 
@@ -171,6 +202,7 @@ const csvArray = z.preprocess(
   (val) =>
     typeof val === "string" ? val.split(",").map((s) => s.trim()) : val,
   z.array(z.string()),
+<<<<<<< HEAD
 );
 =======
   (val) => (typeof val === 'string' ? val.trim() : val),
@@ -206,18 +238,26 @@ const csvArray = z.preprocess(
 )
 >>>>>>> devel
 ```
+=======
+);```
+>>>>>>> devel
 
 **Preprocess vs Transform:**
 
 ```typescript
 // preprocess() runs BEFORE type checking
+<<<<<<< HEAD
 // Use for: Normalizing input format before validation
 <<<<<<< HEAD
 z.preprocess((val) => String(val).trim(), z.string().min(1));
+=======
+// Use for: Normalizing input format before validationz.preprocess((val) => String(val).trim(), z.string().min(1));
+>>>>>>> devel
 
 // transform() runs AFTER type checking
 // Use for: Converting validated data to different format
 z.string().transform((s) => s.toUpperCase());
+<<<<<<< HEAD
 =======
 z.preprocess(val => String(val).trim(), z.string().min(1))
 
@@ -226,6 +266,8 @@ z.preprocess(val => String(val).trim(), z.string().min(1))
 z.string().transform(s => s.toUpperCase())
 >>>>>>> devel
 
+=======
+>>>>>>> devel
 // Order of operations:
 // 1. preprocess receives raw unknown input
 // 2. Zod validates the preprocessed value
@@ -234,11 +276,16 @@ z.string().transform(s => s.toUpperCase())
 
 **When NOT to use this pattern:**
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
 
 > > > > > > > devel
 
+=======
+
+
+>>>>>>> devel
 - When `.coerce` methods handle the conversion (simpler)
 - When transformation should happen after validation (use transform)
 - When normalization could hide validation errors

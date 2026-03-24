@@ -5,10 +5,10 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #56 (2026-03-24). Phases 1–123 complete (incl. 120.1). 120.2 partially complete (20/~40 utility files). 370 unit tests (62 suites). Build passes. TSC passes. Node.js 24.12.0 runtime.**
-> **GATE STATUS: All 7 gates GREEN. Lint (0 errors, 6 warnings), Knip (0 findings), TSC, build, unit tests (62/370), E2E (108 passed, 25 skipped, 0 failed) — all pass.**
+> **STATUS: PM audit #58 (2026-03-24). Phases 1–125 complete (incl. 120.1). 120.2 partially complete (20/~40 utility files). 409 unit tests (68 suites). Build passes. TSC passes. Node.js 24.12.0 runtime. Phase 125 COMPLETE — merge conflicts round 2 resolved (52 files from failed `git merge devel`).**
+> **GATE STATUS: All 7 gates GREEN. Lint (0 errors, 6 warnings), Knip (0 findings), TSC, build, unit tests (68/409), E2E (108 passed, 25 skipped, 0 failed) — all pass.**
 > **Owner directive (CRITICAL): FULL TDD TESTING REBUILD from scratch. NO hardcoded data. WCAG 2.2 AA. Code reuse. Full admin configurability.**
-> **Priority order: 120.2 (CRITICAL TDD utility rebuild — continue) → 120.3 (CRITICAL TDD action rebuild) → 106 (HIGH shared types) → 120.4 (CRITICAL TDD route rebuild) → 120.5 (HIGH TDD component rebuild) → 120.6 (HIGH TDD E2E rebuild) → 120.7 (HIGH coverage thresholds) → 107 (HIGH stop-reason config) → 108 (MEDIUM WCAG tabs) → 114 (MEDIUM WCAG avatar menu) → 74.2 (MEDIUM FAQ admin) → 104 (MEDIUM landing/hero admin)**
+> **Priority order: 120.2 (CRITICAL TDD utility rebuild — continue) → 120.3 (CRITICAL TDD action rebuild) → 106 (HIGH shared types) → 120.4 (CRITICAL TDD route rebuild) → 120.5 (HIGH TDD component rebuild) → 120.6 (HIGH TDD E2E rebuild) → 120.7 (HIGH coverage thresholds) → 125.1 (MEDIUM schema strict:true) → 125.2 (MEDIUM transaction query hardening) → 107 (HIGH stop-reason config) → 108 (MEDIUM WCAG tabs) → 114 (MEDIUM WCAG avatar menu) → 74.2 (MEDIUM FAQ admin) → 104 (MEDIUM landing/hero admin)**
 
 ---
 
@@ -296,6 +296,51 @@ See SPEC.md for full requirements on each.
 
 ---
 
+## MEDIUM — Database & Query Hardening (PM audit #58 findings)
+
+### Phase 125.1 MEDIUM — Add explicit `strict: true` to User, Task, Transaction schemas
+
+> Architect finding MEDIUM-01. Mongoose defaults to strict, so no active vulnerability. This is a governance/auditability fix.
+
+**Files:** `src/lib/database/models/user.model.tsx`, `src/lib/database/models/tasks.model.tsx`, `src/lib/database/models/transaction.model.tsx`
+
+**What to do:**
+
+1. Add `{ strict: true }` to schema options for all 3 models.
+2. Verify build + tests pass.
+
+**Acceptance criteria:**
+
+- [ ] All 9 Mongoose models have explicit `strict: true` in schema options
+- [ ] Build passes, tests pass
+
+### Phase 125.2 MEDIUM — Harden `getAllTransactions()` query
+
+> Engineer finding: unbounded `.find()` without `.limit()`, `.lean()`, or `.select()`.
+
+**File:** `src/lib/actions/transaction.action.tsx` L114
+
+**What to do:**
+
+1. Add `.select("plan amount billing createdAt expiresOn")` projection.
+2. Add `.lean()`.
+3. Add `.limit(100)`.
+
+**Acceptance criteria:**
+
+- [ ] Query uses `.select()`, `.lean()`, `.limit()`
+- [ ] Build passes, tests pass
+
+### Phase 125.3 LOW — Add `rate-limit.ts` bypass comment
+
+> Architect finding MEDIUM-02. Rate limiter uses `.collection.findOneAndUpdate()` which bypasses Mongoose strict mode — this is intentional for atomic sliding-window logic.
+
+**File:** `src/lib/utils/rate-limit.ts` L69
+
+**What to do:** Add code comment explaining the MongoDB driver bypass is intentional.
+
+---
+
 ## LOW — Remaining Work
 
 ### Phase 73.2 LOW — Minor re-render and code quality fixes
@@ -317,5 +362,5 @@ See SPEC.md for full requirements on each.
 ---
 
 > **Completed phases** archived in [`DONE.md`](DONE.md).
-> All phases through 116 complete (includes 113.2, 112.2, 112.1, 109, 110, 115, 116).
+> All phases through 125 complete (includes 120.1, 121–125).
 > All Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS.

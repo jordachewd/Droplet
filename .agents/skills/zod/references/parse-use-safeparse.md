@@ -11,6 +11,7 @@ tags: parse, safeParse, error-handling, validation
 
 **Incorrect (parse without error handling):**
 
+<<<<<<< HEAD
 ```typescript
 <<<<<<< HEAD
 import { z } from "zod";
@@ -25,6 +26,13 @@ const createUserSchema = z.object({
   name: z.string().min(1),
 <<<<<<< HEAD
 });
+=======
+```typescriptimport { z } from "zod";
+import { NextRequest, NextResponse } from "next/server";
+const createUserSchema = z.object({
+  email: z.string().email(),
+  name: z.string().min(1),});
+>>>>>>> devel
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
@@ -34,6 +42,7 @@ export async function POST(req: NextRequest) {
 
   // Never reached if parse throws
   await db.users.create({ data: user });
+<<<<<<< HEAD
   return NextResponse.json({ success: true });
 =======
 })
@@ -49,11 +58,15 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ success: true })
 >>>>>>> devel
 }
+=======
+  return NextResponse.json({ success: true });}
+>>>>>>> devel
 // Result: 500 Internal Server Error with stack trace
 ```
 
 **Correct (using safeParse):**
 
+<<<<<<< HEAD
 ```typescript
 <<<<<<< HEAD
 import { z } from "zod";
@@ -68,11 +81,19 @@ const createUserSchema = z.object({
   name: z.string().min(1),
 <<<<<<< HEAD
 });
+=======
+```typescriptimport { z } from "zod";
+import { NextRequest, NextResponse } from "next/server";
+const createUserSchema = z.object({
+  email: z.string().email(),
+  name: z.string().min(1),});
+>>>>>>> devel
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
 
   const result = createUserSchema.safeParse(body);
+<<<<<<< HEAD
 =======
 })
 
@@ -87,12 +108,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
 <<<<<<< HEAD
       { error: "Validation failed", issues: result.error.issues },
+=======
+  if (!result.success) {
+    // Return structured error response
+    return NextResponse.json(      { error: "Validation failed", issues: result.error.issues },
+>>>>>>> devel
       { status: 400 },
     );
   }
 
   // result.data is typed correctly
   await db.users.create({ data: result.data });
+<<<<<<< HEAD
   return NextResponse.json({ success: true });
 =======
       { error: 'Validation failed', issues: result.error.issues },
@@ -105,6 +132,9 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ success: true })
 >>>>>>> devel
 }
+=======
+  return NextResponse.json({ success: true });}
+>>>>>>> devel
 ```
 
 **The result object structure:**
@@ -130,6 +160,20 @@ if (result.success) {
 ```typescript
 // Internal data you control - parse is fine
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+const config = configSchema.parse(JSON.parse(process.env.CONFIG))
+
+// Test assertions - parse throws helpful errors
+expect(() => schema.parse(invalidData)).toThrow()
+
+// Schema development - see errors immediately
+schema.parse(testData)  // See what fails during development
+```
+
+# **When NOT to use this pattern:**
+
+>>>>>>> devel
 const config = configSchema.parse(JSON.parse(process.env.CONFIG));
 
 // Test assertions - parse throws helpful errors
@@ -137,9 +181,11 @@ expect(() => schema.parse(invalidData)).toThrow();
 
 // Schema development - see errors immediately
 schema.parse(testData); // See what fails during development
+
 ```
 
 **When NOT to use this pattern:**
+<<<<<<< HEAD
 
 =======
 const config = configSchema.parse(JSON.parse(process.env.CONFIG))
@@ -153,6 +199,8 @@ schema.parse(testData) // See what fails during development
 ```
 
 **When NOT to use this pattern:**
+>>>>>>> devel
+=======
 >>>>>>> devel
 - Internal configuration parsing where invalid data should crash early
 - Tests where you want exceptions to fail the test

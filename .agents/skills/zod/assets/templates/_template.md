@@ -25,6 +25,10 @@ tags: section-prefix, technique, tool, related-concepts
 
 **When NOT to use this pattern:**
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> devel
 - Exception 1
 - Exception 2
 

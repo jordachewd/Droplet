@@ -11,9 +11,13 @@ If your schema uses `refine()` or `superRefine()` with async validation (like da
 
 **Incorrect (sync parse with async refinement):**
 
+<<<<<<< HEAD
 ```typescript
 <<<<<<< HEAD
 import { z } from "zod";
+=======
+```typescriptimport { z } from "zod";
+>>>>>>> devel
 
 const userSchema = z
   .object({
@@ -30,6 +34,7 @@ const userSchema = z
   );
 
 // This throws an error!
+<<<<<<< HEAD
 const user = userSchema.parse(formData);
 =======
 import { z } from 'zod'
@@ -50,14 +55,21 @@ const userSchema = z.object({
 const user = userSchema.parse(formData)
 >>>>>>> devel
 // Error: Async refinement encountered during synchronous parse operation.
+=======
+const user = userSchema.parse(formData);// Error: Async refinement encountered during synchronous parse operation.
+>>>>>>> devel
 // Use .parseAsync instead.
 ```
 
 **Correct (using parseAsync):**
 
+<<<<<<< HEAD
 ```typescript
 <<<<<<< HEAD
 import { z } from "zod";
+=======
+```typescriptimport { z } from "zod";
+>>>>>>> devel
 
 const userSchema = z
   .object({
@@ -78,6 +90,7 @@ const user = await userSchema.parseAsync(formData);
 // Or safeParseAsync for error handling
 const result = await userSchema.safeParseAsync(formData);
 if (!result.success) {
+<<<<<<< HEAD
   console.log(result.error.issues);
 =======
 import { z } from 'zod'
@@ -102,13 +115,20 @@ if (!result.success) {
   console.log(result.error.issues)
 >>>>>>> devel
 }
+=======
+  console.log(result.error.issues);}
+>>>>>>> devel
 ```
 
 **Async transforms also require parseAsync:**
 
+<<<<<<< HEAD
 ```typescript
 <<<<<<< HEAD
 const enrichedUserSchema = z
+=======
+```typescriptconst enrichedUserSchema = z
+>>>>>>> devel
   .object({
     userId: z.string().uuid(),
   })
@@ -123,6 +143,7 @@ const enrichedUserSchema = z
   });
 
 // Must use parseAsync
+<<<<<<< HEAD
 const enrichedUser = await enrichedUserSchema.parseAsync({ userId: "123" });
 =======
 const enrichedUserSchema = z.object({
@@ -147,6 +168,13 @@ const enrichedUser = await enrichedUserSchema.parseAsync({ userId: '123' })
 ```typescript
 <<<<<<< HEAD
 import { z } from "zod";
+=======
+const enrichedUser = await enrichedUserSchema.parseAsync({ userId: "123" });```
+
+**Pattern for API routes:**
+
+```typescriptimport { z } from "zod";
+>>>>>>> devel
 import { NextRequest, NextResponse } from "next/server";
 
 const registerSchema = z
@@ -172,6 +200,7 @@ export async function POST(req: NextRequest) {
   const result = await registerSchema.safeParseAsync(body);
 
   if (!result.success) {
+<<<<<<< HEAD
     return NextResponse.json({ errors: result.error.issues }, { status: 400 });
 =======
 import { z } from 'zod'
@@ -201,6 +230,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ errors: result.error.issues }, { status: 400 })
 >>>>>>> devel
   }
+=======
+    return NextResponse.json({ errors: result.error.issues }, { status: 400 });  }
+>>>>>>> devel
 
   // Proceed with registration
 }
@@ -208,11 +240,16 @@ export async function POST(req: NextRequest) {
 
 **When NOT to use this pattern:**
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
 
 > > > > > > > devel
 
+=======
+
+
+>>>>>>> devel
 - Schemas with only synchronous validation (use parse/safeParse)
 - When async validation can be moved outside Zod (validate, then check)
 

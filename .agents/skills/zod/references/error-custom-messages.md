@@ -11,6 +11,7 @@ Zod's default error messages are technical and confusing for end users. Provide 
 
 **Incorrect (default error messages):**
 
+<<<<<<< HEAD
 ```typescript
 <<<<<<< HEAD
 import { z } from "zod";
@@ -32,6 +33,15 @@ signupSchema.parse({ email: "bad", password: "123", age: 15 });
 signupSchema.parse({ email: 'bad', password: '123', age: 15 })
 >>>>>>> devel
 // ZodError issues:
+=======
+```typescriptimport { z } from "zod";
+const signupSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(8),
+  age: z.number().min(18),});
+
+signupSchema.parse({ email: "bad", password: "123", age: 15 });// ZodError issues:
+>>>>>>> devel
 // - "Invalid email"
 // - "String must contain at least 8 character(s)"
 // - "Number must be greater than or equal to 18"
@@ -40,9 +50,13 @@ signupSchema.parse({ email: 'bad', password: '123', age: 15 })
 
 **Correct (custom error messages):**
 
+<<<<<<< HEAD
 ```typescript
 <<<<<<< HEAD
 import { z } from "zod";
+=======
+```typescriptimport { z } from "zod";
+>>>>>>> devel
 
 const signupSchema = z.object({
   email: z
@@ -66,6 +80,7 @@ const signupSchema = z.object({
     .min(18, "You must be at least 18 years old"),
 });
 
+<<<<<<< HEAD
 signupSchema.parse({ email: "bad", password: "123", age: 15 });
 =======
 import { z } from 'zod'
@@ -89,6 +104,9 @@ const signupSchema = z.object({
 signupSchema.parse({ email: 'bad', password: '123', age: 15 })
 >>>>>>> devel
 // ZodError issues:
+=======
+signupSchema.parse({ email: "bad", password: "123", age: 15 });// ZodError issues:
+>>>>>>> devel
 // - "Please enter a valid email address"
 // - "Password must be at least 8 characters"
 // - "You must be at least 18 years old"
@@ -96,9 +114,13 @@ signupSchema.parse({ email: 'bad', password: '123', age: 15 })
 
 **Message types and when they trigger:**
 
+<<<<<<< HEAD
 ```typescript
 <<<<<<< HEAD
 const schema = z
+=======
+```typescriptconst schema = z
+>>>>>>> devel
   .string({
     // When field is undefined
     required_error: "This field is required",
@@ -111,6 +133,7 @@ const schema = z
   })
   .min(1, "Cannot be empty") // When length < 1
   .max(100, "Too long") // When length > 100
+<<<<<<< HEAD
   .email("Invalid email format"); // When format fails
 =======
 const schema = z.string({
@@ -128,12 +151,16 @@ const schema = z.string({
 .email('Invalid email format')  // When format fails
 >>>>>>> devel
 ```
+=======
+  .email("Invalid email format"); // When format fails```
+>>>>>>> devel
 
 **Using error maps for consistent messaging:**
 
 ```typescript
 const customErrorMap: z.ZodErrorMap = (issue, ctx) => {
   // Customize messages by error code
+<<<<<<< HEAD
   if (issue.code === z.ZodIssueCode.too_small) {
 <<<<<<< HEAD
     if (issue.type === "string") {
@@ -201,6 +228,20 @@ schema.parse(data, { errorMap: customErrorMap })
 =======
 >>>>>>> devel
 - Internal development scripts where technical errors are fine
+=======
+  if (issue.code === z.ZodIssueCode.too_small) {    if (issue.type === "string") {
+      return { message: `Must be at least ${issue.minimum} characters` };
+    }
+    if (issue.type === "number") {
+      return { message: `Must be at least ${issue.minimum}` };    }
+  }
+
+  if (issue.code === z.ZodIssueCode.invalid_type) {    if (issue.expected === "string") {
+      return { message: "Must be text" };    }
+  }
+
+  // Default to Zod's message- Internal development scripts where technical errors are fine
+>>>>>>> devel
 - When you'll map errors to user-facing messages in the UI layer
 
 Reference: [Zod Error Customization](https://zod.dev/error-customization)

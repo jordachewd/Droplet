@@ -12,6 +12,7 @@ When the same schema pattern appears in multiple places, extract it into a share
 **Incorrect (duplicating schemas):**
 
 ```typescript
+<<<<<<< HEAD
 // api/users.ts
 <<<<<<< HEAD
 import { z } from "zod";
@@ -19,13 +20,20 @@ import { z } from "zod";
 import { z } from 'zod'
 >>>>>>> devel
 
+=======
+// api/users.tsimport { z } from "zod";
+>>>>>>> devel
 const userSchema = z.object({
   id: z.string().uuid(),
   email: z.string().email(),
   name: z.string().min(1),
+<<<<<<< HEAD
   createdAt: z.date(),
 <<<<<<< HEAD
 });
+=======
+  createdAt: z.date(),});
+>>>>>>> devel
 
 // api/orders.ts
 import { z } from "zod";
@@ -50,6 +58,7 @@ const commentSchema = z.object({
   userId: z.string().uuid(),
   content: z.string().min(1),
   createdAt: z.date(), // Inconsistency risk
+<<<<<<< HEAD
 });
 =======
 })
@@ -78,17 +87,25 @@ const commentSchema = z.object({
 })
 >>>>>>> devel
 ```
+=======
+});```
+>>>>>>> devel
 
 **Correct (shared schema modules):**
 
 ```typescript
+<<<<<<< HEAD
 // schemas/common.ts
 <<<<<<< HEAD
 import { z } from "zod";
+=======
+// schemas/common.tsimport { z } from "zod";
+>>>>>>> devel
 
 // Reusable ID types
 export const uuid = z.string().uuid();
 export type UUID = z.infer<typeof uuid>;
+<<<<<<< HEAD
 =======
 import { z } from 'zod'
 
@@ -103,6 +120,12 @@ export const timestamps = z.object({
   updatedAt: z.date(),
 <<<<<<< HEAD
 });
+=======
+// Timestamps
+export const timestamps = z.object({
+  createdAt: z.date(),
+  updatedAt: z.date(),});
+>>>>>>> devel
 
 // Base entity with ID
 export const baseEntity = z
@@ -112,6 +135,7 @@ export const baseEntity = z
   .merge(timestamps);
 
 export type BaseEntity = z.infer<typeof baseEntity>;
+<<<<<<< HEAD
 =======
 })
 
@@ -191,6 +215,34 @@ export type Order = z.infer<typeof orderSchema>;
 export type Order = z.infer<typeof orderSchema>
 >>>>>>> devel
 ```
+=======
+// Pagination
+export const paginationParams = z.object({
+  page: z.coerce.number().int().positive().default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),});```
+
+```typescript
+// schemas/user.tsimport { z } from "zod";
+import { baseEntity, uuid } from "./common";
+export const userSchema = baseEntity.extend({
+  email: z.string().email(),
+  name: z.string().min(1),});
+
+export type User = z.infer<typeof userSchema>;```
+
+```typescript
+// schemas/order.tsimport { z } from "zod";
+import { baseEntity, uuid } from "./common";
+const orderItemSchema = z.object({
+  productId: uuid,
+  quantity: z.number().int().positive(),});
+export const orderSchema = baseEntity.extend({
+  userId: uuid,
+  items: z.array(orderItemSchema).min(1),
+  total: z.number().positive(),});
+
+export type Order = z.infer<typeof orderSchema>;```
+>>>>>>> devel
 
 **Organizing schema modules:**
 
@@ -206,16 +258,36 @@ schemas/
 ```typescript
 // schemas/index.ts
 <<<<<<< HEAD
+<<<<<<< HEAD
 export * from "./common";
 export * from "./user";
 export * from "./order";
 export * from "./product";
+=======
+export * from './common'
+export * from './user'
+export * from './order'
+export * from './product'
+
+// Usage
+import { userSchema, orderSchema, uuid, type User } from '@/schemas'
+```
+
+# **When NOT to use this pattern:**
+
+export _ from "./common";
+export _ from "./user";
+export _ from "./order";
+export _ from "./product";
+>>>>>>> devel
 
 // Usage
 import { userSchema, orderSchema, uuid, type User } from "@/schemas";
+
 ```
 
 **When NOT to use this pattern:**
+<<<<<<< HEAD
 
 =======
 export _ from './common'
@@ -229,6 +301,8 @@ import { userSchema, orderSchema, uuid, type User } from '@/schemas'
 ```
 
 **When NOT to use this pattern:**
+>>>>>>> devel
+=======
 >>>>>>> devel
 - One-off schemas used only in a single file
 - When schemas look similar but have different semantics (don't over-abstract)

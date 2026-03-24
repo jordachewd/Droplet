@@ -11,9 +11,13 @@ Zod provides specific schemas for each primitive type. Using the wrong schema (e
 
 **Incorrect (wrong primitive or any):**
 
+<<<<<<< HEAD
 ```typescript
 <<<<<<< HEAD
 import { z } from "zod";
+=======
+```typescriptimport { z } from "zod";
+>>>>>>> devel
 
 // Using any loses all type safety
 const userSchema = z.object({
@@ -23,6 +27,7 @@ const userSchema = z.object({
 });
 
 // This passes validation but data is wrong
+<<<<<<< HEAD
 userSchema.parse({ id: null, age: "twenty", active: "yes" });
 =======
 import { z } from 'zod'
@@ -38,13 +43,20 @@ const userSchema = z.object({
 userSchema.parse({ id: null, age: "twenty", active: "yes" })
 >>>>>>> devel
 // Result: { id: null, age: "twenty", active: "yes" }
+=======
+userSchema.parse({ id: null, age: "twenty", active: "yes" });// Result: { id: null, age: "twenty", active: "yes" }
+>>>>>>> devel
 ```
 
 **Correct (specific primitives):**
 
+<<<<<<< HEAD
 ```typescript
 <<<<<<< HEAD
 import { z } from "zod";
+=======
+```typescriptimport { z } from "zod";
+>>>>>>> devel
 
 const userSchema = z.object({
   id: z.string().uuid(), // Specific format validation
@@ -53,6 +65,7 @@ const userSchema = z.object({
 });
 
 // Now invalid data is rejected
+<<<<<<< HEAD
 userSchema.parse({ id: null, age: "twenty", active: "yes" });
 =======
 import { z } from 'zod'
@@ -76,6 +89,14 @@ userSchema.parse({ id: null, age: "twenty", active: "yes" })
 
 > > > > > > > devel
 
+=======
+userSchema.parse({ id: null, age: "twenty", active: "yes" });// Throws ZodError with specific field errors
+```
+
+**Available primitive schemas:**
+
+
+>>>>>>> devel
 - `z.string()` - strings with optional regex, min, max, email, url, uuid
 - `z.number()` - numbers with optional int, positive, negative, min, max
 - `z.bigint()` - BigInt values
@@ -89,11 +110,16 @@ userSchema.parse({ id: null, age: "twenty", active: "yes" })
 
 **When NOT to use this pattern:**
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
 
 > > > > > > > devel
 
+=======
+
+
+>>>>>>> devel
 - When you genuinely need to accept any value (rare - consider `z.unknown()` instead)
 - When migrating legacy code incrementally (use `z.any()` temporarily, then fix)
 

@@ -20,6 +20,7 @@ Zod requires TypeScript's strict mode to work correctly. Without it, `undefined`
 }
 ```
 
+<<<<<<< HEAD
 ```typescript
 <<<<<<< HEAD
 import { z } from "zod";
@@ -57,6 +58,21 @@ processUser(undefined as any); // No warning
 processUser(undefined as any)  // No warning
 >>>>>>> devel
 ```
+=======
+```typescriptimport { z } from "zod";
+const userSchema = z.object({
+  name: z.string(),
+  email: z.string().email(),});
+
+type User = z.infer<typeof userSchema>;// With strict:false, type might include undefined implicitly
+
+function processUser(user: User) {
+  // No error even if user.name could be undefined  console.log(user.name.toUpperCase()); // Potential runtime crash
+}
+
+// TypeScript allows calling with undefined
+processUser(undefined as any); // No warning```
+>>>>>>> devel
 
 **Correct (strict mode enabled):**
 
@@ -69,6 +85,7 @@ processUser(undefined as any)  // No warning
 }
 ```
 
+<<<<<<< HEAD
 ```typescript
 <<<<<<< HEAD
 import { z } from "zod";
@@ -106,6 +123,21 @@ processUser(undefined as any); // Error with strict null checks
 processUser(undefined as any)  // Error with strict null checks
 >>>>>>> devel
 ```
+=======
+```typescriptimport { z } from "zod";
+const userSchema = z.object({
+  name: z.string(),
+  email: z.string().email(),});
+
+type User = z.infer<typeof userSchema>;// { name: string; email: string } - no implicit undefined
+
+function processUser(user: User) {
+  // TypeScript knows name is always string  console.log(user.name.toUpperCase()); // Safe
+}
+
+// TypeScript catches potential undefined
+processUser(undefined as any); // Error with strict null checks```
+>>>>>>> devel
 
 **Minimum strict settings for Zod:**
 
@@ -126,6 +158,7 @@ processUser(undefined as any)  // Error with strict null checks
 **Common errors when strict mode is disabled:**
 
 ```typescript
+<<<<<<< HEAD
 // Without strictNullChecks
 <<<<<<< HEAD
 const schema = z.string().optional();
@@ -146,6 +179,14 @@ const schema = z.object({ name: z.string() })
 schema.parse(data)  // data could be 'any', bypassing validation
 >>>>>>> devel
 ```
+=======
+// Without strictNullChecksconst schema = z.string().optional();
+type MaybeString = z.infer<typeof schema>;// Should be: string | undefined
+// Without strict: just string (undefined is implicit)
+
+// Without noImplicitAnyconst schema = z.object({ name: z.string() });
+schema.parse(data); // data could be 'any', bypassing validation```
+>>>>>>> devel
 
 **Migrating to strict mode:**
 
@@ -154,14 +195,19 @@ schema.parse(data)  // data could be 'any', bypassing validation
 // Common fixes:
 
 // 1. Add null checks
+<<<<<<< HEAD
 if (user.name !== undefined) {
 <<<<<<< HEAD
   console.log(user.name.toUpperCase());
+=======
+if (user.name !== undefined) {  console.log(user.name.toUpperCase());
+>>>>>>> devel
 }
 
 // 2. Add explicit types
 function processData(data: unknown) {
   // Was implicit any
+<<<<<<< HEAD
   const validated = schema.parse(data);
 =======
   console.log(user.name.toUpperCase())
@@ -178,10 +224,27 @@ const user: User = {
 <<<<<<< HEAD
   name: "John",
   email: "john@example.com", // Now required, was optional without strict
+=======
+  const validated = schema.parse(data);}
+
+// 3. Handle optional fields
+const user: User = {
+  name: 'John',
+  email: 'john@example.com',  // Now required, was optional without strict
+}
+```
+
+# **When NOT to use this pattern:**
+
+name: "John",
+email: "john@example.com", // Now required, was optional without strict
+>>>>>>> devel
 };
+
 ```
 
 **When NOT to use this pattern:**
+<<<<<<< HEAD
 
 =======
 name: 'John',
@@ -191,6 +254,8 @@ email: 'john@example.com', // Now required, was optional without strict
 ```
 
 **When NOT to use this pattern:**
+>>>>>>> devel
+=======
 >>>>>>> devel
 - Never - always enable strict mode for Zod projects
 

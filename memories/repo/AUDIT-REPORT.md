@@ -23,7 +23,6 @@
 
 ## 1. Executive Summary
 
-<<<<<<< HEAD
 | Metric | Value |
 | --------------------------------------------- | --------- |
 | Unit test files | 63 |
@@ -41,7 +40,6 @@
 | Server actions without `"use server"` | 0 |
 | Server actions without `import "server-only"` | 0 |
 | API routes missing auth checks | 0 |
-=======
 | Metric | Value |
 |---|---|
 | Unit test files | 63 |
@@ -70,9 +68,7 @@
 
 ### Grading Rubric
 
-<<<<<<< HEAD
 
-=======
 
 > > > > > > > devel
 
@@ -86,7 +82,6 @@
 
 ### 2.1 Models (2 files)
 
-<<<<<<< HEAD
 | # | File | Tests | Happy | Fail | Edge | Grade | Assessment |
 | --- | ------------------------------------------------- | ----- | ----- | ---- | ---- | ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1 | `tests/unit/models/user-model.test.ts` | 1 | 1 | 0 | 0 | **C** | Single test validates default values on `new User()`. No validation failure, no required field rejection, no plan defaults edge cases. |
@@ -94,7 +89,6 @@
 
 **Top 3 missing scenarios (models):**
 
-=======
 | # | File | Tests | Happy | Fail | Edge | Grade | Assessment |
 |---|---|---|---|---|---|---|---|
 | 1 | `tests/unit/models/user-model.test.ts` | 1 | 1 | 0 | 0 | **C** | Single test validates default values on `new User()`. No validation failure, no required field rejection, no plan defaults edge cases. |
@@ -112,7 +106,6 @@
 
 ### 2.2 Utils (32 files)
 
-<<<<<<< HEAD
 | # | File | Tests | Happy | Fail | Edge | Grade | Assessment |
 | --- | ------------------------------------- | ----- | ----- | ---- | ---- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | 1 | `validation-schemas.test.ts` | 16 | 6 | 5 | 5 | **A** | Thorough — XSS payloads, null bytes, long strings, strict mode rejection. Best-in-class defensive testing. |
@@ -147,7 +140,6 @@
 | 30 | `check-daily-conversations.test.ts` | 8 | 3 | 2 | 3 | **A** | Read counter, UTC day reset, limit reached, unlimited bypass, atomic claim, midnight boundary, at-limit rejection. Excellent boundary testing. |
 | 31 | `ai-model-policy.test.ts` | 8+ | 4 | 1 | 3 | **A** | Full matrix coverage, title pinning, plan-specific, runtime overrides, TTS/video, downgrade. |
 | 32 | `admin-queries.test.ts` | 4 | 3 | 0 | 1 | **B** | Pagination, bounds clamping, transaction mapping, empty page skip. Missing: search edge cases, sort validation, large dataset. |
-=======
 | # | File | Tests | Happy | Fail | Edge | Grade | Assessment |
 |---|---|---|---|---|---|---|---|
 | 1 | `validation-schemas.test.ts` | 16 | 6 | 5 | 5 | **A** | Thorough — XSS payloads, null bytes, long strings, strict mode rejection. Best-in-class defensive testing. |
@@ -189,7 +181,6 @@
 
 ### 2.3 Actions (6 files)
 
-<<<<<<< HEAD
 | # | File | Tests | Happy | Fail | Edge | Grade | Assessment |
 | --- | ----------------------------- | ----- | ----- | ---- | ---- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | 1 | `user-actions.test.ts` | 8 | 3 | 4 | 1 | **A** | getUserById auth/forbidden/unauthorized, updateUser error handling, deleteUser full flow/forbidden/not-found/Clerk-failure. |
@@ -198,7 +189,6 @@
 | 4 | `task-actions.test.ts` | 10+ | 4 | 4 | 2+ | **A** | Full CRUD: createTask auth override, prompt init, unauthenticated rejection, updateTask usage increment/no-inc, incrementPromptCount claim/at-limit, deleteTask owner/not-found/unauthorized/invalid-id/S3-failure-resilience. |
 | 5 | `checkout-plan.test.ts` | 2 | 1 | 1 | 0 | **C** | Success/cancel URLs + price mismatch. Missing: unauthenticated request, missing user, Stripe API failure, invalid plan name. |
 | 6 | `admin-audit-trail.test.ts` | 5+ | 5 | 0 | 0 | **A** | Audit entries for suspension, removal, setting update, page creation, publish toggle. Verifies audit trail integrity. |
-=======
 | # | File | Tests | Happy | Fail | Edge | Grade | Assessment |
 |---|---|---|---|---|---|---|---|
 | 1 | `user-actions.test.ts` | 8 | 3 | 4 | 1 | **A** | getUserById auth/forbidden/unauthorized, updateUser error handling, deleteUser full flow/forbidden/not-found/Clerk-failure. |
@@ -214,7 +204,6 @@
 
 ### 2.4 Components (9 files)
 
-<<<<<<< HEAD
 | # | File | Tests | Happy | Fail | Edge | Grade | Assessment |
 | --- | ----------------------------------- | ----- | ----- | ---- | ---- | ----- | --------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1 | `profile-hero.test.tsx` | 3 | 2 | 0 | 1 | **B** | Update profile fields, avatar upload, account deletion. Missing: validation failures, upload errors, missing user data. |
@@ -226,7 +215,6 @@
 | 7 | `chat-input.test.tsx` | 6 | 3 | 1 | 2 | **A** | Initial value, Enter send, empty prevention, attach button, file upload before send, upload failure blocking. |
 | 8 | `chat-body.test.tsx` | 12+ | 6 | 3 | 3 | **A** | All stop reasons rendered (via test.each), action links (new conversation, upgrade, contact), styling. Excellent behavioral testing. |
 | 9 | `alert-message.test.tsx` | 1 | 1 | 0 | 0 | **C** | Single dismiss + re-show test. Missing: all 4 color variants (success/error/warning/info), auto-dismiss, animation, accessibility attributes. |
-=======
 | # | File | Tests | Happy | Fail | Edge | Grade | Assessment |
 |---|---|---|---|---|---|---|---|
 | 1 | `profile-hero.test.tsx` | 3 | 2 | 0 | 1 | **B** | Update profile fields, avatar upload, account deletion. Missing: validation failures, upload errors, missing user data. |
@@ -245,7 +233,6 @@
 
 ### 2.5 Routes (9 files)
 
-<<<<<<< HEAD
 | # | File | Tests | Happy | Fail | Edge | Grade | Assessment |
 | --- | ------------------------------ | ----- | ----- | ---- | ---- | ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1 | `openai-route.test.ts` | 15+ | 4 | 6 | 5 | **A** | Auth 401, invalid message 400, expired plan 403, trial persona access, admin bypass, video entitlements, new task creation, streaming. Highest-risk route, well-covered. |
@@ -257,7 +244,6 @@
 | 7 | `proxy.test.ts` | 8 | 4 | 2 | 2 | **A** | Public routes, webhooks, status routes, unknown routes, /app redirect, /admin redirect, non-admin rejection, admin access. |
 | 8 | `stripe-webhook-route.test.ts` | 10+ | 3 | 5 | 2 | **A** | Missing header, missing secret, invalid signature, invalid metadata, checkout completion, transaction failure, user update failure, unmatched user, non-checkout events, duplicate idempotency. |
 | 9 | `upload-route.test.ts` | 5 | 2 | 2 | 1 | **B** | Auth, missing file, invalid type, successful upload, S3 failure. Missing: oversized file, concurrent upload, rate limiting. |
-=======
 | # | File | Tests | Happy | Fail | Edge | Grade | Assessment |
 |---|---|---|---|---|---|---|---|
 | 1 | `openai-route.test.ts` | 15+ | 4 | 6 | 5 | **A** | Auth 401, invalid message 400, expired plan 403, trial persona access, admin bypass, video entitlements, new task creation, streaming. Highest-risk route, well-covered. |
@@ -276,7 +262,6 @@
 
 ### 2.6 Constants (5 files)
 
-<<<<<<< HEAD
 | # | File | Tests | Happy | Fail | Edge | Grade | Assessment |
 | --- | ---------------------------- | ----- | ----- | ---- | ---- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | 1 | `plans.test.ts` | 8 | 5 | 1 | 2 | **A** | Lite no-expiry sentinel, Pro monthly/Premium yearly expiry, plan icons case-insensitive, unknown plan throws, PLAN_LIMITS full validation, pricing + copy verification, buildPlans runtime override. Protects frozen business rules. |
@@ -284,7 +269,6 @@
 | 3 | `next-config.test.ts` | 2 | 1 | 0 | 1 | **B** | Default allowedDevOrigins and env-parsed deduplication. Thin but reasonable for config. |
 | 4 | `faqs.test.ts` | 2 | 1 | 0 | 1 | **B** | Support email verification, free plan copy, and removal of obsolete trial/yearly language. Good regression prevention. |
 | 5 | `assistant-personas.test.ts` | 1 | 1 | 0 | 0 | **C** | Single test verifying 6 personas are image+audio enabled. Missing: persona ID uniqueness, systemPrompt non-empty, name format. |
-=======
 | # | File | Tests | Happy | Fail | Edge | Grade | Assessment |
 |---|---|---|---|---|---|---|---|
 | 1 | `plans.test.ts` | 8 | 5 | 1 | 2 | **A** | Lite no-expiry sentinel, Pro monthly/Premium yearly expiry, plan icons case-insensitive, unknown plan throws, PLAN_LIMITS full validation, pricing + copy verification, buildPlans runtime override. Protects frozen business rules. |
@@ -300,14 +284,12 @@
 ### 2.7 Grade Distribution Summary
 
 | Grade | Count | Percentage |
-<<<<<<< HEAD
 | ----- | ----- | ---------- |
 | **A** | 28 | 44% |
 | **B** | 20 | 32% |
 | **C** | 15 | 24% |
 | **D** | 0 | 0% |
 | **F** | 0 | 0% |
-=======
 |---|---|---|
 | **A** | 28 | 44% |
 | **B** | 20 | 32% |
@@ -325,9 +307,7 @@
 
 ### Grading Rubric (E2E)
 
-<<<<<<< HEAD
 
-=======
 
 > > > > > > > devel
 
@@ -336,7 +316,6 @@
 - **C** — Smoke-only page renders. No meaningful interaction tested.
 - **D/F** — Broken or actively misleading.
 
-<<<<<<< HEAD
 | # | File | Tests | Grade | Assessment |
 | --- | -------------------------------- | -------------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1 | `public-pages.spec.ts` | 13 | **A** | Landing page hero, dark mode toggle + persistence, 404 custom page, about page sections, plans page with approved prices, checkout fallback, FAQ accordion, personas page, privacy policy, cookie policy, terms page, footer links, header navigation. Comprehensive public surface coverage. |
@@ -351,7 +330,6 @@
 | 10 | `plans-public.spec.ts` | 1 | **B** | Reconciled pricing on /plans, persona access copy per tier, no yearly billing toggle, FAQ accordion interaction. Overlaps with public-pages but focused on business rules. |
 | 11 | `persona-trial-access.spec.ts` | 4 | **A** | Lite user starts trial persona conversation, trial stops at 5 prompts with upgrade CTA, full-access persona uses 10 prompt limit, persona picker shows Trial badge. Mocked backend with realistic prompt counting. |
 | 12 | `user-profile.spec.ts` | 1 | **B** | Profile details + plan display, plans page with upgrade CTAs, verified pricing. Missing: actual profile edit, avatar upload, plan change. |
-=======
 | # | File | Tests | Grade | Assessment |
 |---|---|---|---|---|
 | 1 | `public-pages.spec.ts` | 13 | **A** | Landing page hero, dark mode toggle + persistence, 404 custom page, about page sections, plans page with approved prices, checkout fallback, FAQ accordion, personas page, privacy policy, cookie policy, terms page, footer links, header navigation. Comprehensive public surface coverage. |
@@ -372,7 +350,6 @@
 ### E2E Grade Distribution
 
 | Grade | Count |
-<<<<<<< HEAD
 | ----- | ----- |
 | **A** | 5 |
 | **B** | 7 |
@@ -380,7 +357,6 @@
 
 **Top 5 missing E2E scenarios:**
 
-=======
 |---|---|
 | **A** | 5 |
 | **B** | 7 |
@@ -402,7 +378,6 @@
 
 ### 4.1 Vitest Configuration (`vitest.config.mts`)
 
-<<<<<<< HEAD
 | Setting | Value | Assessment |
 | ------------------- | ------------------------------------------------------ | --------------------------------------------------------------------------------------- |
 | Environment | `node` (default), `jsdom` for `.tsx` | Correct. Node for server logic, jsdom for components. |
@@ -412,7 +387,6 @@
 
 **Gaps:**
 
-=======
 | Setting | Value | Assessment |
 |---|---|---|
 | Environment | `node` (default), `jsdom` for `.tsx` | Correct. Node for server logic, jsdom for components. |
@@ -429,7 +403,6 @@
 
 ### 4.2 Playwright Configuration (`playwright.config.ts`)
 
-<<<<<<< HEAD
 | Setting | Value | Assessment |
 | ------------ | ------------------------------------------------ | ------------------------------------------------ |
 | Browsers | Chromium, Firefox, WebKit + optional mobile/Edge | Good breadth. |
@@ -443,7 +416,6 @@
 
 **Gaps:**
 
-=======
 | Setting | Value | Assessment |
 |---|---|---|
 | Browsers | Chromium, Firefox, WebKit + optional mobile/Edge | Good breadth. |
@@ -464,7 +436,6 @@
 
 ### 4.3 TypeScript Configuration (`tsconfig.json`)
 
-<<<<<<< HEAD
 | Setting | Value | Assessment |
 | -------------------- | ----------------- | --------------------- |
 | `strict` | `true` | Correct. |
@@ -472,7 +443,6 @@
 | `noUnusedParameters` | `true` | Correct. |
 | `target` | `ES2022` | Correct for Node 18+. |
 | Path alias | `@/*` → `./src/*` | Correct. |
-=======
 | Setting | Value | Assessment |
 |---|---|---|
 | `strict` | `true` | Correct. |
@@ -491,9 +461,7 @@ No issues.
 - Single custom rule: `react-hooks/set-state-in-effect: "off"`.
 
 **Gaps:**
-<<<<<<< HEAD
 
-=======
 
 > > > > > > > devel
 
@@ -521,7 +489,6 @@ No issues.
 
 ### 5.1 `tests/unit/test-support/server-only.ts`
 
-<<<<<<< HEAD
 
 ```ts
 export {};
@@ -533,7 +500,6 @@ export {};
 
 ~200 lines. Serial mode. Creates/provisions:
 
-=======
 
 ```ts
 export {};
@@ -555,9 +521,7 @@ export {};
 **Assessment:** Well-structured. Uses `@clerk/testing` properly. Handles missing credentials gracefully via `test.skip`. DB seeding uses upsert — safe for re-runs. The `finally { await browser.close() }` cleanup is correct.
 
 **Gaps:**
-<<<<<<< HEAD
 
-=======
 
 > > > > > > > devel
 
@@ -566,9 +530,7 @@ export {};
 
 ### 5.3 `tests/e2e/utils/e2e-test-user.ts`
 
-<<<<<<< HEAD
 
-=======
 
 > > > > > > > devel
 > > > > > > > Resolves from `E2E_TEST_*` env vars. Returns null if missing. Has `require*` variants that throw.
@@ -577,9 +539,7 @@ export {};
 
 ### 5.4 `tests/e2e/utils/dotenv-local.ts`
 
-<<<<<<< HEAD
 
-=======
 
 > > > > > > > devel
 > > > > > > > Custom `.env.local` parser with caching. Handles quoted values.
@@ -592,9 +552,7 @@ export {};
 
 ### 6.1 Prices ($19, $39)
 
-<<<<<<< HEAD
 
-=======
 
 > > > > > > > devel
 
@@ -606,7 +564,6 @@ export {};
 
 ### 6.2 `window.alert()` / `window.confirm()`
 
-<<<<<<< HEAD
 
 - **Zero occurrences in `src/`.** The rule is enforced.
 
@@ -620,7 +577,6 @@ export {};
 
 ### 6.5 `strict: false` in Mongoose
 
-=======
 
 - **Zero occurrences in `src/`.** The rule is enforced.
 
@@ -644,14 +600,12 @@ export {};
 
 ### 7.1 Server Actions — `"use server"` + `import "server-only"`
 
-<<<<<<< HEAD
 | File | `"use server"` | `import "server-only"` | Auth Check | Ownership Filter |
 | ---------------------------------------- | -------------- | ---------------------- | ---------------- | ----------------------------- |
 | `src/lib/actions/task.actions.tsx` | Yes | Yes | Yes (`auth()`) | Yes (`userId` in all queries) |
 | `src/lib/actions/user.actions.tsx` | Yes | Yes | Yes (`auth()`) | Yes (`clerkId` filter) |
 | `src/lib/actions/transaction.action.tsx` | Yes | Yes | Yes (`auth()`) | Yes (`clerkId` filter) |
 | `src/lib/actions/admin.actions.tsx` | Yes | Yes | Yes (admin auth) | N/A (admin scope) |
-=======
 | File | `"use server"` | `import "server-only"` | Auth Check | Ownership Filter |
 |---|---|---|---|---|
 | `src/lib/actions/task.actions.tsx` | Yes | Yes | Yes (`auth()`) | Yes (`userId` in all queries) |
@@ -665,7 +619,6 @@ export {};
 
 ### 7.2 API Routes — Auth Checks
 
-<<<<<<< HEAD
 | Route | Auth Method | Ownership Check |
 | -------------------------------- | -------------------------------- | -------------------------------------------------- |
 | `/api/openai/route.tsx` | `auth()` → `userId` | Yes (tasks filtered by userId) |
@@ -674,7 +627,6 @@ export {};
 | `/api/upload/route.tsx` | `auth()` → `userId` | Yes (userId used in S3 key) |
 | `/api/webhooks/clerk/route.tsx` | `verifyWebhook()` | N/A (webhook) |
 | `/api/webhooks/stripe/route.tsx` | `stripe.webhooks.constructEvent` | N/A (webhook) |
-=======
 | Route | Auth Method | Ownership Check |
 |---|---|---|
 | `/api/openai/route.tsx` | `auth()` → `userId` | Yes (tasks filtered by userId) |
@@ -692,7 +644,6 @@ export {};
 
 **19 `.ts` files** in `src/lib/utils/`:
 
-<<<<<<< HEAD
 | Has `import "server-only"` | Count | Files |
 | -------------------------- | ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Yes** | 15 | ai-model-policy, admin-audit, admin-auth, admin-queries, check-daily-conversations, check-usage-limit, effective-model-config, effective-persona-access, effective-persona-config, effective-plan-config, ensure-user-synced, handleError, rate-limit, task-queries, usage-event-utils |
@@ -707,7 +658,6 @@ export {};
 
 **Analysis of missing `server-only`:**
 
-=======
 | Has `import "server-only"` | Count | Files |
 |---|---|---|
 | **Yes** | 15 | ai-model-policy, admin-audit, admin-auth, admin-queries, check-daily-conversations, check-usage-limit, effective-model-config, effective-persona-access, effective-persona-config, effective-plan-config, ensure-user-synced, handleError, rate-limit, task-queries, usage-event-utils |
@@ -748,11 +698,9 @@ All 8 model files in `src/lib/database/models/` use `.tsx` extension. The DB con
 
 ### 8.1 Auth Check Pattern
 
-<<<<<<< HEAD
 
 Every server action follows the same pattern:
 
-=======
 Every server action follows the same pattern:
 
 > > > > > > > devel
@@ -768,11 +716,9 @@ This pattern appears in `task.actions.tsx` (~5 times), `user.actions.tsx` (~3 ti
 
 ### 8.2 E2E Helper Duplication
 
-<<<<<<< HEAD
 
 Several E2E specs duplicate the `ensureAuthenticatedAppPage` function:
 
-=======
 Several E2E specs duplicate the `ensureAuthenticatedAppPage` function:
 
 > > > > > > > devel
@@ -787,9 +733,7 @@ Each has a slightly different version with the same core logic (goto → check i
 
 ### 8.3 `isClerkAuthRedirect` Duplication
 
-<<<<<<< HEAD
 
-=======
 
 > > > > > > > devel
 > > > > > > > Duplicated in `auth-boundaries.spec.ts` and `error-handling.spec.ts` with identical implementation.
@@ -798,9 +742,7 @@ Each has a slightly different version with the same core logic (goto → check i
 
 ### 8.4 Admin Settings Query Pattern
 
-<<<<<<< HEAD
 
-=======
 
 > > > > > > > devel
 > > > > > > > `effective-plan-config.ts`, `effective-model-config.ts`, `effective-persona-config.ts`, and `effective-persona-access.ts` all follow the same pattern: connect to DB → query `AppSetting` by key → fallback to defaults → return config.
@@ -815,7 +757,6 @@ Each has a slightly different version with the same core logic (goto → check i
 
 Found 50+ `useEffect` usages across ~20 client components. Key analysis:
 
-<<<<<<< HEAD
 | Component | useEffect Count | Cleanup? | Risk |
 | ------------------------ | --------------- | ------------------------------------------ | --------------------------------------------------------- |
 | `audio-player.tsx` | 2 | **Needs review** — audio element lifecycle | **Medium** — may leak audio element event listeners |
@@ -832,7 +773,6 @@ Found 50+ `useEffect` usages across ~20 client components. Key analysis:
 
 **Components of concern:**
 
-=======
 | Component | useEffect Count | Cleanup? | Risk |
 |---|---|---|---|
 | `audio-player.tsx` | 2 | **Needs review** — audio element lifecycle | **Medium** — may leak audio element event listeners |
@@ -858,13 +798,11 @@ Found 50+ `useEffect` usages across ~20 client components. Key analysis:
 
 ### 9.2 Fetch-in-useEffect Anti-pattern
 
-<<<<<<< HEAD
 
 No instances found of `useEffect` + `fetch` for initial data loading. The "Server Components first" rule appears to be consistently followed. Data loading is done server-side.
 
 ### 9.3 Missing `useMemo` / `useCallback`
 
-=======
 No instances found of `useEffect` + `fetch` for initial data loading. The "Server Components first" rule appears to be consistently followed. Data loading is done server-side.
 
 ### 9.3 Missing `useMemo` / `useCallback`
@@ -878,7 +816,6 @@ No instances found of `useEffect` + `fetch` for initial data loading. The "Serve
 
 ### Critical (Fix Now)
 
-<<<<<<< HEAD
 
 None found. The codebase has no security violations, no broken auth boundaries, no hardcoded secrets, and no `window.alert`/`window.confirm` usage.
 
@@ -914,7 +851,6 @@ None found. The codebase has no security violations, no broken auth boundaries, 
 
 ### Positive Highlights
 
-=======
 None found. The codebase has no security violations, no broken auth boundaries, no hardcoded secrets, and no `window.alert`/`window.confirm` usage.
 
 ### High Priority
@@ -964,9 +900,7 @@ None found. The codebase has no security violations, no broken auth boundaries, 
 
 ---
 
-<<<<<<< HEAD
 _End of audit report._
-=======
 _End of audit report._
 
 > > > > > > > devel

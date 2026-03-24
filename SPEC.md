@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-24 (PM audit #56). Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS — Full TDD testing rebuild (Phase 120). **All 7 gates GREEN.** 370 unit tests (62 suites). E2E: 108 passed, 0 failed, 25 skipped. Coverage: ~78.5/~66/~83.5/~79. Active TDs: TD-HARDCODE-01 (HIGH), TD-REUSE-04/WCAG-05/WCAG-07/TEST-02 (MEDIUM). Build passing. Node.js 24.12.0.
+> Last updated: 2026-03-24 (PM audit #58). Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS — Full TDD testing rebuild (Phase 120). **All 7 gates GREEN.** 409 unit tests (68 suites). E2E: 108 passed, 0 failed, 25 skipped. Coverage: ~83.5/~70.5/~88/~83.6. Active TDs: TD-HARDCODE-01 (HIGH), TD-REUSE-04/WCAG-05/WCAG-07/TEST-02 (MEDIUM). Build passing. Node.js 24.12.0. Merge conflicts resolved (Phase 124+125, 52 files).
 
 ---
 
@@ -801,10 +801,11 @@ All button styles use Lime Green as the accent color in **both** light and dark 
 
 ### Active — Low Priority
 
-| ID         | Area    | Description                                                                    | Phase    |
-| ---------- | ------- | ------------------------------------------------------------------------------ | -------- |
-| TD-AI-09   | OpenAI  | Image/audio generation prompts not persona-aware (chat prompts done Phase 22). | 26.1     |
-| TD-AI-13   | OpenAI  | 5 model pricing entries are placeholders pending OpenAI confirmation.          | Deferred |
-| TD-PLAN-01 | Billing | No recurring subscriptions (deferred v1).                                      | Deferred |
-| TD-AI-18   | OpenAI  | errorMessage forwarding pattern in `/api/openai` is safe but fragile.          | Advisory |
-| TD-API-09  | API     | `messageTextContentSchema` uses `.strict()` — may reject extra fields.         | Monitor  |
+| ID         | Area    | Description                                                                                                                                            | Phase    |
+| ---------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | -------- |
+| TD-DB-01   | DB      | `getAllTransactions()` in `transaction.action.tsx` missing `.select()` projection and `.limit()`. Unbounded query — fix during Phase 120.3 action TDD. | 120.3    |
+| TD-AI-09   | OpenAI  | Image/audio generation prompts not persona-aware (chat prompts done Phase 22).                                                                         | 26.1     |
+| TD-AI-13   | OpenAI  | 5 model pricing entries are placeholders pending OpenAI confirmation.                                                                                  | Deferred |
+| TD-PLAN-01 | Billing | No recurring subscriptions (deferred v1).                                                                                                              | Deferred |
+| TD-AI-18   | OpenAI  | errorMessage forwarding pattern in `/api/openai` is safe but fragile.                                                                                  | Advisory |
+| TD-API-09  | API     | `messageTextContentSchema` uses `.strict()` — may reject extra fields.                                                                                 | Monitor  |

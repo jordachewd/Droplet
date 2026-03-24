@@ -11,9 +11,13 @@ Plain strings and numbers are interchangeable in TypeScript's structural type sy
 
 **Incorrect (plain IDs are interchangeable):**
 
+<<<<<<< HEAD
 ```typescript
 <<<<<<< HEAD
 import { z } from "zod";
+=======
+```typescriptimport { z } from "zod";
+>>>>>>> devel
 
 const userIdSchema = z.string().uuid();
 const orderIdSchema = z.string().uuid();
@@ -26,6 +30,7 @@ async function getOrder(orderId: OrderId) {
 }
 
 const userId: UserId = "550e8400-e29b-41d4-a716-446655440000";
+<<<<<<< HEAD
 getOrder(userId); // No error! TypeScript allows this bug
 =======
 import { z } from 'zod'
@@ -44,13 +49,20 @@ const userId: UserId = '550e8400-e29b-41d4-a716-446655440000'
 getOrder(userId)  // No error! TypeScript allows this bug
 >>>>>>> devel
 // Runtime: queries orders table with user ID, returns nothing or wrong data
+=======
+getOrder(userId); // No error! TypeScript allows this bug// Runtime: queries orders table with user ID, returns nothing or wrong data
+>>>>>>> devel
 ```
 
 **Correct (using branded types):**
 
+<<<<<<< HEAD
 ```typescript
 <<<<<<< HEAD
 import { z } from "zod";
+=======
+```typescriptimport { z } from "zod";
+>>>>>>> devel
 
 const userIdSchema = z.string().uuid().brand<"UserId">();
 const orderIdSchema = z.string().uuid().brand<"OrderId">();
@@ -69,6 +81,7 @@ const userId = userIdSchema.parse("550e8400-e29b-41d4-a716-446655440000");
 getOrder(userId); // TypeScript error: Argument of type 'UserId' is not assignable to parameter of type 'OrderId'
 
 const orderId = orderIdSchema.parse("660e8400-e29b-41d4-a716-446655440001");
+<<<<<<< HEAD
 getOrder(orderId); // Works correctly
 =======
 import { z } from 'zod'
@@ -93,13 +106,20 @@ const orderId = orderIdSchema.parse('660e8400-e29b-41d4-a716-446655440001')
 getOrder(orderId)  // Works correctly
 >>>>>>> devel
 ```
+=======
+getOrder(orderId); // Works correctly```
+>>>>>>> devel
 
 **Common branded types:**
 
 ```typescript
+<<<<<<< HEAD
 // IDs for different entities
 <<<<<<< HEAD
 const UserId = z.string().uuid().brand<"UserId">();
+=======
+// IDs for different entitiesconst UserId = z.string().uuid().brand<"UserId">();
+>>>>>>> devel
 const ProductId = z.string().uuid().brand<"ProductId">();
 const OrderId = z.string().uuid().brand<"OrderId">();
 
@@ -116,6 +136,7 @@ const Cents = z.number().int().nonnegative().brand<"Cents">();
 const Slug = z
   .string()
   .regex(/^[a-z0-9-]+$/)
+<<<<<<< HEAD
   .brand<"Slug">();
 =======
 const UserId = z.string().uuid().brand<'UserId'>()
@@ -135,13 +156,20 @@ const Cents = z.number().int().nonnegative().brand<'Cents'>()
 const Slug = z.string().regex(/^[a-z0-9-]+$/).brand<'Slug'>()
 >>>>>>> devel
 ```
+=======
+  .brand<"Slug">();```
+>>>>>>> devel
 
 **Using with object schemas:**
 
 ```typescript
+<<<<<<< HEAD
 const User = z.object({
 <<<<<<< HEAD
   id: z.string().uuid().brand<"UserId">(),
+=======
+const User = z.object({  id: z.string().uuid().brand<"UserId">(),
+>>>>>>> devel
   email: z.string().email().brand<"Email">(),
   referredBy: z.string().uuid().brand<"UserId">().optional(),
 });
@@ -150,6 +178,7 @@ type User = z.infer<typeof User>;
 
 function sendReferralBonus(
   referrerId: z.infer<typeof User>["id"],
+<<<<<<< HEAD
   refereeId: z.infer<typeof User>["id"],
 =======
   id: z.string().uuid().brand<'UserId'>(),
@@ -164,17 +193,25 @@ function sendReferralBonus(
   refereeId: z.infer<typeof User>['id']
 >>>>>>> devel
 ) {
+=======
+  refereeId: z.infer<typeof User>["id"],) {
+>>>>>>> devel
   // Can't accidentally swap these - both are UserId but distinct values
 }
 ```
 
 **When NOT to use this pattern:**
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
 
 > > > > > > > devel
 
+=======
+
+
+>>>>>>> devel
 - Simple applications without ID confusion risk
 - When interoperating with external systems that expect plain strings
 - Performance-critical paths (brand adds tiny overhead)

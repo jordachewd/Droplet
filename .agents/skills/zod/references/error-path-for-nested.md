@@ -11,9 +11,13 @@ When validating nested objects or arrays, `issue.path` tells you exactly where t
 
 **Incorrect (ignoring path information):**
 
+<<<<<<< HEAD
 ```typescript
 <<<<<<< HEAD
 import { z } from "zod";
+=======
+```typescriptimport { z } from "zod";
+>>>>>>> devel
 
 const orderSchema = z.object({
   customer: z.object({
@@ -41,6 +45,7 @@ if (!result.success) {
   result.error.issues.forEach((issue) => {
     console.log(issue.message); // 'Name required', 'Street required', 'Quantity must be positive'
     // User: "Which quantity? Which field?"
+<<<<<<< HEAD
   });
 =======
 import { z } from 'zod'
@@ -72,13 +77,20 @@ if (!result.success) {
   })
 >>>>>>> devel
 }
+=======
+  });}
+>>>>>>> devel
 ```
 
 **Correct (using path information):**
 
+<<<<<<< HEAD
 ```typescript
 <<<<<<< HEAD
 import { z } from "zod";
+=======
+```typescriptimport { z } from "zod";
+>>>>>>> devel
 
 const orderSchema = z.object({
   customer: z.object({
@@ -104,6 +116,7 @@ const result = orderSchema.safeParse({
 if (!result.success) {
   result.error.issues.forEach((issue) => {
     // path is an array of keys/indices
+<<<<<<< HEAD
     console.log(`${issue.path.join(".")}: ${issue.message}`);
 =======
 import { z } from 'zod'
@@ -142,14 +155,24 @@ if (!result.success) {
   })
 >>>>>>> devel
 }
+=======
+    console.log(`${issue.path.join(".")}: ${issue.message}`);    // 'customer.name: Name required'
+    // 'customer.address.street: Street required'
+    // 'customer.address.city: City required'
+    // 'items.0.quantity: Quantity must be positive'  });}
+>>>>>>> devel
 ```
 
 **Building field-specific error mapping:**
 
 ```typescript
+<<<<<<< HEAD
 function mapErrorsToFields(error: z.ZodError) {
 <<<<<<< HEAD
   const fieldErrors: Map<string, string[]> = new Map();
+=======
+function mapErrorsToFields(error: z.ZodError) {  const fieldErrors: Map<string, string[]> = new Map();
+>>>>>>> devel
 
   for (const issue of error.issues) {
     const fieldPath = issue.path.join(".");
@@ -163,6 +186,7 @@ function mapErrorsToFields(error: z.ZodError) {
 // Usage
 const errors = mapErrorsToFields(result.error);
 errors.get("customer.name"); // ['Name required']
+<<<<<<< HEAD
 errors.get("items.0.quantity"); // ['Quantity must be positive']
 =======
   const fieldErrors: Map<string, string[]> = new Map()
@@ -188,12 +212,20 @@ errors.get('items.0.quantity')  // ['Quantity must be positive']
 ```typescript
 <<<<<<< HEAD
 const itemsWithErrors: Set<number> = new Set();
+=======
+errors.get("items.0.quantity"); // ['Quantity must be positive']```
+
+**For array items, get index from path:**
+
+```typescriptconst itemsWithErrors: Set<number> = new Set();
+>>>>>>> devel
 
 result.error.issues.forEach((issue) => {
   if (issue.path[0] === "items" && typeof issue.path[1] === "number") {
     itemsWithErrors.add(issue.path[1]);
   }
 });
+<<<<<<< HEAD
 =======
 const itemsWithErrors: Set<number> = new Set()
 
@@ -204,6 +236,8 @@ result.error.issues.forEach(issue => {
 })
 >>>>>>> devel
 
+=======
+>>>>>>> devel
 // Highlight items at indices: Set { 0 }
 ```
 
@@ -211,14 +245,28 @@ result.error.issues.forEach(issue => {
 
 ```typescript
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+const formatted = result.error.format()
+
+// Access errors at any path level
+formatted.customer?.address?.city?._errors  // ['City required']
+formatted.items?.[0]?.quantity?._errors  // ['Quantity must be positive']
+```
+
+# **When NOT to use this pattern:**
+
+>>>>>>> devel
 const formatted = result.error.format();
 
 // Access errors at any path level
-formatted.customer?.address?.city?._errors; // ['City required']
-formatted.items?.[0]?.quantity?._errors; // ['Quantity must be positive']
+formatted.customer?.address?.city?.\_errors; // ['City required']
+formatted.items?.[0]?.quantity?.\_errors; // ['Quantity must be positive']
+
 ```
 
 **When NOT to use this pattern:**
+<<<<<<< HEAD
 
 =======
 const formatted = result.error.format()
@@ -230,6 +278,8 @@ formatted.items?.[0]?.quantity?.\_errors // ['Quantity must be positive']
 ```
 
 **When NOT to use this pattern:**
+>>>>>>> devel
+=======
 >>>>>>> devel
 - Flat objects where field name is obvious
 - When using form libraries that handle path mapping

@@ -11,9 +11,13 @@ HTML forms and URL query parameters always transmit data as strings. Using `z.nu
 
 **Incorrect (no coercion for form data):**
 
+<<<<<<< HEAD
 ```typescript
 <<<<<<< HEAD
 import { z } from "zod";
+=======
+```typescriptimport { z } from "zod";
+>>>>>>> devel
 
 const searchSchema = z.object({
   query: z.string(),
@@ -29,6 +33,7 @@ const formData = new URLSearchParams(
 const params = Object.fromEntries(formData);
 // { query: 'test', page: '1', limit: '10', showDeleted: 'true' }
 
+<<<<<<< HEAD
 searchSchema.parse(params);
 =======
 import { z } from 'zod'
@@ -48,12 +53,16 @@ const params = Object.fromEntries(formData)
 searchSchema.parse(params)
 >>>>>>> devel
 // ZodError: Expected number, received string at "page"
+=======
+searchSchema.parse(params);// ZodError: Expected number, received string at "page"
+>>>>>>> devel
 // ZodError: Expected number, received string at "limit"
 // ZodError: Expected boolean, received string at "showDeleted"
 ```
 
 **Correct (using coercion):**
 
+<<<<<<< HEAD
 ```typescript
 <<<<<<< HEAD
 import { z } from "zod";
@@ -61,13 +70,20 @@ import { z } from "zod";
 import { z } from 'zod'
 >>>>>>> devel
 
+=======
+```typescriptimport { z } from "zod";
+>>>>>>> devel
 const searchSchema = z.object({
   query: z.string(),
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().min(1).max(100).default(10),
+<<<<<<< HEAD
   showDeleted: z.coerce.boolean().default(false),
 <<<<<<< HEAD
 });
+=======
+  showDeleted: z.coerce.boolean().default(false),});
+>>>>>>> devel
 
 // Form data / query params are strings
 const formData = new URLSearchParams(
@@ -75,6 +91,7 @@ const formData = new URLSearchParams(
 );
 const params = Object.fromEntries(formData);
 
+<<<<<<< HEAD
 const result = searchSchema.parse(params);
 =======
 })
@@ -86,11 +103,15 @@ const params = Object.fromEntries(formData)
 const result = searchSchema.parse(params)
 >>>>>>> devel
 // { query: 'test', page: 1, limit: 10, showDeleted: true }
+=======
+const result = searchSchema.parse(params);// { query: 'test', page: 1, limit: 10, showDeleted: true }
+>>>>>>> devel
 // Types are correct: number, number, boolean
 ```
 
 **Available coercion types:**
 
+<<<<<<< HEAD
 ```typescript
 <<<<<<< HEAD
 z.coerce.string(); // Converts anything to string via String(value)
@@ -106,12 +127,38 @@ z.coerce.bigint()  // Converts via BigInt(value)
 z.coerce.date()  // Converts via new Date(value)
 >>>>>>> devel
 ```
+=======
+```typescriptz.coerce.string(); // Converts anything to string via String(value)
+z.coerce.number(); // Converts via Number(value), NaN fails validation
+z.coerce.boolean(); // Truthy/falsy conversion
+z.coerce.bigint(); // Converts via BigInt(value)
+z.coerce.date(); // Converts via new Date(value)```
+>>>>>>> devel
 
 **Coercion edge cases:**
 
 ```typescript
 // z.coerce.number() behavior
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+z.coerce.number().parse("42")  // 42
+z.coerce.number().parse("")  // 0 (empty string becomes 0!)
+z.coerce.number().parse("abc")  // ZodError (NaN fails)
+
+// z.coerce.boolean() behavior
+z.coerce.boolean().parse("true")  // true
+z.coerce.boolean().parse("false")  // true! (non-empty string is truthy)
+z.coerce.boolean().parse("")  // false
+z.coerce.boolean().parse("0")  // true! (non-empty string)
+
+// For strict boolean parsing from strings:
+const strictBooleanSchema = z.enum(['true', 'false']).transform(v => v === 'true')
+```
+
+# **When NOT to use this pattern:**
+
+>>>>>>> devel
 z.coerce.number().parse("42"); // 42
 z.coerce.number().parse(""); // 0 (empty string becomes 0!)
 z.coerce.number().parse("abc"); // ZodError (NaN fails)
@@ -124,11 +171,13 @@ z.coerce.boolean().parse("0"); // true! (non-empty string)
 
 // For strict boolean parsing from strings:
 const strictBooleanSchema = z
-  .enum(["true", "false"])
-  .transform((v) => v === "true");
+.enum(["true", "false"])
+.transform((v) => v === "true");
+
 ```
 
 **When NOT to use this pattern:**
+<<<<<<< HEAD
 
 =======
 z.coerce.number().parse("42") // 42
@@ -147,6 +196,8 @@ const strictBooleanSchema = z.enum(['true', 'false']).transform(v => v === 'true
 ```
 
 **When NOT to use this pattern:**
+>>>>>>> devel
+=======
 >>>>>>> devel
 - When receiving JSON payloads (already typed correctly)
 - When you want strict type checking without conversion
