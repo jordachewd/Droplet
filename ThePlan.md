@@ -82,7 +82,7 @@ The points below are verified from the current codebase.
 | Persona configurability  | Admin persona content editing operational (Phase 71.1 + 71.2). Persona labels, taglines, descriptions, starter prompts admin-editable via AppSetting overrides. System prompts and hero images remain in code (v2)                                                                                                                                                                                                                                 | ✅ Persona content admin-configurable (Phase 71.1 + 71.2)                                     | `src/lib/utils/effective-persona-config.ts`, admin settings                                     |
 | Admin table P1 fix       | Stale selectedUserIds / selectedTransactionIds cleared on pagination via useEffect. Bulk-action state across pages eliminated (Phase 88.1 + 88.2)                                                                                                                                                                                                                                                                                                  | ✅ P1 fix verified (Phase 88)                                                                 | admin-users-table.tsx, admin-transactions-table.tsx                                             |
 | Config hardening         | Dead .eslintrc.json deleted (89.1). Runtime deps moved to dependencies (89.2). Vitest environmentMatchGlobs configured for auto-jsdom on .tsx (89.3). Playwright reduced to 3 default browsers with env var for full matrix (89.4)                                                                                                                                                                                                                 | ✅ All config issues resolved (Phase 89)                                                      | eslint.config.mjs, package.json, vitest.config.mts, playwright.config.ts                        |
-| Test infrastructure      | **TDD REBUILD IN PROGRESS (Phase 120.2).** 54 unit test suites, 316 tests (all pass). E2E: 14 spec files, 108 passed, 0 failed, 25 skipped. Build passing. All 7 gates GREEN. TDD infrastructure built (Phase 120.1). 12 utility test files rebuilt out of ~35 target. Previous 532-test suite deleted per owner directive; rebuild from scratch underway.                                                                                         | ✅ All 7 gates GREEN. 316 tests (54 suites). E2E: 14 specs, 108 passed, 0 failed, 25 skipped. | tests/unit/**, tests/e2e/**, vitest.config.mts, playwright.config.ts                            |
+| Test infrastructure      | **TDD REBUILD IN PROGRESS (Phase 120.2).** 62 unit test suites, 370 tests (all pass). E2E: 14 spec files, 108 passed, 0 failed, 25 skipped. Build passing. All 7 gates GREEN. TDD infrastructure built (Phase 120.1). 20 utility test files rebuilt out of ~40 target. Previous 532-test suite deleted per owner directive; rebuild from scratch underway. Phases 121, 122, 123 COMPLETE.                                                          | ✅ All 7 gates GREEN. 370 tests (62 suites). E2E: 14 specs, 108 passed, 0 failed, 25 skipped. | tests/unit/**, tests/e2e/**, vitest.config.mts, playwright.config.ts                            |
 
 ### Practical conclusions
 
@@ -109,9 +109,9 @@ The points below are verified from the current codebase.
 21. ~~2 server utilities missing `server-only` guard: `ai-model-policy.ts`, `check-usage-limit.ts`. Phase 84.~~ **RESOLVED (Phase 84).** `import "server-only"` added to both files. TD-SEC-05 FULLY RESOLVED.
 22. ~~Admin table stale selection P1 bug.~~ **RESOLVED (Phase 88).** Selection cleared on pagination for both users and transactions tables.
 23. ~~Config hardening issues: dead .eslintrc.json, wrong devDeps, fragile vitest env, 7 Playwright browsers.~~ **RESOLVED (Phase 89).** All 4 sub-phases delivered.
-24. Testing infrastructure rebuild delivered through Phase 120.1 + 117 + 113.2 + 112.2 + 109 + 115 + 116. **TDD REBUILD IN PROGRESS.** Previous 532-test suite deleted. Current: **54 suites, 316 tests — all pass. E2E: 14 specs, 108 passed, 0 failed, 25 skipped. Build passing. All 7 gates GREEN.** Phase 120.2 partially complete (12 of ~35 utility test files rebuilt). **Owner directive: FULL TDD REBUILD from scratch.**
-25. Owner directives (March 2026 update — ESCALATED): **TDD REBUILD MANDATED.** Owner directive: remove ALL existing unit and E2E tests and rebuild entire testing process from scratch using strict TDD methodology. Previous incremental rebuild (Phases 88–103.4) is complete and archived. Previous 532-test suite has been deleted. Current 316 tests (54 suites) and 14 E2E spec files represent the partially-rebuilt baseline. Additional mandates: NO hardcoded data (everything admin-configurable), WCAG 2.2 AA full compliance, components as data consumers, code reuse maximized, server-side utilities, user removal cascade verified, knip stays clean, reduce unnecessary renders/leaks.
-26. Owner directives (March 2026 — FINAL, consolidated): (a) **TDD rebuild — CRITICAL: IN PROGRESS. Old tests deleted. 316 tests (54 suites) rebuilt so far. Phase 120.2 partially complete.** (b) Full admin configurability NON-NEGOTIABLE — NO HARDCODED data, everything admin-configurable. Remaining: FAQ (74.2), landing copy (74.3). (c) WCAG 2.2 AA compliance — major fixes done (Phases 72, 97.1, 99.5, 101, 103), full audit pass remaining. (d) `npm run knip` must stay clean — CLEAN (0 findings). (e) `/app/profile` plan limitations display — DELIVERED (Phase 66.1). (f) Code reuse maximized — TD-REUSE-01/02/03 ALL RESOLVED. (g) Client components must be pure data consumers — COMPLETE (Phase 73.1 + 73.3). (h) Reduce resource leaks — COMPLETE (Phase 102, TD-LEAK-01 RESOLVED). (i) User removal cascades — COMPLETE. (j) Components consume data via props — COMPLETE. (k) Reduce unnecessary renders — COMPLETE. (l) Admin configurability — core done, FAQ/landing copy remaining.
+24. Testing infrastructure rebuild delivered through Phase 120.1 + 117 + 113.2 + 112.2 + 109 + 115 + 116. **TDD REBUILD IN PROGRESS.** Previous 532-test suite deleted. Current: **62 suites, 370 tests — all pass. E2E: 14 specs, 108 passed, 0 failed, 25 skipped. Build passing. All 7 gates GREEN.** Phase 120.2 partially complete (20 of ~40 utility test files rebuilt). Phases 121, 122, 123 COMPLETE. **Owner directive: FULL TDD REBUILD from scratch.**
+25. Owner directives (March 2026 update — ESCALATED): **TDD REBUILD MANDATED.** Owner directive: remove ALL existing unit and E2E tests and rebuild entire testing process from scratch using strict TDD methodology. Previous incremental rebuild (Phases 88–103.4) is complete and archived. Previous 532-test suite has been deleted. Current 370 tests (62 suites) and 14 E2E spec files represent the partially-rebuilt baseline. Additional mandates: NO hardcoded data (everything admin-configurable), WCAG 2.2 AA full compliance, components as data consumers, code reuse maximized, server-side utilities, user removal cascade verified, knip stays clean, reduce unnecessary renders/leaks.
+26. Owner directives (March 2026 — FINAL, consolidated): (a) **TDD rebuild — CRITICAL: IN PROGRESS. Old tests deleted. 370 tests (62 suites) rebuilt so far. Phase 120.2 partially complete (20/~40 utility files).** (b) Full admin configurability NON-NEGOTIABLE — NO HARDCODED data, everything admin-configurable. Remaining: FAQ (74.2), landing copy (104), stop msgs (107). (c) WCAG 2.2 AA compliance — major fixes done (Phases 72, 97.1, 99.5, 101, 103), full audit pass remaining. (d) `npm run knip` must stay clean — CLEAN (0 findings, Phase 122 resolved orphan). (e) `/app/profile` plan limitations display — DELIVERED (Phase 66.1). (f) Code reuse maximized — TD-REUSE-01/02/03/05 ALL RESOLVED. Remaining: TD-REUSE-04 (Phase 106). (g) Client components must be pure data consumers — COMPLETE (Phase 73.1 + 73.3). (h) Reduce resource leaks — COMPLETE (Phase 102, TD-LEAK-01 RESOLVED). (i) User removal cascades — COMPLETE. (j) Components consume data via props — COMPLETE. (k) Reduce unnecessary renders — COMPLETE. (l) Admin configurability — core done, FAQ/landing/stop-reasons remaining.
 
 ---
 
@@ -462,34 +462,37 @@ This sequence is mandatory.
 | C    | Product Gate      | GREEN  | 6 personas plan-gated, streaming stable, stop reasons working, trial access live                                                                          |
 | D    | Admin Gate        | GREEN  | Users+transactions+usage+settings+website, audit trail, admin role enforced                                                                               |
 | E    | Public Gate       | GREEN  | All 7 public routes accurate, legal content real, no obsolete trial messaging                                                                             |
-| F    | Validation Gate   | GREEN  | All 7 gates GREEN. Lint (0 errors, 6 warnings), knip (0 findings), TSC clean, unit (316/54 suites), E2E (14 specs, 108 passed, 25 skipped), build passes. |
+| F    | Validation Gate   | GREEN  | All 7 gates GREEN. Lint (0 errors, 6 warnings), knip (0 findings), TSC clean, unit (370/62 suites), E2E (14 specs, 108 passed, 25 skipped), build passes. |
 
 ---
 
 ## 9. Current Execution Order
 
 > Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS — TDD testing rebuild is primary focus.
-> **All 7 gates GREEN.** 54 unit test suites, 316 tests (all pass). E2E: 14 specs, 108 passed, 0 failed, 25 skipped.
-> Node.js 24.12.0 runtime. Build passing. TSC clean. Lint: 0 errors, 6 warnings. Knip: clean.
+> **All 7 gates GREEN.** 62 unit test suites, 370 tests (all pass). E2E: 14 specs, 108 passed, 0 failed, 25 skipped.
+> Node.js 24.12.0 runtime. Build passing. TSC clean. Lint: 0 errors, 6 warnings. Knip: 0 findings.
 > **Owner directive (CRITICAL): FULL TDD REBUILD of ALL tests from scratch.**
 > **Phase 120.1 COMPLETE** — TDD infrastructure built (factories, mock helpers, vitest.setup, tests/README.md).
 > **Phase 117 COMPLETE** — `isMongoDuplicateKeyError` extracted to shared `type-guards.ts`.
+> **Phase 122 COMPLETE** — Orphan `_update_plan.js` deleted. Knip clean (0 findings).
+> **Phase 121 COMPLETE** — Raw `error.message` leak fixed in `profile-hero-editor.tsx`. TD-SEC-12 RESOLVED.
+> **Phase 123 COMPLETE** — `type="button"` added to error boundary buttons.
+> **Phase 120.2 continued** — 20/~40 utility test files rebuilt (8 more files this session).
 
-**Priority order (PM audit #54):**
+**Priority order (PM audit #56):**
 
-1. **Phase 120.2 CRITICAL** — TDD utility test rebuild from scratch (owner directive — next)
+1. **Phase 120.2 CRITICAL** — TDD utility test rebuild from scratch (owner directive — continue, 20/~40 done)
 2. **Phase 120.3 CRITICAL** — TDD server action test rebuild
 3. **Phase 106 HIGH** — Extract shared `ChatApiResponse` types (before 120.4 to prevent duplication cement)
 4. **Phase 120.4 CRITICAL** — TDD API route test rebuild (split openai-route)
 5. **Phase 120.5 HIGH** — TDD component test rebuild
 6. **Phase 120.6 HIGH** — TDD E2E test rebuild
 7. **Phase 120.7 HIGH** — Raise coverage thresholds post-rebuild
-8. **Phase 121 MEDIUM** — Fix error message leak in profile-hero-editor (new PM audit #54 finding)
-9. **Phase 107 HIGH** — Stop reason messages admin-configurable
-10. **Phase 108 MEDIUM** — Tablist arrow-key navigation (WCAG)
-11. **Phase 114 MEDIUM** — AvatarMenu keyboard navigation (WCAG)
-12. **Phase 74.2 MEDIUM** — FAQ content admin-configurable
-13. **Phase 104 MEDIUM** — Landing/hero/about content admin-configurable
+8. **Phase 107 HIGH** — Stop reason messages admin-configurable
+9. **Phase 108 MEDIUM** — Tablist arrow-key navigation (WCAG)
+10. **Phase 114 MEDIUM** — AvatarMenu keyboard navigation (WCAG)
+11. **Phase 74.2 MEDIUM** — FAQ content admin-configurable
+12. **Phase 104 MEDIUM** — Landing/hero/about content admin-configurable
 
 ---
 
@@ -509,47 +512,47 @@ This sequence is mandatory.
 
 > Single canonical tracking table. Replaces all previous directive tables.
 
-| #    | Directive                                         | Priority | Status                                                                                                                                                                             |
-| ---- | ------------------------------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| OI1  | TDD rebuild ALL tests from scratch                | CRITICAL | IN PROGRESS. Old tests deleted, rebuild underway. Current: 316 tests (54 suites). Phase 120.1 COMPLETE (TDD infra). Phase 120.2 PARTIALLY COMPLETE (12/~35 utility files rebuilt). |
-| OI2  | NO hardcoded data — everything admin-configurable | CRITICAL | MOSTLY DONE. Core done. Remaining: FAQ (74.2), landing copy (104), stop msgs (107).                                                                                                |
-| OI3  | RE-USE repetitive code                            | HIGH     | MOSTLY COMPLETE. TD-REUSE-01/02/03/05 all resolved. **Phase 117 COMPLETE** — TD-REUSE-05 resolved. Remaining: TD-REUSE-04 (ChatApiResponse types — Phase 106).                     |
-| OI4  | WCAG 2.2 AA compliance                            | HIGH     | MOSTLY DONE. Phases 72.1-72.4, 97.1, 99.5, 101, 103.1-103.4 delivered. Icons DONE (109). Remaining: tabs (108), AvatarMenu (114).                                                  |
-| OI5  | Components = data consumers                       | CRITICAL | COMPLETE. Phase 73.1 + 73.3. All components converted.                                                                                                                             |
-| OI6  | Reduce renders/leaks                              | CRITICAL | COMPLETE. AbortController (Phase 102). All useEffect cleanup verified.                                                                                                             |
-| OI7  | Server-side utilities                             | CRITICAL | COMPLETE. 44 files with `import "server-only"` guards.                                                                                                                             |
-| OI8  | User removal cascades                             | CRITICAL | COMPLETE. All 3 paths: Clerk -> Tasks -> Transactions -> UsageEvents -> S3 -> User.                                                                                                |
-| OI9  | `npm run knip` clean                              | HIGH     | 1 FINDING: orphan `_update_plan.js` in project root. Phase 122 to delete.                                                                                                          |
-| OI10 | Admin fully configurable                          | HIGH     | MOSTLY DONE. Core operational. Remaining: FAQ (74.2), landing (104), stop msgs (107).                                                                                              |
-| OI11 | Node.js 24.12.0 compatibility                     | CRITICAL | COMPLETE. Runtime confirmed. All 7 gates GREEN. Phases 115/116 resolved.                                                                                                           |
-| OI12 | Deep techstack config audit                       | CRITICAL | COMPLETE. Phase 89 + 94 config hardening.                                                                                                                                          |
-| OI13 | Profile displays plan limits/usage                | HIGH     | COMPLETE. ProfileUsage with progress bars (Phase 66.1).                                                                                                                            |
-| OI14 | Admin panel design matches /app                   | HIGH     | COMPLETE. Phase 70.1 + 70.2 full alignment.                                                                                                                                        |
-| OI15 | Admin shows usage/limits remained vs included     | MEDIUM   | COMPLETE. Phase 66.3 + 59.1 with progress bars + pagination (Phase 85).                                                                                                            |
+| #    | Directive                                         | Priority | Status                                                                                                                                                                                                            |
+| ---- | ------------------------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| OI1  | TDD rebuild ALL tests from scratch                | CRITICAL | IN PROGRESS. Old tests deleted, rebuild underway. Current: 370 tests (62 suites). Phase 120.1 COMPLETE (TDD infra). Phase 120.2 PARTIALLY COMPLETE (20/~40 utility files rebuilt). Phases 121, 122, 123 COMPLETE. |
+| OI2  | NO hardcoded data — everything admin-configurable | CRITICAL | MOSTLY DONE. Core done. Remaining: FAQ (74.2), landing copy (104), stop msgs (107).                                                                                                                               |
+| OI3  | RE-USE repetitive code                            | HIGH     | MOSTLY COMPLETE. TD-REUSE-01/02/03/05 all resolved. **Phase 117 COMPLETE** — TD-REUSE-05 resolved. Remaining: TD-REUSE-04 (ChatApiResponse types — Phase 106).                                                    |
+| OI4  | WCAG 2.2 AA compliance                            | HIGH     | MOSTLY DONE. Phases 72.1-72.4, 97.1, 99.5, 101, 103.1-103.4 delivered. Icons DONE (109). Remaining: tabs (108), AvatarMenu (114).                                                                                 |
+| OI5  | Components = data consumers                       | CRITICAL | COMPLETE. Phase 73.1 + 73.3. All components converted.                                                                                                                                                            |
+| OI6  | Reduce renders/leaks                              | CRITICAL | COMPLETE. AbortController (Phase 102). All useEffect cleanup verified.                                                                                                                                            |
+| OI7  | Server-side utilities                             | CRITICAL | COMPLETE. 44 files with `import "server-only"` guards.                                                                                                                                                            |
+| OI8  | User removal cascades                             | CRITICAL | COMPLETE. All 3 paths: Clerk -> Tasks -> Transactions -> UsageEvents -> S3 -> User.                                                                                                                               |
+| OI9  | `npm run knip` clean                              | HIGH     | CLEAN (0 findings). Phase 122 COMPLETE — orphan `_update_plan.js` deleted.                                                                                                                                        |
+| OI10 | Admin fully configurable                          | HIGH     | MOSTLY DONE. Core operational. Remaining: FAQ (74.2), landing (104), stop msgs (107).                                                                                                                             |
+| OI11 | Node.js 24.12.0 compatibility                     | CRITICAL | COMPLETE. Runtime confirmed. All 7 gates GREEN. Phases 115/116 resolved.                                                                                                                                          |
+| OI12 | Deep techstack config audit                       | CRITICAL | COMPLETE. Phase 89 + 94 config hardening.                                                                                                                                                                         |
+| OI13 | Profile displays plan limits/usage                | HIGH     | COMPLETE. ProfileUsage with progress bars (Phase 66.1).                                                                                                                                                           |
+| OI14 | Admin panel design matches /app                   | HIGH     | COMPLETE. Phase 70.1 + 70.2 full alignment.                                                                                                                                                                       |
+| OI15 | Admin shows usage/limits remained vs included     | MEDIUM   | COMPLETE. Phase 66.3 + 59.1 with progress bars + pagination (Phase 85).                                                                                                                                           |
 
 ---
 
 ### Milestone 25 — Testing Infrastructure Rebuild & Config Hardening (Owner-Directed, 2026-03-21)
 
-> **Status: IN PROGRESS** — TDD rebuild underway. Previous 532-test suite deleted per owner directive. Current: 54 suites, 316 tests. Phase 120.2 partially complete (12/~35 utility test files rebuilt).
+> **Status: IN PROGRESS** — TDD rebuild underway. Previous 532-test suite deleted per owner directive. Current: 62 suites, 370 tests. Phase 120.2 partially complete (20/~40 utility test files rebuilt). Phases 121, 122, 123 COMPLETE.
 
 **Objective:** Rebuild the entire testing infrastructure from scratch with TDD discipline, achieve coverage gate enforcement, and close remaining E2E quality gaps.
 
 **Dependencies:** Milestones 0–24 (all complete). Blocks A–F COMPLETE (archived to DONE.md).
 
-**Completed blocks (archived):** Block A (P1 bug fixes), Block B (config hardening), Block C (unit test rebuild), Block D (E2E test rebuild), Block E (security guards), Block F (coverage & config tightening). Phases 88–103.4, 105, 109, 111.1, 112.1–112.2, 113.1–113.2, 115–117, 120.1 all complete. See DONE.md for full phase records.
+**Completed blocks (archived):** Block A (P1 bug fixes), Block B (config hardening), Block C (unit test rebuild), Block D (E2E test rebuild), Block E (security guards), Block F (coverage & config tightening). Phases 88–103.4, 105, 109, 111.1, 112.1–112.2, 113.1–113.2, 115–117, 120.1, 121, 122, 123 all complete. See DONE.md for full phase records.
 
 **Block G — TDD Full Rebuild (IN PROGRESS):**
 
 1. **HIGH** — Phase 97: E2E quality rebuild — **97.1 DONE** (WCAG axe-core). Remaining: admin propagation E2E, Mongo dedup E2E.
 2. **HIGH** — Phase 98: Coverage gate — **IN PROGRESS**. Baseline: 78.55/66.3/83.53/78.85.
-3. **CRITICAL** — Phase 120.2: TDD utility test rebuild from scratch — **IN PROGRESS** (12/~35 files rebuilt).
+3. **CRITICAL** — Phase 120.2: TDD utility test rebuild from scratch — **IN PROGRESS** (20/~40 files rebuilt).
 
 **Remaining Success Criteria:**
 
 - ⬜ Remaining E2E quality — Phase 97.2+ PENDING.
 - ⬜ Coverage gate GREEN (branches ≥78%, statements ≥82%) — Phase 98 IN PROGRESS.
-- ⚬ TDD utility test rebuild from scratch — Phase 120.2 IN PROGRESS (12/~35 files).
+- ⚬ TDD utility test rebuild from scratch — Phase 120.2 IN PROGRESS (20/~40 files).
 - ⬜ TDD server action test rebuild — Phase 120.3 PENDING.
 - ⬜ TDD API route test rebuild — Phase 120.4 PENDING.
 - ⬜ TDD component test rebuild — Phase 120.5 PENDING.
