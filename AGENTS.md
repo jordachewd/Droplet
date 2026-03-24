@@ -60,12 +60,22 @@ All seven gates must pass.
 
 > Route restructure is **complete** (Phase 17). Proxy protects `/app(.*)` and `/admin(.*)` only. Profile and plans are under `/app/*`. Admin is at `/admin/*`. The `(account)` route group has been deleted (Phase 17-C). Public pages (about, plans, personas, privacy, cookies, terms) are live (Phase 18). `/faqs` route removed — FAQs live in `/plans`. Orphan directories (`/dashboard`, `/pricing`) removed (Phase 20).
 
-| Area   | Namespace                                                                | Protection                           |
+<<<<<<< HEAD
+| Area | Namespace | Protection |
 | ------ | ------------------------------------------------------------------------ | ------------------------------------ |
-| Public | `/`, `/about`, `/plans`, `/personas`, `/privacy`, `/cookies`, `/terms` | None                                 |
-| Auth   | `/sign-in`, `/sign-up`                                                          | Clerk managed                        |
-| App    | `/app(.*)`                                                                      | Auth required (proxy + server)       |
-| Admin  | `/admin(.*)`                                                                    | Admin role required (proxy + server) |
+| Public | `/`, `/about`, `/plans`, `/personas`, `/privacy`, `/cookies`, `/terms` | None |
+| Auth | `/sign-in`, `/sign-up` | Clerk managed |
+| App | `/app(.*)` | Auth required (proxy + server) |
+| Admin | `/admin(.*)` | Admin role required (proxy + server) |
+=======
+| Area | Namespace | Protection |
+| ------ | ---------------------------------------------------------------------- | ------------------------------------ |
+| Public | `/`, `/about`, `/plans`, `/personas`, `/privacy`, `/cookies`, `/terms` | None |
+| Auth | `/sign-in`, `/sign-up` | Clerk managed |
+| App | `/app(.*)` | Auth required (proxy + server) |
+| Admin | `/admin(.*)` | Admin role required (proxy + server) |
+
+> > > > > > > main
 
 ## Coding Standards
 

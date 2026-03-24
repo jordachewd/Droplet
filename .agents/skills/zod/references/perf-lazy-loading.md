@@ -13,6 +13,7 @@ For applications with many complex schemas, importing all of them upfront increa
 
 ```typescript
 // schemas/index.ts - barrel file with everything
+<<<<<<< HEAD
 export * from './user'
 export * from './order'
 export * from './product'
@@ -22,6 +23,22 @@ export * from './admin'      // Admin-only schemas
 
 // app/page.tsx
 import { userSchema, orderSchema, analyticsSchema, reportsSchema } from '@/schemas'
+=======
+export * from "./user";
+export * from "./order";
+export * from "./product";
+export * from "./analytics"; // Large, complex schema
+export * from "./reports"; // Another large schema
+export * from "./admin"; // Admin-only schemas
+
+// app/page.tsx
+import {
+  userSchema,
+  orderSchema,
+  analyticsSchema,
+  reportsSchema,
+} from "@/schemas";
+>>>>>>> main
 // All schemas loaded even if not used on this page
 ```
 
@@ -29,17 +46,30 @@ import { userSchema, orderSchema, analyticsSchema, reportsSchema } from '@/schem
 
 ```typescript
 // Only import what's immediately needed
+<<<<<<< HEAD
 import { userSchema } from '@/schemas/user'
 
 async function loadAnalyticsSchema() {
   const { analyticsSchema } = await import('@/schemas/analytics')
   return analyticsSchema
+=======
+import { userSchema } from "@/schemas/user";
+
+async function loadAnalyticsSchema() {
+  const { analyticsSchema } = await import("@/schemas/analytics");
+  return analyticsSchema;
+>>>>>>> main
 }
 
 // Use when needed
 async function handleAnalyticsData(data: unknown) {
+<<<<<<< HEAD
   const schema = await loadAnalyticsSchema()
   return schema.safeParse(data)
+=======
+  const schema = await loadAnalyticsSchema();
+  return schema.safeParse(data);
+>>>>>>> main
 }
 ```
 
@@ -104,6 +134,7 @@ export default function ReportsForm() {
 ```typescript
 // schemas/registry.ts
 const schemaLoaders = {
+<<<<<<< HEAD
   user: () => import('./user').then(m => m.userSchema),
   order: () => import('./order').then(m => m.orderSchema),
   analytics: () => import('./analytics').then(m => m.analyticsSchema),
@@ -127,9 +158,38 @@ const schema = await getSchema('analytics')
 schema.parse(data)
 ```
 
+# **When NOT to use this pattern:**
+
+user: () => import("./user").then((m) => m.userSchema),
+order: () => import("./order").then((m) => m.orderSchema),
+analytics: () => import("./analytics").then((m) => m.analyticsSchema),
+reports: () => import("./reports").then((m) => m.reportsSchema),
+} as const;
+
+type SchemaName = keyof typeof schemaLoaders;
+
+const schemaCache = new Map<SchemaName, z.ZodType>();
+
+export async function getSchema(name: SchemaName) {
+if (!schemaCache.has(name)) {
+const schema = await schemaLoaders[name]();
+schemaCache.set(name, schema);
+}
+return schemaCache.get(name)!;
+}
+
+// Usage
+const schema = await getSchema("analytics");
+schema.parse(data);
+
+```
+
 **When NOT to use this pattern:**
+
+>>>>>>> main
 - Server-side rendering where all code is available
 - Small applications with few schemas
 - Schemas used on every page (defeats purpose)
 
 Reference: [Next.js Dynamic Imports](https://nextjs.org/docs/app/building-your-application/optimizing/lazy-loading)
+```

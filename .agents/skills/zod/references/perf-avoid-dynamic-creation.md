@@ -12,22 +12,38 @@ Zod 4 uses JIT (Just-In-Time) compilation to speed up repeated parsing, but this
 **Incorrect (schema creation in hot path):**
 
 ```typescript
+<<<<<<< HEAD
 import { z } from 'zod'
 
 async function validateBatch(items: unknown[]) {
   const results = []
+=======
+import { z } from "zod";
+
+async function validateBatch(items: unknown[]) {
+  const results = [];
+>>>>>>> main
 
   for (const item of items) {
     // Schema created for EACH item - slow!
     const schema = z.object({
       id: z.string(),
       value: z.number(),
+<<<<<<< HEAD
     })
 
     results.push(schema.safeParse(item))
   }
 
   return results
+=======
+    });
+
+    results.push(schema.safeParse(item));
+  }
+
+  return results;
+>>>>>>> main
 }
 
 // 1000 items = 1000 schema creations = ~150ms overhead
@@ -36,17 +52,29 @@ async function validateBatch(items: unknown[]) {
 **Correct (pre-created schema):**
 
 ```typescript
+<<<<<<< HEAD
 import { z } from 'zod'
+=======
+import { z } from "zod";
+>>>>>>> main
 
 // Schema created ONCE
 const itemSchema = z.object({
   id: z.string(),
   value: z.number(),
+<<<<<<< HEAD
 })
 
 async function validateBatch(items: unknown[]) {
   // Reuse the same schema instance
   return items.map(item => itemSchema.safeParse(item))
+=======
+});
+
+async function validateBatch(items: unknown[]) {
+  // Reuse the same schema instance
+  return items.map((item) => itemSchema.safeParse(item));
+>>>>>>> main
 }
 
 // 1000 items = 1 schema creation + 1000 fast parses
@@ -55,14 +83,22 @@ async function validateBatch(items: unknown[]) {
 **Dynamic schemas with caching:**
 
 ```typescript
+<<<<<<< HEAD
 import { z } from 'zod'
 
 // Cache for dynamically-configured schemas
 const schemaCache = new WeakMap<object, z.ZodType>()
+=======
+import { z } from "zod";
+
+// Cache for dynamically-configured schemas
+const schemaCache = new WeakMap<object, z.ZodType>();
+>>>>>>> main
 
 function getSchemaForConfig(config: { fields: string[] }) {
   // Check cache first
   if (schemaCache.has(config)) {
+<<<<<<< HEAD
     return schemaCache.get(config)!
   }
 
@@ -75,6 +111,20 @@ function getSchemaForConfig(config: { fields: string[] }) {
   const schema = z.object(shape)
   schemaCache.set(config, schema)
   return schema
+=======
+    return schemaCache.get(config)!;
+  }
+
+  // Create and cache
+  const shape: Record<string, z.ZodString> = {};
+  for (const field of config.fields) {
+    shape[field] = z.string();
+  }
+
+  const schema = z.object(shape);
+  schemaCache.set(config, schema);
+  return schema;
+>>>>>>> main
 }
 
 // Subsequent calls with same config reuse cached schema
@@ -83,10 +133,17 @@ function getSchemaForConfig(config: { fields: string[] }) {
 **Lazy schema creation:**
 
 ```typescript
+<<<<<<< HEAD
 import { z } from 'zod'
 
 // Schema created only when first used
 let _userSchema: z.ZodObject<any> | null = null
+=======
+import { z } from "zod";
+
+// Schema created only when first used
+let _userSchema: z.ZodObject<any> | null = null;
+>>>>>>> main
 
 function getUserSchema() {
   if (!_userSchema) {
@@ -97,9 +154,15 @@ function getUserSchema() {
         name: z.string(),
         avatar: z.string().url().optional(),
       }),
+<<<<<<< HEAD
     })
   }
   return _userSchema
+=======
+    });
+  }
+  return _userSchema;
+>>>>>>> main
 }
 
 // Or use a getter
@@ -107,11 +170,21 @@ const schemas = {
   _user: null as z.ZodType | null,
   get user() {
     if (!this._user) {
+<<<<<<< HEAD
       this._user = z.object({ /* ... */ })
     }
     return this._user
   }
 }
+=======
+      this._user = z.object({
+        /* ... */
+      });
+    }
+    return this._user;
+  },
+};
+>>>>>>> main
 ```
 
 **Benchmark considerations:**
@@ -132,6 +205,11 @@ const schemas = {
 ```
 
 **When NOT to use this pattern:**
+<<<<<<< HEAD
+=======
+
+> > > > > > > main
+
 - One-off validation where schema is used once
 - Dynamically generated forms where fields change per request
 - Test files where performance doesn't matter

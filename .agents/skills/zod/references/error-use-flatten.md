@@ -12,6 +12,7 @@ tags: error, flatten, forms, user-experience
 **Incorrect (manual issue processing):**
 
 ```typescript
+<<<<<<< HEAD
 import { z } from 'zod'
 
 const formSchema = z.object({
@@ -39,6 +40,35 @@ function getFieldErrors(error: z.ZodError) {
 const result = formSchema.safeParse(data)
 if (!result.success) {
   const errors = getFieldErrors(result.error)
+=======
+import { z } from "zod";
+
+const formSchema = z.object({
+  email: z.string().email("Invalid email"),
+  password: z.string().min(8, "Password too short"),
+  profile: z.object({
+    name: z.string().min(1, "Name required"),
+  }),
+});
+
+function getFieldErrors(error: z.ZodError) {
+  const errors: Record<string, string> = {};
+
+  for (const issue of error.issues) {
+    // Manual path joining - error prone
+    const field = issue.path.join(".");
+    if (!errors[field]) {
+      errors[field] = issue.message;
+    }
+  }
+
+  return errors;
+}
+
+const result = formSchema.safeParse(data);
+if (!result.success) {
+  const errors = getFieldErrors(result.error);
+>>>>>>> main
   // { email: 'Invalid email', 'profile.name': 'Name required' }
 }
 ```
@@ -46,6 +76,7 @@ if (!result.success) {
 **Correct (using flatten):**
 
 ```typescript
+<<<<<<< HEAD
 import { z } from 'zod'
 
 const formSchema = z.object({
@@ -60,12 +91,32 @@ const result = formSchema.safeParse(data)
 
 if (!result.success) {
   const { formErrors, fieldErrors } = result.error.flatten()
+=======
+import { z } from "zod";
+
+const formSchema = z.object({
+  email: z.string().email("Invalid email"),
+  password: z.string().min(8, "Password too short"),
+  profile: z.object({
+    name: z.string().min(1, "Name required"),
+  }),
+});
+
+const result = formSchema.safeParse(data);
+
+if (!result.success) {
+  const { formErrors, fieldErrors } = result.error.flatten();
+>>>>>>> main
 
   // formErrors: string[] - top-level errors (from .refine on the object)
   // fieldErrors: { [key]: string[] } - errors by field
 
   // Ready for form display
+<<<<<<< HEAD
   console.log(fieldErrors)
+=======
+  console.log(fieldErrors);
+>>>>>>> main
   // {
   //   email: ['Invalid email'],
   //   password: ['Password too short'],
@@ -77,12 +128,24 @@ if (!result.success) {
 **With React Hook Form:**
 
 ```typescript
+<<<<<<< HEAD
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 
 const { register, formState: { errors } } = useForm({
   resolver: zodResolver(formSchema),
 })
+=======
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+
+const {
+  register,
+  formState: { errors },
+} = useForm({
+  resolver: zodResolver(formSchema),
+});
+>>>>>>> main
 
 // errors are already flattened by the resolver
 // <input {...register('email')} />
@@ -95,7 +158,11 @@ const { register, formState: { errors } } = useForm({
 const flattened = result.error.flatten((issue) => ({
   message: issue.message,
   code: issue.code,
+<<<<<<< HEAD
 }))
+=======
+}));
+>>>>>>> main
 
 // fieldErrors now contains custom objects
 // {
@@ -106,10 +173,17 @@ const flattened = result.error.flatten((issue) => ({
 **For deeply nested objects, use format():**
 
 ```typescript
+<<<<<<< HEAD
 const result = formSchema.safeParse(data)
 
 if (!result.success) {
   const formatted = result.error.format()
+=======
+const result = formSchema.safeParse(data);
+
+if (!result.success) {
+  const formatted = result.error.format();
+>>>>>>> main
   // {
   //   _errors: [],
   //   email: { _errors: ['Invalid email'] },
@@ -120,11 +194,20 @@ if (!result.success) {
   // }
 
   // Access nested errors naturally
+<<<<<<< HEAD
   formatted.profile?.name?._errors  // ['Name required']
+=======
+  formatted.profile?.name?._errors; // ['Name required']
+>>>>>>> main
 }
 ```
 
 **When NOT to use this pattern:**
+<<<<<<< HEAD
+=======
+
+> > > > > > > main
+
 - When you need access to full issue metadata (code, path as array)
 - When using a form library that expects different error format
 

@@ -12,15 +12,25 @@ Zod's default error messages are technical and confusing for end users. Provide 
 **Incorrect (default error messages):**
 
 ```typescript
+<<<<<<< HEAD
 import { z } from 'zod'
+=======
+import { z } from "zod";
+>>>>>>> main
 
 const signupSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
   age: z.number().min(18),
+<<<<<<< HEAD
 })
 
 signupSchema.parse({ email: 'bad', password: '123', age: 15 })
+=======
+});
+
+signupSchema.parse({ email: "bad", password: "123", age: 15 });
+>>>>>>> main
 // ZodError issues:
 // - "Invalid email"
 // - "String must contain at least 8 character(s)"
@@ -31,6 +41,7 @@ signupSchema.parse({ email: 'bad', password: '123', age: 15 })
 **Correct (custom error messages):**
 
 ```typescript
+<<<<<<< HEAD
 import { z } from 'zod'
 
 const signupSchema = z.object({
@@ -50,6 +61,33 @@ const signupSchema = z.object({
 })
 
 signupSchema.parse({ email: 'bad', password: '123', age: 15 })
+=======
+import { z } from "zod";
+
+const signupSchema = z.object({
+  email: z
+    .string({
+      required_error: "Email is required",
+      invalid_type_error: "Email must be text",
+    })
+    .email("Please enter a valid email address"),
+
+  password: z
+    .string({
+      required_error: "Password is required",
+    })
+    .min(8, "Password must be at least 8 characters"),
+
+  age: z
+    .number({
+      required_error: "Age is required",
+      invalid_type_error: "Age must be a number",
+    })
+    .min(18, "You must be at least 18 years old"),
+});
+
+signupSchema.parse({ email: "bad", password: "123", age: 15 });
+>>>>>>> main
 // ZodError issues:
 // - "Please enter a valid email address"
 // - "Password must be at least 8 characters"
@@ -59,6 +97,7 @@ signupSchema.parse({ email: 'bad', password: '123', age: 15 })
 **Message types and when they trigger:**
 
 ```typescript
+<<<<<<< HEAD
 const schema = z.string({
   // When field is undefined
   required_error: 'This field is required',
@@ -72,6 +111,22 @@ const schema = z.string({
 .min(1, 'Cannot be empty')  // When length < 1
 .max(100, 'Too long')  // When length > 100
 .email('Invalid email format')  // When format fails
+=======
+const schema = z
+  .string({
+    // When field is undefined
+    required_error: "This field is required",
+
+    // When field is wrong type (e.g., number instead of string)
+    invalid_type_error: "This field must be text",
+
+    // Fallback for any other error
+    message: "Invalid value",
+  })
+  .min(1, "Cannot be empty") // When length < 1
+  .max(100, "Too long") // When length > 100
+  .email("Invalid email format"); // When format fails
+>>>>>>> main
 ```
 
 **Using error maps for consistent messaging:**
@@ -80,21 +135,35 @@ const schema = z.string({
 const customErrorMap: z.ZodErrorMap = (issue, ctx) => {
   // Customize messages by error code
   if (issue.code === z.ZodIssueCode.too_small) {
+<<<<<<< HEAD
     if (issue.type === 'string') {
       return { message: `Must be at least ${issue.minimum} characters` }
     }
     if (issue.type === 'number') {
       return { message: `Must be at least ${issue.minimum}` }
+=======
+    if (issue.type === "string") {
+      return { message: `Must be at least ${issue.minimum} characters` };
+    }
+    if (issue.type === "number") {
+      return { message: `Must be at least ${issue.minimum}` };
+>>>>>>> main
     }
   }
 
   if (issue.code === z.ZodIssueCode.invalid_type) {
+<<<<<<< HEAD
     if (issue.expected === 'string') {
       return { message: 'Must be text' }
+=======
+    if (issue.expected === "string") {
+      return { message: "Must be text" };
+>>>>>>> main
     }
   }
 
   // Default to Zod's message
+<<<<<<< HEAD
   return { message: ctx.defaultError }
 }
 
@@ -105,14 +174,34 @@ z.setErrorMap(customErrorMap)
 schema.parse(data, { errorMap: customErrorMap })
 ```
 
+# **Good error message principles:**
+
+return { message: ctx.defaultError };
+};
+
+// Apply globally
+z.setErrorMap(customErrorMap);
+
+// Or per-schema
+schema.parse(data, { errorMap: customErrorMap });
+
+```
+
 **Good error message principles:**
+
+>>>>>>> main
 - Say what's wrong: "Password too short" not "Invalid password"
 - Say how to fix it: "at least 8 characters" not just "too short"
 - Use user's language: "email" not "string field at path .email"
 - Be specific: "Must be a positive number" not "Invalid"
 
 **When NOT to use this pattern:**
+<<<<<<< HEAD
+=======
+
+>>>>>>> main
 - Internal development scripts where technical errors are fine
 - When you'll map errors to user-facing messages in the UI layer
 
 Reference: [Zod Error Customization](https://zod.dev/error-customization)
+```

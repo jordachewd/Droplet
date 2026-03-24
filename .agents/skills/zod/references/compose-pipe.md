@@ -12,16 +12,28 @@ When data needs to pass through multiple validation stages (coerce string to num
 **Incorrect (unclear transformation chain):**
 
 ```typescript
+<<<<<<< HEAD
 import { z } from 'zod'
+=======
+import { z } from "zod";
+>>>>>>> main
 
 // All transforms in one long chain - hard to understand stages
 const priceSchema = z
   .string()
+<<<<<<< HEAD
   .transform((s) => parseFloat(s.replace(/[$,]/g, '')))
   .refine((n) => !isNaN(n), 'Invalid number')
   .refine((n) => n >= 0, 'Must be positive')
   .refine((n) => n <= 1000000, 'Too large')
   .transform((n) => Math.round(n * 100))
+=======
+  .transform((s) => parseFloat(s.replace(/[$,]/g, "")))
+  .refine((n) => !isNaN(n), "Invalid number")
+  .refine((n) => n >= 0, "Must be positive")
+  .refine((n) => n <= 1000000, "Too large")
+  .transform((n) => Math.round(n * 100));
+>>>>>>> main
 
 // What type is n at each stage? Hard to tell
 ```
@@ -29,6 +41,7 @@ const priceSchema = z
 **Correct (using pipe for clear stages):**
 
 ```typescript
+<<<<<<< HEAD
 import { z } from 'zod'
 
 // Stage 1: Coerce string to number
@@ -47,6 +60,29 @@ const centsPrice = z.number().transform((n) => Math.round(n * 100))
 
 // Pipe them together - clear data flow
 const priceSchema = parsePrice.pipe(validPrice).pipe(centsPrice)
+=======
+import { z } from "zod";
+
+// Stage 1: Coerce string to number
+const parsePrice = z.string().transform((s) => {
+  const cleaned = s.replace(/[$,]/g, "");
+  const parsed = parseFloat(cleaned);
+  if (isNaN(parsed)) throw new Error("Invalid number");
+  return parsed;
+});
+
+// Stage 2: Validate number constraints
+const validPrice = z
+  .number()
+  .min(0, "Must be positive")
+  .max(1000000, "Too large");
+
+// Stage 3: Transform to cents
+const centsPrice = z.number().transform((n) => Math.round(n * 100));
+
+// Pipe them together - clear data flow
+const priceSchema = parsePrice.pipe(validPrice).pipe(centsPrice);
+>>>>>>> main
 
 // Type at each stage is clear:
 // string -> number (parsePrice)
@@ -58,12 +94,21 @@ const priceSchema = parsePrice.pipe(validPrice).pipe(centsPrice)
 
 ```typescript
 // Without pipe - validation runs on raw input
+<<<<<<< HEAD
 const schema1 = z.coerce.number().min(1)
 schema1.parse('')  // Passes! Empty string coerces to 0, but then... wait, 0 < 1
 
 // With pipe - validation runs on coerced value
 const schema2 = z.coerce.number().pipe(z.number().min(1))
 schema2.parse('')  // Fails correctly: 0 is less than 1
+=======
+const schema1 = z.coerce.number().min(1);
+schema1.parse(""); // Passes! Empty string coerces to 0, but then... wait, 0 < 1
+
+// With pipe - validation runs on coerced value
+const schema2 = z.coerce.number().pipe(z.number().min(1));
+schema2.parse(""); // Fails correctly: 0 is less than 1
+>>>>>>> main
 ```
 
 **Complex data transformation:**
@@ -75,7 +120,11 @@ schema2.parse('')  // Fails correctly: 0 is less than 1
 const emailArraySchema = z
   .string()
   // Stage 1: Split CSV
+<<<<<<< HEAD
   .transform((s) => s.split(',').map((e) => e.trim()))
+=======
+  .transform((s) => s.split(",").map((e) => e.trim()))
+>>>>>>> main
   // Stage 2: Validate as email array
   .pipe(z.array(z.string().email()))
   // Stage 3: Transform to objects
@@ -83,12 +132,21 @@ const emailArraySchema = z
     z.array(z.string()).transform((emails) =>
       emails.map((email) => ({
         address: email.toLowerCase(),
+<<<<<<< HEAD
         domain: email.split('@')[1],
       }))
     )
   )
 
 emailArraySchema.parse('John@Example.com, jane@test.com')
+=======
+        domain: email.split("@")[1],
+      })),
+    ),
+  );
+
+emailArraySchema.parse("John@Example.com, jane@test.com");
+>>>>>>> main
 // [
 //   { address: 'john@example.com', domain: 'Example.com' },
 //   { address: 'jane@test.com', domain: 'test.com' }
@@ -98,15 +156,27 @@ emailArraySchema.parse('John@Example.com, jane@test.com')
 **Type inference with pipe:**
 
 ```typescript
+<<<<<<< HEAD
 const schema = z.string().pipe(z.coerce.number()).pipe(z.number().positive())
 
 type Input = z.input<typeof schema>  // string
 type Output = z.output<typeof schema>  // number
+=======
+const schema = z.string().pipe(z.coerce.number()).pipe(z.number().positive());
+
+type Input = z.input<typeof schema>; // string
+type Output = z.output<typeof schema>; // number
+>>>>>>> main
 
 // Each pipe stage has clear input/output types
 ```
 
 **When NOT to use this pattern:**
+<<<<<<< HEAD
+=======
+
+> > > > > > > main
+
 - Simple single-stage validation (adds unnecessary complexity)
 - When `.refine()` chain is sufficient and readable
 

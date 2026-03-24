@@ -12,7 +12,11 @@ When you need different views of the same data (public vs private, create vs res
 **Incorrect (duplicating for variants):**
 
 ```typescript
+<<<<<<< HEAD
 import { z } from 'zod'
+=======
+import { z } from "zod";
+>>>>>>> main
 
 // Full user schema
 const userSchema = z.object({
@@ -22,7 +26,11 @@ const userSchema = z.object({
   name: z.string(),
   createdAt: z.date(),
   isAdmin: z.boolean(),
+<<<<<<< HEAD
 })
+=======
+});
+>>>>>>> main
 
 // Public view - manually duplicated
 const publicUserSchema = z.object({
@@ -31,21 +39,36 @@ const publicUserSchema = z.object({
   // Forgot email - now users can't see it
   // Added avatar field - doesn't exist in base schema
   avatar: z.string().optional(),
+<<<<<<< HEAD
 })
+=======
+});
+>>>>>>> main
 
 // Create input - manually duplicated
 const createUserSchema = z.object({
   email: z.string().email(),
+<<<<<<< HEAD
   password: z.string().min(8),  // Different from passwordHash
   name: z.string(),
   // Missing isAdmin - can't set on create? Intentional?
 })
+=======
+  password: z.string().min(8), // Different from passwordHash
+  name: z.string(),
+  // Missing isAdmin - can't set on create? Intentional?
+});
+>>>>>>> main
 ```
 
 **Correct (using pick and omit):**
 
 ```typescript
+<<<<<<< HEAD
 import { z } from 'zod'
+=======
+import { z } from "zod";
+>>>>>>> main
 
 // Full user schema - single source of truth
 const userSchema = z.object({
@@ -55,34 +78,57 @@ const userSchema = z.object({
   name: z.string(),
   createdAt: z.date(),
   isAdmin: z.boolean(),
+<<<<<<< HEAD
 })
+=======
+});
+>>>>>>> main
 
 // Public view - explicitly pick public fields
 const publicUserSchema = userSchema.pick({
   id: true,
   email: true,
   name: true,
+<<<<<<< HEAD
 })
 
 type PublicUser = z.infer<typeof publicUserSchema>
+=======
+});
+
+type PublicUser = z.infer<typeof publicUserSchema>;
+>>>>>>> main
 // { id: string; email: string; name: string }
 
 // API response - omit sensitive fields
 const userResponseSchema = userSchema.omit({
   passwordHash: true,
+<<<<<<< HEAD
 })
 
 type UserResponse = z.infer<typeof userResponseSchema>
+=======
+});
+
+type UserResponse = z.infer<typeof userResponseSchema>;
+>>>>>>> main
 // { id: string; email: string; name: string; createdAt: Date; isAdmin: boolean }
 
 // Create input - omit generated fields
 const createUserInputSchema = userSchema
   .omit({ id: true, createdAt: true, passwordHash: true })
   .extend({
+<<<<<<< HEAD
     password: z.string().min(8),  // Add password (different from hash)
   })
 
 type CreateUserInput = z.infer<typeof createUserInputSchema>
+=======
+    password: z.string().min(8), // Add password (different from hash)
+  });
+
+type CreateUserInput = z.infer<typeof createUserInputSchema>;
+>>>>>>> main
 // { email: string; name: string; isAdmin: boolean; password: string }
 ```
 
@@ -97,6 +143,7 @@ const dbRowSchema = z.object({
   password_hash: z.string(),
   internal_notes: z.string(),
   created_at: z.date(),
+<<<<<<< HEAD
 })
 
 const apiResponseSchema = dbRowSchema.omit({
@@ -104,19 +151,36 @@ const apiResponseSchema = dbRowSchema.omit({
   password_hash: true,  // Sensitive
   internal_notes: true,  // Staff only
 })
+=======
+});
+
+const apiResponseSchema = dbRowSchema.omit({
+  id: true, // Internal DB id
+  password_hash: true, // Sensitive
+  internal_notes: true, // Staff only
+});
+>>>>>>> main
 
 // Form data → Database insert (add generated fields)
 const formSchema = z.object({
   title: z.string(),
   content: z.string(),
+<<<<<<< HEAD
 })
+=======
+});
+>>>>>>> main
 
 const dbInsertSchema = formSchema.extend({
   id: z.string().uuid(),
   authorId: z.string().uuid(),
   createdAt: z.date(),
   updatedAt: z.date(),
+<<<<<<< HEAD
 })
+=======
+});
+>>>>>>> main
 ```
 
 **Chaining operations:**
@@ -126,6 +190,7 @@ const baseSchema = z.object({
   id: z.string(),
   name: z.string(),
   email: z.string(),
+<<<<<<< HEAD
   role: z.enum(['admin', 'user']),
   secret: z.string(),
 })
@@ -139,8 +204,27 @@ const updateSchema = baseSchema
   })
 ```
 
+# **When NOT to use this pattern:**
+
+role: z.enum(["admin", "user"]),
+secret: z.string(),
+});
+
+// Combine pick, omit, partial, extend
+const updateSchema = baseSchema
+.omit({ id: true, secret: true }) // Remove immutable/sensitive
+.partial() // Make all optional for updates
+.extend({
+updatedAt: z.date().optional(), // Add update timestamp
+});
+
+```
+
 **When NOT to use this pattern:**
+
+>>>>>>> main
 - When derived schemas need different validation rules (not just different fields)
 - When the relationship between schemas is not subset/superset
 
 Reference: [Zod API - pick/omit](https://zod.dev/api#pickomit)
+```

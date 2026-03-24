@@ -12,12 +12,17 @@ tags: refine, superRefine, validation, custom
 **Incorrect (using refine for multiple checks):**
 
 ```typescript
+<<<<<<< HEAD
 import { z } from 'zod'
+=======
+import { z } from "zod";
+>>>>>>> main
 
 // refine can only report one error at a time
 const passwordSchema = z.string().refine(
   (password) => {
     // Checks all conditions but only reports first failure
+<<<<<<< HEAD
     if (password.length < 8) return false  // Only this error shown
     if (!/[A-Z]/.test(password)) return false
     if (!/[0-9]/.test(password)) return false
@@ -27,6 +32,17 @@ const passwordSchema = z.string().refine(
 )
 
 passwordSchema.parse('weak')
+=======
+    if (password.length < 8) return false; // Only this error shown
+    if (!/[A-Z]/.test(password)) return false;
+    if (!/[0-9]/.test(password)) return false;
+    return true;
+  },
+  { message: "Password does not meet requirements" },
+);
+
+passwordSchema.parse("weak");
+>>>>>>> main
 // Only shows: "Password does not meet requirements"
 // User doesn't know WHICH requirements failed
 ```
@@ -34,39 +50,67 @@ passwordSchema.parse('weak')
 **Correct (using superRefine for multiple issues):**
 
 ```typescript
+<<<<<<< HEAD
 import { z } from 'zod'
+=======
+import { z } from "zod";
+>>>>>>> main
 
 const passwordSchema = z.string().superRefine((password, ctx) => {
   if (password.length < 8) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
+<<<<<<< HEAD
       message: 'Password must be at least 8 characters',
     })
+=======
+      message: "Password must be at least 8 characters",
+    });
+>>>>>>> main
   }
 
   if (!/[A-Z]/.test(password)) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
+<<<<<<< HEAD
       message: 'Password must contain an uppercase letter',
     })
+=======
+      message: "Password must contain an uppercase letter",
+    });
+>>>>>>> main
   }
 
   if (!/[0-9]/.test(password)) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
+<<<<<<< HEAD
       message: 'Password must contain a number',
     })
+=======
+      message: "Password must contain a number",
+    });
+>>>>>>> main
   }
 
   if (!/[!@#$%^&*]/.test(password)) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
+<<<<<<< HEAD
       message: 'Password must contain a special character',
     })
   }
 })
 
 passwordSchema.safeParse('weak')
+=======
+      message: "Password must contain a special character",
+    });
+  }
+});
+
+passwordSchema.safeParse("weak");
+>>>>>>> main
 // Shows ALL failures:
 // - "Password must be at least 8 characters"
 // - "Password must contain an uppercase letter"
@@ -78,6 +122,7 @@ passwordSchema.safeParse('weak')
 
 ```typescript
 // Simple boolean condition with one error message
+<<<<<<< HEAD
 const adultSchema = z.number().refine(
   (age) => age >= 18,
   { message: 'Must be 18 or older' }
@@ -100,6 +145,34 @@ const emailSchema = z.string().email().refine(
   },
   { message: 'Email already registered' }
 )
+=======
+const adultSchema = z
+  .number()
+  .refine((age) => age >= 18, { message: "Must be 18 or older" });
+
+// Cross-field validation with single outcome
+const formSchema = z
+  .object({
+    password: z.string(),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords must match",
+    path: ["confirmPassword"],
+  });
+
+// Async validation
+const emailSchema = z
+  .string()
+  .email()
+  .refine(
+    async (email) => {
+      const exists = await checkEmailExists(email);
+      return !exists;
+    },
+    { message: "Email already registered" },
+  );
+>>>>>>> main
 ```
 
 **When to use superRefine():**
@@ -110,6 +183,7 @@ const emailSchema = z.string().email().refine(
 // Need custom error codes for i18n or client handling
 // Need to add issues at specific paths
 
+<<<<<<< HEAD
 const orderSchema = z.object({
   items: z.array(z.object({
     productId: z.string(),
@@ -145,8 +219,54 @@ const orderSchema = z.object({
 })
 ```
 
+# **When NOT to use this pattern:**
+
+const orderSchema = z
+.object({
+items: z.array(
+z.object({
+productId: z.string(),
+quantity: z.number(),
+}),
+),
+promoCode: z.string().optional(),
+})
+.superRefine(async (order, ctx) => {
+// Check each item's availability
+for (let i = 0; i < order.items.length; i++) {
+const item = order.items[i];
+const available = await checkInventory(item.productId, item.quantity);
+
+      if (!available) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["items", i, "quantity"], // Specific path
+          message: `Only ${available} units available`,
+        });
+      }
+    }
+
+    // Validate promo code
+    if (order.promoCode) {
+      const valid = await validatePromoCode(order.promoCode);
+      if (!valid) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["promoCode"],
+          message: "Invalid or expired promo code",
+        });
+      }
+    }
+
+});
+
+```
+
 **When NOT to use this pattern:**
+
+>>>>>>> main
 - Simple single-condition checks (use refine for simplicity)
 - Transform needed instead of validation (use transform)
 
 Reference: [Zod API - refine/superRefine](https://zod.dev/api#refine)
+```

@@ -13,6 +13,7 @@ tags: parse, json, security, type-safety
 
 ```typescript
 // JSON.parse returns any - no type safety
+<<<<<<< HEAD
 const config = JSON.parse(fs.readFileSync('config.json', 'utf-8'))
 // config is 'any' - TypeScript allows anything
 
@@ -23,12 +24,28 @@ console.log(config.database.host)  // TypeError: Cannot read property 'host' of 
 const response = await fetch('/api/user')
 const user = await response.json()  // any type
 console.log(user.name.toUpperCase())  // Crash if name is null/undefined
+=======
+const config = JSON.parse(fs.readFileSync("config.json", "utf-8"));
+// config is 'any' - TypeScript allows anything
+
+// This might crash at runtime if structure changed
+console.log(config.database.host); // TypeError: Cannot read property 'host' of undefined
+
+// API response - also unvalidated
+const response = await fetch("/api/user");
+const user = await response.json(); // any type
+console.log(user.name.toUpperCase()); // Crash if name is null/undefined
+>>>>>>> main
 ```
 
 **Correct (validate after JSON.parse):**
 
 ```typescript
+<<<<<<< HEAD
 import { z } from 'zod'
+=======
+import { z } from "zod";
+>>>>>>> main
 
 const configSchema = z.object({
   database: z.object({
@@ -40,11 +57,19 @@ const configSchema = z.object({
     key: z.string(),
     timeout: z.number().default(5000),
   }),
+<<<<<<< HEAD
 })
 
 // Parse JSON then validate
 const rawConfig = JSON.parse(fs.readFileSync('config.json', 'utf-8'))
 const config = configSchema.parse(rawConfig)
+=======
+});
+
+// Parse JSON then validate
+const rawConfig = JSON.parse(fs.readFileSync("config.json", "utf-8"));
+const config = configSchema.parse(rawConfig);
+>>>>>>> main
 // config is fully typed: { database: { host: string, ... }, ... }
 
 // API response validation
@@ -52,11 +77,19 @@ const userSchema = z.object({
   id: z.string(),
   name: z.string(),
   email: z.string().email(),
+<<<<<<< HEAD
 })
 
 const response = await fetch('/api/user')
 const rawUser = await response.json()
 const user = userSchema.parse(rawUser)
+=======
+});
+
+const response = await fetch("/api/user");
+const rawUser = await response.json();
+const user = userSchema.parse(rawUser);
+>>>>>>> main
 // user is fully typed and validated
 ```
 
@@ -64,11 +97,16 @@ const user = userSchema.parse(rawUser)
 
 ```typescript
 function parseJSON<T>(schema: z.ZodType<T>, json: string): T {
+<<<<<<< HEAD
   return schema.parse(JSON.parse(json))
+=======
+  return schema.parse(JSON.parse(json));
+>>>>>>> main
 }
 
 function safeParseJSON<T>(schema: z.ZodType<T>, json: string) {
   try {
+<<<<<<< HEAD
     return { success: true as const, data: schema.parse(JSON.parse(json)) }
   } catch (error) {
     if (error instanceof SyntaxError) {
@@ -78,16 +116,32 @@ function safeParseJSON<T>(schema: z.ZodType<T>, json: string) {
       return { success: false as const, error: error.issues }
     }
     throw error
+=======
+    return { success: true as const, data: schema.parse(JSON.parse(json)) };
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      return { success: false as const, error: "Invalid JSON" };
+    }
+    if (error instanceof z.ZodError) {
+      return { success: false as const, error: error.issues };
+    }
+    throw error;
+>>>>>>> main
   }
 }
 
 // Usage
+<<<<<<< HEAD
 const config = parseJSON(configSchema, fs.readFileSync('config.json', 'utf-8'))
+=======
+const config = parseJSON(configSchema, fs.readFileSync("config.json", "utf-8"));
+>>>>>>> main
 ```
 
 **Validate localStorage/sessionStorage:**
 
 ```typescript
+<<<<<<< HEAD
 const cartSchema = z.array(z.object({
   productId: z.string(),
   quantity: z.number().int().positive(),
@@ -104,10 +158,35 @@ function getCart() {
     return []
   }
   return result.data
+=======
+const cartSchema = z.array(
+  z.object({
+    productId: z.string(),
+    quantity: z.number().int().positive(),
+  }),
+);
+
+function getCart() {
+  const raw = localStorage.getItem("cart");
+  if (!raw) return [];
+
+  const result = cartSchema.safeParse(JSON.parse(raw));
+  if (!result.success) {
+    // Corrupted cart data - clear it
+    localStorage.removeItem("cart");
+    return [];
+  }
+  return result.data;
+>>>>>>> main
 }
 ```
 
 **When NOT to use this pattern:**
+<<<<<<< HEAD
+=======
+
+> > > > > > > main
+
 - When you genuinely need to pass through arbitrary JSON without processing
 
 Reference: [Zod API - parse](https://zod.dev/api#parse)

@@ -12,19 +12,29 @@ TypeScript can't infer recursive Zod schema types automatically. Use `z.lazy()` 
 **Incorrect (direct self-reference):**
 
 ```typescript
+<<<<<<< HEAD
 import { z } from 'zod'
+=======
+import { z } from "zod";
+>>>>>>> main
 
 // This fails - categorySchema used before it's defined
 const categorySchema = z.object({
   id: z.string(),
   name: z.string(),
+<<<<<<< HEAD
   children: z.array(categorySchema),  // Error: Block-scoped variable used before declaration
 })
+=======
+  children: z.array(categorySchema), // Error: Block-scoped variable used before declaration
+});
+>>>>>>> main
 ```
 
 **Correct (using z.lazy with type annotation):**
 
 ```typescript
+<<<<<<< HEAD
 import { z } from 'zod'
 
 // Define the type manually
@@ -32,6 +42,15 @@ interface Category {
   id: string
   name: string
   children: Category[]
+=======
+import { z } from "zod";
+
+// Define the type manually
+interface Category {
+  id: string;
+  name: string;
+  children: Category[];
+>>>>>>> main
 }
 
 // Use z.lazy() to defer schema reference
@@ -39,6 +58,7 @@ const categorySchema: z.ZodType<Category> = z.object({
   id: z.string(),
   name: z.string(),
   children: z.lazy(() => z.array(categorySchema)),
+<<<<<<< HEAD
 })
 
 // Now it works
@@ -56,6 +76,25 @@ const tree = categorySchema.parse({
     },
   ],
 })
+=======
+});
+
+// Now it works
+const tree = categorySchema.parse({
+  id: "1",
+  name: "Electronics",
+  children: [
+    {
+      id: "2",
+      name: "Phones",
+      children: [
+        { id: "3", name: "iPhones", children: [] },
+        { id: "4", name: "Android", children: [] },
+      ],
+    },
+  ],
+});
+>>>>>>> main
 ```
 
 **Common recursive patterns:**
@@ -63,10 +102,17 @@ const tree = categorySchema.parse({
 ```typescript
 // Comments with replies
 interface Comment {
+<<<<<<< HEAD
   id: string
   content: string
   author: string
   replies: Comment[]
+=======
+  id: string;
+  content: string;
+  author: string;
+  replies: Comment[];
+>>>>>>> main
 }
 
 const commentSchema: z.ZodType<Comment> = z.object({
@@ -74,6 +120,7 @@ const commentSchema: z.ZodType<Comment> = z.object({
   content: z.string(),
   author: z.string(),
   replies: z.lazy(() => z.array(commentSchema)),
+<<<<<<< HEAD
 })
 
 // Binary tree
@@ -81,12 +128,22 @@ interface TreeNode {
   value: number
   left: TreeNode | null
   right: TreeNode | null
+=======
+});
+
+// Binary tree
+interface TreeNode {
+  value: number;
+  left: TreeNode | null;
+  right: TreeNode | null;
+>>>>>>> main
 }
 
 const treeNodeSchema: z.ZodType<TreeNode> = z.object({
   value: z.number(),
   left: z.lazy(() => treeNodeSchema.nullable()),
   right: z.lazy(() => treeNodeSchema.nullable()),
+<<<<<<< HEAD
 })
 
 // Nested menu structure
@@ -94,13 +151,26 @@ interface MenuItem {
   label: string
   href?: string
   children?: MenuItem[]
+=======
+});
+
+// Nested menu structure
+interface MenuItem {
+  label: string;
+  href?: string;
+  children?: MenuItem[];
+>>>>>>> main
 }
 
 const menuItemSchema: z.ZodType<MenuItem> = z.object({
   label: z.string(),
   href: z.string().url().optional(),
   children: z.lazy(() => z.array(menuItemSchema)).optional(),
+<<<<<<< HEAD
 })
+=======
+});
+>>>>>>> main
 ```
 
 **JSON Schema (any valid JSON):**
@@ -112,7 +182,11 @@ type JSONValue =
   | boolean
   | null
   | JSONValue[]
+<<<<<<< HEAD
   | { [key: string]: JSONValue }
+=======
+  | { [key: string]: JSONValue };
+>>>>>>> main
 
 const jsonValueSchema: z.ZodType<JSONValue> = z.lazy(() =>
   z.union([
@@ -122,8 +196,13 @@ const jsonValueSchema: z.ZodType<JSONValue> = z.lazy(() =>
     z.null(),
     z.array(jsonValueSchema),
     z.record(jsonValueSchema),
+<<<<<<< HEAD
   ])
 )
+=======
+  ]),
+);
+>>>>>>> main
 ```
 
 **Performance consideration:**
@@ -137,6 +216,11 @@ const jsonValueSchema: z.ZodType<JSONValue> = z.lazy(() =>
 ```
 
 **When NOT to use this pattern:**
+<<<<<<< HEAD
+=======
+
+> > > > > > > main
+
 - Non-recursive schemas (lazy adds unnecessary indirection)
 - When you can flatten the structure instead
 
