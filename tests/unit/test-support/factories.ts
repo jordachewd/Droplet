@@ -3,6 +3,7 @@ import type { BillingCycle, PlanData, PlanName } from "@/types/PlanData.d";
 import type { PersonaId } from "@/types/PersonaData.d";
 import type { TaskConversation } from "@/types/TaskData.d";
 import type { UserData, UserRoles } from "@/types/UserData.d";
+import type { ContentItem, Message, MessageRole } from "@/types";
 
 type MockRequestOptions = {
   payload?: unknown;
@@ -123,6 +124,18 @@ const DEFAULT_TRANSACTION_DATA: TestTransaction = {
   billing: "Monthly",
 };
 
+type TestMessageOverrides = Omit<Partial<Message>, "content" | "role"> & {
+  content?: Message["content"];
+  role?: MessageRole;
+};
+
+const DEFAULT_TEST_MESSAGE: Message = {
+  id: "msg_default",
+  role: "user",
+  whois: "user",
+  content: [{ type: "text", text: "Test message" }],
+};
+
 const DEFAULT_CLERK_USER: TestClerkUser = {
   id: "user_123",
   emailAddresses: [
@@ -172,6 +185,29 @@ export function createTestTask(
     personaId: (overrides.personaId ??
       DEFAULT_TASK_DATA.personaId) as PersonaId,
     messages: overrides.messages ?? DEFAULT_TASK_DATA.messages,
+  };
+}
+
+export function createTestMessage(
+  overrides: TestMessageOverrides = {},
+): Message {
+  const resolvedContent =
+    overrides.content ?? DEFAULT_TEST_MESSAGE.content ?? null;
+
+  return {
+    ...DEFAULT_TEST_MESSAGE,
+    ...overrides,
+    role: overrides.role ?? DEFAULT_TEST_MESSAGE.role,
+    content: Array.isArray(resolvedContent)
+      ? [...resolvedContent]
+      : resolvedContent,
+  };
+}
+
+export function createTextContentItem(text: string): ContentItem {
+  return {
+    type: "text",
+    text,
   };
 }
 
