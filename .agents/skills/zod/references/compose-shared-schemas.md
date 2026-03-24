@@ -13,13 +13,18 @@ When the same schema pattern appears in multiple places, extract it into a share
 
 ```typescript
 // api/users.ts
+<<<<<<< HEAD
 import { z } from "zod";
+=======
+import { z } from 'zod'
+>>>>>>> devel
 
 const userSchema = z.object({
   id: z.string().uuid(),
   email: z.string().email(),
   name: z.string().min(1),
   createdAt: z.date(),
+<<<<<<< HEAD
 });
 
 // api/orders.ts
@@ -46,22 +51,57 @@ const commentSchema = z.object({
   content: z.string().min(1),
   createdAt: z.date(), // Inconsistency risk
 });
+=======
+})
+
+// api/orders.ts
+import { z } from 'zod'
+
+const orderSchema = z.object({
+  id: z.string().uuid(),  // Duplicated
+  userId: z.string().uuid(),  // Same pattern
+  items: z.array(z.object({
+    productId: z.string().uuid(),  // Duplicated
+    quantity: z.number().int().positive(),
+  })),
+  createdAt: z.date(),  // Duplicated
+})
+
+// api/comments.ts
+import { z } from 'zod'
+
+const commentSchema = z.object({
+  id: z.string().uuid(),  // Same duplication
+  userId: z.string().uuid(),
+  content: z.string().min(1),
+  createdAt: z.date(),  // Inconsistency risk
+})
+>>>>>>> devel
 ```
 
 **Correct (shared schema modules):**
 
 ```typescript
 // schemas/common.ts
+<<<<<<< HEAD
 import { z } from "zod";
 
 // Reusable ID types
 export const uuid = z.string().uuid();
 export type UUID = z.infer<typeof uuid>;
+=======
+import { z } from 'zod'
+
+// Reusable ID types
+export const uuid = z.string().uuid()
+export type UUID = z.infer<typeof uuid>
+>>>>>>> devel
 
 // Timestamps
 export const timestamps = z.object({
   createdAt: z.date(),
   updatedAt: z.date(),
+<<<<<<< HEAD
 });
 
 // Base entity with ID
@@ -72,44 +112,84 @@ export const baseEntity = z
   .merge(timestamps);
 
 export type BaseEntity = z.infer<typeof baseEntity>;
+=======
+})
+
+// Base entity with ID
+export const baseEntity = z.object({
+  id: uuid,
+}).merge(timestamps)
+
+export type BaseEntity = z.infer<typeof baseEntity>
+>>>>>>> devel
 
 // Pagination
 export const paginationParams = z.object({
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),
+<<<<<<< HEAD
 });
+=======
+})
+>>>>>>> devel
 ```
 
 ```typescript
 // schemas/user.ts
+<<<<<<< HEAD
 import { z } from "zod";
 import { baseEntity, uuid } from "./common";
+=======
+import { z } from 'zod'
+import { baseEntity, uuid } from './common'
+>>>>>>> devel
 
 export const userSchema = baseEntity.extend({
   email: z.string().email(),
   name: z.string().min(1),
+<<<<<<< HEAD
 });
 
 export type User = z.infer<typeof userSchema>;
+=======
+})
+
+export type User = z.infer<typeof userSchema>
+>>>>>>> devel
 ```
 
 ```typescript
 // schemas/order.ts
+<<<<<<< HEAD
 import { z } from "zod";
 import { baseEntity, uuid } from "./common";
+=======
+import { z } from 'zod'
+import { baseEntity, uuid } from './common'
+>>>>>>> devel
 
 const orderItemSchema = z.object({
   productId: uuid,
   quantity: z.number().int().positive(),
+<<<<<<< HEAD
 });
+=======
+})
+>>>>>>> devel
 
 export const orderSchema = baseEntity.extend({
   userId: uuid,
   items: z.array(orderItemSchema).min(1),
   total: z.number().positive(),
+<<<<<<< HEAD
 });
 
 export type Order = z.infer<typeof orderSchema>;
+=======
+})
+
+export type Order = z.infer<typeof orderSchema>
+>>>>>>> devel
 ```
 
 **Organizing schema modules:**
@@ -125,6 +205,7 @@ schemas/
 
 ```typescript
 // schemas/index.ts
+<<<<<<< HEAD
 export * from "./common";
 export * from "./user";
 export * from "./order";
@@ -136,7 +217,21 @@ import { userSchema, orderSchema, uuid, type User } from "@/schemas";
 
 **When NOT to use this pattern:**
 
+=======
+export _ from './common'
+export _ from './user'
+export _ from './order'
+export _ from './product'
+
+// Usage
+import { userSchema, orderSchema, uuid, type User } from '@/schemas'
+
+```
+
+**When NOT to use this pattern:**
+>>>>>>> devel
 - One-off schemas used only in a single file
 - When schemas look similar but have different semantics (don't over-abstract)
 
 Reference: [Zod - Type Inference](https://zod.dev/api#type-inference)
+```

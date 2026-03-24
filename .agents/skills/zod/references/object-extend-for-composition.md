@@ -12,11 +12,16 @@ When building on existing schemas, use `.extend()` to add new fields rather than
 **Incorrect (manual object spreading):**
 
 ```typescript
+<<<<<<< HEAD
 import { z } from "zod";
+=======
+import { z } from 'zod'
+>>>>>>> devel
 
 const baseUserSchema = z.object({
   id: z.string(),
   name: z.string(),
+<<<<<<< HEAD
 });
 
 // Manual spreading loses Zod's schema relationship
@@ -25,6 +30,16 @@ const adminUserSchema = z.object({
   role: z.literal("admin"),
   permissions: z.array(z.string()),
 });
+=======
+})
+
+// Manual spreading loses Zod's schema relationship
+const adminUserSchema = z.object({
+  ...baseUserSchema.shape,  // Accessing internal .shape
+  role: z.literal('admin'),
+  permissions: z.array(z.string()),
+})
+>>>>>>> devel
 
 // Problems:
 // 1. If baseUserSchema changes, TypeScript might not catch issues
@@ -35,12 +50,17 @@ const adminUserSchema = z.object({
 **Correct (using extend):**
 
 ```typescript
+<<<<<<< HEAD
 import { z } from "zod";
+=======
+import { z } from 'zod'
+>>>>>>> devel
 
 const baseUserSchema = z.object({
   id: z.string(),
   name: z.string(),
   email: z.string().email(),
+<<<<<<< HEAD
 });
 
 // Extend to add fields
@@ -50,6 +70,17 @@ const adminUserSchema = baseUserSchema.extend({
 });
 
 type AdminUser = z.infer<typeof adminUserSchema>;
+=======
+})
+
+// Extend to add fields
+const adminUserSchema = baseUserSchema.extend({
+  role: z.literal('admin'),
+  permissions: z.array(z.string()),
+})
+
+type AdminUser = z.infer<typeof adminUserSchema>
+>>>>>>> devel
 // {
 //   id: string;
 //   name: string;
@@ -60,8 +91,13 @@ type AdminUser = z.infer<typeof adminUserSchema>;
 
 // Override existing fields
 const strictEmailSchema = baseUserSchema.extend({
+<<<<<<< HEAD
   email: z.string().email().endsWith("@company.com"), // Stricter validation
 });
+=======
+  email: z.string().email().endsWith('@company.com'),  // Stricter validation
+})
+>>>>>>> devel
 ```
 
 **Building hierarchies with extend:**
@@ -72,24 +108,37 @@ const entitySchema = z.object({
   id: z.string().uuid(),
   createdAt: z.date(),
   updatedAt: z.date(),
+<<<<<<< HEAD
 });
+=======
+})
+>>>>>>> devel
 
 // User extends entity
 const userSchema = entitySchema.extend({
   email: z.string().email(),
   name: z.string(),
+<<<<<<< HEAD
 });
+=======
+})
+>>>>>>> devel
 
 // Product extends entity
 const productSchema = entitySchema.extend({
   name: z.string(),
   price: z.number().positive(),
   sku: z.string(),
+<<<<<<< HEAD
 });
+=======
+})
+>>>>>>> devel
 
 // Order extends entity with references
 const orderSchema = entitySchema.extend({
   userId: z.string().uuid(),
+<<<<<<< HEAD
   items: z.array(
     z.object({
       productId: z.string().uuid(),
@@ -98,6 +147,14 @@ const orderSchema = entitySchema.extend({
   ),
   total: z.number().positive(),
 });
+=======
+  items: z.array(z.object({
+    productId: z.string().uuid(),
+    quantity: z.number().int().positive(),
+  })),
+  total: z.number().positive(),
+})
+>>>>>>> devel
 ```
 
 **Combining extend with other methods:**
@@ -107,6 +164,7 @@ const baseSchema = z.object({
   id: z.string(),
   name: z.string(),
   email: z.string(),
+<<<<<<< HEAD
 });
 
 // Create input: no id, add password
@@ -118,6 +176,23 @@ const createSchema = baseSchema.omit({ id: true }).extend({
 const updateSchema = baseSchema.partial().extend({
   id: z.string(), // Override to make required
 });
+=======
+})
+
+// Create input: no id, add password
+const createSchema = baseSchema
+  .omit({ id: true })
+  .extend({
+    password: z.string().min(8),
+  })
+
+// Update input: all optional except id
+const updateSchema = baseSchema
+  .partial()
+  .extend({
+    id: z.string(),  // Override to make required
+  })
+>>>>>>> devel
 ```
 
 **Merge for combining independent schemas:**
@@ -126,19 +201,35 @@ const updateSchema = baseSchema.partial().extend({
 const addressSchema = z.object({
   street: z.string(),
   city: z.string(),
+<<<<<<< HEAD
 });
+=======
+})
+>>>>>>> devel
 
 const contactSchema = z.object({
   email: z.string().email(),
   phone: z.string(),
+<<<<<<< HEAD
 });
 
 // Merge combines two schemas (both required)
 const customerSchema = addressSchema.merge(contactSchema);
+=======
+})
+
+// Merge combines two schemas (both required)
+const customerSchema = addressSchema.merge(contactSchema)
+>>>>>>> devel
 // { street: string; city: string; email: string; phone: string }
 ```
 
 **When NOT to use this pattern:**
+<<<<<<< HEAD
+
+=======
+
+> > > > > > > devel
 
 - When schemas are genuinely independent (use merge or intersection)
 - When you need to remove fields (use omit)

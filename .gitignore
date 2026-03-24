@@ -55,6 +55,10 @@ node_modules/
 /tests/**/blob-report/
 /test-results/
 
+<<<<<<< HEAD
 # Project specific 
+=======
+# Project specific
+>>>>>>> devel
 /.github/
  
