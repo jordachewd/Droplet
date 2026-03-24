@@ -11,28 +11,7 @@ When parsing data that might have some invalid fields but you want to accept wha
 
 **Incorrect (all-or-nothing parsing):**
 
-```typescript
-<<<<<<< HEAD
-import { z } from 'zod'
-
-const userPrefsSchema = z.object({
-  theme: z.enum(['light', 'dark']),
-  fontSize: z.number().min(8).max(32),
-  language: z.string(),
-  notifications: z.boolean(),
-})
-
-// Corrupted localStorage data
-const stored = {
-  theme: 'invalid-theme',  // Bad
-  fontSize: 200,  // Bad
-  language: 'en',  // Good
-  notifications: 'yes',  // Bad - should be boolean
-}
-
-userPrefsSchema.parse(stored)
-=======
-import { z } from "zod";
+```typescriptimport { z } from "zod";
 
 const userPrefsSchema = z.object({
   theme: z.enum(["light", "dark"]),
@@ -49,36 +28,13 @@ const stored = {
   notifications: "yes", // Bad - should be boolean
 };
 
-userPrefsSchema.parse(stored);
->>>>>>> main
-// ZodError: Invalid enum value at "theme"
+userPrefsSchema.parse(stored);// ZodError: Invalid enum value at "theme"
 // User loses ALL their preferences because one field is bad
 ```
 
 **Correct (fault-tolerant with catch):**
 
-```typescript
-<<<<<<< HEAD
-import { z } from 'zod'
-
-const userPrefsSchema = z.object({
-  theme: z.enum(['light', 'dark']).catch('light'),
-  fontSize: z.number().min(8).max(32).catch(16),
-  language: z.string().catch('en'),
-  notifications: z.boolean().catch(true),
-})
-
-// Corrupted data
-const stored = {
-  theme: 'invalid-theme',
-  fontSize: 200,
-  language: 'en',
-  notifications: 'yes',
-}
-
-const prefs = userPrefsSchema.parse(stored)
-=======
-import { z } from "zod";
+```typescriptimport { z } from "zod";
 
 const userPrefsSchema = z.object({
   theme: z.enum(["light", "dark"]).catch("light"),
@@ -95,9 +51,7 @@ const stored = {
   notifications: "yes",
 };
 
-const prefs = userPrefsSchema.parse(stored);
->>>>>>> main
-// {
+const prefs = userPrefsSchema.parse(stored);// {
 //   theme: 'light',      // Fallback used
 //   fontSize: 16,        // Fallback used
 //   language: 'en',      // Original value preserved
@@ -111,19 +65,10 @@ const prefs = userPrefsSchema.parse(stored);
 ```typescript
 // Factory function receives the caught error
 const schema = z.object({
-  data: z.array(z.number()).catch((ctx) => {
-<<<<<<< HEAD
-    console.warn('Invalid data array:', ctx.error)
-    return []  // Return empty array as fallback
-  }),
-})
-=======
-    console.warn("Invalid data array:", ctx.error);
+  data: z.array(z.number()).catch((ctx) => {    console.warn("Invalid data array:", ctx.error);
     return []; // Return empty array as fallback
   }),
-});
->>>>>>> main
-```
+});```
 
 **Use case: API response resilience:**
 
@@ -132,25 +77,7 @@ const productSchema = z.object({
   id: z.string(),
   name: z.string(),
   price: z.number().positive(),
-  // Legacy field that might be missing or wrong format
-<<<<<<< HEAD
-  legacyCode: z.string().catch('UNKNOWN'),
-  // External data that might be malformed
-  metadata: z.record(z.string()).catch({}),
-})
-
-// API returns partial data
-const apiResponse = {
-  id: 'prod-123',
-  name: 'Widget',
-  price: 29.99,
-  legacyCode: null,  // Bad - should be string
-  metadata: 'invalid',  // Bad - should be object
-}
-
-const product = productSchema.parse(apiResponse)
-=======
-  legacyCode: z.string().catch("UNKNOWN"),
+  // Legacy field that might be missing or wrong format  legacyCode: z.string().catch("UNKNOWN"),
   // External data that might be malformed
   metadata: z.record(z.string()).catch({}),
 });
@@ -164,31 +91,17 @@ const apiResponse = {
   metadata: "invalid", // Bad - should be object
 };
 
-const product = productSchema.parse(apiResponse);
->>>>>>> main
-// Works! Returns product with fallbacks for bad fields
+const product = productSchema.parse(apiResponse);// Works! Returns product with fallbacks for bad fields
 ```
 
 **Difference between catch() and default():**
 
 ```typescript
-// .default() - only fills in undefined
-<<<<<<< HEAD
-z.string().default('fallback')
-=======
-z.string().default("fallback");
->>>>>>> main
-// undefined -> 'fallback'
+// .default() - only fills in undefinedz.string().default("fallback");// undefined -> 'fallback'
 // null -> ZodError
 // '' -> '' (empty string is valid)
 
-// .catch() - fallback for ANY parse failure
-<<<<<<< HEAD
-z.string().catch('fallback')
-=======
-z.string().catch("fallback");
->>>>>>> main
-// undefined -> 'fallback'
+// .catch() - fallback for ANY parse failurez.string().catch("fallback");// undefined -> 'fallback'
 // null -> 'fallback'
 // 123 -> 'fallback'
 // Even valid strings pass through unchanged
@@ -198,7 +111,6 @@ z.string().catch("fallback");
 
 ```typescript
 // Catch only specific validation failures
-<<<<<<< HEAD
 const schema = z.string()
   .email()
   .catch('invalid@example.com')  // Fallback if not valid email
@@ -221,8 +133,6 @@ const ageSchema = z.coerce.number().int().min(0).max(120).catch(0); // Invalid a
 ```
 
 **When NOT to use this pattern:**
-
->>>>>>> main
 - When invalid data should cause errors (strict validation)
 - When you need to know which fields failed (use safeParse)
 - Critical fields that must be valid

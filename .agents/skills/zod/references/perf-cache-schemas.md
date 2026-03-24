@@ -57,22 +57,7 @@ function UserForm() {
 
 **For dynamic schemas, use useMemo:**
 
-```typescript
-<<<<<<< HEAD
-import { z } from 'zod'
-import { useMemo } from 'react'
-
-function DynamicForm({ minAge }: { minAge: number }) {
-  // Schema only recreated when minAge changes
-  const userSchema = useMemo(() =>
-    z.object({
-      name: z.string().min(1),
-      age: z.number().min(minAge),
-    }),
-    [minAge]
-  )
-=======
-import { z } from "zod";
+```typescriptimport { z } from "zod";
 import { useMemo } from "react";
 
 function DynamicForm({ minAge }: { minAge: number }) {
@@ -85,8 +70,6 @@ function DynamicForm({ minAge }: { minAge: number }) {
       }),
     [minAge],
   );
->>>>>>> main
-
   // ...
 }
 ```
@@ -94,36 +77,17 @@ function DynamicForm({ minAge }: { minAge: number }) {
 **For server-side, use module cache:**
 
 ```typescript
-// schemas/user.ts - created once per process
-<<<<<<< HEAD
-import { z } from 'zod'
-=======
-import { z } from "zod";
->>>>>>> main
-
+// schemas/user.ts - created once per processimport { z } from "zod";
 export const userSchema = z.object({
   id: z.string().uuid(),
-  email: z.string().email(),
-<<<<<<< HEAD
-})
-
-// api/users.ts
-import { userSchema } from '@/schemas/user'
-
-export async function POST(req: Request) {
-  const body = await req.json()
-  const result = userSchema.safeParse(body)  // Reuses cached schema
-=======
-});
+  email: z.string().email(),});
 
 // api/users.ts
 import { userSchema } from "@/schemas/user";
 
 export async function POST(req: Request) {
   const body = await req.json();
-  const result = userSchema.safeParse(body); // Reuses cached schema
->>>>>>> main
-  // ...
+  const result = userSchema.safeParse(body); // Reuses cached schema  // ...
 }
 ```
 
@@ -135,7 +99,6 @@ function createUserSchema(role: string) {
   return z.object({
     name: z.string(),
     permissions: z.array(z.string()),
-<<<<<<< HEAD
   })
 }
 
@@ -197,8 +160,6 @@ getUserSchema(user.role).parse(user);
 ```
 
 **When NOT to use this pattern:**
-
->>>>>>> main
 - One-off validation where schema is used once
 - Test files where performance doesn't matter
 

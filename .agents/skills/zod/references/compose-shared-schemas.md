@@ -12,45 +12,12 @@ When the same schema pattern appears in multiple places, extract it into a share
 **Incorrect (duplicating schemas):**
 
 ```typescript
-// api/users.ts
-<<<<<<< HEAD
-import { z } from 'zod'
-=======
-import { z } from "zod";
->>>>>>> main
-
+// api/users.tsimport { z } from "zod";
 const userSchema = z.object({
   id: z.string().uuid(),
   email: z.string().email(),
   name: z.string().min(1),
-  createdAt: z.date(),
-<<<<<<< HEAD
-})
-
-// api/orders.ts
-import { z } from 'zod'
-
-const orderSchema = z.object({
-  id: z.string().uuid(),  // Duplicated
-  userId: z.string().uuid(),  // Same pattern
-  items: z.array(z.object({
-    productId: z.string().uuid(),  // Duplicated
-    quantity: z.number().int().positive(),
-  })),
-  createdAt: z.date(),  // Duplicated
-})
-
-// api/comments.ts
-import { z } from 'zod'
-
-const commentSchema = z.object({
-  id: z.string().uuid(),  // Same duplication
-  userId: z.string().uuid(),
-  content: z.string().min(1),
-  createdAt: z.date(),  // Inconsistency risk
-})
-=======
-});
+  createdAt: z.date(),});
 
 // api/orders.ts
 import { z } from "zod";
@@ -75,43 +42,20 @@ const commentSchema = z.object({
   userId: z.string().uuid(),
   content: z.string().min(1),
   createdAt: z.date(), // Inconsistency risk
-});
->>>>>>> main
-```
+});```
 
 **Correct (shared schema modules):**
 
 ```typescript
-// schemas/common.ts
-<<<<<<< HEAD
-import { z } from 'zod'
-
-// Reusable ID types
-export const uuid = z.string().uuid()
-export type UUID = z.infer<typeof uuid>
-=======
-import { z } from "zod";
+// schemas/common.tsimport { z } from "zod";
 
 // Reusable ID types
 export const uuid = z.string().uuid();
 export type UUID = z.infer<typeof uuid>;
->>>>>>> main
-
 // Timestamps
 export const timestamps = z.object({
   createdAt: z.date(),
-  updatedAt: z.date(),
-<<<<<<< HEAD
-})
-
-// Base entity with ID
-export const baseEntity = z.object({
-  id: uuid,
-}).merge(timestamps)
-
-export type BaseEntity = z.infer<typeof baseEntity>
-=======
-});
+  updatedAt: z.date(),});
 
 // Base entity with ID
 export const baseEntity = z
@@ -121,76 +65,32 @@ export const baseEntity = z
   .merge(timestamps);
 
 export type BaseEntity = z.infer<typeof baseEntity>;
->>>>>>> main
-
 // Pagination
 export const paginationParams = z.object({
   page: z.coerce.number().int().positive().default(1),
-  limit: z.coerce.number().int().min(1).max(100).default(20),
-<<<<<<< HEAD
-})
-=======
-});
->>>>>>> main
-```
+  limit: z.coerce.number().int().min(1).max(100).default(20),});```
 
 ```typescript
-// schemas/user.ts
-<<<<<<< HEAD
-import { z } from 'zod'
-import { baseEntity, uuid } from './common'
-=======
-import { z } from "zod";
+// schemas/user.tsimport { z } from "zod";
 import { baseEntity, uuid } from "./common";
->>>>>>> main
-
 export const userSchema = baseEntity.extend({
   email: z.string().email(),
-  name: z.string().min(1),
-<<<<<<< HEAD
-})
+  name: z.string().min(1),});
 
-export type User = z.infer<typeof userSchema>
-=======
-});
-
-export type User = z.infer<typeof userSchema>;
->>>>>>> main
-```
+export type User = z.infer<typeof userSchema>;```
 
 ```typescript
-// schemas/order.ts
-<<<<<<< HEAD
-import { z } from 'zod'
-import { baseEntity, uuid } from './common'
-=======
-import { z } from "zod";
+// schemas/order.tsimport { z } from "zod";
 import { baseEntity, uuid } from "./common";
->>>>>>> main
-
 const orderItemSchema = z.object({
   productId: uuid,
-  quantity: z.number().int().positive(),
-<<<<<<< HEAD
-})
-=======
-});
->>>>>>> main
-
+  quantity: z.number().int().positive(),});
 export const orderSchema = baseEntity.extend({
   userId: uuid,
   items: z.array(orderItemSchema).min(1),
-  total: z.number().positive(),
-<<<<<<< HEAD
-})
+  total: z.number().positive(),});
 
-export type Order = z.infer<typeof orderSchema>
-=======
-});
-
-export type Order = z.infer<typeof orderSchema>;
->>>>>>> main
-```
+export type Order = z.infer<typeof orderSchema>;```
 
 **Organizing schema modules:**
 
@@ -205,7 +105,6 @@ schemas/
 
 ```typescript
 // schemas/index.ts
-<<<<<<< HEAD
 export * from './common'
 export * from './user'
 export * from './order'
@@ -228,8 +127,6 @@ import { userSchema, orderSchema, uuid, type User } from "@/schemas";
 ```
 
 **When NOT to use this pattern:**
-
->>>>>>> main
 - One-off schemas used only in a single file
 - When schemas look similar but have different semantics (don't over-abstract)
 

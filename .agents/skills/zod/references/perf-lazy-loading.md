@@ -12,19 +12,7 @@ For applications with many complex schemas, importing all of them upfront increa
 **Incorrect (importing all schemas upfront):**
 
 ```typescript
-// schemas/index.ts - barrel file with everything
-<<<<<<< HEAD
-export * from './user'
-export * from './order'
-export * from './product'
-export * from './analytics'  // Large, complex schema
-export * from './reports'    // Another large schema
-export * from './admin'      // Admin-only schemas
-
-// app/page.tsx
-import { userSchema, orderSchema, analyticsSchema, reportsSchema } from '@/schemas'
-=======
-export * from "./user";
+// schemas/index.ts - barrel file with everythingexport * from "./user";
 export * from "./order";
 export * from "./product";
 export * from "./analytics"; // Large, complex schema
@@ -37,40 +25,21 @@ import {
   orderSchema,
   analyticsSchema,
   reportsSchema,
-} from "@/schemas";
->>>>>>> main
-// All schemas loaded even if not used on this page
+} from "@/schemas";// All schemas loaded even if not used on this page
 ```
 
 **Correct (lazy loading schemas):**
 
 ```typescript
-// Only import what's immediately needed
-<<<<<<< HEAD
-import { userSchema } from '@/schemas/user'
-
-async function loadAnalyticsSchema() {
-  const { analyticsSchema } = await import('@/schemas/analytics')
-  return analyticsSchema
-=======
-import { userSchema } from "@/schemas/user";
+// Only import what's immediately neededimport { userSchema } from "@/schemas/user";
 
 async function loadAnalyticsSchema() {
   const { analyticsSchema } = await import("@/schemas/analytics");
-  return analyticsSchema;
->>>>>>> main
-}
+  return analyticsSchema;}
 
 // Use when needed
-async function handleAnalyticsData(data: unknown) {
-<<<<<<< HEAD
-  const schema = await loadAnalyticsSchema()
-  return schema.safeParse(data)
-=======
-  const schema = await loadAnalyticsSchema();
-  return schema.safeParse(data);
->>>>>>> main
-}
+async function handleAnalyticsData(data: unknown) {  const schema = await loadAnalyticsSchema();
+  return schema.safeParse(data);}
 ```
 
 **Route-based schema loading:**
@@ -134,7 +103,6 @@ export default function ReportsForm() {
 ```typescript
 // schemas/registry.ts
 const schemaLoaders = {
-<<<<<<< HEAD
   user: () => import('./user').then(m => m.userSchema),
   order: () => import('./order').then(m => m.orderSchema),
   analytics: () => import('./analytics').then(m => m.analyticsSchema),
@@ -185,8 +153,6 @@ schema.parse(data);
 ```
 
 **When NOT to use this pattern:**
-
->>>>>>> main
 - Server-side rendering where all code is available
 - Small applications with few schemas
 - Schemas used on every page (defeats purpose)

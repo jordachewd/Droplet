@@ -11,29 +11,11 @@ tags: refine, superRefine, validation, custom
 
 **Incorrect (using refine for multiple checks):**
 
-```typescript
-<<<<<<< HEAD
-import { z } from 'zod'
-=======
-import { z } from "zod";
->>>>>>> main
-
+```typescriptimport { z } from "zod";
 // refine can only report one error at a time
 const passwordSchema = z.string().refine(
   (password) => {
-    // Checks all conditions but only reports first failure
-<<<<<<< HEAD
-    if (password.length < 8) return false  // Only this error shown
-    if (!/[A-Z]/.test(password)) return false
-    if (!/[0-9]/.test(password)) return false
-    return true
-  },
-  { message: 'Password does not meet requirements' }
-)
-
-passwordSchema.parse('weak')
-=======
-    if (password.length < 8) return false; // Only this error shown
+    // Checks all conditions but only reports first failure    if (password.length < 8) return false; // Only this error shown
     if (!/[A-Z]/.test(password)) return false;
     if (!/[0-9]/.test(password)) return false;
     return true;
@@ -41,77 +23,37 @@ passwordSchema.parse('weak')
   { message: "Password does not meet requirements" },
 );
 
-passwordSchema.parse("weak");
->>>>>>> main
-// Only shows: "Password does not meet requirements"
+passwordSchema.parse("weak");// Only shows: "Password does not meet requirements"
 // User doesn't know WHICH requirements failed
 ```
 
 **Correct (using superRefine for multiple issues):**
 
-```typescript
-<<<<<<< HEAD
-import { z } from 'zod'
-=======
-import { z } from "zod";
->>>>>>> main
-
+```typescriptimport { z } from "zod";
 const passwordSchema = z.string().superRefine((password, ctx) => {
   if (password.length < 8) {
     ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-<<<<<<< HEAD
-      message: 'Password must be at least 8 characters',
-    })
-=======
-      message: "Password must be at least 8 characters",
-    });
->>>>>>> main
-  }
+      code: z.ZodIssueCode.custom,      message: "Password must be at least 8 characters",
+    });  }
 
   if (!/[A-Z]/.test(password)) {
     ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-<<<<<<< HEAD
-      message: 'Password must contain an uppercase letter',
-    })
-=======
-      message: "Password must contain an uppercase letter",
-    });
->>>>>>> main
-  }
+      code: z.ZodIssueCode.custom,      message: "Password must contain an uppercase letter",
+    });  }
 
   if (!/[0-9]/.test(password)) {
     ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-<<<<<<< HEAD
-      message: 'Password must contain a number',
-    })
-=======
-      message: "Password must contain a number",
-    });
->>>>>>> main
-  }
+      code: z.ZodIssueCode.custom,      message: "Password must contain a number",
+    });  }
 
   if (!/[!@#$%^&*]/.test(password)) {
     ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-<<<<<<< HEAD
-      message: 'Password must contain a special character',
-    })
-  }
-})
-
-passwordSchema.safeParse('weak')
-=======
-      message: "Password must contain a special character",
+      code: z.ZodIssueCode.custom,      message: "Password must contain a special character",
     });
   }
 });
 
-passwordSchema.safeParse("weak");
->>>>>>> main
-// Shows ALL failures:
+passwordSchema.safeParse("weak");// Shows ALL failures:
 // - "Password must be at least 8 characters"
 // - "Password must contain an uppercase letter"
 // - "Password must contain a number"
@@ -121,32 +63,7 @@ passwordSchema.safeParse("weak");
 **When to use refine():**
 
 ```typescript
-// Simple boolean condition with one error message
-<<<<<<< HEAD
-const adultSchema = z.number().refine(
-  (age) => age >= 18,
-  { message: 'Must be 18 or older' }
-)
-
-// Cross-field validation with single outcome
-const formSchema = z.object({
-  password: z.string(),
-  confirmPassword: z.string(),
-}).refine(
-  (data) => data.password === data.confirmPassword,
-  { message: 'Passwords must match', path: ['confirmPassword'] }
-)
-
-// Async validation
-const emailSchema = z.string().email().refine(
-  async (email) => {
-    const exists = await checkEmailExists(email)
-    return !exists
-  },
-  { message: 'Email already registered' }
-)
-=======
-const adultSchema = z
+// Simple boolean condition with one error messageconst adultSchema = z
   .number()
   .refine((age) => age >= 18, { message: "Must be 18 or older" });
 
@@ -171,9 +88,7 @@ const emailSchema = z
       return !exists;
     },
     { message: "Email already registered" },
-  );
->>>>>>> main
-```
+  );```
 
 **When to use superRefine():**
 
@@ -182,8 +97,6 @@ const emailSchema = z
 // Cross-field validation with multiple possible errors
 // Need custom error codes for i18n or client handling
 // Need to add issues at specific paths
-
-<<<<<<< HEAD
 const orderSchema = z.object({
   items: z.array(z.object({
     productId: z.string(),
@@ -263,8 +176,6 @@ const available = await checkInventory(item.productId, item.quantity);
 ```
 
 **When NOT to use this pattern:**
-
->>>>>>> main
 - Simple single-condition checks (use refine for simplicity)
 - Transform needed instead of validation (use transform)
 

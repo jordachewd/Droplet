@@ -1,87 +1,76 @@
-# Droplet Project Audit State — PM Audit #46 (2026-03-21)
+# Droplet Project Audit State — PM Audit #57 (2026-03-24)
 
 ## Current Status
 
-- All Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS (Block G — Testing Infrastructure Rebuild).
-- All Phases 1–102 complete (including 72.4, 96.4, 97.1, 99.5, 100.4, 101, 102).
-- 400 unit tests / 65 suites passing. Build passing. tsc clean. lint 0 errors, 10 warnings.
-- Coverage: 76.27/65.31/79.64/76.67 vs 76/65/79/76 (MET). All 7 gates GREEN (knip added as gate 7).
-- E2E: 108 passed, 0 failed, 25 skipped (15 spec files).
+- All Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS (Block G — TDD Full Rebuild).
+- All Phases 1–124 complete (including 120.1, 121, 122, 123, 124). Phase 120.2 partially complete (20/~40 utility files).
+- 370 unit tests / 62 suites passing. Build passing. tsc clean. lint 0 errors, 6 warnings.
+- Coverage: ~78.5/~66/~83.5/~79 vs 76/65/79/76 thresholds (MET). All 7 gates GREEN.
+- E2E: 108 passed, 0 failed, 25 skipped (14 spec files).
 - Node.js 24.12.0 runtime.
 
 ## Active Tech Debt
 
-- TD-WCAG-CONTRAST (HIGH): axe-core color-contrast violations on `/` and `/plans`. Phase 103.1–103.2.
-- TD-WCAG-HEADING (MEDIUM): heading-order on `/personas`. Phase 103.3.
-- TD-WCAG-LANDMARK (MEDIUM): duplicate landmarks on all public routes. Phase 103.4.
-- TD-KNIP (HIGH): 5 unused root migration files + 3 unused exports. Phase 99.4.
-- TD-TEST-07 (MEDIUM): Zero Zustand store tests. Phase 96.6.
-- TD-DATA-CONSUMER (MEDIUM): 3 admin client components directly import constants. Phase 73.3.
-- TD-DIALOG (MEDIUM): ConfirmationModal uses custom role="dialog" not native `<dialog>`. Phase 99.2.
-- TD-TASK-PASSTHROUGH (LOW): createTaskSchema .passthrough(). Phase 87.
-- TD-AUDIO-LINT (LOW): 10 ESLint warnings in audio-player.tsx (setState in useEffect).
+- TD-HARDCODE-01 (HIGH): Stop reason messages hardcoded. Phase 107.
+- TD-TEST-03 (HIGH): Full TDD test rebuild in progress. Phase 120.
+- TD-REUSE-04 (MEDIUM): ChatApiResponse duplicate types. Phase 106.
+- TD-WCAG-05 (MEDIUM): Tabs missing arrow-key nav. Phase 108.
+- TD-WCAG-07 (MEDIUM): AvatarMenu missing keyboard nav. Phase 114.
+- TD-TEST-02 (MEDIUM): Route test refinement (deferred to TDD rebuild). Phase 112.4.
+- TD-DB-01 (LOW): getAllTransactions() missing .select()/.limit(). Fix during Phase 120.3.
+- TD-AI-09 (LOW): Image/audio prompts not persona-aware.
+- TD-AI-13 (LOW): 5 model pricing placeholders.
+- TD-PLAN-01 (LOW): No recurring subscriptions (deferred v1).
+- TD-AI-18 (LOW-advisory): errorMessage forwarding fragile.
+- TD-API-09 (LOW-monitor): messageTextContentSchema .strict().
 
-## Resolved Tech Debt (PM Audit #46)
+## SWOT Summary (PM Audit #57)
 
-- TD-WCAG-03 RESOLVED — Viewport zoom restriction removed (Phase 101).
-- TD-REUSE-01 FULLY RESOLVED — All 4 isObjectRecord files now import from type-guards.ts (Phase 100.4).
-- TD-LEAK-01 RESOLVED — AbortController added to chat streaming fetch (Phase 102).
-- TD-WCAG-04 RESOLVED — AudioPlayer ARIA progressbar + aria-label + live region (Phase 99.5).
-- TD-WCAG-02 RESOLVED — @axe-core/playwright E2E scanning 7 public routes (Phase 97.1).
-- TD-SEMANTIC-TABLE RESOLVED — Admin tables use semantic HTML (Phase 72.4).
-- TD-AUTH-TEST RESOLVED — Admin authorization failure tests added (Phase 96.4).
+### Strengths
+- Clean route boundaries (proxy + server double-check)
+- 44+ files with server-only guards
+- Central policy architecture (resolveEntitlements, resolveModelPolicy, effective-*)
+- Atomic quota enforcement (findOneAndUpdate + $lt)
+- Strong DB discipline (indexes, lean, select, strict:true)
+- Zero security debt (no console.log, no window.alert, no Math.random, no error.message leaks)
+- Data-consumer pattern complete for all client components
+- Admin audit trail on every admin mutation
 
-## Droplet-Engineer Task List (Priority Order — PM Audit #46)
+### Weaknesses
+- Hero, landing, FAQ, stop-reason content still hardcoded (Phases 74.2, 104, 107)
+- TDD rebuild ~50% complete (20/~40 utility test files)
+- Single-document conversation storage (future scalability risk)
+- No recurring subscriptions (v1 deferred)
 
-1. **Phase 99.4** — Knip cleanup: delete 5 unused files + fix 3 unused exports — **HIGH**
-2. **Phase 103.1** — Fix color contrast on landing page — **HIGH** (WCAG release blocker)
-3. **Phase 103.2** — Fix color contrast on plans page — **HIGH** (WCAG release blocker)
-4. **Phase 103.3** — Fix heading order on personas page — **MEDIUM**
-5. **Phase 103.4** — Fix duplicate landmark violations — **MEDIUM**
-6. Phase 96.5 — Upload file size validation tests (HIGH TDD)
-7. Phase 96.6 — Zustand store tests (MEDIUM TDD)
-8. Phase 96.7 — Component tests: confirmation-modal, plan-card, persona-card, checkout-form (MEDIUM TDD)
-9. Phase 96.8 — Expand user model tests (MEDIUM TDD)
-10. Phase 73.3 — Admin client component data-consumer violations (MEDIUM)
-11. Phase 99.2 — ConfirmationModal native `<dialog>` (MEDIUM)
-12. Phase 98.1–98.3 — Coverage improvement to 82/78/82/82+ (HIGH)
-13. Phase 74.2 — FAQ content admin-configurable (MEDIUM)
-14. Phase 104.1–104.2 — Landing page content admin-configurable (MEDIUM)
-15. Phase 87 — createTaskSchema strict mode (LOW)
+### Opportunities
+- Admin configurability has clear implementation path (effective-* pattern)
+- TDD infrastructure is strong (factories, mock helpers, documented workflow)
+- Only 2 WCAG gaps remain (tabs keyboard, AvatarMenu keyboard)
 
-## Owner Directives Status (PM Audit #46)
+### Threats
+- Content changes require code deployments until admin configurability closes
+- Coverage lower than pre-deletion baseline (370 vs 532 tests)
+- gpt-audio-1.5 inaccessible (403) — Premium audio uses fallback
 
-### DONE from Owner Instructions
+## Docs Updated This Session (PM Audit #57)
 
-- ✅ Code reuse: TD-REUSE-01/02/03 ALL FULLY RESOLVED (Phase 100.1–100.4).
-- ✅ Viewport zoom: TD-WCAG-03 RESOLVED (Phase 101). Mobile pinch-to-zoom works.
-- ✅ AbortController: TD-LEAK-01 RESOLVED (Phase 102). No more connection leaks.
-- ✅ AudioPlayer ARIA: TD-WCAG-04 RESOLVED (Phase 99.5). Progressbar + aria-label.
-- ✅ Admin table semantics: Semantic HTML `<table>` (Phase 72.4).
-- ✅ WCAG E2E tests: @axe-core/playwright scanning 7 routes (Phase 97.1).
-- ✅ Admin auth tests: Authorization enforcement tested (Phase 96.4).
-- ✅ E2E stability: 108 passed, 0 failed, 25 skipped. All Chromium failures resolved.
-- ✅ DEEP config check: Phase 89 + 94 hardening complete.
-- ✅ P1 stale selection bug: Phase 88.1 + 88.2 DONE.
-- ✅ Profile usage display: Phase 66.1 DONE.
-- ✅ User removal cascade: Verified complete (Clerk + DB + S3).
-- ✅ Server-side utilities: Architecture is Server Components first. Guards on all files.
+- SPEC.md: Header updated. TD-DB-01 added (getAllTransactions).
+- TODO.md: Header updated. Phase 124 reference added.
+- DONE.md: Phase 124 entry added. Header phase list updated.
+- ThePlan.md: Execution order updated. OI16 + OI17 added. Milestone 25 block updated.
+- AGENTS.md: Merge conflict in route boundaries table resolved.
 
-### NOT DONE / IN PROGRESS
+## Priority Order (PM Audit #57)
 
-- ⚠️ WCAG color contrast: axe-core violations on `/` and `/plans` (Phase 103.1–103.2).
-- ⚠️ WCAG heading order: `/personas` heading-order violation (Phase 103.3).
-- ⚠️ WCAG landmarks: Duplicate landmarks all routes (Phase 103.4).
-- ⚠️ Testing rebuild from scratch (TDD): 96.1–96.4 done. Remaining: 96.5–96.8, 97.2+, 98.
-- ⚠️ knip: 5 unused files + 3 unused exports (Phase 99.4).
-- ⚠️ Data consumer pattern: 3 admin violations remaining (Phase 73.3).
-- ⚠️ Admin configurability: Core done (74.1). FAQ (74.2), hero/about/landing (104) remaining.
-- ⚠️ Native dialog: ConfirmationModal still using custom CSS dialog (Phase 99.2).
-
-## Docs Updated This Session (PM Audit #46)
-
-- ThePlan.md: Updated by Architect. Test counts fixed to 65/400. 5 tech debt items marked RESOLVED. Milestone 25 phases 101–102 marked DONE.
-- SPEC.md: Header updated to PM #46. Testing section updated (65 suites, 400 tests, 108 E2E). Gaps section cleaned — resolved items removed.
-- TODO.md: 7 completed phases archived. New Phase 103 (WCAG contrast) + 104 (landing admin) added. Priority order updated.
-- DONE.md: 7 new phase entries added (101, 100.4, 102, 96.4, 99.5, 72.4, 97.1).
-- AGENTS.md: `npm run knip` added as validation Gate 7. "All six gates" → "All seven gates".
+1. Phase 120.2 CRITICAL — TDD utility test rebuild (20/~40 done, continue)
+2. Phase 120.3 CRITICAL — TDD server action test rebuild (includes TD-DB-01 fix)
+3. Phase 106 HIGH — Extract shared ChatApiResponse types
+4. Phase 120.4 CRITICAL — TDD API route test rebuild
+5. Phase 120.5 HIGH — TDD component test rebuild
+6. Phase 120.6 HIGH — TDD E2E test rebuild
+7. Phase 120.7 HIGH — Coverage thresholds
+8. Phase 107 HIGH — Stop reason admin-configurable
+9. Phase 108 MEDIUM — WCAG tabs keyboard
+10. Phase 114 MEDIUM — WCAG AvatarMenu keyboard
+11. Phase 74.2 MEDIUM — FAQ admin-configurable
+12. Phase 104 MEDIUM — Landing/hero/about admin-configurable

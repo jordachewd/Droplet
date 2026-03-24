@@ -11,108 +11,48 @@ Zod 4 uses JIT (Just-In-Time) compilation to speed up repeated parsing, but this
 
 **Incorrect (schema creation in hot path):**
 
-```typescript
-<<<<<<< HEAD
-import { z } from 'zod'
-
-async function validateBatch(items: unknown[]) {
-  const results = []
-=======
-import { z } from "zod";
+```typescriptimport { z } from "zod";
 
 async function validateBatch(items: unknown[]) {
   const results = [];
->>>>>>> main
-
   for (const item of items) {
     // Schema created for EACH item - slow!
     const schema = z.object({
       id: z.string(),
-      value: z.number(),
-<<<<<<< HEAD
-    })
-
-    results.push(schema.safeParse(item))
-  }
-
-  return results
-=======
-    });
+      value: z.number(),    });
 
     results.push(schema.safeParse(item));
   }
 
-  return results;
->>>>>>> main
-}
+  return results;}
 
 // 1000 items = 1000 schema creations = ~150ms overhead
 ```
 
 **Correct (pre-created schema):**
 
-```typescript
-<<<<<<< HEAD
-import { z } from 'zod'
-=======
-import { z } from "zod";
->>>>>>> main
-
+```typescriptimport { z } from "zod";
 // Schema created ONCE
 const itemSchema = z.object({
   id: z.string(),
-  value: z.number(),
-<<<<<<< HEAD
-})
+  value: z.number(),});
 
 async function validateBatch(items: unknown[]) {
   // Reuse the same schema instance
-  return items.map(item => itemSchema.safeParse(item))
-=======
-});
-
-async function validateBatch(items: unknown[]) {
-  // Reuse the same schema instance
-  return items.map((item) => itemSchema.safeParse(item));
->>>>>>> main
-}
+  return items.map((item) => itemSchema.safeParse(item));}
 
 // 1000 items = 1 schema creation + 1000 fast parses
 ```
 
 **Dynamic schemas with caching:**
 
-```typescript
-<<<<<<< HEAD
-import { z } from 'zod'
-
-// Cache for dynamically-configured schemas
-const schemaCache = new WeakMap<object, z.ZodType>()
-=======
-import { z } from "zod";
+```typescriptimport { z } from "zod";
 
 // Cache for dynamically-configured schemas
 const schemaCache = new WeakMap<object, z.ZodType>();
->>>>>>> main
-
 function getSchemaForConfig(config: { fields: string[] }) {
   // Check cache first
-  if (schemaCache.has(config)) {
-<<<<<<< HEAD
-    return schemaCache.get(config)!
-  }
-
-  // Create and cache
-  const shape: Record<string, z.ZodString> = {}
-  for (const field of config.fields) {
-    shape[field] = z.string()
-  }
-
-  const schema = z.object(shape)
-  schemaCache.set(config, schema)
-  return schema
-=======
-    return schemaCache.get(config)!;
+  if (schemaCache.has(config)) {    return schemaCache.get(config)!;
   }
 
   // Create and cache
@@ -123,28 +63,17 @@ function getSchemaForConfig(config: { fields: string[] }) {
 
   const schema = z.object(shape);
   schemaCache.set(config, schema);
-  return schema;
->>>>>>> main
-}
+  return schema;}
 
 // Subsequent calls with same config reuse cached schema
 ```
 
 **Lazy schema creation:**
 
-```typescript
-<<<<<<< HEAD
-import { z } from 'zod'
-
-// Schema created only when first used
-let _userSchema: z.ZodObject<any> | null = null
-=======
-import { z } from "zod";
+```typescriptimport { z } from "zod";
 
 // Schema created only when first used
 let _userSchema: z.ZodObject<any> | null = null;
->>>>>>> main
-
 function getUserSchema() {
   if (!_userSchema) {
     _userSchema = z.object({
@@ -153,39 +82,21 @@ function getUserSchema() {
       profile: z.object({
         name: z.string(),
         avatar: z.string().url().optional(),
-      }),
-<<<<<<< HEAD
-    })
+      }),    });
   }
-  return _userSchema
-=======
-    });
-  }
-  return _userSchema;
->>>>>>> main
-}
+  return _userSchema;}
 
 // Or use a getter
 const schemas = {
   _user: null as z.ZodType | null,
   get user() {
-    if (!this._user) {
-<<<<<<< HEAD
-      this._user = z.object({ /* ... */ })
-    }
-    return this._user
-  }
-}
-=======
-      this._user = z.object({
+    if (!this._user) {      this._user = z.object({
         /* ... */
       });
     }
     return this._user;
   },
-};
->>>>>>> main
-```
+};```
 
 **Benchmark considerations:**
 
@@ -205,10 +116,7 @@ const schemas = {
 ```
 
 **When NOT to use this pattern:**
-<<<<<<< HEAD
-=======
 
-> > > > > > > main
 
 - One-off validation where schema is used once
 - Dynamically generated forms where fields change per request

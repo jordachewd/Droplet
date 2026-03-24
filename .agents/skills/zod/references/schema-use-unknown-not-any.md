@@ -11,137 +11,64 @@ tags: schema, unknown, any, type-safety
 
 **Incorrect (using z.any):**
 
-```typescript
-<<<<<<< HEAD
-import { z } from 'zod'
-
-const eventSchema = z.object({
-  type: z.string(),
-  payload: z.any(),  // Infers to 'any'
-})
-
-type Event = z.infer<typeof eventSchema>
-=======
-import { z } from "zod";
+```typescriptimport { z } from "zod";
 
 const eventSchema = z.object({
   type: z.string(),
   payload: z.any(), // Infers to 'any'
 });
 
-type Event = z.infer<typeof eventSchema>;
->>>>>>> main
-// { type: string; payload: any }
+type Event = z.infer<typeof eventSchema>;// { type: string; payload: any }
 
 function handleEvent(event: Event) {
-  // No type error - TypeScript allows anything
-<<<<<<< HEAD
-  console.log(event.payload.foo.bar.baz)  // Runtime crash if structure is wrong
-=======
-  console.log(event.payload.foo.bar.baz); // Runtime crash if structure is wrong
->>>>>>> main
-}
+  // No type error - TypeScript allows anything  console.log(event.payload.foo.bar.baz); // Runtime crash if structure is wrong}
 ```
 
 **Correct (using z.unknown):**
 
-```typescript
-<<<<<<< HEAD
-import { z } from 'zod'
-
-const eventSchema = z.object({
-  type: z.string(),
-  payload: z.unknown(),  // Infers to 'unknown'
-})
-
-type Event = z.infer<typeof eventSchema>
-=======
-import { z } from "zod";
+```typescriptimport { z } from "zod";
 
 const eventSchema = z.object({
   type: z.string(),
   payload: z.unknown(), // Infers to 'unknown'
 });
 
-type Event = z.infer<typeof eventSchema>;
->>>>>>> main
-// { type: string; payload: unknown }
+type Event = z.infer<typeof eventSchema>;// { type: string; payload: unknown }
 
 function handleEvent(event: Event) {
-  // TypeScript error: Object is of type 'unknown'
-<<<<<<< HEAD
-  console.log(event.payload.foo)  // Won't compile
+  // TypeScript error: Object is of type 'unknown'  console.log(event.payload.foo); // Won't compile
 
   // Must narrow type first
-  if (typeof event.payload === 'object' && event.payload !== null) {
-=======
-  console.log(event.payload.foo); // Won't compile
-
-  // Must narrow type first
-  if (typeof event.payload === "object" && event.payload !== null) {
->>>>>>> main
-    // Now TypeScript knows it's an object
+  if (typeof event.payload === "object" && event.payload !== null) {    // Now TypeScript knows it's an object
   }
 }
 ```
 
 **Better approach with discriminated unions:**
 
-```typescript
-<<<<<<< HEAD
-import { z } from 'zod'
+```typescriptimport { z } from "zod";
 
 const userCreatedSchema = z.object({
-  type: z.literal('user.created'),
-=======
-import { z } from "zod";
-
-const userCreatedSchema = z.object({
-  type: z.literal("user.created"),
->>>>>>> main
-  payload: z.object({
+  type: z.literal("user.created"),  payload: z.object({
     userId: z.string(),
     email: z.string().email(),
-  }),
-<<<<<<< HEAD
-})
+  }),});
 
 const orderPlacedSchema = z.object({
-  type: z.literal('order.placed'),
-=======
-});
-
-const orderPlacedSchema = z.object({
-  type: z.literal("order.placed"),
->>>>>>> main
-  payload: z.object({
+  type: z.literal("order.placed"),  payload: z.object({
     orderId: z.string(),
     amount: z.number(),
-  }),
-<<<<<<< HEAD
-})
-
-const eventSchema = z.discriminatedUnion('type', [
-  userCreatedSchema,
-  orderPlacedSchema,
-])
-=======
-});
+  }),});
 
 const eventSchema = z.discriminatedUnion("type", [
   userCreatedSchema,
   orderPlacedSchema,
 ]);
->>>>>>> main
-
 // Full type safety for each event type
 ```
 
 **When NOT to use this pattern:**
-<<<<<<< HEAD
-=======
 
-> > > > > > > main
 
 - When you're consuming a third-party API where you truly don't know the shape
 - When prototyping and will add proper types later

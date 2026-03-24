@@ -11,25 +11,7 @@ HTML forms and URL query parameters always transmit data as strings. Using `z.nu
 
 **Incorrect (no coercion for form data):**
 
-```typescript
-<<<<<<< HEAD
-import { z } from 'zod'
-
-const searchSchema = z.object({
-  query: z.string(),
-  page: z.number(),  // Expects actual number
-  limit: z.number(),
-  showDeleted: z.boolean(),  // Expects actual boolean
-})
-
-// Form data / query params are strings
-const formData = new URLSearchParams('query=test&page=1&limit=10&showDeleted=true')
-const params = Object.fromEntries(formData)
-// { query: 'test', page: '1', limit: '10', showDeleted: 'true' }
-
-searchSchema.parse(params)
-=======
-import { z } from "zod";
+```typescriptimport { z } from "zod";
 
 const searchSchema = z.object({
   query: z.string(),
@@ -45,37 +27,19 @@ const formData = new URLSearchParams(
 const params = Object.fromEntries(formData);
 // { query: 'test', page: '1', limit: '10', showDeleted: 'true' }
 
-searchSchema.parse(params);
->>>>>>> main
-// ZodError: Expected number, received string at "page"
+searchSchema.parse(params);// ZodError: Expected number, received string at "page"
 // ZodError: Expected number, received string at "limit"
 // ZodError: Expected boolean, received string at "showDeleted"
 ```
 
 **Correct (using coercion):**
 
-```typescript
-<<<<<<< HEAD
-import { z } from 'zod'
-=======
-import { z } from "zod";
->>>>>>> main
-
+```typescriptimport { z } from "zod";
 const searchSchema = z.object({
   query: z.string(),
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().min(1).max(100).default(10),
-  showDeleted: z.coerce.boolean().default(false),
-<<<<<<< HEAD
-})
-
-// Form data / query params are strings
-const formData = new URLSearchParams('query=test&page=1&limit=10&showDeleted=true')
-const params = Object.fromEntries(formData)
-
-const result = searchSchema.parse(params)
-=======
-});
+  showDeleted: z.coerce.boolean().default(false),});
 
 // Form data / query params are strings
 const formData = new URLSearchParams(
@@ -83,35 +47,22 @@ const formData = new URLSearchParams(
 );
 const params = Object.fromEntries(formData);
 
-const result = searchSchema.parse(params);
->>>>>>> main
-// { query: 'test', page: 1, limit: 10, showDeleted: true }
+const result = searchSchema.parse(params);// { query: 'test', page: 1, limit: 10, showDeleted: true }
 // Types are correct: number, number, boolean
 ```
 
 **Available coercion types:**
 
-```typescript
-<<<<<<< HEAD
-z.coerce.string()  // Converts anything to string via String(value)
-z.coerce.number()  // Converts via Number(value), NaN fails validation
-z.coerce.boolean()  // Truthy/falsy conversion
-z.coerce.bigint()  // Converts via BigInt(value)
-z.coerce.date()  // Converts via new Date(value)
-=======
-z.coerce.string(); // Converts anything to string via String(value)
+```typescriptz.coerce.string(); // Converts anything to string via String(value)
 z.coerce.number(); // Converts via Number(value), NaN fails validation
 z.coerce.boolean(); // Truthy/falsy conversion
 z.coerce.bigint(); // Converts via BigInt(value)
-z.coerce.date(); // Converts via new Date(value)
->>>>>>> main
-```
+z.coerce.date(); // Converts via new Date(value)```
 
 **Coercion edge cases:**
 
 ```typescript
 // z.coerce.number() behavior
-<<<<<<< HEAD
 z.coerce.number().parse("42")  // 42
 z.coerce.number().parse("")  // 0 (empty string becomes 0!)
 z.coerce.number().parse("abc")  // ZodError (NaN fails)
@@ -146,8 +97,6 @@ const strictBooleanSchema = z
 ```
 
 **When NOT to use this pattern:**
-
->>>>>>> main
 - When receiving JSON payloads (already typed correctly)
 - When you want strict type checking without conversion
 

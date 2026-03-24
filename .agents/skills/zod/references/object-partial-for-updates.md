@@ -11,74 +11,31 @@ When handling PATCH/PUT updates, you need a schema where all fields are optional
 
 **Incorrect (duplicating schemas):**
 
-```typescript
-<<<<<<< HEAD
-import { z } from 'zod'
-=======
-import { z } from "zod";
->>>>>>> main
-
+```typescriptimport { z } from "zod";
 // Base schema
 const userSchema = z.object({
   name: z.string().min(1),
   email: z.string().email(),
-  age: z.number().int().positive(),
-<<<<<<< HEAD
-  role: z.enum(['admin', 'user']),
-})
-=======
-  role: z.enum(["admin", "user"]),
+  age: z.number().int().positive(),  role: z.enum(["admin", "user"]),
 });
->>>>>>> main
-
 // Manually duplicated for updates - will drift!
 const updateUserSchema = z.object({
   name: z.string().min(1).optional(),
   email: z.string().email().optional(),
   age: z.number().int().positive().optional(),
-  // Forgot to add role - schemas out of sync!
-<<<<<<< HEAD
-})
-=======
-});
->>>>>>> main
-
+  // Forgot to add role - schemas out of sync!});
 // Later, you add a field to userSchema but forget updateUserSchema
 // Now updates silently ignore the new field
 ```
 
 **Correct (using partial):**
 
-```typescript
-<<<<<<< HEAD
-import { z } from 'zod'
-=======
-import { z } from "zod";
->>>>>>> main
-
+```typescriptimport { z } from "zod";
 // Base schema - single source of truth
 const userSchema = z.object({
   name: z.string().min(1),
   email: z.string().email(),
-  age: z.number().int().positive(),
-<<<<<<< HEAD
-  role: z.enum(['admin', 'user']),
-})
-
-// All fields optional for updates
-const updateUserSchema = userSchema.partial()
-
-type User = z.infer<typeof userSchema>
-// { name: string; email: string; age: number; role: 'admin' | 'user' }
-
-type UpdateUser = z.infer<typeof updateUserSchema>
-// { name?: string; email?: string; age?: number; role?: 'admin' | 'user' }
-
-// Validate partial updates
-updateUserSchema.parse({ email: 'new@example.com' })  // Valid
-updateUserSchema.parse({})  // Valid - all fields optional
-=======
-  role: z.enum(["admin", "user"]),
+  age: z.number().int().positive(),  role: z.enum(["admin", "user"]),
 });
 
 // All fields optional for updates
@@ -92,9 +49,7 @@ type UpdateUser = z.infer<typeof updateUserSchema>;
 
 // Validate partial updates
 updateUserSchema.parse({ email: "new@example.com" }); // Valid
-updateUserSchema.parse({}); // Valid - all fields optional
->>>>>>> main
-```
+updateUserSchema.parse({}); // Valid - all fields optional```
 
 **Partial specific fields only:**
 
@@ -102,17 +57,9 @@ updateUserSchema.parse({}); // Valid - all fields optional
 // Only name and email are optional for updates
 const updateUserSchema = userSchema.partial({
   name: true,
-  email: true,
-<<<<<<< HEAD
-})
+  email: true,});
 
-type UpdateUser = z.infer<typeof updateUserSchema>
-=======
-});
-
-type UpdateUser = z.infer<typeof updateUserSchema>;
->>>>>>> main
-// { name?: string; email?: string; age: number; role: 'admin' | 'user' }
+type UpdateUser = z.infer<typeof updateUserSchema>;// { name?: string; email?: string; age: number; role: 'admin' | 'user' }
 // age and role still required
 ```
 
@@ -122,37 +69,16 @@ type UpdateUser = z.infer<typeof updateUserSchema>;
 const addressSchema = z.object({
   street: z.string(),
   city: z.string(),
-  country: z.string(),
-<<<<<<< HEAD
-})
-=======
-});
->>>>>>> main
-
+  country: z.string(),});
 const userSchema = z.object({
   name: z.string(),
-  address: addressSchema,
-<<<<<<< HEAD
-})
+  address: addressSchema,});
 
 // .partial() only makes top-level fields optional
-const shallowPartial = userSchema.partial()
-=======
-});
-
-// .partial() only makes top-level fields optional
-const shallowPartial = userSchema.partial();
->>>>>>> main
-// { name?: string; address?: { street: string; city: string; country: string } }
+const shallowPartial = userSchema.partial();// { name?: string; address?: { street: string; city: string; country: string } }
 // If address is provided, all its fields are still required!
 
-// Use deepPartial for nested optionality
-<<<<<<< HEAD
-const deepPartialSchema = userSchema.deepPartial()
-=======
-const deepPartialSchema = userSchema.deepPartial();
->>>>>>> main
-// { name?: string; address?: { street?: string; city?: string; country?: string } }
+// Use deepPartial for nested optionalityconst deepPartialSchema = userSchema.deepPartial();// { name?: string; address?: { street?: string; city?: string; country?: string } }
 ```
 
 **Combining with required() for create vs update:**
@@ -163,7 +89,6 @@ const baseSchema = z.object({
   name: z.string(),
   email: z.string().email(),
   createdAt: z.date(),
-<<<<<<< HEAD
 })
 
 // Create: id and createdAt are generated, rest required
@@ -186,8 +111,6 @@ const updateSchema = baseSchema.partial().omit({ id: true, createdAt: true });
 ```
 
 **When NOT to use this pattern:**
-
->>>>>>> main
 - When update logic differs significantly from create (different validations)
 - When using GraphQL with explicit input types
 

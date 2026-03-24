@@ -18,89 +18,37 @@ For frontend applications where bundle size is critical, use `@zod/mini` instead
 // - Simple validation needs (no complex transforms)
 // - Tree-shaking is important
 
-// Zod: ~17kb gzipped
-<<<<<<< HEAD
-import { z } from 'zod'
+// Zod: ~17kb gzippedimport { z } from "zod";
 
 // Zod Mini: ~1.9kb gzipped (when tree-shaken)
-import * as z from '@zod/mini'
-=======
-import { z } from "zod";
-
-// Zod Mini: ~1.9kb gzipped (when tree-shaken)
-import * as z from "@zod/mini";
->>>>>>> main
-```
+import * as z from "@zod/mini";```
 
 **Standard Zod (method chaining):**
 
-```typescript
-<<<<<<< HEAD
-import { z } from 'zod'
-=======
-import { z } from "zod";
->>>>>>> main
-
+```typescriptimport { z } from "zod";
 // Methods are attached to schema objects - hard to tree-shake
 const userSchema = z.object({
   name: z.string().min(1).max(100),
   email: z.string().email(),
-  age: z.number().int().positive(),
-<<<<<<< HEAD
-})
+  age: z.number().int().positive(),});
 
-const result = userSchema.safeParse(data)
-=======
-});
-
-const result = userSchema.safeParse(data);
->>>>>>> main
-```
+const result = userSchema.safeParse(data);```
 
 **Zod Mini (functional API):**
 
-```typescript
-<<<<<<< HEAD
-import * as z from '@zod/mini'
-=======
-import * as z from "@zod/mini";
->>>>>>> main
-
+```typescriptimport * as z from "@zod/mini";
 // Functions are imported individually - tree-shakeable
 const userSchema = z.object({
   name: z.pipe(z.string(), z.minLength(1), z.maxLength(100)),
   email: z.pipe(z.string(), z.email()),
-  age: z.pipe(z.number(), z.int(), z.positive()),
-<<<<<<< HEAD
-})
+  age: z.pipe(z.number(), z.int(), z.positive()),});
 
-const result = z.safeParse(userSchema, data)
-=======
-});
-
-const result = z.safeParse(userSchema, data);
->>>>>>> main
-```
+const result = z.safeParse(userSchema, data);```
 
 **API differences:**
 
 ```typescript
-// Standard Zod
-<<<<<<< HEAD
-z.string().min(5).max(100).email()
-z.number().int().positive()
-z.array(z.string()).min(1)
-schema.parse(data)
-schema.safeParse(data)
-
-// Zod Mini
-z.pipe(z.string(), z.minLength(5), z.maxLength(100), z.email())
-z.pipe(z.number(), z.int(), z.positive())
-z.pipe(z.array(z.string()), z.minLength(1))
-z.parse(schema, data)
-z.safeParse(schema, data)
-=======
-z.string().min(5).max(100).email();
+// Standard Zodz.string().min(5).max(100).email();
 z.number().int().positive();
 z.array(z.string()).min(1);
 schema.parse(data);
@@ -111,9 +59,7 @@ z.pipe(z.string(), z.minLength(5), z.maxLength(100), z.email());
 z.pipe(z.number(), z.int(), z.positive());
 z.pipe(z.array(z.string()), z.minLength(1));
 z.parse(schema, data);
-z.safeParse(schema, data);
->>>>>>> main
-```
+z.safeParse(schema, data);```
 
 **When to stick with regular Zod:**
 
@@ -144,8 +90,6 @@ z.safeParse(schema, data);
 ```
 
 **Bundle size comparison:**
-
-<<<<<<< HEAD
 | Package | Gzipped Size | Use Case |
 |---------|--------------|----------|
 | `zod@3` | ~13kb | Legacy, stable |
@@ -162,7 +106,6 @@ z.safeParse(schema, data);
 
 **When NOT to use this pattern:**
 
-> > > > > > > main
 
 - Server-side applications (bundle size irrelevant)
 - When method chaining ergonomics are preferred

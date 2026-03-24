@@ -51,8 +51,6 @@ zod/
 ```
 
 ## Rule Categories
-
-<<<<<<< HEAD
 | Priority | Category | Rules | Impact |
 |----------|----------|-------|--------|
 | 1 | Schema Definition | 6 | CRITICAL |
@@ -63,7 +61,6 @@ zod/
 | 6 | Schema Composition | 5 | MEDIUM |
 | 7 | Refinements & Transforms | 5 | MEDIUM |
 | 8 | Performance & Bundle | 5 | LOW-MEDIUM |
-=======
 | Priority | Category | Rules | Impact |
 | -------- | ------------------------ | ----- | ----------- |
 | 1 | Schema Definition | 6 | CRITICAL |
@@ -75,7 +72,6 @@ zod/
 | 7 | Refinements & Transforms | 5 | MEDIUM |
 | 8 | Performance & Bundle | 5 | LOW-MEDIUM |
 
-> > > > > > > main
 
 ## Key Principles
 

@@ -11,32 +11,11 @@ tags: parse, safeParse, error-handling, validation
 
 **Incorrect (parse without error handling):**
 
-```typescript
-<<<<<<< HEAD
-import { z } from 'zod'
-import { NextRequest, NextResponse } from 'next/server'
-=======
-import { z } from "zod";
+```typescriptimport { z } from "zod";
 import { NextRequest, NextResponse } from "next/server";
->>>>>>> main
-
 const createUserSchema = z.object({
   email: z.string().email(),
-  name: z.string().min(1),
-<<<<<<< HEAD
-})
-
-export async function POST(req: NextRequest) {
-  const body = await req.json()
-
-  // If validation fails, this throws and crashes the handler
-  const user = createUserSchema.parse(body)
-
-  // Never reached if parse throws
-  await db.users.create({ data: user })
-  return NextResponse.json({ success: true })
-=======
-});
+  name: z.string().min(1),});
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
@@ -46,65 +25,32 @@ export async function POST(req: NextRequest) {
 
   // Never reached if parse throws
   await db.users.create({ data: user });
-  return NextResponse.json({ success: true });
->>>>>>> main
-}
+  return NextResponse.json({ success: true });}
 // Result: 500 Internal Server Error with stack trace
 ```
 
 **Correct (using safeParse):**
 
-```typescript
-<<<<<<< HEAD
-import { z } from 'zod'
-import { NextRequest, NextResponse } from 'next/server'
-=======
-import { z } from "zod";
+```typescriptimport { z } from "zod";
 import { NextRequest, NextResponse } from "next/server";
->>>>>>> main
-
 const createUserSchema = z.object({
   email: z.string().email(),
-  name: z.string().min(1),
-<<<<<<< HEAD
-})
-
-export async function POST(req: NextRequest) {
-  const body = await req.json()
-
-  const result = createUserSchema.safeParse(body)
-=======
-});
+  name: z.string().min(1),});
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
 
   const result = createUserSchema.safeParse(body);
->>>>>>> main
-
   if (!result.success) {
     // Return structured error response
-    return NextResponse.json(
-<<<<<<< HEAD
-      { error: 'Validation failed', issues: result.error.issues },
-      { status: 400 }
-    )
-  }
-
-  // result.data is typed correctly
-  await db.users.create({ data: result.data })
-  return NextResponse.json({ success: true })
-=======
-      { error: "Validation failed", issues: result.error.issues },
+    return NextResponse.json(      { error: "Validation failed", issues: result.error.issues },
       { status: 400 },
     );
   }
 
   // result.data is typed correctly
   await db.users.create({ data: result.data });
-  return NextResponse.json({ success: true });
->>>>>>> main
-}
+  return NextResponse.json({ success: true });}
 ```
 
 **The result object structure:**
@@ -129,7 +75,6 @@ if (result.success) {
 
 ```typescript
 // Internal data you control - parse is fine
-<<<<<<< HEAD
 const config = configSchema.parse(JSON.parse(process.env.CONFIG))
 
 // Test assertions - parse throws helpful errors
@@ -152,8 +97,6 @@ schema.parse(testData); // See what fails during development
 ```
 
 **When NOT to use this pattern:**
-
->>>>>>> main
 - Internal configuration parsing where invalid data should crash early
 - Tests where you want exceptions to fail the test
 - Scripts where you want to see the full error

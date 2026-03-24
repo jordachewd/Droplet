@@ -5,7 +5,7 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #56 (2026-03-24). Phases 1–123 complete (incl. 120.1). 120.2 partially complete (20/~40 utility files). 370 unit tests (62 suites). Build passes. TSC passes. Node.js 24.12.0 runtime.**
+> **STATUS: PM audit #57 (2026-03-24). Phases 1–123 complete (incl. 120.1). 120.2 partially complete (20/~40 utility files). 370 unit tests (62 suites). Build passes. TSC passes. Node.js 24.12.0 runtime. Phase 124 COMPLETE — merge conflict leftovers resolved (48 files).**
 > **GATE STATUS: All 7 gates GREEN. Lint (0 errors, 6 warnings), Knip (0 findings), TSC, build, unit tests (62/370), E2E (108 passed, 25 skipped, 0 failed) — all pass.**
 > **Owner directive (CRITICAL): FULL TDD TESTING REBUILD from scratch. NO hardcoded data. WCAG 2.2 AA. Code reuse. Full admin configurability.**
 > **Priority order: 120.2 (CRITICAL TDD utility rebuild — continue) → 120.3 (CRITICAL TDD action rebuild) → 106 (HIGH shared types) → 120.4 (CRITICAL TDD route rebuild) → 120.5 (HIGH TDD component rebuild) → 120.6 (HIGH TDD E2E rebuild) → 120.7 (HIGH coverage thresholds) → 107 (HIGH stop-reason config) → 108 (MEDIUM WCAG tabs) → 114 (MEDIUM WCAG avatar menu) → 74.2 (MEDIUM FAQ admin) → 104 (MEDIUM landing/hero admin)**

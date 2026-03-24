@@ -11,19 +11,7 @@ When a field should only accept specific values (status, role, type), use `z.enu
 
 **Incorrect (plain string for fixed values):**
 
-```typescript
-<<<<<<< HEAD
-import { z } from 'zod'
-
-const orderSchema = z.object({
-  id: z.string(),
-  status: z.string(),  // Accepts any string
-  priority: z.string(),  // No constraints
-})
-
-type Order = z.infer<typeof orderSchema>
-=======
-import { z } from "zod";
+```typescriptimport { z } from "zod";
 
 const orderSchema = z.object({
   id: z.string(),
@@ -31,118 +19,59 @@ const orderSchema = z.object({
   priority: z.string(), // No constraints
 });
 
-type Order = z.infer<typeof orderSchema>;
->>>>>>> main
-// { id: string; status: string; priority: string }
+type Order = z.infer<typeof orderSchema>;// { id: string; status: string; priority: string }
 
 // Typos and invalid values pass validation
-orderSchema.parse({
-<<<<<<< HEAD
-  id: '123',
-  status: 'pendng',  // Typo passes
-  priority: 'super-urgent',  // Invalid value passes
-})
-
-function processOrder(order: Order) {
-  if (order.status === 'pending') {  // Might never match due to typos
-=======
-  id: "123",
+orderSchema.parse({  id: "123",
   status: "pendng", // Typo passes
   priority: "super-urgent", // Invalid value passes
 });
 
 function processOrder(order: Order) {
   if (order.status === "pending") {
-    // Might never match due to typos
->>>>>>> main
-    // ...
+    // Might never match due to typos    // ...
   }
 }
 ```
 
 **Correct (using z.enum):**
 
-```typescript
-<<<<<<< HEAD
-import { z } from 'zod'
-
-const OrderStatus = z.enum(['pending', 'processing', 'shipped', 'delivered'])
-const Priority = z.enum(['low', 'medium', 'high'])
-=======
-import { z } from "zod";
+```typescriptimport { z } from "zod";
 
 const OrderStatus = z.enum(["pending", "processing", "shipped", "delivered"]);
 const Priority = z.enum(["low", "medium", "high"]);
->>>>>>> main
-
 const orderSchema = z.object({
   id: z.string(),
   status: OrderStatus,
-  priority: Priority,
-<<<<<<< HEAD
-})
+  priority: Priority,});
 
-type Order = z.infer<typeof orderSchema>
-=======
-});
-
-type Order = z.infer<typeof orderSchema>;
->>>>>>> main
-// { id: string; status: 'pending' | 'processing' | 'shipped' | 'delivered'; priority: 'low' | 'medium' | 'high' }
+type Order = z.infer<typeof orderSchema>;// { id: string; status: 'pending' | 'processing' | 'shipped' | 'delivered'; priority: 'low' | 'medium' | 'high' }
 
 // Typos are caught at validation
-orderSchema.parse({
-<<<<<<< HEAD
-  id: '123',
-  status: 'pendng',  // ZodError: Invalid enum value
-  priority: 'super-urgent',  // ZodError: Invalid enum value
-})
-
-// Extract enum values for reuse
-OrderStatus.options  // ['pending', 'processing', 'shipped', 'delivered']
-type OrderStatusType = z.infer<typeof OrderStatus>  // 'pending' | 'processing' | ...
-=======
-  id: "123",
+orderSchema.parse({  id: "123",
   status: "pendng", // ZodError: Invalid enum value
   priority: "super-urgent", // ZodError: Invalid enum value
 });
 
 // Extract enum values for reuse
 OrderStatus.options; // ['pending', 'processing', 'shipped', 'delivered']
-type OrderStatusType = z.infer<typeof OrderStatus>; // 'pending' | 'processing' | ...
->>>>>>> main
-```
+type OrderStatusType = z.infer<typeof OrderStatus>; // 'pending' | 'processing' | ...```
 
 **For native TypeScript enums:**
 
 ```typescript
-enum Role {
-<<<<<<< HEAD
-  Admin = 'admin',
-  User = 'user',
-  Guest = 'guest',
-=======
-  Admin = "admin",
+enum Role {  Admin = "admin",
   User = "user",
-  Guest = "guest",
->>>>>>> main
-}
+  Guest = "guest",}
 
 // Use z.nativeEnum for TS enums
 const userSchema = z.object({
-  role: z.nativeEnum(Role),
-<<<<<<< HEAD
-})
-=======
-});
->>>>>>> main
-```
+  role: z.nativeEnum(Role),});```
 
 **For single literal values (discriminated unions):**
 
 ```typescript
 const successResponse = z.object({
-<<<<<<< HEAD
   status: z.literal('success'),
   data: z.unknown(),
 })
@@ -177,8 +106,6 @@ errorResponse,
 ```
 
 **When NOT to use this pattern:**
-
->>>>>>> main
 - When the set of valid values is dynamic or user-defined
 - When values come from a database that may have more options
 

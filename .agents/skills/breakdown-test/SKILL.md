@@ -1,11 +1,5 @@
 ---
-name: breakdown-test
-<<<<<<< HEAD
-description: 'Test Planning and Quality Assurance prompt that generates comprehensive test strategies, task breakdowns, and quality validation plans for GitHub projects.'
-=======
-description: "Test Planning and Quality Assurance prompt that generates comprehensive test strategies, task breakdowns, and quality validation plans for GitHub projects."
->>>>>>> main
----
+name: breakdown-testdescription: "Test Planning and Quality Assurance prompt that generates comprehensive test strategies, task breakdowns, and quality validation plans for GitHub projects."---
 
 # Test Planning & Quality Assurance Prompt
 
@@ -216,10 +210,7 @@ Create comprehensive quality validation checkpoints:
 ## ISTQB Framework Application
 
 **Test Design Techniques Used:**
-<<<<<<< HEAD
-=======
 
-> > > > > > > main
 
 - [ ] Equivalence Partitioning
 - [ ] Boundary Value Analysis
@@ -228,10 +219,7 @@ Create comprehensive quality validation checkpoints:
 - [ ] Experience-Based Testing
 
 **Test Types Coverage:**
-<<<<<<< HEAD
-=======
 
-> > > > > > > main
 
 - [ ] Functional Testing
 - [ ] Non-Functional Testing
@@ -241,10 +229,7 @@ Create comprehensive quality validation checkpoints:
 ## ISO 25010 Quality Characteristics
 
 **Priority Assessment:**
-<<<<<<< HEAD
-=======
 
-> > > > > > > main
 
 - [ ] Functional Suitability: {Critical/High/Medium/Low}
 - [ ] Performance Efficiency: {Critical/High/Medium/Low}
@@ -257,28 +242,22 @@ Create comprehensive quality validation checkpoints:
 
 ## Quality Gates
 
-# <<<<<<< HEAD
 
-> > > > > > > main
 
 - [ ] Entry criteria defined
 - [ ] Exit criteria established
 - [ ] Quality thresholds documented
 
 ## Labels
-
-<<<<<<< HEAD
 `test-strategy`, `istqb`, `iso25010`, `quality-gates`
 
 ## Estimate
 
-=======
 
 `test-strategy`, `istqb`, `iso25010`, `quality-gates`
 
 ## Estimate
 
-> > > > > > > main
 > > > > > > > {Strategic planning effort: 2-3 story points}
 ```
 
@@ -288,31 +267,23 @@ Create comprehensive quality validation checkpoints:
 # Playwright Tests: {Story/Component Name}
 
 ## Test Implementation Scope
-
-<<<<<<< HEAD
 {Specific user story or component being tested}
 
 ## ISTQB Test Case Design
 
-=======
 
 {Specific user story or component being tested}
 
 ## ISTQB Test Case Design
 
-> > > > > > > main
 > > > > > > > **Test Design Technique**: {Selected ISTQB technique}
 > > > > > > > **Test Type**: {Functional/Non-Functional/Structural/Change-Related}
 
 ## Test Cases to Implement
-
-<<<<<<< HEAD
 **Functional Tests:**
-=======
 
 **Functional Tests:**
 
-> > > > > > > main
 
 - [ ] Happy path scenarios
 - [ ] Error handling validation
@@ -320,10 +291,7 @@ Create comprehensive quality validation checkpoints:
 - [ ] Input validation testing
 
 **Non-Functional Tests:**
-<<<<<<< HEAD
-=======
 
-> > > > > > > main
 
 - [ ] Performance testing (response time < {threshold})
 - [ ] Accessibility testing (WCAG compliance)
@@ -332,9 +300,7 @@ Create comprehensive quality validation checkpoints:
 
 ## Playwright Implementation Tasks
 
-# <<<<<<< HEAD
 
-> > > > > > > main
 
 - [ ] Page Object Model development
 - [ ] Test fixture setup
@@ -345,9 +311,7 @@ Create comprehensive quality validation checkpoints:
 
 ## Acceptance Criteria
 
-# <<<<<<< HEAD
 
-> > > > > > > main
 
 - [ ] All test cases pass
 - [ ] Code coverage targets met (>80%)
@@ -355,19 +319,15 @@ Create comprehensive quality validation checkpoints:
 - [ ] Accessibility standards verified
 
 ## Labels
-
-<<<<<<< HEAD
 `playwright`, `e2e-test`, `quality-validation`
 
 ## Estimate
 
-=======
 
 `playwright`, `e2e-test`, `quality-validation`
 
 ## Estimate
 
-> > > > > > > main
 > > > > > > > {Test implementation effort: 2-5 story points}
 ```
 
@@ -377,8 +337,6 @@ Create comprehensive quality validation checkpoints:
 # Quality Assurance: {Feature Name}
 
 ## Quality Validation Scope
-
-<<<<<<< HEAD
 {Overall quality validation for feature/epic}
 
 ## ISO 25010 Quality Assessment
@@ -391,7 +349,6 @@ Create comprehensive quality validation checkpoints:
 
 **Quality Characteristics Validation:**
 
-> > > > > > > main
 
 - [ ] Functional Suitability: Completeness, correctness, appropriateness
 - [ ] Performance Efficiency: Time behavior, resource utilization, capacity
@@ -403,24 +360,17 @@ Create comprehensive quality validation checkpoints:
 - [ ] Portability: Environment adaptability, installation procedures
 
 ## Quality Gates Validation
-
-<<<<<<< HEAD
 **Entry Criteria:**
-=======
 
 **Entry Criteria:**
 
-> > > > > > > main
 
 - [ ] All implementation tasks completed
 - [ ] Unit tests passing
 - [ ] Code review approved
 
 **Exit Criteria:**
-<<<<<<< HEAD
-=======
 
-> > > > > > > main
 
 - [ ] All test types completed with >95% pass rate
 - [ ] No critical/high severity defects
@@ -429,9 +379,7 @@ Create comprehensive quality validation checkpoints:
 
 ## Quality Metrics
 
-# <<<<<<< HEAD
 
-> > > > > > > main
 
 - [ ] Test coverage: {target}%
 - [ ] Defect density: <{threshold} defects/KLOC
@@ -440,19 +388,15 @@ Create comprehensive quality validation checkpoints:
 - [ ] Security: Zero critical vulnerabilities
 
 ## Labels
-
-<<<<<<< HEAD
 `quality-assurance`, `iso25010`, `quality-gates`
 
 ## Estimate
 
-=======
 
 `quality-assurance`, `iso25010`, `quality-gates`
 
 ## Estimate
 
-> > > > > > > main
 > > > > > > > {Quality validation effort: 3-5 story points}
 ```
 
