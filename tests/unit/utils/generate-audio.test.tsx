@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { generateAudio } from "@/lib/utils/openai/generateAudio";
+import type { Message, MessageRole } from "@/types";
+import { createTestTask, createTestUser } from "../test-support";
 
 const {
   speechCreateMock,
@@ -71,6 +73,34 @@ function createPolicy(overrides: Partial<TestPolicy> = {}): TestPolicy {
   };
 }
 
+function createAudioRequest(
+  overrides: Partial<{
+    messages: Message[];
+    ttsText: string;
+    role: MessageRole;
+    taskId: string;
+    userId: string;
+    planName: "Lite" | "Pro" | "Premium";
+    audioMode: "tts" | "audio_in_out";
+  }> = {},
+) {
+  const task = createTestTask();
+  const user = createTestUser();
+  const defaultMessages: Message[] = [
+    { role: "user", whois: "user", content: "Hello there" },
+  ];
+
+  return {
+    messages: defaultMessages,
+    role: "assistant" as const,
+    taskId: task._id,
+    userId: user.clerkId,
+    planName: "Lite" as const,
+    audioMode: "tts" as const,
+    ...overrides,
+  };
+}
+
 describe("generateAudio", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -97,19 +127,15 @@ describe("generateAudio", () => {
 
   it("generates TTS audio from explicit ttsText and uploads it", async () => {
     const audioBuffer = Buffer.from("audio-bytes");
+    const request = createAudioRequest({
+      ttsText: "Speak exactly this line",
+    });
 
     speechCreateMock.mockResolvedValue({
       arrayBuffer: async () => audioBuffer,
     });
 
-    const serialized = await generateAudio({
-      ttsText: "Speak exactly this line",
-      role: "assistant",
-      taskId: "task_audio_1",
-      userId: "user_audio_1",
-      planName: "Lite",
-      audioMode: "tts",
-    });
+    const serialized = await generateAudio(request);
 
     const payload = JSON.parse(String(serialized)) as {
       taskData: {
@@ -124,14 +150,14 @@ describe("generateAudio", () => {
     expect(speechCreateMock).toHaveBeenCalledWith({
       model: "gpt-4o-mini-tts",
       voice: "alloy",
-      input: "Speak exactly this line",
+      input: request.ttsText,
       response_format: "wav",
     });
     expect(uploadFileToAWSMock).toHaveBeenCalledWith(
       audioBuffer,
-      "task_audio_1_audio_snd123.wav",
+      `${request.taskId}_audio_snd123.wav`,
       "audio/wav",
-      "user_audio_1/audio",
+      `${request.userId}/audio`,
     );
     expect(payload.taskUsage).toBe(0);
     expect(payload.generatedAudio).toBe(true);
@@ -154,19 +180,15 @@ describe("generateAudio", () => {
 
   it("builds TTS input from messages when ttsText is not provided", async () => {
     const audioBuffer = Buffer.from("audio-built");
+    const request = createAudioRequest({
+      messages: [{ role: "user", whois: "user", content: "Hello there" }],
+    });
 
     speechCreateMock.mockResolvedValue({
       arrayBuffer: async () => audioBuffer,
     });
 
-    await generateAudio({
-      messages: [{ role: "user", whois: "user", content: "Hello there" }],
-      role: "assistant",
-      taskId: "task_audio_2",
-      userId: "user_audio_2",
-      planName: "Lite",
-      audioMode: "tts",
-    });
+    await generateAudio(request);
 
     expect(buildTextToSpeechInputMock).toHaveBeenCalledWith([
       { role: "user", whois: "user", content: "Hello there" },
@@ -180,17 +202,13 @@ describe("generateAudio", () => {
 
   it("delegates to handleError when TTS has no available text input", async () => {
     buildTextToSpeechInputMock.mockReturnValue("");
+    const request = createAudioRequest({
+      messages: [],
+    });
 
-    await expect(
-      generateAudio({
-        messages: [],
-        role: "assistant",
-        taskId: "task_audio_3",
-        userId: "user_audio_3",
-        planName: "Lite",
-        audioMode: "tts",
-      }),
-    ).rejects.toThrow("handled:generateAudio");
+    await expect(generateAudio(request)).rejects.toThrow(
+      "handled:generateAudio",
+    );
 
     expect(speechCreateMock).not.toHaveBeenCalled();
   });
@@ -198,6 +216,11 @@ describe("generateAudio", () => {
   it("generates audio_in_out from chat completions and decodes audio payload", async () => {
     const decodedAudio = Buffer.from("decoded-audio");
     const encodedAudio = decodedAudio.toString("base64");
+    const request = createAudioRequest({
+      messages: [{ role: "user", whois: "user", content: "Talk to me" }],
+      planName: "Pro",
+      audioMode: "audio_in_out",
+    });
 
     chatCompletionsCreateMock.mockResolvedValue({
       usage: {
@@ -217,14 +240,7 @@ describe("generateAudio", () => {
       ],
     });
 
-    const serialized = await generateAudio({
-      messages: [{ role: "user", whois: "user", content: "Talk to me" }],
-      role: "assistant",
-      taskId: "task_audio_4",
-      userId: "user_audio_4",
-      planName: "Pro",
-      audioMode: "audio_in_out",
-    });
+    const serialized = await generateAudio(request);
 
     const payload = JSON.parse(String(serialized)) as {
       taskUsage: number;
@@ -263,6 +279,12 @@ describe("generateAudio", () => {
   });
 
   it("delegates to handleError when audio_in_out returns no choices", async () => {
+    const request = createAudioRequest({
+      messages: [{ role: "user", whois: "user", content: "Missing choices" }],
+      planName: "Pro",
+      audioMode: "audio_in_out",
+    });
+
     chatCompletionsCreateMock.mockResolvedValue({
       usage: {
         prompt_tokens: 10,
@@ -272,19 +294,18 @@ describe("generateAudio", () => {
       choices: [],
     });
 
-    await expect(
-      generateAudio({
-        messages: [{ role: "user", whois: "user", content: "Missing choices" }],
-        role: "assistant",
-        taskId: "task_audio_5",
-        userId: "user_audio_5",
-        planName: "Pro",
-        audioMode: "audio_in_out",
-      }),
-    ).rejects.toThrow("handled:generateAudio");
+    await expect(generateAudio(request)).rejects.toThrow(
+      "handled:generateAudio",
+    );
   });
 
   it("delegates to handleError when decoded audio payload is invalid", async () => {
+    const request = createAudioRequest({
+      messages: [{ role: "user", whois: "user", content: "Invalid audio" }],
+      planName: "Pro",
+      audioMode: "audio_in_out",
+    });
+
     chatCompletionsCreateMock.mockResolvedValue({
       usage: {
         prompt_tokens: 7,
@@ -303,19 +324,16 @@ describe("generateAudio", () => {
       ],
     });
 
-    await expect(
-      generateAudio({
-        messages: [{ role: "user", whois: "user", content: "Invalid audio" }],
-        role: "assistant",
-        taskId: "task_audio_6",
-        userId: "user_audio_6",
-        planName: "Pro",
-        audioMode: "audio_in_out",
-      }),
-    ).rejects.toThrow("handled:generateAudio");
+    await expect(generateAudio(request)).rejects.toThrow(
+      "handled:generateAudio",
+    );
   });
 
   it("delegates to handleError when policy hard-blocks audio generation", async () => {
+    const request = createAudioRequest({
+      ttsText: "blocked",
+    });
+
     resolveModelPolicyMock.mockReturnValue(
       createPolicy({
         hardBlocked: true,
@@ -323,18 +341,74 @@ describe("generateAudio", () => {
       }),
     );
 
-    await expect(
-      generateAudio({
-        ttsText: "blocked",
-        role: "assistant",
-        taskId: "task_audio_7",
-        userId: "user_audio_7",
-        planName: "Lite",
-        audioMode: "tts",
-      }),
-    ).rejects.toThrow("handled:generateAudio");
+    await expect(generateAudio(request)).rejects.toThrow(
+      "handled:generateAudio",
+    );
 
     expect(speechCreateMock).not.toHaveBeenCalled();
     expect(chatCompletionsCreateMock).not.toHaveBeenCalled();
+  });
+
+  it("delegates to handleError when audio_in_out returns no audio payload", async () => {
+    const request = createAudioRequest({
+      messages: [
+        { role: "user", whois: "user", content: "Need audio payload" },
+      ],
+      planName: "Pro",
+      audioMode: "audio_in_out",
+    });
+
+    chatCompletionsCreateMock.mockResolvedValue({
+      usage: {
+        prompt_tokens: 12,
+        completion_tokens: 4,
+        total_tokens: 16,
+      },
+      choices: [
+        {
+          message: {},
+        },
+      ],
+    });
+
+    await expect(generateAudio(request)).rejects.toThrow(
+      "handled:generateAudio",
+    );
+  });
+
+  it("keeps transcript null when audio payload has no transcript field", async () => {
+    const decodedAudio = Buffer.from("decoded-without-transcript");
+    const request = createAudioRequest({
+      messages: [{ role: "user", whois: "user", content: "No transcript" }],
+      planName: "Pro",
+      audioMode: "audio_in_out",
+    });
+
+    chatCompletionsCreateMock.mockResolvedValue({
+      usage: {
+        prompt_tokens: 15,
+        completion_tokens: 6,
+        total_tokens: 21,
+      },
+      choices: [
+        {
+          message: {
+            audio: {
+              data: decodedAudio.toString("base64"),
+            },
+          },
+        },
+      ],
+    });
+
+    const serialized = await generateAudio(request);
+    const payload = JSON.parse(String(serialized)) as {
+      taskData: { content: Array<{ type: string; text?: string | null }> };
+    };
+
+    expect(payload.taskData.content[0]).toEqual({
+      type: "text",
+      text: null,
+    });
   });
 });

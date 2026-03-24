@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { generateVideo } from "@/lib/utils/openai/generateVideo";
+import type { MessageRole } from "@/types";
+import { createTestTask, createTestUser } from "../test-support";
 
 const {
   videosCreateMock,
@@ -62,6 +64,28 @@ function createPolicy(overrides: Partial<TestPolicy> = {}): TestPolicy {
   };
 }
 
+function createVideoRequest(
+  overrides: Partial<{
+    prompt: string;
+    role: MessageRole;
+    taskId: string;
+    userId: string;
+    planName: "Lite" | "Pro" | "Premium";
+  }> = {},
+) {
+  const task = createTestTask();
+  const user = createTestUser();
+
+  return {
+    prompt: "A calm ocean sunset",
+    role: "assistant" as const,
+    taskId: task._id,
+    userId: user.clerkId,
+    planName: "Lite" as const,
+    ...overrides,
+  };
+}
+
 describe("generateVideo", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -83,6 +107,7 @@ describe("generateVideo", () => {
 
   it("creates, polls, downloads, and uploads video successfully", async () => {
     const contentBuffer = Buffer.from("video-bytes");
+    const request = createVideoRequest();
 
     videosCreateMock.mockResolvedValue({
       id: "video_1",
@@ -96,13 +121,7 @@ describe("generateVideo", () => {
       arrayBuffer: async () => contentBuffer,
     });
 
-    const serialized = await generateVideo({
-      prompt: "A calm ocean sunset",
-      role: "assistant",
-      taskId: "task_video_1",
-      userId: "user_video_1",
-      planName: "Lite",
-    });
+    const serialized = await generateVideo(request);
 
     const payload = JSON.parse(String(serialized)) as {
       generatedVideo: boolean;
@@ -115,16 +134,16 @@ describe("generateVideo", () => {
 
     expect(videosCreateMock).toHaveBeenCalledWith({
       model: "sora-2",
-      prompt: "A calm ocean sunset",
+      prompt: request.prompt,
       seconds: "4",
       size: "1280x720",
     });
     expect(videosRetrieveMock).toHaveBeenCalledWith("video_1");
     expect(uploadFileToAWSMock).toHaveBeenCalledWith(
       contentBuffer,
-      "task_video_1_video_vid123.mp4",
+      `${request.taskId}_video_vid123.mp4`,
       "video/mp4",
-      "user_video_1/videos",
+      `${request.userId}/videos`,
     );
     expect(payload.generatedVideo).toBe(true);
     expect(payload.model).toBe("sora-2");
@@ -147,6 +166,7 @@ describe("generateVideo", () => {
   it("polls once when video is pending before completing", async () => {
     vi.useFakeTimers();
     const contentBuffer = Buffer.from("video-polled");
+    const request = createVideoRequest({ prompt: "Time-lapse city" });
 
     videosCreateMock.mockResolvedValue({
       id: "video_queued_1",
@@ -165,13 +185,7 @@ describe("generateVideo", () => {
       arrayBuffer: async () => contentBuffer,
     });
 
-    const generationPromise = generateVideo({
-      prompt: "Time-lapse city",
-      role: "assistant",
-      taskId: "task_video_2",
-      userId: "user_video_2",
-      planName: "Lite",
-    });
+    const generationPromise = generateVideo(request);
 
     await vi.advanceTimersByTimeAsync(1_000);
     const serialized = await generationPromise;
@@ -184,6 +198,8 @@ describe("generateVideo", () => {
   });
 
   it("delegates to handleError when policy hard-blocks generation", async () => {
+    const request = createVideoRequest({ prompt: "blocked" });
+
     resolveModelPolicyMock.mockReturnValue(
       createPolicy({
         hardBlocked: true,
@@ -191,36 +207,28 @@ describe("generateVideo", () => {
       }),
     );
 
-    await expect(
-      generateVideo({
-        prompt: "blocked",
-        role: "assistant",
-        taskId: "task_video_3",
-        userId: "user_video_3",
-        planName: "Lite",
-      }),
-    ).rejects.toThrow("handled:generateVideo");
+    await expect(generateVideo(request)).rejects.toThrow(
+      "handled:generateVideo",
+    );
 
     expect(videosCreateMock).not.toHaveBeenCalled();
   });
 
   it("delegates to handleError when video creation returns no id", async () => {
+    const request = createVideoRequest({ prompt: "missing id" });
+
     videosCreateMock.mockResolvedValue({
       status: "queued",
     });
 
-    await expect(
-      generateVideo({
-        prompt: "missing id",
-        role: "assistant",
-        taskId: "task_video_4",
-        userId: "user_video_4",
-        planName: "Lite",
-      }),
-    ).rejects.toThrow("handled:generateVideo");
+    await expect(generateVideo(request)).rejects.toThrow(
+      "handled:generateVideo",
+    );
   });
 
   it("delegates to handleError when retrieved video status is failed", async () => {
+    const request = createVideoRequest({ prompt: "invalid prompt" });
+
     videosCreateMock.mockResolvedValue({
       id: "video_fail_1",
       status: "queued",
@@ -231,18 +239,14 @@ describe("generateVideo", () => {
       failure_reason: "Provider rejected prompt",
     });
 
-    await expect(
-      generateVideo({
-        prompt: "invalid prompt",
-        role: "assistant",
-        taskId: "task_video_5",
-        userId: "user_video_5",
-        planName: "Lite",
-      }),
-    ).rejects.toThrow("handled:generateVideo");
+    await expect(generateVideo(request)).rejects.toThrow(
+      "handled:generateVideo",
+    );
   });
 
   it("delegates to handleError when downloaded video content is empty", async () => {
+    const request = createVideoRequest({ prompt: "empty content" });
+
     videosCreateMock.mockResolvedValue({
       id: "video_empty_1",
       status: "queued",
@@ -255,14 +259,50 @@ describe("generateVideo", () => {
       arrayBuffer: async () => new Uint8Array(0),
     });
 
-    await expect(
-      generateVideo({
-        prompt: "empty content",
-        role: "assistant",
-        taskId: "task_video_6",
-        userId: "user_video_6",
-        planName: "Lite",
-      }),
-    ).rejects.toThrow("handled:generateVideo");
+    await expect(generateVideo(request)).rejects.toThrow(
+      "handled:generateVideo",
+    );
+  });
+
+  it("delegates to handleError when completed payload is missing id", async () => {
+    const request = createVideoRequest({
+      prompt: "completed without id",
+    });
+
+    videosCreateMock.mockResolvedValue({
+      id: "video_no_id",
+      status: "queued",
+    });
+    videosRetrieveMock.mockResolvedValue({
+      status: "completed",
+    });
+
+    await expect(generateVideo(request)).rejects.toThrow(
+      "handled:generateVideo",
+    );
+  });
+
+  it("delegates to handleError when video polling times out", async () => {
+    vi.useFakeTimers();
+    const request = createVideoRequest({
+      prompt: "timeout prompt",
+    });
+
+    videosCreateMock.mockResolvedValue({
+      id: "video_timeout",
+      status: "queued",
+    });
+    videosRetrieveMock.mockResolvedValue({
+      id: "video_timeout",
+      status: "queued",
+    });
+
+    const generationPromise = generateVideo(request);
+    const rejectionExpectation = expect(generationPromise).rejects.toThrow(
+      "handled:generateVideo",
+    );
+
+    await vi.advanceTimersByTimeAsync(181_000);
+    await rejectionExpectation;
   });
 });

@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { generateImage } from "@/lib/utils/openai/generateImage";
+import type { MessageRole } from "@/types";
+import { createTestTask, createTestUser } from "../test-support";
 
 const {
   imagesGenerateMock,
@@ -66,6 +68,28 @@ function createPolicy(overrides: Partial<TestPolicy> = {}): TestPolicy {
   };
 }
 
+function createImageRequest(
+  overrides: Partial<{
+    prompt: string;
+    role: MessageRole;
+    taskId: string;
+    userId: string;
+    planName: "Lite" | "Pro" | "Premium";
+  }> = {},
+) {
+  const task = createTestTask();
+  const user = createTestUser();
+
+  return {
+    prompt: "Original prompt",
+    role: "assistant" as const,
+    taskId: task._id,
+    userId: user.clerkId,
+    planName: "Lite" as const,
+    ...overrides,
+  };
+}
+
 describe("generateImage", () => {
   const originalFetch = global.fetch;
 
@@ -97,6 +121,7 @@ describe("generateImage", () => {
   it("generates and uploads a PNG image from base64 response data", async () => {
     const rawBuffer = Buffer.from("raw-image");
     const convertedBuffer = Buffer.from("converted-image");
+    const request = createImageRequest();
 
     imagesGenerateMock.mockResolvedValue({
       data: [
@@ -108,13 +133,7 @@ describe("generateImage", () => {
     });
     sharpToBufferMock.mockResolvedValue(convertedBuffer);
 
-    const serialized = await generateImage({
-      prompt: "Original prompt",
-      role: "assistant",
-      taskId: "task_img_1",
-      userId: "user_img_1",
-      planName: "Lite",
-    });
+    const serialized = await generateImage(request);
 
     const payload = JSON.parse(String(serialized)) as {
       taskData: {
@@ -131,13 +150,13 @@ describe("generateImage", () => {
 
     expect(imagesGenerateMock).toHaveBeenCalledWith({
       model: "gpt-image-1-mini",
-      prompt: "Original prompt",
+      prompt: request.prompt,
     });
     expect(uploadFileToAWSMock).toHaveBeenCalledWith(
       convertedBuffer,
-      "task_img_1_image_abc123.png",
+      `${request.taskId}_image_abc123.png`,
       "image/png",
-      "user_img_1/images",
+      `${request.userId}/images`,
     );
     expect(payload.generatedImage).toBe(true);
     expect(payload.model).toBe("gpt-image-1-mini");
@@ -160,6 +179,7 @@ describe("generateImage", () => {
   it("fetches image bytes from URL when base64 payload is unavailable", async () => {
     const fetchedBuffer = Buffer.from("downloaded-image");
     const convertedBuffer = Buffer.from("converted-from-url");
+    const request = createImageRequest({ prompt: "URL prompt" });
 
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
@@ -170,13 +190,7 @@ describe("generateImage", () => {
     });
     sharpToBufferMock.mockResolvedValue(convertedBuffer);
 
-    const serialized = await generateImage({
-      prompt: "URL prompt",
-      role: "assistant",
-      taskId: "task_img_2",
-      userId: "user_img_2",
-      planName: "Lite",
-    });
+    const serialized = await generateImage(request);
 
     const payload = JSON.parse(String(serialized)) as {
       taskData: { content: Array<{ type: string; text?: string }> };
@@ -190,6 +204,8 @@ describe("generateImage", () => {
   });
 
   it("delegates to handleError when model policy hard-blocks the request", async () => {
+    const request = createImageRequest({ prompt: "blocked" });
+
     resolveModelPolicyMock.mockReturnValue(
       createPolicy({
         hardBlocked: true,
@@ -197,15 +213,9 @@ describe("generateImage", () => {
       }),
     );
 
-    await expect(
-      generateImage({
-        prompt: "blocked",
-        role: "assistant",
-        taskId: "task_img_3",
-        userId: "user_img_3",
-        planName: "Lite",
-      }),
-    ).rejects.toThrow("handled:generateImage");
+    await expect(generateImage(request)).rejects.toThrow(
+      "handled:generateImage",
+    );
 
     expect(imagesGenerateMock).not.toHaveBeenCalled();
     expect(handleErrorMock).toHaveBeenCalledWith(
@@ -216,19 +226,15 @@ describe("generateImage", () => {
   });
 
   it("delegates to handleError when image API returns no generated data", async () => {
+    const request = createImageRequest({ prompt: "empty response" });
+
     imagesGenerateMock.mockResolvedValue({
       data: [],
     });
 
-    await expect(
-      generateImage({
-        prompt: "empty response",
-        role: "assistant",
-        taskId: "task_img_4",
-        userId: "user_img_4",
-        planName: "Lite",
-      }),
-    ).rejects.toThrow("handled:generateImage");
+    await expect(generateImage(request)).rejects.toThrow(
+      "handled:generateImage",
+    );
 
     expect(handleErrorMock).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -238,6 +244,8 @@ describe("generateImage", () => {
   });
 
   it("delegates to handleError when image URL fetch fails", async () => {
+    const request = createImageRequest({ prompt: "fetch fail" });
+
     global.fetch = vi.fn().mockResolvedValue({
       ok: false,
       arrayBuffer: async () => Buffer.from(""),
@@ -246,15 +254,9 @@ describe("generateImage", () => {
       data: [{ url: "https://openai.example/fail-image" }],
     });
 
-    await expect(
-      generateImage({
-        prompt: "fetch fail",
-        role: "assistant",
-        taskId: "task_img_5",
-        userId: "user_img_5",
-        planName: "Lite",
-      }),
-    ).rejects.toThrow("handled:generateImage");
+    await expect(generateImage(request)).rejects.toThrow(
+      "handled:generateImage",
+    );
 
     expect(handleErrorMock).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -264,24 +266,46 @@ describe("generateImage", () => {
   });
 
   it("delegates to handleError when response has no usable image payload", async () => {
+    const request = createImageRequest({ prompt: "missing payload" });
+
     imagesGenerateMock.mockResolvedValue({
       data: [{}],
     });
 
-    await expect(
-      generateImage({
-        prompt: "missing payload",
-        role: "assistant",
-        taskId: "task_img_6",
-        userId: "user_img_6",
-        planName: "Lite",
-      }),
-    ).rejects.toThrow("handled:generateImage");
+    await expect(generateImage(request)).rejects.toThrow(
+      "handled:generateImage",
+    );
 
     expect(handleErrorMock).toHaveBeenCalledWith(
       expect.objectContaining({
         source: "generateImage",
       }),
+    );
+  });
+
+  it("delegates sync conversion failures through handleError", async () => {
+    const request = createImageRequest({ prompt: "bad image bytes" });
+
+    imagesGenerateMock.mockResolvedValue({
+      data: [
+        {
+          b64_json: Buffer.from("bad-image").toString("base64"),
+        },
+      ],
+    });
+    sharpFactoryMock.mockImplementationOnce(() => {
+      throw new Error("sharp failed");
+    });
+
+    await expect(generateImage(request)).rejects.toThrow(
+      "handled:generateImage",
+    );
+
+    expect(handleErrorMock).toHaveBeenCalledWith(
+      expect.objectContaining({ source: "convertToPng" }),
+    );
+    expect(handleErrorMock).toHaveBeenCalledWith(
+      expect.objectContaining({ source: "generateImage" }),
     );
   });
 });

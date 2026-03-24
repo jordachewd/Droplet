@@ -225,6 +225,71 @@ describe("ensure-user-synced", () => {
     stderrSpy.mockRestore();
   });
 
+  it("returns null when user is created but cannot be reloaded", async () => {
+    const clerkUser = createTestClerkUser({
+      id: "user_reload_missing_1",
+      username: "missing-reload-user",
+    });
+    const createdUserId = "507f1f77bcf86cd799439102";
+
+    findOneMock.mockReturnValueOnce(createSelectLeanQuery(null));
+    createMock.mockResolvedValue(makeCreatedUserDocument(createdUserId));
+    findByIdMock.mockReturnValue(createSelectLeanQuery(null));
+    getUserMock.mockResolvedValue(clerkUser);
+    updateUserMetadataMock.mockResolvedValue(undefined);
+
+    const result = await ensureUserSynced(clerkUser.id);
+
+    expect(result).toBeNull();
+    expect(updateUserMetadataMock).toHaveBeenCalledWith(clerkUser.id, {
+      publicMetadata: {
+        userId: createdUserId,
+        role: "client",
+        userImg: clerkUser.imageUrl,
+      },
+    });
+  });
+
+  it("falls back to first Clerk email when primary email id is missing", async () => {
+    const clerkUser = createTestClerkUser({
+      id: "user_email_fallback_1",
+      username: null,
+      emailAddresses: [
+        {
+          id: "email_first",
+          emailAddress: "fallback.first@example.com",
+        },
+        {
+          id: "email_second",
+          emailAddress: "fallback.second@example.com",
+        },
+      ],
+      primaryEmailAddressId: "email_unknown",
+    });
+    const createdUserId = "507f1f77bcf86cd799439103";
+    const createdUser = createTestUser({
+      _id: createdUserId,
+      clerkId: clerkUser.id,
+      email: "fallback.first@example.com",
+    });
+
+    findOneMock.mockReturnValueOnce(createSelectLeanQuery(null));
+    createMock.mockResolvedValue(makeCreatedUserDocument(createdUserId));
+    findByIdMock.mockReturnValue(createSelectLeanQuery(createdUser));
+    getUserMock.mockResolvedValue(clerkUser);
+    updateUserMetadataMock.mockResolvedValue(undefined);
+
+    const result = await ensureUserSynced(clerkUser.id);
+
+    expect(result).toEqual(createdUser);
+    expect(createMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        clerkId: clerkUser.id,
+        email: "fallback.first@example.com",
+      }),
+    );
+  });
+
   it("returns race winner when user creation fails with duplicate key", async () => {
     const clerkUser = createTestClerkUser({
       id: "user_duplicate_1",

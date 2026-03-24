@@ -4,6 +4,7 @@ import {
   generateStreamingResponse,
 } from "@/lib/utils/openai/generateResponse";
 import type { PersonaId } from "@/types/PersonaData.d";
+import { createTestTask, createTestUser } from "../test-support";
 
 const {
   getPersonaMock,
@@ -146,6 +147,38 @@ function createBaseMessages() {
   return [{ role: "user", whois: "user", content: "Hello" }] as const;
 }
 
+function createResponseRequest(
+  overrides: Partial<Parameters<typeof generateResponse>[0]> = {},
+) {
+  const task = createTestTask();
+  const user = createTestUser();
+
+  return {
+    messages: [...createBaseMessages()],
+    taskId: task._id,
+    userId: user.clerkId,
+    planName: "Lite" as const,
+    entitlements: createEntitlements(),
+    ...overrides,
+  };
+}
+
+function createStreamingRequest(
+  overrides: Partial<Parameters<typeof generateStreamingResponse>[0]> = {},
+) {
+  const task = createTestTask();
+  const user = createTestUser();
+
+  return {
+    messages: [...createBaseMessages()],
+    taskId: task._id,
+    userId: user.clerkId,
+    planName: "Lite" as const,
+    entitlements: createEntitlements(),
+    ...overrides,
+  };
+}
+
 function parsePayload<TValue>(serializedPayload: string): TValue {
   return JSON.parse(serializedPayload) as TValue;
 }
@@ -211,13 +244,7 @@ describe("generateResponse", () => {
       },
     );
 
-    const serialized = await generateResponse({
-      messages: [...createBaseMessages()],
-      taskId: "task_1",
-      userId: "user_1",
-      planName: "Lite",
-      entitlements: createEntitlements(),
-    });
+    const serialized = await generateResponse(createResponseRequest());
 
     const payload = parsePayload<{
       errorType: string;
@@ -250,14 +277,11 @@ describe("generateResponse", () => {
       ],
     });
 
-    const serialized = await generateResponse({
-      messages: [...createBaseMessages()],
-      taskId: "task_2",
-      userId: "user_2",
-      personaId: "developer",
-      planName: "Lite",
-      entitlements: createEntitlements(),
-    });
+    const serialized = await generateResponse(
+      createResponseRequest({
+        personaId: "developer",
+      }),
+    );
 
     const payload = parsePayload<{
       taskData: { content: Array<{ type: string; text: string }> };
@@ -309,15 +333,13 @@ describe("generateResponse", () => {
       ],
     });
 
-    const serialized = await generateResponse({
-      messages: [...createBaseMessages()],
-      taskId: "task_3",
-      userId: "user_3",
-      planName: "Lite",
-      entitlements: createEntitlements({
-        supportsImageGeneration: false,
+    const serialized = await generateResponse(
+      createResponseRequest({
+        entitlements: createEntitlements({
+          supportsImageGeneration: false,
+        }),
       }),
-    });
+    );
 
     const payload = parsePayload<{
       blockedReason: string;
@@ -372,14 +394,11 @@ describe("generateResponse", () => {
       claimed: false,
     });
 
-    const serialized = await generateResponse({
-      messages: [...createBaseMessages()],
-      taskId: "task_4",
-      userId: "user_4",
-      planName: "Lite",
-      entitlements: createEntitlements(),
-      claimMediaGenerationSlot,
-    });
+    const serialized = await generateResponse(
+      createResponseRequest({
+        claimMediaGenerationSlot,
+      }),
+    );
 
     const payload = parsePayload<{
       blockedReason: string;
@@ -444,14 +463,11 @@ describe("generateResponse", () => {
       }),
     );
 
-    const serialized = await generateResponse({
-      messages: [...createBaseMessages()],
-      taskId: "task_5",
-      userId: "user_5",
-      planName: "Lite",
-      entitlements: createEntitlements(),
-      claimMediaGenerationSlot,
-    });
+    const serialized = await generateResponse(
+      createResponseRequest({
+        claimMediaGenerationSlot,
+      }),
+    );
 
     const payload = parsePayload<{
       taskUsage: number;
@@ -500,15 +516,12 @@ describe("generateResponse", () => {
     const rollbackMediaGenerationSlot = vi.fn().mockResolvedValue(undefined);
     generateImageMock.mockRejectedValue(new Error("image service down"));
 
-    const serialized = await generateResponse({
-      messages: [...createBaseMessages()],
-      taskId: "task_6",
-      userId: "user_6",
-      planName: "Lite",
-      entitlements: createEntitlements(),
-      claimMediaGenerationSlot,
-      rollbackMediaGenerationSlot,
-    });
+    const serialized = await generateResponse(
+      createResponseRequest({
+        claimMediaGenerationSlot,
+        rollbackMediaGenerationSlot,
+      }),
+    );
 
     const payload = parsePayload<{
       errorType: string;
@@ -553,15 +566,13 @@ describe("generateResponse", () => {
       ],
     });
 
-    const serialized = await generateResponse({
-      messages: [...createBaseMessages()],
-      taskId: "task_7",
-      userId: "user_7",
-      planName: "Lite",
-      entitlements: createEntitlements({
-        supportsAudioGeneration: false,
+    const serialized = await generateResponse(
+      createResponseRequest({
+        entitlements: createEntitlements({
+          supportsAudioGeneration: false,
+        }),
       }),
-    });
+    );
 
     const payload = parsePayload<{
       blockedReason: string;
@@ -581,6 +592,54 @@ describe("generateResponse", () => {
         }),
       ]),
     );
+    expect(generateAudioMock).not.toHaveBeenCalled();
+  });
+
+  it("returns audio_limit_reached when audio slot claim fails", async () => {
+    createChatCompletionMock.mockResolvedValue({
+      usage: {
+        prompt_tokens: 7,
+        completion_tokens: 5,
+        total_tokens: 12,
+      },
+      choices: [
+        {
+          message: {
+            role: "assistant",
+            tool_calls: [
+              {
+                type: "function",
+                function: {
+                  name: "getGeneratedAudio",
+                  arguments: JSON.stringify({ content: "Speak this text" }),
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+
+    const claimMediaGenerationSlot = vi.fn().mockResolvedValue({
+      claimed: false,
+    });
+
+    const serialized = await generateResponse(
+      createResponseRequest({
+        claimMediaGenerationSlot,
+      }),
+    );
+
+    const payload = parsePayload<{
+      blockedReason: string;
+      taskData: { content: Array<{ text: string }> };
+    }>(serialized);
+
+    expect(payload.blockedReason).toBe("audio_limit_reached");
+    expect(payload.taskData.content[0]?.text).toContain("limit reached");
+    expect(claimMediaGenerationSlot).toHaveBeenCalledWith({
+      limitType: "audio",
+    });
     expect(generateAudioMock).not.toHaveBeenCalled();
   });
 
@@ -631,14 +690,11 @@ describe("generateResponse", () => {
       }),
     );
 
-    const serialized = await generateResponse({
-      messages: [...createBaseMessages()],
-      taskId: "task_8",
-      userId: "user_8",
-      planName: "Lite",
-      entitlements: createEntitlements(),
-      claimMediaGenerationSlot,
-    });
+    const serialized = await generateResponse(
+      createResponseRequest({
+        claimMediaGenerationSlot,
+      }),
+    );
 
     const payload = parsePayload<{
       taskUsage: number;
@@ -656,16 +712,56 @@ describe("generateResponse", () => {
     );
   });
 
+  it("returns video_limit_reached when video tool is unavailable due to limit state", async () => {
+    createChatCompletionMock.mockResolvedValue({
+      usage: {
+        prompt_tokens: 8,
+        completion_tokens: 6,
+        total_tokens: 14,
+      },
+      choices: [
+        {
+          message: {
+            role: "assistant",
+            tool_calls: [
+              {
+                type: "function",
+                function: {
+                  name: "getGeneratedVideo",
+                  arguments: JSON.stringify({
+                    prompt: "Do not generate",
+                  }),
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+
+    const serialized = await generateResponse(
+      createResponseRequest({
+        entitlements: createEntitlements({
+          supportsVideoGeneration: false,
+          videoLimitReached: true,
+        }),
+      }),
+    );
+
+    const payload = parsePayload<{
+      blockedReason: string;
+      taskData: { content: Array<{ text: string }> };
+    }>(serialized);
+
+    expect(payload.blockedReason).toBe("video_limit_reached");
+    expect(payload.taskData.content[0]?.text).toContain("limit reached");
+    expect(generateVideoMock).not.toHaveBeenCalled();
+  });
+
   it("returns unknown error type when chat completion throws a non-API error", async () => {
     createChatCompletionMock.mockRejectedValue(new Error("network down"));
 
-    const serialized = await generateResponse({
-      messages: [...createBaseMessages()],
-      taskId: "task_9",
-      userId: "user_9",
-      planName: "Lite",
-      entitlements: createEntitlements(),
-    });
+    const serialized = await generateResponse(createResponseRequest());
 
     const payload = parsePayload<{
       errorType: string;
@@ -741,14 +837,12 @@ describe("generateStreamingResponse", () => {
       })),
     });
 
-    const payload = await generateStreamingResponse({
-      messages: [{ role: "user", whois: "user", content: "Hello stream" }],
-      taskId: "task_stream_1",
-      userId: "user_stream_1",
-      planName: "Lite",
-      entitlements: createEntitlements(),
-      onContentChunk,
-    });
+    const payload = await generateStreamingResponse(
+      createStreamingRequest({
+        messages: [{ role: "user", whois: "user", content: "Hello stream" }],
+        onContentChunk,
+      }),
+    );
 
     expect(onContentChunk).toHaveBeenCalledWith("Hi", "Hi there");
     expect(payload.taskData).toEqual({

@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { enforceSlidingWindowRateLimit } from "@/lib/utils/rate-limit";
+import { createTestUser } from "../test-support";
 
 const { connectToDatabaseMock, findOneAndUpdateMock } = vi.hoisted(() => ({
   connectToDatabaseMock: vi.fn(),
@@ -18,6 +19,14 @@ vi.mock("@/lib/database/models/rate-limit-entry.model", () => ({
   },
 }));
 
+function createRateLimitKey() {
+  const user = createTestUser({
+    clerkId: "user_rate_limit_123",
+  });
+
+  return `openai:${user.clerkId}`;
+}
+
 describe("rate-limit", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -32,6 +41,8 @@ describe("rate-limit", () => {
   });
 
   it("accepts a request when the generated requestId is persisted", async () => {
+    const key = createRateLimitKey();
+
     vi.spyOn(crypto, "randomUUID").mockReturnValue("req_current");
     findOneAndUpdateMock.mockResolvedValue({
       requests: [
@@ -47,14 +58,14 @@ describe("rate-limit", () => {
     });
 
     const result = await enforceSlidingWindowRateLimit({
-      key: "openai:user_123",
+      key,
       limit: 3,
       windowMs: 60_000,
     });
 
     expect(connectToDatabaseMock).toHaveBeenCalledTimes(1);
     expect(findOneAndUpdateMock).toHaveBeenCalledWith(
-      { key: "openai:user_123" },
+      { key },
       expect.any(Array),
       expect.objectContaining({
         upsert: true,
@@ -71,6 +82,8 @@ describe("rate-limit", () => {
   });
 
   it("blocks a request when persisted requests do not contain the new requestId", async () => {
+    const key = createRateLimitKey();
+
     vi.spyOn(crypto, "randomUUID").mockReturnValue("req_new");
     findOneAndUpdateMock.mockResolvedValue({
       requests: [
@@ -86,7 +99,7 @@ describe("rate-limit", () => {
     });
 
     const result = await enforceSlidingWindowRateLimit({
-      key: "openai:user_999",
+      key,
       limit: 2,
       windowMs: 60_000,
     });
@@ -101,6 +114,8 @@ describe("rate-limit", () => {
   });
 
   it("normalizes stored request timestamps and filters invalid entries", async () => {
+    const key = createRateLimitKey();
+
     vi.spyOn(crypto, "randomUUID").mockReturnValue("req_valid");
     findOneAndUpdateMock.mockResolvedValue({
       requests: [
@@ -118,7 +133,7 @@ describe("rate-limit", () => {
     });
 
     const result = await enforceSlidingWindowRateLimit({
-      key: "openai:user_filtered",
+      key,
       limit: 5,
       windowMs: 60_000,
     });
@@ -126,5 +141,26 @@ describe("rate-limit", () => {
     expect(result.success).toBe(true);
     expect(result.remaining).toBe(3);
     expect(result.resetAt).toBe(new Date("2026-03-24T12:00:10.000Z").getTime());
+  });
+
+  it("returns blocked response when storage returns no persisted requests", async () => {
+    const key = createRateLimitKey();
+
+    vi.spyOn(crypto, "randomUUID").mockReturnValue("req_missing");
+    findOneAndUpdateMock.mockResolvedValue(null);
+
+    const result = await enforceSlidingWindowRateLimit({
+      key,
+      limit: 1,
+      windowMs: 60_000,
+    });
+
+    expect(result).toEqual({
+      success: false,
+      limit: 1,
+      remaining: 0,
+      resetAt: new Date("2026-03-24T12:01:00.000Z").getTime(),
+      retryAfterMs: 60_000,
+    });
   });
 });
