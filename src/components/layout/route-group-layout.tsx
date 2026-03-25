@@ -1,9 +1,10 @@
 import ChatHeader from "@/components/chat/chat-header";
-import PageWrapper from "@/components/layout/page-wrapper";
+import ChatPageWrapper from "@/components/chat/chat-page-wrapper";
 import { getEffectivePersonaConfig } from "@/lib/utils/effective-persona-config";
+import { ReactNode } from "react";
 
 interface RouteGroupLayoutProps {
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 export default async function RouteGroupLayout({
@@ -14,13 +15,13 @@ export default async function RouteGroupLayout({
   return (
     <>
       <ChatHeader personas={personas} />
-      <PageWrapper
+      <ChatPageWrapper
         id="PageWrapperContent"
         scrollable
         className="RouteGroupLayout"
       >
         {children}
-      </PageWrapper>
+      </ChatPageWrapper>
     </>
   );
 }

@@ -2,8 +2,7 @@
 
 import { useUser } from "@clerk/nextjs";
 import { Plan } from "@/types/PlanData.d";
-import { UserData } from "@/types/UserData.d";
-import PageHead from "@/components/layout/page-head";
+import { UserData } from "@/types/UserData.d"; 
 import PlanCard from "@/components/shared/plan-card";
 import LoadingBubbles from "@/components/shared/loading-bubbles";
 import Link from "next/link";
@@ -37,12 +36,6 @@ export default function Plans({
 
   return (
     <section className={wrapperClassName}>
-      <PageHead
-        title={`${isSignedIn ? "Upgrade" : "Choose"} your plan`}
-        subtitle="Select the plan that suits your needs!"
-        align="center"
-      />
-
       <div className="PlanCards flex w-full flex-col justify-between gap-10 md:flex-row">
         {plansData.map((plan: Plan) => {
           return (

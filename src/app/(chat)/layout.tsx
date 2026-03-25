@@ -1,6 +1,6 @@
 import ChatSidebar from "@/components/chat/chat-sidebar";
 import ChatHeader from "@/components/chat/chat-header";
-import PageWrapper from "@/components/layout/page-wrapper";
+import ChatPageWrapper from "@/components/chat/chat-page-wrapper";
 import { auth } from "@clerk/nextjs/server";
 import { getEffectivePersonaAccessByPlan } from "@/lib/utils/effective-persona-access";
 import { getEffectivePersonaConfig } from "@/lib/utils/effective-persona-config";
@@ -28,7 +28,7 @@ export default async function ChatRouteLayout({
   });
 
   return (
-    <PageWrapper className="ChatRouteLayout flex-row!">
+    <ChatPageWrapper className="ChatRouteLayout flex-row!">
       <a href="#chat-main-content" className="skip-link">
         Skip to main content
       </a>
@@ -44,6 +44,6 @@ export default async function ChatRouteLayout({
         />
         {children}
       </main>
-    </PageWrapper>
+    </ChatPageWrapper>
   );
 }

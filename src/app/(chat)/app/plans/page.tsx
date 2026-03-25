@@ -1,5 +1,5 @@
 import Faqs from "@/components/sections/shared/faqs-section";
-import PageWrapper from "@/components/layout/page-wrapper";
+import ChatPageWrapper from "@/components/chat/chat-page-wrapper";
 import Plans from "@/components/sections/shared/plans-section";
 import { ensureUserSynced } from "@/lib/utils/ensure-user-synced";
 import { auth } from "@clerk/nextjs/server";
@@ -10,6 +10,7 @@ import {
   getEffectiveSupportEmail,
 } from "@/lib/utils/effective-plan-config";
 import { getEffectivePersonaAccessByPlan } from "@/lib/utils/effective-persona-access";
+import PageHead from "@/components/layout/page-head";
 
 export default async function AppPlansPage() {
   const { userId } = await auth();
@@ -34,7 +35,13 @@ export default async function AppPlansPage() {
   });
 
   return userData ? (
-    <PageWrapper id="AppPlansPage" scrollable>
+    <ChatPageWrapper id="AppPlansPage" scrollable>
+      <PageHead
+        title="Upgrade your plan"
+        subtitle="Select the plan that suits your needs!"
+        align="center"
+      />
+
       <Plans
         userData={userData}
         hasLoader
@@ -42,7 +49,7 @@ export default async function AppPlansPage() {
         currencySymbol={effectivePlanConfig.pricing.currencySymbol}
       />
       <Faqs faqsData={faqs} />
-    </PageWrapper>
+    </ChatPageWrapper>
   ) : (
     <div className="AppPlansPage flex h-dvh items-center justify-center">
       <div className="mx-auto max-w-md rounded-lg border border-red-200 bg-red-50 p-6 text-center dark:border-red-800 dark:bg-red-950">

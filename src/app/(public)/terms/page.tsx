@@ -6,6 +6,7 @@ import {
   legalReviewDisclaimer,
 } from "@/constants/terms-data";
 import { getEffectivePlanConfig } from "@/lib/utils/effective-plan-config";
+import PageWrapper from "@/components/layout/page-wrapper";
 
 export const metadata: Metadata = {
   title: "Terms & Conditions | Droplet",
@@ -21,7 +22,7 @@ export default async function TermsPage() {
   });
 
   return (
-    <section className="TermsPage mx-auto flex w-full max-w-screen-2xl flex-col gap-8 px-4 pb-16 pt-24 sm:px-6 lg:px-8">
+    <PageWrapper id="PrivacyPage" className="gap-8!">
       <PageHead
         title="Terms & Conditions"
         subtitle="Draft service terms covering account use, pricing, AI-generated content, suspension, and legal review requirements."
@@ -46,6 +47,6 @@ export default async function TermsPage() {
           </div>
         </article>
       ))}
-    </section>
+    </PageWrapper>
   );
 }

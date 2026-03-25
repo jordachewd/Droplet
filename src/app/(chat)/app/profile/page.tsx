@@ -1,7 +1,7 @@
 import ProfileBilling from "@/components/sections/profile/profile-billing";
 import ProfileHero from "@/components/sections/profile/profile-hero";
 import ProfileUsage from "@/components/sections/profile/profile-usage";
-import PageWrapper from "@/components/layout/page-wrapper";
+import ChatPageWrapper from "@/components/chat/chat-page-wrapper";
 import { getAllTransactions } from "@/lib/actions/transaction.action";
 import { ensureUserSynced } from "@/lib/utils/ensure-user-synced";
 import {
@@ -37,7 +37,7 @@ export default async function AppProfilePage() {
     : undefined;
 
   return userData ? (
-    <PageWrapper id="AppProfilePage" scrollable>
+    <ChatPageWrapper id="AppProfilePage" scrollable>
       <ProfileHero userData={userData} />
       <ProfileUsage
         planName={planName}
@@ -49,7 +49,7 @@ export default async function AppProfilePage() {
         usagePeriodStart={usagePeriodStart}
       />
       <ProfileBilling stripeId={stripeId} userTxns={userTxns} />
-    </PageWrapper>
+    </ChatPageWrapper>
   ) : (
     <div className="AppProfilePage flex h-dvh items-center justify-center">
       <div className="mx-auto max-w-md rounded-lg border border-red-200 bg-red-50 p-6 text-center dark:border-red-800 dark:bg-red-950">

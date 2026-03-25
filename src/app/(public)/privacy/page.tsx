@@ -7,6 +7,7 @@ import {
   privacySections,
 } from "@/constants/privacy-data";
 import { getEffectiveSupportEmail } from "@/lib/utils/effective-plan-config";
+import PageWrapper from "@/components/layout/page-wrapper";
 
 export const metadata: Metadata = {
   title: "Privacy Policy | Droplet",
@@ -28,14 +29,12 @@ export default async function PrivacyPage() {
   ];
 
   return (
-    <section className="PrivacyPage mx-auto flex w-full max-w-screen-2xl flex-col gap-8 px-4 pb-16 pt-24 sm:px-6 lg:px-8">
+    <PageWrapper id="PrivacyPage" className="gap-8!">
       <PageHead
         title="Privacy Policy"
         subtitle="How Droplet handles account data, conversations, stored assets, billing records, and provider integrations."
       />
-      <p className="body-2 -mt-6 mb-4 text-sm">
-        {legalReviewDisclaimer}
-      </p>
+      <p className="body-2 -mt-6 mb-4 text-sm">{legalReviewDisclaimer}</p>
 
       {privacySectionsWithContact.map((section) => (
         <article
@@ -77,6 +76,6 @@ export default async function PrivacyPage() {
           </Link>
         </div>
       </div>
-    </section>
+    </PageWrapper>
   );
 }

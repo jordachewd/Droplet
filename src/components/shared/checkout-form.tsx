@@ -55,7 +55,7 @@ const Checkout = ({ plan, planStatus }: CheckoutProps) => {
 
   const disabledStyle = isIncluded
     ? isCurrent
-      ? "disabled:text-midnightBlue-1000/50"
+      ? "disabled:text-midnightBlue-1000/50 hidden"
       : "disabled:text-midnightBlue-700/50"
     : "";
 

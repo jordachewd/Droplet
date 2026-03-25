@@ -1,4 +1,3 @@
-import PageWrapper from "@/components/layout/page-wrapper";
 import type { Metadata } from "next";
 import { ReactNode } from "react";
 
@@ -13,8 +12,8 @@ interface AuthLayoutProps {
 
 export default async function Layout({ children }: AuthLayoutProps) {
   return (
-    <PageWrapper className="justify-center items-center">
+    <div className="AuthLayoutWrapper flex h-dvh w-full justify-center items-center">
       {children}
-    </PageWrapper>
+    </div>
   );
 }

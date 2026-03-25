@@ -1,3 +1,4 @@
+import PageWrapper from "@/components/layout/page-wrapper";
 import { auth } from "@clerk/nextjs/server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -66,21 +67,24 @@ export default async function CheckoutSuccessPage({
 
   if (!sessionId) {
     return (
-      <section className="CheckoutSuccessPage mx-auto flex w-full max-w-screen-2xl flex-1 flex-col items-center justify-center px-4 py-20 sm:px-6">
-        <div className="w-full rounded-4xl border border-slate-400/80 bg-lavenderHaze-100/85 p-8 text-center shadow-sm dark:border-slate-500 dark:bg-nightIndigo-900/85">
+      <PageWrapper
+        id="CheckoutSuccessPage"
+        className="h-[calc(100vh-120px)] py-0! items-center justify-center"
+      >
+        <div className="flex flex-col rounded-2xl gap-6 p-16 text-center shadow-sm bg-lavenderHaze-100/85 dark:bg-nightIndigo-900/85">
           <h1 className="heading-3">Payment confirmation unavailable</h1>
-          <p className="body-2 mt-4 text-sm sm:text-base">
+          <p className="body-2 text-sm sm:text-base">
             We could not verify your checkout session. Please return to plans
             and try again.
           </p>
           <Link
-            className="btn btn-contained mt-7 inline-flex uppercase"
+            className="btn btn-outlined inline-flex uppercase self-center mt-6"
             href="/app/plans"
           >
             Back to plans
           </Link>
         </div>
-      </section>
+      </PageWrapper>
     );
   }
 
@@ -88,38 +92,44 @@ export default async function CheckoutSuccessPage({
 
   if (paymentVerified) {
     return (
-      <section className="CheckoutSuccessPage mx-auto flex w-full max-w-screen-2xl flex-1 flex-col items-center justify-center px-4 py-20 sm:px-6">
-        <div className="w-full rounded-4xl border border-slate-400/80 bg-lavenderHaze-100/85 p-8 text-center shadow-sm dark:border-slate-500 dark:bg-nightIndigo-900/85">
+      <PageWrapper
+        id="CheckoutSuccessPage"
+        className="h-[calc(100vh-120px)] py-0! items-center justify-center"
+      >
+        <div className="flex flex-col rounded-2xl gap-6 p-16 text-center shadow-sm bg-lavenderHaze-100/85 dark:bg-nightIndigo-900/85">
           <h1 className="heading-3">Payment successful</h1>
-          <p className="body-2 mt-4 text-sm sm:text-base">
+          <p className="body-2 text-sm sm:text-base">
             Your payment was confirmed. You can now continue in your profile.
           </p>
           <Link
-            className="btn btn-contained mt-7 inline-flex uppercase"
+            className="btn btn-outlined inline-flex uppercase self-center mt-6"
             href="/app/profile"
           >
             Go to profile
           </Link>
         </div>
-      </section>
+      </PageWrapper>
     );
   }
 
   return (
-    <section className="CheckoutSuccessPage mx-auto flex w-full max-w-screen-2xl flex-1 flex-col items-center justify-center px-4 py-20 sm:px-6">
-      <div className="w-full rounded-4xl border border-slate-400/80 bg-lavenderHaze-100/85 p-8 text-center shadow-sm dark:border-slate-500 dark:bg-nightIndigo-900/85">
+    <PageWrapper
+      id="CheckoutSuccessPage"
+      className="h-[calc(100vh-120px)] py-0! items-center justify-center"
+    >
+      <div className="flex flex-col rounded-2xl gap-6 p-16 text-center shadow-sm bg-lavenderHaze-100/85 dark:bg-nightIndigo-900/85">
         <h1 className="heading-3">Payment confirmation unavailable</h1>
-        <p className="body-2 mt-4 text-sm sm:text-base">
+        <p className="body-2 text-sm sm:text-base">
           We could not verify your payment. Please return to plans and try
           again.
         </p>
         <Link
-          className="btn btn-contained mt-7 inline-flex uppercase"
+          className="btn btn-outlined inline-flex uppercase self-center mt-6"
           href="/app/plans"
         >
           Back to plans
         </Link>
       </div>
-    </section>
+    </PageWrapper>
   );
 }

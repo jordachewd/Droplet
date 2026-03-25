@@ -8,6 +8,8 @@ import {
 } from "@/lib/utils/effective-plan-config";
 import { getEffectivePersonaAccessByPlan } from "@/lib/utils/effective-persona-access";
 import Link from "next/link";
+import PageWrapper from "@/components/layout/page-wrapper";
+import PageHead from "@/components/layout/page-head";
 
 export const dynamic = "force-dynamic";
 
@@ -32,7 +34,13 @@ export default async function PlansPage() {
   });
 
   return (
-    <section className="PlansPage mx-auto mt-14 flex w-full max-w-screen-2xl flex-1 flex-col gap-10 pb-10">
+    <PageWrapper id="PlansPageWrapper">
+      <PageHead
+        title="Choose your plan"
+        subtitle="Select the plan that suits your needs!"
+        align="center"
+      />
+
       <Plans
         plansData={plans}
         currencySymbol={effectivePlanConfig.pricing.currencySymbol}
@@ -62,6 +70,6 @@ export default async function PlansPage() {
           </div>
         </div>
       </section>
-    </section>
+    </PageWrapper>
   );
 }
