@@ -1,8 +1,7 @@
 "use client";
 
-import classNames from "classnames";
 import { useFormStatus } from "react-dom";
-import LoadingBubbles from "@/components/shared/loading-bubbles";
+import Button from "@/components/shared/button";
 
 interface AdminFormSubmitButtonProps {
   label: string;
@@ -18,22 +17,16 @@ export function AdminFormSubmitButton({
   disabled = false,
 }: AdminFormSubmitButtonProps) {
   const { pending } = useFormStatus();
+  const buttonLabel = pending ? (pendingLabel ?? `${label}...`) : label;
 
   return (
-    <button
-      className={classNames(className)}
+    <Button
+      className={className}
       type="submit"
-      disabled={pending || disabled}
-      aria-busy={pending}
+      disabled={disabled}
+      loading={pending}
     >
-      {pending ? (
-        <span className="inline-flex items-center gap-2">
-          <LoadingBubbles size="small" className="w-auto gap-0.5" />
-          {pendingLabel ?? `${label}...`}
-        </span>
-      ) : (
-        label
-      )}
-    </button>
+      {buttonLabel}
+    </Button>
   );
 }
