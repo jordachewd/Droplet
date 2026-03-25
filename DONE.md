@@ -2,7 +2,26 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-24 — PM audit #59. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4, 105.1, 105.2, 110, 111.1, 112.1, 112.2, 109, 113.1, 113.2, 115, 116, 117, 120.1, 120.2-A, 121, 122, 123, 124, 125, 126 complete. Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS — TDD rebuild active. 419 unit tests (68 suites). E2E: 108 passed, 25 skipped, 0 failed. All 7 gates GREEN. Build passing. Node.js 24.12.0 runtime.
+> Last updated: 2026-03-25 — PM audit #60. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4, 105.1, 105.2, 110, 111.1, 112.1, 112.2, 109, 113.1, 113.2, 115, 116, 117, 120.1, 120.2-A, 120.2-B, 121, 122, 123, 124, 125, 126 complete. Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS — TDD rebuild active. 480 unit tests (76 suites). E2E: 108 passed, 25 skipped, 0 failed. All 7 gates GREEN. Build passing. Node.js 24.12.0 runtime.
+
+---
+
+## Phase 120.2 Batch B — TDD rebuild of 8 HIGH-priority utility test files — COMPLETED (2026-03-25)
+
+> Engineer delivered (PM audit #60). 8 utility test suites rebuilt with TDD methodology. All use shared factories, zero `as never` casts. Tests: 419 → 480 (76 suites).
+
+- [x] `getFullName.tsx` — 7 tests. stmts 100, branches 100, funcs 100, lines 100.
+- [x] `openai/filterAssistantMsg.tsx` — 3 tests. stmts 100, branches 100, funcs 100, lines 100.
+- [x] `handleError.tsx` — 4 tests. stmts 100, branches 100, funcs 100, lines 100.
+- [x] `openai/classify-task-complexity.ts` — 10 tests. stmts 94.44, branches 91.17, funcs 100, lines 94.44.
+- [x] `aws/s3-file-reference.ts` — 10 tests. stmts 95.08, branches 86.53, funcs 100, lines 95.08.
+- [x] `upload-file-validation.ts` — 7 tests. stmts 100, branches 100, funcs 100, lines 100.
+- [x] `admin-queries.ts` — admin data queries tested. stmts 100, branches 63.3, funcs 100, lines 100.
+- [x] `openai/generateTitle.tsx` — title generation tested. stmts 100, branches 100, funcs 100, lines 100.
+
+**Coverage (post Batch B):** Global: stmts 85.47, branches 72.36, funcs 89.5, lines 85.68.
+
+**Files changed:** 9 files — `tests/unit/test-support/factories.ts` + 8 new test files in `tests/unit/utils/`
 
 ---
 

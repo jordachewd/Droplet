@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-24 (PM audit #59). Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS — Full TDD testing rebuild (Phase 120). **All 7 gates GREEN.** 419 unit tests (68 suites). E2E: 108 passed, 0 failed, 25 skipped. Coverage: 83.87/70.99/87.98/84.07. Active TDs: TD-HARDCODE-01 (HIGH), TD-REUSE-04/WCAG-05/WCAG-07/TEST-02 (MEDIUM). Build passing. Node.js 24.12.0. Merge conflicts fully resolved (Phases 124–126).
+> Last updated: 2026-03-25 (PM audit #60). Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS — Full TDD testing rebuild (Phase 120). **All 7 gates GREEN.** 480 unit tests (76 suites). E2E: 108 passed, 0 failed, 25 skipped. Coverage: 85.47/72.36/89.5/85.68. Active TDs: TD-HARDCODE-01 (HIGH), TD-REUSE-04/WCAG-05/WCAG-07/TEST-02 (MEDIUM). Build passing. Node.js 24.12.0. SWOT audit conducted — AppSetting enum mismatch (CRITICAL), handleError leak risk (HIGH), shared Button component needed (HIGH).
 
 ---
 
