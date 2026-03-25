@@ -6,9 +6,10 @@ import { getEffectivePersonaAccessByPlan } from "@/lib/utils/effective-persona-a
 import { getEffectivePersonaConfig } from "@/lib/utils/effective-persona-config";
 import { ensureUserSynced } from "@/lib/utils/ensure-user-synced";
 import { resolveEntitlements } from "@/lib/utils/resolve-entitlements";
+import { ReactNode } from "react";
 
 interface ChatRouteLayoutProps {
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 export default async function ChatRouteLayout({
@@ -27,10 +28,7 @@ export default async function ChatRouteLayout({
   });
 
   return (
-    <PageWrapper
-      id="ChatRouteLayoutWrapper"
-      className="ChatRouteLayout flex-row!"
-    >
+    <PageWrapper className="ChatRouteLayout flex-row!">
       <a href="#chat-main-content" className="skip-link">
         Skip to main content
       </a>
