@@ -32,7 +32,7 @@ export default function Plans({
     );
 
   const wrapperClassName = classNames(
-    "Plans mx-auto flex w-full flex-col gap-16 p-4 max-w-screen-2xl",
+    "Plans mx-auto flex w-full flex-col gap-22 p-4 max-w-screen-2xl",
   );
 
   return (
@@ -43,7 +43,7 @@ export default function Plans({
         align="center"
       />
 
-      <div className="flex w-full flex-col justify-between gap-10 md:flex-row md:gap-4 lg:gap-8">
+      <div className="PlanCards flex w-full flex-col justify-between gap-10 md:flex-row">
         {plansData.map((plan: Plan) => {
           return (
             <PlanCard

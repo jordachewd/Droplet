@@ -26,38 +26,42 @@ export default function PlanCard({
 
   const { isCurrent, isPopular } = planStatus as PlanStatus;
   const accentStyles = isCurrent
-    ? "bg-twilightPurple-400/50 text-twilightPurple-1000 dark:bg-dustyBlue-500 dark:text-dustyBlue-1000"
+    ? "bg-lavenderHaze-600 text-twilightPurple-1000/60"
     : isPopular
-      ? "bg-nightIndigo-600 text-white"
-      : "bg-lavenderHaze-500/50 text-midnightBlue-500 dark:bg-nightIndigo-500/30 dark:text-lavenderHaze-500";
+      ? "bg-twilightPurple-500 text-white"
+      : "bg-lavenderHaze-500 text-midnightBlue-500";
 
   const titleStyles = isPopular
     ? "text-white"
     : isCurrent
-      ? "text-twilightPurple-1000 dark:text-dustyBlue-1000"
-      : "text-midnightBlue-500 dark:text-lavenderHaze-500";
+      ? "text-twilightPurple-1000/60"
+      : "text-midnightBlue-500";
 
   return (
     <div
       className={classNames(
-        "PlanCard relative flex w-full flex-col gap-10 overflow-hidden rounded-lg px-4 py-10 shadow-xl lg:px-8",
+        "PlanCard relative flex w-full flex-col gap-10 overflow-hidden rounded-lg px-12 py-14 shadow-xl align-top",
         accentStyles,
       )}
     >
       {(isPopular || isCurrent) && (
         <div
           className={classNames(
-            "absolute -left-8 top-3.5 flex -rotate-45 p-1.5 px-8 text-2xs font-bold uppercase leading-none tracking-widest text-white shadow-md",
-            isCurrent && "bg-dustyBlue-500 dark:bg-green-700",
-            isPopular && "bg-orange-700",
+            "PlanCardBadge absolute -left-8 top-3.5 flex -rotate-45 p-1.5 text-2xs",
+            "font-bold uppercase leading-none tracking-widest shadow-md px-8",
+            isCurrent && "bg-lavenderHaze-500 text-midnightBlue-600",
+            isPopular && "bg-limeGreen-500 text-midnightBlue-600",
           )}
         >
           {isCurrent ? "Current" : "Popular"}
         </div>
       )}
 
-      <div className="flex flex-col items-center justify-between">
-        <i className={classNames(plan.icon, "text-7xl")} aria-hidden="true"></i>
+      <div className="PlanCardHead flex flex-col items-center justify-between">
+        <i
+          className={classNames(plan.icon, "text-7xl pb-10")}
+          aria-hidden="true"
+        ></i>
 
         <div className="flex w-full items-center justify-between">
           <h2 className={classNames("heading-4", titleStyles)}>{plan.name}</h2>
@@ -73,15 +77,16 @@ export default function PlanCard({
             </span>
 
             {plan.price !== 0 && (
-              <span className="flex self-end text-sm opacity-80">/Mo</span>
+              <span className="flex self-end text-sm opacity-70">/Mo</span>
             )}
           </p>
         </div>
-        <div className="flex w-full items-center justify-between pl-0.5 text-xs">
+        <div className="flex w-full items-center justify-between pl-0.5 text-xs opacity-70">
           <span className="flex">{plan.desc}</span>
         </div>
       </div>
-      <div className="flex w-full flex-col gap-2.5">
+
+      <div className="PlanCardList flex w-full flex-col gap-3">
         {plan.inclusions.map((incl) => (
           <div
             key={plan.name + incl.label}
@@ -100,7 +105,7 @@ export default function PlanCard({
       </div>
 
       {hasUserData && (
-        <div className="flex items-center justify-center">
+        <div className="PlanCardFooter flex items-center justify-center mt-auto">
           <Checkout
             plan={{
               id: plan.id,
