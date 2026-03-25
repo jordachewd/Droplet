@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-25 (PM audit #60). Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS — Full TDD testing rebuild (Phase 120). **All 7 gates GREEN.** 480 unit tests (76 suites). E2E: 108 passed, 0 failed, 25 skipped. Coverage: 85.47/72.36/89.5/85.68. Active TDs: TD-HARDCODE-01 (HIGH), TD-REUSE-04/WCAG-05/WCAG-07/TEST-02 (MEDIUM). Build passing. Node.js 24.12.0. SWOT audit conducted — AppSetting enum mismatch (CRITICAL), handleError leak risk (HIGH), shared Button component needed (HIGH).
+> Last updated: 2026-03-25 (PM audit #61). Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS — Full TDD testing rebuild (Phase 120). **All 7 gates GREEN.** 511 unit tests (83 suites). E2E: 108 passed, 0 failed, 25 skipped. Coverage: ~85/~72/~89/~85. Active TDs: TD-HARDCODE-01 (HIGH), TD-REUSE-04/WCAG-05/WCAG-07/TEST-02 (MEDIUM). Build passing. Node.js 24.12.0. Phase 127 COMPLETE (AppSetting enum fix). Phase 128.1 COMPLETE (shared Button). Phase 120.2 COMPLETE (all utility tests). 203 `as never` casts in 17 non-rebuilt test files.
 
 ---
 
@@ -356,13 +356,13 @@ Purpose: Request-level usage logging for cost tracking and admin analytics.
 
 ### 6.5 AppSetting
 
-| Field     | Type   | Required | Index  | Notes                                                |
-| --------- | ------ | -------- | ------ | ---------------------------------------------------- |
-| key       | String | Yes      | unique | Setting identifier                                   |
-| value     | Mixed  | Yes      | No     | Setting value (JSON-compatible)                      |
-| category  | String | Yes      | Yes    | `plans` / `models` / `theme` / `limits` / `features` |
-| updatedAt | Date   | Yes      | No     |                                                      |
-| updatedBy | String | Yes      | No     | Admin clerkId who last changed                       |
+| Field     | Type   | Required | Index  | Notes                                                          |
+| --------- | ------ | -------- | ------ | -------------------------------------------------------------- |
+| key       | String | Yes      | unique | Setting identifier                                             |
+| value     | Mixed  | Yes      | No     | Setting value (JSON-compatible)                                |
+| category  | String | Yes      | Yes    | `plans` / `models` / `theme` / `limits` / `trial` / `features` |
+| updatedAt | Date   | Yes      | No     |                                                                |
+| updatedBy | String | Yes      | No     | Admin clerkId who last changed                                 |
 
 ### 6.6 PublicPage
 
@@ -743,11 +743,11 @@ All button styles use Lime Green as the accent color in **both** light and dark 
 
 ## 13. Testing
 
-- **Unit tests**: 62 suites, 370 tests (Vitest) — organized by domain in `tests/unit/{actions,components,routes,utils,models,constants,stores}/`. TDD rebuild IN PROGRESS (Phase 120). Phase 120.1 COMPLETE (TDD infrastructure). Phase 120.2 partially complete (20/~40 utility test files rebuilt from scratch with zero `as never`). Includes streaming, webhook, chat-wrapper, chat-body stop-state, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, persona prompt, rate limiting, task complexity classification, conversation stop enforcement, entitlement resolver, checkout-success page, admin audit trail, OpenAI route tests, atomic prompt limit, daily conversation limit, media error handling, universal feature access, trial access tests, video generation, validation schema security injection tests, AudioPlayer ARIA tests, abort behavior tests, Zustand store tests, upload file size validation, component tests for confirmation-modal/plan-card/persona-card/checkout-form, user model tests. Shared test factories in `tests/unit/test-support/` (Phase 94.5 + 120.1). **~200 `as never` casts remain in 18 non-rebuilt test files** — will be eliminated as each test file is rebuilt per TDD methodology. 21 of 62 files currently use shared factories.
+- **Unit tests**: 83 suites, 511 tests (Vitest) — organized by domain in `tests/unit/{actions,components,routes,utils,models,constants,stores}/`. TDD rebuild IN PROGRESS (Phase 120). Phase 120.1 COMPLETE (TDD infrastructure). Phase 120.2 COMPLETE — all ~40 utility test files rebuilt from scratch with zero `as never`. Includes streaming, webhook, chat-wrapper, chat-body stop-state, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, persona prompt, rate limiting, task complexity classification, conversation stop enforcement, entitlement resolver, checkout-success page, admin audit trail, OpenAI route tests, atomic prompt limit, daily conversation limit, media error handling, universal feature access, trial access tests, video generation, validation schema security injection tests, AudioPlayer ARIA tests, abort behavior tests, Zustand store tests, upload file size validation, component tests for confirmation-modal/plan-card/persona-card/checkout-form/button, user model tests. Shared test factories in `tests/unit/test-support/` (Phase 94.5 + 120.1). **203 `as never` casts remain in 17 non-rebuilt test files (actions/routes/components/constants)** — will be eliminated as each file is rebuilt per TDD methodology (Phases 120.3–120.5).
 - **E2E tests**: 14 Playwright spec files. 108 passed, 25 skipped, 0 failed. Default 3 browsers (Chromium, Firefox, WebKit); full 7-browser matrix via `PLAYWRIGHT_FULL_MATRIX=1`. Specs: accessibility (Phase 97.1), auth-boundaries, public-pages (incl. checkout-success redirect Phase 113.2), error-handling, chat-app-shell, conversation-lifecycle, user-profile, admin-users, admin-features, admin-bulk-actions, plans-public, authenticated-flows, persona-trial-access, live-image-generation. 25 skips are intentional: credential-gated tests without E2E env vars + Chromium-only tests on Firefox/WebKit. All E2E assertions are structural (no hardcoded prices/copy — Phase 95). WCAG E2E via @axe-core/playwright scanning all 7 public routes — all WCAG violations fixed (Phase 103.1–103.4), known violations list reduced to zero.
 - **Coverage**: v8 provider, thresholds: 76% statements / 65% branches / 79% functions / 76% lines. Actual: ~78.5/~66/~83.5/~79. Gate PASSES. Reporters: text, json-summary, lcov. Setup file: `tests/unit/vitest.setup.ts` (global mock cleanup).
 - **Config**: Vitest `environmentMatchGlobs` for auto-jsdom on `.tsx`. Playwright `actionTimeout: 10s`, `expect.timeout: 5s`. ESLint `no-console` (error), `no-restricted-globals` (alert/confirm). TS `noFallthroughCasesInSwitch`, `forceConsistentCasingInFileNames`. All 7 validation gates GREEN (lint, knip, tsc, unit, E2E, build, prettier).
-- **Gaps**: No E2E for Stripe checkout flow. No admin action behavioral tests. No E2E for user deletion cascade. Branch coverage ~66% is lowest metric — worst files: chat-body.tsx, admin-queries.ts, admin.actions.tsx. ~20+ components have zero test files. ~200 `as never` casts in 18 non-rebuilt tests (tracked for elimination). 21 of 62 test files use shared factory infrastructure. **Phase 120 is primary work directive: full TDD test rebuild from scratch** (owner mandate). TD-SEC-10 RESOLVED (Phase 113.1). TD-SEC-11 RESOLVED (Phase 113.2). TD-SEC-12 RESOLVED (Phase 121).
+- **Gaps**: No E2E for Stripe checkout flow. No admin action behavioral tests. No E2E for user deletion cascade. Branch coverage ~72% is lowest metric — worst files: chat-body.tsx, admin-queries.ts, admin.actions.tsx. ~20+ components have zero test files. 203 `as never` casts in 17 non-rebuilt tests (tracked for elimination). **Phase 120 is primary work directive: full TDD test rebuild from scratch** (owner mandate). Phase 120.2 utility rebuild COMPLETE. Next: Phase 120.3 (action tests). TD-SEC-10 RESOLVED (Phase 113.1). TD-SEC-11 RESOLVED (Phase 113.2). TD-SEC-12 RESOLVED (Phase 121).
 
 ---
 
@@ -785,10 +785,10 @@ All button styles use Lime Green as the accent color in **both** light and dark 
 
 ### Active — HIGH Priority
 
-| ID             | Area    | Description                                                                                                                                                                                                        | Phase |
-| -------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----- |
-| TD-HARDCODE-01 | Content | Stop reason messages in `src/constants/stop-reasons.ts` are hardcoded user-facing copy. Must be admin-configurable via `effective-*` pattern.                                                                      | 107   |
-| TD-TEST-03     | Test    | Full TDD test rebuild from scratch required (Owner directive). 203 `as never` casts remain in 18 non-rebuilt files, ~20+ components untested, 27/68 files use shared factories. Coverage: 83.87/70.99/87.98/84.07. | 120   |
+| ID             | Area    | Description                                                                                                                                                                                                                                          | Phase |
+| -------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| TD-HARDCODE-01 | Content | Stop reason messages in `src/constants/stop-reasons.ts` are hardcoded user-facing copy. Must be admin-configurable via `effective-*` pattern.                                                                                                        | 107   |
+| TD-TEST-03     | Test    | Full TDD test rebuild from scratch required (Owner directive). 203 `as never` casts remain in 17 non-rebuilt files (actions/routes/components/constants), ~20+ components untested. Phase 120.2 utility rebuild COMPLETE. Coverage: ~85/~72/~89/~85. | 120   |
 
 ### Active — MEDIUM Priority
 
