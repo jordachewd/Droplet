@@ -2,7 +2,22 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-25 — PM audit #61. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4, 105.1, 105.2, 110, 111.1, 112.1, 112.2, 109, 113.1, 113.2, 115, 116, 117, 120.1, 120.2-A, 120.2-B, 120.2-C, 121, 122, 123, 124, 125, 126, 127, 128.1 complete. Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS — TDD rebuild active. 511 unit tests (83 suites). E2E: 108 passed, 25 skipped, 0 failed. All 7 gates GREEN. Build passing. Node.js 24.12.0 runtime.
+> Last updated: 2026-03-25 — PM audit #62. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4, 105.1, 105.2, 110, 111.1, 112.1, 112.2, 109, 113.1, 113.2, 115, 116, 117, 120.1, 120.2-A, 120.2-B, 120.2-C, 121, 122, 123, 124, 125, 126, 127, 128.1, 129 complete. Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS — TDD rebuild active. 514 unit tests (84 suites). E2E: 108 passed, 25 skipped, 0 failed. All 7 gates GREEN. Build passing. Node.js 24.12.0 runtime.
+
+---
+
+## Phase 129 — PageHead heading-level prop + E2E locator fix — COMPLETED (2026-03-25)
+
+> Engineer delivered (PM audit #62). WCAG heading-order fix + E2E blocker resolved. Both pre-existing E2E failures fixed.
+
+- [x] Added `headingLevel` prop to `PageHead` (default `"h1"`, accepts `"h1"` | `"h2"` | `"h3"`). Renders dynamic heading element.
+- [x] FAQ section passes `headingLevel="h2"` to `PageHead` so FAQ title renders as `<h2>` on `/plans`.
+- [x] E2E locator updated from `.Personas` to `.PersonaSpotlight` to match actual DOM class.
+- [x] TDD tests for PageHead heading levels (h1/h2/h3).
+- [x] `/plans` page: exactly one `<h1>`, FAQ section uses `<h2>`. Heading-order axe violation resolved.
+- [x] All 7 gates GREEN. 84 suites, 514 tests.
+
+**Files changed:** `src/components/layout/page-head.tsx`, `src/components/sections/shared/faqs-section.tsx`, `tests/e2e/public-pages.spec.ts`
 
 ---
 

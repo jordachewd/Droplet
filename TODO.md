@@ -5,50 +5,41 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #61 (2026-03-25). Phases 1–128.1 complete. Phase 120.2 COMPLETE (all ~40 utility files rebuilt). 511 unit tests (83 suites). Build passes. TSC passes. Node.js 24.12.0 runtime.**
-> **GATE STATUS: All 7 gates GREEN. Lint (0 errors, 6 warnings), Knip (0 findings), TSC, build, unit tests (83/511), E2E (108 passed, 25 skipped, 0 failed) — all pass.**
+> **STATUS: PM audit #62 (2026-03-25). Phases 1–129 complete. Phase 120.2 COMPLETE (all ~40 utility files rebuilt). 514 unit tests (84 suites). Build passes. TSC passes. Node.js 24.12.0 runtime.**
+> **GATE STATUS: All 7 gates GREEN. Lint (0 errors, 6 warnings), Knip (0 findings), TSC, build, unit tests (84/514), E2E (108 passed, 25 skipped, 0 failed) — all pass.**
 > **Owner directive (CRITICAL): FULL TDD TESTING REBUILD from scratch. NO hardcoded data. WCAG 2.2 AA. Code reuse. Full admin configurability. Shared Button component migration.**
 > **Coverage: ~85/~72/~89/~85 (stmt/branch/func/lines). Thresholds: 76/65/79/76.**
-> **SWOT audit conducted (PM audit #61). Weaknesses and Threats converted to tasks below.**
-> **Priority order: 129 (HIGH PageHead heading-level — E2E blocker) → 120.3 (CRITICAL TDD action rebuild) → 128.2 (HIGH Button migration) → 106 (HIGH shared types) → 120.4 (CRITICAL TDD route rebuild) → 125.2 (HIGH transaction query fix) → 126.1 (HIGH handleError sanitization) → 120.5 (HIGH TDD component rebuild) → 120.6 (HIGH TDD E2E rebuild) → 120.7 (HIGH coverage thresholds) → 107 (HIGH stop-reason config) → 108 (MEDIUM WCAG tabs) → 114 (MEDIUM WCAG avatar menu) → 126.2 (LOW lint warnings) → 125.1 (MEDIUM schema strict:true) → 74.2 (MEDIUM FAQ admin) → 104 (MEDIUM landing/hero admin)**
+> **SWOT audit conducted (PM audit #62). Weaknesses and Threats converted to tasks below.**
+> **Priority order: 120.3 (CRITICAL TDD action rebuild) → 126.1 (HIGH handleError sanitization — before route tests) → 125.2 (HIGH transaction query fix) → 128.2 (HIGH Button migration — 11 buttons in 8 files) → 106 (HIGH shared types) → 120.4 (CRITICAL TDD route rebuild) → 120.5 (HIGH TDD component rebuild — 50 of 68 untested) → 120.6 (HIGH TDD E2E rebuild) → 120.7 (HIGH coverage thresholds) → 107 (HIGH stop-reason config — 9 strings) → 108 (MEDIUM WCAG tabs) → 114 (MEDIUM WCAG avatar menu) → 126.2 (LOW lint warnings) → 125.1 (MEDIUM schema strict:true) → 74.2 (MEDIUM FAQ admin) → 104 (MEDIUM landing/hero admin)**
 
 ---
 
-## HIGH — Fix PageHead heading-level (SWOT Weakness — E2E blocker — PM audit #61)
+## HIGH — Shared Button Migration (PM audit #62)
 
-### Phase 129 HIGH — Add `headingLevel` prop to `PageHead` component
+### Phase 128.2 HIGH — Migrate existing buttons to shared `<Button>` component
 
-> NEW (PM audit #61). `PageHead` always renders `<h1>`. On composite pages like `/plans`, two `<h1>` elements are rendered (Plans title + FAQ title), and heading sequence regresses (h1→h2→h1→h3). This violates WCAG 1.3.1 heading-order and causes the axe E2E failure on `/plans`. Also blocks `.Personas` E2E fix since E2E suite must go GREEN.
+> Phase 128.1 COMPLETE — `Button` component created with TDD tests + first consumer (`AdminFormSubmitButton`) migrated. Phase 128.2 covers the remaining 11 raw `<button className="btn btn-*">` instances across 8 files.
 
-**Files:** `src/components/layout/page-head.tsx`, `src/components/sections/shared/faqs-section.tsx`, `tests/e2e/public-pages.spec.ts`
+**Migration targets (11 buttons in 8 files):**
 
-**What to do:**
-
-1. Add `headingLevel` prop to `PageHead` (default `"h1"`, accepts `"h1"` | `"h2"` | `"h3"`). Render dynamic heading element.
-2. In `faqs-section.tsx`, pass `headingLevel="h2"` to `PageHead` so FAQ title is `<h2>` on `/plans`.
-3. Fix E2E locator in `public-pages.spec.ts`: change `.Personas` to `.PersonaSpotlight` to match actual DOM class.
-4. Verify all heading-order axe violations resolve on `/plans`.
-5. Write TDD test for `PageHead` with different heading levels.
-
-**Acceptance criteria:**
-
-- [ ] `PageHead` renders configurable heading level (h1/h2/h3)
-- [ ] `/plans` page has exactly one `<h1>`, FAQ section uses `<h2>`
-- [ ] E2E `.Personas` selector updated to `.PersonaSpotlight`
-- [ ] E2E heading-order axe violation on `/plans` resolved
-- [ ] TDD test for PageHead heading levels
-- [ ] Build passes, tests pass, E2E passes
+1. `src/app/error.tsx` — 1 × `btn btn-contained` (error recovery)
+2. `src/app/(chat)/error.tsx` — 1 × `btn btn-contained` (error recovery)
+3. `src/app/(admin)/admin/users/page.tsx` — 1 × `btn btn-md btn-contained` (form submit)
+4. `src/components/shared/confirmation-modal.tsx` — 2 × `btn btn-sm` (cancel + confirm)
+5. `src/components/admin/tiptap-editor.tsx` — 3 × `btn btn-sm btn-outlined` (bold, italic, bullets)
+6. `src/components/admin/settings/admin-settings-tabs.tsx` — 1 × `btn btn-sm` (tab button)
+7. `src/components/sections/profile/profile-hero-editor.tsx` — 1 × `btn btn-contained` (form submit)
+8. `src/components/shared/audio-player.tsx` — 1 × `btn btn-sm btn-outlined` (play control)
 
 **What to do:**
 
-1. Incrementally replace raw `<button className="btn btn-*">` instances with `<Button>`.
-2. Start with admin forms (`AdminFormSubmitButton` → use `Button` internally).
-3. Then shared components, then page-level buttons.
-4. Do NOT change `<Link>` elements or non-`btn` buttons yet.
+1. Replace each raw `<button className="btn btn-*">` with `<Button variant="..." size="...">`.
+2. Do NOT change `<Link>` elements or non-`btn` buttons.
+3. Verify no visual regressions.
 
 **Acceptance criteria:**
 
-- [ ] All `<button className="btn btn-*">` instances use shared `Button`
+- [ ] All 11 raw `<button className="btn btn-*">` instances use shared `Button`
 - [ ] No visual regressions
 - [ ] Build passes, tests pass
 
