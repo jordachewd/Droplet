@@ -88,9 +88,8 @@ export default function ProfileUsage({
   return (
     <section
       className={classNames(
-        "ProfileUsage mx-auto flex w-full max-w-6xl flex-col gap-4 rounded-lg border p-6 shadow-md",
-        "border-lavenderHaze-500 bg-lavenderHaze-100/80",
-        "dark:border-nightIndigo-500 dark:bg-nightIndigo-1000/80",
+        "ProfileUsage mx-auto flex w-full max-w-6xl flex-col gap-4 rounded-lg border",
+        " bg-lavenderHaze-100/80 dark:bg-nightIndigo-1000/80 p-6 shadow-sm",
       )}
     >
       <div className="flex flex-wrap items-center justify-between gap-2">

@@ -23,10 +23,11 @@ export default function PersonasSection({
   const enforcePlanFilter = isAppMode && allowedPersonaIds !== undefined;
 
   return (
-    <section className="PersonasSection mx-auto flex w-full max-w-screen-2xl flex-col gap-10 px-4 py-16 pt-24">
+    <section className="PersonasSection mx-auto flex w-full max-w-screen-2xl flex-col gap-16 px-4 py-24">
       <PageHead
         title={isAppMode ? "AI Personas" : "Choose Your AI Persona"}
         subtitle="Explore the Droplet persona catalog. Each persona shapes the assistant's tone, guidance, and tool availability."
+        align="center"
       />
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">

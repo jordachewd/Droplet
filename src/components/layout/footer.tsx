@@ -4,14 +4,14 @@ import Link from "next/link";
 
 export default function Footer() {
   const footerClass = classNames(
-    "Footer z-20 flex w-full items-center justify-between border-t px-4",
+    "Footer z-20 flex w-full items-center justify-between border-t",
     "border-lavenderHaze-800/20 bg-lavenderHaze-100",
     "dark:border-nightIndigo-900/80 dark:bg-nightIndigo-1000",
   );
 
   const footerContentClass = classNames(
-    "mx-auto flex w-full max-w-screen-2xl flex-col items-center justify-between gap-3 py-6",
-    "lg:flex-row lg:py-3",
+    "mx-auto flex w-full max-w-screen-2xl px-4 flex-col items-center",
+    "lg:flex-row lg:py-3 justify-between gap-3 py-6",
   );
 
   return (

@@ -32,7 +32,7 @@ export default function Plans({
     );
 
   const wrapperClassName = classNames(
-    "Plans mx-auto flex w-full flex-col gap-6 p-4 max-w-screen-2xl",
+    "Plans mx-auto flex w-full flex-col gap-16 p-4 max-w-screen-2xl",
   );
 
   return (
@@ -40,6 +40,7 @@ export default function Plans({
       <PageHead
         title={`${isSignedIn ? "Upgrade" : "Choose"} your plan`}
         subtitle="Select the plan that suits your needs!"
+        align="center"
       />
 
       <div className="flex w-full flex-col justify-between gap-10 md:flex-row md:gap-4 lg:gap-8">
