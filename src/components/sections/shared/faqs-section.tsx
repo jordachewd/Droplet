@@ -27,6 +27,7 @@ export default function Faqs({ faqsData }: FaqsProps) {
         title="Frequently Asked Questions"
         subtitle="Find answers to the most frequently asked questions below."
         align="center"
+        headingLevel="h2"
       />
 
       <div className="flex flex-col gap-2.5">
