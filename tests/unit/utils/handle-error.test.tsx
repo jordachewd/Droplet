@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { handleError } from "@/lib/utils/handleError";
 
 function captureThrownError(callback: () => void): Error {
@@ -12,45 +12,63 @@ function captureThrownError(callback: () => void): Error {
 }
 
 describe("handleError", () => {
-  it("throws with error message and preserves original cause for Error input", () => {
+  it("preserves whitelisted auth errors", () => {
+    const rootCause = new Error("Unauthorized");
+
+    const thrownError = captureThrownError(() => {
+      handleError({ error: rootCause, source: "action" });
+    });
+
+    expect(thrownError.message).toBe("Unauthorized");
+    expect(thrownError.cause).toBe(rootCause);
+  });
+
+  it("preserves whitelisted validation errors", () => {
+    const rootCause = new Error("Invalid task payload.");
+
+    const thrownError = captureThrownError(() => {
+      handleError({ error: rootCause, source: "createTask" });
+    });
+
+    expect(thrownError.message).toBe("Invalid task payload.");
+    expect(thrownError.cause).toBe(rootCause);
+  });
+
+  it("sanitizes non-whitelisted Error messages", () => {
+    const rootCause = new Error("Mongo timeout while acquiring connection");
+
+    const thrownError = captureThrownError(() => {
+      handleError({ error: rootCause, source: "db-query" });
+    });
+
+    expect(thrownError.message).toBe("An unexpected error occurred");
+    expect(thrownError.cause).toBe(rootCause);
+  });
+
+  it("sanitizes non-whitelisted string errors", () => {
+    const thrownError = captureThrownError(() => {
+      handleError({ error: "provider exploded", source: "openai-route" });
+    });
+
+    expect(thrownError.message).toBe("An unexpected error occurred");
+    expect(thrownError.cause).toBe("provider exploded");
+  });
+
+  it("logs full detail to stderr for debugging", () => {
+    const stderrWriteSpy = vi
+      .spyOn(process.stderr, "write")
+      .mockImplementation(() => true);
     const rootCause = new Error("Database unavailable");
 
-    const thrownError = captureThrownError(() => {
-      handleError({ error: rootCause });
+    captureThrownError(() => {
+      handleError({ error: rootCause, source: "getUserById" });
     });
 
-    expect(thrownError.message).toBe("Database unavailable");
-    expect(thrownError.cause).toBe(rootCause);
-  });
-
-  it("appends source when provided for Error input", () => {
-    const rootCause = new Error("Operation failed");
-
-    const thrownError = captureThrownError(() => {
-      handleError({ error: rootCause, source: "generateTitle" });
-    });
-
-    expect(thrownError.message).toBe("Operation failed | generateTitle");
-    expect(thrownError.cause).toBe(rootCause);
-  });
-
-  it("handles string errors and includes source suffix", () => {
-    const thrownError = captureThrownError(() => {
-      handleError({ error: "invalid payload", source: "openai-route" });
-    });
-
-    expect(thrownError.message).toBe("invalid payload | openai-route");
-    expect(thrownError.cause).toBe("invalid payload");
-  });
-
-  it("uses fallback message for unknown error values", () => {
-    const rootCause = { code: "E_UNKNOWN" };
-
-    const thrownError = captureThrownError(() => {
-      handleError({ error: rootCause });
-    });
-
-    expect(thrownError.message).toBe("Unexpected error");
-    expect(thrownError.cause).toBe(rootCause);
+    expect(stderrWriteSpy).toHaveBeenCalledWith(
+      expect.stringContaining(
+        "[handleError] getUserById | Database unavailable",
+      ),
+    );
+    stderrWriteSpy.mockRestore();
   });
 });

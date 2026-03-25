@@ -1,26 +1,41 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { auth } from "@clerk/nextjs/server";
+import { auth, clerkClient } from "@clerk/nextjs/server";
 import { connectToDatabase } from "@/lib/database/mongoose";
-import User from "@/lib/database/models/user.model";
-import Task from "@/lib/database/models/tasks.model";
-import Transaction from "@/lib/database/models/transaction.model";
-import UsageEvent from "@/lib/database/models/usage-event.model";
-import deleteS3Prefix from "@/lib/utils/aws/delete-s3-prefix";
-import { revalidatePath } from "next/cache";
 import {
   deleteUser,
   getUserById,
   updateUser,
 } from "@/lib/actions/user.actions";
+import { revalidatePath } from "next/cache";
+import { createTestUser, mockAuth, mockMongooseModel } from "../test-support";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { mockDeleteClerkUser } = vi.hoisted(() => ({
-  mockDeleteClerkUser: vi.fn(),
+const {
+  userFindOneMock,
+  userFindOneAndUpdateMock,
+  userFindByIdAndDeleteMock,
+  taskDeleteManyMock,
+  transactionDeleteManyMock,
+  usageEventDeleteManyMock,
+  deleteS3PrefixMock,
+  deleteClerkUserMock,
+} = vi.hoisted(() => ({
+  userFindOneMock: vi.fn(),
+  userFindOneAndUpdateMock: vi.fn(),
+  userFindByIdAndDeleteMock: vi.fn(),
+  taskDeleteManyMock: vi.fn(),
+  transactionDeleteManyMock: vi.fn(),
+  usageEventDeleteManyMock: vi.fn(),
+  deleteS3PrefixMock: vi.fn(),
+  deleteClerkUserMock: vi.fn(),
 }));
+
 vi.mock("@clerk/nextjs/server", () => ({
   auth: vi.fn(),
-  clerkClient: vi
-    .fn()
-    .mockResolvedValue({ users: { deleteUser: mockDeleteClerkUser } }),
+  clerkClient: vi.fn(async () => ({
+    users: {
+      deleteUser: deleteClerkUserMock,
+    },
+  })),
 }));
 
 vi.mock("@/lib/database/mongoose", () => ({
@@ -29,310 +44,303 @@ vi.mock("@/lib/database/mongoose", () => ({
 
 vi.mock("@/lib/database/models/user.model", () => ({
   default: {
-    findOne: vi.fn(),
-    findOneAndUpdate: vi.fn(),
-    findByIdAndDelete: vi.fn(),
+    findOne: userFindOneMock,
+    findOneAndUpdate: userFindOneAndUpdateMock,
+    findByIdAndDelete: userFindByIdAndDeleteMock,
   },
 }));
 
 vi.mock("@/lib/database/models/tasks.model", () => ({
   default: {
-    deleteMany: vi.fn(),
+    deleteMany: taskDeleteManyMock,
   },
 }));
 
 vi.mock("@/lib/database/models/transaction.model", () => ({
   default: {
-    deleteMany: vi.fn(),
+    deleteMany: transactionDeleteManyMock,
   },
 }));
 
 vi.mock("@/lib/database/models/usage-event.model", () => ({
   default: {
-    deleteMany: vi.fn(),
+    deleteMany: usageEventDeleteManyMock,
   },
 }));
 
 vi.mock("@/lib/utils/aws/delete-s3-prefix", () => ({
-  default: vi.fn(),
+  default: deleteS3PrefixMock,
 }));
 
 vi.mock("next/cache", () => ({
   revalidatePath: vi.fn(),
 }));
 
-describe("getUserById", () => {
+const mongooseModuleMock = {} as typeof import("mongoose");
+
+describe("user.actions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(auth).mockResolvedValue({ userId: "clerk_user_1" } as never);
-    vi.mocked(connectToDatabase).mockResolvedValue(undefined as never);
+    mockAuth(vi.mocked(auth), {
+      userId: "user_123",
+      isAuthenticated: true,
+    });
+    vi.mocked(connectToDatabase).mockResolvedValue(mongooseModuleMock);
+    deleteClerkUserMock.mockResolvedValue(undefined);
+    taskDeleteManyMock.mockResolvedValue({ deletedCount: 4 });
+    transactionDeleteManyMock.mockResolvedValue({ deletedCount: 2 });
+    usageEventDeleteManyMock.mockResolvedValue({ deletedCount: 7 });
+    deleteS3PrefixMock.mockResolvedValue(3);
+    userFindByIdAndDeleteMock.mockResolvedValue({ _id: "mongo_user_1" });
   });
 
-  it("returns data when authenticated user reads their own profile", async () => {
-    const leanMock = vi.fn().mockResolvedValue({
-      clerkId: "clerk_user_1",
-      username: "alice",
-      email: "alice@example.com",
-    });
-    const selectMock = vi.fn().mockReturnValue({
-      lean: leanMock,
-    });
-
-    vi.mocked(User.findOne).mockReturnValue({
-      select: selectMock,
-    } as never);
-
-    const response = await getUserById("clerk_user_1");
-
-    expect(connectToDatabase).toHaveBeenCalledOnce();
-    expect(User.findOne).toHaveBeenCalledWith({ clerkId: "clerk_user_1" });
-    expect(selectMock).toHaveBeenCalledWith(
-      "clerkId username email role plan firstName lastName userimg registerAt updatedAt dailyConversationsStarted dailyConversationWindowStart",
-    );
-    expect(leanMock).toHaveBeenCalledOnce();
-    expect(response).toEqual(
-      expect.objectContaining({
-        clerkId: "clerk_user_1",
+  describe("getUserById", () => {
+    it("returns selected profile fields for the authenticated owner", async () => {
+      const user = createTestUser({
+        clerkId: "user_123",
         username: "alice",
-      }),
-    );
-  });
+        email: "alice@example.com",
+      });
+      const userQuery = mockMongooseModel(user);
+      userFindOneMock.mockReturnValue(userQuery);
 
-  it("throws forbidden when authenticated user requests another user's profile", async () => {
-    await expect(getUserById("clerk_user_2")).rejects.toThrow(
-      "Forbidden | getUserById",
-    );
+      const response = await getUserById("user_123");
 
-    expect(connectToDatabase).not.toHaveBeenCalled();
-    expect(User.findOne).not.toHaveBeenCalled();
-  });
-
-  it("throws unauthorized when no authenticated user exists", async () => {
-    vi.mocked(auth).mockResolvedValue({ userId: null } as never);
-
-    await expect(getUserById("clerk_user_1")).rejects.toThrow(
-      "Unauthorized | getUserById",
-    );
-
-    expect(connectToDatabase).not.toHaveBeenCalled();
-    expect(User.findOne).not.toHaveBeenCalled();
-  });
-});
-
-describe("updateUser", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    vi.mocked(auth).mockResolvedValue({ userId: "clerk_user_1" } as never);
-    vi.mocked(connectToDatabase).mockResolvedValue(undefined as never);
-  });
-
-  it("updates profile data for the authenticated owner", async () => {
-    vi.mocked(User.findOneAndUpdate).mockResolvedValue({
-      clerkId: "clerk_user_1",
-      username: "alice-updated",
-      firstName: "Alice",
-    } as never);
-
-    const response = await updateUser("clerk_user_1", {
-      username: "alice-updated",
-      firstName: "Alice",
-      updatedAt: new Date("2026-03-13T00:00:00Z"),
+      expect(connectToDatabase).toHaveBeenCalledOnce();
+      expect(userFindOneMock).toHaveBeenCalledWith({ clerkId: "user_123" });
+      expect(userQuery.select).toHaveBeenCalledWith(
+        "clerkId username email role plan firstName lastName userimg registerAt updatedAt dailyConversationsStarted dailyConversationWindowStart",
+      );
+      expect(response).toMatchObject({
+        clerkId: "user_123",
+        username: "alice",
+      });
     });
 
-    expect(connectToDatabase).toHaveBeenCalledOnce();
-    expect(User.findOneAndUpdate).toHaveBeenCalledWith(
-      { clerkId: "clerk_user_1" },
-      expect.objectContaining({
-        username: "alice-updated",
-        firstName: "Alice",
-      }),
-      expect.objectContaining({
-        returnDocument: "after",
-        strict: true,
-        upsert: false,
-      }),
-    );
-    expect(response).toEqual(
-      expect.objectContaining({
-        status: 200,
-        message: "User updated successfully (user.actions.tsx)",
-      }),
-    );
-  });
+    it("rejects unauthenticated profile reads", async () => {
+      mockAuth(vi.mocked(auth), {
+        userId: null,
+        isAuthenticated: false,
+      });
 
-  it("returns a 404 payload when user update target is missing", async () => {
-    vi.mocked(User.findOneAndUpdate).mockResolvedValue(null as never);
+      await expect(getUserById("user_123")).rejects.toThrow("Unauthorized");
 
-    const response = await updateUser("clerk_user_1", {
-      updatedAt: new Date("2026-03-13T00:00:00Z"),
+      expect(connectToDatabase).not.toHaveBeenCalled();
+      expect(userFindOneMock).not.toHaveBeenCalled();
     });
 
-    expect(response).toEqual(
-      expect.objectContaining({
-        status: 404,
-        message: "User update failed!",
-      }),
-    );
-  });
+    it("rejects cross-user profile reads", async () => {
+      await expect(getUserById("other_user")).rejects.toThrow("Forbidden");
 
-  it("throws forbidden when an authenticated user updates another account", async () => {
-    await expect(
-      updateUser("clerk_user_2", {
-        updatedAt: new Date("2026-03-13T00:00:00Z"),
-      }),
-    ).rejects.toThrow("Forbidden | updateUser");
-
-    expect(connectToDatabase).not.toHaveBeenCalled();
-    expect(User.findOneAndUpdate).not.toHaveBeenCalled();
-  });
-
-  it("throws unauthorized when no session exists for updateUser", async () => {
-    vi.mocked(auth).mockResolvedValue({ userId: null } as never);
-
-    await expect(
-      updateUser("clerk_user_1", {
-        updatedAt: new Date("2026-03-13T00:00:00Z"),
-      }),
-    ).rejects.toThrow("Unauthorized | updateUser");
-
-    expect(connectToDatabase).not.toHaveBeenCalled();
-    expect(User.findOneAndUpdate).not.toHaveBeenCalled();
-  });
-
-  it("throws handled errors with source metadata when update fails", async () => {
-    vi.mocked(User.findOneAndUpdate).mockRejectedValue(new Error("db failed"));
-
-    await expect(
-      updateUser("clerk_user_1", {
-        updatedAt: new Date("2026-03-13T00:00:00Z"),
-      }),
-    ).rejects.toThrow("db failed | updateUser");
-  });
-});
-
-describe("deleteUser", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    vi.mocked(auth).mockResolvedValue({ userId: "clerk_user_1" } as never);
-    vi.mocked(connectToDatabase).mockResolvedValue(undefined as never);
-    mockDeleteClerkUser.mockResolvedValue({});
-    vi.mocked(Task.deleteMany).mockResolvedValue({ deletedCount: 0 } as never);
-    vi.mocked(Transaction.deleteMany).mockResolvedValue({
-      deletedCount: 0,
-    } as never);
-    vi.mocked(UsageEvent.deleteMany).mockResolvedValue({
-      deletedCount: 0,
-    } as never);
-    vi.mocked(deleteS3Prefix).mockResolvedValue(0);
-    vi.mocked(User.findByIdAndDelete).mockResolvedValue({
-      _id: "mongo_user_1",
-    } as never);
-  });
-
-  it("deletes tasks, transactions, s3 assets, and user for the authenticated owner", async () => {
-    const deleteUserLeanMock = vi.fn().mockResolvedValue({
-      _id: "mongo_user_1",
+      expect(connectToDatabase).not.toHaveBeenCalled();
+      expect(userFindOneMock).not.toHaveBeenCalled();
     });
-    const deleteUserSelectMock = vi.fn().mockReturnValue({
-      lean: deleteUserLeanMock,
-    });
-    vi.mocked(User.findOne).mockReturnValue({
-      select: deleteUserSelectMock,
-    } as never);
-    vi.mocked(Task.deleteMany).mockResolvedValue({ deletedCount: 4 } as never);
-    vi.mocked(Transaction.deleteMany).mockResolvedValue({
-      deletedCount: 2,
-    } as never);
-    vi.mocked(UsageEvent.deleteMany).mockResolvedValue({
-      deletedCount: 9,
-    } as never);
-    vi.mocked(deleteS3Prefix).mockResolvedValue(7);
-
-    const response = await deleteUser("clerk_user_1");
-
-    expect(mockDeleteClerkUser).toHaveBeenCalledWith("clerk_user_1");
-    expect(connectToDatabase).toHaveBeenCalledOnce();
-    expect(User.findOne).toHaveBeenCalledWith({ clerkId: "clerk_user_1" });
-    expect(deleteUserSelectMock).toHaveBeenCalledWith("_id");
-    expect(deleteUserLeanMock).toHaveBeenCalledOnce();
-    expect(Task.deleteMany).toHaveBeenCalledWith({ userId: "clerk_user_1" });
-    expect(Transaction.deleteMany).toHaveBeenCalledWith({
-      clerkId: "clerk_user_1",
-    });
-    expect(UsageEvent.deleteMany).toHaveBeenCalledWith({
-      userId: "clerk_user_1",
-    });
-    expect(deleteS3Prefix).toHaveBeenCalledWith("clerk_user_1/");
-    expect(User.findByIdAndDelete).toHaveBeenCalledWith("mongo_user_1");
-    expect(response).toEqual(
-      expect.objectContaining({
-        status: 200,
-        message: "User deleted successfully.",
-        deletedTasks: 4,
-        deletedTransactions: 2,
-        deletedUsageEvents: 9,
-        deletedObjectsCount: 7,
-      }),
-    );
-    expect(revalidatePath).toHaveBeenCalledWith("/");
-    expect(revalidatePath).toHaveBeenCalledWith("/app");
-    expect(revalidatePath).toHaveBeenCalledWith("/app/profile");
-    expect(revalidatePath).toHaveBeenCalledWith("/app/library");
   });
 
-  it("throws forbidden when authenticated user tries to delete another profile", async () => {
-    await expect(deleteUser("clerk_user_2")).rejects.toThrow(
-      "Forbidden | deleteUser",
-    );
+  describe("updateUser", () => {
+    it("updates owner profile with strict and non-upsert settings", async () => {
+      userFindOneAndUpdateMock.mockResolvedValue(
+        createTestUser({
+          clerkId: "user_123",
+          username: "updated-user",
+        }),
+      );
 
-    expect(connectToDatabase).not.toHaveBeenCalled();
-    expect(User.findOne).not.toHaveBeenCalled();
-    expect(Task.deleteMany).not.toHaveBeenCalled();
-    expect(Transaction.deleteMany).not.toHaveBeenCalled();
-    expect(UsageEvent.deleteMany).not.toHaveBeenCalled();
-  });
+      const response = await updateUser("user_123", {
+        username: "updated-user",
+        firstName: "Updated",
+        updatedAt: new Date("2026-03-25T00:00:00.000Z"),
+      });
 
-  it("returns a 404 response when user does not exist", async () => {
-    const deleteUserLeanMock = vi.fn().mockResolvedValue(null);
-    const deleteUserSelectMock = vi.fn().mockReturnValue({
-      lean: deleteUserLeanMock,
+      expect(connectToDatabase).toHaveBeenCalledOnce();
+      expect(userFindOneAndUpdateMock).toHaveBeenCalledWith(
+        { clerkId: "user_123" },
+        expect.objectContaining({
+          username: "updated-user",
+          firstName: "Updated",
+        }),
+        {
+          returnDocument: "after",
+          strict: true,
+          upsert: false,
+        },
+      );
+      expect(response).toEqual(
+        expect.objectContaining({
+          status: 200,
+          message: "User updated successfully (user.actions.tsx)",
+        }),
+      );
     });
-    vi.mocked(User.findOne).mockReturnValue({
-      select: deleteUserSelectMock,
-    } as never);
 
-    const response = await deleteUser("clerk_user_1");
+    it("returns 404 payload when user update target does not exist", async () => {
+      userFindOneAndUpdateMock.mockResolvedValue(null);
 
-    expect(mockDeleteClerkUser).toHaveBeenCalledWith("clerk_user_1");
-    expect(response).toEqual(
-      expect.objectContaining({
-        status: 404,
-        message: "User does not exist!",
-      }),
-    );
-    expect(Task.deleteMany).not.toHaveBeenCalled();
-    expect(Transaction.deleteMany).not.toHaveBeenCalled();
-    expect(UsageEvent.deleteMany).not.toHaveBeenCalled();
-    expect(deleteS3Prefix).not.toHaveBeenCalled();
-    expect(User.findByIdAndDelete).not.toHaveBeenCalled();
+      const response = await updateUser("user_123", {
+        updatedAt: new Date("2026-03-25T00:00:00.000Z"),
+      });
+
+      expect(response).toEqual(
+        expect.objectContaining({
+          status: 404,
+          message: "User update failed!",
+          source: "updateUser",
+        }),
+      );
+    });
+
+    it("rejects unauthenticated updates", async () => {
+      mockAuth(vi.mocked(auth), {
+        userId: null,
+        isAuthenticated: false,
+      });
+
+      await expect(
+        updateUser("user_123", {
+          updatedAt: new Date("2026-03-25T00:00:00.000Z"),
+        }),
+      ).rejects.toThrow("Unauthorized");
+
+      expect(connectToDatabase).not.toHaveBeenCalled();
+      expect(userFindOneAndUpdateMock).not.toHaveBeenCalled();
+    });
+
+    it("rejects cross-user updates", async () => {
+      await expect(
+        updateUser("other_user", {
+          updatedAt: new Date("2026-03-25T00:00:00.000Z"),
+        }),
+      ).rejects.toThrow("Forbidden");
+
+      expect(connectToDatabase).not.toHaveBeenCalled();
+      expect(userFindOneAndUpdateMock).not.toHaveBeenCalled();
+    });
+
+    it("rejects invalid update payloads", async () => {
+      type InvalidUpdateUserInput = Parameters<typeof updateUser>[1] & {
+        unsupportedField: string;
+      };
+
+      await expect(
+        updateUser("user_123", {
+          updatedAt: new Date("2026-03-25T00:00:00.000Z"),
+          unsupportedField: "blocked",
+        } as InvalidUpdateUserInput),
+      ).rejects.toThrow("Invalid user payload.");
+
+      expect(connectToDatabase).not.toHaveBeenCalled();
+      expect(userFindOneAndUpdateMock).not.toHaveBeenCalled();
+    });
   });
 
-  it("returns error and skips MongoDB cleanup when Clerk deletion fails", async () => {
-    mockDeleteClerkUser.mockRejectedValue(new Error("Clerk API error"));
+  describe("deleteUser", () => {
+    it("deletes Clerk user, all owned data, and revalidates app routes", async () => {
+      const existingUserQuery = mockMongooseModel({ _id: "mongo_user_1" });
+      userFindOneMock.mockReturnValue(existingUserQuery);
 
-    const response = await deleteUser("clerk_user_1");
+      const response = await deleteUser("user_123");
 
-    expect(response).toEqual(
-      expect.objectContaining({
-        status: 500,
-        message: "Account deletion failed. Please try again.",
-      }),
-    );
-    expect(connectToDatabase).not.toHaveBeenCalled();
-    expect(User.findOne).not.toHaveBeenCalled();
-    expect(Task.deleteMany).not.toHaveBeenCalled();
-    expect(Transaction.deleteMany).not.toHaveBeenCalled();
-    expect(deleteS3Prefix).not.toHaveBeenCalled();
-    expect(User.findByIdAndDelete).not.toHaveBeenCalled();
+      expect(vi.mocked(clerkClient)).toHaveBeenCalledOnce();
+      expect(deleteClerkUserMock).toHaveBeenCalledWith("user_123");
+      expect(connectToDatabase).toHaveBeenCalledOnce();
+      expect(userFindOneMock).toHaveBeenCalledWith({ clerkId: "user_123" });
+      expect(existingUserQuery.select).toHaveBeenCalledWith("_id");
+      expect(taskDeleteManyMock).toHaveBeenCalledWith({ userId: "user_123" });
+      expect(transactionDeleteManyMock).toHaveBeenCalledWith({
+        clerkId: "user_123",
+      });
+      expect(usageEventDeleteManyMock).toHaveBeenCalledWith({
+        userId: "user_123",
+      });
+      expect(deleteS3PrefixMock).toHaveBeenCalledWith("user_123/");
+      expect(userFindByIdAndDeleteMock).toHaveBeenCalledWith("mongo_user_1");
+      expect(revalidatePath).toHaveBeenCalledWith("/");
+      expect(revalidatePath).toHaveBeenCalledWith("/app");
+      expect(revalidatePath).toHaveBeenCalledWith("/app/profile");
+      expect(revalidatePath).toHaveBeenCalledWith("/app/library");
+      expect(response).toEqual(
+        expect.objectContaining({
+          status: 200,
+          message: "User deleted successfully.",
+          deletedTasks: 4,
+          deletedTransactions: 2,
+          deletedUsageEvents: 7,
+          deletedObjectsCount: 3,
+        }),
+      );
+    });
+
+    it("rejects unauthenticated deletion requests", async () => {
+      mockAuth(vi.mocked(auth), {
+        userId: null,
+        isAuthenticated: false,
+      });
+
+      await expect(deleteUser("user_123")).rejects.toThrow("Unauthorized");
+
+      expect(vi.mocked(clerkClient)).not.toHaveBeenCalled();
+      expect(connectToDatabase).not.toHaveBeenCalled();
+    });
+
+    it("rejects cross-user deletion requests", async () => {
+      await expect(deleteUser("other_user")).rejects.toThrow("Forbidden");
+
+      expect(vi.mocked(clerkClient)).not.toHaveBeenCalled();
+      expect(connectToDatabase).not.toHaveBeenCalled();
+    });
+
+    it("returns 500 and skips Mongo cleanup when Clerk deletion fails", async () => {
+      deleteClerkUserMock.mockRejectedValue(new Error("Clerk API unavailable"));
+
+      const response = await deleteUser("user_123");
+
+      expect(response).toEqual(
+        expect.objectContaining({
+          status: 500,
+          message: "Account deletion failed. Please try again.",
+          source: "deleteUser",
+        }),
+      );
+      expect(connectToDatabase).not.toHaveBeenCalled();
+      expect(userFindOneMock).not.toHaveBeenCalled();
+      expect(taskDeleteManyMock).not.toHaveBeenCalled();
+      expect(userFindByIdAndDeleteMock).not.toHaveBeenCalled();
+    });
+
+    it("returns 404 when Mongo user does not exist", async () => {
+      userFindOneMock.mockReturnValue(mockMongooseModel(null));
+
+      const response = await deleteUser("user_123");
+
+      expect(response).toEqual(
+        expect.objectContaining({
+          status: 404,
+          message: "User does not exist!",
+          source: "deleteUser",
+        }),
+      );
+      expect(taskDeleteManyMock).not.toHaveBeenCalled();
+      expect(transactionDeleteManyMock).not.toHaveBeenCalled();
+      expect(usageEventDeleteManyMock).not.toHaveBeenCalled();
+      expect(deleteS3PrefixMock).not.toHaveBeenCalled();
+      expect(userFindByIdAndDeleteMock).not.toHaveBeenCalled();
+    });
+
+    it("returns 404 when final Mongo user delete does not delete a document", async () => {
+      userFindOneMock.mockReturnValue(
+        mockMongooseModel({ _id: "mongo_user_1" }),
+      );
+      userFindByIdAndDeleteMock.mockResolvedValue(null);
+
+      const response = await deleteUser("user_123");
+
+      expect(response).toEqual(
+        expect.objectContaining({
+          status: 404,
+          message: "User deletion failed!",
+          source: "deleteUser",
+        }),
+      );
+    });
   });
 });

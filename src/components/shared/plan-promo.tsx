@@ -30,12 +30,11 @@ export default function PlanPromo({ plan, role }: PlanPromoProps) {
       <div className={promoAccentClass}></div>
 
       <div className="z-10 flex w-full flex-col gap-3 text-center">
-
         <div className="absolute right-0.5 top-0.5 z-10 flex items-center gap-1 font-medium">
           <span
             className={classNames(
               "rounded-sm p-1 text-2xs uppercase leading-none tracking-wider",
-              "bg-twilightPurple-600 text-lavenderHaze-400",          
+              "bg-twilightPurple-600 text-lavenderHaze-400",
               { "min-w-20.5": !isLite },
             )}
           >

@@ -315,7 +315,7 @@ export default function ProfileHeroEditor({
           {isDeleting ? "Deleting..." : "Delete My Account"}
         </button>
       </div>
-      
+
       <ConfirmationModal
         isOpen={isDeleteConfirmOpen}
         title="Delete account"
