@@ -1,6 +1,6 @@
 import Link from "next/link";
 import classNames from "classnames";
-import PageWrapper from "@/components/layout/page-wrapper";
+import ChatPageWrapper from "@/components/chat/chat-page-wrapper";
 
 interface HttpStatusPageProps {
   code: 401 | 403 | 404 | 500;
@@ -12,10 +12,10 @@ interface HttpStatusPageProps {
 }
 
 const panelClassByCode: Record<HttpStatusPageProps["code"], string> = {
-  401: "bg-red-800",
-  403: "bg-red-800",
-  404: "bg-slate-700",
-  500: "bg-amber-700",
+  401: "bg-red-600",
+  403: "bg-red-600",
+  404: "bg-slate-600",
+  500: "bg-amber-600",
 };
 
 export default function HttpStatusPage({
@@ -32,21 +32,21 @@ export default function HttpStatusPage({
   );
 
   return (
-    <PageWrapper className="HttpStatusPage items-center justify-center gap-10 px-4">
-      <p className="text-sm font-semibold uppercase tracking-[0.24em] text-midnightBlue-600 dark:text-lavenderHaze-700">
-        HTTP {code}
+    <ChatPageWrapper className="HttpStatusPage items-center justify-center gap-16 px-4 -mt-4">
+      <p className="text-sm font-semibold uppercase text-midnightBlue-500 dark:text-lavenderHaze-500">
+        ERROR: {code}
       </p>
 
-      <h1 className="heading-1 text-center">{title}</h1>
+      <h1 className="heading-2 text-center">{title}</h1>
 
       <div className={statusPanelClass}>
         <h2 className="heading-6 text-center text-white">{message}</h2>
         <p className="body-2 text-center text-white">{details}</p>
       </div>
 
-      <Link href={ctaHref} className="btn btn-sm btn-contained">
+      <Link href={ctaHref} className="btn btn-sm btn-outlined">
         {ctaLabel}
       </Link>
-    </PageWrapper>
+    </ChatPageWrapper>
   );
 }

@@ -11,7 +11,8 @@ When a field's type depends on another field's value (e.g., `type: 'success'` me
 
 **Incorrect (regular union - no automatic narrowing):**
 
-```typescriptimport { z } from "zod";
+```typescript
+import { z } from "zod";
 
 const successSchema = z.object({
   type: z.literal("success"),
@@ -31,14 +32,16 @@ type Response = z.infer<typeof responseSchema>;
 function handleResponse(response: Response) {
   // TypeScript doesn't narrow automatically
   if (response.type === "success") {
-    response.data; // Error: Property 'data' does not exist on type 'Response'    // Must cast or use type guards
+    response.data; // Error: Property 'data' does not exist on type 'Response'
+    // Must cast or use type guards
   }
 }
 ```
 
 **Correct (discriminated union):**
 
-```typescriptimport { z } from "zod";
+```typescript
+import { z } from "zod";
 
 const successSchema = z.object({
   type: z.literal("success"),
@@ -63,14 +66,16 @@ function handleResponse(response: Response) {
   if (response.type === "success") {
     response.data.id; // Works - TypeScript knows data exists
   } else {
-    response.message; // Works - TypeScript knows message exists  }
+    response.message; // Works - TypeScript knows message exists
+  }
 }
 ```
 
 **Common use cases:**
 
 ```typescript
-// API responsesconst apiResponse = z.discriminatedUnion("status", [
+// API responses
+const apiResponse = z.discriminatedUnion("status", [
   z.object({ status: z.literal("success"), data: z.unknown() }),
   z.object({ status: z.literal("error"), error: z.string(), code: z.number() }),
   z.object({ status: z.literal("loading") }),
@@ -88,19 +93,25 @@ const notification = z.discriminatedUnion("channel", [
   z.object({ channel: z.literal("email"), address: z.string().email() }),
   z.object({ channel: z.literal("sms"), phoneNumber: z.string() }),
   z.object({ channel: z.literal("push"), deviceToken: z.string() }),
-]);```
+]);
+```
 
 **Type-safe handling:**
 
-```typescriptconst paymentSchema = z.discriminatedUnion("method", [
+```typescript
+const paymentSchema = z.discriminatedUnion("method", [
   z.object({
-    method: z.literal("card"),    cardNumber: z.string(),
+    method: z.literal("card"),
+    cardNumber: z.string(),
     expiryDate: z.string(),
   }),
-  z.object({    method: z.literal("bank"),    accountNumber: z.string(),
+  z.object({
+    method: z.literal("bank"),
+    accountNumber: z.string(),
     routingNumber: z.string(),
   }),
-  z.object({    method: z.literal("crypto"),
+  z.object({
+    method: z.literal("crypto"),
     walletAddress: z.string(),
   }),
 ]);
@@ -114,13 +125,13 @@ function processPayment(payment: Payment) {
     case "bank":
       return initiateBankTransfer(payment.accountNumber, payment.routingNumber);
     case "crypto":
-      return sendCrypto(payment.walletAddress);    // TypeScript exhaustiveness check - no default needed
+      return sendCrypto(payment.walletAddress);
+    // TypeScript exhaustiveness check - no default needed
   }
 }
 ```
 
 **When NOT to use this pattern:**
-
 
 - When variants don't share a common discriminator field
 - When the discriminator isn't a literal type (use regular union)

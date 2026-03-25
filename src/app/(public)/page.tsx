@@ -6,10 +6,7 @@ import WorkflowSection from "@/components/sections/homepage/workflow-section";
 
 export default async function HomePage() {
   return (
-    <div
-      className="HomePage relative z-10 -mt-16 mb-10 mx-auto flex w-full flex-1 flex-col items-center gap-20"
-      id="HomePageWrapper"
-    >
+    <div className="HomePageWrapper relative z-10 -mt-16 mb-10 mx-auto flex w-full flex-1 flex-col items-center gap-20">
       <HeroSection />
       <FeaturesSection />
       <WorkflowSection />

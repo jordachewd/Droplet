@@ -6,6 +6,7 @@ import {
   legalReviewDisclaimer,
 } from "@/constants/terms-data";
 import { getEffectivePlanConfig } from "@/lib/utils/effective-plan-config";
+import PageWrapper from "@/components/layout/page-wrapper";
 
 export const metadata: Metadata = {
   title: "Terms & Conditions | Droplet",
@@ -21,28 +22,19 @@ export default async function TermsPage() {
   });
 
   return (
-    <section className="TermsPage mx-auto flex w-full max-w-screen-2xl flex-col gap-8 px-4 pb-16 pt-24 sm:px-6 lg:px-8">
-      <div
-        className={classNames(
-          "rounded-4xl px-6 py-10 shadow-sm bg-lavenderHaze-100/76 dark:bg-nightIndigo-900/82",
-        )}
-      >
-        <PageHead
-          title="Terms & Conditions"
-          subtitle="Draft service terms covering account use, pricing, AI-generated content, suspension, and legal review requirements."
-        />
-        <p className="body-2 mt-5 rounded-2xl bg-twilightPurple-100/90 px-4 py-3 text-sm dark:bg-dustyBlue-1000/80">
-          {legalReviewDisclaimer}
-        </p>
-      </div>
+    <PageWrapper id="PrivacyPage" className="gap-8!">
+      <PageHead
+        title="Terms & Conditions"
+        subtitle="Draft service terms covering account use, pricing, AI-generated content, suspension, and legal review requirements."
+      />
+      <p className="body-2 -mt-6 mb-4 text-sm">{legalReviewDisclaimer}</p>
 
       {termsSections.map((section) => (
         <article
           key={section.title}
           className={classNames(
-            "rounded-4xl border px-6 py-7 shadow-sm",
-            "border-slate-400/80 bg-lavenderHaze-100/76",
-            "dark:border-slate-500 dark:bg-nightIndigo-900/82",
+            "rounded-2xl px-6 py-7 shadow-sm",
+            "bg-lavenderHaze-100/76 dark:bg-nightIndigo-900/82",
           )}
         >
           <h2 className="heading-5">{section.title}</h2>
@@ -55,6 +47,6 @@ export default async function TermsPage() {
           </div>
         </article>
       ))}
-    </section>
+    </PageWrapper>
   );
 }

@@ -1,7 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { notFound } from "next/navigation";
 import PageHead from "@/components/layout/page-head";
-import PageWrapper from "@/components/layout/page-wrapper";
+import ChatPageWrapper from "@/components/chat/chat-page-wrapper";
 import PersonaCard from "@/components/shared/persona-card";
 import { getEffectivePersonaAccessByPlan } from "@/lib/utils/effective-persona-access";
 import { getEffectivePersonaConfig } from "@/lib/utils/effective-persona-config";
@@ -31,7 +31,7 @@ export default async function NewConversationPage() {
   const allowedPersonaIdSet = new Set(entitlements.allowedPersonaIds);
 
   return (
-    <PageWrapper id="NewConversationPage" scrollable>
+    <ChatPageWrapper id="NewConversationPage" scrollable>
       <section className="NewConversationPage mx-auto flex w-full max-w-6xl flex-col gap-6 p-4">
         <PageHead
           title="Start a New Conversation"
@@ -62,6 +62,6 @@ export default async function NewConversationPage() {
           })}
         </div>
       </section>
-    </PageWrapper>
+    </ChatPageWrapper>
   );
 }

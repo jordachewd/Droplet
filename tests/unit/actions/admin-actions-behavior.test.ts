@@ -1,0 +1,736 @@
+import { clerkClient } from "@clerk/nextjs/server";
+import { revalidatePath } from "next/cache";
+import {
+  bulkDeletePublicPagesAction,
+  bulkDeleteTransactionsAction,
+  bulkPublishPublicPagesAction,
+  bulkRemoveUsersAction,
+  bulkSuspendUsersAction,
+  bulkUnpublishPublicPagesAction,
+  createPublicPageAction,
+  deletePublicPageAction,
+  removeUserByAdminAction,
+  savePublicPageAction,
+  togglePublicPagePublishedAction,
+  toggleUserSuspensionAction,
+  updateAdminSettingAction,
+  updatePublicPageSortOrderAction,
+} from "@/lib/actions/admin.actions";
+import { createTestUser, mockMongooseModel } from "../test-support";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const {
+  requireAdminActionAccessMock,
+  connectToDatabaseMock,
+  createAdminAuditLogEntryMock,
+  deleteS3PrefixMock,
+  deleteClerkUserMock,
+  userFindByIdAndUpdateMock,
+  userFindByIdMock,
+  userFindByIdAndDeleteMock,
+  userUpdateManyMock,
+  taskDeleteManyMock,
+  transactionDeleteManyMock,
+  usageEventDeleteManyMock,
+  appSettingFindOneAndUpdateMock,
+  publicPageFindOneMock,
+  publicPageCreateMock,
+  publicPageFindByIdAndUpdateMock,
+  publicPageFindByIdAndDeleteMock,
+  publicPageDeleteManyMock,
+  publicPageUpdateManyMock,
+} = vi.hoisted(() => ({
+  requireAdminActionAccessMock: vi.fn(),
+  connectToDatabaseMock: vi.fn(),
+  createAdminAuditLogEntryMock: vi.fn(),
+  deleteS3PrefixMock: vi.fn(),
+  deleteClerkUserMock: vi.fn(),
+  userFindByIdAndUpdateMock: vi.fn(),
+  userFindByIdMock: vi.fn(),
+  userFindByIdAndDeleteMock: vi.fn(),
+  userUpdateManyMock: vi.fn(),
+  taskDeleteManyMock: vi.fn(),
+  transactionDeleteManyMock: vi.fn(),
+  usageEventDeleteManyMock: vi.fn(),
+  appSettingFindOneAndUpdateMock: vi.fn(),
+  publicPageFindOneMock: vi.fn(),
+  publicPageCreateMock: vi.fn(),
+  publicPageFindByIdAndUpdateMock: vi.fn(),
+  publicPageFindByIdAndDeleteMock: vi.fn(),
+  publicPageDeleteManyMock: vi.fn(),
+  publicPageUpdateManyMock: vi.fn(),
+}));
+
+vi.mock("@clerk/nextjs/server", () => ({
+  clerkClient: vi.fn(async () => ({
+    users: {
+      deleteUser: deleteClerkUserMock,
+    },
+  })),
+}));
+
+vi.mock("next/cache", () => ({
+  revalidatePath: vi.fn(),
+}));
+
+vi.mock("@/lib/database/mongoose", () => ({
+  connectToDatabase: connectToDatabaseMock,
+}));
+
+vi.mock("@/lib/database/models/user.model", () => ({
+  default: {
+    findByIdAndUpdate: userFindByIdAndUpdateMock,
+    findById: userFindByIdMock,
+    findByIdAndDelete: userFindByIdAndDeleteMock,
+    updateMany: userUpdateManyMock,
+  },
+}));
+
+vi.mock("@/lib/database/models/tasks.model", () => ({
+  default: {
+    deleteMany: taskDeleteManyMock,
+  },
+}));
+
+vi.mock("@/lib/database/models/transaction.model", () => ({
+  default: {
+    deleteMany: transactionDeleteManyMock,
+  },
+}));
+
+vi.mock("@/lib/database/models/usage-event.model", () => ({
+  default: {
+    deleteMany: usageEventDeleteManyMock,
+  },
+}));
+
+vi.mock("@/lib/database/models/app-setting.model", () => ({
+  default: {
+    findOneAndUpdate: appSettingFindOneAndUpdateMock,
+  },
+}));
+
+vi.mock("@/lib/database/models/public-page.model", () => ({
+  default: {
+    findOne: publicPageFindOneMock,
+    create: publicPageCreateMock,
+    findByIdAndUpdate: publicPageFindByIdAndUpdateMock,
+    findByIdAndDelete: publicPageFindByIdAndDeleteMock,
+    deleteMany: publicPageDeleteManyMock,
+    updateMany: publicPageUpdateManyMock,
+  },
+}));
+
+vi.mock("@/lib/utils/admin-audit", () => ({
+  createAdminAuditLogEntry: createAdminAuditLogEntryMock,
+}));
+
+vi.mock("@/lib/utils/admin-auth", () => ({
+  requireAdminActionAccess: requireAdminActionAccessMock,
+}));
+
+vi.mock("@/lib/utils/aws/delete-s3-prefix", () => ({
+  default: deleteS3PrefixMock,
+}));
+
+type ActionState = {
+  status: "idle" | "success" | "error";
+  message: string;
+  severity?: "success" | "error" | "warning" | "info";
+};
+
+function buildFormData(
+  fields: Record<string, string | string[] | undefined>,
+): FormData {
+  const formData = new FormData();
+
+  for (const [field, value] of Object.entries(fields)) {
+    if (typeof value === "undefined") {
+      continue;
+    }
+
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        formData.append(field, item);
+      }
+      continue;
+    }
+
+    formData.set(field, value);
+  }
+
+  return formData;
+}
+
+function expectErrorState(state: ActionState, message: string): void {
+  expect(state).toEqual({
+    status: "error",
+    message,
+    severity: "error",
+  });
+}
+
+function expectLatestAudit(action: string, targetType: string): void {
+  const calls = createAdminAuditLogEntryMock.mock.calls;
+  const latestCall = calls[calls.length - 1]?.[0] as
+    | { action: string; targetType: string }
+    | undefined;
+
+  expect(latestCall).toBeDefined();
+  expect(latestCall).toMatchObject({ action, targetType });
+}
+
+function makeExistingPageQuery(result: unknown) {
+  return {
+    select: vi.fn(() => ({
+      lean: vi.fn(async () => result),
+    })),
+  };
+}
+
+function makeLatestPageQuery(result: unknown) {
+  return {
+    sort: vi.fn(() => ({
+      select: vi.fn(() => ({
+        lean: vi.fn(async () => result),
+      })),
+    })),
+  };
+}
+
+describe("admin.actions behavior", () => {
+  const targetUserId = "507f1f77bcf86cd799439011";
+  const secondUserId = "507f1f77bcf86cd799439022";
+  const pageId = "507f1f77bcf86cd799439012";
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    requireAdminActionAccessMock.mockResolvedValue("admin_123");
+    connectToDatabaseMock.mockResolvedValue(undefined);
+    createAdminAuditLogEntryMock.mockResolvedValue(undefined);
+
+    userFindByIdAndUpdateMock.mockResolvedValue({
+      _id: targetUserId,
+      clerkId: "user_123",
+    });
+    userUpdateManyMock.mockResolvedValue({ modifiedCount: 2 });
+
+    taskDeleteManyMock.mockResolvedValue({ deletedCount: 4 });
+    transactionDeleteManyMock.mockResolvedValue({ deletedCount: 3 });
+    usageEventDeleteManyMock.mockResolvedValue({ deletedCount: 5 });
+    deleteS3PrefixMock.mockResolvedValue(6);
+    userFindByIdAndDeleteMock.mockResolvedValue({ _id: targetUserId });
+    deleteClerkUserMock.mockResolvedValue(undefined);
+
+    appSettingFindOneAndUpdateMock.mockResolvedValue({ key: "admin.models" });
+
+    publicPageCreateMock.mockResolvedValue({ _id: pageId, slug: "about" });
+    publicPageFindByIdAndUpdateMock.mockResolvedValue({
+      _id: pageId,
+      slug: "about",
+      title: "About",
+    });
+    publicPageFindByIdAndDeleteMock.mockResolvedValue({
+      _id: pageId,
+      slug: "about",
+      title: "About",
+    });
+    publicPageDeleteManyMock.mockResolvedValue({ deletedCount: 2 });
+    publicPageUpdateManyMock.mockResolvedValue({ modifiedCount: 3 });
+
+    userFindByIdMock.mockReturnValue(
+      mockMongooseModel({
+        clerkId: "user_123",
+        email: "user@example.com",
+        username: "user",
+      }),
+    );
+  });
+
+  it("toggleUserSuspensionAction updates status and logs audit", async () => {
+    const response = await toggleUserSuspensionAction(
+      buildFormData({ userId: targetUserId, suspended: "true" }),
+    );
+
+    expect(response).toEqual({
+      status: "success",
+      message: "User suspended.",
+      severity: "success",
+    });
+    expect(userFindByIdAndUpdateMock).toHaveBeenCalledWith(
+      targetUserId,
+      {
+        $set: {
+          suspended: true,
+          updatedAt: expect.any(Date),
+        },
+      },
+      {
+        returnDocument: "after",
+        strict: true,
+        upsert: false,
+      },
+    );
+    expectLatestAudit("user.suspend", "User");
+    expect(revalidatePath).toHaveBeenCalledWith("/admin");
+    expect(revalidatePath).toHaveBeenCalledWith("/admin/users");
+    expect(revalidatePath).toHaveBeenCalledWith(`/admin/users/${targetUserId}`);
+  });
+
+  it("toggleUserSuspensionAction returns not-found edge state", async () => {
+    userFindByIdAndUpdateMock.mockResolvedValueOnce(null);
+
+    const response = await toggleUserSuspensionAction(
+      buildFormData({ userId: targetUserId, suspended: "false" }),
+    );
+
+    expectErrorState(response, "User not found.");
+  });
+
+  it("removeUserByAdminAction removes user and owned resources", async () => {
+    const response = await removeUserByAdminAction(
+      buildFormData({ userId: targetUserId }),
+    );
+
+    expect(response).toEqual({
+      status: "success",
+      message: "User and related data removed.",
+      severity: "success",
+    });
+    expect(vi.mocked(clerkClient)).toHaveBeenCalledOnce();
+    expect(deleteClerkUserMock).toHaveBeenCalledWith("user_123");
+    expect(taskDeleteManyMock).toHaveBeenCalledWith({ userId: "user_123" });
+    expect(transactionDeleteManyMock).toHaveBeenCalledWith({
+      clerkId: "user_123",
+    });
+    expect(usageEventDeleteManyMock).toHaveBeenCalledWith({
+      userId: "user_123",
+    });
+    expect(deleteS3PrefixMock).toHaveBeenCalledWith("user_123/");
+    expect(userFindByIdAndDeleteMock).toHaveBeenCalledWith(targetUserId);
+    expectLatestAudit("user.remove", "User");
+  });
+
+  it("removeUserByAdminAction handles missing users", async () => {
+    userFindByIdMock.mockReturnValueOnce(mockMongooseModel(null));
+
+    const response = await removeUserByAdminAction(
+      buildFormData({ userId: targetUserId }),
+    );
+
+    expectErrorState(response, "Unable to remove user.");
+  });
+
+  it("updateAdminSettingAction updates model settings", async () => {
+    const response = await updateAdminSettingAction(
+      buildFormData({
+        key: "admin.models",
+        category: "models",
+        liteChatModel: "gpt-4.1-mini",
+        proChatModel: "gpt-4.1",
+        premiumChatModel: "gpt-5.4",
+        imageModel: "gpt-image-1",
+        audioModel: "gpt-audio-mini",
+        videoModel: "sora-2",
+      }),
+    );
+
+    expect(response).toEqual({
+      status: "success",
+      message: "Settings updated.",
+      severity: "success",
+    });
+    expectLatestAudit("setting.update", "AppSetting");
+  });
+
+  it("updateAdminSettingAction applies pricing and revalidates plans routes", async () => {
+    await updateAdminSettingAction(
+      buildFormData({
+        key: "admin.pricing",
+        category: "plans",
+        proPrice: "19",
+        premiumPrice: "39",
+      }),
+    );
+
+    expect(appSettingFindOneAndUpdateMock).toHaveBeenCalledWith(
+      { key: "admin.pricing" },
+      expect.objectContaining({
+        $set: expect.objectContaining({
+          value: {
+            proPrice: 19,
+            premiumPrice: 39,
+          },
+        }),
+      }),
+      expect.any(Object),
+    );
+    expect(revalidatePath).toHaveBeenCalledWith("/plans");
+    expect(revalidatePath).toHaveBeenCalledWith("/app/plans");
+  });
+
+  it("updateAdminSettingAction filters invalid persona access ids", async () => {
+    await updateAdminSettingAction(
+      buildFormData({
+        key: "persona_access_lite",
+        category: "features",
+        personaIds: ["strategist", "developer", "invalid-persona"],
+      }),
+    );
+
+    expect(appSettingFindOneAndUpdateMock).toHaveBeenCalledWith(
+      { key: "persona_access_lite" },
+      expect.objectContaining({
+        $set: expect.objectContaining({ value: ["strategist", "developer"] }),
+      }),
+      expect.any(Object),
+    );
+  });
+
+  it("updateAdminSettingAction parses persona overrides", async () => {
+    await updateAdminSettingAction(
+      buildFormData({
+        key: "admin.personaOverrides",
+        category: "features",
+        label_strategist: "Strategist+",
+        tagline_strategist: "Plan smart",
+        description_strategist: "Practical strategy",
+        starterPrompts_strategist: "Prompt one\nPrompt two",
+      }),
+    );
+
+    expect(appSettingFindOneAndUpdateMock).toHaveBeenCalledWith(
+      { key: "admin.personaOverrides" },
+      expect.objectContaining({
+        $set: expect.objectContaining({
+          value: expect.objectContaining({
+            strategist: expect.objectContaining({
+              starterPrompts: ["Prompt one", "Prompt two"],
+            }),
+          }),
+        }),
+      }),
+      expect.any(Object),
+    );
+    expect(revalidatePath).toHaveBeenCalledWith("/personas");
+    expect(revalidatePath).toHaveBeenCalledWith("/app/library");
+    expect(revalidatePath).toHaveBeenCalledWith("/admin/usage");
+  });
+
+  it("updateAdminSettingAction normalizes support email and revalidates support routes", async () => {
+    await updateAdminSettingAction(
+      buildFormData({
+        key: "admin.supportEmail",
+        category: "features",
+        supportEmail: "SUPPORT@DROPLET.EXAMPLE",
+      }),
+    );
+
+    expect(appSettingFindOneAndUpdateMock).toHaveBeenCalledWith(
+      { key: "admin.supportEmail" },
+      expect.objectContaining({
+        $set: expect.objectContaining({ value: "support@droplet.example" }),
+      }),
+      expect.any(Object),
+    );
+    expect(revalidatePath).toHaveBeenCalledWith("/privacy");
+    expect(revalidatePath).toHaveBeenCalledWith("/cookies");
+    expect(revalidatePath).toHaveBeenCalledWith("/app/profile");
+  });
+
+  it("updateAdminSettingAction handles invalid category and missing values", async () => {
+    const invalidCategory = await updateAdminSettingAction(
+      buildFormData({ key: "admin.models", category: "invalid", value: "{}" }),
+    );
+    const missingValue = await updateAdminSettingAction(
+      buildFormData({ key: "unknown.key", category: "features" }),
+    );
+
+    expectErrorState(invalidCategory, "Invalid settings category.");
+    expectErrorState(missingValue, "Missing required settings value.");
+  });
+
+  it("updateAdminSettingAction handles invalid currency and theme values", async () => {
+    const invalidCurrency = await updateAdminSettingAction(
+      buildFormData({
+        key: "admin.currencySymbol",
+        category: "plans",
+        currencySymbol: "GBP",
+      }),
+    );
+    const invalidTheme = await updateAdminSettingAction(
+      buildFormData({
+        key: "admin.theme",
+        category: "theme",
+        defaultMode: "sepia",
+      }),
+    );
+
+    expectErrorState(invalidCurrency, "Unable to update settings.");
+    expectErrorState(invalidTheme, "Unable to update settings.");
+  });
+
+  it("createPublicPageAction creates pages and blocks duplicates", async () => {
+    publicPageFindOneMock
+      .mockReturnValueOnce(makeExistingPageQuery(null))
+      .mockReturnValueOnce(makeLatestPageQuery({ sortOrder: 4 }));
+
+    const success = await createPublicPageAction(
+      buildFormData({ title: "About", slug: "about" }),
+    );
+
+    publicPageFindOneMock.mockReturnValueOnce(
+      makeExistingPageQuery({ _id: pageId }),
+    );
+
+    const duplicate = await createPublicPageAction(
+      buildFormData({ title: "About", slug: "about" }),
+    );
+
+    expect(success).toEqual({
+      status: "success",
+      message: "Public page created.",
+      severity: "success",
+    });
+    expectLatestAudit("page.create", "PublicPage");
+    expectErrorState(duplicate, "A page with this slug already exists.");
+  });
+
+  it("toggle/delete/sort/save public page actions enforce not-found edges", async () => {
+    publicPageFindByIdAndUpdateMock.mockResolvedValueOnce(null);
+    const toggleNotFound = await togglePublicPagePublishedAction(
+      buildFormData({ pageId, isPublished: "false" }),
+    );
+
+    publicPageFindByIdAndDeleteMock.mockResolvedValueOnce(null);
+    const deleteNotFound = await deletePublicPageAction(
+      buildFormData({ pageId }),
+    );
+
+    publicPageFindByIdAndUpdateMock.mockResolvedValueOnce(null);
+    const sortNotFound = await updatePublicPageSortOrderAction(
+      buildFormData({ pageId, sortOrder: "8" }),
+    );
+
+    publicPageFindByIdAndUpdateMock.mockResolvedValueOnce(null);
+    const saveNotFound = await savePublicPageAction(
+      buildFormData({ pageId, title: "About", content: "<p>Saved</p>" }),
+    );
+
+    expectErrorState(toggleNotFound, "Page not found.");
+    expectErrorState(deleteNotFound, "Page not found.");
+    expectErrorState(sortNotFound, "Page not found.");
+    expectErrorState(saveNotFound, "Page not found.");
+  });
+
+  it("togglePublicPagePublishedAction supports publish and unpublish success paths", async () => {
+    const publish = await togglePublicPagePublishedAction(
+      buildFormData({ pageId, isPublished: "true" }),
+    );
+
+    const unpublish = await togglePublicPagePublishedAction(
+      buildFormData({ pageId, isPublished: "false" }),
+    );
+
+    expect(publish).toEqual({
+      status: "success",
+      message: "Page published.",
+      severity: "success",
+    });
+    expect(unpublish).toEqual({
+      status: "success",
+      message: "Page unpublished.",
+      severity: "success",
+    });
+    expectLatestAudit("page.unpublish", "PublicPage");
+    expect(revalidatePath).toHaveBeenCalledWith("/admin/website");
+    expect(revalidatePath).toHaveBeenCalledWith(`/admin/website/${pageId}`);
+  });
+
+  it("deletePublicPageAction success path logs audit and returns warning severity", async () => {
+    const response = await deletePublicPageAction(buildFormData({ pageId }));
+
+    expect(response).toEqual({
+      status: "success",
+      message: "Page deleted.",
+      severity: "warning",
+    });
+    expectLatestAudit("page.delete", "PublicPage");
+    expect(revalidatePath).toHaveBeenCalledWith("/admin/website");
+  });
+
+  it("updatePublicPageSortOrderAction success path logs audit and revalidates", async () => {
+    const response = await updatePublicPageSortOrderAction(
+      buildFormData({ pageId, sortOrder: "8" }),
+    );
+
+    expect(response).toEqual({
+      status: "success",
+      message: "Sort order updated.",
+      severity: "success",
+    });
+    expectLatestAudit("page.sort", "PublicPage");
+    expect(revalidatePath).toHaveBeenCalledWith("/admin/website");
+    expect(revalidatePath).toHaveBeenCalledWith(`/admin/website/${pageId}`);
+  });
+
+  it("savePublicPageAction success path logs audit and revalidates", async () => {
+    const response = await savePublicPageAction(
+      buildFormData({ pageId, title: "About", content: "<p>Saved</p>" }),
+    );
+
+    expect(response).toEqual({
+      status: "success",
+      message: "Page content saved.",
+      severity: "success",
+    });
+    expectLatestAudit("page.save", "PublicPage");
+    expect(revalidatePath).toHaveBeenCalledWith("/admin/website");
+    expect(revalidatePath).toHaveBeenCalledWith(`/admin/website/${pageId}`);
+  });
+
+  it("bulk actions succeed and write expected audit entries", async () => {
+    const suspend = await bulkSuspendUsersAction(
+      buildFormData({ userIds: [targetUserId, secondUserId] }),
+    );
+
+    userFindByIdMock.mockImplementation((id: unknown) => {
+      const value =
+        String(id) === secondUserId
+          ? { clerkId: "user_456", email: "two@example.com", username: "two" }
+          : { clerkId: "user_123", email: "one@example.com", username: "one" };
+      return mockMongooseModel(value);
+    });
+
+    const remove = await bulkRemoveUsersAction(
+      buildFormData({ userIds: [targetUserId, secondUserId] }),
+    );
+    const deleteTransactions = await bulkDeleteTransactionsAction(
+      buildFormData({ transactionIds: ["txn_1", "txn_2"] }),
+    );
+    const deletePages = await bulkDeletePublicPagesAction(
+      buildFormData({ pageIds: ["page_1", "page_2"] }),
+    );
+    const publish = await bulkPublishPublicPagesAction(
+      buildFormData({ pageIds: ["page_1", "page_2", "page_3"] }),
+    );
+    const unpublish = await bulkUnpublishPublicPagesAction(
+      buildFormData({ pageIds: ["page_1"] }),
+    );
+
+    expect(suspend).toEqual(
+      expect.objectContaining({ status: "success", severity: "warning" }),
+    );
+    expect(remove).toEqual(
+      expect.objectContaining({
+        status: "success",
+        message: "2 users removed.",
+      }),
+    );
+    expect(deleteTransactions).toEqual(
+      expect.objectContaining({
+        status: "success",
+        message: "3 transactions removed.",
+      }),
+    );
+    expect(deletePages).toEqual(
+      expect.objectContaining({
+        status: "success",
+        message: "2 pages deleted.",
+      }),
+    );
+    expect(publish).toEqual(
+      expect.objectContaining({
+        status: "success",
+        message: "3 pages published.",
+      }),
+    );
+    expect(unpublish).toEqual(
+      expect.objectContaining({
+        status: "success",
+        message: "3 pages unpublished.",
+      }),
+    );
+  });
+
+  it("bulk actions handle missing ids edge inputs", async () => {
+    const noSuspendIds = await bulkSuspendUsersAction(new FormData());
+    const noRemoveIds = await bulkRemoveUsersAction(new FormData());
+    const noTransactionIds = await bulkDeleteTransactionsAction(new FormData());
+    const noPageIdsDelete = await bulkDeletePublicPagesAction(new FormData());
+    const noPageIdsPublish = await bulkPublishPublicPagesAction(new FormData());
+    const noPageIdsUnpublish = await bulkUnpublishPublicPagesAction(
+      new FormData(),
+    );
+
+    expectErrorState(noSuspendIds, "Unable to suspend selected users.");
+    expectErrorState(noRemoveIds, "Unable to remove selected users.");
+    expectErrorState(
+      noTransactionIds,
+      "Unable to remove selected transactions.",
+    );
+    expectErrorState(noPageIdsDelete, "Unable to delete selected pages.");
+    expectErrorState(noPageIdsPublish, "Unable to publish selected pages.");
+    expectErrorState(noPageIdsUnpublish, "Unable to unpublish selected pages.");
+  });
+
+  it("removeUserByAdminAction handles downstream clerk and final delete failures", async () => {
+    deleteClerkUserMock.mockRejectedValueOnce(new Error("clerk unavailable"));
+    const clerkFailure = await removeUserByAdminAction(
+      buildFormData({ userId: targetUserId }),
+    );
+
+    deleteClerkUserMock.mockResolvedValueOnce(undefined);
+    userFindByIdAndDeleteMock.mockResolvedValueOnce(null);
+    const deleteFailure = await removeUserByAdminAction(
+      buildFormData({ userId: targetUserId }),
+    );
+
+    expectErrorState(clerkFailure, "Unable to remove user.");
+    expectErrorState(deleteFailure, "Unable to remove user.");
+  });
+
+  it("bulkRemoveUsersAction fails when one selected user is missing", async () => {
+    userFindByIdMock
+      .mockReturnValueOnce(
+        mockMongooseModel({
+          clerkId: "user_123",
+          email: "one@example.com",
+          username: "one",
+        }),
+      )
+      .mockReturnValueOnce(mockMongooseModel(null));
+
+    const response = await bulkRemoveUsersAction(
+      buildFormData({ userIds: [targetUserId, secondUserId] }),
+    );
+
+    expectErrorState(response, "Unable to remove selected users.");
+  });
+
+  it("removeUserByAdminAction checks user existence by id before deletion", async () => {
+    const ownedUser = createTestUser({
+      _id: targetUserId,
+      clerkId: "user_123",
+      email: "owner@example.com",
+      username: "owner",
+    });
+
+    userFindByIdMock.mockReturnValueOnce(
+      mockMongooseModel({
+        clerkId: ownedUser.clerkId,
+        email: ownedUser.email,
+        username: ownedUser.username,
+      }),
+    );
+
+    const response = await removeUserByAdminAction(
+      buildFormData({ userId: targetUserId }),
+    );
+
+    expect(response).toEqual(
+      expect.objectContaining({ status: "success", severity: "success" }),
+    );
+    expect(userFindByIdMock).toHaveBeenCalledWith(targetUserId);
+  });
+});

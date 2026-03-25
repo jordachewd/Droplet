@@ -11,13 +11,16 @@ When incoming data needs normalization before validation (trimming whitespace, p
 
 **Incorrect (validation fails on unnormalized data):**
 
-```typescriptimport { z } from "zod";
+```typescript
+import { z } from "zod";
+
 const userSchema = z.object({
   name: z.string().min(1),
   email: z.string().email(),
   config: z.object({
     theme: z.string(),
-  }),});
+  }),
+});
 
 // Raw form data
 const formData = {
@@ -26,12 +29,14 @@ const formData = {
   config: '{"theme": "dark"}', // JSON string, not object
 };
 
-userSchema.parse(formData);// ZodError: Expected object, received string at "config"
+userSchema.parse(formData);
+// ZodError: Expected object, received string at "config"
 ```
 
 **Correct (using preprocess):**
 
-```typescriptimport { z } from "zod";
+```typescript
+import { z } from "zod";
 
 // Preprocess normalizes before validation
 const trimmedString = z.preprocess(
@@ -57,10 +62,12 @@ const jsonObject = z.preprocess(
   },
   z.object({ theme: z.string() }),
 );
+
 const userSchema = z.object({
   name: trimmedString.pipe(z.string().min(1)),
   email: lowercaseEmail,
-  config: jsonObject,});
+  config: jsonObject,
+});
 
 const formData = {
   name: "  John Doe  ",
@@ -68,14 +75,16 @@ const formData = {
   config: '{"theme": "dark"}',
 };
 
-const user = userSchema.parse(formData);// { name: 'John Doe', email: 'john@example.com', config: { theme: 'dark' } }
+const user = userSchema.parse(formData);
+// { name: 'John Doe', email: 'john@example.com', config: { theme: 'dark' } }
 ```
 
 **Common preprocessing patterns:**
 
 ```typescript
 // Trim all strings
-const trimmedString = z.preprocess(  (val) => (typeof val === "string" ? val.trim() : val),
+const trimmedString = z.preprocess(
+  (val) => (typeof val === "string" ? val.trim() : val),
   z.string(),
 );
 
@@ -103,17 +112,20 @@ const csvArray = z.preprocess(
   (val) =>
     typeof val === "string" ? val.split(",").map((s) => s.trim()) : val,
   z.array(z.string()),
-);```
+);
+```
 
 **Preprocess vs Transform:**
 
 ```typescript
 // preprocess() runs BEFORE type checking
-// Use for: Normalizing input format before validationz.preprocess((val) => String(val).trim(), z.string().min(1));
+// Use for: Normalizing input format before validation
+z.preprocess((val) => String(val).trim(), z.string().min(1));
 
 // transform() runs AFTER type checking
 // Use for: Converting validated data to different format
 z.string().transform((s) => s.toUpperCase());
+
 // Order of operations:
 // 1. preprocess receives raw unknown input
 // 2. Zod validates the preprocessed value
@@ -121,7 +133,6 @@ z.string().transform((s) => s.toUpperCase());
 ```
 
 **When NOT to use this pattern:**
-
 
 - When `.coerce` methods handle the conversion (simpler)
 - When transformation should happen after validation (use transform)

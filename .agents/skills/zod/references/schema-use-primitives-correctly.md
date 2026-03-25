@@ -11,7 +11,8 @@ Zod provides specific schemas for each primitive type. Using the wrong schema (e
 
 **Incorrect (wrong primitive or any):**
 
-```typescriptimport { z } from "zod";
+```typescript
+import { z } from "zod";
 
 // Using any loses all type safety
 const userSchema = z.object({
@@ -21,12 +22,14 @@ const userSchema = z.object({
 });
 
 // This passes validation but data is wrong
-userSchema.parse({ id: null, age: "twenty", active: "yes" });// Result: { id: null, age: "twenty", active: "yes" }
+userSchema.parse({ id: null, age: "twenty", active: "yes" });
+// Result: { id: null, age: "twenty", active: "yes" }
 ```
 
 **Correct (specific primitives):**
 
-```typescriptimport { z } from "zod";
+```typescript
+import { z } from "zod";
 
 const userSchema = z.object({
   id: z.string().uuid(), // Specific format validation
@@ -35,11 +38,11 @@ const userSchema = z.object({
 });
 
 // Now invalid data is rejected
-userSchema.parse({ id: null, age: "twenty", active: "yes" });// Throws ZodError with specific field errors
+userSchema.parse({ id: null, age: "twenty", active: "yes" });
+// Throws ZodError with specific field errors
 ```
 
 **Available primitive schemas:**
-
 
 - `z.string()` - strings with optional regex, min, max, email, url, uuid
 - `z.number()` - numbers with optional int, positive, negative, min, max
@@ -53,7 +56,6 @@ userSchema.parse({ id: null, age: "twenty", active: "yes" });// Throws ZodError 
 - `z.never()` - no valid value
 
 **When NOT to use this pattern:**
-
 
 - When you genuinely need to accept any value (rare - consider `z.unknown()` instead)
 - When migrating legacy code incrementally (use `z.any()` temporarily, then fix)

@@ -1,6 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import PageWrapper from "@/components/layout/page-wrapper";
+import ChatPageWrapper from "@/components/chat/chat-page-wrapper";
 import PageHead from "@/components/layout/page-head";
 import LibraryTabs from "@/components/chat/library-tabs";
 import type {
@@ -215,7 +215,7 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
   }
 
   return (
-    <PageWrapper id="LibraryPage" scrollable>
+    <ChatPageWrapper id="LibraryPage" scrollable>
       <section className="LibraryPage mx-auto flex w-full max-w-screen-2xl flex-col gap-6 p-4">
         <PageHead
           title="Conversation Library"
@@ -235,6 +235,6 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
           hasLoadError={hasLoadError}
         />
       </section>
-    </PageWrapper>
+    </ChatPageWrapper>
   );
 }

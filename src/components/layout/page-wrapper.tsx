@@ -1,36 +1,22 @@
-import classNames from "classnames";
 import { ReactNode } from "react";
 
 interface PageWrapperProps {
-  id?: string;
-  scrollable?: boolean;
-  className?: string;
   children: ReactNode;
+  className?: string;
+  id?: string;
 }
 
 export default function PageWrapper({
   children,
-  scrollable = false,
-  className: customCss = "",
-  id: pageId = "PageWrapper",
+  className = "",
+  id: pageId = "PublicPageWrapper",
 }: PageWrapperProps) {
-  const pageClass = classNames(
-    "PageWrapper relative z-10 flex h-dvh w-full flex-col p-0 m-0",
-    customCss,
-  );
-
-  const scrollWrapperClass = classNames(
-    "droplet-scrollbar relative z-10 mt-14 flex h-full w-full flex-1 flex-col gap-10",
-    "overflow-y-auto pb-10",
-  );
-
   return (
-    <div className={pageClass} id={pageId}>
-      {scrollable ? (
-        <div className={scrollWrapperClass}>{children}</div>
-      ) : (
-        children
-      )}
+    <div
+      id={pageId}
+      className={`${pageId} flex w-full mx-auto max-w-screen-2xl flex-col gap-16 px-4 py-24 ${className}`}
+    >
+      {children}
     </div>
   );
 }

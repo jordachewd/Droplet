@@ -2,7 +2,82 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-24 — PM audit #59. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4, 105.1, 105.2, 110, 111.1, 112.1, 112.2, 109, 113.1, 113.2, 115, 116, 117, 120.1, 120.2-A, 121, 122, 123, 124, 125, 126 complete. Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS — TDD rebuild active. 419 unit tests (68 suites). E2E: 108 passed, 25 skipped, 0 failed. All 7 gates GREEN. Build passing. Node.js 24.12.0 runtime.
+> Last updated: 2026-03-25 — PM audit #62. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4, 105.1, 105.2, 110, 111.1, 112.1, 112.2, 109, 113.1, 113.2, 115, 116, 117, 120.1, 120.2-A, 120.2-B, 120.2-C, 121, 122, 123, 124, 125, 126, 127, 128.1, 129 complete. Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS — TDD rebuild active. 514 unit tests (84 suites). E2E: 108 passed, 25 skipped, 0 failed. All 7 gates GREEN. Build passing. Node.js 24.12.0 runtime.
+
+---
+
+## Phase 129 — PageHead heading-level prop + E2E locator fix — COMPLETED (2026-03-25)
+
+> Engineer delivered (PM audit #62). WCAG heading-order fix + E2E blocker resolved. Both pre-existing E2E failures fixed.
+
+- [x] Added `headingLevel` prop to `PageHead` (default `"h1"`, accepts `"h1"` | `"h2"` | `"h3"`). Renders dynamic heading element.
+- [x] FAQ section passes `headingLevel="h2"` to `PageHead` so FAQ title renders as `<h2>` on `/plans`.
+- [x] E2E locator updated from `.Personas` to `.PersonaSpotlight` to match actual DOM class.
+- [x] TDD tests for PageHead heading levels (h1/h2/h3).
+- [x] `/plans` page: exactly one `<h1>`, FAQ section uses `<h2>`. Heading-order axe violation resolved.
+- [x] All 7 gates GREEN. 84 suites, 514 tests.
+
+**Files changed:** `src/components/layout/page-head.tsx`, `src/components/sections/shared/faqs-section.tsx`, `tests/e2e/public-pages.spec.ts`
+
+---
+
+## Phase 128.1 — Shared configurable `<Button>` component — COMPLETED (2026-03-25)
+
+> Engineer delivered (PM audit #61). Shared `Button` component created with TDD tests. First consumer migration (`AdminFormSubmitButton`) complete.
+
+- [x] Created `src/components/shared/button.tsx` — variant (contained/outlined/text), size (sm/md/lg), loading (shows LoadingBubbles + disables), disabled, type, className, standard button props.
+- [x] Uses existing `btn btn-*` CSS classes. Unique CSS class `Button`.
+- [x] `aria-busy={loading}` when loading.
+- [x] TDD tests at `tests/unit/components/button.test.tsx` — 4 tests (render defaults, explicit props, loading state, disabled state).
+- [x] `AdminFormSubmitButton` migrated to use shared `Button` internally.
+
+**Files changed:** `src/components/shared/button.tsx` (new), `tests/unit/components/button.test.tsx` (new), `src/components/admin/admin-form-submit-button.tsx`
+
+---
+
+## Phase 127 — Fix AppSetting Mongoose `category` enum mismatch — COMPLETED (2026-03-25)
+
+> Engineer delivered (PM audit #61). SWOT Threat resolved. Zod and Mongoose enums now match.
+
+- [x] Added `"trial"` to `IAppSetting.category` union type and Mongoose `enum` array.
+- [x] Mongoose enum now matches Zod: `["plans", "models", "theme", "limits", "trial", "features"]`.
+- [x] Build passes, tests pass. No silent DB failures for trial settings.
+
+**Files changed:** `src/lib/database/models/app-setting.model.tsx`
+
+---
+
+## Phase 120.2 Batch C — TDD rebuild of 6 remaining utility test files — COMPLETED (2026-03-25)
+
+> Engineer delivered (PM audit #61). All ~40 utility test files now rebuilt from scratch using TDD methodology. Zero `as never` casts in utility tests. Tests: 480 → 511 (83 suites).
+
+- [x] `database/mongoose.tsx` — DB connection tested.
+- [x] `normalize-public-asset-url.ts` — URL normalization. 5 tests.
+- [x] `serialize-for-client.ts` — serialization. 3 tests.
+- [x] `map-date-to-label.ts` — date labels. 5 tests.
+- [x] `getPlanStatus.tsx` — plan status. 5 tests.
+- [x] `generateString.tsx` — random string generation. 3 tests.
+
+**Files changed:** 6 new test files in `tests/unit/utils/`
+
+---
+
+## Phase 120.2 Batch B — TDD rebuild of 8 HIGH-priority utility test files — COMPLETED (2026-03-25)
+
+> Engineer delivered (PM audit #60). 8 utility test suites rebuilt with TDD methodology. All use shared factories, zero `as never` casts. Tests: 419 → 480 (76 suites).
+
+- [x] `getFullName.tsx` — 7 tests. stmts 100, branches 100, funcs 100, lines 100.
+- [x] `openai/filterAssistantMsg.tsx` — 3 tests. stmts 100, branches 100, funcs 100, lines 100.
+- [x] `handleError.tsx` — 4 tests. stmts 100, branches 100, funcs 100, lines 100.
+- [x] `openai/classify-task-complexity.ts` — 10 tests. stmts 94.44, branches 91.17, funcs 100, lines 94.44.
+- [x] `aws/s3-file-reference.ts` — 10 tests. stmts 95.08, branches 86.53, funcs 100, lines 95.08.
+- [x] `upload-file-validation.ts` — 7 tests. stmts 100, branches 100, funcs 100, lines 100.
+- [x] `admin-queries.ts` — admin data queries tested. stmts 100, branches 63.3, funcs 100, lines 100.
+- [x] `openai/generateTitle.tsx` — title generation tested. stmts 100, branches 100, funcs 100, lines 100.
+
+**Coverage (post Batch B):** Global: stmts 85.47, branches 72.36, funcs 89.5, lines 85.68.
+
+**Files changed:** 9 files — `tests/unit/test-support/factories.ts` + 8 new test files in `tests/unit/utils/`
 
 ---
 

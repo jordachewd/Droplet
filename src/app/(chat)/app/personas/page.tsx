@@ -1,6 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { notFound } from "next/navigation";
-import PageWrapper from "@/components/layout/page-wrapper";
+import ChatPageWrapper from "@/components/chat/chat-page-wrapper";
 import PersonasSection from "@/components/sections/shared/personas-section";
 import { getEffectivePersonaAccessByPlan } from "@/lib/utils/effective-persona-access";
 import { getEffectivePersonaConfig } from "@/lib/utils/effective-persona-config";
@@ -10,6 +10,7 @@ import {
   resolveEntitlements,
 } from "@/lib/utils/resolve-entitlements";
 import { PersonaId } from "@/types/PersonaData.d";
+import PageHead from "@/components/layout/page-head";
 
 export default async function AppPersonasPage() {
   const { userId } = await auth();
@@ -40,7 +41,14 @@ export default async function AppPersonasPage() {
   }
 
   return (
-    <PageWrapper id="AppPersonasPage" scrollable>
+    <ChatPageWrapper id="ChatPersonasPage" scrollable>
+      <PageHead
+        title="AI Personas"
+        subtitle="Explore the Droplet persona catalog. Each persona shapes the assistant's tone, guidance, and tool availability."
+        align="center"
+        className="px-4"
+      />
+
       <PersonasSection
         personas={personas}
         isAppMode
@@ -48,7 +56,8 @@ export default async function AppPersonasPage() {
         showLockedPersonas
         personaAccess={entitlements.personaAccess}
         personaRequiredPlan={personaRequiredPlan}
+        className="px-4"
       />
-    </PageWrapper>
+    </ChatPageWrapper>
   );
 }

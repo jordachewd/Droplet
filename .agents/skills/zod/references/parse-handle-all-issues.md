@@ -11,7 +11,8 @@ Zod collects all validation failures, not just the first one. When displaying er
 
 **Incorrect (showing only first error):**
 
-```typescriptimport { z } from "zod";
+```typescript
+import { z } from "zod";
 
 const formSchema = z.object({
   email: z.string().email("Invalid email"),
@@ -32,7 +33,8 @@ function validateForm(data: unknown) {
 }
 
 // User submits empty form
-validateForm({});// Returns: { error: 'Invalid email' }
+validateForm({});
+// Returns: { error: 'Invalid email' }
 // User fixes email, submits again
 // Returns: { error: 'Password must be 8+ characters' }
 // User fixes password, submits again...
@@ -41,7 +43,8 @@ validateForm({});// Returns: { error: 'Invalid email' }
 
 **Correct (showing all errors):**
 
-```typescriptimport { z } from "zod";
+```typescript
+import { z } from "zod";
 
 const formSchema = z.object({
   email: z.string().email("Invalid email"),
@@ -72,7 +75,8 @@ function validateForm(data: unknown) {
 }
 
 // User submits empty form
-validateForm({});// Returns: {
+validateForm({});
+// Returns: {
 //   errors: {
 //     email: ['Invalid email'],
 //     password: ['Password must be 8+ characters'],
@@ -85,38 +89,38 @@ validateForm({});// Returns: {
 
 **Using flatten() for simpler error structure:**
 
-```typescriptconst result = formSchema.safeParse(data);
+```typescript
+const result = formSchema.safeParse(data);
 
 if (!result.success) {
-  const flattened = result.error.flatten();  // {
+  const flattened = result.error.flatten();
+  // {
   //   formErrors: [],  // Top-level errors
   //   fieldErrors: {
   //     email: ['Invalid email'],
   //     password: ['Password must be 8+ characters'],
   //     ...
   //   }
-  // }  return { errors: flattened.fieldErrors };}
+  // }
+  return { errors: flattened.fieldErrors };
+}
 ```
 
 **With React Hook Form integration:**
 
-```typescriptimport { zodResolver } from "@hookform/resolvers/zod";
+```typescript
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+
 const form = useForm({
   resolver: zodResolver(formSchema),
   // All errors are automatically collected and displayed
-})
-```
-
-# **When NOT to use this pattern:**
-
 });
-
 ```
 
 **When NOT to use this pattern:**
+
 - Rate-limited APIs where you want to fail fast on first error
 - Large batch processing where full validation is expensive
 
 Reference: [Zod Error Handling](https://zod.dev/error-handling)
-```

@@ -11,7 +11,8 @@ When using `.refine()` for custom validation, return `false` for invalid data in
 
 **Incorrect (throwing in refine):**
 
-```typescriptimport { z } from "zod";
+```typescript
+import { z } from "zod";
 
 const passwordSchema = z
   .object({
@@ -25,9 +26,11 @@ const passwordSchema = z
     }
     return true;
   });
+
 const formSchema = z.object({
   email: z.string().email(),
-  passwords: passwordSchema,  terms: z.boolean().refine((v) => v === true, "Must accept terms"),
+  passwords: passwordSchema,
+  terms: z.boolean().refine((v) => v === true, "Must accept terms"),
 });
 
 // If passwords don't match, user never learns about other errors
@@ -35,13 +38,15 @@ formSchema.safeParse({
   email: "bad-email",
   passwords: { password: "12345678", confirmPassword: "different" },
   terms: false,
-});// Only shows: "Passwords do not match"
+});
+// Only shows: "Passwords do not match"
 // Hidden: "Invalid email", "Must accept terms"
 ```
 
 **Correct (returning false in refine):**
 
-```typescriptimport { z } from "zod";
+```typescript
+import { z } from "zod";
 
 const passwordSchema = z
   .object({
@@ -52,9 +57,11 @@ const passwordSchema = z
     message: "Passwords do not match",
     path: ["confirmPassword"],
   });
+
 const formSchema = z.object({
   email: z.string().email(),
-  passwords: passwordSchema,  terms: z.boolean().refine((v) => v === true, "Must accept terms"),
+  passwords: passwordSchema,
+  terms: z.boolean().refine((v) => v === true, "Must accept terms"),
 });
 
 // All errors are collected
@@ -62,7 +69,8 @@ formSchema.safeParse({
   email: "bad-email",
   passwords: { password: "12345678", confirmPassword: "different" },
   terms: false,
-});// Shows all errors:
+});
+// Shows all errors:
 // - "Invalid email"
 // - "Passwords do not match"
 // - "Must accept terms"
@@ -75,61 +83,52 @@ const passwordSchema = z.string().superRefine((password, ctx) => {
   // Check multiple rules, report all failures
   if (password.length < 8) {
     ctx.addIssue({
-      code: z.ZodIssueCode.custom,      message: "Password must be at least 8 characters",
-    });  }
+      code: z.ZodIssueCode.custom,
+      message: "Password must be at least 8 characters",
+    });
+  }
 
   if (!/[A-Z]/.test(password)) {
     ctx.addIssue({
-      code: z.ZodIssueCode.custom,      message: "Password must contain an uppercase letter",
-    });  }
+      code: z.ZodIssueCode.custom,
+      message: "Password must contain an uppercase letter",
+    });
+  }
 
   if (!/[0-9]/.test(password)) {
     ctx.addIssue({
-      code: z.ZodIssueCode.custom,      message: "Password must contain a number",
+      code: z.ZodIssueCode.custom,
+      message: "Password must contain a number",
     });
   }
 
   // Don't return anything - issues are added via ctx
 });
 
-passwordSchema.safeParse("weak");// All three errors reported at once
+passwordSchema.safeParse("weak");
+// All three errors reported at once
 ```
 
 **Correct pattern for async validation:**
 
 ```typescript
-const schema = z.object({
-  email: z.string().email(),
-}).refine(
-  async (data) => {
-    // Return boolean, don't throw
-    const exists = await checkEmailExists(data.email)
-    return !exists
-  },
-  { message: 'Email already registered', path: ['email'] }
-)
-```
-
-# **When NOT to use this pattern:**
-
 const schema = z
-.object({
-email: z.string().email(),
-})
-.refine(
-async (data) => {
-// Return boolean, don't throw
-const exists = await checkEmailExists(data.email);
-return !exists;
-},
-{ message: "Email already registered", path: ["email"] },
-);
-
+  .object({
+    email: z.string().email(),
+  })
+  .refine(
+    async (data) => {
+      // Return boolean, don't throw
+      const exists = await checkEmailExists(data.email);
+      return !exists;
+    },
+    { message: "Email already registered", path: ["email"] },
+  );
 ```
 
 **When NOT to use this pattern:**
+
 - When you need to abort validation entirely (security issues)
 - When subsequent validations depend on current check passing
 
 Reference: [Zod API - Refine](https://zod.dev/api#refine)
-```

@@ -12,6 +12,7 @@ import { getEffectivePersonaAccessByPlan } from "@/lib/utils/effective-persona-a
 import { getEffectivePersonaConfig } from "@/lib/utils/effective-persona-config";
 import { getEffectivePlanConfig } from "@/lib/utils/effective-plan-config";
 import DropletGlobe from "@/components/shared/droplet-globe";
+import PageWrapper from "@/components/layout/page-wrapper";
 
 export const metadata: Metadata = {
   title: "About | Droplet",
@@ -262,7 +263,7 @@ export default async function AboutPage() {
   const aboutSections = buildAboutSections({ personaAccessSummary });
 
   return (
-    <section className="AboutPage mx-auto flex w-full max-w-screen-2xl flex-col gap-10 px-4 py-24">
+    <PageWrapper id="AboutPageWrapper">
       <PageHead
         title="About Droplet"
         subtitle="A persona-driven AI assistant built for structured conversations, practical output, and media-aware workflows."
@@ -340,6 +341,6 @@ export default async function AboutPage() {
           </div>
         </div>
       </div>
-    </section>
+    </PageWrapper>
   );
 }

@@ -7,6 +7,7 @@ import {
   privacySections,
 } from "@/constants/privacy-data";
 import { getEffectiveSupportEmail } from "@/lib/utils/effective-plan-config";
+import PageWrapper from "@/components/layout/page-wrapper";
 
 export const metadata: Metadata = {
   title: "Privacy Policy | Droplet",
@@ -28,30 +29,19 @@ export default async function PrivacyPage() {
   ];
 
   return (
-    <section className="PrivacyPage mx-auto flex w-full max-w-screen-2xl flex-col gap-8 px-4 pb-16 pt-24 sm:px-6 lg:px-8">
-      <div
-        className={classNames(
-          "rounded-4xl border px-6 py-10 shadow-sm",
-          "border-slate-400/80 bg-lavenderHaze-100/76",
-          "dark:border-slate-500 dark:bg-nightIndigo-900/82",
-        )}
-      >
-        <PageHead
-          title="Privacy Policy"
-          subtitle="How Droplet handles account data, conversations, stored assets, billing records, and provider integrations."
-        />
-        <p className="body-2 mt-5 rounded-2xl bg-twilightPurple-100/90 px-4 py-3 text-sm dark:bg-dustyBlue-1000/80">
-          {legalReviewDisclaimer}
-        </p>
-      </div>
+    <PageWrapper id="PrivacyPage" className="gap-8!">
+      <PageHead
+        title="Privacy Policy"
+        subtitle="How Droplet handles account data, conversations, stored assets, billing records, and provider integrations."
+      />
+      <p className="body-2 -mt-6 mb-4 text-sm">{legalReviewDisclaimer}</p>
 
       {privacySectionsWithContact.map((section) => (
         <article
           key={section.title}
           className={classNames(
-            "rounded-4xl border px-6 py-7 shadow-sm",
-            "border-slate-400/80 bg-lavenderHaze-100/76",
-            "dark:border-slate-500 dark:bg-nightIndigo-900/82",
+            "rounded-2xl px-6 py-7 shadow-sm",
+            "bg-lavenderHaze-100/76 dark:bg-nightIndigo-900/82",
           )}
         >
           <h2 className="heading-5">{section.title}</h2>
@@ -67,9 +57,8 @@ export default async function PrivacyPage() {
 
       <div
         className={classNames(
-          "rounded-4xl border px-6 py-7 shadow-sm",
-          "border-slate-400/80 bg-lavenderHaze-200/85",
-          "dark:border-slate-500 dark:bg-nightIndigo-900/82",
+          "rounded-2xl px-6 py-7 shadow-sm",
+          "bg-lavenderHaze-200/85 dark:bg-nightIndigo-900/82",
         )}
       >
         <h2 className="heading-5">Related policy pages</h2>
@@ -79,14 +68,14 @@ export default async function PrivacyPage() {
           rules.
         </p>
         <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-          <Link className="btn btn-lg btn-contained uppercase" href="/cookies">
+          <Link className="btn btn-md btn-contained" href="/cookies">
             Cookie policy
           </Link>
-          <Link className="btn btn-lg btn-outlined uppercase" href="/terms">
+          <Link className="btn btn-md btn-outlined" href="/terms">
             Terms &amp; conditions
           </Link>
         </div>
       </div>
-    </section>
+    </PageWrapper>
   );
 }

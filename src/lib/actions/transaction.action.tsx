@@ -120,6 +120,8 @@ export async function getAllTransactions(userId: string) {
         },
       },
     )
+      .select("plan amount billing createdAt expiresOn")
+      .limit(100)
       .lean()
       .exec();
 

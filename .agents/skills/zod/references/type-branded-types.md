@@ -11,7 +11,8 @@ Plain strings and numbers are interchangeable in TypeScript's structural type sy
 
 **Incorrect (plain IDs are interchangeable):**
 
-```typescriptimport { z } from "zod";
+```typescript
+import { z } from "zod";
 
 const userIdSchema = z.string().uuid();
 const orderIdSchema = z.string().uuid();
@@ -24,12 +25,14 @@ async function getOrder(orderId: OrderId) {
 }
 
 const userId: UserId = "550e8400-e29b-41d4-a716-446655440000";
-getOrder(userId); // No error! TypeScript allows this bug// Runtime: queries orders table with user ID, returns nothing or wrong data
+getOrder(userId); // No error! TypeScript allows this bug
+// Runtime: queries orders table with user ID, returns nothing or wrong data
 ```
 
 **Correct (using branded types):**
 
-```typescriptimport { z } from "zod";
+```typescript
+import { z } from "zod";
 
 const userIdSchema = z.string().uuid().brand<"UserId">();
 const orderIdSchema = z.string().uuid().brand<"OrderId">();
@@ -48,12 +51,14 @@ const userId = userIdSchema.parse("550e8400-e29b-41d4-a716-446655440000");
 getOrder(userId); // TypeScript error: Argument of type 'UserId' is not assignable to parameter of type 'OrderId'
 
 const orderId = orderIdSchema.parse("660e8400-e29b-41d4-a716-446655440001");
-getOrder(orderId); // Works correctly```
+getOrder(orderId); // Works correctly
+```
 
 **Common branded types:**
 
 ```typescript
-// IDs for different entitiesconst UserId = z.string().uuid().brand<"UserId">();
+// IDs for different entities
+const UserId = z.string().uuid().brand<"UserId">();
 const ProductId = z.string().uuid().brand<"ProductId">();
 const OrderId = z.string().uuid().brand<"OrderId">();
 
@@ -70,12 +75,14 @@ const Cents = z.number().int().nonnegative().brand<"Cents">();
 const Slug = z
   .string()
   .regex(/^[a-z0-9-]+$/)
-  .brand<"Slug">();```
+  .brand<"Slug">();
+```
 
 **Using with object schemas:**
 
 ```typescript
-const User = z.object({  id: z.string().uuid().brand<"UserId">(),
+const User = z.object({
+  id: z.string().uuid().brand<"UserId">(),
   email: z.string().email().brand<"Email">(),
   referredBy: z.string().uuid().brand<"UserId">().optional(),
 });
@@ -84,13 +91,13 @@ type User = z.infer<typeof User>;
 
 function sendReferralBonus(
   referrerId: z.infer<typeof User>["id"],
-  refereeId: z.infer<typeof User>["id"],) {
+  refereeId: z.infer<typeof User>["id"],
+) {
   // Can't accidentally swap these - both are UserId but distinct values
 }
 ```
 
 **When NOT to use this pattern:**
-
 
 - Simple applications without ID confusion risk
 - When interoperating with external systems that expect plain strings

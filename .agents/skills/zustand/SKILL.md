@@ -34,7 +34,7 @@ const store = zustandStateStore({ store: bearStore });
 // 3. Use it
 <StateProvider store={store}>
   {/* json-render reads/writes go through Zustand */}
-</StateProvider>
+</StateProvider>;
 ```
 
 ### With a Nested Slice
