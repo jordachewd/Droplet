@@ -40,6 +40,7 @@ export default async function AppPlansPage() {
         title="Upgrade your plan"
         subtitle="Select the plan that suits your needs!"
         align="center"
+        className="px-4 mt-12"
       />
 
       <Plans
@@ -47,6 +48,7 @@ export default async function AppPlansPage() {
         hasLoader
         plansData={plans}
         currencySymbol={effectivePlanConfig.pricing.currencySymbol}
+        className="max-w-7xl!"
       />
       <Faqs faqsData={faqs} />
     </ChatPageWrapper>

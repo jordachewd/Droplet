@@ -169,7 +169,7 @@ export default function ProfileHeroEditor({
     <>
       <form
         className={classNames(
-          "ProfileHeroEditor flex w-full flex-col gap-4 rounded-lg border p-6 shadow-sm",
+          "ProfileHeroEditor flex w-full flex-col gap-4 rounded-lg p-6 shadow-sm",
           "bg-lavenderHaze-100/80 dark:bg-nightIndigo-1000/80",
         )}
         onSubmit={(event) => void handleSaveProfile(event)}

@@ -1,7 +1,7 @@
 import ProfileHeroEditor from "@/components/sections/profile/profile-hero-editor";
 import PlanPromo from "@/components/shared/plan-promo";
 import PlanCountDown from "@/components/shared/plan-count-down";
-import PageHead from "@/components/layout/page-head";
+
 import getFormattedDate from "@/lib/utils/getFormattedDate";
 import getFullName, { getNameLetters } from "@/lib/utils/getFullName";
 import { UserData } from "@/types/UserData.d";
@@ -27,7 +27,7 @@ export default function ProfileHero({ userData }: HeroProps) {
   const profileCardClass = classNames(
     "flex w-full flex-col items-center justify-between gap-8 rounded-lg border p-6 shadow-md md:flex-row",
     "border-lavenderHaze-500 bg-lavenderHaze-500/50",
-    "dark:border-nightIndigo-500 dark:bg-nightIndigo-500/30",
+    "dark:border-nightIndigo-300/10 dark:bg-nightIndigo-500/30",
   );
 
   const avatarClass = classNames(
@@ -37,9 +37,7 @@ export default function ProfileHero({ userData }: HeroProps) {
   );
 
   return (
-    <section className="ProfileHero mx-auto flex w-full max-w-6xl flex-col gap-8 p-4">
-      <PageHead title="Profile" subtitle="Manage your account settings" />
-
+    <section className="ProfileHero mx-auto flex w-full max-w-7xl flex-col gap-8 px-4">
       <div className={profileCardClass}>
         <div className="flex flex-1 items-center gap-4 lg:gap-8">
           <span className={avatarClass}>

@@ -216,25 +216,25 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
 
   return (
     <ChatPageWrapper id="LibraryPage" scrollable>
-      <section className="LibraryPage mx-auto flex w-full max-w-screen-2xl flex-col gap-6 p-4">
-        <PageHead
-          title="Conversation Library"
-          subtitle="Saved sessions grouped by persona."
-        />
+      <PageHead
+        title="Conversation Library"
+        subtitle="Saved sessions grouped by persona."
+        align="center"
+        className="px-4 mt-12"
+      />
 
-        <LibraryTabs
-          conversations={conversations}
-          images={imageItems}
-          audios={audioItems}
-          videos={videoItems}
-          initialTabId={activeTabId}
-          conversationsPagination={conversationsPagination}
-          imagesPagination={imagesPagination}
-          audiosPagination={audiosPagination}
-          videosPagination={videosPagination}
-          hasLoadError={hasLoadError}
-        />
-      </section>
+      <LibraryTabs
+        conversations={conversations}
+        images={imageItems}
+        audios={audioItems}
+        videos={videoItems}
+        initialTabId={activeTabId}
+        conversationsPagination={conversationsPagination}
+        imagesPagination={imagesPagination}
+        audiosPagination={audiosPagination}
+        videosPagination={videosPagination}
+        hasLoadError={hasLoadError}
+      />
     </ChatPageWrapper>
   );
 }

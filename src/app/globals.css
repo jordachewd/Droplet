@@ -234,7 +234,7 @@ a.menu-item {
   }
 
   .body-2 {
-    @apply text-xs md:text-base text-midnightBlue-500 dark:text-lavenderHaze-500;
+    @apply text-xs md:text-base text-twilightPurple-500 dark:text-lavenderHaze-500;
   }
 
   .btn {

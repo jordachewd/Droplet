@@ -10,6 +10,7 @@ import {
 } from "@/lib/utils/effective-plan-config";
 import { Transaction } from "@/types/TransactionData.d";
 import { auth } from "@clerk/nextjs/server";
+import PageHead from "@/components/layout/page-head";
 
 export default async function AppProfilePage() {
   const { userId } = await auth();
@@ -38,6 +39,12 @@ export default async function AppProfilePage() {
 
   return userData ? (
     <ChatPageWrapper id="AppProfilePage" scrollable>
+      <PageHead
+        title="Profile"
+        subtitle="Manage your account settings"
+        align="center"
+        className="px-4 mt-12"
+      />
       <ProfileHero userData={userData} />
       <ProfileUsage
         planName={planName}
