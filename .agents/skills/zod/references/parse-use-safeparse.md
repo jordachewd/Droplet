@@ -11,46 +11,56 @@ tags: parse, safeParse, error-handling, validation
 
 **Incorrect (parse without error handling):**
 
-```typescriptimport { z } from "zod";
-import { NextRequest, NextResponse } from "next/server";
+```typescript
+import { z } from 'zod'
+import { NextRequest, NextResponse } from 'next/server'
+
 const createUserSchema = z.object({
   email: z.string().email(),
-  name: z.string().min(1),});
+  name: z.string().min(1),
+})
 
 export async function POST(req: NextRequest) {
-  const body = await req.json();
+  const body = await req.json()
 
   // If validation fails, this throws and crashes the handler
-  const user = createUserSchema.parse(body);
+  const user = createUserSchema.parse(body)
 
   // Never reached if parse throws
-  await db.users.create({ data: user });
-  return NextResponse.json({ success: true });}
+  await db.users.create({ data: user })
+  return NextResponse.json({ success: true })
+}
 // Result: 500 Internal Server Error with stack trace
 ```
 
 **Correct (using safeParse):**
 
-```typescriptimport { z } from "zod";
-import { NextRequest, NextResponse } from "next/server";
+```typescript
+import { z } from 'zod'
+import { NextRequest, NextResponse } from 'next/server'
+
 const createUserSchema = z.object({
   email: z.string().email(),
-  name: z.string().min(1),});
+  name: z.string().min(1),
+})
 
 export async function POST(req: NextRequest) {
-  const body = await req.json();
+  const body = await req.json()
 
-  const result = createUserSchema.safeParse(body);
+  const result = createUserSchema.safeParse(body)
+
   if (!result.success) {
     // Return structured error response
-    return NextResponse.json(      { error: "Validation failed", issues: result.error.issues },
-      { status: 400 },
-    );
+    return NextResponse.json(
+      { error: 'Validation failed', issues: result.error.issues },
+      { status: 400 }
+    )
   }
 
   // result.data is typed correctly
-  await db.users.create({ data: result.data });
-  return NextResponse.json({ success: true });}
+  await db.users.create({ data: result.data })
+  return NextResponse.json({ success: true })
+}
 ```
 
 **The result object structure:**
@@ -84,22 +94,9 @@ expect(() => schema.parse(invalidData)).toThrow()
 schema.parse(testData)  // See what fails during development
 ```
 
-# **When NOT to use this pattern:**
-
-const config = configSchema.parse(JSON.parse(process.env.CONFIG));
-
-// Test assertions - parse throws helpful errors
-expect(() => schema.parse(invalidData)).toThrow();
-
-// Schema development - see errors immediately
-schema.parse(testData); // See what fails during development
-
-```
-
 **When NOT to use this pattern:**
 - Internal configuration parsing where invalid data should crash early
 - Tests where you want exceptions to fail the test
 - Scripts where you want to see the full error
 
 Reference: [Zod API - safeParse](https://zod.dev/api#safeparse)
-```

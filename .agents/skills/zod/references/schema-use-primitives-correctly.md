@@ -11,36 +11,38 @@ Zod provides specific schemas for each primitive type. Using the wrong schema (e
 
 **Incorrect (wrong primitive or any):**
 
-```typescriptimport { z } from "zod";
+```typescript
+import { z } from 'zod'
 
 // Using any loses all type safety
 const userSchema = z.object({
-  id: z.any(), // Accepts anything - no validation
-  age: z.string(), // Wrong type - age should be number
-  active: z.any(), // Should be boolean
-});
+  id: z.any(),  // Accepts anything - no validation
+  age: z.string(),  // Wrong type - age should be number
+  active: z.any(),  // Should be boolean
+})
 
 // This passes validation but data is wrong
-userSchema.parse({ id: null, age: "twenty", active: "yes" });// Result: { id: null, age: "twenty", active: "yes" }
+userSchema.parse({ id: null, age: "twenty", active: "yes" })
+// Result: { id: null, age: "twenty", active: "yes" }
 ```
 
 **Correct (specific primitives):**
 
-```typescriptimport { z } from "zod";
+```typescript
+import { z } from 'zod'
 
 const userSchema = z.object({
-  id: z.string().uuid(), // Specific format validation
-  age: z.number().int().positive(), // Correct type with constraints
-  active: z.boolean(), // Exact boolean type
-});
+  id: z.string().uuid(),  // Specific format validation
+  age: z.number().int().positive(),  // Correct type with constraints
+  active: z.boolean(),  // Exact boolean type
+})
 
 // Now invalid data is rejected
-userSchema.parse({ id: null, age: "twenty", active: "yes" });// Throws ZodError with specific field errors
+userSchema.parse({ id: null, age: "twenty", active: "yes" })
+// Throws ZodError with specific field errors
 ```
 
 **Available primitive schemas:**
-
-
 - `z.string()` - strings with optional regex, min, max, email, url, uuid
 - `z.number()` - numbers with optional int, positive, negative, min, max
 - `z.bigint()` - BigInt values
@@ -53,8 +55,6 @@ userSchema.parse({ id: null, age: "twenty", active: "yes" });// Throws ZodError 
 - `z.never()` - no valid value
 
 **When NOT to use this pattern:**
-
-
 - When you genuinely need to accept any value (rare - consider `z.unknown()` instead)
 - When migrating legacy code incrementally (use `z.any()` temporarily, then fix)
 

@@ -11,56 +11,62 @@ tags: error, flatten, forms, user-experience
 
 **Incorrect (manual issue processing):**
 
-```typescriptimport { z } from "zod";
+```typescript
+import { z } from 'zod'
 
 const formSchema = z.object({
-  email: z.string().email("Invalid email"),
-  password: z.string().min(8, "Password too short"),
+  email: z.string().email('Invalid email'),
+  password: z.string().min(8, 'Password too short'),
   profile: z.object({
-    name: z.string().min(1, "Name required"),
+    name: z.string().min(1, 'Name required'),
   }),
-});
+})
 
 function getFieldErrors(error: z.ZodError) {
-  const errors: Record<string, string> = {};
+  const errors: Record<string, string> = {}
 
   for (const issue of error.issues) {
     // Manual path joining - error prone
-    const field = issue.path.join(".");
+    const field = issue.path.join('.')
     if (!errors[field]) {
-      errors[field] = issue.message;
+      errors[field] = issue.message
     }
   }
 
-  return errors;
+  return errors
 }
 
-const result = formSchema.safeParse(data);
+const result = formSchema.safeParse(data)
 if (!result.success) {
-  const errors = getFieldErrors(result.error);  // { email: 'Invalid email', 'profile.name': 'Name required' }
+  const errors = getFieldErrors(result.error)
+  // { email: 'Invalid email', 'profile.name': 'Name required' }
 }
 ```
 
 **Correct (using flatten):**
 
-```typescriptimport { z } from "zod";
+```typescript
+import { z } from 'zod'
 
 const formSchema = z.object({
-  email: z.string().email("Invalid email"),
-  password: z.string().min(8, "Password too short"),
+  email: z.string().email('Invalid email'),
+  password: z.string().min(8, 'Password too short'),
   profile: z.object({
-    name: z.string().min(1, "Name required"),
+    name: z.string().min(1, 'Name required'),
   }),
-});
+})
 
-const result = formSchema.safeParse(data);
+const result = formSchema.safeParse(data)
 
 if (!result.success) {
-  const { formErrors, fieldErrors } = result.error.flatten();
+  const { formErrors, fieldErrors } = result.error.flatten()
+
   // formErrors: string[] - top-level errors (from .refine on the object)
   // fieldErrors: { [key]: string[] } - errors by field
 
-  // Ready for form display  console.log(fieldErrors);  // {
+  // Ready for form display
+  console.log(fieldErrors)
+  // {
   //   email: ['Invalid email'],
   //   password: ['Password too short'],
   //   'profile.name': ['Name required']
@@ -70,15 +76,14 @@ if (!result.success) {
 
 **With React Hook Form:**
 
-```typescriptimport { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+```typescript
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useForm } from 'react-hook-form'
 
-const {
-  register,
-  formState: { errors },
-} = useForm({
+const { register, formState: { errors } } = useForm({
   resolver: zodResolver(formSchema),
-});
+})
+
 // errors are already flattened by the resolver
 // <input {...register('email')} />
 // {errors.email && <span>{errors.email.message}</span>}
@@ -89,7 +94,9 @@ const {
 ```typescript
 const flattened = result.error.flatten((issue) => ({
   message: issue.message,
-  code: issue.code,}));
+  code: issue.code,
+}))
+
 // fieldErrors now contains custom objects
 // {
 //   email: [{ message: 'Invalid email', code: 'invalid_string' }],
@@ -98,10 +105,12 @@ const flattened = result.error.flatten((issue) => ({
 
 **For deeply nested objects, use format():**
 
-```typescriptconst result = formSchema.safeParse(data);
+```typescript
+const result = formSchema.safeParse(data)
 
 if (!result.success) {
-  const formatted = result.error.format();  // {
+  const formatted = result.error.format()
+  // {
   //   _errors: [],
   //   email: { _errors: ['Invalid email'] },
   //   profile: {
@@ -110,12 +119,12 @@ if (!result.success) {
   //   }
   // }
 
-  // Access nested errors naturally  formatted.profile?.name?._errors; // ['Name required']}
+  // Access nested errors naturally
+  formatted.profile?.name?._errors  // ['Name required']
+}
 ```
 
 **When NOT to use this pattern:**
-
-
 - When you need access to full issue metadata (code, path as array)
 - When using a form library that expects different error format
 
