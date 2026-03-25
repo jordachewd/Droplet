@@ -14,7 +14,10 @@ export default function PublicLayout({
       </a>
       <Header />
 
-      <main id="public-main-content" className="PublicMain flex flex-col w-full">
+      <main
+        id="public-main-content"
+        className="PublicMain flex flex-col w-full"
+      >
         {children}
       </main>
 

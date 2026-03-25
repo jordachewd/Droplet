@@ -33,9 +33,7 @@ export default async function PrivacyPage() {
         title="Privacy Policy"
         subtitle="How Droplet handles account data, conversations, stored assets, billing records, and provider integrations."
       />
-      <p className="body-2 -mt-6 mb-4 text-sm">
-        {legalReviewDisclaimer}
-      </p>
+      <p className="body-2 -mt-6 mb-4 text-sm">{legalReviewDisclaimer}</p>
 
       {privacySectionsWithContact.map((section) => (
         <article
