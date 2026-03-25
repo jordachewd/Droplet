@@ -56,7 +56,7 @@ test("renders the landing page hero and public CTAs", async ({ page }) => {
   await expect(page.locator('a[href="/app/new"]').first()).toBeVisible();
   await expect(page.locator('a[href="/sign-up"]').first()).toBeVisible();
   await expect(page.locator(".Workflow")).toBeVisible();
-  await expect(page.locator(".Personas")).toBeVisible();
+  await expect(page.locator(".PersonaSpotlight")).toBeVisible();
 });
 
 test("toggles dark mode and keeps it after reload", async ({ page }) => {

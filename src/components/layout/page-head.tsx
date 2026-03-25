@@ -5,6 +5,7 @@ interface PageHeadProps {
   subtitle?: string | null;
   children?: React.ReactNode;
   align?: "left" | "center" | "right";
+  headingLevel?: "h1" | "h2" | "h3";
 }
 
 export default function PageHead({
@@ -12,7 +13,10 @@ export default function PageHead({
   subtitle,
   children,
   align = "left",
+  headingLevel = "h1",
 }: PageHeadProps) {
+  const HeadingTag = headingLevel;
+
   return (
     <div
       className={classNames("PageHead flex flex-col gap-3", {
@@ -21,7 +25,7 @@ export default function PageHead({
         "items-start": align === "left",
       })}
     >
-      <h1 className="heading-3 leading-tight">{title}</h1>
+      <HeadingTag className="heading-3 leading-tight">{title}</HeadingTag>
       {subtitle && <p className="body-1">{subtitle}</p>}
       {children}
     </div>
