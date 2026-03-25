@@ -1,4 +1,5 @@
 "use client";
+
 import classNames from "classnames";
 import { checkoutPlan } from "@/lib/actions/transaction.action";
 import { CheckoutTransactionParams } from "@/types/TransactionData.d";
@@ -50,12 +51,12 @@ const Checkout = ({ plan, planStatus }: CheckoutProps) => {
     (isPopular &&
       "btn-outlined border-white text-white hover:text-white/75 hover:border-white/75") ||
     (isIncluded && "btn-text border-transparent") ||
-    "btn-outlined";
+    "btn-outlined dark:border-midnightBlue-500 dark:text-midnightBlue-500 dark:hover:border-dustyBlue-500 dark:hover:text-dustyBlue-500";
 
   const disabledStyle = isIncluded
     ? isCurrent
-      ? "disabled:text-limeGreen-1000/50"
-      : "disabled:text-limeGreen-700/50"
+      ? "disabled:text-midnightBlue-1000/50"
+      : "disabled:text-midnightBlue-700/50"
     : "";
 
   return (

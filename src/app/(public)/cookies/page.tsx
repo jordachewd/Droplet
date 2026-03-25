@@ -19,29 +19,18 @@ export default async function CookiesPage() {
 
   return (
     <section className="CookiesPage mx-auto flex w-full max-w-screen-2xl flex-col gap-8 px-4 pb-16 pt-24 sm:px-6 lg:px-8">
-      <div
-        className={classNames(
-          "rounded-4xl border px-6 py-10 shadow-sm",
-          "border-slate-400/80 bg-lavenderHaze-100/76",
-          "dark:border-slate-500 dark:bg-nightIndigo-900/82",
-        )}
-      >
-        <PageHead
-          title="Cookie Policy"
-          subtitle="What Droplet stores in the browser today, why it is needed, and what should be disclosed before adding anything optional."
-        />
-        <p className="body-2 mt-5 rounded-2xl bg-twilightPurple-100/90 px-4 py-3 text-sm dark:bg-dustyBlue-1000/80">
-          {legalReviewDisclaimer}
-        </p>
-      </div>
+      <PageHead
+        title="Cookie Policy"
+        subtitle="What Droplet stores in the browser today, why it is needed, and what should be disclosed before adding anything optional."
+      />
+      <p className="body-2 -mt-6 mb-4 text-sm">{legalReviewDisclaimer}</p>
 
       {cookieCategories.map((category) => (
         <article
           key={category.title}
           className={classNames(
-            "rounded-4xl border px-6 py-7 shadow-sm",
-            "border-slate-400/80 bg-lavenderHaze-100/76",
-            "dark:border-slate-500 dark:bg-nightIndigo-900/82",
+            "rounded-2xl px-6 py-7 shadow-sm",
+            "bg-lavenderHaze-100/76 dark:bg-nightIndigo-900/82",
           )}
         >
           <h2 className="heading-5">{category.title}</h2>
@@ -54,8 +43,7 @@ export default async function CookiesPage() {
       <div
         className={classNames(
           "rounded-4xl border px-6 py-7 shadow-sm",
-          "border-slate-400/80 bg-lavenderHaze-200/85",
-          "dark:border-slate-500 dark:bg-nightIndigo-900/82",
+          "bg-lavenderHaze-200/85 dark:bg-nightIndigo-900/82",
         )}
       >
         <h2 className="heading-5">Managing browser preferences</h2>
@@ -65,11 +53,11 @@ export default async function CookiesPage() {
           preferences such as theme mode and sidebar state.
         </p>
         <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-          <Link className="btn btn-lg btn-contained uppercase" href="/privacy">
+          <Link className="btn btn-md btn-contained" href="/privacy">
             Privacy policy
           </Link>
           <Link
-            className="btn btn-lg btn-outlined uppercase"
+            className="btn btn-md btn-outlined"
             href={`mailto:${supportEmail}`}
           >
             Ask a question
