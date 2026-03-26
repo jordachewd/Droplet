@@ -18,6 +18,7 @@ import { Persona, PersonaId } from "@/types/PersonaData.d";
 import { TaskEndAction, TaskEndedReason, TaskStatus } from "@/types/TaskData.d";
 import { useChatStore } from "@/lib/hooks/use-chat-store";
 import { usePreferencesStore } from "@/lib/hooks/use-preferences-store";
+import type { ChatApiResponse, ChatStreamEvent } from "@/types/chat-api";
 
 interface ChatWrapperProps {
   personas: Persona[];
@@ -31,37 +32,6 @@ interface ChatWrapperProps {
   initialEndedReason?: TaskEndedReason;
   initialEndAction?: TaskEndAction;
 }
-
-interface ChatApiResponse {
-  taskData?: Message;
-  taskId?: string;
-  personaId?: PersonaId;
-  error?: string;
-  stopReason?: TaskEndedReason;
-  endAction?: TaskEndAction;
-  taskStatus?: TaskStatus;
-  acceptedPrompt?: boolean;
-}
-
-type ChatStreamEvent =
-  | {
-      type: "meta";
-      taskId: string;
-      personaId: PersonaId;
-    }
-  | {
-      type: "chunk";
-      delta: string;
-      snapshot: string;
-    }
-  | {
-      type: "final";
-      payload: ChatApiResponse;
-    }
-  | {
-      type: "error";
-      error: string;
-    };
 
 function isAbortError(error: unknown): boolean {
   return (

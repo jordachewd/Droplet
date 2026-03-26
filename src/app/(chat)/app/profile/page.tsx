@@ -1,7 +1,10 @@
 import ProfileBilling from "@/components/sections/profile/profile-billing";
 import ProfileHero from "@/components/sections/profile/profile-hero";
+import ProfileHeroEditor from "@/components/sections/profile/profile-hero-editor";
 import ProfileUsage from "@/components/sections/profile/profile-usage";
+import ProfileDangerZone from "@/components/sections/profile/profile-danger-zone";
 import ChatPageWrapper from "@/components/chat/chat-page-wrapper";
+import AccountLoadErrorState from "@/components/shared/account-load-error-state";
 import { getAllTransactions } from "@/lib/actions/transaction.action";
 import { ensureUserSynced } from "@/lib/utils/ensure-user-synced";
 import {
@@ -10,6 +13,7 @@ import {
 } from "@/lib/utils/effective-plan-config";
 import { Transaction } from "@/types/TransactionData.d";
 import { auth } from "@clerk/nextjs/server";
+import PageHead from "@/components/layout/page-head";
 
 export default async function AppProfilePage() {
   const { userId } = await auth();
@@ -38,7 +42,14 @@ export default async function AppProfilePage() {
 
   return userData ? (
     <ChatPageWrapper id="AppProfilePage" scrollable>
+      <PageHead
+        title="Profile"
+        subtitle="Manage your account settings"
+        align="center"
+        className="px-4 mt-12"
+      />
       <ProfileHero userData={userData} />
+      <ProfileHeroEditor userData={userData} />
       <ProfileUsage
         planName={planName}
         planLimits={planLimits}
@@ -49,29 +60,13 @@ export default async function AppProfilePage() {
         usagePeriodStart={usagePeriodStart}
       />
       <ProfileBilling stripeId={stripeId} userTxns={userTxns} />
+      <ProfileDangerZone userData={userData} />
     </ChatPageWrapper>
   ) : (
-    <div className="AppProfilePage flex h-dvh items-center justify-center">
-      <div className="mx-auto max-w-md rounded-lg border border-red-200 bg-red-50 p-6 text-center dark:border-red-800 dark:bg-red-950">
-        <p className="mb-4 text-red-700 dark:text-red-300">
-          We&apos;re having trouble loading your account. Please try refreshing
-          the page or contact support.
-        </p>
-        <div className="flex items-center justify-center gap-4">
-          <a
-            href={`mailto:${supportEmail}`}
-            className="text-sm text-blue-600 underline dark:text-blue-400"
-          >
-            Contact Support
-          </a>
-          <a
-            href="/app/profile"
-            className="text-sm text-blue-600 underline dark:text-blue-400"
-          >
-            Retry
-          </a>
-        </div>
-      </div>
-    </div>
+    <AccountLoadErrorState
+      supportEmail={supportEmail}
+      retryHref="/app/profile"
+      containerClassName="AppProfilePage"
+    />
   );
 }

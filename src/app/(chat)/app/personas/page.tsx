@@ -46,7 +46,7 @@ export default async function AppPersonasPage() {
         title="AI Personas"
         subtitle="Explore the Droplet persona catalog. Each persona shapes the assistant's tone, guidance, and tool availability."
         align="center"
-        className="px-4"
+        className="px-4 mt-12"
       />
 
       <PersonasSection
@@ -56,7 +56,7 @@ export default async function AppPersonasPage() {
         showLockedPersonas
         personaAccess={entitlements.personaAccess}
         personaRequiredPlan={personaRequiredPlan}
-        className="px-4"
+        className="px-4 max-w-7xl! gap-6!"
       />
     </ChatPageWrapper>
   );

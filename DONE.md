@@ -2,7 +2,67 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-25 — PM audit #62. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4, 105.1, 105.2, 110, 111.1, 112.1, 112.2, 109, 113.1, 113.2, 115, 116, 117, 120.1, 120.2-A, 120.2-B, 120.2-C, 121, 122, 123, 124, 125, 126, 127, 128.1, 129 complete. Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS — TDD rebuild active. 514 unit tests (84 suites). E2E: 108 passed, 25 skipped, 0 failed. All 7 gates GREEN. Build passing. Node.js 24.12.0 runtime.
+> Last updated: 2026-03-26 — PM audit #63. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4, 105.1, 105.2, 110, 111.1, 112.1, 112.2, 109, 113.1, 113.2, 115, 116, 117, 120.1, 120.2-A, 120.2-B, 120.2-C, 120.3, 121, 122, 123, 124, 125, 125.2, 126, 126.1, 127, 128.1, 129, 130 complete. Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS — TDD rebuild active. 538 unit tests (82 suites). E2E: 108 passed, 25 skipped, 0 failed. All 7 gates GREEN. Build passing. Node.js 24.12.0 runtime.
+
+---
+
+## Phase 130 — Fix stale status-routes test assertions — COMPLETED (2026-03-26)
+
+> PM audit #63. Test assertions expected "HTTP {code}" but component renders "ERROR: {code}". 4 tests failing. Fixed by PM during audit.
+
+- [x] Updated `tests/unit/routes/status-routes.test.tsx` — changed `"HTTP 401"` → `"ERROR: 401"`, `"HTTP 403"` → `"ERROR: 403"`, `"HTTP 500"` → `"ERROR: 500"`, `"HTTP 404"` → `"ERROR: 404"`.
+- [x] All 538 tests pass. 82 suites.
+
+**Files changed:** `tests/unit/routes/status-routes.test.tsx`
+
+---
+
+## Phase 120.3 — Rebuild server action tests (TDD) — COMPLETED (2026-03-26)
+
+> Engineer delivered (PM audit #63). All 4 server action test files rebuilt from scratch using TDD methodology. Zero `as never` casts in action tests. Coverage targets met.
+
+- [x] Added 5 new action test files:
+  - `tests/unit/actions/admin-actions-auth.test.ts`
+  - `tests/unit/actions/admin-actions-behavior.test.ts`
+  - `tests/unit/actions/task-actions.test.ts`
+  - `tests/unit/actions/user-actions.test.ts`
+  - `tests/unit/actions/transaction-action.test.ts`
+- [x] Removed 5 old action test files (pre-TDD):
+  - `tests/unit/actions/admin-actions.behavior.test.ts`
+  - `tests/unit/actions/admin-audit-trail.test.ts`
+  - `tests/unit/actions/checkout-plan.test.ts`
+  - `tests/unit/actions/task-queries.test.ts`
+  - `tests/unit/actions/transaction-actions.test.ts`
+- [x] Coverage: admin 76.69%, task 94.44%, user 81.25%, transaction 85%.
+- [x] Auth/ownership enforcement, admin audit trail, success/edge cases all tested.
+- [x] Zero `as never` casts in action tests.
+
+**Files changed:** 5 new test files in `tests/unit/actions/`, 5 old files deleted.
+
+---
+
+## Phase 126.1 — Sanitize `handleError` message propagation — COMPLETED (2026-03-26)
+
+> Engineer delivered (PM audit #63). SWOT Threat resolved. Error messages now sanitized with whitelist pattern.
+
+- [x] `handleError` now sanitizes non-whitelisted messages to `"An unexpected error occurred"`.
+- [x] Original error preserved in `cause` for server-side debugging.
+- [x] Full error detail logged to stderr.
+- [x] Updated tests at `tests/unit/utils/handle-error.test.tsx`.
+
+**Files changed:** `src/lib/utils/handleError.tsx`, `tests/unit/utils/handle-error.test.tsx`
+
+---
+
+## Phase 125.2 — Harden `getAllTransactions()` query — COMPLETED (2026-03-26)
+
+> Engineer delivered (PM audit #63). SWOT weakness resolved. Query now has projection and limit.
+
+- [x] Added `.select("plan amount billing createdAt expiresOn")` projection.
+- [x] Added `.limit(100)`.
+- [x] No consumer regressions. Build passes.
+
+**Files changed:** `src/lib/actions/transaction.action.tsx`
 
 ---
 

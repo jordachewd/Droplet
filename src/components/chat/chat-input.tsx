@@ -163,14 +163,14 @@ export default function ChatInput({
   }
 
   const chatInputSectionClass = classNames(
-    "ChatInput sticky bottom-[env(safe-area-inset-bottom)] z-20 mt-2",
-    "flex w-full flex-col items-center px-3 pb-2 lg:px-5",
+    "ChatInput sticky bottom-[env(safe-area-inset-bottom)] z-20",
+    "flex w-full flex-col items-center mt-2 pb-2 px-4",
   );
 
   const chatInputWrapperClass = classNames(
     "flex w-full max-w-screen-lg items-end gap-2 rounded-xl border p-2 shadow-md",
-    "border-slate-500 bg-lavenderHaze-100/90 backdrop-blur",
-    "dark:border-slate-500 dark:bg-nightIndigo-900/90",
+    "border-slate-500/30 bg-lavenderHaze-100/90 backdrop-blur",
+    "dark:border-midnightBlue-300/10 dark:bg-nightIndigo-900/90",
     disabled &&
       "border-amber-400 bg-amber-50/90 dark:border-amber-400/50 dark:bg-amber-500/10",
   );

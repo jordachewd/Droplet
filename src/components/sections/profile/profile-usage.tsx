@@ -86,51 +86,48 @@ export default function ProfileUsage({
     : null;
 
   return (
-    <section
-      className={classNames(
-        "ProfileUsage mx-auto flex w-full max-w-6xl flex-col gap-4 rounded-lg border",
-        " bg-lavenderHaze-100/80 dark:bg-nightIndigo-1000/80 p-6 shadow-sm",
-      )}
-    >
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="heading-5">Usage</h3>
-        <span className="rounded-full border border-slate-400 px-3 py-1 text-xs font-semibold uppercase tracking-wide dark:border-slate-500">
-          {planName}
-        </span>
-      </div>
+    <section className="ProfileUsage mx-auto flex w-full max-w-7xl flex-col px-4">
+      <div className="flex flex-col gap-4 rounded-lg bg-lavenderHaze-100/80 dark:bg-nightIndigo-1000/80 p-6 shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h3 className="heading-5">Usage</h3>
+          <span className="rounded-full border border-slate-400 px-3 py-1 text-xs font-semibold uppercase tracking-wide dark:border-slate-500">
+            {planName}
+          </span>
+        </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <UsageMetricRow
-          label="Image Generations"
-          used={imageUsed}
-          limit={planLimits.images}
-        />
-        <UsageMetricRow
-          label="Audio Generations"
-          used={audioUsed}
-          limit={planLimits.audio}
-        />
-        <UsageMetricRow
-          label="Video Generations"
-          used={videoUsed}
-          limit={planLimits.video}
-        />
-        <UsageMetricRow
-          label="Daily Conversations"
-          used={dailyConversationsUsed}
-          limit={planLimits.conversationsPerDay}
-        />
-      </div>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <UsageMetricRow
+            label="Image Generations"
+            used={imageUsed}
+            limit={planLimits.images}
+          />
+          <UsageMetricRow
+            label="Audio Generations"
+            used={audioUsed}
+            limit={planLimits.audio}
+          />
+          <UsageMetricRow
+            label="Video Generations"
+            used={videoUsed}
+            limit={planLimits.video}
+          />
+          <UsageMetricRow
+            label="Daily Conversations"
+            used={dailyConversationsUsed}
+            limit={planLimits.conversationsPerDay}
+          />
+        </div>
 
-      <div className="grid grid-cols-1 gap-2 text-xs opacity-80 md:grid-cols-2">
-        <span>
-          Usage period start:{" "}
-          {usagePeriodStart ? formatDate(usagePeriodStart) : "-"}
-        </span>
-        <span>
-          Usage period reset:{" "}
-          {usageResetDate ? formatDate(usageResetDate) : "-"}
-        </span>
+        <div className="grid grid-cols-1 gap-2 text-xs opacity-80 md:grid-cols-2">
+          <span>
+            Usage period start:{" "}
+            {usagePeriodStart ? formatDate(usagePeriodStart) : "-"}
+          </span>
+          <span>
+            Usage period reset:{" "}
+            {usageResetDate ? formatDate(usageResetDate) : "-"}
+          </span>
+        </div>
       </div>
     </section>
   );

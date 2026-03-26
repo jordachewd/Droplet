@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Button from "@/components/shared/button";
 
 interface AdminSettingsTab {
   id: string;
@@ -56,20 +57,19 @@ export function AdminSettingsTabs({ tabs }: AdminSettingsTabsProps) {
           const isActive = tab.id === activeTabId;
 
           return (
-            <button
+            <Button
               key={tab.id}
               id={tabId}
               type="button"
+              size="sm"
+              variant={isActive ? "contained" : "outlined"}
               role="tab"
               aria-selected={isActive}
               aria-controls={tabPanelId}
-              className={`btn btn-sm ${
-                isActive ? "btn-contained" : "btn-outlined"
-              }`}
               onClick={() => handleTabChange(tab.id)}
             >
               {tab.label}
-            </button>
+            </Button>
           );
         })}
       </div>

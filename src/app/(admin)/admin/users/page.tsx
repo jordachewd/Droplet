@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Button from "@/components/shared/button";
 import PageHead from "@/components/layout/page-head";
 import { AdminUsersTable } from "@/components/admin/users/admin-users-table";
 import { getAdminUsers } from "@/lib/utils/admin-queries";
@@ -45,9 +46,9 @@ export default async function AdminUsersPage({
           />
         </label>
         <div className="flex items-end gap-3">
-          <button className="btn btn-md btn-contained" type="submit">
+          <Button size="md" variant="contained" type="submit">
             Search
-          </button>
+          </Button>
           <Link className="btn btn-md btn-outlined" href="/admin/users">
             Reset
           </Link>

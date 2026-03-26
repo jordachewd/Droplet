@@ -84,7 +84,7 @@ test("renders custom 404 page for unknown routes", async ({ page }) => {
   await gotoAndExpectPublicRoute(page, "/this-route-does-not-exist");
 
   await expect(page).toHaveURL(/this-route-does-not-exist/);
-  await expect(page.getByText("HTTP 404")).toBeVisible();
+  await expect(page.getByText(/ERROR:\s*404/i)).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "Page Not Found" }),
   ).toBeVisible();
@@ -98,10 +98,12 @@ test("renders the about page with multiple content sections", async ({
 
   await expectVisiblePageHeading(page);
 
-  const aboutSections = page.locator(".AboutPage article");
-  expect(await aboutSections.count()).toBeGreaterThanOrEqual(3);
-  const sectionHeadings = aboutSections.locator("h2, h3");
+  const sectionHeadings = page.locator(
+    "#AboutPageWrapper h2, #AboutPageWrapper h3",
+  );
   expect(await sectionHeadings.count()).toBeGreaterThanOrEqual(3);
+  const contentParagraphs = page.locator("#AboutPageWrapper p");
+  expect(await contentParagraphs.count()).toBeGreaterThanOrEqual(6);
 });
 
 test("renders the public plans page with structural plan-card checks", async ({

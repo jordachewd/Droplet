@@ -32,13 +32,15 @@ export default async function NewConversationPage() {
 
   return (
     <ChatPageWrapper id="NewConversationPage" scrollable>
-      <section className="NewConversationPage mx-auto flex w-full max-w-6xl flex-col gap-6 p-4">
+      <section className="NewConversationPage mx-auto flex w-full max-w-6xl flex-col gap-16">
         <PageHead
           title="Start a New Conversation"
           subtitle="Pick an AI persona and jump directly into the chat dashboard."
+          align="center"
+          className="px-4 mt-12"
         />
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 mx-auto w-full max-w-7xl gap-6 px-4">
           {personas.map((persona) => {
             const isLocked = !allowedPersonaIdSet.has(persona.id);
             const isTrialPersona =

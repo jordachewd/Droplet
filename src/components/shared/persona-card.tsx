@@ -72,7 +72,7 @@ export default function PersonaCard({
       <p className="text-sm font-medium text-midnightBlue-600 dark:text-lavenderHaze-600">
         {persona.tagline}
       </p>
-      <div className="relative mt-1 h-36 w-full overflow-hidden rounded-lg border border-slate-400/60 dark:border-slate-500">
+      <div className="relative mt-1 h-36 w-full overflow-hidden rounded-lg">
         <Image
           src={persona.heroImage}
           alt={`${persona.label} persona`}

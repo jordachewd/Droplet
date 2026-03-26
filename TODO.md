@@ -5,12 +5,12 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #62 (2026-03-25). Phases 1–129 complete. Phase 120.2 COMPLETE (all ~40 utility files rebuilt). 514 unit tests (84 suites). Build passes. TSC passes. Node.js 24.12.0 runtime.**
-> **GATE STATUS: All 7 gates GREEN. Lint (0 errors, 6 warnings), Knip (0 findings), TSC, build, unit tests (84/514), E2E (108 passed, 25 skipped, 0 failed) — all pass.**
+> **STATUS: PM audit #63 (2026-03-26). Phases 1–130 complete. Phase 120.3 COMPLETE (server action tests rebuilt). 538 unit tests (82 suites). Build passes. TSC passes. Node.js 24.12.0 runtime.**
+> **GATE STATUS: All 7 gates GREEN. Lint (0 errors, 6 warnings), Knip (0 findings), TSC, build, unit tests (82/538), E2E (108 passed, 25 skipped, 0 failed) — all pass.**
 > **Owner directive (CRITICAL): FULL TDD TESTING REBUILD from scratch. NO hardcoded data. WCAG 2.2 AA. Code reuse. Full admin configurability. Shared Button component migration.**
 > **Coverage: ~85/~72/~89/~85 (stmt/branch/func/lines). Thresholds: 76/65/79/76.**
-> **SWOT audit conducted (PM audit #62). Weaknesses and Threats converted to tasks below.**
-> **Priority order: 120.3 (CRITICAL TDD action rebuild) → 126.1 (HIGH handleError sanitization — before route tests) → 125.2 (HIGH transaction query fix) → 128.2 (HIGH Button migration — 11 buttons in 8 files) → 106 (HIGH shared types) → 120.4 (CRITICAL TDD route rebuild) → 120.5 (HIGH TDD component rebuild — 50 of 68 untested) → 120.6 (HIGH TDD E2E rebuild) → 120.7 (HIGH coverage thresholds) → 107 (HIGH stop-reason config — 9 strings) → 108 (MEDIUM WCAG tabs) → 114 (MEDIUM WCAG avatar menu) → 126.2 (LOW lint warnings) → 125.1 (MEDIUM schema strict:true) → 74.2 (MEDIUM FAQ admin) → 104 (MEDIUM landing/hero admin)**
+> **SWOT audit conducted (PM audit #63). Weaknesses and Threats converted to tasks below. `as never` casts: 99 remaining in 11 test files.**
+> **Priority order: 128.2 (HIGH Button migration — 11 buttons in 8 files) → 106 (HIGH shared types) → 120.4 (CRITICAL TDD route rebuild — eliminates 88 of 99 `as never` casts) → 120.5 (HIGH TDD component rebuild — 51 of 69 components untested) → 120.6 (HIGH TDD E2E rebuild) → 120.7 (HIGH coverage thresholds) → 107 (HIGH stop-reason config — 9 strings) → 108 (MEDIUM WCAG tabs) → 114 (MEDIUM WCAG avatar menu) → 131 (LOW server-only guards) → 132 (LOW stale TODO comments) → 126.2 (LOW lint warnings) → 125.1 (MEDIUM schema strict:true) → 74.2 (MEDIUM FAQ admin) → 104 (MEDIUM landing/hero admin)**
 
 ---
 
@@ -52,29 +52,12 @@
 > **Owner directive (2026-03-24 — ESCALATED):** Remove ALL existing unit and E2E tests and rebuild the entire testing process from scratch using strict Test-Driven Development methodology.
 >
 > **Phase 120.1 COMPLETE** — TDD test infrastructure built. See `DONE.md`.
-> **Phase 120.2 COMPLETE** — All ~40 utility test files rebuilt from scratch (Batch A+B+C). Tests: 409 → 511 (83 suites). Zero `as never` casts in utility tests.
+> **Phase 120.2 COMPLETE** — All ~40 utility test files rebuilt from scratch (Batch A+B+C). Zero `as never` casts in utility tests.
+> **Phase 120.3 COMPLETE** — All 4 server action test files rebuilt from scratch (TDD). Zero `as never` casts in action tests. Coverage: admin 76.69%, task 94.44%, user 81.25%, transaction 85%.
 >
-> **Current state:** 511 tests (83 suites). 203 `as never` casts remaining in 17 non-rebuilt test files (actions, routes, components, constants). E2E: 14 specs, 108 passed, 25 skipped.
+> **Current state:** 538 tests (82 suites). 99 `as never` casts remaining in 11 non-rebuilt test files (6 routes, 4 components, 1 constants). E2E: 14 specs, 108 passed, 25 skipped.
 >
 > **Key rule:** Every new/rebuilt test file MUST use shared factories from `tests/unit/test-support/`. Zero `as never` casts allowed. Follow TDD workflow in `tests/README.md`.
-
-#### 120.3 CRITICAL — Rebuild server action tests (TDD)
-
-**What to do:**
-
-1. Delete ALL existing action test files in `tests/unit/actions/`
-2. For each exported server action, write failing tests FIRST covering: auth failure, forbidden, success, edge cases, audit trail, ownership enforcement
-3. Target: ≥75% branch coverage on all action files
-
-**Target files:** `admin.actions.tsx`, `task.actions.tsx`, `user.actions.tsx`, `transaction.action.tsx`
-
-**Acceptance criteria:**
-
-- [ ] All action test files rebuilt from scratch using TDD
-- [ ] `admin.actions.tsx` branch coverage ≥75%
-- [ ] Auth/ownership enforcement tested on every action
-- [ ] Admin audit trail verified on every admin mutation
-- [ ] Zero `as never` casts
 
 #### 120.4 CRITICAL — Rebuild API route tests (TDD)
 
@@ -212,51 +195,6 @@
 
 ---
 
-## HIGH — Database & Query Hardening (SWOT weakness — PM audit #60)
-
-### Phase 125.2 HIGH — Harden `getAllTransactions()` query
-
-> SWOT weakness: unbounded `.find()` without `.select()`. Has `.lean()` already. No `.limit()`. Returns all fields of all user transactions. Auth + ownership IS verified, but violates database discipline rules and leaks internal fields.
-
-**File:** `src/lib/actions/transaction.action.tsx` L114
-
-**What to do:**
-
-1. Add `.select("plan amount billing createdAt expiresOn")` projection.
-2. Add `.limit(100)`.
-3. Verify no consumer depends on excluded fields.
-
-**Acceptance criteria:**
-
-- [ ] Query uses `.select()`, `.limit()`
-- [ ] No consumer regressions
-- [ ] Build passes, tests pass
-
----
-
-## HIGH — Error Handling Hardening (SWOT threat — PM audit #60)
-
-### Phase 126.1 HIGH — Sanitize `handleError` message propagation
-
-> SWOT Threat: `handleError.tsx` re-throws with raw `error.message`. If any server action's `handleError` call goes uncaught before the UI boundary, internal DB/provider messages could leak to the client. All current call sites catch, but pattern is fragile.
-
-**File:** `src/lib/utils/handleError.tsx`
-
-**What to do:**
-
-1. Strip internal details from the re-thrown `Error.message` — keep original in `cause` only.
-2. Return generic "An unexpected error occurred" for non-whitelisted error messages.
-3. Maintain `stderr` logging of full error details for debugging.
-
-**Acceptance criteria:**
-
-- [ ] `handleError` never propagates raw internal error messages
-- [ ] Full error detail preserved in `error.cause` for server-side debugging
-- [ ] All server action callers still function correctly
-- [ ] Build passes, tests pass
-
----
-
 ## MEDIUM — WCAG 2.2 AA Remaining Gaps
 
 ### Phase 108 MEDIUM — Library tabs + admin settings tabs arrow-key navigation (TD-WCAG-05)
@@ -378,6 +316,48 @@ See SPEC.md for full requirements on each.
 
 ---
 
+## LOW — Defensive Server-Only Guards (SWOT weakness — PM audit #63)
+
+### Phase 131 LOW — Add `server-only` guard to 4 utility files
+
+> Engineer audit finding. These files are only consumed by server-side code but lack the `import "server-only"` guard. No current leak — purely defensive.
+
+**Files:**
+
+1. `src/lib/utils/serialize-for-client.ts`
+2. `src/lib/utils/generateString.tsx`
+3. `src/lib/utils/validation-schemas.ts`
+4. `src/lib/utils/upload-file-validation.ts`
+
+**What to do:** Add `import "server-only"` at the top of each file.
+
+**Acceptance criteria:**
+
+- [ ] All 4 files have `import "server-only"`
+- [ ] Build passes, tests pass
+
+---
+
+## LOW — Stale TODO Comments in Production Code (SWOT weakness — PM audit #63)
+
+### Phase 132 LOW — Resolve stale TODO comments in `ai-model-policy.ts`
+
+> 4 TODO comments at L377–L390. Two reference "when video generation is implemented" — video IS implemented (Phase 34.9). Either resolve with duration-aware pricing or update comments to reflect flat-rate is intentional.
+
+**File:** `src/lib/utils/ai-model-policy.ts` L377–L390
+
+**What to do:**
+
+1. Update L386/L390 comments to note flat-rate pricing is intentional (or implement duration-aware pricing).
+2. Review L377/L382 — verify audio token accounting or document current approach as intentional.
+
+**Acceptance criteria:**
+
+- [ ] Zero stale TODO comments in production code
+- [ ] Build passes
+
+---
+
 ## ON HOLD — Deferred
 
 ### Phase 29.x — Zod/Zustand app-wide modernization
@@ -389,5 +369,5 @@ See SPEC.md for full requirements on each.
 ---
 
 > **Completed phases** archived in [`DONE.md`](DONE.md).
-> All phases through 126 complete (includes 120.1, 120.2-A, 121–126).
+> All phases through 130 complete (includes 120.1, 120.2-A/B/C, 120.3, 121–130).
 > All Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS.
