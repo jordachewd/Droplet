@@ -68,6 +68,7 @@ import {
   chatMessageArraySchema,
   nonEmptyStringSchema,
 } from "@/lib/utils/validation-schemas";
+import type { ChatApiResponse, ChatStreamEvent } from "@/types/chat-api";
 import { z } from "zod";
 
 const OPENAI_RATE_LIMIT_MAX_REQUESTS = 20;
@@ -110,17 +111,6 @@ function buildEndActionInstructions(
   };
 }
 
-interface ChatApiResponse {
-  taskData?: Message;
-  taskId?: string;
-  personaId?: PersonaId;
-  error?: string;
-  stopReason?: TaskEndedReason;
-  endAction?: TaskEndAction;
-  taskStatus?: TaskStatus;
-  acceptedPrompt?: boolean;
-}
-
 const openAiRequestBodySchema = z
   .object({
     messages: chatMessageArraySchema.min(1),
@@ -136,26 +126,6 @@ interface TitleResponsePayload {
   usage: number;
   requestMetric?: AIRequestMetric;
 }
-
-type OpenAIStreamEvent =
-  | {
-      type: "meta";
-      taskId: string;
-      personaId: PersonaId;
-    }
-  | {
-      type: "chunk";
-      delta: string;
-      snapshot: string;
-    }
-  | {
-      type: "final";
-      payload: ChatApiResponse;
-    }
-  | {
-      type: "error";
-      error: string;
-    };
 
 interface ConversationStopPayload {
   taskData: Message;
@@ -429,7 +399,7 @@ function shouldStreamResponse(req: Request): boolean {
 
 function writeStreamEvent(
   controller: ReadableStreamDefaultController<Uint8Array>,
-  event: OpenAIStreamEvent,
+  event: ChatStreamEvent,
 ) {
   controller.enqueue(
     streamEncoder.encode(`data: ${JSON.stringify(event)}\n\n`),

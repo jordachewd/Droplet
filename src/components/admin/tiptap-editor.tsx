@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Button from "@/components/shared/button";
 
 interface TiptapEditorProps {
   inputName: string;
@@ -29,27 +30,30 @@ export default function TiptapEditor({
   return (
     <div className="TiptapEditor flex flex-col gap-3">
       <div className="flex flex-wrap gap-2">
-        <button
+        <Button
           type="button"
-          className="btn btn-sm btn-outlined"
+          variant="outlined"
+          size="sm"
           onClick={() => applySimpleFormat("strong")}
         >
           Bold
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
-          className="btn btn-sm btn-outlined"
+          variant="outlined"
+          size="sm"
           onClick={() => applySimpleFormat("em")}
         >
           Italic
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
-          className="btn btn-sm btn-outlined"
+          variant="outlined"
+          size="sm"
           onClick={() => applySimpleFormat("ul")}
         >
           Bullets
-        </button>
+        </Button>
       </div>
 
       <div className="min-h-80 rounded-2xl border border-slate-400 bg-lavenderHaze-100 px-4 py-3 dark:border-slate-500 dark:bg-nightIndigo-1000">

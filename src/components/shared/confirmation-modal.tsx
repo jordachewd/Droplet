@@ -1,7 +1,7 @@
 "use client";
 
-import classNames from "classnames";
 import { useEffect, useId, useRef } from "react";
+import Button from "@/components/shared/button";
 
 interface ConfirmationModalProps {
   isOpen: boolean;
@@ -107,26 +107,22 @@ export default function ConfirmationModal({
         </p>
 
         <div className="mt-5 flex justify-end gap-2">
-          <button
-            type="button"
-            className="btn btn-sm btn-outlined"
-            onClick={onCancel}
-          >
+          <Button type="button" variant="outlined" size="sm" onClick={onCancel}>
             {cancelLabel}
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
-            className={classNames(
-              "btn btn-sm",
+            size="sm"
+            className={
               destructive
-                ? "bg-red-700 text-white hover:bg-red-800"
-                : "btn-contained",
-            )}
+                ? "border-red-700 bg-red-700 text-white hover:border-red-800 hover:bg-red-800"
+                : undefined
+            }
             onClick={onConfirm}
             autoFocus
           >
             {confirmLabel}
-          </button>
+          </Button>
         </div>
       </div>
     </dialog>

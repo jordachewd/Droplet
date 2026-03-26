@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { useClerk } from "@clerk/nextjs";
 import { UploadRouteResponse } from "@/types/UploadData.d";
 import ConfirmationModal from "@/components/shared/confirmation-modal";
+import Button from "@/components/shared/button";
 
 type ProfileActionResponse = {
   status?: number;
@@ -264,13 +265,9 @@ export default function ProfileHeroEditor({
         </div>
 
         <div className="flex justify-end">
-          <button
-            type="submit"
-            className={classNames("btn btn-contained")}
-            disabled={isSaving || isDeleting}
-          >
+          <Button type="submit" disabled={isSaving || isDeleting}>
             {isSaving ? "Saving..." : "Save profile"}
-          </button>
+          </Button>
         </div>
 
         {feedbackMessage && (

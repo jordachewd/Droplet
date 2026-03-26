@@ -1,6 +1,7 @@
 import classNames from "classnames";
 import { useState, useEffect } from "react";
 import { resolveStoredAssetUrl } from "@/lib/utils/aws/s3-file-reference";
+import Button from "@/components/shared/button";
 
 interface AudioPlayerProps {
   audioSrc: string | null;
@@ -155,10 +156,11 @@ export default function AudioPlayer({ audioSrc }: AudioPlayerProps) {
   return (
     <div className={audioPlayerClass}>
       <div className="flex flex-1 items-center justify-between gap-4 p-4">
-        <button
+        <Button
           type="button"
           onClick={togglePlay}
-          className="btn btn-sm btn-outlined"
+          variant="outlined"
+          size="sm"
           disabled={!playbackUrl}
           aria-label={playbackControlLabel}
         >
@@ -170,7 +172,7 @@ export default function AudioPlayer({ audioSrc }: AudioPlayerProps) {
             aria-hidden="true"
           ></i>
           {isPlaying ? "Pause" : "Play"}
-        </button>
+        </Button>
 
         <div
           className={progressTrackClass}
