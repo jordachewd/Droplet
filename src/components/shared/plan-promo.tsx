@@ -3,6 +3,10 @@ import { getPlanIcon } from "@/constants/plans";
 import { PlanData, PlanName } from "@/types/PlanData.d";
 import Link from "next/link";
 import { UserRoles } from "@/types/UserData.d";
+import {
+  planPromoAccentClass,
+  planPromoCardClass,
+} from "@/components/shared/plan-promo-styles";
 
 interface PlanPromoProps {
   plan: PlanData;
@@ -15,19 +19,9 @@ export default function PlanPromo({ plan, role }: PlanPromoProps) {
   const isLite = name === "Lite";
   const isPremiumFull = name === "Premium";
 
-  const promoCardClass = classNames(
-    "PlanPromo relative flex w-full flex-col items-center gap-1 overflow-hidden",
-    "bg-dustyBlue-500 text-twilightPurple-600 rounded-lg p-4 shadow-sm",
-  );
-
-  const promoAccentClass = classNames(
-    "absolute -top-1/2 right-1/3 z-0 flex h-[150%] w-full -rotate-45",
-    "bg-dustyBlue-400/20 items-center justify-center rounded-lg",
-  );
-
   return (
-    <div className={promoCardClass}>
-      <div className={promoAccentClass}></div>
+    <div className={classNames("PlanPromo", planPromoCardClass)}>
+      <div className={planPromoAccentClass}></div>
 
       <div className="z-10 flex w-full flex-col gap-3 text-center">
         <div className="absolute right-0.5 top-0.5 z-10 flex items-center gap-1 font-medium">

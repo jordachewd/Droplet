@@ -1,14 +1,11 @@
 "use client";
 
 import classNames from "classnames";
-import { deleteUser, updateUser } from "@/lib/actions/user.actions";
+import { updateUser } from "@/lib/actions/user.actions";
 import { UserData } from "@/types/UserData.d";
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useClerk } from "@clerk/nextjs";
 import { UploadRouteResponse } from "@/types/UploadData.d";
-import ConfirmationModal from "@/components/shared/confirmation-modal";
-import Button from "@/components/shared/button";
 
 type ProfileActionResponse = {
   status?: number;
@@ -23,7 +20,6 @@ export default function ProfileHeroEditor({
   userData,
 }: ProfileHeroEditorProps) {
   const router = useRouter();
-  const clerk = useClerk();
   const [firstNameInput, setFirstNameInput] = useState<string>(
     userData.firstName ?? "",
   );
@@ -37,9 +33,6 @@ export default function ProfileHeroEditor({
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState<boolean>(false);
-  const [isDeleting, setIsDeleting] = useState<boolean>(false);
-  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] =
-    useState<boolean>(false);
   const displayAvatarUrl = avatarPreviewUrl ?? avatarUrl;
 
   const profileInputClass = classNames(
@@ -93,7 +86,7 @@ export default function ProfileHeroEditor({
 
   async function handleSaveProfile(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (isSaving || isDeleting) {
+    if (isSaving) {
       return;
     }
 
@@ -139,38 +132,11 @@ export default function ProfileHeroEditor({
     }
   }
 
-  async function handleDeleteAccount() {
-    if (isDeleting || isSaving) {
-      return;
-    }
-
-    setIsDeleting(true);
-    setFeedbackMessage(null);
-    setErrorMessage(null);
-
-    try {
-      const deleteResult = (await deleteUser(
-        userData.clerkId,
-      )) as ProfileActionResponse | null;
-
-      if (!deleteResult || deleteResult.status !== 200) {
-        throw new Error(deleteResult?.message || "Failed to delete account.");
-      }
-
-      await clerk.signOut({ redirectUrl: "/" });
-    } catch (error) {
-      void error;
-      setErrorMessage("Failed to delete account. Please try again.");
-    } finally {
-      setIsDeleting(false);
-    }
-  }
-
   return (
-    <>
+    <section className="ProfileHero mx-auto flex w-full max-w-7xl px-4">
       <form
         className={classNames(
-          "ProfileHeroEditor flex w-full flex-col gap-4 rounded-lg border p-6 shadow-sm",
+          "ProfileHeroEditor flex w-full flex-col gap-4 rounded-lg p-6 shadow-sm",
           "bg-lavenderHaze-100/80 dark:bg-nightIndigo-1000/80",
         )}
         onSubmit={(event) => void handleSaveProfile(event)}
@@ -265,9 +231,13 @@ export default function ProfileHeroEditor({
         </div>
 
         <div className="flex justify-end">
-          <Button type="submit" disabled={isSaving || isDeleting}>
+          <button
+            type="submit"
+            className={classNames("btn btn-contained")}
+            disabled={isSaving}
+          >
             {isSaving ? "Saving..." : "Save profile"}
-          </Button>
+          </button>
         </div>
 
         {feedbackMessage && (
@@ -285,47 +255,6 @@ export default function ProfileHeroEditor({
           </p>
         )}
       </form>
-
-      <div
-        className={classNames(
-          "ProfileHeroDangerZone rounded-lg border border-red-300 bg-red-50 p-6",
-          "dark:border-red-800 dark:bg-red-950/40",
-        )}
-      >
-        <h3 className="heading-5 text-red-700 dark:text-red-300">
-          Danger zone
-        </h3>
-        <p className="mt-2 text-sm text-red-700/90 dark:text-red-300/90">
-          Deleting your account permanently removes your profile, conversations,
-          transactions, and uploaded assets.
-        </p>
-        <button
-          type="button"
-          className={classNames(
-            "mt-4 inline-flex min-w-40 items-center justify-center rounded-md px-4 py-2 text-sm font-semibold",
-            "bg-red-600 text-white transition hover:bg-red-500",
-            "disabled:cursor-not-allowed disabled:bg-red-800 disabled:text-red-200",
-          )}
-          onClick={() => setIsDeleteConfirmOpen(true)}
-          disabled={isDeleting || isSaving}
-        >
-          {isDeleting ? "Deleting..." : "Delete My Account"}
-        </button>
-      </div>
-
-      <ConfirmationModal
-        isOpen={isDeleteConfirmOpen}
-        title="Delete account"
-        description="Delete your account and all associated conversations, transactions, and uploaded files? This cannot be undone."
-        confirmLabel="Delete account"
-        cancelLabel="Cancel"
-        destructive
-        onConfirm={() => {
-          setIsDeleteConfirmOpen(false);
-          void handleDeleteAccount();
-        }}
-        onCancel={() => setIsDeleteConfirmOpen(false)}
-      />
-    </>
+    </section>
   );
 }

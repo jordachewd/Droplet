@@ -40,7 +40,7 @@ export default function PlanCard({
   return (
     <div
       className={classNames(
-        "PlanCard relative flex w-full flex-col gap-10 overflow-hidden rounded-lg px-12 py-14 shadow-xl align-top",
+        "PlanCard relative flex w-full flex-col gap-10 overflow-hidden rounded-lg px-10 py-14 shadow-xl align-top",
         accentStyles,
       )}
     >

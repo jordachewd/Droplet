@@ -4,6 +4,7 @@ import { useUser } from "@clerk/nextjs";
 import classNames from "classnames";
 import LoadingBubbles from "@/components/shared/loading-bubbles";
 import type { Persona } from "@/types/PersonaData.d";
+import DropletGlobe from "../shared/droplet-globe";
 
 interface ChatIntroProps {
   persona: Persona;
@@ -26,22 +27,22 @@ export default function ChatIntro({ persona, sendPrompt }: ChatIntroProps) {
   }
 
   const introWrapperClass = classNames(
-    "ChatIntro mx-auto flex w-full max-w-4xl flex-col gap-12 p-6",
+    "ChatIntro mx-auto flex w-full max-w-5xl flex-col gap-6 px-4",
   );
 
   const introPromptButtonClass = classNames(
     "flex w-full items-start gap-2 rounded-lg border px-3 py-2 text-left text-sm transition-all",
-    "border-slate-400 hover:bg-lavenderHaze-200/60",
-    "dark:border-slate-500 dark:hover:bg-nightIndigo-500/25",
+    "border-slate-400 hover:bg-lavenderHaze-200/60 dark:border-slate-500 dark:hover:bg-nightIndigo-500/25",
   );
 
   return (
     <section className={introWrapperClass}>
-      <div className="flex flex-col gap-2 text-center">
-        <h1 className="heading-5">
-          Hello {user?.firstName || "there"}, welcome to your chat dashboard.
-        </h1>
-        <p className="body-2">
+      <div className="flex flex-col gap-2 justify-center items-center">
+        <DropletGlobe size={128} className="mb-10" />
+
+        <h1 className="heading-2">Hello {user?.firstName || "there"},</h1>
+        <h2 className="heading-5">welcome to your chat dashboard.</h2>
+        <p className="body-2 mt-10">
           Active persona: <strong>{persona.label}</strong> - {persona.tagline}
         </p>
       </div>

@@ -4,6 +4,10 @@ import Link from "next/link";
 import classNames from "classnames";
 import { PlanName } from "@/types/PlanData.d";
 import { UserRoles } from "@/types/UserData.d";
+import {
+  planPromoAccentClass,
+  planPromoCardClass,
+} from "@/components/shared/plan-promo-styles";
 
 interface ChatSidebarPromoProps {
   isOpen: boolean;
@@ -16,21 +20,18 @@ export default function ChatSidebarPromo({
   userRole,
   planName,
 }: ChatSidebarPromoProps) {
+  const sectionClass = classNames("ChatSidebarPromo p-3", !isOpen && "hidden");
+  const promoCardClass = classNames("ChatSidebarPromoCard", planPromoCardClass);
+
   if (userRole === "admin") {
     return (
-      <section
-        className={classNames("ChatSidebarPromo p-3", !isOpen && "hidden")}
-      >
-        <article
-          className={classNames(
-            "rounded-xl border p-3 shadow-sm",
-            "border-slate-400 bg-lavenderHaze-100/70 dark:border-slate-500 dark:bg-nightIndigo-900/70",
-          )}
-        >
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
-            Admin Access
-          </p>
-          <p className="text-sm">Full permissions enabled for admin users.</p>
+      <section className={sectionClass}>
+        <article className={promoCardClass}>
+          <div className={planPromoAccentClass}></div>
+          <div className="z-10 flex w-full flex-col gap-4 text-center">
+            <h5 className="heading-5">Admin</h5>
+            <p className="text-sm leading-4">You have admin access.</p>
+          </div>
         </article>
       </section>
     );
@@ -40,31 +41,28 @@ export default function ChatSidebarPromo({
     return null;
   }
 
+  const promoTitle = planName === "Pro" ? "Go Premium" : "Go Pro";
+
   const promoMessage =
     planName === "Pro"
       ? "Upgrade to Premium for highest limits and premium workflows."
       : "Upgrade to Pro for higher usage limits and more persona access.";
 
   return (
-    <section
-      className={classNames("ChatSidebarPromo p-3", !isOpen && "hidden")}
-    >
-      <article
-        className={classNames(
-          "rounded-xl border p-3 shadow-sm",
-          "border-slate-400 bg-lavenderHaze-100/70 dark:border-slate-500 dark:bg-nightIndigo-900/70",
-        )}
-      >
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
-          Plan Status
-        </p>
-        <p className="mb-3 text-sm">{promoMessage}</p>
-        <Link
-          className="btn btn-sm btn-contained w-full justify-center"
-          href="/app/plans"
-        >
-          Manage Plan
-        </Link>
+    <section className={sectionClass}>
+      <article className={promoCardClass}>
+        <div className={planPromoAccentClass}></div>
+        <div className="z-10 flex w-full flex-col gap-4 text-center">
+          <h5 className="heading-5">{promoTitle}</h5>
+          <p className="text-sm leading-4">{promoMessage}</p>
+
+          <Link
+            className="btn btn-sm btn-contained self-center"
+            href="/app/plans"
+          >
+            Manage Plan
+          </Link>
+        </div>
       </article>
     </section>
   );

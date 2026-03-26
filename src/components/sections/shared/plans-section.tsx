@@ -13,6 +13,7 @@ interface PlansProps {
   hasLoader?: boolean;
   plansData: Plan[];
   currencySymbol?: string;
+  className?: string;
 }
 
 export default function Plans({
@@ -20,6 +21,7 @@ export default function Plans({
   hasLoader = false,
   plansData,
   currencySymbol = "$",
+  className = "",
 }: PlansProps) {
   const { isSignedIn } = useUser();
 
@@ -31,7 +33,8 @@ export default function Plans({
     );
 
   const wrapperClassName = classNames(
-    "Plans mx-auto flex w-full flex-col gap-22 p-4 max-w-screen-2xl",
+    "Plans mx-auto flex w-full flex-col gap-20 px-4 max-w-screen-2xl",
+    className,
   );
 
   return (

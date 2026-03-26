@@ -56,7 +56,7 @@ export default function LibraryTabs({
   );
 
   return (
-    <section className="LibraryTabs flex flex-col gap-6">
+    <section className="LibraryTabs flex flex-col gap-6 w-full max-w-7xl mx-auto px-4">
       <div
         role="tablist"
         aria-label="Library content tabs"

@@ -22,7 +22,7 @@ export default function ProfileBilling({ stripeId, userTxns }: BillingProps) {
   );
 
   return (
-    <section className="ProfileBilling mx-auto flex w-full max-w-6xl flex-col gap-6 p-4">
+    <section className="ProfileBilling mx-auto flex w-full max-w-7xl flex-col gap-6 px-4">
       <div className="flex items-center justify-center">
         <h2 className="heading-4 text-center">Billing History</h2>
       </div>
