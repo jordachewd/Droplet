@@ -2,7 +2,33 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-26 — PM audit #63. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4, 105.1, 105.2, 110, 111.1, 112.1, 112.2, 109, 113.1, 113.2, 115, 116, 117, 120.1, 120.2-A, 120.2-B, 120.2-C, 120.3, 121, 122, 123, 124, 125, 125.2, 126, 126.1, 127, 128.1, 129, 130 complete. Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS — TDD rebuild active. 538 unit tests (82 suites). E2E: 108 passed, 25 skipped, 0 failed. All 7 gates GREEN. Build passing. Node.js 24.12.0 runtime.
+> Last updated: 2026-03-26 — PM audit #64. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4, 105.1, 105.2, 106, 110, 111.1, 112.1, 112.2, 109, 113.1, 113.2, 115, 116, 117, 120.1, 120.2-A, 120.2-B, 120.2-C, 120.3, 121, 122, 123, 124, 125, 125.2, 126, 126.1, 127, 128.1, 128.2, 129, 130 complete. Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS — TDD rebuild active. 537 unit tests (83 suites). E2E: 108 passed, 25 skipped, 0 failed. All 7 gates GREEN. Build passing. Node.js 24.12.0 runtime.
+
+---
+
+## Phase 128.2 — Migrate existing buttons to shared `<Button>` component — COMPLETED (2026-03-26)
+
+> Engineer delivered (PM audit #64). All 11 raw `<button className="btn btn-*">` instances across 8 files migrated to shared `<Button>` component.
+
+- [x] Replaced all 11 targeted raw buttons with `<Button variant="..." size="...">` in 8 files.
+- [x] Files changed: `src/app/error.tsx`, `src/app/(chat)/error.tsx`, `src/app/(admin)/admin/users/page.tsx`, `src/components/shared/confirmation-modal.tsx`, `src/components/admin/tiptap-editor.tsx`, `src/components/admin/settings/admin-settings-tabs.tsx`, `src/components/sections/profile/profile-hero-editor.tsx`, `src/components/shared/audio-player.tsx`.
+- [x] `RAW_BTN_MATCHES=0` verified for all 8 target files.
+- [x] Build passes, tests pass.
+
+**Files changed:** 8 files (see list above).
+
+---
+
+## Phase 106 — Extract `ChatApiResponse` / `ChatStreamEvent` to shared types — COMPLETED (2026-03-26)
+
+> Engineer delivered (PM audit #64). TD-REUSE-04 RESOLVED. Shared types extracted and consumed by both API route and chat wrapper.
+
+- [x] Created `src/types/chat-api.d.ts` with shared `ChatApiResponse` and `ChatStreamEvent` types.
+- [x] Imported from shared location in `src/app/api/openai/route.tsx` and `src/components/chat/chat-wrapper.tsx`.
+- [x] Removed local duplicate type definitions from both files.
+- [x] Build passes, tests pass.
+
+**Files changed:** `src/types/chat-api.d.ts` (new), `src/app/api/openai/route.tsx`, `src/components/chat/chat-wrapper.tsx`.
 
 ---
 

@@ -5,43 +5,12 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #63 (2026-03-26). Phases 1–130 complete. Phase 120.3 COMPLETE (server action tests rebuilt). 538 unit tests (82 suites). Build passes. TSC passes. Node.js 24.12.0 runtime.**
-> **GATE STATUS: All 7 gates GREEN. Lint (0 errors, 6 warnings), Knip (0 findings), TSC, build, unit tests (82/538), E2E (108 passed, 25 skipped, 0 failed) — all pass.**
-> **Owner directive (CRITICAL): FULL TDD TESTING REBUILD from scratch. NO hardcoded data. WCAG 2.2 AA. Code reuse. Full admin configurability. Shared Button component migration.**
+> **STATUS: PM audit #64 (2026-03-26). Phases 1–130, 128.2, 106 complete. 537 unit tests (83 suites). Build passes. TSC passes. Node.js 24.12.0 runtime.**
+> **GATE STATUS: All 7 gates GREEN. Lint (0 errors, 6 warnings), Knip (0 findings), TSC, build, unit tests (83/537), E2E (108 passed, 25 skipped, 0 failed) — all pass.**
+> **Owner directive (CRITICAL): FULL TDD TESTING REBUILD from scratch. NO hardcoded data. WCAG 2.2 AA. Code reuse. Full admin configurability.**
 > **Coverage: ~85/~72/~89/~85 (stmt/branch/func/lines). Thresholds: 76/65/79/76.**
-> **SWOT audit conducted (PM audit #63). Weaknesses and Threats converted to tasks below. `as never` casts: 99 remaining in 11 test files.**
-> **Priority order: 128.2 (HIGH Button migration — 11 buttons in 8 files) → 106 (HIGH shared types) → 120.4 (CRITICAL TDD route rebuild — eliminates 88 of 99 `as never` casts) → 120.5 (HIGH TDD component rebuild — 51 of 69 components untested) → 120.6 (HIGH TDD E2E rebuild) → 120.7 (HIGH coverage thresholds) → 107 (HIGH stop-reason config — 9 strings) → 108 (MEDIUM WCAG tabs) → 114 (MEDIUM WCAG avatar menu) → 131 (LOW server-only guards) → 132 (LOW stale TODO comments) → 126.2 (LOW lint warnings) → 125.1 (MEDIUM schema strict:true) → 74.2 (MEDIUM FAQ admin) → 104 (MEDIUM landing/hero admin)**
-
----
-
-## HIGH — Shared Button Migration (PM audit #62)
-
-### Phase 128.2 HIGH — Migrate existing buttons to shared `<Button>` component
-
-> Phase 128.1 COMPLETE — `Button` component created with TDD tests + first consumer (`AdminFormSubmitButton`) migrated. Phase 128.2 covers the remaining 11 raw `<button className="btn btn-*">` instances across 8 files.
-
-**Migration targets (11 buttons in 8 files):**
-
-1. `src/app/error.tsx` — 1 × `btn btn-contained` (error recovery)
-2. `src/app/(chat)/error.tsx` — 1 × `btn btn-contained` (error recovery)
-3. `src/app/(admin)/admin/users/page.tsx` — 1 × `btn btn-md btn-contained` (form submit)
-4. `src/components/shared/confirmation-modal.tsx` — 2 × `btn btn-sm` (cancel + confirm)
-5. `src/components/admin/tiptap-editor.tsx` — 3 × `btn btn-sm btn-outlined` (bold, italic, bullets)
-6. `src/components/admin/settings/admin-settings-tabs.tsx` — 1 × `btn btn-sm` (tab button)
-7. `src/components/sections/profile/profile-hero-editor.tsx` — 1 × `btn btn-contained` (form submit)
-8. `src/components/shared/audio-player.tsx` — 1 × `btn btn-sm btn-outlined` (play control)
-
-**What to do:**
-
-1. Replace each raw `<button className="btn btn-*">` with `<Button variant="..." size="...">`.
-2. Do NOT change `<Link>` elements or non-`btn` buttons.
-3. Verify no visual regressions.
-
-**Acceptance criteria:**
-
-- [ ] All 11 raw `<button className="btn btn-*">` instances use shared `Button`
-- [ ] No visual regressions
-- [ ] Build passes, tests pass
+> **SWOT audit conducted (PM audit #64). Weaknesses and Threats converted to tasks below. `as never` casts: 100 remaining in 12 test files.**
+> **Priority order: 120.4 (CRITICAL TDD route rebuild — eliminates ~88 of 100 `as never` casts) → 120.5 (HIGH TDD component rebuild — 51 of 69 components untested) → 120.6 (HIGH TDD E2E rebuild) → 120.7 (HIGH coverage thresholds) → 107 (HIGH stop-reason config — 9 strings) → 108 (MEDIUM WCAG tabs) → 114 (MEDIUM WCAG avatar menu) → 131 (LOW server-only guards) → 132 (LOW stale TODO comments) → 126.2 (LOW lint warnings) → 125.1 (MEDIUM schema strict:true) → 74.2 (MEDIUM FAQ admin) → 104 (MEDIUM landing/hero admin)**
 
 ---
 
@@ -55,7 +24,7 @@
 > **Phase 120.2 COMPLETE** — All ~40 utility test files rebuilt from scratch (Batch A+B+C). Zero `as never` casts in utility tests.
 > **Phase 120.3 COMPLETE** — All 4 server action test files rebuilt from scratch (TDD). Zero `as never` casts in action tests. Coverage: admin 76.69%, task 94.44%, user 81.25%, transaction 85%.
 >
-> **Current state:** 538 tests (82 suites). 99 `as never` casts remaining in 11 non-rebuilt test files (6 routes, 4 components, 1 constants). E2E: 14 specs, 108 passed, 25 skipped.
+> **Current state:** 537 tests (83 suites). 100 `as never` casts remaining in 12 non-rebuilt test files (6 routes, 5 components, 1 constants). E2E: 14 specs, 108 passed, 25 skipped.
 >
 > **Key rule:** Every new/rebuilt test file MUST use shared factories from `tests/unit/test-support/`. Zero `as never` casts allowed. Follow TDD workflow in `tests/README.md`.
 
@@ -121,27 +90,6 @@
 
 - [ ] Thresholds raised to ≥85/80/85/85
 - [ ] `npm run test:coverage` passes
-
----
-
-## HIGH — Code Reuse: Extract shared types (PM audit #47)
-
-### Phase 106 HIGH — Extract `ChatApiResponse` / `ChatStreamEvent` to shared types
-
-> TD-REUSE-04.
-
-**Files:** `src/types/chat-api.d.ts` (new), `src/app/api/openai/route.tsx`, `src/components/chat/chat-wrapper.tsx`
-
-**What to do:**
-
-1. Create `src/types/chat-api.d.ts` with shared types.
-2. Import from shared location in both files.
-3. Remove local type definitions.
-
-**Acceptance criteria:**
-
-- [ ] Zero duplicate type definitions
-- [ ] Build passes, tests pass
 
 ---
 
@@ -369,5 +317,5 @@ See SPEC.md for full requirements on each.
 ---
 
 > **Completed phases** archived in [`DONE.md`](DONE.md).
-> All phases through 130 complete (includes 120.1, 120.2-A/B/C, 120.3, 121–130).
+> All phases through 130 complete + 128.2, 106 (includes 120.1, 120.2-A/B/C, 120.3, 121–130, 128.2, 106).
 > All Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS.
