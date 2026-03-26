@@ -133,124 +133,128 @@ export default function ProfileHeroEditor({
   }
 
   return (
-    <form
-      className={classNames(
-        "ProfileHeroEditor mx-auto flex w-full max-w-7xl flex-col gap-4 rounded-lg p-6 shadow-sm",
-        "bg-lavenderHaze-100/80 dark:bg-nightIndigo-1000/80",
-      )}
-      onSubmit={(event) => void handleSaveProfile(event)}
-    >
-      <h3 className="heading-5">Edit account details</h3>
+    <section className="ProfileHero mx-auto flex w-full max-w-7xl px-4">
+      <form
+        className={classNames(
+          "ProfileHeroEditor flex w-full flex-col gap-4 rounded-lg p-6 shadow-sm",
+          "bg-lavenderHaze-100/80 dark:bg-nightIndigo-1000/80",
+        )}
+        onSubmit={(event) => void handleSaveProfile(event)}
+      >
+        <h3 className="heading-5">Edit account details</h3>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <label className="flex flex-col gap-2">
-          <span className="text-sm font-semibold">First name</span>
-          <input
-            type="text"
-            value={firstNameInput}
-            onChange={(event) => setFirstNameInput(event.target.value)}
-            className={profileInputClass}
-            maxLength={120}
-            autoComplete="given-name"
-          />
-        </label>
-
-        <label className="flex flex-col gap-2">
-          <span className="text-sm font-semibold">Last name</span>
-          <input
-            type="text"
-            value={lastNameInput}
-            onChange={(event) => setLastNameInput(event.target.value)}
-            className={profileInputClass}
-            maxLength={120}
-            autoComplete="family-name"
-          />
-        </label>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <label className="flex flex-col gap-2">
-          <span className="text-sm font-semibold">Email address</span>
-          <input
-            type="email"
-            value={emailInput}
-            onChange={(event) => setEmailInput(event.target.value)}
-            className={profileInputClass}
-            autoComplete="email"
-            required
-            aria-required="true"
-          />
-        </label>
-
-        <label className="flex flex-col gap-2">
-          <span className="text-sm font-semibold">Username</span>
-          <input
-            type="text"
-            value={userData.username}
-            disabled
-            aria-disabled="true"
-            className={classNames(
-              profileInputClass,
-              "cursor-not-allowed opacity-60",
-            )}
-          />
-          <span className="text-xs opacity-60">Username cannot be changed</span>
-        </label>
-      </div>
-
-      <div className="flex items-center gap-4">
-        <div className="inline-flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-lavenderHaze-500 text-sm font-semibold text-white dark:bg-nightIndigo-500">
-          {displayAvatarUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={displayAvatarUrl}
-              alt="Profile avatar preview"
-              className="h-full w-full object-cover"
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <label className="flex flex-col gap-2">
+            <span className="text-sm font-semibold">First name</span>
+            <input
+              type="text"
+              value={firstNameInput}
+              onChange={(event) => setFirstNameInput(event.target.value)}
+              className={profileInputClass}
+              maxLength={120}
+              autoComplete="given-name"
             />
-          ) : (
-            "IMG"
-          )}
+          </label>
+
+          <label className="flex flex-col gap-2">
+            <span className="text-sm font-semibold">Last name</span>
+            <input
+              type="text"
+              value={lastNameInput}
+              onChange={(event) => setLastNameInput(event.target.value)}
+              className={profileInputClass}
+              maxLength={120}
+              autoComplete="family-name"
+            />
+          </label>
         </div>
-        <label className="flex flex-col gap-2">
-          <span className="text-sm font-semibold">Avatar image</span>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleAvatarChange}
-            className={classNames(
-              "block w-full cursor-pointer text-sm",
-              "file:mr-4 file:rounded-md file:border file:px-3 file:py-2 file:text-sm file:font-medium",
-              "file:border-slate-500 file:bg-lavenderHaze-300/40 file:text-midnightBlue-900",
-              "dark:file:border-slate-500 dark:file:bg-nightIndigo-500/30 dark:file:text-white",
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <label className="flex flex-col gap-2">
+            <span className="text-sm font-semibold">Email address</span>
+            <input
+              type="email"
+              value={emailInput}
+              onChange={(event) => setEmailInput(event.target.value)}
+              className={profileInputClass}
+              autoComplete="email"
+              required
+              aria-required="true"
+            />
+          </label>
+
+          <label className="flex flex-col gap-2">
+            <span className="text-sm font-semibold">Username</span>
+            <input
+              type="text"
+              value={userData.username}
+              disabled
+              aria-disabled="true"
+              className={classNames(
+                profileInputClass,
+                "cursor-not-allowed opacity-60",
+              )}
+            />
+            <span className="text-xs opacity-60">
+              Username cannot be changed
+            </span>
+          </label>
+        </div>
+
+        <div className="flex items-center gap-4">
+          <div className="inline-flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-lavenderHaze-500 text-sm font-semibold text-white dark:bg-nightIndigo-500">
+            {displayAvatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={displayAvatarUrl}
+                alt="Profile avatar preview"
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              "IMG"
             )}
-          />
-        </label>
-      </div>
+          </div>
+          <label className="flex flex-col gap-2">
+            <span className="text-sm font-semibold">Avatar image</span>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleAvatarChange}
+              className={classNames(
+                "block w-full cursor-pointer text-sm",
+                "file:mr-4 file:rounded-md file:border file:px-3 file:py-2 file:text-sm file:font-medium",
+                "file:border-slate-500 file:bg-lavenderHaze-300/40 file:text-midnightBlue-900",
+                "dark:file:border-slate-500 dark:file:bg-nightIndigo-500/30 dark:file:text-white",
+              )}
+            />
+          </label>
+        </div>
 
-      <div className="flex justify-end">
-        <button
-          type="submit"
-          className={classNames("btn btn-contained")}
-          disabled={isSaving}
-        >
-          {isSaving ? "Saving..." : "Save profile"}
-        </button>
-      </div>
+        <div className="flex justify-end">
+          <button
+            type="submit"
+            className={classNames("btn btn-contained")}
+            disabled={isSaving}
+          >
+            {isSaving ? "Saving..." : "Save profile"}
+          </button>
+        </div>
 
-      {feedbackMessage && (
-        <p
-          aria-live="polite"
-          className="text-sm text-emerald-700 dark:text-emerald-300"
-        >
-          {feedbackMessage}
-        </p>
-      )}
+        {feedbackMessage && (
+          <p
+            aria-live="polite"
+            className="text-sm text-emerald-700 dark:text-emerald-300"
+          >
+            {feedbackMessage}
+          </p>
+        )}
 
-      {errorMessage && (
-        <p role="alert" className="text-sm text-red-700 dark:text-red-300">
-          {errorMessage}
-        </p>
-      )}
-    </form>
+        {errorMessage && (
+          <p role="alert" className="text-sm text-red-700 dark:text-red-300">
+            {errorMessage}
+          </p>
+        )}
+      </form>
+    </section>
   );
 }

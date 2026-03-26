@@ -22,22 +22,15 @@ export default function ChatSidebarPromo({
 }: ChatSidebarPromoProps) {
   const sectionClass = classNames("ChatSidebarPromo p-3", !isOpen && "hidden");
   const promoCardClass = classNames("ChatSidebarPromoCard", planPromoCardClass);
-  const promoBadgeClass = classNames(
-    "rounded-sm bg-twilightPurple-600 p-1 text-2xs uppercase leading-none tracking-wider text-lavenderHaze-400",
-  );
 
   if (userRole === "admin") {
     return (
       <section className={sectionClass}>
         <article className={promoCardClass}>
           <div className={planPromoAccentClass}></div>
-          <div className="z-10 flex w-full flex-col gap-3 text-center">
-            <div className="absolute right-0.5 top-0.5 z-10 flex items-center gap-1 font-medium">
-              <span className={promoBadgeClass}>Admin</span>
-            </div>
-            <p className="mt-1 border-t border-dotted border-twilightPurple-600 pt-2.5 text-xs">
-              Full permissions enabled for admin users.
-            </p>
+          <div className="z-10 flex w-full flex-col gap-4 text-center">
+            <h5 className="heading-5">Admin</h5>
+            <p className="text-sm leading-4">You have admin access.</p>
           </div>
         </article>
       </section>
@@ -48,6 +41,8 @@ export default function ChatSidebarPromo({
     return null;
   }
 
+  const promoTitle = planName === "Pro" ? "Go Premium" : "Go Pro";
+
   const promoMessage =
     planName === "Pro"
       ? "Upgrade to Premium for highest limits and premium workflows."
@@ -57,15 +52,10 @@ export default function ChatSidebarPromo({
     <section className={sectionClass}>
       <article className={promoCardClass}>
         <div className={planPromoAccentClass}></div>
-        <div className="z-10 flex w-full flex-col gap-3 text-center">
-          <div className="absolute right-0.5 top-0.5 z-10 flex items-center gap-1 font-medium">
-            <span className={classNames(promoBadgeClass, "min-w-20.5")}>
-              Plan status
-            </span>
-          </div>
-          <p className="mt-1 border-t border-dotted border-twilightPurple-600 pt-2.5 text-xs">
-            {promoMessage}
-          </p>
+        <div className="z-10 flex w-full flex-col gap-4 text-center">
+          <h5 className="heading-5">{promoTitle}</h5>
+          <p className="text-sm leading-4">{promoMessage}</p>
+
           <Link
             className="btn btn-sm btn-contained self-center"
             href="/app/plans"
