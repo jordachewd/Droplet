@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-25 (PM audit #62). Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS — Full TDD testing rebuild (Phase 120). **All 7 gates GREEN.** 514 unit tests (84 suites). E2E: 108 passed, 0 failed, 25 skipped. Coverage: ~85/~72/~89/~85. Active TDs: TD-HARDCODE-01 (HIGH), TD-REUSE-04/WCAG-05/WCAG-07/TEST-02 (MEDIUM). Build passing. Node.js 24.12.0. Phase 129 COMPLETE (PageHead heading-level). Phase 128.1 COMPLETE (shared Button). Phase 120.2 COMPLETE (all utility tests). 200+ `as never` casts in 18 non-rebuilt test files.
+> Last updated: 2026-03-26 (PM audit #63). Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS — Full TDD testing rebuild (Phase 120). **All 7 gates GREEN.** 538 unit tests (82 suites). E2E: 108 passed, 0 failed, 25 skipped. Coverage: ~85/~72/~89/~85. Active TDs: TD-HARDCODE-01 (HIGH), TD-REUSE-04/WCAG-05/WCAG-07/TEST-02 (MEDIUM). Build passing. Node.js 24.12.0. Phase 120.3 COMPLETE (action tests TDD). Phase 126.1 COMPLETE (handleError sanitization). Phase 125.2 COMPLETE (getAllTransactions hardening). 99 `as never` casts in 11 non-rebuilt test files.
 
 ---
 

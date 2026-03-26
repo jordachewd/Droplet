@@ -1,7 +1,7 @@
 # Droplet Codebase Deep-Dive Audit Report
 
-**Date:** Generated during Phase 120 (Full TDD Testing Rebuild)
-**Scope:** 201 source files in `src/`, 67 test files in `tests/unit/`, 8 DB models, 5 API routes, 4 server action files
+**Date:** Updated PM audit #63 (2026-03-26). Originally generated during Phase 120.
+**Scope:** 201 source files in `src/`, 82 test suites in `tests/unit/`, 8 DB models, 5 API routes, 4 server action files
 **Type:** Read-only audit — no files modified
 
 ---
@@ -13,23 +13,23 @@ The Droplet codebase is in strong shape overall. Auth checks are present on ever
 **Key metrics:**
 
 - **0 CRITICAL** findings (no security vulnerabilities or data leaks)
-- **3 HIGH** findings (all KNOWN, tracked in TODO.md)
-- **8 MEDIUM** findings (4 KNOWN, 4 NEW)
+- **2 HIGH** findings (all KNOWN, tracked in TODO.md)
+- **5 MEDIUM** findings (3 KNOWN, 2 NEW)
 - **6 LOW** findings (2 KNOWN, 4 NEW)
 
 ---
 
 ## 1. Code Quality & Patterns
 
-### 1.1 — `getAllTransactions()` missing `.select()` projection
+### 1.1 — ~~`getAllTransactions()` missing `.select()` projection~~ RESOLVED (Phase 125.2)
 
-| Field              | Value                                                                                                                                                       |
-| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Severity**       | MEDIUM                                                                                                                                                      |
-| **Status**         | NEW                                                                                                                                                         |
-| **File**           | `src/lib/actions/transaction.action.tsx` L114-125                                                                                                           |
-| **Description**    | `Transaction.find()` returns all fields (including `stripeId`, internal IDs) to the client. Every other query in the codebase uses `.select()` projections. |
-| **Recommendation** | Add `.select("plan amount billing createdAt expiresOn")` to the query chain.                                                                                |
+| Field              | Value                                                         |
+| ------------------ | ------------------------------------------------------------- |
+| **Severity**       | ~~MEDIUM~~ RESOLVED                                           |
+| **Status**         | **RESOLVED** — Phase 125.2 added `.select()` + `.limit(100)`. |
+| **File**           | `src/lib/actions/transaction.action.tsx`                      |
+| **Description**    | Fixed. `.select()` projection and `.limit(100)` cap added.    |
+| **Recommendation** | None — resolved.                                              |
 
 ### 1.2 — Duplicate type definitions (ChatApiResponse / ChatStreamEvent)
 
@@ -71,15 +71,15 @@ The Droplet codebase is in strong shape overall. Auth checks are present on ever
 | **Description**    | `export const faqs = buildFaqs()` creates a module-level singleton with hardcoded defaults. `buildFaqs()` accepts config overrides, but the exported singleton doesn't use them. Server components must call `buildFaqs(effectiveConfig)` directly. |
 | **Recommendation** | Remove the module-level `faqs` export and always call `buildFaqs()` with effective config at consumption sites.                                                                                                                                     |
 
-### 1.6 — `handleError` propagates raw `error.message`
+### 1.6 — ~~`handleError` propagates raw `error.message`~~ RESOLVED (Phase 126.1)
 
-| Field              | Value                                                                                                                                                                                                                                                                                                                              |
-| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Severity**       | MEDIUM                                                                                                                                                                                                                                                                                                                             |
-| **Status**         | NEW                                                                                                                                                                                                                                                                                                                                |
-| **File**           | `src/lib/utils/handleError.tsx` L14                                                                                                                                                                                                                                                                                                |
-| **Description**    | `buildErrorMessage()` re-throws with `error.message` content. When server actions throw, Next.js error boundaries may display this to the client. All current callers wrap the throw in their own try/catch, but if a server action's `handleError` call goes uncaught at the boundary, the raw DB or internal message could leak. |
-| **Recommendation** | Audit all `handleError` call sites to confirm they're caught before reaching the UI. Consider stripping internal details from the re-thrown message (keep them in `cause` only).                                                                                                                                                   |
+| Field              | Value                                                                                                                                                                  |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Severity**       | ~~MEDIUM~~ RESOLVED                                                                                                                                                    |
+| **Status**         | **RESOLVED** — Phase 126.1 added whitelist sanitization. Non-whitelisted messages replaced with `"An unexpected error occurred"`. Original error preserved in `cause`. |
+| **File**           | `src/lib/utils/handleError.tsx`                                                                                                                                        |
+| **Description**    | Fixed. Error messages now sanitized via allowlist pattern.                                                                                                             |
+| **Recommendation** | None — resolved.                                                                                                                                                       |
 
 ### 1.7 — 4 inline TODO comments in production code
 
@@ -177,15 +177,15 @@ All user-facing data queries include `userId` or `clerkId` in the filter. Cross-
 
 20+ instances of `.select()` found. All admin queries, task queries, and user queries use projections. The one exception is `getAllTransactions()` (Finding 1.1).
 
-### 3.3 — Unbounded queries
+### 3.3 — ~~Unbounded queries~~ RESOLVED (Phase 125.2)
 
-| Field              | Value                                                                                                                                                                                                   |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Severity**       | MEDIUM                                                                                                                                                                                                  |
-| **Status**         | NEW                                                                                                                                                                                                     |
-| **File**           | `src/lib/actions/transaction.action.tsx` L114                                                                                                                                                           |
-| **Description**    | `getAllTransactions()` has no `.limit()`. For a user with many transactions, this returns all documents. Admin queries properly use pagination (`.skip()` + `.limit()` in `admin-queries.ts` L459-461). |
-| **Recommendation** | Add `.limit(100)` or implement pagination. In practice, most users will have few transactions (plan changes), so this is low-risk currently.                                                            |
+| Field              | Value                                           |
+| ------------------ | ----------------------------------------------- |
+| **Severity**       | ~~MEDIUM~~ RESOLVED                             |
+| **Status**         | **RESOLVED** — Phase 125.2 added `.limit(100)`. |
+| **File**           | `src/lib/actions/transaction.action.tsx`        |
+| **Description**    | Fixed. `.limit(100)` added.                     |
+| **Recommendation** | None — resolved.                                |
 
 ### 3.4 — Admin query pagination: GOOD
 
@@ -316,12 +316,12 @@ All model files import `"server-only"` at the top, preventing accidental client-
 
 ```
 ✅ Prettier (format)
-✅ ESLint (lint)
-✅ TypeScript (typecheck)
-✅ Vitest (370 unit tests, 62 suites)
-✅ Playwright (108 E2E tests)
+✅ ESLint (lint — 0 errors, 6 warnings)
+✅ TypeScript (typecheck — clean)
+✅ Vitest (538 unit tests, 82 suites)
+✅ Playwright (108 E2E passed, 25 skipped, 0 failed)
 ✅ Production build
-✅ Knip (unused code audit)
+✅ Knip (0 findings)
 ```
 
 ### 6.2 — Dependency versions
@@ -358,15 +358,15 @@ No outdated or vulnerable dependencies detected based on version numbers.
 
 ## 7. Testing Gaps
 
-### 7.1 — ~200 `as never` casts in non-rebuilt test files
+### 7.1 — `as never` casts in non-rebuilt test files (reduced 203→99)
 
-| Field              | Value                                                                                                                                                                                                                                                                                                                    |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Severity**       | HIGH                                                                                                                                                                                                                                                                                                                     |
-| **Status**         | KNOWN (TD-TEST-02, Phase 120)                                                                                                                                                                                                                                                                                            |
-| **Files**          | `tests/unit/actions/user-actions.test.ts` (~23 casts), `tests/unit/actions/admin-actions.behavior.test.ts` (~20 casts), `tests/unit/actions/transaction-actions.test.ts` (~5 casts), `tests/unit/audit/admin-audit-trail.test.ts` (~1 cast), `tests/unit/plans/plans.test.ts` (~3 casts), and ~13 more non-rebuilt files |
-| **Description**    | 50+ `as never` casts found in sampled files alone. These are type-unsafe mock bypasses that hide type errors and make tests fragile. Rebuilt test files use shared factories with zero `as never` — the pattern exists, it just needs to be applied to remaining files.                                                  |
-| **Recommendation** | Continue Phase 120 (Full TDD Testing Rebuild). 20 of ~40 test files have been rebuilt.                                                                                                                                                                                                                                   |
+| Field              | Value                                                                                                                                                                                |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Severity**       | HIGH                                                                                                                                                                                 |
+| **Status**         | KNOWN (TD-TEST-02, Phase 120). Reduced from ~203 to 99 via Phase 120.3 action test rebuild.                                                                                          |
+| **Files**          | 99 `as never` casts in 11 non-rebuilt test files: 6 route tests (88 casts), 4 component tests, 1 constants test.                                                                     |
+| **Description**    | Type-unsafe mock bypasses remain in non-rebuilt test files. Phase 120.4 (route tests rebuild) will eliminate 88 of 99. Rebuilt test files use shared factories with zero `as never`. |
+| **Recommendation** | Continue Phase 120.4 (route tests) → 120.5 (component tests) to eliminate all remaining casts.                                                                                       |
 
 ### 7.2 — Components with zero unit test coverage
 
@@ -395,26 +395,26 @@ Rebuilt test files demonstrate strong patterns:
 
 None.
 
-### HIGH (3) — all KNOWN
+### HIGH (2) — all KNOWN
 
-1. **TD-HARDCODE-01** — Hardcoded stop reason messages (Phase 103)
-2. **TD-TEST-02** — ~200 `as never` casts in non-rebuilt tests (Phase 120)
-3. **Phase 120.5** — Components with zero test coverage
+1. **TD-HARDCODE-01** — Hardcoded stop reason messages (Phase 107)
+2. **TD-TEST-02** — 99 `as never` casts in non-rebuilt tests (Phase 120.4–120.5)
 
-### MEDIUM (8)
+_(Previous HIGH: "Components with zero test coverage" merged into TD-TEST-02 / Phase 120.5)_
 
-| #   | Finding                                              | Status              | File                                          |
-| --- | ---------------------------------------------------- | ------------------- | --------------------------------------------- |
-| 1   | `getAllTransactions()` missing `.select()`           | NEW                 | `transaction.action.tsx` L114                 |
-| 2   | Duplicate type definitions                           | KNOWN (TD-REUSE-04) | `openai/route.tsx` + `chat-wrapper.tsx`       |
-| 3   | Hardcoded hero/landing copy                          | KNOWN (Phase 104)   | `hero-section.tsx`, `landing-page.tsx`        |
-| 4   | `handleError` propagates raw `error.message`         | NEW                 | `handleError.tsx` L14                         |
-| 5   | Unbounded `getAllTransactions()` query               | NEW                 | `transaction.action.tsx` L114                 |
-| 6   | Tab arrow key navigation                             | KNOWN (TD-WCAG-05)  | `library-tabs.tsx`, `admin-settings-tabs.tsx` |
-| 7   | Avatar menu ARIA/keyboard                            | KNOWN (TD-WCAG-07)  | `avatar-menu.tsx`                             |
-| 8   | **NEW** missing `.select()` + no `.limit()` combined | NEW                 | `transaction.action.tsx` L114                 |
+### MEDIUM (5)
 
-_(Note: Findings 1, 5, and 8 all point to the same `getAllTransactions()` function — they're three facets of one issue.)_
+| #   | Finding                                          | Status              | File                                          |
+| --- | ------------------------------------------------ | ------------------- | --------------------------------------------- |
+| 1   | ~~`getAllTransactions()` missing `.select()`~~   | RESOLVED (125.2)    | `transaction.action.tsx`                      |
+| 2   | Duplicate type definitions                       | KNOWN (TD-REUSE-04) | `openai/route.tsx` + `chat-wrapper.tsx`       |
+| 3   | Hardcoded hero/landing copy                      | KNOWN (Phase 104)   | `hero-section.tsx`, `landing-page.tsx`        |
+| 4   | ~~`handleError` propagates raw `error.message`~~ | RESOLVED (126.1)    | `handleError.tsx`                             |
+| 5   | ~~Unbounded `getAllTransactions()` query~~       | RESOLVED (125.2)    | `transaction.action.tsx`                      |
+| 6   | Tab arrow key navigation                         | KNOWN (TD-WCAG-05)  | `library-tabs.tsx`, `admin-settings-tabs.tsx` |
+| 7   | Avatar menu ARIA/keyboard                        | KNOWN (TD-WCAG-07)  | `avatar-menu.tsx`                             |
+
+**3 of 7 MEDIUM findings resolved.** 2 active MEDIUM remain (type dups Phase 106, hero copy Phase 104) + 2 WCAG tracked.
 
 ### LOW (6)
 
@@ -449,26 +449,27 @@ _(Note: Findings 1, 5, and 8 all point to the same `getAllTransactions()` functi
 
 ## Recommendations for Droplet-PM
 
-### Immediate (before next release)
+### Resolved since last audit
 
-1. Add `.select()` to `getAllTransactions()` — easy fix, prevents leaking internal fields
-
-### Short-term (next sprint)
-
-2. Audit `handleError` call sites to confirm error messages don't leak to UI
-3. Resolve 4 TODO comments in `ai-model-policy.ts` for accurate cost tracking
+1. ~~Add `.select()` to `getAllTransactions()`~~ — **RESOLVED (Phase 125.2)**
+2. ~~Audit `handleError` call sites~~ — **RESOLVED (Phase 126.1)**
 
 ### Already tracked (continue as planned)
 
-4. TD-HARDCODE-01: Admin-configurable stop reasons (Phase 103)
-5. TD-REUSE-04: Extract duplicate types (Phase 121)
-6. TD-WCAG-05: Tab arrow key navigation (Phase 108)
-7. TD-WCAG-07: Avatar menu keyboard/ARIA (Phase 114)
-8. TD-TEST-02: Complete TDD rebuild (Phase 120)
-9. Phase 104/104.2: Admin-configurable hero/landing copy
+3. TD-HARDCODE-01: Admin-configurable stop reasons (Phase 107)
+4. TD-REUSE-04: Extract duplicate types (Phase 106)
+5. TD-WCAG-05: Tab arrow key navigation (Phase 108)
+6. TD-WCAG-07: Avatar menu keyboard/ARIA (Phase 114)
+7. TD-TEST-02: Complete TDD rebuild (Phase 120.4–120.7)
+8. Phase 104/104.2: Admin-configurable hero/landing copy
+
+### Short-term
+
+9. Resolve 4 TODO comments in `ai-model-policy.ts` (Phase 132)
+10. Add `server-only` guards to 4 utility files (Phase 131)
 
 ### Low priority (backlog)
 
-10. `User.plan.name` index (when user count > 10K)
-11. `PublicPage.isPublished` index (when page count grows)
-12. Admin-configurable rate limit constants
+11. `User.plan.name` index (when user count > 10K)
+12. `PublicPage.isPublished` index (when page count grows)
+13. Admin-configurable rate limit constants

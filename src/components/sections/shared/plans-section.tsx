@@ -2,7 +2,7 @@
 
 import { useUser } from "@clerk/nextjs";
 import { Plan } from "@/types/PlanData.d";
-import { UserData } from "@/types/UserData.d"; 
+import { UserData } from "@/types/UserData.d";
 import PlanCard from "@/components/shared/plan-card";
 import LoadingBubbles from "@/components/shared/loading-bubbles";
 import Link from "next/link";

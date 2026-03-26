@@ -22,11 +22,15 @@ export default function PageHead({
 
   return (
     <section
-      className={classNames("PageHead flex flex-col gap-3 mx-auto w-full max-w-screen-2xl", className, {
-        "items-center": align === "center",
-        "items-end": align === "right",
-        "items-start": align === "left",
-      })}
+      className={classNames(
+        "PageHead flex flex-col gap-3 mx-auto w-full max-w-screen-2xl",
+        className,
+        {
+          "items-center": align === "center",
+          "items-end": align === "right",
+          "items-start": align === "left",
+        },
+      )}
     >
       <HeadingTag className="heading-3 leading-tight">{title}</HeadingTag>
       {subtitle && <p className="body-1">{subtitle}</p>}
