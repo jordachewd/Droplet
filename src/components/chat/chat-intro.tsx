@@ -4,6 +4,7 @@ import { useUser } from "@clerk/nextjs";
 import classNames from "classnames";
 import LoadingBubbles from "@/components/shared/loading-bubbles";
 import type { Persona } from "@/types/PersonaData.d";
+import DropletGlobe from "../shared/droplet-globe";
 
 interface ChatIntroProps {
   persona: Persona;
@@ -36,7 +37,9 @@ export default function ChatIntro({ persona, sendPrompt }: ChatIntroProps) {
 
   return (
     <section className={introWrapperClass}>
-      <div className="flex flex-col gap-2 text-center">
+      <div className="flex flex-col gap-2 justify-center items-center">
+        <DropletGlobe size={128} className="mb-10" />
+
         <h1 className="heading-2">Hello {user?.firstName || "there"},</h1>
         <h2 className="heading-5">welcome to your chat dashboard.</h2>
         <p className="body-2 mt-10">

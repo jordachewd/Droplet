@@ -11,7 +11,6 @@ import { PlanPricing } from "@/constants/plans";
 import { getEffectivePersonaAccessByPlan } from "@/lib/utils/effective-persona-access";
 import { getEffectivePersonaConfig } from "@/lib/utils/effective-persona-config";
 import { getEffectivePlanConfig } from "@/lib/utils/effective-plan-config";
-import DropletGlobe from "@/components/shared/droplet-globe";
 import PageWrapper from "@/components/layout/page-wrapper";
 
 export const metadata: Metadata = {
@@ -269,10 +268,6 @@ export default async function AboutPage() {
         subtitle="A persona-driven AI assistant built for structured conversations, practical output, and media-aware workflows."
         align="center"
       />
-
-      <div className="flex justify-center my-4">
-        <DropletGlobe size={128} />
-      </div>
 
       {aboutSections.map((section, index) => (
         <div
