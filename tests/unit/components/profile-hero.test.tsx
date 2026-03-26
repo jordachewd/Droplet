@@ -4,17 +4,11 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import ProfileHeroEditor from "@/components/sections/profile/profile-hero-editor";
 import type { UserData } from "@/types/UserData.d";
-import { useClerk } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
-import { deleteUser, updateUser } from "@/lib/actions/user.actions";
+import { updateUser } from "@/lib/actions/user.actions";
 
 vi.mock("@/lib/actions/user.actions", () => ({
   updateUser: vi.fn(),
-  deleteUser: vi.fn(),
-}));
-
-vi.mock("@clerk/nextjs", () => ({
-  useClerk: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -22,7 +16,6 @@ vi.mock("next/navigation", () => ({
 }));
 
 const refreshMock = vi.hoisted(() => vi.fn());
-const signOutMock = vi.hoisted(() => vi.fn());
 const createObjectURLMock = vi.hoisted(() =>
   vi.fn(() => "blob:avatar-preview"),
 );
@@ -70,11 +63,7 @@ describe("ProfileHeroEditor", () => {
     vi.mocked(useRouter).mockReturnValue({
       refresh: refreshMock,
     } as never);
-    vi.mocked(useClerk).mockReturnValue({
-      signOut: signOutMock,
-    } as never);
     vi.mocked(updateUser).mockResolvedValue({ status: 200 } as never);
-    vi.mocked(deleteUser).mockResolvedValue({ status: 200 } as never);
   });
 
   afterEach(() => {
@@ -146,18 +135,6 @@ describe("ProfileHeroEditor", () => {
           userimg: "/api/download?key=clerk_user_1%2Fuploads%2Favatar.png",
         }),
       );
-    });
-  });
-
-  it("deletes account after confirmation and signs out", async () => {
-    render(<ProfileHeroEditor userData={baseUserData} />);
-
-    fireEvent.click(screen.getByRole("button", { name: "Delete My Account" }));
-    fireEvent.click(screen.getByRole("button", { name: "Delete account" }));
-
-    await waitFor(() => {
-      expect(deleteUser).toHaveBeenCalledWith("clerk_user_1");
-      expect(signOutMock).toHaveBeenCalledWith({ redirectUrl: "/" });
     });
   });
 });

@@ -1,6 +1,4 @@
-import ProfileHeroEditor from "@/components/sections/profile/profile-hero-editor";
 import PlanPromo from "@/components/shared/plan-promo";
-import PlanCountDown from "@/components/shared/plan-count-down";
 
 import getFormattedDate from "@/lib/utils/getFormattedDate";
 import getFullName, { getNameLetters } from "@/lib/utils/getFullName";
@@ -16,6 +14,8 @@ export default function ProfileHero({ userData }: HeroProps) {
     userData;
   const formattedRegisterAt = getFormattedDate(registerAt);
   const formattedUpdatedAt = getFormattedDate(updatedAt);
+  const formattedPlanExpiresOn =
+    plan.name === "Lite" ? "Never" : getFormattedDate(plan.expiresOn);
 
   const fullName = getFullName({
     firstName: firstName || "",
@@ -37,7 +37,7 @@ export default function ProfileHero({ userData }: HeroProps) {
   );
 
   return (
-    <section className="ProfileHero mx-auto flex w-full max-w-7xl flex-col gap-8 px-4">
+    <section className="ProfileHero mx-auto flex w-full max-w-7xl px-4">
       <div className={profileCardClass}>
         <div className="flex flex-1 items-center gap-4 lg:gap-8">
           <span className={avatarClass}>
@@ -74,14 +74,10 @@ export default function ProfileHero({ userData }: HeroProps) {
           )}
 
           <div className="flex items-center gap-2">
-            <span className="font-semibold leading-none">
-              {plan.name === "Lite" ? "Plan expires:" : "Plan expires in:"}
+            <span className="font-semibold leading-none">Plan expires:</span>
+            <span className="text-xxs leading-none">
+              {formattedPlanExpiresOn}
             </span>
-            {plan.name === "Lite" ? (
-              <span className="text-xxs leading-none">Never</span>
-            ) : (
-              <PlanCountDown endDate={plan.expiresOn as Date} wrapped />
-            )}
           </div>
         </div>
 
@@ -89,8 +85,6 @@ export default function ProfileHero({ userData }: HeroProps) {
           <PlanPromo plan={plan} role={userData.role} />
         </div>
       </div>
-
-      <ProfileHeroEditor userData={userData} />
     </section>
   );
 }

@@ -27,7 +27,7 @@ describe("status routes", () => {
   it("renders /401 with sign-in call to action", () => {
     render(<UnauthorizedPage />);
 
-    expect(screen.getByText("HTTP 401")).toBeTruthy();
+    expect(screen.getByText(/ERROR:\s*401/i)).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Unauthorized" })).toBeTruthy();
     expect(
       screen.getByRole("link", { name: "Go to Sign In" }).getAttribute("href"),
@@ -37,7 +37,7 @@ describe("status routes", () => {
   it("renders /403 with home call to action", () => {
     render(<ForbiddenPage />);
 
-    expect(screen.getByText("HTTP 403")).toBeTruthy();
+    expect(screen.getByText(/ERROR:\s*403/i)).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Forbidden" })).toBeTruthy();
     expect(
       screen.getByRole("link", { name: "Go Home" }).getAttribute("href"),
@@ -47,7 +47,7 @@ describe("status routes", () => {
   it("renders /500 with retry guidance", () => {
     render(<InternalServerErrorPage />);
 
-    expect(screen.getByText("HTTP 500")).toBeTruthy();
+    expect(screen.getByText(/ERROR:\s*500/i)).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Server Error" })).toBeTruthy();
     expect(
       screen.getByText(
@@ -59,7 +59,7 @@ describe("status routes", () => {
   it("renders not-found page with home call to action", () => {
     render(<NotFoundPage />);
 
-    expect(screen.getByText("HTTP 404")).toBeTruthy();
+    expect(screen.getByText(/ERROR:\s*404/i)).toBeTruthy();
     expect(
       screen.getByRole("heading", { name: "Page Not Found" }),
     ).toBeTruthy();

@@ -1,13 +1,11 @@
 "use client";
 
 import classNames from "classnames";
-import { deleteUser, updateUser } from "@/lib/actions/user.actions";
+import { updateUser } from "@/lib/actions/user.actions";
 import { UserData } from "@/types/UserData.d";
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useClerk } from "@clerk/nextjs";
 import { UploadRouteResponse } from "@/types/UploadData.d";
-import ConfirmationModal from "@/components/shared/confirmation-modal";
 
 type ProfileActionResponse = {
   status?: number;
@@ -22,7 +20,6 @@ export default function ProfileHeroEditor({
   userData,
 }: ProfileHeroEditorProps) {
   const router = useRouter();
-  const clerk = useClerk();
   const [firstNameInput, setFirstNameInput] = useState<string>(
     userData.firstName ?? "",
   );
@@ -36,9 +33,6 @@ export default function ProfileHeroEditor({
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState<boolean>(false);
-  const [isDeleting, setIsDeleting] = useState<boolean>(false);
-  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] =
-    useState<boolean>(false);
   const displayAvatarUrl = avatarPreviewUrl ?? avatarUrl;
 
   const profileInputClass = classNames(
@@ -92,7 +86,7 @@ export default function ProfileHeroEditor({
 
   async function handleSaveProfile(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (isSaving || isDeleting) {
+    if (isSaving) {
       return;
     }
 
@@ -138,197 +132,125 @@ export default function ProfileHeroEditor({
     }
   }
 
-  async function handleDeleteAccount() {
-    if (isDeleting || isSaving) {
-      return;
-    }
-
-    setIsDeleting(true);
-    setFeedbackMessage(null);
-    setErrorMessage(null);
-
-    try {
-      const deleteResult = (await deleteUser(
-        userData.clerkId,
-      )) as ProfileActionResponse | null;
-
-      if (!deleteResult || deleteResult.status !== 200) {
-        throw new Error(deleteResult?.message || "Failed to delete account.");
-      }
-
-      await clerk.signOut({ redirectUrl: "/" });
-    } catch (error) {
-      void error;
-      setErrorMessage("Failed to delete account. Please try again.");
-    } finally {
-      setIsDeleting(false);
-    }
-  }
-
   return (
-    <>
-      <form
-        className={classNames(
-          "ProfileHeroEditor flex w-full flex-col gap-4 rounded-lg p-6 shadow-sm",
-          "bg-lavenderHaze-100/80 dark:bg-nightIndigo-1000/80",
-        )}
-        onSubmit={(event) => void handleSaveProfile(event)}
-      >
-        <h3 className="heading-5">Edit account details</h3>
+    <form
+      className={classNames(
+        "ProfileHeroEditor mx-auto flex w-full max-w-7xl flex-col gap-4 rounded-lg p-6 shadow-sm",
+        "bg-lavenderHaze-100/80 dark:bg-nightIndigo-1000/80",
+      )}
+      onSubmit={(event) => void handleSaveProfile(event)}
+    >
+      <h3 className="heading-5">Edit account details</h3>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <label className="flex flex-col gap-2">
-            <span className="text-sm font-semibold">First name</span>
-            <input
-              type="text"
-              value={firstNameInput}
-              onChange={(event) => setFirstNameInput(event.target.value)}
-              className={profileInputClass}
-              maxLength={120}
-              autoComplete="given-name"
-            />
-          </label>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <label className="flex flex-col gap-2">
+          <span className="text-sm font-semibold">First name</span>
+          <input
+            type="text"
+            value={firstNameInput}
+            onChange={(event) => setFirstNameInput(event.target.value)}
+            className={profileInputClass}
+            maxLength={120}
+            autoComplete="given-name"
+          />
+        </label>
 
-          <label className="flex flex-col gap-2">
-            <span className="text-sm font-semibold">Last name</span>
-            <input
-              type="text"
-              value={lastNameInput}
-              onChange={(event) => setLastNameInput(event.target.value)}
-              className={profileInputClass}
-              maxLength={120}
-              autoComplete="family-name"
-            />
-          </label>
-        </div>
+        <label className="flex flex-col gap-2">
+          <span className="text-sm font-semibold">Last name</span>
+          <input
+            type="text"
+            value={lastNameInput}
+            onChange={(event) => setLastNameInput(event.target.value)}
+            className={profileInputClass}
+            maxLength={120}
+            autoComplete="family-name"
+          />
+        </label>
+      </div>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <label className="flex flex-col gap-2">
-            <span className="text-sm font-semibold">Email address</span>
-            <input
-              type="email"
-              value={emailInput}
-              onChange={(event) => setEmailInput(event.target.value)}
-              className={profileInputClass}
-              autoComplete="email"
-              required
-              aria-required="true"
-            />
-          </label>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <label className="flex flex-col gap-2">
+          <span className="text-sm font-semibold">Email address</span>
+          <input
+            type="email"
+            value={emailInput}
+            onChange={(event) => setEmailInput(event.target.value)}
+            className={profileInputClass}
+            autoComplete="email"
+            required
+            aria-required="true"
+          />
+        </label>
 
-          <label className="flex flex-col gap-2">
-            <span className="text-sm font-semibold">Username</span>
-            <input
-              type="text"
-              value={userData.username}
-              disabled
-              aria-disabled="true"
-              className={classNames(
-                profileInputClass,
-                "cursor-not-allowed opacity-60",
-              )}
-            />
-            <span className="text-xs opacity-60">
-              Username cannot be changed
-            </span>
-          </label>
-        </div>
-
-        <div className="flex items-center gap-4">
-          <div className="inline-flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-lavenderHaze-500 text-sm font-semibold text-white dark:bg-nightIndigo-500">
-            {displayAvatarUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={displayAvatarUrl}
-                alt="Profile avatar preview"
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              "IMG"
+        <label className="flex flex-col gap-2">
+          <span className="text-sm font-semibold">Username</span>
+          <input
+            type="text"
+            value={userData.username}
+            disabled
+            aria-disabled="true"
+            className={classNames(
+              profileInputClass,
+              "cursor-not-allowed opacity-60",
             )}
-          </div>
-          <label className="flex flex-col gap-2">
-            <span className="text-sm font-semibold">Avatar image</span>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleAvatarChange}
-              className={classNames(
-                "block w-full cursor-pointer text-sm",
-                "file:mr-4 file:rounded-md file:border file:px-3 file:py-2 file:text-sm file:font-medium",
-                "file:border-slate-500 file:bg-lavenderHaze-300/40 file:text-midnightBlue-900",
-                "dark:file:border-slate-500 dark:file:bg-nightIndigo-500/30 dark:file:text-white",
-              )}
+          />
+          <span className="text-xs opacity-60">Username cannot be changed</span>
+        </label>
+      </div>
+
+      <div className="flex items-center gap-4">
+        <div className="inline-flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-lavenderHaze-500 text-sm font-semibold text-white dark:bg-nightIndigo-500">
+          {displayAvatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={displayAvatarUrl}
+              alt="Profile avatar preview"
+              className="h-full w-full object-cover"
             />
-          </label>
-        </div>
-
-        <div className="flex justify-end">
-          <button
-            type="submit"
-            className={classNames("btn btn-contained")}
-            disabled={isSaving || isDeleting}
-          >
-            {isSaving ? "Saving..." : "Save profile"}
-          </button>
-        </div>
-
-        {feedbackMessage && (
-          <p
-            aria-live="polite"
-            className="text-sm text-emerald-700 dark:text-emerald-300"
-          >
-            {feedbackMessage}
-          </p>
-        )}
-
-        {errorMessage && (
-          <p role="alert" className="text-sm text-red-700 dark:text-red-300">
-            {errorMessage}
-          </p>
-        )}
-      </form>
-
-      <div
-        className={classNames(
-          "ProfileHeroDangerZone rounded-lg border border-red-300 bg-red-50 p-6",
-          "dark:border-red-800 dark:bg-red-950/40",
-        )}
-      >
-        <h3 className="heading-5 text-red-700 dark:text-red-300">
-          Danger zone
-        </h3>
-        <p className="mt-2 text-sm text-red-700/90 dark:text-red-300/90">
-          Deleting your account permanently removes your profile, conversations,
-          transactions, and uploaded assets.
-        </p>
-        <button
-          type="button"
-          className={classNames(
-            "mt-4 inline-flex min-w-40 items-center justify-center rounded-md px-4 py-2 text-sm font-semibold",
-            "bg-red-600 text-white transition hover:bg-red-500",
-            "disabled:cursor-not-allowed disabled:bg-red-800 disabled:text-red-200",
+          ) : (
+            "IMG"
           )}
-          onClick={() => setIsDeleteConfirmOpen(true)}
-          disabled={isDeleting || isSaving}
+        </div>
+        <label className="flex flex-col gap-2">
+          <span className="text-sm font-semibold">Avatar image</span>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleAvatarChange}
+            className={classNames(
+              "block w-full cursor-pointer text-sm",
+              "file:mr-4 file:rounded-md file:border file:px-3 file:py-2 file:text-sm file:font-medium",
+              "file:border-slate-500 file:bg-lavenderHaze-300/40 file:text-midnightBlue-900",
+              "dark:file:border-slate-500 dark:file:bg-nightIndigo-500/30 dark:file:text-white",
+            )}
+          />
+        </label>
+      </div>
+
+      <div className="flex justify-end">
+        <button
+          type="submit"
+          className={classNames("btn btn-contained")}
+          disabled={isSaving}
         >
-          {isDeleting ? "Deleting..." : "Delete My Account"}
+          {isSaving ? "Saving..." : "Save profile"}
         </button>
       </div>
 
-      <ConfirmationModal
-        isOpen={isDeleteConfirmOpen}
-        title="Delete account"
-        description="Delete your account and all associated conversations, transactions, and uploaded files? This cannot be undone."
-        confirmLabel="Delete account"
-        cancelLabel="Cancel"
-        destructive
-        onConfirm={() => {
-          setIsDeleteConfirmOpen(false);
-          void handleDeleteAccount();
-        }}
-        onCancel={() => setIsDeleteConfirmOpen(false)}
-      />
-    </>
+      {feedbackMessage && (
+        <p
+          aria-live="polite"
+          className="text-sm text-emerald-700 dark:text-emerald-300"
+        >
+          {feedbackMessage}
+        </p>
+      )}
+
+      {errorMessage && (
+        <p role="alert" className="text-sm text-red-700 dark:text-red-300">
+          {errorMessage}
+        </p>
+      )}
+    </form>
   );
 }

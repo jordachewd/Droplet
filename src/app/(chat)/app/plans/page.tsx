@@ -11,6 +11,7 @@ import {
 } from "@/lib/utils/effective-plan-config";
 import { getEffectivePersonaAccessByPlan } from "@/lib/utils/effective-persona-access";
 import PageHead from "@/components/layout/page-head";
+import AccountLoadErrorState from "@/components/shared/account-load-error-state";
 
 export default async function AppPlansPage() {
   const { userId } = await auth();
@@ -53,27 +54,10 @@ export default async function AppPlansPage() {
       <Faqs faqsData={faqs} />
     </ChatPageWrapper>
   ) : (
-    <div className="AppPlansPage flex h-dvh items-center justify-center">
-      <div className="mx-auto max-w-md rounded-lg border border-red-200 bg-red-50 p-6 text-center dark:border-red-800 dark:bg-red-950">
-        <p className="mb-4 text-red-700 dark:text-red-300">
-          We&apos;re having trouble loading your account. Please try refreshing
-          the page or contact support.
-        </p>
-        <div className="flex items-center justify-center gap-4">
-          <a
-            href={`mailto:${supportEmail}`}
-            className="text-sm text-blue-600 underline dark:text-blue-400"
-          >
-            Contact Support
-          </a>
-          <a
-            href="/app/plans"
-            className="text-sm text-blue-600 underline dark:text-blue-400"
-          >
-            Retry
-          </a>
-        </div>
-      </div>
-    </div>
+    <AccountLoadErrorState
+      supportEmail={supportEmail}
+      retryHref="/app/plans"
+      containerClassName="AppPlansPage"
+    />
   );
 }
