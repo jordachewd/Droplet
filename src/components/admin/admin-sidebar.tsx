@@ -88,7 +88,7 @@ export default function AdminSidebar({ links }: AdminSidebarProps) {
           <nav
             aria-label="Admin navigation"
             className={classNames(
-              "AdminSidebarNavItems droplet-scrollbar flex flex-col gap-2 overflow-y-auto",
+              "AdminSidebarNavItems flex flex-col gap-2 overflow-y-auto",
               !isOpen && "lg:items-center",
             )}
           >

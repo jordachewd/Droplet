@@ -114,7 +114,7 @@ export default function AdminLayoutShell({
         <main
           id="admin-main-content"
           tabIndex={-1}
-          className="AdminLayoutMain droplet-scrollbar relative z-10 flex-1 overflow-y-auto px-4 pb-10 pt-6 md:px-6 lg:px-8"
+          className="AdminLayoutMain relative z-10 flex-1 overflow-y-auto px-4 pb-10 pt-6 md:px-6 lg:px-8"
         >
           {children}
         </main>

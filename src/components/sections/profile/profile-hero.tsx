@@ -7,9 +7,10 @@ import classNames from "classnames";
 
 interface HeroProps {
   userData: UserData;
+  supportEmail: string;
 }
 
-export default function ProfileHero({ userData }: HeroProps) {
+export default function ProfileHero({ userData, supportEmail }: HeroProps) {
   const { username, firstName, lastName, email, registerAt, updatedAt, plan } =
     userData;
   const formattedRegisterAt = getFormattedDate(registerAt);
@@ -82,7 +83,12 @@ export default function ProfileHero({ userData }: HeroProps) {
         </div>
 
         <div className="flex w-full lg:max-w-[25%]">
-          <PlanPromo plan={plan} role={userData.role} />
+          <PlanPromo
+            plan={plan}
+            role={userData.role}
+            isSuspended={userData.suspended}
+            supportEmail={supportEmail}
+          />
         </div>
       </div>
     </section>

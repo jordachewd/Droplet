@@ -58,6 +58,16 @@ describe("LibraryTabs media cards", () => {
     href: "/app/c/task_3",
   };
 
+  const uploadItem = {
+    id: "upload_1",
+    fileName: "brief.pdf",
+    contentType: "application/pdf",
+    sizeBytes: 4096,
+    createdAtLabel: "Today",
+    url: "user_123/uploads/brief.pdf",
+    href: "/app/c/task_3",
+  };
+
   it("renders image card thumbnail with preview and download controls", () => {
     render(
       <LibraryTabs
@@ -65,6 +75,7 @@ describe("LibraryTabs media cards", () => {
         images={[imageItem]}
         audios={[]}
         videos={[]}
+        uploads={[]}
         conversationsPagination={defaultPagination}
         imagesPagination={{
           currentPage: 2,
@@ -73,6 +84,7 @@ describe("LibraryTabs media cards", () => {
         }}
         audiosPagination={defaultPagination}
         videosPagination={defaultPagination}
+        uploadsPagination={defaultPagination}
       />,
     );
 
@@ -106,10 +118,12 @@ describe("LibraryTabs media cards", () => {
         images={[]}
         audios={[audioItem]}
         videos={[]}
+        uploads={[]}
         conversationsPagination={defaultPagination}
         imagesPagination={defaultPagination}
         audiosPagination={defaultPagination}
         videosPagination={defaultPagination}
+        uploadsPagination={defaultPagination}
       />,
     );
 
@@ -133,6 +147,7 @@ describe("LibraryTabs media cards", () => {
         images={[]}
         audios={[]}
         videos={[videoItem]}
+        uploads={[]}
         conversationsPagination={defaultPagination}
         imagesPagination={defaultPagination}
         audiosPagination={defaultPagination}
@@ -141,6 +156,7 @@ describe("LibraryTabs media cards", () => {
           hasPreviousPage: true,
           hasNextPage: true,
         }}
+        uploadsPagination={defaultPagination}
       />,
     );
 
@@ -163,5 +179,42 @@ describe("LibraryTabs media cards", () => {
     expect(
       screen.getByRole("link", { name: "Next" }).getAttribute("href"),
     ).toBe("/app/library?tab=videos&videosPage=3");
+  });
+
+  it("renders uploaded file card with download and pagination controls", () => {
+    render(
+      <LibraryTabs
+        conversations={[]}
+        images={[]}
+        audios={[]}
+        videos={[]}
+        uploads={[uploadItem]}
+        conversationsPagination={defaultPagination}
+        imagesPagination={defaultPagination}
+        audiosPagination={defaultPagination}
+        videosPagination={defaultPagination}
+        uploadsPagination={{
+          currentPage: 2,
+          hasPreviousPage: true,
+          hasNextPage: true,
+        }}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("tab", { name: /Uploaded/i }));
+
+    expect(screen.getByText("brief.pdf")).toBeTruthy();
+    expect(screen.getByText("application/pdf")).toBeTruthy();
+
+    const downloadLink = screen.getByRole("link", { name: /Download/i });
+    expect(downloadLink.getAttribute("href")).toContain(
+      "/api/download?key=user_123%2Fuploads%2Fbrief.pdf&download=1&filename=brief.pdf",
+    );
+    expect(
+      screen.getByRole("link", { name: "Previous" }).getAttribute("href"),
+    ).toBe("/app/library?tab=uploaded&uploadedPage=1");
+    expect(
+      screen.getByRole("link", { name: "Next" }).getAttribute("href"),
+    ).toBe("/app/library?tab=uploaded&uploadedPage=3");
   });
 });

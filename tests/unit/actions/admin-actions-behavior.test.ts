@@ -26,15 +26,13 @@ const {
   requireAdminActionAccessMock,
   connectToDatabaseMock,
   createAdminAuditLogEntryMock,
-  deleteS3PrefixMock,
+  deleteUserCascadeMock,
   deleteClerkUserMock,
   userFindByIdAndUpdateMock,
   userFindByIdMock,
   userFindByIdAndDeleteMock,
   userUpdateManyMock,
-  taskDeleteManyMock,
   transactionDeleteManyMock,
-  usageEventDeleteManyMock,
   appSettingFindOneAndUpdateMock,
   publicPageFindOneMock,
   publicPageCreateMock,
@@ -46,15 +44,13 @@ const {
   requireAdminActionAccessMock: vi.fn(),
   connectToDatabaseMock: vi.fn(),
   createAdminAuditLogEntryMock: vi.fn(),
-  deleteS3PrefixMock: vi.fn(),
+  deleteUserCascadeMock: vi.fn(),
   deleteClerkUserMock: vi.fn(),
   userFindByIdAndUpdateMock: vi.fn(),
   userFindByIdMock: vi.fn(),
   userFindByIdAndDeleteMock: vi.fn(),
   userUpdateManyMock: vi.fn(),
-  taskDeleteManyMock: vi.fn(),
   transactionDeleteManyMock: vi.fn(),
-  usageEventDeleteManyMock: vi.fn(),
   appSettingFindOneAndUpdateMock: vi.fn(),
   publicPageFindOneMock: vi.fn(),
   publicPageCreateMock: vi.fn(),
@@ -89,27 +85,15 @@ vi.mock("@/lib/database/models/user.model", () => ({
   },
 }));
 
-vi.mock("@/lib/database/models/tasks.model", () => ({
+vi.mock("@/lib/database/models/app-setting.model", () => ({
   default: {
-    deleteMany: taskDeleteManyMock,
+    findOneAndUpdate: appSettingFindOneAndUpdateMock,
   },
 }));
 
 vi.mock("@/lib/database/models/transaction.model", () => ({
   default: {
     deleteMany: transactionDeleteManyMock,
-  },
-}));
-
-vi.mock("@/lib/database/models/usage-event.model", () => ({
-  default: {
-    deleteMany: usageEventDeleteManyMock,
-  },
-}));
-
-vi.mock("@/lib/database/models/app-setting.model", () => ({
-  default: {
-    findOneAndUpdate: appSettingFindOneAndUpdateMock,
   },
 }));
 
@@ -132,8 +116,8 @@ vi.mock("@/lib/utils/admin-auth", () => ({
   requireAdminActionAccess: requireAdminActionAccessMock,
 }));
 
-vi.mock("@/lib/utils/aws/delete-s3-prefix", () => ({
-  default: deleteS3PrefixMock,
+vi.mock("@/lib/utils/delete-user-cascade", () => ({
+  deleteUserCascade: deleteUserCascadeMock,
 }));
 
 type ActionState = {
@@ -217,11 +201,16 @@ describe("admin.actions behavior", () => {
       clerkId: "user_123",
     });
     userUpdateManyMock.mockResolvedValue({ modifiedCount: 2 });
-
-    taskDeleteManyMock.mockResolvedValue({ deletedCount: 4 });
     transactionDeleteManyMock.mockResolvedValue({ deletedCount: 3 });
-    usageEventDeleteManyMock.mockResolvedValue({ deletedCount: 5 });
-    deleteS3PrefixMock.mockResolvedValue(6);
+
+    deleteUserCascadeMock.mockResolvedValue({
+      deletedTasks: 4,
+      deletedTransactions: 3,
+      deletedUsageEvents: 5,
+      deletedRateLimitEntries: 2,
+      deletedUploads: 7,
+      deletedObjectsCount: 6,
+    });
     userFindByIdAndDeleteMock.mockResolvedValue({ _id: targetUserId });
     deleteClerkUserMock.mockResolvedValue(undefined);
 
@@ -302,14 +291,7 @@ describe("admin.actions behavior", () => {
     });
     expect(vi.mocked(clerkClient)).toHaveBeenCalledOnce();
     expect(deleteClerkUserMock).toHaveBeenCalledWith("user_123");
-    expect(taskDeleteManyMock).toHaveBeenCalledWith({ userId: "user_123" });
-    expect(transactionDeleteManyMock).toHaveBeenCalledWith({
-      clerkId: "user_123",
-    });
-    expect(usageEventDeleteManyMock).toHaveBeenCalledWith({
-      userId: "user_123",
-    });
-    expect(deleteS3PrefixMock).toHaveBeenCalledWith("user_123/");
+    expect(deleteUserCascadeMock).toHaveBeenCalledWith("user_123");
     expect(userFindByIdAndDeleteMock).toHaveBeenCalledWith(targetUserId);
     expectLatestAudit("user.remove", "User");
   });

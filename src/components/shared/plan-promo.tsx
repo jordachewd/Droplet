@@ -11,13 +11,21 @@ import {
 interface PlanPromoProps {
   plan: PlanData;
   role: UserRoles;
+  isSuspended?: boolean;
+  supportEmail?: string;
 }
 
-export default function PlanPromo({ plan, role }: PlanPromoProps) {
+export default function PlanPromo({
+  plan,
+  role,
+  isSuspended = false,
+  supportEmail,
+}: PlanPromoProps) {
   const isAdmin = role === "admin";
   const { name } = plan;
   const isLite = name === "Lite";
   const isPremiumFull = name === "Premium";
+  const supportHref = supportEmail ? `mailto:${supportEmail}` : "/privacy";
 
   return (
     <div className={classNames("PlanPromo", planPromoCardClass)}>
@@ -48,6 +56,21 @@ export default function PlanPromo({ plan, role }: PlanPromoProps) {
           <div className="flex w-full items-center justify-center border-t border-dotted border-twilightPurple-600 pt-2.5 text-xs font-semibold uppercase tracking-wide dark:border-dustyBlue-1000">
             Admin access - full permissions
           </div>
+        ) : isSuspended ? (
+          <>
+            <div className="flex w-full items-center justify-center border-t border-dotted border-twilightPurple-600 pt-2.5 text-xs font-semibold uppercase tracking-wide dark:border-dustyBlue-1000">
+              Account suspended
+            </div>
+            <p className="text-xs opacity-80">
+              Your account is suspended. Contact support to restore access.
+            </p>
+            <a
+              className="btn btn-sm btn-contained self-center"
+              href={supportHref}
+            >
+              Contact support
+            </a>
+          </>
         ) : !isPremiumFull ? (
           <>
             <div className="flex w-full items-center justify-center border-t border-dotted border-twilightPurple-600 pt-2.5 text-xs">

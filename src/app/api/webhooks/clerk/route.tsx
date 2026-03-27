@@ -4,11 +4,11 @@ import { type WebhookEvent, verifyWebhook } from "@clerk/nextjs/webhooks";
 import { NextResponse, type NextRequest } from "next/server";
 import { CreateUserParams, UpdateUserParams } from "@/types/UserData.d";
 import { connectToDatabase } from "@/lib/database/mongoose";
-import Task from "@/lib/database/models/tasks.model";
 import User from "@/lib/database/models/user.model";
-import Transaction from "@/lib/database/models/transaction.model";
-import UsageEvent from "@/lib/database/models/usage-event.model";
-import deleteS3Prefix from "@/lib/utils/aws/delete-s3-prefix";
+import {
+  deleteUserCascade,
+  DeleteUserCascadeStep,
+} from "@/lib/utils/delete-user-cascade";
 import serializeForClient from "@/lib/utils/serialize-for-client";
 import { isMongoDuplicateKeyError } from "@/lib/utils/type-guards";
 import { nonEmptyStringSchema } from "@/lib/utils/validation-schemas";
@@ -100,7 +100,7 @@ async function findUserByClerkId(clerkId: string) {
   return existingUser ? serializeForClient(existingUser) : null;
 }
 
-function logUserDeletedCleanupFailure(step: string) {
+function logUserDeletedCleanupFailure(step: DeleteUserCascadeStep | "user") {
   process.stderr.write(
     `[clerk-webhook] user.deleted ${step} cleanup failed.\n`,
   );
@@ -110,15 +110,21 @@ function logUserDeletedCleanupSummary({
   deletedUserCount,
   deletedTransactionCount,
   deletedTaskCount,
+  deletedUsageEventCount,
+  deletedRateLimitEntryCount,
+  deletedUploadCount,
   deletedObjectCount,
 }: {
   deletedUserCount: number | null;
   deletedTransactionCount: number | null;
   deletedTaskCount: number | null;
+  deletedUsageEventCount: number | null;
+  deletedRateLimitEntryCount: number | null;
+  deletedUploadCount: number | null;
   deletedObjectCount: number | null;
 }) {
   process.stderr.write(
-    `[clerk-webhook] user.deleted cleanup counts user=${deletedUserCount ?? "unknown"} transactions=${deletedTransactionCount ?? "unknown"} tasks=${deletedTaskCount ?? "unknown"} s3Objects=${deletedObjectCount ?? "unknown"}\n`,
+    `[clerk-webhook] user.deleted cleanup counts user=${deletedUserCount ?? "unknown"} transactions=${deletedTransactionCount ?? "unknown"} tasks=${deletedTaskCount ?? "unknown"} usageEvents=${deletedUsageEventCount ?? "unknown"} rateLimitEntries=${deletedRateLimitEntryCount ?? "unknown"} uploads=${deletedUploadCount ?? "unknown"} s3Objects=${deletedObjectCount ?? "unknown"}\n`,
   );
 }
 
@@ -474,6 +480,8 @@ export async function POST(req: NextRequest) {
       let deletedTransactionCount: number | null = null;
       let deletedTaskCount: number | null = null;
       let deletedUsageEventCount: number | null = null;
+      let deletedRateLimitEntryCount: number | null = null;
+      let deletedUploadCount: number | null = null;
       let deletedObjectCount: number | null = null;
 
       try {
@@ -488,45 +496,25 @@ export async function POST(req: NextRequest) {
         logUserDeletedCleanupFailure("user");
       }
 
-      try {
-        const deletedTransactions = await Transaction.deleteMany({ clerkId });
-        deletedTransactionCount = deletedTransactions.deletedCount ?? 0;
-      } catch {
-        logUserDeletedCleanupFailure("transaction");
-      }
-
-      try {
-        const deletedTasks = await Task.deleteMany({ userId: clerkId });
-        deletedTaskCount = deletedTasks.deletedCount ?? 0;
-      } catch {
-        logUserDeletedCleanupFailure("task");
-      }
-
-      try {
-        const deletedUsageEvents = await UsageEvent.deleteMany({
-          userId: clerkId,
-        });
-        deletedUsageEventCount = deletedUsageEvents.deletedCount ?? 0;
-      } catch {
-        logUserDeletedCleanupFailure("usage-event");
-      }
-
-      try {
-        deletedObjectCount = await deleteS3Prefix(`${clerkId}/`);
-      } catch {
-        logUserDeletedCleanupFailure("s3");
-      }
+      const cascadeResult = await deleteUserCascade(clerkId, {
+        onStepError: logUserDeletedCleanupFailure,
+      });
+      deletedTransactionCount = cascadeResult.deletedTransactions;
+      deletedTaskCount = cascadeResult.deletedTasks;
+      deletedUsageEventCount = cascadeResult.deletedUsageEvents;
+      deletedRateLimitEntryCount = cascadeResult.deletedRateLimitEntries;
+      deletedUploadCount = cascadeResult.deletedUploads;
+      deletedObjectCount = cascadeResult.deletedObjectsCount;
 
       logUserDeletedCleanupSummary({
         deletedUserCount,
         deletedTransactionCount,
         deletedTaskCount,
+        deletedUsageEventCount,
+        deletedRateLimitEntryCount,
+        deletedUploadCount,
         deletedObjectCount,
       });
-
-      process.stderr.write(
-        `[clerk-webhook] user.deleted cleanup counts usageEvents=${deletedUsageEventCount ?? "unknown"}\n`,
-      );
 
       return NextResponse.json({ message: "OK" });
     }

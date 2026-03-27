@@ -17,6 +17,16 @@ export interface LibraryMediaCardItem {
   href: string;
 }
 
+export interface LibraryUploadCardItem {
+  id: string;
+  fileName: string;
+  contentType: string;
+  sizeBytes: number;
+  createdAtLabel: string;
+  url: string;
+  href?: string;
+}
+
 export interface LibraryPaginationState {
   currentPage: number;
   hasPreviousPage: boolean;

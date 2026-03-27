@@ -16,11 +16,13 @@ export default async function ChatSidebar() {
   let history: ConversationListItem[] = [];
   let userRole: UserRoles | undefined;
   let userPlanName: PlanName | null = null;
+  let isSuspended = false;
 
   if (userId) {
     const userData = await ensureUserSynced(userId);
     userRole = userData?.role;
     userPlanName = userData?.plan?.name ?? null;
+    isSuspended = userData?.suspended === true;
 
     try {
       const [taskHistory, personas] = await Promise.all([
@@ -52,6 +54,7 @@ export default async function ChatSidebar() {
       historyItems={history}
       userRole={userRole}
       userPlanName={userPlanName}
+      isSuspended={isSuspended}
     />
   );
 }
