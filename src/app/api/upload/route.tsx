@@ -18,6 +18,7 @@ import {
 } from "@/lib/utils/upload-file-validation";
 import uploadFileToAWS from "@/lib/utils/aws/uploadFileToAWS";
 import { buildS3ObjectKey } from "@/lib/utils/aws/s3-file-reference";
+import { requireActiveUser } from "@/lib/utils/require-active-user";
 import { auth } from "@clerk/nextjs/server";
 import { z } from "zod";
 
@@ -36,6 +37,21 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       return NextResponse.json(
         { error: "Authentication required." },
         { status: 401 },
+      );
+    }
+    const activeUser = await requireActiveUser(userId);
+    if (activeUser.status === "not_provisioned") {
+      return NextResponse.json(
+        {
+          error: "Account not yet provisioned. Please try again in a moment.",
+        },
+        { status: 503 },
+      );
+    }
+    if (activeUser.status === "suspended") {
+      return NextResponse.json(
+        { error: "Account suspended." },
+        { status: 403 },
       );
     }
 

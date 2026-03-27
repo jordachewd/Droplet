@@ -3,6 +3,7 @@ import { NextRequest } from "next/server";
 import { GET } from "@/app/api/download/route";
 import { auth } from "@clerk/nextjs/server";
 import getFileFromAWS from "@/lib/utils/aws/getFileFromAWS";
+import { requireActiveUser } from "@/lib/utils/require-active-user";
 import { mockAuth } from "../test-support";
 
 vi.mock("@clerk/nextjs/server", () => ({
@@ -12,6 +13,16 @@ vi.mock("@clerk/nextjs/server", () => ({
 vi.mock("@/lib/utils/aws/getFileFromAWS", () => ({
   default: vi.fn(),
 }));
+
+vi.mock("@/lib/utils/require-active-user", () => ({
+  requireActiveUser: vi.fn(),
+}));
+
+type ActiveUserStatus = "active" | "suspended" | "not_provisioned";
+
+function mockActiveUserStatus(status: ActiveUserStatus): void {
+  vi.mocked(requireActiveUser).mockResolvedValue({ status });
+}
 
 function createStreamResponseBody(payload: string): ReadableStream<Uint8Array> {
   return new ReadableStream<Uint8Array>({
@@ -29,6 +40,7 @@ describe("GET /api/download", () => {
       isAuthenticated: true,
       sessionId: "session_123",
     });
+    mockActiveUserStatus("active");
     vi.mocked(getFileFromAWS).mockResolvedValue({
       Body: {
         transformToWebStream: () => createStreamResponseBody("image-bytes"),
@@ -58,6 +70,35 @@ describe("GET /api/download", () => {
 
     expect(response.status).toBe(401);
     await expect(response.text()).resolves.toContain("Authentication required");
+    expect(requireActiveUser).not.toHaveBeenCalled();
+  });
+
+  it("returns 403 when authenticated account is suspended", async () => {
+    mockActiveUserStatus("suspended");
+    const req = new NextRequest(
+      "http://localhost:3000/api/download?key=user_123%2Fimages%2Ffile.png",
+    );
+
+    const response = await GET(req);
+
+    expect(response.status).toBe(403);
+    await expect(response.text()).resolves.toContain("Account suspended");
+    expect(getFileFromAWS).not.toHaveBeenCalled();
+  });
+
+  it("returns 503 when authenticated account cannot be provisioned", async () => {
+    mockActiveUserStatus("not_provisioned");
+    const req = new NextRequest(
+      "http://localhost:3000/api/download?key=user_123%2Fimages%2Ffile.png",
+    );
+
+    const response = await GET(req);
+
+    expect(response.status).toBe(503);
+    await expect(response.text()).resolves.toContain(
+      "Account not yet provisioned",
+    );
+    expect(getFileFromAWS).not.toHaveBeenCalled();
   });
 
   it("returns 400 when key and url query params are missing", async () => {

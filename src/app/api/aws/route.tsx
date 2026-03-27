@@ -7,6 +7,7 @@ import {
   resolveS3ObjectKey,
 } from "@/lib/utils/aws/s3-file-reference";
 import { generateString } from "@/lib/utils/generateString";
+import { requireActiveUser } from "@/lib/utils/require-active-user";
 import { nonEmptyStringSchema } from "@/lib/utils/validation-schemas";
 import { currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
@@ -76,6 +77,21 @@ export async function POST(req: Request): Promise<NextResponse> {
         { status: 401 },
       );
     }
+    const activeUser = await requireActiveUser(user.id);
+    if (activeUser.status === "not_provisioned") {
+      return NextResponse.json(
+        {
+          error: "Account not yet provisioned. Please try again in a moment.",
+        },
+        { status: 503 },
+      );
+    }
+    if (activeUser.status === "suspended") {
+      return NextResponse.json(
+        { error: "Account suspended." },
+        { status: 403 },
+      );
+    }
 
     const parsedBody = awsUploadBodySchema.safeParse(await req.json());
 
@@ -124,6 +140,21 @@ export async function DELETE(req: Request): Promise<NextResponse> {
       return NextResponse.json(
         { error: "User not authenticated." },
         { status: 401 },
+      );
+    }
+    const activeUser = await requireActiveUser(user.id);
+    if (activeUser.status === "not_provisioned") {
+      return NextResponse.json(
+        {
+          error: "Account not yet provisioned. Please try again in a moment.",
+        },
+        { status: 503 },
+      );
+    }
+    if (activeUser.status === "suspended") {
+      return NextResponse.json(
+        { error: "Account suspended." },
+        { status: 403 },
       );
     }
 
