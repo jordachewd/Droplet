@@ -542,7 +542,7 @@ export default function ChatWrapper({
       <section
         id="ChatWrapperContent"
         className={classNames(
-          "droplet-scrollbar relative z-10 mt-14 flex w-full flex-1 flex-col overflow-y-auto pb-4",
+          "ChatWrapperContent droplet-scrollbar relative z-10 mt-14 flex w-full flex-1 flex-col overflow-y-auto pb-4",
           isNewTask && "items-center justify-center px-4",
         )}
       >

@@ -5,6 +5,7 @@ import { Message } from "@/types";
 import { UploadRouteResponse } from "@/types/UploadData.d";
 import { UploadFileInput } from "@/components/shared/upload-file-input";
 import { TooltipArrow } from "@/components/shared/tooltip-arrow";
+import DropletGlobe from "../shared/droplet-globe";
 
 interface ChatInputProps {
   loading: boolean;
@@ -18,7 +19,7 @@ export default function ChatInput({
   loading,
   disabled = false,
   startPrompt,
-  personaLabel = "AI",
+  personaLabel = "Droplet",
   sendMessage,
 }: ChatInputProps) {
   const [prompt, setPrompt] = useState<string>(startPrompt || "");
@@ -164,27 +165,23 @@ export default function ChatInput({
 
   const chatInputSectionClass = classNames(
     "ChatInput sticky bottom-[env(safe-area-inset-bottom)] z-20",
-    "flex w-full flex-col items-center mt-2 pb-2 px-4",
+    "flex w-full flex-col items-center px-4 gap-1",
   );
 
   const chatInputWrapperClass = classNames(
-    "flex w-full max-w-screen-lg items-end gap-2 rounded-xl border p-2 shadow-md",
-    "border-slate-500/30 bg-lavenderHaze-100/90 backdrop-blur",
+    "flex flex-col w-full max-w-3xl items-end gap-2 rounded-xl",
+    "bg-lavenderHaze-100/90 dark:border shadow-md p-1.5",
     "dark:border-midnightBlue-300/10 dark:bg-nightIndigo-900/90",
     disabled &&
       "border-amber-400 bg-amber-50/90 dark:border-amber-400/50 dark:bg-amber-500/10",
   );
 
-  const promptWrapperClass = classNames(
-    "relative flex flex-1 items-end gap-2 rounded-lg px-2",
-    "bg-lavenderHaze-200 dark:bg-nightIndigo-1000",
-  );
+  const promptWrapperClass = classNames("flex w-full gap-2");
 
   const textareaClass = classNames(
-    "mb-[0.35rem] flex min-h-11 w-full resize-none rounded-md bg-transparent py-2 text-sm leading-tight",
-    "placeholder:text-sm placeholder:text-midnightBlue-600 dark:placeholder:text-lavenderHaze-700",
-    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-limeGreen-500/70 focus-visible:ring-offset-1",
-    "disabled:cursor-not-allowed disabled:opacity-50",
+    "flex min-h-11 w-full resize-none bg-lavenderHaze-500 rounded-md p-2 text-sm leading-tight",
+    "placeholder:text-sm placeholder:text-midnightBlue-500/50 dark:placeholder:text-lavenderHaze-500/50",
+    "focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:bg-nightIndigo-400/10",
   );
 
   const removeFileIconClass = classNames(
@@ -205,7 +202,7 @@ export default function ChatInput({
               disabled ? "This conversation has ended." : "Ask Droplet..."
             }
             onChange={handlePromptChange}
-            rows={2}
+            rows={3}
             className={textareaClass}
             onKeyDown={handlePromptKeyDown}
             aria-label="Message input"
@@ -215,21 +212,19 @@ export default function ChatInput({
             title={canSend ? "Send message" : "Write a message first"}
             placement="top"
           >
-            <span>
-              <button
-                type="button"
-                className="icon-btn text-base"
-                disabled={!canSend}
-                onClick={handleSendButtonClick}
-                aria-label="Send message"
-              >
-                <i className="bi bi-send text-base" aria-hidden="true"></i>
-              </button>
-            </span>
+            <button
+              type="button"
+              className="px-2"
+              disabled={!canSend}
+              onClick={handleSendButtonClick}
+              aria-label="Send message"
+            >
+              <DropletGlobe icon="bi-stars" size={38} />
+            </button>
           </TooltipArrow>
         </div>
 
-        <div className="flex w-auto">
+        <div className="flex w-full">
           {!selectedFile ? (
             <TooltipArrow title="Attach media" placement="top">
               <button
@@ -278,22 +273,23 @@ export default function ChatInput({
         </div>
       </div>
 
-      <div className="flex flex-col items-center gap-1 py-1 text-xxs font-light tracking-wide">
-        {uploadError && (
+      <div className="flex flex-col items-center gap-1 pt-1 pb-2 text-xxs font-light tracking-wide">
+        {uploadError ? (
           <p
             role="alert"
             className="font-medium text-rose-600 dark:text-rose-300"
           >
             {uploadError}
           </p>
+        ) : (
+          <div className="text-midnightBlue-600 dark:text-lavenderHaze-600">
+            {disabled
+              ? "This conversation is read-only. Use the action above to continue."
+              : isUploading
+                ? "Uploading your attachment..."
+                : `${personaLabel} can still make mistakes. Verify important details.`}
+          </div>
         )}
-        <div className="text-midnightBlue-600 dark:text-lavenderHaze-600">
-          {disabled
-            ? "This conversation is read-only. Use the action above to continue."
-            : isUploading
-              ? "Uploading your attachment..."
-              : `${personaLabel} can still make mistakes. Verify important details.`}
-        </div>
       </div>
     </section>
   );

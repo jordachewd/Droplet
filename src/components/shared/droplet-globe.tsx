@@ -1,13 +1,17 @@
 import type { CSSProperties } from "react";
 
 interface DropletGlobeProps {
+  icon?: string;
   size?: number;
   className?: string;
+  ariaHidden?: boolean;
 }
 
 export default function DropletGlobe({
+  icon = "bi-droplet",
   size = 36,
   className,
+  ariaHidden = true,
 }: DropletGlobeProps) {
   const normalizedSize = Math.max(32, size);
   const shadowScale = normalizedSize / 900;
@@ -60,13 +64,12 @@ export default function DropletGlobe({
       aria-hidden="true"
     >
       <div className="DropletGlobeOuter absolute inset-0 rounded-full bg-nightIndigo-500 shadow-(--droplet-globe-outer-glow-light) dark:bg-nightIndigo-600 dark:shadow-(--droplet-globe-outer-glow-dark)" />
-
       <div className="DropletGlobeInner absolute left-1/2 top-1/2 h-(--droplet-globe-inner-size) w-(--droplet-globe-inner-size) -translate-x-1/2 -translate-y-1/2 rounded-full bg-twilightPurple-800 shadow-(--droplet-globe-inner-glow-light) animate-ping animate-duration-[1.6s] animate-ease-linear dark:bg-twilightPurple-600 dark:shadow-(--droplet-globe-inner-glow-dark)" />
 
       <i
-        className="DropletGlobeLogo bi bi-droplet relative z-30 block text-lavenderHaze-100 dark:text-lavenderHaze-200"
+        className={`DropletGlobeLogo ${icon} relative z-30 block text-lavenderHaze-200`}
         style={{ fontSize: "var(--droplet-globe-icon-size)" }}
-        aria-hidden="true"
+        aria-hidden={ariaHidden}
       />
 
       <div className="DropletGlobeShadow absolute inset-0 z-10 rounded-full animate-spin animate-duration-[1.6s] animate-ease-linear shadow-(--droplet-globe-shadow-light) dark:shadow-(--droplet-globe-shadow-dark)" />
