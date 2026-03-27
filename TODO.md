@@ -10,11 +10,12 @@
 > **Owner directive (CRITICAL): FULL TDD TESTING REBUILD from scratch. NO hardcoded data. WCAG 2.2 AA. Code reuse. Full admin configurability.**
 > **Coverage: ~85/~72/~89/~85 (stmt/branch/func/lines). Thresholds: 76/65/79/76.**
 > **SWOT audit conducted (PM audit #64). Weaknesses and Threats converted to tasks below. `as never` casts: 100 remaining in 12 test files.**
-> **Priority order: 120.4 (CRITICAL TDD route rebuild — eliminates ~88 of 100 `as never` casts) → 120.5 (HIGH TDD component rebuild — 51 of 69 components untested) → 120.6 (HIGH TDD E2E rebuild) → 120.7 (HIGH coverage thresholds) → 107 (HIGH stop-reason config — 9 strings) → 108 (MEDIUM WCAG tabs) → 114 (MEDIUM WCAG avatar menu) → 131 (LOW server-only guards) → 132 (LOW stale TODO comments) → 126.2 (LOW lint warnings) → 125.1 (MEDIUM schema strict:true) → 74.2 (MEDIUM FAQ admin) → 104 (MEDIUM landing/hero admin)**
+> **NEXT SESSION (MANDATORY): Complete ALL test rebuild phases (120.4 → 120.5 → 120.6 → 120.7) in a single session. No other work until all four pass all 7 gates.**
+> **AFTER TEST REBUILD: 107 (HIGH stop-reason config) → 108 (MEDIUM WCAG tabs) → 114 (MEDIUM WCAG avatar menu) → 131 (LOW server-only guards) → 132 (LOW stale TODO comments) → 126.2 (LOW lint warnings) → 125.1 (MEDIUM schema strict:true) → 74.2 (MEDIUM FAQ admin) → 104 (MEDIUM landing/hero admin)**
 
 ---
 
-## CRITICAL — Full TDD Testing Rebuild (Owner directive — Primary work stream)
+## CRITICAL — Full TDD Testing Rebuild — MUST COMPLETE NEXT SESSION
 
 ### Phase 120 CRITICAL — Full TDD test rebuild from scratch
 
@@ -27,6 +28,8 @@
 > **Current state:** 537 tests (83 suites). 100 `as never` casts remaining in 12 non-rebuilt test files (6 routes, 5 components, 1 constants). E2E: 14 specs, 108 passed, 25 skipped.
 >
 > **Key rule:** Every new/rebuilt test file MUST use shared factories from `tests/unit/test-support/`. Zero `as never` casts allowed. Follow TDD workflow in `tests/README.md`.
+>
+> **SESSION DIRECTIVE:** Phases 120.4, 120.5, 120.6, and 120.7 must ALL be completed in the next Engineer session. No partial delivery. No scope expansion. All 7 gates must be GREEN after each sub-phase. The TDD rebuild is the last blocking directive before the project can move to admin configurability closure and remaining backlog.
 
 #### 120.4 CRITICAL — Rebuild API route tests (TDD)
 
