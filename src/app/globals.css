@@ -202,7 +202,7 @@ a.menu-item {
   .heading-5,
   .heading-6 {
     font-family: var(--font-jwd-dosis), sans-serif;
-    @apply text-midnightBlue-500 dark:text-lavenderHaze-500 font-medium transition-all ease-in;
+    @apply text-midnightBlue-500 dark:text-lavenderHaze-500 font-medium;
   }
 
   .heading-1 {
