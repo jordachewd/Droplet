@@ -110,21 +110,26 @@ function setupDefaultMocks() {
   vi.mocked(getTaskByIdForUser).mockResolvedValue(
     createTestTask({ _id: EXISTING_TASK_ID, estimatedBytes: 256 }),
   );
-  vi.mocked(generateTitle).mockResolvedValue(
-    JSON.stringify({ title: "Generated title", usage: 7 }),
-  );
+  vi.mocked(generateTitle).mockResolvedValue({
+    title: "Generated title",
+    usage: 7,
+    model: "gpt-4.1-nano",
+    requestMetric: {
+      requestType: "title",
+      model: "gpt-4.1-nano",
+      latencyMs: 5,
+    },
+  });
   vi.mocked(createTask).mockResolvedValue({ _id: "507f1f77bcf86cd799439012" });
   vi.mocked(incrementPromptCountIfBelowLimit).mockResolvedValue(true);
-  vi.mocked(generateResponse).mockResolvedValue(
-    JSON.stringify({
-      taskData: {
-        whois: "assistant",
-        role: "assistant",
-        content: [{ type: "text", text: "Hello from AI" }],
-      },
-      taskUsage: 11,
-    }),
-  );
+  vi.mocked(generateResponse).mockResolvedValue({
+    taskData: {
+      whois: "assistant",
+      role: "assistant",
+      content: [{ type: "text", text: "Hello from AI" }],
+    },
+    taskUsage: 11,
+  });
   vi.mocked(generateStreamingResponse).mockResolvedValue({
     taskData: {
       whois: "assistant",
@@ -158,7 +163,7 @@ describe("POST /api/openai - media generation limits", () => {
           limitType: "images",
         });
         if (!claimResult?.claimed) {
-          return JSON.stringify({
+          return {
             blockedReason: "image_limit_reached",
             taskUsage: 5,
             taskData: {
@@ -168,17 +173,17 @@ describe("POST /api/openai - media generation limits", () => {
                 { type: "text", text: "Image generation limit reached." },
               ],
             },
-          });
+          };
         }
 
-        return JSON.stringify({
+        return {
           taskData: {
             whois: "assistant",
             role: "assistant",
             content: [{ type: "text", text: "Image generated." }],
           },
           taskUsage: 5,
-        });
+        };
       },
     );
 
@@ -214,7 +219,7 @@ describe("POST /api/openai - media generation limits", () => {
           limitType: "images",
         });
         if (!claimResult?.claimed) {
-          return JSON.stringify({
+          return {
             blockedReason: "image_limit_reached",
             taskUsage: 5,
             taskData: {
@@ -222,10 +227,10 @@ describe("POST /api/openai - media generation limits", () => {
               role: "assistant",
               content: [{ type: "text", text: "Trial limit reached." }],
             },
-          });
+          };
         }
 
-        return JSON.stringify({ taskUsage: 5 });
+        return { taskUsage: 5 };
       },
     );
 
@@ -252,14 +257,14 @@ describe("POST /api/openai - media generation limits", () => {
     vi.mocked(generateResponse).mockImplementation(
       async ({ claimMediaGenerationSlot }) => {
         await claimMediaGenerationSlot?.({ limitType: "images" });
-        return JSON.stringify({
+        return {
           taskData: {
             whois: "assistant",
             role: "assistant",
             content: [{ type: "text", text: "Generated image output." }],
           },
           taskUsage: 10,
-        });
+        };
       },
     );
 
@@ -304,7 +309,7 @@ describe("POST /api/openai - media generation limits", () => {
         });
         secondClaimed = Boolean(secondClaim?.claimed);
 
-        return JSON.stringify({ taskUsage: 10 });
+        return { taskUsage: 10 };
       },
     );
 

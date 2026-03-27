@@ -1,5 +1,9 @@
 import "server-only";
 
+import { getDefaultAboutContent } from "@/constants/about-data";
+import { buildFaqs } from "@/constants/faqs";
+import { getDefaultHeroContent } from "@/constants/hero-content";
+import { getDefaultLandingContent } from "@/constants/landing-data";
 import {
   DEFAULT_PLAN_PRICING,
   PERSONA_TRIAL_LIMITS,
@@ -752,6 +756,7 @@ export async function getAdminSettingsSnapshot() {
 
   const settings = (await AppSetting.find({})
     .sort({ category: 1, key: 1 })
+    .limit(500)
     .select("key value category updatedAt updatedBy")
     .lean()) as AppSettingRecord[];
   const settingsByKey = Object.fromEntries(
@@ -812,6 +817,10 @@ export async function getAdminSettingsSnapshot() {
         supportEmail: SUPPORT_EMAIL,
       },
       stopReasonMessages: { ...STOP_REASON_MESSAGES },
+      faqContent: buildFaqs(),
+      heroContent: getDefaultHeroContent(),
+      landingContent: getDefaultLandingContent(),
+      aboutContent: getDefaultAboutContent(),
     },
   };
 }
@@ -821,6 +830,7 @@ export async function getAdminWebsitePages() {
 
   const pages = (await PublicPage.find({})
     .sort({ sortOrder: 1, updatedAt: -1 })
+    .limit(500)
     .select("slug title sortOrder isPublished updatedAt updatedBy")
     .lean()) as PublicPageRecord[];
 

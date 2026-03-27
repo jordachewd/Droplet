@@ -9,6 +9,7 @@ import { AdminThemeSection } from "@/components/admin/settings/admin-theme-secti
 import { AdminSupportSection } from "@/components/admin/settings/admin-support-section";
 import { AdminStopReasonsSection } from "@/components/admin/settings/admin-stop-reasons-section";
 import { AdminSettingsTabs } from "@/components/admin/settings/admin-settings-tabs";
+import { AdminWebsiteContentSection } from "@/components/admin/settings/admin-website-content-section";
 import {
   AUDIO_MODEL_OPTIONS,
   CHAT_MODEL_OPTIONS,
@@ -16,6 +17,10 @@ import {
   VIDEO_MODEL_OPTIONS,
 } from "@/constants/admin-options";
 import {
+  normalizeAboutContentSettings,
+  normalizeFaqContentSettings,
+  normalizeHeroContentSettings,
+  normalizeLandingContentSettings,
   normalizeLimitsSettingsValue,
   normalizeModelSettingsValue,
   normalizePersonaAccessSettings,
@@ -27,6 +32,10 @@ import {
   normalizeTrialLimitsSettingsValue,
 } from "@/components/admin/settings/normalize-admin-settings";
 import {
+  AboutContentSettingsFormValue,
+  FaqContentSettingsFormValue,
+  HeroContentSettingsFormValue,
+  LandingContentSettingsFormValue,
   LimitsSettingsFormValue,
   PersonaAccessSettingsFormValue,
   PersonaContentSettingsFormValue,
@@ -53,6 +62,14 @@ export default async function AdminSettingsPage() {
     .personaAccess as PersonaAccessSettingsFormValue;
   const personaContentDefaults = snapshot.defaults
     .personaContent as PersonaContentSettingsFormValue;
+  const faqContentDefaults = snapshot.defaults
+    .faqContent as FaqContentSettingsFormValue;
+  const heroContentDefaults = snapshot.defaults
+    .heroContent as HeroContentSettingsFormValue;
+  const landingContentDefaults = snapshot.defaults
+    .landingContent as LandingContentSettingsFormValue;
+  const aboutContentDefaults = snapshot.defaults
+    .aboutContent as AboutContentSettingsFormValue;
 
   const modelValue = normalizeModelSettingsValue(
     snapshot.settingsByKey["admin.models"]?.value,
@@ -89,6 +106,22 @@ export default async function AdminSettingsPage() {
   const personaContentValue = normalizePersonaContentSettings(
     snapshot.settingsByKey["admin.personaOverrides"]?.value,
     personaContentDefaults,
+  );
+  const faqContentValue = normalizeFaqContentSettings(
+    snapshot.settingsByKey["admin.faqContent"]?.value,
+    faqContentDefaults,
+  );
+  const heroContentValue = normalizeHeroContentSettings(
+    snapshot.settingsByKey["admin.heroContent"]?.value,
+    heroContentDefaults,
+  );
+  const landingContentValue = normalizeLandingContentSettings(
+    snapshot.settingsByKey["admin.landingContent"]?.value,
+    landingContentDefaults,
+  );
+  const aboutContentValue = normalizeAboutContentSettings(
+    snapshot.settingsByKey["admin.aboutContent"]?.value,
+    aboutContentDefaults,
   );
   const personaIds = Object.keys(personaContentDefaults) as PersonaId[];
 
@@ -158,6 +191,18 @@ export default async function AdminSettingsPage() {
             content: (
               <AdminStopReasonsSection
                 stopReasonMessagesValue={stopReasonMessagesValue}
+              />
+            ),
+          },
+          {
+            id: "website-copy",
+            label: "Website Copy",
+            content: (
+              <AdminWebsiteContentSection
+                faqContentValue={faqContentValue}
+                heroContentValue={heroContentValue}
+                landingContentValue={landingContentValue}
+                aboutContentValue={aboutContentValue}
               />
             ),
           },

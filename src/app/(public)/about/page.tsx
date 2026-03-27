@@ -11,6 +11,7 @@ import { PlanPricing } from "@/constants/plans";
 import { getEffectivePersonaAccessByPlan } from "@/lib/utils/effective-persona-access";
 import { getEffectivePersonaConfig } from "@/lib/utils/effective-persona-config";
 import { getEffectivePlanConfig } from "@/lib/utils/effective-plan-config";
+import { getEffectiveAboutContent } from "@/lib/utils/effective-website-copy";
 import PageWrapper from "@/components/layout/page-wrapper";
 
 export const metadata: Metadata = {
@@ -236,12 +237,17 @@ function renderAboutVisual(
 }
 
 export default async function AboutPage() {
-  const [effectivePlanConfig, personaAccessByPlan, effectivePersonas] =
-    await Promise.all([
-      getEffectivePlanConfig(),
-      getEffectivePersonaAccessByPlan(),
-      getEffectivePersonaConfig(),
-    ]);
+  const [
+    effectivePlanConfig,
+    personaAccessByPlan,
+    effectivePersonas,
+    aboutContent,
+  ] = await Promise.all([
+    getEffectivePlanConfig(),
+    getEffectivePersonaAccessByPlan(),
+    getEffectivePersonaConfig(),
+    getEffectiveAboutContent(),
+  ]);
   const personaLabelById = Object.fromEntries(
     effectivePersonas.map((persona) => [persona.id, persona.label]),
   );
@@ -259,13 +265,16 @@ export default async function AboutPage() {
     id: persona.id,
     label: persona.label,
   }));
-  const aboutSections = buildAboutSections({ personaAccessSummary });
+  const aboutSections = buildAboutSections({
+    personaAccessSummary,
+    content: aboutContent,
+  });
 
   return (
     <PageWrapper id="AboutPageWrapper">
       <PageHead
-        title="About Droplet"
-        subtitle="A persona-driven AI assistant built for structured conversations, practical output, and media-aware workflows."
+        title={aboutContent.pageTitle}
+        subtitle={aboutContent.pageSubtitle}
         align="center"
       />
 
@@ -315,23 +324,20 @@ export default async function AboutPage() {
       >
         <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
           <div className="max-w-2xl">
-            <h2 className="heading-5 leading-tight">
-              Want the full breakdown of pricing and plan limits?
-            </h2>
+            <h2 className="heading-5 leading-tight">{aboutContent.ctaTitle}</h2>
             <p className="body-2 mt-3 text-sm md:text-base">
-              Compare Lite, Pro, and Premium on the public plans page, or jump
-              straight into the persona catalog before creating an account.
+              {aboutContent.ctaDescription}
             </p>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row">
             <Link className="btn btn-lg btn-contained uppercase" href="/plans">
-              View plans
+              {aboutContent.ctaPrimaryLabel}
             </Link>
             <Link
               className="btn btn-lg btn-outlined uppercase"
               href="/personas"
             >
-              Explore personas
+              {aboutContent.ctaSecondaryLabel}
             </Link>
           </div>
         </div>

@@ -110,21 +110,26 @@ function setupDefaultMocks() {
   vi.mocked(getTaskByIdForUser).mockResolvedValue(
     createTestTask({ _id: "507f1f77bcf86cd799439011", estimatedBytes: 256 }),
   );
-  vi.mocked(generateTitle).mockResolvedValue(
-    JSON.stringify({ title: "Generated title", usage: 7 }),
-  );
+  vi.mocked(generateTitle).mockResolvedValue({
+    title: "Generated title",
+    usage: 7,
+    model: "gpt-4.1-nano",
+    requestMetric: {
+      requestType: "title",
+      model: "gpt-4.1-nano",
+      latencyMs: 5,
+    },
+  });
   vi.mocked(createTask).mockResolvedValue({ _id: NEW_TASK_ID });
   vi.mocked(incrementPromptCountIfBelowLimit).mockResolvedValue(true);
-  vi.mocked(generateResponse).mockResolvedValue(
-    JSON.stringify({
-      taskData: {
-        whois: "assistant",
-        role: "assistant",
-        content: [{ type: "text", text: "Hello from AI" }],
-      },
-      taskUsage: 11,
-    }),
-  );
+  vi.mocked(generateResponse).mockResolvedValue({
+    taskData: {
+      whois: "assistant",
+      role: "assistant",
+      content: [{ type: "text", text: "Hello from AI" }],
+    },
+    taskUsage: 11,
+  });
   vi.mocked(generateStreamingResponse).mockResolvedValue({
     taskData: {
       whois: "assistant",

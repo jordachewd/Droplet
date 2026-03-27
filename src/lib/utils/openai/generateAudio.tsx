@@ -29,6 +29,14 @@ interface GenerateAudioParams {
   modelOverrides?: ModelPolicyModelOverrides;
 }
 
+export interface GeneratedAudioPayload {
+  taskData: Message;
+  taskUsage?: number;
+  generatedAudio: true;
+  model: string;
+  requestMetric: AIRequestMetric;
+}
+
 function decodeGeneratedAudio(rawAudioData: string): Buffer {
   const normalizedAudioData = rawAudioData.replace(/\s+/g, "");
 
@@ -54,7 +62,7 @@ export async function generateAudio({
   planName,
   audioMode = "tts",
   modelOverrides,
-}: GenerateAudioParams) {
+}: GenerateAudioParams): Promise<GeneratedAudioPayload> {
   const policy = resolveModelPolicy({
     plan: normalizePlanTier(planName),
     feature: "audio_generation",
@@ -153,13 +161,13 @@ export async function generateAudio({
       ],
     };
 
-    return JSON.stringify({
+    return {
       taskData,
       taskUsage,
       generatedAudio: true,
       model: policy.model,
       requestMetric,
-    });
+    };
   } catch (error) {
     const status =
       error instanceof Error && "status" in error
@@ -168,6 +176,6 @@ export async function generateAudio({
     process.stderr.write(
       `[generateAudio] model=${policy.model} audioMode=${audioMode} status=${status ?? "unknown"} error=${error instanceof Error ? error.message : "unknown"}\n`,
     );
-    handleError({ error, source: "generateAudio" });
+    return handleError({ error, source: "generateAudio" });
   }
 }

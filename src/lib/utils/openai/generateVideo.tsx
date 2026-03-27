@@ -25,6 +25,13 @@ interface GenerateVideoParams {
   modelOverrides?: ModelPolicyModelOverrides;
 }
 
+export interface GeneratedVideoPayload {
+  taskData: Message;
+  generatedVideo: true;
+  model: string;
+  requestMetric: AIRequestMetric;
+}
+
 type RetrievedVideo = {
   id?: string;
   status?: string;
@@ -96,7 +103,7 @@ export async function generateVideo({
   userId,
   planName,
   modelOverrides,
-}: GenerateVideoParams) {
+}: GenerateVideoParams): Promise<GeneratedVideoPayload> {
   const policy = resolveModelPolicy({
     plan: normalizePlanTier(planName),
     feature: "video_generation",
@@ -159,12 +166,12 @@ export async function generateVideo({
       latencyMs: Date.now() - startTime,
     };
 
-    return JSON.stringify({
+    return {
       taskData,
       generatedVideo: true,
       model: policy.model,
       requestMetric,
-    });
+    };
   } catch (error) {
     const status =
       error instanceof Error && "status" in error
@@ -173,6 +180,6 @@ export async function generateVideo({
     process.stderr.write(
       `[generateVideo] model=${policy.model} status=${status ?? "unknown"} error=${error instanceof Error ? error.message : "unknown"}\n`,
     );
-    handleError({ error, source: "generateVideo" });
+    return handleError({ error, source: "generateVideo" });
   }
 }

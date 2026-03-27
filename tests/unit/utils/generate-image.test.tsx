@@ -133,19 +133,25 @@ describe("generateImage", () => {
     });
     sharpToBufferMock.mockResolvedValue(convertedBuffer);
 
-    const serialized = await generateImage(request);
+    const payload = await generateImage(request);
 
-    const payload = JSON.parse(String(serialized)) as {
-      taskData: {
-        content: Array<{
-          type: string;
-          text?: string;
-          image_url?: { url: string };
-        }>;
-      };
-      generatedImage: boolean;
-      model: string;
-      requestMetric: { requestType: string; model: string };
+    expect(payload).toEqual(
+      expect.objectContaining({
+        generatedImage: true,
+        model: "gpt-image-1-mini",
+        requestMetric: expect.objectContaining({
+          requestType: "image",
+          model: "gpt-image-1-mini",
+        }),
+      }),
+    );
+
+    const taskData = payload.taskData as {
+      content: Array<{
+        type: string;
+        text?: string;
+        image_url?: { url: string };
+      }>;
     };
 
     expect(imagesGenerateMock).toHaveBeenCalledWith({
@@ -158,22 +164,14 @@ describe("generateImage", () => {
       "image/png",
       `${request.userId}/images`,
     );
-    expect(payload.generatedImage).toBe(true);
-    expect(payload.model).toBe("gpt-image-1-mini");
-    expect(payload.taskData.content[0]).toEqual({
+    expect(taskData.content[0]).toEqual({
       type: "text",
       text: "Refined prompt",
     });
-    expect(payload.taskData.content[1]).toEqual({
+    expect(taskData.content[1]).toEqual({
       type: "image_url",
       image_url: { url: "https://cdn.example.com/image.png" },
     });
-    expect(payload.requestMetric).toEqual(
-      expect.objectContaining({
-        requestType: "image",
-        model: "gpt-image-1-mini",
-      }),
-    );
   });
 
   it("fetches image bytes from URL when base64 payload is unavailable", async () => {
@@ -190,14 +188,18 @@ describe("generateImage", () => {
     });
     sharpToBufferMock.mockResolvedValue(convertedBuffer);
 
-    const serialized = await generateImage(request);
+    const payload = await generateImage(request);
 
-    const payload = JSON.parse(String(serialized)) as {
-      taskData: { content: Array<{ type: string; text?: string }> };
+    const taskData = payload.taskData as {
+      content: Array<{
+        type: string;
+        text?: string;
+        image_url?: { url: string };
+      }>;
     };
 
     expect(global.fetch).toHaveBeenCalledWith("https://openai.example/image");
-    expect(payload.taskData.content[0]).toEqual({
+    expect(taskData.content[0]).toEqual({
       type: "text",
       text: "URL prompt",
     });

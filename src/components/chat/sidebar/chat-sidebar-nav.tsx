@@ -47,6 +47,7 @@ function SidebarNavLink({
   return (
     <Link
       href={item.href}
+      aria-label={item.label}
       className={classNames(
         "group flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-sm transition-all",
         "hover:bg-lavenderHaze-300/70 dark:hover:bg-nightIndigo-500/30",
@@ -208,6 +209,7 @@ export default function ChatSidebarNav({
               >
                 <Link
                   href={item.href}
+                  aria-label={`${item.title} conversation`}
                   className={classNames(
                     "group flex min-w-0 flex-1 items-center gap-2 rounded-lg px-2.5 py-2 transition-all",
                     "hover:bg-lavenderHaze-300/70 dark:hover:bg-nightIndigo-500/30",

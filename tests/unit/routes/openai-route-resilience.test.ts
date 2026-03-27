@@ -110,21 +110,26 @@ function setupDefaultMocks() {
   vi.mocked(getTaskByIdForUser).mockResolvedValue(
     createTestTask({ _id: EXISTING_TASK_ID, estimatedBytes: 256 }),
   );
-  vi.mocked(generateTitle).mockResolvedValue(
-    JSON.stringify({ title: "Generated title", usage: 7 }),
-  );
+  vi.mocked(generateTitle).mockResolvedValue({
+    title: "Generated title",
+    usage: 7,
+    model: "gpt-4.1-nano",
+    requestMetric: {
+      requestType: "title",
+      model: "gpt-4.1-nano",
+      latencyMs: 5,
+    },
+  });
   vi.mocked(createTask).mockResolvedValue({ _id: "507f1f77bcf86cd799439012" });
   vi.mocked(incrementPromptCountIfBelowLimit).mockResolvedValue(true);
-  vi.mocked(generateResponse).mockResolvedValue(
-    JSON.stringify({
-      taskData: {
-        whois: "assistant",
-        role: "assistant",
-        content: [{ type: "text", text: "Hello from AI" }],
-      },
-      taskUsage: 11,
-    }),
-  );
+  vi.mocked(generateResponse).mockResolvedValue({
+    taskData: {
+      whois: "assistant",
+      role: "assistant",
+      content: [{ type: "text", text: "Hello from AI" }],
+    },
+    taskUsage: 11,
+  });
   vi.mocked(generateStreamingResponse).mockResolvedValue({
     taskData: {
       whois: "assistant",
@@ -192,9 +197,7 @@ describe("POST /api/openai - resilience and rate limits", () => {
   });
 
   it("maps OpenAI rate_limit errors to HTTP 429", async () => {
-    vi.mocked(generateResponse).mockResolvedValue(
-      JSON.stringify({ errorType: "rate_limit" }),
-    );
+    vi.mocked(generateResponse).mockResolvedValue({ errorType: "rate_limit" });
 
     const response = await POST(
       buildOpenAiRequest({
@@ -208,8 +211,10 @@ describe("POST /api/openai - resilience and rate limits", () => {
     expect(payload.error).toContain("too many requests");
   });
 
-  it("returns 500 when AI response payload is malformed JSON", async () => {
-    vi.mocked(generateResponse).mockResolvedValue("not-json");
+  it("returns 500 when AI response generation throws", async () => {
+    vi.mocked(generateResponse).mockRejectedValue(
+      new Error("response generation failed"),
+    );
 
     const response = await POST(
       buildOpenAiRequest({

@@ -1,8 +1,15 @@
 import classNames from "classnames";
 import Image from "next/image";
 import Link from "next/link";
+import { getDefaultHeroContent, HeroContent } from "@/constants/hero-content";
 
-export default function HeroSection() {
+interface HeroSectionProps {
+  content?: HeroContent;
+}
+
+export default function HeroSection({
+  content = getDefaultHeroContent(),
+}: HeroSectionProps) {
   const heroSectionClass = classNames(
     "Hero flex w-full items-center justify-between pt-14 shadow-2xl",
     "bg-lavenderHaze-500/40 dark:bg-nightIndigo-900/40 backdrop-blur-lg",
@@ -27,26 +34,21 @@ export default function HeroSection() {
     <section className={heroSectionClass}>
       <div className="mx-auto flex w-full max-w-screen-2xl px-4 flex-col items-center justify-between lg:flex-row">
         <div className={heroTextClass}>
-          <h1 className="heading-2">
-            Chat, create, <br />
-            and get things done.
-          </h1>
+          <h1 className="heading-2 whitespace-pre-line">{content.heading}</h1>
 
-          <p className="heading-6 max-w-2xl">
-            Unlock all personas across text conversations,
-            <br className="hidden lg:flex" />
-            image, and audio generation.
+          <p className="heading-6 max-w-2xl whitespace-pre-line">
+            {content.subheading}
           </p>
 
           <Link className="btn btn-lg btn-contained px-16" href="/app/new">
-            Try it for free
+            {content.ctaLabel}
           </Link>
         </div>
 
         <div className={heroImageClass}>
           <Image
             src="/images/lp-hero-image-flipped.png"
-            alt="Droplet assistant visual with floating chat and media creation elements"
+            alt={content.imageAlt}
             width={700}
             height={700}
             priority

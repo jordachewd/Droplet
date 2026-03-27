@@ -1,7 +1,25 @@
-import { howItWorksSteps } from "@/constants/landing-data";
+import {
+  getDefaultLandingContent,
+  LandingHowItWorksStep,
+  LandingWorkflowCopy,
+} from "@/constants/landing-data";
 import classNames from "classnames";
 
-export default function WorkflowSection() {
+interface WorkflowSectionProps {
+  howItWorksSteps?: LandingHowItWorksStep[];
+  workflowCopy?: LandingWorkflowCopy;
+}
+
+export default function WorkflowSection({
+  howItWorksSteps = getDefaultLandingContent().howItWorksSteps,
+  workflowCopy = getDefaultLandingContent().workflow,
+}: WorkflowSectionProps) {
+  const rhythmCardClassNames = [
+    "rounded-2xl bg-lavenderHaze-100/90 p-4 shadow-sm dark:bg-nightIndigo-1000/80",
+    "rounded-2xl bg-lavenderHaze-100/80 p-4 shadow-sm dark:bg-nightIndigo-900/72",
+    "rounded-2xl bg-twilightPurple-100/85 p-4 shadow-sm dark:bg-dustyBlue-1000/78",
+  ];
+
   return (
     <section className="Workflow mx-auto grid w-full max-w-screen-2xl gap-6 px-4 lg:grid-cols-[1.1fr_0.9fr]">
       <div
@@ -10,15 +28,11 @@ export default function WorkflowSection() {
         )}
       >
         <p className="text-xxs font-semibold uppercase tracking-[0.3em] text-midnightBlue-700 dark:text-lavenderHaze-700">
-          How it works
+          {workflowCopy.eyebrow}
         </p>
-        <h2 className="heading-4 mt-3 leading-tight">
-          Not another empty prompt box.
-        </h2>
+        <h2 className="heading-4 mt-3 leading-tight">{workflowCopy.title}</h2>
         <p className="body-2 mt-4 max-w-2xl text-sm md:text-base">
-          Droplet gives the conversation structure from the first click. You
-          choose the persona, set the task, and keep the thread alive as the
-          work gets more specific.
+          {workflowCopy.description}
         </p>
 
         <div className="mt-6 flex flex-col gap-4">
@@ -50,36 +64,23 @@ export default function WorkflowSection() {
         )}
       >
         <p className="text-xxs font-semibold uppercase tracking-[0.3em] text-midnightBlue-700 dark:text-lavenderHaze-700">
-          Conversation rhythm
+          {workflowCopy.rhythmEyebrow}
         </p>
         <div className="mt-5 flex flex-col gap-4">
-          <article className="rounded-2xl bg-lavenderHaze-100/90 p-4 shadow-sm dark:bg-nightIndigo-1000/80">
-            <p className="text-xxs font-semibold uppercase tracking-[0.24em] text-midnightBlue-700 dark:text-lavenderHaze-700">
-              You
-            </p>
-            <p className="body-2 mt-2 text-sm">
-              Build me a launch plan for a small SaaS with a free tier and two
-              paid plans.
-            </p>
-          </article>
-          <article className="rounded-2xl bg-lavenderHaze-100/80 p-4 shadow-sm dark:bg-nightIndigo-900/72">
-            <p className="text-xxs font-semibold uppercase tracking-[0.24em] text-midnightBlue-700 dark:text-lavenderHaze-700">
-              Strategist
-            </p>
-            <p className="body-2 mt-2 text-sm">
-              Here is the sequence: pricing truth first, navigation second, then
-              plan-aware messaging so the site and product say the same thing.
-            </p>
-          </article>
-          <article className="rounded-2xl bg-twilightPurple-100/85 p-4 shadow-sm dark:bg-dustyBlue-1000/78">
-            <p className="text-xxs font-semibold uppercase tracking-[0.24em] text-midnightBlue-700 dark:text-lavenderHaze-700">
-              Result
-            </p>
-            <p className="body-2 mt-2 text-sm">
-              You leave with concrete next actions instead of another vague wall
-              of AI text.
-            </p>
-          </article>
+          {workflowCopy.rhythmCards.map((card, index) => (
+            <article
+              key={`${card.label}-${index}`}
+              className={
+                rhythmCardClassNames[index] ??
+                "rounded-2xl bg-lavenderHaze-100/80 p-4 shadow-sm dark:bg-nightIndigo-900/72"
+              }
+            >
+              <p className="text-xxs font-semibold uppercase tracking-[0.24em] text-midnightBlue-700 dark:text-lavenderHaze-700">
+                {card.label}
+              </p>
+              <p className="body-2 mt-2 text-sm">{card.detail}</p>
+            </article>
+          ))}
         </div>
       </div>
     </section>

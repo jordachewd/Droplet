@@ -1,7 +1,16 @@
-import { featureCards } from "@/constants/landing-data";
+import {
+  getDefaultLandingContent,
+  LandingFeatureCard,
+} from "@/constants/landing-data";
 import classNames from "classnames";
 
-export default function FeaturesSection() {
+interface FeaturesSectionProps {
+  featureCards?: LandingFeatureCard[];
+}
+
+export default function FeaturesSection({
+  featureCards = getDefaultLandingContent().featureCards,
+}: FeaturesSectionProps) {
   return (
     <section className="Features mx-auto grid w-full max-w-screen-2xl gap-4 px-4 lg:grid-cols-3">
       {featureCards.map((card) => (

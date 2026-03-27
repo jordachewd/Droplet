@@ -14,12 +14,19 @@ import {
 import { AIRequestMetric } from "@/lib/utils/usage-event-utils";
 import { compactMessagesToTokenLimit } from "./message-policy";
 
+export interface GeneratedTitlePayload {
+  title: string;
+  usage: number;
+  model: string;
+  requestMetric: AIRequestMetric;
+}
+
 export async function generateTitle(
   messages: Message[],
   planName: PlanName,
   personaId?: string | null,
   modelOverrides?: ModelPolicyModelOverrides,
-) {
+): Promise<GeneratedTitlePayload> {
   try {
     const persona = getPersona(personaId);
     const policy = resolveModelPolicy({
@@ -64,16 +71,20 @@ export async function generateTitle(
       throw new Error("No data returned from Title Generator API.");
     }
 
-    const title = response.choices[0].message.content;
+    const titleContent = response.choices[0].message.content;
+    const title =
+      typeof titleContent === "string" && titleContent.trim().length > 0
+        ? titleContent
+        : "Untitled conversation";
     const usage: number = response.usage?.total_tokens ?? 0;
 
-    return JSON.stringify({
+    return {
       title,
       usage,
       model: policy.model,
       requestMetric,
-    });
+    };
   } catch (error) {
-    handleError({ error, source: "generateTitle" });
+    return handleError({ error, source: "generateTitle" });
   }
 }

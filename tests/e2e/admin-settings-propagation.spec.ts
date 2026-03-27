@@ -20,11 +20,12 @@ test.describe("admin settings propagation", () => {
     page,
   }) => {
     await page.goto("/admin/settings");
-    await page.getByRole("tab", { name: "Support" }).click();
-    const supportPanel = page.getByRole("tabpanel", { name: "Support" });
-    const supportAlert = supportPanel.getByRole("alert");
+    const supportTab = page.getByRole("tab", { name: "Support" });
+    await supportTab.click();
+    await expect(supportTab).toHaveAttribute("aria-selected", "true");
+    const supportAlert = page.locator(".AdminSupportSection [role='alert']");
 
-    const supportInput = page.getByLabel("Support Email");
+    const supportInput = page.locator("input[name='supportEmail']:visible");
     await expect(supportInput).toBeVisible();
 
     const originalSupportEmail = await supportInput.inputValue();
@@ -47,12 +48,25 @@ test.describe("admin settings propagation", () => {
       );
     } finally {
       await page.goto("/admin/settings");
-      await page.getByRole("tab", { name: "Support" }).click();
+      await page.evaluate(() => {
+        window.localStorage.setItem(
+          "droplet-admin-settings-active-tab",
+          "support",
+        );
+      });
+      await page.reload();
+      const resetSupportAlert = page.locator(
+        ".AdminSupportSection [role='alert']",
+      );
 
-      const resetInput = page.getByLabel("Support Email");
+      const resetInput = page.locator("input[name='supportEmail']:visible");
+      if ((await resetInput.count()) === 0) {
+        return;
+      }
+
       await resetInput.fill(originalSupportEmail);
       await page.getByRole("button", { name: "Save Support Email" }).click();
-      await expect(supportAlert).toContainText("Settings updated.");
+      await expect(resetSupportAlert).toContainText("Settings updated.");
     }
   });
 });

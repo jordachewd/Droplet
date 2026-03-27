@@ -3,8 +3,11 @@
 import "server-only";
 import { clerkClient } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
+import { getDefaultAboutContent } from "@/constants/about-data";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import { PERSONAS, VALID_PERSONA_ID_SET } from "@/constants/assistant-personas";
+import { buildFaqs } from "@/constants/faqs";
+import { getDefaultLandingContent } from "@/constants/landing-data";
 import { STOP_REASON_CODES } from "@/constants/stop-reasons";
 import AppSetting from "@/lib/database/models/app-setting.model";
 import PublicPage from "@/lib/database/models/public-page.model";
@@ -320,6 +323,73 @@ function parseStructuredAdminSettingValue({
     );
   }
 
+  if (key === "admin.faqContent") {
+    return buildFaqs().map((faqEntry) => ({
+      id: faqEntry.id,
+      question: getStringField(formData, `faqQuestion_${faqEntry.id}`),
+      answer: getStringField(formData, `faqAnswer_${faqEntry.id}`),
+    }));
+  }
+
+  if (key === "admin.heroContent") {
+    return {
+      heading: getStringField(formData, "heroHeading"),
+      subheading: getStringField(formData, "heroSubheading"),
+      ctaLabel: getStringField(formData, "heroCtaLabel"),
+      imageAlt: getStringField(formData, "heroImageAlt"),
+    };
+  }
+
+  if (key === "admin.landingContent") {
+    const defaults = getDefaultLandingContent();
+
+    return {
+      featureCards: defaults.featureCards.map((_, index) => ({
+        icon: getStringField(formData, `featureIcon_${index}`),
+        title: getStringField(formData, `featureTitle_${index}`),
+        description: getStringField(formData, `featureDescription_${index}`),
+      })),
+      howItWorksSteps: defaults.howItWorksSteps.map((_, index) => ({
+        step: getStringField(formData, `howStep_${index}`),
+        title: getStringField(formData, `howTitle_${index}`),
+        description: getStringField(formData, `howDescription_${index}`),
+      })),
+      workflow: {
+        eyebrow: getStringField(formData, "workflowEyebrow"),
+        title: getStringField(formData, "workflowTitle"),
+        description: getStringField(formData, "workflowDescription"),
+        rhythmEyebrow: getStringField(formData, "workflowRhythmEyebrow"),
+        rhythmCards: defaults.workflow.rhythmCards.map((_, index) => ({
+          label: getStringField(formData, `rhythmLabel_${index}`),
+          detail: getStringField(formData, `rhythmDetail_${index}`),
+        })),
+      },
+    };
+  }
+
+  if (key === "admin.aboutContent") {
+    const defaults = getDefaultAboutContent();
+
+    return {
+      pageTitle: getStringField(formData, "aboutPageTitle"),
+      pageSubtitle: getStringField(formData, "aboutPageSubtitle"),
+      sections: defaults.sections.map((section) => ({
+        id: section.id,
+        visualType: section.visualType,
+        eyebrow: getStringField(formData, `aboutEyebrow_${section.id}`),
+        title: getStringField(formData, `aboutTitle_${section.id}`),
+        paragraphs: [
+          getStringField(formData, `aboutParagraph1_${section.id}`),
+          getStringField(formData, `aboutParagraph2_${section.id}`),
+        ],
+      })),
+      ctaTitle: getStringField(formData, "aboutCtaTitle"),
+      ctaDescription: getStringField(formData, "aboutCtaDescription"),
+      ctaPrimaryLabel: getStringField(formData, "aboutCtaPrimaryLabel"),
+      ctaSecondaryLabel: getStringField(formData, "aboutCtaSecondaryLabel"),
+    };
+  }
+
   if (PERSONA_ACCESS_KEYS.has(key)) {
     return formData
       .getAll("personaIds")
@@ -559,6 +629,19 @@ export async function updateAdminSettingAction(
     if (key === "admin.stopReasonMessages") {
       revalidatePath("/app");
       revalidatePath("/app/new");
+    }
+
+    if (key === "admin.faqContent") {
+      revalidatePath("/plans");
+      revalidatePath("/app/plans");
+    }
+
+    if (key === "admin.heroContent" || key === "admin.landingContent") {
+      revalidatePath("/");
+    }
+
+    if (key === "admin.aboutContent") {
+      revalidatePath("/about");
     }
 
     return successState("Settings updated.");

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { bulkDeleteTransactionsAction } from "@/lib/actions/admin.actions";
 import { AdminManagedForm } from "@/components/admin/admin-managed-form";
 import { AdminFormSubmitButton } from "@/components/admin/admin-form-submit-button";
@@ -38,25 +38,36 @@ export function AdminTransactionsTable({
   const [selectedTransactionIds, setSelectedTransactionIds] = useState<
     string[]
   >([]);
-
-  useEffect(() => {
-    setSelectedTransactionIds([]);
-  }, [transactions]);
+  const transactionIdSet = useMemo(
+    () => new Set(transactions.map((transaction) => transaction.id)),
+    [transactions],
+  );
+  const visibleSelectedTransactionIds = useMemo(
+    () =>
+      selectedTransactionIds.filter((transactionId) =>
+        transactionIdSet.has(transactionId),
+      ),
+    [selectedTransactionIds, transactionIdSet],
+  );
 
   const selectedSet = useMemo(
-    () => new Set(selectedTransactionIds),
-    [selectedTransactionIds],
+    () => new Set(visibleSelectedTransactionIds),
+    [visibleSelectedTransactionIds],
   );
   const allSelected =
     transactions.length > 0 &&
-    selectedTransactionIds.length === transactions.length;
+    visibleSelectedTransactionIds.length === transactions.length;
 
   const handleToggleTransaction = (transactionId: string) => {
-    setSelectedTransactionIds((current) =>
-      current.includes(transactionId)
-        ? current.filter((value) => value !== transactionId)
-        : [...current, transactionId],
-    );
+    setSelectedTransactionIds((current) => {
+      const normalizedCurrent = current.filter((value) =>
+        transactionIdSet.has(value),
+      );
+
+      return normalizedCurrent.includes(transactionId)
+        ? normalizedCurrent.filter((value) => value !== transactionId)
+        : [...normalizedCurrent, transactionId];
+    });
   };
 
   const handleToggleAll = () => {
@@ -86,17 +97,17 @@ export function AdminTransactionsTable({
           Select All
         </label>
 
-        {selectedTransactionIds.length > 0 ? (
+        {visibleSelectedTransactionIds.length > 0 ? (
           <div className="flex items-center gap-2">
             <span className="text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
-              {selectedTransactionIds.length} selected
+              {visibleSelectedTransactionIds.length} selected
             </span>
             <AdminManagedForm
               action={bulkDeleteTransactionsAction}
               className="inline-flex"
               confirmMessage="Are you sure you want to remove all selected transactions? This action cannot be undone."
             >
-              {selectedTransactionIds.map((transactionId) => (
+              {visibleSelectedTransactionIds.map((transactionId) => (
                 <input
                   key={`transaction-${transactionId}`}
                   type="hidden"

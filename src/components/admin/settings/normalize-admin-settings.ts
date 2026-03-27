@@ -4,7 +4,11 @@ import { isObjectRecord } from "@/lib/utils/type-guards";
 import { ModelSettingsFormValue } from "@/types/AdminData.d";
 import { PersonaId } from "@/types/PersonaData.d";
 import {
+  AboutContentSettingsFormValue,
+  FaqContentSettingsFormValue,
+  HeroContentSettingsFormValue,
   LimitsSettingsFormValue,
+  LandingContentSettingsFormValue,
   PersonaAccessSettingsFormValue,
   PersonaContentSettingsFormValue,
   PricingSettingsFormValue,
@@ -26,6 +30,23 @@ function readNumericValue(
   }
 
   return rawValue;
+}
+
+function readStringValue(
+  source: Record<string, unknown>,
+  key: string,
+  fallbackValue: string,
+): string {
+  return normalizeStringValue(source[key], fallbackValue);
+}
+
+function normalizeStringValue(value: unknown, fallbackValue: string): string {
+  if (typeof value !== "string") {
+    return fallbackValue;
+  }
+
+  const trimmedValue = value.trim();
+  return trimmedValue.length > 0 ? trimmedValue : fallbackValue;
 }
 
 export function normalizeModelSettingsValue(
@@ -246,6 +267,272 @@ export function normalizeTrialLimitsSettingsValue(
     images: readNumericValue(value, "images", defaults.images),
     audio: readNumericValue(value, "audio", defaults.audio),
     video: readNumericValue(value, "video", defaults.video),
+  };
+}
+
+export function normalizeFaqContentSettings(
+  value: unknown,
+  defaults: FaqContentSettingsFormValue,
+): FaqContentSettingsFormValue {
+  if (!Array.isArray(value)) {
+    return defaults;
+  }
+
+  const valueById = new Map<number, unknown>();
+
+  for (const entry of value) {
+    if (!isObjectRecord(entry)) {
+      continue;
+    }
+
+    if (typeof entry.id !== "number" || !Number.isInteger(entry.id)) {
+      continue;
+    }
+
+    valueById.set(entry.id, entry);
+  }
+
+  return defaults.map((defaultFaq) => {
+    const faqValue = valueById.get(defaultFaq.id);
+
+    if (!isObjectRecord(faqValue)) {
+      return { ...defaultFaq };
+    }
+
+    return {
+      id: defaultFaq.id,
+      question: readStringValue(faqValue, "question", defaultFaq.question),
+      answer: readStringValue(faqValue, "answer", defaultFaq.answer),
+    };
+  });
+}
+
+export function normalizeHeroContentSettings(
+  value: unknown,
+  defaults: HeroContentSettingsFormValue,
+): HeroContentSettingsFormValue {
+  if (!isObjectRecord(value)) {
+    return defaults;
+  }
+
+  return {
+    heading: readStringValue(value, "heading", defaults.heading),
+    subheading: readStringValue(value, "subheading", defaults.subheading),
+    ctaLabel: readStringValue(value, "ctaLabel", defaults.ctaLabel),
+    imageAlt: readStringValue(value, "imageAlt", defaults.imageAlt),
+  };
+}
+
+function normalizeLandingFeatureCards({
+  value,
+  defaults,
+}: {
+  value: unknown;
+  defaults: LandingContentSettingsFormValue["featureCards"];
+}): LandingContentSettingsFormValue["featureCards"] {
+  if (!Array.isArray(value)) {
+    return defaults.map((card) => ({ ...card }));
+  }
+
+  return defaults.map((defaultCard, index) => {
+    const cardValue = value[index];
+
+    if (!isObjectRecord(cardValue)) {
+      return { ...defaultCard };
+    }
+
+    return {
+      icon: readStringValue(cardValue, "icon", defaultCard.icon),
+      title: readStringValue(cardValue, "title", defaultCard.title),
+      description: readStringValue(
+        cardValue,
+        "description",
+        defaultCard.description,
+      ),
+    };
+  });
+}
+
+function normalizeLandingHowItWorksSteps({
+  value,
+  defaults,
+}: {
+  value: unknown;
+  defaults: LandingContentSettingsFormValue["howItWorksSteps"];
+}): LandingContentSettingsFormValue["howItWorksSteps"] {
+  if (!Array.isArray(value)) {
+    return defaults.map((step) => ({ ...step }));
+  }
+
+  return defaults.map((defaultStep, index) => {
+    const stepValue = value[index];
+
+    if (!isObjectRecord(stepValue)) {
+      return { ...defaultStep };
+    }
+
+    return {
+      step: readStringValue(stepValue, "step", defaultStep.step),
+      title: readStringValue(stepValue, "title", defaultStep.title),
+      description: readStringValue(
+        stepValue,
+        "description",
+        defaultStep.description,
+      ),
+    };
+  });
+}
+
+function normalizeLandingWorkflowCopy({
+  value,
+  defaults,
+}: {
+  value: unknown;
+  defaults: LandingContentSettingsFormValue["workflow"];
+}): LandingContentSettingsFormValue["workflow"] {
+  if (!isObjectRecord(value)) {
+    return {
+      ...defaults,
+      rhythmCards: defaults.rhythmCards.map((card) => ({ ...card })),
+    };
+  }
+
+  const rhythmCardsSource = Array.isArray(value.rhythmCards)
+    ? value.rhythmCards
+    : [];
+
+  return {
+    eyebrow: readStringValue(value, "eyebrow", defaults.eyebrow),
+    title: readStringValue(value, "title", defaults.title),
+    description: readStringValue(value, "description", defaults.description),
+    rhythmEyebrow: readStringValue(
+      value,
+      "rhythmEyebrow",
+      defaults.rhythmEyebrow,
+    ),
+    rhythmCards: defaults.rhythmCards.map((defaultCard, index) => {
+      const cardValue = rhythmCardsSource[index];
+
+      if (!isObjectRecord(cardValue)) {
+        return { ...defaultCard };
+      }
+
+      return {
+        label: readStringValue(cardValue, "label", defaultCard.label),
+        detail: readStringValue(cardValue, "detail", defaultCard.detail),
+      };
+    }),
+  };
+}
+
+export function normalizeLandingContentSettings(
+  value: unknown,
+  defaults: LandingContentSettingsFormValue,
+): LandingContentSettingsFormValue {
+  if (!isObjectRecord(value)) {
+    return {
+      ...defaults,
+      featureCards: defaults.featureCards.map((card) => ({ ...card })),
+      howItWorksSteps: defaults.howItWorksSteps.map((step) => ({ ...step })),
+      workflow: {
+        ...defaults.workflow,
+        rhythmCards: defaults.workflow.rhythmCards.map((card) => ({ ...card })),
+      },
+    };
+  }
+
+  return {
+    featureCards: normalizeLandingFeatureCards({
+      value: value.featureCards,
+      defaults: defaults.featureCards,
+    }),
+    howItWorksSteps: normalizeLandingHowItWorksSteps({
+      value: value.howItWorksSteps,
+      defaults: defaults.howItWorksSteps,
+    }),
+    workflow: normalizeLandingWorkflowCopy({
+      value: value.workflow,
+      defaults: defaults.workflow,
+    }),
+  };
+}
+
+export function normalizeAboutContentSettings(
+  value: unknown,
+  defaults: AboutContentSettingsFormValue,
+): AboutContentSettingsFormValue {
+  if (!isObjectRecord(value)) {
+    return {
+      ...defaults,
+      sections: defaults.sections.map((section) => ({
+        ...section,
+        paragraphs: [...section.paragraphs],
+      })),
+    };
+  }
+
+  const sectionsSource = Array.isArray(value.sections) ? value.sections : [];
+  const sectionById = new Map<string, unknown>();
+
+  for (const section of sectionsSource) {
+    if (!isObjectRecord(section)) {
+      continue;
+    }
+
+    if (typeof section.id !== "string") {
+      continue;
+    }
+
+    sectionById.set(section.id, section);
+  }
+
+  return {
+    pageTitle: readStringValue(value, "pageTitle", defaults.pageTitle),
+    pageSubtitle: readStringValue(value, "pageSubtitle", defaults.pageSubtitle),
+    sections: defaults.sections.map((defaultSection) => {
+      const sectionValue = sectionById.get(defaultSection.id);
+
+      if (!isObjectRecord(sectionValue)) {
+        return {
+          ...defaultSection,
+          paragraphs: [...defaultSection.paragraphs],
+        };
+      }
+
+      const paragraphsSource = Array.isArray(sectionValue.paragraphs)
+        ? sectionValue.paragraphs
+        : [];
+
+      return {
+        id: defaultSection.id,
+        visualType: defaultSection.visualType,
+        eyebrow: readStringValue(
+          sectionValue,
+          "eyebrow",
+          defaultSection.eyebrow,
+        ),
+        title: readStringValue(sectionValue, "title", defaultSection.title),
+        paragraphs: defaultSection.paragraphs.map((fallbackParagraph, index) =>
+          normalizeStringValue(paragraphsSource[index], fallbackParagraph),
+        ),
+      };
+    }),
+    ctaTitle: readStringValue(value, "ctaTitle", defaults.ctaTitle),
+    ctaDescription: readStringValue(
+      value,
+      "ctaDescription",
+      defaults.ctaDescription,
+    ),
+    ctaPrimaryLabel: readStringValue(
+      value,
+      "ctaPrimaryLabel",
+      defaults.ctaPrimaryLabel,
+    ),
+    ctaSecondaryLabel: readStringValue(
+      value,
+      "ctaSecondaryLabel",
+      defaults.ctaSecondaryLabel,
+    ),
   };
 }
 

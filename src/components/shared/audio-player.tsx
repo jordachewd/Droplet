@@ -1,5 +1,5 @@
 import classNames from "classnames";
-import { useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { resolveStoredAssetUrl } from "@/lib/utils/aws/s3-file-reference";
 import Button from "@/components/shared/button";
 
@@ -43,11 +43,11 @@ function createLegacyAudioBlobUrl(base64Audio: string): string {
   return URL.createObjectURL(blob);
 }
 
-export default function AudioPlayer({ audioSrc }: AudioPlayerProps) {
-  const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
+function AudioPlayerSession({ audioSrc }: AudioPlayerProps) {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const previousAudioUrlRef = useRef<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [playbackUrl, setPlaybackUrl] = useState<string | null>(null);
   const [currentTime, setCurrentTime] = useState("0:00");
   const [duration, setDuration] = useState("0:00");
   const safeProgress = Number.isFinite(progress)
@@ -58,17 +58,11 @@ export default function AudioPlayer({ audioSrc }: AudioPlayerProps) {
     : "Play audio playback";
 
   useEffect(() => {
-    setAudio(null);
-    setPlaybackUrl(null);
-    setIsPlaying(false);
-    setProgress(0);
-    setCurrentTime("0:00");
-    setDuration("0:00");
-
-    if (!audioSrc) {
+    if (!audioSrc || previousAudioUrlRef.current === audioSrc) {
       return;
     }
 
+    previousAudioUrlRef.current = audioSrc;
     let generatedBlobUrl: string | null = null;
 
     try {
@@ -79,14 +73,25 @@ export default function AudioPlayer({ audioSrc }: AudioPlayerProps) {
           })()
         : resolveStoredAssetUrl(audioSrc);
 
-      setPlaybackUrl(resolvedAudioSrc);
-
       const audioElement = new Audio(resolvedAudioSrc);
-      setAudio(audioElement);
+      audioRef.current = audioElement;
 
       audioElement.onloadedmetadata = () => {
         setDuration(formatTime(audioElement.duration));
       };
+      const updateProgress = () => {
+        if (audioElement.duration) {
+          setProgress((audioElement.currentTime / audioElement.duration) * 100);
+          setCurrentTime(formatTime(audioElement.currentTime));
+        }
+      };
+      const handleEnded = () => {
+        setIsPlaying(false);
+        setProgress(0);
+        setCurrentTime("0:00");
+      };
+      audioElement.addEventListener("timeupdate", updateProgress);
+      audioElement.addEventListener("ended", handleEnded);
 
       return () => {
         if (generatedBlobUrl) {
@@ -95,50 +100,32 @@ export default function AudioPlayer({ audioSrc }: AudioPlayerProps) {
 
         audioElement.pause();
         audioElement.onloadedmetadata = null;
+        audioElement.removeEventListener("timeupdate", updateProgress);
+        audioElement.removeEventListener("ended", handleEnded);
+        if (audioRef.current === audioElement) {
+          audioRef.current = null;
+        }
       };
     } catch {
-      setAudio(null);
-      setPlaybackUrl(null);
+      audioRef.current = null;
     }
   }, [audioSrc]);
 
-  useEffect(() => {
-    if (!audio) return;
-
-    const updateProgress = () => {
-      if (audio.duration) {
-        setProgress((audio.currentTime / audio.duration) * 100);
-        setCurrentTime(formatTime(audio.currentTime));
-      }
-    };
-
-    const handleEnded = () => {
-      setIsPlaying(false);
-      setProgress(0);
-      setCurrentTime("0:00");
-    };
-
-    audio.addEventListener("timeupdate", updateProgress);
-    audio.addEventListener("ended", handleEnded);
-
-    return () => {
-      audio.removeEventListener("timeupdate", updateProgress);
-      audio.removeEventListener("ended", handleEnded);
-    };
-  }, [audio]);
-
   const togglePlay = () => {
-    if (audio) {
-      if (isPlaying) {
-        audio.pause();
-        setIsPlaying(false);
-      } else {
-        audio
-          .play()
-          .then(() => setIsPlaying(true))
-          .catch(() => setIsPlaying(false));
-        return;
-      }
+    const audioElement = audioRef.current;
+
+    if (!audioElement) {
+      return;
+    }
+
+    if (isPlaying) {
+      audioElement.pause();
+      setIsPlaying(false);
+    } else {
+      audioElement
+        .play()
+        .then(() => setIsPlaying(true))
+        .catch(() => setIsPlaying(false));
     }
   };
 
@@ -161,7 +148,7 @@ export default function AudioPlayer({ audioSrc }: AudioPlayerProps) {
           onClick={togglePlay}
           variant="outlined"
           size="sm"
-          disabled={!playbackUrl}
+          disabled={!audioSrc}
           aria-label={playbackControlLabel}
         >
           <i
@@ -195,5 +182,14 @@ export default function AudioPlayer({ audioSrc }: AudioPlayerProps) {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function AudioPlayer({ audioSrc }: AudioPlayerProps) {
+  return (
+    <AudioPlayerSession
+      key={audioSrc ?? "empty-audio-src"}
+      audioSrc={audioSrc}
+    />
   );
 }

@@ -4,7 +4,7 @@ import Plans from "@/components/sections/shared/plans-section";
 import { ensureUserSynced } from "@/lib/utils/ensure-user-synced";
 import { auth } from "@clerk/nextjs/server";
 import { buildPlans } from "@/constants/plans";
-import { buildFaqs } from "@/constants/faqs";
+import { getEffectiveFaqContent } from "@/lib/utils/effective-faq-content";
 import {
   getEffectivePlanConfig,
   getEffectiveSupportEmail,
@@ -28,7 +28,7 @@ export default async function AppPlansPage() {
     personaAccess: personaAccessByPlan,
     trialLimits: effectivePlanConfig.trialLimits,
   });
-  const faqs = buildFaqs({
+  const faqs = await getEffectiveFaqContent({
     pricing: effectivePlanConfig.pricing,
     personaAccessByPlan,
     currencySymbol: effectivePlanConfig.pricing.currencySymbol,

@@ -53,10 +53,7 @@ import {
   normalizePlanTier,
   resolveModelPolicy,
 } from "@/lib/utils/ai-model-policy";
-import {
-  AIRequestMetric,
-  emitUsageEvents,
-} from "@/lib/utils/usage-event-utils";
+import { emitUsageEvents } from "@/lib/utils/usage-event-utils";
 import { getEffectivePersonaAccessByPlan } from "@/lib/utils/effective-persona-access";
 import { getEffectiveModelConfig } from "@/lib/utils/effective-model-config";
 import {
@@ -120,12 +117,6 @@ const openAiRequestBodySchema = z
   .strict();
 
 type OpenAiRequestBody = z.infer<typeof openAiRequestBodySchema>;
-
-interface TitleResponsePayload {
-  title: string;
-  usage: number;
-  requestMetric?: AIRequestMetric;
-}
 
 interface ConversationStopPayload {
   taskData: Message;
@@ -1307,7 +1298,7 @@ export async function POST(req: Request): Promise<Response> {
         title,
         usage,
         requestMetric: titleRequestMetric,
-      } = JSON.parse(generatedTitle as string) as TitleResponsePayload;
+      } = generatedTitle;
 
       let newTask;
       try {
@@ -1369,7 +1360,7 @@ export async function POST(req: Request): Promise<Response> {
         title,
         usage,
         requestMetric: titleRequestMetric,
-      } = JSON.parse(generatedTitle as string) as TitleResponsePayload;
+      } = generatedTitle;
 
       const newTask = await createTask({
         title,
@@ -1512,7 +1503,7 @@ export async function POST(req: Request): Promise<Response> {
       });
     }
 
-    const aiResponse = await generateResponse({
+    const aiPayload = await generateResponse({
       messages: promptPayloadMessages,
       taskId,
       userId,
@@ -1537,7 +1528,6 @@ export async function POST(req: Request): Promise<Response> {
           counterScope: isTrialPersona ? "trial" : "plan",
         }),
     });
-    const aiPayload = JSON.parse(aiResponse as string) as OpenAIResponsePayload;
 
     const finalResult = await finalizeAIResponse({
       aiPayload,

@@ -61,7 +61,7 @@ function logErrorToStderr(error: Error | unknown, source?: string): void {
   );
 }
 
-export const handleError = ({ error, source }: HdlErrorProps) => {
+export const handleError = ({ error, source }: HdlErrorProps): never => {
   logErrorToStderr(error, source);
   throw new Error(buildSafeClientMessage(error), { cause: error });
 };

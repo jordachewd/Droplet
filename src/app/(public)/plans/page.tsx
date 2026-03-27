@@ -1,7 +1,7 @@
 import Plans from "@/components/sections/shared/plans-section";
 import Faqs from "@/components/sections/shared/faqs-section";
 import { buildPlans } from "@/constants/plans";
-import { buildFaqs } from "@/constants/faqs";
+import { getEffectiveFaqContent } from "@/lib/utils/effective-faq-content";
 import {
   getEffectivePlanConfig,
   getEffectiveSupportEmail,
@@ -26,7 +26,7 @@ export default async function PlansPage() {
     personaAccess: personaAccessByPlan,
     trialLimits: effectivePlanConfig.trialLimits,
   });
-  const faqs = buildFaqs({
+  const faqs = await getEffectiveFaqContent({
     pricing: effectivePlanConfig.pricing,
     personaAccessByPlan,
     currencySymbol: effectivePlanConfig.pricing.currencySymbol,

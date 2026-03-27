@@ -168,6 +168,6 @@ describe("POST /api/upload", () => {
     const payload = await response.json();
 
     expect(response.status).toBe(500);
-    expect(payload.message).toBe("Failed to upload file.");
+    expect(payload.error).toBe("Failed to upload file.");
   });
 });

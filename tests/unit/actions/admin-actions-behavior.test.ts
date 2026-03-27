@@ -1,5 +1,8 @@
 import { clerkClient } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
+import { getDefaultAboutContent } from "@/constants/about-data";
+import { buildFaqs } from "@/constants/faqs";
+import { getDefaultLandingContent } from "@/constants/landing-data";
 import {
   bulkDeletePublicPagesAction,
   bulkDeleteTransactionsAction,
@@ -436,6 +439,131 @@ describe("admin.actions behavior", () => {
     expect(revalidatePath).toHaveBeenCalledWith("/privacy");
     expect(revalidatePath).toHaveBeenCalledWith("/cookies");
     expect(revalidatePath).toHaveBeenCalledWith("/app/profile");
+  });
+
+  it("updateAdminSettingAction parses FAQ content and revalidates plans pages", async () => {
+    const faqFields: Record<string, string> = {
+      key: "admin.faqContent",
+      category: "features",
+    };
+
+    for (const faqEntry of buildFaqs()) {
+      faqFields[`faqQuestion_${faqEntry.id}`] = `Question ${faqEntry.id}`;
+      faqFields[`faqAnswer_${faqEntry.id}`] = `Answer ${faqEntry.id}`;
+    }
+
+    await updateAdminSettingAction(buildFormData(faqFields));
+
+    expect(appSettingFindOneAndUpdateMock).toHaveBeenCalledWith(
+      { key: "admin.faqContent" },
+      expect.objectContaining({
+        $set: expect.objectContaining({
+          value: expect.arrayContaining([
+            expect.objectContaining({
+              id: 0,
+              question: "Question 0",
+              answer: "Answer 0",
+            }),
+          ]),
+        }),
+      }),
+      expect.any(Object),
+    );
+    expect(revalidatePath).toHaveBeenCalledWith("/plans");
+    expect(revalidatePath).toHaveBeenCalledWith("/app/plans");
+  });
+
+  it("updateAdminSettingAction parses landing content and revalidates homepage", async () => {
+    const landingDefaults = getDefaultLandingContent();
+    const landingFields: Record<string, string> = {
+      key: "admin.landingContent",
+      category: "features",
+      workflowEyebrow: "Updated workflow eyebrow",
+      workflowTitle: "Updated workflow title",
+      workflowDescription: "Updated workflow description",
+      workflowRhythmEyebrow: "Updated rhythm eyebrow",
+    };
+
+    landingDefaults.featureCards.forEach((_, index) => {
+      landingFields[`featureIcon_${index}`] = `bi bi-star-${index}`;
+      landingFields[`featureTitle_${index}`] = `Feature ${index}`;
+      landingFields[`featureDescription_${index}`] = `Feature copy ${index}`;
+    });
+
+    landingDefaults.howItWorksSteps.forEach((_, index) => {
+      landingFields[`howStep_${index}`] = `0${index + 1}`;
+      landingFields[`howTitle_${index}`] = `Step ${index}`;
+      landingFields[`howDescription_${index}`] = `Step copy ${index}`;
+    });
+
+    landingDefaults.workflow.rhythmCards.forEach((_, index) => {
+      landingFields[`rhythmLabel_${index}`] = `Rhythm ${index}`;
+      landingFields[`rhythmDetail_${index}`] = `Rhythm detail ${index}`;
+    });
+
+    await updateAdminSettingAction(buildFormData(landingFields));
+
+    expect(appSettingFindOneAndUpdateMock).toHaveBeenCalledWith(
+      { key: "admin.landingContent" },
+      expect.objectContaining({
+        $set: expect.objectContaining({
+          value: expect.objectContaining({
+            featureCards: expect.arrayContaining([
+              expect.objectContaining({
+                title: "Feature 0",
+              }),
+            ]),
+            workflow: expect.objectContaining({
+              title: "Updated workflow title",
+            }),
+          }),
+        }),
+      }),
+      expect.any(Object),
+    );
+    expect(revalidatePath).toHaveBeenCalledWith("/");
+  });
+
+  it("updateAdminSettingAction parses about content and revalidates about page", async () => {
+    const aboutDefaults = getDefaultAboutContent();
+    const aboutFields: Record<string, string> = {
+      key: "admin.aboutContent",
+      category: "features",
+      aboutPageTitle: "Updated About",
+      aboutPageSubtitle: "Updated About subtitle",
+      aboutCtaTitle: "Updated CTA",
+      aboutCtaDescription: "Updated CTA description",
+      aboutCtaPrimaryLabel: "Primary action",
+      aboutCtaSecondaryLabel: "Secondary action",
+    };
+
+    aboutDefaults.sections.forEach((section, index) => {
+      aboutFields[`aboutEyebrow_${section.id}`] = `Eyebrow ${index}`;
+      aboutFields[`aboutTitle_${section.id}`] = `Title ${index}`;
+      aboutFields[`aboutParagraph1_${section.id}`] = `Paragraph one ${index}`;
+      aboutFields[`aboutParagraph2_${section.id}`] = `Paragraph two ${index}`;
+    });
+
+    await updateAdminSettingAction(buildFormData(aboutFields));
+
+    expect(appSettingFindOneAndUpdateMock).toHaveBeenCalledWith(
+      { key: "admin.aboutContent" },
+      expect.objectContaining({
+        $set: expect.objectContaining({
+          value: expect.objectContaining({
+            pageTitle: "Updated About",
+            sections: expect.arrayContaining([
+              expect.objectContaining({
+                id: "identity",
+                title: "Title 0",
+              }),
+            ]),
+          }),
+        }),
+      }),
+      expect.any(Object),
+    );
+    expect(revalidatePath).toHaveBeenCalledWith("/about");
   });
 
   it("updateAdminSettingAction handles invalid category and missing values", async () => {
