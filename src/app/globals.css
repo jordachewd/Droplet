@@ -419,8 +419,4 @@ a.menu-item {
       @apply bg-nightIndigo-500/5 font-semibold;
     }
   }
-
-  .droplet-scrollbar {
-    @apply [&::-webkit-scrollbar]:w-0.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:bg-slate-500 [&::-webkit-scrollbar-thumb]:bg-lavenderHaze-800 dark:[&::-webkit-scrollbar-track]:bg-slate-500 dark:[&::-webkit-scrollbar-thumb]:bg-nightIndigo-500;
-  }
 }

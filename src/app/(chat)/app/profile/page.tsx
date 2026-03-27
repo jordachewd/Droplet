@@ -48,7 +48,7 @@ export default async function AppProfilePage() {
         align="center"
         className="px-4 mt-12"
       />
-      <ProfileHero userData={userData} />
+      <ProfileHero userData={userData} supportEmail={supportEmail} />
       <ProfileHeroEditor userData={userData} />
       <ProfileUsage
         planName={planName}

@@ -16,12 +16,14 @@ interface ChatSidebarShellProps {
   historyItems: ConversationListItem[];
   userRole?: UserRoles;
   userPlanName?: PlanName | null;
+  isSuspended?: boolean;
 }
 
 export default function ChatSidebarShell({
   historyItems,
   userRole,
   userPlanName,
+  isSuspended,
 }: ChatSidebarShellProps) {
   const sidebarStorageKey = "droplet-sidebar-collapsed";
   const legacySidebarStorageKey = "cellesseon-sidebar-collapsed";
@@ -98,7 +100,7 @@ export default function ChatSidebarShell({
   );
 
   const navWrapperClass = classNames(
-    "droplet-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto",
+    "flex min-h-0 flex-1 flex-col overflow-y-auto",
     !isSidebarOpen && "lg:items-center",
   );
 
@@ -127,6 +129,7 @@ export default function ChatSidebarShell({
           isOpen={isSidebarOpen}
           userRole={userRole}
           planName={userPlanName}
+          isSuspended={isSuspended}
         />
       </aside>
     </>

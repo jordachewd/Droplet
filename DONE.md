@@ -2,7 +2,22 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-27 — PM audit #68. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4, 105.1, 105.2, 106, 107.1, 107.2, 107.3, 108, 110, 111.1, 112.1, 112.2, 109, 113.1, 113.2, 114, 115, 116, 117, 120.1, 120.2-A, 120.2-B, 120.2-C, 120.3, 120.4, 120.5, 120.6, 120.7, 121, 122, 123, 124, 125, 125.1, 125.2, 126, 126.1, 126.2, 127, 128.1, 128.2, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 74.2, 104, 125.3 complete. Milestones 0–25 COMPLETE. 571 unit tests (97 suites). E2E: 8 spec files. All 7 gates GREEN. Build passing. Node.js 24.12.0 runtime. Coverage: 85/80/85/85. Zero `as never` casts. Lint: 0 errors, 0 warnings.
+> Last updated: 2026-03-27 — PM audit #69. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4, 105.1, 105.2, 106, 107.1, 107.2, 107.3, 108, 110, 111.1, 112.1, 112.2, 109, 113.1, 113.2, 114, 115, 116, 117, 120.1, 120.2-A, 120.2-B, 120.2-C, 120.3, 120.4, 120.5, 120.6, 120.7, 121, 122, 123, 124, 125, 125.1, 125.2, 126, 126.1, 126.2, 127, 128.1, 128.2, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 149, 74.2, 104, 125.3 complete. Milestones 0–25 COMPLETE. 574 unit tests (97 suites). E2E: 8 spec files. All 7 gates GREEN. Build passing. Node.js 24.12.0 runtime. Coverage: 85/80/85/85. Zero `as never` casts. Lint: 0 errors, 0 warnings.
+
+---
+
+## Phase 149 — Fix SSE streaming timeout during media generation (heartbeat) — COMPLETED (2026-03-27)
+
+> Engineer delivered (PM audit #69). CRITICAL streaming fix. Media generation no longer times out during image/audio/video processing.
+
+- [x] Added `heartbeat` event to `ChatStreamEvent` union type in `chat-api.d.ts`.
+- [x] Added media-generation lifecycle callbacks (`onMediaGenerationStart`/`onMediaGenerationEnd`) in `generateResponse.tsx` — invoked around image, audio, and video generation.
+- [x] Implemented heartbeat emission in streaming route: 12s interval, immediate heartbeat at media start, cleanup in `finally`.
+- [x] Updated chat client: timeout increased to 200s, timeout reset on every received event (including heartbeats), heartbeat handled as no-op (activity only).
+- [x] Unit tests: route heartbeat SSE emission, utility callback signaling, client timeout reset behavior.
+- [x] All 7 gates GREEN. 574 tests (97 suites).
+
+**Files changed:** `src/app/api/openai/route.tsx`, `src/components/chat/chat-wrapper.tsx`, `src/lib/utils/openai/generateResponse.tsx`, `src/types/chat-api.d.ts`, `tests/unit/routes/openai-route-streaming.test.ts`, `tests/unit/utils/generate-response.test.tsx`, `tests/unit/components/chat-wrapper.test.tsx`
 
 ---
 

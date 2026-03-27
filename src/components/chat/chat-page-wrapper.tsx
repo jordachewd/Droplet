@@ -16,7 +16,7 @@ export default function ChatPageWrapper({
 }: PageWrapperProps) {
   const pageClass = classNames(
     pageId,
-    "droplet-scrollbar relative z-10 flex h-dvh w-full flex-col p-0 m-0 overflow-y-auto",
+    "relative z-10 flex h-dvh w-full flex-col p-0 m-0 overflow-y-auto",
     customCss,
   );
 

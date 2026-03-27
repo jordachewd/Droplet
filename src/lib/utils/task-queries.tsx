@@ -2,6 +2,7 @@ import "server-only";
 import { DEFAULT_PERSONA_ID, getPersona } from "@/constants/assistant-personas";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import Task from "@/lib/database/models/tasks.model";
+import Upload from "@/lib/database/models/upload.model";
 import {
   TaskConversation,
   TaskEndAction,
@@ -46,6 +47,28 @@ type MediaAggregateRecord = {
   personaId?: string;
   createdAt?: Date | string;
 };
+
+type UploadRecord = {
+  _id: unknown;
+  fileName?: string;
+  objectKey?: string;
+  s3Url?: string;
+  contentType?: string;
+  sizeBytes?: number;
+  taskId?: string;
+  createdAt?: Date | string;
+};
+
+export interface UploadLibraryItem {
+  id: string;
+  fileName: string;
+  objectKey: string;
+  s3Url: string;
+  contentType: string;
+  sizeBytes: number;
+  taskId?: string;
+  createdAt: string;
+}
 
 const messageRoles: MessageRole[] = [
   "user",
@@ -293,4 +316,43 @@ export async function getMediaItemsByUserId(
     taskTitle: item.taskTitle || "Untitled conversation",
     personaId: getPersona(item.personaId).id,
   }));
+}
+
+export async function getUploadsByUserId(
+  userId: string,
+  limit: number = 24,
+  offset: number = 0,
+): Promise<UploadLibraryItem[]> {
+  await connectToDatabase();
+
+  const safeLimit = Math.max(1, Math.min(limit, 100));
+  const safeOffset = Math.min(Math.max(0, offset), 10000);
+
+  const uploads = (await Upload.find({ userId })
+    .sort({ createdAt: -1 })
+    .skip(safeOffset)
+    .limit(safeLimit)
+    .select("fileName objectKey s3Url contentType sizeBytes taskId createdAt")
+    .lean()) as UploadRecord[];
+
+  return uploads.map((upload) => {
+    const parsedCreatedAt = new Date(upload.createdAt || Date.now());
+    const createdAt = Number.isNaN(parsedCreatedAt.getTime())
+      ? new Date().toISOString()
+      : parsedCreatedAt.toISOString();
+
+    return {
+      id: String(upload._id),
+      fileName: upload.fileName || "Uploaded file",
+      objectKey: upload.objectKey || "",
+      s3Url: upload.s3Url || "",
+      contentType: upload.contentType || "application/octet-stream",
+      sizeBytes: typeof upload.sizeBytes === "number" ? upload.sizeBytes : 0,
+      taskId:
+        typeof upload.taskId === "string" && upload.taskId.trim().length > 0
+          ? upload.taskId
+          : undefined,
+      createdAt,
+    };
+  });
 }

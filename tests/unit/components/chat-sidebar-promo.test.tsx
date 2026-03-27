@@ -1,0 +1,35 @@
+/** @vitest-environment jsdom */
+
+import { render, screen } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
+import ChatSidebarPromo from "@/components/chat/sidebar/chat-sidebar-promo";
+
+describe("ChatSidebarPromo", () => {
+  it("shows the upgrade CTA for non-suspended client users", () => {
+    render(
+      <ChatSidebarPromo
+        isOpen
+        planName="Lite"
+        userRole="client"
+        isSuspended={false}
+      />,
+    );
+
+    expect(screen.getByText("Go Pro")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Manage Plan" })).toBeTruthy();
+  });
+
+  it("shows a suspension message and hides upgrade CTA for suspended users", () => {
+    render(
+      <ChatSidebarPromo isOpen planName="Lite" userRole="client" isSuspended />,
+    );
+
+    expect(screen.getByText("Account Suspended")).toBeTruthy();
+    expect(
+      screen.getByText(
+        "Your account has been suspended. Contact support for assistance.",
+      ),
+    ).toBeTruthy();
+    expect(screen.queryByRole("link", { name: "Manage Plan" })).toBeNull();
+  });
+});

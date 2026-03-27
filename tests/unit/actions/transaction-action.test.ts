@@ -71,6 +71,9 @@ describe("transaction.action", () => {
     vi.clearAllMocks();
     process.env.NEXT_PUBLIC_API_BASE_URL = "http://localhost:3000";
     process.env.STRIPE_SECRET_KEY = "sk_test_123";
+    vi.mocked(redirect).mockImplementation((url: string) => {
+      throw new Error(`NEXT_REDIRECT:${url}`);
+    });
 
     mockAuth(vi.mocked(auth), {
       userId: "user_123",
@@ -141,15 +144,17 @@ describe("transaction.action", () => {
   });
 
   describe("checkoutPlan", () => {
-    it("creates checkout session and redirects when payload is valid", async () => {
-      await checkoutPlan({
-        plan: {
-          id: 2,
-          billing: "Monthly",
-          name: "Pro",
-          price: 19,
-        },
-      });
+    it("creates checkout session and propagates redirect outside catch handling", async () => {
+      await expect(
+        checkoutPlan({
+          plan: {
+            id: 2,
+            billing: "Monthly",
+            name: "Pro",
+            price: 19,
+          },
+        }),
+      ).rejects.toThrow("NEXT_REDIRECT:http://stripe.test/session");
 
       expect(connectToDatabase).toHaveBeenCalledOnce();
       expect(userFindOneMock).toHaveBeenCalledWith(

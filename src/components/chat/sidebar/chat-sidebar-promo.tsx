@@ -13,12 +13,14 @@ interface ChatSidebarPromoProps {
   isOpen: boolean;
   userRole?: UserRoles;
   planName?: PlanName | null;
+  isSuspended?: boolean;
 }
 
 export default function ChatSidebarPromo({
   isOpen,
   userRole,
   planName,
+  isSuspended,
 }: ChatSidebarPromoProps) {
   const sectionClass = classNames("ChatSidebarPromo p-3", !isOpen && "hidden");
   const promoCardClass = classNames("ChatSidebarPromoCard", planPromoCardClass);
@@ -31,6 +33,22 @@ export default function ChatSidebarPromo({
           <div className="z-10 flex w-full flex-col gap-4 text-center">
             <h5 className="heading-5">Admin</h5>
             <p className="text-sm leading-4">You have admin access.</p>
+          </div>
+        </article>
+      </section>
+    );
+  }
+
+  if (isSuspended) {
+    return (
+      <section className={sectionClass}>
+        <article className={promoCardClass}>
+          <div className={planPromoAccentClass}></div>
+          <div className="z-10 flex w-full flex-col gap-4 text-center">
+            <h5 className="heading-5">Account Suspended</h5>
+            <p className="text-sm leading-4">
+              Your account has been suspended. Contact support for assistance.
+            </p>
           </div>
         </article>
       </section>

@@ -1,6 +1,6 @@
 "use client";
 
-import { KeyboardEvent, useState } from "react";
+import { KeyboardEvent, useEffect, useState } from "react";
 import Button from "@/components/shared/button";
 
 interface AdminSettingsTab {
@@ -15,29 +15,29 @@ interface AdminSettingsTabsProps {
 
 const ADMIN_SETTINGS_TAB_STORAGE_KEY = "droplet-admin-settings-active-tab";
 
-function getInitialActiveTabId(tabs: AdminSettingsTab[]): string {
-  const fallbackTabId = tabs[0]?.id ?? "";
-
-  if (typeof window === "undefined") {
-    return fallbackTabId;
-  }
-
-  const storedTab = window.localStorage.getItem(ADMIN_SETTINGS_TAB_STORAGE_KEY);
-
-  if (storedTab && tabs.some((tab) => tab.id === storedTab)) {
-    return storedTab;
-  }
-
-  return fallbackTabId;
-}
-
 export function AdminSettingsTabs({ tabs }: AdminSettingsTabsProps) {
-  const [activeTabId, setActiveTabId] = useState<string>(() =>
-    getInitialActiveTabId(tabs),
-  );
+  const [activeTabId, setActiveTabId] = useState<string>(tabs[0]?.id ?? "");
   const resolvedActiveTabId = tabs.some((tab) => tab.id === activeTabId)
     ? activeTabId
     : (tabs[0]?.id ?? "");
+
+  useEffect(() => {
+    const storedTab = window.localStorage.getItem(
+      ADMIN_SETTINGS_TAB_STORAGE_KEY,
+    );
+
+    if (!(storedTab && tabs.some((tab) => tab.id === storedTab))) {
+      return;
+    }
+
+    const restoreTimer = window.setTimeout(() => {
+      setActiveTabId(storedTab);
+    }, 0);
+
+    return () => {
+      window.clearTimeout(restoreTimer);
+    };
+  }, [tabs]);
 
   const handleTabChange = (tabId: string) => {
     setActiveTabId(tabId);

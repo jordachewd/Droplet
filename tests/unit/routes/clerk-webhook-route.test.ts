@@ -3,11 +3,8 @@ import { POST } from "@/app/api/webhooks/clerk/route";
 import { clerkClient } from "@clerk/nextjs/server";
 import { NextRequest } from "next/server";
 import { connectToDatabase } from "@/lib/database/mongoose";
-import Task from "@/lib/database/models/tasks.model";
 import User from "@/lib/database/models/user.model";
-import Transaction from "@/lib/database/models/transaction.model";
-import UsageEvent from "@/lib/database/models/usage-event.model";
-import deleteS3Prefix from "@/lib/utils/aws/delete-s3-prefix";
+import { deleteUserCascade } from "@/lib/utils/delete-user-cascade";
 
 const verifyWebhookMock = vi.hoisted(() => vi.fn());
 const stderrWriteMock = vi.hoisted(() => vi.fn(() => true));
@@ -35,26 +32,8 @@ vi.mock("@/lib/database/models/user.model", () => ({
   },
 }));
 
-vi.mock("@/lib/database/models/transaction.model", () => ({
-  default: {
-    deleteMany: vi.fn(),
-  },
-}));
-
-vi.mock("@/lib/database/models/tasks.model", () => ({
-  default: {
-    deleteMany: vi.fn(),
-  },
-}));
-
-vi.mock("@/lib/database/models/usage-event.model", () => ({
-  default: {
-    deleteMany: vi.fn(),
-  },
-}));
-
-vi.mock("@/lib/utils/aws/delete-s3-prefix", () => ({
-  default: vi.fn(),
+vi.mock("@/lib/utils/delete-user-cascade", () => ({
+  deleteUserCascade: vi.fn(),
 }));
 
 function buildRequest(payload: unknown): NextRequest {
@@ -88,19 +67,14 @@ describe("POST /api/webhooks/clerk", () => {
     vi.mocked(User.findOneAndUpdate).mockResolvedValue(null);
     vi.mocked(User.findOne).mockResolvedValue(null);
     vi.mocked(User.findByIdAndDelete).mockResolvedValue(null);
-    vi.mocked(Transaction.deleteMany).mockResolvedValue({
-      acknowledged: true,
-      deletedCount: 0,
+    vi.mocked(deleteUserCascade).mockResolvedValue({
+      deletedTasks: 0,
+      deletedTransactions: 0,
+      deletedUsageEvents: 0,
+      deletedRateLimitEntries: 0,
+      deletedUploads: 0,
+      deletedObjectsCount: 0,
     });
-    vi.mocked(Task.deleteMany).mockResolvedValue({
-      acknowledged: true,
-      deletedCount: 0,
-    });
-    vi.mocked(UsageEvent.deleteMany).mockResolvedValue({
-      acknowledged: true,
-      deletedCount: 0,
-    });
-    vi.mocked(deleteS3Prefix).mockResolvedValue(0);
     getUserMock.mockResolvedValue({
       emailAddresses: [],
       primaryEmailAddressId: null,
@@ -473,7 +447,7 @@ describe("POST /api/webhooks/clerk", () => {
     expect(payload).toEqual({ message: "OK" });
   });
 
-  it("deletes user, tasks, and S3 assets for user.deleted", async () => {
+  it("deletes user and runs shared cascade cleanup for user.deleted", async () => {
     verifyWebhookMock.mockResolvedValue({
       type: "user.deleted",
       data: {
@@ -486,19 +460,14 @@ describe("POST /api/webhooks/clerk", () => {
     vi.mocked(User.findByIdAndDelete).mockResolvedValue({
       acknowledged: true,
     });
-    vi.mocked(Transaction.deleteMany).mockResolvedValue({
-      acknowledged: true,
-      deletedCount: 3,
+    vi.mocked(deleteUserCascade).mockResolvedValue({
+      deletedTasks: 8,
+      deletedTransactions: 3,
+      deletedUsageEvents: 11,
+      deletedRateLimitEntries: 4,
+      deletedUploads: 6,
+      deletedObjectsCount: 5,
     });
-    vi.mocked(Task.deleteMany).mockResolvedValue({
-      acknowledged: true,
-      deletedCount: 8,
-    });
-    vi.mocked(UsageEvent.deleteMany).mockResolvedValue({
-      acknowledged: true,
-      deletedCount: 11,
-    });
-    vi.mocked(deleteS3Prefix).mockResolvedValue(5);
 
     const response = await POST(buildRequest({ event: "user.deleted" }));
     const payload = await response.json();
@@ -507,22 +476,15 @@ describe("POST /api/webhooks/clerk", () => {
     expect(connectToDatabase).toHaveBeenCalledOnce();
     expect(User.findOne).toHaveBeenCalledWith({ clerkId: "clerk_user_1" });
     expect(User.findByIdAndDelete).toHaveBeenCalledWith("mongo_user_1");
-    expect(Transaction.deleteMany).toHaveBeenCalledWith({
-      clerkId: "clerk_user_1",
-    });
-    expect(Task.deleteMany).toHaveBeenCalledWith({
-      userId: "clerk_user_1",
-    });
-    expect(UsageEvent.deleteMany).toHaveBeenCalledWith({
-      userId: "clerk_user_1",
-    });
-    expect(deleteS3Prefix).toHaveBeenCalledWith("clerk_user_1/");
+    expect(deleteUserCascade).toHaveBeenCalledWith(
+      "clerk_user_1",
+      expect.objectContaining({
+        onStepError: expect.any(Function),
+      }),
+    );
     expect(payload).toEqual({ message: "OK" });
     expect(stderrWriteMock).toHaveBeenCalledWith(
-      "[clerk-webhook] user.deleted cleanup counts user=1 transactions=3 tasks=8 s3Objects=5\n",
-    );
-    expect(stderrWriteMock).toHaveBeenCalledWith(
-      "[clerk-webhook] user.deleted cleanup counts usageEvents=11\n",
+      "[clerk-webhook] user.deleted cleanup counts user=1 transactions=3 tasks=8 usageEvents=11 rateLimitEntries=4 uploads=6 s3Objects=5\n",
     );
   });
 
@@ -540,59 +502,53 @@ describe("POST /api/webhooks/clerk", () => {
 
     expect(response.status).toBe(200);
     expect(User.findByIdAndDelete).not.toHaveBeenCalled();
-    expect(Transaction.deleteMany).toHaveBeenCalledWith({
-      clerkId: "clerk_user_1",
-    });
-    expect(Task.deleteMany).toHaveBeenCalledWith({
-      userId: "clerk_user_1",
-    });
-    expect(UsageEvent.deleteMany).toHaveBeenCalledWith({
-      userId: "clerk_user_1",
-    });
+    expect(deleteUserCascade).toHaveBeenCalledWith(
+      "clerk_user_1",
+      expect.objectContaining({
+        onStepError: expect.any(Function),
+      }),
+    );
     expect(payload).toEqual({ message: "OK" });
     expect(stderrWriteMock).toHaveBeenCalledWith(
-      "[clerk-webhook] user.deleted cleanup counts user=0 transactions=0 tasks=0 s3Objects=0\n",
-    );
-    expect(stderrWriteMock).toHaveBeenCalledWith(
-      "[clerk-webhook] user.deleted cleanup counts usageEvents=0\n",
+      "[clerk-webhook] user.deleted cleanup counts user=0 transactions=0 tasks=0 usageEvents=0 rateLimitEntries=0 uploads=0 s3Objects=0\n",
     );
   });
 
-  it("returns 200 and still attempts S3 cleanup when task deletion fails", async () => {
+  it("returns 200 and logs task cleanup failure when cascade reports it", async () => {
     verifyWebhookMock.mockResolvedValue({
       type: "user.deleted",
       data: {
         id: "clerk_user_1",
       },
     });
-    vi.mocked(Task.deleteMany).mockRejectedValue(
-      new Error("Task cleanup failed"),
-    );
-    vi.mocked(deleteS3Prefix).mockResolvedValue(4);
+    vi.mocked(deleteUserCascade).mockImplementationOnce(async (_, options) => {
+      options?.onStepError?.("task");
+      return {
+        deletedTasks: null,
+        deletedTransactions: 0,
+        deletedUsageEvents: 0,
+        deletedRateLimitEntries: 0,
+        deletedUploads: 0,
+        deletedObjectsCount: 4,
+      };
+    });
 
     const response = await POST(buildRequest({ event: "user.deleted" }));
     const payload = await response.json();
 
     expect(response.status).toBe(200);
-    expect(Transaction.deleteMany).toHaveBeenCalledWith({
-      clerkId: "clerk_user_1",
-    });
-    expect(Task.deleteMany).toHaveBeenCalledWith({
-      userId: "clerk_user_1",
-    });
-    expect(UsageEvent.deleteMany).toHaveBeenCalledWith({
-      userId: "clerk_user_1",
-    });
-    expect(deleteS3Prefix).toHaveBeenCalledWith("clerk_user_1/");
+    expect(deleteUserCascade).toHaveBeenCalledWith(
+      "clerk_user_1",
+      expect.objectContaining({
+        onStepError: expect.any(Function),
+      }),
+    );
     expect(payload).toEqual({ message: "OK" });
     expect(stderrWriteMock).toHaveBeenCalledWith(
       "[clerk-webhook] user.deleted task cleanup failed.\n",
     );
     expect(stderrWriteMock).toHaveBeenCalledWith(
-      "[clerk-webhook] user.deleted cleanup counts user=0 transactions=0 tasks=unknown s3Objects=4\n",
-    );
-    expect(stderrWriteMock).toHaveBeenCalledWith(
-      "[clerk-webhook] user.deleted cleanup counts usageEvents=0\n",
+      "[clerk-webhook] user.deleted cleanup counts user=0 transactions=0 tasks=unknown usageEvents=0 rateLimitEntries=0 uploads=0 s3Objects=4\n",
     );
   });
 
@@ -603,77 +559,72 @@ describe("POST /api/webhooks/clerk", () => {
         id: "clerk_user_1",
       },
     });
-    vi.mocked(Task.deleteMany).mockResolvedValue({
-      acknowledged: true,
-      deletedCount: 2,
+    vi.mocked(deleteUserCascade).mockImplementationOnce(async (_, options) => {
+      options?.onStepError?.("usage-event");
+      return {
+        deletedTasks: 2,
+        deletedTransactions: 0,
+        deletedUsageEvents: null,
+        deletedRateLimitEntries: 0,
+        deletedUploads: 0,
+        deletedObjectsCount: 3,
+      };
     });
-    vi.mocked(UsageEvent.deleteMany).mockRejectedValue(
-      new Error("Usage cleanup failed"),
-    );
-    vi.mocked(deleteS3Prefix).mockResolvedValue(3);
 
     const response = await POST(buildRequest({ event: "user.deleted" }));
     const payload = await response.json();
 
     expect(response.status).toBe(200);
-    expect(Transaction.deleteMany).toHaveBeenCalledWith({
-      clerkId: "clerk_user_1",
-    });
-    expect(Task.deleteMany).toHaveBeenCalledWith({
-      userId: "clerk_user_1",
-    });
-    expect(UsageEvent.deleteMany).toHaveBeenCalledWith({
-      userId: "clerk_user_1",
-    });
-    expect(deleteS3Prefix).toHaveBeenCalledWith("clerk_user_1/");
+    expect(deleteUserCascade).toHaveBeenCalledWith(
+      "clerk_user_1",
+      expect.objectContaining({
+        onStepError: expect.any(Function),
+      }),
+    );
     expect(payload).toEqual({ message: "OK" });
     expect(stderrWriteMock).toHaveBeenCalledWith(
       "[clerk-webhook] user.deleted usage-event cleanup failed.\n",
     );
     expect(stderrWriteMock).toHaveBeenCalledWith(
-      "[clerk-webhook] user.deleted cleanup counts user=0 transactions=0 tasks=2 s3Objects=3\n",
-    );
-    expect(stderrWriteMock).toHaveBeenCalledWith(
-      "[clerk-webhook] user.deleted cleanup counts usageEvents=unknown\n",
+      "[clerk-webhook] user.deleted cleanup counts user=0 transactions=0 tasks=2 usageEvents=unknown rateLimitEntries=0 uploads=0 s3Objects=3\n",
     );
   });
 
-  it("returns 200 when S3 cleanup fails after task deletion succeeds", async () => {
+  it("returns 200 when rate-limit cleanup fails and logs partial cleanup", async () => {
     verifyWebhookMock.mockResolvedValue({
       type: "user.deleted",
       data: {
         id: "clerk_user_1",
       },
     });
-    vi.mocked(Task.deleteMany).mockResolvedValue({
-      acknowledged: true,
-      deletedCount: 2,
+    vi.mocked(deleteUserCascade).mockImplementationOnce(async (_, options) => {
+      options?.onStepError?.("rate-limit");
+      return {
+        deletedTasks: 2,
+        deletedTransactions: 0,
+        deletedUsageEvents: 0,
+        deletedRateLimitEntries: null,
+        deletedUploads: 0,
+        deletedObjectsCount: 3,
+      };
     });
-    vi.mocked(deleteS3Prefix).mockRejectedValue(new Error("S3 cleanup failed"));
 
     const response = await POST(buildRequest({ event: "user.deleted" }));
     const payload = await response.json();
 
     expect(response.status).toBe(200);
-    expect(Transaction.deleteMany).toHaveBeenCalledWith({
-      clerkId: "clerk_user_1",
-    });
-    expect(Task.deleteMany).toHaveBeenCalledWith({
-      userId: "clerk_user_1",
-    });
-    expect(UsageEvent.deleteMany).toHaveBeenCalledWith({
-      userId: "clerk_user_1",
-    });
-    expect(deleteS3Prefix).toHaveBeenCalledWith("clerk_user_1/");
+    expect(deleteUserCascade).toHaveBeenCalledWith(
+      "clerk_user_1",
+      expect.objectContaining({
+        onStepError: expect.any(Function),
+      }),
+    );
     expect(payload).toEqual({ message: "OK" });
     expect(stderrWriteMock).toHaveBeenCalledWith(
-      "[clerk-webhook] user.deleted s3 cleanup failed.\n",
+      "[clerk-webhook] user.deleted rate-limit cleanup failed.\n",
     );
     expect(stderrWriteMock).toHaveBeenCalledWith(
-      "[clerk-webhook] user.deleted cleanup counts user=0 transactions=0 tasks=2 s3Objects=unknown\n",
-    );
-    expect(stderrWriteMock).toHaveBeenCalledWith(
-      "[clerk-webhook] user.deleted cleanup counts usageEvents=0\n",
+      "[clerk-webhook] user.deleted cleanup counts user=0 transactions=0 tasks=2 usageEvents=0 rateLimitEntries=unknown uploads=0 s3Objects=3\n",
     );
   });
 

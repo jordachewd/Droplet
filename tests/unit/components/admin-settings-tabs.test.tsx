@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AdminSettingsTabs } from "@/components/admin/settings/admin-settings-tabs";
 
@@ -45,7 +45,7 @@ describe("AdminSettingsTabs", () => {
     ).toBe(true);
   });
 
-  it("restores active tab from localStorage when available", () => {
+  it("restores active tab from localStorage after mount", async () => {
     window.localStorage.setItem(
       "droplet-admin-settings-active-tab",
       "personas",
@@ -53,16 +53,18 @@ describe("AdminSettingsTabs", () => {
 
     render(<AdminSettingsTabs tabs={tabs} />);
 
-    expect(
-      screen
-        .getByRole("tab", { name: "Personas" })
-        .getAttribute("aria-selected"),
-    ).toBe("true");
-    expect(
-      screen
-        .getByRole("tabpanel")
-        .textContent?.includes("Persona settings panel"),
-    ).toBe(true);
+    await waitFor(() => {
+      expect(
+        screen
+          .getByRole("tab", { name: "Personas" })
+          .getAttribute("aria-selected"),
+      ).toBe("true");
+      expect(
+        screen
+          .getByRole("tabpanel")
+          .textContent?.includes("Persona settings panel"),
+      ).toBe(true);
+    });
   });
 
   it("switches tabs on click and persists the new active tab id", () => {

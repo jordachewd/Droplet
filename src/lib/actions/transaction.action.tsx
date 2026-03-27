@@ -31,6 +31,8 @@ const checkoutPlanSchema = z
 type CheckoutPlanInput = z.infer<typeof checkoutPlanSchema>;
 
 export async function checkoutPlan(transaction: CheckoutTransactionParams) {
+  let redirectUrl: string | undefined;
+
   try {
     const parsedTransaction = checkoutPlanSchema.safeParse(transaction);
     if (!parsedTransaction.success)
@@ -99,9 +101,17 @@ export async function checkoutPlan(transaction: CheckoutTransactionParams) {
       cancel_url: `${BASEURL}/app/plans`,
     });
 
-    redirect(session.url!);
+    if (!session.url) {
+      throw new Error("Unable to start checkout.");
+    }
+
+    redirectUrl = session.url;
   } catch (error) {
     handleError({ error, source: "checkoutPlan" });
+  }
+
+  if (redirectUrl) {
+    redirect(redirectUrl);
   }
 }
 

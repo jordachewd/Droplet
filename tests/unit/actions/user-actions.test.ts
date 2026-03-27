@@ -13,19 +13,13 @@ const {
   userFindOneMock,
   userFindOneAndUpdateMock,
   userFindByIdAndDeleteMock,
-  taskDeleteManyMock,
-  transactionDeleteManyMock,
-  usageEventDeleteManyMock,
-  deleteS3PrefixMock,
+  deleteUserCascadeMock,
   deleteClerkUserMock,
 } = vi.hoisted(() => ({
   userFindOneMock: vi.fn(),
   userFindOneAndUpdateMock: vi.fn(),
   userFindByIdAndDeleteMock: vi.fn(),
-  taskDeleteManyMock: vi.fn(),
-  transactionDeleteManyMock: vi.fn(),
-  usageEventDeleteManyMock: vi.fn(),
-  deleteS3PrefixMock: vi.fn(),
+  deleteUserCascadeMock: vi.fn(),
   deleteClerkUserMock: vi.fn(),
 }));
 
@@ -50,26 +44,8 @@ vi.mock("@/lib/database/models/user.model", () => ({
   },
 }));
 
-vi.mock("@/lib/database/models/tasks.model", () => ({
-  default: {
-    deleteMany: taskDeleteManyMock,
-  },
-}));
-
-vi.mock("@/lib/database/models/transaction.model", () => ({
-  default: {
-    deleteMany: transactionDeleteManyMock,
-  },
-}));
-
-vi.mock("@/lib/database/models/usage-event.model", () => ({
-  default: {
-    deleteMany: usageEventDeleteManyMock,
-  },
-}));
-
-vi.mock("@/lib/utils/aws/delete-s3-prefix", () => ({
-  default: deleteS3PrefixMock,
+vi.mock("@/lib/utils/delete-user-cascade", () => ({
+  deleteUserCascade: deleteUserCascadeMock,
 }));
 
 vi.mock("next/cache", () => ({
@@ -87,10 +63,14 @@ describe("user.actions", () => {
     });
     vi.mocked(connectToDatabase).mockResolvedValue(mongooseModuleMock);
     deleteClerkUserMock.mockResolvedValue(undefined);
-    taskDeleteManyMock.mockResolvedValue({ deletedCount: 4 });
-    transactionDeleteManyMock.mockResolvedValue({ deletedCount: 2 });
-    usageEventDeleteManyMock.mockResolvedValue({ deletedCount: 7 });
-    deleteS3PrefixMock.mockResolvedValue(3);
+    deleteUserCascadeMock.mockResolvedValue({
+      deletedTasks: 4,
+      deletedTransactions: 2,
+      deletedUsageEvents: 7,
+      deletedRateLimitEntries: 5,
+      deletedUploads: 6,
+      deletedObjectsCount: 3,
+    });
     userFindByIdAndDeleteMock.mockResolvedValue({ _id: "mongo_user_1" });
   });
 
@@ -245,14 +225,7 @@ describe("user.actions", () => {
       expect(connectToDatabase).toHaveBeenCalledOnce();
       expect(userFindOneMock).toHaveBeenCalledWith({ clerkId: "user_123" });
       expect(existingUserQuery.select).toHaveBeenCalledWith("_id");
-      expect(taskDeleteManyMock).toHaveBeenCalledWith({ userId: "user_123" });
-      expect(transactionDeleteManyMock).toHaveBeenCalledWith({
-        clerkId: "user_123",
-      });
-      expect(usageEventDeleteManyMock).toHaveBeenCalledWith({
-        userId: "user_123",
-      });
-      expect(deleteS3PrefixMock).toHaveBeenCalledWith("user_123/");
+      expect(deleteUserCascadeMock).toHaveBeenCalledWith("user_123");
       expect(userFindByIdAndDeleteMock).toHaveBeenCalledWith("mongo_user_1");
       expect(revalidatePath).toHaveBeenCalledWith("/");
       expect(revalidatePath).toHaveBeenCalledWith("/app");
@@ -265,6 +238,8 @@ describe("user.actions", () => {
           deletedTasks: 4,
           deletedTransactions: 2,
           deletedUsageEvents: 7,
+          deletedRateLimitEntries: 5,
+          deletedUploads: 6,
           deletedObjectsCount: 3,
         }),
       );
@@ -303,7 +278,7 @@ describe("user.actions", () => {
       );
       expect(connectToDatabase).not.toHaveBeenCalled();
       expect(userFindOneMock).not.toHaveBeenCalled();
-      expect(taskDeleteManyMock).not.toHaveBeenCalled();
+      expect(deleteUserCascadeMock).not.toHaveBeenCalled();
       expect(userFindByIdAndDeleteMock).not.toHaveBeenCalled();
     });
 
@@ -319,10 +294,7 @@ describe("user.actions", () => {
           source: "deleteUser",
         }),
       );
-      expect(taskDeleteManyMock).not.toHaveBeenCalled();
-      expect(transactionDeleteManyMock).not.toHaveBeenCalled();
-      expect(usageEventDeleteManyMock).not.toHaveBeenCalled();
-      expect(deleteS3PrefixMock).not.toHaveBeenCalled();
+      expect(deleteUserCascadeMock).not.toHaveBeenCalled();
       expect(userFindByIdAndDeleteMock).not.toHaveBeenCalled();
     });
 

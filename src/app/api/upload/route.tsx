@@ -18,6 +18,8 @@ import {
 } from "@/lib/utils/upload-file-validation";
 import uploadFileToAWS from "@/lib/utils/aws/uploadFileToAWS";
 import { buildS3ObjectKey } from "@/lib/utils/aws/s3-file-reference";
+import { connectToDatabase } from "@/lib/database/mongoose";
+import Upload from "@/lib/database/models/upload.model";
 import { requireActiveUser } from "@/lib/utils/require-active-user";
 import { auth } from "@clerk/nextjs/server";
 import { z } from "zod";
@@ -25,6 +27,7 @@ import { z } from "zod";
 const uploadFormDataSchema = z
   .object({
     file: z.instanceof(File),
+    taskId: z.string().trim().min(1).optional(),
   })
   .strict();
 
@@ -56,15 +59,21 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     }
 
     const formData = await req.formData();
+    const rawTaskId = formData.get("taskId");
+    const normalizedTaskId =
+      typeof rawTaskId === "string" && rawTaskId.trim().length > 0
+        ? rawTaskId.trim()
+        : undefined;
     const parsedFormData = uploadFormDataSchema.safeParse({
       file: formData.get("file"),
+      taskId: normalizedTaskId,
     });
 
     if (!parsedFormData.success) {
       return NextResponse.json({ error: "No file uploaded." }, { status: 400 });
     }
 
-    const { file }: UploadFormData = parsedFormData.data;
+    const { file, taskId }: UploadFormData = parsedFormData.data;
 
     const validation = validateUploadFile(file);
     if (!validation.isValid) {
@@ -90,6 +99,18 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const folder = `${userId}/uploads`;
     const objectKey = buildS3ObjectKey(folder, fileName);
     const fileUrl = await uploadFileToAWS(buffer, fileName, file.type, folder);
+
+    await connectToDatabase();
+    await Upload.create({
+      userId,
+      fileName,
+      objectKey,
+      s3Url: fileUrl,
+      contentType: file.type,
+      sizeBytes: file.size,
+      taskId,
+      createdAt: new Date(),
+    });
 
     return NextResponse.json({ fileName, fileUrl, objectKey });
   } catch {

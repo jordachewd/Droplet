@@ -18,10 +18,12 @@ describe("LibraryTabs keyboard navigation", () => {
         images={[]}
         audios={[]}
         videos={[]}
+        uploads={[]}
         conversationsPagination={defaultPagination}
         imagesPagination={defaultPagination}
         audiosPagination={defaultPagination}
         videosPagination={defaultPagination}
+        uploadsPagination={defaultPagination}
       />,
     );
 
@@ -32,11 +34,13 @@ describe("LibraryTabs keyboard navigation", () => {
     const imagesTab = screen.getByRole("tab", { name: /Images/i });
     const audiosTab = screen.getByRole("tab", { name: /Audios/i });
     const videosTab = screen.getByRole("tab", { name: /Videos/i });
+    const uploadedTab = screen.getByRole("tab", { name: /Uploaded/i });
 
     expect(chatsTab.getAttribute("tabindex")).toBe("0");
     expect(imagesTab.getAttribute("tabindex")).toBe("-1");
     expect(audiosTab.getAttribute("tabindex")).toBe("-1");
     expect(videosTab.getAttribute("tabindex")).toBe("-1");
+    expect(uploadedTab.getAttribute("tabindex")).toBe("-1");
 
     fireEvent.keyDown(tablist, { key: "ArrowRight" });
     expect(imagesTab.getAttribute("aria-selected")).toBe("true");
@@ -46,8 +50,8 @@ describe("LibraryTabs keyboard navigation", () => {
     expect(chatsTab.getAttribute("aria-selected")).toBe("true");
 
     fireEvent.keyDown(tablist, { key: "End" });
-    expect(videosTab.getAttribute("aria-selected")).toBe("true");
-    expect(videosTab.getAttribute("tabindex")).toBe("0");
+    expect(uploadedTab.getAttribute("aria-selected")).toBe("true");
+    expect(uploadedTab.getAttribute("tabindex")).toBe("0");
 
     fireEvent.keyDown(tablist, { key: "Home" });
     expect(chatsTab.getAttribute("aria-selected")).toBe("true");

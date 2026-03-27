@@ -4,12 +4,9 @@ import { auth, clerkClient } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 import { UpdateUserParams } from "@/types/UserData.d";
 import User from "@/lib/database/models/user.model";
-import Task from "@/lib/database/models/tasks.model";
-import Transaction from "@/lib/database/models/transaction.model";
-import UsageEvent from "@/lib/database/models/usage-event.model";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import { handleError } from "@/lib/utils/handleError";
-import deleteS3Prefix from "@/lib/utils/aws/delete-s3-prefix";
+import { deleteUserCascade } from "@/lib/utils/delete-user-cascade";
 import serializeForClient from "@/lib/utils/serialize-for-client";
 import { nonEmptyStringSchema } from "@/lib/utils/validation-schemas";
 import { z } from "zod";
@@ -127,14 +124,7 @@ export async function deleteUser(clerkId: string) {
       });
     }
 
-    const [deletedTasks, deletedTransactions, deletedUsageEvents] =
-      await Promise.all([
-        Task.deleteMany({ userId: parsedClerkId.data }),
-        Transaction.deleteMany({ clerkId: parsedClerkId.data }),
-        UsageEvent.deleteMany({ userId: parsedClerkId.data }),
-      ]);
-
-    const deletedObjectsCount = await deleteS3Prefix(`${parsedClerkId.data}/`);
+    const cascadeResult = await deleteUserCascade(parsedClerkId.data);
 
     // Delete user after all user-owned data and assets are cleaned up
     const deletedUser = await User.findByIdAndDelete(userToDelete._id);
@@ -154,10 +144,12 @@ export async function deleteUser(clerkId: string) {
     return serializeForClient({
       message: "User deleted successfully.",
       status: 200,
-      deletedTasks: deletedTasks.deletedCount ?? 0,
-      deletedTransactions: deletedTransactions.deletedCount ?? 0,
-      deletedUsageEvents: deletedUsageEvents.deletedCount ?? 0,
-      deletedObjectsCount,
+      deletedTasks: cascadeResult.deletedTasks ?? 0,
+      deletedTransactions: cascadeResult.deletedTransactions ?? 0,
+      deletedUsageEvents: cascadeResult.deletedUsageEvents ?? 0,
+      deletedRateLimitEntries: cascadeResult.deletedRateLimitEntries ?? 0,
+      deletedUploads: cascadeResult.deletedUploads ?? 0,
+      deletedObjectsCount: cascadeResult.deletedObjectsCount ?? 0,
     });
   } catch (error) {
     handleError({ error, source: "deleteUser" });

@@ -55,6 +55,8 @@ describe("ProfileDangerZone", () => {
       deletedTasks: 0,
       deletedTransactions: 0,
       deletedUsageEvents: 0,
+      deletedRateLimitEntries: 0,
+      deletedUploads: 0,
       deletedObjectsCount: 0,
     });
   });
