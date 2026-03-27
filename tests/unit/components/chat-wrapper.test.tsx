@@ -1,6 +1,12 @@
 /** @vitest-environment jsdom */
 
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import type { Message } from "@/types";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import ChatWrapper from "@/components/chat/chat-wrapper";
@@ -276,6 +282,44 @@ describe("ChatWrapper", () => {
     });
 
     expect(screen.queryByRole("alert")).toBeNull();
+  });
+
+  it("shows a timeout alert when the request exceeds the safety timeout", async () => {
+    vi.useFakeTimers();
+    vi.spyOn(globalThis, "fetch").mockImplementation((_input, init) => {
+      const signal = init?.signal as AbortSignal;
+
+      return new Promise<Response>((_resolve, reject) => {
+        if (signal.aborted) {
+          reject(new DOMException("Aborted", "AbortError"));
+          return;
+        }
+
+        signal.addEventListener(
+          "abort",
+          () => {
+            reject(new DOMException("Aborted", "AbortError"));
+          },
+          { once: true },
+        );
+      });
+    });
+
+    try {
+      render(<ChatWrapper {...chatWrapperProps} />);
+
+      fireEvent.click(screen.getByRole("button", { name: "Send message" }));
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(120_000);
+      });
+
+      expect(screen.getByRole("alert").textContent).toContain(
+        "The response timed out. Please try again.",
+      );
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("passes an AbortSignal to fetch and aborts in-flight requests on unmount", async () => {

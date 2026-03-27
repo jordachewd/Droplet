@@ -44,7 +44,6 @@ import {
   ensureMessagesHaveId,
 } from "@/lib/utils/message-id";
 import { PlanLimits } from "@/constants/plans";
-import { STOP_REASON_MESSAGES } from "@/constants/stop-reasons";
 import { PlanName } from "@/types/PlanData.d";
 import { PersonaId } from "@/types/PersonaData.d";
 import {
@@ -64,6 +63,7 @@ import {
   getEffectivePlanConfig,
   getEffectiveSupportEmail,
 } from "@/lib/utils/effective-plan-config";
+import { getEffectiveStopReasonMessages } from "@/lib/utils/effective-stop-reasons";
 import {
   chatMessageArraySchema,
   nonEmptyStringSchema,
@@ -138,6 +138,8 @@ interface ConversationStopPayload {
   acceptedPrompt: boolean;
 }
 
+type StopReasonMessages = Record<TaskEndedReason, string>;
+
 type MediaUsageLimitType = "images" | "audio" | "video";
 type MediaCounterScope = "plan" | "trial";
 
@@ -159,10 +161,12 @@ function createStopTaskData({
   stopReason,
   endAction,
   supportEmail,
+  stopReasonMessages,
 }: {
   stopReason: TaskEndedReason;
   endAction: TaskEndAction;
   supportEmail: string;
+  stopReasonMessages: StopReasonMessages;
 }): Message {
   const endActionInstructions = buildEndActionInstructions(supportEmail);
   const shouldAppendInstruction =
@@ -179,7 +183,7 @@ function createStopTaskData({
     content: [
       {
         type: "text",
-        text: `${STOP_REASON_MESSAGES[stopReason]}${endActionInstruction}`,
+        text: `${stopReasonMessages[stopReason]}${endActionInstruction}`,
       },
     ],
   });
@@ -193,6 +197,7 @@ function createStopResponsePayload({
   endAction,
   taskStatus,
   acceptedPrompt,
+  stopReasonMessages,
 }: {
   taskData: Message;
   taskId?: string;
@@ -201,12 +206,13 @@ function createStopResponsePayload({
   endAction: TaskEndAction;
   taskStatus?: TaskStatus;
   acceptedPrompt: boolean;
+  stopReasonMessages: StopReasonMessages;
 }): ConversationStopPayload {
   return {
     taskData,
     taskId,
     personaId,
-    error: STOP_REASON_MESSAGES[stopReason],
+    error: stopReasonMessages[stopReason],
     stopReason,
     endAction,
     taskStatus: taskStatus ?? "ended",
@@ -506,6 +512,7 @@ async function persistConversationStop({
   endAction,
   estimatedBytes,
   supportEmail,
+  stopReasonMessages,
 }: {
   taskId: string;
   personaId: PersonaId;
@@ -514,12 +521,14 @@ async function persistConversationStop({
   endAction: TaskEndAction;
   estimatedBytes?: number;
   supportEmail: string;
+  stopReasonMessages: StopReasonMessages;
 }): Promise<Message> {
   const normalizedCurrentMessages = ensureMessagesHaveId(currentMessages);
   const stopTaskData = createStopTaskData({
     stopReason,
     endAction,
     supportEmail,
+    stopReasonMessages,
   });
   const messagesWithStop = [...normalizedCurrentMessages, stopTaskData];
   const estimatedBytesWithStop = estimateConversationBytes(messagesWithStop);
@@ -597,6 +606,7 @@ async function finalizeAIResponse({
   storedMessagesWithIncomingPrompt,
   estimatedBytesWithIncomingPrompt,
   supportEmail,
+  stopReasonMessages,
 }: {
   aiPayload: OpenAIResponsePayload;
   taskId: string;
@@ -609,6 +619,7 @@ async function finalizeAIResponse({
   storedMessagesWithIncomingPrompt: Message[];
   estimatedBytesWithIncomingPrompt: number;
   supportEmail: string;
+  stopReasonMessages: StopReasonMessages;
 }): Promise<{
   status: number;
   payload: ChatApiResponse;
@@ -656,6 +667,7 @@ async function finalizeAIResponse({
         stopReason,
         endAction,
         supportEmail,
+        stopReasonMessages,
       });
       await persistConversationNotice({
         taskId,
@@ -673,6 +685,7 @@ async function finalizeAIResponse({
         endAction,
         estimatedBytes: estimatedBytesWithIncomingPrompt,
         supportEmail,
+        stopReasonMessages,
       });
     }
 
@@ -686,6 +699,7 @@ async function finalizeAIResponse({
         endAction,
         taskStatus: isNonTerminalMediaLimit ? "active" : "ended",
         acceptedPrompt: true,
+        stopReasonMessages,
       }),
     };
   }
@@ -714,6 +728,7 @@ async function finalizeAIResponse({
       endAction,
       estimatedBytes: estimatedBytesWithIncomingPrompt,
       supportEmail,
+      stopReasonMessages,
     });
 
     emitBlockedChatUsageEvent({
@@ -734,6 +749,7 @@ async function finalizeAIResponse({
         stopReason,
         endAction,
         acceptedPrompt: true,
+        stopReasonMessages,
       }),
     };
   }
@@ -853,11 +869,13 @@ export async function POST(req: Request): Promise<Response> {
       fullPersonaAccessByPlan,
       effectiveModelConfig,
       supportEmail,
+      stopReasonMessages,
     ] = await Promise.all([
       getEffectivePlanConfig(),
       getEffectivePersonaAccessByPlan(),
       getEffectiveModelConfig(),
       getEffectiveSupportEmail(),
+      getEffectiveStopReasonMessages(),
     ]);
     const effectivePlanLimits = effectivePlanConfig.limits;
     const effectiveTrialLimits = effectivePlanConfig.trialLimits;
@@ -895,6 +913,7 @@ export async function POST(req: Request): Promise<Response> {
         stopReason,
         endAction,
         supportEmail,
+        stopReasonMessages,
       });
 
       return NextResponse.json(
@@ -905,6 +924,7 @@ export async function POST(req: Request): Promise<Response> {
           stopReason,
           endAction,
           acceptedPrompt: false,
+          stopReasonMessages,
         }),
         { status: 409 },
       );
@@ -926,6 +946,7 @@ export async function POST(req: Request): Promise<Response> {
             endAction,
             estimatedBytes: persistedTask.estimatedBytes,
             supportEmail,
+            stopReasonMessages,
           });
 
           emitBlockedChatUsageEvent({
@@ -945,6 +966,7 @@ export async function POST(req: Request): Promise<Response> {
               stopReason,
               endAction,
               acceptedPrompt: false,
+              stopReasonMessages,
             }),
             { status: 403 },
           );
@@ -954,6 +976,7 @@ export async function POST(req: Request): Promise<Response> {
           stopReason,
           endAction,
           supportEmail,
+          stopReasonMessages,
         });
 
         emitBlockedChatUsageEvent({
@@ -971,6 +994,7 @@ export async function POST(req: Request): Promise<Response> {
             stopReason,
             endAction,
             acceptedPrompt: false,
+            stopReasonMessages,
           }),
           { status: 403 },
         );
@@ -1117,6 +1141,7 @@ export async function POST(req: Request): Promise<Response> {
           endAction,
           estimatedBytes: persistedTask.estimatedBytes,
           supportEmail,
+          stopReasonMessages,
         });
 
         emitBlockedChatUsageEvent({
@@ -1136,6 +1161,7 @@ export async function POST(req: Request): Promise<Response> {
             stopReason,
             endAction,
             acceptedPrompt: false,
+            stopReasonMessages,
           }),
           { status: 403 },
         );
@@ -1145,6 +1171,7 @@ export async function POST(req: Request): Promise<Response> {
         stopReason,
         endAction,
         supportEmail,
+        stopReasonMessages,
       });
 
       emitBlockedChatUsageEvent({
@@ -1162,6 +1189,7 @@ export async function POST(req: Request): Promise<Response> {
           stopReason,
           endAction,
           acceptedPrompt: false,
+          stopReasonMessages,
         }),
         { status: 403 },
       );
@@ -1198,6 +1226,7 @@ export async function POST(req: Request): Promise<Response> {
           endAction,
           estimatedBytes: persistedTask.estimatedBytes,
           supportEmail,
+          stopReasonMessages,
         });
 
         emitBlockedChatUsageEvent({
@@ -1217,6 +1246,7 @@ export async function POST(req: Request): Promise<Response> {
             stopReason,
             endAction,
             acceptedPrompt: false,
+            stopReasonMessages,
           }),
           { status: 403 },
         );
@@ -1243,6 +1273,7 @@ export async function POST(req: Request): Promise<Response> {
           stopReason,
           endAction,
           supportEmail,
+          stopReasonMessages,
         });
 
         emitBlockedChatUsageEvent({
@@ -1260,6 +1291,7 @@ export async function POST(req: Request): Promise<Response> {
             stopReason,
             endAction,
             acceptedPrompt: false,
+            stopReasonMessages,
           }),
           { status: 403 },
         );
@@ -1450,6 +1482,7 @@ export async function POST(req: Request): Promise<Response> {
               storedMessagesWithIncomingPrompt,
               estimatedBytesWithIncomingPrompt,
               supportEmail,
+              stopReasonMessages,
             });
 
             if (finalResult.payload.error && !finalResult.payload.taskData) {
@@ -1518,6 +1551,7 @@ export async function POST(req: Request): Promise<Response> {
       storedMessagesWithIncomingPrompt,
       estimatedBytesWithIncomingPrompt,
       supportEmail,
+      stopReasonMessages,
     });
 
     return NextResponse.json(finalResult.payload, {

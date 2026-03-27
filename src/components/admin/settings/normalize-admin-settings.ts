@@ -1,4 +1,5 @@
 import { PERSONAS, VALID_PERSONA_ID_SET } from "@/constants/assistant-personas";
+import { STOP_REASON_CODES } from "@/constants/stop-reasons";
 import { isObjectRecord } from "@/lib/utils/type-guards";
 import { ModelSettingsFormValue } from "@/types/AdminData.d";
 import { PersonaId } from "@/types/PersonaData.d";
@@ -7,6 +8,7 @@ import {
   PersonaAccessSettingsFormValue,
   PersonaContentSettingsFormValue,
   PricingSettingsFormValue,
+  StopReasonMessagesSettingsFormValue,
   SupportSettingsFormValue,
   ThemeSettingsFormValue,
   TrialLimitsSettingsFormValue,
@@ -203,6 +205,28 @@ export function normalizeSupportSettingsValue(
   return emailPattern.test(trimmedValue)
     ? { supportEmail: trimmedValue }
     : defaults;
+}
+
+export function normalizeStopReasonMessagesSettings(
+  value: unknown,
+  defaults: StopReasonMessagesSettingsFormValue,
+): StopReasonMessagesSettingsFormValue {
+  if (!isObjectRecord(value)) {
+    return defaults;
+  }
+
+  return STOP_REASON_CODES.reduce(
+    (accumulator, stopReasonCode) => {
+      const rawValue = value[stopReasonCode];
+      accumulator[stopReasonCode] =
+        typeof rawValue === "string" && rawValue.trim().length > 0
+          ? rawValue.trim()
+          : defaults[stopReasonCode];
+
+      return accumulator;
+    },
+    { ...defaults } as StopReasonMessagesSettingsFormValue,
+  );
 }
 
 export function normalizeTrialLimitsSettingsValue(

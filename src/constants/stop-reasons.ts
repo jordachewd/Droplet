@@ -1,5 +1,17 @@
 import { TaskEndedReason } from "@/types/TaskData.d";
 
+export const STOP_REASON_CODES = [
+  "prompt_limit_reached",
+  "trial_limit_reached",
+  "media_limit_reached",
+  "image_limit_reached",
+  "audio_limit_reached",
+  "video_limit_reached",
+  "daily_conversation_limit_reached",
+  "conversation_storage_limit_reached",
+  "billing_state_invalid",
+] as const satisfies readonly TaskEndedReason[];
+
 export const STOP_REASON_MESSAGES: Record<TaskEndedReason, string> = {
   prompt_limit_reached:
     "You've reached the message limit for this conversation.",

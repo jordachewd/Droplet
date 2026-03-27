@@ -1,5 +1,6 @@
 import { PersonaTrialLimits, PlanLimits } from "@/constants/plans";
 import { PersonaId } from "@/types/PersonaData.d";
+import { TaskEndedReason } from "@/types/TaskData.d";
 
 export interface PricingSettingsFormValue {
   proPrice: number;
@@ -14,6 +15,11 @@ export interface ThemeSettingsFormValue {
 export interface SupportSettingsFormValue {
   supportEmail: string;
 }
+
+export type StopReasonMessagesSettingsFormValue = Record<
+  TaskEndedReason,
+  string
+>;
 
 export type LimitsSettingsFormValue = PlanLimits;
 export type TrialLimitsSettingsFormValue = PersonaTrialLimits;

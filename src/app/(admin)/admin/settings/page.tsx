@@ -7,6 +7,7 @@ import { AdminLimitsSection } from "@/components/admin/settings/admin-limits-sec
 import { AdminPersonasSection } from "@/components/admin/settings/admin-personas-section";
 import { AdminThemeSection } from "@/components/admin/settings/admin-theme-section";
 import { AdminSupportSection } from "@/components/admin/settings/admin-support-section";
+import { AdminStopReasonsSection } from "@/components/admin/settings/admin-stop-reasons-section";
 import { AdminSettingsTabs } from "@/components/admin/settings/admin-settings-tabs";
 import {
   AUDIO_MODEL_OPTIONS,
@@ -20,6 +21,7 @@ import {
   normalizePersonaAccessSettings,
   normalizePersonaContentSettings,
   normalizePricingSettingsValue,
+  normalizeStopReasonMessagesSettings,
   normalizeSupportSettingsValue,
   normalizeThemeSettingsValue,
   normalizeTrialLimitsSettingsValue,
@@ -29,6 +31,7 @@ import {
   PersonaAccessSettingsFormValue,
   PersonaContentSettingsFormValue,
   PricingSettingsFormValue,
+  StopReasonMessagesSettingsFormValue,
   SupportSettingsFormValue,
   ThemeSettingsFormValue,
   TrialLimitsSettingsFormValue,
@@ -44,6 +47,8 @@ export default async function AdminSettingsPage() {
     .trialLimits as TrialLimitsSettingsFormValue;
   const themeDefaults = snapshot.defaults.theme as ThemeSettingsFormValue;
   const supportDefaults = snapshot.defaults.support as SupportSettingsFormValue;
+  const stopReasonMessagesDefaults = snapshot.defaults
+    .stopReasonMessages as StopReasonMessagesSettingsFormValue;
   const personaAccessDefaults = snapshot.defaults
     .personaAccess as PersonaAccessSettingsFormValue;
   const personaContentDefaults = snapshot.defaults
@@ -72,6 +77,10 @@ export default async function AdminSettingsPage() {
   const supportValue = normalizeSupportSettingsValue(
     snapshot.settingsByKey["admin.supportEmail"]?.value,
     supportDefaults,
+  );
+  const stopReasonMessagesValue = normalizeStopReasonMessagesSettings(
+    snapshot.settingsByKey["admin.stopReasonMessages"]?.value,
+    stopReasonMessagesDefaults,
   );
   const personaAccessValue = normalizePersonaAccessSettings(
     snapshot.settingsByKey as Record<string, { value: unknown }>,
@@ -142,6 +151,15 @@ export default async function AdminSettingsPage() {
             id: "support",
             label: "Support",
             content: <AdminSupportSection supportValue={supportValue} />,
+          },
+          {
+            id: "stop-reasons",
+            label: "Stop Messages",
+            content: (
+              <AdminStopReasonsSection
+                stopReasonMessagesValue={stopReasonMessagesValue}
+              />
+            ),
           },
         ]}
       />

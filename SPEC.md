@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-27 (PM audit #65). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). **All 7 gates GREEN.** 543 unit tests (92 suites). E2E: 5 spec files (rebuilt from scratch). Coverage: 85/80/85/85. Zero `as never` casts. Active TDs: TD-HARDCODE-01 (HIGH), TD-WCAG-05/WCAG-07 (MEDIUM). Build passing. Node.js 24.12.0.
+> Last updated: 2026-03-27 (PM audit #66). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. TD-HARDCODE-01 RESOLVED (Phase 107). **All 7 gates GREEN.** 551 unit tests (95 suites). E2E: 5 spec files (39 passed, 4 skipped). Coverage: 85/80/85/85. Zero `as never` casts. Active TDs: TD-SEC-13 (HIGH), TD-API-10 (HIGH), TD-TYPE-01 (HIGH). Build passing. Node.js 24.12.0.
 
 ---
 
@@ -781,20 +781,23 @@ All button styles use Lime Green as the accent color in **both** light and dark 
 ## 15. Technical Debt Summary
 
 > Only unresolved items live here. All resolved TDs are archived in `DONE.md`.
-> Last updated: PM audit #65 (2026-03-27).
+> Last updated: PM audit #66 (2026-03-27).
 
 ### Active — HIGH Priority
 
-| ID             | Area    | Description                                                                                                                                   | Phase |
-| -------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
-| TD-HARDCODE-01 | Content | Stop reason messages in `src/constants/stop-reasons.ts` are hardcoded user-facing copy. Must be admin-configurable via `effective-*` pattern. | 107   |
+| ID         | Area     | Description                                                                                                                                                                               | Phase |
+| ---------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| TD-SEC-13  | Security | `checkoutPlan` server action has no try/catch — Stripe API failures can leak raw provider error messages to clients.                                                                      | 135   |
+| TD-API-10  | API      | Upload and AWS routes use `{ message: ... }` instead of `{ error: ... }` for error responses. Inconsistent with all other API routes. Clients checking `.error` will miss these failures. | 136   |
+| TD-TYPE-01 | TypeSafe | `handleError` return type is `void` instead of `never` — downstream generate\* functions have imprecise return types (`string \| undefined` instead of `string`).                         | 137   |
 
 ### Active — MEDIUM Priority
 
-| ID         | Area | Description                                                                                                                                                | Phase |
-| ---------- | ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
-| TD-WCAG-05 | A11y | Library tabs and admin settings tabs have `role="tablist"` but no arrow-key navigation. WCAG tablist pattern requires Left/Right arrow key focus movement. | 108   |
-| TD-WCAG-07 | A11y | `AvatarMenu` dropdown lacks keyboard navigation: no Escape handler, no Arrow key navigation, no `role="menu"`/`role="menuitem"`.                           | 114   |
+| ID          | Area | Description                                                                                                                                                      | Phase |
+| ----------- | ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| TD-LINT-01  | Code | 7 lint warnings (6 `react-hooks/set-state-in-effect` + 1 `@next/next/no-img-element` in test). Target: 0 warnings.                                               | 126.2 |
+| TD-PARSE-01 | Code | `generateTitle/Image/Audio/Video/Response` return `JSON.stringify()` that callers immediately `JSON.parse(... as string)`. 7 unnecessary `as string` assertions. | 138   |
+| TD-E2E-01   | Test | E2E coverage at 5 specs only. Critical business paths (billing, admin ops, error states) lack E2E coverage.                                                      | 134   |
 
 ### Active — Low Priority
 
@@ -806,10 +809,13 @@ All button styles use Lime Green as the accent color in **both** light and dark 
 | TD-AI-18   | OpenAI  | errorMessage forwarding pattern in `/api/openai` is safe but fragile.          | Advisory |
 | TD-API-09  | API     | `messageTextContentSchema` uses `.strict()` — may reject extra fields.         | Monitor  |
 
-### Resolved (PM audit #65)
+### Resolved (PM audit #66)
 
-| ID          | Area | Description                                                                                                                                 | Phase |
-| ----------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
-| TD-TEST-03  | Test | ~~Full TDD test rebuild from scratch (Owner directive).~~ **RESOLVED.** 543 tests (92 suites). Zero `as never` casts. Coverage 85/80/85/85. | 120   |
-| TD-REUSE-04 | Code | ~~`ChatApiResponse` interface duplicate.~~ **RESOLVED (Phase 106).** Shared types in `src/types/chat-api.d.ts`.                             | 106   |
-| TD-TEST-02  | Test | ~~openai-route test IO mocks.~~ **RESOLVED.** Route tests rebuilt from scratch (Phase 120.4) — split into 5 focused modules.                | 120.4 |
+| ID             | Area    | Description                                                                                                                                           | Phase |
+| -------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| TD-HARDCODE-01 | Content | ~~Stop reason messages hardcoded.~~ **RESOLVED (Phase 107).** Admin-configurable via `getEffectiveStopReasonMessages()` + AppSetting overrides.       | 107   |
+| TD-WCAG-05     | A11y    | ~~Tablist arrow-key navigation missing.~~ **RESOLVED (Phase 108).** ArrowLeft/Right/Home/End + roving tabIndex implemented in both tab components.    | 108   |
+| TD-WCAG-07     | A11y    | ~~AvatarMenu keyboard navigation missing.~~ **RESOLVED (Phase 114).** role="menu"/"menuitem", Escape, ArrowUp/Down, focus management all implemented. | 114   |
+| TD-TEST-03     | Test    | ~~Full TDD test rebuild from scratch.~~ **RESOLVED.** 551 tests (95 suites). Zero `as never` casts. Coverage 85/80/85/85.                             | 120   |
+| TD-REUSE-04    | Code    | ~~`ChatApiResponse` interface duplicate.~~ **RESOLVED (Phase 106).** Shared types in `src/types/chat-api.d.ts`.                                       | 106   |
+| TD-TEST-02     | Test    | ~~openai-route test IO mocks.~~ **RESOLVED.** Route tests rebuilt from scratch (Phase 120.4) — split into 5 focused modules.                          | 120.4 |

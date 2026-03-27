@@ -2,7 +2,127 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-27 — PM audit #65. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4, 105.1, 105.2, 106, 110, 111.1, 112.1, 112.2, 109, 113.1, 113.2, 115, 116, 117, 120.1, 120.2-A, 120.2-B, 120.2-C, 120.3, 120.4, 120.5, 120.6, 120.7, 121, 122, 123, 124, 125, 125.2, 126, 126.1, 127, 128.1, 128.2, 129, 130 complete. Milestones 0–25 COMPLETE. 543 unit tests (92 suites). E2E: 5 spec files (rebuilt from scratch). All 7 gates GREEN. Build passing. Node.js 24.12.0 runtime. Coverage: 85/80/85/85. Zero `as never` casts.
+> Last updated: 2026-03-27 — PM audit #66. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4, 105.1, 105.2, 106, 107.1, 107.2, 107.3, 108, 110, 111.1, 112.1, 112.2, 109, 113.1, 113.2, 114, 115, 116, 117, 120.1, 120.2-A, 120.2-B, 120.2-C, 120.3, 120.4, 120.5, 120.6, 120.7, 121, 122, 123, 124, 125, 125.1, 125.2, 126, 126.1, 127, 128.1, 128.2, 129, 130, 131, 132, 133 complete. Milestones 0–25 COMPLETE. 551 unit tests (95 suites). E2E: 5 spec files (39 passed, 4 skipped). All 7 gates GREEN. Build passing. Node.js 24.12.0 runtime. Coverage: 85/80/85/85. Zero `as never` casts.
+
+---
+
+## Phase 107.1 — Create `getEffectiveStopReasonMessages()` resolver — COMPLETED (2026-03-27)
+
+> Engineer delivered (PM audit #66). TD-HARDCODE-01 step 1. Server-only resolver with AppSetting fallback.
+
+- [x] Created `src/lib/utils/effective-stop-reasons.ts` with `getEffectiveStopReasonMessages()` resolver.
+- [x] Extended `src/constants/stop-reasons.ts` with `STOP_REASON_CODES`.
+- [x] Falls back to `STOP_REASON_MESSAGES` defaults when no admin override.
+- [x] `import "server-only"` guard added.
+- [x] Unit tests: `tests/unit/utils/effective-stop-reasons.test.ts`.
+- [x] Build passes, tests pass.
+
+**Files changed:** `src/lib/utils/effective-stop-reasons.ts` (new), `src/constants/stop-reasons.ts`, `tests/unit/utils/effective-stop-reasons.test.ts` (new)
+
+---
+
+## Phase 107.2 — Admin UI for stop reason message editing — COMPLETED (2026-03-27)
+
+> Engineer delivered (PM audit #66). TD-HARDCODE-01 step 2. Admin settings UI wired.
+
+- [x] Created `src/components/admin/settings/admin-stop-reasons-section.tsx`.
+- [x] All 9 stop reason messages editable from `/admin/settings`.
+- [x] Save via admin action with audit trail.
+- [x] Type + normalization support added.
+- [x] Build passes.
+
+**Files changed:** `src/components/admin/settings/admin-stop-reasons-section.tsx` (new), `src/components/admin/settings/types.ts`, `src/components/admin/settings/normalize-admin-settings.ts`, `src/lib/utils/admin-queries.ts`, `src/lib/actions/admin.actions.tsx`, `src/app/(admin)/admin/settings/page.tsx`
+
+---
+
+## Phase 107.3 — Wire consumers to use stop-reason resolver — COMPLETED (2026-03-27)
+
+> Engineer delivered (PM audit #66). TD-HARDCODE-01 RESOLVED. Zero hardcoded stop reason imports in consumers.
+
+- [x] Chat pages resolve effective stop messages server-side.
+- [x] OpenAI route uses resolved stop messages.
+- [x] Zero hardcoded `STOP_REASON_MESSAGES` imports in consumer files.
+- [x] Build passes, tests pass.
+
+**Files changed:** `src/app/(chat)/app/page.tsx`, `src/app/(chat)/app/c/[conversationId]/page.tsx`, `src/app/api/openai/route.tsx`
+
+---
+
+## Phase 108 — Library tabs + admin settings tabs arrow-key navigation — COMPLETED (2026-03-27)
+
+> Engineer delivered (PM audit #66). TD-WCAG-05 RESOLVED. Full WCAG tablist keyboard pattern.
+
+- [x] ArrowLeft/ArrowRight/Home/End + roving tabIndex in `admin-settings-tabs.tsx`.
+- [x] ArrowLeft/ArrowRight/Home/End + roving tabIndex in `library-tabs.tsx`.
+- [x] Unit tests for both: `admin-settings-tabs.test.tsx`, `library-tabs-keyboard.test.tsx`.
+- [x] Build passes.
+
+**Files changed:** `src/components/admin/settings/admin-settings-tabs.tsx`, `src/components/chat/library-tabs.tsx`, `tests/unit/components/admin-settings-tabs.test.tsx`, `tests/unit/components/library-tabs-keyboard.test.tsx`
+
+---
+
+## Phase 114 — AvatarMenu keyboard navigation — COMPLETED (2026-03-27)
+
+> Engineer delivered (PM audit #66). TD-WCAG-07 RESOLVED. Full menu keyboard pattern.
+
+- [x] `role="menu"` on dropdown, `role="menuitem"` on links.
+- [x] Escape closes menu, ArrowUp/ArrowDown/Home/End navigation.
+- [x] First item focus on open, trigger-focus restore on close.
+- [x] Logout button forwards compatible menu props.
+- [x] Unit tests: `avatar-menu.test.tsx`.
+- [x] Build passes.
+
+**Files changed:** `src/components/shared/avatar-menu.tsx`, `src/components/shared/logout-btn.tsx`, `tests/unit/components/avatar-menu.test.tsx`
+
+---
+
+## Phase 125.1 — Add explicit `strict: true` to User, Task, Transaction schemas — COMPLETED (2026-03-27)
+
+> Engineer delivered (PM audit #66). Schema hardening for governance/auditability.
+
+- [x] `{ strict: true }` added to `user.model.tsx`, `tasks.model.tsx`, `transaction.model.tsx`.
+- [x] All 8+ Mongoose models now have explicit `strict: true`.
+- [x] Build passes, tests pass.
+
+**Files changed:** `src/lib/database/models/user.model.tsx`, `src/lib/database/models/tasks.model.tsx`, `src/lib/database/models/transaction.model.tsx`
+
+---
+
+## Phase 133 — Add auto-timeout to streaming fetch in chat-wrapper — COMPLETED (2026-03-27)
+
+> Engineer delivered (PM audit #66). 120s auto-abort safety net with user-visible timeout feedback.
+
+- [x] 120s auto-timeout `abort()` on streaming fetch.
+- [x] Timeout-specific alert message shown to user.
+- [x] Manual cancel still works.
+- [x] Unit tests: `chat-wrapper.test.tsx`.
+- [x] Build passes, tests pass.
+
+**Files changed:** `src/components/chat/chat-wrapper.tsx`, `tests/unit/components/chat-wrapper.test.tsx`
+
+---
+
+## Phase 131 — Add `server-only` guard to 4 utility files — COMPLETED (2026-03-27)
+
+> Engineer delivered (PM audit #66). Defensive server-only guards added.
+
+- [x] `import "server-only"` added to `serialize-for-client.ts`, `generateString.tsx`, `validation-schemas.ts`, `upload-file-validation.ts`.
+- [x] Build passes, tests pass.
+
+**Files changed:** `src/lib/utils/serialize-for-client.ts`, `src/lib/utils/generateString.tsx`, `src/lib/utils/validation-schemas.ts`, `src/lib/utils/upload-file-validation.ts`
+
+---
+
+## Phase 132 — Resolve stale TODO comments in ai-model-policy.ts — COMPLETED (2026-03-27)
+
+> Engineer delivered (PM audit #66). Comments updated to reflect intentional current state.
+
+- [x] Updated L386/L390 comments to note flat-rate pricing is intentional.
+- [x] Updated L377/L382 to document current audio token accounting approach.
+- [x] Zero stale TODO comments in production code.
+- [x] Build passes.
+
+**Files changed:** `src/lib/utils/ai-model-policy.ts`
 
 ---
 

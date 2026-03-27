@@ -1,3 +1,5 @@
+import "server-only";
+
 export function generateString(length?: number) {
   const size = length || 16;
   // Keep generated IDs URL-safe because they are embedded in public asset URLs.

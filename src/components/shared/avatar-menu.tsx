@@ -4,6 +4,7 @@ import getFullName, { getNameLetters } from "@/lib/utils/getFullName";
 import classNames from "classnames";
 import Image from "next/image";
 import {
+  KeyboardEvent as ReactKeyboardEvent,
   MouseEvent as ReactMouseEvent,
   useEffect,
   useRef,
@@ -18,6 +19,9 @@ export default function AvatarMenu() {
   const { user } = useUser();
   const [open, setOpen] = useState<boolean>(false);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+  const wasOpenRef = useRef<boolean>(false);
 
   useEffect(() => {
     const onOutsideClick = (event: globalThis.MouseEvent) => {
@@ -30,6 +34,18 @@ export default function AvatarMenu() {
     window.addEventListener("click", onOutsideClick);
     return () => window.removeEventListener("click", onOutsideClick);
   }, []);
+
+  useEffect(() => {
+    if (open) {
+      const firstMenuItem =
+        menuRef.current?.querySelector<HTMLElement>("[role='menuitem']");
+      firstMenuItem?.focus();
+    } else if (wasOpenRef.current) {
+      triggerRef.current?.focus();
+    }
+
+    wasOpenRef.current = open;
+  }, [open]);
 
   if (!user)
     return (
@@ -53,6 +69,54 @@ export default function AvatarMenu() {
 
   const handleCloseUserMenu = () => setOpen(false);
 
+  const handleMenuKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      setOpen(false);
+      return;
+    }
+
+    if (
+      event.key !== "ArrowDown" &&
+      event.key !== "ArrowUp" &&
+      event.key !== "Home" &&
+      event.key !== "End"
+    ) {
+      return;
+    }
+
+    const menuItems = Array.from(
+      menuRef.current?.querySelectorAll<HTMLElement>("[role='menuitem']") ?? [],
+    );
+
+    if (menuItems.length === 0) {
+      return;
+    }
+
+    const activeElement = document.activeElement;
+    const currentIndex = menuItems.findIndex((item) => item === activeElement);
+    const fallbackIndex = currentIndex === -1 ? 0 : currentIndex;
+
+    event.preventDefault();
+
+    if (event.key === "Home") {
+      menuItems[0]?.focus();
+      return;
+    }
+
+    if (event.key === "End") {
+      menuItems[menuItems.length - 1]?.focus();
+      return;
+    }
+
+    const nextIndex =
+      event.key === "ArrowDown"
+        ? (fallbackIndex + 1) % menuItems.length
+        : (fallbackIndex - 1 + menuItems.length) % menuItems.length;
+
+    menuItems[nextIndex]?.focus();
+  };
+
   const userInitialsClass = classNames(
     "inline-flex h-7 w-7 items-center justify-center overflow-hidden rounded-full",
     "bg-lavenderHaze-500 text-[13px] font-semibold text-white",
@@ -75,10 +139,11 @@ export default function AvatarMenu() {
     <div className="AvatarMenu relative flex" ref={wrapperRef}>
       <TooltipArrow title="Account" placement="bottom">
         <button
+          ref={triggerRef}
           type="button"
           onClick={handleToggleUserMenu}
           className="inline-flex rounded-full bg-transparent p-0"
-          aria-haspopup="true"
+          aria-haspopup="menu"
           aria-expanded={open}
           aria-controls={open ? "my-account" : undefined}
           aria-label="Account menu"
@@ -100,12 +165,21 @@ export default function AvatarMenu() {
       </TooltipArrow>
 
       {open && (
-        <div id="my-account" className={accountMenuClass}>
+        <div
+          id="my-account"
+          role="menu"
+          aria-label="Account actions"
+          className={accountMenuClass}
+          ref={menuRef}
+          onKeyDown={handleMenuKeyDown}
+        >
           {publicMetadata.role === "admin" && (
             <Link
               href="/admin"
               className={accountMenuLinkClass}
               onClick={handleCloseUserMenu}
+              role="menuitem"
+              tabIndex={-1}
             >
               <i className="bi bi-speedometer2 mr-4" aria-hidden="true"></i>
               <span>Dashboard</span>
@@ -116,6 +190,8 @@ export default function AvatarMenu() {
             href="/app/library"
             className={accountMenuLinkClass}
             onClick={handleCloseUserMenu}
+            role="menuitem"
+            tabIndex={-1}
           >
             <i className="bi bi-clock-history mr-4" aria-hidden="true"></i>
             <span>Library</span>
@@ -125,6 +201,8 @@ export default function AvatarMenu() {
             href="/app/personas"
             className={accountMenuLinkClass}
             onClick={handleCloseUserMenu}
+            role="menuitem"
+            tabIndex={-1}
           >
             <i className="bi bi-grid-3x3-gap mr-4" aria-hidden="true"></i>
             <span>Personas</span>
@@ -134,6 +212,8 @@ export default function AvatarMenu() {
             href="/app/plans"
             className={accountMenuLinkClass}
             onClick={handleCloseUserMenu}
+            role="menuitem"
+            tabIndex={-1}
           >
             <i className="bi bi-graph-up mr-4" aria-hidden="true"></i>
             <span>Plans</span>
@@ -143,6 +223,8 @@ export default function AvatarMenu() {
             href="/app/profile"
             className={accountMenuLinkClass}
             onClick={handleCloseUserMenu}
+            role="menuitem"
+            tabIndex={-1}
           >
             <i className="bi bi-person mr-4" aria-hidden="true"></i>
             <span>Profile</span>
@@ -151,7 +233,7 @@ export default function AvatarMenu() {
           <hr className="my-1 border-nightIndigo-100/20" />
 
           <div className="flex min-w-45 items-center px-5 py-2 text-sm">
-            <LogoutBtn />
+            <LogoutBtn role="menuitem" tabIndex={-1} />
           </div>
         </div>
       )}

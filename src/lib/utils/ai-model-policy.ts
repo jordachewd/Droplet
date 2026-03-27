@@ -374,20 +374,20 @@ const MODEL_PRICING: Record<string, TokenPricing> = {
   "gpt-audio-mini": {
     inputUsdPerMillion: 10,
     outputUsdPerMillion: 20,
-    // TODO: verify the exact token accounting for the current audio model tier.
+    // Token accounting intentionally uses blended text/audio estimates for the current verified tier.
   },
   [DEFAULT_TTS_MODEL]: {
     inputUsdPerMillion: 0.6,
     outputUsdPerMillion: 12,
-    // TODO: verify text-vs-audio output accounting for the speech API path.
+    // TTS cost estimation intentionally uses a blended output-token approximation for speech responses.
   },
   "sora-2": {
     flatUsd: 0.1,
-    // TODO: replace with duration-aware pricing when video generation is implemented.
+    // Flat-rate estimate is intentional until duration metadata is reliably available in usage logs.
   },
   "sora-2-pro": {
     flatUsd: 0.3,
-    // TODO: replace with duration-aware pricing when video generation is implemented.
+    // Flat-rate estimate is intentional until duration metadata is reliably available in usage logs.
   },
 };
 

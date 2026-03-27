@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { KeyboardEvent, useEffect, useState } from "react";
 import Button from "@/components/shared/button";
 
 interface AdminSettingsTab {
@@ -44,12 +44,69 @@ export function AdminSettingsTabs({ tabs }: AdminSettingsTabsProps) {
     }
   };
 
+  const focusAndActivateTabAtIndex = (nextIndex: number) => {
+    const nextTab = tabs[nextIndex];
+
+    if (!nextTab) {
+      return;
+    }
+
+    handleTabChange(nextTab.id);
+
+    if (typeof document === "undefined") {
+      return;
+    }
+
+    const tabButton = document.getElementById(
+      `admin-settings-tab-${nextTab.id}`,
+    );
+
+    if (tabButton instanceof HTMLButtonElement) {
+      tabButton.focus();
+    }
+  };
+
+  const handleTabListKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (tabs.length === 0) {
+      return;
+    }
+
+    const activeIndex = tabs.findIndex((tab) => tab.id === activeTabId);
+    const fallbackIndex = activeIndex === -1 ? 0 : activeIndex;
+
+    if (event.key === "ArrowRight") {
+      event.preventDefault();
+      focusAndActivateTabAtIndex((fallbackIndex + 1) % tabs.length);
+      return;
+    }
+
+    if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      focusAndActivateTabAtIndex(
+        (fallbackIndex - 1 + tabs.length) % tabs.length,
+      );
+      return;
+    }
+
+    if (event.key === "Home") {
+      event.preventDefault();
+      focusAndActivateTabAtIndex(0);
+      return;
+    }
+
+    if (event.key === "End") {
+      event.preventDefault();
+      focusAndActivateTabAtIndex(tabs.length - 1);
+    }
+  };
+
   return (
     <div className="AdminSettingsTabs flex flex-col gap-4">
       <div
         className="flex flex-wrap gap-2"
         role="tablist"
         aria-label="Admin settings sections"
+        onKeyDown={handleTabListKeyDown}
       >
         {tabs.map((tab) => {
           const tabPanelId = `admin-settings-panel-${tab.id}`;
@@ -66,6 +123,7 @@ export function AdminSettingsTabs({ tabs }: AdminSettingsTabsProps) {
               role="tab"
               aria-selected={isActive}
               aria-controls={tabPanelId}
+              tabIndex={isActive ? 0 : -1}
               onClick={() => handleTabChange(tab.id)}
             >
               {tab.label}

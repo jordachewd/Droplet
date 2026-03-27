@@ -5,6 +5,7 @@ import { clerkClient } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import { PERSONAS, VALID_PERSONA_ID_SET } from "@/constants/assistant-personas";
+import { STOP_REASON_CODES } from "@/constants/stop-reasons";
 import AppSetting from "@/lib/database/models/app-setting.model";
 import PublicPage from "@/lib/database/models/public-page.model";
 import Task from "@/lib/database/models/tasks.model";
@@ -16,6 +17,7 @@ import { requireAdminActionAccess } from "@/lib/utils/admin-auth";
 import deleteS3Prefix from "@/lib/utils/aws/delete-s3-prefix";
 import { AdminActionState } from "@/components/admin/admin-action-state";
 import { PersonaId } from "@/types/PersonaData.d";
+import { TaskEndedReason } from "@/types/TaskData.d";
 import { z } from "zod";
 
 const requiredStringSchema = z.string().trim().min(1);
@@ -308,6 +310,16 @@ function parseStructuredAdminSettingValue({
     return parsedSupportEmail.data.toLowerCase();
   }
 
+  if (key === "admin.stopReasonMessages") {
+    return STOP_REASON_CODES.reduce(
+      (accumulator, stopReasonCode) => {
+        accumulator[stopReasonCode] = getStringField(formData, stopReasonCode);
+        return accumulator;
+      },
+      {} as Record<TaskEndedReason, string>,
+    );
+  }
+
   if (PERSONA_ACCESS_KEYS.has(key)) {
     return formData
       .getAll("personaIds")
@@ -542,6 +554,11 @@ export async function updateAdminSettingAction(
       revalidatePath("/app/new");
       revalidatePath("/app/plans");
       revalidatePath("/app/profile");
+    }
+
+    if (key === "admin.stopReasonMessages") {
+      revalidatePath("/app");
+      revalidatePath("/app/new");
     }
 
     return successState("Settings updated.");

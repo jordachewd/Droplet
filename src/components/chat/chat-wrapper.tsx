@@ -33,11 +33,19 @@ interface ChatWrapperProps {
   initialEndAction?: TaskEndAction;
 }
 
+const STREAM_REQUEST_TIMEOUT_MS = 120_000;
+const STREAM_REQUEST_TIMEOUT_MESSAGE =
+  "The response timed out. Please try again.";
+
 function isAbortError(error: unknown): boolean {
   return (
     (error instanceof DOMException && error.name === "AbortError") ||
     (error instanceof Error && error.name === "AbortError")
   );
+}
+
+function isTimeoutAbortReason(reason: unknown): boolean {
+  return reason instanceof DOMException && reason.name === "TimeoutError";
 }
 
 export default function ChatWrapper({
@@ -405,6 +413,13 @@ export default function ChatWrapper({
     ]);
 
     const requestAbortController = new AbortController();
+    const timeoutAbortReason = new DOMException(
+      "Streaming request timed out.",
+      "TimeoutError",
+    );
+    const requestTimeoutId = window.setTimeout(() => {
+      requestAbortController.abort(timeoutAbortReason);
+    }, STREAM_REQUEST_TIMEOUT_MS);
     activeRequestControllerRef.current = requestAbortController;
 
     try {
@@ -476,6 +491,11 @@ export default function ChatWrapper({
       }
     } catch (error) {
       if (isAbortError(error)) {
+        if (isTimeoutAbortReason(requestAbortController.signal.reason)) {
+          showAlert("Request timed out", STREAM_REQUEST_TIMEOUT_MESSAGE);
+          return;
+        }
+
         setMessages((previousMessages) => {
           const lastMessage = previousMessages[previousMessages.length - 1];
 
@@ -498,6 +518,8 @@ export default function ChatWrapper({
 
       showAlert("Error", "Unable to send your message right now.");
     } finally {
+      window.clearTimeout(requestTimeoutId);
+
       if (activeRequestControllerRef.current === requestAbortController) {
         activeRequestControllerRef.current = null;
       }
