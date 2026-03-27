@@ -16,13 +16,12 @@ export default function ChatPageWrapper({
 }: PageWrapperProps) {
   const pageClass = classNames(
     pageId,
-    "relative z-10 flex h-dvh w-full flex-col p-0 m-0",
+    "droplet-scrollbar relative z-10 flex h-dvh w-full flex-col p-0 m-0 overflow-y-auto",
     customCss,
   );
 
   const scrollWrapperClass = classNames(
-    "droplet-scrollbar relative z-10 flex h-full w-full",
-    "overflow-y-auto pb-10 flex-1 flex-col gap-16 mt-14",
+    "relative z-10 flex h-full w-full pb-10 flex-1 flex-col gap-16",
   );
 
   return (

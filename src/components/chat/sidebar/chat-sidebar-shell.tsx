@@ -94,7 +94,7 @@ export default function ChatSidebarShell({
     "bg-lavenderHaze-100/40 shadow-sm transition-all duration-300 backdrop-blur-lg",
     "lg:relative lg:z-10 lg:translate-x-0 dark:bg-nightIndigo-1000/40",
     mobileOpen ? "translate-x-0" : "-translate-x-full",
-    desktopCollapsed ? "lg:w-[78px]" : "lg:w-72",
+    desktopCollapsed ? "lg:w-16" : "lg:w-72",
   );
 
   const navWrapperClass = classNames(

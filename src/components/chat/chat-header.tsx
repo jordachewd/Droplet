@@ -102,7 +102,8 @@ export default function ChatHeader({
   }
 
   const chatHeaderClass = classNames(
-    "ChatHeader absolute left-0 right-0 top-0 z-20 flex w-full px-4",
+    "ChatHeader sticky left-0 right-0 top-0 z-20 flex w-full px-4",
+    "bg-lavenderHaze-500/50 backdrop-blur-lg dark:bg-nightIndigo-500/50",
     style,
   );
 
