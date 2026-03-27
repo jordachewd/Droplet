@@ -2,10 +2,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { isValidObjectId } from "mongoose";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import Task from "@/lib/database/models/tasks.model";
+import Upload from "@/lib/database/models/upload.model";
 import {
   getMediaItemsByUserId,
   getRecentTasksByUserId,
   getTaskByIdForUser,
+  getUploadsByUserId,
 } from "@/lib/utils/task-queries";
 import {
   createTestTask,
@@ -25,6 +27,12 @@ vi.mock("@/lib/database/models/tasks.model", () => ({
   },
 }));
 
+vi.mock("@/lib/database/models/upload.model", () => ({
+  default: {
+    find: vi.fn(),
+  },
+}));
+
 vi.mock("mongoose", () => ({
   isValidObjectId: vi.fn(),
 }));
@@ -35,7 +43,12 @@ type TaskModelMock = {
   aggregate: ReturnType<typeof vi.fn>;
 };
 
+type UploadModelMock = {
+  find: ReturnType<typeof vi.fn>;
+};
+
 const taskModelMock = Task as unknown as TaskModelMock;
+const uploadModelMock = Upload as unknown as UploadModelMock;
 
 describe("task-queries", () => {
   beforeEach(() => {
@@ -209,6 +222,47 @@ describe("task-queries", () => {
         personaId: "strategist",
       }),
     );
+    expect(Number.isNaN(new Date(result[0]?.createdAt ?? "").getTime())).toBe(
+      false,
+    );
+  });
+
+  it("returns uploaded files with pagination clamps and normalized payload", async () => {
+    const user = createTestUser();
+    const uploadQuery = mockMongooseModel([
+      {
+        _id: "upload_1",
+        fileName: "",
+        objectKey: "user_123/uploads/file.png",
+        s3Url: "/api/download?key=user_123%2Fuploads%2Ffile.png",
+        contentType: "image/png",
+        sizeBytes: 2048,
+        taskId: "task_123",
+        createdAt: "invalid-date",
+      },
+    ]);
+    uploadModelMock.find.mockReturnValue(uploadQuery);
+
+    const result = await getUploadsByUserId(user._id, 1000, -10);
+
+    expect(connectToDatabase).toHaveBeenCalledTimes(1);
+    expect(uploadModelMock.find).toHaveBeenCalledWith({ userId: user._id });
+    expect(uploadQuery.skip).toHaveBeenCalledWith(0);
+    expect(uploadQuery.limit).toHaveBeenCalledWith(100);
+    expect(uploadQuery.select).toHaveBeenCalledWith(
+      "fileName objectKey s3Url contentType sizeBytes taskId createdAt",
+    );
+    expect(result).toEqual([
+      expect.objectContaining({
+        id: "upload_1",
+        fileName: "Uploaded file",
+        objectKey: "user_123/uploads/file.png",
+        s3Url: "/api/download?key=user_123%2Fuploads%2Ffile.png",
+        contentType: "image/png",
+        sizeBytes: 2048,
+        taskId: "task_123",
+      }),
+    ]);
     expect(Number.isNaN(new Date(result[0]?.createdAt ?? "").getTime())).toBe(
       false,
     );

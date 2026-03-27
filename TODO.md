@@ -5,56 +5,159 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #68 (2026-03-27). Milestones 0–25 COMPLETE. All phases through 141 complete. 571 unit tests (97 suites). 8 E2E specs. Build passes. TSC clean. Node.js 24.12.0 runtime.**
-> **GATE STATUS: All 7 gates GREEN. Lint (0 errors, 0 warnings), Knip (0 findings), TSC clean, build passes, unit tests (97/571), E2E (8 specs), coverage 85/80/85/85.**
-> **TDD REBUILD COMPLETE. WCAG 2.2 AA COMPLETE. Admin configurability ALL RESOLVED. Phase 141 (suspended user enforcement) COMPLETE.**
+> **STATUS: PM audit #69 (2026-03-27). Milestones 0–25 COMPLETE. All phases through 149 complete. 574 unit tests (97 suites). 8 E2E specs. Build passes. TSC clean. Node.js 24.12.0 runtime.**
+> **GATE STATUS: All 7 gates GREEN. Lint (0 errors, 0 warnings), Knip (0 findings), TSC clean, build passes, unit tests (97/574), E2E (8 specs), coverage 85/80/85/85.**
+> **TDD REBUILD COMPLETE. WCAG 2.2 AA COMPLETE. Admin configurability ALL RESOLVED. Phase 149 (SSE heartbeat streaming fix) COMPLETE.**
 > **Zero: `as never`, `as any`, `console.log`, `console.error`, `window.alert`, `window.confirm`, `strict: false`, stale TODOs — all in `src/`.**
-> **SWOT audit #68 conducted. Architect + Engineer + PM triple audit. 3 production bugs identified (owner-reported).**
-> **NEXT SESSION: 149 (CRITICAL streaming fix) → 150 (HIGH user deletion cascade) → 151 (HIGH library uploaded tab) → 142 (HIGH upload/aws rate limiting) → 143 (MEDIUM env var validation) → 144 (MEDIUM admin config caching) → 145 (MEDIUM upload filename collision) → 146–148 (LOW)**
+> **SWOT audit #69 conducted. Architect + Engineer + PM triple audit. 4 new production bugs identified (owner-reported). 1 CRITICAL regression (billing).**
+> **NEXT SESSION: 152 (CRITICAL billing fix) → 153 (HIGH hydration fix) → 154 (HIGH suspended UX) → 155 (HIGH scrollbar removal) → 150 (HIGH user deletion cascade) → 151 (HIGH library uploaded tab) → 142 (HIGH rate limiting) → 143–148 (MEDIUM/LOW)**
 
 ---
 
-## CRITICAL — SSE Streaming Timeout During Media Generation (PM audit #68 — Owner-reported production bug)
+## CRITICAL — Payment Checkout Broken (PM audit #69 — Owner-reported production bug)
 
-### Phase 149 CRITICAL — Fix "The response stream ended unexpectedly" error
+### Phase 152 CRITICAL — Fix `redirect()` inside try/catch in `checkoutPlan()`
 
-> **Owner-reported CRITICAL production bug.** When asking for media generation (image, audio, video) it triggers `Error: The response stream ended unexpectedly.` Also occurs with large text responses. Triple-confirmed root cause: when OpenAI returns a tool call (media generation), the SSE stream goes silent while the server performs media generation (generateImage/generateAudio/generateVideo). No heartbeat/keepalive events are sent during this gap. Video generation polls Sora for up to 180s, but the client has a 120s timeout — **video generation ALWAYS fails in streaming mode**. Image/audio (5-20s) may also fail if network intermediaries drop idle connections.
+> **Owner-reported CRITICAL production bug.** Clicking "SUBSCRIBE" on `/app/plans` shows "Something went wrong." Billing is 100% broken — zero users can subscribe. Root cause: `redirect()` inside try/catch. Next.js `redirect()` throws `NEXT_REDIRECT` error internally — this is caught by the surrounding catch block and passed to `handleError()`, which re-throws as a generic error. The Stripe session is created successfully but the redirect never executes. **Regression introduced by Phase 135** (try/catch addition).
 
 **Root cause chain:**
 
-1. Client sends streaming request with 120s timeout (`STREAM_REQUEST_TIMEOUT_MS` in `chat-wrapper.tsx:36`)
-2. Server creates `ReadableStream` and sends `meta` SSE event (`route.tsx:1433`)
-3. OpenAI streaming completes (text chunks sent to client)
-4. OpenAI returns tool call → `buildOpenAIResponsePayload()` runs media generation synchronously
-5. During media generation: **zero SSE data flows** — stream is silent
-6. Client 120s timeout fires → abort → stream ends without `final` event → error shown
+1. `checkoutPlan()` in `transaction.action.tsx` calls `redirect(session.url!)` at line ~102
+2. `redirect()` throws a special `NEXT_REDIRECT` error (this is how Next.js redirects work in server actions)
+3. The `catch (error)` block at line ~104 catches the `NEXT_REDIRECT` error
+4. `handleError()` calls `buildSafeClientMessage()` which doesn't recognize `NEXT_REDIRECT` → returns "An unexpected error occurred"
+5. `handleError()` throws `new Error("An unexpected error occurred")` — stripping the `NEXT_REDIRECT` digest
+6. Client receives the generic error → "Something went wrong"
 
 **Files:**
 
-1. `src/app/api/openai/route.tsx` — Add heartbeat mechanism to `ReadableStream.start()` during media generation
-2. `src/components/chat/chat-wrapper.tsx` — Handle `heartbeat` events; make timeout resettable on any received event
-3. `src/types/chat-api.d.ts` — Add `heartbeat` to `ChatStreamEvent` union type
-4. `src/lib/utils/openai/generateResponse.tsx` — Signal to caller when media generation starts (for heartbeat coordination)
+1. `src/lib/actions/transaction.action.tsx` — Move `redirect()` outside try/catch
 
 **What to do:**
 
-1. Add a `type: "heartbeat"` event to the `ChatStreamEvent` type.
-2. In the streaming branch of `route.tsx`: when `generateStreamingResponse` is processing (especially during media tool calls), start a `setInterval` that writes `{ type: "heartbeat" }` SSE events every 10-15 seconds.
-3. In `generateStreamingResponse` or `buildOpenAIResponsePayload`: add a callback (`onMediaGenerationStart`/`onMediaGenerationEnd`) so the route can coordinate the heartbeat interval.
-4. In `chat-wrapper.tsx`: (a) Handle `heartbeat` events in `handleEvent` — ignore content-wise but the data received keeps the connection alive. (b) Reset the timeout timer on every received event (including heartbeats) instead of using a fixed 120s from request start.
-5. Increase `STREAM_REQUEST_TIMEOUT_MS` to 200s as a safety margin (video can take up to 180s).
+1. Store `session.url` in a variable declared before the try/catch block.
+2. Inside the try block, assign `redirectUrl = session.url` instead of calling `redirect()` directly.
+3. After the try/catch block, call `redirect(redirectUrl)` — this way the `NEXT_REDIRECT` throw propagates correctly.
+4. Update the unit test for `checkoutPlan` to correctly mock `redirect` as throwing (matches production behavior).
+
+**Fix pattern:**
+
+```typescript
+let redirectUrl: string | undefined;
+try {
+  // ... create Stripe session ...
+  redirectUrl = session.url!;
+} catch (error) {
+  handleError({ error, source: "checkoutPlan" });
+}
+if (redirectUrl) redirect(redirectUrl);
+```
 
 **Acceptance criteria:**
 
-- [ ] SSE heartbeat events sent every 10-15s during media generation
-- [ ] Client handles heartbeat events without error
-- [ ] Client timeout resets on every received event
-- [ ] Video generation (180s max) completes without stream timeout
-- [ ] Image/audio generation completes without stream timeout
-- [ ] Large text responses complete without timeout
-- [ ] `ChatStreamEvent` type includes `heartbeat`
-- [ ] Unit tests cover heartbeat emission and client handling
-- [ ] Build passes, tests pass
+- [x] `redirect()` called outside try/catch block
+- [x] Stripe checkout flow completes without error
+- [x] Unit test updated to verify redirect behavior
+- [x] Build passes, tests pass
+
+---
+
+## HIGH — Admin Settings Hydration Mismatch (PM audit #69 — Owner-reported production bug)
+
+### Phase 153 HIGH — Fix `AdminSettingsTabs` SSR/client hydration mismatch
+
+> **Owner-reported HIGH bug.** `/admin/settings` shows React hydration mismatch errors. `AdminSettingsTabs` reads `localStorage` in `useState` initializer — SSR returns fallback (`tabs[0].id`), but client hydration may return a different tab ID from localStorage. This causes `aria-selected`, `className`, and `tabIndex` attributes to differ between server HTML and client's first render.
+
+**File:** `src/components/admin/settings/admin-settings-tabs.tsx`
+
+**What to do:**
+
+1. Remove the `getInitialActiveTabId()` function.
+2. Initialize `useState` with `tabs[0]?.id ?? ""` (same value for SSR and client).
+3. Add a `useEffect` that reads `localStorage` after mount and updates state if a stored valid tab is found.
+4. This ensures hydration matches, then updates client-side only after mount.
+
+**Fix pattern:**
+
+```typescript
+const [activeTabId, setActiveTabId] = useState(tabs[0]?.id ?? "");
+
+useEffect(() => {
+  const stored = localStorage.getItem(ADMIN_SETTINGS_TAB_STORAGE_KEY);
+  if (stored && tabs.some((t) => t.id === stored)) {
+    setActiveTabId(stored);
+  }
+}, [tabs]);
+```
+
+**Acceptance criteria:**
+
+- [x] No hydration mismatch errors on `/admin/settings`
+- [x] Tab persistence still works (stored tab restored after mount)
+- [x] Arrow-key navigation still works
+- [x] Build passes, tests pass
+
+---
+
+## HIGH — Suspended User UX Messaging (PM audit #69 — Owner-reported UX gap)
+
+### Phase 154 HIGH — Add suspension message to `ChatSidebarPromo` and `PlanPromo`
+
+> **Owner-reported HIGH UX gap.** Suspended users can access `/app` but see normal upgrade CTAs instead of suspension messaging. Backend enforcement exists (Phase 141 — API routes return 403) but the UI provides no explanation. Owner wants `ChatSidebarPromo` to display a relevant suspension message and `PlanPromo` on `/app/profile` to display a relevant suspension message.
+
+**Files:**
+
+1. `src/components/chat/sidebar/chat-sidebar-promo.tsx` — Add `isSuspended` prop and suspension-specific display
+2. `src/components/shared/plan-promo.tsx` — Add `isSuspended` prop and suspension-specific display
+3. `src/components/chat/sidebar/chat-sidebar-shell.tsx` — Pass `isSuspended` to `ChatSidebarPromo`
+4. `src/components/sections/profile/profile-hero.tsx` — Pass `isSuspended` to `PlanPromo`
+5. Server component parents — Provide `isSuspended` data
+
+**What to do:**
+
+1. Add `isSuspended?: boolean` prop to `ChatSidebarPromoProps` and `PlanPromoProps`.
+2. In `ChatSidebarPromo`: if `isSuspended` is true, render a suspension message (e.g., "Account Suspended — Your account has been suspended. Contact support for assistance.") instead of upgrade CTA. No "Manage Plan" link.
+3. In `PlanPromo`: if `isSuspended` is true, render a suspension notice with contact-support CTA instead of upgrade prompt.
+4. Pass `isSuspended` from server components to these client components via props.
+
+**Acceptance criteria:**
+
+- [x] `ChatSidebarPromo` shows suspension message when `isSuspended` is true
+- [x] `PlanPromo` shows suspension notice when `isSuspended` is true
+- [x] Normal behavior preserved when `isSuspended` is false/undefined
+- [x] No upgrade CTAs visible to suspended users
+- [x] Unit tests cover suspension display
+- [x] Build passes, tests pass
+
+---
+
+## HIGH — Remove Custom Scrollbar CSS (PM audit #69 — Owner directive)
+
+### Phase 155 HIGH — Remove `.droplet-scrollbar` class and all usages
+
+> **Owner directive.** Remove ALL custom scrollbar manipulation — let the browser handle scrollbars natively. The `.droplet-scrollbar` class in `globals.css` customizes WebKit scrollbars. Used in 5 components.
+
+**Files:**
+
+1. `src/app/globals.css` — Delete `.droplet-scrollbar` class definition
+2. `src/components/chat/chat-wrapper.tsx` — Remove `droplet-scrollbar` from className
+3. `src/components/chat/sidebar/chat-sidebar-shell.tsx` — Remove `droplet-scrollbar` from className
+4. `src/components/chat/chat-page-wrapper.tsx` — Remove `droplet-scrollbar` from className
+5. `src/components/admin/admin-layout-shell.tsx` — Remove `droplet-scrollbar` from className
+6. `src/components/admin/admin-sidebar.tsx` — Remove `droplet-scrollbar` from className
+
+**What to do:**
+
+1. Delete the `.droplet-scrollbar { ... }` block from `globals.css`.
+2. Remove the `droplet-scrollbar` class name from all 5 component className strings.
+3. No replacement needed — browser default scrollbars will apply.
+
+**Acceptance criteria:**
+
+- [x] `.droplet-scrollbar` CSS class deleted from `globals.css`
+- [x] Zero usages of `droplet-scrollbar` in any component file
+- [x] Browser default scrollbars work correctly
+- [x] Build passes, tests pass
 
 ---
 
@@ -116,7 +219,7 @@
 
 **What to do:**
 
-1. Create `Upload` model: `{ userId: String (indexed), fileName: String, objectKey: String, s3Url: String, contentType: String, sizeBytes: Number, taskId: String (optional — conversation it was used in), createdAt: Date (indexed) }`. Use `strict: true`.
+1. Create `Upload` model: `{ userId: String, fileName: String, objectKey: String, s3Url: String, contentType: String, sizeBytes: Number, taskId: String (optional — conversation it was used in), createdAt: Date }`. Use `strict: true`. Use compound index `{ userId: 1, createdAt: -1 }` instead of two separate indexes (covers filter + sort in single scan per Architect recommendation).
 2. In upload API route: after successful S3 upload, persist an `Upload` document.
 3. Add `getUploadsByUserId(userId, page, limit)` query with `.lean().select()` and pagination.
 4. In library page: fetch uploads server-side and pass as props.
@@ -332,5 +435,5 @@
 ---
 
 > **Completed phases** archived in [`DONE.md`](DONE.md).
-> All phases through 141 complete (incl. 135–141, 74.2, 104, 125.3, 126.2, 134, plus 107.1–107.3, 108, 114, 125.1, 131, 132, 133, 120.1–120.7, 121–130, 128.2, 106).
+> All phases through 149 complete (incl. 135–141, 149, 74.2, 104, 125.3, 126.2, 134, plus 107.1–107.3, 108, 114, 125.1, 131, 132, 133, 120.1–120.7, 121–130, 128.2, 106).
 > All Milestones 0–25 COMPLETE.

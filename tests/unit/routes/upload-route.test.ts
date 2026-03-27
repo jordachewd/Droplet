@@ -2,6 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { NextRequest } from "next/server";
 import { POST } from "@/app/api/upload/route";
 import uploadFileToAWS from "@/lib/utils/aws/uploadFileToAWS";
+import { connectToDatabase } from "@/lib/database/mongoose";
+import Upload from "@/lib/database/models/upload.model";
 import { requireActiveUser } from "@/lib/utils/require-active-user";
 import { auth } from "@clerk/nextjs/server";
 import { MAX_UPLOAD_SIZE_BYTES } from "@/lib/utils/upload-file-validation";
@@ -12,6 +14,16 @@ vi.mock("@clerk/nextjs/server", () => ({
 
 vi.mock("@/lib/utils/aws/uploadFileToAWS", () => ({
   default: vi.fn(),
+}));
+
+vi.mock("@/lib/database/mongoose", () => ({
+  connectToDatabase: vi.fn(),
+}));
+
+vi.mock("@/lib/database/models/upload.model", () => ({
+  default: {
+    create: vi.fn(),
+  },
 }));
 
 vi.mock("@/lib/utils/require-active-user", () => ({
@@ -40,6 +52,12 @@ describe("POST /api/upload", () => {
   beforeEach(() => {
     mockAuthUser("user_123");
     mockActiveUserStatus("active");
+    vi.mocked(connectToDatabase).mockResolvedValue(
+      {} as Awaited<ReturnType<typeof connectToDatabase>>,
+    );
+    vi.mocked(Upload.create).mockResolvedValue({
+      _id: "upload_1",
+    } as unknown as Awaited<ReturnType<typeof Upload.create>>);
     vi.mocked(uploadFileToAWS).mockResolvedValue(
       "/api/download?key=user_123%2Fuploads%2Fuploaded_file_1700000000000.png",
     );
@@ -192,6 +210,16 @@ describe("POST /api/upload", () => {
     expect(payload.objectKey).toBe(
       "user_123/uploads/uploaded_file_1700000000000.png",
     );
+    expect(connectToDatabase).toHaveBeenCalledOnce();
+    expect(Upload.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: "user_123",
+        fileName: "uploaded_file_1700000000000.png",
+        objectKey: "user_123/uploads/uploaded_file_1700000000000.png",
+        contentType: "image/png",
+        sizeBytes: 3,
+      }),
+    );
     expect(uploadFileToAWS).toHaveBeenCalledWith(
       expect.any(Buffer),
       "uploaded_file_1700000000000.png",
@@ -214,5 +242,28 @@ describe("POST /api/upload", () => {
 
     expect(response.status).toBe(500);
     expect(payload.error).toBe("Failed to upload file.");
+    expect(connectToDatabase).not.toHaveBeenCalled();
+    expect(Upload.create).not.toHaveBeenCalled();
+  });
+
+  it("persists optional taskId when provided", async () => {
+    vi.spyOn(Date, "now").mockReturnValue(1_700_000_000_222);
+    const formData = new FormData();
+    formData.set(
+      "file",
+      new File([new Uint8Array([1, 2, 3])], "image.png", {
+        type: "image/png",
+      }),
+    );
+    formData.set("taskId", "task_abc123");
+
+    const response = await POST(buildRequestWithFormData(formData));
+
+    expect(response.status).toBe(200);
+    expect(Upload.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        taskId: "task_abc123",
+      }),
+    );
   });
 });

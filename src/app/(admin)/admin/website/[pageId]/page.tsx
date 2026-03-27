@@ -72,7 +72,6 @@ export default async function AdminWebsiteEditorPage({
 
         <div className="flex justify-end">
           <AdminFormSubmitButton
-            className="btn btn-md btn-contained"
             label="Save Page"
             pendingLabel="Saving page..."
           />

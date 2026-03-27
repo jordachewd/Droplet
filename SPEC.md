@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-27 (PM audit #68). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. Phase 141 (suspended user enforcement) COMPLETE. Admin configurability ALL RESOLVED. **All 7 gates GREEN.** 571 unit tests (97 suites). E2E: 8 spec files. Coverage: 85/80/85/85. Zero `as never` casts. Lint: 0 errors, 0 warnings. Active issues: TD-STREAM-01 (CRITICAL — SSE streaming timeout during media generation, Phase 149), TD-CASCADE-01 (HIGH — user deletion cascade incomplete, Phase 150), TD-UPLOAD-01 (HIGH — library upload tracking missing, Phase 151). Build passing. Node.js 24.12.0.
+> Last updated: 2026-03-27 (PM audit #69). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. Phase 141 (suspended user enforcement) COMPLETE. Phase 149 (SSE heartbeat streaming fix) COMPLETE. Admin configurability ALL RESOLVED. **All 7 gates GREEN.** 574 unit tests (97 suites). E2E: 8 spec files. Coverage: 85/80/85/85. Zero `as never` casts. Lint: 0 errors, 0 warnings. Active issues: TD-CHECKOUT-01 (CRITICAL — payment checkout broken, Phase 152), TD-CASCADE-01 (HIGH — user deletion cascade incomplete, Phase 150), TD-UPLOAD-01 (HIGH — library upload tracking missing, Phase 151), TD-HYDRATION-01 (HIGH — admin settings hydration mismatch, Phase 153), TD-SUSPEND-UX-01 (HIGH — suspended user UX gap, Phase 154), TD-SCROLLBAR-01 (HIGH — custom scrollbar removal, Phase 155). Build passing. Node.js 24.12.0.
 
 ---
 
@@ -601,7 +601,7 @@ Route streams via SSE events (`meta`, `chunk`, `final`, `error`) in `/api/openai
 Client consumes via `ReadableStream.getReader()` in `chat-wrapper.tsx` with JSON fallback for non-streaming clients.
 All auth/limit checks execute before streaming begins. Final task persistence and usage event emission happen after stream completion.
 
-> **⚠️ CRITICAL GAP (TD-STREAM-01, Phase 149):** No heartbeat/keepalive events during media generation via tool calls. When OpenAI returns a tool call (image/audio/video), the SSE connection goes silent during generation (up to 180s for video). Client 120s timeout fires before video completes. Fix: add periodic `{ type: "heartbeat" }` SSE events during media generation and make client timeout resettable on any received event.
+> **✅ RESOLVED (Phase 149 COMPLETE, TD-STREAM-01 CLOSED):** SSE heartbeat mechanism implemented. 12s keepalive interval during media generation via `onMediaGenerationStart`/`onMediaGenerationEnd` lifecycle callbacks. Client timeout reset on every received event (including heartbeats). Timeout increased to 200s. `heartbeat` event type added to `ChatStreamEvent` union.
 
 ### OpenAI Technical Debt
 
@@ -745,11 +745,11 @@ All button styles use Lime Green as the accent color in **both** light and dark 
 
 ## 13. Testing
 
-- **Unit tests**: 97 suites, 571 tests (Vitest) — organized by domain in `tests/unit/{actions,components,routes,utils,models,constants,stores}/`. TDD rebuild COMPLETE (Phases 120.1–120.7). All test files rebuilt from scratch using strict TDD methodology. Zero `as never` casts. All tests use shared factories from `tests/unit/test-support/`. Includes streaming, webhook, chat-wrapper, chat-body stop-state, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, persona prompt, rate limiting, task complexity classification, conversation stop enforcement, entitlement resolver, checkout-success page, admin audit trail, OpenAI route tests (split into 5 focused modules), atomic prompt limit, daily conversation limit, media error handling, universal feature access, trial access tests, video generation, validation schema security injection tests, AudioPlayer ARIA tests, abort behavior tests, Zustand store tests, upload file size validation, 24 component test files, user model tests, Button component TDD tests, PageHead heading-level TDD tests, suspended user enforcement tests.
+- **Unit tests**: 97 suites, 574 tests (Vitest) — organized by domain in `tests/unit/{actions,components,routes,utils,models,constants,stores}/`. TDD rebuild COMPLETE (Phases 120.1–120.7). All test files rebuilt from scratch using strict TDD methodology. Zero `as never` casts. All tests use shared factories from `tests/unit/test-support/`. Includes streaming, webhook, chat-wrapper, chat-body stop-state, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, persona prompt, rate limiting, task complexity classification, conversation stop enforcement, entitlement resolver, checkout-success page, admin audit trail, OpenAI route tests (split into 5 focused modules), atomic prompt limit, daily conversation limit, media error handling, universal feature access, trial access tests, video generation, validation schema security injection tests, AudioPlayer ARIA tests, abort behavior tests, Zustand store tests, upload file size validation, 24 component test files, user model tests, Button component TDD tests, PageHead heading-level TDD tests, suspended user enforcement tests.
 - **E2E tests**: 8 Playwright spec files. Specs: `admin-settings-propagation`, `auth-boundaries`, `authenticated-accessibility`, `chat-conversation-flow`, `public-structure`, `admin-user-operations`, `billing-checkout-flow`, `error-boundary-handling`. Default 3 browsers (Chromium, Firefox, WebKit); full 7-browser matrix via `PLAYWRIGHT_FULL_MATRIX=1`. WCAG E2E via @axe-core/playwright.
 - **Coverage**: v8 provider, thresholds: 85% statements / 80% branches / 85% functions / 85% lines. Gate PASSES. 7 files explicitly excluded from coverage (complex integration files). Reporters: text, json-summary, lcov. Setup file: `tests/unit/vitest.setup.ts`.
 - **Config**: Vitest `environmentMatchGlobs` for auto-jsdom on `.tsx`. Playwright `actionTimeout: 10s`, `expect.timeout: 5s`. ESLint `no-console` (error), `no-restricted-globals` (alert/confirm). TS `noFallthroughCasesInSwitch`, `forceConsistentCasingInFileNames`. All 7 validation gates GREEN (lint, knip, tsc, unit, E2E, build, prettier).
-- **Gaps**: No E2E for Stripe checkout flow. Streaming heartbeat during media generation untested (Phase 149). User deletion cascade completeness untested for RateLimitEntry (Phase 150). 7 coverage-excluded files include `generateResponse.tsx`.
+- **Gaps**: No E2E for Stripe checkout flow. User deletion cascade completeness untested for RateLimitEntry (Phase 150). 7 coverage-excluded files include `generateResponse.tsx`.
 
 ---
 
@@ -783,15 +783,23 @@ All button styles use Lime Green as the accent color in **both** light and dark 
 ## 15. Technical Debt Summary
 
 > Only unresolved items live here. All resolved TDs are archived in `DONE.md`.
-> Last updated: PM audit #66 (2026-03-27).
+> Last updated: PM audit #69 (2026-03-27).
+
+### Active — CRITICAL Priority
+
+| ID             | Area    | Description                                                                                                                                                                                                                                                                                              | Phase |
+| -------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| TD-CHECKOUT-01 | Billing | **CRITICAL.** `redirect()` inside try/catch in `checkoutPlan()` — Next.js `redirect()` throws `NEXT_REDIRECT`, caught by surrounding try/catch, re-thrown as generic error by `handleError()`. Stripe session created but redirect never executes. Billing completely broken. Regression from Phase 135. | 152   |
 
 ### Active — HIGH Priority
 
-| ID            | Area    | Description                                                                                                                                                                                                                                                                                            | Phase |
-| ------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----- |
-| TD-STREAM-01  | SSE     | **CRITICAL.** SSE stream goes silent during media generation (tool calls). Video generation polls for up to 180s but client has 120s timeout — video always fails. No heartbeat/keepalive mechanism. Image/audio may also fail if intermediaries drop idle connections. Owner-reported production bug. | 149   |
-| TD-CASCADE-01 | Data    | **HIGH.** User deletion cascade incomplete — `RateLimitEntry` records survive all 3 deletion paths (self-delete, admin-delete, webhook). Three independent deletion path implementations duplicate the same cascade logic. Owner-reported production bug.                                              | 150   |
-| TD-UPLOAD-01  | Feature | **HIGH.** Library has no "Uploaded" tab. User-uploaded files stored in S3 (`{userId}/uploads/`) but not tracked in MongoDB. No `Upload` model. No way to list/browse/manage uploaded files. Owner-reported production bug.                                                                             | 151   |
+| ID               | Area    | Description                                                                                                                                                                                                                   | Phase |
+| ---------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| TD-CASCADE-01    | Data    | **HIGH.** User deletion cascade incomplete — `RateLimitEntry` records survive all 3 deletion paths (self-delete, admin-delete, webhook). Three independent deletion path implementations duplicate the same cascade logic.    | 150   |
+| TD-UPLOAD-01     | Feature | **HIGH.** Library has no "Uploaded" tab. User-uploaded files stored in S3 (`{userId}/uploads/`) but not tracked in MongoDB. No `Upload` model. No way to list/browse/manage uploaded files.                                   | 151   |
+| TD-HYDRATION-01  | Admin   | **HIGH.** `AdminSettingsTabs` SSR/client mismatch — `getInitialActiveTabId()` reads `localStorage` in `useState` initializer. SSR returns fallback, client may return stored tab. Causes React hydration errors.              | 153   |
+| TD-SUSPEND-UX-01 | UX      | **HIGH.** Suspended users see normal upgrade CTAs and plan info instead of suspension messaging. `ChatSidebarPromo` and `PlanPromo` have zero suspension awareness. Backend enforcement exists (Phase 141) but UX is missing. | 154   |
+| TD-SCROLLBAR-01  | UX      | **HIGH.** Custom scrollbar CSS (`.droplet-scrollbar` in `globals.css` + 5 component usages) must be removed — owner directive to let browser handle scrollbars natively.                                                      | 155   |
 
 ### Active — MEDIUM Priority
 
@@ -809,20 +817,21 @@ All button styles use Lime Green as the accent color in **both** light and dark 
 | TD-AI-18   | OpenAI  | errorMessage forwarding pattern in `/api/openai` is safe but fragile.          | Advisory |
 | TD-API-09  | API     | `messageTextContentSchema` uses `.strict()` — may reject extra fields.         | Monitor  |
 
-### Resolved (PM audit #68)
+### Resolved (PM audit #69)
 
-| ID             | Area     | Description                                                                                                                                                | Phase |
-| -------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
-| TD-SEC-13      | Security | ~~`checkoutPlan` server action has no try/catch.~~ **RESOLVED (Phase 135).** Wrapped in try/catch with `handleError`.                                      | 135   |
-| TD-API-10      | API      | ~~Upload/AWS routes use `{ message }` instead of `{ error }`.~~ **RESOLVED (Phase 136).** All error responses standardized to `{ error }`.                 | 136   |
-| TD-TYPE-01     | TypeSafe | ~~`handleError` return type `void` instead of `never`.~~ **RESOLVED (Phase 137).** Return type is `never`.                                                 | 137   |
-| TD-LINT-01     | Code     | ~~7 lint warnings.~~ **RESOLVED (Phase 126.2).** 0 errors, 0 warnings.                                                                                     | 126.2 |
-| TD-PARSE-01    | Code     | ~~Generate functions return JSON.stringify.~~ **RESOLVED (Phase 138).** Return typed objects directly.                                                     | 138   |
-| TD-E2E-01      | Test     | ~~E2E coverage at 5 specs only.~~ **RESOLVED (Phase 134).** 8 E2E specs.                                                                                   | 134   |
-| TD-SEC-14      | Security | ~~`User.suspended` never enforced in API routes.~~ **RESOLVED (Phase 141).** All 4 API routes enforce suspended check. Shared `requireActiveUser()` guard. | 141   |
-| TD-HARDCODE-01 | Content  | ~~Stop reason messages hardcoded.~~ **RESOLVED (Phase 107).** Admin-configurable via `getEffectiveStopReasonMessages()` + AppSetting overrides.            | 107   |
-| TD-WCAG-05     | A11y     | ~~Tablist arrow-key navigation missing.~~ **RESOLVED (Phase 108).** ArrowLeft/Right/Home/End + roving tabIndex implemented in both tab components.         | 108   |
-| TD-WCAG-07     | A11y     | ~~AvatarMenu keyboard navigation missing.~~ **RESOLVED (Phase 114).** role="menu"/"menuitem", Escape, ArrowUp/Down, focus management all implemented.      | 114   |
-| TD-TEST-03     | Test     | ~~Full TDD test rebuild from scratch.~~ **RESOLVED.** 571 tests (97 suites). Zero `as never` casts. Coverage 85/80/85/85.                                  | 120   |
-| TD-REUSE-04    | Code     | ~~`ChatApiResponse` interface duplicate.~~ **RESOLVED (Phase 106).** Shared types in `src/types/chat-api.d.ts`.                                            | 106   |
-| TD-TEST-02     | Test     | ~~openai-route test IO mocks.~~ **RESOLVED.** Route tests rebuilt from scratch (Phase 120.4) — split into 5 focused modules.                               | 120.4 |
+| ID             | Area     | Description                                                                                                                                                                             | Phase |
+| -------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| TD-STREAM-01   | SSE      | ~~SSE stream goes silent during media generation.~~ **RESOLVED (Phase 149).** Heartbeat mechanism implemented with 12s interval, lifecycle callbacks, 200s client timeout.              | 149   |
+| TD-SEC-13      | Security | ~~`checkoutPlan` server action has no try/catch.~~ **RESOLVED (Phase 135).** Wrapped in try/catch with `handleError`. **NOTE:** Introduced TD-CHECKOUT-01 regression — redirect broken. | 135   |
+| TD-API-10      | API      | ~~Upload/AWS routes use `{ message }` instead of `{ error }`.~~ **RESOLVED (Phase 136).** All error responses standardized to `{ error }`.                                              | 136   |
+| TD-TYPE-01     | TypeSafe | ~~`handleError` return type `void` instead of `never`.~~ **RESOLVED (Phase 137).** Return type is `never`.                                                                              | 137   |
+| TD-LINT-01     | Code     | ~~7 lint warnings.~~ **RESOLVED (Phase 126.2).** 0 errors, 0 warnings.                                                                                                                  | 126.2 |
+| TD-PARSE-01    | Code     | ~~Generate functions return JSON.stringify.~~ **RESOLVED (Phase 138).** Return typed objects directly.                                                                                  | 138   |
+| TD-E2E-01      | Test     | ~~E2E coverage at 5 specs only.~~ **RESOLVED (Phase 134).** 8 E2E specs.                                                                                                                | 134   |
+| TD-SEC-14      | Security | ~~`User.suspended` never enforced in API routes.~~ **RESOLVED (Phase 141).** All 4 API routes enforce suspended check. Shared `requireActiveUser()` guard.                              | 141   |
+| TD-HARDCODE-01 | Content  | ~~Stop reason messages hardcoded.~~ **RESOLVED (Phase 107).** Admin-configurable via `getEffectiveStopReasonMessages()` + AppSetting overrides.                                         | 107   |
+| TD-WCAG-05     | A11y     | ~~Tablist arrow-key navigation missing.~~ **RESOLVED (Phase 108).** ArrowLeft/Right/Home/End + roving tabIndex implemented in both tab components.                                      | 108   |
+| TD-WCAG-07     | A11y     | ~~AvatarMenu keyboard navigation missing.~~ **RESOLVED (Phase 114).** role="menu"/"menuitem", Escape, ArrowUp/Down, focus management all implemented.                                   | 114   |
+| TD-TEST-03     | Test     | ~~Full TDD test rebuild from scratch.~~ **RESOLVED.** 574 tests (97 suites). Zero `as never` casts. Coverage 85/80/85/85.                                                               | 120   |
+| TD-REUSE-04    | Code     | ~~`ChatApiResponse` interface duplicate.~~ **RESOLVED (Phase 106).** Shared types in `src/types/chat-api.d.ts`.                                                                         | 106   |
+| TD-TEST-02     | Test     | ~~openai-route test IO mocks.~~ **RESOLVED.** Route tests rebuilt from scratch (Phase 120.4) — split into 5 focused modules.                                                            | 120.4 |

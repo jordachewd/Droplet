@@ -55,30 +55,30 @@ export default async function AdminUserDetailPage({
         subtitle="Inspect plan state, recent billing, and account-level operational controls."
       />
 
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.4fr_0.8fr]">
+      <div className="flex flex-col gap-6">
         <article className="admin-surface">
           <h2 className="heading-6 mb-4">Account Details</h2>
           <dl className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
-              <dt className="text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
+              <dt className="text-xs font-semibold uppercase text-midnightBlue-700 dark:text-lavenderHaze-700">
                 Email
               </dt>
               <dd className="mt-1 text-sm">{user.email}</dd>
             </div>
             <div>
-              <dt className="text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
+              <dt className="text-xs font-semibold uppercase text-midnightBlue-700 dark:text-lavenderHaze-700">
                 Clerk ID
               </dt>
               <dd className="mt-1 text-sm">{user.clerkId}</dd>
             </div>
             <div>
-              <dt className="text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
+              <dt className="text-xs font-semibold uppercase text-midnightBlue-700 dark:text-lavenderHaze-700">
                 Role
               </dt>
               <dd className="mt-1 text-sm capitalize">{user.role}</dd>
             </div>
             <div>
-              <dt className="text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
+              <dt className="text-xs font-semibold uppercase text-midnightBlue-700 dark:text-lavenderHaze-700">
                 State
               </dt>
               <dd className="mt-1 text-sm">
@@ -86,7 +86,7 @@ export default async function AdminUserDetailPage({
               </dd>
             </div>
             <div>
-              <dt className="text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
+              <dt className="text-xs font-semibold uppercase text-midnightBlue-700 dark:text-lavenderHaze-700">
                 Plan
               </dt>
               <dd className="mt-1 text-sm">
@@ -95,13 +95,13 @@ export default async function AdminUserDetailPage({
               </dd>
             </div>
             <div>
-              <dt className="text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
+              <dt className="text-xs font-semibold uppercase text-midnightBlue-700 dark:text-lavenderHaze-700">
                 Billing
               </dt>
               <dd className="mt-1 text-sm">{user.billing}</dd>
             </div>
             <div>
-              <dt className="text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
+              <dt className="text-xs font-semibold uppercase text-midnightBlue-700 dark:text-lavenderHaze-700">
                 Plan Expires
               </dt>
               <dd className="mt-1 text-sm">
@@ -111,7 +111,7 @@ export default async function AdminUserDetailPage({
               </dd>
             </div>
             <div>
-              <dt className="text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
+              <dt className="text-xs font-semibold uppercase text-midnightBlue-700 dark:text-lavenderHaze-700">
                 Registered
               </dt>
               <dd className="mt-1 text-sm">
@@ -125,17 +125,17 @@ export default async function AdminUserDetailPage({
 
         <article className="admin-surface">
           <h2 className="heading-6 mb-4">Usage Snapshot</h2>
-          <div className="grid grid-cols-1 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             <div className="admin-surface-subtle">
-              <p className="text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
+              <p className="text-xxs uppercase text-midnightBlue-700 dark:text-lavenderHaze-700">
                 Daily Conversations
               </p>
-              <p className="heading-5 mt-1">
+              <p className="heading-6 mt-2">
                 {formatUsageLabel(user.conversationUsage)}
               </p>
               <div className="mt-2 h-2 overflow-hidden rounded-full bg-lavenderHaze-300 dark:bg-nightIndigo-500/40">
                 <div
-                  className="h-full bg-lavenderHaze-500 dark:bg-nightIndigo-400"
+                  className="h-full bg-limeGreen-500"
                   style={{
                     width: `${getUsagePercent(user.conversationUsage)}%`,
                   }}
@@ -143,10 +143,10 @@ export default async function AdminUserDetailPage({
               </div>
             </div>
             <div className="admin-surface-subtle">
-              <p className="text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
+              <p className="text-xxs uppercase text-midnightBlue-700 dark:text-lavenderHaze-700">
                 Prompts / Conversation (Peak)
               </p>
-              <p className="heading-5 mt-1">
+              <p className="heading-6 mt-2">
                 {formatUsageLabel(user.promptUsage)}
               </p>
               <p className="mt-1 text-xs text-midnightBlue-600 dark:text-lavenderHaze-600">
@@ -154,21 +154,21 @@ export default async function AdminUserDetailPage({
               </p>
               <div className="mt-2 h-2 overflow-hidden rounded-full bg-lavenderHaze-300 dark:bg-nightIndigo-500/40">
                 <div
-                  className="h-full bg-lavenderHaze-500 dark:bg-nightIndigo-400"
+                  className="h-full bg-limeGreen-500"
                   style={{ width: `${getUsagePercent(user.promptUsage)}%` }}
                 />
               </div>
             </div>
             <div className="admin-surface-subtle">
-              <p className="text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
+              <p className="text-xxs uppercase text-midnightBlue-700 dark:text-lavenderHaze-700">
                 Image Generations
               </p>
-              <p className="heading-5 mt-1">
+              <p className="heading-6 mt-2">
                 {formatUsageLabel(user.mediaUsage.images)}
               </p>
               <div className="mt-2 h-2 overflow-hidden rounded-full bg-lavenderHaze-300 dark:bg-nightIndigo-500/40">
                 <div
-                  className="h-full bg-lavenderHaze-500 dark:bg-nightIndigo-400"
+                  className="h-full bg-limeGreen-500"
                   style={{
                     width: `${getUsagePercent(user.mediaUsage.images)}%`,
                   }}
@@ -176,15 +176,15 @@ export default async function AdminUserDetailPage({
               </div>
             </div>
             <div className="admin-surface-subtle">
-              <p className="text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
+              <p className="text-xxs uppercase text-midnightBlue-700 dark:text-lavenderHaze-700">
                 Audio Generations
               </p>
-              <p className="heading-5 mt-1">
+              <p className="heading-6 mt-2">
                 {formatUsageLabel(user.mediaUsage.audio)}
               </p>
               <div className="mt-2 h-2 overflow-hidden rounded-full bg-lavenderHaze-300 dark:bg-nightIndigo-500/40">
                 <div
-                  className="h-full bg-lavenderHaze-500 dark:bg-nightIndigo-400"
+                  className="h-full bg-limeGreen-500"
                   style={{
                     width: `${getUsagePercent(user.mediaUsage.audio)}%`,
                   }}
@@ -192,15 +192,15 @@ export default async function AdminUserDetailPage({
               </div>
             </div>
             <div className="admin-surface-subtle">
-              <p className="text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
+              <p className="text-xxs uppercase text-midnightBlue-700 dark:text-lavenderHaze-700">
                 Video Generations
               </p>
-              <p className="heading-5 mt-1">
+              <p className="heading-6 mt-2">
                 {formatUsageLabel(user.mediaUsage.video)}
               </p>
               <div className="mt-2 h-2 overflow-hidden rounded-full bg-lavenderHaze-300 dark:bg-nightIndigo-500/40">
                 <div
-                  className="h-full bg-lavenderHaze-500 dark:bg-nightIndigo-400"
+                  className="h-full bg-limeGreen-500"
                   style={{
                     width: `${getUsagePercent(user.mediaUsage.video)}%`,
                   }}
@@ -208,7 +208,7 @@ export default async function AdminUserDetailPage({
               </div>
             </div>
             <div className="admin-surface-subtle">
-              <p className="text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
+              <p className="text-xxs uppercase text-midnightBlue-700 dark:text-lavenderHaze-700">
                 Trial Usage (Img / Audio / Video)
               </p>
               <p className="mt-1 text-sm">
@@ -235,7 +235,6 @@ export default async function AdminUserDetailPage({
               value={(!user.suspended).toString()}
             />
             <AdminFormSubmitButton
-              className="btn btn-md btn-outlined"
               label={user.suspended ? "Reinstate User" : "Suspend User"}
               pendingLabel="Updating user..."
             />
@@ -247,9 +246,9 @@ export default async function AdminUserDetailPage({
           >
             <input type="hidden" name="userId" value={user.id} />
             <AdminFormSubmitButton
-              className="btn btn-md btn-contained bg-red-700 text-white hover:bg-red-800"
               label="Remove User"
               pendingLabel="Removing user..."
+              className="text-white bg-red-700 hover:bg-red-800 border-red-700 hover:border-red-800"
             />
           </AdminManagedForm>
         </div>

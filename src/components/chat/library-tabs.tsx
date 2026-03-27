@@ -10,6 +10,7 @@ import {
   LibraryConversationCardItem,
   LibraryMediaCardItem,
   LibraryPaginationState,
+  LibraryUploadCardItem,
 } from "@/types/LibraryData.d";
 
 interface LibraryTabsProps {
@@ -17,26 +18,30 @@ interface LibraryTabsProps {
   images: LibraryMediaCardItem[];
   audios: LibraryMediaCardItem[];
   videos: LibraryMediaCardItem[];
+  uploads: LibraryUploadCardItem[];
   initialTabId?: LibraryTabId;
   conversationsPagination: LibraryPaginationState;
   imagesPagination: LibraryPaginationState;
   audiosPagination: LibraryPaginationState;
   videosPagination: LibraryPaginationState;
+  uploadsPagination: LibraryPaginationState;
   hasLoadError?: boolean;
 }
 
-type LibraryTabId = "chats" | "images" | "audios" | "videos";
+type LibraryTabId = "chats" | "images" | "audios" | "videos" | "uploaded";
 
 export default function LibraryTabs({
   conversations,
   images,
   audios,
   videos,
+  uploads,
   initialTabId = "chats",
   conversationsPagination,
   imagesPagination,
   audiosPagination,
   videosPagination,
+  uploadsPagination,
   hasLoadError = false,
 }: LibraryTabsProps) {
   const [activeTabId, setActiveTabId] = useState<LibraryTabId>(initialTabId);
@@ -51,8 +56,15 @@ export default function LibraryTabs({
       { id: "images" as const, label: "Images", count: images.length },
       { id: "audios" as const, label: "Audios", count: audios.length },
       { id: "videos" as const, label: "Videos", count: videos.length },
+      { id: "uploaded" as const, label: "Uploaded", count: uploads.length },
     ],
-    [audios.length, conversations.length, images.length, videos.length],
+    [
+      audios.length,
+      conversations.length,
+      images.length,
+      uploads.length,
+      videos.length,
+    ],
   );
 
   const handleTabChange = (tabId: LibraryTabId) => {
@@ -321,6 +333,38 @@ export default function LibraryTabs({
           </>
         )}
       </section>
+
+      <section
+        id="library-panel-uploaded"
+        role="tabpanel"
+        aria-labelledby="library-tab-uploaded"
+        hidden={activeTabId !== "uploaded"}
+      >
+        {hasLoadError ? (
+          <EmptyState
+            title="Failed to load uploads"
+            text="Please refresh and try again."
+          />
+        ) : uploads.length === 0 ? (
+          <EmptyState
+            title="No uploaded files yet"
+            text="Files you upload will appear here with download links."
+          />
+        ) : (
+          <>
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+              {uploads.map((item) => (
+                <LibraryUploadCard key={item.id} item={item} />
+              ))}
+            </div>
+
+            <LibraryPagination
+              tabId="uploaded"
+              pagination={uploadsPagination}
+            />
+          </>
+        )}
+      </section>
     </section>
   );
 }
@@ -513,6 +557,73 @@ function LibraryVideoCard({ item }: { item: LibraryMediaCardItem }) {
   );
 }
 
+function formatUploadSize(sizeBytes: number): string {
+  if (sizeBytes < 1024) {
+    return `${sizeBytes} B`;
+  }
+
+  if (sizeBytes < 1024 * 1024) {
+    return `${(sizeBytes / 1024).toFixed(1)} KB`;
+  }
+
+  return `${(sizeBytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function LibraryUploadCard({ item }: { item: LibraryUploadCardItem }) {
+  const downloadUploadUrl = resolveStoredAssetUrl(item.url, {
+    download: true,
+    filename: item.fileName,
+  });
+
+  return (
+    <article
+      className={classNames(
+        "LibraryUploadCard rounded-xl border p-4",
+        "border-slate-400 bg-lavenderHaze-100/80",
+        "dark:border-slate-500 dark:bg-nightIndigo-900/80",
+      )}
+    >
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <h3 className="line-clamp-1 text-sm font-semibold">{item.fileName}</h3>
+        <span className="text-xs opacity-80">{item.createdAtLabel}</span>
+      </div>
+
+      <div className="mb-3 flex items-center justify-between text-xs opacity-80">
+        <span>{item.contentType}</span>
+        <span>{formatUploadSize(item.sizeBytes)}</span>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <a
+          href={downloadUploadUrl}
+          className={classNames(
+            "inline-flex items-center gap-1 rounded-md border px-2.5 py-1.5 text-xs font-medium transition-all",
+            "border-slate-400 hover:bg-lavenderHaze-300/70",
+            "dark:border-slate-500 dark:hover:bg-nightIndigo-500/30",
+          )}
+        >
+          <i className="bi bi-download" aria-hidden="true"></i>
+          Download
+        </a>
+
+        {item.href ? (
+          <Link
+            href={item.href}
+            className={classNames(
+              "inline-flex items-center gap-1 rounded-md border px-2.5 py-1.5 text-xs font-medium transition-all",
+              "border-slate-400 hover:bg-lavenderHaze-300/70",
+              "dark:border-slate-500 dark:hover:bg-nightIndigo-500/30",
+            )}
+          >
+            <i className="bi bi-chat-left-text" aria-hidden="true"></i>
+            Open conversation
+          </Link>
+        ) : null}
+      </div>
+    </article>
+  );
+}
+
 function EmptyState({
   title,
   text,
@@ -554,7 +665,10 @@ function LibraryPagination({
   tabId,
   pagination,
 }: {
-  tabId: Extract<LibraryTabId, "chats" | "images" | "audios" | "videos">;
+  tabId: Extract<
+    LibraryTabId,
+    "chats" | "images" | "audios" | "videos" | "uploaded"
+  >;
   pagination: LibraryPaginationState;
 }) {
   if (!pagination.hasPreviousPage && !pagination.hasNextPage) {
@@ -566,6 +680,7 @@ function LibraryPagination({
     images: "imagesPage",
     audios: "audiosPage",
     videos: "videosPage",
+    uploaded: "uploadedPage",
   } as const;
 
   const pageParamName = pageParamByTab[tabId];

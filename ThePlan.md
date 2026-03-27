@@ -92,9 +92,13 @@ The points below are verified from the current codebase.
 | Stop-reason messages | All 9 stop-reason messages admin-configurable via `getEffectiveStopReasonMessages()` resolver. Admin UI for editing all stop codes. Consumers wired to resolver. Phase 107.1–107.3 ALL COMPLETE. TD-HARDCODE-01 RESOLVED. | ✅ Stop reasons admin-configurable (Phase 107) | `src/lib/utils/effective-stop-reasons.ts`, admin settings |
 | WCAG 2.2 AA | **FULLY COMPLETE.** All sub-phases delivered: admin skip-link (72.1), opacity contrast (72.2), form labels/ARIA (72.3), table semantics (72.4), viewport zoom (101), AudioPlayer ARIA (99.5), WCAG E2E (97.1), landing contrast (103.1), plans contrast (103.2), heading order (103.3), duplicate landmarks (103.4), decorative icons aria-hidden (109), hamburger aria-expanded (110), **tablist arrow-key navigation (108 ✅)**, **AvatarMenu keyboard navigation (114 ✅)**. | ✅ WCAG 2.2 AA FULLY COMPLETE | All component files, E2E accessibility specs |
 | Suspended user enforcement | ~~`User.suspended` never enforced in API routes (PM audit #67 SWOT).~~ **RESOLVED (Phase 141).** Suspension now enforced in all API routes via `resolveEntitlements` `isSuspended` param. | ✅ RESOLVED (Phase 141 COMPLETE) | `src/app/api/openai/route.tsx`, `src/lib/utils/resolve-entitlements.tsx` |
-| Stream error on media gen | **CRITICAL production bug.** Media generation via tool calls (`generateImage`/`generateAudio`/`generateVideo`) triggers `Error: The response stream ended unexpectedly.` Root cause: media gen happens AFTER OpenAI stream completes but BEFORE final SSE event. No data flows to client during media gen (especially video/Sora polling). Client 120s timeout or connection drops. Also occurs on large text responses where OpenAI closes stream prematurely. | ❌ CRITICAL production bug — blocks media generation reliability | `src/app/api/openai/route.tsx`, `src/components/chat/chat-wrapper.tsx` |
+| Stream error on media gen | ~~**CRITICAL production bug.** Media generation via tool calls triggers `Error: The response stream ended unexpectedly.`~~ **RESOLVED (Phase 149).** SSE heartbeat mechanism implemented: 12s interval during media generation, media lifecycle callbacks (`onMediaGenerationStart`/`onMediaGenerationEnd`), client timeout reset on every event (including heartbeats), timeout increased to 200s. | ✅ RESOLVED (Phase 149 COMPLETE) | `src/app/api/openai/route.tsx`, `src/components/chat/chat-wrapper.tsx`, `src/types/chat-api.d.ts`, `src/lib/utils/openai/generateResponse.tsx` |
 | User deletion cascade gap | `RateLimitEntry` records (keyed `openai:${userId}`, `upload:${userId}`, `aws:${userId}`) and `AdminAuditLog` entries NOT cleaned in any of 3 deletion paths (self-delete via `deleteUser`, admin-delete via `removeUserByAdmin`, webhook `user.deleted`) | ❌ HIGH — orphaned data persists after user deletion | `src/lib/actions/user.actions.tsx`, `src/app/api/webhooks/clerk/route.tsx` |
 | Library uploaded tab | Conversation Library has 4 tabs (Chats, Images, Audios, Videos) but no "Uploaded" tab for user-uploaded media (images, documents). Users need visibility into what they have uploaded. | ❌ HIGH — users cannot track their uploaded files | `src/app/(chat)/app/library/page.tsx` |
+| Payment checkout broken | **CRITICAL production bug (PM audit #69).** Clicking "SUBSCRIBE" on `/app/plans` shows "Something went wrong." Root cause: `redirect()` inside try/catch in `checkoutPlan()` — Next.js `redirect()` throws `NEXT_REDIRECT` error, caught by surrounding try/catch, re-thrown as generic error by `handleError()`. Stripe session is created but redirect never executes. Regression introduced by Phase 135 (try/catch addition). | ❌ CRITICAL — billing is completely broken, zero users can subscribe | `src/lib/actions/transaction.action.tsx`, `src/components/shared/checkout-form.tsx` |
+| Admin settings hydration mismatch | **HIGH bug (PM audit #69).** `AdminSettingsTabs` SSR/client mismatch. `getInitialActiveTabId()` reads `localStorage` in `useState` initializer — SSR returns fallback (`tabs[0].id`), client hydration may return stored tab from localStorage. `aria-selected`, `className`, `tabIndex` attributes differ between server and client HTML. | ❌ HIGH — admin settings page has React hydration errors | `src/components/admin/settings/admin-settings-tabs.tsx` |
+| Suspended user UX gap | **HIGH UX gap (PM audit #69).** Suspended users can access `/app` but see no suspension message. `ChatSidebarPromo` shows normal upgrade CTA; `PlanPromo` on `/app/profile` shows normal plan info. Owner wants both to show clear suspension messaging. Backend enforcement exists (Phase 141) but UX provides no user-facing explanation. | ❌ HIGH — suspended users get no visual feedback of suspension | `src/components/chat/sidebar/chat-sidebar-promo.tsx`, `src/components/shared/plan-promo.tsx` |
+| Custom scrollbar removal | **HIGH directive (PM audit #69).** Owner wants ALL custom scrollbar CSS removed — let browser handle scrollbars natively. `.droplet-scrollbar` class in `globals.css` customizes webkit scrollbars. Used in 5 components. | ❌ HIGH — custom scrollbar manipulation must be removed | `src/app/globals.css`, 5 component files |
 
 ### Practical conclusions
 
@@ -127,10 +131,14 @@ The points below are verified from the current codebase.
 27. PM audit #61/#63 architect findings ALL RESOLVED: AppSetting enum (Phase 127), transactions hardening (Phase 125.2), handleError sanitization (Phase 126.1), `as never` casts eliminated (120.4+120.5), shared Button (128.1+128.2), PageHead heading-level (129). ~~Remaining defense: 4 files missing `server-only` guard (Phase 131), stale TODO comments in ai-model-policy (Phase 132).~~ **ALL RESOLVED (Phases 131 + 132).**
 28. PM audit #67 API error hardening COMPLETE: `checkoutPlan` try/catch (135 ✅), error response key standardization (136 ✅), `handleError` return type `never` (137 ✅), generate functions return typed objects (138 ✅). Lint 0 warnings (126.2 ✅). 3 new E2E specs (134 ✅). Admin query `.limit()` (140 ✅). FAQ admin-configurable (74.2 ✅). Landing/hero/about admin-configurable (104 ✅). 12 phases completed in one session.
 29. ~~PM audit #67 SWOT: **CRITICAL finding** — `User.suspended` is never enforced in API routes.~~ **RESOLVED (Phase 141 COMPLETE).** Suspension is now enforced in all API routes. `resolveEntitlements` `isSuspended` param is now correctly passed. Triple-confirmed by Architect, Engineer, and PM. Phase 141 COMPLETE.
-30. **CRITICAL production bug — stream error on media generation.** When media generation (image, audio, video) is triggered via tool calls (`generateImage`, `generateAudio`, `generateVideo`), the response stream ends unexpectedly. Root cause: media generation happens AFTER the OpenAI stream completes but BEFORE the final SSE event is sent. During media generation (especially video which polls Sora), no data flows to the client. Client-side 120s timeout or connection drops cause `Error: The response stream ended unexpectedly.` The same error can occur on large text responses where OpenAI closes the stream prematurely. This is a CRITICAL production issue that must be resolved before launch.
+30. ~~**CRITICAL production bug — stream error on media generation.**~~ **RESOLVED (Phase 149 COMPLETE).** SSE heartbeat mechanism implemented with 12s interval, media lifecycle callbacks, and client timeout reset. Video generation (up to 180s) now works within 200s timeout window.
 31. **HIGH production bug — user deletion does not cascade RateLimitEntry or AdminAuditLog.** When a user is deleted (self-delete via `deleteUser`, admin-delete via `removeUserByAdmin`, or webhook via `user.deleted`), `RateLimitEntry` records keyed as `openai:${userId}`, `upload:${userId}`, `aws:${userId}` are NOT cleaned up. `AdminAuditLog` entries for deleted users are also not cleaned. All three deletion paths must be updated to cascade these records.
 32. **HIGH feature gap — Library "Uploaded" tab missing.** The Conversation Library has 4 tabs (Chats, Images, Audios, Videos) but no "Uploaded" tab to track user-uploaded media (images, documents). Users need visibility into what they have uploaded.
 33. **Future direction — PostgreSQL migration planned.** Migration to Supabase/PostgreSQL is a future strategic direction. Current MongoDB implementation should avoid over-investment in MongoDB-specific workarounds. Design data access patterns to be portable where practical. Not blocking current work.
+34. **CRITICAL production bug — payment checkout broken (PM audit #69, Phase 152).** `redirect()` inside try/catch in `checkoutPlan()` throws `NEXT_REDIRECT` error that gets caught and re-thrown as generic error. Stripe session is created but redirect never executes. Regression from Phase 135 (try/catch hardening). Fix: move `redirect()` outside try/catch.
+35. **HIGH bug — admin settings hydration mismatch (PM audit #69, Phase 153).** `AdminSettingsTabs` reads localStorage in `useState` initializer during SSR check, but SSR returns fallback while client reads stored value. Fix: use `useEffect` to sync with localStorage after mount.
+36. **HIGH UX gap — suspended user messaging (PM audit #69, Phase 154).** `ChatSidebarPromo` and `PlanPromo` need `isSuspended` prop to display suspension-specific messaging instead of upgrade CTAs.
+37. **HIGH directive — remove all custom scrollbar CSS (PM audit #69, Phase 155).** Delete `.droplet-scrollbar` class from `globals.css` and remove all 5 usages from component files.
 
 ---
 
@@ -481,32 +489,35 @@ This sequence is mandatory.
 | C    | Product Gate      | GREEN  | 6 personas plan-gated, streaming stable, stop reasons working, trial access live                                                                               |
 | D    | Admin Gate        | GREEN  | Users+transactions+usage+settings+website, audit trail, admin role enforced. ALL admin-configurability gaps RESOLVED (FAQ 74.2, landing 104, stop msgs 107)    |
 | E    | Public Gate       | GREEN  | All 7 public routes accurate, legal content real, no obsolete trial messaging                                                                                  |
-| F    | Validation Gate   | GREEN  | All 7 gates GREEN. Lint (0 errors, 0 warnings), knip (0 findings), TSC clean, unit (97 suites, 561 tests), E2E (8 specs), build passes. Coverage: 85/80/85/85. |
+| F    | Validation Gate   | GREEN  | All 7 gates GREEN. Lint (0 errors, 0 warnings), knip (0 findings), TSC clean, unit (97 suites, 574 tests), E2E (8 specs), build passes. Coverage: 85/80/85/85. |
 
 ---
 
 ## 9. Current Execution Order
 
-> Milestones 0–25 ALL COMPLETE. TDD testing rebuild finished (Phases 120.1–7). Phase 141 (suspended user enforcement) COMPLETE.
-> **All 7 gates GREEN.** 97 unit test suites, 561 tests (all pass). E2E: 8 specs. Zero `as never` casts.
+> Milestones 0–25 ALL COMPLETE. TDD testing rebuild finished (Phases 120.1–7). Phase 141 (suspended user enforcement) COMPLETE. Phase 149 (SSE heartbeat streaming fix) COMPLETE.
+> **All 7 gates GREEN.** 97 unit test suites, 574 tests (all pass). E2E: 8 specs. Zero `as never` casts.
 > Coverage thresholds: 85/80/85/85. Node.js 24.12.0. Build passing. TSC clean. Lint: 0 errors, 0 warnings. Knip: 0 findings.
 > Admin-configurability ALL RESOLVED: FAQ (74.2 ✅), landing/hero/about (104 ✅), stop msgs (107 ✅), support email (74.1 ✅).
 > API error hardening COMPLETE: checkoutPlan (135 ✅), error keys (136 ✅), handleError never (137 ✅), typed objects (138 ✅).
-> Phases 135–140, 74.2, 104, 125.3, 126.2, 134 ALL COMPLETE (PM audit #67).
+> SSE streaming heartbeat COMPLETE: 12s interval, media lifecycle callbacks, client timeout reset (149 ✅).
+> Phases 135–141, 149, 74.2, 104, 125.3, 126.2, 134 ALL COMPLETE (PM audit #69).
 
-**Priority order (PM audit #67 — next session):**
+**Priority order (PM audit #69 — next session):**
 
-1. ~~**Phase 141 CRITICAL** — Enforce `User.suspended` check in all API routes (triple-confirmed security gap)~~ **COMPLETE**
-2. **Phase 142A CRITICAL** — Fix stream error on media generation — tool-call media gen causes `Error: The response stream ended unexpectedly.` during image/audio/video generation and large text responses
-3. **Phase 142B HIGH** — Complete user deletion cascade — clean `RateLimitEntry` and `AdminAuditLog` records in all 3 deletion paths (self-delete, admin-delete, webhook)
-4. **Phase 142C HIGH** — Add "Uploaded" tab to Conversation Library for user-uploaded media tracking
-5. **Phase 142 HIGH** — Add rate limiting to `/api/upload` and `/api/aws` endpoints
-6. **Phase 143 MEDIUM** — Replace `as string` / `!` casts on env vars with runtime validation
-7. **Phase 144 MEDIUM** — Admin config in-memory cache with 30s TTL
-8. **Phase 145 MEDIUM** — Upload filename collision fix (`crypto.randomUUID()`)
-9. **Phase 146 LOW** — Admin user detail transaction `.limit(50)`
-10. **Phase 147 LOW** — Rename `.tsx` utility files to `.ts` where no JSX
-11. **Phase 148 LOW** — Admin bulk operations partial-failure reporting
+1. **Phase 152 CRITICAL** — Fix payment checkout `redirect()` in try/catch bug — billing is completely broken, zero users can subscribe
+2. **Phase 153 HIGH** — Fix `/admin/settings` hydration mismatch — localStorage in useState initializer causes SSR/client divergence
+3. **Phase 154 HIGH** — Suspended user UX messaging — add suspension message to `ChatSidebarPromo` and `PlanPromo`
+4. **Phase 155 HIGH** — Remove all custom scrollbar CSS — delete `.droplet-scrollbar` and all 5 component usages
+5. **Phase 150 HIGH** — Complete user deletion cascade — clean `RateLimitEntry` records, extract shared `deleteUserCascade()` utility
+6. **Phase 151 HIGH** — Add "Uploaded" tab to Conversation Library — new `Upload` model with compound `{ userId: 1, createdAt: -1 }` index
+7. **Phase 142 HIGH** — Add rate limiting to `/api/upload` and `/api/aws` endpoints
+8. **Phase 143 MEDIUM** — Replace `as string` / `!` casts on env vars with runtime validation
+9. **Phase 144 MEDIUM** — Admin config in-memory cache with 30s TTL
+10. **Phase 145 MEDIUM** — Upload filename collision fix (`crypto.randomUUID()`)
+11. **Phase 146 LOW** — Admin user detail transaction `.limit(50)`
+12. **Phase 147 LOW** — Rename `.tsx` utility files to `.ts` where no JSX
+13. **Phase 148 LOW** — Admin bulk operations partial-failure reporting
 
 ---
 
@@ -529,7 +540,7 @@ This sequence is mandatory.
 
 | #    | Directive                                         | Priority | Status                                                                                                                                                                                                                                                   |
 | ---- | ------------------------------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| OI1  | TDD rebuild ALL tests from scratch                | CRITICAL | COMPLETE. 561 tests (97 suites). 8 E2E specs. Zero `as never` casts. Coverage 85/80/85/85. Phases 120.1–120.7 ALL COMPLETE. TDD infrastructure, utilities, actions, routes, components, E2E all rebuilt from scratch. 3 new E2E specs added (Phase 134). |
+| OI1  | TDD rebuild ALL tests from scratch                | CRITICAL | COMPLETE. 574 tests (97 suites). 8 E2E specs. Zero `as never` casts. Coverage 85/80/85/85. Phases 120.1–120.7 ALL COMPLETE. TDD infrastructure, utilities, actions, routes, components, E2E all rebuilt from scratch. 3 new E2E specs added (Phase 134). |
 | OI2  | NO hardcoded data — everything admin-configurable | CRITICAL | **COMPLETE.** Core done. Stop msgs (107) ✅. FAQ (74.2) ✅. Landing/hero/about (104) ✅. Zero remaining admin-configurability gaps.                                                                                                                      |
 | OI3  | RE-USE repetitive code                            | HIGH     | COMPLETE. TD-REUSE-01/02/03/04/05 all resolved. TD-REUSE-04 closed by Phase 106 (shared ChatApiResponse types).                                                                                                                                          |
 | OI4  | WCAG 2.2 AA compliance                            | HIGH     | **COMPLETE.** All sub-phases delivered. Tabs (108) ✅, AvatarMenu (114) ✅. WCAG 2.2 AA FULLY COMPLETE.                                                                                                                                                  |
@@ -551,7 +562,7 @@ This sequence is mandatory.
 
 ### Milestone 25 — Testing Infrastructure Rebuild & Config Hardening (Owner-Directed, 2026-03-21)
 
-> **Status: COMPLETE** — TDD rebuild finished. 97 suites, 561 tests. 8 E2E specs. Coverage thresholds raised to 85/80/85/85. Zero `as never` casts. All 7 gates GREEN. Phases 120.1–120.7 ALL COMPLETE.
+> **Status: COMPLETE** — TDD rebuild finished. 97 suites, 574 tests. 8 E2E specs. Coverage thresholds raised to 85/80/85/85. Zero `as never` casts. All 7 gates GREEN. Phases 120.1–120.7 ALL COMPLETE.
 
 **Objective:** Rebuild the entire testing infrastructure from scratch with TDD discipline, achieve coverage gate enforcement, and close remaining E2E quality gaps.
 

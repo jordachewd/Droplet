@@ -11,13 +11,11 @@ import { getDefaultLandingContent } from "@/constants/landing-data";
 import { STOP_REASON_CODES } from "@/constants/stop-reasons";
 import AppSetting from "@/lib/database/models/app-setting.model";
 import PublicPage from "@/lib/database/models/public-page.model";
-import Task from "@/lib/database/models/tasks.model";
 import Transaction from "@/lib/database/models/transaction.model";
-import UsageEvent from "@/lib/database/models/usage-event.model";
 import User from "@/lib/database/models/user.model";
 import { createAdminAuditLogEntry } from "@/lib/utils/admin-audit";
 import { requireAdminActionAccess } from "@/lib/utils/admin-auth";
-import deleteS3Prefix from "@/lib/utils/aws/delete-s3-prefix";
+import { deleteUserCascade } from "@/lib/utils/delete-user-cascade";
 import { AdminActionState } from "@/components/admin/admin-action-state";
 import { PersonaId } from "@/types/PersonaData.d";
 import { TaskEndedReason } from "@/types/TaskData.d";
@@ -142,6 +140,8 @@ async function removeUserByAdmin({
   deletedTasks: number;
   deletedTransactions: number;
   deletedUsageEvents: number;
+  deletedRateLimitEntries: number;
+  deletedUploads: number;
   deletedObjectsCount: number;
   assetCleanupStatus: "completed";
 }> {
@@ -156,14 +156,7 @@ async function removeUserByAdmin({
   const client = await clerkClient();
   await client.users.deleteUser(targetUser.clerkId);
 
-  const deletedTasks = await Task.deleteMany({ userId: targetUser.clerkId });
-  const deletedTransactions = await Transaction.deleteMany({
-    clerkId: targetUser.clerkId,
-  });
-  const deletedUsageEvents = await UsageEvent.deleteMany({
-    userId: targetUser.clerkId,
-  });
-  const deletedObjectsCount = await deleteS3Prefix(`${targetUser.clerkId}/`);
+  const cascadeResult = await deleteUserCascade(targetUser.clerkId);
   const deletedUser = await User.findByIdAndDelete(targetUserId);
 
   if (!deletedUser) {
@@ -181,10 +174,12 @@ async function removeUserByAdmin({
       clerkId: targetUser.clerkId,
       email: targetUser.email,
       username: targetUser.username,
-      deletedTasks: deletedTasks.deletedCount ?? 0,
-      deletedTransactions: deletedTransactions.deletedCount ?? 0,
-      deletedUsageEvents: deletedUsageEvents.deletedCount ?? 0,
-      deletedObjectsCount,
+      deletedTasks: cascadeResult.deletedTasks ?? 0,
+      deletedTransactions: cascadeResult.deletedTransactions ?? 0,
+      deletedUsageEvents: cascadeResult.deletedUsageEvents ?? 0,
+      deletedRateLimitEntries: cascadeResult.deletedRateLimitEntries ?? 0,
+      deletedUploads: cascadeResult.deletedUploads ?? 0,
+      deletedObjectsCount: cascadeResult.deletedObjectsCount ?? 0,
       assetCleanupStatus,
       deletedUser: Boolean(deletedUser),
     },
@@ -193,10 +188,12 @@ async function removeUserByAdmin({
   return {
     userId: targetUserId,
     clerkId: targetUser.clerkId,
-    deletedTasks: deletedTasks.deletedCount ?? 0,
-    deletedTransactions: deletedTransactions.deletedCount ?? 0,
-    deletedUsageEvents: deletedUsageEvents.deletedCount ?? 0,
-    deletedObjectsCount,
+    deletedTasks: cascadeResult.deletedTasks ?? 0,
+    deletedTransactions: cascadeResult.deletedTransactions ?? 0,
+    deletedUsageEvents: cascadeResult.deletedUsageEvents ?? 0,
+    deletedRateLimitEntries: cascadeResult.deletedRateLimitEntries ?? 0,
+    deletedUploads: cascadeResult.deletedUploads ?? 0,
+    deletedObjectsCount: cascadeResult.deletedObjectsCount ?? 0,
     assetCleanupStatus,
   };
 }
