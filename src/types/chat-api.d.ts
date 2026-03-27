@@ -20,6 +20,9 @@ export type ChatStreamEvent =
       personaId: PersonaId;
     }
   | {
+      type: "heartbeat";
+    }
+  | {
       type: "chunk";
       delta: string;
       snapshot: string;

@@ -284,6 +284,75 @@ describe("ChatWrapper", () => {
     expect(screen.queryByRole("alert")).toBeNull();
   });
 
+  it("keeps long streams alive when heartbeat events are received", async () => {
+    vi.useFakeTimers();
+
+    vi.spyOn(globalThis, "fetch").mockImplementation((_input, init) => {
+      let streamController: ReadableStreamDefaultController<Uint8Array> | null =
+        null;
+      const signal = init?.signal as AbortSignal;
+
+      const stream = new ReadableStream<Uint8Array>({
+        start(controller) {
+          streamController = controller;
+
+          controller.enqueue(
+            new TextEncoder().encode(
+              'data: {"type":"meta","taskId":"task_stream_heartbeat","personaId":"strategist"}\n\n',
+            ),
+          );
+
+          window.setTimeout(() => {
+            controller.enqueue(
+              new TextEncoder().encode('data: {"type":"heartbeat"}\n\n'),
+            );
+          }, 190_000);
+
+          window.setTimeout(() => {
+            controller.enqueue(
+              new TextEncoder().encode(
+                'data: {"type":"final","payload":{"taskData":{"whois":"assistant","role":"assistant","content":[{"type":"text","text":"Still here after heartbeat"}]},"taskId":"task_stream_heartbeat","personaId":"strategist","acceptedPrompt":true}}\n\n',
+              ),
+            );
+            controller.close();
+          }, 300_000);
+        },
+      });
+
+      signal.addEventListener(
+        "abort",
+        () => {
+          streamController?.error(new DOMException("Aborted", "AbortError"));
+        },
+        { once: true },
+      );
+
+      return Promise.resolve(
+        new Response(stream, {
+          status: 200,
+          headers: { "Content-Type": "text/event-stream" },
+        }),
+      );
+    });
+
+    try {
+      render(<ChatWrapper {...chatWrapperProps} />);
+
+      fireEvent.click(screen.getByRole("button", { name: "Send message" }));
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(300_000);
+      });
+
+      expect(screen.getByTestId("chat-body-messages").textContent).toContain(
+        "Still here after heartbeat",
+      );
+      expect(screen.queryByRole("alert")).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("shows a timeout alert when the request exceeds the safety timeout", async () => {
     vi.useFakeTimers();
     vi.spyOn(globalThis, "fetch").mockImplementation((_input, init) => {
@@ -311,7 +380,7 @@ describe("ChatWrapper", () => {
       fireEvent.click(screen.getByRole("button", { name: "Send message" }));
 
       await act(async () => {
-        await vi.advanceTimersByTimeAsync(120_000);
+        await vi.advanceTimersByTimeAsync(200_000);
       });
 
       expect(screen.getByRole("alert").textContent).toContain(

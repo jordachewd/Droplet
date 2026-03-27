@@ -33,7 +33,7 @@ interface ChatWrapperProps {
   initialEndAction?: TaskEndAction;
 }
 
-const STREAM_REQUEST_TIMEOUT_MS = 120_000;
+const STREAM_REQUEST_TIMEOUT_MS = 200_000;
 const STREAM_REQUEST_TIMEOUT_MESSAGE =
   "The response timed out. Please try again.";
 
@@ -302,7 +302,12 @@ export default function ChatWrapper({
     }
   }
 
-  async function consumeStreamingResponse(response: Response) {
+  async function consumeStreamingResponse(
+    response: Response,
+    options?: {
+      onStreamEvent?: () => void;
+    },
+  ) {
     if (!response.body) {
       showAlert("Error", "Invalid server response.");
       return;
@@ -318,8 +323,14 @@ export default function ChatWrapper({
         return;
       }
 
+      options?.onStreamEvent?.();
+
       if (event.type === "meta") {
         setTaskId(event.taskId);
+        return;
+      }
+
+      if (event.type === "heartbeat") {
         return;
       }
 
@@ -417,9 +428,23 @@ export default function ChatWrapper({
       "Streaming request timed out.",
       "TimeoutError",
     );
-    const requestTimeoutId = window.setTimeout(() => {
-      requestAbortController.abort(timeoutAbortReason);
-    }, STREAM_REQUEST_TIMEOUT_MS);
+    let requestTimeoutId: number | null = null;
+    const clearRequestTimeout = () => {
+      if (requestTimeoutId === null) {
+        return;
+      }
+
+      window.clearTimeout(requestTimeoutId);
+      requestTimeoutId = null;
+    };
+    const resetRequestTimeout = () => {
+      clearRequestTimeout();
+      requestTimeoutId = window.setTimeout(() => {
+        requestAbortController.abort(timeoutAbortReason);
+      }, STREAM_REQUEST_TIMEOUT_MS);
+    };
+
+    resetRequestTimeout();
     activeRequestControllerRef.current = requestAbortController;
 
     try {
@@ -445,7 +470,9 @@ export default function ChatWrapper({
       const responseContentType = response.headers.get("Content-Type") ?? "";
 
       if (response.ok && responseContentType.includes("text/event-stream")) {
-        await consumeStreamingResponse(response);
+        await consumeStreamingResponse(response, {
+          onStreamEvent: resetRequestTimeout,
+        });
         return;
       }
 
@@ -518,7 +545,7 @@ export default function ChatWrapper({
 
       showAlert("Error", "Unable to send your message right now.");
     } finally {
-      window.clearTimeout(requestTimeoutId);
+      clearRequestTimeout();
 
       if (activeRequestControllerRef.current === requestAbortController) {
         activeRequestControllerRef.current = null;

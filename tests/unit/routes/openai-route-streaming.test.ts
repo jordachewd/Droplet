@@ -188,6 +188,37 @@ describe("POST /api/openai - streaming", () => {
     expect(payload).toContain('"type":"final"');
   });
 
+  it("emits heartbeat events while media generation is active", async () => {
+    vi.mocked(generateStreamingResponse).mockImplementation(
+      async ({ onMediaGenerationStart, onMediaGenerationEnd }) => {
+        onMediaGenerationStart?.();
+        onMediaGenerationEnd?.();
+
+        return {
+          taskData: {
+            whois: "assistant",
+            role: "assistant",
+            content: [{ type: "text", text: "Video generated." }],
+          },
+          taskUsage: 14,
+        };
+      },
+    );
+
+    const response = await POST(
+      buildOpenAiRequest(
+        { messages: [{ role: "user", whois: "user", content: "new chat" }] },
+        { Accept: "text/event-stream", "x-droplet-stream": "1" },
+      ),
+    );
+
+    const payload = await response.text();
+
+    expect(response.status).toBe(200);
+    expect(payload).toContain('"type":"heartbeat"');
+    expect(payload).toContain('"type":"final"');
+  });
+
   it("emits an SSE error event when streaming generation returns an OpenAI error", async () => {
     vi.mocked(generateStreamingResponse).mockResolvedValue({
       errorType: "rate_limit",

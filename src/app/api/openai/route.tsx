@@ -73,6 +73,7 @@ const OPENAI_RATE_LIMIT_WINDOW_MS = 60_000;
 const TASK_STORAGE_WARNING_BYTES = 12 * 1024 * 1024;
 const DEFAULT_CHAT_TASK_CLASS: TaskClass = "standard";
 const DEFAULT_CHAT_BUDGET_STATE: BudgetState = "normal";
+const STREAM_MEDIA_HEARTBEAT_INTERVAL_MS = 12_000;
 const STREAM_HEADERS = {
   "Content-Type": "text/event-stream; charset=utf-8",
   "Cache-Control": "no-store, no-transform",
@@ -1428,6 +1429,48 @@ export async function POST(req: Request): Promise<Response> {
     if (streamingResponseRequested) {
       const stream = new ReadableStream<Uint8Array>({
         async start(controller) {
+          let mediaHeartbeatInterval: ReturnType<typeof setInterval> | null =
+            null;
+
+          const stopMediaHeartbeat = () => {
+            if (mediaHeartbeatInterval === null) {
+              return;
+            }
+
+            clearInterval(mediaHeartbeatInterval);
+            mediaHeartbeatInterval = null;
+          };
+
+          const emitHeartbeat = (): boolean => {
+            try {
+              writeStreamEvent(controller, {
+                type: "heartbeat",
+              });
+              return true;
+            } catch (error) {
+              process.stderr.write(
+                `[openai/route] heartbeat write failed: ${error instanceof Error ? error.message : "unknown"}\n`,
+              );
+              return false;
+            }
+          };
+
+          const startMediaHeartbeat = () => {
+            if (mediaHeartbeatInterval !== null) {
+              return;
+            }
+
+            if (!emitHeartbeat()) {
+              return;
+            }
+
+            mediaHeartbeatInterval = setInterval(() => {
+              if (!emitHeartbeat()) {
+                stopMediaHeartbeat();
+              }
+            }, STREAM_MEDIA_HEARTBEAT_INTERVAL_MS);
+          };
+
           try {
             writeStreamEvent(controller, {
               type: "meta",
@@ -1467,6 +1510,8 @@ export async function POST(req: Request): Promise<Response> {
                   snapshot,
                 });
               },
+              onMediaGenerationStart: startMediaHeartbeat,
+              onMediaGenerationEnd: stopMediaHeartbeat,
             });
 
             const finalResult = await finalizeAIResponse({
@@ -1501,6 +1546,7 @@ export async function POST(req: Request): Promise<Response> {
               error: OPENAI_ERROR_MESSAGES.unknown,
             });
           } finally {
+            stopMediaHeartbeat();
             controller.close();
           }
         },
