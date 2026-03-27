@@ -6,6 +6,7 @@ import type { AnchorHTMLAttributes, ReactNode } from "react";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import CheckoutSuccessPage from "@/app/(public)/checkout-success/page";
+import { mockAuth } from "../test-support";
 
 const retrieveSessionMock = vi.hoisted(() => vi.fn());
 
@@ -64,12 +65,20 @@ describe("checkout-success page", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     process.env.STRIPE_SECRET_KEY = "sk_test_123";
-    vi.mocked(auth).mockResolvedValue({ userId: "clerk_user_1" } as never);
+    mockAuth(vi.mocked(auth), {
+      userId: "clerk_user_1",
+      isAuthenticated: true,
+      sessionId: "session_123",
+    });
     retrieveSessionMock.mockResolvedValue({ payment_status: "paid" });
   });
 
   it("redirects unauthenticated visitors to sign-in before Stripe session checks", async () => {
-    vi.mocked(auth).mockResolvedValue({ userId: null } as never);
+    mockAuth(vi.mocked(auth), {
+      userId: null,
+      isAuthenticated: false,
+      sessionId: null,
+    });
 
     await expect(
       CheckoutSuccessPage({

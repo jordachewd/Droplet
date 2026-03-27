@@ -1,8 +1,8 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": ["playwright.config.ts", "tests/e2e/global.setup.ts"],
   "ignoreFiles": [
     "src/types/globals.d.tsx",
-    "tests/e2e/global.setup.ts",
     "src/components/layout/route-group-layout.tsx",
     "tests/unit/test-support/server-only.ts"
   ],

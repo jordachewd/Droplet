@@ -76,27 +76,30 @@ describe("POST /api/webhooks/clerk", () => {
     verifyWebhookMock.mockReset();
     getUserMock.mockReset();
     updateUserMetadataMock.mockReset();
-    vi.spyOn(process.stderr, "write").mockImplementation(
-      stderrWriteMock as never,
-    );
+    vi.spyOn(process.stderr, "write").mockImplementation(stderrWriteMock);
     process.env.CLERK_WEBHOOK_SIGNING_SECRET = "whsec_clerk_signing_test";
-    vi.mocked(connectToDatabase).mockResolvedValue(undefined as never);
+    vi.mocked(connectToDatabase).mockResolvedValue(
+      {} as Awaited<ReturnType<typeof connectToDatabase>>,
+    );
     vi.mocked(User.create).mockResolvedValue({
       _id: "mongo_user_1",
       role: "client",
-    } as never);
-    vi.mocked(User.findOneAndUpdate).mockResolvedValue(null as never);
-    vi.mocked(User.findOne).mockResolvedValue(null as never);
-    vi.mocked(User.findByIdAndDelete).mockResolvedValue(null as never);
+    } as unknown as Awaited<ReturnType<typeof User.create>>);
+    vi.mocked(User.findOneAndUpdate).mockResolvedValue(null);
+    vi.mocked(User.findOne).mockResolvedValue(null);
+    vi.mocked(User.findByIdAndDelete).mockResolvedValue(null);
     vi.mocked(Transaction.deleteMany).mockResolvedValue({
+      acknowledged: true,
       deletedCount: 0,
-    } as never);
+    });
     vi.mocked(Task.deleteMany).mockResolvedValue({
+      acknowledged: true,
       deletedCount: 0,
-    } as never);
+    });
     vi.mocked(UsageEvent.deleteMany).mockResolvedValue({
+      acknowledged: true,
       deletedCount: 0,
-    } as never);
+    });
     vi.mocked(deleteS3Prefix).mockResolvedValue(0);
     getUserMock.mockResolvedValue({
       emailAddresses: [],
@@ -105,13 +108,13 @@ describe("POST /api/webhooks/clerk", () => {
       firstName: null,
       lastName: null,
       imageUrl: "",
-    } as never);
+    });
     vi.mocked(clerkClient).mockResolvedValue({
       users: {
         getUser: getUserMock,
         updateUserMetadata: updateUserMetadataMock,
       },
-    } as never);
+    } as unknown as Awaited<ReturnType<typeof clerkClient>>);
   });
 
   afterEach(() => {
@@ -155,7 +158,7 @@ describe("POST /api/webhooks/clerk", () => {
     vi.mocked(User.create).mockResolvedValue({
       _id: "mongo_user_1",
       role: "client",
-    } as never);
+    } as unknown as Awaited<ReturnType<typeof User.create>>);
 
     const response = await POST(buildRequest({ event: "user.created" }));
     const payload = await response.json();
@@ -199,7 +202,7 @@ describe("POST /api/webhooks/clerk", () => {
       _id: "mongo_user_existing",
       clerkId: "clerk_user_1",
       role: "client",
-    } as never);
+    });
 
     const response = await POST(buildRequest({ event: "user.created" }));
     const payload = await response.json();
@@ -229,16 +232,14 @@ describe("POST /api/webhooks/clerk", () => {
         image_url: "https://cdn.example.com/u1.png",
       },
     });
-    vi.mocked(User.findOne)
-      .mockResolvedValueOnce(null as never)
-      .mockResolvedValueOnce({
-        _id: "mongo_user_existing",
-        clerkId: "clerk_user_1",
-        role: "client",
-      } as never);
+    vi.mocked(User.findOne).mockResolvedValueOnce(null).mockResolvedValueOnce({
+      _id: "mongo_user_existing",
+      clerkId: "clerk_user_1",
+      role: "client",
+    });
     vi.mocked(User.create).mockRejectedValueOnce({
       code: 11000,
-    } as never);
+    });
 
     const response = await POST(buildRequest({ event: "user.created" }));
     const payload = await response.json();
@@ -346,7 +347,7 @@ describe("POST /api/webhooks/clerk", () => {
       firstName: "Grace",
       lastName: "Hopper",
       imageUrl: "https://cdn.example.com/backend.png",
-    } as never);
+    });
 
     const response = await POST(buildRequest({ event: "user.created" }));
 
@@ -427,7 +428,7 @@ describe("POST /api/webhooks/clerk", () => {
     });
     vi.mocked(User.findOneAndUpdate).mockResolvedValue({
       clerkId: "clerk_user_1",
-    } as never);
+    });
 
     const response = await POST(buildRequest({ event: "user.updated" }));
     const payload = await response.json();
@@ -463,7 +464,7 @@ describe("POST /api/webhooks/clerk", () => {
         image_url: "https://cdn.example.com/u2.png",
       },
     });
-    vi.mocked(User.findOneAndUpdate).mockResolvedValue(null as never);
+    vi.mocked(User.findOneAndUpdate).mockResolvedValue(null);
 
     const response = await POST(buildRequest({ event: "user.updated" }));
     const payload = await response.json();
@@ -481,19 +482,22 @@ describe("POST /api/webhooks/clerk", () => {
     });
     vi.mocked(User.findOne).mockResolvedValue({
       _id: "mongo_user_1",
-    } as never);
+    });
     vi.mocked(User.findByIdAndDelete).mockResolvedValue({
       acknowledged: true,
-    } as never);
+    });
     vi.mocked(Transaction.deleteMany).mockResolvedValue({
+      acknowledged: true,
       deletedCount: 3,
-    } as never);
+    });
     vi.mocked(Task.deleteMany).mockResolvedValue({
+      acknowledged: true,
       deletedCount: 8,
-    } as never);
+    });
     vi.mocked(UsageEvent.deleteMany).mockResolvedValue({
+      acknowledged: true,
       deletedCount: 11,
-    } as never);
+    });
     vi.mocked(deleteS3Prefix).mockResolvedValue(5);
 
     const response = await POST(buildRequest({ event: "user.deleted" }));
@@ -529,7 +533,7 @@ describe("POST /api/webhooks/clerk", () => {
         id: "clerk_user_1",
       },
     });
-    vi.mocked(User.findOne).mockResolvedValue(null as never);
+    vi.mocked(User.findOne).mockResolvedValue(null);
 
     const response = await POST(buildRequest({ event: "user.deleted" }));
     const payload = await response.json();
@@ -600,8 +604,9 @@ describe("POST /api/webhooks/clerk", () => {
       },
     });
     vi.mocked(Task.deleteMany).mockResolvedValue({
+      acknowledged: true,
       deletedCount: 2,
-    } as never);
+    });
     vi.mocked(UsageEvent.deleteMany).mockRejectedValue(
       new Error("Usage cleanup failed"),
     );
@@ -641,8 +646,9 @@ describe("POST /api/webhooks/clerk", () => {
       },
     });
     vi.mocked(Task.deleteMany).mockResolvedValue({
+      acknowledged: true,
       deletedCount: 2,
-    } as never);
+    });
     vi.mocked(deleteS3Prefix).mockRejectedValue(new Error("S3 cleanup failed"));
 
     const response = await POST(buildRequest({ event: "user.deleted" }));

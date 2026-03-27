@@ -35,7 +35,7 @@ describe("/api/aws route", () => {
     vi.mocked(currentUser).mockResolvedValue({
       id: "user_123",
       username: "jwd-user",
-    } as never);
+    } as unknown as Awaited<ReturnType<typeof currentUser>>);
     vi.mocked(generateString).mockReturnValue("rand123");
     vi.mocked(uploadFileToAWS).mockResolvedValue(
       "/api/download?key=user_123%2Ftask_abc%2Ftask_abc_image_rand123.png",
@@ -44,7 +44,7 @@ describe("/api/aws route", () => {
   });
 
   it("returns 401 for upload when user is not authenticated", async () => {
-    vi.mocked(currentUser).mockResolvedValue(null as never);
+    vi.mocked(currentUser).mockResolvedValue(null);
 
     const response = await POST(
       buildRequest("POST", { taskId: "task_abc", imgBuffer: "ZmFrZQ==" }),
@@ -120,7 +120,7 @@ describe("/api/aws route", () => {
   });
 
   it("returns 401 for delete when user is not authenticated", async () => {
-    vi.mocked(currentUser).mockResolvedValue(null as never);
+    vi.mocked(currentUser).mockResolvedValue(null);
 
     const response = await DELETE(
       buildRequest("DELETE", { folder: "task_abc", fileName: "file.png" }),
