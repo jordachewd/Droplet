@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-27 (PM audit #66). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. TD-HARDCODE-01 RESOLVED (Phase 107). **All 7 gates GREEN.** 551 unit tests (95 suites). E2E: 5 spec files (39 passed, 4 skipped). Coverage: 85/80/85/85. Zero `as never` casts. Active TDs: TD-SEC-13 (HIGH), TD-API-10 (HIGH), TD-TYPE-01 (HIGH). Build passing. Node.js 24.12.0.
+> Last updated: 2026-03-27 (PM audit #67). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. TD-HARDCODE-01 RESOLVED (Phase 107). Admin configurability ALL RESOLVED (74.2, 104). **All 7 gates GREEN.** 561 unit tests (97 suites). E2E: 8 spec files. Coverage: 85/80/85/85. Zero `as never` casts. Lint: 0 errors, 0 warnings. Active TDs: TD-SEC-13 (HIGH — suspended user enforcement, Phase 141). Build passing. Node.js 24.12.0.
 
 ---
 

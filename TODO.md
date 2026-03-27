@@ -5,213 +5,220 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #66 (2026-03-27). Milestones 0–25 COMPLETE. All phases through 133 complete (incl. 107.1–107.3, 108, 114, 125.1, 131, 132, 133). 551 unit tests (95 suites). 5 E2E specs (39 passed, 4 skipped). Build passes. TSC clean. Node.js 24.12.0 runtime.**
-> **GATE STATUS: All 7 gates GREEN. Lint (0 errors, 7 warnings), Knip (0 findings), TSC clean, build passes, unit tests (95/551), E2E (5 specs), coverage 85/80/85/85.**
-> **TDD REBUILD COMPLETE. WCAG 2.2 AA COMPLETE. TD-HARDCODE-01 RESOLVED. Zero `as never` casts. Zero `console.log`/`console.error`/`as any`/`window.alert`/`strict: false`/stale TODOs in `src/`.**
-> **SWOT audit #66 conducted. New findings from Architect + Engineer + PM audit below.**
-> **NEXT SESSION: 135 (HIGH checkoutPlan security) → 136 (HIGH API error key standardization) → 137 (HIGH handleError return type) → 126.2 (MEDIUM lint warnings) → 134 (MEDIUM E2E expansion) → 138 (MEDIUM JSON.stringify elimination) → 125.3 (LOW rate-limit comment) → 139 (LOW terms page ID) → 140 (LOW admin query limit) → 74.2 (MEDIUM FAQ admin) → 104 (MEDIUM landing/hero admin)**
+> **STATUS: PM audit #67 (2026-03-27). Milestones 0–25 COMPLETE. All phases through 140 complete (incl. 135–140, 74.2, 104, 125.3, 126.2, 134). 561 unit tests (97 suites). 8 E2E specs. Build passes. TSC clean. Node.js 24.12.0 runtime.**
+> **GATE STATUS: All 7 gates GREEN. Lint (0 errors, 0 warnings), Knip (0 findings), TSC clean, build passes, unit tests (97/561), E2E (8 specs), coverage 85/80/85/85.**
+> **TDD REBUILD COMPLETE. WCAG 2.2 AA COMPLETE. TD-HARDCODE-01 RESOLVED. Admin configurability ALL RESOLVED (FAQ 74.2 ✅, landing/hero/about 104 ✅, stop reasons 107 ✅, support email 74.1 ✅).**
+> **Zero: `as never`, `as any`, `console.log`, `console.error`, `window.alert`, `window.confirm`, `strict: false`, stale TODOs — all in `src/`.**
+> **SWOT audit #67 conducted. Architect + Engineer + PM triple audit. New findings below.**
+> **NEXT SESSION: 141 (CRITICAL suspended user enforcement) → 142 (HIGH upload/aws rate limiting) → 143 (MEDIUM env var validation) → 144 (MEDIUM admin config caching) → 145 (MEDIUM upload filename collision) → 146 (LOW admin detail transaction limit) → 147 (LOW .tsx→.ts renames) → 148 (LOW bulk ops partial-failure)**
 
 ---
 
-## HIGH — Security: checkoutPlan Missing Error Handling (PM audit #66)
+## CRITICAL — Suspended User Enforcement (PM audit #67 — Architect + Engineer + PM triple-confirmed)
 
-### Phase 135 HIGH — Add try/catch to `checkoutPlan` server action
+### Phase 141 CRITICAL — Enforce `User.suspended` check in all API routes
 
-> Engineer finding M-2. `checkoutPlan` is the only server action without try/catch + `handleError`. Stripe API failures will leak raw Stripe error messages to clients. Violates security rule: "Never leak provider error messages."
-
-**File:** `src/lib/actions/transaction.action.tsx`
-
-**What to do:**
-
-1. Wrap the `checkoutPlan` function body in try/catch.
-2. Call `handleError({ error, source: "checkoutPlan" })` in catch block.
-3. Keep the existing explicit `throw new Error("Unable to start checkout.")` for price mismatch — it's already caught.
-
-**Acceptance criteria:**
-
-- [ ] `checkoutPlan` has try/catch + `handleError`
-- [ ] Stripe errors no longer leak raw messages
-- [ ] Build passes, tests pass
-
----
-
-## HIGH — API Error Response Key Standardization (PM audit #66)
-
-### Phase 136 HIGH — Standardize error response keys to `{ error: ... }` across all API routes
-
-> Engineer finding H-1 + M-5. Upload route and AWS route use `{ message: "..." }` for error responses instead of `{ error: "..." }`. All other API routes use `{ error: "..." }`. Clients checking `.error` will miss these.
+> **Triple-confirmed finding.** Admin can suspend users via `toggleUserSuspensionAction` (sets `User.suspended = true`), but NO API route checks this field. Suspended users retain full API access — they can chat, upload files, generate media, and download content. `resolveEntitlements` already supports `isSuspended` parameter but it's never passed. `getUserById` doesn't even select the `suspended` field.
 
 **Files:**
 
-1. `src/app/api/upload/route.tsx` — L81: change `message` → `error`
-2. `src/app/api/aws/route.tsx` — L75, L84, L96, L116, L128, L174: change `message` → `error`
+1. `src/lib/actions/user.actions.tsx` — `getUserById()` .select() must include `suspended`
+2. `src/app/api/openai/route.tsx` — Add suspended check after `getUserById`, pass `isSuspended` to `resolveEntitlements`, return 403 if suspended
+3. `src/app/api/upload/route.tsx` — Add suspended check after auth
+4. `src/app/api/download/route.tsx` — Add suspended check after auth
+5. `src/app/api/aws/route.tsx` — Add suspended check after auth
+6. `src/lib/database/models/user.model.tsx` — Add `index: true` to `suspended` field
 
 **What to do:**
 
-1. Replace all `{ message: "..." }` error responses with `{ error: "..." }` in both files.
-2. Keep success responses unchanged.
+1. Add `suspended` to `getUserById()` `.select()` projection.
+2. In `/api/openai` route: after `getUserById`, check `if (userData.suspended)` → return `NextResponse.json({ error: "Account suspended" }, { status: 403 })`.
+3. Pass `isSuspended: Boolean(userData.suspended)` to `resolveEntitlements()` call.
+4. In `/api/upload`, `/api/download`, `/api/aws`: fetch user and check `suspended` before processing. Consider extracting a shared `requireActiveUser(userId)` guard.
+5. Add `index: true` to `suspended` field in user model schema.
+6. Add unit tests for suspended user rejection in each route.
 
 **Acceptance criteria:**
 
-- [ ] All error responses in `upload/route.tsx` and `aws/route.tsx` use `{ error: "..." }`
+- [ ] `getUserById` returns `suspended` field
+- [ ] `/api/openai` returns 403 for suspended users
+- [ ] `/api/upload` returns 403 for suspended users
+- [ ] `/api/download` returns 403 for suspended users
+- [ ] `/api/aws` returns 403 for suspended users
+- [ ] `resolveEntitlements` receives `isSuspended` flag in production
+- [ ] `suspended` field has `index: true` in user model
+- [ ] Unit tests cover all 4 API routes rejecting suspended users
 - [ ] Build passes, tests pass
 
 ---
 
-## HIGH — handleError Return Type Fix (PM audit #66)
+## HIGH — Rate Limiting on Upload/AWS Endpoints (PM audit #67)
 
-### Phase 137 HIGH — Change `handleError` return type to `never`
+### Phase 142 HIGH — Add rate limiting to `/api/upload` and `/api/aws` endpoints
 
-> Engineer finding H-3. `handleError` always throws but returns `void`. Downstream callers (`generateImage`, `generateAudio`, `generateVideo`) have imprecise return types (`string | undefined` instead of `string`) because TypeScript doesn't know execution stops. One-line fix with high type-safety impact.
-
-**File:** `src/lib/utils/handleError.tsx`
-
-**What to do:**
-
-1. Change the `handleError` function signature to explicitly return `never`.
-2. Verify downstream callers' return types narrow correctly.
-3. Update tests if needed.
-
-**Acceptance criteria:**
-
-- [ ] `handleError` return type is `never`
-- [ ] No `undefined` in return types of generate\* functions due to this
-- [ ] Build passes, tests pass
-
----
-
-## MEDIUM — Lint Warning Cleanup (PM audit #66)
-
-### Phase 126.2 MEDIUM — Fix 7 lint warnings (6 `setState-in-effect` + 1 `no-img-element`)
-
-> 6 `react-hooks/set-state-in-effect` warnings + 1 `@next/next/no-img-element` warning in test file. Target: 0 warnings total.
+> Architect finding T-1. Upload and AWS endpoints have auth checks but zero rate limiting. An authenticated user can flood S3 with unlimited uploads — each triggers S3 PUT operations. This is a cost attack vector. The `/api/openai` endpoint has rate limiting but these don't.
 
 **Files:**
 
-1. `src/components/admin/admin-layout-shell.tsx` — use `useSyncExternalStore` for media query
-2. `src/components/admin/admin-managed-form.tsx` — derive alert from `actionState` during render
-3. `src/components/admin/settings/admin-settings-tabs.tsx` — read localStorage in `useState` initializer
-4. `src/components/admin/transactions/admin-transactions-table.tsx` — derive empty selection from `useMemo`
-5. `src/components/layout/droplet-theme.tsx` — read initial theme in `useState` initializer
-6. `src/components/shared/audio-player.tsx` — use `useRef` to track previous audioUrl
-7. `tests/unit/components/hero-section.test.tsx` — suppress `@next/next/no-img-element` or use `next/image`
+1. `src/app/api/upload/route.tsx` — Add `enforceSlidingWindowRateLimit`
+2. `src/app/api/aws/route.tsx` — Add `enforceSlidingWindowRateLimit`
 
 **What to do:**
 
-1. Each component: replace setState-in-useEffect with `key` prop reset, derived state, or `useSyncExternalStore`.
-2. Target: 0 lint warnings total.
+1. Import `enforceSlidingWindowRateLimit` from `@/lib/utils/rate-limit`.
+2. Apply `enforceSlidingWindowRateLimit({ key: \`upload:${userId}\`, limit: 30, windowMs: 60_000 })` before processing in upload route.
+3. Apply `enforceSlidingWindowRateLimit({ key: \`aws:${userId}\`, limit: 30, windowMs: 60_000 })` before processing in aws route.
+4. Return proper 429 response with `Retry-After` header on rate limit hit.
 
 **Acceptance criteria:**
 
-- [ ] `npm run lint` reports 0 warnings
-- [ ] No behavioral regressions
+- [ ] `/api/upload` has per-user rate limiting (30 req/60s)
+- [ ] `/api/aws` has per-user rate limiting (30 req/60s)
+- [ ] Rate limit returns 429 with `Retry-After` header
 - [ ] Build passes, tests pass
 
 ---
 
-## MEDIUM — E2E Coverage Expansion (PM audit #65)
+## MEDIUM — Environment Variable Runtime Validation (PM audit #67)
 
-### Phase 134 MEDIUM — Add E2E tests for critical business paths
+### Phase 143 MEDIUM — Replace `as string` / `!` casts on env vars with runtime validation
 
-> E2E coverage at 5 specs. Critical user paths lack E2E coverage: billing/checkout flow, admin operations, error states. Also add coverage for new stop-message admin UI and keyboard navigation flows.
-
-**What to do:**
-
-1. Add E2E spec for billing/checkout flow (structural assertions).
-2. Add E2E spec for admin user operations (view, suspend).
-3. Add E2E spec for error boundary handling.
-4. Keep Playwright workers=1 for Clerk stability.
-
-**Acceptance criteria:**
-
-- [ ] At least 3 new E2E spec files covering billing, admin, and error paths
-- [ ] All assertions structural (no hardcoded content)
-- [ ] All 7 gates GREEN
-
----
-
-## MEDIUM — JSON.stringify/parse Elimination in Generate Functions (PM audit #66)
-
-### Phase 138 MEDIUM — Return typed objects from generate functions instead of JSON strings
-
-> Engineer finding H-2 + M-4. `generateTitle`, `generateImage`, `generateAudio`, `generateVideo`, `generateResponse` (non-streaming) return `JSON.stringify(...)` that callers immediately `JSON.parse(... as string)`. 7 `as string` type assertions in codebase from this pattern. Streaming path already returns typed objects correctly.
+> Architect finding W-2, Engineer finding H-1/H-2/H-4. 4 `as string` casts and 4 `!` non-null assertions on `process.env` values. If any env var is missing, broken clients are silently constructed (S3Client with `undefined` region, OpenAI with `undefined` API key). Errors surface later as cryptic API failures.
 
 **Files:**
 
-1. `src/lib/utils/openai/generateTitle.tsx` — return typed object
-2. `src/lib/utils/openai/generateImage.tsx` — return typed object
-3. `src/lib/utils/openai/generateAudio.tsx` — return typed object
-4. `src/lib/utils/openai/generateVideo.tsx` — return typed object
-5. `src/lib/utils/openai/generateResponse.tsx` — return typed object (non-streaming path)
-6. `src/app/api/openai/route.tsx` — remove `JSON.parse(... as string)` calls
-7. Update all related tests
+1. `src/constants/aws.tsx` — 3 `as string` casts on `AWS_S3_REGION`, `AWS_S3_ACCESS_ID`, `AWS_S3_SECRET_KEY`
+2. `src/constants/openai.tsx` — 3 `!` on `OPENAI_ORG`, `OPENAI_PRJ`, `OPENAI_KEY`
+3. `src/lib/database/mongoose.tsx` — 1 `as string` on `MONGODB_URL`
+4. `src/lib/actions/transaction.action.tsx` — 1 `!` on `STRIPE_SECRET_KEY`
 
 **What to do:**
 
-1. Change each generate function to return the typed payload object directly.
-2. Update all callers to use typed objects instead of parsing.
-3. Remove `as string` assertions.
-4. Update tests.
+1. Create a shared `throwEnvError(name: string): never` utility (or inline).
+2. Replace `process.env.VAR as string` with `process.env.VAR ?? throwEnvError("VAR")`.
+3. Replace `process.env.VAR!` with `process.env.VAR ?? throwEnvError("VAR")`.
+4. This ensures fast failure with clear error messages on missing env vars.
 
 **Acceptance criteria:**
 
-- [ ] Zero `as string` in generate/route files
-- [ ] All generate functions return typed objects
+- [ ] Zero `as string` on `process.env` in codebase
+- [ ] Zero `!` on `process.env` in codebase
+- [ ] Missing env vars throw clear error at module load
 - [ ] Build passes, tests pass
 
 ---
 
-## MEDIUM — Admin Configurability (Owner directive)
+## MEDIUM — Admin Config In-Memory Cache (PM audit #67)
 
-### Phase 74.2 MEDIUM — FAQ content admin-configurable
+### Phase 144 MEDIUM — Cache admin config queries with short TTL
+
+> Architect finding O-2. `getEffectivePlanConfig()`, `getEffectivePersonaAccessByPlan()`, `getEffectiveModelConfig()`, `getEffectiveSupportEmail()`, `getEffectiveStopReasonMessages()` are called on every `/api/openai` request (5 DB round trips per chat message). These settings change only when admin updates them.
+
+**Files:**
+
+1. Create `src/lib/utils/config-cache.ts` — simple in-memory cache with TTL (30s)
+2. Update all `effective-*.ts` resolvers to use cache
 
 **What to do:**
 
-1. `admin.faqContent` AppSetting + `getEffectiveFaqContent()` resolver.
-2. Admin UI for FAQ entries. Fallback to `buildFaqs()`.
+1. Create a generic `cachedQuery<T>(key: string, fetcher: () => Promise<T>, ttlMs: number): Promise<T>` utility.
+2. Wrap each `getEffective*` resolver's DB calls in the cache.
+3. TTL of 30 seconds balances freshness with DB load reduction.
+4. Cache invalidation happens naturally via TTL expiry (admin updates are infrequent).
 
 **Acceptance criteria:**
 
-- [ ] FAQ admin-editable from `/admin/settings`
+- [ ] Admin config queries cached with 30s TTL
+- [ ] Repeated calls within TTL window return cached result
+- [ ] Cache is per-process (no shared state concerns)
+- [ ] Build passes, tests pass
+
+---
+
+## MEDIUM — Upload Filename Collision Prevention (PM audit #67)
+
+### Phase 145 MEDIUM — Use `crypto.randomUUID()` for upload filenames
+
+> Engineer finding M-7. `uploaded_file_${Date.now()}.${fileExtension}` could collide under high-concurrency uploads from the same user.
+
+**File:** `src/app/api/upload/route.tsx`
+
+**What to do:**
+
+1. Replace `Date.now()` with `crypto.randomUUID()` in upload filename generation.
+2. Result: `uploaded_file_${crypto.randomUUID()}.${fileExtension}`.
+
+**Acceptance criteria:**
+
+- [ ] Upload filenames use `crypto.randomUUID()` instead of `Date.now()`
 - [ ] Build passes
 
-### Phase 104 MEDIUM — Landing/hero/about content admin-configurable
-
-#### 104.1 — Landing feature cards + how-it-works
-
-#### 104.2 — Hero copy
-
-#### 104.3 — About page copy
-
-See SPEC.md for full requirements on each.
-
 ---
 
-## LOW — Cosmetic / Code Quality
+## LOW — Admin User Detail Transaction Limit (PM audit #67)
 
-### Phase 125.3 LOW — Add `rate-limit.ts` bypass comment
+### Phase 146 LOW — Add `.limit(50)` to admin user detail transaction query
 
-> Rate limiter uses `.collection.findOneAndUpdate()` which bypasses Mongoose strict mode — intentional for atomic sliding-window logic.
-
-**File:** `src/lib/utils/rate-limit.ts`
-
-**What to do:** Add code comment explaining the MongoDB driver bypass is intentional.
-
-### Phase 139 LOW — Fix terms page wrapper ID
-
-> Architect finding L-1. Terms page at `src/app/(public)/terms/page.tsx` L25 uses `id="PrivacyPage"` instead of `id="TermsPage"`. Violates unique CSS class naming convention.
-
-**File:** `src/app/(public)/terms/page.tsx`
-
-**What to do:** Change `id="PrivacyPage"` to `id="TermsPage"`.
-
-### Phase 140 LOW — Add `.limit()` to unbounded admin queries
-
-> Architect finding M-3. `AppSetting.find({})` and `PublicPage.find({})` in `admin-queries.ts` lack `.limit()`. These admin-only collections are small but should have a safety cap.
+> Architect finding W-6. `Transaction.find({ clerkId: user.clerkId })` in `getAdminUserDetail` has no `.limit()`. A user with many transactions causes an unbounded query.
 
 **File:** `src/lib/utils/admin-queries.ts`
 
-**What to do:** Add `.limit(500)` to `AppSetting.find({})` and `PublicPage.find({})` queries.
+**What to do:** Add `.limit(50)` to the transaction query in `getAdminUserDetail`.
+
+**Acceptance criteria:**
+
+- [ ] Transaction query in admin user detail has `.limit(50)`
+- [ ] Build passes
+
+---
+
+## LOW — Rename `.tsx` Utility Files to `.ts` (PM audit #67)
+
+### Phase 147 LOW — Rename utility files with `.tsx` extension that contain no JSX
+
+> Engineer finding L-4/L-5. Per coding standards, utility-only files should use `.ts` extension. Several utility files use `.tsx` but contain no JSX.
+
+**Files to evaluate:**
+
+1. `src/lib/utils/handleError.tsx` → `.ts`
+2. `src/lib/utils/getPlanStatus.tsx` → `.ts`
+3. `src/lib/utils/getFullName.tsx` → `.ts`
+4. `src/lib/utils/getFormattedDate.tsx` → `.ts`
+5. `src/lib/utils/generateString.tsx` → `.ts`
+
+**What to do:**
+
+1. Verify each file contains no JSX.
+2. Rename `.tsx` → `.ts`.
+3. Update all imports.
+4. Update test file imports if needed.
+
+**Acceptance criteria:**
+
+- [ ] All utility-only files use `.ts` extension
+- [ ] All imports updated
+- [ ] Build passes, tests pass
+
+---
+
+## LOW — Bulk Operations Partial-Failure Reporting (PM audit #67)
+
+### Phase 148 LOW — Report partial success/failure in admin bulk operations
+
+> Engineer finding H-6. `bulkRemoveUsersAction` fails midway through a batch with no partial-failure reporting. Users deleted so far are not reported and no rollback is possible.
+
+**File:** `src/lib/actions/admin.actions.tsx`
+
+**What to do:**
+
+1. Track successful and failed operations in the loop.
+2. Return partial results: `{ success: N, failed: M, errors: [...] }`.
+3. Apply to `bulkRemoveUsersAction` and `bulkSuspendUsersAction`.
+
+**Acceptance criteria:**
+
+- [ ] Bulk operations report partial success/failure
+- [ ] Build passes
 
 ---
 
@@ -235,8 +242,10 @@ See SPEC.md for full requirements on each.
 
 ### TypeScript 6 / @typescript-eslint compatibility — Monitor for official TS 6 support in `@typescript-eslint` (Engineer finding M-3, PM audit #66)
 
+### Admin config caching (Phase 144) — Optional performance optimization, not blocking
+
 ---
 
 > **Completed phases** archived in [`DONE.md`](DONE.md).
-> All phases through 133 complete (incl. 107.1–107.3, 108, 114, 125.1, 131, 132, 133, plus 120.1–120.7, 121–130, 128.2, 106).
+> All phases through 140 complete (incl. 135–140, 74.2, 104, 125.3, 126.2, 134, plus 107.1–107.3, 108, 114, 125.1, 131, 132, 133, 120.1–120.7, 121–130, 128.2, 106).
 > All Milestones 0–25 COMPLETE.
