@@ -1,8 +1,18 @@
 "use client";
 
 import { useClerk } from "@clerk/nextjs";
+import classNames from "classnames";
+import { ButtonHTMLAttributes } from "react";
 
-export default function LogoutBtn() {
+type LogoutBtnProps = Omit<
+  ButtonHTMLAttributes<HTMLButtonElement>,
+  "type" | "onClick"
+>;
+
+export default function LogoutBtn({
+  className,
+  ...buttonProps
+}: LogoutBtnProps) {
   const { signOut } = useClerk();
 
   function handleLogout() {
@@ -12,8 +22,9 @@ export default function LogoutBtn() {
   return (
     <button
       type="button"
-      className="LogoutBtn flex flex-1 items-center"
+      className={classNames("LogoutBtn flex flex-1 items-center", className)}
       onClick={handleLogout}
+      {...buttonProps}
     >
       <i className="bi bi-box-arrow-right mr-4" aria-hidden="true" />
       Logout

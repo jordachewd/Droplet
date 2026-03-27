@@ -121,15 +121,10 @@ describe("generateVideo", () => {
       arrayBuffer: async () => contentBuffer,
     });
 
-    const serialized = await generateVideo(request);
+    const payload = await generateVideo(request);
 
-    const payload = JSON.parse(String(serialized)) as {
-      generatedVideo: boolean;
-      model: string;
-      taskData: {
-        content: Array<{ type: string; text?: string; video_url?: string }>;
-      };
-      requestMetric: { requestType: string; model: string };
+    const taskData = payload.taskData as {
+      content: Array<{ type: string; text?: string; video_url?: string }>;
     };
 
     expect(videosCreateMock).toHaveBeenCalledWith({
@@ -147,11 +142,11 @@ describe("generateVideo", () => {
     );
     expect(payload.generatedVideo).toBe(true);
     expect(payload.model).toBe("sora-2");
-    expect(payload.taskData.content[0]).toEqual({
+    expect(taskData.content[0]).toEqual({
       type: "text",
       text: "A calm ocean sunset",
     });
-    expect(payload.taskData.content[1]).toEqual({
+    expect(taskData.content[1]).toEqual({
       type: "video_url",
       video_url: "https://cdn.example.com/video.mp4",
     });
@@ -188,10 +183,7 @@ describe("generateVideo", () => {
     const generationPromise = generateVideo(request);
 
     await vi.advanceTimersByTimeAsync(1_000);
-    const serialized = await generationPromise;
-    const payload = JSON.parse(String(serialized)) as {
-      generatedVideo: boolean;
-    };
+    const payload = await generationPromise;
 
     expect(videosRetrieveMock).toHaveBeenCalledTimes(2);
     expect(payload.generatedVideo).toBe(true);

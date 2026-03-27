@@ -1,3 +1,5 @@
+import "server-only";
+
 const UPLOAD_MIME_TYPE_TO_EXTENSION = {
   "image/jpeg": "jpg",
   "image/png": "png",

@@ -135,16 +135,10 @@ describe("generateAudio", () => {
       arrayBuffer: async () => audioBuffer,
     });
 
-    const serialized = await generateAudio(request);
+    const payload = await generateAudio(request);
 
-    const payload = JSON.parse(String(serialized)) as {
-      taskData: {
-        content: Array<{ type: string; text?: string; audio_url?: string }>;
-      };
-      taskUsage: number;
-      generatedAudio: boolean;
-      model: string;
-      requestMetric: { requestType: string; model: string };
+    const taskData = payload.taskData as {
+      content: Array<{ type: string; text?: string; audio_url?: string }>;
     };
 
     expect(speechCreateMock).toHaveBeenCalledWith({
@@ -162,11 +156,11 @@ describe("generateAudio", () => {
     expect(payload.taskUsage).toBe(0);
     expect(payload.generatedAudio).toBe(true);
     expect(payload.model).toBe("gpt-4o-mini-tts");
-    expect(payload.taskData.content[0]).toEqual({
+    expect(taskData.content[0]).toEqual({
       type: "text",
       text: "Speak exactly this line",
     });
-    expect(payload.taskData.content[1]).toEqual({
+    expect(taskData.content[1]).toEqual({
       type: "audio_url",
       audio_url: "https://cdn.example.com/audio.wav",
     });
@@ -240,19 +234,10 @@ describe("generateAudio", () => {
       ],
     });
 
-    const serialized = await generateAudio(request);
+    const payload = await generateAudio(request);
 
-    const payload = JSON.parse(String(serialized)) as {
-      taskUsage: number;
-      generatedAudio: boolean;
-      model: string;
-      taskData: { content: Array<{ type: string; text?: string }> };
-      requestMetric: {
-        requestType: string;
-        model: string;
-        tokensIn: number;
-        tokensOut: number;
-      };
+    const taskData = payload.taskData as {
+      content: Array<{ type: string; text?: string }>;
     };
 
     expect(chatCompletionsCreateMock).toHaveBeenCalledWith(
@@ -264,7 +249,7 @@ describe("generateAudio", () => {
     expect(payload.taskUsage).toBe(58);
     expect(payload.generatedAudio).toBe(true);
     expect(payload.model).toBe("gpt-audio-mini");
-    expect(payload.taskData.content[0]).toEqual({
+    expect(taskData.content[0]).toEqual({
       type: "text",
       text: "Decoded transcript",
     });
@@ -401,12 +386,12 @@ describe("generateAudio", () => {
       ],
     });
 
-    const serialized = await generateAudio(request);
-    const payload = JSON.parse(String(serialized)) as {
-      taskData: { content: Array<{ type: string; text?: string | null }> };
+    const payload = await generateAudio(request);
+    const taskData = payload.taskData as {
+      content: Array<{ type: string; text?: string | null }>;
     };
 
-    expect(payload.taskData.content[0]).toEqual({
+    expect(taskData.content[0]).toEqual({
       type: "text",
       text: null,
     });

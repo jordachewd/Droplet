@@ -62,8 +62,12 @@ describe("ProfileHeroEditor", () => {
     vi.clearAllMocks();
     vi.mocked(useRouter).mockReturnValue({
       refresh: refreshMock,
-    } as never);
-    vi.mocked(updateUser).mockResolvedValue({ status: 200 } as never);
+    } as unknown as ReturnType<typeof useRouter>);
+    vi.mocked(updateUser).mockResolvedValue({
+      mongoResponse: {},
+      message: "User updated successfully",
+      status: 200,
+    });
   });
 
   afterEach(() => {

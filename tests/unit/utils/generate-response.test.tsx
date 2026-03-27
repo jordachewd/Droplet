@@ -179,8 +179,8 @@ function createStreamingRequest(
   };
 }
 
-function parsePayload<TValue>(serializedPayload: string): TValue {
-  return JSON.parse(serializedPayload) as TValue;
+function parsePayload<TValue>(payload: unknown): TValue {
+  return payload as TValue;
 }
 
 describe("generateResponse", () => {
@@ -441,27 +441,24 @@ describe("generateResponse", () => {
     const claimMediaGenerationSlot = vi.fn().mockResolvedValue({
       claimed: true,
     });
-    generateImageMock.mockResolvedValue(
-      JSON.stringify({
-        taskData: {
-          role: "assistant",
-          whois: "assistant",
-          content: [
-            {
-              type: "text",
-              text: "sunset skyline",
-            },
-          ],
-        },
-        taskUsage: 3,
-        generatedImage: true,
-        requestMetric: {
-          requestType: "image",
-          model: "gpt-image-1-mini",
-          latencyMs: 44,
-        },
-      }),
-    );
+    generateImageMock.mockResolvedValue({
+      taskData: {
+        role: "assistant",
+        whois: "assistant",
+        content: [
+          {
+            type: "text",
+            text: "sunset skyline",
+          },
+        ],
+      },
+      generatedImage: true,
+      requestMetric: {
+        requestType: "image",
+        model: "gpt-image-1-mini",
+        latencyMs: 44,
+      },
+    });
 
     const serialized = await generateResponse(
       createResponseRequest({
@@ -475,7 +472,7 @@ describe("generateResponse", () => {
       requestMetrics: Array<{ requestType: string }>;
     }>(serialized);
 
-    expect(payload.taskUsage).toBe(21);
+    expect(payload.taskUsage).toBe(18);
     expect(payload.generatedImage).toBe(true);
     expect(payload.requestMetrics).toEqual(
       expect.arrayContaining([
@@ -673,22 +670,19 @@ describe("generateResponse", () => {
     const claimMediaGenerationSlot = vi.fn().mockResolvedValue({
       claimed: true,
     });
-    generateVideoMock.mockResolvedValue(
-      JSON.stringify({
-        taskData: {
-          role: "assistant",
-          whois: "assistant",
-          content: [{ type: "text", text: "Time-lapse city lights" }],
-        },
-        taskUsage: 5,
-        generatedVideo: true,
-        requestMetric: {
-          requestType: "video",
-          model: "sora-2",
-          latencyMs: 99,
-        },
-      }),
-    );
+    generateVideoMock.mockResolvedValue({
+      taskData: {
+        role: "assistant",
+        whois: "assistant",
+        content: [{ type: "text", text: "Time-lapse city lights" }],
+      },
+      generatedVideo: true,
+      requestMetric: {
+        requestType: "video",
+        model: "sora-2",
+        latencyMs: 99,
+      },
+    });
 
     const serialized = await generateResponse(
       createResponseRequest({
@@ -702,7 +696,7 @@ describe("generateResponse", () => {
       requestMetrics: Array<{ requestType: string }>;
     }>(serialized);
 
-    expect(payload.taskUsage).toBe(19);
+    expect(payload.taskUsage).toBe(14);
     expect(payload.generatedVideo).toBe(true);
     expect(payload.requestMetrics).toEqual(
       expect.arrayContaining([

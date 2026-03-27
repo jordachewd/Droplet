@@ -2,7 +2,350 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-26 — PM audit #63. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4, 105.1, 105.2, 110, 111.1, 112.1, 112.2, 109, 113.1, 113.2, 115, 116, 117, 120.1, 120.2-A, 120.2-B, 120.2-C, 120.3, 121, 122, 123, 124, 125, 125.2, 126, 126.1, 127, 128.1, 129, 130 complete. Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS — TDD rebuild active. 538 unit tests (82 suites). E2E: 108 passed, 25 skipped, 0 failed. All 7 gates GREEN. Build passing. Node.js 24.12.0 runtime.
+> Last updated: 2026-03-27 — PM audit #67. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4, 105.1, 105.2, 106, 107.1, 107.2, 107.3, 108, 110, 111.1, 112.1, 112.2, 109, 113.1, 113.2, 114, 115, 116, 117, 120.1, 120.2-A, 120.2-B, 120.2-C, 120.3, 120.4, 120.5, 120.6, 120.7, 121, 122, 123, 124, 125, 125.1, 125.2, 126, 126.1, 126.2, 127, 128.1, 128.2, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 74.2, 104, 125.3 complete. Milestones 0–25 COMPLETE. 561 unit tests (97 suites). E2E: 8 spec files. All 7 gates GREEN. Build passing. Node.js 24.12.0 runtime. Coverage: 85/80/85/85. Zero `as never` casts. Lint: 0 errors, 0 warnings.
+
+---
+
+## Phase 135 — Add try/catch to `checkoutPlan` server action — COMPLETED (2026-03-27)
+
+> Engineer delivered (PM audit #67). Security hardening. Stripe API failures no longer leak raw messages.
+
+- [x] Wrapped `checkoutPlan` function body in try/catch.
+- [x] `handleError({ error, source: "checkoutPlan" })` in catch block.
+- [x] Build passes, tests pass.
+
+**Files changed:** `src/lib/actions/transaction.action.tsx`
+
+---
+
+## Phase 136 — Standardize API error response keys to `{ error }` — COMPLETED (2026-03-27)
+
+> Engineer delivered (PM audit #67). All error responses now use `{ error: "..." }` consistently.
+
+- [x] Replaced all `{ message: "..." }` error responses with `{ error: "..." }` in `upload/route.tsx` and `aws/route.tsx`.
+- [x] Build passes, tests pass.
+
+**Files changed:** `src/app/api/upload/route.tsx`, `src/app/api/aws/route.tsx`
+
+---
+
+## Phase 137 — Change `handleError` return type to `never` — COMPLETED (2026-03-27)
+
+> Engineer delivered (PM audit #67). Type-safety improvement — downstream generate functions have precise return types.
+
+- [x] `handleError` return type changed to `never`.
+- [x] Downstream callers' return types narrow correctly (no spurious `undefined`).
+- [x] Build passes, tests pass.
+
+**Files changed:** `src/lib/utils/handleError.tsx`, OpenAI utils call sites
+
+---
+
+## Phase 126.2 — Fix all lint warnings (0 errors, 0 warnings) — COMPLETED (2026-03-27)
+
+> Engineer delivered (PM audit #67). All 6 `setState-in-effect` + 1 `no-img-element` warnings resolved.
+
+- [x] `npm run lint` reports 0 errors, 0 warnings.
+- [x] No behavioral regressions.
+- [x] Build passes, tests pass.
+
+**Files changed:** `src/components/admin/admin-layout-shell.tsx`, `src/components/admin/admin-managed-form.tsx`, `src/components/admin/settings/admin-settings-tabs.tsx`, `src/components/admin/transactions/admin-transactions-table.tsx`, `src/components/layout/droplet-theme.tsx`, `src/components/shared/audio-player.tsx`, `tests/unit/components/hero-section.test.tsx`
+
+---
+
+## Phase 134 — Add E2E tests for critical business paths — COMPLETED (2026-03-27)
+
+> Engineer delivered (PM audit #67). 3 new E2E specs for billing, admin, and error paths.
+
+- [x] `tests/e2e/admin-user-operations.spec.ts` — admin user operations coverage.
+- [x] `tests/e2e/billing-checkout-flow.spec.ts` — billing/checkout flow structural assertions.
+- [x] `tests/e2e/error-boundary-handling.spec.ts` — error boundary handling.
+- [x] All assertions structural (no hardcoded content).
+- [x] All 7 gates GREEN.
+
+**Files changed:** 3 new E2E spec files in `tests/e2e/`
+
+---
+
+## Phase 138 — Return typed objects from generate functions — COMPLETED (2026-03-27)
+
+> Engineer delivered (PM audit #67). Zero JSON.stringify/JSON.parse roundtrips. Zero `as string` in generate/route files.
+
+- [x] All generate functions return typed payload objects directly.
+- [x] All callers use typed objects instead of parsing.
+- [x] Removed `as string` assertions.
+- [x] Build passes, tests pass.
+
+**Files changed:** `src/lib/utils/openai/generateTitle.tsx`, `generateImage.tsx`, `generateAudio.tsx`, `generateVideo.tsx`, `generateResponse.tsx`, `src/app/api/openai/route.tsx`
+
+---
+
+## Phase 125.3 — Add rate-limit.ts bypass comment — COMPLETED (2026-03-27)
+
+> Engineer delivered (PM audit #67). Explains intentional MongoDB driver bypass for atomic sliding-window.
+
+- [x] Code comment added explaining intentional `.collection.findOneAndUpdate()` bypass.
+- [x] Build passes.
+
+**Files changed:** `src/lib/utils/rate-limit.ts`
+
+---
+
+## Phase 139 — Fix terms page wrapper ID — COMPLETED (2026-03-27)
+
+> Engineer delivered (PM audit #67). Changed `id="PrivacyPage"` to `id="TermsPage"`.
+
+- [x] Unique CSS class naming convention now respected.
+- [x] Build passes.
+
+**Files changed:** `src/app/(public)/terms/page.tsx`
+
+---
+
+## Phase 140 — Add `.limit()` to unbounded admin queries — COMPLETED (2026-03-27)
+
+> Engineer delivered (PM audit #67). `.limit(500)` added to `AppSetting.find({})` and `PublicPage.find({})`.
+
+- [x] Safety cap on admin-only collection queries.
+- [x] Build passes.
+
+**Files changed:** `src/lib/utils/admin-queries.ts`
+
+---
+
+## Phase 74.2 — FAQ content admin-configurable — COMPLETED (2026-03-27)
+
+> Engineer delivered (PM audit #67). FAQ admin-editable from `/admin/settings`. Fallback to `buildFaqs()`.
+
+- [x] `admin.faqContent` AppSetting + `getEffectiveFaqContent()` resolver.
+- [x] Admin UI for FAQ entries.
+- [x] Unit tests: `tests/unit/utils/effective-faq-content.test.ts`.
+- [x] Build passes.
+
+**Files changed:** `src/constants/faqs.tsx`, `src/lib/utils/effective-faq-content.ts` (new), `src/lib/actions/admin.actions.tsx`, admin settings page, `tests/unit/utils/effective-faq-content.test.ts` (new)
+
+---
+
+## Phase 104 — Landing/hero/about content admin-configurable — COMPLETED (2026-03-27)
+
+> Engineer delivered (PM audit #67). Landing feature cards, hero copy, about copy all admin-editable.
+
+- [x] `getEffectiveWebsiteCopy()` resolver with admin override fallbacks.
+- [x] Admin website content section in settings.
+- [x] Unit tests: `tests/unit/utils/effective-website-copy.test.ts`.
+- [x] Build passes.
+
+**Files changed:** `src/constants/hero-content.ts`, `src/constants/landing-data.ts`, `src/constants/about-data.ts`, `src/lib/utils/effective-website-copy.ts` (new), `src/components/admin/settings/admin-website-content-section.tsx` (new), admin settings page, `tests/unit/utils/effective-website-copy.test.ts` (new)
+
+---
+
+## Phase 107.1 — Create `getEffectiveStopReasonMessages()` resolver — COMPLETED (2026-03-27)
+
+> Engineer delivered (PM audit #66). TD-HARDCODE-01 step 1. Server-only resolver with AppSetting fallback.
+
+- [x] Created `src/lib/utils/effective-stop-reasons.ts` with `getEffectiveStopReasonMessages()` resolver.
+- [x] Extended `src/constants/stop-reasons.ts` with `STOP_REASON_CODES`.
+- [x] Falls back to `STOP_REASON_MESSAGES` defaults when no admin override.
+- [x] `import "server-only"` guard added.
+- [x] Unit tests: `tests/unit/utils/effective-stop-reasons.test.ts`.
+- [x] Build passes, tests pass.
+
+**Files changed:** `src/lib/utils/effective-stop-reasons.ts` (new), `src/constants/stop-reasons.ts`, `tests/unit/utils/effective-stop-reasons.test.ts` (new)
+
+---
+
+## Phase 107.2 — Admin UI for stop reason message editing — COMPLETED (2026-03-27)
+
+> Engineer delivered (PM audit #66). TD-HARDCODE-01 step 2. Admin settings UI wired.
+
+- [x] Created `src/components/admin/settings/admin-stop-reasons-section.tsx`.
+- [x] All 9 stop reason messages editable from `/admin/settings`.
+- [x] Save via admin action with audit trail.
+- [x] Type + normalization support added.
+- [x] Build passes.
+
+**Files changed:** `src/components/admin/settings/admin-stop-reasons-section.tsx` (new), `src/components/admin/settings/types.ts`, `src/components/admin/settings/normalize-admin-settings.ts`, `src/lib/utils/admin-queries.ts`, `src/lib/actions/admin.actions.tsx`, `src/app/(admin)/admin/settings/page.tsx`
+
+---
+
+## Phase 107.3 — Wire consumers to use stop-reason resolver — COMPLETED (2026-03-27)
+
+> Engineer delivered (PM audit #66). TD-HARDCODE-01 RESOLVED. Zero hardcoded stop reason imports in consumers.
+
+- [x] Chat pages resolve effective stop messages server-side.
+- [x] OpenAI route uses resolved stop messages.
+- [x] Zero hardcoded `STOP_REASON_MESSAGES` imports in consumer files.
+- [x] Build passes, tests pass.
+
+**Files changed:** `src/app/(chat)/app/page.tsx`, `src/app/(chat)/app/c/[conversationId]/page.tsx`, `src/app/api/openai/route.tsx`
+
+---
+
+## Phase 108 — Library tabs + admin settings tabs arrow-key navigation — COMPLETED (2026-03-27)
+
+> Engineer delivered (PM audit #66). TD-WCAG-05 RESOLVED. Full WCAG tablist keyboard pattern.
+
+- [x] ArrowLeft/ArrowRight/Home/End + roving tabIndex in `admin-settings-tabs.tsx`.
+- [x] ArrowLeft/ArrowRight/Home/End + roving tabIndex in `library-tabs.tsx`.
+- [x] Unit tests for both: `admin-settings-tabs.test.tsx`, `library-tabs-keyboard.test.tsx`.
+- [x] Build passes.
+
+**Files changed:** `src/components/admin/settings/admin-settings-tabs.tsx`, `src/components/chat/library-tabs.tsx`, `tests/unit/components/admin-settings-tabs.test.tsx`, `tests/unit/components/library-tabs-keyboard.test.tsx`
+
+---
+
+## Phase 114 — AvatarMenu keyboard navigation — COMPLETED (2026-03-27)
+
+> Engineer delivered (PM audit #66). TD-WCAG-07 RESOLVED. Full menu keyboard pattern.
+
+- [x] `role="menu"` on dropdown, `role="menuitem"` on links.
+- [x] Escape closes menu, ArrowUp/ArrowDown/Home/End navigation.
+- [x] First item focus on open, trigger-focus restore on close.
+- [x] Logout button forwards compatible menu props.
+- [x] Unit tests: `avatar-menu.test.tsx`.
+- [x] Build passes.
+
+**Files changed:** `src/components/shared/avatar-menu.tsx`, `src/components/shared/logout-btn.tsx`, `tests/unit/components/avatar-menu.test.tsx`
+
+---
+
+## Phase 125.1 — Add explicit `strict: true` to User, Task, Transaction schemas — COMPLETED (2026-03-27)
+
+> Engineer delivered (PM audit #66). Schema hardening for governance/auditability.
+
+- [x] `{ strict: true }` added to `user.model.tsx`, `tasks.model.tsx`, `transaction.model.tsx`.
+- [x] All 8+ Mongoose models now have explicit `strict: true`.
+- [x] Build passes, tests pass.
+
+**Files changed:** `src/lib/database/models/user.model.tsx`, `src/lib/database/models/tasks.model.tsx`, `src/lib/database/models/transaction.model.tsx`
+
+---
+
+## Phase 133 — Add auto-timeout to streaming fetch in chat-wrapper — COMPLETED (2026-03-27)
+
+> Engineer delivered (PM audit #66). 120s auto-abort safety net with user-visible timeout feedback.
+
+- [x] 120s auto-timeout `abort()` on streaming fetch.
+- [x] Timeout-specific alert message shown to user.
+- [x] Manual cancel still works.
+- [x] Unit tests: `chat-wrapper.test.tsx`.
+- [x] Build passes, tests pass.
+
+**Files changed:** `src/components/chat/chat-wrapper.tsx`, `tests/unit/components/chat-wrapper.test.tsx`
+
+---
+
+## Phase 131 — Add `server-only` guard to 4 utility files — COMPLETED (2026-03-27)
+
+> Engineer delivered (PM audit #66). Defensive server-only guards added.
+
+- [x] `import "server-only"` added to `serialize-for-client.ts`, `generateString.tsx`, `validation-schemas.ts`, `upload-file-validation.ts`.
+- [x] Build passes, tests pass.
+
+**Files changed:** `src/lib/utils/serialize-for-client.ts`, `src/lib/utils/generateString.tsx`, `src/lib/utils/validation-schemas.ts`, `src/lib/utils/upload-file-validation.ts`
+
+---
+
+## Phase 132 — Resolve stale TODO comments in ai-model-policy.ts — COMPLETED (2026-03-27)
+
+> Engineer delivered (PM audit #66). Comments updated to reflect intentional current state.
+
+- [x] Updated L386/L390 comments to note flat-rate pricing is intentional.
+- [x] Updated L377/L382 to document current audio token accounting approach.
+- [x] Zero stale TODO comments in production code.
+- [x] Build passes.
+
+**Files changed:** `src/lib/utils/ai-model-policy.ts`
+
+---
+
+## Phase 120.7 — Raise coverage thresholds post-rebuild — COMPLETED (2026-03-27)
+
+> Engineer delivered (PM audit #65). Coverage thresholds raised to match achieved coverage after full TDD rebuild.
+
+- [x] Raised vitest coverage thresholds: statements 85%, branches 80%, functions 85%, lines 85%.
+- [x] `npm run test:coverage` passes.
+- [x] All 7 gates GREEN.
+
+**Files changed:** `vitest.config.mts`
+
+---
+
+## Phase 120.6 — Rebuild E2E tests (TDD) — COMPLETED (2026-03-27)
+
+> Engineer delivered (PM audit #65). All E2E tests rebuilt from scratch with structural assertions. 5 spec files.
+
+- [x] Deleted all existing E2E test files and rebuilt from scratch.
+- [x] 5 new E2E spec files: `admin-settings-propagation.spec.ts`, `auth-boundaries.spec.ts`, `authenticated-accessibility.spec.ts`, `chat-conversation-flow.spec.ts`, `public-structure.spec.ts`.
+- [x] All assertions structural (no hardcoded content/prices).
+- [x] Chat conversation flow E2E exists.
+- [x] Admin settings propagation verified E2E.
+- [x] Authenticated route accessibility scanning added.
+- [x] All 7 gates GREEN.
+
+**Files changed:** 5 E2E spec files in `tests/e2e/`
+
+---
+
+## Phase 120.5 — Rebuild component tests (TDD + a11y) — COMPLETED (2026-03-27)
+
+> Engineer delivered (PM audit #65). All component tests rebuilt from scratch using TDD methodology. 24 component test files.
+
+- [x] Deleted all existing component test files and rebuilt from scratch.
+- [x] 24 component test files rebuilt with behavioral tests.
+- [x] Focus on user interactions, conditional rendering, a11y attributes, keyboard navigation.
+- [x] Zero smoke tests ("renders without crashing").
+- [x] Zero `as never` casts.
+- [x] All 7 gates GREEN.
+
+**Files changed:** 24 component test files in `tests/unit/components/`
+
+---
+
+## Phase 120.4 — Rebuild API route tests (TDD) — COMPLETED (2026-03-27)
+
+> Engineer delivered (PM audit #65). All route tests rebuilt from scratch. OpenAI route split into 5 focused modules ≤321 lines each.
+
+- [x] Deleted all existing route test files and rebuilt from scratch.
+- [x] OpenAI route tests split into focused modules by concern (auth, streaming, media, conversation-stop, rate-limit).
+- [x] All route test files rebuilt using TDD methodology.
+- [x] Covers: auth failure, malformed input, success paths, edge cases, webhook idempotency.
+- [x] Zero `as never` casts.
+- [x] All 7 gates GREEN.
+
+**Files changed:** Route test files in `tests/unit/routes/`
+
+---
+
+## Milestone 25 — Testing Infrastructure Rebuild & Config Hardening — COMPLETED (2026-03-27)
+
+> Full milestone completed. TDD rebuild from scratch finished. All phases 120.1–120.7 COMPLETE. 92 suites, 543 tests. 5 E2E specs rebuilt. Zero `as never` casts. Coverage 85/80/85/85. All 7 gates GREEN.
+
+---
+
+## Phase 128.2 — Migrate existing buttons to shared `<Button>` component — COMPLETED (2026-03-26)
+
+> Engineer delivered (PM audit #64). All 11 raw `<button className="btn btn-*">` instances across 8 files migrated to shared `<Button>` component.
+
+- [x] Replaced all 11 targeted raw buttons with `<Button variant="..." size="...">` in 8 files.
+- [x] Files changed: `src/app/error.tsx`, `src/app/(chat)/error.tsx`, `src/app/(admin)/admin/users/page.tsx`, `src/components/shared/confirmation-modal.tsx`, `src/components/admin/tiptap-editor.tsx`, `src/components/admin/settings/admin-settings-tabs.tsx`, `src/components/sections/profile/profile-hero-editor.tsx`, `src/components/shared/audio-player.tsx`.
+- [x] `RAW_BTN_MATCHES=0` verified for all 8 target files.
+- [x] Build passes, tests pass.
+
+**Files changed:** 8 files (see list above).
+
+---
+
+## Phase 106 — Extract `ChatApiResponse` / `ChatStreamEvent` to shared types — COMPLETED (2026-03-26)
+
+> Engineer delivered (PM audit #64). TD-REUSE-04 RESOLVED. Shared types extracted and consumed by both API route and chat wrapper.
+
+- [x] Created `src/types/chat-api.d.ts` with shared `ChatApiResponse` and `ChatStreamEvent` types.
+- [x] Imported from shared location in `src/app/api/openai/route.tsx` and `src/components/chat/chat-wrapper.tsx`.
+- [x] Removed local duplicate type definitions from both files.
+- [x] Build passes, tests pass.
+
+**Files changed:** `src/types/chat-api.d.ts` (new), `src/app/api/openai/route.tsx`, `src/components/chat/chat-wrapper.tsx`.
 
 ---
 

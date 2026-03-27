@@ -22,18 +22,25 @@ interface GenerateImageParams {
   modelOverrides?: ModelPolicyModelOverrides;
 }
 
-async function convertToPng(imageBuffer: Buffer): Promise<Buffer | undefined> {
+export interface GeneratedImagePayload {
+  taskData: Message;
+  generatedImage: true;
+  model: string;
+  requestMetric: AIRequestMetric;
+}
+
+async function convertToPng(imageBuffer: Buffer): Promise<Buffer> {
   try {
     return sharp(imageBuffer).png().toBuffer();
   } catch (error) {
-    handleError({ error, source: "convertToPng" });
+    return handleError({ error, source: "convertToPng" });
   }
 }
 
 async function getGeneratedImageBuffer(imageData: {
   b64_json?: string;
   url?: string;
-}): Promise<Buffer | undefined> {
+}): Promise<Buffer> {
   if (typeof imageData.b64_json === "string" && imageData.b64_json.length > 0) {
     return Buffer.from(imageData.b64_json, "base64");
   }
@@ -48,7 +55,7 @@ async function getGeneratedImageBuffer(imageData: {
     return Buffer.from(await response.arrayBuffer());
   }
 
-  return undefined;
+  throw new Error("The image generation API returned no usable image data.");
 }
 
 export async function generateImage({
@@ -58,7 +65,7 @@ export async function generateImage({
   userId,
   planName,
   modelOverrides,
-}: GenerateImageParams) {
+}: GenerateImageParams): Promise<GeneratedImagePayload> {
   const policy = resolveModelPolicy({
     plan: normalizePlanTier(planName),
     feature: "image_generation",
@@ -91,17 +98,7 @@ export async function generateImage({
     const respData = response.data[0];
     const rawImageBuffer = await getGeneratedImageBuffer(respData);
 
-    if (!rawImageBuffer) {
-      throw new Error(
-        "The image generation API returned no usable image data.",
-      );
-    }
-
     const imgBuffer = await convertToPng(rawImageBuffer);
-
-    if (!imgBuffer) {
-      throw new Error("Failed to convert the generated image to PNG.");
-    }
 
     const fileName = `${taskId}_image_${generateString()}.png`;
     const imageS3Url = await uploadFileToAWS(
@@ -126,12 +123,12 @@ export async function generateImage({
       ] as ContentItem[],
     };
 
-    return JSON.stringify({
+    return {
       taskData,
       generatedImage: true,
       model: policy.model,
       requestMetric,
-    });
+    };
   } catch (error) {
     const status =
       error instanceof Error && "status" in error
@@ -140,6 +137,6 @@ export async function generateImage({
     process.stderr.write(
       `[generateImage] model=${policy.model} status=${status ?? "unknown"} error=${error instanceof Error ? error.message : "unknown"}\n`,
     );
-    handleError({ error, source: "generateImage" });
+    return handleError({ error, source: "generateImage" });
   }
 }

@@ -56,21 +56,21 @@ function buildRequest(body: string, signature?: string): NextRequest {
 describe("POST /api/webhooks/stripe", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.spyOn(process.stderr, "write").mockImplementation(
-      stderrWriteMock as never,
-    );
+    vi.spyOn(process.stderr, "write").mockImplementation(stderrWriteMock);
     process.env.STRIPE_WEBHOOK_SECRET = "whsec_test";
-    vi.mocked(connectToDatabase).mockResolvedValue(undefined as never);
+    vi.mocked(connectToDatabase).mockResolvedValue(
+      {} as Awaited<ReturnType<typeof connectToDatabase>>,
+    );
     vi.mocked(Transaction.findOne).mockResolvedValue(null);
     vi.mocked(Transaction.create).mockResolvedValue({
       _id: "txn_default",
-    } as never);
+    } as unknown as Awaited<ReturnType<typeof Transaction.create>>);
     vi.mocked(User.findOne).mockResolvedValue({
       _id: "mongo_user_1",
-    } as never);
+    } as unknown as Awaited<ReturnType<typeof User.findOne>>);
     vi.mocked(User.findOneAndUpdate).mockResolvedValue({
       mongoResponse: {},
-    } as never);
+    });
   });
 
   afterEach(() => {
@@ -173,7 +173,9 @@ describe("POST /api/webhooks/stripe", () => {
       },
     });
 
-    vi.mocked(Transaction.create).mockResolvedValue({ _id: "txn_1" } as never);
+    vi.mocked(Transaction.create).mockResolvedValue({
+      _id: "txn_1",
+    } as unknown as Awaited<ReturnType<typeof Transaction.create>>);
 
     const response = await POST(buildRequest('{"valid":"payload"}', "sig_123"));
     const payload = await response.json();
@@ -280,7 +282,7 @@ describe("POST /api/webhooks/stripe", () => {
         },
       },
     });
-    vi.mocked(User.findOneAndUpdate).mockResolvedValue(null as never);
+    vi.mocked(User.findOneAndUpdate).mockResolvedValue(null);
 
     const response = await POST(buildRequest('{"valid":"payload"}', "sig_123"));
     const payload = await response.json();
@@ -315,7 +317,7 @@ describe("POST /api/webhooks/stripe", () => {
         },
       },
     });
-    vi.mocked(User.findOne).mockResolvedValue(null as never);
+    vi.mocked(User.findOne).mockResolvedValue(null);
 
     const response = await POST(buildRequest('{"valid":"payload"}', "sig_123"));
     const payload = await response.json();
@@ -368,7 +370,7 @@ describe("POST /api/webhooks/stripe", () => {
     });
     vi.mocked(Transaction.findOne).mockResolvedValue({
       stripeId: "cs_test_duplicate",
-    } as never);
+    });
 
     const response = await POST(buildRequest('{"valid":"payload"}', "sig_123"));
     const payload = await response.json();
@@ -401,8 +403,8 @@ describe("POST /api/webhooks/stripe", () => {
     });
     vi.mocked(Transaction.findOne).mockResolvedValue({
       stripeId: "cs_test_duplicate_short_circuit",
-    } as never);
-    vi.mocked(User.findOne).mockResolvedValue(null as never);
+    });
+    vi.mocked(User.findOne).mockResolvedValue(null);
 
     const response = await POST(buildRequest('{"valid":"payload"}', "sig_123"));
     const payload = await response.json();

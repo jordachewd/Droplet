@@ -48,8 +48,15 @@ describe("ProfileDangerZone", () => {
     vi.clearAllMocks();
     vi.mocked(useClerk).mockReturnValue({
       signOut: signOutMock,
-    } as never);
-    vi.mocked(deleteUser).mockResolvedValue({ status: 200 } as never);
+    } as unknown as ReturnType<typeof useClerk>);
+    vi.mocked(deleteUser).mockResolvedValue({
+      message: "User deleted successfully.",
+      status: 200,
+      deletedTasks: 0,
+      deletedTransactions: 0,
+      deletedUsageEvents: 0,
+      deletedObjectsCount: 0,
+    });
   });
 
   it("deletes account after confirmation and signs out", async () => {
@@ -65,7 +72,11 @@ describe("ProfileDangerZone", () => {
   });
 
   it("shows an error when account deletion fails", async () => {
-    vi.mocked(deleteUser).mockResolvedValue({ status: 500 } as never);
+    vi.mocked(deleteUser).mockResolvedValue({
+      message: "Account deletion failed. Please try again.",
+      status: 500,
+      source: "deleteUser",
+    });
     render(<ProfileDangerZone userData={baseUserData} />);
 
     fireEvent.click(screen.getByRole("button", { name: "Delete My Account" }));

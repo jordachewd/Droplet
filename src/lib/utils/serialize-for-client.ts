@@ -1,3 +1,5 @@
+import "server-only";
+
 type JsonPrimitive = string | number | boolean | null;
 type NonJsonable = undefined | symbol | ((...args: unknown[]) => unknown);
 

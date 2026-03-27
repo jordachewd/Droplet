@@ -50,48 +50,51 @@ const MessageSchema = new Schema<Message>(
   { _id: false },
 );
 
-const TaskSchema = new Schema<ITask>({
-  userId: { type: String, required: true, index: true },
-  title: { type: String, required: true },
-  messages: { type: [MessageSchema], required: true },
-  personaId: {
-    type: String,
-    required: true,
-    default: "strategist",
-    index: true,
+const TaskSchema = new Schema<ITask>(
+  {
+    userId: { type: String, required: true, index: true },
+    title: { type: String, required: true },
+    messages: { type: [MessageSchema], required: true },
+    personaId: {
+      type: String,
+      required: true,
+      default: "strategist",
+      index: true,
+    },
+    usage: { type: Number, required: true, default: 0 },
+    promptCount: { type: Number, required: true, default: 0 },
+    mediaCount: { type: Number, required: true, default: 0 },
+    estimatedBytes: { type: Number, required: true, default: 0 },
+    status: {
+      type: String,
+      required: true,
+      enum: ["active", "ended"],
+      default: "active",
+    },
+    endedAt: { type: Date },
+    endedReason: {
+      type: String,
+      enum: [
+        "prompt_limit_reached",
+        "trial_limit_reached",
+        "media_limit_reached",
+        "image_limit_reached",
+        "audio_limit_reached",
+        "video_limit_reached",
+        "daily_conversation_limit_reached",
+        "conversation_storage_limit_reached",
+        "billing_state_invalid",
+      ],
+    },
+    endAction: {
+      type: String,
+      enum: ["start_new_conversation", "upgrade_plan", "contact_support"],
+    },
+    createdAt: { type: Date, default: Date.now, index: true },
+    updatedAt: { type: Date, default: Date.now },
   },
-  usage: { type: Number, required: true, default: 0 },
-  promptCount: { type: Number, required: true, default: 0 },
-  mediaCount: { type: Number, required: true, default: 0 },
-  estimatedBytes: { type: Number, required: true, default: 0 },
-  status: {
-    type: String,
-    required: true,
-    enum: ["active", "ended"],
-    default: "active",
-  },
-  endedAt: { type: Date },
-  endedReason: {
-    type: String,
-    enum: [
-      "prompt_limit_reached",
-      "trial_limit_reached",
-      "media_limit_reached",
-      "image_limit_reached",
-      "audio_limit_reached",
-      "video_limit_reached",
-      "daily_conversation_limit_reached",
-      "conversation_storage_limit_reached",
-      "billing_state_invalid",
-    ],
-  },
-  endAction: {
-    type: String,
-    enum: ["start_new_conversation", "upgrade_plan", "contact_support"],
-  },
-  createdAt: { type: Date, default: Date.now, index: true },
-  updatedAt: { type: Date, default: Date.now },
-});
+  { strict: true },
+);
 
 TaskSchema.index({ userId: 1, updatedAt: -1 });
 TaskSchema.index({ userId: 1, createdAt: -1 });

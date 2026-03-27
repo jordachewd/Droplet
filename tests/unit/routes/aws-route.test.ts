@@ -35,7 +35,7 @@ describe("/api/aws route", () => {
     vi.mocked(currentUser).mockResolvedValue({
       id: "user_123",
       username: "jwd-user",
-    } as never);
+    } as unknown as Awaited<ReturnType<typeof currentUser>>);
     vi.mocked(generateString).mockReturnValue("rand123");
     vi.mocked(uploadFileToAWS).mockResolvedValue(
       "/api/download?key=user_123%2Ftask_abc%2Ftask_abc_image_rand123.png",
@@ -44,7 +44,7 @@ describe("/api/aws route", () => {
   });
 
   it("returns 401 for upload when user is not authenticated", async () => {
-    vi.mocked(currentUser).mockResolvedValue(null as never);
+    vi.mocked(currentUser).mockResolvedValue(null);
 
     const response = await POST(
       buildRequest("POST", { taskId: "task_abc", imgBuffer: "ZmFrZQ==" }),
@@ -52,7 +52,7 @@ describe("/api/aws route", () => {
     const payload = await response.json();
 
     expect(response.status).toBe(401);
-    expect(payload.message).toBe("User not authenticated.");
+    expect(payload.error).toBe("User not authenticated.");
   });
 
   it("returns 400 for upload when required payload is missing", async () => {
@@ -60,7 +60,7 @@ describe("/api/aws route", () => {
     const payload = await response.json();
 
     expect(response.status).toBe(400);
-    expect(payload.message).toBe("TaskId and image buffer are required.");
+    expect(payload.error).toBe("TaskId and image buffer are required.");
   });
 
   it("uploads image and returns fileUrl", async () => {
@@ -99,7 +99,7 @@ describe("/api/aws route", () => {
     const payload = await response.json();
 
     expect(response.status).toBe(400);
-    expect(payload.message).toBe("Image payload exceeds 10MB limit.");
+    expect(payload.error).toBe("Image payload exceeds 10MB limit.");
     expect(uploadFileToAWS).not.toHaveBeenCalled();
   });
 
@@ -115,12 +115,11 @@ describe("/api/aws route", () => {
     const payload = await response.json();
 
     expect(response.status).toBe(500);
-    expect(payload.message).toBe("File upload failed");
-    expect(payload.error).toBeUndefined();
+    expect(payload.error).toBe("File upload failed");
   });
 
   it("returns 401 for delete when user is not authenticated", async () => {
-    vi.mocked(currentUser).mockResolvedValue(null as never);
+    vi.mocked(currentUser).mockResolvedValue(null);
 
     const response = await DELETE(
       buildRequest("DELETE", { folder: "task_abc", fileName: "file.png" }),
@@ -128,7 +127,7 @@ describe("/api/aws route", () => {
     const payload = await response.json();
 
     expect(response.status).toBe(401);
-    expect(payload.message).toBe("User not authenticated.");
+    expect(payload.error).toBe("User not authenticated.");
   });
 
   it("returns 400 for delete when payload is incomplete", async () => {
@@ -138,7 +137,7 @@ describe("/api/aws route", () => {
     const payload = await response.json();
 
     expect(response.status).toBe(400);
-    expect(payload.message).toContain("required for deletion");
+    expect(payload.error).toContain("required for deletion");
   });
 
   it("deletes image with user id path and returns success", async () => {
@@ -168,7 +167,7 @@ describe("/api/aws route", () => {
     const payload = await response.json();
 
     expect(response.status).toBe(403);
-    expect(payload.message).toContain("Forbidden");
+    expect(payload.error).toContain("Forbidden");
     expect(deleteFileFromAWS).not.toHaveBeenCalled();
   });
 
@@ -197,7 +196,6 @@ describe("/api/aws route", () => {
     const payload = await response.json();
 
     expect(response.status).toBe(500);
-    expect(payload.message).toBe("File deletion failed");
-    expect(payload.error).toBeUndefined();
+    expect(payload.error).toBe("File deletion failed");
   });
 });

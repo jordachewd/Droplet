@@ -1,5 +1,10 @@
 import { PersonaTrialLimits, PlanLimits } from "@/constants/plans";
+import { AboutContent } from "@/constants/about-data";
+import { FaqItem } from "@/constants/faqs";
+import { HeroContent } from "@/constants/hero-content";
+import { LandingContent } from "@/constants/landing-data";
 import { PersonaId } from "@/types/PersonaData.d";
+import { TaskEndedReason } from "@/types/TaskData.d";
 
 export interface PricingSettingsFormValue {
   proPrice: number;
@@ -14,6 +19,11 @@ export interface ThemeSettingsFormValue {
 export interface SupportSettingsFormValue {
   supportEmail: string;
 }
+
+export type StopReasonMessagesSettingsFormValue = Record<
+  TaskEndedReason,
+  string
+>;
 
 export type LimitsSettingsFormValue = PlanLimits;
 export type TrialLimitsSettingsFormValue = PersonaTrialLimits;
@@ -32,6 +42,14 @@ export type PersonaContentSettingsFormValue = Record<
     starterPrompts: string[];
   }
 >;
+
+export type FaqContentSettingsFormValue = FaqItem[];
+
+export type HeroContentSettingsFormValue = HeroContent;
+
+export type LandingContentSettingsFormValue = LandingContent;
+
+export type AboutContentSettingsFormValue = AboutContent;
 
 export const PERSONA_ACCESS_KEY_BY_PLAN = {
   Lite: "persona_access_lite",

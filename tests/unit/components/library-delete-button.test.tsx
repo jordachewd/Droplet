@@ -27,7 +27,8 @@ describe("LibraryDeleteButton", () => {
     vi.mocked(deleteTask).mockResolvedValue({
       status: 200,
       message: "Task deleted successfully",
-    } as never);
+      source: "deleteTask",
+    });
 
     render(
       <LibraryDeleteButton

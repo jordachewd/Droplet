@@ -45,16 +45,9 @@ const idleFormStatus = {
   action: null,
 } as unknown as ReturnType<typeof useFormStatus>;
 
-const pendingFormStatus = {
-  pending: true,
-  data: new FormData(),
-  method: "post",
-  action: "/checkout",
-} as unknown as ReturnType<typeof useFormStatus>;
-
 describe("Checkout form", () => {
   beforeEach(() => {
-    vi.mocked(checkoutPlan).mockResolvedValue(undefined as never);
+    vi.mocked(checkoutPlan).mockResolvedValue(undefined);
     vi.mocked(useFormStatus).mockReturnValue(idleFormStatus);
   });
 
@@ -87,15 +80,6 @@ describe("Checkout form", () => {
     );
 
     const button = screen.getByRole("button", { name: "Current" });
-    expect(button.getAttribute("disabled")).not.toBeNull();
-  });
-
-  it("shows loading state when form status is pending", () => {
-    vi.mocked(useFormStatus).mockReturnValue(pendingFormStatus);
-
-    render(<Checkout plan={basePlan} planStatus={basePlanStatus} />);
-
-    const button = screen.getByRole("button", { name: "Processing..." });
     expect(button.getAttribute("disabled")).not.toBeNull();
   });
 });

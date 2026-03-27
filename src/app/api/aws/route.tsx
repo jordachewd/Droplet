@@ -72,7 +72,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
     if (!user?.id) {
       return NextResponse.json(
-        { message: "User not authenticated." },
+        { error: "User not authenticated." },
         { status: 401 },
       );
     }
@@ -81,7 +81,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
     if (!parsedBody.success) {
       return NextResponse.json(
-        { message: "TaskId and image buffer are required." },
+        { error: "TaskId and image buffer are required." },
         { status: 400 },
       );
     }
@@ -93,7 +93,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
     if (payloadSizeBytes > MAX_BASE64_IMAGE_SIZE_BYTES) {
       return NextResponse.json(
-        { message: "Image payload exceeds 10MB limit." },
+        { error: "Image payload exceeds 10MB limit." },
         { status: 400 },
       );
     }
@@ -112,10 +112,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
     return NextResponse.json({ fileUrl, objectKey }, { status: 200 });
   } catch {
-    return NextResponse.json(
-      { message: "File upload failed" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "File upload failed" }, { status: 500 });
   }
 }
 
@@ -125,7 +122,7 @@ export async function DELETE(req: Request): Promise<NextResponse> {
 
     if (!user?.id) {
       return NextResponse.json(
-        { message: "User not authenticated." },
+        { error: "User not authenticated." },
         { status: 401 },
       );
     }
@@ -135,7 +132,7 @@ export async function DELETE(req: Request): Promise<NextResponse> {
     if (!parsedBody.success) {
       return NextResponse.json(
         {
-          message:
+          error:
             "objectKey, fileUrl, or folder and fileName are required for deletion.",
         },
         { status: 400 },
@@ -147,7 +144,7 @@ export async function DELETE(req: Request): Promise<NextResponse> {
     if (!objectKey) {
       return NextResponse.json(
         {
-          message:
+          error:
             "objectKey, fileUrl, or folder and fileName are required for deletion.",
         },
         { status: 400 },
@@ -157,7 +154,7 @@ export async function DELETE(req: Request): Promise<NextResponse> {
     if (!isUserOwnedS3ObjectKey(user.id, objectKey)) {
       return NextResponse.json(
         {
-          message: "Forbidden: file does not belong to the authenticated user.",
+          error: "Forbidden: file does not belong to the authenticated user.",
         },
         { status: 403 },
       );
@@ -171,7 +168,7 @@ export async function DELETE(req: Request): Promise<NextResponse> {
     });
   } catch {
     return NextResponse.json(
-      { message: "File deletion failed" },
+      { error: "File deletion failed" },
       { status: 500 },
     );
   }

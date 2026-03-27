@@ -8,7 +8,6 @@ import {
   useMemo,
   useState,
 } from "react";
-import { useUiStore } from "@/lib/hooks/use-ui-store";
 import { ThemeMode } from "@/types/ThemeData.d";
 
 interface ThemeProps {
@@ -54,6 +53,14 @@ const getStoredMode = (): ThemeMode => {
   return "system";
 };
 
+const getInitialMode = (): ThemeMode => {
+  if (typeof window === "undefined") {
+    return "system";
+  }
+
+  return getStoredMode();
+};
+
 const persistMode = (nextMode: ThemeMode) => {
   try {
     window.localStorage.setItem(STORAGE_KEY, nextMode);
@@ -63,43 +70,37 @@ const persistMode = (nextMode: ThemeMode) => {
 };
 
 export default function DropletTheme({ children }: ThemeProps) {
-  const mode = useUiStore((state) => state.themeMode);
-  const setModeState = useUiStore((state) => state.setThemeMode);
-  const [resolvedMode, setResolvedMode] = useState<ResolvedThemeMode>("light");
-
-  const applyTheme = useCallback((targetMode: ThemeMode) => {
-    const nextResolvedMode =
-      targetMode === "system" ? getSystemMode() : targetMode;
-    document.documentElement.classList.add("DropletTheme");
-    document.documentElement.setAttribute(THEME_ATTRIBUTE, nextResolvedMode);
-    setResolvedMode(nextResolvedMode);
-  }, []);
+  const [mode, setModeState] = useState<ThemeMode>(getInitialMode);
+  const [systemMode, setSystemMode] = useState<ResolvedThemeMode>(() =>
+    typeof window === "undefined" ? "light" : getSystemMode(),
+  );
+  const resolvedMode: ResolvedThemeMode = mode === "system" ? systemMode : mode;
 
   useEffect(() => {
-    const safeInitialTheme = getStoredMode();
-
-    setModeState(safeInitialTheme);
-    applyTheme(safeInitialTheme);
-  }, [applyTheme, setModeState]);
+    document.documentElement.classList.add("DropletTheme");
+    document.documentElement.setAttribute(THEME_ATTRIBUTE, resolvedMode);
+  }, [resolvedMode]);
 
   useEffect(() => {
     if (mode !== "system") return;
 
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-    const onSystemThemeChange = () => applyTheme("system");
+    const onSystemThemeChange = () => {
+      setSystemMode(getSystemMode());
+    };
     mediaQuery.addEventListener("change", onSystemThemeChange);
 
     return () => mediaQuery.removeEventListener("change", onSystemThemeChange);
-  }, [applyTheme, mode]);
+  }, [mode]);
 
-  const setMode = useCallback(
-    (nextMode: ThemeMode) => {
-      setModeState(nextMode);
-      persistMode(nextMode);
-      applyTheme(nextMode);
-    },
-    [applyTheme, setModeState],
-  );
+  const setMode = useCallback((nextMode: ThemeMode) => {
+    setModeState(nextMode);
+    persistMode(nextMode);
+
+    if (nextMode === "system") {
+      setSystemMode(getSystemMode());
+    }
+  }, []);
 
   const contextValue = useMemo(
     () => ({

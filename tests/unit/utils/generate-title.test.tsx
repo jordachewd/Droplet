@@ -60,14 +60,6 @@ vi.mock("@/lib/utils/openai/message-policy", () => ({
 
 import { generateTitle } from "@/lib/utils/openai/generateTitle";
 
-function parseSerializedResult(serializedResult: string | undefined) {
-  if (!serializedResult) {
-    throw new Error("Expected generateTitle to return serialized JSON.");
-  }
-
-  return JSON.parse(serializedResult) as Record<string, unknown>;
-}
-
 describe("generateTitle", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -96,7 +88,7 @@ describe("generateTitle", () => {
     vi.restoreAllMocks();
   });
 
-  it("builds a title request, calls OpenAI, and returns serialized payload", async () => {
+  it("builds a title request, calls OpenAI, and returns typed payload", async () => {
     const nowSpy = vi
       .spyOn(Date, "now")
       .mockReturnValueOnce(1_000)
@@ -124,7 +116,7 @@ describe("generateTitle", () => {
       }),
     ];
 
-    const serializedResult = await generateTitle(messages, "Lite", "developer");
+    const result = await generateTitle(messages, "Lite", "developer");
 
     expect(nowSpy).toHaveBeenCalledTimes(2);
     expect(normalizePlanTierMock).toHaveBeenCalledWith("Lite");
@@ -158,7 +150,7 @@ describe("generateTitle", () => {
       max_completion_tokens: 20,
     });
 
-    expect(parseSerializedResult(serializedResult)).toEqual({
+    expect(result).toEqual({
       title: "Migration Rollout Checklist",
       usage: 17,
       model: "gpt-4.1-nano",
@@ -260,12 +252,12 @@ describe("generateTitle", () => {
       ],
     });
 
-    const serializedResult = await generateTitle(
+    const result = await generateTitle(
       [createTestMessage({ content: "Create quick title" })],
       "Lite",
     );
 
-    expect(parseSerializedResult(serializedResult)).toEqual(
+    expect(result).toEqual(
       expect.objectContaining({
         title: "Quick title",
         usage: 0,

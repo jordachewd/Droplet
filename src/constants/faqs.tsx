@@ -9,11 +9,17 @@ export interface FaqItem {
   answer: string;
 }
 
-interface BuildFaqsConfig {
+export interface BuildFaqsConfig {
   pricing?: PlanPricing;
   personaAccessByPlan?: FullPersonaAccessByPlan;
   currencySymbol?: string;
   supportEmail?: string;
+}
+
+export function cloneFaqItems(faqItems: FaqItem[]): FaqItem[] {
+  return faqItems.map((faqItem) => ({
+    ...faqItem,
+  }));
 }
 
 export function buildFaqs({

@@ -34,7 +34,9 @@ export function AdminManagedForm({
     action,
     ADMIN_ACTION_INITIAL_STATE,
   );
-  const [alert, setAlert] = useState<AlertParams | null>(null);
+  const [dismissedSuccessKey, setDismissedSuccessKey] = useState<string | null>(
+    null,
+  );
   const [pendingFormData, setPendingFormData] = useState<FormData | null>(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
@@ -78,25 +80,45 @@ export function AdminManagedForm({
     } satisfies AlertParams;
   }, [errorTitle, state.message, state.severity, state.status, successTitle]);
 
-  useEffect(() => {
+  const alertKey = useMemo(() => {
     if (!alertPayload) {
+      return null;
+    }
+
+    return `${state.status}:${alertPayload.severity}:${state.message}`;
+  }, [alertPayload, state.message, state.status]);
+
+  const alert = useMemo(() => {
+    if (!alertPayload) {
+      return null;
+    }
+
+    if (
+      alertPayload.severity === "success" &&
+      alertKey &&
+      dismissedSuccessKey === alertKey
+    ) {
+      return null;
+    }
+
+    return alertPayload;
+  }, [alertKey, alertPayload, dismissedSuccessKey]);
+
+  useEffect(() => {
+    if (!alertPayload || alertPayload.severity !== "success" || !alertKey) {
       return;
     }
 
-    setAlert(alertPayload);
-  }, [alertPayload]);
-
-  useEffect(() => {
-    if (!alert || alert.severity !== "success") {
+    if (dismissedSuccessKey === alertKey) {
       return;
     }
 
     const timeoutId = window.setTimeout(() => {
-      setAlert(null);
+      setDismissedSuccessKey(alertKey);
     }, autoDismissSuccessMs);
 
     return () => window.clearTimeout(timeoutId);
-  }, [alert, autoDismissSuccessMs]);
+  }, [alertKey, alertPayload, autoDismissSuccessMs, dismissedSuccessKey]);
 
   return (
     <>

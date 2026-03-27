@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { KeyboardEvent, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import classNames from "classnames";
@@ -55,11 +55,70 @@ export default function LibraryTabs({
     [audios.length, conversations.length, images.length, videos.length],
   );
 
+  const handleTabChange = (tabId: LibraryTabId) => {
+    setActiveTabId(tabId);
+  };
+
+  const focusAndActivateTabAtIndex = (nextIndex: number) => {
+    const nextTab = tabs[nextIndex];
+
+    if (!nextTab) {
+      return;
+    }
+
+    handleTabChange(nextTab.id);
+
+    if (typeof document === "undefined") {
+      return;
+    }
+
+    const tabButton = document.getElementById(`library-tab-${nextTab.id}`);
+
+    if (tabButton instanceof HTMLButtonElement) {
+      tabButton.focus();
+    }
+  };
+
+  const handleTabListKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (tabs.length === 0) {
+      return;
+    }
+
+    const activeIndex = tabs.findIndex((tab) => tab.id === activeTabId);
+    const fallbackIndex = activeIndex === -1 ? 0 : activeIndex;
+
+    if (event.key === "ArrowRight") {
+      event.preventDefault();
+      focusAndActivateTabAtIndex((fallbackIndex + 1) % tabs.length);
+      return;
+    }
+
+    if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      focusAndActivateTabAtIndex(
+        (fallbackIndex - 1 + tabs.length) % tabs.length,
+      );
+      return;
+    }
+
+    if (event.key === "Home") {
+      event.preventDefault();
+      focusAndActivateTabAtIndex(0);
+      return;
+    }
+
+    if (event.key === "End") {
+      event.preventDefault();
+      focusAndActivateTabAtIndex(tabs.length - 1);
+    }
+  };
+
   return (
     <section className="LibraryTabs flex flex-col gap-6 w-full max-w-7xl mx-auto px-4">
       <div
         role="tablist"
         aria-label="Library content tabs"
+        onKeyDown={handleTabListKeyDown}
         className={classNames(
           "flex w-full flex-wrap items-center gap-2 rounded-xl p-2",
           "bg-lavenderHaze-100/80 dark:bg-nightIndigo-900/70 shadow-sm",
@@ -76,6 +135,7 @@ export default function LibraryTabs({
               type="button"
               aria-selected={selected}
               aria-controls={`library-panel-${tab.id}`}
+              tabIndex={selected ? 0 : -1}
               className={classNames(
                 "inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm transition-all",
                 "hover:-translate-y-0.5",
@@ -83,7 +143,7 @@ export default function LibraryTabs({
                   ? "bg-dustyBlue-400/80 font-semibold dark:bg-twilightPurple-500/80"
                   : "bg-lavenderHaze-500/80 dark:bg-twilightPurple-900/80",
               )}
-              onClick={() => setActiveTabId(tab.id)}
+              onClick={() => handleTabChange(tab.id)}
             >
               <span>{tab.label}</span>
               <span className="rounded-full px-1.5 py-0.5 text-xxs opacity-75 bg-twilightPurple-200 dark:bg-nightIndigo-1000">

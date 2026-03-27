@@ -1,10 +1,10 @@
 import { auth } from "@clerk/nextjs/server";
 import { notFound } from "next/navigation";
 import ChatWrapper from "@/components/chat/chat-wrapper";
-import { STOP_REASON_MESSAGES } from "@/constants/stop-reasons";
 import { getEffectivePersonaAccessByPlan } from "@/lib/utils/effective-persona-access";
 import { getEffectivePersonaConfig } from "@/lib/utils/effective-persona-config";
 import { getEffectiveSupportEmail } from "@/lib/utils/effective-plan-config";
+import { getEffectiveStopReasonMessages } from "@/lib/utils/effective-stop-reasons";
 import { ensureUserSynced } from "@/lib/utils/ensure-user-synced";
 import { resolveEntitlements } from "@/lib/utils/resolve-entitlements";
 
@@ -22,11 +22,13 @@ export default async function ChatPage({ searchParams }: ChatPageProps) {
   }
 
   const isAdmin = userData.role === "admin";
-  const [fullPersonaAccessByPlan, personas, supportEmail] = await Promise.all([
-    getEffectivePersonaAccessByPlan(),
-    getEffectivePersonaConfig(),
-    getEffectiveSupportEmail(),
-  ]);
+  const [fullPersonaAccessByPlan, personas, supportEmail, stopReasonMessages] =
+    await Promise.all([
+      getEffectivePersonaAccessByPlan(),
+      getEffectivePersonaConfig(),
+      getEffectiveSupportEmail(),
+      getEffectiveStopReasonMessages(),
+    ]);
   const entitlements = resolveEntitlements(userData.plan?.name ?? "Lite", {
     isAdmin,
     fullPersonaAccessByPlan,
@@ -36,7 +38,7 @@ export default async function ChatPage({ searchParams }: ChatPageProps) {
     <ChatWrapper
       personas={personas}
       supportEmail={supportEmail}
-      stopReasonMessages={STOP_REASON_MESSAGES}
+      stopReasonMessages={stopReasonMessages}
       initialPersonaId={persona}
       allowedPersonaIds={entitlements.allowedPersonaIds}
     />

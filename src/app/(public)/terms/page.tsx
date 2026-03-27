@@ -22,7 +22,7 @@ export default async function TermsPage() {
   });
 
   return (
-    <PageWrapper id="PrivacyPage" className="gap-8!">
+    <PageWrapper id="TermsPage" className="gap-8!">
       <PageHead
         title="Terms & Conditions"
         subtitle="Draft service terms covering account use, pricing, AI-generated content, suspension, and legal review requirements."

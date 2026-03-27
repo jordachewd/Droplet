@@ -479,7 +479,7 @@ async function buildOpenAIResponsePayload({
       }
 
       try {
-        const imageResponse = await generateImage({
+        const imagePayload = await generateImage({
           prompt:
             typeof parsedArgs.prompt === "string" ? parsedArgs.prompt : "",
           role: message.role,
@@ -488,12 +488,6 @@ async function buildOpenAIResponsePayload({
           planName,
           modelOverrides,
         });
-        const imagePayload = JSON.parse(imageResponse as string) as {
-          taskData?: Message;
-          taskUsage?: number;
-          generatedImage?: boolean;
-          requestMetric?: AIRequestMetric;
-        };
 
         if (imagePayload.requestMetric) {
           requestMetrics.push(imagePayload.requestMetric);
@@ -501,7 +495,7 @@ async function buildOpenAIResponsePayload({
 
         return {
           ...imagePayload,
-          taskUsage: taskUsage + (imagePayload.taskUsage ?? 0),
+          taskUsage,
           requestMetrics,
         };
       } catch (imageError) {
@@ -594,7 +588,7 @@ async function buildOpenAIResponsePayload({
         const ttsText =
           typeof parsedArgs.content === "string" ? parsedArgs.content : "";
 
-        const audioResponse = await generateAudio({
+        const audioPayload = await generateAudio({
           ttsText,
           role: message.role,
           taskId,
@@ -603,12 +597,6 @@ async function buildOpenAIResponsePayload({
           audioMode: "tts",
           modelOverrides,
         });
-        const audioPayload = JSON.parse(audioResponse as string) as {
-          taskData?: Message;
-          taskUsage?: number;
-          generatedAudio?: boolean;
-          requestMetric?: AIRequestMetric;
-        };
 
         if (audioPayload.requestMetric) {
           requestMetrics.push(audioPayload.requestMetric);
@@ -705,7 +693,7 @@ async function buildOpenAIResponsePayload({
       }
 
       try {
-        const videoResponse = await generateVideo({
+        const videoPayload = await generateVideo({
           prompt:
             typeof parsedArgs.prompt === "string" ? parsedArgs.prompt : "",
           role: message.role,
@@ -714,12 +702,6 @@ async function buildOpenAIResponsePayload({
           planName,
           modelOverrides,
         });
-        const videoPayload = JSON.parse(videoResponse as string) as {
-          taskData?: Message;
-          taskUsage?: number;
-          generatedVideo?: boolean;
-          requestMetric?: AIRequestMetric;
-        };
 
         if (videoPayload.requestMetric) {
           requestMetrics.push(videoPayload.requestMetric);
@@ -727,7 +709,7 @@ async function buildOpenAIResponsePayload({
 
         return {
           ...videoPayload,
-          taskUsage: taskUsage + (videoPayload.taskUsage ?? 0),
+          taskUsage,
           requestMetrics,
         };
       } catch (videoError) {
@@ -1041,7 +1023,7 @@ export async function generateResponse({
   modelOverrides,
   claimMediaGenerationSlot,
   rollbackMediaGenerationSlot,
-}: GenerateResponseParams) {
+}: GenerateResponseParams): Promise<OpenAIResponsePayload> {
   const requestMetrics: AIRequestMetric[] = [];
 
   try {
@@ -1079,12 +1061,12 @@ export async function generateResponse({
         }),
     });
 
-    return JSON.stringify(payload);
+    return payload;
   } catch (error) {
-    return JSON.stringify({
+    return {
       errorType: classifyOpenAIError(error),
       requestMetrics,
-    } satisfies OpenAIResponsePayload);
+    };
   }
 }
 

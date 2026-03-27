@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useSyncExternalStore } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import classNames from "classnames";
@@ -21,6 +21,30 @@ interface AdminLayoutShellProps {
   }>;
 }
 
+const DESKTOP_MEDIA_QUERY = "(min-width: 1024px)";
+
+function subscribeToDesktopQuery(onStoreChange: () => void): () => void {
+  if (typeof window === "undefined") {
+    return () => {};
+  }
+
+  const mediaQueryList = window.matchMedia(DESKTOP_MEDIA_QUERY);
+  const handleChange = () => onStoreChange();
+  mediaQueryList.addEventListener("change", handleChange);
+
+  return () => {
+    mediaQueryList.removeEventListener("change", handleChange);
+  };
+}
+
+function getDesktopSnapshot(): boolean {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  return window.matchMedia(DESKTOP_MEDIA_QUERY).matches;
+}
+
 export default function AdminLayoutShell({
   children,
   adminLinks,
@@ -39,21 +63,14 @@ export default function AdminLayoutShell({
       toggleMobileSidebarOpen: state.toggleMobileSidebarOpen,
     })),
   );
-
-  const desktopQueryRef = useRef<MediaQueryList | null>(null);
-  const [isDesktop, setIsDesktop] = useState(false);
-
-  useEffect(() => {
-    const mql = window.matchMedia("(min-width: 1024px)");
-    desktopQueryRef.current = mql;
-    setIsDesktop(mql.matches);
-    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
-    mql.addEventListener("change", handler);
-    return () => mql.removeEventListener("change", handler);
-  }, []);
+  const isDesktop = useSyncExternalStore(
+    subscribeToDesktopQuery,
+    getDesktopSnapshot,
+    () => false,
+  );
 
   function handleToggleSidebar() {
-    if (desktopQueryRef.current?.matches) {
+    if (isDesktop) {
       toggleDesktopSidebarCollapsed();
     } else {
       toggleMobileSidebarOpen();

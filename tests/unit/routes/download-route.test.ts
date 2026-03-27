@@ -3,6 +3,7 @@ import { NextRequest } from "next/server";
 import { GET } from "@/app/api/download/route";
 import { auth } from "@clerk/nextjs/server";
 import getFileFromAWS from "@/lib/utils/aws/getFileFromAWS";
+import { mockAuth } from "../test-support";
 
 vi.mock("@clerk/nextjs/server", () => ({
   auth: vi.fn(),
@@ -23,7 +24,11 @@ function createStreamResponseBody(payload: string): ReadableStream<Uint8Array> {
 
 describe("GET /api/download", () => {
   beforeEach(() => {
-    vi.mocked(auth).mockResolvedValue({ userId: "user_123" } as never);
+    mockAuth(vi.mocked(auth), {
+      userId: "user_123",
+      isAuthenticated: true,
+      sessionId: "session_123",
+    });
     vi.mocked(getFileFromAWS).mockResolvedValue({
       Body: {
         transformToWebStream: () => createStreamResponseBody("image-bytes"),
@@ -32,7 +37,7 @@ describe("GET /api/download", () => {
       ContentType: "image/png",
       ETag: '"etag"',
       LastModified: new Date("2026-03-10T10:00:00.000Z"),
-    } as never);
+    } as unknown as Awaited<ReturnType<typeof getFileFromAWS>>);
   });
 
   afterEach(() => {
@@ -42,7 +47,11 @@ describe("GET /api/download", () => {
   });
 
   it("returns 401 when user is not authenticated", async () => {
-    vi.mocked(auth).mockResolvedValue({ userId: null } as never);
+    mockAuth(vi.mocked(auth), {
+      userId: null,
+      isAuthenticated: false,
+      sessionId: null,
+    });
     const req = new NextRequest("http://localhost:3000/api/download");
 
     const response = await GET(req);

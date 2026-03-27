@@ -40,14 +40,20 @@ describe("plans constants", () => {
   });
 
   it("returns matching plan icons case-insensitively", () => {
-    expect(getPlanIcon("pro" as never)).toBe("bi bi-stars");
-    expect(getPlanIcon("PREMIUM" as never)).toBe("bi bi-gem");
+    expect(
+      getPlanIcon("pro" as unknown as Parameters<typeof getPlanIcon>[0]),
+    ).toBe("bi bi-stars");
+    expect(
+      getPlanIcon("PREMIUM" as unknown as Parameters<typeof getPlanIcon>[0]),
+    ).toBe("bi bi-gem");
   });
 
   it("throws when plan icon is requested for an unknown plan", () => {
-    expect(() => getPlanIcon("InvalidPlan" as never)).toThrow(
-      "No plan found with the name: InvalidPlan",
-    );
+    expect(() =>
+      getPlanIcon(
+        "InvalidPlan" as unknown as Parameters<typeof getPlanIcon>[0],
+      ),
+    ).toThrow("No plan found with the name: InvalidPlan");
   });
 
   it("defines the approved limits for every plan", () => {

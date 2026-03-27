@@ -66,6 +66,8 @@ export async function enforceSlidingWindowRateLimit({
   const nowDate = new Date(now);
   const windowStartDate = new Date(now - windowMs);
   const requestId = crypto.randomUUID();
+  // Intentional MongoDB driver call: we need one atomic pipeline update for
+  // sliding-window check-and-append semantics that Mongoose helpers cannot express.
   const entry = (await RateLimitEntry.collection.findOneAndUpdate(
     { key },
     [

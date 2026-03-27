@@ -31,73 +31,78 @@ const checkoutPlanSchema = z
 type CheckoutPlanInput = z.infer<typeof checkoutPlanSchema>;
 
 export async function checkoutPlan(transaction: CheckoutTransactionParams) {
-  const parsedTransaction = checkoutPlanSchema.safeParse(transaction);
-  if (!parsedTransaction.success) throw new Error("Invalid checkout payload.");
+  try {
+    const parsedTransaction = checkoutPlanSchema.safeParse(transaction);
+    if (!parsedTransaction.success)
+      throw new Error("Invalid checkout payload.");
 
-  const { userId: authedUserId } = await auth();
-  if (!authedUserId) throw new Error("Unauthorized");
+    const { userId: authedUserId } = await auth();
+    if (!authedUserId) throw new Error("Unauthorized");
 
-  await connectToDatabase();
+    await connectToDatabase();
 
-  const currentUser = await User.findOne(
-    { clerkId: authedUserId },
-    "_id firstName lastName username email",
-    { lean: true },
-  );
-  if (!currentUser) throw new Error("User not found");
+    const currentUser = await User.findOne(
+      { clerkId: authedUserId },
+      "_id firstName lastName username email",
+      { lean: true },
+    );
+    if (!currentUser) throw new Error("User not found");
 
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
-  const BASEURL = process.env.NEXT_PUBLIC_API_BASE_URL;
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+    const BASEURL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-  const {
-    id: planId,
-    billing: planBilling,
-    name: planName,
-    price: planPrice,
-  }: CheckoutPlanParams = (parsedTransaction.data as CheckoutPlanInput).plan;
-
-  const { pricing } = await getEffectivePlanConfig();
-  const serverPlanPrice = pricing[planName];
-
-  if (serverPlanPrice !== planPrice) {
-    throw new Error("Unable to start checkout.");
-  }
-
-  const fullName = getFullName({
-    firstName: currentUser.firstName || "",
-    lastName: currentUser.lastName || "",
-    username: currentUser.username || "",
-  });
-
-  const session = await stripe.checkout.sessions.create({
-    mode: "payment",
-    payment_method_types: ["card"],
-    line_items: [
-      {
-        price_data: {
-          currency: "usd",
-          unit_amount: Number(serverPlanPrice) * 100,
-          product_data: {
-            name: planName,
-          },
-        },
-        quantity: 1,
-      },
-    ],
-    customer_email: currentUser.email,
-    metadata: {
-      userId: currentUser._id.toString(),
-      clerkId: authedUserId,
-      name: fullName,
-      plan: planName,
+    const {
+      id: planId,
       billing: planBilling,
-      planId: String(planId),
-    },
-    success_url: `${BASEURL}/checkout-success?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${BASEURL}/app/plans`,
-  });
+      name: planName,
+      price: planPrice,
+    }: CheckoutPlanParams = (parsedTransaction.data as CheckoutPlanInput).plan;
 
-  redirect(session.url!);
+    const { pricing } = await getEffectivePlanConfig();
+    const serverPlanPrice = pricing[planName];
+
+    if (serverPlanPrice !== planPrice) {
+      throw new Error("Unable to start checkout.");
+    }
+
+    const fullName = getFullName({
+      firstName: currentUser.firstName || "",
+      lastName: currentUser.lastName || "",
+      username: currentUser.username || "",
+    });
+
+    const session = await stripe.checkout.sessions.create({
+      mode: "payment",
+      payment_method_types: ["card"],
+      line_items: [
+        {
+          price_data: {
+            currency: "usd",
+            unit_amount: Number(serverPlanPrice) * 100,
+            product_data: {
+              name: planName,
+            },
+          },
+          quantity: 1,
+        },
+      ],
+      customer_email: currentUser.email,
+      metadata: {
+        userId: currentUser._id.toString(),
+        clerkId: authedUserId,
+        name: fullName,
+        plan: planName,
+        billing: planBilling,
+        planId: String(planId),
+      },
+      success_url: `${BASEURL}/checkout-success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${BASEURL}/app/plans`,
+    });
+
+    redirect(session.url!);
+  } catch (error) {
+    handleError({ error, source: "checkoutPlan" });
+  }
 }
 
 export async function getAllTransactions(userId: string) {
