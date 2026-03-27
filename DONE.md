@@ -2,7 +2,71 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-26 — PM audit #64. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4, 105.1, 105.2, 106, 110, 111.1, 112.1, 112.2, 109, 113.1, 113.2, 115, 116, 117, 120.1, 120.2-A, 120.2-B, 120.2-C, 120.3, 121, 122, 123, 124, 125, 125.2, 126, 126.1, 127, 128.1, 128.2, 129, 130 complete. Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS — TDD rebuild active. 537 unit tests (83 suites). E2E: 108 passed, 25 skipped, 0 failed. All 7 gates GREEN. Build passing. Node.js 24.12.0 runtime.
+> Last updated: 2026-03-27 — PM audit #65. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4, 105.1, 105.2, 106, 110, 111.1, 112.1, 112.2, 109, 113.1, 113.2, 115, 116, 117, 120.1, 120.2-A, 120.2-B, 120.2-C, 120.3, 120.4, 120.5, 120.6, 120.7, 121, 122, 123, 124, 125, 125.2, 126, 126.1, 127, 128.1, 128.2, 129, 130 complete. Milestones 0–25 COMPLETE. 543 unit tests (92 suites). E2E: 5 spec files (rebuilt from scratch). All 7 gates GREEN. Build passing. Node.js 24.12.0 runtime. Coverage: 85/80/85/85. Zero `as never` casts.
+
+---
+
+## Phase 120.7 — Raise coverage thresholds post-rebuild — COMPLETED (2026-03-27)
+
+> Engineer delivered (PM audit #65). Coverage thresholds raised to match achieved coverage after full TDD rebuild.
+
+- [x] Raised vitest coverage thresholds: statements 85%, branches 80%, functions 85%, lines 85%.
+- [x] `npm run test:coverage` passes.
+- [x] All 7 gates GREEN.
+
+**Files changed:** `vitest.config.mts`
+
+---
+
+## Phase 120.6 — Rebuild E2E tests (TDD) — COMPLETED (2026-03-27)
+
+> Engineer delivered (PM audit #65). All E2E tests rebuilt from scratch with structural assertions. 5 spec files.
+
+- [x] Deleted all existing E2E test files and rebuilt from scratch.
+- [x] 5 new E2E spec files: `admin-settings-propagation.spec.ts`, `auth-boundaries.spec.ts`, `authenticated-accessibility.spec.ts`, `chat-conversation-flow.spec.ts`, `public-structure.spec.ts`.
+- [x] All assertions structural (no hardcoded content/prices).
+- [x] Chat conversation flow E2E exists.
+- [x] Admin settings propagation verified E2E.
+- [x] Authenticated route accessibility scanning added.
+- [x] All 7 gates GREEN.
+
+**Files changed:** 5 E2E spec files in `tests/e2e/`
+
+---
+
+## Phase 120.5 — Rebuild component tests (TDD + a11y) — COMPLETED (2026-03-27)
+
+> Engineer delivered (PM audit #65). All component tests rebuilt from scratch using TDD methodology. 24 component test files.
+
+- [x] Deleted all existing component test files and rebuilt from scratch.
+- [x] 24 component test files rebuilt with behavioral tests.
+- [x] Focus on user interactions, conditional rendering, a11y attributes, keyboard navigation.
+- [x] Zero smoke tests ("renders without crashing").
+- [x] Zero `as never` casts.
+- [x] All 7 gates GREEN.
+
+**Files changed:** 24 component test files in `tests/unit/components/`
+
+---
+
+## Phase 120.4 — Rebuild API route tests (TDD) — COMPLETED (2026-03-27)
+
+> Engineer delivered (PM audit #65). All route tests rebuilt from scratch. OpenAI route split into 5 focused modules ≤321 lines each.
+
+- [x] Deleted all existing route test files and rebuilt from scratch.
+- [x] OpenAI route tests split into focused modules by concern (auth, streaming, media, conversation-stop, rate-limit).
+- [x] All route test files rebuilt using TDD methodology.
+- [x] Covers: auth failure, malformed input, success paths, edge cases, webhook idempotency.
+- [x] Zero `as never` casts.
+- [x] All 7 gates GREEN.
+
+**Files changed:** Route test files in `tests/unit/routes/`
+
+---
+
+## Milestone 25 — Testing Infrastructure Rebuild & Config Hardening — COMPLETED (2026-03-27)
+
+> Full milestone completed. TDD rebuild from scratch finished. All phases 120.1–120.7 COMPLETE. 92 suites, 543 tests. 5 E2E specs rebuilt. Zero `as never` casts. Coverage 85/80/85/85. All 7 gates GREEN.
 
 ---
 

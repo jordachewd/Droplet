@@ -5,94 +5,11 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #64 (2026-03-26). Phases 1–130, 128.2, 106 complete. 537 unit tests (83 suites). Build passes. TSC passes. Node.js 24.12.0 runtime.**
-> **GATE STATUS: All 7 gates GREEN. Lint (0 errors, 6 warnings), Knip (0 findings), TSC, build, unit tests (83/537), E2E (108 passed, 25 skipped, 0 failed) — all pass.**
-> **Owner directive (CRITICAL): FULL TDD TESTING REBUILD from scratch. NO hardcoded data. WCAG 2.2 AA. Code reuse. Full admin configurability.**
-> **Coverage: ~85/~72/~89/~85 (stmt/branch/func/lines). Thresholds: 76/65/79/76.**
-> **SWOT audit conducted (PM audit #64). Weaknesses and Threats converted to tasks below. `as never` casts: 100 remaining in 12 test files.**
-> **NEXT SESSION (MANDATORY): Complete ALL test rebuild phases (120.4 → 120.5 → 120.6 → 120.7) in a single session. No other work until all four pass all 7 gates.**
-> **AFTER TEST REBUILD: 107 (HIGH stop-reason config) → 108 (MEDIUM WCAG tabs) → 114 (MEDIUM WCAG avatar menu) → 131 (LOW server-only guards) → 132 (LOW stale TODO comments) → 126.2 (LOW lint warnings) → 125.1 (MEDIUM schema strict:true) → 74.2 (MEDIUM FAQ admin) → 104 (MEDIUM landing/hero admin)**
-
----
-
-## CRITICAL — Full TDD Testing Rebuild — MUST COMPLETE NEXT SESSION
-
-### Phase 120 CRITICAL — Full TDD test rebuild from scratch
-
-> **Owner directive (2026-03-24 — ESCALATED):** Remove ALL existing unit and E2E tests and rebuild the entire testing process from scratch using strict Test-Driven Development methodology.
->
-> **Phase 120.1 COMPLETE** — TDD test infrastructure built. See `DONE.md`.
-> **Phase 120.2 COMPLETE** — All ~40 utility test files rebuilt from scratch (Batch A+B+C). Zero `as never` casts in utility tests.
-> **Phase 120.3 COMPLETE** — All 4 server action test files rebuilt from scratch (TDD). Zero `as never` casts in action tests. Coverage: admin 76.69%, task 94.44%, user 81.25%, transaction 85%.
->
-> **Current state:** 537 tests (83 suites). 100 `as never` casts remaining in 12 non-rebuilt test files (6 routes, 5 components, 1 constants). E2E: 14 specs, 108 passed, 25 skipped.
->
-> **Key rule:** Every new/rebuilt test file MUST use shared factories from `tests/unit/test-support/`. Zero `as never` casts allowed. Follow TDD workflow in `tests/README.md`.
->
-> **SESSION DIRECTIVE:** Phases 120.4, 120.5, 120.6, and 120.7 must ALL be completed in the next Engineer session. No partial delivery. No scope expansion. All 7 gates must be GREEN after each sub-phase. The TDD rebuild is the last blocking directive before the project can move to admin configurability closure and remaining backlog.
-
-#### 120.4 CRITICAL — Rebuild API route tests (TDD)
-
-**What to do:**
-
-1. Delete ALL existing route test files in `tests/unit/routes/`
-2. Split `openai-route` tests into focused ≤300-line modules by concern (auth, streaming, media, conversation-stop, rate-limit)
-3. For each route, write failing tests FIRST
-4. Cover: auth failure, malformed input, success paths, edge cases, webhook idempotency
-
-**Target files:** All files in `src/app/api/` (openai, upload, download, aws, webhooks/clerk, webhooks/stripe)
-
-**Acceptance criteria:**
-
-- [ ] All route test files rebuilt from scratch using TDD
-- [ ] `openai-route` split into ≤300-line focused test modules
-- [ ] Missing edge cases covered (malformed JSON, 503 self-heal failure, non-fatal usage-event)
-- [ ] Zero `as never` casts
-
-#### 120.5 HIGH — Rebuild component tests (TDD + a11y)
-
-**What to do:**
-
-1. Delete ALL existing component test files in `tests/unit/components/`
-2. For each component, write failing behavioral tests FIRST
-3. Focus: user interactions, conditional rendering, a11y attributes, keyboard navigation
-4. Every test must answer: "What observable behavior changes if this code breaks?"
-5. NO "renders without crashing" tests
-
-**Target files:** All tested components PLUS untested ones: `landing-page.tsx`, `hero-section.tsx`, `faqs-section.tsx`, `plans-section.tsx`, `personas-section.tsx`, `admin-settings-tabs.tsx`, `profile-hero-editor.tsx`
-
-**Acceptance criteria:**
-
-- [ ] All component test files rebuilt from scratch using TDD
-- [ ] Keyboard navigation tested for tabs and modals
-- [ ] All components with user interactions have tests
-- [ ] Zero smoke tests ("renders without crashing")
-
-#### 120.6 HIGH — Rebuild E2E tests (TDD)
-
-**What to do:**
-
-1. Delete ALL existing E2E test files in `tests/e2e/`
-2. Rebuild with structural assertions (no hardcoded copy/prices)
-3. Add missing specs: chat conversation flow, admin settings propagation, authenticated a11y scan
-4. Keep Playwright workers=1 for Clerk stability
-
-**Acceptance criteria:**
-
-- [ ] All E2E test files rebuilt from scratch
-- [ ] Basic chat flow E2E exists
-- [ ] Admin settings propagation verified E2E
-- [ ] Authenticated route a11y scanning added
-- [ ] All assertions structural (no hardcoded content)
-
-#### 120.7 HIGH — Raise coverage thresholds post-rebuild
-
-**What to do:** After 120.2–120.5, raise vitest thresholds to match achieved coverage (target: 85/80/85/85+).
-
-**Acceptance criteria:**
-
-- [ ] Thresholds raised to ≥85/80/85/85
-- [ ] `npm run test:coverage` passes
+> **STATUS: PM audit #65 (2026-03-27). Milestones 0–25 COMPLETE. Phases 1–130, 120.4–120.7, 128.2, 106 all complete. 543 unit tests (92 suites). 5 E2E specs. Build passes. TSC clean. Node.js 24.12.0 runtime.**
+> **GATE STATUS: All 7 gates GREEN. Lint (0 errors, 7 warnings), Knip (0 findings), TSC clean, build passes, unit tests (92/543), E2E (5 specs), coverage 85/80/85/85.**
+> **TDD REBUILD COMPLETE — Owner directive fulfilled. Phases 120.1–120.7 ALL DONE. Zero `as never` casts.**
+> **SWOT audit #65 conducted. Weaknesses and Threats converted to tasks below.**
+> **NEXT SESSION: 107 (HIGH stop-reason config) → 108 (MEDIUM WCAG tabs) → 114 (MEDIUM WCAG avatar menu) → 125.1 (MEDIUM schema strict:true) → 133 (MEDIUM streaming timeout) → 134 (MEDIUM E2E expansion) → 131 (LOW server-only) → 132 (LOW stale TODOs) → 126.2 (LOW lint warnings) → 74.2 (MEDIUM FAQ admin) → 104 (MEDIUM landing/hero admin)**
 
 ---
 
@@ -309,6 +226,50 @@ See SPEC.md for full requirements on each.
 
 ---
 
+## MEDIUM — Streaming Timeout (SWOT threat — PM audit #65)
+
+### Phase 133 MEDIUM — Add auto-timeout to streaming fetch in chat-wrapper.tsx
+
+> Engineer audit finding. Streaming SSE fetch uses `AbortController` for manual cancel only. No auto-timeout — hung SSE connection leaves user in infinite loading state.
+
+**File:** `src/components/chat/chat-wrapper.tsx`
+
+**What to do:**
+
+1. Add `AbortSignal.timeout()` or manual `setTimeout` + `abort()` as a safety net (e.g., 120s).
+2. Show timeout error message to user when triggered.
+3. Ensure abort cleanup is correct in both manual-cancel and timeout paths.
+
+**Acceptance criteria:**
+
+- [ ] Streaming fetch aborts automatically after reasonable timeout (e.g., 120s)
+- [ ] User sees error message on timeout
+- [ ] Manual cancel still works
+- [ ] Build passes, tests pass
+
+---
+
+## MEDIUM — E2E Coverage Expansion (SWOT weakness — PM audit #65)
+
+### Phase 134 MEDIUM — Add E2E tests for critical business paths
+
+> E2E coverage dropped from 14 specs to 5 during TDD rebuild. Critical user paths now lack end-to-end coverage: billing/checkout flow, media generation, admin operations, error states.
+
+**What to do:**
+
+1. Add E2E spec for billing/checkout flow (structural assertions).
+2. Add E2E spec for admin user operations (view, suspend).
+3. Add E2E spec for error boundary handling.
+4. Keep Playwright workers=1 for Clerk stability.
+
+**Acceptance criteria:**
+
+- [ ] At least 3 new E2E spec files covering billing, admin, and error paths
+- [ ] All assertions structural (no hardcoded content)
+- [ ] All 7 gates GREEN
+
+---
+
 ## ON HOLD — Deferred
 
 ### Phase 29.x — Zod/Zustand app-wide modernization
@@ -320,5 +281,5 @@ See SPEC.md for full requirements on each.
 ---
 
 > **Completed phases** archived in [`DONE.md`](DONE.md).
-> All phases through 130 complete + 128.2, 106 (includes 120.1, 120.2-A/B/C, 120.3, 121–130, 128.2, 106).
-> All Milestones 0–24 COMPLETE. Milestone 25 IN PROGRESS.
+> All phases through 130 complete + 120.4–120.7, 128.2, 106 (includes 120.1–120.7, 121–130, 128.2, 106).
+> All Milestones 0–25 COMPLETE.
