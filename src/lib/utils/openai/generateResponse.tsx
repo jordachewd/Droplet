@@ -51,6 +51,8 @@ interface GenerateResponseParams {
 interface GenerateStreamingResponseParams extends GenerateResponseParams {
   abortSignal?: AbortSignal;
   onContentChunk?: (delta: string, snapshot: string) => void;
+  onMediaGenerationStart?: () => void;
+  onMediaGenerationEnd?: () => void;
 }
 
 export type OpenAIErrorType =
@@ -382,6 +384,8 @@ async function buildOpenAIResponsePayload({
   modelOverrides,
   claimMediaGenerationSlot,
   rollbackMediaGenerationSlot,
+  onMediaGenerationStart,
+  onMediaGenerationEnd,
 }: {
   message: {
     role: MessageRole;
@@ -407,6 +411,8 @@ async function buildOpenAIResponsePayload({
   rollbackMediaGenerationSlot?: (params: {
     limitType: "images" | "audio" | "video";
   }) => Promise<void>;
+  onMediaGenerationStart?: () => void;
+  onMediaGenerationEnd?: () => void;
 }): Promise<OpenAIResponsePayload> {
   const toolCall = message.tool_calls?.[0];
 
@@ -478,7 +484,13 @@ async function buildOpenAIResponsePayload({
         imageSlotClaimed = true;
       }
 
+      let didStartMediaGeneration = false;
       try {
+        if (onMediaGenerationStart) {
+          onMediaGenerationStart();
+          didStartMediaGeneration = true;
+        }
+
         const imagePayload = await generateImage({
           prompt:
             typeof parsedArgs.prompt === "string" ? parsedArgs.prompt : "",
@@ -523,6 +535,10 @@ async function buildOpenAIResponsePayload({
           errorMessage: "Image generation failed. Please try again.",
           requestMetrics,
         };
+      } finally {
+        if (didStartMediaGeneration) {
+          onMediaGenerationEnd?.();
+        }
       }
     }
 
@@ -584,7 +600,13 @@ async function buildOpenAIResponsePayload({
         audioSlotClaimed = true;
       }
 
+      let didStartMediaGeneration = false;
       try {
+        if (onMediaGenerationStart) {
+          onMediaGenerationStart();
+          didStartMediaGeneration = true;
+        }
+
         const ttsText =
           typeof parsedArgs.content === "string" ? parsedArgs.content : "";
 
@@ -632,6 +654,10 @@ async function buildOpenAIResponsePayload({
           errorMessage: "Audio generation failed. Please try again.",
           requestMetrics,
         };
+      } finally {
+        if (didStartMediaGeneration) {
+          onMediaGenerationEnd?.();
+        }
       }
     }
 
@@ -692,7 +718,13 @@ async function buildOpenAIResponsePayload({
         videoSlotClaimed = true;
       }
 
+      let didStartMediaGeneration = false;
       try {
+        if (onMediaGenerationStart) {
+          onMediaGenerationStart();
+          didStartMediaGeneration = true;
+        }
+
         const videoPayload = await generateVideo({
           prompt:
             typeof parsedArgs.prompt === "string" ? parsedArgs.prompt : "",
@@ -737,6 +769,10 @@ async function buildOpenAIResponsePayload({
           errorMessage: "Video generation failed. Please try again.",
           requestMetrics,
         };
+      } finally {
+        if (didStartMediaGeneration) {
+          onMediaGenerationEnd?.();
+        }
       }
     }
   }
@@ -917,6 +953,8 @@ async function runStreamingChatCompletion({
   rollbackMediaGenerationSlot,
   abortSignal,
   onContentChunk,
+  onMediaGenerationStart,
+  onMediaGenerationEnd,
   requestMetrics,
 }: GenerateStreamingResponseParams & {
   requestMetrics: AIRequestMetric[];
@@ -1005,6 +1043,8 @@ async function runStreamingChatCompletion({
     modelOverrides,
     claimMediaGenerationSlot,
     rollbackMediaGenerationSlot,
+    onMediaGenerationStart,
+    onMediaGenerationEnd,
   });
 }
 
@@ -1087,6 +1127,8 @@ export async function generateStreamingResponse({
   rollbackMediaGenerationSlot,
   abortSignal,
   onContentChunk,
+  onMediaGenerationStart,
+  onMediaGenerationEnd,
 }: GenerateStreamingResponseParams): Promise<OpenAIResponsePayload> {
   const requestMetrics: AIRequestMetric[] = [];
   let didEmitContent = false;
@@ -1128,6 +1170,8 @@ export async function generateStreamingResponse({
             didEmitContent = true;
             onContentChunk?.(delta, snapshot);
           },
+          onMediaGenerationStart,
+          onMediaGenerationEnd,
           requestMetrics,
         }),
     });

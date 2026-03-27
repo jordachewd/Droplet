@@ -854,4 +854,68 @@ describe("generateStreamingResponse", () => {
       }),
     ]);
   });
+
+  it("signals media generation start and end callbacks during streaming tool execution", async () => {
+    const onMediaGenerationStart = vi.fn();
+    const onMediaGenerationEnd = vi.fn();
+
+    streamChatCompletionMock.mockReturnValue({
+      on: vi.fn(),
+      finalChatCompletion: vi.fn(async () => ({
+        usage: {
+          prompt_tokens: 11,
+          completion_tokens: 3,
+          total_tokens: 14,
+        },
+        choices: [
+          {
+            message: {
+              role: "assistant",
+              tool_calls: [
+                {
+                  type: "function",
+                  function: {
+                    name: "getGeneratedImage",
+                    arguments: JSON.stringify({ prompt: "ocean cliff" }),
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      })),
+      totalUsage: vi.fn(async () => ({
+        prompt_tokens: 11,
+        completion_tokens: 3,
+        total_tokens: 14,
+      })),
+    });
+    generateImageMock.mockResolvedValue({
+      taskData: {
+        role: "assistant",
+        whois: "assistant",
+        content: [{ type: "text", text: "ocean cliff image" }],
+      },
+      generatedImage: true,
+      requestMetric: {
+        requestType: "image",
+        model: "gpt-image-1-mini",
+        latencyMs: 24,
+      },
+    });
+
+    const payload = await generateStreamingResponse(
+      createStreamingRequest({
+        onMediaGenerationStart,
+        onMediaGenerationEnd,
+      }),
+    );
+
+    expect(payload.generatedImage).toBe(true);
+    expect(onMediaGenerationStart).toHaveBeenCalledOnce();
+    expect(onMediaGenerationEnd).toHaveBeenCalledOnce();
+    expect(onMediaGenerationStart.mock.invocationCallOrder[0]).toBeLessThan(
+      onMediaGenerationEnd.mock.invocationCallOrder[0],
+    );
+  });
 });

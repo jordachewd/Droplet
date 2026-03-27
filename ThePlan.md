@@ -91,6 +91,10 @@ The points below are verified from the current codebase.
 | Server-only guards | 50+ server-side utility files have `import "server-only"` guards. Phase 84 (2 files) + Phase 131 (4 additional files) COMPLETE. | ✅ Server-only boundary enforcement comprehensive (Phase 131) | `src/lib/utils/*.ts` |
 | Stop-reason messages | All 9 stop-reason messages admin-configurable via `getEffectiveStopReasonMessages()` resolver. Admin UI for editing all stop codes. Consumers wired to resolver. Phase 107.1–107.3 ALL COMPLETE. TD-HARDCODE-01 RESOLVED. | ✅ Stop reasons admin-configurable (Phase 107) | `src/lib/utils/effective-stop-reasons.ts`, admin settings |
 | WCAG 2.2 AA | **FULLY COMPLETE.** All sub-phases delivered: admin skip-link (72.1), opacity contrast (72.2), form labels/ARIA (72.3), table semantics (72.4), viewport zoom (101), AudioPlayer ARIA (99.5), WCAG E2E (97.1), landing contrast (103.1), plans contrast (103.2), heading order (103.3), duplicate landmarks (103.4), decorative icons aria-hidden (109), hamburger aria-expanded (110), **tablist arrow-key navigation (108 ✅)**, **AvatarMenu keyboard navigation (114 ✅)**. | ✅ WCAG 2.2 AA FULLY COMPLETE | All component files, E2E accessibility specs |
+| Suspended user enforcement | ~~`User.suspended` never enforced in API routes (PM audit #67 SWOT).~~ **RESOLVED (Phase 141).** Suspension now enforced in all API routes via `resolveEntitlements` `isSuspended` param. | ✅ RESOLVED (Phase 141 COMPLETE) | `src/app/api/openai/route.tsx`, `src/lib/utils/resolve-entitlements.tsx` |
+| Stream error on media gen | **CRITICAL production bug.** Media generation via tool calls (`generateImage`/`generateAudio`/`generateVideo`) triggers `Error: The response stream ended unexpectedly.` Root cause: media gen happens AFTER OpenAI stream completes but BEFORE final SSE event. No data flows to client during media gen (especially video/Sora polling). Client 120s timeout or connection drops. Also occurs on large text responses where OpenAI closes stream prematurely. | ❌ CRITICAL production bug — blocks media generation reliability | `src/app/api/openai/route.tsx`, `src/components/chat/chat-wrapper.tsx` |
+| User deletion cascade gap | `RateLimitEntry` records (keyed `openai:${userId}`, `upload:${userId}`, `aws:${userId}`) and `AdminAuditLog` entries NOT cleaned in any of 3 deletion paths (self-delete via `deleteUser`, admin-delete via `removeUserByAdmin`, webhook `user.deleted`) | ❌ HIGH — orphaned data persists after user deletion | `src/lib/actions/user.actions.tsx`, `src/app/api/webhooks/clerk/route.tsx` |
+| Library uploaded tab | Conversation Library has 4 tabs (Chats, Images, Audios, Videos) but no "Uploaded" tab for user-uploaded media (images, documents). Users need visibility into what they have uploaded. | ❌ HIGH — users cannot track their uploaded files | `src/app/(chat)/app/library/page.tsx` |
 
 ### Practical conclusions
 
@@ -122,7 +126,11 @@ The points below are verified from the current codebase.
 26. PM audit #65 architect/engineer verification: Phases 120.4–120.7 COMPLETE in codebase (verified independently). Zero `as never` casts (verified). ~~Lint: 7 warnings (not 6).~~ **RESOLVED (Phase 126.2).** Lint: 0 warnings. ~~3 models without explicit `strict: true` (Phase 125.1).~~ **RESOLVED (Phase 125.1).** ~~Stop reasons still hardcoded (Phase 107).~~ **RESOLVED (Phase 107).** ~~4 stale TODOs in ai-model-policy (Phase 132).~~ **RESOLVED (Phase 132).** ~~Streaming fetch has no auto-timeout (Phase 133).~~ **RESOLVED (Phase 133).** ~~4 files missing `server-only` guard (Phase 131).~~ **RESOLVED (Phase 131).** No CRITICAL issues. ~~E2E coverage reduced from 14 → 5 specs during rebuild (Phase 134 tracks expansion).~~ **RESOLVED (Phase 134).** E2E: 8 specs. ~~Lint warnings (126.2).~~ **RESOLVED (Phase 126.2).** ALL PM audit #65 findings RESOLVED.
 27. PM audit #61/#63 architect findings ALL RESOLVED: AppSetting enum (Phase 127), transactions hardening (Phase 125.2), handleError sanitization (Phase 126.1), `as never` casts eliminated (120.4+120.5), shared Button (128.1+128.2), PageHead heading-level (129). ~~Remaining defense: 4 files missing `server-only` guard (Phase 131), stale TODO comments in ai-model-policy (Phase 132).~~ **ALL RESOLVED (Phases 131 + 132).**
 28. PM audit #67 API error hardening COMPLETE: `checkoutPlan` try/catch (135 ✅), error response key standardization (136 ✅), `handleError` return type `never` (137 ✅), generate functions return typed objects (138 ✅). Lint 0 warnings (126.2 ✅). 3 new E2E specs (134 ✅). Admin query `.limit()` (140 ✅). FAQ admin-configurable (74.2 ✅). Landing/hero/about admin-configurable (104 ✅). 12 phases completed in one session.
-29. PM audit #67 SWOT: **CRITICAL finding** — `User.suspended` is never enforced in API routes. Admin can suspend users but suspended users retain full API access. `resolveEntitlements` already supports `isSuspended` param but it's never passed. Triple-confirmed by Architect, Engineer, and PM independent verification. Phase 141 is the #1 priority for next session.
+29. ~~PM audit #67 SWOT: **CRITICAL finding** — `User.suspended` is never enforced in API routes.~~ **RESOLVED (Phase 141 COMPLETE).** Suspension is now enforced in all API routes. `resolveEntitlements` `isSuspended` param is now correctly passed. Triple-confirmed by Architect, Engineer, and PM. Phase 141 COMPLETE.
+30. **CRITICAL production bug — stream error on media generation.** When media generation (image, audio, video) is triggered via tool calls (`generateImage`, `generateAudio`, `generateVideo`), the response stream ends unexpectedly. Root cause: media generation happens AFTER the OpenAI stream completes but BEFORE the final SSE event is sent. During media generation (especially video which polls Sora), no data flows to the client. Client-side 120s timeout or connection drops cause `Error: The response stream ended unexpectedly.` The same error can occur on large text responses where OpenAI closes the stream prematurely. This is a CRITICAL production issue that must be resolved before launch.
+31. **HIGH production bug — user deletion does not cascade RateLimitEntry or AdminAuditLog.** When a user is deleted (self-delete via `deleteUser`, admin-delete via `removeUserByAdmin`, or webhook via `user.deleted`), `RateLimitEntry` records keyed as `openai:${userId}`, `upload:${userId}`, `aws:${userId}` are NOT cleaned up. `AdminAuditLog` entries for deleted users are also not cleaned. All three deletion paths must be updated to cascade these records.
+32. **HIGH feature gap — Library "Uploaded" tab missing.** The Conversation Library has 4 tabs (Chats, Images, Audios, Videos) but no "Uploaded" tab to track user-uploaded media (images, documents). Users need visibility into what they have uploaded.
+33. **Future direction — PostgreSQL migration planned.** Migration to Supabase/PostgreSQL is a future strategic direction. Current MongoDB implementation should avoid over-investment in MongoDB-specific workarounds. Design data access patterns to be portable where practical. Not blocking current work.
 
 ---
 
@@ -479,7 +487,7 @@ This sequence is mandatory.
 
 ## 9. Current Execution Order
 
-> Milestones 0–25 ALL COMPLETE. TDD testing rebuild finished (Phases 120.1–120.7).
+> Milestones 0–25 ALL COMPLETE. TDD testing rebuild finished (Phases 120.1–7). Phase 141 (suspended user enforcement) COMPLETE.
 > **All 7 gates GREEN.** 97 unit test suites, 561 tests (all pass). E2E: 8 specs. Zero `as never` casts.
 > Coverage thresholds: 85/80/85/85. Node.js 24.12.0. Build passing. TSC clean. Lint: 0 errors, 0 warnings. Knip: 0 findings.
 > Admin-configurability ALL RESOLVED: FAQ (74.2 ✅), landing/hero/about (104 ✅), stop msgs (107 ✅), support email (74.1 ✅).
@@ -488,14 +496,17 @@ This sequence is mandatory.
 
 **Priority order (PM audit #67 — next session):**
 
-1. **Phase 141 CRITICAL** — Enforce `User.suspended` check in all API routes (triple-confirmed security gap)
-2. **Phase 142 HIGH** — Add rate limiting to `/api/upload` and `/api/aws` endpoints
-3. **Phase 143 MEDIUM** — Replace `as string` / `!` casts on env vars with runtime validation
-4. **Phase 144 MEDIUM** — Admin config in-memory cache with 30s TTL
-5. **Phase 145 MEDIUM** — Upload filename collision fix (`crypto.randomUUID()`)
-6. **Phase 146 LOW** — Admin user detail transaction `.limit(50)`
-7. **Phase 147 LOW** — Rename `.tsx` utility files to `.ts` where no JSX
-8. **Phase 148 LOW** — Admin bulk operations partial-failure reporting
+1. ~~**Phase 141 CRITICAL** — Enforce `User.suspended` check in all API routes (triple-confirmed security gap)~~ **COMPLETE**
+2. **Phase 142A CRITICAL** — Fix stream error on media generation — tool-call media gen causes `Error: The response stream ended unexpectedly.` during image/audio/video generation and large text responses
+3. **Phase 142B HIGH** — Complete user deletion cascade — clean `RateLimitEntry` and `AdminAuditLog` records in all 3 deletion paths (self-delete, admin-delete, webhook)
+4. **Phase 142C HIGH** — Add "Uploaded" tab to Conversation Library for user-uploaded media tracking
+5. **Phase 142 HIGH** — Add rate limiting to `/api/upload` and `/api/aws` endpoints
+6. **Phase 143 MEDIUM** — Replace `as string` / `!` casts on env vars with runtime validation
+7. **Phase 144 MEDIUM** — Admin config in-memory cache with 30s TTL
+8. **Phase 145 MEDIUM** — Upload filename collision fix (`crypto.randomUUID()`)
+9. **Phase 146 LOW** — Admin user detail transaction `.limit(50)`
+10. **Phase 147 LOW** — Rename `.tsx` utility files to `.ts` where no JSX
+11. **Phase 148 LOW** — Admin bulk operations partial-failure reporting
 
 ---
 
@@ -508,6 +519,7 @@ This sequence is mandatory.
 - Broad role systems beyond `client` and `admin`
 - Stripe subscription mode (auto-renewal)
 - Legal/nav/footer admin configurability (deferred v2)
+- Supabase/PostgreSQL migration (future strategic direction — not blocking current MongoDB work)
 
 ---
 
@@ -524,7 +536,7 @@ This sequence is mandatory.
 | OI5  | Components = data consumers                       | CRITICAL | COMPLETE. Phase 73.1 + 73.3. All components converted.                                                                                                                                                                                                   |
 | OI6  | Reduce renders/leaks                              | CRITICAL | COMPLETE. AbortController (Phase 102). All useEffect cleanup verified.                                                                                                                                                                                   |
 | OI7  | Server-side utilities                             | CRITICAL | COMPLETE. 50+ files with `import "server-only"` guards (Phase 84 + Phase 131).                                                                                                                                                                           |
-| OI8  | User removal cascades                             | CRITICAL | COMPLETE. All 3 paths: Clerk → Tasks → Transactions → UsageEvents → S3 → User.                                                                                                                                                                           |
+| OI8  | User removal cascades                             | CRITICAL | PARTIAL. Core cascade (Clerk → Tasks → Transactions → UsageEvents → S3 → User) delivered. **Gap found:** `RateLimitEntry` and `AdminAuditLog` records not cleaned in any deletion path. Requires fix.                                                    |
 | OI9  | `npm run knip` clean                              | HIGH     | CLEAN (0 findings). Phase 122 COMPLETE.                                                                                                                                                                                                                  |
 | OI10 | Admin fully configurable                          | HIGH     | **COMPLETE.** Core operational. Stop msgs (107) ✅. FAQ (74.2) ✅. Landing/hero/about (104) ✅. Zero remaining gaps.                                                                                                                                     |
 | OI11 | Node.js 24.12.0 compatibility                     | CRITICAL | COMPLETE. Runtime confirmed. All 7 gates GREEN.                                                                                                                                                                                                          |

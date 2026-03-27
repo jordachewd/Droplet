@@ -36,7 +36,7 @@ export default async function ChatRouteLayout({
 
       <main
         id="chat-main-content"
-        className="ChatRouteLayoutMain relative flex h-full min-w-0 flex-1"
+        className="ChatRouteLayoutMain relative flex flex-col h-full min-w-0 flex-1"
       >
         <ChatHeader
           personas={personas}

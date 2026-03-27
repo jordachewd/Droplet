@@ -2,7 +2,6 @@
 
 import { useSyncExternalStore } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import classNames from "classnames";
 import AdminSidebar from "@/components/admin/admin-sidebar";
 import ToggleTheme from "@/components/shared/toggle-theme";
@@ -49,7 +48,6 @@ export default function AdminLayoutShell({
   children,
   adminLinks,
 }: AdminLayoutShellProps) {
-  const pathname = usePathname();
   const {
     desktopSidebarCollapsed,
     mobileSidebarOpen,
@@ -80,7 +78,6 @@ export default function AdminLayoutShell({
   const sidebarExpanded = isDesktop
     ? !desktopSidebarCollapsed
     : mobileSidebarOpen;
-  const isAdminDashboardPath = pathname === "/admin";
 
   return (
     <section className="AdminLayoutShell relative flex min-h-dvh w-full">
@@ -89,9 +86,8 @@ export default function AdminLayoutShell({
       <div className="relative flex min-h-dvh flex-1 flex-col">
         <header
           className={classNames(
-            "AdminLayoutHeader sticky left-0 right-0 top-0 z-20 flex w-full px-3",
-            "border-b border-slate-300/70 bg-lavenderHaze-100/88 backdrop-blur-xl",
-            "dark:border-slate-500 dark:bg-nightIndigo-900/68",
+            "AdminLayoutHeader sticky left-0 right-0 top-0 z-20 flex w-full px-4",
+            "bg-lavenderHaze-500/50 backdrop-blur-lg dark:bg-nightIndigo-500/50",
           )}
         >
           <div className="mx-auto flex w-full items-center justify-between gap-4 py-2.5">
@@ -103,18 +99,6 @@ export default function AdminLayoutShell({
                 expanded={sidebarExpanded}
                 controlsId="admin-sidebar"
               />
-              <div className="flex flex-col gap-0.5">
-                <p className="text-xxs font-semibold uppercase tracking-[0.28em] text-midnightBlue-700 dark:text-lavenderHaze-700">
-                  Operations
-                </p>
-                <Link
-                  href="/admin"
-                  aria-current={isAdminDashboardPath ? "page" : undefined}
-                  className="text-sm font-semibold"
-                >
-                  Admin Panel
-                </Link>
-              </div>
             </div>
 
             <div className="ml-auto flex items-center gap-3">

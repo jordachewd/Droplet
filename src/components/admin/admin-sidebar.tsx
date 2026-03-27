@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useUiStore } from "@/lib/hooks/use-ui-store";
 import { useShallow } from "zustand/react/shallow";
+import Logo from "../shared/app-logo";
 
 interface AdminSidebarLink {
   href: string;
@@ -38,11 +39,10 @@ export default function AdminSidebar({ links }: AdminSidebarProps) {
 
   const sidebarClass = classNames(
     "AdminSidebar fixed bottom-0 left-0 top-0 z-30 flex w-72 flex-col justify-between",
-    "border-r border-slate-300/70 bg-lavenderHaze-200 shadow-xl transition-all duration-300",
-    "lg:relative lg:z-10 lg:translate-x-0 lg:shadow-none",
-    "dark:border-slate-500 dark:bg-nightIndigo-1000",
+    "bg-lavenderHaze-100/40 shadow-sm transition-all duration-300 backdrop-blur-lg",
+    "lg:relative lg:z-10 lg:translate-x-0 dark:bg-nightIndigo-1000/40",
     mobileOpen ? "translate-x-0" : "-translate-x-full",
-    desktopCollapsed ? "lg:w-[78px]" : "lg:w-72",
+    desktopCollapsed ? "lg:w-16" : "lg:w-72",
   );
 
   const isOpen = !desktopCollapsed;
@@ -62,39 +62,33 @@ export default function AdminSidebar({ links }: AdminSidebarProps) {
       />
 
       <aside className={sidebarClass} id="admin-sidebar">
-        <div className="flex flex-col px-4 py-6">
+        <div
+          className={classNames(
+            "AdminSidebarHead flex w-full items-start gap-2 px-4 py-3",
+            !isOpen && "lg:items-center",
+          )}
+        >
+          <Logo size={32} iconOnly={!isOpen} />
+        </div>
+
+        <div className="AdminSidebarNav flex flex-col flex-1 px-4 gap-4">
           <div
             className={classNames(
-              "mb-8 flex items-start gap-3 rounded-2xl border border-slate-300/70 bg-lavenderHaze-100/85 px-3 py-3 dark:border-slate-500 dark:bg-nightIndigo-900/80",
-              !isOpen && "lg:items-center lg:px-0",
+              "AdminSidebarNavLabel flex flex-col w-full p-3 rounded-md",
+              "bg-lavenderHaze-500 dark:bg-nightIndigo-500",
+              !isOpen && "lg:hidden",
             )}
           >
-            <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-linear-135 from-limeGreen-500/90 to-limeGreen-800/90 text-midnightBlue-500 shadow-sm">
-              <i className="bi bi-droplet-fill text-lg" aria-hidden="true"></i>
-            </span>
-            <div
-              className={classNames(
-                "flex flex-col gap-1",
-                !isOpen && "lg:hidden",
-              )}
-            >
-              <p className="text-xxs font-semibold uppercase tracking-[0.28em] text-midnightBlue-700 dark:text-lavenderHaze-700">
-                Droplet
-              </p>
-              <h2 className="heading-6 leading-tight">Admin Control</h2>
-              <p className="text-xs text-midnightBlue-600 dark:text-lavenderHaze-600">
-                Operational command center
-              </p>
-            </div>
-            {!isOpen && (
-              <span className="hidden text-lg font-bold lg:block">DC</span>
-            )}
+            <h2 className="heading-6 leading-tight">Admin Control</h2>
+            <p className="text-xs text-midnightBlue-500/50 dark:text-lavenderHaze-500/50">
+              Operational Command Center
+            </p>
           </div>
 
           <nav
             aria-label="Admin navigation"
             className={classNames(
-              "droplet-scrollbar flex flex-col gap-2 overflow-y-auto",
+              "AdminSidebarNavItems droplet-scrollbar flex flex-col gap-2 overflow-y-auto",
               !isOpen && "lg:items-center",
             )}
           >
@@ -133,7 +127,7 @@ export default function AdminSidebar({ links }: AdminSidebarProps) {
 
         <div
           className={classNames(
-            "px-6 pb-6 text-xs text-midnightBlue-600 dark:text-lavenderHaze-600",
+            "AdminSidebarFooter p-4 text-xs text-midnightBlue-600 dark:text-lavenderHaze-600",
             !isOpen && "lg:hidden",
           )}
         >

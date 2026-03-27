@@ -2,7 +2,25 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-27 — PM audit #67. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4, 105.1, 105.2, 106, 107.1, 107.2, 107.3, 108, 110, 111.1, 112.1, 112.2, 109, 113.1, 113.2, 114, 115, 116, 117, 120.1, 120.2-A, 120.2-B, 120.2-C, 120.3, 120.4, 120.5, 120.6, 120.7, 121, 122, 123, 124, 125, 125.1, 125.2, 126, 126.1, 126.2, 127, 128.1, 128.2, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 74.2, 104, 125.3 complete. Milestones 0–25 COMPLETE. 561 unit tests (97 suites). E2E: 8 spec files. All 7 gates GREEN. Build passing. Node.js 24.12.0 runtime. Coverage: 85/80/85/85. Zero `as never` casts. Lint: 0 errors, 0 warnings.
+> Last updated: 2026-03-27 — PM audit #68. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4, 105.1, 105.2, 106, 107.1, 107.2, 107.3, 108, 110, 111.1, 112.1, 112.2, 109, 113.1, 113.2, 114, 115, 116, 117, 120.1, 120.2-A, 120.2-B, 120.2-C, 120.3, 120.4, 120.5, 120.6, 120.7, 121, 122, 123, 124, 125, 125.1, 125.2, 126, 126.1, 126.2, 127, 128.1, 128.2, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 74.2, 104, 125.3 complete. Milestones 0–25 COMPLETE. 571 unit tests (97 suites). E2E: 8 spec files. All 7 gates GREEN. Build passing. Node.js 24.12.0 runtime. Coverage: 85/80/85/85. Zero `as never` casts. Lint: 0 errors, 0 warnings.
+
+---
+
+## Phase 141 — Enforce `User.suspended` check in all API routes — COMPLETED (2026-03-27)
+
+> Engineer delivered (PM audit #68). CRITICAL security fix. Suspended users now blocked from all API routes with 403 response.
+
+- [x] `getUserById()` `.select()` includes `suspended` field.
+- [x] `/api/openai` returns 403 for suspended users; passes `isSuspended` to `resolveEntitlements`.
+- [x] `/api/upload` returns 403 for suspended users via shared `requireActiveUser()` guard.
+- [x] `/api/download` returns 403 for suspended users via shared `requireActiveUser()` guard.
+- [x] `/api/aws` returns 403 for suspended users (POST and DELETE) via shared `requireActiveUser()` guard.
+- [x] `suspended` field has `index: true` in user model.
+- [x] Shared `requireActiveUser()` utility extracted to prevent duplication.
+- [x] Unit tests cover all 4 API routes rejecting suspended users.
+- [x] All 7 gates GREEN.
+
+**Files changed:** `src/lib/utils/require-active-user.ts` (new), `src/lib/actions/user.actions.tsx`, `src/lib/database/models/user.model.tsx`, `src/app/api/openai/route.tsx`, `src/app/api/upload/route.tsx`, `src/app/api/download/route.tsx`, `src/app/api/aws/route.tsx`, + 6 unit test files.
 
 ---
 
