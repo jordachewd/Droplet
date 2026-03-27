@@ -2,7 +2,140 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-27 — PM audit #66. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4, 105.1, 105.2, 106, 107.1, 107.2, 107.3, 108, 110, 111.1, 112.1, 112.2, 109, 113.1, 113.2, 114, 115, 116, 117, 120.1, 120.2-A, 120.2-B, 120.2-C, 120.3, 120.4, 120.5, 120.6, 120.7, 121, 122, 123, 124, 125, 125.1, 125.2, 126, 126.1, 127, 128.1, 128.2, 129, 130, 131, 132, 133 complete. Milestones 0–25 COMPLETE. 551 unit tests (95 suites). E2E: 5 spec files (39 passed, 4 skipped). All 7 gates GREEN. Build passing. Node.js 24.12.0 runtime. Coverage: 85/80/85/85. Zero `as never` casts.
+> Last updated: 2026-03-27 — PM audit #67. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4, 105.1, 105.2, 106, 107.1, 107.2, 107.3, 108, 110, 111.1, 112.1, 112.2, 109, 113.1, 113.2, 114, 115, 116, 117, 120.1, 120.2-A, 120.2-B, 120.2-C, 120.3, 120.4, 120.5, 120.6, 120.7, 121, 122, 123, 124, 125, 125.1, 125.2, 126, 126.1, 126.2, 127, 128.1, 128.2, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 74.2, 104, 125.3 complete. Milestones 0–25 COMPLETE. 561 unit tests (97 suites). E2E: 8 spec files. All 7 gates GREEN. Build passing. Node.js 24.12.0 runtime. Coverage: 85/80/85/85. Zero `as never` casts. Lint: 0 errors, 0 warnings.
+
+---
+
+## Phase 135 — Add try/catch to `checkoutPlan` server action — COMPLETED (2026-03-27)
+
+> Engineer delivered (PM audit #67). Security hardening. Stripe API failures no longer leak raw messages.
+
+- [x] Wrapped `checkoutPlan` function body in try/catch.
+- [x] `handleError({ error, source: "checkoutPlan" })` in catch block.
+- [x] Build passes, tests pass.
+
+**Files changed:** `src/lib/actions/transaction.action.tsx`
+
+---
+
+## Phase 136 — Standardize API error response keys to `{ error }` — COMPLETED (2026-03-27)
+
+> Engineer delivered (PM audit #67). All error responses now use `{ error: "..." }` consistently.
+
+- [x] Replaced all `{ message: "..." }` error responses with `{ error: "..." }` in `upload/route.tsx` and `aws/route.tsx`.
+- [x] Build passes, tests pass.
+
+**Files changed:** `src/app/api/upload/route.tsx`, `src/app/api/aws/route.tsx`
+
+---
+
+## Phase 137 — Change `handleError` return type to `never` — COMPLETED (2026-03-27)
+
+> Engineer delivered (PM audit #67). Type-safety improvement — downstream generate functions have precise return types.
+
+- [x] `handleError` return type changed to `never`.
+- [x] Downstream callers' return types narrow correctly (no spurious `undefined`).
+- [x] Build passes, tests pass.
+
+**Files changed:** `src/lib/utils/handleError.tsx`, OpenAI utils call sites
+
+---
+
+## Phase 126.2 — Fix all lint warnings (0 errors, 0 warnings) — COMPLETED (2026-03-27)
+
+> Engineer delivered (PM audit #67). All 6 `setState-in-effect` + 1 `no-img-element` warnings resolved.
+
+- [x] `npm run lint` reports 0 errors, 0 warnings.
+- [x] No behavioral regressions.
+- [x] Build passes, tests pass.
+
+**Files changed:** `src/components/admin/admin-layout-shell.tsx`, `src/components/admin/admin-managed-form.tsx`, `src/components/admin/settings/admin-settings-tabs.tsx`, `src/components/admin/transactions/admin-transactions-table.tsx`, `src/components/layout/droplet-theme.tsx`, `src/components/shared/audio-player.tsx`, `tests/unit/components/hero-section.test.tsx`
+
+---
+
+## Phase 134 — Add E2E tests for critical business paths — COMPLETED (2026-03-27)
+
+> Engineer delivered (PM audit #67). 3 new E2E specs for billing, admin, and error paths.
+
+- [x] `tests/e2e/admin-user-operations.spec.ts` — admin user operations coverage.
+- [x] `tests/e2e/billing-checkout-flow.spec.ts` — billing/checkout flow structural assertions.
+- [x] `tests/e2e/error-boundary-handling.spec.ts` — error boundary handling.
+- [x] All assertions structural (no hardcoded content).
+- [x] All 7 gates GREEN.
+
+**Files changed:** 3 new E2E spec files in `tests/e2e/`
+
+---
+
+## Phase 138 — Return typed objects from generate functions — COMPLETED (2026-03-27)
+
+> Engineer delivered (PM audit #67). Zero JSON.stringify/JSON.parse roundtrips. Zero `as string` in generate/route files.
+
+- [x] All generate functions return typed payload objects directly.
+- [x] All callers use typed objects instead of parsing.
+- [x] Removed `as string` assertions.
+- [x] Build passes, tests pass.
+
+**Files changed:** `src/lib/utils/openai/generateTitle.tsx`, `generateImage.tsx`, `generateAudio.tsx`, `generateVideo.tsx`, `generateResponse.tsx`, `src/app/api/openai/route.tsx`
+
+---
+
+## Phase 125.3 — Add rate-limit.ts bypass comment — COMPLETED (2026-03-27)
+
+> Engineer delivered (PM audit #67). Explains intentional MongoDB driver bypass for atomic sliding-window.
+
+- [x] Code comment added explaining intentional `.collection.findOneAndUpdate()` bypass.
+- [x] Build passes.
+
+**Files changed:** `src/lib/utils/rate-limit.ts`
+
+---
+
+## Phase 139 — Fix terms page wrapper ID — COMPLETED (2026-03-27)
+
+> Engineer delivered (PM audit #67). Changed `id="PrivacyPage"` to `id="TermsPage"`.
+
+- [x] Unique CSS class naming convention now respected.
+- [x] Build passes.
+
+**Files changed:** `src/app/(public)/terms/page.tsx`
+
+---
+
+## Phase 140 — Add `.limit()` to unbounded admin queries — COMPLETED (2026-03-27)
+
+> Engineer delivered (PM audit #67). `.limit(500)` added to `AppSetting.find({})` and `PublicPage.find({})`.
+
+- [x] Safety cap on admin-only collection queries.
+- [x] Build passes.
+
+**Files changed:** `src/lib/utils/admin-queries.ts`
+
+---
+
+## Phase 74.2 — FAQ content admin-configurable — COMPLETED (2026-03-27)
+
+> Engineer delivered (PM audit #67). FAQ admin-editable from `/admin/settings`. Fallback to `buildFaqs()`.
+
+- [x] `admin.faqContent` AppSetting + `getEffectiveFaqContent()` resolver.
+- [x] Admin UI for FAQ entries.
+- [x] Unit tests: `tests/unit/utils/effective-faq-content.test.ts`.
+- [x] Build passes.
+
+**Files changed:** `src/constants/faqs.tsx`, `src/lib/utils/effective-faq-content.ts` (new), `src/lib/actions/admin.actions.tsx`, admin settings page, `tests/unit/utils/effective-faq-content.test.ts` (new)
+
+---
+
+## Phase 104 — Landing/hero/about content admin-configurable — COMPLETED (2026-03-27)
+
+> Engineer delivered (PM audit #67). Landing feature cards, hero copy, about copy all admin-editable.
+
+- [x] `getEffectiveWebsiteCopy()` resolver with admin override fallbacks.
+- [x] Admin website content section in settings.
+- [x] Unit tests: `tests/unit/utils/effective-website-copy.test.ts`.
+- [x] Build passes.
+
+**Files changed:** `src/constants/hero-content.ts`, `src/constants/landing-data.ts`, `src/constants/about-data.ts`, `src/lib/utils/effective-website-copy.ts` (new), `src/components/admin/settings/admin-website-content-section.tsx` (new), admin settings page, `tests/unit/utils/effective-website-copy.test.ts` (new)
 
 ---
 
