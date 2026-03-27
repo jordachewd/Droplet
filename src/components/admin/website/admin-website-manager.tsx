@@ -83,7 +83,6 @@ export function AdminWebsiteManager({ pages }: AdminWebsiteManagerProps) {
         </label>
         <div className="flex items-end">
           <AdminFormSubmitButton
-            className="btn btn-md btn-contained"
             label="Create Page"
             pendingLabel="Creating..."
           />

@@ -64,27 +64,18 @@ export default function AdminSidebar({ links }: AdminSidebarProps) {
       <aside className={sidebarClass} id="admin-sidebar">
         <div
           className={classNames(
-            "AdminSidebarHead flex w-full items-start gap-2 px-4 py-3",
-            !isOpen && "lg:items-center",
+            "AdminSidebarHead flex flex-col w-full px-4 h-14 justify-center" ,
+            "bg-lavenderHaze-500 dark:bg-nightIndigo-500",
+            !isOpen && "lg:hidden",
           )}
         >
-          <Logo size={32} iconOnly={!isOpen} />
+          <h2 className="heading-6 leading-tight">Admin Control</h2>
+          <p className="text-xxs text-midnightBlue-500/50 dark:text-lavenderHaze-500/50">
+            Operational Command Center
+          </p>
         </div>
 
-        <div className="AdminSidebarNav flex flex-col flex-1 px-4 gap-4">
-          <div
-            className={classNames(
-              "AdminSidebarNavLabel flex flex-col w-full p-3 rounded-md",
-              "bg-lavenderHaze-500 dark:bg-nightIndigo-500",
-              !isOpen && "lg:hidden",
-            )}
-          >
-            <h2 className="heading-6 leading-tight">Admin Control</h2>
-            <p className="text-xs text-midnightBlue-500/50 dark:text-lavenderHaze-500/50">
-              Operational Command Center
-            </p>
-          </div>
-
+        <div className="AdminSidebarNav flex flex-col flex-1 px-4 py-6">
           <nav
             aria-label="Admin navigation"
             className={classNames(
@@ -127,11 +118,11 @@ export default function AdminSidebar({ links }: AdminSidebarProps) {
 
         <div
           className={classNames(
-            "AdminSidebarFooter p-4 text-xs text-midnightBlue-600 dark:text-lavenderHaze-600",
+            "AdminSidebarFooter p-4",
             !isOpen && "lg:hidden",
           )}
         >
-          <p>Protected by proxy and server layers.</p>
+          <Logo size={32} iconOnly={!isOpen} />
         </div>
       </aside>
     </>

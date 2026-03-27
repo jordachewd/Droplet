@@ -46,10 +46,10 @@ export default async function AdminUsersPage({
           />
         </label>
         <div className="flex items-end gap-3">
-          <Button size="md" variant="contained" type="submit">
+          <Button size="sm" variant="contained" type="submit">
             Search
           </Button>
-          <Link className="btn btn-md btn-outlined" href="/admin/users">
+          <Link className="btn btn-sm btn-outlined" href="/admin/users">
             Reset
           </Link>
         </div>

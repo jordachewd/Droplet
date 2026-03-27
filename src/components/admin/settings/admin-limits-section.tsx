@@ -120,7 +120,6 @@ export function AdminLimitsSection({
         </div>
         <div className="mt-4 flex justify-end">
           <AdminFormSubmitButton
-            className="btn btn-md btn-contained"
             label="Save Limits"
             pendingLabel="Saving limits..."
           />
@@ -183,7 +182,6 @@ export function AdminLimitsSection({
         </div>
         <div className="mt-4 flex justify-end">
           <AdminFormSubmitButton
-            className="btn btn-md btn-contained"
             label="Save Trial Limits"
             pendingLabel="Saving trial limits..."
           />
