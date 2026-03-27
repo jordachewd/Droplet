@@ -5,49 +5,134 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #67 (2026-03-27). Milestones 0–25 COMPLETE. All phases through 140 complete (incl. 135–140, 74.2, 104, 125.3, 126.2, 134). 561 unit tests (97 suites). 8 E2E specs. Build passes. TSC clean. Node.js 24.12.0 runtime.**
-> **GATE STATUS: All 7 gates GREEN. Lint (0 errors, 0 warnings), Knip (0 findings), TSC clean, build passes, unit tests (97/561), E2E (8 specs), coverage 85/80/85/85.**
-> **TDD REBUILD COMPLETE. WCAG 2.2 AA COMPLETE. TD-HARDCODE-01 RESOLVED. Admin configurability ALL RESOLVED (FAQ 74.2 ✅, landing/hero/about 104 ✅, stop reasons 107 ✅, support email 74.1 ✅).**
+> **STATUS: PM audit #68 (2026-03-27). Milestones 0–25 COMPLETE. All phases through 141 complete. 571 unit tests (97 suites). 8 E2E specs. Build passes. TSC clean. Node.js 24.12.0 runtime.**
+> **GATE STATUS: All 7 gates GREEN. Lint (0 errors, 0 warnings), Knip (0 findings), TSC clean, build passes, unit tests (97/571), E2E (8 specs), coverage 85/80/85/85.**
+> **TDD REBUILD COMPLETE. WCAG 2.2 AA COMPLETE. Admin configurability ALL RESOLVED. Phase 141 (suspended user enforcement) COMPLETE.**
 > **Zero: `as never`, `as any`, `console.log`, `console.error`, `window.alert`, `window.confirm`, `strict: false`, stale TODOs — all in `src/`.**
-> **SWOT audit #67 conducted. Architect + Engineer + PM triple audit. New findings below.**
-> **NEXT SESSION: 141 (CRITICAL suspended user enforcement) → 142 (HIGH upload/aws rate limiting) → 143 (MEDIUM env var validation) → 144 (MEDIUM admin config caching) → 145 (MEDIUM upload filename collision) → 146 (LOW admin detail transaction limit) → 147 (LOW .tsx→.ts renames) → 148 (LOW bulk ops partial-failure)**
+> **SWOT audit #68 conducted. Architect + Engineer + PM triple audit. 3 production bugs identified (owner-reported).**
+> **NEXT SESSION: 149 (CRITICAL streaming fix) → 150 (HIGH user deletion cascade) → 151 (HIGH library uploaded tab) → 142 (HIGH upload/aws rate limiting) → 143 (MEDIUM env var validation) → 144 (MEDIUM admin config caching) → 145 (MEDIUM upload filename collision) → 146–148 (LOW)**
 
 ---
 
-## CRITICAL — Suspended User Enforcement (PM audit #67 — Architect + Engineer + PM triple-confirmed)
+## CRITICAL — SSE Streaming Timeout During Media Generation (PM audit #68 — Owner-reported production bug)
 
-### Phase 141 CRITICAL — Enforce `User.suspended` check in all API routes
+### Phase 149 CRITICAL — Fix "The response stream ended unexpectedly" error
 
-> **Triple-confirmed finding.** Admin can suspend users via `toggleUserSuspensionAction` (sets `User.suspended = true`), but NO API route checks this field. Suspended users retain full API access — they can chat, upload files, generate media, and download content. `resolveEntitlements` already supports `isSuspended` parameter but it's never passed. `getUserById` doesn't even select the `suspended` field.
+> **Owner-reported CRITICAL production bug.** When asking for media generation (image, audio, video) it triggers `Error: The response stream ended unexpectedly.` Also occurs with large text responses. Triple-confirmed root cause: when OpenAI returns a tool call (media generation), the SSE stream goes silent while the server performs media generation (generateImage/generateAudio/generateVideo). No heartbeat/keepalive events are sent during this gap. Video generation polls Sora for up to 180s, but the client has a 120s timeout — **video generation ALWAYS fails in streaming mode**. Image/audio (5-20s) may also fail if network intermediaries drop idle connections.
+
+**Root cause chain:**
+
+1. Client sends streaming request with 120s timeout (`STREAM_REQUEST_TIMEOUT_MS` in `chat-wrapper.tsx:36`)
+2. Server creates `ReadableStream` and sends `meta` SSE event (`route.tsx:1433`)
+3. OpenAI streaming completes (text chunks sent to client)
+4. OpenAI returns tool call → `buildOpenAIResponsePayload()` runs media generation synchronously
+5. During media generation: **zero SSE data flows** — stream is silent
+6. Client 120s timeout fires → abort → stream ends without `final` event → error shown
 
 **Files:**
 
-1. `src/lib/actions/user.actions.tsx` — `getUserById()` .select() must include `suspended`
-2. `src/app/api/openai/route.tsx` — Add suspended check after `getUserById`, pass `isSuspended` to `resolveEntitlements`, return 403 if suspended
-3. `src/app/api/upload/route.tsx` — Add suspended check after auth
-4. `src/app/api/download/route.tsx` — Add suspended check after auth
-5. `src/app/api/aws/route.tsx` — Add suspended check after auth
-6. `src/lib/database/models/user.model.tsx` — Add `index: true` to `suspended` field
+1. `src/app/api/openai/route.tsx` — Add heartbeat mechanism to `ReadableStream.start()` during media generation
+2. `src/components/chat/chat-wrapper.tsx` — Handle `heartbeat` events; make timeout resettable on any received event
+3. `src/types/chat-api.d.ts` — Add `heartbeat` to `ChatStreamEvent` union type
+4. `src/lib/utils/openai/generateResponse.tsx` — Signal to caller when media generation starts (for heartbeat coordination)
 
 **What to do:**
 
-1. Add `suspended` to `getUserById()` `.select()` projection.
-2. In `/api/openai` route: after `getUserById`, check `if (userData.suspended)` → return `NextResponse.json({ error: "Account suspended" }, { status: 403 })`.
-3. Pass `isSuspended: Boolean(userData.suspended)` to `resolveEntitlements()` call.
-4. In `/api/upload`, `/api/download`, `/api/aws`: fetch user and check `suspended` before processing. Consider extracting a shared `requireActiveUser(userId)` guard.
-5. Add `index: true` to `suspended` field in user model schema.
-6. Add unit tests for suspended user rejection in each route.
+1. Add a `type: "heartbeat"` event to the `ChatStreamEvent` type.
+2. In the streaming branch of `route.tsx`: when `generateStreamingResponse` is processing (especially during media tool calls), start a `setInterval` that writes `{ type: "heartbeat" }` SSE events every 10-15 seconds.
+3. In `generateStreamingResponse` or `buildOpenAIResponsePayload`: add a callback (`onMediaGenerationStart`/`onMediaGenerationEnd`) so the route can coordinate the heartbeat interval.
+4. In `chat-wrapper.tsx`: (a) Handle `heartbeat` events in `handleEvent` — ignore content-wise but the data received keeps the connection alive. (b) Reset the timeout timer on every received event (including heartbeats) instead of using a fixed 120s from request start.
+5. Increase `STREAM_REQUEST_TIMEOUT_MS` to 200s as a safety margin (video can take up to 180s).
 
 **Acceptance criteria:**
 
-- [ ] `getUserById` returns `suspended` field
-- [ ] `/api/openai` returns 403 for suspended users
-- [ ] `/api/upload` returns 403 for suspended users
-- [ ] `/api/download` returns 403 for suspended users
-- [ ] `/api/aws` returns 403 for suspended users
-- [ ] `resolveEntitlements` receives `isSuspended` flag in production
-- [ ] `suspended` field has `index: true` in user model
-- [ ] Unit tests cover all 4 API routes rejecting suspended users
+- [ ] SSE heartbeat events sent every 10-15s during media generation
+- [ ] Client handles heartbeat events without error
+- [ ] Client timeout resets on every received event
+- [ ] Video generation (180s max) completes without stream timeout
+- [ ] Image/audio generation completes without stream timeout
+- [ ] Large text responses complete without timeout
+- [ ] `ChatStreamEvent` type includes `heartbeat`
+- [ ] Unit tests cover heartbeat emission and client handling
+- [ ] Build passes, tests pass
+
+---
+
+## HIGH — User Deletion Cascade Gap (PM audit #68 — Owner-reported production bug)
+
+### Phase 150 HIGH — Complete user deletion cascade + extract shared utility
+
+> **Owner-reported HIGH production bug.** When a user is deleted, `RateLimitEntry` records (keyed as `openai:${userId}`, `upload:${userId}`, `aws:${userId}`) survive in ALL THREE deletion paths. This is orphaned data. Additionally, all three deletion paths duplicate the same cascade logic independently — extract a shared utility to prevent future cascade gaps.
+
+**Current cascade (incomplete in all 3 paths):** Clerk → Tasks → Transactions → UsageEvents → S3 → User
+**Missing:** RateLimitEntry cleanup
+**AdminAuditLog decision:** RETAIN for audit trail compliance — do NOT delete. These are permanent admin forensics records.
+
+**Files:**
+
+1. Create `src/lib/utils/delete-user-cascade.ts` — shared cascade utility
+2. `src/lib/actions/user.actions.tsx` — Refactor `deleteUser()` to use shared utility
+3. `src/lib/actions/admin.actions.tsx` — Refactor `removeUserByAdmin()` to use shared utility
+4. `src/app/api/webhooks/clerk/route.tsx` — Refactor `user.deleted` handler to use shared utility
+
+**What to do:**
+
+1. Create `deleteUserCascade(clerkId: string)` in a new shared utility file. This function performs:
+   - `Task.deleteMany({ userId: clerkId })`
+   - `Transaction.deleteMany({ clerkId })`
+   - `UsageEvent.deleteMany({ userId: clerkId })`
+   - `RateLimitEntry.deleteMany({ key: { $in: [\`openai:${clerkId}\`, \`upload:${clerkId}\`, \`aws:${clerkId}\`] } })`
+   - `deleteS3Prefix(\`${clerkId}/\`)`Returns:`{ deletedTasks, deletedTransactions, deletedUsageEvents, deletedRateLimitEntries, deletedObjectsCount }`
+2. Each error in the cascade should be caught independently (existing pattern in webhook) so partial failure doesn't break the cascade.
+3. Refactor all 3 deletion paths to call the shared utility.
+4. Add unit tests verifying RateLimitEntry is cleaned.
+
+**Acceptance criteria:**
+
+- [ ] Shared `deleteUserCascade()` utility extracted
+- [ ] `RateLimitEntry.deleteMany` included in cascade
+- [ ] All 3 deletion paths use the shared utility
+- [ ] Webhook handler maintains independent error handling per step
+- [ ] Unit tests verify RateLimitEntry cleanup in all paths
+- [ ] Build passes, tests pass
+
+---
+
+## HIGH — Library "Uploaded" Tab (PM audit #68 — Owner-reported production bug)
+
+### Phase 151 HIGH — Add "Uploaded" tab to Conversation Library
+
+> **Owner-reported HIGH feature gap.** The Conversation Library only tracks AI-generated media (images, audios, videos). User-uploaded files (images, documents via `/api/upload`) are stored in S3 under `{userId}/uploads/` but are NOT tracked in MongoDB — there is no way to list, browse, or manage uploaded files after the upload.
+
+**Files:**
+
+1. Create `src/lib/database/models/upload.model.ts` — new Upload Mongoose model
+2. `src/app/api/upload/route.tsx` — Persist upload metadata to new model
+3. `src/lib/utils/task-queries.tsx` — Add `getUploadsByUserId()` query
+4. `src/app/(chat)/app/library/page.tsx` — Fetch uploads and pass to LibraryTabs
+5. `src/components/chat/library-tabs.tsx` — Add 5th "Uploaded" tab
+6. `src/types/LibraryData.d.ts` — Add `LibraryUploadCardItem` type
+7. `src/lib/utils/delete-user-cascade.ts` — Add `Upload.deleteMany({ userId })` to cascade
+
+**What to do:**
+
+1. Create `Upload` model: `{ userId: String (indexed), fileName: String, objectKey: String, s3Url: String, contentType: String, sizeBytes: Number, taskId: String (optional — conversation it was used in), createdAt: Date (indexed) }`. Use `strict: true`.
+2. In upload API route: after successful S3 upload, persist an `Upload` document.
+3. Add `getUploadsByUserId(userId, page, limit)` query with `.lean().select()` and pagination.
+4. In library page: fetch uploads server-side and pass as props.
+5. In LibraryTabs: add `uploads` tab with uploaded file cards (filename, content type, date, download link).
+6. Add `Upload.deleteMany({ userId })` to the deletion cascade utility (Phase 150).
+7. Add unit tests for the new model and query.
+
+**Acceptance criteria:**
+
+- [ ] `Upload` model created with proper schema, indexes, and `strict: true`
+- [ ] Upload API persists metadata on successful upload
+- [ ] Library page fetches and displays uploads in new "Uploaded" tab
+- [ ] Uploaded tab shows filename, type, date, and download link
+- [ ] Upload.deleteMany included in user deletion cascade
+- [ ] Pagination works for uploaded files
+- [ ] Unit tests for model and query
 - [ ] Build passes, tests pass
 
 ---
@@ -247,5 +332,5 @@
 ---
 
 > **Completed phases** archived in [`DONE.md`](DONE.md).
-> All phases through 140 complete (incl. 135–140, 74.2, 104, 125.3, 126.2, 134, plus 107.1–107.3, 108, 114, 125.1, 131, 132, 133, 120.1–120.7, 121–130, 128.2, 106).
+> All phases through 141 complete (incl. 135–141, 74.2, 104, 125.3, 126.2, 134, plus 107.1–107.3, 108, 114, 125.1, 131, 132, 133, 120.1–120.7, 121–130, 128.2, 106).
 > All Milestones 0–25 COMPLETE.
