@@ -44,7 +44,9 @@ describe("PlanPromo", () => {
       ),
     ).toBeTruthy();
     expect(
-      screen.getByRole("link", { name: "Contact support" }).getAttribute("href"),
+      screen
+        .getByRole("link", { name: "Contact support" })
+        .getAttribute("href"),
     ).toBe("mailto:support@droplet.example");
     expect(screen.queryByRole("link", { name: "Upgrade now" })).toBeNull();
   });

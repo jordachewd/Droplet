@@ -2,7 +2,108 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-27 — PM audit #69. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4, 105.1, 105.2, 106, 107.1, 107.2, 107.3, 108, 110, 111.1, 112.1, 112.2, 109, 113.1, 113.2, 114, 115, 116, 117, 120.1, 120.2-A, 120.2-B, 120.2-C, 120.3, 120.4, 120.5, 120.6, 120.7, 121, 122, 123, 124, 125, 125.1, 125.2, 126, 126.1, 126.2, 127, 128.1, 128.2, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 149, 74.2, 104, 125.3 complete. Milestones 0–25 COMPLETE. 574 unit tests (97 suites). E2E: 8 spec files. All 7 gates GREEN. Build passing. Node.js 24.12.0 runtime. Coverage: 85/80/85/85. Zero `as never` casts. Lint: 0 errors, 0 warnings.
+> Last updated: 2026-03-27 — PM audit #70. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4, 105.1, 105.2, 106, 107.1, 107.2, 107.3, 108, 110, 111.1, 112.1, 112.2, 109, 113.1, 113.2, 114, 115, 116, 117, 120.1, 120.2-A, 120.2-B, 120.2-C, 120.3, 120.4, 120.5, 120.6, 120.7, 121, 122, 123, 124, 125, 125.1, 125.2, 126, 126.1, 126.2, 127, 128.1, 128.2, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 149, 150, 151, 152, 153, 154, 155, 74.2, 104, 125.3 complete. Milestones 0–25 COMPLETE. 586 unit tests (101 suites). E2E: 8 spec files. All 7 gates GREEN. Build passing. Node.js 24.12.0 runtime. Coverage: 85/80/85/85. Zero `as never` casts. Lint: 0 errors, 0 warnings.
+
+---
+
+## Phase 152 — Fix `redirect()` inside try/catch in `checkoutPlan()` — COMPLETED (2026-03-27)
+
+> Engineer delivered (PM audit #70). CRITICAL billing fix. Payment checkout restored — `redirect()` moved outside try/catch. Regression from Phase 135 resolved.
+
+- [x] `redirectUrl` variable declared before try/catch block.
+- [x] Inside try block: `redirectUrl = session.url` assigned (no direct `redirect()` call).
+- [x] After try/catch: `redirect(redirectUrl)` called — `NEXT_REDIRECT` throw propagates correctly.
+- [x] Unit test updated to verify redirect behavior.
+- [x] Stripe checkout flow completes without error.
+- [x] All 7 gates GREEN.
+
+**Files changed:** `src/lib/actions/transaction.action.tsx`, `tests/unit/actions/transaction-actions.test.ts`
+
+---
+
+## Phase 153 — Fix `AdminSettingsTabs` SSR/client hydration mismatch — COMPLETED (2026-03-27)
+
+> Engineer delivered (PM audit #70). HIGH admin bug. Hydration mismatch eliminated — localStorage read moved to useEffect.
+
+- [x] `getInitialActiveTabId()` function removed.
+- [x] `useState` initializer uses `tabs[0]?.id ?? ""` (same value SSR and client).
+- [x] `useEffect` restores localStorage value after mount via `setTimeout(0)`.
+- [x] `resolvedActiveTabId` ensures fallback to valid tab if stored value stale.
+- [x] Arrow-key navigation preserved.
+- [x] No hydration mismatch errors on `/admin/settings`.
+- [x] All 7 gates GREEN.
+
+**Files changed:** `src/components/admin/settings/admin-settings-tabs.tsx`
+
+---
+
+## Phase 154 — Add suspension message to `ChatSidebarPromo` and `PlanPromo` — COMPLETED (2026-03-27)
+
+> Engineer delivered (PM audit #70). HIGH UX fix. Suspended users now see clear suspension messaging instead of upgrade CTAs.
+
+- [x] `isSuspended?: boolean` prop added to `ChatSidebarPromoProps` and `PlanPromoProps`.
+- [x] `ChatSidebarPromo`: renders "Account Suspended" card with contact-support CTA when suspended.
+- [x] `PlanPromo`: renders suspension notice with contact-support link when suspended.
+- [x] Priority order correct: Admin > Suspended > Premium > Pro/Lite.
+- [x] Normal behavior preserved when `isSuspended` is false/undefined.
+- [x] `isSuspended` passed from server component parents.
+- [x] Unit tests cover suspension display.
+- [x] All 7 gates GREEN.
+
+**Files changed:** `src/components/chat/sidebar/chat-sidebar-promo.tsx`, `src/components/shared/plan-promo.tsx`, `src/components/chat/sidebar/chat-sidebar-shell.tsx`, `src/components/sections/profile/profile-hero.tsx`
+
+---
+
+## Phase 155 — Remove `.droplet-scrollbar` class and all usages — COMPLETED (2026-03-27)
+
+> Engineer delivered (PM audit #70). HIGH owner directive. All custom scrollbar CSS removed — browser handles scrollbars natively.
+
+- [x] `.droplet-scrollbar` CSS class definition deleted from `globals.css`.
+- [x] `droplet-scrollbar` class removed from `chat-wrapper.tsx`.
+- [x] `droplet-scrollbar` class removed from `chat-sidebar-shell.tsx`.
+- [x] `droplet-scrollbar` class removed from `chat-page-wrapper.tsx`.
+- [x] `droplet-scrollbar` class removed from `admin-layout-shell.tsx`.
+- [x] `droplet-scrollbar` class removed from `admin-sidebar.tsx`.
+- [x] Zero `droplet-scrollbar` references remaining in `src/`.
+- [x] All 7 gates GREEN.
+
+**Files changed:** `src/app/globals.css`, `src/components/chat/chat-wrapper.tsx`, `src/components/chat/sidebar/chat-sidebar-shell.tsx`, `src/components/chat/chat-page-wrapper.tsx`, `src/components/admin/admin-layout-shell.tsx`, `src/components/admin/admin-sidebar.tsx`
+
+---
+
+## Phase 150 — Complete user deletion cascade + extract shared utility — COMPLETED (2026-03-27)
+
+> Engineer delivered (PM audit #70). HIGH data integrity fix. All 3 deletion paths now use shared `deleteUserCascade()` utility. RateLimitEntry + Upload cleanup included.
+
+- [x] Created `src/lib/utils/delete-user-cascade.ts` — shared cascade utility.
+- [x] Cascade steps: Tasks → Transactions → UsageEvents → RateLimitEntries → Uploads → S3 prefix.
+- [x] Each step wrapped in independent try/catch with `onStepError` callback.
+- [x] Input validation: trims and validates clerkId is non-empty.
+- [x] `AdminAuditLog` intentionally NOT deleted (audit trail compliance).
+- [x] `deleteUser()` in `user.actions.tsx` refactored to use shared utility.
+- [x] `removeUserByAdmin()` in `admin.actions.tsx` refactored to use shared utility.
+- [x] `user.deleted` webhook handler refactored to use shared utility.
+- [x] Unit tests: happy path + step failure resilience.
+- [x] All 7 gates GREEN.
+
+**Files changed:** `src/lib/utils/delete-user-cascade.ts` (new), `src/lib/actions/user.actions.tsx`, `src/lib/actions/admin.actions.tsx`, `src/app/api/webhooks/clerk/route.tsx`, `tests/unit/utils/delete-user-cascade.test.ts` (new), `tests/unit/actions/user-actions.test.ts`, `tests/unit/routes/clerk-webhook-route.test.ts`
+
+---
+
+## Phase 151 — Add "Uploaded" tab to Conversation Library — COMPLETED (2026-03-27)
+
+> Engineer delivered (PM audit #70). HIGH feature. Users can now browse and manage uploaded files in the library.
+
+- [x] Created `src/lib/database/models/upload.model.ts` — Upload Mongoose model with `strict: true`.
+- [x] Compound index `{ userId: 1, createdAt: -1 }` for efficient query.
+- [x] Upload API route (`/api/upload`) persists `Upload` document after successful S3 upload.
+- [x] `getUploadsByUserId()` query added with `.lean().select()` and pagination.
+- [x] "Uploaded" tab added to LibraryTabs component.
+- [x] Library page fetches uploads server-side and passes as props.
+- [x] `Upload.deleteMany({ userId })` included in `deleteUserCascade()`.
+- [x] All 7 gates GREEN.
+
+**Files changed:** `src/lib/database/models/upload.model.ts` (new), `src/app/api/upload/route.tsx`, `src/lib/utils/task-queries.tsx`, `src/app/(chat)/app/library/page.tsx`, `src/components/chat/library-tabs.tsx`, `src/types/LibraryData.d.ts`
 
 ---
 

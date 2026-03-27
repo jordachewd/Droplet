@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-27 (PM audit #69). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. Phase 141 (suspended user enforcement) COMPLETE. Phase 149 (SSE heartbeat streaming fix) COMPLETE. Admin configurability ALL RESOLVED. **All 7 gates GREEN.** 574 unit tests (97 suites). E2E: 8 spec files. Coverage: 85/80/85/85. Zero `as never` casts. Lint: 0 errors, 0 warnings. Active issues: TD-CHECKOUT-01 (CRITICAL — payment checkout broken, Phase 152), TD-CASCADE-01 (HIGH — user deletion cascade incomplete, Phase 150), TD-UPLOAD-01 (HIGH — library upload tracking missing, Phase 151), TD-HYDRATION-01 (HIGH — admin settings hydration mismatch, Phase 153), TD-SUSPEND-UX-01 (HIGH — suspended user UX gap, Phase 154), TD-SCROLLBAR-01 (HIGH — custom scrollbar removal, Phase 155). Build passing. Node.js 24.12.0.
+> Last updated: 2026-03-27 (PM audit #70). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. Phase 141 (suspended user enforcement) COMPLETE. Phase 149 (SSE heartbeat streaming fix) COMPLETE. Admin configurability ALL RESOLVED. User deletion cascade COMPLETE (Phase 150). Library uploaded tab COMPLETE (Phase 151). Payment checkout FIXED (Phase 152). Admin hydration fix COMPLETE (Phase 153). Suspended user UX COMPLETE (Phase 154). Scrollbar removal COMPLETE (Phase 155). **All 7 gates GREEN.** 586 unit tests (101 suites). E2E: 8 spec files. Coverage: 85/80/85/85. Zero `as never` casts. Lint: 0 errors, 0 warnings. Active issues: TD-SERVERONLY-01 (HIGH — missing server-only guards on 4 constants files, Phase 156), TD-RATELIMIT-02 (HIGH — no rate limiting on upload/aws/download routes, Phase 142), TD-ENV-01 (MEDIUM — unsafe process.env access, Phase 143). Build passing. Node.js 24.12.0.
 
 ---
 
@@ -398,6 +398,26 @@ Purpose: Request-level usage logging for cost tracking and admin analytics.
 | createdAt | Date     | Yes      | No     | Mongoose timestamps            |
 | updatedAt | Date     | Yes      | No     | Mongoose timestamps            |
 
+### 6.9 Upload
+
+Tracks user-uploaded files stored in S3 (`{userId}/uploads/`). Created by `/api/upload` route.
+
+| Field       | Type     | Required | Index                            | Notes                               |
+| ----------- | -------- | -------- | -------------------------------- | ----------------------------------- |
+| userId      | String   | Yes      | Compound `{userId,createdAt:-1}` | Clerk user ID                       |
+| fileName    | String   | Yes      | No                               | Original filename                   |
+| objectKey   | String   | Yes      | No                               | S3 object key                       |
+| s3Url       | String   | Yes      | No                               | Full S3 URL                         |
+| contentType | String   | Yes      | No                               | MIME type                           |
+| sizeBytes   | Number   | Yes      | No                               | File size in bytes                  |
+| taskId      | ObjectId | No       | No                               | Optional ref to Task (conversation) |
+| createdAt   | Date     | Yes      | Compound `{userId,createdAt:-1}` | Mongoose timestamps                 |
+| updatedAt   | Date     | Yes      | No                               | Mongoose timestamps                 |
+
+- **Strict mode**: `strict: true`.
+- **Cascade**: Deleted during user deletion cascade via `deleteUserCascade()` (Phase 150).
+- **Added**: Phase 151.
+
 ---
 
 ## 7. API Routes
@@ -642,32 +662,32 @@ All file handling technical debt has been resolved. S3 cleanup on task/user dele
 
 ### Route Map (Target)
 
-| Route                                 | Type      | Description                                                                                                                                                                |
-| ------------------------------------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `/`                                   | Public    | Landing (Hero + product sections + CTAs)                                                                                                                                   |
-| `/about`                              | Public    | How app works (stacked sections)                                                                                                                                           |
-| `/plans`                              | Public    | Pricing (plan cards)                                                                                                                                                       |
-| `/personas`                           | Public    | Personas showcase                                                                                                                                                          |
-| `/privacy`                            | Public    | Privacy & Cookie Policy                                                                                                                                                    |
-| `/cookies`                            | Public    | Cookie Policy                                                                                                                                                              |
-| `/terms`                              | Public    | Terms & Conditions                                                                                                                                                         |
-| `/sign-in`, `/sign-up`                | Auth      | Clerk auth                                                                                                                                                                 |
-| `/app`                                | Protected | Chat dashboard                                                                                                                                                             |
-| `/app/new`                            | Protected | New conversation                                                                                                                                                           |
-| `/app/library`                        | Protected | Media library (tabs: Chats, Images, Audios, Videos) — **Implemented (Phase 32.3 + 32.4 media cards)**. **⚠️ Missing: "Uploaded" tab for user-uploaded files (Phase 151).** |
-| `/app/personas`                       | Protected | In-app personas                                                                                                                                                            |
-| `/app/c/[conversationId]`             | Protected | Resume conversation                                                                                                                                                        |
-| `/app/profile`                        | Protected | User profile + plan + history                                                                                                                                              |
-| `/app/plans`                          | Protected | Plan upgrade + checkout                                                                                                                                                    |
-| `/admin`                              | Admin     | Dashboard overview                                                                                                                                                         |
-| `/admin/users`                        | Admin     | User management list                                                                                                                                                       |
-| `/admin/users/[userId]`               | Admin     | User detail + actions                                                                                                                                                      |
-| `/admin/transactions`                 | Admin     | Transaction management                                                                                                                                                     |
-| `/admin/transactions/[transactionId]` | Admin     | Transaction detail                                                                                                                                                         |
-| `/admin/usage`                        | Admin     | Usage analytics                                                                                                                                                            |
-| `/admin/settings`                     | Admin     | App settings                                                                                                                                                               |
-| `/admin/website`                      | Admin     | Content management                                                                                                                                                         |
-| `/admin/website/[pageId]`             | Admin     | Page editor (textarea fallback � Tiptap replaced)                                                                                                                          |
+| Route                                 | Type      | Description                                                                                                                               |
+| ------------------------------------- | --------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `/`                                   | Public    | Landing (Hero + product sections + CTAs)                                                                                                  |
+| `/about`                              | Public    | How app works (stacked sections)                                                                                                          |
+| `/plans`                              | Public    | Pricing (plan cards)                                                                                                                      |
+| `/personas`                           | Public    | Personas showcase                                                                                                                         |
+| `/privacy`                            | Public    | Privacy & Cookie Policy                                                                                                                   |
+| `/cookies`                            | Public    | Cookie Policy                                                                                                                             |
+| `/terms`                              | Public    | Terms & Conditions                                                                                                                        |
+| `/sign-in`, `/sign-up`                | Auth      | Clerk auth                                                                                                                                |
+| `/app`                                | Protected | Chat dashboard                                                                                                                            |
+| `/app/new`                            | Protected | New conversation                                                                                                                          |
+| `/app/library`                        | Protected | Media library (tabs: Chats, Images, Audios, Videos, Uploaded) — **Implemented (Phase 32.3 + 32.4 media cards + Phase 151 Uploaded tab).** |
+| `/app/personas`                       | Protected | In-app personas                                                                                                                           |
+| `/app/c/[conversationId]`             | Protected | Resume conversation                                                                                                                       |
+| `/app/profile`                        | Protected | User profile + plan + history                                                                                                             |
+| `/app/plans`                          | Protected | Plan upgrade + checkout                                                                                                                   |
+| `/admin`                              | Admin     | Dashboard overview                                                                                                                        |
+| `/admin/users`                        | Admin     | User management list                                                                                                                      |
+| `/admin/users/[userId]`               | Admin     | User detail + actions                                                                                                                     |
+| `/admin/transactions`                 | Admin     | Transaction management                                                                                                                    |
+| `/admin/transactions/[transactionId]` | Admin     | Transaction detail                                                                                                                        |
+| `/admin/usage`                        | Admin     | Usage analytics                                                                                                                           |
+| `/admin/settings`                     | Admin     | App settings                                                                                                                              |
+| `/admin/website`                      | Admin     | Content management                                                                                                                        |
+| `/admin/website/[pageId]`             | Admin     | Page editor (textarea fallback � Tiptap replaced)                                                                                         |
 
 ### Public Pages Content
 
@@ -745,11 +765,11 @@ All button styles use Lime Green as the accent color in **both** light and dark 
 
 ## 13. Testing
 
-- **Unit tests**: 97 suites, 574 tests (Vitest) — organized by domain in `tests/unit/{actions,components,routes,utils,models,constants,stores}/`. TDD rebuild COMPLETE (Phases 120.1–120.7). All test files rebuilt from scratch using strict TDD methodology. Zero `as never` casts. All tests use shared factories from `tests/unit/test-support/`. Includes streaming, webhook, chat-wrapper, chat-body stop-state, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, persona prompt, rate limiting, task complexity classification, conversation stop enforcement, entitlement resolver, checkout-success page, admin audit trail, OpenAI route tests (split into 5 focused modules), atomic prompt limit, daily conversation limit, media error handling, universal feature access, trial access tests, video generation, validation schema security injection tests, AudioPlayer ARIA tests, abort behavior tests, Zustand store tests, upload file size validation, 24 component test files, user model tests, Button component TDD tests, PageHead heading-level TDD tests, suspended user enforcement tests.
+- **Unit tests**: 101 suites, 586 tests (Vitest) — organized by domain in `tests/unit/{actions,components,routes,utils,models,constants,stores}/`. TDD rebuild COMPLETE (Phases 120.1–120.7). All test files rebuilt from scratch using strict TDD methodology. Zero `as never` casts. All tests use shared factories from `tests/unit/test-support/`. Includes streaming, webhook, chat-wrapper, chat-body stop-state, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, persona prompt, rate limiting, task complexity classification, conversation stop enforcement, entitlement resolver, checkout-success page, admin audit trail, OpenAI route tests (split into 5 focused modules), atomic prompt limit, daily conversation limit, media error handling, universal feature access, trial access tests, video generation, validation schema security injection tests, AudioPlayer ARIA tests, abort behavior tests, Zustand store tests, upload file size validation, 24 component test files, user model tests, Button component TDD tests, PageHead heading-level TDD tests, suspended user enforcement tests, delete-user-cascade tests, upload model tests, admin-settings-tabs hydration tests, checkout redirect tests.
 - **E2E tests**: 8 Playwright spec files. Specs: `admin-settings-propagation`, `auth-boundaries`, `authenticated-accessibility`, `chat-conversation-flow`, `public-structure`, `admin-user-operations`, `billing-checkout-flow`, `error-boundary-handling`. Default 3 browsers (Chromium, Firefox, WebKit); full 7-browser matrix via `PLAYWRIGHT_FULL_MATRIX=1`. WCAG E2E via @axe-core/playwright.
 - **Coverage**: v8 provider, thresholds: 85% statements / 80% branches / 85% functions / 85% lines. Gate PASSES. 7 files explicitly excluded from coverage (complex integration files). Reporters: text, json-summary, lcov. Setup file: `tests/unit/vitest.setup.ts`.
 - **Config**: Vitest `environmentMatchGlobs` for auto-jsdom on `.tsx`. Playwright `actionTimeout: 10s`, `expect.timeout: 5s`. ESLint `no-console` (error), `no-restricted-globals` (alert/confirm). TS `noFallthroughCasesInSwitch`, `forceConsistentCasingInFileNames`. All 7 validation gates GREEN (lint, knip, tsc, unit, E2E, build, prettier).
-- **Gaps**: No E2E for Stripe checkout flow. User deletion cascade completeness untested for RateLimitEntry (Phase 150). 7 coverage-excluded files include `generateResponse.tsx`.
+- **Gaps**: No E2E for Stripe checkout flow. 7 coverage-excluded files include `generateResponse.tsx`.
 
 ---
 
@@ -783,23 +803,18 @@ All button styles use Lime Green as the accent color in **both** light and dark 
 ## 15. Technical Debt Summary
 
 > Only unresolved items live here. All resolved TDs are archived in `DONE.md`.
-> Last updated: PM audit #69 (2026-03-27).
+> Last updated: PM audit #70 (2026-03-27).
 
 ### Active — CRITICAL Priority
 
-| ID             | Area    | Description                                                                                                                                                                                                                                                                                              | Phase |
-| -------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
-| TD-CHECKOUT-01 | Billing | **CRITICAL.** `redirect()` inside try/catch in `checkoutPlan()` — Next.js `redirect()` throws `NEXT_REDIRECT`, caught by surrounding try/catch, re-thrown as generic error by `handleError()`. Stripe session created but redirect never executes. Billing completely broken. Regression from Phase 135. | 152   |
+_None. Zero CRITICAL issues._
 
 ### Active — HIGH Priority
 
-| ID               | Area    | Description                                                                                                                                                                                                                   | Phase |
-| ---------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
-| TD-CASCADE-01    | Data    | **HIGH.** User deletion cascade incomplete — `RateLimitEntry` records survive all 3 deletion paths (self-delete, admin-delete, webhook). Three independent deletion path implementations duplicate the same cascade logic.    | 150   |
-| TD-UPLOAD-01     | Feature | **HIGH.** Library has no "Uploaded" tab. User-uploaded files stored in S3 (`{userId}/uploads/`) but not tracked in MongoDB. No `Upload` model. No way to list/browse/manage uploaded files.                                   | 151   |
-| TD-HYDRATION-01  | Admin   | **HIGH.** `AdminSettingsTabs` SSR/client mismatch — `getInitialActiveTabId()` reads `localStorage` in `useState` initializer. SSR returns fallback, client may return stored tab. Causes React hydration errors.              | 153   |
-| TD-SUSPEND-UX-01 | UX      | **HIGH.** Suspended users see normal upgrade CTAs and plan info instead of suspension messaging. `ChatSidebarPromo` and `PlanPromo` have zero suspension awareness. Backend enforcement exists (Phase 141) but UX is missing. | 154   |
-| TD-SCROLLBAR-01  | UX      | **HIGH.** Custom scrollbar CSS (`.droplet-scrollbar` in `globals.css` + 5 component usages) must be removed — owner directive to let browser handle scrollbars natively.                                                      | 155   |
+| ID               | Area     | Description                                                                                                                                                                                                                         | Phase |
+| ---------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| TD-SERVERONLY-01 | Security | **HIGH.** 4 constants files missing `server-only` guards: `plans.tsx`, `assistant-personas.tsx`, `faqs.tsx`, `stop-reasons.ts`. Contains business-critical data. One wrong client import bundles plan/persona internals to browser. | 156   |
+| TD-RATELIMIT-02  | Security | **HIGH.** No rate limiting on `/api/upload`, `/api/aws`, `/api/download`. Authenticated users can flood S3 with unlimited operations — cost attack vector.                                                                          | 142   |
 
 ### Active — MEDIUM Priority
 
@@ -817,21 +832,27 @@ All button styles use Lime Green as the accent color in **both** light and dark 
 | TD-AI-18   | OpenAI  | errorMessage forwarding pattern in `/api/openai` is safe but fragile.          | Advisory |
 | TD-API-09  | API     | `messageTextContentSchema` uses `.strict()` — may reject extra fields.         | Monitor  |
 
-### Resolved (PM audit #69)
+### Resolved (PM audit #70)
 
-| ID             | Area     | Description                                                                                                                                                                             | Phase |
-| -------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
-| TD-STREAM-01   | SSE      | ~~SSE stream goes silent during media generation.~~ **RESOLVED (Phase 149).** Heartbeat mechanism implemented with 12s interval, lifecycle callbacks, 200s client timeout.              | 149   |
-| TD-SEC-13      | Security | ~~`checkoutPlan` server action has no try/catch.~~ **RESOLVED (Phase 135).** Wrapped in try/catch with `handleError`. **NOTE:** Introduced TD-CHECKOUT-01 regression — redirect broken. | 135   |
-| TD-API-10      | API      | ~~Upload/AWS routes use `{ message }` instead of `{ error }`.~~ **RESOLVED (Phase 136).** All error responses standardized to `{ error }`.                                              | 136   |
-| TD-TYPE-01     | TypeSafe | ~~`handleError` return type `void` instead of `never`.~~ **RESOLVED (Phase 137).** Return type is `never`.                                                                              | 137   |
-| TD-LINT-01     | Code     | ~~7 lint warnings.~~ **RESOLVED (Phase 126.2).** 0 errors, 0 warnings.                                                                                                                  | 126.2 |
-| TD-PARSE-01    | Code     | ~~Generate functions return JSON.stringify.~~ **RESOLVED (Phase 138).** Return typed objects directly.                                                                                  | 138   |
-| TD-E2E-01      | Test     | ~~E2E coverage at 5 specs only.~~ **RESOLVED (Phase 134).** 8 E2E specs.                                                                                                                | 134   |
-| TD-SEC-14      | Security | ~~`User.suspended` never enforced in API routes.~~ **RESOLVED (Phase 141).** All 4 API routes enforce suspended check. Shared `requireActiveUser()` guard.                              | 141   |
-| TD-HARDCODE-01 | Content  | ~~Stop reason messages hardcoded.~~ **RESOLVED (Phase 107).** Admin-configurable via `getEffectiveStopReasonMessages()` + AppSetting overrides.                                         | 107   |
-| TD-WCAG-05     | A11y     | ~~Tablist arrow-key navigation missing.~~ **RESOLVED (Phase 108).** ArrowLeft/Right/Home/End + roving tabIndex implemented in both tab components.                                      | 108   |
-| TD-WCAG-07     | A11y     | ~~AvatarMenu keyboard navigation missing.~~ **RESOLVED (Phase 114).** role="menu"/"menuitem", Escape, ArrowUp/Down, focus management all implemented.                                   | 114   |
-| TD-TEST-03     | Test     | ~~Full TDD test rebuild from scratch.~~ **RESOLVED.** 574 tests (97 suites). Zero `as never` casts. Coverage 85/80/85/85.                                                               | 120   |
-| TD-REUSE-04    | Code     | ~~`ChatApiResponse` interface duplicate.~~ **RESOLVED (Phase 106).** Shared types in `src/types/chat-api.d.ts`.                                                                         | 106   |
-| TD-TEST-02     | Test     | ~~openai-route test IO mocks.~~ **RESOLVED.** Route tests rebuilt from scratch (Phase 120.4) — split into 5 focused modules.                                                            | 120.4 |
+| ID               | Area     | Description                                                                                                                                                                      | Phase |
+| ---------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| TD-CHECKOUT-01   | Billing  | ~~`redirect()` inside try/catch in `checkoutPlan()`.~~ **RESOLVED (Phase 152).** `redirectUrl` variable declared outside try/catch. Redirect executes correctly.                 | 152   |
+| TD-CASCADE-01    | Data     | ~~User deletion cascade incomplete — RateLimitEntry records survive.~~ **RESOLVED (Phase 150).** Shared `deleteUserCascade()` utility. RateLimitEntry + Upload cleanup included. | 150   |
+| TD-UPLOAD-01     | Feature  | ~~Library has no "Uploaded" tab.~~ **RESOLVED (Phase 151).** Upload model, API persistence, library tab all delivered.                                                           | 151   |
+| TD-HYDRATION-01  | Admin    | ~~AdminSettingsTabs SSR/client mismatch.~~ **RESOLVED (Phase 153).** localStorage read moved to useEffect after mount.                                                           | 153   |
+| TD-SUSPEND-UX-01 | UX       | ~~Suspended users see normal upgrade CTAs.~~ **RESOLVED (Phase 154).** `isSuspended` prop added to `ChatSidebarPromo` and `PlanPromo` with suspension-specific messaging.        | 154   |
+| TD-SCROLLBAR-01  | UX       | ~~Custom scrollbar CSS must be removed.~~ **RESOLVED (Phase 155).** `.droplet-scrollbar` class and all 5 usages deleted.                                                         | 155   |
+| TD-STREAM-01     | SSE      | ~~SSE stream goes silent during media generation.~~ **RESOLVED (Phase 149).** Heartbeat mechanism implemented with 12s interval, lifecycle callbacks, 200s client timeout.       | 149   |
+| TD-SEC-13        | Security | ~~`checkoutPlan` server action has no try/catch.~~ **RESOLVED (Phase 135).** Wrapped in try/catch with `handleError`. Regression (TD-CHECKOUT-01) later fixed in Phase 152.      | 135   |
+| TD-API-10        | API      | ~~Upload/AWS routes use `{ message }` instead of `{ error }`.~~ **RESOLVED (Phase 136).** All error responses standardized to `{ error }`.                                       | 136   |
+| TD-TYPE-01       | TypeSafe | ~~`handleError` return type `void` instead of `never`.~~ **RESOLVED (Phase 137).** Return type is `never`.                                                                       | 137   |
+| TD-LINT-01       | Code     | ~~7 lint warnings.~~ **RESOLVED (Phase 126.2).** 0 errors, 0 warnings.                                                                                                           | 126.2 |
+| TD-PARSE-01      | Code     | ~~Generate functions return JSON.stringify.~~ **RESOLVED (Phase 138).** Return typed objects directly.                                                                           | 138   |
+| TD-E2E-01        | Test     | ~~E2E coverage at 5 specs only.~~ **RESOLVED (Phase 134).** 8 E2E specs.                                                                                                         | 134   |
+| TD-SEC-14        | Security | ~~`User.suspended` never enforced in API routes.~~ **RESOLVED (Phase 141).** All 4 API routes enforce suspended check. Shared `requireActiveUser()` guard.                       | 141   |
+| TD-HARDCODE-01   | Content  | ~~Stop reason messages hardcoded.~~ **RESOLVED (Phase 107).** Admin-configurable via `getEffectiveStopReasonMessages()` + AppSetting overrides.                                  | 107   |
+| TD-WCAG-05       | A11y     | ~~Tablist arrow-key navigation missing.~~ **RESOLVED (Phase 108).** ArrowLeft/Right/Home/End + roving tabIndex implemented in both tab components.                               | 108   |
+| TD-WCAG-07       | A11y     | ~~AvatarMenu keyboard navigation missing.~~ **RESOLVED (Phase 114).** role="menu"/"menuitem", Escape, ArrowUp/Down, focus management all implemented.                            | 114   |
+| TD-TEST-03       | Test     | ~~Full TDD test rebuild from scratch.~~ **RESOLVED.** 574 tests (97 suites). Zero `as never` casts. Coverage 85/80/85/85.                                                        | 120   |
+| TD-REUSE-04      | Code     | ~~`ChatApiResponse` interface duplicate.~~ **RESOLVED (Phase 106).** Shared types in `src/types/chat-api.d.ts`.                                                                  | 106   |
+| TD-TEST-02       | Test     | ~~openai-route test IO mocks.~~ **RESOLVED.** Route tests rebuilt from scratch (Phase 120.4) — split into 5 focused modules.                                                     | 120.4 |

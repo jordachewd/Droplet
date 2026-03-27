@@ -5,263 +5,79 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #69 (2026-03-27). Milestones 0–25 COMPLETE. All phases through 149 complete. 574 unit tests (97 suites). 8 E2E specs. Build passes. TSC clean. Node.js 24.12.0 runtime.**
-> **GATE STATUS: All 7 gates GREEN. Lint (0 errors, 0 warnings), Knip (0 findings), TSC clean, build passes, unit tests (97/574), E2E (8 specs), coverage 85/80/85/85.**
-> **TDD REBUILD COMPLETE. WCAG 2.2 AA COMPLETE. Admin configurability ALL RESOLVED. Phase 149 (SSE heartbeat streaming fix) COMPLETE.**
+> **STATUS: PM audit #70 (2026-03-27). Milestones 0–25 COMPLETE. All phases through 155 complete. 586 unit tests (101 suites). 8 E2E specs. Build passes. TSC clean. Node.js 24.12.0 runtime.**
+> **GATE STATUS: All 7 gates GREEN. Lint (0 errors, 0 warnings), Knip (0 findings), TSC clean, build passes, unit tests (101/586), E2E (8 specs), coverage 85/80/85/85.**
+> **TDD REBUILD COMPLETE. WCAG 2.2 AA COMPLETE. Admin configurability ALL RESOLVED. User deletion cascade COMPLETE (Phase 150). Library uploaded tab COMPLETE (Phase 151). Payment checkout FIXED (Phase 152). All owner-reported bugs from PM audit #69 RESOLVED.**
 > **Zero: `as never`, `as any`, `console.log`, `console.error`, `window.alert`, `window.confirm`, `strict: false`, stale TODOs — all in `src/`.**
-> **SWOT audit #69 conducted. Architect + Engineer + PM triple audit. 4 new production bugs identified (owner-reported). 1 CRITICAL regression (billing).**
-> **NEXT SESSION: 152 (CRITICAL billing fix) → 153 (HIGH hydration fix) → 154 (HIGH suspended UX) → 155 (HIGH scrollbar removal) → 150 (HIGH user deletion cascade) → 151 (HIGH library uploaded tab) → 142 (HIGH rate limiting) → 143–148 (MEDIUM/LOW)**
+> **SWOT audit #70 conducted. Architect + Engineer + PM triple audit. Zero CRITICAL issues. Remaining work: hardening + performance + code quality.**
+> **NEXT SESSION: 156 (HIGH server-only guards) → 142 (HIGH rate limiting) → 143 (MEDIUM env validation) → 144–148 (MEDIUM/LOW)**
 
 ---
 
-## CRITICAL — Payment Checkout Broken (PM audit #69 — Owner-reported production bug)
+## HIGH — Add `server-only` Guards to Constants Files (PM audit #70 — SWOT finding W1/W2)
 
-### Phase 152 CRITICAL — Fix `redirect()` inside try/catch in `checkoutPlan()`
+### Phase 156 HIGH — Add `import "server-only"` to constants files + fix type imports
 
-> **Owner-reported CRITICAL production bug.** Clicking "SUBSCRIBE" on `/app/plans` shows "Something went wrong." Billing is 100% broken — zero users can subscribe. Root cause: `redirect()` inside try/catch. Next.js `redirect()` throws `NEXT_REDIRECT` error internally — this is caught by the surrounding catch block and passed to `handleError()`, which re-throws as a generic error. The Stripe session is created successfully but the redirect never executes. **Regression introduced by Phase 135** (try/catch addition).
-
-**Root cause chain:**
-
-1. `checkoutPlan()` in `transaction.action.tsx` calls `redirect(session.url!)` at line ~102
-2. `redirect()` throws a special `NEXT_REDIRECT` error (this is how Next.js redirects work in server actions)
-3. The `catch (error)` block at line ~104 catches the `NEXT_REDIRECT` error
-4. `handleError()` calls `buildSafeClientMessage()` which doesn't recognize `NEXT_REDIRECT` → returns "An unexpected error occurred"
-5. `handleError()` throws `new Error("An unexpected error occurred")` — stripping the `NEXT_REDIRECT` digest
-6. Client receives the generic error → "Something went wrong"
+> Architect + PM SWOT finding. 4 constants files lack `server-only` guards: `plans.tsx`, `assistant-personas.tsx`, `faqs.tsx`, `stop-reasons.ts`. These contain business-critical data (plan limits, persona definitions, FAQ content, stop reason codes). Currently safe because only imported by server-side code, but one careless client import would bundle plan/persona internals to the browser. `stop-reasons.ts` is blocked by `admin-stop-reasons-section.tsx` client import — must be refactored first.
 
 **Files:**
 
-1. `src/lib/actions/transaction.action.tsx` — Move `redirect()` outside try/catch
+1. `src/constants/plans.tsx` — Add `import "server-only"`
+2. `src/constants/assistant-personas.tsx` — Add `import "server-only"`
+3. `src/constants/faqs.tsx` — Add `import "server-only"`
+4. `src/components/admin/settings/types.ts` — Change to `import type` for `PlanLimits` and `FaqItem` (required before adding guards — these are type-only imports used by client components)
+5. `src/components/sections/profile/profile-usage.tsx` — Change to `import type` for `PlanLimits`
+6. `src/constants/stop-reasons.ts` — Add `import "server-only"` AFTER fixing client dependency
+7. `src/components/admin/settings/admin-stop-reasons-section.tsx` — Receive `STOP_REASON_CODES` as prop instead of importing directly
+8. `src/app/(admin)/admin/settings/page.tsx` — Pass `STOP_REASON_CODES` to the section component
 
 **What to do:**
 
-1. Store `session.url` in a variable declared before the try/catch block.
-2. Inside the try block, assign `redirectUrl = session.url` instead of calling `redirect()` directly.
-3. After the try/catch block, call `redirect(redirectUrl)` — this way the `NEXT_REDIRECT` throw propagates correctly.
-4. Update the unit test for `checkoutPlan` to correctly mock `redirect` as throwing (matches production behavior).
-
-**Fix pattern:**
-
-```typescript
-let redirectUrl: string | undefined;
-try {
-  // ... create Stripe session ...
-  redirectUrl = session.url!;
-} catch (error) {
-  handleError({ error, source: "checkoutPlan" });
-}
-if (redirectUrl) redirect(redirectUrl);
-```
+1. In `types.ts`: change `import { PlanLimits } from "@/constants/plans"` → `import type { PlanLimits } from "@/constants/plans"`. Same for `FaqItem`.
+2. In `profile-usage.tsx`: change to `import type { PlanLimits } from "@/constants/plans"`.
+3. Add `import "server-only"` to top of `plans.tsx`, `assistant-personas.tsx`, `faqs.tsx`.
+4. In `admin-stop-reasons-section.tsx`: add `stopReasonCodes: string[]` prop, remove import of `STOP_REASON_CODES`.
+5. In `admin/settings/page.tsx`: import `STOP_REASON_CODES` and pass as prop to the section component.
+6. Add `import "server-only"` to `stop-reasons.ts`.
+7. Update unit tests if needed.
 
 **Acceptance criteria:**
 
-- [x] `redirect()` called outside try/catch block
-- [x] Stripe checkout flow completes without error
-- [x] Unit test updated to verify redirect behavior
-- [x] Build passes, tests pass
-
----
-
-## HIGH — Admin Settings Hydration Mismatch (PM audit #69 — Owner-reported production bug)
-
-### Phase 153 HIGH — Fix `AdminSettingsTabs` SSR/client hydration mismatch
-
-> **Owner-reported HIGH bug.** `/admin/settings` shows React hydration mismatch errors. `AdminSettingsTabs` reads `localStorage` in `useState` initializer — SSR returns fallback (`tabs[0].id`), but client hydration may return a different tab ID from localStorage. This causes `aria-selected`, `className`, and `tabIndex` attributes to differ between server HTML and client's first render.
-
-**File:** `src/components/admin/settings/admin-settings-tabs.tsx`
-
-**What to do:**
-
-1. Remove the `getInitialActiveTabId()` function.
-2. Initialize `useState` with `tabs[0]?.id ?? ""` (same value for SSR and client).
-3. Add a `useEffect` that reads `localStorage` after mount and updates state if a stored valid tab is found.
-4. This ensures hydration matches, then updates client-side only after mount.
-
-**Fix pattern:**
-
-```typescript
-const [activeTabId, setActiveTabId] = useState(tabs[0]?.id ?? "");
-
-useEffect(() => {
-  const stored = localStorage.getItem(ADMIN_SETTINGS_TAB_STORAGE_KEY);
-  if (stored && tabs.some((t) => t.id === stored)) {
-    setActiveTabId(stored);
-  }
-}, [tabs]);
-```
-
-**Acceptance criteria:**
-
-- [x] No hydration mismatch errors on `/admin/settings`
-- [x] Tab persistence still works (stored tab restored after mount)
-- [x] Arrow-key navigation still works
-- [x] Build passes, tests pass
-
----
-
-## HIGH — Suspended User UX Messaging (PM audit #69 — Owner-reported UX gap)
-
-### Phase 154 HIGH — Add suspension message to `ChatSidebarPromo` and `PlanPromo`
-
-> **Owner-reported HIGH UX gap.** Suspended users can access `/app` but see normal upgrade CTAs instead of suspension messaging. Backend enforcement exists (Phase 141 — API routes return 403) but the UI provides no explanation. Owner wants `ChatSidebarPromo` to display a relevant suspension message and `PlanPromo` on `/app/profile` to display a relevant suspension message.
-
-**Files:**
-
-1. `src/components/chat/sidebar/chat-sidebar-promo.tsx` — Add `isSuspended` prop and suspension-specific display
-2. `src/components/shared/plan-promo.tsx` — Add `isSuspended` prop and suspension-specific display
-3. `src/components/chat/sidebar/chat-sidebar-shell.tsx` — Pass `isSuspended` to `ChatSidebarPromo`
-4. `src/components/sections/profile/profile-hero.tsx` — Pass `isSuspended` to `PlanPromo`
-5. Server component parents — Provide `isSuspended` data
-
-**What to do:**
-
-1. Add `isSuspended?: boolean` prop to `ChatSidebarPromoProps` and `PlanPromoProps`.
-2. In `ChatSidebarPromo`: if `isSuspended` is true, render a suspension message (e.g., "Account Suspended — Your account has been suspended. Contact support for assistance.") instead of upgrade CTA. No "Manage Plan" link.
-3. In `PlanPromo`: if `isSuspended` is true, render a suspension notice with contact-support CTA instead of upgrade prompt.
-4. Pass `isSuspended` from server components to these client components via props.
-
-**Acceptance criteria:**
-
-- [x] `ChatSidebarPromo` shows suspension message when `isSuspended` is true
-- [x] `PlanPromo` shows suspension notice when `isSuspended` is true
-- [x] Normal behavior preserved when `isSuspended` is false/undefined
-- [x] No upgrade CTAs visible to suspended users
-- [x] Unit tests cover suspension display
-- [x] Build passes, tests pass
-
----
-
-## HIGH — Remove Custom Scrollbar CSS (PM audit #69 — Owner directive)
-
-### Phase 155 HIGH — Remove `.droplet-scrollbar` class and all usages
-
-> **Owner directive.** Remove ALL custom scrollbar manipulation — let the browser handle scrollbars natively. The `.droplet-scrollbar` class in `globals.css` customizes WebKit scrollbars. Used in 5 components.
-
-**Files:**
-
-1. `src/app/globals.css` — Delete `.droplet-scrollbar` class definition
-2. `src/components/chat/chat-wrapper.tsx` — Remove `droplet-scrollbar` from className
-3. `src/components/chat/sidebar/chat-sidebar-shell.tsx` — Remove `droplet-scrollbar` from className
-4. `src/components/chat/chat-page-wrapper.tsx` — Remove `droplet-scrollbar` from className
-5. `src/components/admin/admin-layout-shell.tsx` — Remove `droplet-scrollbar` from className
-6. `src/components/admin/admin-sidebar.tsx` — Remove `droplet-scrollbar` from className
-
-**What to do:**
-
-1. Delete the `.droplet-scrollbar { ... }` block from `globals.css`.
-2. Remove the `droplet-scrollbar` class name from all 5 component className strings.
-3. No replacement needed — browser default scrollbars will apply.
-
-**Acceptance criteria:**
-
-- [x] `.droplet-scrollbar` CSS class deleted from `globals.css`
-- [x] Zero usages of `droplet-scrollbar` in any component file
-- [x] Browser default scrollbars work correctly
-- [x] Build passes, tests pass
-
----
-
-## HIGH — User Deletion Cascade Gap (PM audit #68 — Owner-reported production bug)
-
-### Phase 150 HIGH — Complete user deletion cascade + extract shared utility
-
-> **Owner-reported HIGH production bug.** When a user is deleted, `RateLimitEntry` records (keyed as `openai:${userId}`, `upload:${userId}`, `aws:${userId}`) survive in ALL THREE deletion paths. This is orphaned data. Additionally, all three deletion paths duplicate the same cascade logic independently — extract a shared utility to prevent future cascade gaps.
-
-**Current cascade (incomplete in all 3 paths):** Clerk → Tasks → Transactions → UsageEvents → S3 → User
-**Missing:** RateLimitEntry cleanup
-**AdminAuditLog decision:** RETAIN for audit trail compliance — do NOT delete. These are permanent admin forensics records.
-
-**Files:**
-
-1. Create `src/lib/utils/delete-user-cascade.ts` — shared cascade utility
-2. `src/lib/actions/user.actions.tsx` — Refactor `deleteUser()` to use shared utility
-3. `src/lib/actions/admin.actions.tsx` — Refactor `removeUserByAdmin()` to use shared utility
-4. `src/app/api/webhooks/clerk/route.tsx` — Refactor `user.deleted` handler to use shared utility
-
-**What to do:**
-
-1. Create `deleteUserCascade(clerkId: string)` in a new shared utility file. This function performs:
-   - `Task.deleteMany({ userId: clerkId })`
-   - `Transaction.deleteMany({ clerkId })`
-   - `UsageEvent.deleteMany({ userId: clerkId })`
-   - `RateLimitEntry.deleteMany({ key: { $in: [\`openai:${clerkId}\`, \`upload:${clerkId}\`, \`aws:${clerkId}\`] } })`
-   - `deleteS3Prefix(\`${clerkId}/\`)`Returns:`{ deletedTasks, deletedTransactions, deletedUsageEvents, deletedRateLimitEntries, deletedObjectsCount }`
-2. Each error in the cascade should be caught independently (existing pattern in webhook) so partial failure doesn't break the cascade.
-3. Refactor all 3 deletion paths to call the shared utility.
-4. Add unit tests verifying RateLimitEntry is cleaned.
-
-**Acceptance criteria:**
-
-- [ ] Shared `deleteUserCascade()` utility extracted
-- [ ] `RateLimitEntry.deleteMany` included in cascade
-- [ ] All 3 deletion paths use the shared utility
-- [ ] Webhook handler maintains independent error handling per step
-- [ ] Unit tests verify RateLimitEntry cleanup in all paths
+- [ ] `plans.tsx` has `import "server-only"`
+- [ ] `assistant-personas.tsx` has `import "server-only"`
+- [ ] `faqs.tsx` has `import "server-only"`
+- [ ] `stop-reasons.ts` has `import "server-only"`
+- [ ] `types.ts` uses `import type` for all plan/faq type imports
+- [ ] `admin-stop-reasons-section.tsx` receives codes as prop (data-consumer pattern)
 - [ ] Build passes, tests pass
 
 ---
 
-## HIGH — Library "Uploaded" Tab (PM audit #68 — Owner-reported production bug)
+## HIGH — Rate Limiting on Upload/AWS/Download Endpoints (PM audit #67 + #70)
 
-### Phase 151 HIGH — Add "Uploaded" tab to Conversation Library
+### Phase 142 HIGH — Add rate limiting to `/api/upload`, `/api/aws`, and `/api/download` endpoints
 
-> **Owner-reported HIGH feature gap.** The Conversation Library only tracks AI-generated media (images, audios, videos). User-uploaded files (images, documents via `/api/upload`) are stored in S3 under `{userId}/uploads/` but are NOT tracked in MongoDB — there is no way to list, browse, or manage uploaded files after the upload.
-
-**Files:**
-
-1. Create `src/lib/database/models/upload.model.ts` — new Upload Mongoose model
-2. `src/app/api/upload/route.tsx` — Persist upload metadata to new model
-3. `src/lib/utils/task-queries.tsx` — Add `getUploadsByUserId()` query
-4. `src/app/(chat)/app/library/page.tsx` — Fetch uploads and pass to LibraryTabs
-5. `src/components/chat/library-tabs.tsx` — Add 5th "Uploaded" tab
-6. `src/types/LibraryData.d.ts` — Add `LibraryUploadCardItem` type
-7. `src/lib/utils/delete-user-cascade.ts` — Add `Upload.deleteMany({ userId })` to cascade
-
-**What to do:**
-
-1. Create `Upload` model: `{ userId: String, fileName: String, objectKey: String, s3Url: String, contentType: String, sizeBytes: Number, taskId: String (optional — conversation it was used in), createdAt: Date }`. Use `strict: true`. Use compound index `{ userId: 1, createdAt: -1 }` instead of two separate indexes (covers filter + sort in single scan per Architect recommendation).
-2. In upload API route: after successful S3 upload, persist an `Upload` document.
-3. Add `getUploadsByUserId(userId, page, limit)` query with `.lean().select()` and pagination.
-4. In library page: fetch uploads server-side and pass as props.
-5. In LibraryTabs: add `uploads` tab with uploaded file cards (filename, content type, date, download link).
-6. Add `Upload.deleteMany({ userId })` to the deletion cascade utility (Phase 150).
-7. Add unit tests for the new model and query.
-
-**Acceptance criteria:**
-
-- [ ] `Upload` model created with proper schema, indexes, and `strict: true`
-- [ ] Upload API persists metadata on successful upload
-- [ ] Library page fetches and displays uploads in new "Uploaded" tab
-- [ ] Uploaded tab shows filename, type, date, and download link
-- [ ] Upload.deleteMany included in user deletion cascade
-- [ ] Pagination works for uploaded files
-- [ ] Unit tests for model and query
-- [ ] Build passes, tests pass
-
----
-
-## HIGH — Rate Limiting on Upload/AWS Endpoints (PM audit #67)
-
-### Phase 142 HIGH — Add rate limiting to `/api/upload` and `/api/aws` endpoints
-
-> Architect finding T-1. Upload and AWS endpoints have auth checks but zero rate limiting. An authenticated user can flood S3 with unlimited uploads — each triggers S3 PUT operations. This is a cost attack vector. The `/api/openai` endpoint has rate limiting but these don't.
+> Architect finding T-1, Engineer finding M1/M2. Upload, AWS, and download endpoints have auth checks but zero rate limiting. An authenticated user can flood S3 with unlimited uploads or downloads — each triggers S3 operations. This is a cost attack vector. The `/api/openai` endpoint has rate limiting but these don't.
 
 **Files:**
 
 1. `src/app/api/upload/route.tsx` — Add `enforceSlidingWindowRateLimit`
 2. `src/app/api/aws/route.tsx` — Add `enforceSlidingWindowRateLimit`
+3. `src/app/api/download/route.tsx` — Add `enforceSlidingWindowRateLimit`
 
 **What to do:**
 
 1. Import `enforceSlidingWindowRateLimit` from `@/lib/utils/rate-limit`.
 2. Apply `enforceSlidingWindowRateLimit({ key: \`upload:${userId}\`, limit: 30, windowMs: 60_000 })` before processing in upload route.
 3. Apply `enforceSlidingWindowRateLimit({ key: \`aws:${userId}\`, limit: 30, windowMs: 60_000 })` before processing in aws route.
-4. Return proper 429 response with `Retry-After` header on rate limit hit.
+4. Apply `enforceSlidingWindowRateLimit({ key: \`download:${userId}\`, limit: 60, windowMs: 60_000 })` before processing in download route.
+5. Return proper 429 response with `Retry-After` header on rate limit hit.
 
 **Acceptance criteria:**
 
 - [ ] `/api/upload` has per-user rate limiting (30 req/60s)
 - [ ] `/api/aws` has per-user rate limiting (30 req/60s)
+- [ ] `/api/download` has per-user rate limiting (60 req/60s)
 - [ ] Rate limit returns 429 with `Retry-After` header
 - [ ] Build passes, tests pass
 
@@ -282,9 +98,9 @@ useEffect(() => {
 
 **What to do:**
 
-1. Create a shared `throwEnvError(name: string): never` utility (or inline).
-2. Replace `process.env.VAR as string` with `process.env.VAR ?? throwEnvError("VAR")`.
-3. Replace `process.env.VAR!` with `process.env.VAR ?? throwEnvError("VAR")`.
+1. Create a shared `requireEnv(name: string): string` utility that throws with a clear message.
+2. Replace `process.env.VAR as string` with `requireEnv("VAR")`.
+3. Replace `process.env.VAR!` with `requireEnv("VAR")`.
 4. This ensures fast failure with clear error messages on missing env vars.
 
 **Acceptance criteria:**
@@ -430,10 +246,8 @@ useEffect(() => {
 
 ### TypeScript 6 / @typescript-eslint compatibility — Monitor for official TS 6 support in `@typescript-eslint` (Engineer finding M-3, PM audit #66)
 
-### Admin config caching (Phase 144) — Optional performance optimization, not blocking
-
 ---
 
 > **Completed phases** archived in [`DONE.md`](DONE.md).
-> All phases through 149 complete (incl. 135–141, 149, 74.2, 104, 125.3, 126.2, 134, plus 107.1–107.3, 108, 114, 125.1, 131, 132, 133, 120.1–120.7, 121–130, 128.2, 106).
+> All phases through 155 complete (incl. 135–141, 149–155, 74.2, 104, 125.3, 126.2, 134, plus 107.1–107.3, 108, 114, 125.1, 131, 132, 133, 120.1–120.7, 121–130, 128.2, 106).
 > All Milestones 0–25 COMPLETE.

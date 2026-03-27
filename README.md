@@ -39,7 +39,7 @@ Each persona is an independent AI agent — pragmatic, direct, and grounded in r
 - **Audio Generation** — generate audio content through conversation
 - **Video Generation** — create short video clips through conversation
 - **Conversation History** — save, resume, and manage your chats
-- **Media Library** — browse and download all generated images and audio
+- **Media Library** — browse and download all generated images, audio, and uploaded files
 - **File Uploads** — share images with your AI assistant
 - **Secure & Private** — your data stays yours, always
 
