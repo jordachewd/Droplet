@@ -48,7 +48,7 @@ describe("User model", () => {
     expect(error?.errors.role).toBeTruthy();
   });
 
-  it("defines clerkId unique index and email index", () => {
+  it("defines clerkId unique index, email index, and suspended index", () => {
     const schemaIndexes = User.schema.indexes() as SchemaIndex[];
 
     expect(
@@ -57,6 +57,7 @@ describe("User model", () => {
       ),
     ).toBe(true);
     expect(schemaIndexes.some(([fields]) => fields.email === 1)).toBe(true);
+    expect(schemaIndexes.some(([fields]) => fields.suspended === 1)).toBe(true);
   });
 
   it("rejects invalid plan name transitions outside allowed enum", () => {

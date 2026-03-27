@@ -21,6 +21,8 @@ import {
 import { getTaskByIdForUser } from "@/lib/utils/task-queries";
 import { enforceSlidingWindowRateLimit } from "@/lib/utils/rate-limit";
 import { emitUsageEvents } from "@/lib/utils/usage-event-utils";
+import { resolveEntitlements } from "@/lib/utils/resolve-entitlements";
+import type { Entitlements } from "@/lib/utils/resolve-entitlements";
 import {
   buildMockRequest,
   createTestTask,
@@ -78,8 +80,57 @@ vi.mock("@/lib/utils/ensure-user-synced", () => ({
   ensureUserSynced: vi.fn(),
 }));
 
+vi.mock("@/lib/utils/resolve-entitlements", () => ({
+  DEFAULT_FULL_PERSONA_ACCESS_BY_PLAN: {
+    Lite: ["strategist", "developer"],
+    Pro: ["strategist", "developer", "teacher", "creator", "wellness"],
+    Premium: [
+      "strategist",
+      "developer",
+      "teacher",
+      "creator",
+      "wellness",
+      "interviewer",
+    ],
+  },
+  resolveEntitlements: vi.fn(),
+}));
+
 const EXISTING_TASK_ID = "507f1f77bcf86cd799439011";
 const NEW_TASK_ID = "507f1f77bcf86cd799439012";
+const MOCK_ENTITLEMENTS: Entitlements = {
+  planName: "Lite",
+  limits: {
+    conversationsPerDay: 5,
+    promptsPerConversation: 10,
+    images: 3,
+    audio: 3,
+    video: 1,
+  },
+  personaAccess: {
+    strategist: "full",
+    developer: "full",
+    teacher: "limited",
+    creator: "limited",
+    wellness: "limited",
+    interviewer: "limited",
+  },
+  allowedPersonaIds: [
+    "strategist",
+    "developer",
+    "teacher",
+    "creator",
+    "wellness",
+    "interviewer",
+  ],
+  trialPersonaIds: ["teacher", "creator", "wellness", "interviewer"],
+  supportsImageGeneration: true,
+  supportsAudioGeneration: true,
+  supportsVideoGeneration: true,
+  imageLimitReached: false,
+  audioLimitReached: false,
+  videoLimitReached: false,
+};
 
 function buildOpenAiRequest(
   payload: unknown,
@@ -182,6 +233,7 @@ function setupDefaultMocks() {
   vi.mocked(updateTask).mockResolvedValue({});
   vi.mocked(User.findOneAndUpdate).mockResolvedValue({});
   vi.mocked(ensureUserSynced).mockResolvedValue(null);
+  vi.mocked(resolveEntitlements).mockReturnValue(MOCK_ENTITLEMENTS);
   vi.mocked(emitUsageEvents).mockImplementation(() => {
     return;
   });
@@ -289,6 +341,25 @@ describe("POST /api/openai - auth and validation", () => {
     expect(ensureUserSynced).toHaveBeenCalledWith("user_123");
   });
 
+  it("returns 403 when the account is suspended", async () => {
+    vi.mocked(getUserById).mockResolvedValue(
+      createTestUser({
+        suspended: true,
+      }),
+    );
+
+    const response = await POST(
+      buildOpenAiRequest({
+        messages: [{ role: "user", whois: "user", content: "hello" }],
+      }),
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(payload.error).toBe("Account suspended.");
+    expect(resolveEntitlements).not.toHaveBeenCalled();
+  });
+
   it("continues request handling when user self-heal succeeds", async () => {
     vi.mocked(getUserById).mockResolvedValue(null);
     vi.mocked(ensureUserSynced).mockResolvedValue({
@@ -312,5 +383,21 @@ describe("POST /api/openai - auth and validation", () => {
     expect(response.status).toBe(200);
     expect(payload.taskId).toBe(NEW_TASK_ID);
     expect(ensureUserSynced).toHaveBeenCalledWith("user_123");
+  });
+
+  it("passes suspension status to entitlement resolution", async () => {
+    const response = await POST(
+      buildOpenAiRequest({
+        messages: [{ role: "user", whois: "user", content: "hello" }],
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(resolveEntitlements).toHaveBeenCalledWith(
+      "Lite",
+      expect.objectContaining({
+        isSuspended: false,
+      }),
+    );
   });
 });

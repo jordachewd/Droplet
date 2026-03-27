@@ -8,6 +8,7 @@ import {
 import { NextRequest, NextResponse } from "next/server";
 import { isAllowedDownloadUrl } from "@/lib/utils/download-url-allowlist";
 import { normalizePublicAssetUrl } from "@/lib/utils/normalize-public-asset-url";
+import { requireActiveUser } from "@/lib/utils/require-active-user";
 import { auth } from "@clerk/nextjs/server";
 import { nonEmptyStringSchema } from "@/lib/utils/validation-schemas";
 import { z } from "zod";
@@ -120,6 +121,18 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const { userId } = await auth();
     if (!userId) {
       return new NextResponse("Authentication required", { status: 401 });
+    }
+    const activeUser = await requireActiveUser(userId);
+    if (activeUser.status === "not_provisioned") {
+      return new NextResponse(
+        "Account not yet provisioned. Please try again in a moment.",
+        {
+          status: 503,
+        },
+      );
+    }
+    if (activeUser.status === "suspended") {
+      return new NextResponse("Account suspended.", { status: 403 });
     }
 
     const parsedQuery = downloadQuerySchema.safeParse({

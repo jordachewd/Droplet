@@ -852,6 +852,13 @@ export async function POST(req: Request): Promise<Response> {
         { status: 503 },
       );
     }
+    const isSuspended = Boolean(userData.suspended);
+    if (isSuspended) {
+      return NextResponse.json(
+        { error: "Account suspended." },
+        { status: 403 },
+      );
+    }
 
     const isAdminUser = userData.role === "admin";
     const planName = userData.plan?.name ?? "Lite";
@@ -993,6 +1000,7 @@ export async function POST(req: Request): Promise<Response> {
     }
 
     const entitlements = resolveEntitlements(planName, {
+      isSuspended,
       isAdmin: isAdminUser,
       planLimits: effectivePlanLimits,
       fullPersonaAccessByPlan,

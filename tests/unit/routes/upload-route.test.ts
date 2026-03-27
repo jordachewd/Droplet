@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { NextRequest } from "next/server";
 import { POST } from "@/app/api/upload/route";
 import uploadFileToAWS from "@/lib/utils/aws/uploadFileToAWS";
+import { requireActiveUser } from "@/lib/utils/require-active-user";
 import { auth } from "@clerk/nextjs/server";
 import { MAX_UPLOAD_SIZE_BYTES } from "@/lib/utils/upload-file-validation";
 
@@ -11,6 +12,10 @@ vi.mock("@clerk/nextjs/server", () => ({
 
 vi.mock("@/lib/utils/aws/uploadFileToAWS", () => ({
   default: vi.fn(),
+}));
+
+vi.mock("@/lib/utils/require-active-user", () => ({
+  requireActiveUser: vi.fn(),
 }));
 
 function buildRequestWithFormData(formData: FormData): NextRequest {
@@ -25,9 +30,16 @@ function mockAuthUser(userId: string | null): void {
   vi.mocked(auth).mockResolvedValue({ userId } as AuthResult);
 }
 
+type ActiveUserStatus = "active" | "suspended" | "not_provisioned";
+
+function mockActiveUserStatus(status: ActiveUserStatus): void {
+  vi.mocked(requireActiveUser).mockResolvedValue({ status });
+}
+
 describe("POST /api/upload", () => {
   beforeEach(() => {
     mockAuthUser("user_123");
+    mockActiveUserStatus("active");
     vi.mocked(uploadFileToAWS).mockResolvedValue(
       "/api/download?key=user_123%2Fuploads%2Fuploaded_file_1700000000000.png",
     );
@@ -46,6 +58,39 @@ describe("POST /api/upload", () => {
 
     expect(response.status).toBe(401);
     expect(payload.error).toContain("Authentication required.");
+    expect(requireActiveUser).not.toHaveBeenCalled();
+  });
+
+  it("returns 403 when authenticated account is suspended", async () => {
+    mockActiveUserStatus("suspended");
+    const formData = new FormData();
+    formData.set(
+      "file",
+      new File([new Uint8Array([1, 2, 3])], "image.png", { type: "image/png" }),
+    );
+
+    const response = await POST(buildRequestWithFormData(formData));
+    const payload = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(payload.error).toBe("Account suspended.");
+    expect(uploadFileToAWS).not.toHaveBeenCalled();
+  });
+
+  it("returns 503 when authenticated account cannot be provisioned", async () => {
+    mockActiveUserStatus("not_provisioned");
+    const formData = new FormData();
+    formData.set(
+      "file",
+      new File([new Uint8Array([1, 2, 3])], "image.png", { type: "image/png" }),
+    );
+
+    const response = await POST(buildRequestWithFormData(formData));
+    const payload = await response.json();
+
+    expect(response.status).toBe(503);
+    expect(payload.error).toContain("Account not yet provisioned");
+    expect(uploadFileToAWS).not.toHaveBeenCalled();
   });
 
   it("returns 400 when file is missing", async () => {

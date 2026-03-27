@@ -46,6 +46,7 @@ const UserSchema = new Schema<IUser>(
     suspended: {
       type: Boolean,
       default: false,
+      index: true,
     },
     registerAt: { type: Date, default: Date.now, required: true },
     plan: {
