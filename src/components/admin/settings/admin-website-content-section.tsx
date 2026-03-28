@@ -74,7 +74,6 @@ export function AdminWebsiteContentSection({
 
         <div className="flex justify-end">
           <AdminFormSubmitButton
-            className="btn btn-md btn-contained"
             label="Save FAQ Content"
             pendingLabel="Saving FAQ content..."
           />
@@ -144,7 +143,6 @@ export function AdminWebsiteContentSection({
 
         <div className="flex justify-end">
           <AdminFormSubmitButton
-            className="btn btn-md btn-contained"
             label="Save Hero Copy"
             pendingLabel="Saving hero copy..."
           />
@@ -343,7 +341,6 @@ export function AdminWebsiteContentSection({
 
         <div className="flex justify-end">
           <AdminFormSubmitButton
-            className="btn btn-md btn-contained"
             label="Save Landing Content"
             pendingLabel="Saving landing content..."
           />
@@ -495,7 +492,6 @@ export function AdminWebsiteContentSection({
 
         <div className="flex justify-end">
           <AdminFormSubmitButton
-            className="btn btn-md btn-contained"
             label="Save About Copy"
             pendingLabel="Saving about copy..."
           />

@@ -20,7 +20,7 @@ interface ButtonProps extends Omit<
 
 export default function Button({
   variant = "contained",
-  size = "md",
+  size = "sm",
   loading = false,
   disabled = false,
   type = "button",
@@ -46,7 +46,7 @@ export default function Button({
     >
       {loading ? (
         <span className="inline-flex items-center gap-2">
-          <LoadingBubbles size="small" className="w-auto gap-0.5" />
+          <LoadingBubbles size="small" />
           {children}
         </span>
       ) : (

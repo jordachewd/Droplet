@@ -44,7 +44,6 @@ export function AdminThemeSection({ themeValue }: AdminThemeSectionProps) {
       </fieldset>
       <div className="mt-4 flex justify-end">
         <AdminFormSubmitButton
-          className="btn btn-md btn-contained"
           label="Save Theme"
           pendingLabel="Saving theme..."
         />

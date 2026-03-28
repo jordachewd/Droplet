@@ -39,7 +39,6 @@ export function AdminSupportSection({
 
       <div className="mt-4 flex justify-end">
         <AdminFormSubmitButton
-          className="btn btn-md btn-contained"
           label="Save Support Email"
           pendingLabel="Saving support email..."
         />

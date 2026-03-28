@@ -57,7 +57,6 @@ export function AdminStopReasonsSection({
 
       <div className="mt-4 flex justify-end">
         <AdminFormSubmitButton
-          className="btn btn-md btn-contained"
           label="Save Stop Messages"
           pendingLabel="Saving stop messages..."
         />

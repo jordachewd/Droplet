@@ -50,7 +50,6 @@ export function AdminPricingSection({
         </div>
         <div className="mt-4 flex justify-end">
           <AdminFormSubmitButton
-            className="btn btn-md btn-contained"
             label="Save Pricing"
             pendingLabel="Saving pricing..."
           />
@@ -80,7 +79,6 @@ export function AdminPricingSection({
         </label>
         <div className="mt-4 flex justify-end">
           <AdminFormSubmitButton
-            className="btn btn-md btn-contained"
             label="Save Currency"
             pendingLabel="Saving currency..."
           />

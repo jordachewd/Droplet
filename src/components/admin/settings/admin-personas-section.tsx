@@ -103,7 +103,6 @@ export function AdminPersonasSection({
 
         <div className="mt-4 flex justify-end">
           <AdminFormSubmitButton
-            className="btn btn-md btn-contained"
             label="Save Persona Content"
             pendingLabel="Saving persona content..."
           />
@@ -156,7 +155,6 @@ export function AdminPersonasSection({
                 </fieldset>
                 <div className="mt-3 flex justify-end">
                   <AdminFormSubmitButton
-                    className="btn btn-sm btn-contained"
                     label={`Save ${planName} Persona Access`}
                     pendingLabel="Saving..."
                   />

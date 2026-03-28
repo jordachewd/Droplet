@@ -274,15 +274,15 @@ a.menu-item {
   }
 
   .admin-surface {
-    @apply rounded-3xl border border-slate-300/70 bg-lavenderHaze-100/78 p-5 shadow-sm backdrop-blur-sm dark:border-slate-500 dark:bg-nightIndigo-900/72;
+    @apply rounded-2xl bg-lavenderHaze-100/78 p-5 shadow-sm backdrop-blur-sm dark:bg-nightIndigo-900/72;
   }
 
   .admin-surface-subtle {
-    @apply rounded-2xl border border-slate-300/70 bg-lavenderHaze-100/72 p-4 shadow-sm dark:border-slate-500 dark:bg-nightIndigo-900/68;
+    @apply rounded-2xl bg-lavenderHaze-100/72 p-4 shadow-sm dark:bg-nightIndigo-900/68;
   }
 
   .admin-table-shell {
-    @apply overflow-hidden rounded-3xl border border-slate-300/70 bg-lavenderHaze-100/78 shadow-sm backdrop-blur-sm dark:border-slate-500 dark:bg-nightIndigo-900/72;
+    @apply overflow-hidden rounded-2xl bg-lavenderHaze-100/78 shadow-sm backdrop-blur-sm dark:bg-nightIndigo-900/72;
   }
 
   .tooltip-content {

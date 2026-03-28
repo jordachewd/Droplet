@@ -83,7 +83,7 @@ export default function AdminLayoutShell({
     <section className="AdminLayoutShell relative flex min-h-dvh w-full">
       <AdminSidebar links={adminLinks} />
 
-      <div className="relative flex min-h-dvh flex-1 flex-col">
+      <div className="AdminMainWrapper relative flex flex-1 flex-col droplet-scrollbar z-10 h-dvh w-full p-0 m-0 overflow-y-auto">
         <header
           className={classNames(
             "AdminLayoutHeader sticky left-0 right-0 top-0 z-20 flex w-full px-4",
@@ -114,7 +114,7 @@ export default function AdminLayoutShell({
         <main
           id="admin-main-content"
           tabIndex={-1}
-          className="AdminLayoutMain relative z-10 flex-1 overflow-y-auto px-4 pb-10 pt-6 md:px-6 lg:px-8"
+          className="AdminLayoutMain droplet-scrollbar relative z-10 flex-1 overflow-y-auto px-4 pb-16 pt-28 -mt-14"
         >
           {children}
         </main>
