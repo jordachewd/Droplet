@@ -2,7 +2,45 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-28 — PM audit #72. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4, 105.1, 105.2, 106, 107.1, 107.2, 107.3, 108, 110, 111.1, 112.1, 112.2, 109, 113.1, 113.2, 114, 115, 116, 117, 120.1, 120.2-A, 120.2-B, 120.2-C, 120.3, 120.4, 120.5, 120.6, 120.7, 121, 122, 123, 124, 125, 125.1, 125.2, 126, 126.1, 126.2, 127, 128.1, 128.2, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 149, 150, 151, 152, 153, 154, 155, 156, 157, 74.2, 104, 125.3 complete. Milestones 0–25 COMPLETE. 586 unit tests (101 suites). E2E: 8 spec files. All 7 gates GREEN. Build passing. Node.js 24.12.0 runtime. Coverage: 85/80/85/85. Zero `as never` casts. Lint: 0 errors, 0 warnings.
+> Last updated: 2026-03-28 — PM audit #73. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4, 105.1, 105.2, 106, 107.1, 107.2, 107.3, 108, 110, 111.1, 112.1, 112.2, 109, 113.1, 113.2, 114, 115, 116, 117, 120.1, 120.2-A, 120.2-B, 120.2-C, 120.3, 120.4, 120.5, 120.6, 120.7, 121, 122, 123, 124, 125, 125.1, 125.2, 126, 126.1, 126.2, 127, 128.1, 128.2, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 149, 150, 151, 152, 153, 154, 155, 155.1, 156, 157, 158, 159, 74.2, 104, 125.3 complete. Milestones 0–25 COMPLETE. 591 unit tests (101 suites). E2E: 49 tests (8 spec files). All 7 gates GREEN. Build passing. Node.js 24.12.0 runtime. Coverage: 85/80/85/85. Zero `as never` casts. Lint: 0 errors, 0 warnings.
+
+---
+
+## Phase 159 HIGH — Fix Button test asserting wrong default size — COMPLETED (2026-03-28)
+
+> Engineer delivered (PM audit #73). Button component defaults `size="sm"` (producing `btn-sm`), test wrongly asserted `btn-md`. Test corrected.
+
+- [x] `tests/unit/components/button.test.tsx` line 15: `btn-md` → `btn-sm`.
+- [x] All unit tests pass (591 tests).
+- [x] Build passes.
+
+**Files changed:** `tests/unit/components/button.test.tsx`
+
+---
+
+## Phase 158 HIGH — Harden SSE streaming catch/finally blocks against double-throw — COMPLETED (2026-03-28)
+
+> Engineer delivered (PM audit #73). `writeStreamEvent` in catch and `controller.close()` in finally wrapped in inner try/catch to prevent secondary throws on closed controller.
+
+- [x] `writeStreamEvent(controller, { type: "error" })` in catch block wrapped in try/catch.
+- [x] `controller.close()` in finally block wrapped in try/catch.
+- [x] Inner catch blocks intentionally silent (stream already broken).
+- [x] Build passes, tests pass.
+
+**Files changed:** `src/app/api/openai/route.tsx`
+
+---
+
+## Phase 155.1 HIGH — Remove 2 remaining `droplet-scrollbar` references in admin-layout-shell — COMPLETED (2026-03-28)
+
+> Engineer delivered (PM audit #73). Phase 155 had claimed zero references but PM audit #71 found 2 dangling JSX class names. Now fully clean.
+
+- [x] `droplet-scrollbar` removed from `admin-layout-shell.tsx` line 86 className.
+- [x] `droplet-scrollbar` removed from `admin-layout-shell.tsx` line 117 className.
+- [x] Zero `droplet-scrollbar` references remaining in `src/` (verified by `rg`).
+- [x] Build passes.
+
+**Files changed:** `src/components/admin/admin-layout-shell.tsx`
 
 ---
 
