@@ -1541,13 +1541,17 @@ export async function POST(req: Request): Promise<Response> {
               });
             }
           } catch {
-            writeStreamEvent(controller, {
-              type: "error",
-              error: OPENAI_ERROR_MESSAGES.unknown,
-            });
+            try {
+              writeStreamEvent(controller, {
+                type: "error",
+                error: OPENAI_ERROR_MESSAGES.unknown,
+              });
+            } catch {}
           } finally {
             stopMediaHeartbeat();
-            controller.close();
+            try {
+              controller.close();
+            } catch {}
           }
         },
       });
