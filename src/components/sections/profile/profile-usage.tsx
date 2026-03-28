@@ -1,5 +1,5 @@
 import classNames from "classnames";
-import { PlanLimits } from "@/constants/plans";
+import type { PlanLimits } from "@/constants/plans";
 import { PlanName } from "@/types/PlanData.d";
 
 interface UsageMetric {

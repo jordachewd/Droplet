@@ -1,3 +1,5 @@
+import "server-only";
+
 import { TaskEndedReason } from "@/types/TaskData.d";
 
 export const STOP_REASON_CODES = [

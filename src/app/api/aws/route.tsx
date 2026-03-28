@@ -8,12 +8,15 @@ import {
 } from "@/lib/utils/aws/s3-file-reference";
 import { generateString } from "@/lib/utils/generateString";
 import { requireActiveUser } from "@/lib/utils/require-active-user";
+import { enforceSlidingWindowRateLimit } from "@/lib/utils/rate-limit";
 import { nonEmptyStringSchema } from "@/lib/utils/validation-schemas";
 import { currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
 const MAX_BASE64_IMAGE_SIZE_BYTES = 10 * 1024 * 1024;
+const AWS_RATE_LIMIT_MAX_REQUESTS = 30;
+const AWS_RATE_LIMIT_WINDOW_MS = 60_000;
 
 const awsUploadBodySchema = z
   .object({
@@ -33,6 +36,33 @@ const awsDeleteBodySchema = z
   .strict();
 
 type AwsDeleteBody = z.infer<typeof awsDeleteBodySchema>;
+
+async function enforceAwsRouteRateLimit(
+  userId: string,
+): Promise<NextResponse | null> {
+  const rateLimit = await enforceSlidingWindowRateLimit({
+    key: `aws:${userId}`,
+    limit: AWS_RATE_LIMIT_MAX_REQUESTS,
+    windowMs: AWS_RATE_LIMIT_WINDOW_MS,
+  });
+
+  if (rateLimit.success) {
+    return null;
+  }
+
+  return NextResponse.json(
+    { error: "Too many requests. Please try again shortly." },
+    {
+      status: 429,
+      headers: {
+        "Retry-After": String(Math.ceil(rateLimit.retryAfterMs / 1000)),
+        "X-RateLimit-Limit": String(rateLimit.limit),
+        "X-RateLimit-Remaining": String(rateLimit.remaining),
+        "X-RateLimit-Reset": String(rateLimit.resetAt),
+      },
+    },
+  );
+}
 
 function normalizeFolderPath(folder: string): string {
   return normalizeS3ObjectKey(folder).replace(/\/+$/g, "");
@@ -91,6 +121,11 @@ export async function POST(req: Request): Promise<NextResponse> {
         { error: "Account suspended." },
         { status: 403 },
       );
+    }
+
+    const rateLimitResponse = await enforceAwsRouteRateLimit(user.id);
+    if (rateLimitResponse) {
+      return rateLimitResponse;
     }
 
     const parsedBody = awsUploadBodySchema.safeParse(await req.json());
@@ -156,6 +191,11 @@ export async function DELETE(req: Request): Promise<NextResponse> {
         { error: "Account suspended." },
         { status: 403 },
       );
+    }
+
+    const rateLimitResponse = await enforceAwsRouteRateLimit(user.id);
+    if (rateLimitResponse) {
+      return rateLimitResponse;
     }
 
     const parsedBody = awsDeleteBodySchema.safeParse(await req.json());

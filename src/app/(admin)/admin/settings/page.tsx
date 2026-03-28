@@ -46,6 +46,7 @@ import {
   TrialLimitsSettingsFormValue,
 } from "@/components/admin/settings/types";
 import { PersonaId } from "@/types/PersonaData.d";
+import { STOP_REASON_CODES } from "@/constants/stop-reasons";
 
 export default async function AdminSettingsPage() {
   const snapshot = await getAdminSettingsSnapshot();
@@ -190,6 +191,7 @@ export default async function AdminSettingsPage() {
             label: "Stop Messages",
             content: (
               <AdminStopReasonsSection
+                stopReasonCodes={STOP_REASON_CODES}
                 stopReasonMessagesValue={stopReasonMessagesValue}
               />
             ),

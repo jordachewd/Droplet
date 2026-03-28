@@ -9,9 +9,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { isAllowedDownloadUrl } from "@/lib/utils/download-url-allowlist";
 import { normalizePublicAssetUrl } from "@/lib/utils/normalize-public-asset-url";
 import { requireActiveUser } from "@/lib/utils/require-active-user";
+import { enforceSlidingWindowRateLimit } from "@/lib/utils/rate-limit";
 import { auth } from "@clerk/nextjs/server";
 import { nonEmptyStringSchema } from "@/lib/utils/validation-schemas";
 import { z } from "zod";
+
+const DOWNLOAD_RATE_LIMIT_MAX_REQUESTS = 60;
+const DOWNLOAD_RATE_LIMIT_WINDOW_MS = 60_000;
 
 function isDownloadRequest(downloadValue: string | null): boolean {
   return downloadValue === "1" || downloadValue === "true";
@@ -133,6 +137,24 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     }
     if (activeUser.status === "suspended") {
       return new NextResponse("Account suspended.", { status: 403 });
+    }
+
+    const rateLimit = await enforceSlidingWindowRateLimit({
+      key: `download:${userId}`,
+      limit: DOWNLOAD_RATE_LIMIT_MAX_REQUESTS,
+      windowMs: DOWNLOAD_RATE_LIMIT_WINDOW_MS,
+    });
+
+    if (!rateLimit.success) {
+      return new NextResponse("Too many requests. Please try again shortly.", {
+        status: 429,
+        headers: {
+          "Retry-After": String(Math.ceil(rateLimit.retryAfterMs / 1000)),
+          "X-RateLimit-Limit": String(rateLimit.limit),
+          "X-RateLimit-Remaining": String(rateLimit.remaining),
+          "X-RateLimit-Reset": String(rateLimit.resetAt),
+        },
+      });
     }
 
     const parsedQuery = downloadQuerySchema.safeParse({

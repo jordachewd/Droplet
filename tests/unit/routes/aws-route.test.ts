@@ -5,6 +5,7 @@ import deleteFileFromAWS from "@/lib/utils/aws/deleteFileFromAWS";
 import { generateString } from "@/lib/utils/generateString";
 import { requireActiveUser } from "@/lib/utils/require-active-user";
 import { DELETE, POST } from "@/app/api/aws/route";
+import { enforceSlidingWindowRateLimit } from "@/lib/utils/rate-limit";
 
 vi.mock("@clerk/nextjs/server", () => ({
   currentUser: vi.fn(),
@@ -24,6 +25,10 @@ vi.mock("@/lib/utils/generateString", () => ({
 
 vi.mock("@/lib/utils/require-active-user", () => ({
   requireActiveUser: vi.fn(),
+}));
+
+vi.mock("@/lib/utils/rate-limit", () => ({
+  enforceSlidingWindowRateLimit: vi.fn(),
 }));
 
 type ActiveUserStatus = "active" | "suspended" | "not_provisioned";
@@ -53,6 +58,13 @@ describe("/api/aws route", () => {
       "/api/download?key=user_123%2Ftask_abc%2Ftask_abc_image_rand123.png",
     );
     vi.mocked(deleteFileFromAWS).mockResolvedValue(undefined);
+    vi.mocked(enforceSlidingWindowRateLimit).mockResolvedValue({
+      success: true,
+      limit: 30,
+      remaining: 29,
+      resetAt: Date.now() + 60_000,
+      retryAfterMs: 0,
+    });
   });
 
   it("returns 401 for upload when user is not authenticated", async () => {
@@ -100,6 +112,26 @@ describe("/api/aws route", () => {
 
     expect(response.status).toBe(400);
     expect(payload.error).toBe("TaskId and image buffer are required.");
+  });
+
+  it("returns 429 for upload when rate limit is exceeded", async () => {
+    vi.mocked(enforceSlidingWindowRateLimit).mockResolvedValue({
+      success: false,
+      limit: 30,
+      remaining: 0,
+      resetAt: Date.now() + 1_500,
+      retryAfterMs: 1_500,
+    });
+
+    const response = await POST(
+      buildRequest("POST", { taskId: "task_abc", imgBuffer: "ZmFrZQ==" }),
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(429);
+    expect(response.headers.get("Retry-After")).toBe("2");
+    expect(payload.error).toContain("Too many requests");
+    expect(uploadFileToAWS).not.toHaveBeenCalled();
   });
 
   it("uploads image and returns fileUrl", async () => {
@@ -204,6 +236,29 @@ describe("/api/aws route", () => {
 
     expect(response.status).toBe(400);
     expect(payload.error).toContain("required for deletion");
+  });
+
+  it("returns 429 for delete when rate limit is exceeded", async () => {
+    vi.mocked(enforceSlidingWindowRateLimit).mockResolvedValue({
+      success: false,
+      limit: 30,
+      remaining: 0,
+      resetAt: Date.now() + 1_500,
+      retryAfterMs: 1_500,
+    });
+
+    const response = await DELETE(
+      buildRequest("DELETE", {
+        folder: "user_123/task_abc",
+        fileName: "file.png",
+      }),
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(429);
+    expect(response.headers.get("Retry-After")).toBe("2");
+    expect(payload.error).toContain("Too many requests");
+    expect(deleteFileFromAWS).not.toHaveBeenCalled();
   });
 
   it("deletes image with user id path and returns success", async () => {

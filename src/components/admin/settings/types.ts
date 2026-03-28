@@ -1,6 +1,6 @@
-import { PersonaTrialLimits, PlanLimits } from "@/constants/plans";
+import type { PersonaTrialLimits, PlanLimits } from "@/constants/plans";
 import { AboutContent } from "@/constants/about-data";
-import { FaqItem } from "@/constants/faqs";
+import type { FaqItem } from "@/constants/faqs";
 import { HeroContent } from "@/constants/hero-content";
 import { LandingContent } from "@/constants/landing-data";
 import { PersonaId } from "@/types/PersonaData.d";
