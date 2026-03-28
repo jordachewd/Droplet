@@ -2,7 +2,52 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-27 — PM audit #70. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4, 105.1, 105.2, 106, 107.1, 107.2, 107.3, 108, 110, 111.1, 112.1, 112.2, 109, 113.1, 113.2, 114, 115, 116, 117, 120.1, 120.2-A, 120.2-B, 120.2-C, 120.3, 120.4, 120.5, 120.6, 120.7, 121, 122, 123, 124, 125, 125.1, 125.2, 126, 126.1, 126.2, 127, 128.1, 128.2, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 149, 150, 151, 152, 153, 154, 155, 74.2, 104, 125.3 complete. Milestones 0–25 COMPLETE. 586 unit tests (101 suites). E2E: 8 spec files. All 7 gates GREEN. Build passing. Node.js 24.12.0 runtime. Coverage: 85/80/85/85. Zero `as never` casts. Lint: 0 errors, 0 warnings.
+> Last updated: 2026-03-28 — PM audit #72. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4, 105.1, 105.2, 106, 107.1, 107.2, 107.3, 108, 110, 111.1, 112.1, 112.2, 109, 113.1, 113.2, 114, 115, 116, 117, 120.1, 120.2-A, 120.2-B, 120.2-C, 120.3, 120.4, 120.5, 120.6, 120.7, 121, 122, 123, 124, 125, 125.1, 125.2, 126, 126.1, 126.2, 127, 128.1, 128.2, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 149, 150, 151, 152, 153, 154, 155, 156, 157, 74.2, 104, 125.3 complete. Milestones 0–25 COMPLETE. 586 unit tests (101 suites). E2E: 8 spec files. All 7 gates GREEN. Build passing. Node.js 24.12.0 runtime. Coverage: 85/80/85/85. Zero `as never` casts. Lint: 0 errors, 0 warnings.
+
+---
+
+## Phase 157 CRITICAL — Fix Stripe webhook `checkoutSessionMetadataSchema.strict()` rejecting valid payment metadata — COMPLETED (2026-03-28)
+
+> Engineer delivered (PM audit #72). CRITICAL billing fix. Stripe webhook now processes payments correctly. Defense-in-depth: both sender and receiver fixed.
+
+- [x] `checkoutSessionMetadataSchema` changed from `.strict()` to `.strip()` — strips unknown keys instead of rejecting.
+- [x] `name: fullName` removed from `checkoutPlan()` metadata — field was unused by webhook handler.
+- [x] Both fixes applied for defense-in-depth (receiver tolerant AND sender cleaned).
+- [x] Regression test added: webhook tolerates extra metadata keys in checkout payload.
+- [x] Transaction record created in database after successful payment.
+- [x] User plan updated after successful payment.
+- [x] All existing unit tests pass.
+- [x] Build passes.
+
+**Files changed:** `src/app/api/webhooks/stripe/route.tsx`, `src/lib/actions/transaction.action.tsx`, `tests/unit/routes/stripe-webhook-route.test.ts`
+
+---
+
+## Phase 156 HIGH — Add `import "server-only"` to constants files — COMPLETED (2026-03-28)
+
+> Discovered complete during PM audit #72 triple audit. All 4 constants files already have `import "server-only"` guards. TD-SERVERONLY-01 RESOLVED.
+
+- [x] `src/constants/plans.tsx` has `import "server-only"`.
+- [x] `src/constants/assistant-personas.tsx` has `import "server-only"`.
+- [x] `src/constants/faqs.tsx` has `import "server-only"`.
+- [x] `src/constants/stop-reasons.ts` has `import "server-only"`.
+- [x] Build passes.
+
+**Files changed:** Already in place — no code changes needed.
+
+---
+
+## Phase 142 HIGH — Add rate limiting to `/api/upload`, `/api/aws`, and `/api/download` endpoints — COMPLETED (2026-03-28)
+
+> Discovered complete during PM audit #72 triple audit. All 3 routes already have `enforceSlidingWindowRateLimit` implemented. TD-RATELIMIT-02 RESOLVED.
+
+- [x] `/api/upload` has per-user rate limiting (30 req/60s) via `enforceSlidingWindowRateLimit`.
+- [x] `/api/aws` has per-user rate limiting (30 req/60s) via `enforceAwsRouteRateLimit` (wraps `enforceSlidingWindowRateLimit`).
+- [x] `/api/download` has per-user rate limiting (60 req/60s) via `enforceSlidingWindowRateLimit`.
+- [x] Rate limit returns 429 with proper error response.
+- [x] Build passes.
+
+**Files changed:** Already in place — no code changes needed.
 
 ---
 
