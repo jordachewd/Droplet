@@ -47,7 +47,7 @@ const checkoutSessionMetadataSchema = z
     plan: z.enum(ALLOWED_PLAN_NAMES),
     billing: z.enum(ALLOWED_BILLING_CYCLES),
   })
-  .strict();
+  .strip();
 
 const checkoutSessionPayloadSchema = z
   .object({

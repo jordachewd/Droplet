@@ -152,6 +152,44 @@ describe("POST /api/webhooks/stripe", () => {
     );
   });
 
+  it("tolerates extra metadata keys in checkout payload", async () => {
+    const expiresOn = new Date("2026-04-05T10:00:00.000Z");
+    vi.mocked(getExpiresOn).mockReturnValue(expiresOn);
+
+    constructEventMock.mockReturnValue({
+      type: "checkout.session.completed",
+      data: {
+        object: {
+          id: "cs_test_123_extra_metadata",
+          amount_total: 1900,
+          metadata: {
+            userId: "mongo_user_1",
+            clerkId: "clerk_user_1",
+            planId: "1",
+            plan: "Pro",
+            billing: "Monthly",
+            name: "Buyer One",
+            extraKey: "ignored-value",
+          },
+        },
+      },
+    });
+
+    const response = await POST(buildRequest('{"valid":"payload"}', "sig_123"));
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload).toEqual({ message: "OK" });
+    expect(Transaction.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        stripeId: "cs_test_123_extra_metadata",
+        userId: "mongo_user_1",
+        clerkId: "clerk_user_1",
+      }),
+    );
+    expect(User.findOneAndUpdate).toHaveBeenCalledOnce();
+  });
+
   it("persists transaction and updates user plan on checkout completion", async () => {
     const expiresOn = new Date("2026-04-05T10:00:00.000Z");
     vi.mocked(getExpiresOn).mockReturnValue(expiresOn);

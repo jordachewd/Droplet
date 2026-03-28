@@ -8,7 +8,6 @@ import Transaction from "@/lib/database/models/transaction.model";
 import User from "@/lib/database/models/user.model";
 import { CheckoutTransactionParams } from "@/types/TransactionData.d";
 import { CheckoutPlanParams } from "@/types/PlanData.d";
-import getFullName from "@/lib/utils/getFullName";
 import serializeForClient from "@/lib/utils/serialize-for-client";
 import { auth } from "@clerk/nextjs/server";
 import { nonEmptyStringSchema } from "@/lib/utils/validation-schemas";
@@ -67,12 +66,6 @@ export async function checkoutPlan(transaction: CheckoutTransactionParams) {
       throw new Error("Unable to start checkout.");
     }
 
-    const fullName = getFullName({
-      firstName: currentUser.firstName || "",
-      lastName: currentUser.lastName || "",
-      username: currentUser.username || "",
-    });
-
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       payment_method_types: ["card"],
@@ -92,7 +85,6 @@ export async function checkoutPlan(transaction: CheckoutTransactionParams) {
       metadata: {
         userId: currentUser._id.toString(),
         clerkId: authedUserId,
-        name: fullName,
         plan: planName,
         billing: planBilling,
         planId: String(planId),
