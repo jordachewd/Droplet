@@ -5,12 +5,86 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #70 (2026-03-27). Milestones 0–25 COMPLETE. All phases through 155 complete. 586 unit tests (101 suites). 8 E2E specs. Build passes. TSC clean. Node.js 24.12.0 runtime.**
+> **STATUS: PM audit #71 (2026-03-28). Milestones 0–25 COMPLETE. All phases through 155 complete. 586 unit tests (101 suites). 8 E2E specs. Build passes. TSC clean. Node.js 24.12.0 runtime.**
 > **GATE STATUS: All 7 gates GREEN. Lint (0 errors, 0 warnings), Knip (0 findings), TSC clean, build passes, unit tests (101/586), E2E (8 specs), coverage 85/80/85/85.**
-> **TDD REBUILD COMPLETE. WCAG 2.2 AA COMPLETE. Admin configurability ALL RESOLVED. User deletion cascade COMPLETE (Phase 150). Library uploaded tab COMPLETE (Phase 151). Payment checkout FIXED (Phase 152). All owner-reported bugs from PM audit #69 RESOLVED.**
+> **TDD REBUILD COMPLETE. WCAG 2.2 AA COMPLETE. User deletion cascade COMPLETE (Phase 150). Library uploaded tab COMPLETE (Phase 151).**
 > **Zero: `as never`, `as any`, `console.log`, `console.error`, `window.alert`, `window.confirm`, `strict: false`, stale TODOs — all in `src/`.**
-> **SWOT audit #70 conducted. Architect + Engineer + PM triple audit. Zero CRITICAL issues. Remaining work: hardening + performance + code quality.**
-> **NEXT SESSION: 156 (HIGH server-only guards) → 142 (HIGH rate limiting) → 143 (MEDIUM env validation) → 144–148 (MEDIUM/LOW)**
+> **Triple audit #71 conducted. Architect + Engineer + PM. ONE CRITICAL bug: Stripe webhook schema mismatch silently drops all payment processing (customers charged, no plan upgrade).**
+> **NEXT SESSION: 157 (CRITICAL Stripe webhook fix) → 155.1 (HIGH scrollbar cleanup) → 158 (HIGH streaming hardening) → 156 (HIGH server-only guards) → 142 (HIGH rate limiting) → 143–148 (MEDIUM/LOW)**
+
+---
+
+## CRITICAL — Stripe Webhook Schema Mismatch (PM audit #71 — Triple audit finding C1)
+
+### Phase 157 CRITICAL — Fix Stripe webhook `checkoutSessionMetadataSchema.strict()` rejecting valid payment metadata
+
+> **ROOT CAUSE (Architect finding, Engineer + PM confirmed):** `checkoutPlan()` in `src/lib/actions/transaction.action.tsx` sends 6 fields in Stripe session metadata including `name: fullName`. The webhook handler in `src/app/api/webhooks/stripe/route.tsx` defines `checkoutSessionMetadataSchema` with only 5 fields and uses `.strict()` which rejects any extra keys. `safeParse` fails → no Transaction created → no User plan updated. **Customer is charged by Stripe but receives no plan upgrade. P0 money-loss bug.**
+
+**Files:**
+
+1. `src/app/api/webhooks/stripe/route.tsx` — Change `.strict()` to `.strip()` on `checkoutSessionMetadataSchema`
+2. `src/lib/actions/transaction.action.tsx` — Remove unused `name` field from Stripe metadata
+
+**What to do:**
+
+1. In `route.tsx` L45-51: change `checkoutSessionMetadataSchema` from `.strict()` to `.strip()` (strips unknown keys instead of rejecting). This makes the webhook resilient to future metadata additions.
+2. In `transaction.action.tsx` L95: remove `name: fullName` from the `metadata` object — this field is unused by the webhook handler.
+3. Apply BOTH fixes for defense-in-depth (fix sender AND receiver).
+4. Update unit tests for the webhook to verify extra metadata fields are tolerated.
+
+**Acceptance criteria:**
+
+- [ ] `checkoutSessionMetadataSchema` uses `.strip()` instead of `.strict()`
+- [ ] `name` field removed from `checkoutPlan()` metadata
+- [ ] Webhook correctly processes `checkout.session.completed` events
+- [ ] Transaction record created in database after successful payment
+- [ ] User plan updated after successful payment
+- [ ] Existing unit tests pass
+- [ ] New test: webhook tolerates extra metadata keys
+- [ ] Build passes, all 7 gates GREEN
+
+---
+
+## HIGH — Scrollbar Cleanup Completion (PM audit #71)
+
+### Phase 155.1 HIGH — Remove 2 remaining `droplet-scrollbar` references in admin-layout-shell
+
+> Phase 155 claimed "Zero `droplet-scrollbar` references remaining in `src/`" but PM audit #71 found 2 dangling references at `src/components/admin/admin-layout-shell.tsx` L86 and L117. No functional impact (CSS class was already removed) but the class name must be cleaned from the JSX.
+
+**File:** `src/components/admin/admin-layout-shell.tsx`
+
+**What to do:**
+
+1. Remove `droplet-scrollbar` from the `className` string at line 86.
+2. Remove `droplet-scrollbar` from the `className` string at line 117.
+
+**Acceptance criteria:**
+
+- [ ] Zero `droplet-scrollbar` references in `src/`
+- [ ] Build passes
+
+---
+
+## HIGH — Streaming Error Handling Hardening (PM audit #71 — Triple audit finding C2)
+
+### Phase 158 HIGH — Harden SSE streaming catch/finally blocks against double-throw
+
+> Architect + Engineer finding. In `/api/openai/route.tsx` streaming path, the `catch` block calls `writeStreamEvent(controller, { type: "error" })` which can itself throw if the controller is already closed/errored (e.g., client disconnect). If this happens, no `error` or `final` event reaches the client → client shows "The response stream ended unexpectedly." Similarly, `controller.close()` in `finally` can throw if already closed.
+
+**File:** `src/app/api/openai/route.tsx`
+
+**What to do:**
+
+1. Wrap the `writeStreamEvent` call in the `catch` block with its own try/catch.
+2. Wrap `controller.close()` in the `finally` block with its own try/catch.
+3. Inner catch blocks should be silent (stream is already broken, nothing to do).
+
+**Acceptance criteria:**
+
+- [ ] `writeStreamEvent` in catch block wrapped in try/catch
+- [ ] `controller.close()` in finally block wrapped in try/catch
+- [ ] No "stream ended unexpectedly" on client disconnect during media generation
+- [ ] Build passes, tests pass
 
 ---
 
