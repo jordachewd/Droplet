@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-31 (PM audit #78). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. **DEPLOYED TO PRODUCTION — 3 CRITICAL BUGS ACTIVE, 1 HIGH.** Phase 167 PARTIAL (targeted catch blocks in 9 files — 35 remaining). Phase 161 (webhook idempotency) CODE-COMPLETE — Stripe Dashboard ops verification required (BUG 3). TD-STREAM-03 RE-OPENED — streaming fails on media gen in production (Vercel 60s timeout kills function). TD-AUDIO-01 NEW — audio player `ERR_INVALID_STATE` (SSE controller race + download Range support). TD-TIMEOUT-02 NEW — proactive 55s timeout safety net needed. Admin configurability PARTIAL (~25 hardcoded strings — Phase 162). 592 unit tests (101 suites). E2E: 49 tests (8 spec files). Coverage: 85/80/85/85. **All 7 validation gates GREEN locally.** Build passing. Node.js 24.12.0.
+> Last updated: 2026-03-31 (PM audit #78.1). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. **DEPLOYED TO PRODUCTION — 2 CRITICAL BUGS ACTIVE (audio, streaming), 1 HIGH.** BUG-PAYMENT RESOLVED (owner verified Stripe webhook 200 OK + payment test passed, PM audit #78.1). Phase 167 PARTIAL (targeted catch blocks in 9 files — 35 remaining). Phase 161 (webhook idempotency) VERIFIED IN PRODUCTION. TD-STREAM-03 RE-OPENED — streaming fails on media gen in production (Vercel 60s timeout kills function). TD-AUDIO-01 — audio player `ERR_INVALID_STATE` (SSE controller race + download Range support). TD-TIMEOUT-02 — proactive 55s timeout safety net needed. Admin configurability PARTIAL (~25 hardcoded strings — Phase 162). 592 unit tests (101 suites). E2E: 49 tests (8 spec files). Coverage: 85/80/85/85. **All 7 validation gates GREEN locally.** Build passing. Node.js 24.12.0.
 
 ---
 
@@ -837,12 +837,11 @@ All button styles use Lime Green as the accent color in **both** light and dark 
 
 ### Active — CRITICAL Priority
 
-| ID            | Area    | Description                                                                                                                                                                                                                                                                                                                                                                             | Phase |
-| ------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
-| TD-STREAM-03  | SSE     | **RE-OPENED (PM audit #78).** Streaming fails in production for media generation. Vercel Hobby 60s function timeout kills server before media pipeline completes. Heartbeats prevent client timeout but NOT Vercel function kill. `didSendFinal` guard fires correctly but Vercel terminates before completion. Phase 160.2 adds proactive 55s timeout for graceful degradation.        | 160.2 |
-| TD-AUDIO-01   | Audio   | **NEW (PM audit #78).** Audio player `ERR_INVALID_STATE` error. Triple-audit root cause: (A) SSE controller race — heartbeat interval fires after `controller.close()`, (B) download route lacks HTTP Range support (`Accept-Ranges: bytes` + `206 Partial Content`), (C) audio player `useEffect` doesn't reset ref or release audio source on cleanup. Phase 168.                     | 168   |
-| TD-PAYMENT-01 | Billing | **CODE-COMPLETE (Phase 161, PM audit #76).** Code triple-audit verified correct: Zod `.strip()`, idempotency check, `applyCheckoutPlanUpdate`, `hasExpectedStripePlan()` repair path, full error logging. **PRODUCTION BUG: Stripe Dashboard webhook endpoint misconfiguration suspected** (URL, signing secret, or event types). Requires ops verification — zero code changes needed. | 161   |
-| TD-TIMEOUT-02 | SSE     | **NEW (PM audit #78).** Vercel Hobby 60s limit insufficient for media gen pipeline. Need proactive 55s elapsed-time check in SSE route to return graceful timeout error before Vercel kills the function. Without this, client sees "stream ended unexpectedly" instead of actionable error message. Phase 160.2.                                                                       | 160.2 |
+| ID            | Area  | Description                                                                                                                                                                                                                                                                                                                                                                      | Phase |
+| ------------- | ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| TD-STREAM-03  | SSE   | **RE-OPENED (PM audit #78).** Streaming fails in production for media generation. Vercel Hobby 60s function timeout kills server before media pipeline completes. Heartbeats prevent client timeout but NOT Vercel function kill. `didSendFinal` guard fires correctly but Vercel terminates before completion. Phase 160.2 adds proactive 55s timeout for graceful degradation. | 160.2 |
+| TD-AUDIO-01   | Audio | **NEW (PM audit #78).** Audio player `ERR_INVALID_STATE` error. Triple-audit root cause: (A) SSE controller race — heartbeat interval fires after `controller.close()`, (B) download route lacks HTTP Range support (`Accept-Ranges: bytes` + `206 Partial Content`), (C) audio player `useEffect` doesn't reset ref or release audio source on cleanup. Phase 168.              | 168   |
+| TD-TIMEOUT-02 | SSE   | **NEW (PM audit #78).** Vercel Hobby 60s limit insufficient for media gen pipeline. Need proactive 55s elapsed-time check in SSE route to return graceful timeout error before Vercel kills the function. Without this, client sees "stream ended unexpectedly" instead of actionable error message. Phase 160.2.                                                                | 160.2 |
 
 ### Active — HIGH Priority
 
@@ -867,6 +866,12 @@ All button styles use Lime Green as the accent color in **both** light and dark 
 | TD-PLAN-01 | Billing | No recurring subscriptions (deferred v1).                                      | Deferred |
 | TD-AI-18   | OpenAI  | errorMessage forwarding pattern in `/api/openai` is safe but fragile.          | Advisory |
 | TD-API-09  | API     | `messageTextContentSchema` uses `.strict()` — may reject extra fields.         | Monitor  |
+
+### Resolved (PM audit #78.1)
+
+| ID            | Area    | Description                                                                                                                                                                                                                   | Phase |
+| ------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| TD-PAYMENT-01 | Billing | ~~**CRITICAL.** Payment succeeds but no Transaction/plan update.~~ **RESOLVED (PM audit #78.1).** Owner verified Stripe webhook 200 OK + payment test passed. Code was correct (Phase 161). Ops fix only — zero code changes. | 161   |
 
 ### Resolved (PM audit #78)
 

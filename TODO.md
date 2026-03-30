@@ -5,58 +5,29 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #78 (2026-03-30). DEPLOYED TO PRODUCTION. 3 CRITICAL production bugs active. Phase 167 partially completed (targeted catches). 592 unit tests (101 suites). 49 E2E tests (8 spec files). Build passes. TSC clean. Node.js 24.12.0 runtime.**
-> **GATE STATUS: All 7 validation gates GREEN locally. Product Gate RED (3 CRITICAL bugs). Admin Gate YELLOW (Phase 162 pending).**
+> **STATUS: PM audit #78.1 (2026-03-30). DEPLOYED TO PRODUCTION. 2 CRITICAL production bugs active (audio, streaming). BUG-PAYMENT RESOLVED (owner verified Stripe webhook 200 OK + payment test passed). Phase 167 partially completed (targeted catches). 592 unit tests (101 suites). 49 E2E tests (8 spec files). Build passes. TSC clean. Node.js 24.12.0 runtime.**
+> **GATE STATUS: All 7 validation gates GREEN locally. Product Gate RED (2 CRITICAL bugs). Admin Gate YELLOW (Phase 162 pending).**
 > **Zero: `as never`, `as any`, `console.log`, `console.error`, `window.alert`, `window.confirm`, `strict: false`, `droplet-scrollbar`, stale TODOs — all in `src/`.**
 >
-> **CRITICAL PRODUCTION BUGS (PM audit #78):**
+> **REMAINING PRODUCTION BUGS (PM audit #78.1):**
 >
-> - 🔴 BUG-PAYMENT: Payment succeeds but no Transaction/plan update. Stripe webhook misconfigured. **OPS FIX REQUIRED (zero code).**
+> - ✅ ~~BUG-PAYMENT~~: **RESOLVED.** Stripe webhook returning 200 OK. Payment test successful. Transaction recorded, plan updated.
 > - 🔴 BUG-STREAM: Stream ends unexpectedly on media gen. Vercel 60s timeout. **Phase 160.2 (proactive timeout safety net).**
 > - 🔴 BUG-AUDIO: Audio PLAY button triggers ERR_INVALID_STATE. **Phase 168 (controller guard + download Range support).**
 > - ⚠️ Admin configurability (Phase 162): PENDING — after critical bugs resolved.
 >
-> **EXECUTION ORDER (PM audit #78 — critical bugs first, everything else on hold):**
+> **EXECUTION ORDER (PM audit #78.1 — 2 critical bugs first, then hardening):**
 >
-> 1. **🔴 OPS: STRIPE WEBHOOK VERIFICATION** — Owner must fix Stripe Dashboard config. Zero code.
-> 2. **🔴 Phase 168 CRITICAL** — Audio player + download Range support + SSE controller guard.
-> 3. **🔴 Phase 160.2 CRITICAL** — Proactive timeout safety net (55s timer before Vercel kill).
-> 4. **Phase 165 HIGH** — Checkout success page DB polling (payment safety net). PRIORITY BUMPED.
-> 5. **Phase 167.2 HIGH** — Remaining 35 empty catch blocks.
-> 6. **Phase 162 HIGH** — Promo text admin-configurable.
-> 7. **Phase 163 HIGH** — Global error boundary.
-> 8. **Phase 143 MEDIUM** — Env var runtime validation.
-> 9. **Phase 144–148 MEDIUM/LOW** — Backlog.
+> 1. **🔴 Phase 168 CRITICAL** — Audio player + download Range support + SSE controller guard.
+> 2. **🔴 Phase 160.2 CRITICAL** — Proactive timeout safety net (55s timer before Vercel kill).
+> 3. **Phase 167.2 HIGH** — Remaining 35 empty catch blocks.
+> 4. **Phase 162 HIGH** — Promo text admin-configurable.
+> 5. **Phase 163 HIGH** — Global error boundary.
+> 6. **Phase 165 MEDIUM** — Checkout success page DB polling (safety net — payment now working, deprioritized).
+> 7. **Phase 143 MEDIUM** — Env var runtime validation.
+> 8. **Phase 144–148 MEDIUM/LOW** — Backlog.
 >
 > _Critical bugs block ALL other work. No exceptions._
-> _Post-deploy ops checklist (Stripe webhook verification, streaming test, payment test) is owner responsibility._
-
----
-
-## � OWNER ACTION REQUIRED — Stripe Webhook Ops Verification (PM audit #78)
-
-> **This is NOT a code task.** The owner must verify Stripe Dashboard configuration. Zero code changes needed.
-> All three audit agents (Architect, Engineer, PM) independently verified the webhook code is correct.
-
-**What the owner must check in Stripe Dashboard → Developers → Webhooks:**
-
-1. **Endpoint URL** — Must be `https://<production-domain>/api/webhooks/stripe` (exact path match)
-2. **Signing secret** — The `whsec_...` value must match the `STRIPE_WEBHOOK_SECRET` environment variable in Vercel
-3. **Event types** — `checkout.session.completed` must be checked/selected
-4. **Recent deliveries** — Check for 400/500 responses (evidence of failed delivery attempts)
-5. **Send test webhook** — Use Stripe's test webhook button to verify connectivity
-
-**If URL or secret is wrong:** Fix in Stripe Dashboard. Re-test payment flow.
-**If event type is missing:** Add `checkout.session.completed`. Re-test payment flow.
-**If deliveries show 400:** Signing secret mismatch. Update `STRIPE_WEBHOOK_SECRET` in Vercel env.
-**If deliveries show 500:** Server error — check Vercel function logs for `[stripe-webhook]` entries.
-
-**Acceptance criteria:**
-
-- [ ] Stripe webhook endpoint URL matches production domain
-- [ ] `STRIPE_WEBHOOK_SECRET` env var matches webhook endpoint signing secret
-- [ ] `checkout.session.completed` event type is selected
-- [ ] Test payment creates Transaction record AND updates User plan
 
 ---
 
@@ -130,11 +101,11 @@ File: `src/components/shared/audio-player.tsx`
 
 ---
 
-## HIGH — Checkout Success Page DB Polling (PM audit #78 — PRIORITY BUMPED)
+## MEDIUM — Checkout Success Page DB Polling (PM audit #75)
 
-### Phase 165 HIGH — Add plan confirmation polling to checkout success page
+### Phase 165 MEDIUM — Add plan confirmation polling to checkout success page
 
-> PRIORITY BUMPED from MEDIUM to HIGH (PM audit #78). Acts as safety net for BUG-PAYMENT. After Stripe redirects to `/checkout-success`, webhook may not have processed yet. User sees "success" but plan is still Lite.
+> BUG-PAYMENT resolved (PM audit #78.1 — owner verified). Deprioritized back to MEDIUM. Still a good safety net: after Stripe redirects to `/checkout-success`, webhook may not have processed yet. User sees "success" but plan is still Lite.
 
 **File:** `src/app/(public)/checkout-success/page.tsx` (or add client component)
 
@@ -153,7 +124,7 @@ File: `src/components/shared/audio-player.tsx`
 
 ---
 
-## 🟢 ENGINEER START HERE (after critical bugs) — Remaining Empty Catch Blocks (PM audit #78)
+## HIGH — Remaining Empty Catch Blocks (PM audit #78)
 
 ### Phase 167.2 HIGH — Fix remaining 35 parameterless `catch {` blocks across `src/`
 

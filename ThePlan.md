@@ -513,38 +513,37 @@ This sequence is mandatory.
 
 ## 9. Current Execution Order
 
-> Milestones 0–25 ALL COMPLETE. **DEPLOYED TO PRODUCTION.** 3 CRITICAL production bugs active (PM audit #78, 2026-03-30). Phase 167 partially completed (targeted catches in 9 files). 35 parameterless catches remain repo-wide. Phases 160/161 RE-OPENED — code is deployed but insufficient/ops-blocked. Phase 168 NEW (audio player + download Range support).
+> Milestones 0–25 ALL COMPLETE. **DEPLOYED TO PRODUCTION.** 2 CRITICAL production bugs active (audio, streaming). BUG-PAYMENT RESOLVED (PM audit #78.1 — owner verified Stripe webhook 200 OK + payment test passed). Phase 167 partially completed (targeted catches in 9 files). 35 parameterless catches remain repo-wide. Phase 168 NEW (audio player + download Range support). Phase 160.2 NEW (proactive timeout safety net).
 > **4 of 6 gates GREEN (Product RED, Admin YELLOW).** 101 unit test suites, 592 tests (all pass). E2E: 8 specs (49 tests). Zero `as never` casts.
 > Coverage thresholds: 85/80/85/85. Node.js 24.12.0. Build passing locally. TSC clean. Lint: 0 errors, 0 warnings. Knip: 0 findings.
 > Admin-configurability PARTIAL: core resolved (FAQ 74.2, landing 104, stop msgs 107, support email 74.1). **Remaining: promo/upgrade text still hardcoded (Phase 162).**
 
-**CRITICAL PRODUCTION BUGS (active, PM audit #78):**
+**REMAINING PRODUCTION BUGS (PM audit #78.1):**
 
-> 1. **BUG-PAYMENT**: Payment succeeds but no Transaction/plan update. Stripe webhook misconfigured. **OPS FIX — zero code changes.**
+> 1. ~~**BUG-PAYMENT**~~: **RESOLVED.** Stripe webhook returning 200 OK. Payment test passed. Transaction created, User plan updated.
 > 2. **BUG-STREAM**: Stream ends unexpectedly on media gen. Vercel 60s timeout. **Phase 160.2 — proactive timeout safety net.**
 > 3. **BUG-AUDIO**: Audio PLAY button triggers ERR_INVALID_STATE. **Phase 168 — controller guard + download Range support.**
 
-**Priority order (PM audit #78 — production bugs first):**
+**Priority order (PM audit #78.1 — 2 critical bugs first, then hardening):**
 
-1. **🔴 STRIPE OPS VERIFICATION (BUG-PAYMENT)** — Owner must verify Stripe Dashboard: webhook URL, signing secret, event types. Check Recent Deliveries for failed attempts. **Zero code. Fixes revenue.**
-2. **🔴 Phase 168 CRITICAL** — Audio player ERR_INVALID_STATE fix: (a) add `controllerClosed` boolean flag in SSE stream before `controller.close()`, checked by `emitHeartbeat`; (b) add HTTP Range request support to `/api/download` for audio/video playback; (c) harden audio player lifecycle (`previousAudioUrlRef` reset on cleanup, `src = ""` disposal, error event listener).
-3. **🔴 Phase 160.2 CRITICAL** — Proactive timeout safety net: set a `maxDuration - 5s` timer that sends graceful `{type: "error", error: "Media generation timed out. Your content may still be processing."}` before Vercel kills the function. Also discuss Vercel Pro upgrade ($20/mo, 300s timeout) with owner.
-4. **🟡 Phase 165 HIGH** — Checkout success page DB polling (safety net for BUG-PAYMENT). Poll plan status for 30s after Stripe redirect.
-5. **Phase 167.2 HIGH** — Remaining 35 empty catch blocks across `src/`. Phase 167 was partially completed (API routes, admin actions, delete cascade, sidebar). Remaining: clerk webhook catches, task actions, theme, audio player, upload AWS, s3-file-reference, effective-\* resolvers, normalize-public-asset, chat-wrapper, chat-input, library-delete, sidebar-nav, layout.tsx, ensure-user-synced, checkout-success, download route, generateResponse.
-6. **Phase 162 HIGH** — Extract promo/upgrade text to admin-configurable settings.
-7. **Phase 163 HIGH** — Add `global-error.tsx` for root layout error recovery.
-8. **Phase 143 MEDIUM** — Replace `as string` / `!` casts on env vars with runtime validation.
-9. **Phase 144 MEDIUM** — Admin config in-memory cache with 30s TTL.
-10. **Phase 145 MEDIUM** — Upload filename collision fix (`crypto.randomUUID()`).
-11. **Phase 146 LOW** — Admin user detail transaction `.limit(50)`.
-12. **Phase 147 LOW** — Rename `.tsx` utility files to `.ts` where no JSX.
-13. **Phase 148 LOW** — Admin bulk operations partial-failure reporting.
+1. **🔴 Phase 168 CRITICAL** — Audio player ERR_INVALID_STATE fix: (a) add `controllerClosed` boolean flag in SSE stream before `controller.close()`, checked by `emitHeartbeat`; (b) add HTTP Range request support to `/api/download` for audio/video playback; (c) harden audio player lifecycle (`previousAudioUrlRef` reset on cleanup, `src = ""` disposal, error event listener).
+2. **🔴 Phase 160.2 CRITICAL** — Proactive timeout safety net: set a `maxDuration - 5s` timer that sends graceful `{type: "error", error: "Media generation timed out. Your content may still be processing."}` before Vercel kills the function. Also discuss Vercel Pro upgrade ($20/mo, 300s timeout) with owner.
+3. **Phase 167.2 HIGH** — Remaining 35 empty catch blocks across `src/`.
+4. **Phase 162 HIGH** — Extract promo/upgrade text to admin-configurable settings.
+5. **Phase 163 HIGH** — Add `global-error.tsx` for root layout error recovery.
+6. **Phase 165 MEDIUM** — Checkout success page DB polling (safety net — payment now working, deprioritized).
+7. **Phase 143 MEDIUM** — Replace `as string` / `!` casts on env vars with runtime validation.
+8. **Phase 144 MEDIUM** — Admin config in-memory cache with 30s TTL.
+9. **Phase 145 MEDIUM** — Upload filename collision fix (`crypto.randomUUID()`).
+10. **Phase 146 LOW** — Admin user detail transaction `.limit(50)`.
+11. **Phase 147 LOW** — Rename `.tsx` utility files to `.ts` where no JSX.
+12. **Phase 148 LOW** — Admin bulk operations partial-failure reporting.
 
 **Completed and deployed (Production):**
 
 - Phase 160 — `maxDuration=60`, heartbeat, `didSendFinal`, stderr logging. **Deployed but insufficient (see Phase 160.2).**
 - Phase 160.1 — `maxDuration` reduced to 60, client timeout to 70s. **Deployed.**
-- Phase 161 — Webhook idempotency repair + error logging. **Deployed. Ops-blocked by Stripe misconfig.**
+- Phase 161 — Webhook idempotency repair + error logging. **Deployed. VERIFIED IN PRODUCTION (PM audit #78.1 — owner confirmed webhook 200 OK + payment test passed).**
 - Phase 164 — Client timeout 70s. **Deployed.**
 - Phase 166 — maxDuration on all 6 API routes. **Deployed.**
 - Phase 167 (partial) — Targeted catch blocks in API routes, admin actions, delete cascade, sidebar. **Deployed.** 35 remain.
