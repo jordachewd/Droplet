@@ -68,7 +68,7 @@ import {
 import type { ChatApiResponse, ChatStreamEvent } from "@/types/chat-api";
 import { z } from "zod";
 
-export const maxDuration = 300;
+export const maxDuration = 60;
 
 const OPENAI_RATE_LIMIT_MAX_REQUESTS = 20;
 const OPENAI_RATE_LIMIT_WINDOW_MS = 60_000;

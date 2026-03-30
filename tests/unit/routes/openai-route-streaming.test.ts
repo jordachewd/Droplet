@@ -156,7 +156,7 @@ describe("POST /api/openai - streaming", () => {
   });
 
   it("exports maxDuration for long-running stream requests", () => {
-    expect(maxDuration).toBe(300);
+    expect(maxDuration).toBe(60);
   });
 
   it("streams meta, chunk, and final events when streaming is requested", async () => {
