@@ -25,6 +25,8 @@ import { enforceSlidingWindowRateLimit } from "@/lib/utils/rate-limit";
 import { auth } from "@clerk/nextjs/server";
 import { z } from "zod";
 
+export const maxDuration = 30;
+
 const uploadFormDataSchema = z
   .object({
     file: z.instanceof(File),

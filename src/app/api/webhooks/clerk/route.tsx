@@ -14,6 +14,8 @@ import { isMongoDuplicateKeyError } from "@/lib/utils/type-guards";
 import { nonEmptyStringSchema } from "@/lib/utils/validation-schemas";
 import { z } from "zod";
 
+export const maxDuration = 60;
+
 type ClerkBackendEmailAddress = {
   id: string;
   emailAddress: string;

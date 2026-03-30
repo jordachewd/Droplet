@@ -563,13 +563,13 @@ export default function ChatWrapper({
   };
 
   return (
-    <main className="ChatWrapper relative flex h-full flex-1 flex-col overflow-hidden">
+    <main className="ChatWrapper relative flex h-full flex-1 flex-col overflow-hidden -mt-14">
       {alert && <AlertMessage message={alert} />}
 
       <section
         id="ChatWrapperContent"
         className={classNames(
-          "ChatWrapperContent relative z-10 -mt-14 flex w-full flex-1 flex-col overflow-y-auto pb-4",
+          "ChatWrapperContent relative z-10 flex w-full h-dvh flex-col overflow-y-auto pt-14",
           isNewTask && "items-center justify-center px-4",
         )}
       >

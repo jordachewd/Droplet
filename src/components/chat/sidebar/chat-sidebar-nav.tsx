@@ -231,37 +231,39 @@ export default function ChatSidebarNav({
                     </p>
                   </div>
                 </Link>
-
-                <button
-                  type="button"
-                  className={classNames(
-                    "SidebarDeleteBtn inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-transparent text-xs text-midnightBlue-700 transition-all dark:text-lavenderHaze-700",
-                    "hover:border-slate-400 hover:bg-lavenderHaze-300/70 hover:opacity-100",
-                    "focus-visible:border-lavenderHaze-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lavenderHaze-300/60",
-                    "dark:hover:border-slate-500 dark:hover:bg-nightIndigo-500/30",
-                    "dark:focus-visible:border-nightIndigo-400 dark:focus-visible:ring-nightIndigo-500/40",
-                    isDeleteDisabled &&
-                      "cursor-not-allowed opacity-35 hover:border-transparent hover:bg-transparent",
-                  )}
-                  onClick={() => requestDeleteConversation(item)}
-                  disabled={isDeleteDisabled}
-                  aria-label={deleteLabel}
-                  title={
-                    item.isDemo
-                      ? "Demo conversations cannot be deleted"
-                      : "Delete conversation"
-                  }
-                >
-                  <i
+                
+                {isOpen && (
+                  <button
+                    type="button"
                     className={classNames(
-                      isDeleting
-                        ? "bi bi-arrow-repeat animate-spin"
-                        : "bi bi-trash3",
-                      "text-sm",
+                      "SidebarDeleteBtn inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-transparent text-xs text-midnightBlue-700 transition-all dark:text-lavenderHaze-700",
+                      "hover:border-slate-400 hover:bg-lavenderHaze-300/70 hover:opacity-100",
+                      "focus-visible:border-lavenderHaze-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lavenderHaze-300/60",
+                      "dark:hover:border-slate-500 dark:hover:bg-nightIndigo-500/30",
+                      "dark:focus-visible:border-nightIndigo-400 dark:focus-visible:ring-nightIndigo-500/40",
+                      isDeleteDisabled &&
+                        "cursor-not-allowed opacity-35 hover:border-transparent hover:bg-transparent",
                     )}
-                    aria-hidden="true"
-                  ></i>
-                </button>
+                    onClick={() => requestDeleteConversation(item)}
+                    disabled={isDeleteDisabled}
+                    aria-label={deleteLabel}
+                    title={
+                      item.isDemo
+                        ? "Demo conversations cannot be deleted"
+                        : "Delete conversation"
+                    }
+                  >
+                    <i
+                      className={classNames(
+                        isDeleting
+                          ? "bi bi-arrow-repeat animate-spin"
+                          : "bi bi-trash3",
+                        "text-sm",
+                      )}
+                      aria-hidden="true"
+                    ></i>
+                  </button>
+                )}
               </div>
             );
           })}
