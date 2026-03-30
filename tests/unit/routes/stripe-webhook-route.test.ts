@@ -117,7 +117,7 @@ describe("POST /api/webhooks/stripe", () => {
     expect(payload.message).toBe("Webhook error");
     expect(payload.error).toBe("Webhook processing failed");
     expect(stderrWriteMock).toHaveBeenCalledWith(
-      "[stripe-webhook] Invalid webhook signature.\n",
+      "[stripe-webhook] Invalid webhook signature: Invalid signature\n",
     );
   });
 
@@ -235,7 +235,7 @@ describe("POST /api/webhooks/stripe", () => {
         _id: "mongo_user_1",
         clerkId: "clerk_user_1",
       },
-      "_id clerkId",
+      "_id clerkId plan.stripeId",
       { lean: true },
     );
     expect(User.findOneAndUpdate).toHaveBeenCalledWith(
@@ -293,10 +293,10 @@ describe("POST /api/webhooks/stripe", () => {
     expect(payload.error).toBe("Webhook processing failed");
     expect(User.findOneAndUpdate).not.toHaveBeenCalled();
     expect(stderrWriteMock).toHaveBeenCalledWith(
-      "[stripe-webhook] Failed to create transaction.\n",
+      "[stripe-webhook] Failed to create transaction for session cs_test_123 and user mongo_user_1: Transaction create failed\n",
     );
     expect(stderrWriteMock).toHaveBeenCalledWith(
-      "[stripe-webhook] Transaction creation returned null.\n",
+      "[stripe-webhook] Transaction creation returned null for session cs_test_123 and user mongo_user_1.\n",
     );
   });
 
@@ -331,7 +331,7 @@ describe("POST /api/webhooks/stripe", () => {
       error: "Webhook processing failed",
     });
     expect(stderrWriteMock).toHaveBeenCalledWith(
-      "[stripe-webhook] Failed to update the checkout user.\n",
+      "[stripe-webhook] Failed to update user plan for session cs_test_123 and user mongo_user_1.\n",
     );
   });
 
@@ -366,7 +366,7 @@ describe("POST /api/webhooks/stripe", () => {
     expect(Transaction.create).not.toHaveBeenCalled();
     expect(User.findOneAndUpdate).not.toHaveBeenCalled();
     expect(stderrWriteMock).toHaveBeenCalledWith(
-      "[stripe-webhook] Checkout session could not be matched to a user.\n",
+      "[stripe-webhook] Checkout session cs_test_404 could not be matched to user mongo_user_404.\n",
     );
   });
 
@@ -409,6 +409,10 @@ describe("POST /api/webhooks/stripe", () => {
     vi.mocked(Transaction.findOne).mockResolvedValue({
       stripeId: "cs_test_duplicate",
     });
+    vi.mocked(User.findOne).mockResolvedValue({
+      _id: "mongo_user_1",
+      plan: { stripeId: "cs_test_duplicate" },
+    } as unknown as Awaited<ReturnType<typeof User.findOne>>);
 
     const response = await POST(buildRequest('{"valid":"payload"}', "sig_123"));
     const payload = await response.json();
@@ -419,7 +423,7 @@ describe("POST /api/webhooks/stripe", () => {
     expect(User.findOneAndUpdate).not.toHaveBeenCalled();
   });
 
-  it("short-circuits replayed checkout events before user lookups", async () => {
+  it("repairs user plan when replayed webhook has existing transaction but stale user plan", async () => {
     vi.mocked(getExpiresOn).mockReturnValue(
       new Date("2026-04-05T10:00:00.000Z"),
     );
@@ -442,15 +446,34 @@ describe("POST /api/webhooks/stripe", () => {
     vi.mocked(Transaction.findOne).mockResolvedValue({
       stripeId: "cs_test_duplicate_short_circuit",
     });
-    vi.mocked(User.findOne).mockResolvedValue(null);
+    vi.mocked(User.findOne).mockResolvedValue({
+      _id: "mongo_user_deleted",
+      clerkId: "clerk_user_deleted",
+    } as unknown as Awaited<ReturnType<typeof User.findOne>>);
 
     const response = await POST(buildRequest('{"valid":"payload"}', "sig_123"));
     const payload = await response.json();
 
     expect(response.status).toBe(200);
-    expect(payload.message).toBe("Already processed");
-    expect(User.findOne).not.toHaveBeenCalled();
+    expect(payload.message).toBe("OK");
+    expect(User.findOne).toHaveBeenCalledTimes(1);
     expect(Transaction.create).not.toHaveBeenCalled();
-    expect(User.findOneAndUpdate).not.toHaveBeenCalled();
+    expect(User.findOneAndUpdate).toHaveBeenCalledWith(
+      { _id: "mongo_user_deleted", clerkId: "clerk_user_deleted" },
+      expect.objectContaining({
+        plan: expect.objectContaining({
+          stripeId: "cs_test_duplicate_short_circuit",
+          name: "Pro",
+        }),
+      }),
+      {
+        returnDocument: "after",
+        strict: true,
+        upsert: false,
+      },
+    );
+    expect(stderrWriteMock).toHaveBeenCalledWith(
+      "[stripe-webhook] Repairing user plan state for replayed session cs_test_duplicate_short_circuit and user mongo_user_deleted.\n",
+    );
   });
 });
