@@ -26,7 +26,7 @@ export default function ChatIntro({ persona, sendPrompt }: ChatIntroProps) {
   }
 
   const introWrapperClass = classNames(
-    "ChatIntro mx-auto flex w-full max-w-5xl flex-col gap-6 px-4",
+    "ChatIntro mx-auto flex w-full max-w-4xl flex-col gap-6 px-4",
   );
 
   const introPromptButtonClass = classNames(

@@ -21,6 +21,7 @@ import { buildS3ObjectKey } from "@/lib/utils/aws/s3-file-reference";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import Upload from "@/lib/database/models/upload.model";
 import { requireActiveUser } from "@/lib/utils/require-active-user";
+import { enforceSlidingWindowRateLimit } from "@/lib/utils/rate-limit";
 import { auth } from "@clerk/nextjs/server";
 import { z } from "zod";
 
@@ -32,6 +33,9 @@ const uploadFormDataSchema = z
   .strict();
 
 type UploadFormData = z.infer<typeof uploadFormDataSchema>;
+
+const UPLOAD_RATE_LIMIT_MAX_REQUESTS = 30;
+const UPLOAD_RATE_LIMIT_WINDOW_MS = 60_000;
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
@@ -55,6 +59,27 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       return NextResponse.json(
         { error: "Account suspended." },
         { status: 403 },
+      );
+    }
+
+    const rateLimit = await enforceSlidingWindowRateLimit({
+      key: `upload:${userId}`,
+      limit: UPLOAD_RATE_LIMIT_MAX_REQUESTS,
+      windowMs: UPLOAD_RATE_LIMIT_WINDOW_MS,
+    });
+
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: "Too many upload requests. Please try again shortly." },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(Math.ceil(rateLimit.retryAfterMs / 1000)),
+            "X-RateLimit-Limit": String(rateLimit.limit),
+            "X-RateLimit-Remaining": String(rateLimit.remaining),
+            "X-RateLimit-Reset": String(rateLimit.resetAt),
+          },
+        },
       );
     }
 

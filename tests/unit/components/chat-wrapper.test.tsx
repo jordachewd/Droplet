@@ -380,7 +380,7 @@ describe("ChatWrapper", () => {
       fireEvent.click(screen.getByRole("button", { name: "Send message" }));
 
       await act(async () => {
-        await vi.advanceTimersByTimeAsync(200_000);
+        await vi.advanceTimersByTimeAsync(310_000);
       });
 
       expect(screen.getByRole("alert").textContent).toContain(

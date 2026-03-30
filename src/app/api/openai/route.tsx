@@ -68,11 +68,14 @@ import {
 import type { ChatApiResponse, ChatStreamEvent } from "@/types/chat-api";
 import { z } from "zod";
 
+export const maxDuration = 300;
+
 const OPENAI_RATE_LIMIT_MAX_REQUESTS = 20;
 const OPENAI_RATE_LIMIT_WINDOW_MS = 60_000;
 const TASK_STORAGE_WARNING_BYTES = 12 * 1024 * 1024;
 const DEFAULT_CHAT_TASK_CLASS: TaskClass = "standard";
 const DEFAULT_CHAT_BUDGET_STATE: BudgetState = "normal";
+const STREAM_GENERAL_HEARTBEAT_INTERVAL_MS = 30_000;
 const STREAM_MEDIA_HEARTBEAT_INTERVAL_MS = 12_000;
 const STREAM_HEADERS = {
   "Content-Type": "text/event-stream; charset=utf-8",
@@ -1429,8 +1432,58 @@ export async function POST(req: Request): Promise<Response> {
     if (streamingResponseRequested) {
       const stream = new ReadableStream<Uint8Array>({
         async start(controller) {
+          let didSendFinal = false;
+          let generalHeartbeatInterval: ReturnType<typeof setInterval> | null =
+            null;
           let mediaHeartbeatInterval: ReturnType<typeof setInterval> | null =
             null;
+
+          const writeErrorEvent = (
+            errorMessage: string,
+            context: string,
+          ): boolean => {
+            try {
+              writeStreamEvent(controller, {
+                type: "error",
+                error: errorMessage,
+              });
+              didSendFinal = true;
+              return true;
+            } catch (error) {
+              process.stderr.write(
+                `[openai/route] ${context}: ${error instanceof Error ? error.message : "unknown"}\n`,
+              );
+              return false;
+            }
+          };
+
+          const writeFinalEvent = (
+            payload: ChatApiResponse,
+            context: string,
+          ): boolean => {
+            try {
+              writeStreamEvent(controller, {
+                type: "final",
+                payload,
+              });
+              didSendFinal = true;
+              return true;
+            } catch (error) {
+              process.stderr.write(
+                `[openai/route] ${context}: ${error instanceof Error ? error.message : "unknown"}\n`,
+              );
+              return false;
+            }
+          };
+
+          const stopGeneralHeartbeat = () => {
+            if (generalHeartbeatInterval === null) {
+              return;
+            }
+
+            clearInterval(generalHeartbeatInterval);
+            generalHeartbeatInterval = null;
+          };
 
           const stopMediaHeartbeat = () => {
             if (mediaHeartbeatInterval === null) {
@@ -1455,6 +1508,18 @@ export async function POST(req: Request): Promise<Response> {
             }
           };
 
+          const startGeneralHeartbeat = () => {
+            if (generalHeartbeatInterval !== null) {
+              return;
+            }
+
+            generalHeartbeatInterval = setInterval(() => {
+              if (!emitHeartbeat()) {
+                stopGeneralHeartbeat();
+              }
+            }, STREAM_GENERAL_HEARTBEAT_INTERVAL_MS);
+          };
+
           const startMediaHeartbeat = () => {
             if (mediaHeartbeatInterval !== null) {
               return;
@@ -1477,6 +1542,7 @@ export async function POST(req: Request): Promise<Response> {
               taskId,
               personaId: selectedPersona.id,
             });
+            startGeneralHeartbeat();
 
             const aiPayload = await generateStreamingResponse({
               messages: promptPayloadMessages,
@@ -1530,24 +1596,40 @@ export async function POST(req: Request): Promise<Response> {
             });
 
             if (finalResult.payload.error && !finalResult.payload.taskData) {
-              writeStreamEvent(controller, {
-                type: "error",
-                error: finalResult.payload.error,
-              });
+              writeErrorEvent(
+                finalResult.payload.error,
+                "failed to write error event to stream",
+              );
             } else {
-              writeStreamEvent(controller, {
-                type: "final",
-                payload: finalResult.payload,
-              });
+              writeFinalEvent(
+                finalResult.payload,
+                "failed to write final event to stream",
+              );
             }
-          } catch {
-            writeStreamEvent(controller, {
-              type: "error",
-              error: OPENAI_ERROR_MESSAGES.unknown,
-            });
+          } catch (error) {
+            process.stderr.write(
+              `[openai/route] streaming pipeline failed: ${error instanceof Error ? error.message : "unknown"}\n`,
+            );
+            writeErrorEvent(
+              OPENAI_ERROR_MESSAGES.unknown,
+              "failed to write fallback error event to stream",
+            );
           } finally {
+            stopGeneralHeartbeat();
             stopMediaHeartbeat();
-            controller.close();
+            if (!didSendFinal) {
+              writeErrorEvent(
+                OPENAI_ERROR_MESSAGES.unknown,
+                "failed to write synthetic final error event to stream",
+              );
+            }
+            try {
+              controller.close();
+            } catch (error) {
+              process.stderr.write(
+                `[openai/route] failed to close stream controller: ${error instanceof Error ? error.message : "unknown"}\n`,
+              );
+            }
           }
         },
       });

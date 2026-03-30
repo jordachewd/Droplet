@@ -1,3 +1,5 @@
+import "server-only";
+
 import { SUPPORT_EMAIL } from "@/constants/support";
 import { DEFAULT_PLAN_PRICING, PlanPricing } from "@/constants/plans";
 import type { FullPersonaAccessByPlan } from "@/lib/utils/effective-persona-access";

@@ -202,7 +202,7 @@ export default function ChatInput({
               disabled ? "This conversation has ended." : "Ask Droplet..."
             }
             onChange={handlePromptChange}
-            rows={3}
+            rows={2}
             className={textareaClass}
             onKeyDown={handlePromptKeyDown}
             aria-label="Message input"

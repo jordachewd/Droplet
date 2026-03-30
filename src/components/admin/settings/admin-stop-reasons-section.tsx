@@ -1,12 +1,13 @@
 "use client";
 
-import { STOP_REASON_CODES } from "@/constants/stop-reasons";
 import { updateAdminSettingAction } from "@/lib/actions/admin.actions";
 import { AdminFormSubmitButton } from "@/components/admin/admin-form-submit-button";
 import { AdminManagedForm } from "@/components/admin/admin-managed-form";
 import { StopReasonMessagesSettingsFormValue } from "@/components/admin/settings/types";
+import type { TaskEndedReason } from "@/types/TaskData.d";
 
 interface AdminStopReasonsSectionProps {
+  stopReasonCodes: readonly TaskEndedReason[];
   stopReasonMessagesValue: StopReasonMessagesSettingsFormValue;
 }
 
@@ -18,6 +19,7 @@ function formatStopReasonLabel(stopReasonCode: string): string {
 }
 
 export function AdminStopReasonsSection({
+  stopReasonCodes,
   stopReasonMessagesValue,
 }: AdminStopReasonsSectionProps) {
   return (
@@ -35,7 +37,7 @@ export function AdminStopReasonsSection({
       </p>
 
       <div className="grid grid-cols-1 gap-4">
-        {STOP_REASON_CODES.map((stopReasonCode) => (
+        {stopReasonCodes.map((stopReasonCode) => (
           <label key={stopReasonCode} className="text-sm">
             <span className="mb-1 block font-medium">
               {formatStopReasonLabel(stopReasonCode)}

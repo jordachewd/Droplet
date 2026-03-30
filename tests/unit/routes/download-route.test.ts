@@ -4,6 +4,7 @@ import { GET } from "@/app/api/download/route";
 import { auth } from "@clerk/nextjs/server";
 import getFileFromAWS from "@/lib/utils/aws/getFileFromAWS";
 import { requireActiveUser } from "@/lib/utils/require-active-user";
+import { enforceSlidingWindowRateLimit } from "@/lib/utils/rate-limit";
 import { mockAuth } from "../test-support";
 
 vi.mock("@clerk/nextjs/server", () => ({
@@ -16,6 +17,10 @@ vi.mock("@/lib/utils/aws/getFileFromAWS", () => ({
 
 vi.mock("@/lib/utils/require-active-user", () => ({
   requireActiveUser: vi.fn(),
+}));
+
+vi.mock("@/lib/utils/rate-limit", () => ({
+  enforceSlidingWindowRateLimit: vi.fn(),
 }));
 
 type ActiveUserStatus = "active" | "suspended" | "not_provisioned";
@@ -50,6 +55,13 @@ describe("GET /api/download", () => {
       ETag: '"etag"',
       LastModified: new Date("2026-03-10T10:00:00.000Z"),
     } as unknown as Awaited<ReturnType<typeof getFileFromAWS>>);
+    vi.mocked(enforceSlidingWindowRateLimit).mockResolvedValue({
+      success: true,
+      limit: 60,
+      remaining: 59,
+      resetAt: Date.now() + 60_000,
+      retryAfterMs: 0,
+    });
   });
 
   afterEach(() => {
@@ -98,6 +110,26 @@ describe("GET /api/download", () => {
     await expect(response.text()).resolves.toContain(
       "Account not yet provisioned",
     );
+    expect(getFileFromAWS).not.toHaveBeenCalled();
+  });
+
+  it("returns 429 when download rate limit is exceeded", async () => {
+    vi.mocked(enforceSlidingWindowRateLimit).mockResolvedValue({
+      success: false,
+      limit: 60,
+      remaining: 0,
+      resetAt: Date.now() + 1_200,
+      retryAfterMs: 1_200,
+    });
+    const req = new NextRequest(
+      "http://localhost:3000/api/download?key=user_123%2Fimages%2Ffile.png",
+    );
+
+    const response = await GET(req);
+
+    expect(response.status).toBe(429);
+    expect(response.headers.get("Retry-After")).toBe("2");
+    await expect(response.text()).resolves.toContain("Too many requests");
     expect(getFileFromAWS).not.toHaveBeenCalled();
   });
 

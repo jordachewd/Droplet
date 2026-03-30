@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { POST } from "@/app/api/openai/route";
+import { POST, maxDuration } from "@/app/api/openai/route";
 import {
   generateResponse,
   generateStreamingResponse,
@@ -153,6 +153,10 @@ describe("POST /api/openai - streaming", () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+  });
+
+  it("exports maxDuration for long-running stream requests", () => {
+    expect(maxDuration).toBe(300);
   });
 
   it("streams meta, chunk, and final events when streaming is requested", async () => {

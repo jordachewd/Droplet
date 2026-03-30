@@ -12,7 +12,7 @@ describe("Button", () => {
 
     expect(button.className).toContain("Button");
     expect(button.className).toContain("btn");
-    expect(button.className).toContain("btn-md");
+    expect(button.className).toContain("btn-sm");
     expect(button.className).toContain("btn-contained");
     expect(button.getAttribute("type")).toBe("button");
     expect(button.getAttribute("aria-busy")).toBe("false");

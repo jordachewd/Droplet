@@ -7,6 +7,7 @@ import Upload from "@/lib/database/models/upload.model";
 import { requireActiveUser } from "@/lib/utils/require-active-user";
 import { auth } from "@clerk/nextjs/server";
 import { MAX_UPLOAD_SIZE_BYTES } from "@/lib/utils/upload-file-validation";
+import { enforceSlidingWindowRateLimit } from "@/lib/utils/rate-limit";
 
 vi.mock("@clerk/nextjs/server", () => ({
   auth: vi.fn(),
@@ -28,6 +29,10 @@ vi.mock("@/lib/database/models/upload.model", () => ({
 
 vi.mock("@/lib/utils/require-active-user", () => ({
   requireActiveUser: vi.fn(),
+}));
+
+vi.mock("@/lib/utils/rate-limit", () => ({
+  enforceSlidingWindowRateLimit: vi.fn(),
 }));
 
 function buildRequestWithFormData(formData: FormData): NextRequest {
@@ -61,6 +66,13 @@ describe("POST /api/upload", () => {
     vi.mocked(uploadFileToAWS).mockResolvedValue(
       "/api/download?key=user_123%2Fuploads%2Fuploaded_file_1700000000000.png",
     );
+    vi.mocked(enforceSlidingWindowRateLimit).mockResolvedValue({
+      success: true,
+      limit: 30,
+      remaining: 29,
+      resetAt: Date.now() + 60_000,
+      retryAfterMs: 0,
+    });
   });
 
   afterEach(() => {
@@ -108,6 +120,30 @@ describe("POST /api/upload", () => {
 
     expect(response.status).toBe(503);
     expect(payload.error).toContain("Account not yet provisioned");
+    expect(uploadFileToAWS).not.toHaveBeenCalled();
+  });
+
+  it("returns 429 when upload rate limit is exceeded", async () => {
+    vi.mocked(enforceSlidingWindowRateLimit).mockResolvedValue({
+      success: false,
+      limit: 30,
+      remaining: 0,
+      resetAt: Date.now() + 1_800,
+      retryAfterMs: 1_800,
+    });
+
+    const formData = new FormData();
+    formData.set(
+      "file",
+      new File([new Uint8Array([1, 2, 3])], "image.png", { type: "image/png" }),
+    );
+
+    const response = await POST(buildRequestWithFormData(formData));
+    const payload = await response.json();
+
+    expect(response.status).toBe(429);
+    expect(response.headers.get("Retry-After")).toBe("2");
+    expect(payload.error).toContain("Too many upload requests");
     expect(uploadFileToAWS).not.toHaveBeenCalled();
   });
 

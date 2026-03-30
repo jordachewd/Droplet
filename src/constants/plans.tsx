@@ -1,3 +1,5 @@
+import "server-only";
+
 import { BillingCycle, Plan, PlanName } from "@/types/PlanData.d";
 import { PersonaId } from "@/types/PersonaData.d";
 import { PERSONAS } from "@/constants/assistant-personas";

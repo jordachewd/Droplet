@@ -33,7 +33,7 @@ interface ChatWrapperProps {
   initialEndAction?: TaskEndAction;
 }
 
-const STREAM_REQUEST_TIMEOUT_MS = 200_000;
+const STREAM_REQUEST_TIMEOUT_MS = 310_000;
 const STREAM_REQUEST_TIMEOUT_MESSAGE =
   "The response timed out. Please try again.";
 
@@ -569,7 +569,7 @@ export default function ChatWrapper({
       <section
         id="ChatWrapperContent"
         className={classNames(
-          "ChatWrapperContent relative z-10 mt-14 flex w-full flex-1 flex-col overflow-y-auto pb-4",
+          "ChatWrapperContent relative z-10 -mt-14 flex w-full flex-1 flex-col overflow-y-auto pb-4",
           isNewTask && "items-center justify-center px-4",
         )}
       >

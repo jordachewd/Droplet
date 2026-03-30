@@ -1,3 +1,5 @@
+import "server-only";
+
 import { Persona, PersonaId } from "@/types/PersonaData.d";
 
 export const DEFAULT_PERSONA_ID: PersonaId = "strategist";
