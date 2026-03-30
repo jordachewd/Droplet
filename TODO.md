@@ -5,23 +5,23 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #73 (2026-03-28). Milestones 0–25 COMPLETE. All phases through 159 complete (incl. 142, 155.1, 156, 158, 159). 591 unit tests (101 suites). 49 E2E tests (8 spec files). Build passes. TSC clean. Node.js 24.12.0 runtime.**
-> **GATE STATUS: All 7 gates GREEN. Lint (0 errors, 0 warnings), Knip (0 findings), TSC clean, build passes, unit tests (101/591), E2E (8 specs/49 tests), coverage 85/80/85/85.**
-> **TDD REBUILD COMPLETE. WCAG 2.2 AA COMPLETE. User deletion cascade COMPLETE (Phase 150). Library uploaded tab COMPLETE (Phase 151). Scrollbar removal COMPLETE (Phase 155 + 155.1). SSE catch/finally hardened (Phase 158). Button test fixed (Phase 159).**
+> **STATUS: PM audit #74 (2026-03-30). Milestones 0–25 COMPLETE. All phases through 159 complete. 591 unit tests (101 suites). 49 E2E tests (8 spec files). Build passes. TSC clean. Node.js 24.12.0 runtime.**
+> **GATE STATUS: All 7 validation gates GREEN. Lint (0 errors, 0 warnings), Knip (0 findings), TSC clean, build passes, unit tests (101/591), E2E (8 specs/49 tests), coverage 85/80/85/85.**
+> **RELEASE GATE STATUS: BLOCKED — 2 CRITICAL production bugs unresolved (stream + payment).**
 > **Zero: `as never`, `as any`, `console.log`, `console.error`, `window.alert`, `window.confirm`, `strict: false`, `droplet-scrollbar`, stale TODOs — all in `src/`.**
 >
-> **OWNER RE-REPORTS (production testing, PM audit #73):**
+> **OWNER RE-REPORTS (production testing, PM audit #74):**
 >
-> - **CRITICAL** — Media generation still triggers "The response stream ended unexpectedly" in production.
+> - **CRITICAL** — Media generation triggers "The response stream ended unexpectedly" in production. Also fails on large text responses.
 > - **CRITICAL** — Payment goes through Stripe but NO Transaction registered, user plan NOT updated.
-> - **HIGH** — Admin `/admin/settings` fully configurable — minor promo text gaps remain.
+> - **HIGH** — Admin `/admin/settings` fully configurable — promo/marketing text gaps remain in multiple components.
 >
-> **ROOT CAUSE ANALYSIS (PM audit #73, triple audit — Architect + Engineer + PM):**
+> **ROOT CAUSE ANALYSIS (PM audit #74, triple audit — Architect + Engineer + PM — unanimous):**
 >
-> - Stream error: Missing `maxDuration` export on API route (serverless function killed before media gen completes). No heartbeat for text-only responses. Silent failure swallowing in catch blocks.
-> - Payment: Most likely Stripe Dashboard webhook endpoint misconfiguration. CRITICAL code bug found: non-atomic Transaction/User update — if Transaction.create succeeds but User.findOneAndUpdate fails, idempotency check prevents Stripe retry from ever updating user plan. Webhook error details swallowed (actual `constructEvent` error not logged).
+> - Stream error: Missing `export const maxDuration` on API route (serverless function killed at 10-60s default, media gen needs up to 180s). No heartbeat during text-only streaming (OpenAI thinking/queue delays cause infrastructure idle timeout). Empty catch blocks swallow all error details making debugging impossible.
+> - Payment: Non-atomic Transaction/User update with flawed idempotency — if Transaction.create succeeds but User.findOneAndUpdate fails, Stripe retries get 200 "Already processed" (idempotency only checks Transaction, not User plan state). User plan is NEVER updated. Error details swallowed in all catch blocks. No top-level try/catch around webhook handler. Stripe Dashboard webhook config should also be verified (ops task).
 >
-> **NEXT SESSION: Phase 160 (CRITICAL stream fix) → Phase 161 (CRITICAL payment fix) → Phase 162 (HIGH promo text) → Phase 143–147 (MEDIUM/LOW)**
+> **EXECUTION ORDER: Phase 160 (CRITICAL stream) → Phase 161 (CRITICAL payment) → Phase 162 (HIGH promo text) → Phase 163 (HIGH global-error) → Phase 164 (MEDIUM client timeout alignment) → Phase 143–147 (MEDIUM/LOW backlog)**
 
 ---
 
@@ -65,17 +65,20 @@
 
 **What to do:**
 
-1. **Fix non-atomic idempotency (CRITICAL):** When the idempotency check finds an existing Transaction, also verify the user's plan was updated. If the user's plan doesn't match (still on old plan), reattempt the user plan update instead of returning "Already processed."
-2. **Log actual `constructEvent` error:** Change the catch block at line 106 to capture the error and log it: `catch (err) { logStripeWebhookError(\`Invalid webhook signature: ${err instanceof Error ? err.message : "unknown"}\`); }`. This immediately reveals secret mismatches.
-3. **Log actual `createTransaction` error:** Same pattern for the `createTransaction` catch block — log the real error message, not just "Failed to create transaction."
-4. **Add pre-verification arrival log:** Before the signature verification try/catch, add `logStripeWebhookEvent("Webhook received")` or equivalent so operators can confirm webhooks are arriving at all.
+1. **Fix non-atomic idempotency (CRITICAL):** When the idempotency check finds an existing Transaction, also verify the user's plan was updated (check `User.plan.stripeId` matches this `id`). If the user's plan doesn't match (still on old plan), reattempt the user plan update instead of returning "Already processed."
+2. **Add top-level try/catch around POST handler:** Wrap the entire handler body in try/catch. On unhandled error, return controlled 500 response with generic message. Log actual error to stderr with Stripe session ID context.
+3. **Log actual `constructEvent` error:** Change the catch block to capture the error: `catch (err) { logStripeWebhookError(\`Invalid webhook signature: ${err instanceof Error ? err.message : "unknown"}\`); }`. This immediately reveals secret mismatches.
+4. **Log actual `createTransaction` error:** Same pattern — capture original error object and log real message, not just "Failed to create transaction."
+5. **Add pre-verification arrival log:** Before the signature verification try/catch, log `"Webhook received"` so operators can confirm webhooks are arriving at all.
+6. **Include Stripe session ID in failure logs:** When `createTransaction` fails or `User.findOneAndUpdate` returns null, include the Stripe session ID and user ID in the log for payment correlation.
 
 **Acceptance criteria:**
 
 - [ ] Idempotency check verifies BOTH Transaction existence AND user plan state
 - [ ] If Transaction exists but user plan not updated, reattempt user plan update
+- [ ] Top-level try/catch wraps entire POST handler (no unhandled exceptions)
 - [ ] `constructEvent` error message logged (not swallowed)
-- [ ] `createTransaction` error details logged (not swallowed)
+- [ ] `createTransaction` error details logged with session ID context (not swallowed)
 - [ ] Webhook arrival logged before signature verification
 - [ ] Build passes, tests pass
 
@@ -92,20 +95,70 @@
 
 ### Phase 162 HIGH — Make sidebar promo upgrade text admin-configurable
 
-> Owner directive: admin settings must control ALL display text. `ChatSidebarPromo` has hardcoded "Go Pro"/"Go Premium" and hardcoded promo descriptions. These should come from admin-configurable settings or at minimum from the effective plan config.
+> Owner directive: admin settings must control ALL display text. `ChatSidebarPromo` has hardcoded "Go Pro"/"Go Premium" and hardcoded promo descriptions. `PlanPromo` has hardcoded "Unlock premium features", "Free forever", "Admin access - full permissions". `PersonaCard` has hardcoded upgrade messaging. These should come from admin-configurable settings or at minimum from the effective plan config.
 
-**File:** `src/components/chat/sidebar/chat-sidebar-promo.tsx`
+**Files:**
+
+1. `src/components/chat/sidebar/chat-sidebar-promo.tsx` — "Go Pro"/"Go Premium", promo descriptions, "Admin"/"Account Suspended" text
+2. `src/components/shared/plan-promo.tsx` — "Free forever", "Admin access - full permissions", "Unlock premium features with an upgrade!", "Upgrade now", suspension text
+3. `src/components/shared/persona-card.tsx` — "Upgrade to ${requiredPlan} to unlock this persona", "Trial access with reduced limits..."
 
 **What to do:**
 
-1. Accept promo title and description as props from the parent server component (which reads from effective admin config).
-2. Or, if parent restructuring is too invasive, add `AppSetting` keys for `admin.promoTitle.pro`, `admin.promoTitle.premium`, `admin.promoDescription.pro`, `admin.promoDescription.premium` and create a resolver.
-3. Remove hardcoded "Go Pro"/"Go Premium" and hardcoded promo description strings from the component.
+1. Create `src/lib/utils/effective-promo-content.ts` resolver following the existing `effective-*` pattern. Keys: `admin.promoTitle.pro`, `admin.promoTitle.premium`, `admin.promoDescription.pro`, `admin.promoDescription.premium`, `admin.promoUpgradeCta`, `admin.promoAdminLabel`, `admin.promoAdminDescription`, `admin.promoSuspensionTitle`, `admin.promoSuspensionDescription`.
+2. Parent server components pass resolved promo text as props to client components.
+3. Remove ALL hardcoded marketing/promo strings from the 3 files above. CSS class names and route paths are excluded (those are structural, not marketing).
 
 **Acceptance criteria:**
 
-- [ ] Zero hardcoded promo marketing text in `chat-sidebar-promo.tsx`
-- [ ] Promo title and description come from admin-configurable source
+- [ ] Zero hardcoded promo/marketing text in `chat-sidebar-promo.tsx`
+- [ ] Zero hardcoded promo/marketing text in `plan-promo.tsx`
+- [ ] Zero hardcoded upgrade messaging text in `persona-card.tsx`
+- [ ] Promo text comes from admin-configurable source via `effective-promo-content.ts` resolver
+- [ ] Admin UI section for editing promo text in `/admin/settings`
+- [ ] Build passes, tests pass
+
+---
+
+## HIGH — Global Error Boundary (PM audit #74 — Architect finding)
+
+### Phase 163 HIGH — Add `global-error.tsx` for root layout error recovery
+
+> No `global-error.tsx` exists. In Next.js, `global-error.tsx` catches errors in the root layout itself. Without it, a root layout error produces a raw browser error page with no recovery path.
+
+**File:** `src/app/global-error.tsx` (new)
+
+**What to do:**
+
+1. Create `src/app/global-error.tsx` as a client component (`"use client"`).
+2. Render a minimal error UI with "Something went wrong" message, a "Try again" button (calls `reset()`), and a "Return home" link.
+3. Include required `<html>` and `<body>` tags (Next.js requirement for global-error).
+4. Apply basic Droplet styling inline (no theme dependency since root layout may have failed).
+
+**Acceptance criteria:**
+
+- [ ] `src/app/global-error.tsx` exists and is a valid `"use client"` component
+- [ ] Contains `<html>` and `<body>` tags
+- [ ] Shows error recovery UI with "Try again" and "Return home"
+- [ ] Build passes
+
+---
+
+## MEDIUM — Client Stream Timeout Alignment (PM audit #74 — Engineer finding)
+
+### Phase 164 MEDIUM — Align client stream timeout with server `maxDuration`
+
+> Client-side `STREAM_REQUEST_TIMEOUT_MS` is 200s in `chat-wrapper.tsx`. Server `maxDuration` will be 300s (Phase 160). Client could kill connection prematurely during long media generation.
+
+**File:** `src/components/chat/chat-wrapper.tsx`
+
+**What to do:**
+
+1. Increase `STREAM_REQUEST_TIMEOUT_MS` from `200_000` to `310_000` (300s server max + 10s margin).
+
+**Acceptance criteria:**
+
+- [ ] `STREAM_REQUEST_TIMEOUT_MS` is `310_000`
 - [ ] Build passes, tests pass
 
 ---

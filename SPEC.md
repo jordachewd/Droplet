@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-28 (PM audit #73). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. Phase 141 (suspended user enforcement) COMPLETE. Phase 149 (SSE heartbeat streaming fix) COMPLETE. Admin configurability ALL RESOLVED. User deletion cascade COMPLETE (Phase 150). Library uploaded tab COMPLETE (Phase 151). Payment checkout redirect FIXED (Phase 152). Webhook schema FIXED (Phase 157). Admin hydration fix COMPLETE (Phase 153). Suspended user UX COMPLETE (Phase 154). Scrollbar removal COMPLETE (Phase 155 + 155.1). SSE catch/finally hardened (Phase 158). Button test fixed (Phase 159). Rate limiting on all routes COMPLETE (Phase 142). Server-only guards on all constants COMPLETE (Phase 156). **All 7 gates GREEN.** 591 unit tests (101 suites). E2E: 49 tests (8 spec files). Coverage: 85/80/85/85. Zero `as never` casts. Lint: 0 errors, 0 warnings. Active CRITICAL issues: TD-STREAM-03 (stream error persists in production — missing `maxDuration`, no text heartbeat), TD-PAYMENT-01 (payment webhook not registering — webhook config + non-atomic update). Active HIGH: TD-PROMO-01 (hardcoded promo text). Build passing. Node.js 24.12.0.
+> Last updated: 2026-03-30 (PM audit #74). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. Phase 141 (suspended user enforcement) COMPLETE. Phase 149 (SSE heartbeat streaming fix) COMPLETE. Admin configurability PARTIAL (promo text hardcoded — Phase 162). User deletion cascade COMPLETE (Phase 150). Library uploaded tab COMPLETE (Phase 151). Payment checkout redirect FIXED (Phase 152). Webhook schema FIXED (Phase 157). Admin hydration fix COMPLETE (Phase 153). Suspended user UX COMPLETE (Phase 154). Scrollbar removal COMPLETE (Phase 155 + 155.1). SSE catch/finally hardened (Phase 158). Button test fixed (Phase 159). Rate limiting on all routes COMPLETE (Phase 142). Server-only guards on all constants COMPLETE (Phase 156). **All 7 validation gates GREEN.** 591 unit tests (101 suites). E2E: 49 tests (8 spec files). Coverage: 85/80/85/85. Zero `as never` casts. Lint: 0 errors, 0 warnings. **RELEASE BLOCKED: 2 CRITICAL production bugs (TD-STREAM-03, TD-PAYMENT-01).** Active HIGH: TD-PROMO-01 (hardcoded promo text), TD-GERROR-01 (no global-error.tsx). Build passing. Node.js 24.12.0.
 
 ---
 
@@ -617,12 +617,34 @@ type ResolvedModelPolicy = {
 ### 8.9 Streaming (Implemented)
 
 Server-side streaming via `generateStreamingResponse()` in `src/lib/utils/openai/generateResponse.tsx`.
-Route streams via SSE events (`meta`, `chunk`, `final`, `error`) in `/api/openai`.
+Route streams via SSE events (`meta`, `chunk`, `final`, `error`, `heartbeat`) in `/api/openai`.
 Client consumes via `ReadableStream.getReader()` in `chat-wrapper.tsx` with JSON fallback for non-streaming clients.
 All auth/limit checks execute before streaming begins. Final task persistence and usage event emission happen after stream completion.
 
-> **✅ RESOLVED (Phase 149 COMPLETE, TD-STREAM-01 CLOSED):** SSE heartbeat mechanism implemented. 12s keepalive interval during media generation via `onMediaGenerationStart`/`onMediaGenerationEnd` lifecycle callbacks. Client timeout reset on every received event (including heartbeats). Timeout increased to 200s. `heartbeat` event type added to `ChatStreamEvent` union.
-> **⚠️ TD-STREAM-03 OPEN (Phase 160):** Owner still reports "The response stream ended unexpectedly" in production. In-container code is structurally correct (heartbeat + catch hardening). Root cause: missing `export const maxDuration` on route — platform kills serverless function before media gen completes. No heartbeat for text-only streaming. Silent failure swallowing in catch blocks prevents debugging.
+> **✅ RESOLVED (Phase 149 COMPLETE, TD-STREAM-01 CLOSED):** SSE heartbeat mechanism implemented. 12s keepalive interval during media generation via `onMediaGenerationStart`/`onMediaGenerationEnd` lifecycle callbacks. Client timeout reset on every received event (including heartbeats). `heartbeat` event type added to `ChatStreamEvent` union.
+> **🔴 TD-STREAM-03 OPEN (Phase 160):** Owner still reports "The response stream ended unexpectedly" in production. Triple-confirmed root cause (PM audit #74): missing `export const maxDuration` on route — platform kills serverless function before media gen completes. No heartbeat for text-only streaming (gap between stream creation and first OpenAI content chunk). Empty catch blocks swallow all error details. Client timeout (200s) out of sync with required server duration (300s).
+
+### 8.10 API Route Timeout Requirements
+
+All API routes that call external services (OpenAI, Stripe, AWS) **must** export `maxDuration` to prevent serverless platform timeout kills:
+
+| Route                  | Required `maxDuration` | Reason                                        |
+| ---------------------- | ---------------------- | --------------------------------------------- |
+| `/api/openai`          | 300s                   | Video generation up to 180s + DB ops + margin |
+| `/api/webhooks/stripe` | 30s                    | Stripe webhook processing with DB writes      |
+| `/api/webhooks/clerk`  | 30s                    | Clerk webhook with cascade deletes            |
+| `/api/upload`          | 30s                    | S3 upload                                     |
+| `/api/download`        | 30s                    | Proxied download                              |
+| `/api/aws`             | 30s                    | S3 operations                                 |
+
+### 8.11 Webhook Idempotency Requirements
+
+Webhook idempotency checks **must verify the complete operation**, not just the first write:
+
+- **Stripe `checkout.session.completed`:** Must verify BOTH Transaction existence AND User plan state. If Transaction exists but User plan was not updated, reattempt the user plan update.
+- **Clerk webhooks:** Already handle missing documents gracefully.
+
+**Rule:** If a multi-step webhook operation has a partial failure, the idempotency check must not short-circuit — it must attempt to complete all remaining steps.
 
 ### OpenAI Technical Debt
 
@@ -808,22 +830,24 @@ All button styles use Lime Green as the accent color in **both** light and dark 
 
 ### Active — CRITICAL Priority
 
-| ID            | Area    | Description                                                                                                                                                                                                                                                                                                                                                                                                                         | Phase |
-| ------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
-| TD-STREAM-03  | SSE     | **CRITICAL.** Owner still reports "The response stream ended unexpectedly" in production on media generation AND large text responses. Phase 149 (heartbeat) + Phase 158 (catch hardening) applied. Root cause: missing `export const maxDuration` on `/api/openai` route — serverless function killed before media gen completes. Secondary: no heartbeat during text-only streaming. No failure logging in catch blocks.          | 160   |
-| TD-PAYMENT-01 | Billing | **CRITICAL.** Owner still reports payment goes through Stripe but no Transaction registered, user plan not updated. Phase 157 (.strict()→.strip()) applied. Root causes: (1) Stripe Dashboard webhook likely misconfigured. (2) Non-atomic Transaction/User update — idempotency check returns 200 if Transaction exists even when User plan update failed, permanently orphaning the update. (3) `constructEvent` error swallowed. | 161   |
+| ID            | Area    | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                        | Phase |
+| ------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----- |
+| TD-STREAM-03  | SSE     | **CRITICAL.** Owner still reports "The response stream ended unexpectedly" in production on media generation AND large text responses. Triple-confirmed root cause (PM audit #74): (a) missing `export const maxDuration` — platform kills function at 10-60s default, (b) no heartbeat during text-only streaming, (c) empty catch blocks swallow error details, (d) client timeout 200s < required 300s.                                                         | 160   |
+| TD-PAYMENT-01 | Billing | **CRITICAL.** Owner still reports payment goes through Stripe but no Transaction registered, user plan not updated. Triple-confirmed root cause (PM audit #74): (a) non-atomic Transaction/User update — idempotency check returns 200 if Transaction exists even when User plan update failed (permanent data orphan), (b) no top-level try/catch around webhook handler, (c) all error details swallowed. Ops: Stripe Dashboard webhook config must be verified. | 161   |
 
 ### Active — HIGH Priority
 
-| ID          | Area    | Description                                                                                                                              | Phase |
-| ----------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ----- |
-| TD-PROMO-01 | Content | **HIGH.** Sidebar promo "Go Pro"/"Go Premium" text and descriptions hardcoded in `chat-sidebar-promo.tsx`. Should be admin-configurable. | 162   |
+| ID           | Area     | Description                                                                                                                                                                                 | Phase |
+| ------------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| TD-PROMO-01  | Content  | **HIGH.** ~20+ hardcoded promo/marketing strings in `chat-sidebar-promo.tsx`, `plan-promo.tsx`, `persona-card.tsx`. Should be admin-configurable via `effective-promo-content.ts` resolver. | 162   |
+| TD-GERROR-01 | Frontend | **HIGH.** No `global-error.tsx` — root layout errors produce raw error page with no recovery path. Required by Next.js for root-level error boundary.                                       | 163   |
 
 ### Active — MEDIUM Priority
 
-| ID        | Area | Description                                                                                                                   | Phase |
-| --------- | ---- | ----------------------------------------------------------------------------------------------------------------------------- | ----- |
-| TD-ENV-01 | Code | 4 `as string` + 4 `!` casts on `process.env` values. Missing env vars produce cryptic runtime errors instead of failing fast. | 143   |
+| ID            | Area     | Description                                                                                                                              | Phase |
+| ------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| TD-ENV-01     | Code     | 4 `as string` + 4 `!` casts on `process.env` values. Missing env vars produce cryptic runtime errors instead of failing fast.            | 143   |
+| TD-TIMEOUT-01 | Frontend | Client `STREAM_REQUEST_TIMEOUT_MS` is 200s, but server `maxDuration` will be 300s (Phase 160). Client could kill connection prematurely. | 164   |
 
 ### Active — Low Priority
 

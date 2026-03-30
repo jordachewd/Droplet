@@ -55,6 +55,8 @@ All seven gates must pass.
 7. **Central policy — no scattered plan logic** — plan limits, model selection, and entitlements must be resolved through central utilities (`resolve-entitlements.tsx`, `ai-model-policy.ts`, `PLAN_LIMITS`). Never hardcode plan rules in UI components, routes, or action files.
 8. **Admin audit trail** — every admin mutation must log to `AdminAuditLog` model.
 9. **Code reuse** — extract repetitive patterns into shared utilities, components, or constants. Do not duplicate logic across admin/client/public surfaces. If a pattern appears 3+ times, extract it.
+10. **API route timeouts** — all API routes that call external services (OpenAI, Stripe, AWS) must export `maxDuration` with an appropriate value. Default serverless timeouts (10-60s) are insufficient for media generation (up to 180s) and webhook processing.
+11. **No hardcoded display text** — all user-facing marketing/promo text must flow from admin-configurable settings via `effective-*` resolver pattern. CSS class names and route paths are structural (exempt). Plan enum values (`Lite`/`Pro`/`Premium`) used as type literals are structural (exempt).
 
 ## Route Boundaries
 
@@ -92,7 +94,8 @@ All seven gates must pass.
 
 - **Zero trust**: protect all routes unless explicitly public. Verify auth in every server action and API route before DB writes.
 - **Admin double-check**: admin routes must verify `role === "admin"` at both proxy AND server-action/page level.
-- **Webhooks**: verify via `verifyWebhook()` from `@clerk/nextjs/webhooks` (Clerk) and `stripe.webhooks.constructEvent` (Stripe) before processing. Ensure idempotency — check for duplicate event IDs before creating records. Webhook handlers must not throw on replayed or missing documents.
+- **Webhooks**: verify via `verifyWebhook()` from `@clerk/nextjs/webhooks` (Clerk) and `stripe.webhooks.constructEvent` (Stripe) before processing. Ensure idempotency — check for duplicate event IDs before creating records. Webhook handlers must not throw on replayed or missing documents. **Idempotency must verify the complete operation** — if a multi-step webhook (e.g., create Transaction + update User) partially fails, the idempotency check must not short-circuit; it must attempt to complete remaining steps.
+- **Webhook error boundaries** — all webhook POST handlers must have a top-level try/catch. Unhandled exceptions must return controlled error responses, not crash the function. Capture and log original error details (never empty `catch {}` in webhook code).
 - **Secrets**: never commit; use `.env.local`. Only `NEXT_PUBLIC_*` values reach the browser.
 - **Error responses**: generic messages to clients; detailed logs server-side only. Never leak provider error messages (OpenAI, AWS, Stripe). Use `new Error(message, { cause: originalError })` to preserve stack traces when rethrowing.
 - **Uploads**: validate type and size at the boundary. Use allowlists, not blocklists.
@@ -118,6 +121,7 @@ All seven gates must pass.
 - **Tool call arguments are NOT messages** — when a tool call invokes media generation, extract the specific data from the tool call arguments (e.g., text to speak, prompt to generate). Never pass raw `parsedArgs` as `messages` to media generation functions.
 - **Limit checks must be atomic** — use `findOneAndUpdate` with `$lt` guard for check-and-increment in a single operation. Separated read-then-write patterns (TOCTOU) are not acceptable for quota enforcement.
 - **Rollback operations need error handling** — compensating deletes/decrements in catch blocks must be wrapped in their own try/catch with stderr logging. Never let a rollback failure mask the original error.
+- **No empty catch blocks** — every `catch` must either capture the error variable and log to `process.stderr.write()`, or have a code comment explaining why the error is intentionally discarded. Empty `catch {}` blocks that silently swallow errors are forbidden in production code.
 
 ## Testing Rules
 
