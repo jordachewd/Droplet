@@ -14,6 +14,8 @@ import { currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
+export const maxDuration = 30;
+
 const MAX_BASE64_IMAGE_SIZE_BYTES = 10 * 1024 * 1024;
 const AWS_RATE_LIMIT_MAX_REQUESTS = 30;
 const AWS_RATE_LIMIT_WINDOW_MS = 60_000;

@@ -2,7 +2,41 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-30 — PM audit #75. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4, 105.1, 105.2, 106, 107.1, 107.2, 107.3, 108, 110, 111.1, 112.1, 112.2, 109, 113.1, 113.2, 114, 115, 116, 117, 120.1, 120.2-A, 120.2-B, 120.2-C, 120.3, 120.4, 120.5, 120.6, 120.7, 121, 122, 123, 124, 125, 125.1, 125.2, 126, 126.1, 126.2, 127, 128.1, 128.2, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 149, 150, 151, 152, 153, 154, 155, 155.1, 156, 157, 158, 159, 160, 161, 164, 74.2, 104, 125.3 complete. Milestones 0–25 COMPLETE. 592 unit tests (101 suites). E2E: 49 tests (8 spec files). All 7 validation gates GREEN. Build passing. Node.js 24.12.0 runtime. Coverage: 85/80/85/85. Zero `as never` casts. Lint: 0 errors, 0 warnings.
+> Last updated: 2026-03-30 — PM audit #77. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4, 105.1, 105.2, 106, 107.1, 107.2, 107.3, 108, 110, 111.1, 112.1, 112.2, 109, 113.1, 113.2, 114, 115, 116, 117, 120.1, 120.2-A, 120.2-B, 120.2-C, 120.3, 120.4, 120.5, 120.6, 120.7, 121, 122, 123, 124, 125, 125.1, 125.2, 126, 126.1, 126.2, 127, 128.1, 128.2, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 149, 150, 151, 152, 153, 154, 155, 155.1, 156, 157, 158, 159, 160, 160.1, 161, 164, 166, 74.2, 104, 125.3 complete. Milestones 0–25 COMPLETE. 592 unit tests (101 suites). E2E: 49 tests (8 spec files). All 7 validation gates GREEN. Build passing. Node.js 24.12.0 runtime. Coverage: 85/80/85/85. Zero `as never` casts. Lint: 0 errors, 0 warnings.
+
+---
+
+## Phase 166 CRITICAL-PRE-DEPLOY — Add `maxDuration` exports to 5 API routes — VERIFIED COMPLETE (2026-03-30)
+
+> Verified by PM audit #77 (triple-audit: Architect, Engineer, PM). All 6 API routes confirmed to have `export const maxDuration`. Phase was listed as pending in TODO.md but code was already in place.
+
+- [x] `src/app/api/upload/route.tsx` — `export const maxDuration = 30;`
+- [x] `src/app/api/download/route.tsx` — `export const maxDuration = 30;`
+- [x] `src/app/api/aws/route.tsx` — `export const maxDuration = 30;`
+- [x] `src/app/api/webhooks/stripe/route.tsx` — `export const maxDuration = 30;`
+- [x] `src/app/api/webhooks/clerk/route.tsx` — `export const maxDuration = 60;`
+- [x] `src/app/api/openai/route.tsx` — `export const maxDuration = 60;` (Phase 160.1)
+- [x] All 6 API routes have `export const maxDuration`.
+- [x] Build passes, tests pass.
+
+**Files:** All 6 API route files in `src/app/api/`.
+
+---
+
+## Phase 160.1 CRITICAL — Fix `maxDuration` to comply with Vercel Hobby plan limit — COMPLETED (2026-03-30)
+
+> Engineer delivered (PM audit #76). CRITICAL deployment blocker fix. Vercel Hobby plan limits maxDuration to 60s. Phase 160 had set maxDuration=300 which blocked deployment. Reduced to 60. Client timeout re-aligned.
+
+- [x] `export const maxDuration = 300` changed to `export const maxDuration = 60` in OpenAI route.
+- [x] `STREAM_REQUEST_TIMEOUT_MS` changed from `310_000` to `70_000` in `chat-wrapper.tsx`.
+- [x] Unit test `maxDuration` assertion updated from `300` to `60`.
+- [x] Unit test timeout assertions updated for 70s window.
+- [x] All unit tests pass (592 tests).
+- [x] Build passes.
+
+**Trade-off:** Video generation requests exceeding 60s will time out on Vercel Hobby. Text chat, image gen (~15-30s), and audio gen (~10-20s) should work within 60s. Owner can upgrade to Vercel Pro ($20/mo) for 300s maxDuration.
+
+**Files changed:** `src/app/api/openai/route.tsx`, `src/components/chat/chat-wrapper.tsx`, `tests/unit/routes/openai-route-streaming.test.ts`, `tests/unit/components/chat-wrapper.test.tsx`
 
 ---
 

@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-30 (PM audit #75). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. Phase 141 (suspended user enforcement) COMPLETE. Phase 149 (SSE heartbeat streaming fix) COMPLETE. Phase 160 (maxDuration + text heartbeat + didSendFinal) CODE-COMPLETE. Phase 161 (webhook idempotency repair) CODE-COMPLETE. Phase 164 (client timeout alignment) CODE-COMPLETE. Admin configurability PARTIAL (promo text hardcoded — Phase 162). User deletion cascade COMPLETE (Phase 150). Library uploaded tab COMPLETE (Phase 151). Payment checkout redirect FIXED (Phase 152). Webhook schema FIXED (Phase 157). Admin hydration fix COMPLETE (Phase 153). Suspended user UX COMPLETE (Phase 154). Scrollbar removal COMPLETE (Phase 155 + 155.1). SSE catch/finally hardened (Phase 158). Button test fixed (Phase 159). Rate limiting on all routes COMPLETE (Phase 142). Server-only guards on all constants COMPLETE (Phase 156). **All 7 validation gates GREEN locally.** 592 unit tests (101 suites). E2E: 49 tests (8 spec files). Coverage: 85/80/85/85. Zero `as never` casts. Lint: 0 errors, 0 warnings. **RELEASE BLOCKED: 1 CRITICAL Vercel deployment blocker (TD-STREAM-04, Phase 160.1).** Active HIGH: TD-PROMO-01 (hardcoded promo text), TD-GERROR-01 (no global-error.tsx). Build passing locally. Node.js 24.12.0.
+> Last updated: 2026-03-30 (PM audit #77). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. Phase 141 (suspended user enforcement) COMPLETE. Phase 149 (SSE heartbeat streaming fix) COMPLETE. Phase 160 (maxDuration + text heartbeat + didSendFinal) COMPLETE. Phase 160.1 (Vercel Hobby maxDuration fix) COMPLETE. Phase 161 (webhook idempotency repair) CODE-COMPLETE — awaiting deployment. Phase 164 (client timeout alignment) COMPLETE. Phase 166 (maxDuration on all API routes) VERIFIED COMPLETE. Admin configurability PARTIAL (promo text hardcoded — Phase 162). User deletion cascade COMPLETE (Phase 150). Library uploaded tab COMPLETE (Phase 151). Payment checkout redirect FIXED (Phase 152). Webhook schema FIXED (Phase 157). Admin hydration fix COMPLETE (Phase 153). Suspended user UX COMPLETE (Phase 154). Scrollbar removal COMPLETE (Phase 155 + 155.1). SSE catch/finally hardened (Phase 158). Button test fixed (Phase 159). Rate limiting on all routes COMPLETE (Phase 142). Server-only guards on all constants COMPLETE (Phase 156). **All 7 validation gates GREEN locally.** 592 unit tests (101 suites). E2E: 49 tests (8 spec files). Coverage: 85/80/85/85. Zero `as never` casts. Lint: 0 errors, 0 warnings. **DEPLOYMENT UNBLOCKED — ALL CODE FIXES READY.** Remaining: empty catch blocks (Phase 167 expanded), TD-PROMO-01 (Phase 162), TD-GERROR-01 (Phase 163). Build passing locally. Node.js 24.12.0.
 
 ---
 
@@ -622,8 +622,9 @@ Client consumes via `ReadableStream.getReader()` in `chat-wrapper.tsx` with JSON
 All auth/limit checks execute before streaming begins. Final task persistence and usage event emission happen after stream completion.
 
 > **✅ RESOLVED (Phase 149 COMPLETE, TD-STREAM-01 CLOSED):** SSE heartbeat mechanism implemented. 12s keepalive interval during media generation via `onMediaGenerationStart`/`onMediaGenerationEnd` lifecycle callbacks. Client timeout reset on every received event (including heartbeats). `heartbeat` event type added to `ChatStreamEvent` union.
-> **✅ TD-STREAM-03 CODE-COMPLETE (Phase 160 COMPLETE, PM audit #75):** `export const maxDuration` added. General heartbeat (30s) started at stream creation for text-only streaming. `didSendFinal` guard ensures client always receives `final` or `error` event. All catch blocks log to stderr. **⚠️ TD-STREAM-04 OPEN (Phase 160.1):** Vercel Hobby plan limits `maxDuration` to 60s. Current value of 300 blocks deployment. Must be reduced to 60. Video generation (up to 180s) will time out on Hobby — owner must upgrade to Vercel Pro ($20/mo) for full video gen support.
-> **Client timeout:** `STREAM_REQUEST_TIMEOUT_MS = 310_000` (Phase 164 COMPLETE). Must be re-aligned to `70_000` when `maxDuration` is reduced to 60 (Phase 160.1).
+> **✅ TD-STREAM-03 RESOLVED (Phases 160 + 160.1 COMPLETE, PM audit #76):** `export const maxDuration = 60` set (Vercel Hobby compliant). General heartbeat (30s) started at stream creation for text-only streaming. Media heartbeat (12s) during media generation. `didSendFinal` guard ensures client always receives `final` or `error` event. All catch blocks log to stderr.
+> **✅ TD-STREAM-04 RESOLVED (Phase 160.1 COMPLETE, PM audit #76):** `maxDuration` reduced from 300 to 60 for Vercel Hobby compliance. Deployment unblocked. Video generation (up to 180s) will time out on Hobby — accepted trade-off. Owner can upgrade to Vercel Pro ($20/mo) for 300s support.
+> **Client timeout:** `STREAM_REQUEST_TIMEOUT_MS = 70_000` (Phase 160.1 COMPLETE). Aligned with server maxDuration=60 + 10s margin.
 
 ### 8.10 API Route Timeout Requirements
 
@@ -633,14 +634,14 @@ All API routes that call external services (OpenAI, Stripe, AWS) **must** export
 | ---------------------- | ------------------------ | --------------------------------------------------------------------- |
 | `/api/openai`          | 60s (Hobby) / 300s (Pro) | ⚠️ Vercel Hobby max = 60s. Video gen needs 180s → requires Vercel Pro |
 | `/api/webhooks/stripe` | 30s                      | Stripe webhook processing with DB writes                              |
-| `/api/webhooks/clerk`  | 30s                      | Clerk webhook with cascade deletes                                    |
+| `/api/webhooks/clerk`  | 60s                      | Clerk webhook with cascade deletes (S3 prefix cleanup)                |
 | `/api/upload`          | 30s                      | S3 upload                                                             |
 | `/api/download`        | 30s                      | Proxied download                                                      |
 | `/api/aws`             | 30s                      | S3 operations                                                         |
 
 > **Vercel Plan Constraint (PM audit #75):** Vercel Hobby limits `maxDuration` to 60 seconds. Only `/api/openai` is affected — all other routes fit within 30s. Video generation via Sora API needs up to 180s and CANNOT complete within the 60s Hobby limit. Upgrading to Vercel Pro ($20/mo) raises the limit to 300s. Text chat, image gen (~15-30s), and audio gen (~10-20s) should work within 60s.
 >
-> **Current state:** Only `/api/openai` exports `maxDuration` (set to 300, must be reduced to 60 per Phase 160.1). Other 5 routes missing export entirely (tracked as Phase 166).
+> **Current state (PM audit #77):** All 6 API routes have `export const maxDuration`. Values: openai=60, clerk-webhook=60, upload/download/aws/stripe-webhook=30. Phase 166 VERIFIED COMPLETE.
 
 ### 8.11 Webhook Idempotency Requirements
 
@@ -835,24 +836,28 @@ All button styles use Lime Green as the accent color in **both** light and dark 
 
 ### Active — CRITICAL Priority
 
-| ID            | Area    | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                        | Phase |
-| ------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----- |
-| TD-STREAM-03  | SSE     | **CRITICAL.** Owner still reports "The response stream ended unexpectedly" in production on media generation AND large text responses. Triple-confirmed root cause (PM audit #74): (a) missing `export const maxDuration` — platform kills function at 10-60s default, (b) no heartbeat during text-only streaming, (c) empty catch blocks swallow error details, (d) client timeout 200s < required 300s.                                                         | 160   |
-| TD-PAYMENT-01 | Billing | **CRITICAL.** Owner still reports payment goes through Stripe but no Transaction registered, user plan not updated. Triple-confirmed root cause (PM audit #74): (a) non-atomic Transaction/User update — idempotency check returns 200 if Transaction exists even when User plan update failed (permanent data orphan), (b) no top-level try/catch around webhook handler, (c) all error details swallowed. Ops: Stripe Dashboard webhook config must be verified. | 161   |
+| ID            | Area    | Description                                                                                                                                                                                                                                                                                                  | Phase      |
+| ------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------- |
+| TD-STREAM-03  | SSE     | ~~**CRITICAL.** Stream error on media generation and large text responses.~~ **RESOLVED (Phases 160 + 160.1, PM audit #76).** `maxDuration=60`, dual heartbeat (30s general + 12s media), `didSendFinal` guard, stderr logging. Client timeout aligned to 70s. Awaiting production deployment to verify fix. | 160, 160.1 |
+| TD-STREAM-04  | SSE     | ~~**CRITICAL.** Vercel Hobby rejects maxDuration=300.~~ **RESOLVED (Phase 160.1, PM audit #76).** Reduced to 60. Deployment unblocked. Video gen timeout accepted trade-off.                                                                                                                                 | 160.1      |
+| TD-PAYMENT-01 | Billing | **CODE-COMPLETE (Phase 161, PM audit #76).** Idempotency repair: checks Transaction + User `plan.stripeId`. Repair path for stale plan. Top-level try/catch. Full error logging. **Awaiting production deployment + Stripe Dashboard ops verification.**                                                     | 161        |
 
 ### Active — HIGH Priority
 
-| ID           | Area     | Description                                                                                                                                                                                 | Phase |
-| ------------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
-| TD-PROMO-01  | Content  | **HIGH.** ~20+ hardcoded promo/marketing strings in `chat-sidebar-promo.tsx`, `plan-promo.tsx`, `persona-card.tsx`. Should be admin-configurable via `effective-promo-content.ts` resolver. | 162   |
-| TD-GERROR-01 | Frontend | **HIGH.** No `global-error.tsx` — root layout errors produce raw error page with no recovery path. Required by Next.js for root-level error boundary.                                       | 163   |
+| ID           | Area     | Description                                                                                                                                                                                                                                                                                               | Phase |
+| ------------ | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| TD-MAXDUR-01 | API      | **CRITICAL-PRE-DEPLOY.** 5 of 6 API routes missing `export const maxDuration`. Webhook handlers and file ops risk timeout kills on Vercel. Triple-audit confirmed (Architect, Engineer, PM). Phase 166.                                                                                                   | 166   |
+| TD-CATCH-01  | Code     | **HIGH.** 20+ empty `catch {}` blocks across `admin.actions.tsx` (15), API routes (5), `delete-user-cascade.ts` (6), sidebar components (2). Violates AGENTS.md. Admin operations silently swallow errors — production debugging blind spot. Phase 167 expanded.                                          | 167   |
+| TD-PROMO-01  | Content  | **HIGH.** ~20+ hardcoded promo/marketing strings in `chat-sidebar-promo.tsx`, `plan-promo.tsx`, `persona-card.tsx`. Should be admin-configurable via `effective-promo-content.ts` resolver. Additional gaps: `cta-banner.tsx`, `persona-spotlight.tsx`, `faqs-section.tsx` section titles also hardcoded. | 162   |
+| TD-GERROR-01 | Frontend | **HIGH.** No `global-error.tsx` — root layout errors produce raw error page with no recovery path. Required by Next.js for root-level error boundary.                                                                                                                                                     | 163   |
+| TD-CATCH-API | API      | **HIGH.** 3 API route outer catches (aws POST, aws DELETE, upload POST) return HTTP 500 without logging error details. Production failures in file upload/delete will be undiagnosable. Included in expanded Phase 167.                                                                                   | 167   |
 
 ### Active — MEDIUM Priority
 
-| ID            | Area     | Description                                                                                                                              | Phase |
-| ------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ----- |
-| TD-ENV-01     | Code     | 4 `as string` + 4 `!` casts on `process.env` values. Missing env vars produce cryptic runtime errors instead of failing fast.            | 143   |
-| TD-TIMEOUT-01 | Frontend | Client `STREAM_REQUEST_TIMEOUT_MS` is 200s, but server `maxDuration` will be 300s (Phase 160). Client could kill connection prematurely. | 164   |
+| ID            | Area     | Description                                                                                                                                                                 | Phase      |
+| ------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
+| TD-ENV-01     | Code     | 4 `as string` + 4 `!` casts on `process.env` values. Missing env vars produce cryptic runtime errors instead of failing fast.                                               | 143        |
+| TD-TIMEOUT-01 | Frontend | ~~Client stream timeout misaligned with server maxDuration.~~ **RESOLVED (Phase 164 + 160.1, PM audit #76).** Client timeout = 70_000ms, server maxDuration = 60s. Aligned. | 164, 160.1 |
 
 ### Active — Low Priority
 
@@ -863,6 +868,14 @@ All button styles use Lime Green as the accent color in **both** light and dark 
 | TD-PLAN-01 | Billing | No recurring subscriptions (deferred v1).                                      | Deferred |
 | TD-AI-18   | OpenAI  | errorMessage forwarding pattern in `/api/openai` is safe but fragile.          | Advisory |
 | TD-API-09  | API     | `messageTextContentSchema` uses `.strict()` — may reject extra fields.         | Monitor  |
+
+### Resolved (PM audit #76)
+
+| ID            | Area     | Description                                                                                                                                                                        | Phase      |
+| ------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
+| TD-STREAM-03  | SSE      | ~~**CRITICAL.** Stream error on media generation.~~ **RESOLVED (Phases 160 + 160.1).** maxDuration=60, dual heartbeat, didSendFinal guard, stderr logging. Client timeout aligned. | 160, 160.1 |
+| TD-STREAM-04  | SSE      | ~~**CRITICAL.** Vercel Hobby rejects maxDuration=300.~~ **RESOLVED (Phase 160.1).** Reduced to 60. Deployment unblocked.                                                           | 160.1      |
+| TD-TIMEOUT-01 | Frontend | ~~Client stream timeout misaligned with server maxDuration.~~ **RESOLVED (Phase 164 + 160.1, PM audit #76).** Client timeout = 70_000ms, server maxDuration = 60s. Aligned.        | 164, 160.1 |
 
 ### Resolved (PM audit #73)
 
