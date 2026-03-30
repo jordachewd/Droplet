@@ -30,9 +30,9 @@ export default function ChatSidebarPromo({
       <section className={sectionClass}>
         <article className={promoCardClass}>
           <div className={planPromoAccentClass}></div>
-          <div className="z-10 flex w-full flex-col gap-4 text-center">
-            <h5 className="heading-5">Admin</h5>
-            <p className="text-sm leading-4">You have admin access.</p>
+          <div className="z-10 flex w-full flex-col gap-2 text-center">
+            <h6 className="heading-6 text-twilightPurple-600">Admin</h6>
+            <p className="text-xs leading-4">You have admin access.</p>
           </div>
         </article>
       </section>
@@ -44,9 +44,9 @@ export default function ChatSidebarPromo({
       <section className={sectionClass}>
         <article className={promoCardClass}>
           <div className={planPromoAccentClass}></div>
-          <div className="z-10 flex w-full flex-col gap-4 text-center">
-            <h5 className="heading-5">Account Suspended</h5>
-            <p className="text-sm leading-4">
+          <div className="z-10 flex w-full flex-col gap-2 text-center">
+            <h6 className="heading-6 text-twilightPurple-600">Account Suspended</h6>
+            <p className="text-xs leading-4">
               Your account has been suspended. Contact support for assistance.
             </p>
           </div>
@@ -70,15 +70,15 @@ export default function ChatSidebarPromo({
     <section className={sectionClass}>
       <article className={promoCardClass}>
         <div className={planPromoAccentClass}></div>
-        <div className="z-10 flex w-full flex-col gap-4 text-center">
-          <h5 className="heading-5">{promoTitle}</h5>
-          <p className="text-sm leading-4">{promoMessage}</p>
+        <div className="z-10 flex w-full flex-col gap-2 text-center">
+          <h6 className="heading-6 font-semibold text-twilightPurple-600">{promoTitle}</h6>
+          <p className="text-xs leading-4">{promoMessage}</p>
 
           <Link
-            className="btn btn-sm btn-contained self-center"
+            className="btn btn-sm btn-contained self-center mt-2"
             href="/app/plans"
           >
-            Manage Plan
+            Upgrade Now
           </Link>
         </div>
       </article>

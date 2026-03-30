@@ -294,7 +294,7 @@ a.menu-item {
   }
 
   .chat-markdown--bot {
-    @apply rounded-xl bg-lavenderHaze-100 p-3 dark:bg-nightIndigo-500/40;
+    @apply flex flex-col w-full gap-4 bg-amber-100;
   }
 
   .chat-markdown h1,

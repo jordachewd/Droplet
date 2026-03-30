@@ -169,7 +169,7 @@ export default function ChatInput({
   );
 
   const chatInputWrapperClass = classNames(
-    "flex flex-col w-full max-w-3xl items-end gap-2 rounded-xl",
+    "flex flex-col w-full max-w-4xl gap-2 rounded-xl",
     "bg-lavenderHaze-100/90 dark:border shadow-md p-1.5",
     "dark:border-midnightBlue-300/10 dark:bg-nightIndigo-900/90",
     disabled &&
@@ -273,7 +273,7 @@ export default function ChatInput({
         </div>
       </div>
 
-      <div className="flex flex-col items-center gap-1 pt-1 pb-2 text-xxs font-light tracking-wide">
+      <div className="flex flex-col items-center gap-1 pt-1 pb-2 px-4 text-xxs font-light tracking-wide">
         {uploadError ? (
           <p
             role="alert"
