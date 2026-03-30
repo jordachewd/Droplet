@@ -5,74 +5,205 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #78 (2026-03-30). Milestones 0–25 COMPLETE. All phases through 166 complete + 160.1 + 164 complete. 592 unit tests (101 suites). 49 E2E tests (8 spec files). Build passes. TSC clean. Node.js 24.12.0 runtime.**
-> **GATE STATUS: All 7 validation gates GREEN locally. Lint (0 errors, 0 warnings), Knip (0 findings), TSC clean, build passes, unit tests (101/592), E2E (8 specs/49 tests), coverage 85/80/85/85.**
-> **DEPLOYMENT UNBLOCKED (Phase 160.1 COMPLETE). ALL code fixes ready for production. Deployment is owner-manual.**
+> **STATUS: PM audit #78 (2026-03-30). DEPLOYED TO PRODUCTION. 3 CRITICAL production bugs active. Phase 167 partially completed (targeted catches). 592 unit tests (101 suites). 49 E2E tests (8 spec files). Build passes. TSC clean. Node.js 24.12.0 runtime.**
+> **GATE STATUS: All 7 validation gates GREEN locally. Product Gate RED (3 CRITICAL bugs). Admin Gate YELLOW (Phase 162 pending).**
 > **Zero: `as never`, `as any`, `console.log`, `console.error`, `window.alert`, `window.confirm`, `strict: false`, `droplet-scrollbar`, stale TODOs — all in `src/`.**
 >
-> **OWNER-REPORTED BUGS STATUS (PM audit #78):**
+> **CRITICAL PRODUCTION BUGS (PM audit #78):**
 >
-> - ✅ Stream error fix (Phases 160 + 160.1): CODE-COMPLETE. Awaiting owner deployment.
-> - ✅ Payment webhook fix (Phase 161): CODE-COMPLETE. Awaiting owner deployment + Stripe Dashboard verification.
-> - ✅ Client timeout (Phase 164 + 160.1): COMPLETE.
-> - ✅ Phase 166 (maxDuration on all routes): VERIFIED COMPLETE.
-> - ⚠️ Admin configurability (Phase 162): PENDING — next after Phase 167.
+> - 🔴 BUG-PAYMENT: Payment succeeds but no Transaction/plan update. Stripe webhook misconfigured. **OPS FIX REQUIRED (zero code).**
+> - 🔴 BUG-STREAM: Stream ends unexpectedly on media gen. Vercel 60s timeout. **Phase 160.2 (proactive timeout safety net).**
+> - 🔴 BUG-AUDIO: Audio PLAY button triggers ERR_INVALID_STATE. **Phase 168 (controller guard + download Range support).**
+> - ⚠️ Admin configurability (Phase 162): PENDING — after critical bugs resolved.
 >
-> **EXECUTION ORDER (PM audit #78 — deployment is owner-manual):**
+> **EXECUTION ORDER (PM audit #78 — critical bugs first, everything else on hold):**
 >
-> 1. **Phase 167 HIGH** — Fix empty catch blocks (~27 blocks across 7 files). START HERE.
-> 2. **Phase 162 HIGH** — Promo text admin-configurable (3 core files + resolver).
-> 3. **Phase 163 HIGH** — Global error boundary (`global-error.tsx`).
-> 4. **Phase 143 MEDIUM** — Env var runtime validation.
-> 5. **Phase 165 MEDIUM** — Checkout success page DB polling.
-> 6. **Phase 144–148 MEDIUM/LOW** — Backlog.
+> 1. **🔴 OPS: STRIPE WEBHOOK VERIFICATION** — Owner must fix Stripe Dashboard config. Zero code.
+> 2. **🔴 Phase 168 CRITICAL** — Audio player + download Range support + SSE controller guard.
+> 3. **🔴 Phase 160.2 CRITICAL** — Proactive timeout safety net (55s timer before Vercel kill).
+> 4. **Phase 165 HIGH** — Checkout success page DB polling (payment safety net). PRIORITY BUMPED.
+> 5. **Phase 167.2 HIGH** — Remaining 35 empty catch blocks.
+> 6. **Phase 162 HIGH** — Promo text admin-configurable.
+> 7. **Phase 163 HIGH** — Global error boundary.
+> 8. **Phase 143 MEDIUM** — Env var runtime validation.
+> 9. **Phase 144–148 MEDIUM/LOW** — Backlog.
 >
-> _Production deployment is handled by the owner manually. Do not block on deployment._
+> _Critical bugs block ALL other work. No exceptions._
 > _Post-deploy ops checklist (Stripe webhook verification, streaming test, payment test) is owner responsibility._
 
 ---
 
-## 🟢 ENGINEER START HERE — Fix Empty Catch Blocks (PM audit #76)
+## � OWNER ACTION REQUIRED — Stripe Webhook Ops Verification (PM audit #78)
 
-### Phase 167 HIGH — Add error handling to all empty catch blocks violating AGENTS.md
+> **This is NOT a code task.** The owner must verify Stripe Dashboard configuration. Zero code changes needed.
+> All three audit agents (Architect, Engineer, PM) independently verified the webhook code is correct.
 
-> **EXPANDED from 2 blocks to ~27 (PM audit #76).** Triple-audit confirmed: Architect found 15 in admin.actions.tsx + 6 in delete-user-cascade.ts. Engineer found 3 in API routes (aws + upload). PM independently verified all counts.
->
-> AGENTS.md: "No empty catch blocks — every catch must either capture the error variable and log to `process.stderr.write()`, or have a code comment explaining why the error is intentionally discarded."
+**What the owner must check in Stripe Dashboard → Developers → Webhooks:**
 
-**Category A — API Route catches (MUST LOG — production debugging at stake):**
+1. **Endpoint URL** — Must be `https://<production-domain>/api/webhooks/stripe` (exact path match)
+2. **Signing secret** — The `whsec_...` value must match the `STRIPE_WEBHOOK_SECRET` environment variable in Vercel
+3. **Event types** — `checkout.session.completed` must be checked/selected
+4. **Recent deliveries** — Check for 400/500 responses (evidence of failed delivery attempts)
+5. **Send test webhook** — Use Stripe's test webhook button to verify connectivity
 
-1. `src/app/api/aws/route.tsx` line 165 — POST catch: returns 500 without logging
-2. `src/app/api/aws/route.tsx` line 240 — DELETE catch: returns 500 without logging
-3. `src/app/api/upload/route.tsx` line 141 — POST catch: returns 500 without logging
-4. `src/app/api/openai/route.tsx` line ~777 — inner catch: returns error JSON without logging
-5. `src/app/api/openai/route.tsx` line ~1686 — outer catch: returns 500 without logging
-
-**Category B — Admin action catches (15 blocks — MUST LOG):**
-
-6-20. `src/lib/actions/admin.actions.tsx` — 15 `catch {` blocks at lines 56, 498, 522, 645, 702, 757, 796, 851, 908, 959, 989, 1030, 1068, 1116, 1164. All return `errorState(...)` to UI but discard actual error details.
-
-**Category C — Cascade utility catches (6 blocks — add error variable capture):**
-
-21-26. `src/lib/utils/delete-user-cascade.ts` — 6 `catch {` blocks. Currently call `onStepError(step)` but don't capture error variable.
-
-**Category D — Client/utility catches (comment-only — acceptable fallback patterns):**
-
-27. `src/components/chat/sidebar/chat-sidebar-shell.tsx` line 75 — localStorage write. Add comment: `// localStorage quota exceeded — non-critical, intentionally discarded`
-28. `src/components/chat/chat-sidebar.tsx` line 49 — Server data-fetch fallback. Add `process.stderr.write()` logging.
-
-**What to do:**
-
-1. **For all Category A + B blocks:** Capture error variable `catch (error)`, add `process.stderr.write(\`[source] Error: ${error instanceof Error ? error.message : "unknown"}\\n\`)` before the return statement.
-2. **For Category C blocks:** Capture error variable, pass to `onStepError(step, error)` (update callback signature).
-3. **For Category D block 27:** Add comment explaining intentional discard.
-4. **For Category D block 28:** Add `process.stderr.write()` logging.
+**If URL or secret is wrong:** Fix in Stripe Dashboard. Re-test payment flow.
+**If event type is missing:** Add `checkout.session.completed`. Re-test payment flow.
+**If deliveries show 400:** Signing secret mismatch. Update `STRIPE_WEBHOOK_SECRET` in Vercel env.
+**If deliveries show 500:** Server error — check Vercel function logs for `[stripe-webhook]` entries.
 
 **Acceptance criteria:**
 
-- [ ] Zero parameterless `catch {` blocks in `src/` (every catch either captures error or has explaining comment)
-- [ ] All API route catches log error details via `process.stderr.write()`
-- [ ] All admin action catches log error details via `process.stderr.write()`
+- [ ] Stripe webhook endpoint URL matches production domain
+- [ ] `STRIPE_WEBHOOK_SECRET` env var matches webhook endpoint signing secret
+- [ ] `checkout.session.completed` event type is selected
+- [ ] Test payment creates Transaction record AND updates User plan
+
+---
+
+## 🔴 ENGINEER START HERE — Phase 168 CRITICAL — Audio Player Controller Error Fix (PM audit #78)
+
+> **NEW.** Owner reported: clicking PLAY on generated audio triggers `TypeError: Invalid state: Controller is already closed { code: 'ERR_INVALID_STATE' }`. Triple-audit identified three contributing paths.
+
+**Path A — SSE controller race condition (server-side fix):**
+
+File: `src/app/api/openai/route.tsx`
+
+1. Add a `let controllerClosed = false;` flag alongside `didSendFinal`.
+2. Set `controllerClosed = true;` immediately BEFORE `controller.close()` in the `finally` block.
+3. Update `emitHeartbeat()` to check `controllerClosed` before calling `writeStreamEvent()`. If `controllerClosed`, skip the write and return `false`.
+4. This prevents the race: heartbeat interval fires after `controller.close()`, tries `controller.enqueue()` on a closed controller.
+
+**Path B — Download route HTTP Range support (server-side fix):**
+
+File: `src/app/api/download/route.tsx`
+
+1. Parse `Range` request header from the incoming request.
+2. For S3-sourced files: pass `Range` header to `getFileFromAWS()` (the S3 SDK `GetObjectCommand` supports `Range` parameter natively).
+3. Return `206 Partial Content` with `Content-Range` and `Accept-Ranges: bytes` headers when Range is requested.
+4. Return `200 OK` with `Accept-Ranges: bytes` header for non-Range requests.
+5. This is essential for browser audio/video elements to properly buffer, seek, and replay content.
+
+**Path C — Audio player lifecycle hardening (client-side fix):**
+
+File: `src/components/shared/audio-player.tsx`
+
+1. Reset `previousAudioUrlRef.current = null` in the cleanup function (before `return`). This allows re-initialization if the component remounts with the same `audioSrc`.
+2. Set `audioElement.src = ""` before disposing to force the browser to release the resource.
+3. Add an `error` event listener on the Audio element: `audioElement.addEventListener("error", handleError)` — surface fetch/decode failures to the user (e.g., set an error state and show "Audio unavailable").
+
+**Acceptance criteria:**
+
+- [ ] Zero `ERR_INVALID_STATE` errors from SSE controller in server logs
+- [ ] `emitHeartbeat()` checks `controllerClosed` flag before enqueuing
+- [ ] `/api/download` returns `Accept-Ranges: bytes` header
+- [ ] `/api/download` handles `Range` request header and returns `206 Partial Content`
+- [ ] Audio player re-initializes correctly after component remount
+- [ ] Audio player shows error state on fetch/decode failure
+- [ ] Build passes, tests pass
+
+---
+
+## 🔴 Phase 160.2 CRITICAL — Proactive Timeout Safety Net (PM audit #78)
+
+> Stream error on media gen still failing in production. Code mitigations (heartbeat, didSendFinal, maxDuration=60) are deployed but do NOT fix root cause: Vercel Hobby 60s function timeout kills server before pipeline completes. This phase adds a proactive safety net.
+
+**File:** `src/app/api/openai/route.tsx`
+
+**What to do:**
+
+1. At the start of the `ReadableStream.start(controller)` callback, record `const startTime = Date.now();`.
+2. Define `const TIMEOUT_SAFETY_MS = (maxDuration - 5) * 1000;` (55s for current maxDuration=60).
+3. Start a `setTimeout` (the "safety timer") that fires at `TIMEOUT_SAFETY_MS`:
+   - Sends `writeErrorEvent("Your request is taking longer than expected. Media generation may still be processing in the background. Please check your library or start a new conversation.", "proactive timeout safety net")`
+   - Calls `stopGeneralHeartbeat()` and `stopMediaHeartbeat()`
+   - Calls `controller.close()` (wrapped in try/catch)
+4. Clear the safety timer in the `finally` block if the pipeline completes normally.
+5. **Additionally**: update `src/components/chat/chat-wrapper.tsx` to display this specific error message gracefully (not as a red alert — use orange/warning since media may still be processing).
+
+**Acceptance criteria:**
+
+- [ ] Safety timer fires at `maxDuration - 5s` and sends graceful error event
+- [ ] Client receives and displays the timeout message (not raw "stream ended unexpectedly")
+- [ ] Normal-speed requests are unaffected (timer cleared before firing)
+- [ ] Video gen requests get a clear message instead of silent crash
+- [ ] Build passes, tests pass
+
+---
+
+## HIGH — Checkout Success Page DB Polling (PM audit #78 — PRIORITY BUMPED)
+
+### Phase 165 HIGH — Add plan confirmation polling to checkout success page
+
+> PRIORITY BUMPED from MEDIUM to HIGH (PM audit #78). Acts as safety net for BUG-PAYMENT. After Stripe redirects to `/checkout-success`, webhook may not have processed yet. User sees "success" but plan is still Lite.
+
+**File:** `src/app/(public)/checkout-success/page.tsx` (or add client component)
+
+**What to do:**
+
+1. Add a client component that polls a plan-status endpoint every 3-5s for up to 30s.
+2. Show "Confirming your plan upgrade..." initially.
+3. On confirmation: "Plan upgraded successfully!" with green indicator.
+4. On timeout: "Payment successful. Your plan will be updated shortly. If not updated within a few minutes, contact support."
+
+**Acceptance criteria:**
+
+- [ ] Checkout success page shows plan confirmation status
+- [ ] Polling stops after confirmation or 30s timeout
+- [ ] Build passes
+
+---
+
+## 🟢 ENGINEER START HERE (after critical bugs) — Remaining Empty Catch Blocks (PM audit #78)
+
+### Phase 167.2 HIGH — Fix remaining 35 parameterless `catch {` blocks across `src/`
+
+> Phase 167 was partially completed (targeted catches in API routes, admin actions, delete cascade, sidebar — see DONE.md Phase 167). **35 parameterless `catch {` blocks remain across `src/`.** This phase covers the remaining ones.
+>
+> AGENTS.md: "No empty catch blocks — every catch must either capture the error variable and log to `process.stderr.write()`, or have a code comment explaining why the error is intentionally discarded."
+
+**Category A — Server-side catches that MUST LOG (production debugging at stake):**
+
+1. `src/app/api/webhooks/clerk/route.tsx` lines 292, 497, 523 — 3 webhook catches
+2. `src/lib/actions/user.actions.tsx` line 104 — Clerk user deletion failure
+3. `src/lib/actions/task.actions.tsx` lines 338, 348 — S3 cleanup and task deletion
+4. `src/lib/utils/ensure-user-synced.ts` line 108 — Clerk metadata sync
+5. `src/lib/utils/aws/uploadFileToAWS.tsx` line 37 — file upload (must use `{ cause: error }`)
+6. `src/app/(public)/checkout-success/page.tsx` line 45 — Stripe session verify
+7. `src/lib/utils/openai/generateResponse.tsx` line 425 — JSON.parse args
+
+**Category B — Effective-\* resolver catches (add comment — intentional fallback to defaults):**
+
+8-16. `effective-website-copy.ts` (2), `effective-stop-reasons.ts` (1), `effective-plan-config.ts` (3), `effective-persona-config.ts` (1), `effective-persona-access.ts` (1), `effective-model-config.ts` (1), `effective-faq-content.ts` (1)
+
+**Category C — Client catches (add comment for intentional discards, log for real errors):**
+
+17. `src/components/shared/audio-player.tsx` line 109 — audio init failure
+18. `src/components/shared/image-holder.tsx` line 48 — download failure (already has comment ✅)
+19. `src/components/layout/droplet-theme.tsx` lines 49, 67 — localStorage (already has comment ✅)
+20. `src/components/chat/sidebar/chat-sidebar-nav.tsx` line 144 — delete failure
+21. `src/components/chat/library-delete-button.tsx` line 66 — delete failure
+22. `src/components/chat/chat-wrapper.tsx` line 300 — JSON parse
+23. `src/components/chat/chat-input.tsx` line 115 — upload failure
+24. `src/app/layout.tsx` line 73 — theme init (inline script — intentional)
+
+**Category D — Utility catches (add comment for URL/parse fallbacks):**
+
+25-28. `normalize-public-asset-url.ts` (2), `s3-file-reference.ts` (2), `download-url-allowlist.ts` (1), `download/route.tsx` (1)
+
+**What to do:**
+
+1. **For Category A blocks:** Capture error variable `catch (error)`, add `process.stderr.write(\`[source] Error: ${error instanceof Error ? error.message : "unknown"}\\n\`)`before the return/rethrow. For`uploadFileToAWS`: use `throw new Error("File upload failed", { cause: error })`.
+2. **For Category B blocks:** Add comment: `// Intentional fallback to defaults — DB error non-fatal for admin config resolution`
+3. **For Category C blocks 17, 20, 21, 22, 23:** Add comment or capture error where appropriate.
+4. **For Category D blocks:** Add comment: `// URL/path parse failure — non-fatal, fallback value used`
+5. For blocks that already have comments (#18, #19, #24): No change needed.
+
+**Acceptance criteria:**
+
+- [ ] Zero uncommented parameterless `catch {` blocks in `src/`
+- [ ] Server-side catches (Category A) log error details via `process.stderr.write()`
+- [ ] Client/utility catches (Categories B-D) have explaining comments or capture error
+- [ ] `uploadFileToAWS` uses `{ cause: error }` pattern
 - [ ] Build passes, tests pass
 
 ---
@@ -154,29 +285,6 @@
 - [ ] Zero `!` on `process.env` in codebase
 - [ ] Missing env vars throw clear error at module load
 - [ ] Build passes, tests pass
-
----
-
-## MEDIUM — Checkout Success Page DB Polling (PM audit #75 — Architect finding)
-
-### Phase 165 MEDIUM — Add plan confirmation polling to checkout success page
-
-> Architect recommendation: checkout success page shows "Payment successful" based on Stripe status, but webhook may not have processed yet. User sees old plan. Add lightweight polling for plan confirmation.
-
-**File:** `src/app/(public)/checkout-success/page.tsx` (or add client component)
-
-**What to do:**
-
-1. Add a client component that polls a plan-status endpoint every 3-5s for up to 30s.
-2. Show "Confirming your plan upgrade..." initially.
-3. On confirmation: "Plan upgraded successfully!" with green indicator.
-4. On timeout: "Payment successful. Your plan will be updated shortly."
-
-**Acceptance criteria:**
-
-- [ ] Checkout success page shows plan confirmation status
-- [ ] Polling stops after confirmation or 30s timeout
-- [ ] Build passes
 
 ---
 

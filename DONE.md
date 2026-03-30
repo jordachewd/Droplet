@@ -2,7 +2,27 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-30 — PM audit #77. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4, 105.1, 105.2, 106, 107.1, 107.2, 107.3, 108, 110, 111.1, 112.1, 112.2, 109, 113.1, 113.2, 114, 115, 116, 117, 120.1, 120.2-A, 120.2-B, 120.2-C, 120.3, 120.4, 120.5, 120.6, 120.7, 121, 122, 123, 124, 125, 125.1, 125.2, 126, 126.1, 126.2, 127, 128.1, 128.2, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 149, 150, 151, 152, 153, 154, 155, 155.1, 156, 157, 158, 159, 160, 160.1, 161, 164, 166, 74.2, 104, 125.3 complete. Milestones 0–25 COMPLETE. 592 unit tests (101 suites). E2E: 49 tests (8 spec files). All 7 validation gates GREEN. Build passing. Node.js 24.12.0 runtime. Coverage: 85/80/85/85. Zero `as never` casts. Lint: 0 errors, 0 warnings.
+> Last updated: 2026-03-31 — PM audit #78. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4, 105.1, 105.2, 106, 107.1, 107.2, 107.3, 108, 110, 111.1, 112.1, 112.2, 109, 113.1, 113.2, 114, 115, 116, 117, 120.1, 120.2-A, 120.2-B, 120.2-C, 120.3, 120.4, 120.5, 120.6, 120.7, 121, 122, 123, 124, 125, 125.1, 125.2, 126, 126.1, 126.2, 127, 128.1, 128.2, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 149, 150, 151, 152, 153, 154, 155, 155.1, 156, 157, 158, 159, 160, 160.1, 161, 164, 166, 167 (partial), 74.2, 104, 125.3 complete. Milestones 0–25 COMPLETE. 592 unit tests (101 suites). E2E: 49 tests (8 spec files). All 7 validation gates GREEN. Build passing. Node.js 24.12.0 runtime. Coverage: 85/80/85/85. Zero `as never` casts. Lint: 0 errors, 0 warnings.
+
+---
+
+## Phase 167 HIGH — Fix empty catch blocks (PARTIAL) — COMPLETED (2026-03-31)
+
+> Engineer delivered targeted catch block fixes in 9 files. PM audit #78 verified: all targeted API route, admin action, delete cascade, and sidebar catches are fixed. 35 parameterless `catch {}` blocks remain across `src/` — tracked as Phase 167.2 in TODO.md.
+
+- [x] `src/app/api/aws/route.tsx` — 2 empty catches fixed (POST, DELETE outer catches now log to stderr)
+- [x] `src/app/api/openai/route.tsx` — 1 empty catch fixed (main route outer catch now logs to stderr)
+- [x] `src/app/api/upload/route.tsx` — 1 empty catch fixed (POST outer catch now logs to stderr)
+- [x] `src/components/chat/chat-sidebar.tsx` — 1 empty catch fixed (sidebar data fetch)
+- [x] `src/components/chat/chat-sidebar-shell.tsx` — 1 empty catch fixed (sidebar shell data fetch)
+- [x] `src/lib/actions/admin.actions.tsx` — 15 empty catches fixed (all admin action catches now log to stderr)
+- [x] `src/lib/utils/delete-user-cascade.ts` — 6 empty catches fixed (cascade cleanup steps now log to stderr)
+- [x] Unit test files updated to match new error handling patterns
+- [x] Build passes, all 592 unit tests pass
+
+**Remaining:** 35 parameterless `catch {}` blocks in `src/` — Phase 167.2.
+
+**Files changed:** 9 source files + associated test files.
 
 ---
 
