@@ -2,7 +2,62 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-30 — PM audit #74. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4, 105.1, 105.2, 106, 107.1, 107.2, 107.3, 108, 110, 111.1, 112.1, 112.2, 109, 113.1, 113.2, 114, 115, 116, 117, 120.1, 120.2-A, 120.2-B, 120.2-C, 120.3, 120.4, 120.5, 120.6, 120.7, 121, 122, 123, 124, 125, 125.1, 125.2, 126, 126.1, 126.2, 127, 128.1, 128.2, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 149, 150, 151, 152, 153, 154, 155, 155.1, 156, 157, 158, 159, 74.2, 104, 125.3 complete. Milestones 0–25 COMPLETE. 591 unit tests (101 suites). E2E: 49 tests (8 spec files). All 7 validation gates GREEN. Build passing. Node.js 24.12.0 runtime. Coverage: 85/80/85/85. Zero `as never` casts. Lint: 0 errors, 0 warnings.
+> Last updated: 2026-03-30 — PM audit #75. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4, 105.1, 105.2, 106, 107.1, 107.2, 107.3, 108, 110, 111.1, 112.1, 112.2, 109, 113.1, 113.2, 114, 115, 116, 117, 120.1, 120.2-A, 120.2-B, 120.2-C, 120.3, 120.4, 120.5, 120.6, 120.7, 121, 122, 123, 124, 125, 125.1, 125.2, 126, 126.1, 126.2, 127, 128.1, 128.2, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 149, 150, 151, 152, 153, 154, 155, 155.1, 156, 157, 158, 159, 160, 161, 164, 74.2, 104, 125.3 complete. Milestones 0–25 COMPLETE. 592 unit tests (101 suites). E2E: 49 tests (8 spec files). All 7 validation gates GREEN. Build passing. Node.js 24.12.0 runtime. Coverage: 85/80/85/85. Zero `as never` casts. Lint: 0 errors, 0 warnings.
+
+---
+
+## Phase 164 MEDIUM — Align client stream timeout with server `maxDuration` — COMPLETED (2026-03-30)
+
+> Engineer delivered (PM audit #75). Client timeout aligned with server maxDuration + 10s margin.
+
+- [x] `STREAM_REQUEST_TIMEOUT_MS` changed from `200_000` to `310_000` in `chat-wrapper.tsx`.
+- [x] Unit test updated to assert `310_000` timeout.
+- [x] All unit tests pass (592 tests).
+- [x] Build passes.
+
+**Note (PM audit #75):** Phase 160.1 will re-align this to `70_000` when `maxDuration` is reduced from 300 to 60 for Vercel Hobby compliance.
+
+**Files changed:** `src/components/chat/chat-wrapper.tsx`, `tests/unit/components/chat-wrapper.test.tsx`
+
+---
+
+## Phase 161 CRITICAL — Harden Stripe webhook: idempotency repair, error logging, arrival logging — COMPLETED (2026-03-30)
+
+> Engineer delivered (PM audit #75). CRITICAL payment fix. Webhook idempotency now checks both Transaction existence AND User plan state. Repair path implemented for partial failures. Full error logging added.
+
+- [x] Idempotency check verifies Transaction existence AND `user.plan.stripeId` match via `hasExpectedStripePlan()`.
+- [x] If Transaction exists but user plan is stale, `applyCheckoutPlanUpdate()` repairs the user plan (not 200 "Already processed").
+- [x] Top-level try/catch wraps entire POST handler with session ID in error context.
+- [x] `constructEvent` catch logs actual error message (was swallowed).
+- [x] `createTransaction` catch logs actual error with session + user context (was swallowed).
+- [x] Webhook arrival logged before signature verification.
+- [x] Unit tests: idempotency repair + replayed transaction stale-plan repair + logging assertions.
+- [x] All unit tests pass (592 tests).
+- [x] Build passes.
+
+**Awaiting:** Production deployment (blocked by Phase 160.1) + Stripe Dashboard ops verification.
+
+**Files changed:** `src/app/api/webhooks/stripe/route.tsx`, `tests/unit/routes/stripe-webhook-route.test.ts`
+
+---
+
+## Phase 160 CRITICAL — Add `maxDuration`, text-streaming heartbeat, error logging, `didSendFinal` guard — COMPLETED (2026-03-30)
+
+> Engineer delivered (PM audit #75). CRITICAL stream fix. All root causes addressed: maxDuration export, general heartbeat for text streaming, didSendFinal guard, stderr logging.
+
+- [x] `export const maxDuration = 300` added to OpenAI route (line 71).
+- [x] General heartbeat (30s interval) started immediately after meta event — not just during media generation.
+- [x] Media heartbeat (12s interval) via `onMediaGenerationStart`/`onMediaGenerationEnd` callbacks.
+- [x] `didSendFinal` boolean flag: prevents double-write, guarantees client always receives `final` or `error`.
+- [x] All catch blocks log to `process.stderr.write()` with context (was empty `catch {}`).
+- [x] `controller.close()` wrapped in try/catch with logging.
+- [x] Unit test asserts `maxDuration = 300`.
+- [x] All unit tests pass (592 tests).
+- [x] Build passes.
+
+**Note (PM audit #75):** `maxDuration = 300` exceeds Vercel Hobby limit (60s max). Phase 160.1 will reduce to 60. The heartbeat, didSendFinal, and logging improvements remain valid regardless of maxDuration value.
+
+**Files changed:** `src/app/api/openai/route.tsx`, `tests/unit/routes/openai-route-streaming.test.ts`
 
 ---
 

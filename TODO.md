@@ -5,89 +5,63 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #74 (2026-03-30). Milestones 0–25 COMPLETE. All phases through 159 complete. 591 unit tests (101 suites). 49 E2E tests (8 spec files). Build passes. TSC clean. Node.js 24.12.0 runtime.**
-> **GATE STATUS: All 7 validation gates GREEN. Lint (0 errors, 0 warnings), Knip (0 findings), TSC clean, build passes, unit tests (101/591), E2E (8 specs/49 tests), coverage 85/80/85/85.**
-> **RELEASE GATE STATUS: BLOCKED — 2 CRITICAL production bugs unresolved (stream + payment).**
+> **STATUS: PM audit #75 (2026-03-30). Milestones 0–25 COMPLETE. All phases through 161 complete + 164 complete. 592 unit tests (101 suites). 49 E2E tests (8 spec files). Build passes. TSC clean. Node.js 24.12.0 runtime.**
+> **GATE STATUS: All 7 validation gates GREEN locally. Lint (0 errors, 0 warnings), Knip (0 findings), TSC clean, build passes, unit tests (101/592), E2E (8 specs/49 tests), coverage 85/80/85/85.**
+> **RELEASE GATE STATUS: BLOCKED — 1 CRITICAL Vercel deployment blocker (maxDuration). Payment + stream code fixes complete but blocked from deploying.**
 > **Zero: `as never`, `as any`, `console.log`, `console.error`, `window.alert`, `window.confirm`, `strict: false`, `droplet-scrollbar`, stale TODOs — all in `src/`.**
 >
-> **OWNER RE-REPORTS (production testing, PM audit #74):**
+> **CRITICAL PRODUCTION BLOCKER (PM audit #75 — owner report):**
 >
-> - **CRITICAL** — Media generation triggers "The response stream ended unexpectedly" in production. Also fails on large text responses.
-> - **CRITICAL** — Payment goes through Stripe but NO Transaction registered, user plan NOT updated.
-> - **HIGH** — Admin `/admin/settings` fully configurable — promo/marketing text gaps remain in multiple components.
+> - **CRITICAL** — Vercel Hobby plan rejects `maxDuration = 300` on `api/openai` route. Error: "Builder returned invalid maxDuration value for Serverless Function. Serverless Functions must have a maxDuration between 1 and 60 for plan hobby." Deployment FAILS. All code fixes (Phase 160, 161, 164) cannot reach production.
 >
-> **ROOT CAUSE ANALYSIS (PM audit #74, triple audit — Architect + Engineer + PM — unanimous):**
+> **Previous CRITICAL bugs status (PM audit #75):**
 >
-> - Stream error: Missing `export const maxDuration` on API route (serverless function killed at 10-60s default, media gen needs up to 180s). No heartbeat during text-only streaming (OpenAI thinking/queue delays cause infrastructure idle timeout). Empty catch blocks swallow all error details making debugging impossible.
-> - Payment: Non-atomic Transaction/User update with flawed idempotency — if Transaction.create succeeds but User.findOneAndUpdate fails, Stripe retries get 200 "Already processed" (idempotency only checks Transaction, not User plan state). User plan is NEVER updated. Error details swallowed in all catch blocks. No top-level try/catch around webhook handler. Stripe Dashboard webhook config should also be verified (ops task).
+> - Stream error fix (Phase 160): CODE-COMPLETE. `maxDuration=300`, heartbeat, `didSendFinal`, stderr logging all implemented. **BUT: maxDuration=300 exceeds Vercel Hobby limit (60s). Must be reduced to 60 OR owner must upgrade to Vercel Pro ($20/mo).**
+> - Payment webhook fix (Phase 161): CODE-COMPLETE. Idempotency repair, top-level try/catch, arrival/error logging. **Awaiting deployment + Stripe Dashboard ops verification.**
+> - Client timeout alignment (Phase 164): CODE-COMPLETE. `STREAM_REQUEST_TIMEOUT_MS = 310_000`. **Must be re-aligned if maxDuration changes.**
 >
-> **EXECUTION ORDER: Phase 160 (CRITICAL stream) → Phase 161 (CRITICAL payment) → Phase 162 (HIGH promo text) → Phase 163 (HIGH global-error) → Phase 164 (MEDIUM client timeout alignment) → Phase 143–147 (MEDIUM/LOW backlog)**
+> **EXECUTION ORDER: Phase 160.1 (CRITICAL Vercel maxDuration fix) → Phase 162 (HIGH promo text) → Phase 163 (HIGH global-error) → Phase 166 (HIGH maxDuration on other routes) → Phase 167 (HIGH empty catch blocks) → Phase 143–148 (MEDIUM/LOW backlog)**
 
 ---
 
-## CRITICAL — Stream Error Production Fix (PM audit #73 — triple audit)
+## CRITICAL — Vercel Hobby maxDuration Deployment Blocker (PM audit #75)
 
-### Phase 160 CRITICAL — Add `maxDuration`, text-streaming heartbeat, and error logging to `/api/openai` route
+### Phase 160.1 CRITICAL — Fix `maxDuration` to comply with Vercel Hobby plan limit
 
-> Owner still reports "The response stream ended unexpectedly" on media generation AND large text responses in production. Phase 149 (heartbeat) + Phase 158 (catch/finally hardening) are applied — the in-container code is correct. But the serverless function itself is killed by the platform before media generation completes. Triple-confirmed root cause: no `export const maxDuration` → platform uses default (10–60s depending on plan) → video generation (up to 180s) always fails.
+> Owner reports Vercel build error: "Builder returned invalid maxDuration value for Serverless Function 'api/openai'. Serverless Functions must have a maxDuration between 1 and 60 for plan hobby." Phase 160 set `maxDuration = 300` which requires Vercel Pro ($20/mo). Vercel Hobby allows max 60s. Deployment is completely blocked.
+>
+> **Impact analysis:** Reducing to 60s means video generation (up to 180s) WILL time out on Hobby. Image generation (~15-30s) and audio generation (~10-20s) should fit. Text streaming with heartbeat should fit. This is a hard platform constraint — no code workaround exists. Owner must either: (a) accept 60s limit and disable/warn on video gen, OR (b) upgrade Vercel plan.
+>
+> **PM Decision:** Set `maxDuration = 60` to unblock deployment immediately. Video generation timeout is an accepted trade-off on Vercel Hobby. Document the constraint. Re-align client timeout to match.
 
-**File:** `src/app/api/openai/route.tsx`
+**Files:**
+
+1. `src/app/api/openai/route.tsx` — Change `maxDuration` from `300` to `60`
+2. `src/components/chat/chat-wrapper.tsx` — Change `STREAM_REQUEST_TIMEOUT_MS` from `310_000` to `70_000` (60s server max + 10s margin)
+3. `tests/unit/routes/openai-route-streaming.test.ts` — Update `maxDuration` assertion from `300` to `60`
+4. `tests/unit/components/chat-wrapper.test.tsx` — Update timeout test from `310_000` to `70_000`
 
 **What to do:**
 
-1. Add `export const maxDuration = 300;` near the top of the route file (after imports, before constants). This tells Next.js/Vercel to allow 300s function execution (covers 180s video + DB ops + margin).
-2. Start a low-frequency heartbeat (30s interval) immediately after writing the `meta` stream event — not just during media generation. This prevents infrastructure idle-timeout kills during long text streaming where OpenAI may have pauses between chunks.
-3. In the existing empty `catch {}` blocks (lines ~1549 and ~1554), add `process.stderr.write` logging so failed stream event writes and controller closes are not silently swallowed. Format: `[openai-stream] Failed to write <error|close> event to stream\n`.
-4. Add a `didSendFinal` boolean flag. Before `controller.close()` in finally, if `!didSendFinal`, attempt to write a synthetic error event. This guarantees the client ALWAYS receives either `final` or `error`.
+1. Change `export const maxDuration = 300` to `export const maxDuration = 60` in the OpenAI route.
+2. Change `STREAM_REQUEST_TIMEOUT_MS` from `310_000` to `70_000` in `chat-wrapper.tsx`.
+3. Update the unit test asserting `maxDuration` value.
+4. Update the unit test asserting `STREAM_REQUEST_TIMEOUT_MS` value.
 
 **Acceptance criteria:**
 
-- [ ] `export const maxDuration = 300` exported from route file
-- [ ] Text-streaming heartbeat started at stream creation (not just media generation)
-- [ ] Empty `catch {}` blocks replaced with `catch { process.stderr.write(...) }`
-- [ ] `didSendFinal` flag ensures client always gets `final` or `error` event
-- [ ] Build passes, tests pass
-- [ ] Media generation works in production without "stream ended unexpectedly"
-
----
-
-## CRITICAL — Payment Webhook Production Fix (PM audit #73 — triple audit)
-
-### Phase 161 CRITICAL — Harden Stripe webhook: non-atomic fix, error logging, arrival logging
-
-> Owner still reports payment goes through Stripe but NO Transaction registered and user plan NOT updated. Code-level Phase 157 fix (.strict() → .strip()) is applied. Triple audit found TWO root causes:
->
-> **RC-1 (Configuration):** Stripe Dashboard webhook endpoint likely not configured or misconfigured for production (wrong URL, wrong secret, or `checkout.session.completed` not selected). This is an ops task — verify in Stripe Dashboard.
->
-> **RC-2 (Code bug — CRITICAL):** Non-atomic Transaction/User update with incorrect idempotency. If `Transaction.create` succeeds but `User.findOneAndUpdate` fails or returns null (DB hiccup, timeout), the idempotency check at line 162 finds the existing Transaction and returns 200 "Already processed" — the user plan is NEVER updated. Stripe stops retrying because it got 200. This is a permanent data consistency gap.
-
-**File:** `src/app/api/webhooks/stripe/route.tsx`
-
-**What to do:**
-
-1. **Fix non-atomic idempotency (CRITICAL):** When the idempotency check finds an existing Transaction, also verify the user's plan was updated (check `User.plan.stripeId` matches this `id`). If the user's plan doesn't match (still on old plan), reattempt the user plan update instead of returning "Already processed."
-2. **Add top-level try/catch around POST handler:** Wrap the entire handler body in try/catch. On unhandled error, return controlled 500 response with generic message. Log actual error to stderr with Stripe session ID context.
-3. **Log actual `constructEvent` error:** Change the catch block to capture the error: `catch (err) { logStripeWebhookError(\`Invalid webhook signature: ${err instanceof Error ? err.message : "unknown"}\`); }`. This immediately reveals secret mismatches.
-4. **Log actual `createTransaction` error:** Same pattern — capture original error object and log real message, not just "Failed to create transaction."
-5. **Add pre-verification arrival log:** Before the signature verification try/catch, log `"Webhook received"` so operators can confirm webhooks are arriving at all.
-6. **Include Stripe session ID in failure logs:** When `createTransaction` fails or `User.findOneAndUpdate` returns null, include the Stripe session ID and user ID in the log for payment correlation.
-
-**Acceptance criteria:**
-
-- [ ] Idempotency check verifies BOTH Transaction existence AND user plan state
-- [ ] If Transaction exists but user plan not updated, reattempt user plan update
-- [ ] Top-level try/catch wraps entire POST handler (no unhandled exceptions)
-- [ ] `constructEvent` error message logged (not swallowed)
-- [ ] `createTransaction` error details logged with session ID context (not swallowed)
-- [ ] Webhook arrival logged before signature verification
+- [ ] `export const maxDuration = 60` in OpenAI route
+- [ ] `STREAM_REQUEST_TIMEOUT_MS = 70_000` in chat-wrapper
+- [ ] Unit tests updated and passing
+- [ ] Vercel build succeeds (no maxDuration error)
 - [ ] Build passes, tests pass
 
-**Ops task (non-code, owner action):**
+**Known trade-off:** Video generation requests exceeding 60s will time out on Vercel Hobby. Text chat, image gen (~15-30s), and audio gen (~10-20s) should work within the 60s window. Owner can upgrade to Vercel Pro ($20/mo) for `maxDuration` up to 300s, which would restore full video generation support. When/if upgrading, change `maxDuration` back to `300` and `STREAM_REQUEST_TIMEOUT_MS` back to `310_000`.
 
-- [ ] Verify Stripe Dashboard → Developers → Webhooks → endpoint URL matches production domain (`/api/webhooks/stripe`)
-- [ ] Verify `checkout.session.completed` event is selected in webhook endpoint config
-- [ ] Verify `STRIPE_WEBHOOK_SECRET` in production .env matches the signing secret shown in Stripe Dashboard for that endpoint
-- [ ] Check Stripe Dashboard → Developers → Webhooks → Event deliveries for recent failures
+**Ops decision required from owner:**
+
+- [ ] Accept 60s limit on Hobby (video gen may time out) — OR
+- [ ] Upgrade to Vercel Pro ($20/mo) for 300s maxDuration support
 
 ---
 
@@ -141,25 +115,6 @@
 - [ ] Contains `<html>` and `<body>` tags
 - [ ] Shows error recovery UI with "Try again" and "Return home"
 - [ ] Build passes
-
----
-
-## MEDIUM — Client Stream Timeout Alignment (PM audit #74 — Engineer finding)
-
-### Phase 164 MEDIUM — Align client stream timeout with server `maxDuration`
-
-> Client-side `STREAM_REQUEST_TIMEOUT_MS` is 200s in `chat-wrapper.tsx`. Server `maxDuration` will be 300s (Phase 160). Client could kill connection prematurely during long media generation.
-
-**File:** `src/components/chat/chat-wrapper.tsx`
-
-**What to do:**
-
-1. Increase `STREAM_REQUEST_TIMEOUT_MS` from `200_000` to `310_000` (300s server max + 10s margin).
-
-**Acceptance criteria:**
-
-- [ ] `STREAM_REQUEST_TIMEOUT_MS` is `310_000`
-- [ ] Build passes, tests pass
 
 ---
 
@@ -288,6 +243,69 @@
 
 ---
 
+## HIGH — Missing `maxDuration` on External-Service API Routes (PM audit #75 — Engineer finding)
+
+### Phase 166 HIGH — Add `maxDuration` exports to 5 API routes calling external services
+
+> AGENTS.md rule 10: "All API routes that call external services must export `maxDuration`." Only `/api/openai` has this export. 5 routes are missing it. Per SPEC.md Section 8.10: upload/download/aws = 30s, webhooks/stripe = 30s, webhooks/clerk = 30s.
+
+**Files:**
+
+1. `src/app/api/upload/route.tsx` — Add `export const maxDuration = 30;`
+2. `src/app/api/download/route.tsx` — Add `export const maxDuration = 30;`
+3. `src/app/api/aws/route.tsx` — Add `export const maxDuration = 30;`
+4. `src/app/api/webhooks/stripe/route.tsx` — Add `export const maxDuration = 30;`
+5. `src/app/api/webhooks/clerk/route.tsx` — Add `export const maxDuration = 30;`
+
+**Acceptance criteria:**
+
+- [ ] All 6 API routes have `export const maxDuration`
+- [ ] Values: openai=60, upload/download/aws=30, webhooks=30
+- [ ] Build passes
+
+---
+
+## HIGH — Fix Empty Catch Blocks (PM audit #75 — Engineer finding)
+
+### Phase 167 HIGH — Add error handling to 2 empty catch blocks violating AGENTS.md
+
+> AGENTS.md: "No empty catch blocks." 2 violations found by Engineer audit.
+
+**Files:**
+
+1. `src/components/chat/sidebar/chat-sidebar-shell.tsx` line 75 — `localStorage.setItem()` empty catch. Add `// localStorage quota exceeded — non-critical, intentionally discarded` comment.
+2. `src/components/chat/chat-sidebar.tsx` line 49 — Server data-fetch empty catch. Add `process.stderr.write()` logging.
+
+**Acceptance criteria:**
+
+- [ ] Zero empty `catch {}` blocks in `src/`
+- [ ] Build passes
+
+---
+
+## MEDIUM — Checkout Success Page DB Polling (PM audit #75 — Architect finding)
+
+### Phase 165 MEDIUM — Add plan confirmation polling to checkout success page
+
+> Architect recommendation: checkout success page shows "Payment successful" based on Stripe status, but webhook may not have processed yet. User sees old plan. Add lightweight polling for plan confirmation.
+
+**File:** `src/app/(public)/checkout-success/page.tsx` (or add client component)
+
+**What to do:**
+
+1. Add a client component that polls a plan-status endpoint every 3-5s for up to 30s.
+2. Show "Confirming your plan upgrade..." initially.
+3. On confirmation: "Plan upgraded successfully!" with green indicator.
+4. On timeout: "Payment successful. Your plan will be updated shortly."
+
+**Acceptance criteria:**
+
+- [ ] Checkout success page shows plan confirmation status
+- [ ] Polling stops after confirmation or 30s timeout
+- [ ] Build passes
+
+---
+
 ## ON HOLD — Deferred
 
 ### Phase 29.x — Zod/Zustand app-wide modernization
@@ -301,5 +319,5 @@
 ---
 
 > **Completed phases** archived in [`DONE.md`](DONE.md).
-> All phases through 157 complete (incl. 135–142, 149–157, 74.2, 104, 125.3, 126.2, 134, plus 107.1–107.3, 108, 114, 125.1, 131, 132, 133, 120.1–120.7, 121–130, 128.2, 106, 156).
+> All phases through 161 complete + 164 complete (incl. 135–142, 149–161, 164, 74.2, 104, 125.3, 126.2, 134, plus 107.1–107.3, 108, 114, 125.1, 131, 132, 133, 120.1–120.7, 121–130, 128.2, 106, 156).
 > All Milestones 0–25 COMPLETE.
