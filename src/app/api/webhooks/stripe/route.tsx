@@ -24,6 +24,8 @@ import { NextRequest, NextResponse } from "next/server";
 import stripe from "stripe";
 import { z } from "zod";
 
+export const maxDuration = 30;
+
 const ALLOWED_PLAN_NAMES: readonly PlanName[] = ["Lite", "Pro", "Premium"];
 const ALLOWED_BILLING_CYCLES: readonly BillingCycle[] = ["Monthly", "Yearly"];
 const WEBHOOK_FAILURE_MESSAGE = "Webhook processing failed";
