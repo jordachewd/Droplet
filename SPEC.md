@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-03-30 (PM audit #74). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. Phase 141 (suspended user enforcement) COMPLETE. Phase 149 (SSE heartbeat streaming fix) COMPLETE. Admin configurability PARTIAL (promo text hardcoded — Phase 162). User deletion cascade COMPLETE (Phase 150). Library uploaded tab COMPLETE (Phase 151). Payment checkout redirect FIXED (Phase 152). Webhook schema FIXED (Phase 157). Admin hydration fix COMPLETE (Phase 153). Suspended user UX COMPLETE (Phase 154). Scrollbar removal COMPLETE (Phase 155 + 155.1). SSE catch/finally hardened (Phase 158). Button test fixed (Phase 159). Rate limiting on all routes COMPLETE (Phase 142). Server-only guards on all constants COMPLETE (Phase 156). **All 7 validation gates GREEN.** 591 unit tests (101 suites). E2E: 49 tests (8 spec files). Coverage: 85/80/85/85. Zero `as never` casts. Lint: 0 errors, 0 warnings. **RELEASE BLOCKED: 2 CRITICAL production bugs (TD-STREAM-03, TD-PAYMENT-01).** Active HIGH: TD-PROMO-01 (hardcoded promo text), TD-GERROR-01 (no global-error.tsx). Build passing. Node.js 24.12.0.
+> Last updated: 2026-03-30 (PM audit #75). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. Phase 141 (suspended user enforcement) COMPLETE. Phase 149 (SSE heartbeat streaming fix) COMPLETE. Phase 160 (maxDuration + text heartbeat + didSendFinal) CODE-COMPLETE. Phase 161 (webhook idempotency repair) CODE-COMPLETE. Phase 164 (client timeout alignment) CODE-COMPLETE. Admin configurability PARTIAL (promo text hardcoded — Phase 162). User deletion cascade COMPLETE (Phase 150). Library uploaded tab COMPLETE (Phase 151). Payment checkout redirect FIXED (Phase 152). Webhook schema FIXED (Phase 157). Admin hydration fix COMPLETE (Phase 153). Suspended user UX COMPLETE (Phase 154). Scrollbar removal COMPLETE (Phase 155 + 155.1). SSE catch/finally hardened (Phase 158). Button test fixed (Phase 159). Rate limiting on all routes COMPLETE (Phase 142). Server-only guards on all constants COMPLETE (Phase 156). **All 7 validation gates GREEN locally.** 592 unit tests (101 suites). E2E: 49 tests (8 spec files). Coverage: 85/80/85/85. Zero `as never` casts. Lint: 0 errors, 0 warnings. **RELEASE BLOCKED: 1 CRITICAL Vercel deployment blocker (TD-STREAM-04, Phase 160.1).** Active HIGH: TD-PROMO-01 (hardcoded promo text), TD-GERROR-01 (no global-error.tsx). Build passing locally. Node.js 24.12.0.
 
 ---
 
@@ -622,26 +622,31 @@ Client consumes via `ReadableStream.getReader()` in `chat-wrapper.tsx` with JSON
 All auth/limit checks execute before streaming begins. Final task persistence and usage event emission happen after stream completion.
 
 > **✅ RESOLVED (Phase 149 COMPLETE, TD-STREAM-01 CLOSED):** SSE heartbeat mechanism implemented. 12s keepalive interval during media generation via `onMediaGenerationStart`/`onMediaGenerationEnd` lifecycle callbacks. Client timeout reset on every received event (including heartbeats). `heartbeat` event type added to `ChatStreamEvent` union.
-> **🔴 TD-STREAM-03 OPEN (Phase 160):** Owner still reports "The response stream ended unexpectedly" in production. Triple-confirmed root cause (PM audit #74): missing `export const maxDuration` on route — platform kills serverless function before media gen completes. No heartbeat for text-only streaming (gap between stream creation and first OpenAI content chunk). Empty catch blocks swallow all error details. Client timeout (200s) out of sync with required server duration (300s).
+> **✅ TD-STREAM-03 CODE-COMPLETE (Phase 160 COMPLETE, PM audit #75):** `export const maxDuration` added. General heartbeat (30s) started at stream creation for text-only streaming. `didSendFinal` guard ensures client always receives `final` or `error` event. All catch blocks log to stderr. **⚠️ TD-STREAM-04 OPEN (Phase 160.1):** Vercel Hobby plan limits `maxDuration` to 60s. Current value of 300 blocks deployment. Must be reduced to 60. Video generation (up to 180s) will time out on Hobby — owner must upgrade to Vercel Pro ($20/mo) for full video gen support.
+> **Client timeout:** `STREAM_REQUEST_TIMEOUT_MS = 310_000` (Phase 164 COMPLETE). Must be re-aligned to `70_000` when `maxDuration` is reduced to 60 (Phase 160.1).
 
 ### 8.10 API Route Timeout Requirements
 
 All API routes that call external services (OpenAI, Stripe, AWS) **must** export `maxDuration` to prevent serverless platform timeout kills:
 
-| Route                  | Required `maxDuration` | Reason                                        |
-| ---------------------- | ---------------------- | --------------------------------------------- |
-| `/api/openai`          | 300s                   | Video generation up to 180s + DB ops + margin |
-| `/api/webhooks/stripe` | 30s                    | Stripe webhook processing with DB writes      |
-| `/api/webhooks/clerk`  | 30s                    | Clerk webhook with cascade deletes            |
-| `/api/upload`          | 30s                    | S3 upload                                     |
-| `/api/download`        | 30s                    | Proxied download                              |
-| `/api/aws`             | 30s                    | S3 operations                                 |
+| Route                  | Required `maxDuration`   | Reason                                                                |
+| ---------------------- | ------------------------ | --------------------------------------------------------------------- |
+| `/api/openai`          | 60s (Hobby) / 300s (Pro) | ⚠️ Vercel Hobby max = 60s. Video gen needs 180s → requires Vercel Pro |
+| `/api/webhooks/stripe` | 30s                      | Stripe webhook processing with DB writes                              |
+| `/api/webhooks/clerk`  | 30s                      | Clerk webhook with cascade deletes                                    |
+| `/api/upload`          | 30s                      | S3 upload                                                             |
+| `/api/download`        | 30s                      | Proxied download                                                      |
+| `/api/aws`             | 30s                      | S3 operations                                                         |
+
+> **Vercel Plan Constraint (PM audit #75):** Vercel Hobby limits `maxDuration` to 60 seconds. Only `/api/openai` is affected — all other routes fit within 30s. Video generation via Sora API needs up to 180s and CANNOT complete within the 60s Hobby limit. Upgrading to Vercel Pro ($20/mo) raises the limit to 300s. Text chat, image gen (~15-30s), and audio gen (~10-20s) should work within 60s.
+>
+> **Current state:** Only `/api/openai` exports `maxDuration` (set to 300, must be reduced to 60 per Phase 160.1). Other 5 routes missing export entirely (tracked as Phase 166).
 
 ### 8.11 Webhook Idempotency Requirements
 
 Webhook idempotency checks **must verify the complete operation**, not just the first write:
 
-- **Stripe `checkout.session.completed`:** Must verify BOTH Transaction existence AND User plan state. If Transaction exists but User plan was not updated, reattempt the user plan update.
+- **Stripe `checkout.session.completed`:** Must verify BOTH Transaction existence AND User plan state. If Transaction exists but User plan was not updated, reattempt the user plan update. **✅ IMPLEMENTED (Phase 161 COMPLETE, PM audit #75).** `hasExpectedStripePlan()` checks `user.plan.stripeId` against session ID. Repair path via `applyCheckoutPlanUpdate()` for stale plan state.
 - **Clerk webhooks:** Already handle missing documents gracefully.
 
 **Rule:** If a multi-step webhook operation has a partial failure, the idempotency check must not short-circuit — it must attempt to complete all remaining steps.

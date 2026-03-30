@@ -306,7 +306,7 @@ describe("ChatWrapper", () => {
             controller.enqueue(
               new TextEncoder().encode('data: {"type":"heartbeat"}\n\n'),
             );
-          }, 190_000);
+          }, 40_000);
 
           window.setTimeout(() => {
             controller.enqueue(
@@ -315,7 +315,7 @@ describe("ChatWrapper", () => {
               ),
             );
             controller.close();
-          }, 300_000);
+          }, 100_000);
         },
       });
 
@@ -341,7 +341,7 @@ describe("ChatWrapper", () => {
       fireEvent.click(screen.getByRole("button", { name: "Send message" }));
 
       await act(async () => {
-        await vi.advanceTimersByTimeAsync(300_000);
+        await vi.advanceTimersByTimeAsync(100_000);
       });
 
       expect(screen.getByTestId("chat-body-messages").textContent).toContain(
@@ -380,7 +380,7 @@ describe("ChatWrapper", () => {
       fireEvent.click(screen.getByRole("button", { name: "Send message" }));
 
       await act(async () => {
-        await vi.advanceTimersByTimeAsync(310_000);
+        await vi.advanceTimersByTimeAsync(70_000);
       });
 
       expect(screen.getByRole("alert").textContent).toContain(

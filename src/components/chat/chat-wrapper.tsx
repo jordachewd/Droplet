@@ -33,7 +33,7 @@ interface ChatWrapperProps {
   initialEndAction?: TaskEndAction;
 }
 
-const STREAM_REQUEST_TIMEOUT_MS = 310_000;
+const STREAM_REQUEST_TIMEOUT_MS = 70_000;
 const STREAM_REQUEST_TIMEOUT_MESSAGE =
   "The response timed out. Please try again.";
 
