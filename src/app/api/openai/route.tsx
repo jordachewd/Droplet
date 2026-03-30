@@ -774,7 +774,10 @@ export async function POST(req: Request): Promise<Response> {
 
     try {
       rawRequestBody = await req.json();
-    } catch {
+    } catch (error) {
+      process.stderr.write(
+        `[openai/route] request json parse failed: ${error instanceof Error ? error.message : "unknown"}\n`,
+      );
       return NextResponse.json(
         { error: "Invalid request body." },
         { status: 400 },
@@ -1683,7 +1686,10 @@ export async function POST(req: Request): Promise<Response> {
     return NextResponse.json(finalResult.payload, {
       status: finalResult.status,
     });
-  } catch {
+  } catch (error) {
+    process.stderr.write(
+      `[openai/route] request handling failed: ${error instanceof Error ? error.message : "unknown"}\n`,
+    );
     return NextResponse.json(
       { error: OPENAI_ERROR_MESSAGES.unknown },
       { status: OPENAI_ERROR_STATUS_MAP.unknown },

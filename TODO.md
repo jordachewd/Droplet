@@ -5,29 +5,75 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #77 (2026-03-30). Milestones 0–25 COMPLETE. All phases through 166 complete + 160.1 + 164 complete. 592 unit tests (101 suites). 49 E2E tests (8 spec files). Build passes. TSC clean. Node.js 24.12.0 runtime.**
+> **STATUS: PM audit #78 (2026-03-30). Milestones 0–25 COMPLETE. All phases through 166 complete + 160.1 + 164 complete. 592 unit tests (101 suites). 49 E2E tests (8 spec files). Build passes. TSC clean. Node.js 24.12.0 runtime.**
 > **GATE STATUS: All 7 validation gates GREEN locally. Lint (0 errors, 0 warnings), Knip (0 findings), TSC clean, build passes, unit tests (101/592), E2E (8 specs/49 tests), coverage 85/80/85/85.**
-> **DEPLOYMENT UNBLOCKED (Phase 160.1 COMPLETE). ALL code fixes ready for production.**
+> **DEPLOYMENT UNBLOCKED (Phase 160.1 COMPLETE). ALL code fixes ready for production. Deployment is owner-manual.**
 > **Zero: `as never`, `as any`, `console.log`, `console.error`, `window.alert`, `window.confirm`, `strict: false`, `droplet-scrollbar`, stale TODOs — all in `src/`.**
 >
-> **OWNER-REPORTED BUGS STATUS (PM audit #77):**
+> **OWNER-REPORTED BUGS STATUS (PM audit #78):**
 >
-> - ✅ Stream error fix (Phases 160 + 160.1): CODE-COMPLETE. `maxDuration=60`, dual heartbeat, `didSendFinal`, stderr logging. **Root cause: Vercel function timeout at 60s. Text/image/audio should work. Video exceeds 60s (accepted trade-off). REQUIRES PRODUCTION DEPLOYMENT TO VERIFY.**
-> - ✅ Payment webhook fix (Phase 161): CODE-COMPLETE. Idempotency repair, top-level try/catch, arrival/error logging. **Root cause: Most likely Stripe webhook endpoint misconfiguration in production (URL, signing secret, or event type). Code is correct. REQUIRES: (1) production deployment, (2) Stripe Dashboard webhook endpoint verification.**
-> - ✅ Client timeout (Phase 164 + 160.1): COMPLETE. `STREAM_REQUEST_TIMEOUT_MS = 70_000`, aligned with server `maxDuration=60`.
-> - ✅ Phase 166 (maxDuration on all routes): VERIFIED COMPLETE. All 6 routes have exports.
-> - ⚠️ Admin configurability (Phase 162): PENDING. Hardcoded promo text remains.
+> - ✅ Stream error fix (Phases 160 + 160.1): CODE-COMPLETE. Awaiting owner deployment.
+> - ✅ Payment webhook fix (Phase 161): CODE-COMPLETE. Awaiting owner deployment + Stripe Dashboard verification.
+> - ✅ Client timeout (Phase 164 + 160.1): COMPLETE.
+> - ✅ Phase 166 (maxDuration on all routes): VERIFIED COMPLETE.
+> - ⚠️ Admin configurability (Phase 162): PENDING — next after Phase 167.
 >
-> **EXECUTION ORDER (PM audit #77):**
+> **EXECUTION ORDER (PM audit #78 — deployment is owner-manual):**
 >
-> 1. **🔴 DEPLOY TO PRODUCTION** — All code-complete fixes must ship.
-> 2. **🔴 POST-DEPLOY OPS CHECKLIST** — Verify Stripe webhook endpoint, test streaming, test payment.
-> 3. **Phase 167 HIGH** — Fix empty catch blocks (expanded scope: ~27 blocks across 5 files).
-> 4. **Phase 162 HIGH** — Promo text admin-configurable (3 core files + expanded scope).
-> 5. **Phase 163 HIGH** — Global error boundary.
-> 6. **Phase 143 MEDIUM** — Env var runtime validation.
-> 7. **Phase 165 MEDIUM** — Checkout success page DB polling.
-> 8. **Phase 144–148 MEDIUM/LOW** — Backlog.
+> 1. **Phase 167 HIGH** — Fix empty catch blocks (~27 blocks across 7 files). START HERE.
+> 2. **Phase 162 HIGH** — Promo text admin-configurable (3 core files + resolver).
+> 3. **Phase 163 HIGH** — Global error boundary (`global-error.tsx`).
+> 4. **Phase 143 MEDIUM** — Env var runtime validation.
+> 5. **Phase 165 MEDIUM** — Checkout success page DB polling.
+> 6. **Phase 144–148 MEDIUM/LOW** — Backlog.
+>
+> _Production deployment is handled by the owner manually. Do not block on deployment._
+> _Post-deploy ops checklist (Stripe webhook verification, streaming test, payment test) is owner responsibility._
+
+---
+
+## 🟢 ENGINEER START HERE — Fix Empty Catch Blocks (PM audit #76)
+
+### Phase 167 HIGH — Add error handling to all empty catch blocks violating AGENTS.md
+
+> **EXPANDED from 2 blocks to ~27 (PM audit #76).** Triple-audit confirmed: Architect found 15 in admin.actions.tsx + 6 in delete-user-cascade.ts. Engineer found 3 in API routes (aws + upload). PM independently verified all counts.
+>
+> AGENTS.md: "No empty catch blocks — every catch must either capture the error variable and log to `process.stderr.write()`, or have a code comment explaining why the error is intentionally discarded."
+
+**Category A — API Route catches (MUST LOG — production debugging at stake):**
+
+1. `src/app/api/aws/route.tsx` line 165 — POST catch: returns 500 without logging
+2. `src/app/api/aws/route.tsx` line 240 — DELETE catch: returns 500 without logging
+3. `src/app/api/upload/route.tsx` line 141 — POST catch: returns 500 without logging
+4. `src/app/api/openai/route.tsx` line ~777 — inner catch: returns error JSON without logging
+5. `src/app/api/openai/route.tsx` line ~1686 — outer catch: returns 500 without logging
+
+**Category B — Admin action catches (15 blocks — MUST LOG):**
+
+6-20. `src/lib/actions/admin.actions.tsx` — 15 `catch {` blocks at lines 56, 498, 522, 645, 702, 757, 796, 851, 908, 959, 989, 1030, 1068, 1116, 1164. All return `errorState(...)` to UI but discard actual error details.
+
+**Category C — Cascade utility catches (6 blocks — add error variable capture):**
+
+21-26. `src/lib/utils/delete-user-cascade.ts` — 6 `catch {` blocks. Currently call `onStepError(step)` but don't capture error variable.
+
+**Category D — Client/utility catches (comment-only — acceptable fallback patterns):**
+
+27. `src/components/chat/sidebar/chat-sidebar-shell.tsx` line 75 — localStorage write. Add comment: `// localStorage quota exceeded — non-critical, intentionally discarded`
+28. `src/components/chat/chat-sidebar.tsx` line 49 — Server data-fetch fallback. Add `process.stderr.write()` logging.
+
+**What to do:**
+
+1. **For all Category A + B blocks:** Capture error variable `catch (error)`, add `process.stderr.write(\`[source] Error: ${error instanceof Error ? error.message : "unknown"}\\n\`)` before the return statement.
+2. **For Category C blocks:** Capture error variable, pass to `onStepError(step, error)` (update callback signature).
+3. **For Category D block 27:** Add comment explaining intentional discard.
+4. **For Category D block 28:** Add `process.stderr.write()` logging.
+
+**Acceptance criteria:**
+
+- [ ] Zero parameterless `catch {` blocks in `src/` (every catch either captures error or has explaining comment)
+- [ ] All API route catches log error details via `process.stderr.write()`
+- [ ] All admin action catches log error details via `process.stderr.write()`
+- [ ] Build passes, tests pass
 
 ---
 
@@ -108,6 +154,29 @@
 - [ ] Zero `!` on `process.env` in codebase
 - [ ] Missing env vars throw clear error at module load
 - [ ] Build passes, tests pass
+
+---
+
+## MEDIUM — Checkout Success Page DB Polling (PM audit #75 — Architect finding)
+
+### Phase 165 MEDIUM — Add plan confirmation polling to checkout success page
+
+> Architect recommendation: checkout success page shows "Payment successful" based on Stripe status, but webhook may not have processed yet. User sees old plan. Add lightweight polling for plan confirmation.
+
+**File:** `src/app/(public)/checkout-success/page.tsx` (or add client component)
+
+**What to do:**
+
+1. Add a client component that polls a plan-status endpoint every 3-5s for up to 30s.
+2. Show "Confirming your plan upgrade..." initially.
+3. On confirmation: "Plan upgraded successfully!" with green indicator.
+4. On timeout: "Payment successful. Your plan will be updated shortly."
+
+**Acceptance criteria:**
+
+- [ ] Checkout success page shows plan confirmation status
+- [ ] Polling stops after confirmation or 30s timeout
+- [ ] Build passes
 
 ---
 
@@ -204,110 +273,6 @@
 ### Phase 73.2 LOW — Minor re-render and code quality fixes
 
 ### Phase 46.1 LOW — Admin error boundary
-
-### Phase 46.2 LOW — Silent catch logging
-
----
-
-## ~~COMPLETED~~ — Phase 166 — maxDuration on all API routes — VERIFIED COMPLETE (PM audit #77)
-
-> **VERIFIED COMPLETE (2026-03-30).** Moved to `DONE.md`. Triple-audit confirms all 6 API routes already have `export const maxDuration`. Values: openai=60, clerk-webhook=60, upload/download/aws/stripe-webhook=30.
-
----
-
-## 🔴 POST-DEPLOY OPS CHECKLIST (PM audit #77 — CRITICAL)
-
-> **This is not a code phase.** These are operational verification steps required immediately after production deployment. Both CRITICAL owner-reported bugs are code-complete — the remaining risk is deployment and ops configuration.
-
-**Stripe Webhook Verification:**
-
-1. [ ] Open Stripe Dashboard → Developers → Webhooks
-2. [ ] Verify endpoint URL is exactly `https://<production-domain>/api/webhooks/stripe`
-3. [ ] Verify `checkout.session.completed` is in the enabled events list
-4. [ ] Verify signing secret matches `STRIPE_WEBHOOK_SECRET` env var in Vercel
-5. [ ] Test a real payment → check Stripe Dashboard for webhook delivery status (200/400/500)
-6. [ ] Verify Transaction record created in MongoDB after successful payment
-7. [ ] Verify User plan updated in MongoDB after successful payment
-
-**Streaming Verification:**
-
-8. [ ] Test text chat — should stream without errors
-9. [ ] Test image generation — should complete within 60s
-10. [ ] Test audio generation — should complete within 60s
-11. [ ] Test video generation — should fail gracefully with user-friendly timeout error (not crash)
-12. [ ] Check Vercel function logs for `[openai-route]` entries confirming heartbeat/didSendFinal behavior
-
-**Environment Variables:**
-
-13. [ ] Verify all env vars are set in Vercel: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `OPENAI_*`, `AWS_*`, `MONGODB_URL`, `NEXT_PUBLIC_API_BASE_URL`, `CLERK_*`
-
----
-
-## HIGH — Fix Empty Catch Blocks — Expanded Scope (PM audit #76)
-
-### Phase 167 HIGH — Add error handling to all empty catch blocks violating AGENTS.md
-
-> **EXPANDED from 2 blocks to 20+ (PM audit #76).** Triple-audit confirmed: Architect found 15 in admin.actions.tsx + 6 in delete-user-cascade.ts. Engineer found 3 in API routes (aws + upload). PM independently verified all counts.
->
-> AGENTS.md: "No empty catch blocks — every catch must either capture the error variable and log to `process.stderr.write()`, or have a code comment explaining why the error is intentionally discarded."
-
-**Category A — API Route catches (MUST LOG — production debugging at stake):**
-
-1. `src/app/api/aws/route.tsx` line 165 — POST catch: returns 500 without logging
-2. `src/app/api/aws/route.tsx` line 240 — DELETE catch: returns 500 without logging
-3. `src/app/api/upload/route.tsx` line 141 — POST catch: returns 500 without logging
-4. `src/app/api/openai/route.tsx` line ~777 — inner catch: returns error JSON without logging
-5. `src/app/api/openai/route.tsx` line ~1686 — outer catch: returns 500 without logging
-
-**Category B — Admin action catches (15 blocks — MUST LOG):**
-
-6-20. `src/lib/actions/admin.actions.tsx` — 15 `catch {` blocks at lines 56, 498, 522, 645, 702, 757, 796, 851, 908, 959, 989, 1030, 1068, 1116, 1164. All return `errorState(...)` to UI but discard actual error details.
-
-**Category C — Cascade utility catches (6 blocks — add error variable capture):**
-
-21-26. `src/lib/utils/delete-user-cascade.ts` — 6 `catch {` blocks. Currently call `onStepError(step)` but don't capture error variable.
-
-**Category D — Client/utility catches (comment-only — acceptable fallback patterns):**
-
-27. `src/components/chat/sidebar/chat-sidebar-shell.tsx` line 75 — localStorage write. Add comment: `// localStorage quota exceeded — non-critical, intentionally discarded`
-28. `src/components/chat/chat-sidebar.tsx` line 49 — Server data-fetch fallback. Add `process.stderr.write()` logging.
-
-**What to do:**
-
-1. **For all Category A + B blocks:** Capture error variable `catch (error)`, add `process.stderr.write(\`[source] Error: ${error instanceof Error ? error.message : "unknown"}\\n\`)` before the return statement.
-2. **For Category C blocks:** Capture error variable, pass to `onStepError(step, error)` (update callback signature).
-3. **For Category D block 27:** Add comment explaining intentional discard.
-4. **For Category D block 28:** Add `process.stderr.write()` logging.
-
-**Acceptance criteria:**
-
-- [ ] Zero parameterless `catch {` blocks in `src/` (every catch either captures error or has explaining comment)
-- [ ] All API route catches log error details via `process.stderr.write()`
-- [ ] All admin action catches log error details via `process.stderr.write()`
-- [ ] Build passes, tests pass
-
----
-
-## MEDIUM — Checkout Success Page DB Polling (PM audit #75 — Architect finding)
-
-### Phase 165 MEDIUM — Add plan confirmation polling to checkout success page
-
-> Architect recommendation: checkout success page shows "Payment successful" based on Stripe status, but webhook may not have processed yet. User sees old plan. Add lightweight polling for plan confirmation.
-
-**File:** `src/app/(public)/checkout-success/page.tsx` (or add client component)
-
-**What to do:**
-
-1. Add a client component that polls a plan-status endpoint every 3-5s for up to 30s.
-2. Show "Confirming your plan upgrade..." initially.
-3. On confirmation: "Plan upgraded successfully!" with green indicator.
-4. On timeout: "Payment successful. Your plan will be updated shortly."
-
-**Acceptance criteria:**
-
-- [ ] Checkout success page shows plan confirmation status
-- [ ] Polling stops after confirmation or 30s timeout
-- [ ] Build passes
 
 ---
 
