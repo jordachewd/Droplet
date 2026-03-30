@@ -106,9 +106,9 @@ describe("deleteUserCascade", () => {
 
     const result = await deleteUserCascade("user_123", { onStepError });
 
-    expect(onStepError).toHaveBeenCalledWith("task");
-    expect(onStepError).toHaveBeenCalledWith("rate-limit");
-    expect(onStepError).toHaveBeenCalledWith("upload");
+    expect(onStepError).toHaveBeenCalledWith("task", expect.any(Error));
+    expect(onStepError).toHaveBeenCalledWith("rate-limit", expect.any(Error));
+    expect(onStepError).toHaveBeenCalledWith("upload", expect.any(Error));
     expect(Transaction.deleteMany).toHaveBeenCalledWith({
       clerkId: "user_123",
     });

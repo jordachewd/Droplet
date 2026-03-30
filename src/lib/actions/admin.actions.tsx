@@ -53,7 +53,8 @@ function getStringField(formData: FormData, fieldName: string): string {
 function parseJsonValue(rawValue: string): unknown {
   try {
     return JSON.parse(rawValue);
-  } catch {
+  } catch (error) {
+    logAdminActionError("parseJsonValue", error);
     return rawValue;
   }
 }
@@ -126,6 +127,12 @@ function errorState(message: string): AdminActionState {
     message,
     severity: "error",
   };
+}
+
+function logAdminActionError(context: string, error: unknown): void {
+  process.stderr.write(
+    `[admin.actions] ${context}: ${error instanceof Error ? error.message : "unknown"}\n`,
+  );
 }
 
 async function removeUserByAdmin({
@@ -495,7 +502,8 @@ export async function toggleUserSuspensionAction(
     revalidatePath(`/admin/users/${targetUserId}`);
 
     return successState(suspended ? "User suspended." : "User reinstated.");
-  } catch {
+  } catch (error) {
+    logAdminActionError("toggleUserSuspensionAction", error);
     return errorState("Unable to update user state.");
   }
 }
@@ -519,7 +527,8 @@ export async function removeUserByAdminAction(
     revalidatePath("/admin/users");
 
     return successState("User and related data removed.");
-  } catch {
+  } catch (error) {
+    logAdminActionError("removeUserByAdminAction", error);
     return errorState("Unable to remove user.");
   }
 }
@@ -642,7 +651,8 @@ export async function updateAdminSettingAction(
     }
 
     return successState("Settings updated.");
-  } catch {
+  } catch (error) {
+    logAdminActionError("updateAdminSettingAction", error);
     return errorState("Unable to update settings.");
   }
 }
@@ -699,7 +709,8 @@ export async function createPublicPageAction(
     revalidatePath("/admin/website");
 
     return successState("Public page created.");
-  } catch {
+  } catch (error) {
+    logAdminActionError("createPublicPageAction", error);
     return errorState("Unable to create page.");
   }
 }
@@ -754,7 +765,8 @@ export async function togglePublicPagePublishedAction(
     revalidatePath(`/admin/website/${pageId}`);
 
     return successState(isPublished ? "Page published." : "Page unpublished.");
-  } catch {
+  } catch (error) {
+    logAdminActionError("togglePublicPagePublishedAction", error);
     return errorState("Unable to change page publish state.");
   }
 }
@@ -793,7 +805,8 @@ export async function deletePublicPageAction(
     revalidatePath("/admin/website");
 
     return successState("Page deleted.", "warning");
-  } catch {
+  } catch (error) {
+    logAdminActionError("deletePublicPageAction", error);
     return errorState("Unable to delete page.");
   }
 }
@@ -848,7 +861,8 @@ export async function updatePublicPageSortOrderAction(
     revalidatePath(`/admin/website/${pageId}`);
 
     return successState("Sort order updated.");
-  } catch {
+  } catch (error) {
+    logAdminActionError("updatePublicPageSortOrderAction", error);
     return errorState("Unable to update sort order.");
   }
 }
@@ -905,7 +919,8 @@ export async function savePublicPageAction(
     revalidatePath(`/admin/website/${pageId}`);
 
     return successState("Page content saved.");
-  } catch {
+  } catch (error) {
+    logAdminActionError("savePublicPageAction", error);
     return errorState("Unable to save page content.");
   }
 }
@@ -956,7 +971,8 @@ export async function bulkSuspendUsersAction(
       `${result.modifiedCount ?? 0} users suspended.`,
       "warning",
     );
-  } catch {
+  } catch (error) {
+    logAdminActionError("bulkSuspendUsersAction", error);
     return errorState("Unable to suspend selected users.");
   }
 }
@@ -986,7 +1002,8 @@ export async function bulkRemoveUsersAction(
     revalidatePath("/admin/users");
 
     return successState(`${removedCount} users removed.`, "warning");
-  } catch {
+  } catch (error) {
+    logAdminActionError("bulkRemoveUsersAction", error);
     return errorState("Unable to remove selected users.");
   }
 }
@@ -1027,7 +1044,8 @@ export async function bulkDeleteTransactionsAction(
       `${result.deletedCount ?? 0} transactions removed.`,
       "warning",
     );
-  } catch {
+  } catch (error) {
+    logAdminActionError("bulkDeleteTransactionsAction", error);
     return errorState("Unable to remove selected transactions.");
   }
 }
@@ -1065,7 +1083,8 @@ export async function bulkDeletePublicPagesAction(
       `${result.deletedCount ?? 0} pages deleted.`,
       "warning",
     );
-  } catch {
+  } catch (error) {
+    logAdminActionError("bulkDeletePublicPagesAction", error);
     return errorState("Unable to delete selected pages.");
   }
 }
@@ -1113,7 +1132,8 @@ export async function bulkPublishPublicPagesAction(
     revalidatePath("/admin/website");
 
     return successState(`${result.modifiedCount ?? 0} pages published.`);
-  } catch {
+  } catch (error) {
+    logAdminActionError("bulkPublishPublicPagesAction", error);
     return errorState("Unable to publish selected pages.");
   }
 }
@@ -1161,7 +1181,8 @@ export async function bulkUnpublishPublicPagesAction(
     revalidatePath("/admin/website");
 
     return successState(`${result.modifiedCount ?? 0} pages unpublished.`);
-  } catch {
+  } catch (error) {
+    logAdminActionError("bulkUnpublishPublicPagesAction", error);
     return errorState("Unable to unpublish selected pages.");
   }
 }

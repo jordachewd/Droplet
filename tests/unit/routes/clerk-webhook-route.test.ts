@@ -522,7 +522,7 @@ describe("POST /api/webhooks/clerk", () => {
       },
     });
     vi.mocked(deleteUserCascade).mockImplementationOnce(async (_, options) => {
-      options?.onStepError?.("task");
+      options?.onStepError?.("task", new Error("task cleanup failed"));
       return {
         deletedTasks: null,
         deletedTransactions: 0,
@@ -560,7 +560,10 @@ describe("POST /api/webhooks/clerk", () => {
       },
     });
     vi.mocked(deleteUserCascade).mockImplementationOnce(async (_, options) => {
-      options?.onStepError?.("usage-event");
+      options?.onStepError?.(
+        "usage-event",
+        new Error("usage-event cleanup failed"),
+      );
       return {
         deletedTasks: 2,
         deletedTransactions: 0,
@@ -598,7 +601,10 @@ describe("POST /api/webhooks/clerk", () => {
       },
     });
     vi.mocked(deleteUserCascade).mockImplementationOnce(async (_, options) => {
-      options?.onStepError?.("rate-limit");
+      options?.onStepError?.(
+        "rate-limit",
+        new Error("rate-limit cleanup failed"),
+      );
       return {
         deletedTasks: 2,
         deletedTransactions: 0,
