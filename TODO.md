@@ -5,53 +5,29 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #76 (2026-03-30). Milestones 0–25 COMPLETE. All phases through 161 complete + 160.1 + 164 complete. 592 unit tests (101 suites). 49 E2E tests (8 spec files). Build passes. TSC clean. Node.js 24.12.0 runtime.**
+> **STATUS: PM audit #77 (2026-03-30). Milestones 0–25 COMPLETE. All phases through 166 complete + 160.1 + 164 complete. 592 unit tests (101 suites). 49 E2E tests (8 spec files). Build passes. TSC clean. Node.js 24.12.0 runtime.**
 > **GATE STATUS: All 7 validation gates GREEN locally. Lint (0 errors, 0 warnings), Knip (0 findings), TSC clean, build passes, unit tests (101/592), E2E (8 specs/49 tests), coverage 85/80/85/85.**
-> **DEPLOYMENT UNBLOCKED (Phase 160.1 COMPLETE). Vercel maxDuration=60. Stream + payment code fixes ready for production. Awaiting deploy + production verification.**
+> **DEPLOYMENT UNBLOCKED (Phase 160.1 COMPLETE). ALL code fixes ready for production.**
 > **Zero: `as never`, `as any`, `console.log`, `console.error`, `window.alert`, `window.confirm`, `strict: false`, `droplet-scrollbar`, stale TODOs — all in `src/`.**
 >
-> **OWNER-REPORTED BUGS STATUS (PM audit #76):**
+> **OWNER-REPORTED BUGS STATUS (PM audit #77):**
 >
-> - ✅ Stream error fix (Phases 160 + 160.1): COMPLETE. `maxDuration=60`, dual heartbeat, `didSendFinal`, stderr logging. **Awaiting production deployment to verify.**
-> - ✅ Payment webhook fix (Phase 161): CODE-COMPLETE. Idempotency repair, top-level try/catch, arrival/error logging. **Awaiting production deployment + Stripe Dashboard ops verification.**
+> - ✅ Stream error fix (Phases 160 + 160.1): CODE-COMPLETE. `maxDuration=60`, dual heartbeat, `didSendFinal`, stderr logging. **Root cause: Vercel function timeout at 60s. Text/image/audio should work. Video exceeds 60s (accepted trade-off). REQUIRES PRODUCTION DEPLOYMENT TO VERIFY.**
+> - ✅ Payment webhook fix (Phase 161): CODE-COMPLETE. Idempotency repair, top-level try/catch, arrival/error logging. **Root cause: Most likely Stripe webhook endpoint misconfiguration in production (URL, signing secret, or event type). Code is correct. REQUIRES: (1) production deployment, (2) Stripe Dashboard webhook endpoint verification.**
 > - ✅ Client timeout (Phase 164 + 160.1): COMPLETE. `STREAM_REQUEST_TIMEOUT_MS = 70_000`, aligned with server `maxDuration=60`.
+> - ✅ Phase 166 (maxDuration on all routes): VERIFIED COMPLETE. All 6 routes have exports.
 > - ⚠️ Admin configurability (Phase 162): PENDING. Hardcoded promo text remains.
 >
-> **EXECUTION ORDER (PM audit #76): Phase 166 (CRITICAL maxDuration on other routes — one-liner x5) → DEPLOY TO PRODUCTION → Verify streaming + payment in prod → Phase 167 (HIGH empty catch blocks — expanded scope) → Phase 162 (HIGH promo text) → Phase 163 (HIGH global-error) → Phase 143–148 (MEDIUM/LOW backlog)**
-
----
-
-## ~~COMPLETED~~ — Phase 160.1 — Vercel Hobby maxDuration fix (PM audit #76)
-
-> **COMPLETED (2026-03-30).** Moved to `DONE.md`. `maxDuration` reduced from 300 to 60. Client timeout aligned to 70_000. All gates pass. Deployment unblocked.
-
----
-
-## CRITICAL-PRE-DEPLOY — Missing `maxDuration` on 5 API Routes (PM audit #76)
-
-### ~~Phase 160.1~~ — COMPLETED — Moved to DONE.md
-
----
-
-### Phase 166 CRITICAL-PRE-DEPLOY — Add `maxDuration` exports to 5 API routes calling external services
-
-> **ELEVATED from HIGH to CRITICAL-PRE-DEPLOY (PM audit #76).** Triple-audit confirms: all 3 auditors (Architect, Engineer, PM) independently flagged this as the #1 pre-deployment risk. Without `maxDuration`, Vercel may kill webhook handlers and file operations at default timeout (10s). Clerk user-deletion cascade to S3 is especially vulnerable.
+> **EXECUTION ORDER (PM audit #77):**
 >
-> AGENTS.md rule 10: "All API routes that call external services must export `maxDuration`." Only `/api/openai` has this export. 5 routes are missing it.
-
-**Files (one-liner addition each):**
-
-1. `src/app/api/upload/route.tsx` — Add `export const maxDuration = 30;`
-2. `src/app/api/download/route.tsx` — Add `export const maxDuration = 30;`
-3. `src/app/api/aws/route.tsx` — Add `export const maxDuration = 30;`
-4. `src/app/api/webhooks/stripe/route.tsx` — Add `export const maxDuration = 30;`
-5. `src/app/api/webhooks/clerk/route.tsx` — Add `export const maxDuration = 60;` (cascade deletes from S3)
-
-**Acceptance criteria:**
-
-- [ ] All 6 API routes have `export const maxDuration`
-- [ ] Values: openai=60, clerk-webhook=60, upload/download/aws/stripe-webhook=30
-- [ ] Build passes, tests pass
+> 1. **🔴 DEPLOY TO PRODUCTION** — All code-complete fixes must ship.
+> 2. **🔴 POST-DEPLOY OPS CHECKLIST** — Verify Stripe webhook endpoint, test streaming, test payment.
+> 3. **Phase 167 HIGH** — Fix empty catch blocks (expanded scope: ~27 blocks across 5 files).
+> 4. **Phase 162 HIGH** — Promo text admin-configurable (3 core files + expanded scope).
+> 5. **Phase 163 HIGH** — Global error boundary.
+> 6. **Phase 143 MEDIUM** — Env var runtime validation.
+> 7. **Phase 165 MEDIUM** — Checkout success page DB polling.
+> 8. **Phase 144–148 MEDIUM/LOW** — Backlog.
 
 ---
 
@@ -233,7 +209,37 @@
 
 ---
 
-## ~~SUPERSEDED~~ — Phase 166 moved to CRITICAL-PRE-DEPLOY section above
+## ~~COMPLETED~~ — Phase 166 — maxDuration on all API routes — VERIFIED COMPLETE (PM audit #77)
+
+> **VERIFIED COMPLETE (2026-03-30).** Moved to `DONE.md`. Triple-audit confirms all 6 API routes already have `export const maxDuration`. Values: openai=60, clerk-webhook=60, upload/download/aws/stripe-webhook=30.
+
+---
+
+## 🔴 POST-DEPLOY OPS CHECKLIST (PM audit #77 — CRITICAL)
+
+> **This is not a code phase.** These are operational verification steps required immediately after production deployment. Both CRITICAL owner-reported bugs are code-complete — the remaining risk is deployment and ops configuration.
+
+**Stripe Webhook Verification:**
+
+1. [ ] Open Stripe Dashboard → Developers → Webhooks
+2. [ ] Verify endpoint URL is exactly `https://<production-domain>/api/webhooks/stripe`
+3. [ ] Verify `checkout.session.completed` is in the enabled events list
+4. [ ] Verify signing secret matches `STRIPE_WEBHOOK_SECRET` env var in Vercel
+5. [ ] Test a real payment → check Stripe Dashboard for webhook delivery status (200/400/500)
+6. [ ] Verify Transaction record created in MongoDB after successful payment
+7. [ ] Verify User plan updated in MongoDB after successful payment
+
+**Streaming Verification:**
+
+8. [ ] Test text chat — should stream without errors
+9. [ ] Test image generation — should complete within 60s
+10. [ ] Test audio generation — should complete within 60s
+11. [ ] Test video generation — should fail gracefully with user-friendly timeout error (not crash)
+12. [ ] Check Vercel function logs for `[openai-route]` entries confirming heartbeat/didSendFinal behavior
+
+**Environment Variables:**
+
+13. [ ] Verify all env vars are set in Vercel: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `OPENAI_*`, `AWS_*`, `MONGODB_URL`, `NEXT_PUBLIC_API_BASE_URL`, `CLERK_*`
 
 ---
 
@@ -318,5 +324,5 @@
 ---
 
 > **Completed phases** archived in [`DONE.md`](DONE.md).
-> All phases through 161 complete + 160.1 + 164 complete (incl. 135–142, 149–161, 160.1, 164, 74.2, 104, 125.3, 126.2, 134, plus 107.1–107.3, 108, 114, 125.1, 131, 132, 133, 120.1–120.7, 121–130, 128.2, 106, 156).
+> All phases through 166 complete + 160.1 + 164 complete (incl. 135–142, 149–161, 160.1, 164, 166, 74.2, 104, 125.3, 126.2, 134, plus 107.1–107.3, 108, 114, 125.1, 131, 132, 133, 120.1–120.7, 121–130, 128.2, 106, 156).
 > All Milestones 0–25 COMPLETE.

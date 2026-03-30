@@ -92,10 +92,11 @@ The points below are verified from the current codebase.
 | Stop-reason messages | All 9 stop-reason messages admin-configurable via `getEffectiveStopReasonMessages()` resolver. Admin UI for editing all stop codes. Consumers wired to resolver. Phase 107.1–107.3 ALL COMPLETE. TD-HARDCODE-01 RESOLVED. | ✅ Stop reasons admin-configurable (Phase 107) | `src/lib/utils/effective-stop-reasons.ts`, admin settings |
 | WCAG 2.2 AA | **FULLY COMPLETE.** All sub-phases delivered: admin skip-link (72.1), opacity contrast (72.2), form labels/ARIA (72.3), table semantics (72.4), viewport zoom (101), AudioPlayer ARIA (99.5), WCAG E2E (97.1), landing contrast (103.1), plans contrast (103.2), heading order (103.3), duplicate landmarks (103.4), decorative icons aria-hidden (109), hamburger aria-expanded (110), **tablist arrow-key navigation (108 ✅)**, **AvatarMenu keyboard navigation (114 ✅)**. | ✅ WCAG 2.2 AA FULLY COMPLETE | All component files, E2E accessibility specs |
 | Suspended user enforcement | ~~`User.suspended` never enforced in API routes (PM audit #67 SWOT).~~ **RESOLVED (Phase 141).** Suspension now enforced in all API routes via `resolveEntitlements` `isSuspended` param. | ✅ RESOLVED (Phase 141 COMPLETE) | `src/app/api/openai/route.tsx`, `src/lib/utils/resolve-entitlements.tsx` |
-| Stream error on media gen | ~~**CRITICAL production bug.** Media generation via tool calls triggers `Error: The response stream ended unexpectedly.`~~ Phase 149 (SSE heartbeat) + Phase 158 (catch/finally hardening) + **Phase 160 (heartbeat + didSendFinal + logging)** + **Phase 160.1 (maxDuration=60, client timeout=70s)** all applied. **CODE-COMPLETE.** Awaiting production deployment to verify. | **🟡 CODE-COMPLETE — Phase 160.1 COMPLETE, awaiting production deployment.** | `src/app/api/openai/route.tsx`, `src/components/chat/chat-wrapper.tsx` |
+| Stream error on media gen | ~~**CRITICAL production bug.** Media generation via tool calls triggers `Error: The response stream ended unexpectedly.`~~ Phase 149 (SSE heartbeat) + Phase 158 (catch/finally hardening) + **Phase 160 (heartbeat + didSendFinal + logging)** + **Phase 160.1 (maxDuration=60, client timeout=70s)** all applied. **CODE-COMPLETE.** Root cause: Vercel function timeout at 60s. Text/image/audio should fit. Video (up to 180s) will timeout on Hobby — accepted trade-off. **PM audit #77: Code is correct. Requires production deployment to verify.** | **🟡 CODE-COMPLETE — awaiting production deployment.** | `src/app/api/openai/route.tsx`, `src/components/chat/chat-wrapper.tsx` |
+| maxDuration on all routes | All 6 API routes have `export const maxDuration`: openai=60, clerk-webhook=60, upload/download/aws/stripe-webhook=30. | ✅ VERIFIED COMPLETE (Phase 166, PM audit #77) | All `src/app/api/*/route.tsx` |
 | User deletion cascade fix | ~~`RateLimitEntry` records and `AdminAuditLog` entries NOT cleaned in any of 3 deletion paths.~~ **RESOLVED (Phase 150).** Shared `deleteUserCascade()` utility extracts all cascade steps (Tasks, Transactions, UsageEvents, RateLimitEntries, Uploads, S3). All 3 deletion paths (self-delete, admin-delete, webhook) use shared utility. `RateLimitEntry` cleanup included. | ✅ RESOLVED (Phase 150 COMPLETE) | `src/lib/utils/delete-user-cascade.ts`, `src/lib/actions/user.actions.tsx`, `src/app/api/webhooks/clerk/route.tsx` |
 | Library uploaded tab | ~~Conversation Library has no "Uploaded" tab for user-uploaded media.~~ **RESOLVED (Phase 151).** "Uploaded" tab added to Conversation Library. `Upload` model with compound `{ userId: 1, createdAt: -1 }` index. Upload records persisted on file upload. | ✅ RESOLVED (Phase 151 COMPLETE) | `src/lib/database/models/upload.model.ts`, `src/components/chat/library-tabs.tsx`, `src/app/(chat)/app/library/page.tsx` |
-| Payment checkout fix | ~~**CRITICAL production bug (PM audit #69).** `redirect()` inside try/catch in `checkoutPlan()`.~~ Phase 152 fixed redirect. Phase 157 fixed webhook schema (.strict()→.strip()). **Phase 161 CODE-COMPLETE:** Idempotency repair checks Transaction + User plan.stripeId. Repair path for stale plan state. Top-level try/catch. Full error logging. **Phase 160.1 COMPLETE — deployment unblocked. Awaiting production deployment + Stripe Dashboard ops check.** | **🟡 CODE-COMPLETE — deployment unblocked, awaiting production deployment + ops verification.** | `src/app/api/webhooks/stripe/route.tsx`, `src/lib/actions/transaction.action.tsx` |
+| Payment checkout fix | ~~**CRITICAL production bug (PM audit #69).** `redirect()` inside try/catch in `checkoutPlan()`.~~ Phase 152 fixed redirect. Phase 157 fixed webhook schema (.strict()→.strip()). **Phase 161 CODE-COMPLETE:** Idempotency repair checks Transaction + User plan.stripeId. Repair path for stale plan state. Top-level try/catch. Full error logging. **PM audit #77: Code is architecturally sound. Root cause most likely Stripe webhook endpoint misconfiguration in production (URL, signing secret, or event types). Requires: (1) deployment, (2) Stripe Dashboard verification.** | **🟡 CODE-COMPLETE — awaiting deployment + Stripe ops verification.** | `src/app/api/webhooks/stripe/route.tsx`, `src/lib/actions/transaction.action.tsx` |
 | Admin settings hydration fix | ~~**HIGH bug (PM audit #69).** `AdminSettingsTabs` SSR/client mismatch.~~ **RESOLVED (Phase 153).** `getInitialActiveTabId()` function removed. `useState` initializer uses `tabs[0]?.id ?? ""`. localStorage synced via `useEffect` after mount. No SSR/client divergence. | ✅ RESOLVED (Phase 153 COMPLETE) | `src/components/admin/settings/admin-settings-tabs.tsx` |
 | Suspended user UX messaging | ~~**HIGH UX gap (PM audit #69).** Suspended users get no visual feedback.~~ **RESOLVED (Phase 154).** `isSuspended` prop added to `ChatSidebarPromo` and `PlanPromo`. Suspension-specific messaging displayed with contact support CTA. | ✅ RESOLVED (Phase 154 COMPLETE) | `src/components/chat/sidebar/chat-sidebar-promo.tsx`, `src/components/shared/plan-promo.tsx` |
 | Custom scrollbar removal | ~~**HIGH directive (PM audit #69).** Remove all custom scrollbar CSS.~~ **RESOLVED (Phase 155 + 155.1 COMPLETE).** CSS class deleted from `globals.css`. All JSX references removed. Zero `droplet-scrollbar` references remaining in codebase. | ✅ RESOLVED (Phase 155 + 155.1 COMPLETE) | `src/app/globals.css`, `src/components/admin/admin-layout-shell.tsx` |
@@ -141,10 +142,11 @@ The points below are verified from the current codebase.
 37. ~~**HIGH directive — remove all custom scrollbar CSS (PM audit #69, Phase 155).**~~ **RESOLVED (Phase 155 + 155.1 COMPLETE).** CSS class removed. All JSX class references removed. Zero `droplet-scrollbar` references in codebase.
 38. ~~**CRITICAL production bug — Stripe webhook silently drops payment processing (PM audit #71, Phase 157).**~~ **RESOLVED (Phase 157 COMPLETE).** Root cause: `.strict()` vs `.strip()` on Zod schema + unused `name` field in checkout metadata. Fix: schema changed to `.strip()`, `name` field removed from metadata, regression test added for extra metadata tolerance. Triple-confirmed by Architect, Engineer, and PM. All 7 gates GREEN.
 39. ~~**HIGH — SSE streaming catch/finally can throw on closed controller (PM audit #71, Phase 158).**~~ **RESOLVED (Phase 158 COMPLETE).** `writeStreamEvent` in catch and `controller.close()` in finally wrapped in try/catch. **However, owner STILL reports "stream ended unexpectedly" in production — root cause is infrastructure timeout, not catch/finally. See Phase 160.**
-40. ~~**CRITICAL — Stream error persists in production (Phase 160).**~~ **CODE-COMPLETE (Phase 160 + Phase 160.1 COMPLETE, PM audit #75).** General+media heartbeats, `didSendFinal` guard, stderr logging all implemented. `maxDuration` reduced to 60 (Vercel Hobby compliant). Client timeout reduced to 70s. **Awaiting production deployment to verify fix.** Video gen (up to 180s) may time out on Hobby — owner accepted trade-off.
-41. ~~**CRITICAL — Payment/transaction still not registering (Phase 161).**~~ **CODE-COMPLETE (Phase 161, PM audit #75).** Idempotency repair: checks Transaction + User `plan.stripeId`. Repair path via `applyCheckoutPlanUpdate()`. Top-level try/catch with session ID context. All error details logged to stderr. **Phase 160.1 COMPLETE — deployment unblocked. Awaiting production deployment + Stripe Dashboard ops verification.**
+40. ~~**CRITICAL — Stream error persists in production (Phase 160).**~~ **CODE-COMPLETE (Phase 160 + Phase 160.1 COMPLETE, PM audit #77).** General+media heartbeats, `didSendFinal` guard, stderr logging all implemented. `maxDuration` reduced to 60 (Vercel Hobby compliant). Client timeout reduced to 70s. **PM audit #77 root cause analysis: Vercel function timeout at 60s kills server-side processing. Code is correct. Text/image/audio should fit within 60s. Video (up to 180s) will timeout on Hobby — accepted trade-off. Awaiting production deployment to verify.**
+41. ~~**CRITICAL — Payment/transaction still not registering (Phase 161).**~~ **CODE-COMPLETE (Phase 161, PM audit #77).** Idempotency repair: checks Transaction + User `plan.stripeId`. Repair path via `applyCheckoutPlanUpdate()`. Top-level try/catch with session ID context. All error details logged to stderr. **PM audit #77 root cause analysis: Code is architecturally sound with proper signature verification, Zod `.strip()`, idempotency repair, and error logging. Most likely root cause is Stripe webhook endpoint misconfiguration in production (URL, signing secret, or event types). Requires: (1) production deployment, (2) Stripe Dashboard webhook endpoint verification.**
 42. **HIGH — Admin promo text still hardcoded (Phase 162).** "Go Pro"/"Go Premium" and promo descriptions in `chat-sidebar-promo.tsx` are hardcoded. Should be admin-configurable. Note: plan NAMES (Lite/Pro/Premium) are TypeScript enum literals throughout the type system — making names themselves configurable requires a v2-level refactor and is NOT recommended now. Only DISPLAY TEXT should be extracted to admin settings.
 43. ~~**🔴 CRITICAL — Vercel Hobby `maxDuration` deployment blocker (Phase 160.1, PM audit #75).**~~ **RESOLVED (Phase 160.1 COMPLETE).** `maxDuration` reduced from 300 to 60. Client timeout reduced from 310s to 70s. Unit tests updated. All 7 gates pass (592 tests). Deployment unblocked. Trade-off accepted: video gen (up to 180s Sora) may time out on Hobby; text chat + image + audio fit within 60s.
+44. **Phase 166 VERIFIED COMPLETE (PM audit #77).** All 6 API routes have `export const maxDuration`. Values: openai=60, clerk-webhook=60, upload/download/aws/stripe-webhook=30. Triple-audit confirmed (Architect, Engineer, PM). TODO.md had listed this as pending — stale entry corrected.
 
 ---
 
@@ -501,33 +503,43 @@ This sequence is mandatory.
 
 ## 9. Current Execution Order
 
-> Milestones 0–25 ALL COMPLETE. **Phase 160.1 (maxDuration fix) COMPLETE.** Phases 160 (stream fix), 161 (payment fix), 164 (client timeout) CODE-COMPLETE — deployment unblocked. Phase 141 (suspended user enforcement) COMPLETE. Phase 149 (SSE heartbeat streaming fix) COMPLETE. Phases 150–155 ALL COMPLETE. Phase 157 (Stripe webhook schema fix) COMPLETE. Phase 155.1 (scrollbar cleanup) COMPLETE. Phase 158 (SSE catch/finally hardening) COMPLETE. Phase 159 (button test fix) COMPLETE.
+> Milestones 0–25 ALL COMPLETE. **Phase 160.1 (maxDuration fix) COMPLETE. Phase 166 (maxDuration on all routes) VERIFIED COMPLETE.** Phases 160 (stream fix), 161 (payment fix), 164 (client timeout) CODE-COMPLETE — deployment unblocked. Phase 141 (suspended user enforcement) COMPLETE. Phase 149 (SSE heartbeat streaming fix) COMPLETE. Phases 150–155 ALL COMPLETE. Phase 157 (Stripe webhook schema fix) COMPLETE. Phase 155.1 (scrollbar cleanup) COMPLETE. Phase 158 (SSE catch/finally hardening) COMPLETE. Phase 159 (button test fix) COMPLETE.
 > **4 of 6 gates GREEN (Product YELLOW, Admin YELLOW).** 101 unit test suites, 592 tests (all pass). E2E: 8 specs (49 tests). Zero `as never` casts.
 > Coverage thresholds: 85/80/85/85. Node.js 24.12.0. Build passing locally. TSC clean. Lint: 0 errors, 0 warnings. Knip: 0 findings.
 > Admin-configurability PARTIAL: core resolved (FAQ 74.2, landing 104, stop msgs 107, support email 74.1). **Remaining: promo/upgrade text still hardcoded (Phase 162).**
 
-**Priority order (updated — Phase 160.1 COMPLETE, deployment unblocked):**
+**Owner evaluation directives (2026-03-30):**
 
-1. ~~**Phase 160.1 🔴 CRITICAL**~~ — **COMPLETE.** `maxDuration` reduced to 60. Client timeout reduced to 70s. All 7 gates pass (592 tests). Deployment unblocked.
-2. **🔴 DEPLOY TO PRODUCTION** — Deploy all code-complete fixes (Phases 160, 160.1, 161, 164) to Vercel. Verify streaming + payment in production.
-3. **Phase 162 HIGH** — Extract hardcoded promo/upgrade text from `chat-sidebar-promo.tsx`, `plan-promo.tsx`, `persona-card.tsx` to admin-configurable settings via `effective-*` resolver pattern.
-4. **Phase 163 HIGH** — Add `global-error.tsx` for root layout error recovery.
-5. **Phase 166 HIGH** — Add `maxDuration` exports to 5 API routes missing them (upload, download, aws, webhooks/stripe, webhooks/clerk). All 30s.
-6. **Phase 167 HIGH** — Fix 2 empty catch blocks violating AGENTS.md (chat-sidebar-shell.tsx, chat-sidebar.tsx).
-7. **Phase 143 MEDIUM** — Replace `as string` / `!` casts on env vars with runtime validation.
-8. **Phase 144 MEDIUM** — Admin config in-memory cache with 30s TTL.
-9. **Phase 145 MEDIUM** — Upload filename collision fix (`crypto.randomUUID()`).
-10. **Phase 165 MEDIUM** — Checkout success page DB polling for plan confirmation.
-11. **Phase 146 LOW** — Admin user detail transaction `.limit(50)`.
-12. **Phase 147 LOW** — Rename `.tsx` utility files to `.ts` where no JSX.
-13. **Phase 148 LOW** — Admin bulk operations partial-failure reporting.
+> - After production deployment, verify streaming behavior (text chat, image gen, audio gen within 60s).
+> - Verify video generation correctly fails with user-friendly message (not silent crash) when exceeding 60s on Hobby.
+> - Monitor Stripe webhook Event deliveries for successful processing.
+> - Evaluate whether video generation should be gated/warned on Hobby plan to prevent bad UX.
+> - Evaluate additional hardcoded text in `cta-banner.tsx`, `persona-spotlight.tsx`, `about/page.tsx` headings (Phase 162 expanded scope).
+
+**Priority order (updated — PM audit #77):**
+
+1. ~~**Phase 160.1 🔴 CRITICAL**~~ — **COMPLETE.**
+2. ~~**Phase 166 🔴 CRITICAL-PRE-DEPLOY**~~ — **VERIFIED COMPLETE.** All 6 API routes have `export const maxDuration`.
+3. **🔴 DEPLOY TO PRODUCTION** — Deploy all code-complete fixes to Vercel. All 7 gates GREEN.
+4. **🔴 POST-DEPLOY OPS CHECKLIST** — Verify Stripe webhook endpoint (URL, signing secret, event types). Test streaming. Test payment e2e. Check Vercel function logs.
+5. **Phase 167 HIGH** — Fix empty catch blocks (~27 blocks across 5 files). Most critical: openai route outer catch + 15 admin action catches.
+6. **Phase 162 HIGH** — Extract hardcoded promo/upgrade text to admin-configurable settings via `effective-*` resolver pattern.
+7. **Phase 163 HIGH** — Add `global-error.tsx` for root layout error recovery.
+8. **Phase 143 MEDIUM** — Replace `as string` / `!` casts on env vars with runtime validation.
+9. **Phase 165 MEDIUM** — Checkout success page DB polling for plan confirmation.
+10. **Phase 144 MEDIUM** — Admin config in-memory cache with 30s TTL.
+11. **Phase 145 MEDIUM** — Upload filename collision fix (`crypto.randomUUID()`).
+12. **Phase 146 LOW** — Admin user detail transaction `.limit(50)`.
+13. **Phase 147 LOW** — Rename `.tsx` utility files to `.ts` where no JSX.
+14. **Phase 148 LOW** — Admin bulk operations partial-failure reporting.
 
 **Code-complete awaiting deployment:**
 
-- Phase 160 — `maxDuration=60` (Phase 160.1 applied), heartbeat, `didSendFinal`, stderr logging. Ready to deploy.
-- Phase 160.1 — `maxDuration` reduced to 60, client timeout to 70s. COMPLETE. Ready to deploy.
-- Phase 161 — Webhook idempotency repair. Ready to deploy. Stripe Dashboard ops check needed post-deploy.
-- Phase 164 — Client timeout 70s (aligned by Phase 160.1). Ready to deploy.
+- Phase 160 — `maxDuration=60`, heartbeat, `didSendFinal`, stderr logging. Ready to deploy.
+- Phase 160.1 — `maxDuration` reduced to 60, client timeout to 70s. Ready to deploy.
+- Phase 161 — Webhook idempotency repair + error logging. Ready to deploy. Stripe Dashboard ops check needed post-deploy.
+- Phase 164 — Client timeout 70s. Ready to deploy.
+- Phase 166 — maxDuration on all 6 API routes. Ready to deploy.
 
 ---
 
