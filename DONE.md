@@ -2,21 +2,62 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-31 — PM audit #78.1. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4, 105.1, 105.2, 106, 107.1, 107.2, 107.3, 108, 110, 111.1, 112.1, 112.2, 109, 113.1, 113.2, 114, 115, 116, 117, 120.1, 120.2-A, 120.2-B, 120.2-C, 120.3, 120.4, 120.5, 120.6, 120.7, 121, 122, 123, 124, 125, 125.1, 125.2, 126, 126.1, 126.2, 127, 128.1, 128.2, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 149, 150, 151, 152, 153, 154, 155, 155.1, 156, 157, 158, 159, 160, 160.1, 161, 164, 166, 167 (partial), 74.2, 104, 125.3 complete. Milestones 0–25 COMPLETE. 592 unit tests (101 suites). E2E: 49 tests (8 spec files). All 7 validation gates GREEN. Build passing. Node.js 24.12.0 runtime. Coverage: 85/80/85/85. Zero `as never` casts. Lint: 0 errors, 0 warnings.
+> Last updated: 2026-03-31 — PM audit #79. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4, 105.1, 105.2, 106, 107.1, 107.2, 107.3, 108, 110, 111.1, 112.1, 112.2, 109, 113.1, 113.2, 114, 115, 116, 117, 120.1, 120.2-A, 120.2-B, 120.2-C, 120.3, 120.4, 120.5, 120.6, 120.7, 121, 122, 123, 124, 125, 125.1, 125.2, 126, 126.1, 126.2, 127, 128.1, 128.2, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 149, 150, 151, 152, 153, 154, 155, 155.1, 156, 157, 158, 159, 160, 160.1, 161, 164, 166, 167 (partial), 168, 74.2, 104, 125.3 complete. Milestones 0–25 COMPLETE. 592 unit tests (101 suites). E2E: 49 tests (8 spec files). Build passing. Node.js 24.12.0 runtime. Coverage: 85/80/85/85. Zero `as never` casts. Lint: 0 errors, 0 warnings.
 
 ---
 
-## Stripe Webhook Ops Verification — RESOLVED (2026-03-30)
+## Phase 168 CRITICAL — Audio Player Controller Error Fix — COMPLETED (2026-03-31)
 
-> Owner verified Stripe Dashboard configuration (PM audit #78.1). Webhook returning 200 OK for all requests. Payment test successful: Transaction created and User plan updated.
+> Engineer delivered (PM audit #79). CRITICAL production bug fix. Three contributing paths addressed: SSE controller race, download Range support, audio player lifecycle.
 
-- [x] Stripe webhook endpoint URL matches production domain
-- [x] `STRIPE_WEBHOOK_SECRET` env var matches webhook endpoint signing secret
-- [x] `checkout.session.completed` event type selected
-- [x] Test payment creates Transaction record AND updates User plan
-- [x] Webhook responses: 200 OK confirmed
+**Path A — SSE controller race condition (server-side):**
 
-**Resolution:** Ops fix only — zero code changes. TD-PAYMENT-01 closed.
+- [x] Added `let controllerClosed = false;` flag in SSE streaming path.
+- [x] `emitHeartbeat()` checks `controllerClosed` before calling `writeStreamEvent()` — returns early if closed.
+- [x] `controllerClosed = true;` set immediately before `controller.close()` in finally block.
+- [x] Prevents heartbeat interval firing after controller is closed.
+
+**Path B — Download route HTTP Range support (server-side):**
+
+- [x] `parseByteRangeHeader()` added to parse Range request header.
+- [x] Range passed to `getFileFromAWS()` for S3-sourced files.
+- [x] Returns `206 Partial Content` with `Content-Range` header for Range requests.
+- [x] Returns `Accept-Ranges: bytes` header for all responses.
+- [x] AWS `getFileFromAWS` updated to accept optional Range parameter.
+
+**Path C — Audio player lifecycle hardening (client-side):**
+
+- [x] `previousAudioUrlRef.current` reset to `null` in cleanup function.
+- [x] `audioElement.src = ""` set before disposal to release browser resources.
+- [x] `error` event listener added to Audio element — surfaces `"Audio unavailable."` to user.
+- [x] `audioError` state added for error display.
+- [x] Play rejection surfaces `"Audio unavailable."` message.
+
+**Tests updated:**
+
+- [x] SSE post-close heartbeat behavior test added.
+- [x] Download range + headers test added.
+- [x] AWS range passthrough test added.
+- [x] Audio error + cleanup behavior test added.
+- [x] Build passes, lint passes, TSC clean.
+
+**Known issue:** 1 unrelated test failure — `chat-sidebar-promo.test.tsx` line 19 expects "Manage Plan" but UI renders "Upgrade Now". Not caused by Phase 168.
+
+**Files changed:** `src/app/api/openai/route.tsx`, `src/app/api/download/route.tsx`, `src/lib/utils/aws/getFileFromAWS.ts`, `src/components/shared/audio-player.tsx`, + 4 test files.
+
+---
+
+## Stripe Webhook Ops Verification — RE-OPENED (PM audit #79, 2026-03-31)
+
+> Previously marked RESOLVED (PM audit #78.1). Owner NOW reports (2026-03-31): payment succeeds (Stripe charges card), webhook returns 200 OK for all requests, but NO Transaction created in database and NO User plan updated. **This contradicts the previous resolution.** RE-OPENED as CRITICAL — requires diagnostic logging (Phase 169) to identify which event types are being received and which code path returns 200.
+
+- [x] ~~Stripe webhook endpoint URL matches production domain~~ — UNVERIFIED (re-opened)
+- [x] ~~`STRIPE_WEBHOOK_SECRET` env var matches webhook endpoint signing secret~~ — UNVERIFIED (re-opened)
+- [ ] **`checkout.session.completed` event type confirmed reaching webhook** — NEEDS VERIFICATION via function logs
+- [ ] **Test payment creates Transaction record AND updates User plan** — FAILING per owner
+- [x] Webhook responses: 200 OK confirmed — but 200 can mean "Unhandled event" (non-checkout events)
+
+**Status:** RE-OPENED. TD-PAYMENT-01 re-opened. Phase 169 (diagnostic logging) required.
 
 ---
 

@@ -5,72 +5,85 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #78.1 (2026-03-30). DEPLOYED TO PRODUCTION. 2 CRITICAL production bugs active (audio, streaming). BUG-PAYMENT RESOLVED (owner verified Stripe webhook 200 OK + payment test passed). Phase 167 partially completed (targeted catches). 592 unit tests (101 suites). 49 E2E tests (8 spec files). Build passes. TSC clean. Node.js 24.12.0 runtime.**
-> **GATE STATUS: All 7 validation gates GREEN locally. Product Gate RED (2 CRITICAL bugs). Admin Gate YELLOW (Phase 162 pending).**
+> **STATUS: PM audit #79 (2026-03-31). DEPLOYED TO PRODUCTION. 3 CRITICAL production bugs active (payment RE-OPENED, streaming, test regression). Phase 168 COMPLETE (audio player fix). Phase 167 partially completed (targeted catches). 592 unit tests (101 suites). 49 E2E tests (8 spec files). Build passes. TSC clean. Node.js 24.12.0 runtime.**
+> **GATE STATUS: Product Gate RED (3 CRITICAL bugs). Admin Gate YELLOW (Phase 162 pending). Validation Gate YELLOW (1 test failure).**
 > **Zero: `as never`, `as any`, `console.log`, `console.error`, `window.alert`, `window.confirm`, `strict: false`, `droplet-scrollbar`, stale TODOs — all in `src/`.**
 >
-> **REMAINING PRODUCTION BUGS (PM audit #78.1):**
+> **REMAINING PRODUCTION BUGS (PM audit #79):**
 >
-> - ✅ ~~BUG-PAYMENT~~: **RESOLVED.** Stripe webhook returning 200 OK. Payment test successful. Transaction recorded, plan updated.
+> - 🔴 BUG-PAYMENT **RE-OPENED**: Owner reports (2026-03-31): Stripe payment succeeds, webhook returns 200 OK, but NO Transaction created and NO User plan updated. **Phase 169 (diagnostic logging) required to identify root cause.** Code logic verified correct — hypothesis: `checkout.session.completed` event may not be reaching webhook, or non-checkout events returning 200 "Unhandled event" masking the issue.
 > - 🔴 BUG-STREAM: Stream ends unexpectedly on media gen. Vercel 60s timeout. **Phase 160.2 (proactive timeout safety net).**
-> - 🔴 BUG-AUDIO: Audio PLAY button triggers ERR_INVALID_STATE. **Phase 168 (controller guard + download Range support).**
+> - ✅ ~~BUG-AUDIO~~: **RESOLVED (Phase 168 COMPLETE).** SSE controller guard, download Range support, audio player lifecycle hardening.
+> - 🟡 TEST-REGRESSION: `chat-sidebar-promo.test.tsx` expects "Manage Plan" but UI renders "Upgrade Now". **Phase 168.1 (test fix).**
 > - ⚠️ Admin configurability (Phase 162): PENDING — after critical bugs resolved.
 >
-> **EXECUTION ORDER (PM audit #78.1 — 2 critical bugs first, then hardening):**
+> **EXECUTION ORDER (PM audit #79 — 3 critical bugs first, then hardening):**
 >
-> 1. **🔴 Phase 168 CRITICAL** — Audio player + download Range support + SSE controller guard.
+> 1. **🔴 Phase 169 CRITICAL** — Stripe webhook diagnostic logging (BUG-PAYMENT investigation).
 > 2. **🔴 Phase 160.2 CRITICAL** — Proactive timeout safety net (55s timer before Vercel kill).
-> 3. **Phase 167.2 HIGH** — Remaining 35 empty catch blocks.
-> 4. **Phase 162 HIGH** — Promo text admin-configurable.
-> 5. **Phase 163 HIGH** — Global error boundary.
-> 6. **Phase 165 MEDIUM** — Checkout success page DB polling (safety net — payment now working, deprioritized).
-> 7. **Phase 143 MEDIUM** — Env var runtime validation.
-> 8. **Phase 144–148 MEDIUM/LOW** — Backlog.
+> 3. **🔴 Phase 168.1 CRITICAL** — Fix `chat-sidebar-promo.test.tsx` test regression (Validation Gate blocker).
+> 4. **Phase 167.2 HIGH** — Remaining 35 empty catch blocks.
+> 5. **Phase 162 HIGH** — Promo text admin-configurable.
+> 6. **Phase 163 HIGH** — Global error boundary.
+> 7. **Phase 165 MEDIUM** — Checkout success page DB polling.
+> 8. **Phase 143 MEDIUM** — Env var runtime validation.
+> 9. **Phase 144–148 MEDIUM/LOW** — Backlog.
 >
 > _Critical bugs block ALL other work. No exceptions._
 
 ---
 
-## 🔴 ENGINEER START HERE — Phase 168 CRITICAL — Audio Player Controller Error Fix (PM audit #78)
+## 🔴 ENGINEER START HERE — Phase 169 CRITICAL — Stripe Webhook Diagnostic Logging (PM audit #79)
 
-> **NEW.** Owner reported: clicking PLAY on generated audio triggers `TypeError: Invalid state: Controller is already closed { code: 'ERR_INVALID_STATE' }`. Triple-audit identified three contributing paths.
+> **BUG-PAYMENT RE-OPENED.** Owner reports (2026-03-31): Stripe payment succeeds, webhook returns 200 OK for all requests, but NO Transaction created and NO User plan updated. Code logic triple-audited — correct. **Root cause hypothesis:** the webhook returns 200 "Unhandled event" for non-checkout event types (like `payment_intent.succeeded`, `charge.succeeded`). The actual `checkout.session.completed` event may not be reaching the webhook at all (not selected in Stripe Dashboard), OR it may be failing silently at a point that returns 200. The webhook currently has ZERO logging of event type received and ZERO logging at success return points — making production diagnosis impossible.
 
-**Path A — SSE controller race condition (server-side fix):**
+**File:** `src/app/api/webhooks/stripe/route.tsx`
 
-File: `src/app/api/openai/route.tsx`
+**What to do:**
 
-1. Add a `let controllerClosed = false;` flag alongside `didSendFinal`.
-2. Set `controllerClosed = true;` immediately BEFORE `controller.close()` in the `finally` block.
-3. Update `emitHeartbeat()` to check `controllerClosed` before calling `writeStreamEvent()`. If `controllerClosed`, skip the write and return `false`.
-4. This prevents the race: heartbeat interval fires after `controller.close()`, tries `controller.enqueue()` on a closed controller.
+1. Add `logStripeWebhookInfo(\`Event type received: ${eventType}\`);`immediately after`const eventType = parsedEvent.data.type;` (line ~187).
+2. Add `logStripeWebhookInfo(\`Checkout session ${id}: user ${theUserId} found. Processing...\`);` after the user lookup succeeds (line ~270).
+3. Add `logStripeWebhookInfo(\`Checkout session ${checkoutSessionId}: Already processed — transaction and plan match.\`);` before the "Already processed" return (line ~280).
+4. Add `logStripeWebhookInfo(\`Checkout session ${id}: Repair path completed.\`);` after successful repair (line ~300).
+5. Add `logStripeWebhookInfo(\`Checkout session ${id}: Transaction created successfully.\`);`after`createTransaction` succeeds (line ~305).
+6. Add `logStripeWebhookInfo(\`Checkout session ${id}: User plan updated successfully.\`);`after`applyCheckoutPlanUpdate` succeeds (line ~320).
 
-**Path B — Download route HTTP Range support (server-side fix):**
+**Additional diagnostic action for owner:**
 
-File: `src/app/api/download/route.tsx`
+After deploying Phase 169, have the owner:
 
-1. Parse `Range` request header from the incoming request.
-2. For S3-sourced files: pass `Range` header to `getFileFromAWS()` (the S3 SDK `GetObjectCommand` supports `Range` parameter natively).
-3. Return `206 Partial Content` with `Content-Range` and `Accept-Ranges: bytes` headers when Range is requested.
-4. Return `200 OK` with `Accept-Ranges: bytes` header for non-Range requests.
-5. This is essential for browser audio/video elements to properly buffer, seek, and replay content.
-
-**Path C — Audio player lifecycle hardening (client-side fix):**
-
-File: `src/components/shared/audio-player.tsx`
-
-1. Reset `previousAudioUrlRef.current = null` in the cleanup function (before `return`). This allows re-initialization if the component remounts with the same `audioSrc`.
-2. Set `audioElement.src = ""` before disposing to force the browser to release the resource.
-3. Add an `error` event listener on the Audio element: `audioElement.addEventListener("error", handleError)` — surface fetch/decode failures to the user (e.g., set an error state and show "Audio unavailable").
+1. Make a test payment in production
+2. Check Vercel function logs for the webhook endpoint
+3. Look for `Event type received:` log entries — this will show EXACTLY which events are hitting the webhook
+4. If `checkout.session.completed` is NOT in the logs, the event type is not selected in Stripe Dashboard
+5. If it IS in the logs, the subsequent logs will show which code path was taken
 
 **Acceptance criteria:**
 
-- [ ] Zero `ERR_INVALID_STATE` errors from SSE controller in server logs
-- [ ] `emitHeartbeat()` checks `controllerClosed` flag before enqueuing
-- [ ] `/api/download` returns `Accept-Ranges: bytes` header
-- [ ] `/api/download` handles `Range` request header and returns `206 Partial Content`
-- [ ] Audio player re-initializes correctly after component remount
-- [ ] Audio player shows error state on fetch/decode failure
+- [ ] Event type logged at entry for every webhook event
+- [ ] Each 200 return path has descriptive logging
+- [ ] No behavioral changes to webhook logic (logging only)
 - [ ] Build passes, tests pass
+
+---
+
+## 🔴 Phase 168.1 CRITICAL — Fix `chat-sidebar-promo.test.tsx` test regression (PM audit #79)
+
+> Unit test expects `"Manage Plan"` link text but the UI component renders `"Upgrade Now"`. This is a test-vs-code mismatch — the test was not updated when the link text changed. Validation Gate blocker (1 failing test).
+
+**File:** `tests/unit/components/chat-sidebar-promo.test.tsx`
+
+**What to do:**
+
+1. Line 19: Change `screen.getByRole("link", { name: "Manage Plan" })` to `screen.getByRole("link", { name: "Upgrade Now" })`.
+2. Line 33: Change `screen.queryByRole("link", { name: "Manage Plan" })` to match actual suspended/admin behavior — verify what the component actually renders and update assertion accordingly.
+3. Verify by running `npx vitest run tests/unit/components/chat-sidebar-promo.test.tsx`.
+
+**Acceptance criteria:**
+
+- [ ] `chat-sidebar-promo.test.tsx` passes
+- [ ] All unit tests pass (592+)
+- [ ] Build passes
 
 ---
 
