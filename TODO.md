@@ -5,8 +5,8 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #79 (2026-03-31). DEPLOYED TO PRODUCTION. 3 CRITICAL production bugs active (payment RE-OPENED, streaming, test regression). Phase 168 COMPLETE (audio player fix). Phase 167 partially completed (targeted catches). 592 unit tests (101 suites). 49 E2E tests (8 spec files). Build passes. TSC clean. Node.js 24.12.0 runtime.**
-> **GATE STATUS: Product Gate RED (3 CRITICAL bugs). Admin Gate YELLOW (Phase 162 pending). Validation Gate YELLOW (1 test failure).**
+> **STATUS: PM audit #80 (2026-03-31). DEPLOYED TO PRODUCTION. 5 CRITICAL production bugs active (payment RE-OPENED, streaming, test regression, hydration mismatch, script tag error). Phase 168 COMPLETE (audio player fix). Phase 167 partially completed (targeted catches). 592 unit tests (101 suites). 49 E2E tests (8 spec files). Build passes. TSC clean. Node.js 24.12.0 runtime.**
+> **GATE STATUS: Product Gate RED (5 CRITICAL bugs). Admin Gate YELLOW (Phase 162 pending). Validation Gate YELLOW (1 test failure).**
 > **Zero: `as never`, `as any`, `console.log`, `console.error`, `window.alert`, `window.confirm`, `strict: false`, `droplet-scrollbar`, stale TODOs — all in `src/`.**
 >
 > **REMAINING PRODUCTION BUGS (PM audit #79):**
@@ -14,26 +14,113 @@
 > - 🔴 BUG-PAYMENT **RE-OPENED**: Owner reports (2026-03-31): Stripe payment succeeds, webhook returns 200 OK, but NO Transaction created and NO User plan updated. **Phase 169 (diagnostic logging) required to identify root cause.** Code logic verified correct — hypothesis: `checkout.session.completed` event may not be reaching webhook, or non-checkout events returning 200 "Unhandled event" masking the issue.
 > - 🔴 BUG-STREAM: Stream ends unexpectedly on media gen. Vercel 60s timeout. **Phase 160.2 (proactive timeout safety net).**
 > - ✅ ~~BUG-AUDIO~~: **RESOLVED (Phase 168 COMPLETE).** SSE controller guard, download Range support, audio player lifecycle hardening.
-> - 🟡 TEST-REGRESSION: `chat-sidebar-promo.test.tsx` expects "Manage Plan" but UI renders "Upgrade Now". **Phase 168.1 (test fix).**
+> - � BUG-HYDRATION: Theme toggle hydration mismatch — server renders `aria-checked="false"` / "Dark Mode" but client renders `aria-checked={true}` / "Light Mode" for dark-mode users. Causes full hydration recovery re-render on every page load. **Phase 170 (hydration fix).**
+> - 🔴 BUG-SCRIPT: `<Script>` with inline children in RootLayout triggers React console error in Next.js 16.2.1: "Scripts inside React components are never executed when rendering on the client." Theme init script may silently fail. **Phase 171 (script extraction).**
+> - �🟡 TEST-REGRESSION: `chat-sidebar-promo.test.tsx` expects "Manage Plan" but UI renders "Upgrade Now". **Phase 168.1 (test fix).**
 > - ⚠️ Admin configurability (Phase 162): PENDING — after critical bugs resolved.
 >
 > **EXECUTION ORDER (PM audit #79 — 3 critical bugs first, then hardening):**
 >
-> 1. **🔴 Phase 169 CRITICAL** — Stripe webhook diagnostic logging (BUG-PAYMENT investigation).
-> 2. **🔴 Phase 160.2 CRITICAL** — Proactive timeout safety net (55s timer before Vercel kill).
-> 3. **🔴 Phase 168.1 CRITICAL** — Fix `chat-sidebar-promo.test.tsx` test regression (Validation Gate blocker).
-> 4. **Phase 167.2 HIGH** — Remaining 35 empty catch blocks.
-> 5. **Phase 162 HIGH** — Promo text admin-configurable.
-> 6. **Phase 163 HIGH** — Global error boundary.
-> 7. **Phase 165 MEDIUM** — Checkout success page DB polling.
-> 8. **Phase 143 MEDIUM** — Env var runtime validation.
-> 9. **Phase 144–148 MEDIUM/LOW** — Backlog.
+> 1. **🔴 Phase 170 CRITICAL** — Fix theme toggle hydration mismatch (BUG-HYDRATION).
+> 2. **🔴 Phase 171 CRITICAL** — Extract inline theme script to file (BUG-SCRIPT).
+> 3. **🔴 Phase 169 CRITICAL** — Stripe webhook diagnostic logging (BUG-PAYMENT investigation).
+> 4. **🔴 Phase 160.2 CRITICAL** — Proactive timeout safety net (55s timer before Vercel kill).
+> 5. **🔴 Phase 168.1 CRITICAL** — Fix `chat-sidebar-promo.test.tsx` test regression (Validation Gate blocker).
+> 6. **Phase 167.2 HIGH** — Remaining 35 empty catch blocks.
+> 7. **Phase 162 HIGH** — Promo text admin-configurable.
+> 8. **Phase 163 HIGH** — Global error boundary.
+> 9. **Phase 165 MEDIUM** — Checkout success page DB polling.
+> 10. **Phase 143 MEDIUM** — Env var runtime validation.
+> 11. **Phase 144–148 MEDIUM/LOW** — Backlog.
 >
 > _Critical bugs block ALL other work. No exceptions._
 
 ---
 
-## 🔴 ENGINEER START HERE — Phase 169 CRITICAL — Stripe Webhook Diagnostic Logging (PM audit #79)
+## 🔴 ENGINEER START HERE — Phase 170 CRITICAL — Fix Theme Toggle Hydration Mismatch (PM audit #80)
+
+> **BUG-HYDRATION.** Owner reports (2026-03-31): Hydration mismatch on every page load for dark-mode users. Server renders `aria-checked="false"` / "Dark Mode" but client renders `aria-checked={true}` / "Light Mode". React recovers by re-rendering the entire tree on the client, causing performance degradation and potential visual flash. Root cause: `DropletTheme` component's `useState(getInitialMode)` reads localStorage on the client during initialization, producing a different initial state than the server (which always returns `"system"`).
+
+**Files:**
+
+1. `src/components/layout/droplet-theme.tsx` — theme state initialization
+2. `src/components/shared/toggle-theme.tsx` — displays theme-dependent values
+
+**What to do:**
+
+1. In `droplet-theme.tsx`, change `useState<ThemeMode>(getInitialMode)` to always initialize as `"system"` (matching server). This ensures server and client produce identical initial HTML.
+2. Add a `useEffect` that runs once on mount to read `getStoredMode()` from localStorage and call `setModeState(storedMode)` if it differs from `"system"`.
+3. The inline `<Script>` in `layout.tsx` already sets `data-droplet-theme` on `<html>` before React hydrates, so CSS themes are correct from the start — this fix only prevents the React hydration mismatch on interactive elements.
+4. Optionally: add a `mounted` state boolean and suppress theme-dependent aria/text rendering in `ToggleTheme` until mounted (prevents the brief mismatch on interactive elements). Simple approach: render a neutral state (e.g., `aria-checked={false}`, tooltipTitle="Toggle theme") until first `useEffect` fires.
+
+**Acceptance criteria:**
+
+- [ ] Zero hydration mismatch errors in console for dark-mode users
+- [ ] Theme toggle shows correct state after mount
+- [ ] CSS theme (via `data-droplet-theme` attribute) still applies instantly via inline script (no FOUC)
+- [ ] Build passes, tests pass
+
+---
+
+## 🔴 Phase 171 CRITICAL — Extract Inline Theme Script to File (PM audit #80)
+
+> **BUG-SCRIPT.** Owner reports (2026-03-31): Next.js 16.2.1 with React 19 raises console error: "Encountered a script tag while rendering React component. Scripts inside React components are never executed when rendering on the client." The `<Script id="theme-init" strategy="beforeInteractive">` with inline children in `layout.tsx` triggers this error. The theme init script may silently fail in some client-rendering scenarios.
+
+**Files:**
+
+1. `public/scripts/theme-init.js` — new file (extracted script)
+2. `src/app/layout.tsx` — replace inline `<Script>` with `src` reference
+
+**What to do:**
+
+1. Create `public/scripts/theme-init.js` containing the extracted theme init IIFE:
+   ```js
+   (function () {
+     try {
+       var storageKey = "droplet-theme-mode";
+       var legacyStorageKey = "cellesseon-theme-mode";
+       var savedMode =
+         localStorage.getItem(storageKey) ||
+         localStorage.getItem(legacyStorageKey) ||
+         "system";
+       var mode =
+         savedMode === "light" || savedMode === "dark" ? savedMode : "system";
+       var resolvedMode =
+         mode === "system"
+           ? window.matchMedia("(prefers-color-scheme: dark)").matches
+             ? "dark"
+             : "light"
+           : mode;
+       document.documentElement.setAttribute(
+         "data-droplet-theme",
+         resolvedMode,
+       );
+     } catch (e) {
+       document.documentElement.setAttribute("data-droplet-theme", "light");
+     }
+   })();
+   ```
+2. In `src/app/layout.tsx`, replace the inline `<Script>` block (lines 61-79) with:
+   ```tsx
+   <Script
+     id="theme-init"
+     strategy="beforeInteractive"
+     src="/scripts/theme-init.js"
+   />
+   ```
+3. Remove the `next/script` import if it's still needed for this single usage — keep if other scripts use it.
+
+**Acceptance criteria:**
+
+- [ ] Zero "script tag while rendering React component" console errors
+- [ ] Theme init still executes before React hydration (no FOUC)
+- [ ] `public/scripts/theme-init.js` exists with correct IIFE
+- [ ] `layout.tsx` uses `src` attribute instead of inline children
+- [ ] Build passes, tests pass
+
+---
+
+## 🔴 Phase 169 CRITICAL — Stripe Webhook Diagnostic Logging (PM audit #79)
 
 > **BUG-PAYMENT RE-OPENED.** Owner reports (2026-03-31): Stripe payment succeeds, webhook returns 200 OK for all requests, but NO Transaction created and NO User plan updated. Code logic triple-audited — correct. **Root cause hypothesis:** the webhook returns 200 "Unhandled event" for non-checkout event types (like `payment_intent.succeeded`, `charge.succeeded`). The actual `checkout.session.completed` event may not be reaching the webhook at all (not selected in Stripe Dashboard), OR it may be failing silently at a point that returns 200. The webhook currently has ZERO logging of event type received and ZERO logging at success return points — making production diagnosis impossible.
 

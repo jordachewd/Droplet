@@ -44,13 +44,15 @@ The owner has mandated a full TDD rebuild of the entire testing infrastructure. 
 8. **Knip must stay clean** — zero unused code findings at all times.
 9. **Reduce unnecessary renders and resource leaks** throughout the application.
 
-**Production deployment has occurred but critical bugs remain (PM audit #78, 2026-03-30):**
+**Production deployment has occurred but critical bugs remain (PM audit #80, 2026-03-31):**
 
 1. ~~**Audio playback error**~~ — **RESOLVED (Phase 168 COMPLETE).** SSE controller-close guard, /api/download HTTP Range support, Audio player lifecycle hardening — all deployed.
 2. **Stream error on media generation** — still failing in production despite Phase 160/160.1 code-complete. Root cause: Vercel Hobby 60s function timeout kills server before pipeline completes.
-3. **Payment not registering — RE-OPENED (2026-03-31).** Owner reports Stripe webhook returns HTTP 200 OK for ALL requests AND payment test succeeded, but NO Transaction is created in DB and NO User plan is updated. Previous diagnosis (webhook endpoint misconfiguration) was incorrect or insufficient. Requires code-level investigation of webhook handler logic, event parsing, and database write path.
+3. **Payment not registering — RE-OPENED (2026-03-31).** Owner reports Stripe webhook returns HTTP 200 OK for ALL requests AND payment test succeeded, but NO Transaction is created in DB and NO User plan is updated. Previous diagnosis was incorrect or insufficient. Requires diagnostic logging (Phase 169).
+4. **Hydration mismatch — NEW (2026-03-31).** Theme toggle `aria-checked` and tooltip text differ between server and client for dark-mode users. Causes full hydration recovery re-render on every page load. Phase 170.
+5. **Script tag error — NEW (2026-03-31).** `<Script>` with inline children in RootLayout triggers React 19 error in Next.js 16.2.1. Theme init script may silently fail. Phase 171.
 
-The execution order is: **Phase 169 (webhook diagnostic logging for BUG-PAYMENT) → Proactive timeout safety net (Phase 160.2) → Fix test regression (Phase 168.1) → Remaining catch blocks (Phase 167.2) → Admin promo text (Phase 162) → Global error boundary (Phase 163) → Checkout success polling (Phase 165) → Env hardening (Phase 143) → Performance (Phase 144 config cache) → Remaining backlog.**
+The execution order is: **Phase 170 (hydration mismatch fix) → Phase 171 (script tag extraction) → Phase 169 (webhook diagnostic logging for BUG-PAYMENT) → Proactive timeout safety net (Phase 160.2) → Fix test regression (Phase 168.1) → Remaining catch blocks (Phase 167.2) → Admin promo text (Phase 162) → Global error boundary (Phase 163) → Checkout success polling (Phase 165) → Env hardening (Phase 143) → Performance (Phase 144 config cache) → Remaining backlog.**
 
 ---
 
