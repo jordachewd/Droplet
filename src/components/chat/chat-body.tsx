@@ -146,10 +146,13 @@ export default function ChatBody({
     return messages.map((message) => {
       const { whois, content } = message;
       const isBot = whois !== "user";
+
       const messageOwner = isBot ? personaLabel || "Assistant" : "You";
       const messageKeyBase = message.id ?? buildMessageFallbackKey(message);
+
       const messageKeyIndex = messageKeyCount.get(messageKeyBase) ?? 0;
       messageKeyCount.set(messageKeyBase, messageKeyIndex + 1);
+
       const messageKey =
         messageKeyIndex === 0
           ? messageKeyBase
@@ -160,96 +163,90 @@ export default function ChatBody({
         isBot ? "justify-start" : "justify-end",
       );
 
-      const avatarClass = classNames(
-        isBot ? "bi bi-robot" : "bi bi-person",
-        "rounded-full p-2 text-base leading-none shadow-sm",
-        isBot
-          ? "bg-lavenderHaze-100 dark:bg-nightIndigo-500/40"
-          : "bg-lavenderHaze-200 text-midnightBlue-500 dark:bg-nightIndigo-500 dark:text-lavenderHaze-500",
-      );
+      const avatarClass = classNames(isBot ? "bi bi-droplet" : "bi bi-person");
 
-      const chatMarkdownClass = classNames("chat-markdown", {
+      const chatMarkdownClass = classNames({
+        "chat-markdown": !isBot,
         "chat-markdown--bot": isBot,
       });
 
       return (
         <article key={messageKey} className={articleClass}>
-          <i className={avatarClass} aria-hidden="true"></i>
-
-          <div className="flex max-w-[92%] flex-col gap-1">
-            <span className="px-1 text-xxs font-semibold uppercase text-midnightBlue-700 dark:text-lavenderHaze-700">
-              {messageOwner}
-            </span>
-
-            <div className={chatMarkdownClass}>
-              {Array.isArray(content) ? (
-                (() => {
-                  const contentKeyCount = new Map<string, number>();
-
-                  return content.map((reply) => {
-                    const contentKeyBase = buildContentFallbackKey(reply);
-                    const contentKeyIndex =
-                      contentKeyCount.get(contentKeyBase) ?? 0;
-                    contentKeyCount.set(contentKeyBase, contentKeyIndex + 1);
-                    const contentKey =
-                      contentKeyIndex === 0
-                        ? contentKeyBase
-                        : `${contentKeyBase}:${contentKeyIndex}`;
-
-                    if (reply.type === "text") {
-                      return (
-                        <ReactMarkdown
-                          key={contentKey}
-                          remarkPlugins={[remarkGfm]}
-                        >
-                          {reply.text}
-                        </ReactMarkdown>
-                      );
-                    }
-
-                    if (reply.type === "image_url") {
-                      return (
-                        <ImageHolder
-                          key={contentKey}
-                          hasTools={isBot}
-                          src={reply.image_url?.url || ""}
-                          width={isBot ? 320 : 128}
-                          height={isBot ? 320 : 128}
-                        />
-                      );
-                    }
-
-                    if (reply.type === "audio_url") {
-                      return (
-                        <AudioPlayer
-                          key={contentKey}
-                          audioSrc={reply.audio_url || null}
-                        />
-                      );
-                    }
-
-                    if (reply.type === "video_url") {
-                      return (
-                        <VideoPlayer
-                          key={contentKey}
-                          videoSrc={reply.video_url || null}
-                        />
-                      );
-                    }
-
-                    if (reply.type === "temp") {
-                      return <LoadingBubbles key={contentKey} size="small" />;
-                    }
-
-                    return null;
-                  });
-                })()
-              ) : (
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                  {content}
-                </ReactMarkdown>
-              )}
+          <div className={chatMarkdownClass}>
+            <div className="flex w-full gap-2 items-center mb-4">
+              <i className={avatarClass} aria-hidden="true"></i>
+              <span className="px-1 text-xxs font-semibold uppercase text-midnightBlue-700 dark:text-lavenderHaze-700">
+                {messageOwner}
+              </span>
             </div>
+
+            {Array.isArray(content) ? (
+              (() => {
+                const contentKeyCount = new Map<string, number>();
+
+                return content.map((reply) => {
+                  const contentKeyBase = buildContentFallbackKey(reply);
+                  const contentKeyIndex =
+                    contentKeyCount.get(contentKeyBase) ?? 0;
+                  contentKeyCount.set(contentKeyBase, contentKeyIndex + 1);
+                  const contentKey =
+                    contentKeyIndex === 0
+                      ? contentKeyBase
+                      : `${contentKeyBase}:${contentKeyIndex}`;
+
+                  if (reply.type === "text") {
+                    return (
+                      <ReactMarkdown
+                        key={contentKey}
+                        remarkPlugins={[remarkGfm]}
+                      >
+                        {reply.text}
+                      </ReactMarkdown>
+                    );
+                  }
+
+                  if (reply.type === "image_url") {
+                    return (
+                      <ImageHolder
+                        key={contentKey}
+                        hasTools={isBot}
+                        src={reply.image_url?.url || ""}
+                        width={isBot ? 320 : 128}
+                        height={isBot ? 320 : 128}
+                      />
+                    );
+                  }
+
+                  if (reply.type === "audio_url") {
+                    return (
+                      <AudioPlayer
+                        key={contentKey}
+                        audioSrc={reply.audio_url || null}
+                      />
+                    );
+                  }
+
+                  if (reply.type === "video_url") {
+                    return (
+                      <VideoPlayer
+                        key={contentKey}
+                        videoSrc={reply.video_url || null}
+                      />
+                    );
+                  }
+
+                  if (reply.type === "temp") {
+                    return <LoadingBubbles key={contentKey} size="small" />;
+                  }
+
+                  return null;
+                });
+              })()
+            ) : (
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {content}
+              </ReactMarkdown>
+            )}
           </div>
         </article>
       );
@@ -257,7 +254,7 @@ export default function ChatBody({
   }, [personaLabel, messages]);
 
   const chatBodyClass = classNames(
-    "ChatBody mx-auto flex w-full max-w-screen-lg flex-1 flex-col gap-4 px-4 pb-10 pt-6",
+    "ChatBody mx-auto flex w-full max-w-4xl flex-1 flex-col gap-6 px-4 pb-10 pt-6",
     "lg:px-0",
     conversationEnded &&
       "rounded-2xl border border-amber-400/45 bg-amber-50/40 dark:border-amber-400/30 dark:bg-amber-500/5",
@@ -271,7 +268,7 @@ export default function ChatBody({
         {endState && (
           <aside className="ChatBodyEndNotice mt-2 rounded-2xl border border-dashed border-amber-500/60 bg-amber-100/85 p-4 text-sm text-amber-950 shadow-sm dark:bg-amber-500/10 dark:text-amber-50">
             <div className="flex flex-col gap-3">
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col gap-2">
                 <span className="text-xxs font-semibold uppercase tracking-[0.18em] opacity-75">
                   Conversation Ended
                 </span>
@@ -293,7 +290,7 @@ export default function ChatBody({
           </aside>
         )}
       </div>
-      <div className="flex h-2 w-full" ref={bottomRef}></div>
+      <div className="ScrollIntoViewRef flex w-full" ref={bottomRef} />
     </>
   );
 }
