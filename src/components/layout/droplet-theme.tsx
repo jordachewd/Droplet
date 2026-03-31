@@ -53,14 +53,6 @@ const getStoredMode = (): ThemeMode => {
   return "system";
 };
 
-const getInitialMode = (): ThemeMode => {
-  if (typeof window === "undefined") {
-    return "system";
-  }
-
-  return getStoredMode();
-};
-
 const persistMode = (nextMode: ThemeMode) => {
   try {
     window.localStorage.setItem(STORAGE_KEY, nextMode);
@@ -70,16 +62,38 @@ const persistMode = (nextMode: ThemeMode) => {
 };
 
 export default function DropletTheme({ children }: ThemeProps) {
-  const [mode, setModeState] = useState<ThemeMode>(getInitialMode);
-  const [systemMode, setSystemMode] = useState<ResolvedThemeMode>(() =>
-    typeof window === "undefined" ? "light" : getSystemMode(),
-  );
+  const [mode, setModeState] = useState<ThemeMode>("system");
+  const [systemMode, setSystemMode] = useState<ResolvedThemeMode>("light");
+  const [hasHydratedTheme, setHasHydratedTheme] = useState(false);
   const resolvedMode: ResolvedThemeMode = mode === "system" ? systemMode : mode;
 
   useEffect(() => {
     document.documentElement.classList.add("DropletTheme");
+    if (!document.documentElement.hasAttribute(THEME_ATTRIBUTE)) {
+      document.documentElement.setAttribute(THEME_ATTRIBUTE, "light");
+    }
+  }, []);
+
+  useEffect(() => {
+    const storedMode = getStoredMode();
+    const nextSystemMode = getSystemMode();
+    const syncThemeState = window.setTimeout(() => {
+      setSystemMode(nextSystemMode);
+      if (storedMode !== "system") {
+        setModeState(storedMode);
+      }
+      setHasHydratedTheme(true);
+    }, 0);
+
+    return () => window.clearTimeout(syncThemeState);
+  }, []);
+
+  useEffect(() => {
+    if (!hasHydratedTheme) return;
+
+    document.documentElement.classList.add("DropletTheme");
     document.documentElement.setAttribute(THEME_ATTRIBUTE, resolvedMode);
-  }, [resolvedMode]);
+  }, [hasHydratedTheme, resolvedMode]);
 
   useEffect(() => {
     if (mode !== "system") return;

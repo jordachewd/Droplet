@@ -16,7 +16,7 @@ describe("ChatSidebarPromo", () => {
     );
 
     expect(screen.getByText("Go Pro")).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Manage Plan" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Upgrade Now" })).toBeTruthy();
   });
 
   it("shows a suspension message and hides upgrade CTA for suspended users", () => {
@@ -30,6 +30,6 @@ describe("ChatSidebarPromo", () => {
         "Your account has been suspended. Contact support for assistance.",
       ),
     ).toBeTruthy();
-    expect(screen.queryByRole("link", { name: "Manage Plan" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Upgrade Now" })).toBeNull();
   });
 });

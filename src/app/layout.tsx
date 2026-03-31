@@ -58,24 +58,11 @@ export default function RootLayout({
             },
           }}
         >
-          <Script id="theme-init" strategy="beforeInteractive">
-            {`
-              (() => {
-                try {
-                  const storageKey = "droplet-theme-mode";
-                  const legacyStorageKey = "cellesseon-theme-mode";
-                  const savedMode = localStorage.getItem(storageKey) || localStorage.getItem(legacyStorageKey) || "system";
-                  const mode = savedMode === "light" || savedMode === "dark" ? savedMode : "system";
-                  const resolvedMode = mode === "system"
-                    ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
-                    : mode;
-                  document.documentElement.setAttribute("data-droplet-theme", resolvedMode);
-                } catch {
-                  document.documentElement.setAttribute("data-droplet-theme", "light");
-                }
-              })();
-            `}
-          </Script>
+          <Script
+            id="theme-init"
+            strategy="beforeInteractive"
+            src="/scripts/theme-init.js"
+          />
 
           <DropletTheme>
             <MainWrapper>{children}</MainWrapper>
