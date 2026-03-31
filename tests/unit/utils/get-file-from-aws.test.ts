@@ -59,4 +59,23 @@ describe("getFileFromAWS", () => {
       Key: `normalized/${objectKey}`,
     });
   });
+
+  it("forwards byte range requests to S3", async () => {
+    process.env.AWS_S3_BUCKET = "droplet-bucket";
+    const objectKey = "user_123/audio/sample.wav";
+
+    vi.mocked(awsS3Client.send).mockResolvedValueOnce({
+      Body: "stream",
+    } as unknown as Awaited<ReturnType<typeof awsS3Client.send>>);
+
+    await getFileFromAWS(objectKey, { range: "bytes=0-1023" });
+
+    const sentCommand = vi.mocked(awsS3Client.send).mock.calls[0]?.[0];
+
+    expect((sentCommand as GetObjectCommand).input).toEqual({
+      Bucket: "droplet-bucket",
+      Key: `normalized/${objectKey}`,
+      Range: "bytes=0-1023",
+    });
+  });
 });

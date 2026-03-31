@@ -177,10 +177,46 @@ describe("GET /api/download", () => {
 
     expect(response.status).toBe(200);
     expect(response.headers.get("Content-Type")).toBe("image/png");
+    expect(response.headers.get("Accept-Ranges")).toBe("bytes");
     expect(response.headers.get("Content-Disposition")).toContain(
       'inline; filename="file.png"',
     );
-    expect(getFileFromAWS).toHaveBeenCalledWith("user_123/images/file.png");
+    expect(getFileFromAWS).toHaveBeenCalledWith(
+      "user_123/images/file.png",
+      undefined,
+    );
+  });
+
+  it("returns 206 partial content for S3 byte range requests", async () => {
+    vi.mocked(getFileFromAWS).mockResolvedValueOnce({
+      Body: {
+        transformToWebStream: () => createStreamResponseBody("image"),
+      },
+      ContentLength: 5,
+      ContentType: "image/png",
+      ContentRange: "bytes 0-4/11",
+      AcceptRanges: "bytes",
+      ETag: '"etag-partial"',
+      LastModified: new Date("2026-03-10T10:00:00.000Z"),
+    } as unknown as Awaited<ReturnType<typeof getFileFromAWS>>);
+
+    const req = new NextRequest(
+      "http://localhost:3000/api/download?key=user_123%2Fimages%2Ffile.png",
+      {
+        headers: {
+          Range: "bytes=0-4",
+        },
+      },
+    );
+
+    const response = await GET(req);
+
+    expect(response.status).toBe(206);
+    expect(response.headers.get("Accept-Ranges")).toBe("bytes");
+    expect(response.headers.get("Content-Range")).toBe("bytes 0-4/11");
+    expect(getFileFromAWS).toHaveBeenCalledWith("user_123/images/file.png", {
+      range: "bytes=0-4",
+    });
   });
 
   it("resolves legacy public bucket URLs to private S3 object reads", async () => {
@@ -196,6 +232,7 @@ describe("GET /api/download", () => {
     expect(response.status).toBe(200);
     expect(getFileFromAWS).toHaveBeenCalledWith(
       "user_123/images/image#v1+.png",
+      undefined,
     );
   });
 

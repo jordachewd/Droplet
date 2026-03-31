@@ -223,6 +223,59 @@ describe("POST /api/openai - streaming", () => {
     expect(payload).toContain('"type":"final"');
   });
 
+  it("skips heartbeat writes after the stream controller is closed", async () => {
+    const heartbeatCallbacks: Array<() => void> = [];
+    const stderrWriteSpy = vi
+      .spyOn(process.stderr, "write")
+      .mockImplementation(() => true);
+
+    vi.spyOn(globalThis, "setInterval").mockImplementation(((
+      callback: () => void,
+    ) => {
+      heartbeatCallbacks.push(callback);
+      return 1 as unknown as ReturnType<typeof setInterval>;
+    }) as unknown as typeof setInterval);
+    vi.spyOn(globalThis, "clearInterval").mockImplementation(() => {
+      return;
+    });
+
+    vi.mocked(generateStreamingResponse).mockImplementation(
+      async ({ onMediaGenerationStart, onMediaGenerationEnd }) => {
+        onMediaGenerationStart?.();
+        onMediaGenerationEnd?.();
+
+        return {
+          taskData: {
+            whois: "assistant",
+            role: "assistant",
+            content: [{ type: "text", text: "Audio complete." }],
+          },
+          taskUsage: 12,
+        };
+      },
+    );
+
+    const response = await POST(
+      buildOpenAiRequest(
+        { messages: [{ role: "user", whois: "user", content: "new chat" }] },
+        { Accept: "text/event-stream", "x-droplet-stream": "1" },
+      ),
+    );
+
+    await response.text();
+
+    for (const callback of heartbeatCallbacks) {
+      callback();
+    }
+
+    const heartbeatWriteFailureLogged = stderrWriteSpy.mock.calls.some(
+      ([message]) =>
+        String(message).includes("[openai/route] heartbeat write failed"),
+    );
+
+    expect(heartbeatWriteFailureLogged).toBe(false);
+  });
+
   it("emits an SSE error event when streaming generation returns an OpenAI error", async () => {
     vi.mocked(generateStreamingResponse).mockResolvedValue({
       errorType: "rate_limit",
