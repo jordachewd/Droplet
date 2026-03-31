@@ -165,11 +165,11 @@ export default function ChatInput({
 
   const chatInputSectionClass = classNames(
     "ChatInput sticky bottom-[env(safe-area-inset-bottom)] z-20",
-    "flex w-full flex-col items-center px-4 gap-1",
+    "flex w-full flex-col items-center gap-1 max-w-4xl mx-auto",
   );
 
   const chatInputWrapperClass = classNames(
-    "flex flex-col w-full max-w-4xl gap-2 rounded-xl",
+    "ChatInputPrompt flex flex-col w-full gap-2 rounded-xl",
     "bg-lavenderHaze-100/90 dark:border shadow-md p-1.5",
     "dark:border-midnightBlue-300/10 dark:bg-nightIndigo-900/90",
     disabled &&
@@ -190,107 +190,109 @@ export default function ChatInput({
   );
 
   return (
-    <section className={chatInputSectionClass}>
-      <div className={chatInputWrapperClass}>
-        <div className={promptWrapperClass}>
-          <textarea
-            id="chatInput"
-            name="chatInput"
-            value={prompt}
-            disabled={loading || disabled}
-            placeholder={
-              disabled ? "This conversation has ended." : "Ask Droplet..."
-            }
-            onChange={handlePromptChange}
-            rows={2}
-            className={textareaClass}
-            onKeyDown={handlePromptKeyDown}
-            aria-label="Message input"
-          />
+    <div className={chatInputSectionClass}>
+ 
+        <div className={chatInputWrapperClass}>
+          <div className={promptWrapperClass}>
+            <textarea
+              id="chatInput"
+              name="chatInput"
+              value={prompt}
+              disabled={loading || disabled}
+              placeholder={
+                disabled ? "This conversation has ended." : "Ask Droplet..."
+              }
+              onChange={handlePromptChange}
+              rows={2}
+              className={textareaClass}
+              onKeyDown={handlePromptKeyDown}
+              aria-label="Message input"
+            />
 
-          <TooltipArrow
-            title={canSend ? "Send message" : "Write a message first"}
-            placement="top"
-          >
-            <button
-              type="button"
-              className="px-2"
-              disabled={!canSend}
-              onClick={handleSendButtonClick}
-              aria-label="Send message"
+            <TooltipArrow
+              title={canSend ? "Send message" : "Write a message first"}
+              placement="top"
             >
-              <DropletGlobe icon="bi-stars" size={38} />
-            </button>
-          </TooltipArrow>
-        </div>
-
-        <div className="flex w-full">
-          {!selectedFile ? (
-            <TooltipArrow title="Attach media" placement="top">
               <button
                 type="button"
-                className={classNames("icon-btn text-base", {
-                  "cursor-not-allowed opacity-50":
-                    loading || disabled || isUploading,
-                })}
-                onClick={handleOpenFilePicker}
-                aria-label="Attach media"
-                disabled={loading || disabled || isUploading}
+                className="px-2"
+                disabled={!canSend}
+                onClick={handleSendButtonClick}
+                aria-label="Send message"
               >
-                <i
-                  className="bi bi-cloud-upload text-base"
-                  aria-hidden="true"
-                ></i>
+                <DropletGlobe icon="bi-stars" size={38} />
               </button>
             </TooltipArrow>
-          ) : previewUrl ? (
-            <button
-              type="button"
-              className="relative flex cursor-pointer"
-              onClick={handleRemoveFile}
-              aria-label="Remove selected image"
-            >
-              <i className={removeFileIconClass} aria-hidden="true"></i>
-              <Image
-                priority
-                width={40}
-                height={40}
-                className="max-h-10 max-w-10 rounded-sm"
-                alt="Preview of selected image"
-                src={previewUrl}
-              />
-            </button>
-          ) : null}
-
-          <UploadFileInput
-            ref={fileInputRef}
-            id="addFile"
-            type="file"
-            accept="image/*"
-            disabled={loading || disabled}
-            onChange={handleImageChange}
-          />
-        </div>
-      </div>
-
-      <div className="flex flex-col items-center gap-1 pt-1 pb-2 px-4 text-xxs font-light tracking-wide">
-        {uploadError ? (
-          <p
-            role="alert"
-            className="font-medium text-rose-600 dark:text-rose-300"
-          >
-            {uploadError}
-          </p>
-        ) : (
-          <div className="text-midnightBlue-600 dark:text-lavenderHaze-600">
-            {disabled
-              ? "This conversation is read-only. Use the action above to continue."
-              : isUploading
-                ? "Uploading your attachment..."
-                : `${personaLabel} can still make mistakes. Verify important details.`}
           </div>
-        )}
-      </div>
-    </section>
+
+          <div className="flex w-full">
+            {!selectedFile ? (
+              <TooltipArrow title="Attach media" placement="top">
+                <button
+                  type="button"
+                  className={classNames("icon-btn text-base", {
+                    "cursor-not-allowed opacity-50":
+                      loading || disabled || isUploading,
+                  })}
+                  onClick={handleOpenFilePicker}
+                  aria-label="Attach media"
+                  disabled={loading || disabled || isUploading}
+                >
+                  <i
+                    className="bi bi-cloud-upload text-base"
+                    aria-hidden="true"
+                  ></i>
+                </button>
+              </TooltipArrow>
+            ) : previewUrl ? (
+              <button
+                type="button"
+                className="relative flex cursor-pointer"
+                onClick={handleRemoveFile}
+                aria-label="Remove selected image"
+              >
+                <i className={removeFileIconClass} aria-hidden="true"></i>
+                <Image
+                  priority
+                  width={40}
+                  height={40}
+                  className="max-h-10 max-w-10 rounded-sm"
+                  alt="Preview of selected image"
+                  src={previewUrl}
+                />
+              </button>
+            ) : null}
+
+            <UploadFileInput
+              ref={fileInputRef}
+              id="addFile"
+              type="file"
+              accept="image/*"
+              disabled={loading || disabled}
+              onChange={handleImageChange}
+            />
+          </div>
+        </div>
+
+        <div className="ChatInputFooter flex flex-col items-center gap-1 pt-1 pb-2 px-4 text-xxs font-light tracking-wide">
+          {uploadError ? (
+            <p
+              role="alert"
+              className="font-medium text-rose-600 dark:text-rose-300"
+            >
+              {uploadError}
+            </p>
+          ) : (
+            <div className="text-midnightBlue-600 dark:text-lavenderHaze-600">
+              {disabled
+                ? "This conversation is read-only. Use the action above to continue."
+                : isUploading
+                  ? "Uploading your attachment..."
+                  : `${personaLabel} can still make mistakes. Verify important details.`}
+            </div>
+          )}
+        </div>
+ 
+    </div>
   );
 }

@@ -563,14 +563,14 @@ export default function ChatWrapper({
   };
 
   return (
-    <main className="ChatWrapper relative flex h-full flex-1 flex-col overflow-hidden -mt-14">
+    <section className="ChatWrapper relative flex h-full flex-1 flex-col overflow-hidden -mt-14">
       {alert && <AlertMessage message={alert} />}
 
-      <section
+      <div
         id="ChatWrapperContent"
         className={classNames(
-          "ChatWrapperContent relative z-10 flex w-full h-dvh flex-col overflow-y-auto pt-14",
-          isNewTask && "items-center justify-center px-4",
+          "ChatWrapperContent relative z-10 flex w-full h-dvh flex-col overflow-y-auto pt-14 px-4",
+          isNewTask && "items-center justify-center gap-12",
         )}
       >
         {isNewTask ? (
@@ -588,7 +588,6 @@ export default function ChatWrapper({
             endState={endState}
           />
         )}
-      </section>
 
       <ChatInput
         sendMessage={sendMessage}
@@ -597,6 +596,10 @@ export default function ChatWrapper({
         startPrompt={startMsg}
         personaLabel={selectedPersona.label}
       />
-    </main>
+
+      </div>
+
+
+    </section>
   );
 }

@@ -32,6 +32,7 @@ export default async function ChatRouteLayout({
       <a href="#chat-main-content" className="skip-link">
         Skip to main content
       </a>
+      
       <ChatSidebar />
 
       <main
