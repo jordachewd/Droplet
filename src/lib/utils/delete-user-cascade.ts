@@ -27,14 +27,19 @@ function getRateLimitKeys(clerkId: string): string[] {
   return [`openai:${clerkId}`, `upload:${clerkId}`, `aws:${clerkId}`];
 }
 
-function logDeleteUserCascadeFailure(step: DeleteUserCascadeStep): void {
-  process.stderr.write(`[delete-user-cascade] ${step} cleanup failed.\n`);
+function logDeleteUserCascadeFailure(
+  step: DeleteUserCascadeStep,
+  error: unknown,
+): void {
+  process.stderr.write(
+    `[delete-user-cascade] ${step} cleanup failed: ${error instanceof Error ? error.message : "unknown"}\n`,
+  );
 }
 
 export async function deleteUserCascade(
   clerkId: string,
   options?: {
-    onStepError?: (step: DeleteUserCascadeStep) => void;
+    onStepError?: (step: DeleteUserCascadeStep, error: unknown) => void;
   },
 ): Promise<DeleteUserCascadeResult> {
   const normalizedClerkId = clerkId.trim();
@@ -56,8 +61,8 @@ export async function deleteUserCascade(
   try {
     const deletedTasks = await Task.deleteMany({ userId: normalizedClerkId });
     result.deletedTasks = deletedTasks.deletedCount ?? 0;
-  } catch {
-    onStepError("task");
+  } catch (error) {
+    onStepError("task", error);
   }
 
   try {
@@ -65,8 +70,8 @@ export async function deleteUserCascade(
       clerkId: normalizedClerkId,
     });
     result.deletedTransactions = deletedTransactions.deletedCount ?? 0;
-  } catch {
-    onStepError("transaction");
+  } catch (error) {
+    onStepError("transaction", error);
   }
 
   try {
@@ -74,8 +79,8 @@ export async function deleteUserCascade(
       userId: normalizedClerkId,
     });
     result.deletedUsageEvents = deletedUsageEvents.deletedCount ?? 0;
-  } catch {
-    onStepError("usage-event");
+  } catch (error) {
+    onStepError("usage-event", error);
   }
 
   try {
@@ -85,8 +90,8 @@ export async function deleteUserCascade(
       },
     });
     result.deletedRateLimitEntries = deletedRateLimitEntries.deletedCount ?? 0;
-  } catch {
-    onStepError("rate-limit");
+  } catch (error) {
+    onStepError("rate-limit", error);
   }
 
   try {
@@ -94,14 +99,14 @@ export async function deleteUserCascade(
       userId: normalizedClerkId,
     });
     result.deletedUploads = deletedUploads.deletedCount ?? 0;
-  } catch {
-    onStepError("upload");
+  } catch (error) {
+    onStepError("upload", error);
   }
 
   try {
     result.deletedObjectsCount = await deleteS3Prefix(`${normalizedClerkId}/`);
-  } catch {
-    onStepError("s3");
+  } catch (error) {
+    onStepError("s3", error);
   }
 
   return result;

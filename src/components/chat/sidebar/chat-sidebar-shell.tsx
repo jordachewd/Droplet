@@ -64,7 +64,8 @@ export default function ChatSidebarShell({
         localStorage.getItem(sidebarStorageKey) ??
         localStorage.getItem(legacySidebarStorageKey);
       setDesktopSidebarCollapsed(collapsedFromStorage === "true");
-    } catch {
+    } catch (error) {
+      void error;
       setDesktopSidebarCollapsed(false);
     }
   }, [legacySidebarStorageKey, setDesktopSidebarCollapsed, sidebarStorageKey]);
@@ -72,7 +73,10 @@ export default function ChatSidebarShell({
   useEffect(() => {
     try {
       localStorage.setItem(sidebarStorageKey, String(desktopCollapsed));
-    } catch {}
+    } catch (error) {
+      void error;
+      // localStorage quota exceeded or unavailable - non-critical UI preference write.
+    }
   }, [desktopCollapsed, sidebarStorageKey]);
 
   useEffect(() => {

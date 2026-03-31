@@ -146,12 +146,13 @@ export default function ChatBody({
     return messages.map((message) => {
       const { whois, content } = message;
       const isBot = whois !== "user";
-      const messageOwner = isBot
-        ? `Droplet ${personaLabel || "Assistant"}`
-        : "You";
+
+      const messageOwner = isBot ? personaLabel || "Assistant" : "You";
       const messageKeyBase = message.id ?? buildMessageFallbackKey(message);
+
       const messageKeyIndex = messageKeyCount.get(messageKeyBase) ?? 0;
       messageKeyCount.set(messageKeyBase, messageKeyIndex + 1);
+
       const messageKey =
         messageKeyIndex === 0
           ? messageKeyBase
@@ -164,7 +165,8 @@ export default function ChatBody({
 
       const avatarClass = classNames(isBot ? "bi bi-droplet" : "bi bi-person");
 
-      const chatMarkdownClass = classNames("chat-markdown", {
+      const chatMarkdownClass = classNames({
+        "chat-markdown": !isBot,
         "chat-markdown--bot": isBot,
       });
 
@@ -252,7 +254,7 @@ export default function ChatBody({
   }, [personaLabel, messages]);
 
   const chatBodyClass = classNames(
-    "ChatBody mx-auto flex w-full max-w-4xl flex-1 flex-col gap-4 px-4 pb-10 pt-6",
+    "ChatBody mx-auto flex w-full max-w-4xl flex-1 flex-col gap-6 px-4 pb-10 pt-6",
     "lg:px-0",
     conversationEnded &&
       "rounded-2xl border border-amber-400/45 bg-amber-50/40 dark:border-amber-400/30 dark:bg-amber-500/5",
@@ -266,7 +268,7 @@ export default function ChatBody({
         {endState && (
           <aside className="ChatBodyEndNotice mt-2 rounded-2xl border border-dashed border-amber-500/60 bg-amber-100/85 p-4 text-sm text-amber-950 shadow-sm dark:bg-amber-500/10 dark:text-amber-50">
             <div className="flex flex-col gap-3">
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col gap-2">
                 <span className="text-xxs font-semibold uppercase tracking-[0.18em] opacity-75">
                   Conversation Ended
                 </span>
@@ -288,7 +290,7 @@ export default function ChatBody({
           </aside>
         )}
       </div>
-      <div className="flex h-2 w-full" ref={bottomRef}></div>
+      <div className="ScrollIntoViewRef flex w-full" ref={bottomRef} />
     </>
   );
 }

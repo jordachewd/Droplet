@@ -140,7 +140,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     });
 
     return NextResponse.json({ fileName, fileUrl, objectKey });
-  } catch {
+  } catch (error) {
+    process.stderr.write(
+      `[api/upload] upload failed: ${error instanceof Error ? error.message : "unknown"}\n`,
+    );
     return NextResponse.json(
       { error: "Failed to upload file." },
       { status: 500 },

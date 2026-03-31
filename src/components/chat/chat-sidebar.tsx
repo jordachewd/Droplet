@@ -46,7 +46,11 @@ export default async function ChatSidebar() {
           href: `/app/c/${task._id}`,
         };
       });
-    } catch {}
+    } catch (error) {
+      process.stderr.write(
+        `[chat-sidebar] failed to build task history: ${error instanceof Error ? error.message : "unknown"}\n`,
+      );
+    }
   }
 
   return (

@@ -164,7 +164,10 @@ export async function POST(req: Request): Promise<NextResponse> {
     }
 
     return NextResponse.json({ fileUrl, objectKey }, { status: 200 });
-  } catch {
+  } catch (error) {
+    process.stderr.write(
+      `[api/aws] upload failed: ${error instanceof Error ? error.message : "unknown"}\n`,
+    );
     return NextResponse.json({ error: "File upload failed" }, { status: 500 });
   }
 }
@@ -239,7 +242,10 @@ export async function DELETE(req: Request): Promise<NextResponse> {
       message: "Image deleted successfully",
       objectKey,
     });
-  } catch {
+  } catch (error) {
+    process.stderr.write(
+      `[api/aws] delete failed: ${error instanceof Error ? error.message : "unknown"}\n`,
+    );
     return NextResponse.json(
       { error: "File deletion failed" },
       { status: 500 },
