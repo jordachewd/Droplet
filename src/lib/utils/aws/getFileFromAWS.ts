@@ -8,6 +8,9 @@ import { normalizeS3ObjectKey } from "@/lib/utils/aws/s3-file-reference";
 
 export default async function getFileFromAWS(
   objectKey: string,
+  options?: {
+    range?: string;
+  },
 ): Promise<GetObjectCommandOutput> {
   const bucketName = process.env.AWS_S3_BUCKET;
 
@@ -19,6 +22,7 @@ export default async function getFileFromAWS(
     new GetObjectCommand({
       Bucket: bucketName,
       Key: normalizeS3ObjectKey(objectKey),
+      ...(options?.range ? { Range: options.range } : {}),
     }),
   );
 }

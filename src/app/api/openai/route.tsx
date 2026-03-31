@@ -1436,6 +1436,7 @@ export async function POST(req: Request): Promise<Response> {
       const stream = new ReadableStream<Uint8Array>({
         async start(controller) {
           let didSendFinal = false;
+          let controllerClosed = false;
           let generalHeartbeatInterval: ReturnType<typeof setInterval> | null =
             null;
           let mediaHeartbeatInterval: ReturnType<typeof setInterval> | null =
@@ -1498,6 +1499,10 @@ export async function POST(req: Request): Promise<Response> {
           };
 
           const emitHeartbeat = (): boolean => {
+            if (controllerClosed) {
+              return false;
+            }
+
             try {
               writeStreamEvent(controller, {
                 type: "heartbeat",
@@ -1627,6 +1632,7 @@ export async function POST(req: Request): Promise<Response> {
               );
             }
             try {
+              controllerClosed = true;
               controller.close();
             } catch (error) {
               process.stderr.write(
