@@ -2,7 +2,88 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-04-01 — PM audit #80. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4, 105.1, 105.2, 106, 107.1, 107.2, 107.3, 108, 110, 111.1, 112.1, 112.2, 109, 113.1, 113.2, 114, 115, 116, 117, 120.1, 120.2-A, 120.2-B, 120.2-C, 120.3, 120.4, 120.5, 120.6, 120.7, 121, 122, 123, 124, 125, 125.1, 125.2, 126, 126.1, 126.2, 127, 128.1, 128.2, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 149, 150, 151, 152, 153, 154, 155, 155.1, 156, 157, 158, 159, 160, 160.1, 160.2, 161, 164, 166, 167 (partial), 168, 169, 170, 74.2, 104, 125.3 complete. Milestones 0–25 COMPLETE. E2E: 49 tests (8 spec files). Build passing. Node.js 24.12.0 runtime. Coverage: 85/80/85/85. Zero `as never` casts. Lint: 0 errors, 0 warnings.
+> Last updated: 2026-04-01 — PM audit #81. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4, 105.1, 105.2, 106, 107.1, 107.2, 107.3, 108, 110, 111.1, 112.1, 112.2, 109, 113.1, 113.2, 114, 115, 116, 117, 120.1, 120.2-A, 120.2-B, 120.2-C, 120.3, 120.4, 120.5, 120.6, 120.7, 121, 122, 123, 124, 125, 125.1, 125.2, 126, 126.1, 126.2, 127, 128.1, 128.2, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 149, 150, 151, 152, 153, 154, 155, 155.1, 156, 157, 158, 159, 160, 160.1, 160.2, 161, 162, 163, 164, 166, 167, 167.2, 168, 169, 170, 171, 172, 74.2, 104, 125.3 complete. Milestones 0–25 COMPLETE. E2E: 49 tests (8 spec files). Build passing. Node.js 24.12.0 runtime. Coverage: 85/80/85/85. Zero `as never` casts. Lint: 0 errors, 0 warnings. 601 tests (101 suites).
+
+---
+
+## Phase 171 CRITICAL — Fix 2 Failing Unit Tests — COMPLETED (2026-04-01, PM audit #81)
+
+> Engineer delivered. Test assertions aligned with current component implementation.
+
+- [x] `chat-body.test.tsx:160` — updated amber class assertions to match actual component classes
+- [x] `chat-sidebar-promo.test.tsx:19` — changed "Manage Plan" to "Upgrade Now"
+- [x] All 601 tests pass (101 suites)
+- [x] All 7 validation gates GREEN
+
+**Files:** `tests/unit/components/chat-body.test.tsx`, `tests/unit/components/chat-sidebar-promo.test.tsx`
+
+---
+
+## Phase 172 CRITICAL — `cellesseon` → `droplet` localStorage Key Migration — COMPLETED (2026-04-01, PM audit #81)
+
+> Engineer delivered. Owner override — deprecation cycle waived. All legacy migration logic removed from `src/`.
+
+- [x] `LEGACY_STORAGE_KEY` constant and migration logic removed from `droplet-theme.tsx`
+- [x] `legacyStorageKey` variable and fallback removed from `layout.tsx` inline theme script
+- [x] `legacySidebarStorageKey` constant and migration logic removed from `chat-sidebar-shell.tsx`
+- [x] `privacy.json` — legacy migration key references removed, updated to reference only `droplet-theme-mode` and `droplet-sidebar-collapsed`
+- [x] `cookies.json` — legacy migration key references removed
+- [x] Zero `cellesseon` references in `src/` (verified by `grep -r "cellesseon" src/`)
+- [x] Build passes, tests pass
+
+**Files:** `src/components/layout/droplet-theme.tsx`, `src/app/layout.tsx`, `src/components/chat/sidebar/chat-sidebar-shell.tsx`, `src/json/privacy.json`, `src/json/cookies.json`
+
+**Note:** `public/scripts/theme-init.js` still contains `cellesseon` — orphaned dead file to be deleted in Phase 174.
+
+---
+
+## Phase 167.2 HIGH — Fix Remaining Empty Catch Blocks — COMPLETED (2026-04-01, PM audit #81)
+
+> Engineer delivered. All parameterless `catch {}` blocks in `src/` now have either error capture with logging (server-side) or explanatory comments (client/utility).
+
+- [x] Category A (server-side): 10 catches now capture error and log via `process.stderr.write()`
+- [x] Category B (effective-\* resolvers): 9 catches have `// Intentional fallback to defaults` comments
+- [x] Category C (client components): 5 catches have explanatory comments or error capture
+- [x] Category D (utility catches): 6 catches have `// URL/path parse failure — non-fatal` comments
+- [x] `uploadFileToAWS` uses `throw new Error("...", { cause: error })` pattern
+- [x] Zero uncommented parameterless `catch {}` blocks in `src/`
+- [x] Build passes, tests pass
+
+**Files:** 21 files across `src/` updated.
+
+---
+
+## Phase 162 HIGH — Make Promo/Upgrade Text Admin-Configurable — COMPLETED (2026-04-01, PM audit #81)
+
+> Engineer delivered. All promo/marketing text extracted to admin-configurable settings via `effective-promo-content.ts` resolver.
+
+- [x] `src/constants/promo-content.ts` created with `DEFAULT_PROMO_CONTENT` and `PromoContent` type
+- [x] `src/lib/utils/effective-promo-content.ts` resolver with admin override + default fallback
+- [x] `src/components/admin/settings/admin-promo-content-section.tsx` — admin UI section for editing promo text
+- [x] Admin settings page wired with promo content tab
+- [x] `chat-sidebar-promo.tsx` — all promo strings resolved from props (admin-configurable)
+- [x] `plan-promo.tsx` — all promo strings resolved from props
+- [x] `persona-card.tsx` — upgrade messaging resolved from props
+- [x] `chat-body.tsx` — conversation-ended label resolved from props
+- [x] Zero hardcoded promo/marketing text in targeted components
+- [x] Build passes, tests pass
+
+**Files:** `src/constants/promo-content.ts` (new), `src/lib/utils/effective-promo-content.ts` (new), `src/components/admin/settings/admin-promo-content-section.tsx` (new), + 8 modified files.
+
+---
+
+## Phase 163 HIGH — Global Error Boundary — COMPLETED (2026-04-01, PM audit #81)
+
+> Engineer delivered. Root layout error boundary implemented.
+
+- [x] `src/app/global-error.tsx` created as `"use client"` component
+- [x] Contains `<html>` and `<body>` tags (Next.js requirement)
+- [x] Shows error recovery UI: "Something went wrong" message, "Try again" button (`reset()`), "Return home" link
+- [x] Basic inline styling — no theme dependency
+- [x] Brand-consistent styling with Droplet colors
+- [x] Build passes
+
+**Files:** `src/app/global-error.tsx` (new)
 
 ---
 

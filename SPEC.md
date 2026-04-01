@@ -2,7 +2,19 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-04-01 (PM audit #80). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE (Phase 169 resolved hydration mismatch). **DEPLOYED TO PRODUCTION — streaming timeout MITIGATED (Phase 160.2 proactive 55s safety net). Root cause persists (Vercel Hobby 60s limit).** BUG-PAYMENT RESOLVED. BUG-AUDIO RESOLVED (Phase 168). TD-HYDRATION-01 RESOLVED (Phase 169). TD-SCRIPT-01 RESOLVED (Phase 170). TD-STREAM-03 MITIGATED (Phase 160.2). TD-LEGACY-01 NEW — 5 src files still reference `cellesseon` (owner directs rename). 2 unit test failures (stale assertions, TEST-FAIL-01/02). Admin configurability PARTIAL (~15 hardcoded strings — Phase 162). E2E: 49 tests (8 spec files). Coverage: 85/80/85/85. Build passing. Node.js 24.12.0.
+> Last updated: 2026-04-01 (PM audit #81). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. **DEPLOYED TO PRODUCTION — streaming timeout MITIGATED (Phase 160.2 proactive 55s safety net). Root cause persists (Vercel Hobby 60s limit).** BUG-PAYMENT RESOLVED. BUG-AUDIO RESOLVED (Phase 168). All unit test failures RESOLVED (Phase 171). Brand rename complete in `src/` (Phase 172). Empty catch blocks documented (Phase 167.2). Promo text admin-configurable (Phase 162). Global error boundary live (Phase 163). Admin configurability COMPLETE (core). E2E: 49 tests (8 spec files). Coverage: 85/80/85/85. 601 tests (101 suites). Build passing. Node.js 24.12.0.
+>
+> **Active Technical Debt (PM audit #81):**
+>
+> - **TD-DEBUG-01** — Debug text `<p>Checking if is new task...</p>` visible in production (`chat-wrapper.tsx:601`). Phase 173.
+> - **TD-DEAD-01** — Orphaned `public/scripts/theme-init.js` (dead file, last `cellesseon` reference). Phase 174.
+> - **TD-DESYNC-01** — Duplicate `STREAM_PROACTIVE_TIMEOUT_MESSAGE` constant in `route.tsx` and `chat-stream.ts`. Phase 177.
+> - **TD-DEAD-02** — Dead `conversationEnded` prop in `ChatBodyProps`. Phase 175.
+> - **TD-A11Y-01** — Fake download icon in `profile-billing.tsx` (no handler, no keyboard access). Phase 178.
+> - **TD-HTTP-01** — Download route S3 path forces 206 from request Range, not upstream ContentRange. Phase 176.
+> - **TD-UX-01** — No video player error state. Phase 179.
+> - **TD-HARDCODE-02** — ~30 hardcoded UI strings across 8+ components. Phase 180.
+> - **TD-HARDCODE-03** — Hardcoded persona IDs in homepage spotlight. Phase 180.
 
 ---
 
@@ -833,29 +845,33 @@ All button styles use Lime Green as the accent color in **both** light and dark 
 ## 15. Technical Debt Summary
 
 > Only unresolved items live here. All resolved TDs are archived in `DONE.md`.
-> Last updated: PM audit #80 (2026-03-31).
+> Last updated: PM audit #81 (2026-04-01).
 
 ### Active — CRITICAL Priority
 
-| ID           | Area    | Description                                                                                                                                                                                                                                                                                             | Phase |
-| ------------ | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
-| TD-STREAM-03 | SSE     | **MITIGATED (PM audit #80).** Streaming fails in production for media gen exceeding 60s. Proactive 55s timeout safety net (Phase 160.2) sends graceful error before Vercel kill. Root cause persists: Vercel Hobby 60s limit. Full fix requires Vercel Pro ($20/mo, 300s limit) or architecture change. | 160.2 |
-| TD-LEGACY-01 | Brand   | **NEW (PM audit #80, owner directive OI18).** 5 src files still reference `cellesseon` localStorage keys. Owner overrides deprecation protection — must rename all to `droplet`. Phase 172.                                                                                                             | 172   |
-| TD-TEST-01   | Testing | **NEW (PM audit #80).** 2 unit tests failing: `chat-body.test.tsx:160` (stale amber class assertions) and `chat-sidebar-promo.test.tsx:19` (expects "Manage Plan" but component renders "Upgrade Now"). Validation gate YELLOW. Phase 171.                                                              | 171   |
+| ID           | Area | Description                                                                                                                                                                                                                                                                                             | Phase |
+| ------------ | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| TD-DEBUG-01  | UX   | **CRITICAL (PM audit #81).** Debug text `<p>Checking if is new task...</p>` rendered in production to every user viewing an existing conversation. Must be removed immediately.                                                                                                                         | 173   |
+| TD-STREAM-03 | SSE  | **MITIGATED (PM audit #80).** Streaming fails in production for media gen exceeding 60s. Proactive 55s timeout safety net (Phase 160.2) sends graceful error before Vercel kill. Root cause persists: Vercel Hobby 60s limit. Full fix requires Vercel Pro ($20/mo, 300s limit) or architecture change. | 160.2 |
 
 ### Active — HIGH Priority
 
-| ID           | Area     | Description                                                                                                                                                                                                                                                                  | Phase |
-| ------------ | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
-| TD-CATCH-01  | Code     | **HIGH.** 34 parameterless `catch {}` blocks remaining in `src/` after Phase 167 partial fix. Categories: A (server-side, 8 blocks), B (admin config resolution, 5 blocks), C (client/utility, 8 blocks), D (URL/path parsing, 3 blocks + 2 already commented). Phase 167.2. | 167.2 |
-| TD-PROMO-01  | Content  | **HIGH.** ~15 hardcoded promo/marketing strings in `chat-sidebar-promo.tsx`, `plan-promo.tsx`, `persona-card.tsx`, `chat-body.tsx`. Should be admin-configurable via `effective-promo-content.ts` resolver. Phase 162 (expanded scope).                                      | 162   |
-| TD-GERROR-01 | Frontend | **HIGH.** No `global-error.tsx` — root layout errors produce raw error page with no recovery path.                                                                                                                                                                           | 163   |
+| ID           | Area     | Description                                                                                                                                                                                                           | Phase |
+| ------------ | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| TD-DEAD-01   | Brand    | **HIGH (PM audit #81).** Orphaned `public/scripts/theme-init.js` — dead since Phase 170, contains last `cellesseon` reference in the repo. Listed in knip.json ignoreFiles.                                           | 174   |
+| TD-DESYNC-01 | SSE      | **HIGH (PM audit #81).** `STREAM_PROACTIVE_TIMEOUT_MESSAGE` defined independently in `openai/route.tsx:81` and `constants/chat-stream.ts:4`. If either changes, timeout detection silently breaks on the client side. | 177   |
+| TD-DEAD-02   | Frontend | **HIGH (PM audit #81).** `conversationEnded` prop declared in `ChatBodyProps` but never destructured or consumed by `ChatBody`. Passed from `ChatWrapper` line 612 for no effect.                                     | 175   |
+| TD-A11Y-01   | A11y     | **HIGH (PM audit #81).** `profile-billing.tsx:75` — download icon styled as clickable (`cursor-pointer`) but has no onClick handler, no button wrapper, and `aria-hidden="true"`.                                     | 178   |
+| TD-HTTP-01   | API      | **HIGH (PM audit #81).** Download route S3 path uses `byteRange ? 206 : 200` (request-derived, not upstream). Should use `response.ContentRange ? 206 : 200` per HTTP spec.                                           | 176   |
 
 ### Active — MEDIUM Priority
 
-| ID        | Area | Description                                                                                                                   | Phase |
-| --------- | ---- | ----------------------------------------------------------------------------------------------------------------------------- | ----- |
-| TD-ENV-01 | Code | 4 `as string` + 4 `!` casts on `process.env` values. Missing env vars produce cryptic runtime errors instead of failing fast. | 143   |
+| ID             | Area    | Description                                                                                                                                                                               | Phase |
+| -------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| TD-UX-01       | UX      | **MEDIUM (PM audit #81).** `video-player.tsx` has no error handling. Failed video loads show raw broken element — no user-facing error message (unlike audio player).                     | 179   |
+| TD-HARDCODE-02 | Content | **MEDIUM (PM audit #81).** ~30 hardcoded display strings across `cta-banner.tsx`, `persona-spotlight.tsx`, `chat-intro.tsx`, `plans-section.tsx`, `chat-input.tsx`, `profile-*.tsx`, etc. | 180   |
+| TD-HARDCODE-03 | Content | **MEDIUM (PM audit #81).** Hardcoded persona IDs `["strategist", "teacher", "creator"]` in `persona-spotlight.tsx:6`. Admin persona changes won't reflect on homepage.                    | 180   |
+| TD-ENV-01      | Code    | 4 `as string` + 4 `!` casts on `process.env` values. Missing env vars produce cryptic runtime errors instead of failing fast.                                                             | 143   |
 
 ### Active — Low Priority
 
@@ -867,13 +883,15 @@ All button styles use Lime Green as the accent color in **both** light and dark 
 | TD-AI-18   | OpenAI  | errorMessage forwarding pattern in `/api/openai` is safe but fragile.          | Advisory |
 | TD-API-09  | API     | `messageTextContentSchema` uses `.strict()` — may reject extra fields.         | Monitor  |
 
-### Resolved (PM audit #80)
+### Resolved (PM audit #81)
 
-| ID              | Area     | Description                                                                                                                                                                                                                                                                             | Phase |
-| --------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
-| TD-HYDRATION-01 | Frontend | ~~**CRITICAL.** ToggleTheme reads localStorage during useState init — server/client state divergence, WCAG aria-checked regression.~~ **RESOLVED (Phase 169).** `getInitialMode()` always returns `"system"`, useEffect syncs from localStorage after mount. Same pattern as Phase 153. | 169   |
-| TD-SCRIPT-01    | Frontend | ~~**HIGH.** Script tag warning in root layout — `<Script strategy="beforeInteractive">` inside body JSX.~~ **RESOLVED (Phase 170).** Replaced with raw `<script dangerouslySetInnerHTML>` in `<head>`.                                                                                  | 170   |
-| TD-TIMEOUT-02   | SSE      | ~~**CRITICAL.** Vercel Hobby 60s limit insufficient for media gen.~~ **RESOLVED (Phase 160.2).** Proactive 55s safety timer sends graceful error before Vercel kills function. Client shows warning (amber) instead of raw error.                                                       | 160.2 |
+| ID           | Area     | Description                                                                                                                                               | Phase |
+| ------------ | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| TD-LEGACY-01 | Brand    | ~~5 src files reference `cellesseon`.~~ **RESOLVED (Phase 172).** All legacy migration logic removed from `src/`. Zero `cellesseon` references in `src/`. | 172   |
+| TD-TEST-01   | Testing  | ~~2 unit tests failing (stale assertions).~~ **RESOLVED (Phase 171).** Assertions aligned with current component implementation. 601 tests pass.          | 171   |
+| TD-CATCH-01  | Code     | ~~34 parameterless `catch {}` blocks remaining.~~ **RESOLVED (Phase 167.2).** All catches now have error capture with logging or explanatory comments.    | 167.2 |
+| TD-PROMO-01  | Content  | ~~~15 hardcoded promo/marketing strings.~~ **RESOLVED (Phase 162).** All promo text extracted to `effective-promo-content.ts` resolver with admin UI.     | 162   |
+| TD-GERROR-01 | Frontend | ~~No `global-error.tsx`.~~ **RESOLVED (Phase 163).** Global error boundary implemented with brand styling, "Try again" and "Return home" actions.         | 163   |
 
 ### Resolved (PM audit #79)
 
