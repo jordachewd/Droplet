@@ -57,6 +57,8 @@ vi.mock("@/lib/utils/ensure-user-synced", () => ({
 }));
 
 const NEW_TASK_ID = "507f1f77bcf86cd799439012";
+const STREAM_PROACTIVE_TIMEOUT_MESSAGE =
+  "Your request is taking longer than expected. Media generation may still be processing in the background. Please check your library or start a new conversation.";
 
 function buildOpenAiRequest(
   payload: unknown,
@@ -221,6 +223,75 @@ describe("POST /api/openai - streaming", () => {
     expect(response.status).toBe(200);
     expect(payload).toContain('"type":"heartbeat"');
     expect(payload).toContain('"type":"final"');
+  });
+
+  it("sends a proactive timeout error event before the platform timeout kills the function", async () => {
+    const timeoutCallbacks: Array<() => void> = [];
+    const stderrWriteSpy = vi
+      .spyOn(process.stderr, "write")
+      .mockImplementation(() => true);
+
+    vi.spyOn(globalThis, "setTimeout").mockImplementation(
+      ((callback: TimerHandler) => {
+        if (typeof callback === "function") {
+          timeoutCallbacks.push(callback as () => void);
+        }
+
+        return 1 as unknown as ReturnType<typeof setTimeout>;
+      }) as unknown as typeof setTimeout,
+    );
+    vi.spyOn(globalThis, "clearTimeout").mockImplementation(() => {
+      return;
+    });
+    vi.mocked(generateStreamingResponse).mockImplementation(
+      () => new Promise(() => undefined),
+    );
+
+    const response = await POST(
+      buildOpenAiRequest(
+        { messages: [{ role: "user", whois: "user", content: "new chat" }] },
+        { Accept: "text/event-stream", "x-droplet-stream": "1" },
+      ),
+    );
+
+    expect(timeoutCallbacks).toHaveLength(1);
+    timeoutCallbacks[0]?.();
+
+    const payload = await response.text();
+    const proactiveTimeoutLogged = stderrWriteSpy.mock.calls.some(([message]) =>
+      String(message).includes(
+        "[openai/route] proactive timeout safety net fired",
+      ),
+    );
+
+    expect(payload).toContain('"type":"error"');
+    expect(payload).toContain(STREAM_PROACTIVE_TIMEOUT_MESSAGE);
+    expect(payload).not.toContain('"type":"final"');
+    expect(proactiveTimeoutLogged).toBe(true);
+  });
+
+  it("clears the proactive timeout timer when streaming completes normally", async () => {
+    const timeoutToken = 42 as unknown as ReturnType<typeof setTimeout>;
+    const clearTimeoutSpy = vi
+      .spyOn(globalThis, "clearTimeout")
+      .mockImplementation(() => {
+        return;
+      });
+    const setTimeoutSpy = vi
+      .spyOn(globalThis, "setTimeout")
+      .mockImplementation((() => timeoutToken) as unknown as typeof setTimeout);
+
+    const response = await POST(
+      buildOpenAiRequest(
+        { messages: [{ role: "user", whois: "user", content: "new chat" }] },
+        { Accept: "text/event-stream", "x-droplet-stream": "1" },
+      ),
+    );
+
+    await response.text();
+
+    expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), 55_000);
+    expect(clearTimeoutSpy).toHaveBeenCalledWith(timeoutToken);
   });
 
   it("skips heartbeat writes after the stream controller is closed", async () => {

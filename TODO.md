@@ -5,62 +5,130 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #83 (2026-04-01). DEPLOYED TO PRODUCTION. 2 CRITICAL production bugs active (payment awaiting ops verification, streaming). Quintuple-audit verified (Architect + Engineer + PM + independent re-audit). 597 unit tests (101 suites). 49 E2E tests (8 spec files). All 7 gates GREEN. Build passes. TSC clean. Lint clean. Knip clean. Node.js 24.12.0 runtime.**
->
-> **GATE STATUS: Product Gate RED (2 CRITICAL bugs). Admin Gate YELLOW (Phase 162 pending). Compliance Gate YELLOW (33 empty catch blocks, 8 env casts). Validation Gate GREEN (597 tests pass).**
->
+> **STATUS: PM audit #80 (2026-04-01). DEPLOYED TO PRODUCTION. Phases 169, 170, 160.2 COMPLETED this session. BUG-HYDRATION RESOLVED. BUG-SCRIPT RESOLVED. BUG-STREAM MITIGATED (proactive 55s timeout). BUG-PAYMENT RESOLVED. BUG-AUDIO RESOLVED. 2 unit test failures remain (test assertions stale vs component). E2E: 49 tests (8 spec files). Build passes. TSC clean. Node.js 24.12.0 runtime.**
+> **GATE STATUS: Validation Gate YELLOW (2 unit test failures). Product Gate YELLOW (streaming mitigated, not fully resolved). Admin Gate YELLOW (Phase 162 pending).**
 > **Zero: `as never`, `as any`, `console.log`, `console.error`, `window.alert`, `window.confirm`, `strict: false`, `droplet-scrollbar`, stale TODOs — all in `src/`.**
 >
-> **REMAINING PRODUCTION BUGS (PM audit #83):**
+> **ACTIVE ISSUES (PM audit #80):**
 >
-> - 🟡 BUG-PAYMENT **AWAITING OPS VERIFICATION**: Phase 169 diagnostic logging DEPLOYED. Code quintuple-audited CORRECT (Architect + Engineer + PM independently confirm). **Owner must: (1) make test payment, (2) check Vercel function logs for `Event type received:` entries, (3) if `checkout.session.completed` absent → enable in Stripe Dashboard → Webhooks → Events.** No further engineering action until logs are reviewed.
-> - 🔴 BUG-STREAM: Stream ends unexpectedly on media gen. Vercel Hobby 60s timeout kills function before pipeline completes. **Phase 160.2 (proactive 55s safety timer) is #1 engineering priority.**
+> - ✅ ~~BUG-PAYMENT~~: **RESOLVED.** Stripe webhook returning 200 OK.
+> - ✅ ~~BUG-AUDIO~~: **RESOLVED (Phase 168, archived).**
+> - ✅ ~~BUG-HYDRATION~~: **RESOLVED (Phase 169, archived).**
+> - ✅ ~~BUG-SCRIPT~~: **RESOLVED (Phase 170, archived).**
+> - ✅ ~~BUG-STREAM~~: **MITIGATED (Phase 160.2, proactive 55s timeout — archived).** Root cause persists (Vercel Hobby 60s limit). Full fix requires Vercel Pro upgrade or architecture change.
+> - 🔴 TEST-FAIL-01: `chat-body.test.tsx:160` — stale amber class assertions vs current component.
+> - 🔴 TEST-FAIL-02: `chat-sidebar-promo.test.tsx:19` — expects "Manage Plan" but component renders "Upgrade Now".
+> - 🔴 BRAND-LEGACY: 5 src files still reference `cellesseon` (owner directs immediate rename to `droplet`).
+> - ⚠️ CATCH-BLOCKS: 34 parameterless `catch {}` blocks in `src/`.
+> - ⚠️ HARDCODED-TEXT: ~15 hardcoded promo/marketing strings across 4 components.
 >
-> **EXECUTION ORDER (PM audit #83 — updated 2026-04-01):**
+> **EXECUTION ORDER (PM audit #80 — test fixes + owner directives first, then hardening):**
 >
-> 1. **🔴 Phase 160.2 CRITICAL** — Proactive timeout safety net (55s timer before Vercel kill). BUG-STREAM fix.
-> 2. **Phase 167.2 HIGH** — Fix 33 remaining empty catch blocks.
-> 3. **Phase 162 HIGH** — Promo text admin-configurable (~25 hardcoded strings).
-> 4. **Phase 163 HIGH** — Global error boundary (`global-error.tsx`).
-> 5. **Phase 165 MEDIUM** — Checkout success page DB polling.
-> 6. **Phase 143 MEDIUM** — Env var runtime validation (8 unsafe casts).
-> 7. **Phase 144 MEDIUM** — Admin config in-memory cache.
-> 8. **Phase 145–148 LOW** — Backlog.
+> 1. **🔴 Phase 171 CRITICAL** — Fix 2 failing unit tests (stale assertions).
+> 2. **🔴 Phase 172 CRITICAL** — `cellesseon` → `droplet` localStorage key migration (owner override).
+> 3. **Phase 167.2 HIGH** — Remaining 34 empty catch blocks.
+> 4. **Phase 162 HIGH** — Promo text admin-configurable (expanded scope).
+> 5. **Phase 163 HIGH** — Global error boundary.
+> 6. **Phase 165 MEDIUM** — Checkout success page DB polling (safety net).
+> 7. **Phase 143 MEDIUM** — Env var runtime validation.
+> 8. **Phase 144–148 MEDIUM/LOW** — Backlog.
 >
-> _BUG-PAYMENT is now OPS/OWNER action, not engineering. BUG-STREAM is #1 engineering priority._
+> _Test failures and owner directives block ALL other work. No exceptions._
 
 ---
 
-## 🔴 ENGINEER START HERE — Phase 160.2 CRITICAL — Proactive Timeout Safety Net
+## 🔴 ENGINEER START HERE — Phase 171 CRITICAL — Fix 2 Failing Unit Tests (PM audit #80)
 
-> Stream error on media gen still failing in production. All code mitigations (heartbeat, didSendFinal, maxDuration=60, controllerClosed guard) are deployed. Root cause: Vercel Hobby 60s function timeout kills server before pipeline completes. This phase adds a proactive safety net that sends a graceful error BEFORE Vercel kills the function.
+> **2 unit tests failing due to stale assertions.** Test expectations do not match current component implementation. Test-component drift from recent refactoring.
 
-**File:** `src/app/api/openai/route.tsx`
+### Test 1: `chat-body.test.tsx` line 160 — "applies amber ended-conversation styling"
+
+**Root cause:** Test expects `.ChatBody` to have conditional amber border/bg classes (`border-amber-400/45`, `bg-amber-50/40`) when `conversationEnded=true`, and `.ChatBodyEndNotice` to have `border-amber-500/60` and `bg-amber-100/85`. But the component uses:
+
+- `.ChatBody` has NO conditional amber classes (static class only)
+- `.ChatBodyEndNotice` uses `border-amber-500/30 bg-amber-500/10` (different opacity values)
+
+**File:** `tests/unit/components/chat-body.test.tsx`
 
 **What to do:**
 
-1. At the start of the `ReadableStream.start(controller)` callback, record `const startTime = Date.now();`.
-2. Define `const TIMEOUT_SAFETY_MS = (maxDuration - 5) * 1000;` (55s for current maxDuration=60).
-3. Start a `setTimeout` (the "safety timer") that fires at `TIMEOUT_SAFETY_MS`:
-   - Sends `writeStreamEvent(controller, { type: "error", error: "Your request is taking longer than expected. Media generation may still be processing in the background. Please check your library or start a new conversation." })` with source `"proactive timeout safety net"`.
-   - Calls `stopGeneralHeartbeat()` and `stopMediaHeartbeat()`.
-   - Sets `controllerClosed = true` and calls `controller.close()` (wrapped in try/catch).
-4. Clear the safety timer in the `finally` block if the pipeline completes normally.
-5. Update `src/components/chat/chat-wrapper.tsx` to display this specific timeout error message with orange/warning styling (not red/error — since media may still be processing in the background).
+1. Update test assertions to match actual component classes:
+   - Remove assertions for `border-amber-400/45` and `bg-amber-50/40` on `.ChatBody` (component has no conditional amber styling)
+   - Change `.ChatBodyEndNotice` assertions from `border-amber-500/60` to `border-amber-500/30` and from `bg-amber-100/85` to `bg-amber-500/10`
+2. Keep the test's intent (verify end-notice renders with amber styling) but align with current implementation.
+
+### Test 2: `chat-sidebar-promo.test.tsx` line 19 — "shows the upgrade CTA"
+
+**Root cause:** Test expects `screen.getByRole("link", { name: "Manage Plan" })` but the component renders `"Upgrade Now"` as the CTA link text.
+
+**File:** `tests/unit/components/chat-sidebar-promo.test.tsx`
+
+**What to do:**
+
+1. Change `{ name: "Manage Plan" }` to `{ name: "Upgrade Now" }`.
 
 **Acceptance criteria:**
 
-- [ ] Safety timer fires at `maxDuration - 5s` and sends graceful error event
-- [ ] Client receives and displays the timeout message (not raw "stream ended unexpectedly")
-- [ ] Normal-speed requests are unaffected (timer cleared before firing)
-- [ ] Video gen requests get a clear message instead of silent crash
+- [ ] Both tests pass
+- [ ] All 7 validation gates GREEN
+- [ ] No behavioral changes to components
+
+---
+
+## 🔴 Phase 172 CRITICAL — `cellesseon` → `droplet` localStorage Key Migration (PM audit #80, owner override)
+
+> **Owner directive OI18: ALL `cellesseon` references in `/src` must be changed to `droplet`.** The previous deprecation cycle protection (AGENTS.md Rule 9) is hereby OVERRIDDEN by the owner. Legacy migration keys must be replaced, not just kept for backward compatibility.
+
+**Files and changes:**
+
+1. **`src/components/layout/droplet-theme.tsx` line 26** — Remove `LEGACY_STORAGE_KEY` constant and its one-time migration logic. The migration has had sufficient time. Remove the `getStoredMode()` legacy fallback read.
+
+2. **`src/app/layout.tsx` line 59** — Remove `legacyStorageKey` variable and the `localStorage.getItem(legacyStorageKey)` fallback in the inline theme init script. Keep reading from `"droplet-theme-mode"` only.
+
+3. **`src/components/chat/sidebar/chat-sidebar-shell.tsx` line 29** — Remove `legacySidebarStorageKey` constant and the migration logic. Keep reading from `"droplet-sidebar-collapsed"` only.
+
+4. **`src/json/privacy.json` line 35** — Remove references to "legacy migration keys cellesseon-theme-mode and cellesseon-sidebar-collapsed". Update text to reference only `droplet-theme-mode` and `droplet-sidebar-collapsed`.
+
+5. **`src/json/cookies.json` line 9** — Remove references to "legacy migration keys cellesseon-theme-mode and cellesseon-sidebar-collapsed". Update text to reference only `droplet-theme-mode` and `droplet-sidebar-collapsed`.
+
+**Acceptance criteria:**
+
+- [ ] Zero `cellesseon` references in `src/` (verified by `grep -r "cellesseon" src/`)
+- [ ] Theme mode reads from `droplet-theme-mode` only
+- [ ] Sidebar state reads from `droplet-sidebar-collapsed` only
+- [ ] Privacy and cookies JSON files updated
 - [ ] Build passes, tests pass
 
 ---
 
-## HIGH — Phase 167.2 — Fix 33 Remaining Empty Catch Blocks
+## MEDIUM — Checkout Success Page DB Polling (PM audit #75)
 
-> Phase 167 was partially completed (targeted catches in API routes, admin actions, delete cascade, sidebar). **33 parameterless `catch {` blocks remain across `src/`** (triple-audit verified, PM audit #82). 3 already have comments (image-holder.tsx L48, droplet-theme.tsx L49 + L59). 30 need fixing.
+### Phase 165 MEDIUM — Add plan confirmation polling to checkout success page
+
+> BUG-PAYMENT resolved (PM audit #78.1 — owner verified). Deprioritized back to MEDIUM. Still a good safety net: after Stripe redirects to `/checkout-success`, webhook may not have processed yet. User sees "success" but plan is still Lite.
+
+**File:** `src/app/(public)/checkout-success/page.tsx` (or add client component)
+
+**What to do:**
+
+1. Add a client component that polls a plan-status endpoint every 3-5s for up to 30s.
+2. Show "Confirming your plan upgrade..." initially.
+3. On confirmation: "Plan upgraded successfully!" with green indicator.
+4. On timeout: "Payment successful. Your plan will be updated shortly. If not updated within a few minutes, contact support."
+
+**Acceptance criteria:**
+
+- [ ] Checkout success page shows plan confirmation status
+- [ ] Polling stops after confirmation or 30s timeout
+- [ ] Build passes
+
+---
+
+## HIGH — Remaining Empty Catch Blocks (PM audit #78)
+
+### Phase 167.2 HIGH — Fix remaining 34 parameterless `catch {` blocks across `src/`
+
+> Phase 167 was partially completed (targeted catches in API routes, admin actions, delete cascade, sidebar — see DONE.md Phase 167). **34 parameterless `catch {` blocks remain across `src/`.** This phase covers the remaining ones.
 >
 > AGENTS.md: "No empty catch blocks — every catch must either capture the error variable and log to `process.stderr.write()`, or have a code comment explaining why the error is intentionally discarded."
 
@@ -343,4 +411,5 @@
 ---
 
 > **Completed phases** archived in [`DONE.md`](DONE.md).
-> All phases through 168 complete + 160.1 + 164 + 170 + 171 + 168.1 complete. Milestones 0–25 COMPLETE.
+> All phases through 166 complete + 160.1 + 164 + 168 complete (incl. 135–142, 149–161, 160.1, 164, 166, 168, 74.2, 104, 125.3, 126.2, 134, plus 107.1–107.3, 108, 114, 125.1, 131, 132, 133, 120.1–120.7, 121–130, 128.2, 106, 156).
+> All Milestones 0–25 COMPLETE.

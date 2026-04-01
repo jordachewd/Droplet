@@ -2,7 +2,87 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-04-01 — PM audit #83. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4, 105.1, 105.2, 106, 107.1, 107.2, 107.3, 108, 110, 111.1, 112.1, 112.2, 109, 113.1, 113.2, 114, 115, 116, 117, 120.1, 120.2-A, 120.2-B, 120.2-C, 120.3, 120.4, 120.5, 120.6, 120.7, 121, 122, 123, 124, 125, 125.1, 125.2, 126, 126.1, 126.2, 127, 128.1, 128.2, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 149, 150, 151, 152, 153, 154, 155, 155.1, 156, 157, 158, 159, 160, 160.1, 161, 164, 166, 167 (partial), 168, 168.1, 169, 170, 171, 74.2, 104, 125.3 complete. Milestones 0–25 COMPLETE. 597 unit tests (101 suites). E2E: 49 tests (8 spec files). All 7 gates GREEN. Build passing. Node.js 24.12.0 runtime. Coverage: 85/80/85/85. Zero `as never` casts. Lint: 0 errors, 0 warnings.
+> Last updated: 2026-04-01 — PM audit #80. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4, 105.1, 105.2, 106, 107.1, 107.2, 107.3, 108, 110, 111.1, 112.1, 112.2, 109, 113.1, 113.2, 114, 115, 116, 117, 120.1, 120.2-A, 120.2-B, 120.2-C, 120.3, 120.4, 120.5, 120.6, 120.7, 121, 122, 123, 124, 125, 125.1, 125.2, 126, 126.1, 126.2, 127, 128.1, 128.2, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 149, 150, 151, 152, 153, 154, 155, 155.1, 156, 157, 158, 159, 160, 160.1, 160.2, 161, 164, 166, 167 (partial), 168, 169, 170, 74.2, 104, 125.3 complete. Milestones 0–25 COMPLETE. E2E: 49 tests (8 spec files). Build passing. Node.js 24.12.0 runtime. Coverage: 85/80/85/85. Zero `as never` casts. Lint: 0 errors, 0 warnings.
+
+---
+
+## Phase 169 CRITICAL — ToggleTheme Hydration Mismatch Fix — COMPLETED (2026-04-01, PM audit #80)
+
+> Engineer delivered. Triple-audit (Architect, Engineer, PM) verified implementation.
+
+- [x] `getInitialMode()` now always returns `"system"` — no localStorage read in initializer
+- [x] `systemMode` initializer always returns `"light"` — no `window` access in initializer
+- [x] `useEffect` on mount syncs mode from localStorage via `getStoredMode()` and `setSystemMode(getSystemMode())`
+- [x] Uses Phase 153 post-mount restore pattern via `setTimeout(..., 0)`
+- [x] Zero React hydration mismatch warnings from ToggleTheme
+- [x] `aria-checked` value matches visual state after hydration
+- [x] Theme still persists correctly across page loads
+- [x] Regression test added for post-mount stored-mode sync
+- [x] Build passes, tests pass
+- [x] WCAG 2.2 AA `aria-checked` regression RESOLVED
+
+**Files:** `src/components/layout/droplet-theme.tsx`, `tests/unit/components/droplet-theme.test.tsx`
+
+---
+
+## Phase 170 HIGH — Script Tag Warning Fix — COMPLETED (2026-04-01, PM audit #80)
+
+> Engineer delivered. Verified via Playwright MCP — `#theme-init` script is in `<head>`, not in `<body>`. Zero React script tag warnings.
+
+- [x] Replaced `<Script id="theme-init" strategy="beforeInteractive">` with raw `<script dangerouslySetInnerHTML>` inside `<head>`
+- [x] Added `<head>` element before `<body>` in the layout JSX
+- [x] Removed `import Script from "next/script"` (no other usage)
+- [x] Theme flash prevention (FOUC) still works correctly
+- [x] Zero React "script tag" warnings during hydration
+- [x] Build passes, tests pass
+
+**Files:** `src/app/layout.tsx`
+
+---
+
+## Phase 160.2 CRITICAL — Proactive Timeout Safety Net — COMPLETED (2026-04-01, PM audit #80)
+
+> Engineer delivered. Proactive 55s safety timer sends graceful error before Vercel kills function.
+
+- [x] `STREAM_TIMEOUT_SAFETY_BUFFER_SECONDS = 5` constant added
+- [x] `proactiveTimeoutId` safety timer fires at `(maxDuration - 5) * 1000` (55s)
+- [x] Timer sends `writeErrorEvent("Your request is taking longer than expected...")` + proactive timeout source
+- [x] Timer calls `stopGeneralHeartbeat()`, `stopMediaHeartbeat()`, and `controller.close()` (wrapped in try/catch)
+- [x] Timer cleared in `finally` block if pipeline completes normally
+- [x] Client-side: proactive timeout error mapped to warning alert (amber path, not red error)
+- [x] `showAlert` supports severity overrides
+- [x] Chunk-write guard added after controller close
+- [x] Unit tests for streaming timeout warning coverage
+- [x] Build passes, E2E passes (49 passed, 6 skipped)
+
+**Files:** `src/app/api/openai/route.tsx`, `src/components/chat/chat-wrapper.tsx`, `tests/unit/routes/openai-route-streaming.test.ts`, `tests/unit/components/chat-wrapper.test.tsx`
+
+---
+
+## Phase 168 CRITICAL — Audio Player Controller Error Fix — CODE-COMPLETE (verified 2026-04-01, PM audit #79)
+
+> Triple-audit (Architect, Engineer, PM) confirmed all three fix paths fully implemented in codebase. Was listed as "ENGINEER START HERE" in TODO.md but code was already complete. Documentation debt — archiving now.
+
+**Path A — SSE controller race condition (server-side):**
+
+- [x] `controllerClosed` boolean flag added alongside `didSendFinal` in `src/app/api/openai/route.tsx`
+- [x] `controllerClosed = true` set immediately BEFORE `controller.close()` in finally block
+- [x] `emitHeartbeat()` checks `controllerClosed` before calling `writeStreamEvent()` — skips write if closed
+
+**Path B — Download route HTTP Range support (server-side):**
+
+- [x] `parseByteRangeHeader()` function implemented in `src/app/api/download/route.tsx`
+- [x] `Range` header parsed and forwarded to S3 `GetObjectCommand`
+- [x] `206 Partial Content` returned with `Content-Range` and `Accept-Ranges: bytes` headers for Range requests
+- [x] `200 OK` with `Accept-Ranges: bytes` header for non-Range requests
+
+**Path C — Audio player lifecycle hardening (client-side):**
+
+- [x] `previousAudioUrlRef.current = null` reset in cleanup function
+- [x] `audioElement.src = ""` before disposing to force browser resource release
+- [x] Error event listener added on Audio element with user-facing error state
+
+**Files:** `src/app/api/openai/route.tsx`, `src/app/api/download/route.tsx`, `src/components/shared/audio-player.tsx`
 
 ---
 

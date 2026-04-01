@@ -53,6 +53,8 @@ const getStoredMode = (): ThemeMode => {
   return "system";
 };
 
+const getInitialMode = (): ThemeMode => "system";
+
 const persistMode = (nextMode: ThemeMode) => {
   try {
     window.localStorage.setItem(STORAGE_KEY, nextMode);
@@ -62,9 +64,8 @@ const persistMode = (nextMode: ThemeMode) => {
 };
 
 export default function DropletTheme({ children }: ThemeProps) {
-  const [mode, setModeState] = useState<ThemeMode>("system");
+  const [mode, setModeState] = useState<ThemeMode>(getInitialMode);
   const [systemMode, setSystemMode] = useState<ResolvedThemeMode>("light");
-  const [hasHydratedTheme, setHasHydratedTheme] = useState(false);
   const resolvedMode: ResolvedThemeMode = mode === "system" ? systemMode : mode;
 
   useEffect(() => {
@@ -93,7 +94,18 @@ export default function DropletTheme({ children }: ThemeProps) {
 
     document.documentElement.classList.add("DropletTheme");
     document.documentElement.setAttribute(THEME_ATTRIBUTE, resolvedMode);
-  }, [hasHydratedTheme, resolvedMode]);
+  }, [resolvedMode]);
+
+  useEffect(() => {
+    const restoreTimer = window.setTimeout(() => {
+      setModeState(getStoredMode());
+      setSystemMode(getSystemMode());
+    }, 0);
+
+    return () => {
+      window.clearTimeout(restoreTimer);
+    };
+  }, []);
 
   useEffect(() => {
     if (mode !== "system") return;

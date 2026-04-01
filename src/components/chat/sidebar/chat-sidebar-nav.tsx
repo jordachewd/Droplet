@@ -231,7 +231,7 @@ export default function ChatSidebarNav({
                     </p>
                   </div>
                 </Link>
-                
+
                 {isOpen && (
                   <button
                     type="button"

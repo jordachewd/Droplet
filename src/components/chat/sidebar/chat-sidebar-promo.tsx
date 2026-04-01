@@ -45,7 +45,9 @@ export default function ChatSidebarPromo({
         <article className={promoCardClass}>
           <div className={planPromoAccentClass}></div>
           <div className="z-10 flex w-full flex-col gap-2 text-center">
-            <h6 className="heading-6 text-twilightPurple-600">Account Suspended</h6>
+            <h6 className="heading-6 text-twilightPurple-600">
+              Account Suspended
+            </h6>
             <p className="text-xs leading-4">
               Your account has been suspended. Contact support for assistance.
             </p>
@@ -71,7 +73,9 @@ export default function ChatSidebarPromo({
       <article className={promoCardClass}>
         <div className={planPromoAccentClass}></div>
         <div className="z-10 flex w-full flex-col gap-2 text-center">
-          <h6 className="heading-6 font-semibold text-twilightPurple-600">{promoTitle}</h6>
+          <h6 className="heading-6 font-semibold text-twilightPurple-600">
+            {promoTitle}
+          </h6>
           <p className="text-xs leading-4">{promoMessage}</p>
 
           <Link
