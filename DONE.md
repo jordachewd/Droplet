@@ -2,7 +2,34 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-31 — PM audit #78.1. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4, 105.1, 105.2, 106, 107.1, 107.2, 107.3, 108, 110, 111.1, 112.1, 112.2, 109, 113.1, 113.2, 114, 115, 116, 117, 120.1, 120.2-A, 120.2-B, 120.2-C, 120.3, 120.4, 120.5, 120.6, 120.7, 121, 122, 123, 124, 125, 125.1, 125.2, 126, 126.1, 126.2, 127, 128.1, 128.2, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 149, 150, 151, 152, 153, 154, 155, 155.1, 156, 157, 158, 159, 160, 160.1, 161, 164, 166, 167 (partial), 74.2, 104, 125.3 complete. Milestones 0–25 COMPLETE. 592 unit tests (101 suites). E2E: 49 tests (8 spec files). All 7 validation gates GREEN. Build passing. Node.js 24.12.0 runtime. Coverage: 85/80/85/85. Zero `as never` casts. Lint: 0 errors, 0 warnings.
+> Last updated: 2026-04-01 — PM audit #79. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4, 105.1, 105.2, 106, 107.1, 107.2, 107.3, 108, 110, 111.1, 112.1, 112.2, 109, 113.1, 113.2, 114, 115, 116, 117, 120.1, 120.2-A, 120.2-B, 120.2-C, 120.3, 120.4, 120.5, 120.6, 120.7, 121, 122, 123, 124, 125, 125.1, 125.2, 126, 126.1, 126.2, 127, 128.1, 128.2, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 149, 150, 151, 152, 153, 154, 155, 155.1, 156, 157, 158, 159, 160, 160.1, 161, 164, 166, 167 (partial), 168, 74.2, 104, 125.3 complete. Milestones 0–25 COMPLETE. 592 unit tests (101 suites). E2E: 49 tests (8 spec files). All 7 validation gates GREEN. Build passing. Node.js 24.12.0 runtime. Coverage: 85/80/85/85. Zero `as never` casts. Lint: 0 errors, 0 warnings.
+
+---
+
+## Phase 168 CRITICAL — Audio Player Controller Error Fix — CODE-COMPLETE (verified 2026-04-01, PM audit #79)
+
+> Triple-audit (Architect, Engineer, PM) confirmed all three fix paths fully implemented in codebase. Was listed as "ENGINEER START HERE" in TODO.md but code was already complete. Documentation debt — archiving now.
+
+**Path A — SSE controller race condition (server-side):**
+
+- [x] `controllerClosed` boolean flag added alongside `didSendFinal` in `src/app/api/openai/route.tsx`
+- [x] `controllerClosed = true` set immediately BEFORE `controller.close()` in finally block
+- [x] `emitHeartbeat()` checks `controllerClosed` before calling `writeStreamEvent()` — skips write if closed
+
+**Path B — Download route HTTP Range support (server-side):**
+
+- [x] `parseByteRangeHeader()` function implemented in `src/app/api/download/route.tsx`
+- [x] `Range` header parsed and forwarded to S3 `GetObjectCommand`
+- [x] `206 Partial Content` returned with `Content-Range` and `Accept-Ranges: bytes` headers for Range requests
+- [x] `200 OK` with `Accept-Ranges: bytes` header for non-Range requests
+
+**Path C — Audio player lifecycle hardening (client-side):**
+
+- [x] `previousAudioUrlRef.current = null` reset in cleanup function
+- [x] `audioElement.src = ""` before disposing to force browser resource release
+- [x] Error event listener added on Audio element with user-facing error state
+
+**Files:** `src/app/api/openai/route.tsx`, `src/app/api/download/route.tsx`, `src/components/shared/audio-player.tsx`
 
 ---
 

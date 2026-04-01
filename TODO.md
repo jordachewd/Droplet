@@ -5,71 +5,96 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #78.1 (2026-03-30). DEPLOYED TO PRODUCTION. 2 CRITICAL production bugs active (audio, streaming). BUG-PAYMENT RESOLVED (owner verified Stripe webhook 200 OK + payment test passed). Phase 167 partially completed (targeted catches). 592 unit tests (101 suites). 49 E2E tests (8 spec files). Build passes. TSC clean. Node.js 24.12.0 runtime.**
-> **GATE STATUS: All 7 validation gates GREEN locally. Product Gate RED (2 CRITICAL bugs). Admin Gate YELLOW (Phase 162 pending).**
+> **STATUS: PM audit #79 (2026-04-01). DEPLOYED TO PRODUCTION. 1 CRITICAL production bug active (streaming timeout). 2 NEW bugs (hydration mismatch + script tag warning). Phase 168 CODE-COMPLETE (archived to DONE.md). BUG-PAYMENT RESOLVED. 592 unit tests (101 suites). 49 E2E tests (8 spec files). Build passes. TSC clean. Node.js 24.12.0 runtime.**
+> **GATE STATUS: All 7 validation gates GREEN locally. Product Gate RED (1 CRITICAL + 2 NEW bugs). Admin Gate YELLOW (Phase 162 pending).**
 > **Zero: `as never`, `as any`, `console.log`, `console.error`, `window.alert`, `window.confirm`, `strict: false`, `droplet-scrollbar`, stale TODOs — all in `src/`.**
 >
-> **REMAINING PRODUCTION BUGS (PM audit #78.1):**
+> **ACTIVE BUGS (PM audit #79):**
 >
-> - ✅ ~~BUG-PAYMENT~~: **RESOLVED.** Stripe webhook returning 200 OK. Payment test successful. Transaction recorded, plan updated.
-> - 🔴 BUG-STREAM: Stream ends unexpectedly on media gen. Vercel 60s timeout. **Phase 160.2 (proactive timeout safety net).**
-> - 🔴 BUG-AUDIO: Audio PLAY button triggers ERR_INVALID_STATE. **Phase 168 (controller guard + download Range support).**
+> - ✅ ~~BUG-PAYMENT~~: **RESOLVED.** Stripe webhook returning 200 OK. Payment test successful.
+> - ✅ ~~BUG-AUDIO~~: **RESOLVED (Phase 168 CODE-COMPLETE, archived to DONE.md).** All three paths implemented.
+> - 🔴 BUG-HYDRATION (NEW): ToggleTheme hydration mismatch — server/client state divergence. **Phase 169.**
+> - 🔴 BUG-SCRIPT (NEW): Script tag warning in root layout — React warning on hydration. **Phase 170.**
+> - 🔴 BUG-STREAM: Stream ends unexpectedly on media gen. Vercel 60s timeout. **Phase 160.2.**
 > - ⚠️ Admin configurability (Phase 162): PENDING — after critical bugs resolved.
 >
-> **EXECUTION ORDER (PM audit #78.1 — 2 critical bugs first, then hardening):**
+> **EXECUTION ORDER (PM audit #79 — critical bugs first, then hardening):**
 >
-> 1. **🔴 Phase 168 CRITICAL** — Audio player + download Range support + SSE controller guard.
-> 2. **🔴 Phase 160.2 CRITICAL** — Proactive timeout safety net (55s timer before Vercel kill).
-> 3. **Phase 167.2 HIGH** — Remaining 35 empty catch blocks.
-> 4. **Phase 162 HIGH** — Promo text admin-configurable.
-> 5. **Phase 163 HIGH** — Global error boundary.
-> 6. **Phase 165 MEDIUM** — Checkout success page DB polling (safety net — payment now working, deprioritized).
-> 7. **Phase 143 MEDIUM** — Env var runtime validation.
-> 8. **Phase 144–148 MEDIUM/LOW** — Backlog.
+> 1. **🔴 Phase 169 CRITICAL** — ToggleTheme hydration mismatch fix.
+> 2. **🔴 Phase 170 HIGH** — Script tag warning fix in root layout.
+> 3. **🔴 Phase 160.2 CRITICAL** — Proactive timeout safety net (55s timer before Vercel kill).
+> 4. **Phase 167.2 HIGH** — Remaining 34 empty catch blocks.
+> 5. **Phase 162 HIGH** — Promo text admin-configurable.
+> 6. **Phase 163 HIGH** — Global error boundary.
+> 7. **Phase 165 MEDIUM** — Checkout success page DB polling (safety net).
+> 8. **Phase 143 MEDIUM** — Env var runtime validation.
+> 9. **Phase 144–148 MEDIUM/LOW** — Backlog.
 >
 > _Critical bugs block ALL other work. No exceptions._
 
 ---
 
-## 🔴 ENGINEER START HERE — Phase 168 CRITICAL — Audio Player Controller Error Fix (PM audit #78)
+## 🔴 ENGINEER START HERE — Phase 169 CRITICAL — ToggleTheme Hydration Mismatch Fix (PM audit #79, owner-reported 2026-04-01)
 
-> **NEW.** Owner reported: clicking PLAY on generated audio triggers `TypeError: Invalid state: Controller is already closed { code: 'ERR_INVALID_STATE' }`. Triple-audit identified three contributing paths.
+> **NEW.** `DropletTheme` component reads localStorage during `useState(getInitialMode)` initialization. Server returns `mode="system"` → `resolvedMode="light"`. Client may return `mode="dark"` from localStorage → `resolvedMode="dark"`. `ToggleTheme` derives `darkActive` from context, producing `aria-checked="false"` / "Dark Mode" on server but `aria-checked={true}` / "Light Mode" on client. Same bug class as Phase 153 (AdminSettingsTabs hydration fix — already resolved using useEffect-after-mount pattern). This is also a WCAG 2.2 AA regression — `aria-checked` must match component state.
 
-**Path A — SSE controller race condition (server-side fix):**
+**File:** `src/components/layout/droplet-theme.tsx`
 
-File: `src/app/api/openai/route.tsx`
+**What to do:**
 
-1. Add a `let controllerClosed = false;` flag alongside `didSendFinal`.
-2. Set `controllerClosed = true;` immediately BEFORE `controller.close()` in the `finally` block.
-3. Update `emitHeartbeat()` to check `controllerClosed` before calling `writeStreamEvent()`. If `controllerClosed`, skip the write and return `false`.
-4. This prevents the race: heartbeat interval fires after `controller.close()`, tries `controller.enqueue()` on a closed controller.
-
-**Path B — Download route HTTP Range support (server-side fix):**
-
-File: `src/app/api/download/route.tsx`
-
-1. Parse `Range` request header from the incoming request.
-2. For S3-sourced files: pass `Range` header to `getFileFromAWS()` (the S3 SDK `GetObjectCommand` supports `Range` parameter natively).
-3. Return `206 Partial Content` with `Content-Range` and `Accept-Ranges: bytes` headers when Range is requested.
-4. Return `200 OK` with `Accept-Ranges: bytes` header for non-Range requests.
-5. This is essential for browser audio/video elements to properly buffer, seek, and replay content.
-
-**Path C — Audio player lifecycle hardening (client-side fix):**
-
-File: `src/components/shared/audio-player.tsx`
-
-1. Reset `previousAudioUrlRef.current = null` in the cleanup function (before `return`). This allows re-initialization if the component remounts with the same `audioSrc`.
-2. Set `audioElement.src = ""` before disposing to force the browser to release the resource.
-3. Add an `error` event listener on the Audio element: `audioElement.addEventListener("error", handleError)` — surface fetch/decode failures to the user (e.g., set an error state and show "Audio unavailable").
+1. Change `getInitialMode()` to always return `"system"` — remove the `typeof window` check and localStorage read from the initializer function. The `useState(getInitialMode)` call must produce the same value on server and client during SSR.
+2. Change the `systemMode` useState initializer to always return `"light"` — remove the `typeof window === "undefined"` ternary at line 75. Both initializers must be deterministic.
+3. Add a `useEffect` that runs once on mount to read from localStorage via `getStoredMode()` and call `setModeState(storedMode)`. Also call `setSystemMode(getSystemMode())` in the same effect. This is the identical pattern used in Phase 153 for admin settings tabs.
+4. The inline `<script>` in `layout.tsx` sets `data-droplet-theme` attribute before hydration for CSS — this prevents FOUC and must be kept unchanged. The fix here is purely for React state consistency.
 
 **Acceptance criteria:**
 
-- [ ] Zero `ERR_INVALID_STATE` errors from SSE controller in server logs
-- [ ] `emitHeartbeat()` checks `controllerClosed` flag before enqueuing
-- [ ] `/api/download` returns `Accept-Ranges: bytes` header
-- [ ] `/api/download` handles `Range` request header and returns `206 Partial Content`
-- [ ] Audio player re-initializes correctly after component remount
-- [ ] Audio player shows error state on fetch/decode failure
+- [ ] `getInitialMode()` always returns `"system"` (no localStorage read in initializer)
+- [ ] `systemMode` initializer always returns `"light"` (no `window` access in initializer)
+- [ ] `useEffect` on mount syncs mode from localStorage and system preference
+- [ ] Zero React hydration mismatch warnings from ToggleTheme
+- [ ] `aria-checked` value matches visual state after hydration
+- [ ] Theme still persists correctly across page loads
+- [ ] Build passes, tests pass
+
+---
+
+## 🔴 Phase 170 HIGH — Script Tag Warning Fix (PM audit #79, owner-reported 2026-04-01)
+
+> **NEW.** `<Script id="theme-init" strategy="beforeInteractive">` in `src/app/layout.tsx` produces React warning: "Encountered a script tag while rendering React component. Scripts inside React components are never executed when rendering on the client." Next.js 16.2.2 renders the Script component inside body during hydration. This uses the `next/script` component which is not appropriate for inline theme scripts in the App Router body.
+
+**File:** `src/app/layout.tsx`
+
+**What to do:**
+
+1. Replace `<Script id="theme-init" strategy="beforeInteractive">{...}</Script>` with a raw `<script>` tag using `dangerouslySetInnerHTML` placed inside the `<head>` element.
+2. Add a `<head>` element before `<body>` in the layout JSX.
+3. Move the theme initialization script content from the `<Script>` component to the raw `<script>` tag.
+4. Remove the `import Script from "next/script"` if no other `Script` usage remains in the file.
+
+**Example structure:**
+
+```tsx
+<html lang="en" suppressHydrationWarning className={...}>
+  <head>
+    <script
+      dangerouslySetInnerHTML={{
+        __html: `(() => { /* existing theme init code */ })();`,
+      }}
+    />
+  </head>
+  <body>
+    {/* existing body content */}
+  </body>
+</html>
+```
+
+**Acceptance criteria:**
+
+- [ ] No `<Script>` component from `next/script` in layout.tsx (unless used elsewhere)
+- [ ] Theme initialization script runs before hydration via raw `<script>` in `<head>`
+- [ ] Zero React "script tag" warnings during hydration
+- [ ] Theme flash prevention (FOUC) still works correctly
 - [ ] Build passes, tests pass
 
 ---
@@ -126,9 +151,9 @@ File: `src/components/shared/audio-player.tsx`
 
 ## HIGH — Remaining Empty Catch Blocks (PM audit #78)
 
-### Phase 167.2 HIGH — Fix remaining 35 parameterless `catch {` blocks across `src/`
+### Phase 167.2 HIGH — Fix remaining 34 parameterless `catch {` blocks across `src/`
 
-> Phase 167 was partially completed (targeted catches in API routes, admin actions, delete cascade, sidebar — see DONE.md Phase 167). **35 parameterless `catch {` blocks remain across `src/`.** This phase covers the remaining ones.
+> Phase 167 was partially completed (targeted catches in API routes, admin actions, delete cascade, sidebar — see DONE.md Phase 167). **34 parameterless `catch {` blocks remain across `src/`.** This phase covers the remaining ones.
 >
 > AGENTS.md: "No empty catch blocks — every catch must either capture the error variable and log to `process.stderr.write()`, or have a code comment explaining why the error is intentionally discarded."
 
@@ -368,5 +393,5 @@ File: `src/components/shared/audio-player.tsx`
 ---
 
 > **Completed phases** archived in [`DONE.md`](DONE.md).
-> All phases through 166 complete + 160.1 + 164 complete (incl. 135–142, 149–161, 160.1, 164, 166, 74.2, 104, 125.3, 126.2, 134, plus 107.1–107.3, 108, 114, 125.1, 131, 132, 133, 120.1–120.7, 121–130, 128.2, 106, 156).
+> All phases through 166 complete + 160.1 + 164 + 168 complete (incl. 135–142, 149–161, 160.1, 164, 166, 168, 74.2, 104, 125.3, 126.2, 134, plus 107.1–107.3, 108, 114, 125.1, 131, 132, 133, 120.1–120.7, 121–130, 128.2, 106, 156).
 > All Milestones 0–25 COMPLETE.
