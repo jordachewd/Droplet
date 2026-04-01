@@ -5,72 +5,33 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #82 (2026-04-01). DEPLOYED TO PRODUCTION. 2 CRITICAL production bugs active (payment RE-OPENED, streaming). Triple-audit verified (Architect + Engineer + PM). 597 unit tests (101 suites). 49 E2E tests (8 spec files). All 7 gates GREEN. Build passes. TSC clean. Lint clean. Knip clean. Node.js 24.12.0 runtime.**
+> **STATUS: PM audit #83 (2026-04-01). DEPLOYED TO PRODUCTION. 2 CRITICAL production bugs active (payment awaiting ops verification, streaming). Quintuple-audit verified (Architect + Engineer + PM + independent re-audit). 597 unit tests (101 suites). 49 E2E tests (8 spec files). All 7 gates GREEN. Build passes. TSC clean. Lint clean. Knip clean. Node.js 24.12.0 runtime.**
 >
-> **GATE STATUS: Product Gate YELLOW (2 CRITICAL bugs). Admin Gate YELLOW (Phase 162 pending). Compliance Gate YELLOW (33 empty catch blocks, 8 env casts). Validation Gate GREEN (597 tests pass).**
+> **GATE STATUS: Product Gate RED (2 CRITICAL bugs). Admin Gate YELLOW (Phase 162 pending). Compliance Gate YELLOW (33 empty catch blocks, 8 env casts). Validation Gate GREEN (597 tests pass).**
 >
 > **Zero: `as never`, `as any`, `console.log`, `console.error`, `window.alert`, `window.confirm`, `strict: false`, `droplet-scrollbar`, stale TODOs — all in `src/`.**
 >
-> **REMAINING PRODUCTION BUGS (PM audit #82 — triple-audit confirmed):**
+> **REMAINING PRODUCTION BUGS (PM audit #83):**
 >
-> - 🔴 BUG-PAYMENT **RE-OPENED**: Stripe payment succeeds, webhook returns 200 OK, but NO Transaction created and NO User plan updated. Code quadruple-audited CORRECT. Root cause: likely `checkout.session.completed` event NOT enabled in Stripe Dashboard — non-checkout events return 200 "Unhandled event". **Phase 169 (diagnostic logging) confirms.** Owner MUST verify Stripe Dashboard webhook event selection.
-> - 🔴 BUG-STREAM: Stream ends unexpectedly on media gen. Vercel Hobby 60s timeout kills function before pipeline completes. Heartbeats prevent client timeout but NOT Vercel function kill. **Phase 160.2 (proactive 55s safety timer).**
-> - ✅ BUG-AUDIO RESOLVED (Phase 168).
-> - ✅ BUG-HYDRATION RESOLVED (PM audit #81 verified — code already fixed).
-> - ✅ BUG-SCRIPT RESOLVED (PM audit #81 verified — code already fixed).
-> - ✅ TEST-REGRESSION RESOLVED (PM audit #81 verified — 597 tests pass).
+> - 🟡 BUG-PAYMENT **AWAITING OPS VERIFICATION**: Phase 169 diagnostic logging DEPLOYED. Code quintuple-audited CORRECT (Architect + Engineer + PM independently confirm). **Owner must: (1) make test payment, (2) check Vercel function logs for `Event type received:` entries, (3) if `checkout.session.completed` absent → enable in Stripe Dashboard → Webhooks → Events.** No further engineering action until logs are reviewed.
+> - 🔴 BUG-STREAM: Stream ends unexpectedly on media gen. Vercel Hobby 60s timeout kills function before pipeline completes. **Phase 160.2 (proactive 55s safety timer) is #1 engineering priority.**
 >
-> **EXECUTION ORDER (PM audit #82 — critical bugs first, then hardening):**
+> **EXECUTION ORDER (PM audit #83 — updated 2026-04-01):**
 >
-> 1. **🔴 Phase 169 CRITICAL** — Stripe webhook diagnostic logging (BUG-PAYMENT investigation).
-> 2. **🔴 Phase 160.2 CRITICAL** — Proactive timeout safety net (55s timer before Vercel kill).
-> 3. **Phase 167.2 HIGH** — Fix 33 remaining empty catch blocks.
-> 4. **Phase 162 HIGH** — Promo text admin-configurable (~25 hardcoded strings).
-> 5. **Phase 163 HIGH** — Global error boundary (`global-error.tsx`).
-> 6. **Phase 165 MEDIUM** — Checkout success page DB polling.
-> 7. **Phase 143 MEDIUM** — Env var runtime validation (8 unsafe casts).
-> 8. **Phase 144 MEDIUM** — Admin config in-memory cache.
-> 9. **Phase 145–148 LOW** — Backlog.
+> 1. **🔴 Phase 160.2 CRITICAL** — Proactive timeout safety net (55s timer before Vercel kill). BUG-STREAM fix.
+> 2. **Phase 167.2 HIGH** — Fix 33 remaining empty catch blocks.
+> 3. **Phase 162 HIGH** — Promo text admin-configurable (~25 hardcoded strings).
+> 4. **Phase 163 HIGH** — Global error boundary (`global-error.tsx`).
+> 5. **Phase 165 MEDIUM** — Checkout success page DB polling.
+> 6. **Phase 143 MEDIUM** — Env var runtime validation (8 unsafe casts).
+> 7. **Phase 144 MEDIUM** — Admin config in-memory cache.
+> 8. **Phase 145–148 LOW** — Backlog.
 >
-> _Critical bugs block ALL other work. No exceptions._
+> _BUG-PAYMENT is now OPS/OWNER action, not engineering. BUG-STREAM is #1 engineering priority._
 
 ---
 
-## 🔴 ENGINEER START HERE — Phase 169 CRITICAL — Stripe Webhook Diagnostic Logging
-
-> **BUG-PAYMENT RE-OPENED (3rd time).** Owner reports: Stripe payment succeeds, webhook returns 200 OK for all requests, but NO Transaction created and NO User plan updated. Code logic quadruple-audited by Architect, Engineer, and PM — **code is CORRECT.** Root cause hypothesis (PM audit #82): `checkout.session.completed` event type is NOT selected/enabled in Stripe Dashboard webhook configuration. Non-checkout events (payment_intent.succeeded, charge.succeeded) reach the webhook and return 200 "Unhandled event" — making owner see 200 OK. The webhook currently has ZERO logging of event type received — making production diagnosis impossible. This phase adds diagnostic logging only. **Owner MUST also verify Stripe Dashboard webhook event selection after deployment.**
-
-**File:** `src/app/api/webhooks/stripe/route.tsx`
-
-**What to do:**
-
-1. Add `logStripeWebhookInfo(\`Event type received: ${eventType}\`)`immediately after`const eventType = parsedEvent.data.type;` (~line 187).
-2. Add `logStripeWebhookInfo(\`Checkout session ${id}: user ${theUserId} found. Processing...\`)` after the user lookup succeeds (~line 270).
-3. Add `logStripeWebhookInfo(\`Checkout session ${checkoutSessionId}: Already processed — transaction and plan match.\`)` before the "Already processed" return (~line 280).
-4. Add `logStripeWebhookInfo(\`Checkout session ${id}: Repair path completed.\`)` after successful repair (~line 300).
-5. Add `logStripeWebhookInfo(\`Checkout session ${id}: Transaction created successfully.\`)`after`createTransaction` succeeds (~line 305).
-6. Add `logStripeWebhookInfo(\`Checkout session ${id}: User plan updated successfully.\`)`after`applyCheckoutPlanUpdate` succeeds (~line 320).
-7. **Rename** `logStripeWebhookError` to `logStripeWebhookInfo` for the "Unhandled event type" path at the bottom — it's not an error, it's normal Stripe behavior (non-checkout events).
-
-**Post-deployment owner action:**
-
-1. Make a test payment in production.
-2. Check Vercel function logs for the webhook endpoint.
-3. Look for `Event type received:` log entries — shows EXACTLY which events reach the webhook.
-4. If `checkout.session.completed` is NOT in the logs → enable it in Stripe Dashboard → Webhooks → Events.
-5. If it IS in the logs → subsequent logs show which code path was taken.
-
-**Acceptance criteria:**
-
-- [ ] Event type logged at entry for every webhook event
-- [ ] Each 200 return path has descriptive logging
-- [ ] "Unhandled event" path uses info-level logging (not error-level)
-- [ ] No behavioral changes to webhook logic (logging only)
-- [ ] Build passes, tests pass
-
----
-
-## 🔴 Phase 160.2 CRITICAL — Proactive Timeout Safety Net
+## 🔴 ENGINEER START HERE — Phase 160.2 CRITICAL — Proactive Timeout Safety Net
 
 > Stream error on media gen still failing in production. All code mitigations (heartbeat, didSendFinal, maxDuration=60, controllerClosed guard) are deployed. Root cause: Vercel Hobby 60s function timeout kills server before pipeline completes. This phase adds a proactive safety net that sends a graceful error BEFORE Vercel kills the function.
 

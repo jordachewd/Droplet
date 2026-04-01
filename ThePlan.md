@@ -44,16 +44,14 @@ The owner has mandated a full TDD rebuild of the entire testing infrastructure. 
 8. **Knip must stay clean** — zero unused code findings at all times.
 9. **Reduce unnecessary renders and resource leaks** throughout the application.
 
-**Production deployment has occurred — 2 CRITICAL bugs remain (PM audit #81, 2026-03-31):**
+**Production deployment has occurred — 2 CRITICAL bugs remain (PM audit #83, 2026-04-01):**
 
-1. ~~**Audio playback error**~~ — **RESOLVED (Phase 168 COMPLETE).** SSE controller-close guard, /api/download HTTP Range support, Audio player lifecycle hardening — all deployed.
-2. **Stream error on media generation** — still failing in production despite Phase 160/160.1 code-complete. Root cause: Vercel Hobby 60s function timeout kills server before pipeline completes. Phase 160.2 (proactive timeout safety net) required.
-3. **Payment not registering — RE-OPENED (2026-03-31).** Owner reports Stripe webhook returns HTTP 200 OK for ALL requests AND payment test succeeded, but NO Transaction is created in DB and NO User plan is updated. **PM audit #81 ROOT CAUSE HYPOTHESIS:** webhook code logic is verified correct — most likely `checkout.session.completed` event type is NOT enabled in the Stripe Dashboard webhook configuration. Non-checkout events (payment_intent.succeeded, charge.succeeded) return 200 "Unhandled event", making it look like webhook works. Phase 169 (diagnostic logging) will confirm. Owner MUST verify Stripe Dashboard webhook event selection.
-4. ~~**Hydration mismatch**~~ — **RESOLVED (PM audit #81 verified).** Code already uses `useState<ThemeMode>("system")` with `useEffect` for localStorage read. No `getInitialMode` function exists. Bug was already fixed.
-5. ~~**Script tag error**~~ — **RESOLVED (PM audit #81 verified).** `layout.tsx` already uses `<Script src="/scripts/theme-init.js">` (external file). `public/scripts/theme-init.js` exists with correct IIFE. Bug was already fixed.
-6. ~~**Test regression**~~ — **RESOLVED (PM audit #81 verified).** 597 tests pass (101 suites). chat-sidebar-promo test is passing.
+1. **Stream error on media generation** — still failing in production. Root cause: Vercel Hobby 60s function timeout kills server before pipeline completes. Phase 160.2 (proactive timeout safety net) is #1 engineering priority.
+2. **Payment not registering — AWAITING OPS VERIFICATION.** Phase 169 diagnostic logging DEPLOYED (2026-04-01). Code quintuple-audited CORRECT by Architect, Engineer, and PM independently. Root cause: `checkout.session.completed` event type likely NOT enabled in Stripe Dashboard webhook configuration. **Owner must check Vercel function logs and Stripe Dashboard event selection. No further engineering work needed.**
 
-The execution order is: **Phase 169 (webhook diagnostic logging for BUG-PAYMENT) → Phase 160.2 (proactive timeout safety net for BUG-STREAM) → Phase 167.2 (remaining catch blocks) → Phase 162 (admin promo text) → Phase 163 (global error boundary) → Phase 165 (checkout success polling) → Phase 143 (env hardening) → Phase 144 (config cache) → Remaining backlog.**
+The execution order is: **Phase 160.2 (proactive timeout safety net for BUG-STREAM) → Phase 167.2 (remaining catch blocks) → Phase 162 (admin promo text) → Phase 163 (global error boundary) → Phase 165 (checkout success polling) → Phase 143 (env hardening) → Phase 144 (config cache) → Remaining backlog.**
+
+**Phase 169 (webhook diagnostic logging) COMPLETE** — deployed 2026-04-01.
 
 ---
 
