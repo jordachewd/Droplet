@@ -1,5 +1,6 @@
 import classNames from "classnames";
 import Link from "next/link";
+import { DEFAULT_PROMO_CONTENT, PromoContent } from "@/constants/promo-content";
 import { ContentItem, Message } from "@/types";
 import { useEffect, useMemo, useRef } from "react";
 import autoAnimate from "@formkit/auto-animate";
@@ -14,9 +15,9 @@ import { TaskEndAction, TaskEndedReason } from "@/types/TaskData.d";
 interface ChatBodyProps {
   messages: Message[];
   personaLabel?: string;
-  conversationEnded?: boolean;
   supportEmail: string;
   stopReasonMessages: Record<TaskEndedReason, string>;
+  promoContent?: PromoContent;
   endState?: {
     stopReason: TaskEndedReason;
     endAction: TaskEndAction;
@@ -26,38 +27,31 @@ interface ChatBodyProps {
 function renderAction({
   endAction,
   supportEmail,
+  promoContent,
 }: {
   endAction: TaskEndAction;
   supportEmail: string;
+  promoContent: PromoContent;
 }) {
   if (endAction === "start_new_conversation") {
     return (
-      <Link
-        href="/app/new"
-        className="inline-flex items-center rounded-full border border-emerald-500/60 bg-emerald-500 px-3 py-1.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
-      >
-        Start a new conversation
+      <Link href="/app/new" className="btn btn-sm btn-contained">
+        {promoContent.chatStartConversationCta}
       </Link>
     );
   }
 
   if (endAction === "upgrade_plan") {
     return (
-      <Link
-        href="/app/plans"
-        className="inline-flex items-center rounded-full border border-sky-500/60 bg-sky-600 px-3 py-1.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
-      >
-        Upgrade your plan
+      <Link href="/app/plans" className="btn btn-sm btn-contained">
+        {promoContent.chatUpgradePlanCta}
       </Link>
     );
   }
 
   return (
-    <a
-      href={`mailto:${supportEmail}`}
-      className="inline-flex items-center rounded-full border border-amber-500/60 px-3 py-1.5 text-sm font-semibold text-amber-900 transition-colors hover:bg-amber-100 dark:text-amber-100 dark:hover:bg-amber-500/10"
-    >
-      Contact support
+    <a href={`mailto:${supportEmail}`} className="btn btn-sm btn-contained">
+      {promoContent.chatContactSupportCta}
     </a>
   );
 }
@@ -113,9 +107,9 @@ function buildContentFallbackKey(content: ContentItem): string {
 export default function ChatBody({
   messages,
   personaLabel,
-  conversationEnded = false,
   supportEmail,
   stopReasonMessages,
+  promoContent = DEFAULT_PROMO_CONTENT,
   endState = null,
 }: ChatBodyProps) {
   const parent = useRef<HTMLDivElement | null>(null);
@@ -147,7 +141,7 @@ export default function ChatBody({
       const { whois, content } = message;
       const isBot = whois !== "user";
 
-      const messageOwner = isBot ? personaLabel || "Assistant" : "You";
+      const messageOwner = isBot ? personaLabel || "Assistant" : "Me";
       const messageKeyBase = message.id ?? buildMessageFallbackKey(message);
 
       const messageKeyIndex = messageKeyCount.get(messageKeyBase) ?? 0;
@@ -165,8 +159,7 @@ export default function ChatBody({
 
       const avatarClass = classNames(isBot ? "bi bi-droplet" : "bi bi-person");
 
-      const chatMarkdownClass = classNames({
-        "chat-markdown": !isBot,
+      const chatMarkdownClass = classNames("chat-markdown", {
         "chat-markdown--bot": isBot,
       });
 
@@ -254,10 +247,12 @@ export default function ChatBody({
   }, [personaLabel, messages]);
 
   const chatBodyClass = classNames(
-    "ChatBody mx-auto flex w-full max-w-4xl flex-1 flex-col gap-6 px-4 pb-10 pt-6",
-    "lg:px-0",
-    conversationEnded &&
-      "rounded-2xl border border-amber-400/45 bg-amber-50/40 dark:border-amber-400/30 dark:bg-amber-500/5",
+    "ChatBody mx-auto flex w-full max-w-4xl flex-1 flex-col gap-6 pb-10 pt-6",
+  );
+
+  const chatEndNoticeClass = classNames(
+    "ChatBodyEndNotice mt-4 rounded-2xl p-4 text-sm shadow-sm border ",
+    "border-amber-500/30 bg-amber-500/10 text-twilightPurple-500 dark:text-lavenderHaze-500",
   );
 
   return (
@@ -266,11 +261,11 @@ export default function ChatBody({
         {listMessages}
 
         {endState && (
-          <aside className="ChatBodyEndNotice mt-2 rounded-2xl border border-dashed border-amber-500/60 bg-amber-100/85 p-4 text-sm text-amber-950 shadow-sm dark:bg-amber-500/10 dark:text-amber-50">
+          <article className={chatEndNoticeClass}>
             <div className="flex flex-col gap-3">
-              <div className="flex flex-col gap-2">
-                <span className="text-xxs font-semibold uppercase tracking-[0.18em] opacity-75">
-                  Conversation Ended
+              <div className="flex flex-col gap-3">
+                <span className="text-xxs font-semibold uppercase opacity-50">
+                  {promoContent.chatConversationEndedLabel}
                 </span>
                 <p className="font-medium">
                   {stopReasonMessages[endState.stopReason]}
@@ -281,13 +276,14 @@ export default function ChatBody({
                 {renderAction({
                   endAction: endState.endAction,
                   supportEmail,
+                  promoContent,
                 })}
                 {endState.endAction === "contact_support" && (
                   <span className="text-xs opacity-80">{supportEmail}</span>
                 )}
               </div>
             </div>
-          </aside>
+          </article>
         )}
       </div>
       <div className="ScrollIntoViewRef flex w-full" ref={bottomRef} />

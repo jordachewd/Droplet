@@ -15,9 +15,9 @@ const sizeMappings = {
 };
 
 const colorMappings = [
-  "bg-lavenderHaze-600 dark:bg-nightIndigo-400/60",
-  "bg-lavenderHaze-600 dark:bg-nightIndigo-400/50",
-  "bg-lavenderHaze-600 dark:bg-nightIndigo-400/40",
+  "bg-twilightPurple-600/60 dark:bg-lavenderHaze-400/60",
+  "bg-twilightPurple-600/50 dark:bg-lavenderHaze-400/50",
+  "bg-twilightPurple-600/40 dark:bg-lavenderHaze-400/40",
 ];
 
 export default function LoadingBubbles({

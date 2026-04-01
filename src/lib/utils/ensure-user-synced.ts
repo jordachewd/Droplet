@@ -105,9 +105,9 @@ async function ensureUserSyncedUncached(
           userImg: clerkUser.imageUrl ?? "",
         },
       });
-    } catch {
+    } catch (error) {
       process.stderr.write(
-        `[ensure-user-synced] Metadata sync failed for ${clerkUserId}; continuing with MongoDB user.\n`,
+        `[ensure-user-synced] Metadata sync failed for ${clerkUserId}: ${error instanceof Error ? error.message : "unknown"}; continuing with MongoDB user.\n`,
       );
     }
 

@@ -1,4 +1,5 @@
 import PlanPromo from "@/components/shared/plan-promo";
+import { PromoContent } from "@/constants/promo-content";
 
 import getFormattedDate from "@/lib/utils/getFormattedDate";
 import getFullName, { getNameLetters } from "@/lib/utils/getFullName";
@@ -8,9 +9,14 @@ import classNames from "classnames";
 interface HeroProps {
   userData: UserData;
   supportEmail: string;
+  promoContent: PromoContent;
 }
 
-export default function ProfileHero({ userData, supportEmail }: HeroProps) {
+export default function ProfileHero({
+  userData,
+  supportEmail,
+  promoContent,
+}: HeroProps) {
   const { username, firstName, lastName, email, registerAt, updatedAt, plan } =
     userData;
   const formattedRegisterAt = getFormattedDate(registerAt);
@@ -88,6 +94,7 @@ export default function ProfileHero({ userData, supportEmail }: HeroProps) {
             role={userData.role}
             isSuspended={userData.suspended}
             supportEmail={supportEmail}
+            promoContent={promoContent}
           />
         </div>
       </div>

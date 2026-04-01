@@ -1,5 +1,6 @@
 import classNames from "classnames";
 import { getPlanIcon } from "@/constants/plans";
+import { DEFAULT_PROMO_CONTENT, PromoContent } from "@/constants/promo-content";
 import { PlanData, PlanName } from "@/types/PlanData.d";
 import Link from "next/link";
 import { UserRoles } from "@/types/UserData.d";
@@ -13,6 +14,7 @@ interface PlanPromoProps {
   role: UserRoles;
   isSuspended?: boolean;
   supportEmail?: string;
+  promoContent?: PromoContent;
 }
 
 export default function PlanPromo({
@@ -20,6 +22,7 @@ export default function PlanPromo({
   role,
   isSuspended = false,
   supportEmail,
+  promoContent = DEFAULT_PROMO_CONTENT,
 }: PlanPromoProps) {
   const isAdmin = role === "admin";
   const { name } = plan;
@@ -41,7 +44,9 @@ export default function PlanPromo({
                 { "min-w-20.5": !isLite },
               )}
             >
-              {isLite ? "Free forever" : "Your plan"}
+              {isLite
+                ? promoContent.promoFreeLabel
+                : promoContent.promoCurrentPlanLabel}
             </span>
           </div>
         )}
@@ -54,36 +59,38 @@ export default function PlanPromo({
             ></i>
           )}
 
-          <span>{isAdmin ? "Admin" : name}</span>
+          <span>{isAdmin ? promoContent.promoAdminLabel : name}</span>
         </h2>
 
         {isAdmin ? (
-          <div className="flex w-full text-xs">You have admin access.</div>
+          <div className="flex w-full text-xs">
+            {promoContent.promoAdminDescription}
+          </div>
         ) : isSuspended ? (
           <>
             <div className="flex w-full items-center justify-center border-t border-dotted border-twilightPurple-600 pt-2.5 text-xs font-semibold uppercase tracking-wide dark:border-dustyBlue-1000">
-              Account suspended
+              {promoContent.promoSuspensionTitle}
             </div>
             <p className="text-xs opacity-80">
-              Your account is suspended. Contact support to restore access.
+              {promoContent.promoSuspensionDescription}
             </p>
             <a
               className="btn btn-sm btn-contained self-center"
               href={supportHref}
             >
-              Contact support
+              {promoContent.promoContactSupportCta}
             </a>
           </>
         ) : !isPremiumFull ? (
           <>
             <div className="flex w-full items-center text-xs">
-              Unlock premium features with an upgrade!
+              {promoContent.promoUpgradeMessage}
             </div>
             <Link
               className="btn btn-sm btn-contained self-center"
               href="/app/plans"
             >
-              Upgrade now
+              {promoContent.promoUpgradeCta}
             </Link>
           </>
         ) : null}

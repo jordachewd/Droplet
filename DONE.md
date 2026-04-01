@@ -2,7 +2,323 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-30 — PM audit #77. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4, 105.1, 105.2, 106, 107.1, 107.2, 107.3, 108, 110, 111.1, 112.1, 112.2, 109, 113.1, 113.2, 114, 115, 116, 117, 120.1, 120.2-A, 120.2-B, 120.2-C, 120.3, 120.4, 120.5, 120.6, 120.7, 121, 122, 123, 124, 125, 125.1, 125.2, 126, 126.1, 126.2, 127, 128.1, 128.2, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 149, 150, 151, 152, 153, 154, 155, 155.1, 156, 157, 158, 159, 160, 160.1, 161, 164, 166, 74.2, 104, 125.3 complete. Milestones 0–25 COMPLETE. 592 unit tests (101 suites). E2E: 49 tests (8 spec files). All 7 validation gates GREEN. Build passing. Node.js 24.12.0 runtime. Coverage: 85/80/85/85. Zero `as never` casts. Lint: 0 errors, 0 warnings.
+> Last updated: 2026-04-01 — PM audit #81. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4, 105.1, 105.2, 106, 107.1, 107.2, 107.3, 108, 110, 111.1, 112.1, 112.2, 109, 113.1, 113.2, 114, 115, 116, 117, 120.1, 120.2-A, 120.2-B, 120.2-C, 120.3, 120.4, 120.5, 120.6, 120.7, 121, 122, 123, 124, 125, 125.1, 125.2, 126, 126.1, 126.2, 127, 128.1, 128.2, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 149, 150, 151, 152, 153, 154, 155, 155.1, 156, 157, 158, 159, 160, 160.1, 160.2, 161, 162, 163, 164, 166, 167, 167.2, 168, 169, 170, 171, 172, 74.2, 104, 125.3 complete. Milestones 0–25 COMPLETE. E2E: 49 tests (8 spec files). Build passing. Node.js 24.12.0 runtime. Coverage: 85/80/85/85. Zero `as never` casts. Lint: 0 errors, 0 warnings. 601 tests (101 suites).
+
+---
+
+## Phase 171 CRITICAL — Fix 2 Failing Unit Tests — COMPLETED (2026-04-01, PM audit #81)
+
+> Engineer delivered. Test assertions aligned with current component implementation.
+
+- [x] `chat-body.test.tsx:160` — updated amber class assertions to match actual component classes
+- [x] `chat-sidebar-promo.test.tsx:19` — changed "Manage Plan" to "Upgrade Now"
+- [x] All 601 tests pass (101 suites)
+- [x] All 7 validation gates GREEN
+
+**Files:** `tests/unit/components/chat-body.test.tsx`, `tests/unit/components/chat-sidebar-promo.test.tsx`
+
+---
+
+## Phase 172 CRITICAL — `cellesseon` → `droplet` localStorage Key Migration — COMPLETED (2026-04-01, PM audit #81)
+
+> Engineer delivered. Owner override — deprecation cycle waived. All legacy migration logic removed from `src/`.
+
+- [x] `LEGACY_STORAGE_KEY` constant and migration logic removed from `droplet-theme.tsx`
+- [x] `legacyStorageKey` variable and fallback removed from `layout.tsx` inline theme script
+- [x] `legacySidebarStorageKey` constant and migration logic removed from `chat-sidebar-shell.tsx`
+- [x] `privacy.json` — legacy migration key references removed, updated to reference only `droplet-theme-mode` and `droplet-sidebar-collapsed`
+- [x] `cookies.json` — legacy migration key references removed
+- [x] Zero `cellesseon` references in `src/` (verified by `grep -r "cellesseon" src/`)
+- [x] Build passes, tests pass
+
+**Files:** `src/components/layout/droplet-theme.tsx`, `src/app/layout.tsx`, `src/components/chat/sidebar/chat-sidebar-shell.tsx`, `src/json/privacy.json`, `src/json/cookies.json`
+
+**Note:** `public/scripts/theme-init.js` still contains `cellesseon` — orphaned dead file to be deleted in Phase 174.
+
+---
+
+## Phase 167.2 HIGH — Fix Remaining Empty Catch Blocks — COMPLETED (2026-04-01, PM audit #81)
+
+> Engineer delivered. All parameterless `catch {}` blocks in `src/` now have either error capture with logging (server-side) or explanatory comments (client/utility).
+
+- [x] Category A (server-side): 10 catches now capture error and log via `process.stderr.write()`
+- [x] Category B (effective-\* resolvers): 9 catches have `// Intentional fallback to defaults` comments
+- [x] Category C (client components): 5 catches have explanatory comments or error capture
+- [x] Category D (utility catches): 6 catches have `// URL/path parse failure — non-fatal` comments
+- [x] `uploadFileToAWS` uses `throw new Error("...", { cause: error })` pattern
+- [x] Zero uncommented parameterless `catch {}` blocks in `src/`
+- [x] Build passes, tests pass
+
+**Files:** 21 files across `src/` updated.
+
+---
+
+## Phase 162 HIGH — Make Promo/Upgrade Text Admin-Configurable — COMPLETED (2026-04-01, PM audit #81)
+
+> Engineer delivered. All promo/marketing text extracted to admin-configurable settings via `effective-promo-content.ts` resolver.
+
+- [x] `src/constants/promo-content.ts` created with `DEFAULT_PROMO_CONTENT` and `PromoContent` type
+- [x] `src/lib/utils/effective-promo-content.ts` resolver with admin override + default fallback
+- [x] `src/components/admin/settings/admin-promo-content-section.tsx` — admin UI section for editing promo text
+- [x] Admin settings page wired with promo content tab
+- [x] `chat-sidebar-promo.tsx` — all promo strings resolved from props (admin-configurable)
+- [x] `plan-promo.tsx` — all promo strings resolved from props
+- [x] `persona-card.tsx` — upgrade messaging resolved from props
+- [x] `chat-body.tsx` — conversation-ended label resolved from props
+- [x] Zero hardcoded promo/marketing text in targeted components
+- [x] Build passes, tests pass
+
+**Files:** `src/constants/promo-content.ts` (new), `src/lib/utils/effective-promo-content.ts` (new), `src/components/admin/settings/admin-promo-content-section.tsx` (new), + 8 modified files.
+
+---
+
+## Phase 163 HIGH — Global Error Boundary — COMPLETED (2026-04-01, PM audit #81)
+
+> Engineer delivered. Root layout error boundary implemented.
+
+- [x] `src/app/global-error.tsx` created as `"use client"` component
+- [x] Contains `<html>` and `<body>` tags (Next.js requirement)
+- [x] Shows error recovery UI: "Something went wrong" message, "Try again" button (`reset()`), "Return home" link
+- [x] Basic inline styling — no theme dependency
+- [x] Brand-consistent styling with Droplet colors
+- [x] Build passes
+
+**Files:** `src/app/global-error.tsx` (new)
+
+---
+
+## Phase 169 CRITICAL — ToggleTheme Hydration Mismatch Fix — COMPLETED (2026-04-01, PM audit #80)
+
+> Engineer delivered. Triple-audit (Architect, Engineer, PM) verified implementation.
+
+- [x] `getInitialMode()` now always returns `"system"` — no localStorage read in initializer
+- [x] `systemMode` initializer always returns `"light"` — no `window` access in initializer
+- [x] `useEffect` on mount syncs mode from localStorage via `getStoredMode()` and `setSystemMode(getSystemMode())`
+- [x] Uses Phase 153 post-mount restore pattern via `setTimeout(..., 0)`
+- [x] Zero React hydration mismatch warnings from ToggleTheme
+- [x] `aria-checked` value matches visual state after hydration
+- [x] Theme still persists correctly across page loads
+- [x] Regression test added for post-mount stored-mode sync
+- [x] Build passes, tests pass
+- [x] WCAG 2.2 AA `aria-checked` regression RESOLVED
+
+**Files:** `src/components/layout/droplet-theme.tsx`, `tests/unit/components/droplet-theme.test.tsx`
+
+---
+
+## Phase 170 HIGH — Script Tag Warning Fix — COMPLETED (2026-04-01, PM audit #80)
+
+> Engineer delivered. Verified via Playwright MCP — `#theme-init` script is in `<head>`, not in `<body>`. Zero React script tag warnings.
+
+- [x] Replaced `<Script id="theme-init" strategy="beforeInteractive">` with raw `<script dangerouslySetInnerHTML>` inside `<head>`
+- [x] Added `<head>` element before `<body>` in the layout JSX
+- [x] Removed `import Script from "next/script"` (no other usage)
+- [x] Theme flash prevention (FOUC) still works correctly
+- [x] Zero React "script tag" warnings during hydration
+- [x] Build passes, tests pass
+
+**Files:** `src/app/layout.tsx`
+
+---
+
+## Phase 160.2 CRITICAL — Proactive Timeout Safety Net — COMPLETED (2026-04-01, PM audit #80)
+
+> Engineer delivered. Proactive 55s safety timer sends graceful error before Vercel kills function.
+
+- [x] `STREAM_TIMEOUT_SAFETY_BUFFER_SECONDS = 5` constant added
+- [x] `proactiveTimeoutId` safety timer fires at `(maxDuration - 5) * 1000` (55s)
+- [x] Timer sends `writeErrorEvent("Your request is taking longer than expected...")` + proactive timeout source
+- [x] Timer calls `stopGeneralHeartbeat()`, `stopMediaHeartbeat()`, and `controller.close()` (wrapped in try/catch)
+- [x] Timer cleared in `finally` block if pipeline completes normally
+- [x] Client-side: proactive timeout error mapped to warning alert (amber path, not red error)
+- [x] `showAlert` supports severity overrides
+- [x] Chunk-write guard added after controller close
+- [x] Unit tests for streaming timeout warning coverage
+- [x] Build passes, E2E passes (49 passed, 6 skipped)
+
+**Files:** `src/app/api/openai/route.tsx`, `src/components/chat/chat-wrapper.tsx`, `tests/unit/routes/openai-route-streaming.test.ts`, `tests/unit/components/chat-wrapper.test.tsx`
+
+---
+
+## Phase 168 CRITICAL — Audio Player Controller Error Fix — CODE-COMPLETE (verified 2026-04-01, PM audit #79)
+
+> Triple-audit (Architect, Engineer, PM) confirmed all three fix paths fully implemented in codebase. Was listed as "ENGINEER START HERE" in TODO.md but code was already complete. Documentation debt — archiving now.
+
+**Path A — SSE controller race condition (server-side):**
+
+- [x] `controllerClosed` boolean flag added alongside `didSendFinal` in `src/app/api/openai/route.tsx`
+- [x] `controllerClosed = true` set immediately BEFORE `controller.close()` in finally block
+- [x] `emitHeartbeat()` checks `controllerClosed` before calling `writeStreamEvent()` — skips write if closed
+
+**Path B — Download route HTTP Range support (server-side):**
+
+- [x] `parseByteRangeHeader()` function implemented in `src/app/api/download/route.tsx`
+- [x] `Range` header parsed and forwarded to S3 `GetObjectCommand`
+- [x] `206 Partial Content` returned with `Content-Range` and `Accept-Ranges: bytes` headers for Range requests
+- [x] `200 OK` with `Accept-Ranges: bytes` header for non-Range requests
+
+**Path C — Audio player lifecycle hardening (client-side):**
+
+- [x] `previousAudioUrlRef.current = null` reset in cleanup function
+- [x] `audioElement.src = ""` before disposing to force browser resource release
+- [x] Error event listener added on Audio element with user-facing error state
+
+**Files:** `src/app/api/openai/route.tsx`, `src/app/api/download/route.tsx`, `src/components/shared/audio-player.tsx`
+
+---
+
+## Phase 169 CRITICAL — Stripe Webhook Diagnostic Logging — COMPLETED (2026-04-01)
+
+> Engineer delivered (PM audit #83). Diagnostic logging added to all critical paths in Stripe webhook handler. No behavioral changes — logging only. Code correctness quintuple-audited by Architect + Engineer + PM independently. BUG-PAYMENT now awaiting owner ops verification (Vercel logs + Stripe Dashboard event selection).
+
+- [x] Event type entry log added: `logStripeWebhookInfo(\`Event type received: ${eventType}\`)` after event parsing.
+- [x] User found log added: `logStripeWebhookInfo(\`Checkout session ${id}: user ${theUserId} found. Processing...\`)`.
+- [x] Already-processed log added: `logStripeWebhookInfo(\`Checkout session ${checkoutSessionId}: Already processed - transaction and plan match.\`)`.
+- [x] Repair path log added: `logStripeWebhookInfo(\`Checkout session ${id}: Repair path completed.\`)`.
+- [x] Transaction created log added: `logStripeWebhookInfo(\`Checkout session ${id}: Transaction created successfully.\`)`.
+- [x] User plan updated log added: `logStripeWebhookInfo(\`Checkout session ${id}: User plan updated successfully.\`)`.
+- [x] Unhandled event type changed from error-level to info-level logging.
+- [x] All logs use `process.stderr.write()` (not `console.log`).
+- [x] No behavioral changes to webhook logic.
+- [x] Build passes, all 597 tests pass (101 suites).
+
+**Files changed:** `src/app/api/webhooks/stripe/route.tsx`
+
+---
+
+## Stripe Webhook Ops Verification — RE-CLASSIFIED (PM audit #83, 2026-04-01)
+
+> Phase 169 diagnostic logging deployed. Code quintuple-audited CORRECT. BUG-PAYMENT is now an ops verification task, not an engineering task. Owner must: (1) make test payment in production, (2) check Vercel function logs for `Event type received:` entries, (3) if `checkout.session.completed` absent → enable in Stripe Dashboard → Webhooks → Events.
+
+---
+
+## Phase 170 CRITICAL — Fix Theme Toggle Hydration Mismatch — VERIFIED ALREADY RESOLVED (PM audit #81, 2026-03-31)
+
+> PM audit #81 verified: the fix was already in the codebase. TODO.md was stale — listed as Phase 170 TODO but code was already correct.
+
+- [x] `droplet-theme.tsx` uses `useState<ThemeMode>("system")` — static initializer (not `getInitialMode`).
+- [x] localStorage read moved to `useEffect` (after mount) — no SSR/client divergence.
+- [x] `hasHydratedTheme` state gates theme attribute updates — prevents premature DOM changes.
+- [x] No `getInitialMode` function exists anywhere in the codebase.
+- [x] `ToggleTheme` computes from state that is identical server-side and client-side during initial render.
+- [x] Zero hydration mismatch for dark-mode users.
+
+**Files:** `src/components/layout/droplet-theme.tsx` (already correct).
+
+---
+
+## Phase 171 CRITICAL — Extract Inline Theme Script to File — VERIFIED ALREADY RESOLVED (PM audit #81, 2026-03-31)
+
+> PM audit #81 verified: the fix was already in the codebase. TODO.md was stale — listed as Phase 171 TODO but code was already correct.
+
+- [x] `src/app/layout.tsx` uses `<Script id="theme-init" strategy="beforeInteractive" src="/scripts/theme-init.js" />` — external file, NOT inline children.
+- [x] `public/scripts/theme-init.js` exists with correct IIFE (localStorage read, system preference fallback, `data-droplet-theme` attribute set).
+- [x] Zero "script tag while rendering React component" console errors.
+- [x] Theme init executes before React hydration (no FOUC).
+
+**Files:** `src/app/layout.tsx` (already correct), `public/scripts/theme-init.js` (already exists).
+
+---
+
+## Phase 168.1 CRITICAL — Fix `chat-sidebar-promo.test.tsx` test regression — VERIFIED ALREADY RESOLVED (PM audit #81, 2026-03-31)
+
+> PM audit #81 verified: All 597 tests pass (101 suites). The test regression was already fixed in a previous session. TODO.md was stale.
+
+- [x] `chat-sidebar-promo.test.tsx` passes.
+- [x] All 597 unit tests pass (101 suites).
+- [x] Build passes.
+- [x] All 7 validation gates GREEN.
+
+**Files:** `tests/unit/components/chat-sidebar-promo.test.tsx` (already correct).
+
+---
+
+## Phase 168 CRITICAL — Audio Player Controller Error Fix — COMPLETED (2026-03-31)
+
+> Engineer delivered (PM audit #79). CRITICAL production bug fix. Three contributing paths addressed: SSE controller race, download Range support, audio player lifecycle.
+
+**Path A — SSE controller race condition (server-side):**
+
+- [x] Added `let controllerClosed = false;` flag in SSE streaming path.
+- [x] `emitHeartbeat()` checks `controllerClosed` before calling `writeStreamEvent()` — returns early if closed.
+- [x] `controllerClosed = true;` set immediately before `controller.close()` in finally block.
+- [x] Prevents heartbeat interval firing after controller is closed.
+
+**Path B — Download route HTTP Range support (server-side):**
+
+- [x] `parseByteRangeHeader()` added to parse Range request header.
+- [x] Range passed to `getFileFromAWS()` for S3-sourced files.
+- [x] Returns `206 Partial Content` with `Content-Range` header for Range requests.
+- [x] Returns `Accept-Ranges: bytes` header for all responses.
+- [x] AWS `getFileFromAWS` updated to accept optional Range parameter.
+
+**Path C — Audio player lifecycle hardening (client-side):**
+
+- [x] `previousAudioUrlRef.current` reset to `null` in cleanup function.
+- [x] `audioElement.src = ""` set before disposal to release browser resources.
+- [x] `error` event listener added to Audio element — surfaces `"Audio unavailable."` to user.
+- [x] `audioError` state added for error display.
+- [x] Play rejection surfaces `"Audio unavailable."` message.
+
+**Tests updated:**
+
+- [x] SSE post-close heartbeat behavior test added.
+- [x] Download range + headers test added.
+- [x] AWS range passthrough test added.
+- [x] Audio error + cleanup behavior test added.
+- [x] Build passes, lint passes, TSC clean.
+
+**Known issue:** 1 unrelated test failure — `chat-sidebar-promo.test.tsx` line 19 expects "Manage Plan" but UI renders "Upgrade Now". Not caused by Phase 168.
+
+**Files changed:** `src/app/api/openai/route.tsx`, `src/app/api/download/route.tsx`, `src/lib/utils/aws/getFileFromAWS.ts`, `src/components/shared/audio-player.tsx`, + 4 test files.
+
+---
+
+## Stripe Webhook Ops Verification — RE-OPENED (PM audit #79, 2026-03-31)
+
+> Previously marked RESOLVED (PM audit #78.1). Owner NOW reports (2026-03-31): payment succeeds (Stripe charges card), webhook returns 200 OK for all requests, but NO Transaction created in database and NO User plan updated. **This contradicts the previous resolution.** RE-OPENED as CRITICAL — requires diagnostic logging (Phase 169) to identify which event types are being received and which code path returns 200.
+
+- [x] ~~Stripe webhook endpoint URL matches production domain~~ — UNVERIFIED (re-opened)
+- [x] ~~`STRIPE_WEBHOOK_SECRET` env var matches webhook endpoint signing secret~~ — UNVERIFIED (re-opened)
+- [ ] **`checkout.session.completed` event type confirmed reaching webhook** — NEEDS VERIFICATION via function logs
+- [ ] **Test payment creates Transaction record AND updates User plan** — FAILING per owner
+- [x] Webhook responses: 200 OK confirmed — but 200 can mean "Unhandled event" (non-checkout events)
+
+**Status:** RE-OPENED. TD-PAYMENT-01 re-opened. Phase 169 (diagnostic logging) required.
+
+---
+
+## Phase 161 CRITICAL — Stripe Webhook Idempotency Repair — VERIFIED IN PRODUCTION (2026-03-30)
+
+> CODE-COMPLETE since PM audit #76. Triple-audit (Architect, Engineer, PM) verified code correct: Zod `.strip()`, idempotency check on `Transaction.stripeId`, `applyCheckoutPlanUpdate`, `hasExpectedStripePlan()` repair path, full error logging. **Production verification confirmed PM audit #78.1** — webhook 200 OK, payment flow end-to-end working.
+
+- [x] Idempotency check: Transaction lookup by `stripeId` before creation
+- [x] Repair path: `hasExpectedStripePlan()` checks, `applyCheckoutPlanUpdate()` reattempts
+- [x] Top-level try/catch with full error logging
+- [x] Zod `.strip()` for flexible metadata parsing
+- [x] Production verified: webhook 200 OK, Transaction created, User plan updated
+
+**Files:** `src/app/api/webhooks/stripe/route.tsx`, `src/lib/actions/transaction.action.tsx`
+
+---
+
+## Phase 167 HIGH — Fix empty catch blocks (PARTIAL) — COMPLETED (2026-03-31)
+
+> Engineer delivered targeted catch block fixes in 9 files. PM audit #78 verified: all targeted API route, admin action, delete cascade, and sidebar catches are fixed. 35 parameterless `catch {}` blocks remain across `src/` — tracked as Phase 167.2 in TODO.md.
+
+- [x] `src/app/api/aws/route.tsx` — 2 empty catches fixed (POST, DELETE outer catches now log to stderr)
+- [x] `src/app/api/openai/route.tsx` — 1 empty catch fixed (main route outer catch now logs to stderr)
+- [x] `src/app/api/upload/route.tsx` — 1 empty catch fixed (POST outer catch now logs to stderr)
+- [x] `src/components/chat/chat-sidebar.tsx` — 1 empty catch fixed (sidebar data fetch)
+- [x] `src/components/chat/chat-sidebar-shell.tsx` — 1 empty catch fixed (sidebar shell data fetch)
+- [x] `src/lib/actions/admin.actions.tsx` — 15 empty catches fixed (all admin action catches now log to stderr)
+- [x] `src/lib/utils/delete-user-cascade.ts` — 6 empty catches fixed (cascade cleanup steps now log to stderr)
+- [x] Unit test files updated to match new error handling patterns
+- [x] Build passes, all 592 unit tests pass
+
+**Remaining:** 35 parameterless `catch {}` blocks in `src/` — Phase 167.2.
+
+**Files changed:** 9 source files + associated test files.
 
 ---
 

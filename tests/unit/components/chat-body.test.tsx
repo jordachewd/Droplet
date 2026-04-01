@@ -72,7 +72,6 @@ function renderChatBodyEndState(
   return render(
     <ChatBody
       messages={[]}
-      conversationEnded
       supportEmail={SUPPORT_EMAIL}
       stopReasonMessages={STOP_REASON_MESSAGES}
       endState={{ stopReason, endAction }}
@@ -122,11 +121,10 @@ describe("ChatBody", () => {
     expect(screen.getByText(SUPPORT_EMAIL)).toBeTruthy();
   });
 
-  it("applies amber ended-conversation styling only when the conversation is ended", () => {
+  it("applies amber ended-conversation styling only when end state is present", () => {
     const { container, rerender } = render(
       <ChatBody
         messages={[]}
-        conversationEnded={false}
         supportEmail={SUPPORT_EMAIL}
         stopReasonMessages={STOP_REASON_MESSAGES}
         endState={null}
@@ -136,15 +134,14 @@ describe("ChatBody", () => {
     const activeChatBody = container.querySelector(".ChatBody");
 
     expect(activeChatBody).toBeTruthy();
-    expect(activeChatBody?.className.includes("border-amber-400/45")).toBe(
+    expect(activeChatBody?.className.includes("border-amber-500/30")).toBe(
       false,
     );
-    expect(activeChatBody?.className.includes("bg-amber-50/40")).toBe(false);
+    expect(activeChatBody?.className.includes("bg-amber-500/10")).toBe(false);
 
     rerender(
       <ChatBody
         messages={[]}
-        conversationEnded
         supportEmail={SUPPORT_EMAIL}
         stopReasonMessages={STOP_REASON_MESSAGES}
         endState={{
@@ -157,9 +154,11 @@ describe("ChatBody", () => {
     const endedChatBody = container.querySelector(".ChatBody");
     const endNotice = container.querySelector(".ChatBodyEndNotice");
 
-    expect(endedChatBody?.className.includes("border-amber-400/45")).toBe(true);
-    expect(endedChatBody?.className.includes("bg-amber-50/40")).toBe(true);
-    expect(endNotice?.className.includes("border-amber-500/60")).toBe(true);
-    expect(endNotice?.className.includes("bg-amber-100/85")).toBe(true);
+    expect(endedChatBody?.className.includes("border-amber-500/30")).toBe(
+      false,
+    );
+    expect(endedChatBody?.className.includes("bg-amber-500/10")).toBe(false);
+    expect(endNotice?.className.includes("border-amber-500/30")).toBe(true);
+    expect(endNotice?.className.includes("bg-amber-500/10")).toBe(true);
   });
 });

@@ -47,6 +47,7 @@ function AudioPlayerSession({ audioSrc }: AudioPlayerProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const previousAudioUrlRef = useRef<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [audioError, setAudioError] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
   const [currentTime, setCurrentTime] = useState("0:00");
   const [duration, setDuration] = useState("0:00");
@@ -90,24 +91,43 @@ function AudioPlayerSession({ audioSrc }: AudioPlayerProps) {
         setProgress(0);
         setCurrentTime("0:00");
       };
+      const handleError = () => {
+        setIsPlaying(false);
+        setAudioError("Audio unavailable.");
+      };
       audioElement.addEventListener("timeupdate", updateProgress);
       audioElement.addEventListener("ended", handleEnded);
+      audioElement.addEventListener("error", handleError);
 
       return () => {
+        previousAudioUrlRef.current = null;
+
+        audioElement.pause();
+        audioElement.src = "";
+        audioElement.onloadedmetadata = null;
+        audioElement.removeEventListener("timeupdate", updateProgress);
+        audioElement.removeEventListener("ended", handleEnded);
+        audioElement.removeEventListener("error", handleError);
+
         if (generatedBlobUrl) {
           URL.revokeObjectURL(generatedBlobUrl);
         }
 
-        audioElement.pause();
-        audioElement.onloadedmetadata = null;
-        audioElement.removeEventListener("timeupdate", updateProgress);
-        audioElement.removeEventListener("ended", handleEnded);
         if (audioRef.current === audioElement) {
           audioRef.current = null;
         }
       };
-    } catch {
+    } catch (error) {
+      // Audio initialization failed (invalid URL, decode error, browser restrictions).
       audioRef.current = null;
+      previousAudioUrlRef.current = null;
+      queueMicrotask(() => {
+        setAudioError(
+          error instanceof Error && error.name === "NotSupportedError"
+            ? "Audio format is not supported."
+            : "Audio unavailable.",
+        );
+      });
     }
   }, [audioSrc]);
 
@@ -125,7 +145,10 @@ function AudioPlayerSession({ audioSrc }: AudioPlayerProps) {
       audioElement
         .play()
         .then(() => setIsPlaying(true))
-        .catch(() => setIsPlaying(false));
+        .catch(() => {
+          setIsPlaying(false);
+          setAudioError("Audio unavailable.");
+        });
     }
   };
 
@@ -148,7 +171,7 @@ function AudioPlayerSession({ audioSrc }: AudioPlayerProps) {
           onClick={togglePlay}
           variant="outlined"
           size="sm"
-          disabled={!audioSrc}
+          disabled={!audioSrc || audioError !== null}
           aria-label={playbackControlLabel}
         >
           <i
@@ -177,9 +200,15 @@ function AudioPlayerSession({ audioSrc }: AudioPlayerProps) {
           />
         </div>
 
-        <p className="text-sm" role="status" aria-live="polite">
-          {currentTime} / {duration}
-        </p>
+        {audioError ? (
+          <p className="text-sm text-red-700 dark:text-red-300" role="status">
+            {audioError}
+          </p>
+        ) : (
+          <p className="text-sm" role="status" aria-live="polite">
+            {currentTime} / {duration}
+          </p>
+        )}
       </div>
     </div>
   );

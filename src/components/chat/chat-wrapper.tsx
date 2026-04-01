@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import classNames from "classnames";
 import { useShallow } from "zustand/react/shallow";
+import { DEFAULT_PROMO_CONTENT, PromoContent } from "@/constants/promo-content";
 import { Message } from "@/types";
 import ChatIntro from "@/components/chat/chat-intro";
 import ChatBody from "@/components/chat/chat-body";
@@ -19,11 +20,18 @@ import { TaskEndAction, TaskEndedReason, TaskStatus } from "@/types/TaskData.d";
 import { useChatStore } from "@/lib/hooks/use-chat-store";
 import { usePreferencesStore } from "@/lib/hooks/use-preferences-store";
 import type { ChatApiResponse, ChatStreamEvent } from "@/types/chat-api";
+import {
+  STREAM_PROACTIVE_TIMEOUT_MESSAGE,
+  STREAM_PROACTIVE_TIMEOUT_TITLE,
+  STREAM_REQUEST_TIMEOUT_MS,
+  STREAM_REQUEST_TIMEOUT_MESSAGE,
+} from "@/constants/chat-stream";
 
 interface ChatWrapperProps {
   personas: Persona[];
   supportEmail: string;
   stopReasonMessages: Record<TaskEndedReason, string>;
+  promoContent?: PromoContent;
   initialPersonaId?: string;
   allowedPersonaIds?: PersonaId[];
   initialTaskId?: string | null;
@@ -32,10 +40,6 @@ interface ChatWrapperProps {
   initialEndedReason?: TaskEndedReason;
   initialEndAction?: TaskEndAction;
 }
-
-const STREAM_REQUEST_TIMEOUT_MS = 70_000;
-const STREAM_REQUEST_TIMEOUT_MESSAGE =
-  "The response timed out. Please try again.";
 
 function isAbortError(error: unknown): boolean {
   return (
@@ -52,6 +56,7 @@ export default function ChatWrapper({
   personas,
   supportEmail,
   stopReasonMessages,
+  promoContent = DEFAULT_PROMO_CONTENT,
   initialPersonaId,
   allowedPersonaIds,
   initialTaskId = null,
@@ -297,7 +302,9 @@ export default function ChatWrapper({
 
     try {
       return JSON.parse(dataLine.slice(6)) as ChatStreamEvent;
-    } catch {
+    } catch (error) {
+      void error;
+      // Ignore malformed stream chunks; SSE parser continues until a valid event arrives.
       return null;
     }
   }
@@ -340,8 +347,16 @@ export default function ChatWrapper({
       }
 
       if (event.type === "error") {
-        showAlert("Error", event.error);
         finalEventReceived = true;
+
+        if (event.error === STREAM_PROACTIVE_TIMEOUT_MESSAGE) {
+          showAlert(STREAM_PROACTIVE_TIMEOUT_TITLE, event.error, {
+            severity: "warning",
+          });
+          return;
+        }
+
+        showAlert("Error", event.error);
         return;
       }
 
@@ -555,22 +570,32 @@ export default function ChatWrapper({
     setIsLoading(false);
   };
 
-  const showAlert = (title: string, text: string) => {
+  const showAlert = (
+    title: string,
+    text: string,
+    options?: Pick<AlertParams, "severity" | "variant">,
+  ) => {
     nextAlertId.current += 1;
-    setAlert({ id: nextAlertId.current, title, text });
+    setAlert({
+      id: nextAlertId.current,
+      title,
+      text,
+      severity: options?.severity,
+      variant: options?.variant,
+    });
     setIsLoading(false);
     setMessages((previousMessages) => previousMessages.slice(0, -1));
   };
 
   return (
-    <main className="ChatWrapper relative flex h-full flex-1 flex-col overflow-hidden -mt-14">
+    <section className="ChatWrapper relative flex h-full flex-1 flex-col overflow-hidden -mt-14">
       {alert && <AlertMessage message={alert} />}
 
-      <section
+      <div
         id="ChatWrapperContent"
         className={classNames(
-          "ChatWrapperContent relative z-10 flex w-full h-dvh flex-col overflow-y-auto pt-14",
-          isNewTask && "items-center justify-center px-4",
+          "ChatWrapperContent relative z-10 flex w-full h-dvh flex-col overflow-y-auto pt-14 px-4",
+          isNewTask && "items-center justify-center gap-12",
         )}
       >
         {isNewTask ? (
@@ -582,21 +607,21 @@ export default function ChatWrapper({
           <ChatBody
             messages={task}
             personaLabel={selectedPersona.label}
-            conversationEnded={isConversationEnded}
             supportEmail={supportEmail}
             stopReasonMessages={stopReasonMessages}
+            promoContent={promoContent}
             endState={endState}
           />
         )}
-      </section>
 
-      <ChatInput
-        sendMessage={sendMessage}
-        loading={isLoading}
-        disabled={isConversationEnded}
-        startPrompt={startMsg}
-        personaLabel={selectedPersona.label}
-      />
-    </main>
+        <ChatInput
+          sendMessage={sendMessage}
+          loading={isLoading}
+          disabled={isConversationEnded}
+          startPrompt={startMsg}
+          personaLabel={selectedPersona.label}
+        />
+      </div>
+    </section>
   );
 }

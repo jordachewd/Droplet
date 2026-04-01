@@ -4,6 +4,7 @@ import ChatPageWrapper from "@/components/chat/chat-page-wrapper";
 import PersonasSection from "@/components/sections/shared/personas-section";
 import { getEffectivePersonaAccessByPlan } from "@/lib/utils/effective-persona-access";
 import { getEffectivePersonaConfig } from "@/lib/utils/effective-persona-config";
+import { getEffectivePromoContent } from "@/lib/utils/effective-promo-content";
 import { ensureUserSynced } from "@/lib/utils/ensure-user-synced";
 import {
   getRequiredPlanForPersona,
@@ -21,9 +22,10 @@ export default async function AppPersonasPage() {
   }
 
   const isAdmin = userData.role === "admin";
-  const [fullPersonaAccessByPlan, personas] = await Promise.all([
+  const [fullPersonaAccessByPlan, personas, promoContent] = await Promise.all([
     getEffectivePersonaAccessByPlan(),
     getEffectivePersonaConfig(),
+    getEffectivePromoContent(),
   ]);
   const entitlements = resolveEntitlements(userData.plan?.name ?? "Lite", {
     isAdmin,
@@ -57,6 +59,7 @@ export default async function AppPersonasPage() {
         personaAccess={entitlements.personaAccess}
         personaRequiredPlan={personaRequiredPlan}
         className="px-4 max-w-7xl! gap-6!"
+        promoContent={promoContent}
       />
     </ChatPageWrapper>
   );

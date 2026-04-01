@@ -23,7 +23,6 @@ interface ThemeContextValue {
 }
 
 const STORAGE_KEY = "droplet-theme-mode";
-const LEGACY_STORAGE_KEY = "cellesseon-theme-mode";
 const THEME_ATTRIBUTE = "data-droplet-theme";
 
 export const DropletThemeContext = createContext<ThemeContextValue | null>(
@@ -35,9 +34,7 @@ const getSystemMode = (): ResolvedThemeMode =>
 
 const getStoredMode = (): ThemeMode => {
   try {
-    const storedThemeMode =
-      window.localStorage.getItem(STORAGE_KEY) ??
-      window.localStorage.getItem(LEGACY_STORAGE_KEY);
+    const storedThemeMode = window.localStorage.getItem(STORAGE_KEY);
 
     if (
       storedThemeMode === "light" ||
@@ -53,13 +50,7 @@ const getStoredMode = (): ThemeMode => {
   return "system";
 };
 
-const getInitialMode = (): ThemeMode => {
-  if (typeof window === "undefined") {
-    return "system";
-  }
-
-  return getStoredMode();
-};
+const getInitialMode = (): ThemeMode => "system";
 
 const persistMode = (nextMode: ThemeMode) => {
   try {
@@ -71,15 +62,48 @@ const persistMode = (nextMode: ThemeMode) => {
 
 export default function DropletTheme({ children }: ThemeProps) {
   const [mode, setModeState] = useState<ThemeMode>(getInitialMode);
-  const [systemMode, setSystemMode] = useState<ResolvedThemeMode>(() =>
-    typeof window === "undefined" ? "light" : getSystemMode(),
-  );
+  const [systemMode, setSystemMode] = useState<ResolvedThemeMode>("light");
+  const [hasHydratedTheme, setHasHydratedTheme] = useState(false);
   const resolvedMode: ResolvedThemeMode = mode === "system" ? systemMode : mode;
 
   useEffect(() => {
     document.documentElement.classList.add("DropletTheme");
+    if (!document.documentElement.hasAttribute(THEME_ATTRIBUTE)) {
+      document.documentElement.setAttribute(THEME_ATTRIBUTE, "light");
+    }
+  }, []);
+
+  useEffect(() => {
+    const storedMode = getStoredMode();
+    const nextSystemMode = getSystemMode();
+    const syncThemeState = window.setTimeout(() => {
+      setSystemMode(nextSystemMode);
+      if (storedMode !== "system") {
+        setModeState(storedMode);
+      }
+      setHasHydratedTheme(true);
+    }, 0);
+
+    return () => window.clearTimeout(syncThemeState);
+  }, []);
+
+  useEffect(() => {
+    if (!hasHydratedTheme) return;
+
+    document.documentElement.classList.add("DropletTheme");
     document.documentElement.setAttribute(THEME_ATTRIBUTE, resolvedMode);
-  }, [resolvedMode]);
+  }, [hasHydratedTheme, resolvedMode]);
+
+  useEffect(() => {
+    const restoreTimer = window.setTimeout(() => {
+      setModeState(getStoredMode());
+      setSystemMode(getSystemMode());
+    }, 0);
+
+    return () => {
+      window.clearTimeout(restoreTimer);
+    };
+  }, []);
 
   useEffect(() => {
     if (mode !== "system") return;

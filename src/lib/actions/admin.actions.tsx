@@ -394,6 +394,49 @@ function parseStructuredAdminSettingValue({
     };
   }
 
+  if (key === "admin.promoContent") {
+    return {
+      promoTitlePro: getStringField(formData, "promoTitlePro"),
+      promoTitlePremium: getStringField(formData, "promoTitlePremium"),
+      promoDescriptionPro: getStringField(formData, "promoDescriptionPro"),
+      promoDescriptionPremium: getStringField(
+        formData,
+        "promoDescriptionPremium",
+      ),
+      promoUpgradeCta: getStringField(formData, "promoUpgradeCta"),
+      promoAdminLabel: getStringField(formData, "promoAdminLabel"),
+      promoAdminDescription: getStringField(formData, "promoAdminDescription"),
+      promoSuspensionTitle: getStringField(formData, "promoSuspensionTitle"),
+      promoSuspensionDescription: getStringField(
+        formData,
+        "promoSuspensionDescription",
+      ),
+      promoFreeLabel: getStringField(formData, "promoFreeLabel"),
+      promoCurrentPlanLabel: getStringField(formData, "promoCurrentPlanLabel"),
+      promoUpgradeMessage: getStringField(formData, "promoUpgradeMessage"),
+      promoTrialLabel: getStringField(formData, "promoTrialLabel"),
+      promoPersonaUpgrade: getStringField(formData, "promoPersonaUpgrade"),
+      promoPersonaUpgradeFallback: getStringField(
+        formData,
+        "promoPersonaUpgradeFallback",
+      ),
+      promoContactSupportCta: getStringField(
+        formData,
+        "promoContactSupportCta",
+      ),
+      chatConversationEndedLabel: getStringField(
+        formData,
+        "chatConversationEndedLabel",
+      ),
+      chatStartConversationCta: getStringField(
+        formData,
+        "chatStartConversationCta",
+      ),
+      chatUpgradePlanCta: getStringField(formData, "chatUpgradePlanCta"),
+      chatContactSupportCta: getStringField(formData, "chatContactSupportCta"),
+    };
+  }
+
   if (PERSONA_ACCESS_KEYS.has(key)) {
     return formData
       .getAll("personaIds")
@@ -648,6 +691,14 @@ export async function updateAdminSettingAction(
 
     if (key === "admin.aboutContent") {
       revalidatePath("/about");
+    }
+
+    if (key === "admin.promoContent") {
+      revalidatePath("/app");
+      revalidatePath("/app/new");
+      revalidatePath("/app/personas");
+      revalidatePath("/app/profile");
+      revalidatePath("/app/plans");
     }
 
     return successState("Settings updated.");

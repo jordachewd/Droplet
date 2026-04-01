@@ -65,6 +65,7 @@ import {
   chatMessageArraySchema,
   nonEmptyStringSchema,
 } from "@/lib/utils/validation-schemas";
+import { STREAM_PROACTIVE_TIMEOUT_MESSAGE } from "@/constants/chat-stream";
 import type { ChatApiResponse, ChatStreamEvent } from "@/types/chat-api";
 import { z } from "zod";
 
@@ -77,6 +78,7 @@ const DEFAULT_CHAT_TASK_CLASS: TaskClass = "standard";
 const DEFAULT_CHAT_BUDGET_STATE: BudgetState = "normal";
 const STREAM_GENERAL_HEARTBEAT_INTERVAL_MS = 30_000;
 const STREAM_MEDIA_HEARTBEAT_INTERVAL_MS = 12_000;
+const STREAM_TIMEOUT_SAFETY_BUFFER_SECONDS = 5;
 const STREAM_HEADERS = {
   "Content-Type": "text/event-stream; charset=utf-8",
   "Cache-Control": "no-store, no-transform",
@@ -1435,11 +1437,16 @@ export async function POST(req: Request): Promise<Response> {
     if (streamingResponseRequested) {
       const stream = new ReadableStream<Uint8Array>({
         async start(controller) {
+          const startTime = Date.now();
+          const timeoutSafetyMs =
+            (maxDuration - STREAM_TIMEOUT_SAFETY_BUFFER_SECONDS) * 1000;
           let didSendFinal = false;
+          let controllerClosed = false;
           let generalHeartbeatInterval: ReturnType<typeof setInterval> | null =
             null;
           let mediaHeartbeatInterval: ReturnType<typeof setInterval> | null =
             null;
+          let proactiveTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
           const writeErrorEvent = (
             errorMessage: string,
@@ -1498,6 +1505,10 @@ export async function POST(req: Request): Promise<Response> {
           };
 
           const emitHeartbeat = (): boolean => {
+            if (controllerClosed) {
+              return false;
+            }
+
             try {
               writeStreamEvent(controller, {
                 type: "heartbeat",
@@ -1539,6 +1550,43 @@ export async function POST(req: Request): Promise<Response> {
             }, STREAM_MEDIA_HEARTBEAT_INTERVAL_MS);
           };
 
+          const clearProactiveTimeout = () => {
+            if (proactiveTimeoutId === null) {
+              return;
+            }
+
+            clearTimeout(proactiveTimeoutId);
+            proactiveTimeoutId = null;
+          };
+
+          const startProactiveTimeout = () => {
+            if (proactiveTimeoutId !== null) {
+              return;
+            }
+
+            proactiveTimeoutId = setTimeout(() => {
+              const elapsedMs = Date.now() - startTime;
+
+              process.stderr.write(
+                `[openai/route] proactive timeout safety net fired after ${elapsedMs}ms\n`,
+              );
+              writeErrorEvent(
+                STREAM_PROACTIVE_TIMEOUT_MESSAGE,
+                "proactive timeout safety net",
+              );
+              stopGeneralHeartbeat();
+              stopMediaHeartbeat();
+              try {
+                controllerClosed = true;
+                controller.close();
+              } catch (error) {
+                process.stderr.write(
+                  `[openai/route] proactive timeout close failed: ${error instanceof Error ? error.message : "unknown"}\n`,
+                );
+              }
+            }, timeoutSafetyMs);
+          };
+
           try {
             writeStreamEvent(controller, {
               type: "meta",
@@ -1546,6 +1594,7 @@ export async function POST(req: Request): Promise<Response> {
               personaId: selectedPersona.id,
             });
             startGeneralHeartbeat();
+            startProactiveTimeout();
 
             const aiPayload = await generateStreamingResponse({
               messages: promptPayloadMessages,
@@ -1573,6 +1622,10 @@ export async function POST(req: Request): Promise<Response> {
                 }),
               abortSignal: req.signal,
               onContentChunk: (delta, snapshot) => {
+                if (controllerClosed) {
+                  return;
+                }
+
                 writeStreamEvent(controller, {
                   type: "chunk",
                   delta,
@@ -1620,6 +1673,7 @@ export async function POST(req: Request): Promise<Response> {
           } finally {
             stopGeneralHeartbeat();
             stopMediaHeartbeat();
+            clearProactiveTimeout();
             if (!didSendFinal) {
               writeErrorEvent(
                 OPENAI_ERROR_MESSAGES.unknown,
@@ -1627,6 +1681,7 @@ export async function POST(req: Request): Promise<Response> {
               );
             }
             try {
+              controllerClosed = true;
               controller.close();
             } catch (error) {
               process.stderr.write(

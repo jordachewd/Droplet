@@ -42,9 +42,9 @@ async function isPaidCheckoutSession(sessionId: string): Promise<boolean> {
   try {
     const session = await stripe.checkout.sessions.retrieve(sessionId);
     return session.payment_status === "paid";
-  } catch {
+  } catch (error) {
     process.stderr.write(
-      "[checkout-success] Failed to verify Stripe checkout session.\n",
+      `[checkout-success] Failed to verify Stripe checkout session: ${error instanceof Error ? error.message : "unknown"}.\n`,
     );
 
     return false;

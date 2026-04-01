@@ -64,7 +64,7 @@ export default function AdminSidebar({ links }: AdminSidebarProps) {
       <aside className={sidebarClass} id="admin-sidebar">
         <div
           className={classNames(
-            "AdminSidebarHead flex flex-col w-full px-4 h-14 justify-center" ,
+            "AdminSidebarHead flex flex-col w-full px-4 h-14 justify-center",
             "bg-lavenderHaze-500 dark:bg-nightIndigo-500",
             !isOpen && "lg:hidden",
           )}

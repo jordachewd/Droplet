@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import DropletTheme from "@/components/layout/droplet-theme";
 import useThemeMode from "@/lib/hooks/use-theme-mode";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -69,6 +69,22 @@ describe("DropletTheme", () => {
     expect((await screen.findByTestId("mode")).textContent).toBe("dark");
     expect(localStorage.getItem("droplet-theme-mode")).toBe("dark");
     expect(document.documentElement.dataset.dropletTheme).toBe("dark");
+  });
+
+  it("syncs the stored mode after mount", async () => {
+    localStorage.setItem("droplet-theme-mode", "dark");
+
+    render(
+      <DropletTheme>
+        <ThemeProbe />
+      </DropletTheme>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("mode").textContent).toBe("dark");
+      expect(screen.getByTestId("resolved-mode").textContent).toBe("dark");
+      expect(document.documentElement.dataset.dropletTheme).toBe("dark");
+    });
   });
 
   it("keeps working when browser storage access is blocked", async () => {

@@ -324,6 +324,7 @@ export async function getEffectiveLandingPageContent(): Promise<LandingPageConte
       ),
     };
   } catch {
+    // Intentional fallback to defaults — admin config DB errors are non-fatal.
     return {
       heroContent: heroFallback,
       landingContent: landingFallback,
@@ -338,6 +339,7 @@ export async function getEffectiveAboutContent(): Promise<AboutContent> {
     const settings = await getSettingValues(["admin.aboutContent"]);
     return normalizeAboutContent(settings.get("admin.aboutContent"));
   } catch {
+    // Intentional fallback to defaults — admin config DB errors are non-fatal.
     return fallback;
   }
 }

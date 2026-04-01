@@ -1,4 +1,5 @@
 import PersonaCard from "@/components/shared/persona-card";
+import { PromoContent } from "@/constants/promo-content";
 import { Persona, PersonaAccessLevel, PersonaId } from "@/types/PersonaData.d";
 import classNames from "classnames";
 
@@ -10,6 +11,7 @@ interface PersonasSectionProps {
   personaAccess?: Partial<Record<PersonaId, PersonaAccessLevel>>;
   personaRequiredPlan?: Partial<Record<PersonaId, "Pro" | "Premium" | null>>;
   className?: string;
+  promoContent?: PromoContent;
 }
 
 export default function PersonasSection({
@@ -20,6 +22,7 @@ export default function PersonasSection({
   personaAccess,
   personaRequiredPlan,
   className = "",
+  promoContent,
 }: PersonasSectionProps) {
   const allowedPersonaIdSet = new Set(allowedPersonaIds ?? []);
   const enforcePlanFilter = isAppMode && allowedPersonaIds !== undefined;
@@ -58,6 +61,7 @@ export default function PersonasSection({
             locked={isLocked}
             trial={isTrialPersona}
             requiredPlan={requiredPlan}
+            promoContent={promoContent}
           />
         );
       })}

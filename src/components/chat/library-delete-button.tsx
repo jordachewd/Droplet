@@ -63,7 +63,9 @@ export default function LibraryDeleteButton({
         variant: "outlined",
       });
       router.refresh();
-    } catch {
+    } catch (error) {
+      void error;
+      // Deletion failures are surfaced via the user-facing alert below.
       setAlert({
         id: Date.now(),
         title: "Delete failed",

@@ -24,7 +24,7 @@ describe("PlanPromo", () => {
     expect(
       screen.getByText("Unlock premium features with an upgrade!"),
     ).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Upgrade now" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Upgrade Now" })).toBeTruthy();
   });
 
   it("shows suspension notice and contact support CTA for suspended users", () => {
@@ -37,10 +37,10 @@ describe("PlanPromo", () => {
       />,
     );
 
-    expect(screen.getByText("Account suspended")).toBeTruthy();
+    expect(screen.getByText("Account Suspended")).toBeTruthy();
     expect(
       screen.getByText(
-        "Your account is suspended. Contact support to restore access.",
+        "Your account has been suspended. Contact support for assistance.",
       ),
     ).toBeTruthy();
     expect(
@@ -48,6 +48,6 @@ describe("PlanPromo", () => {
         .getByRole("link", { name: "Contact support" })
         .getAttribute("href"),
     ).toBe("mailto:support@droplet.example");
-    expect(screen.queryByRole("link", { name: "Upgrade now" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Upgrade Now" })).toBeNull();
   });
 });

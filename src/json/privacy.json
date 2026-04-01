@@ -32,7 +32,7 @@
       "title": "Cookies, local storage, and similar technologies",
       "paragraphs": [
         "Droplet uses essential authentication technologies through Clerk and stores interface preferences such as theme and sidebar state in browser storage. More detail appears in the dedicated Cookie Policy.",
-        "For the current public experience, the documented browser storage keys include droplet-theme-mode, droplet-sidebar-collapsed, and the legacy migration keys cellesseon-theme-mode and cellesseon-sidebar-collapsed."
+        "For the current public experience, the documented browser storage keys include droplet-theme-mode and droplet-sidebar-collapsed."
       ]
     }
   ]

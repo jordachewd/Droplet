@@ -6,6 +6,7 @@ function encodePathSegment(segment: string): string {
   try {
     return encodeURIComponent(decodeURIComponent(segment));
   } catch {
+    // URL/path parse failure is non-fatal; fallback to encoding the raw segment.
     return encodeURIComponent(segment);
   }
 }
@@ -31,6 +32,7 @@ export function normalizePublicAssetUrl(rawUrl: string): string {
 
     return `${parsedUrl.origin}${normalizedPathname}%23${encodedHash}${parsedUrl.search}`;
   } catch {
+    // URL/path parse failure is non-fatal; fallback to the original URL.
     return rawUrl;
   }
 }

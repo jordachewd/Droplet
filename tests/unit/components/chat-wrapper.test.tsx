@@ -24,15 +24,13 @@ vi.mock("@/components/chat/chat-intro", () => ({
 vi.mock("@/components/chat/chat-body", () => ({
   default: ({
     messages,
-    conversationEnded,
     endState,
   }: {
     messages?: Message[];
-    conversationEnded?: boolean;
     endState?: { stopReason: string; endAction: string } | null;
   }) => (
     <div data-testid="chat-body">
-      {conversationEnded ? "ended" : "active"}
+      {endState ? "ended" : "active"}
       {endState ? `:${endState.stopReason}:${endState.endAction}` : ""}
       <div data-testid="chat-body-messages">
         {messages
@@ -74,9 +72,13 @@ vi.mock("@/components/chat/chat-input", () => ({
 }));
 
 vi.mock("@/components/shared/alert-message", () => ({
-  default: ({ message }: { message: { title: string; text?: string } }) => (
+  default: ({
+    message,
+  }: {
+    message: { title: string; text?: string; severity?: string };
+  }) => (
     <div role="alert">
-      {message.title}: {message.text}
+      [{message.severity ?? "error"}] {message.title}: {message.text}
     </div>
   ),
 }));
@@ -86,6 +88,8 @@ vi.mock("@/lib/utils/openai/filterAssistantMsg", () => ({
 }));
 
 describe("ChatWrapper", () => {
+  const proactiveTimeoutMessage =
+    "Your request is taking longer than expected. Media generation may still be processing in the background. Please check your library or start a new conversation.";
   const chatWrapperProps = {
     personas: PERSONAS,
     supportEmail: "support@example.com",
@@ -123,6 +127,7 @@ describe("ChatWrapper", () => {
     expect(screen.getByRole("alert").textContent).toContain(
       "Your plan has expired. Please upgrade to continue.",
     );
+    expect(screen.getByRole("alert").textContent).toContain("[error]");
   });
 
   it("renders stop payloads and disables input when the conversation is ended", async () => {
@@ -282,6 +287,45 @@ describe("ChatWrapper", () => {
     });
 
     expect(screen.queryByRole("alert")).toBeNull();
+  });
+
+  it("shows proactive stream timeout errors as warning alerts", async () => {
+    const stream = new ReadableStream({
+      start(controller: ReadableStreamDefaultController<Uint8Array>) {
+        controller.enqueue(
+          new TextEncoder().encode(
+            'data: {"type":"meta","taskId":"task_stream_timeout","personaId":"strategist"}\n\n',
+          ),
+        );
+        controller.enqueue(
+          new TextEncoder().encode(
+            `data: {"type":"error","error":"${proactiveTimeoutMessage}"}\n\n`,
+          ),
+        );
+        controller.close();
+      },
+    });
+
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(stream, {
+        status: 200,
+        headers: { "Content-Type": "text/event-stream" },
+      }),
+    );
+
+    render(<ChatWrapper {...chatWrapperProps} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Send message" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert").textContent).toContain(
+        "Request taking longer than expected",
+      );
+      expect(screen.getByRole("alert").textContent).toContain(
+        proactiveTimeoutMessage,
+      );
+      expect(screen.getByRole("alert").textContent).toContain("[warning]");
+    });
   });
 
   it("keeps long streams alive when heartbeat events are received", async () => {

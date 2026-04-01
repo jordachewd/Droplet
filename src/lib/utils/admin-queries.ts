@@ -4,6 +4,7 @@ import { getDefaultAboutContent } from "@/constants/about-data";
 import { buildFaqs } from "@/constants/faqs";
 import { getDefaultHeroContent } from "@/constants/hero-content";
 import { getDefaultLandingContent } from "@/constants/landing-data";
+import { DEFAULT_PROMO_CONTENT } from "@/constants/promo-content";
 import {
   DEFAULT_PLAN_PRICING,
   PERSONA_TRIAL_LIMITS,
@@ -821,6 +822,7 @@ export async function getAdminSettingsSnapshot() {
       heroContent: getDefaultHeroContent(),
       landingContent: getDefaultLandingContent(),
       aboutContent: getDefaultAboutContent(),
+      promoContent: { ...DEFAULT_PROMO_CONTENT },
     },
   };
 }

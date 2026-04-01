@@ -1,169 +1,269 @@
-﻿# Droplet — TODO
+# Droplet — TODO
 
 > Prioritized, actionable development tasks. Each task max ~30 minutes.
 > Governed by **Droplet-PM**. Do not add tasks without PM approval.
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #78 (2026-03-30). Milestones 0–25 COMPLETE. All phases through 166 complete + 160.1 + 164 complete. 592 unit tests (101 suites). 49 E2E tests (8 spec files). Build passes. TSC clean. Node.js 24.12.0 runtime.**
-> **GATE STATUS: All 7 validation gates GREEN locally. Lint (0 errors, 0 warnings), Knip (0 findings), TSC clean, build passes, unit tests (101/592), E2E (8 specs/49 tests), coverage 85/80/85/85.**
-> **DEPLOYMENT UNBLOCKED (Phase 160.1 COMPLETE). ALL code fixes ready for production. Deployment is owner-manual.**
-> **Zero: `as never`, `as any`, `console.log`, `console.error`, `window.alert`, `window.confirm`, `strict: false`, `droplet-scrollbar`, stale TODOs — all in `src/`.**
+> **STATUS: PM audit #81 (2026-04-01). DEPLOYED TO PRODUCTION. All 7 validation gates GREEN (601 tests, lint 0/0, TSC clean, build passes, knip 0). All Milestones 0–25 COMPLETE. Phases 171–172, 167.2, 162, 163 ALL COMPLETED this session. Brand rename complete in `src/`. Catch blocks documented. Promo text admin-configurable. Global error boundary live.**
 >
-> **OWNER-REPORTED BUGS STATUS (PM audit #78):**
+> **GATE STATUS: Validation GREEN. Architecture GREEN. Admin GREEN. Public GREEN. Contract GREEN. Product YELLOW (C1 debug text in production).**
 >
-> - ✅ Stream error fix (Phases 160 + 160.1): CODE-COMPLETE. Awaiting owner deployment.
-> - ✅ Payment webhook fix (Phase 161): CODE-COMPLETE. Awaiting owner deployment + Stripe Dashboard verification.
-> - ✅ Client timeout (Phase 164 + 160.1): COMPLETE.
-> - ✅ Phase 166 (maxDuration on all routes): VERIFIED COMPLETE.
-> - ⚠️ Admin configurability (Phase 162): PENDING — next after Phase 167.
+> **ACTIVE ISSUES (PM audit #81 — triple-audit: Architect + Engineer + PM):**
 >
-> **EXECUTION ORDER (PM audit #78 — deployment is owner-manual):**
+> - 🔴 C1: Debug text "Checking if is new task..." visible to all users in production (`chat-wrapper.tsx:601`).
+> - ⚠️ H1: Dead `public/scripts/theme-init.js` — orphaned since Phase 170, last `cellesseon` reference.
+> - ⚠️ H2: Duplicate `STREAM_PROACTIVE_TIMEOUT_MESSAGE` constant — desync risk between server and client.
+> - ⚠️ H3: Dead `conversationEnded` prop in `ChatBodyProps` — accepted but never consumed.
+> - ⚠️ H4: Fake download icon in `profile-billing.tsx` — styled clickable, no handler, no keyboard access.
+> - ⚠️ H5: Download route S3 path forces 206 from request Range header, not upstream ContentRange.
+> - ⚠️ H6: Audio player button permanently disabled after transient error (no retry mechanism).
+> - ⚠️ M1: No video player error state (unlike audio player).
+> - ⚠️ M2: ~30 hardcoded display strings across 8+ components (AGENTS.md Rule 11 violation).
+> - ⚠️ M3: Hardcoded persona IDs `["strategist", "teacher", "creator"]` in homepage spotlight.
 >
-> 1. **Phase 167 HIGH** — Fix empty catch blocks (~27 blocks across 7 files). START HERE.
-> 2. **Phase 162 HIGH** — Promo text admin-configurable (3 core files + resolver).
-> 3. **Phase 163 HIGH** — Global error boundary (`global-error.tsx`).
-> 4. **Phase 143 MEDIUM** — Env var runtime validation.
-> 5. **Phase 165 MEDIUM** — Checkout success page DB polling.
-> 6. **Phase 144–148 MEDIUM/LOW** — Backlog.
+> **EXECUTION ORDER (PM audit #81 — critical production fix first, then audit findings, then backlog):**
 >
-> _Production deployment is handled by the owner manually. Do not block on deployment._
-> _Post-deploy ops checklist (Stripe webhook verification, streaming test, payment test) is owner responsibility._
+> 1. **🔴 Phase 173 CRITICAL** — Remove debug text from production.
+> 2. **HIGH Phase 174** — Delete dead file + update knip.json.
+> 3. **HIGH Phase 175** — Remove dead prop from ChatBodyProps.
+> 4. **HIGH Phase 176** — Fix download route 206 status logic.
+> 5. **HIGH Phase 177** — Deduplicate timeout message constant.
+> 6. **HIGH Phase 178** — Fix/remove fake download icon.
+> 7. **MEDIUM Phase 179** — Add video player error state.
+> 8. **MEDIUM Phase 180** — Hardcoded display text sweep.
+> 9. **MEDIUM Phase 143** — Env var runtime validation.
+> 10. **MEDIUM Phase 144** — Admin config cache.
+> 11. **MEDIUM Phase 145–165** — Remaining backlog.
+>
+> _Debug text in production blocks ALL other work. No exceptions._
 
 ---
 
-## 🟢 ENGINEER START HERE — Fix Empty Catch Blocks (PM audit #76)
+## 🔴 ENGINEER START HERE — Phase 173 CRITICAL — Remove Debug Text from Production
 
-### Phase 167 HIGH — Add error handling to all empty catch blocks violating AGENTS.md
+> **Debug text `<p>Checking if is new task...</p>` visible to every user on every existing conversation.** This is a production-visible debug artifact that must be removed immediately.
 
-> **EXPANDED from 2 blocks to ~27 (PM audit #76).** Triple-audit confirmed: Architect found 15 in admin.actions.tsx + 6 in delete-user-cascade.ts. Engineer found 3 in API routes (aws + upload). PM independently verified all counts.
->
-> AGENTS.md: "No empty catch blocks — every catch must either capture the error variable and log to `process.stderr.write()`, or have a code comment explaining why the error is intentionally discarded."
+**File:** `src/components/chat/chat-wrapper.tsx` line 601
 
-**Category A — API Route catches (MUST LOG — production debugging at stake):**
+**Current code:**
 
-1. `src/app/api/aws/route.tsx` line 165 — POST catch: returns 500 without logging
-2. `src/app/api/aws/route.tsx` line 240 — DELETE catch: returns 500 without logging
-3. `src/app/api/upload/route.tsx` line 141 — POST catch: returns 500 without logging
-4. `src/app/api/openai/route.tsx` line ~777 — inner catch: returns error JSON without logging
-5. `src/app/api/openai/route.tsx` line ~1686 — outer catch: returns 500 without logging
-
-**Category B — Admin action catches (15 blocks — MUST LOG):**
-
-6-20. `src/lib/actions/admin.actions.tsx` — 15 `catch {` blocks at lines 56, 498, 522, 645, 702, 757, 796, 851, 908, 959, 989, 1030, 1068, 1116, 1164. All return `errorState(...)` to UI but discard actual error details.
-
-**Category C — Cascade utility catches (6 blocks — add error variable capture):**
-
-21-26. `src/lib/utils/delete-user-cascade.ts` — 6 `catch {` blocks. Currently call `onStepError(step)` but don't capture error variable.
-
-**Category D — Client/utility catches (comment-only — acceptable fallback patterns):**
-
-27. `src/components/chat/sidebar/chat-sidebar-shell.tsx` line 75 — localStorage write. Add comment: `// localStorage quota exceeded — non-critical, intentionally discarded`
-28. `src/components/chat/chat-sidebar.tsx` line 49 — Server data-fetch fallback. Add `process.stderr.write()` logging.
+```tsx
+{
+  !isNewTask && <p>Checking if is new task...</p>;
+}
+```
 
 **What to do:**
 
-1. **For all Category A + B blocks:** Capture error variable `catch (error)`, add `process.stderr.write(\`[source] Error: ${error instanceof Error ? error.message : "unknown"}\\n\`)` before the return statement.
-2. **For Category C blocks:** Capture error variable, pass to `onStepError(step, error)` (update callback signature).
-3. **For Category D block 27:** Add comment explaining intentional discard.
-4. **For Category D block 28:** Add `process.stderr.write()` logging.
+1. Remove the entire line `{!isNewTask && <p>Checking if is new task...</p>}`.
 
 **Acceptance criteria:**
 
-- [ ] Zero parameterless `catch {` blocks in `src/` (every catch either captures error or has explaining comment)
-- [ ] All API route catches log error details via `process.stderr.write()`
-- [ ] All admin action catches log error details via `process.stderr.write()`
+- [ ] Zero debug text visible in production
 - [ ] Build passes, tests pass
 
 ---
 
-## HIGH — Admin Promo Text Configurability (PM audit #73)
+## HIGH — Phase 174 — Delete Orphaned `public/scripts/theme-init.js`
 
-### Phase 162 HIGH — Make sidebar promo upgrade text admin-configurable
-
-> Owner directive: admin settings must control ALL display text. `ChatSidebarPromo` has hardcoded "Go Pro"/"Go Premium" and hardcoded promo descriptions. `PlanPromo` has hardcoded "Unlock premium features", "Free forever", "Admin access - full permissions". `PersonaCard` has hardcoded upgrade messaging. These should come from admin-configurable settings or at minimum from the effective plan config.
-
-**Files:**
-
-1. `src/components/chat/sidebar/chat-sidebar-promo.tsx` — "Go Pro"/"Go Premium", promo descriptions, "Admin"/"Account Suspended" text
-2. `src/components/shared/plan-promo.tsx` — "Free forever", "Admin access - full permissions", "Unlock premium features with an upgrade!", "Upgrade now", suspension text
-3. `src/components/shared/persona-card.tsx` — "Upgrade to ${requiredPlan} to unlock this persona", "Trial access with reduced limits..."
+> Dead file orphaned since Phase 170 (inline script replaced it). Contains last `cellesseon` reference in the repository. Listed in `knip.json` ignoreFiles because it's unreferenced by code.
 
 **What to do:**
 
-1. Create `src/lib/utils/effective-promo-content.ts` resolver following the existing `effective-*` pattern. Keys: `admin.promoTitle.pro`, `admin.promoTitle.premium`, `admin.promoDescription.pro`, `admin.promoDescription.premium`, `admin.promoUpgradeCta`, `admin.promoAdminLabel`, `admin.promoAdminDescription`, `admin.promoSuspensionTitle`, `admin.promoSuspensionDescription`.
-2. Parent server components pass resolved promo text as props to client components.
-3. Remove ALL hardcoded marketing/promo strings from the 3 files above. CSS class names and route paths are excluded (those are structural, not marketing).
+1. Delete `public/scripts/theme-init.js`.
+2. Remove `"public/scripts/theme-init.js"` from `knip.json` `ignoreFiles` array.
 
 **Acceptance criteria:**
 
-- [ ] Zero hardcoded promo/marketing text in `chat-sidebar-promo.tsx`
-- [ ] Zero hardcoded promo/marketing text in `plan-promo.tsx`
-- [ ] Zero hardcoded upgrade messaging text in `persona-card.tsx`
-- [ ] Promo text comes from admin-configurable source via `effective-promo-content.ts` resolver
-- [ ] Admin UI section for editing promo text in `/admin/settings`
-- [ ] Build passes, tests pass
-
----
-
-## HIGH — Global Error Boundary (PM audit #74 — Architect finding)
-
-### Phase 163 HIGH — Add `global-error.tsx` for root layout error recovery
-
-> No `global-error.tsx` exists. In Next.js, `global-error.tsx` catches errors in the root layout itself. Without it, a root layout error produces a raw browser error page with no recovery path.
-
-**File:** `src/app/global-error.tsx` (new)
-
-**What to do:**
-
-1. Create `src/app/global-error.tsx` as a client component (`"use client"`).
-2. Render a minimal error UI with "Something went wrong" message, a "Try again" button (calls `reset()`), and a "Return home" link.
-3. Include required `<html>` and `<body>` tags (Next.js requirement for global-error).
-4. Apply basic Droplet styling inline (no theme dependency since root layout may have failed).
-
-**Acceptance criteria:**
-
-- [ ] `src/app/global-error.tsx` exists and is a valid `"use client"` component
-- [ ] Contains `<html>` and `<body>` tags
-- [ ] Shows error recovery UI with "Try again" and "Return home"
+- [ ] File deleted
+- [ ] `knip.json` updated
+- [ ] Zero `cellesseon` references in entire repository (verify with `grep -r "cellesseon" .`)
+- [ ] Knip still clean
 - [ ] Build passes
 
 ---
 
-## MEDIUM — Environment Variable Runtime Validation (PM audit #67)
+## HIGH — Phase 175 — Remove Dead `conversationEnded` Prop from ChatBodyProps
 
-### Phase 143 MEDIUM — Replace `as string` / `!` casts on env vars with runtime validation
+> `conversationEnded` is declared in `ChatBodyProps` (line 18) and passed from `ChatWrapper` (line 612), but is NOT destructured or consumed by `ChatBody`. Dead API surface.
 
-> Architect finding W-2, Engineer finding H-1/H-2/H-4. 4 `as string` casts and 4 `!` non-null assertions on `process.env` values. If any env var is missing, broken clients are silently constructed.
-
-**Files:**
-
-1. `src/constants/aws.tsx` — 3 `as string` casts on `AWS_S3_REGION`, `AWS_S3_ACCESS_ID`, `AWS_S3_SECRET_KEY`
-2. `src/constants/openai.tsx` — 3 `!` on `OPENAI_ORG`, `OPENAI_PRJ`, `OPENAI_KEY`
-3. `src/lib/database/mongoose.tsx` — 1 `as string` on `MONGODB_URL`
-4. `src/lib/actions/transaction.action.tsx` — 1 `!` on `STRIPE_SECRET_KEY`
+**Files:** `src/components/chat/chat-body.tsx`, `src/components/chat/chat-wrapper.tsx`
 
 **What to do:**
 
-1. Create a shared `requireEnv(name: string): string` utility that throws with a clear message.
+1. Remove `conversationEnded?: boolean;` from `ChatBodyProps` interface in `chat-body.tsx`.
+2. Remove `conversationEnded={isConversationEnded}` from the `<ChatBody>` JSX in `chat-wrapper.tsx`.
+3. Update any test that references this prop.
+
+**Acceptance criteria:**
+
+- [ ] `conversationEnded` removed from interface and call site
+- [ ] Build passes, tests pass
+
+---
+
+## HIGH — Phase 176 — Fix Download Route S3 206 Status Logic
+
+> S3 path returns `status: byteRange ? 206 : 200` — derives HTTP 206 from client request, not S3 response. Should check `response.ContentRange` (upstream-derived). If S3 ignores the range and returns full file, proxy incorrectly returns 206 without a Content-Range header.
+
+**File:** `src/app/api/download/route.tsx` ~line 232
+
+**Current code:**
+
+```ts
+status: byteRange ? 206 : 200,
+```
+
+**What to do:**
+
+1. Change to `status: response.ContentRange ? 206 : 200,`.
+
+**Acceptance criteria:**
+
+- [ ] 206 returned only when upstream S3 response includes ContentRange
+- [ ] Build passes, tests pass
+
+---
+
+## HIGH — Phase 177 — Deduplicate `STREAM_PROACTIVE_TIMEOUT_MESSAGE` Constant
+
+> Same string defined independently in `src/app/api/openai/route.tsx:81` (local const) and `src/constants/chat-stream.ts:4` (shared export). If either side changes, the client's proactive timeout detection silently breaks (it compares by string equality).
+
+**Files:** `src/app/api/openai/route.tsx`, `src/constants/chat-stream.ts`
+
+**What to do:**
+
+1. In `route.tsx`, remove the local `const STREAM_PROACTIVE_TIMEOUT_MESSAGE = "..."`.
+2. Import `STREAM_PROACTIVE_TIMEOUT_MESSAGE` from `@/constants/chat-stream`.
+3. Note: `chat-stream.ts` needs `import "server-only"` if not already present, OR this constant must be moved to a file without server-only guard since it's used by both server (`route.tsx`) and client (`chat-wrapper.tsx`). Verify the import chain works.
+
+**Acceptance criteria:**
+
+- [ ] Single source of truth for the timeout message string
+- [ ] Both server and client import from the same location
+- [ ] Build passes, tests pass
+
+---
+
+## HIGH — Phase 178 — Fix Profile Billing Fake Download Icon
+
+> `profile-billing.tsx:75` renders `<i className="bi bi-file-earmark-arrow-down cursor-pointer" aria-hidden="true">` — styled as clickable (`cursor-pointer`) but has no `onClick` handler, no `<button>` wrapper, and `aria-hidden="true"`. Users expect a download action but nothing happens.
+
+**File:** `src/components/sections/profile/profile-billing.tsx` ~line 75
+
+**What to do:**
+
+Option A (preferred): Remove the icon entirely (no download functionality exists).
+Option B: Make it a functional download button (would require receipt/invoice generation — likely out of scope).
+
+1. Remove the `<i>` element entirely.
+
+**Acceptance criteria:**
+
+- [ ] No fake clickable elements in profile billing
+- [ ] Build passes, tests pass
+
+---
+
+## MEDIUM — Phase 179 — Add Video Player Error State
+
+> `video-player.tsx` has no error handling. If the video URL fails to load, the browser shows a default broken element with no user-facing message. The audio player (`audio-player.tsx`) already handles this well — match that pattern.
+
+**File:** `src/components/shared/video-player.tsx`
+
+**What to do:**
+
+1. Add `onError` handler to the `<video>` element.
+2. Show user-facing error state ("Video unavailable.") similar to `AudioPlayer`.
+
+**Acceptance criteria:**
+
+- [ ] Video player shows error message on failed load
+- [ ] Build passes
+
+---
+
+## MEDIUM — Phase 180 — Hardcoded Display Text Sweep
+
+> AGENTS.md Rule 11: "No hardcoded display text — all user-facing marketing/promo text must flow from admin-configurable settings." ~30 strings across 8+ components violate this.
+
+**Files and strings to evaluate:**
+
+1. `src/components/sections/homepage/cta-banner.tsx` — "Create an account, pick a persona...", "Explore the persona catalog...", "Create account", "Explore plans"
+2. `src/components/sections/homepage/persona-spotlight.tsx` — "Persona spotlight", "Different jobs need different voices.", hardcoded IDs `["strategist", "teacher", "creator"]`
+3. `src/components/chat/chat-intro.tsx` — "Hello {name},", "welcome to your chat dashboard.", "Active persona:"
+4. `src/components/sections/shared/plans-section.tsx` — "Subscribe Now"
+5. `src/components/chat/chat-input.tsx` — "This conversation has ended.", "Ask Droplet...", "can still make mistakes."
+6. `src/components/sections/profile/profile-usage.tsx` — "Image Generations", "Audio Generations", etc.
+7. `src/components/sections/profile/profile-hero.tsx` — "Member since:", "Last update:"
+8. `src/components/shared/plan-card.tsx` — "Current", "Popular", "Free", "/Mo"
+9. `src/components/sections/profile/profile-danger-zone.tsx` — "Danger zone", "Deleting your account..."
+
+**What to do:**
+
+1. Evaluate each string: structural UI label (exempt per Rule 11) vs marketing/configurable text.
+2. For configurable text: add to `effective-promo-content.ts` or create new `effective-ui-labels.ts` resolver.
+3. For structural UI labels: document as intentionally exempt with brief comment if needed.
+
+**Note:** This is a large phase. PM may split into sub-phases (180.1, 180.2, etc.) if needed.
+
+**Acceptance criteria:**
+
+- [ ] Every hardcoded string classified as exempt or extracted
+- [ ] Build passes, tests pass
+
+---
+
+## MEDIUM — Phase 143 — Env Var Runtime Validation
+
+> 8 unsafe `process.env` casts: 4 `as string` + 4 `!`. Missing env vars produce cryptic runtime crashes.
+
+**What to do:**
+
+1. Create a shared `requireEnv(name: string): string` utility that throws with a clear message if undefined.
 2. Replace all `process.env.VAR as string` and `process.env.VAR!` with `requireEnv("VAR")`.
 
 **Acceptance criteria:**
 
 - [ ] Zero `as string` on `process.env` in codebase
 - [ ] Zero `!` on `process.env` in codebase
-- [ ] Missing env vars throw clear error at module load
 - [ ] Build passes, tests pass
 
 ---
 
-## MEDIUM — Checkout Success Page DB Polling (PM audit #75 — Architect finding)
+## MEDIUM — Phase 144 — Admin Config In-Memory Cache
 
-### Phase 165 MEDIUM — Add plan confirmation polling to checkout success page
+> 5+ DB round trips per `/api/openai` request for admin settings that change infrequently.
 
-> Architect recommendation: checkout success page shows "Payment successful" based on Stripe status, but webhook may not have processed yet. User sees old plan. Add lightweight polling for plan confirmation.
+**What to do:**
 
-**File:** `src/app/(public)/checkout-success/page.tsx` (or add client component)
+1. Create `src/lib/utils/config-cache.ts` — simple in-memory cache with 30s TTL.
+2. Wrap each `getEffective*` resolver's DB calls in the cache.
+
+**Acceptance criteria:**
+
+- [ ] Admin config queries cached with 30s TTL
+- [ ] Build passes, tests pass
+
+---
+
+## MEDIUM — Phase 145 — Upload Filename Collision Prevention
+
+**File:** `src/app/api/upload/route.tsx`
+
+**What to do:** Replace `Date.now()` with `crypto.randomUUID()` in upload filename generation.
+
+**Acceptance criteria:**
+
+- [ ] Upload filenames use `crypto.randomUUID()`
+- [ ] Build passes
+
+---
+
+## MEDIUM — Phase 165 — Checkout Success Page DB Polling
+
+> After Stripe redirects to checkout success, webhook may not have processed yet. User sees "success" but plan is still Lite.
 
 **What to do:**
 
@@ -180,99 +280,21 @@
 
 ---
 
-## MEDIUM — Admin Config In-Memory Cache (PM audit #67)
-
-### Phase 144 MEDIUM — Cache admin config queries with short TTL
-
-> 5+ DB round trips per `/api/openai` request for admin settings that change infrequently.
-
-**What to do:**
-
-1. Create `src/lib/utils/config-cache.ts` — simple in-memory cache with 30s TTL.
-2. Wrap each `getEffective*` resolver's DB calls in the cache.
-
-**Acceptance criteria:**
-
-- [ ] Admin config queries cached with 30s TTL
-- [ ] Repeated calls within TTL window return cached result
-- [ ] Build passes, tests pass
-
----
-
-## MEDIUM — Upload Filename Collision Prevention (PM audit #67)
-
-### Phase 145 MEDIUM — Use `crypto.randomUUID()` for upload filenames
-
-**File:** `src/app/api/upload/route.tsx`
-
-**What to do:** Replace `Date.now()` with `crypto.randomUUID()` in upload filename generation.
-
-**Acceptance criteria:**
-
-- [ ] Upload filenames use `crypto.randomUUID()`
-- [ ] Build passes
-
----
-
-## LOW — Admin User Detail Transaction Limit (PM audit #67)
-
-### Phase 146 LOW — Add `.limit(50)` to admin user detail transaction query
-
-**File:** `src/lib/utils/admin-queries.ts`
+## LOW — Phase 146 — Admin User Detail Transaction Limit
 
 **What to do:** Add `.limit(50)` to the transaction query in `getAdminUserDetail`.
 
-**Acceptance criteria:**
+---
 
-- [ ] Transaction query has `.limit(50)`
-- [ ] Build passes
+## LOW — Phase 147 — Rename `.tsx` Utility Files to `.ts`
+
+**Files:** `handleError.tsx`, `getPlanStatus.tsx`, `getFullName.tsx`, `getFormattedDate.tsx`, `generateString.tsx`
 
 ---
 
-## LOW — Rename `.tsx` Utility Files to `.ts` (PM audit #67)
+## LOW — Phase 148 — Bulk Operations Partial-Failure Reporting
 
-### Phase 147 LOW — Rename utility files with `.tsx` extension that contain no JSX
-
-**Files to evaluate:**
-
-1. `src/lib/utils/handleError.tsx` → `.ts`
-2. `src/lib/utils/getPlanStatus.tsx` → `.ts`
-3. `src/lib/utils/getFullName.tsx` → `.ts`
-4. `src/lib/utils/getFormattedDate.tsx` → `.ts`
-5. `src/lib/utils/generateString.tsx` → `.ts`
-
-**Acceptance criteria:**
-
-- [ ] All utility-only files use `.ts` extension
-- [ ] All imports updated
-- [ ] Build passes, tests pass
-
-## LOW — Bulk Operations Partial-Failure Reporting (PM audit #67)
-
-### Phase 148 LOW — Report partial success/failure in admin bulk operations
-
-> Engineer finding H-6. `bulkRemoveUsersAction` fails midway through a batch with no partial-failure reporting. Users deleted so far are not reported and no rollback is possible.
-
-**File:** `src/lib/actions/admin.actions.tsx`
-
-**What to do:**
-
-1. Track successful and failed operations in the loop.
-2. Return partial results: `{ success: N, failed: M, errors: [...] }`.
-3. Apply to `bulkRemoveUsersAction` and `bulkSuspendUsersAction`.
-
-**Acceptance criteria:**
-
-- [ ] Bulk operations report partial success/failure
-- [ ] Build passes
-
----
-
-## LOW — Remaining Work
-
-### Phase 73.2 LOW — Minor re-render and code quality fixes
-
-### Phase 46.1 LOW — Admin error boundary
+**What to do:** Track successful/failed operations in bulk admin actions, return partial results.
 
 ---
 
@@ -284,10 +306,8 @@
 
 ### Legal/nav/footer admin configurability — Deferred to v2
 
-### TypeScript 6 / @typescript-eslint compatibility — Monitor for official TS 6 support in `@typescript-eslint` (Engineer finding M-3, PM audit #66)
+### TypeScript 6 / @typescript-eslint compatibility — Monitor
 
 ---
 
 > **Completed phases** archived in [`DONE.md`](DONE.md).
-> All phases through 166 complete + 160.1 + 164 complete (incl. 135–142, 149–161, 160.1, 164, 166, 74.2, 104, 125.3, 126.2, 134, plus 107.1–107.3, 108, 114, 125.1, 131, 132, 133, 120.1–120.7, 121–130, 128.2, 106, 156).
-> All Milestones 0–25 COMPLETE.

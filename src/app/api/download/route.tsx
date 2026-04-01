@@ -53,6 +53,7 @@ function getFileNameFromUrl(rawUrl: string): string {
       ) || "downloaded-file"
     );
   } catch {
+    // URL/path parse failure is non-fatal; fallback to a safe default filename.
     return "downloaded-file";
   }
 }
@@ -60,10 +61,12 @@ function getFileNameFromUrl(rawUrl: string): string {
 function buildProxyHeaders(options: {
   contentType?: string | null;
   contentLength?: number;
+  contentRange?: string | null;
   contentDispositionFileName: string;
   download: boolean;
   eTag?: string | null;
   lastModified?: Date;
+  acceptRanges?: string | null;
 }): Headers {
   const headers = new Headers({
     "Cache-Control": "private, max-age=3600",
@@ -71,6 +74,7 @@ function buildProxyHeaders(options: {
       options.download ? "attachment" : "inline"
     }; filename="${sanitizeFileName(options.contentDispositionFileName)}"`,
     "Content-Type": options.contentType || "application/octet-stream",
+    "Accept-Ranges": options.acceptRanges ?? "bytes",
     Vary: "Cookie",
     "X-Content-Type-Options": "nosniff",
   });
@@ -81,6 +85,10 @@ function buildProxyHeaders(options: {
 
   if (options.eTag) {
     headers.set("ETag", options.eTag);
+  }
+
+  if (options.contentRange) {
+    headers.set("Content-Range", options.contentRange);
   }
 
   if (options.lastModified) {
@@ -120,6 +128,18 @@ function toReadableStream(body: unknown): ReadableStream<Uint8Array> | null {
   }
 
   return null;
+}
+
+function parseByteRangeHeader(rangeHeader: string | null): string | null {
+  if (!rangeHeader) {
+    return null;
+  }
+
+  const normalizedRangeHeader = rangeHeader.trim();
+
+  return normalizedRangeHeader.toLowerCase().startsWith("bytes=")
+    ? normalizedRangeHeader
+    : null;
 }
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
@@ -176,6 +196,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       download: downloadParam,
       filename: requestedFileName,
     }: DownloadQuery = parsedQuery.data;
+    const byteRange = parseByteRangeHeader(req.headers.get("range"));
     const download = isDownloadRequest(downloadParam ?? null);
     const normalizedImageUrl = imageUrl
       ? normalizePublicAssetUrl(imageUrl)
@@ -197,7 +218,10 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         return new NextResponse("Forbidden", { status: 403 });
       }
 
-      const response = await getFileFromAWS(resolvedObjectKey);
+      const response = await getFileFromAWS(
+        resolvedObjectKey,
+        byteRange ? { range: byteRange } : undefined,
+      );
       const body = toReadableStream(response.Body);
 
       if (!body) {
@@ -205,10 +229,13 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       }
 
       return new NextResponse(body, {
+        status: response.ContentRange ? 206 : 200,
         headers: buildProxyHeaders({
+          acceptRanges: response.AcceptRanges ?? "bytes",
           contentDispositionFileName:
             requestedFileName || getFileNameFromS3ObjectKey(resolvedObjectKey),
           contentLength: response.ContentLength,
+          contentRange: response.ContentRange,
           contentType: response.ContentType,
           download,
           eTag: response.ETag,
@@ -223,7 +250,9 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       });
     }
 
-    const response = await fetch(normalizedImageUrl);
+    const response = await fetch(normalizedImageUrl, {
+      headers: byteRange ? { Range: byteRange } : undefined,
+    });
     if (!response.ok) {
       return new NextResponse("Failed to fetch file", { status: 502 });
     }
@@ -233,11 +262,14 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     }
 
     return new NextResponse(response.body, {
+      status: response.status,
       headers: buildProxyHeaders({
+        acceptRanges: response.headers.get("Accept-Ranges") ?? "bytes",
         contentDispositionFileName:
           requestedFileName || getFileNameFromUrl(normalizedImageUrl),
         contentLength:
           Number(response.headers.get("Content-Length")) || undefined,
+        contentRange: response.headers.get("Content-Range"),
         contentType: response.headers.get("Content-Type"),
         download,
         eTag: response.headers.get("ETag"),

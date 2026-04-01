@@ -290,11 +290,11 @@ a.menu-item {
   }
 
   .chat-markdown {
-    @apply max-w-full wrap-break-word rounded-xl bg-lavenderHaze-200 px-3 py-2 text-midnightBlue-500 shadow-sm dark:bg-nightIndigo-500 dark:text-lavenderHaze-500;
+    @apply max-w-full wrap-break-word rounded-xl bg-lavenderHaze-200 px-3 py-2 text-midnightBlue-500 shadow-sm dark:bg-twilightPurple-500 dark:text-lavenderHaze-500;
   }
 
   .chat-markdown--bot {
-    @apply flex flex-col w-full gap-4 bg-amber-100;
+    @apply bg-transparent shadow-none dark:bg-transparent;
   }
 
   .chat-markdown h1,
