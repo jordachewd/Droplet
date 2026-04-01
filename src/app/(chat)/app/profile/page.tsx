@@ -11,6 +11,7 @@ import {
   getEffectivePlanConfig,
   getEffectiveSupportEmail,
 } from "@/lib/utils/effective-plan-config";
+import { getEffectivePromoContent } from "@/lib/utils/effective-promo-content";
 import { Transaction } from "@/types/TransactionData.d";
 import { auth } from "@clerk/nextjs/server";
 import PageHead from "@/components/layout/page-head";
@@ -20,9 +21,10 @@ export default async function AppProfilePage() {
   const userData = userId ? await ensureUserSynced(userId) : null;
   let userTxns: Transaction[] | null = null;
 
-  const [effectivePlanConfig, supportEmail] = await Promise.all([
+  const [effectivePlanConfig, supportEmail, promoContent] = await Promise.all([
     getEffectivePlanConfig(),
     getEffectiveSupportEmail(),
+    getEffectivePromoContent(),
   ]);
 
   if (userData?.plan) {
@@ -48,7 +50,11 @@ export default async function AppProfilePage() {
         align="center"
         className="px-4 mt-12"
       />
-      <ProfileHero userData={userData} supportEmail={supportEmail} />
+      <ProfileHero
+        userData={userData}
+        supportEmail={supportEmail}
+        promoContent={promoContent}
+      />
       <ProfileHeroEditor userData={userData} />
       <ProfileUsage
         planName={planName}

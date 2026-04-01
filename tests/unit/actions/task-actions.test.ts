@@ -532,7 +532,7 @@ describe("task.actions", () => {
         }),
       );
       expect(stderrWriteSpy).toHaveBeenCalledWith(
-        "[task.actions] deleteTask S3 cleanup failed.\n",
+        expect.stringContaining("[task.actions] deleteTask S3 cleanup failed:"),
       );
       stderrWriteSpy.mockRestore();
     });

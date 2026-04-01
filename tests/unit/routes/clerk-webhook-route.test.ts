@@ -111,7 +111,7 @@ describe("POST /api/webhooks/clerk", () => {
     expect(response.status).toBe(400);
     await expect(response.text()).resolves.toBe("Webhook verification failed");
     expect(stderrWriteMock).toHaveBeenCalledWith(
-      "[clerk-webhook] Verification failed.\n",
+      expect.stringContaining("[clerk-webhook] Verification failed:"),
     );
     expect(User.create).not.toHaveBeenCalled();
   });
@@ -373,7 +373,9 @@ describe("POST /api/webhooks/clerk", () => {
     });
     expect(User.create).not.toHaveBeenCalled();
     expect(stderrWriteMock).toHaveBeenCalledWith(
-      "[clerk-webhook] user.created processing failed.\n",
+      expect.stringContaining(
+        "[clerk-webhook] user.created processing failed:",
+      ),
     );
   });
 
@@ -545,7 +547,9 @@ describe("POST /api/webhooks/clerk", () => {
     );
     expect(payload).toEqual({ message: "OK" });
     expect(stderrWriteMock).toHaveBeenCalledWith(
-      "[clerk-webhook] user.deleted task cleanup failed.\n",
+      expect.stringContaining(
+        "[clerk-webhook] user.deleted task cleanup failed:",
+      ),
     );
     expect(stderrWriteMock).toHaveBeenCalledWith(
       "[clerk-webhook] user.deleted cleanup counts user=0 transactions=0 tasks=unknown usageEvents=0 rateLimitEntries=0 uploads=0 s3Objects=4\n",
@@ -586,7 +590,9 @@ describe("POST /api/webhooks/clerk", () => {
     );
     expect(payload).toEqual({ message: "OK" });
     expect(stderrWriteMock).toHaveBeenCalledWith(
-      "[clerk-webhook] user.deleted usage-event cleanup failed.\n",
+      expect.stringContaining(
+        "[clerk-webhook] user.deleted usage-event cleanup failed:",
+      ),
     );
     expect(stderrWriteMock).toHaveBeenCalledWith(
       "[clerk-webhook] user.deleted cleanup counts user=0 transactions=0 tasks=2 usageEvents=unknown rateLimitEntries=0 uploads=0 s3Objects=3\n",
@@ -627,7 +633,9 @@ describe("POST /api/webhooks/clerk", () => {
     );
     expect(payload).toEqual({ message: "OK" });
     expect(stderrWriteMock).toHaveBeenCalledWith(
-      "[clerk-webhook] user.deleted rate-limit cleanup failed.\n",
+      expect.stringContaining(
+        "[clerk-webhook] user.deleted rate-limit cleanup failed:",
+      ),
     );
     expect(stderrWriteMock).toHaveBeenCalledWith(
       "[clerk-webhook] user.deleted cleanup counts user=0 transactions=0 tasks=2 usageEvents=0 rateLimitEntries=unknown uploads=0 s3Objects=3\n",

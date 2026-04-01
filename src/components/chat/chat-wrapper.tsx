@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import classNames from "classnames";
 import { useShallow } from "zustand/react/shallow";
+import { DEFAULT_PROMO_CONTENT, PromoContent } from "@/constants/promo-content";
 import { Message } from "@/types";
 import ChatIntro from "@/components/chat/chat-intro";
 import ChatBody from "@/components/chat/chat-body";
@@ -24,6 +25,7 @@ interface ChatWrapperProps {
   personas: Persona[];
   supportEmail: string;
   stopReasonMessages: Record<TaskEndedReason, string>;
+  promoContent?: PromoContent;
   initialPersonaId?: string;
   allowedPersonaIds?: PersonaId[];
   initialTaskId?: string | null;
@@ -55,6 +57,7 @@ export default function ChatWrapper({
   personas,
   supportEmail,
   stopReasonMessages,
+  promoContent = DEFAULT_PROMO_CONTENT,
   initialPersonaId,
   allowedPersonaIds,
   initialTaskId = null,
@@ -300,7 +303,9 @@ export default function ChatWrapper({
 
     try {
       return JSON.parse(dataLine.slice(6)) as ChatStreamEvent;
-    } catch {
+    } catch (error) {
+      void error;
+      // Ignore malformed stream chunks; SSE parser continues until a valid event arrives.
       return null;
     }
   }
@@ -606,6 +611,7 @@ export default function ChatWrapper({
             conversationEnded={isConversationEnded}
             supportEmail={supportEmail}
             stopReasonMessages={stopReasonMessages}
+            promoContent={promoContent}
             endState={endState}
           />
         )}

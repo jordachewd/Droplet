@@ -5,6 +5,7 @@ import ChatPageWrapper from "@/components/chat/chat-page-wrapper";
 import PersonaCard from "@/components/shared/persona-card";
 import { getEffectivePersonaAccessByPlan } from "@/lib/utils/effective-persona-access";
 import { getEffectivePersonaConfig } from "@/lib/utils/effective-persona-config";
+import { getEffectivePromoContent } from "@/lib/utils/effective-promo-content";
 import { ensureUserSynced } from "@/lib/utils/ensure-user-synced";
 import {
   getRequiredPlanForPersona,
@@ -20,9 +21,10 @@ export default async function NewConversationPage() {
   }
 
   const isAdmin = userData.role === "admin";
-  const [fullPersonaAccessByPlan, personas] = await Promise.all([
+  const [fullPersonaAccessByPlan, personas, promoContent] = await Promise.all([
     getEffectivePersonaAccessByPlan(),
     getEffectivePersonaConfig(),
+    getEffectivePromoContent(),
   ]);
   const entitlements = resolveEntitlements(userData.plan?.name ?? "Lite", {
     isAdmin,
@@ -59,6 +61,7 @@ export default async function NewConversationPage() {
                 locked={isLocked}
                 trial={isTrialPersona}
                 requiredPlan={requiredPlan}
+                promoContent={promoContent}
               />
             );
           })}

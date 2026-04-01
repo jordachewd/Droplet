@@ -53,6 +53,7 @@ function getFileNameFromUrl(rawUrl: string): string {
       ) || "downloaded-file"
     );
   } catch {
+    // URL/path parse failure is non-fatal; fallback to a safe default filename.
     return "downloaded-file";
   }
 }

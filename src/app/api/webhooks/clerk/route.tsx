@@ -102,9 +102,12 @@ async function findUserByClerkId(clerkId: string) {
   return existingUser ? serializeForClient(existingUser) : null;
 }
 
-function logUserDeletedCleanupFailure(step: DeleteUserCascadeStep | "user") {
+function logUserDeletedCleanupFailure(
+  step: DeleteUserCascadeStep | "user",
+  error?: unknown,
+) {
   process.stderr.write(
-    `[clerk-webhook] user.deleted ${step} cleanup failed.\n`,
+    `[clerk-webhook] user.deleted ${step} cleanup failed${error ? `: ${error instanceof Error ? error.message : "unknown"}` : ""}.\n`,
   );
 }
 
@@ -130,12 +133,16 @@ function logUserDeletedCleanupSummary({
   );
 }
 
-function logWebhookProcessingFailure(eventType: string) {
-  process.stderr.write(`[clerk-webhook] ${eventType} processing failed.\n`);
+function logWebhookProcessingFailure(eventType: string, error?: unknown) {
+  process.stderr.write(
+    `[clerk-webhook] ${eventType} processing failed${error ? `: ${error instanceof Error ? error.message : "unknown"}` : ""}.\n`,
+  );
 }
 
-function logWebhookVerificationFailure() {
-  process.stderr.write("[clerk-webhook] Verification failed.\n");
+function logWebhookVerificationFailure(error?: unknown) {
+  process.stderr.write(
+    `[clerk-webhook] Verification failed${error ? `: ${error instanceof Error ? error.message : "unknown"}` : ""}.\n`,
+  );
 }
 
 function toNonEmptyString(value?: string | null): string | null {
@@ -289,8 +296,8 @@ export async function POST(req: NextRequest) {
 
   try {
     evt = await verifyWebhook(req, { signingSecret });
-  } catch {
-    logWebhookVerificationFailure();
+  } catch (error) {
+    logWebhookVerificationFailure(error);
 
     return new Response("Webhook verification failed", {
       status: 400,
@@ -494,8 +501,8 @@ export async function POST(req: NextRequest) {
         } else {
           deletedUserCount = 0;
         }
-      } catch {
-        logUserDeletedCleanupFailure("user");
+      } catch (error) {
+        logUserDeletedCleanupFailure("user", error);
       }
 
       const cascadeResult = await deleteUserCascade(clerkId, {
@@ -520,8 +527,8 @@ export async function POST(req: NextRequest) {
 
       return NextResponse.json({ message: "OK" });
     }
-  } catch {
-    logWebhookProcessingFailure(eventType);
+  } catch (error) {
+    logWebhookProcessingFailure(eventType, error);
 
     return NextResponse.json(
       {

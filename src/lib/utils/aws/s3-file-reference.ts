@@ -7,6 +7,7 @@ function safeDecodeURIComponent(value: string): string {
   try {
     return decodeURIComponent(value);
   } catch {
+    // URL decode failure is non-fatal; fallback to the original segment.
     return value;
   }
 }
@@ -97,6 +98,7 @@ export function resolveS3ObjectKey(rawValue: string): string | null {
         : null;
     }
   } catch {
+    // URL/path parse failure is non-fatal; fallback to raw key candidate checks.
     return isRawS3ObjectKeyCandidate(trimmedValue)
       ? normalizeS3ObjectKey(trimmedValue)
       : null;

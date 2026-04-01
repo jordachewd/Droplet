@@ -1,5 +1,6 @@
 import classNames from "classnames";
 import Link from "next/link";
+import { DEFAULT_PROMO_CONTENT, PromoContent } from "@/constants/promo-content";
 import { ContentItem, Message } from "@/types";
 import { useEffect, useMemo, useRef } from "react";
 import autoAnimate from "@formkit/auto-animate";
@@ -17,6 +18,7 @@ interface ChatBodyProps {
   conversationEnded?: boolean;
   supportEmail: string;
   stopReasonMessages: Record<TaskEndedReason, string>;
+  promoContent?: PromoContent;
   endState?: {
     stopReason: TaskEndedReason;
     endAction: TaskEndAction;
@@ -26,14 +28,16 @@ interface ChatBodyProps {
 function renderAction({
   endAction,
   supportEmail,
+  promoContent,
 }: {
   endAction: TaskEndAction;
   supportEmail: string;
+  promoContent: PromoContent;
 }) {
   if (endAction === "start_new_conversation") {
     return (
       <Link href="/app/new" className="btn btn-sm btn-contained">
-        Start a new conversation
+        {promoContent.chatStartConversationCta}
       </Link>
     );
   }
@@ -41,14 +45,14 @@ function renderAction({
   if (endAction === "upgrade_plan") {
     return (
       <Link href="/app/plans" className="btn btn-sm btn-contained">
-        Upgrade your plan
+        {promoContent.chatUpgradePlanCta}
       </Link>
     );
   }
 
   return (
     <a href={`mailto:${supportEmail}`} className="btn btn-sm btn-contained">
-      Contact support
+      {promoContent.chatContactSupportCta}
     </a>
   );
 }
@@ -106,6 +110,7 @@ export default function ChatBody({
   personaLabel,
   supportEmail,
   stopReasonMessages,
+  promoContent = DEFAULT_PROMO_CONTENT,
   endState = null,
 }: ChatBodyProps) {
   const parent = useRef<HTMLDivElement | null>(null);
@@ -261,7 +266,7 @@ export default function ChatBody({
             <div className="flex flex-col gap-3">
               <div className="flex flex-col gap-3">
                 <span className="text-xxs font-semibold uppercase opacity-50">
-                  Conversation Ended
+                  {promoContent.chatConversationEndedLabel}
                 </span>
                 <p className="font-medium">
                   {stopReasonMessages[endState.stopReason]}
@@ -272,6 +277,7 @@ export default function ChatBody({
                 {renderAction({
                   endAction: endState.endAction,
                   supportEmail,
+                  promoContent,
                 })}
                 {endState.endAction === "contact_support" && (
                   <span className="text-xs opacity-80">{supportEmail}</span>

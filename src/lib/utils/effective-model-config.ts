@@ -90,6 +90,7 @@ export async function getEffectiveModelConfig(): Promise<ModelSettingsFormValue>
 
     return normalizeModelSettings(setting?.value, DEFAULT_MODEL_SETTINGS);
   } catch {
+    // Intentional fallback to defaults — admin config DB errors are non-fatal.
     return { ...DEFAULT_MODEL_SETTINGS };
   }
 }

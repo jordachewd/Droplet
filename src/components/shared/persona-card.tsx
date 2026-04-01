@@ -1,6 +1,11 @@
 import classNames from "classnames";
 import Link from "next/link";
 import Image from "next/image";
+import {
+  DEFAULT_PROMO_CONTENT,
+  PromoContent,
+  resolvePersonaUpgradeMessage,
+} from "@/constants/promo-content";
 import { Persona } from "@/types/PersonaData.d";
 
 interface PersonaCardProps {
@@ -10,6 +15,7 @@ interface PersonaCardProps {
   locked?: boolean;
   trial?: boolean;
   requiredPlan?: "Pro" | "Premium" | null;
+  promoContent?: PromoContent;
 }
 
 export default function PersonaCard({
@@ -19,6 +25,7 @@ export default function PersonaCard({
   locked = false,
   trial = false,
   requiredPlan,
+  promoContent = DEFAULT_PROMO_CONTENT,
 }: PersonaCardProps) {
   const cardClass = classNames(
     "PersonaCard flex h-full flex-col rounded-xl  p-4 transition-all duration-300",
@@ -85,14 +92,16 @@ export default function PersonaCard({
       <p className={bodyClass}>{persona.description}</p>
       {locked && (
         <p className="text-xs font-medium text-amber-700 dark:text-amber-300">
-          {requiredPlan
-            ? `Upgrade to ${requiredPlan} to unlock this persona.`
-            : "Upgrade your plan to unlock this persona."}
+          {resolvePersonaUpgradeMessage({
+            template: promoContent.promoPersonaUpgrade,
+            fallback: promoContent.promoPersonaUpgradeFallback,
+            requiredPlan,
+          })}
         </p>
       )}
       {!locked && trial && (
         <p className="text-xs font-medium text-sky-700 dark:text-sky-300">
-          Trial access with reduced limits. Upgrade to unlock full access.
+          {promoContent.promoTrialLabel}
         </p>
       )}
 

@@ -23,7 +23,6 @@ interface ThemeContextValue {
 }
 
 const STORAGE_KEY = "droplet-theme-mode";
-const LEGACY_STORAGE_KEY = "cellesseon-theme-mode";
 const THEME_ATTRIBUTE = "data-droplet-theme";
 
 export const DropletThemeContext = createContext<ThemeContextValue | null>(
@@ -35,9 +34,7 @@ const getSystemMode = (): ResolvedThemeMode =>
 
 const getStoredMode = (): ThemeMode => {
   try {
-    const storedThemeMode =
-      window.localStorage.getItem(STORAGE_KEY) ??
-      window.localStorage.getItem(LEGACY_STORAGE_KEY);
+    const storedThemeMode = window.localStorage.getItem(STORAGE_KEY);
 
     if (
       storedThemeMode === "light" ||
@@ -95,7 +92,7 @@ export default function DropletTheme({ children }: ThemeProps) {
 
     document.documentElement.classList.add("DropletTheme");
     document.documentElement.setAttribute(THEME_ATTRIBUTE, resolvedMode);
-  }, [resolvedMode]);
+  }, [hasHydratedTheme, resolvedMode]);
 
   useEffect(() => {
     const restoreTimer = window.setTimeout(() => {

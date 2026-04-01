@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import classNames from "classnames";
+import { DEFAULT_PROMO_CONTENT, PromoContent } from "@/constants/promo-content";
 import { PlanName } from "@/types/PlanData.d";
 import { UserRoles } from "@/types/UserData.d";
 import {
@@ -14,6 +15,7 @@ interface ChatSidebarPromoProps {
   userRole?: UserRoles;
   planName?: PlanName | null;
   isSuspended?: boolean;
+  promoContent?: PromoContent;
 }
 
 export default function ChatSidebarPromo({
@@ -21,6 +23,7 @@ export default function ChatSidebarPromo({
   userRole,
   planName,
   isSuspended,
+  promoContent = DEFAULT_PROMO_CONTENT,
 }: ChatSidebarPromoProps) {
   const sectionClass = classNames("ChatSidebarPromo p-3", !isOpen && "hidden");
   const promoCardClass = classNames("ChatSidebarPromoCard", planPromoCardClass);
@@ -31,8 +34,12 @@ export default function ChatSidebarPromo({
         <article className={promoCardClass}>
           <div className={planPromoAccentClass}></div>
           <div className="z-10 flex w-full flex-col gap-2 text-center">
-            <h6 className="heading-6 text-twilightPurple-600">Admin</h6>
-            <p className="text-xs leading-4">You have admin access.</p>
+            <h6 className="heading-6 text-twilightPurple-600">
+              {promoContent.promoAdminLabel}
+            </h6>
+            <p className="text-xs leading-4">
+              {promoContent.promoAdminDescription}
+            </p>
           </div>
         </article>
       </section>
@@ -46,10 +53,10 @@ export default function ChatSidebarPromo({
           <div className={planPromoAccentClass}></div>
           <div className="z-10 flex w-full flex-col gap-2 text-center">
             <h6 className="heading-6 text-twilightPurple-600">
-              Account Suspended
+              {promoContent.promoSuspensionTitle}
             </h6>
             <p className="text-xs leading-4">
-              Your account has been suspended. Contact support for assistance.
+              {promoContent.promoSuspensionDescription}
             </p>
           </div>
         </article>
@@ -61,12 +68,15 @@ export default function ChatSidebarPromo({
     return null;
   }
 
-  const promoTitle = planName === "Pro" ? "Go Premium" : "Go Pro";
+  const promoTitle =
+    planName === "Pro"
+      ? promoContent.promoTitlePremium
+      : promoContent.promoTitlePro;
 
   const promoMessage =
     planName === "Pro"
-      ? "Upgrade to Premium for highest limits and premium workflows."
-      : "Upgrade to Pro for higher usage limits and more persona access.";
+      ? promoContent.promoDescriptionPremium
+      : promoContent.promoDescriptionPro;
 
   return (
     <section className={sectionClass}>
@@ -82,7 +92,7 @@ export default function ChatSidebarPromo({
             className="btn btn-sm btn-contained self-center mt-2"
             href="/app/plans"
           >
-            Upgrade Now
+            {promoContent.promoUpgradeCta}
           </Link>
         </div>
       </article>

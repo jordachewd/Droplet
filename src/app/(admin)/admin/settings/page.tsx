@@ -9,6 +9,7 @@ import { AdminThemeSection } from "@/components/admin/settings/admin-theme-secti
 import { AdminSupportSection } from "@/components/admin/settings/admin-support-section";
 import { AdminStopReasonsSection } from "@/components/admin/settings/admin-stop-reasons-section";
 import { AdminSettingsTabs } from "@/components/admin/settings/admin-settings-tabs";
+import { AdminPromoContentSection } from "@/components/admin/settings/admin-promo-content-section";
 import { AdminWebsiteContentSection } from "@/components/admin/settings/admin-website-content-section";
 import {
   AUDIO_MODEL_OPTIONS,
@@ -25,6 +26,7 @@ import {
   normalizeModelSettingsValue,
   normalizePersonaAccessSettings,
   normalizePersonaContentSettings,
+  normalizePromoContentSettings,
   normalizePricingSettingsValue,
   normalizeStopReasonMessagesSettings,
   normalizeSupportSettingsValue,
@@ -40,6 +42,7 @@ import {
   PersonaAccessSettingsFormValue,
   PersonaContentSettingsFormValue,
   PricingSettingsFormValue,
+  PromoContentSettingsFormValue,
   StopReasonMessagesSettingsFormValue,
   SupportSettingsFormValue,
   ThemeSettingsFormValue,
@@ -71,6 +74,8 @@ export default async function AdminSettingsPage() {
     .landingContent as LandingContentSettingsFormValue;
   const aboutContentDefaults = snapshot.defaults
     .aboutContent as AboutContentSettingsFormValue;
+  const promoContentDefaults = snapshot.defaults
+    .promoContent as PromoContentSettingsFormValue;
 
   const modelValue = normalizeModelSettingsValue(
     snapshot.settingsByKey["admin.models"]?.value,
@@ -123,6 +128,10 @@ export default async function AdminSettingsPage() {
   const aboutContentValue = normalizeAboutContentSettings(
     snapshot.settingsByKey["admin.aboutContent"]?.value,
     aboutContentDefaults,
+  );
+  const promoContentValue = normalizePromoContentSettings(
+    snapshot.settingsByKey["admin.promoContent"]?.value,
+    promoContentDefaults,
   );
   const personaIds = Object.keys(personaContentDefaults) as PersonaId[];
 
@@ -185,6 +194,13 @@ export default async function AdminSettingsPage() {
             id: "support",
             label: "Support",
             content: <AdminSupportSection supportValue={supportValue} />,
+          },
+          {
+            id: "promo-content",
+            label: "Promo Copy",
+            content: (
+              <AdminPromoContentSection promoContentValue={promoContentValue} />
+            ),
           },
           {
             id: "stop-reasons",

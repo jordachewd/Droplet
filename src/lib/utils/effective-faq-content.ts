@@ -91,6 +91,7 @@ export async function getEffectiveFaqContent(
       defaults,
     });
   } catch {
+    // Intentional fallback to defaults — admin config DB errors are non-fatal.
     return defaults;
   }
 }

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useSyncExternalStore } from "react";
 import classNames from "classnames";
+import { PromoContent } from "@/constants/promo-content";
 import SidebarHead from "@/components/chat/sidebar/sidebar-head";
 import ChatSidebarNav from "@/components/chat/sidebar/chat-sidebar-nav";
 import ChatSidebarPromo from "@/components/chat/sidebar/chat-sidebar-promo";
@@ -17,6 +18,7 @@ interface ChatSidebarShellProps {
   userRole?: UserRoles;
   userPlanName?: PlanName | null;
   isSuspended?: boolean;
+  promoContent?: PromoContent;
 }
 
 export default function ChatSidebarShell({
@@ -24,9 +26,9 @@ export default function ChatSidebarShell({
   userRole,
   userPlanName,
   isSuspended,
+  promoContent,
 }: ChatSidebarShellProps) {
   const sidebarStorageKey = "droplet-sidebar-collapsed";
-  const legacySidebarStorageKey = "cellesseon-sidebar-collapsed";
 
   const subscribeToDesktopQuery = useCallback((callback: () => void) => {
     const mql = window.matchMedia("(min-width: 1024px)");
@@ -60,15 +62,13 @@ export default function ChatSidebarShell({
 
   useEffect(() => {
     try {
-      const collapsedFromStorage =
-        localStorage.getItem(sidebarStorageKey) ??
-        localStorage.getItem(legacySidebarStorageKey);
+      const collapsedFromStorage = localStorage.getItem(sidebarStorageKey);
       setDesktopSidebarCollapsed(collapsedFromStorage === "true");
     } catch (error) {
       void error;
       setDesktopSidebarCollapsed(false);
     }
-  }, [legacySidebarStorageKey, setDesktopSidebarCollapsed, sidebarStorageKey]);
+  }, [setDesktopSidebarCollapsed, sidebarStorageKey]);
 
   useEffect(() => {
     try {
@@ -134,6 +134,7 @@ export default function ChatSidebarShell({
           userRole={userRole}
           planName={userPlanName}
           isSuspended={isSuspended}
+          promoContent={promoContent}
         />
       </aside>
     </>

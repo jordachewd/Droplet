@@ -161,6 +161,7 @@ export async function getEffectivePersonaConfig(): Promise<Persona[]> {
       }),
     );
   } catch {
+    // Intentional fallback to defaults — admin config DB errors are non-fatal.
     return PERSONAS.map((persona) => clonePersona(persona));
   }
 }

@@ -63,6 +63,7 @@ export async function getEffectiveStopReasonMessages(): Promise<
 
     return normalizeStopReasonMessages(setting?.value);
   } catch {
+    // Intentional fallback to defaults — admin config DB errors are non-fatal.
     return { ...STOP_REASON_MESSAGES };
   }
 }
