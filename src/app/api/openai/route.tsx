@@ -65,6 +65,7 @@ import {
   chatMessageArraySchema,
   nonEmptyStringSchema,
 } from "@/lib/utils/validation-schemas";
+import { STREAM_PROACTIVE_TIMEOUT_MESSAGE } from "@/constants/chat-stream";
 import type { ChatApiResponse, ChatStreamEvent } from "@/types/chat-api";
 import { z } from "zod";
 
@@ -78,8 +79,6 @@ const DEFAULT_CHAT_BUDGET_STATE: BudgetState = "normal";
 const STREAM_GENERAL_HEARTBEAT_INTERVAL_MS = 30_000;
 const STREAM_MEDIA_HEARTBEAT_INTERVAL_MS = 12_000;
 const STREAM_TIMEOUT_SAFETY_BUFFER_SECONDS = 5;
-const STREAM_PROACTIVE_TIMEOUT_MESSAGE =
-  "Your request is taking longer than expected. Media generation may still be processing in the background. Please check your library or start a new conversation.";
 const STREAM_HEADERS = {
   "Content-Type": "text/event-stream; charset=utf-8",
   "Cache-Control": "no-store, no-transform",

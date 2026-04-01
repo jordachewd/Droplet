@@ -24,15 +24,13 @@ vi.mock("@/components/chat/chat-intro", () => ({
 vi.mock("@/components/chat/chat-body", () => ({
   default: ({
     messages,
-    conversationEnded,
     endState,
   }: {
     messages?: Message[];
-    conversationEnded?: boolean;
     endState?: { stopReason: string; endAction: string } | null;
   }) => (
     <div data-testid="chat-body">
-      {conversationEnded ? "ended" : "active"}
+      {endState ? "ended" : "active"}
       {endState ? `:${endState.stopReason}:${endState.endAction}` : ""}
       <div data-testid="chat-body-messages">
         {messages

@@ -598,8 +598,6 @@ export default function ChatWrapper({
           isNewTask && "items-center justify-center gap-12",
         )}
       >
-        {!isNewTask && <p>Checking if is new task...</p>}
-
         {isNewTask ? (
           <ChatIntro
             persona={selectedPersona}
@@ -609,7 +607,6 @@ export default function ChatWrapper({
           <ChatBody
             messages={task}
             personaLabel={selectedPersona.label}
-            conversationEnded={isConversationEnded}
             supportEmail={supportEmail}
             stopReasonMessages={stopReasonMessages}
             promoContent={promoContent}

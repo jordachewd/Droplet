@@ -229,7 +229,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       }
 
       return new NextResponse(body, {
-        status: byteRange ? 206 : 200,
+        status: response.ContentRange ? 206 : 200,
         headers: buildProxyHeaders({
           acceptRanges: response.AcceptRanges ?? "bytes",
           contentDispositionFileName:

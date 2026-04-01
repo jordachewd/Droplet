@@ -71,10 +71,6 @@ export default function ProfileBilling({ stripeId, userTxns }: BillingProps) {
                 <p className="min-w-14 text-center text-xxs">
                   <span className={txnColor}>{txnStatus}</span>
                 </p>
-                <i
-                  className="bi bi-file-earmark-arrow-down ml-4 cursor-pointer text-base"
-                  aria-hidden="true"
-                ></i>
               </div>
             );
           })}

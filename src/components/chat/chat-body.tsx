@@ -15,7 +15,6 @@ import { TaskEndAction, TaskEndedReason } from "@/types/TaskData.d";
 interface ChatBodyProps {
   messages: Message[];
   personaLabel?: string;
-  conversationEnded?: boolean;
   supportEmail: string;
   stopReasonMessages: Record<TaskEndedReason, string>;
   promoContent?: PromoContent;

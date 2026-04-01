@@ -72,7 +72,6 @@ function renderChatBodyEndState(
   return render(
     <ChatBody
       messages={[]}
-      conversationEnded
       supportEmail={SUPPORT_EMAIL}
       stopReasonMessages={STOP_REASON_MESSAGES}
       endState={{ stopReason, endAction }}
@@ -122,11 +121,10 @@ describe("ChatBody", () => {
     expect(screen.getByText(SUPPORT_EMAIL)).toBeTruthy();
   });
 
-  it("applies amber ended-conversation styling only when the conversation is ended", () => {
+  it("applies amber ended-conversation styling only when end state is present", () => {
     const { container, rerender } = render(
       <ChatBody
         messages={[]}
-        conversationEnded={false}
         supportEmail={SUPPORT_EMAIL}
         stopReasonMessages={STOP_REASON_MESSAGES}
         endState={null}
@@ -144,7 +142,6 @@ describe("ChatBody", () => {
     rerender(
       <ChatBody
         messages={[]}
-        conversationEnded
         supportEmail={SUPPORT_EMAIL}
         stopReasonMessages={STOP_REASON_MESSAGES}
         endState={{
