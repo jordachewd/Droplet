@@ -2,7 +2,48 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-03-31 — PM audit #79. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4, 105.1, 105.2, 106, 107.1, 107.2, 107.3, 108, 110, 111.1, 112.1, 112.2, 109, 113.1, 113.2, 114, 115, 116, 117, 120.1, 120.2-A, 120.2-B, 120.2-C, 120.3, 120.4, 120.5, 120.6, 120.7, 121, 122, 123, 124, 125, 125.1, 125.2, 126, 126.1, 126.2, 127, 128.1, 128.2, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 149, 150, 151, 152, 153, 154, 155, 155.1, 156, 157, 158, 159, 160, 160.1, 161, 164, 166, 167 (partial), 168, 74.2, 104, 125.3 complete. Milestones 0–25 COMPLETE. 592 unit tests (101 suites). E2E: 49 tests (8 spec files). Build passing. Node.js 24.12.0 runtime. Coverage: 85/80/85/85. Zero `as never` casts. Lint: 0 errors, 0 warnings.
+> Last updated: 2026-03-31 — PM audit #81. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4, 105.1, 105.2, 106, 107.1, 107.2, 107.3, 108, 110, 111.1, 112.1, 112.2, 109, 113.1, 113.2, 114, 115, 116, 117, 120.1, 120.2-A, 120.2-B, 120.2-C, 120.3, 120.4, 120.5, 120.6, 120.7, 121, 122, 123, 124, 125, 125.1, 125.2, 126, 126.1, 126.2, 127, 128.1, 128.2, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 149, 150, 151, 152, 153, 154, 155, 155.1, 156, 157, 158, 159, 160, 160.1, 161, 164, 166, 167 (partial), 168, 168.1, 170, 171, 74.2, 104, 125.3 complete. Milestones 0–25 COMPLETE. 597 unit tests (101 suites). E2E: 49 tests (8 spec files). All 7 gates GREEN. Build passing. Node.js 24.12.0 runtime. Coverage: 85/80/85/85. Zero `as never` casts. Lint: 0 errors, 0 warnings.
+
+---
+
+## Phase 170 CRITICAL — Fix Theme Toggle Hydration Mismatch — VERIFIED ALREADY RESOLVED (PM audit #81, 2026-03-31)
+
+> PM audit #81 verified: the fix was already in the codebase. TODO.md was stale — listed as Phase 170 TODO but code was already correct.
+
+- [x] `droplet-theme.tsx` uses `useState<ThemeMode>("system")` — static initializer (not `getInitialMode`).
+- [x] localStorage read moved to `useEffect` (after mount) — no SSR/client divergence.
+- [x] `hasHydratedTheme` state gates theme attribute updates — prevents premature DOM changes.
+- [x] No `getInitialMode` function exists anywhere in the codebase.
+- [x] `ToggleTheme` computes from state that is identical server-side and client-side during initial render.
+- [x] Zero hydration mismatch for dark-mode users.
+
+**Files:** `src/components/layout/droplet-theme.tsx` (already correct).
+
+---
+
+## Phase 171 CRITICAL — Extract Inline Theme Script to File — VERIFIED ALREADY RESOLVED (PM audit #81, 2026-03-31)
+
+> PM audit #81 verified: the fix was already in the codebase. TODO.md was stale — listed as Phase 171 TODO but code was already correct.
+
+- [x] `src/app/layout.tsx` uses `<Script id="theme-init" strategy="beforeInteractive" src="/scripts/theme-init.js" />` — external file, NOT inline children.
+- [x] `public/scripts/theme-init.js` exists with correct IIFE (localStorage read, system preference fallback, `data-droplet-theme` attribute set).
+- [x] Zero "script tag while rendering React component" console errors.
+- [x] Theme init executes before React hydration (no FOUC).
+
+**Files:** `src/app/layout.tsx` (already correct), `public/scripts/theme-init.js` (already exists).
+
+---
+
+## Phase 168.1 CRITICAL — Fix `chat-sidebar-promo.test.tsx` test regression — VERIFIED ALREADY RESOLVED (PM audit #81, 2026-03-31)
+
+> PM audit #81 verified: All 597 tests pass (101 suites). The test regression was already fixed in a previous session. TODO.md was stale.
+
+- [x] `chat-sidebar-promo.test.tsx` passes.
+- [x] All 597 unit tests pass (101 suites).
+- [x] Build passes.
+- [x] All 7 validation gates GREEN.
+
+**Files:** `tests/unit/components/chat-sidebar-promo.test.tsx` (already correct).
 
 ---
 
