@@ -185,6 +185,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     const eventType = parsedEvent.data.type;
+    logStripeWebhookInfo(`Event type received: ${eventType}`);
 
     if (eventType === "checkout.session.completed") {
       const parsedSessionPayload = checkoutSessionPayloadSchema.safeParse(
@@ -259,6 +260,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         );
         return createWebhookErrorResponse(400);
       }
+      logStripeWebhookInfo(
+        `Checkout session ${id}: user ${theUserId} found. Processing...`,
+      );
 
       const existingTransaction = await Transaction.findOne(
         { stripeId: id },
@@ -277,6 +281,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             sessionId: id,
           })
         ) {
+          logStripeWebhookInfo(
+            `Checkout session ${checkoutSessionId}: Already processed - transaction and plan match.`,
+          );
           return NextResponse.json(
             { message: "Already processed" },
             { status: 200 },
@@ -296,6 +303,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         if (!repairedPlanUpdate) {
           return createWebhookErrorResponse(500);
         }
+        logStripeWebhookInfo(`Checkout session ${id}: Repair path completed.`);
 
         return NextResponse.json({ message: "OK" });
       }
@@ -308,6 +316,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         );
         return createWebhookErrorResponse(500);
       }
+      logStripeWebhookInfo(
+        `Checkout session ${id}: Transaction created successfully.`,
+      );
 
       const updatedPlan = await applyCheckoutPlanUpdate({
         userId: theUserId,
@@ -319,11 +330,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       if (!updatedPlan) {
         return createWebhookErrorResponse(500);
       }
+      logStripeWebhookInfo(
+        `Checkout session ${id}: User plan updated successfully.`,
+      );
 
       return NextResponse.json({ message: "OK" });
     }
 
-    logStripeWebhookError(`Unhandled Stripe event type: ${eventType}`);
+    logStripeWebhookInfo(`Unhandled Stripe event type: ${eventType}`);
 
     return NextResponse.json({ message: "Unhandled event" }, { status: 200 });
   } catch (error) {

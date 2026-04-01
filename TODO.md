@@ -5,72 +5,74 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #81 (2026-03-31). DEPLOYED TO PRODUCTION. 2 CRITICAL production bugs active (payment RE-OPENED, streaming). Phases 170, 171, 168.1 verified ALREADY RESOLVED in code (PM audit #81). 597 unit tests (101 suites). 49 E2E tests (8 spec files). All 7 gates GREEN. Build passes. TSC clean. Node.js 24.12.0 runtime.**
-> **GATE STATUS: Product Gate YELLOW (2 CRITICAL bugs). Admin Gate YELLOW (Phase 162 pending). Validation Gate GREEN (597 tests pass).**
+> **STATUS: PM audit #82 (2026-04-01). DEPLOYED TO PRODUCTION. 2 CRITICAL production bugs active (payment RE-OPENED, streaming). Triple-audit verified (Architect + Engineer + PM). 597 unit tests (101 suites). 49 E2E tests (8 spec files). All 7 gates GREEN. Build passes. TSC clean. Lint clean. Knip clean. Node.js 24.12.0 runtime.**
+>
+> **GATE STATUS: Product Gate YELLOW (2 CRITICAL bugs). Admin Gate YELLOW (Phase 162 pending). Compliance Gate YELLOW (33 empty catch blocks, 8 env casts). Validation Gate GREEN (597 tests pass).**
+>
 > **Zero: `as never`, `as any`, `console.log`, `console.error`, `window.alert`, `window.confirm`, `strict: false`, `droplet-scrollbar`, stale TODOs — all in `src/`.**
 >
-> **REMAINING PRODUCTION BUGS (PM audit #81):**
+> **REMAINING PRODUCTION BUGS (PM audit #82 — triple-audit confirmed):**
 >
-> - 🔴 BUG-PAYMENT **RE-OPENED**: Owner reports (2026-03-31): Stripe payment succeeds, webhook returns 200 OK, but NO Transaction created and NO User plan updated. **PM audit #81 finding:** webhook code logic is CORRECT — most likely `checkout.session.completed` event NOT enabled in Stripe Dashboard. Non-checkout events return 200 "Unhandled event". **Phase 169 (diagnostic logging) to confirm.** Owner MUST verify Stripe Dashboard webhook event selection.
-> - 🔴 BUG-STREAM: Stream ends unexpectedly on media gen. Vercel 60s timeout. **Phase 160.2 (proactive timeout safety net).**
-> - ✅ ~~BUG-AUDIO~~: **RESOLVED (Phase 168 COMPLETE).**
-> - ✅ ~~BUG-HYDRATION~~: **RESOLVED (PM audit #81 verified — code already uses `useState("system")` with useEffect).**
-> - ✅ ~~BUG-SCRIPT~~: **RESOLVED (PM audit #81 verified — layout.tsx already uses external script src).**
-> - ✅ ~~TEST-REGRESSION~~: **RESOLVED (PM audit #81 verified — 597 tests pass).**
-> - ⚠️ Admin configurability (Phase 162): PENDING — after critical bugs resolved.
+> - 🔴 BUG-PAYMENT **RE-OPENED**: Stripe payment succeeds, webhook returns 200 OK, but NO Transaction created and NO User plan updated. Code quadruple-audited CORRECT. Root cause: likely `checkout.session.completed` event NOT enabled in Stripe Dashboard — non-checkout events return 200 "Unhandled event". **Phase 169 (diagnostic logging) confirms.** Owner MUST verify Stripe Dashboard webhook event selection.
+> - 🔴 BUG-STREAM: Stream ends unexpectedly on media gen. Vercel Hobby 60s timeout kills function before pipeline completes. Heartbeats prevent client timeout but NOT Vercel function kill. **Phase 160.2 (proactive 55s safety timer).**
+> - ✅ BUG-AUDIO RESOLVED (Phase 168).
+> - ✅ BUG-HYDRATION RESOLVED (PM audit #81 verified — code already fixed).
+> - ✅ BUG-SCRIPT RESOLVED (PM audit #81 verified — code already fixed).
+> - ✅ TEST-REGRESSION RESOLVED (PM audit #81 verified — 597 tests pass).
 >
-> **EXECUTION ORDER (PM audit #81 — 2 critical bugs first, then hardening):**
+> **EXECUTION ORDER (PM audit #82 — critical bugs first, then hardening):**
 >
 > 1. **🔴 Phase 169 CRITICAL** — Stripe webhook diagnostic logging (BUG-PAYMENT investigation).
 > 2. **🔴 Phase 160.2 CRITICAL** — Proactive timeout safety net (55s timer before Vercel kill).
-> 3. **Phase 167.2 HIGH** — Remaining 33 empty catch blocks.
-> 4. **Phase 162 HIGH** — Promo text admin-configurable.
-> 5. **Phase 163 HIGH** — Global error boundary.
+> 3. **Phase 167.2 HIGH** — Fix 33 remaining empty catch blocks.
+> 4. **Phase 162 HIGH** — Promo text admin-configurable (~25 hardcoded strings).
+> 5. **Phase 163 HIGH** — Global error boundary (`global-error.tsx`).
 > 6. **Phase 165 MEDIUM** — Checkout success page DB polling.
-> 7. **Phase 143 MEDIUM** — Env var runtime validation.
-> 8. **Phase 144–148 MEDIUM/LOW** — Backlog.
+> 7. **Phase 143 MEDIUM** — Env var runtime validation (8 unsafe casts).
+> 8. **Phase 144 MEDIUM** — Admin config in-memory cache.
+> 9. **Phase 145–148 LOW** — Backlog.
 >
 > _Critical bugs block ALL other work. No exceptions._
 
 ---
 
-## 🔴 ENGINEER START HERE — Phase 169 CRITICAL — Stripe Webhook Diagnostic Logging (PM audit #81)
+## 🔴 ENGINEER START HERE — Phase 169 CRITICAL — Stripe Webhook Diagnostic Logging
 
-> **BUG-PAYMENT RE-OPENED.** Owner reports (2026-03-31): Stripe payment succeeds, webhook returns 200 OK for all requests, but NO Transaction created and NO User plan updated. Code logic quadruple-audited (PM audit #81) — **code is CORRECT.** **Root cause hypothesis (PM audit #81):** `checkout.session.completed` event type is NOT selected/enabled in Stripe Dashboard webhook configuration. Non-checkout events (payment_intent.succeeded, charge.succeeded) reach the webhook and return 200 "Unhandled event" — making owner see 200 OK. The webhook currently has ZERO logging of event type received — making production diagnosis impossible. This phase adds diagnostic logging. **Owner MUST also verify Stripe Dashboard webhook event selection.**
+> **BUG-PAYMENT RE-OPENED (3rd time).** Owner reports: Stripe payment succeeds, webhook returns 200 OK for all requests, but NO Transaction created and NO User plan updated. Code logic quadruple-audited by Architect, Engineer, and PM — **code is CORRECT.** Root cause hypothesis (PM audit #82): `checkout.session.completed` event type is NOT selected/enabled in Stripe Dashboard webhook configuration. Non-checkout events (payment_intent.succeeded, charge.succeeded) reach the webhook and return 200 "Unhandled event" — making owner see 200 OK. The webhook currently has ZERO logging of event type received — making production diagnosis impossible. This phase adds diagnostic logging only. **Owner MUST also verify Stripe Dashboard webhook event selection after deployment.**
 
 **File:** `src/app/api/webhooks/stripe/route.tsx`
 
 **What to do:**
 
-1. Add `logStripeWebhookInfo(\`Event type received: ${eventType}\`);`immediately after`const eventType = parsedEvent.data.type;` (line ~187).
-2. Add `logStripeWebhookInfo(\`Checkout session ${id}: user ${theUserId} found. Processing...\`);` after the user lookup succeeds (line ~270).
-3. Add `logStripeWebhookInfo(\`Checkout session ${checkoutSessionId}: Already processed — transaction and plan match.\`);` before the "Already processed" return (line ~280).
-4. Add `logStripeWebhookInfo(\`Checkout session ${id}: Repair path completed.\`);` after successful repair (line ~300).
-5. Add `logStripeWebhookInfo(\`Checkout session ${id}: Transaction created successfully.\`);`after`createTransaction` succeeds (line ~305).
-6. Add `logStripeWebhookInfo(\`Checkout session ${id}: User plan updated successfully.\`);`after`applyCheckoutPlanUpdate` succeeds (line ~320).
+1. Add `logStripeWebhookInfo(\`Event type received: ${eventType}\`)`immediately after`const eventType = parsedEvent.data.type;` (~line 187).
+2. Add `logStripeWebhookInfo(\`Checkout session ${id}: user ${theUserId} found. Processing...\`)` after the user lookup succeeds (~line 270).
+3. Add `logStripeWebhookInfo(\`Checkout session ${checkoutSessionId}: Already processed — transaction and plan match.\`)` before the "Already processed" return (~line 280).
+4. Add `logStripeWebhookInfo(\`Checkout session ${id}: Repair path completed.\`)` after successful repair (~line 300).
+5. Add `logStripeWebhookInfo(\`Checkout session ${id}: Transaction created successfully.\`)`after`createTransaction` succeeds (~line 305).
+6. Add `logStripeWebhookInfo(\`Checkout session ${id}: User plan updated successfully.\`)`after`applyCheckoutPlanUpdate` succeeds (~line 320).
+7. **Rename** `logStripeWebhookError` to `logStripeWebhookInfo` for the "Unhandled event type" path at the bottom — it's not an error, it's normal Stripe behavior (non-checkout events).
 
-**Additional diagnostic action for owner:**
+**Post-deployment owner action:**
 
-After deploying Phase 169, have the owner:
-
-1. Make a test payment in production
-2. Check Vercel function logs for the webhook endpoint
-3. Look for `Event type received:` log entries — this will show EXACTLY which events are hitting the webhook
-4. If `checkout.session.completed` is NOT in the logs, the event type is not selected in Stripe Dashboard
-5. If it IS in the logs, the subsequent logs will show which code path was taken
+1. Make a test payment in production.
+2. Check Vercel function logs for the webhook endpoint.
+3. Look for `Event type received:` log entries — shows EXACTLY which events reach the webhook.
+4. If `checkout.session.completed` is NOT in the logs → enable it in Stripe Dashboard → Webhooks → Events.
+5. If it IS in the logs → subsequent logs show which code path was taken.
 
 **Acceptance criteria:**
 
 - [ ] Event type logged at entry for every webhook event
 - [ ] Each 200 return path has descriptive logging
+- [ ] "Unhandled event" path uses info-level logging (not error-level)
 - [ ] No behavioral changes to webhook logic (logging only)
 - [ ] Build passes, tests pass
 
 ---
 
-## 🔴 Phase 160.2 CRITICAL — Proactive Timeout Safety Net (PM audit #78)
+## 🔴 Phase 160.2 CRITICAL — Proactive Timeout Safety Net
 
-> Stream error on media gen still failing in production. Code mitigations (heartbeat, didSendFinal, maxDuration=60) are deployed but do NOT fix root cause: Vercel Hobby 60s function timeout kills server before pipeline completes. This phase adds a proactive safety net.
+> Stream error on media gen still failing in production. All code mitigations (heartbeat, didSendFinal, maxDuration=60, controllerClosed guard) are deployed. Root cause: Vercel Hobby 60s function timeout kills server before pipeline completes. This phase adds a proactive safety net that sends a graceful error BEFORE Vercel kills the function.
 
 **File:** `src/app/api/openai/route.tsx`
 
@@ -79,11 +81,11 @@ After deploying Phase 169, have the owner:
 1. At the start of the `ReadableStream.start(controller)` callback, record `const startTime = Date.now();`.
 2. Define `const TIMEOUT_SAFETY_MS = (maxDuration - 5) * 1000;` (55s for current maxDuration=60).
 3. Start a `setTimeout` (the "safety timer") that fires at `TIMEOUT_SAFETY_MS`:
-   - Sends `writeErrorEvent("Your request is taking longer than expected. Media generation may still be processing in the background. Please check your library or start a new conversation.", "proactive timeout safety net")`
-   - Calls `stopGeneralHeartbeat()` and `stopMediaHeartbeat()`
-   - Calls `controller.close()` (wrapped in try/catch)
+   - Sends `writeStreamEvent(controller, { type: "error", error: "Your request is taking longer than expected. Media generation may still be processing in the background. Please check your library or start a new conversation." })` with source `"proactive timeout safety net"`.
+   - Calls `stopGeneralHeartbeat()` and `stopMediaHeartbeat()`.
+   - Sets `controllerClosed = true` and calls `controller.close()` (wrapped in try/catch).
 4. Clear the safety timer in the `finally` block if the pipeline completes normally.
-5. **Additionally**: update `src/components/chat/chat-wrapper.tsx` to display this specific error message gracefully (not as a red alert — use orange/warning since media may still be processing).
+5. Update `src/components/chat/chat-wrapper.tsx` to display this specific timeout error message with orange/warning styling (not red/error — since media may still be processing in the background).
 
 **Acceptance criteria:**
 
@@ -95,13 +97,145 @@ After deploying Phase 169, have the owner:
 
 ---
 
-## MEDIUM — Checkout Success Page DB Polling (PM audit #75)
+## HIGH — Phase 167.2 — Fix 33 Remaining Empty Catch Blocks
 
-### Phase 165 MEDIUM — Add plan confirmation polling to checkout success page
+> Phase 167 was partially completed (targeted catches in API routes, admin actions, delete cascade, sidebar). **33 parameterless `catch {` blocks remain across `src/`** (triple-audit verified, PM audit #82). 3 already have comments (image-holder.tsx L48, droplet-theme.tsx L49 + L59). 30 need fixing.
+>
+> AGENTS.md: "No empty catch blocks — every catch must either capture the error variable and log to `process.stderr.write()`, or have a code comment explaining why the error is intentionally discarded."
 
-> BUG-PAYMENT resolved (PM audit #78.1 — owner verified). Deprioritized back to MEDIUM. Still a good safety net: after Stripe redirects to `/checkout-success`, webhook may not have processed yet. User sees "success" but plan is still Lite.
+**Category A — Server-side catches that MUST LOG (production debugging at stake):**
 
-**File:** `src/app/(public)/checkout-success/page.tsx` (or add client component)
+| #   | File                                         | Line | Context                     |
+| --- | -------------------------------------------- | ---- | --------------------------- |
+| 1   | `src/app/api/webhooks/clerk/route.tsx`       | 292  | Webhook verify failure      |
+| 2   | `src/app/api/webhooks/clerk/route.tsx`       | 497  | User delete cleanup         |
+| 3   | `src/app/api/webhooks/clerk/route.tsx`       | 523  | Webhook processing failure  |
+| 4   | `src/lib/actions/user.actions.tsx`           | 104  | Clerk user deletion failure |
+| 5   | `src/lib/actions/task.actions.tsx`           | 338  | S3 cleanup                  |
+| 6   | `src/lib/actions/task.actions.tsx`           | 348  | Task deletion               |
+| 7   | `src/lib/utils/ensure-user-synced.ts`        | 108  | Clerk metadata sync         |
+| 8   | `src/lib/utils/aws/uploadFileToAWS.tsx`      | 37   | S3 upload (use `{ cause }`) |
+| 9   | `src/app/(public)/checkout-success/page.tsx` | 45   | Stripe session verify       |
+| 10  | `src/lib/utils/openai/generateResponse.tsx`  | 425  | JSON.parse args             |
+
+**Category B — Effective-\* resolver fallback catches (add comment — intentional fallback to defaults):**
+
+| #   | File                                        | Line          | Count |
+| --- | ------------------------------------------- | ------------- | ----- |
+| 11  | `src/lib/utils/effective-website-copy.ts`   | 326, 340      | 2     |
+| 12  | `src/lib/utils/effective-stop-reasons.ts`   | 65            | 1     |
+| 13  | `src/lib/utils/effective-plan-config.ts`    | 267, 285, 299 | 3     |
+| 14  | `src/lib/utils/effective-persona-config.ts` | 163           | 1     |
+| 15  | `src/lib/utils/effective-persona-access.ts` | 69            | 1     |
+| 16  | `src/lib/utils/effective-model-config.ts`   | 92            | 1     |
+| 17  | `src/lib/utils/effective-faq-content.ts`    | 93            | 1     |
+
+**Category C — Client catches (add comment for intentional discards):**
+
+| #   | File                                               | Line | Context            |
+| --- | -------------------------------------------------- | ---- | ------------------ |
+| 18  | `src/components/shared/audio-player.tsx`           | 109  | Audio init failure |
+| 19  | `src/components/chat/sidebar/chat-sidebar-nav.tsx` | 144  | Delete failure     |
+| 20  | `src/components/chat/library-delete-button.tsx`    | 66   | Delete failure     |
+| 21  | `src/components/chat/chat-wrapper.tsx`             | 300  | JSON parse         |
+| 22  | `src/components/chat/chat-input.tsx`               | 115  | Upload failure     |
+
+**Category D — Utility catches (add comment for URL/parse fallbacks):**
+
+| #   | File                                          | Line  | Count |
+| --- | --------------------------------------------- | ----- | ----- |
+| 23  | `src/lib/utils/normalize-public-asset-url.ts` | 8, 33 | 2     |
+| 24  | `src/lib/utils/aws/s3-file-reference.ts`      | 9, 99 | 2     |
+| 25  | `src/lib/utils/download-url-allowlist.ts`     | 54    | 1     |
+| 26  | `src/app/api/download/route.tsx`              | 55    | 1     |
+
+**Already have comments (NO CHANGE):** `image-holder.tsx` L48, `droplet-theme.tsx` L49 + L59, `layout.tsx` L73.
+
+**Instructions:**
+
+1. **Category A:** Capture error — `catch (error)` → `process.stderr.write(\`[source] Error: ${error instanceof Error ? error.message : "unknown"}\\n\`)`. For `uploadFileToAWS`: use `throw new Error("File upload failed", { cause: error })`.
+2. **Category B:** Add comment: `// Intentional fallback to defaults — admin config DB error is non-fatal`
+3. **Category C:** Add comment where intentional, or capture error if genuinely useful.
+4. **Category D:** Add comment: `// URL/path parse failure — non-fatal, fallback value used`
+
+**Acceptance criteria:**
+
+- [ ] Zero uncommented parameterless `catch {` blocks in `src/`
+- [ ] Server-side catches (Category A) log error details via `process.stderr.write()`
+- [ ] Client/utility catches (Categories B-D) have explaining comments or capture error
+- [ ] `uploadFileToAWS` uses `{ cause: error }` pattern
+- [ ] Build passes, tests pass
+
+---
+
+## HIGH — Phase 162 — Make Promo/Upgrade Text Admin-Configurable
+
+> Owner directive: admin settings must control ALL display text. ~25 hardcoded marketing/promo strings across 3 files. Must be admin-configurable via `effective-promo-content.ts` resolver.
+
+**Hardcoded strings to extract (triple-audit verified):**
+
+**`src/components/chat/sidebar/chat-sidebar-promo.tsx`:**
+
+- "Admin" (heading), "You have admin access." (description)
+- "Account Suspended" (heading), "Your account has been suspended..." (description)
+- "Go Premium" / "Go Pro" (heading), upgrade descriptions
+- "Upgrade Now" (CTA)
+
+**`src/components/shared/plan-promo.tsx`:**
+
+- "Free forever" (badge), "Your plan" (badge)
+- "Admin" / "You have admin access." / "Account suspended" / suspension description
+- "Unlock premium features with an upgrade!" / "Upgrade now" / "Contact support"
+
+**`src/components/shared/persona-card.tsx`:**
+
+- "Upgrade to ${requiredPlan} to unlock this persona" / "Trial access with reduced limits..."
+
+**What to do:**
+
+1. Create `src/lib/utils/effective-promo-content.ts` resolver following existing `effective-*` pattern. Keys: `admin.promoTitle.pro`, `admin.promoTitle.premium`, `admin.promoDescription.pro`, `admin.promoDescription.premium`, `admin.promoUpgradeCta`, `admin.promoAdminLabel`, `admin.promoAdminDescription`, `admin.promoSuspensionTitle`, `admin.promoSuspensionDescription`, `admin.promoFreeLabel`, `admin.promoUpgradeMessage`, `admin.promoTrialLabel`, `admin.promoPersonaUpgrade`.
+2. Parent server components pass resolved promo text as props to client components.
+3. Remove ALL hardcoded marketing/promo strings from the 3 files above. CSS class names and route paths are excluded (structural).
+4. Add admin UI section for editing promo text in `/admin/settings`.
+
+**Acceptance criteria:**
+
+- [ ] Zero hardcoded promo/marketing text in `chat-sidebar-promo.tsx`
+- [ ] Zero hardcoded promo/marketing text in `plan-promo.tsx`
+- [ ] Zero hardcoded upgrade messaging text in `persona-card.tsx`
+- [ ] `effective-promo-content.ts` resolver with admin override + default fallback
+- [ ] Admin UI section for editing promo text in `/admin/settings`
+- [ ] Build passes, tests pass
+
+---
+
+## HIGH — Phase 163 — Global Error Boundary
+
+> No `global-error.tsx` exists. `error.tsx` catches errors within the root layout's children, but `global-error.tsx` is needed for root layout errors themselves. Without it, root layout failures produce a raw browser error page.
+
+**File:** `src/app/global-error.tsx` (new)
+
+**What to do:**
+
+1. Create `src/app/global-error.tsx` as a `"use client"` component.
+2. Render minimal error UI: "Something went wrong" message, "Try again" button (`reset()`), "Return home" link.
+3. Include required `<html>` and `<body>` tags (Next.js requirement for global-error).
+4. Apply basic inline styling — no theme dependency since root layout may have failed.
+
+**Acceptance criteria:**
+
+- [ ] `src/app/global-error.tsx` exists and is a valid `"use client"` component
+- [ ] Contains `<html>` and `<body>` tags
+- [ ] Shows error recovery UI with "Try again" and "Return home"
+- [ ] Build passes
+
+---
+
+## MEDIUM — Phase 165 — Checkout Success Page DB Polling
+
+> After Stripe redirects to checkout success, webhook may not have processed yet. User sees "success" but plan is still Lite until webhook fires.
+
+**File:** `src/app/(public)/checkout-success/page.tsx` (or new client component)
 
 **What to do:**
 
@@ -118,130 +252,26 @@ After deploying Phase 169, have the owner:
 
 ---
 
-## HIGH — Remaining Empty Catch Blocks (PM audit #78)
+## MEDIUM — Phase 143 — Env Var Runtime Validation
 
-### Phase 167.2 HIGH — Fix remaining 33 parameterless `catch {` blocks across `src/`
+> 8 unsafe `process.env` casts: 4 `as string` + 4 `!`. Missing env vars produce cryptic runtime crashes instead of clear startup errors.
 
-> Phase 167 was partially completed (targeted catches in API routes, admin actions, delete cascade, sidebar — see DONE.md Phase 167). **33 parameterless `catch {` blocks remain across `src/` (PM audit #81 verified).** This phase covers the remaining ones.
->
-> AGENTS.md: "No empty catch blocks — every catch must either capture the error variable and log to `process.stderr.write()`, or have a code comment explaining why the error is intentionally discarded."
+**Locations (triple-audit verified):**
 
-**Category A — Server-side catches that MUST LOG (production debugging at stake):**
-
-1. `src/app/api/webhooks/clerk/route.tsx` lines 292, 497, 523 — 3 webhook catches
-2. `src/lib/actions/user.actions.tsx` line 104 — Clerk user deletion failure
-3. `src/lib/actions/task.actions.tsx` lines 338, 348 — S3 cleanup and task deletion
-4. `src/lib/utils/ensure-user-synced.ts` line 108 — Clerk metadata sync
-5. `src/lib/utils/aws/uploadFileToAWS.tsx` line 37 — file upload (must use `{ cause: error }`)
-6. `src/app/(public)/checkout-success/page.tsx` line 45 — Stripe session verify
-7. `src/lib/utils/openai/generateResponse.tsx` line 425 — JSON.parse args
-
-**Category B — Effective-\* resolver catches (add comment — intentional fallback to defaults):**
-
-8-16. `effective-website-copy.ts` (2), `effective-stop-reasons.ts` (1), `effective-plan-config.ts` (3), `effective-persona-config.ts` (1), `effective-persona-access.ts` (1), `effective-model-config.ts` (1), `effective-faq-content.ts` (1)
-
-**Category C — Client catches (add comment for intentional discards, log for real errors):**
-
-17. `src/components/shared/audio-player.tsx` line 109 — audio init failure
-18. `src/components/shared/image-holder.tsx` line 48 — download failure (already has comment ✅)
-19. `src/components/layout/droplet-theme.tsx` lines 49, 67 — localStorage (already has comment ✅)
-20. `src/components/chat/sidebar/chat-sidebar-nav.tsx` line 144 — delete failure
-21. `src/components/chat/library-delete-button.tsx` line 66 — delete failure
-22. `src/components/chat/chat-wrapper.tsx` line 300 — JSON parse
-23. `src/components/chat/chat-input.tsx` line 115 — upload failure
-24. `src/app/layout.tsx` line 73 — theme init (inline script — intentional)
-
-**Category D — Utility catches (add comment for URL/parse fallbacks):**
-
-25-28. `normalize-public-asset-url.ts` (2), `s3-file-reference.ts` (2), `download-url-allowlist.ts` (1), `download/route.tsx` (1)
+| File                                     | Line | Pattern     | Variable            |
+| ---------------------------------------- | ---- | ----------- | ------------------- |
+| `src/lib/database/mongoose.tsx`          | 5    | `as string` | `MONGODB_URL`       |
+| `src/constants/aws.tsx`                  | 5    | `as string` | `AWS_S3_REGION`     |
+| `src/constants/aws.tsx`                  | 7    | `as string` | `AWS_S3_ACCESS_ID`  |
+| `src/constants/aws.tsx`                  | 8    | `as string` | `AWS_S3_SECRET_KEY` |
+| `src/constants/openai.tsx`               | 5    | `!`         | `OPENAI_ORG`        |
+| `src/constants/openai.tsx`               | 6    | `!`         | `OPENAI_PRJ`        |
+| `src/constants/openai.tsx`               | 7    | `!`         | `OPENAI_KEY`        |
+| `src/lib/actions/transaction.action.tsx` | 52   | `!`         | `STRIPE_SECRET_KEY` |
 
 **What to do:**
 
-1. **For Category A blocks:** Capture error variable `catch (error)`, add `process.stderr.write(\`[source] Error: ${error instanceof Error ? error.message : "unknown"}\\n\`)`before the return/rethrow. For`uploadFileToAWS`: use `throw new Error("File upload failed", { cause: error })`.
-2. **For Category B blocks:** Add comment: `// Intentional fallback to defaults — DB error non-fatal for admin config resolution`
-3. **For Category C blocks 17, 20, 21, 22, 23:** Add comment or capture error where appropriate.
-4. **For Category D blocks:** Add comment: `// URL/path parse failure — non-fatal, fallback value used`
-5. For blocks that already have comments (#18, #19, #24): No change needed.
-
-**Acceptance criteria:**
-
-- [ ] Zero uncommented parameterless `catch {` blocks in `src/`
-- [ ] Server-side catches (Category A) log error details via `process.stderr.write()`
-- [ ] Client/utility catches (Categories B-D) have explaining comments or capture error
-- [ ] `uploadFileToAWS` uses `{ cause: error }` pattern
-- [ ] Build passes, tests pass
-
----
-
-## HIGH — Admin Promo Text Configurability (PM audit #73)
-
-### Phase 162 HIGH — Make sidebar promo upgrade text admin-configurable
-
-> Owner directive: admin settings must control ALL display text. `ChatSidebarPromo` has hardcoded "Go Pro"/"Go Premium" and hardcoded promo descriptions. `PlanPromo` has hardcoded "Unlock premium features", "Free forever", "Admin access - full permissions". `PersonaCard` has hardcoded upgrade messaging. These should come from admin-configurable settings or at minimum from the effective plan config.
-
-**Files:**
-
-1. `src/components/chat/sidebar/chat-sidebar-promo.tsx` — "Go Pro"/"Go Premium", promo descriptions, "Admin"/"Account Suspended" text
-2. `src/components/shared/plan-promo.tsx` — "Free forever", "Admin access - full permissions", "Unlock premium features with an upgrade!", "Upgrade now", suspension text
-3. `src/components/shared/persona-card.tsx` — "Upgrade to ${requiredPlan} to unlock this persona", "Trial access with reduced limits..."
-
-**What to do:**
-
-1. Create `src/lib/utils/effective-promo-content.ts` resolver following the existing `effective-*` pattern. Keys: `admin.promoTitle.pro`, `admin.promoTitle.premium`, `admin.promoDescription.pro`, `admin.promoDescription.premium`, `admin.promoUpgradeCta`, `admin.promoAdminLabel`, `admin.promoAdminDescription`, `admin.promoSuspensionTitle`, `admin.promoSuspensionDescription`.
-2. Parent server components pass resolved promo text as props to client components.
-3. Remove ALL hardcoded marketing/promo strings from the 3 files above. CSS class names and route paths are excluded (those are structural, not marketing).
-
-**Acceptance criteria:**
-
-- [ ] Zero hardcoded promo/marketing text in `chat-sidebar-promo.tsx`
-- [ ] Zero hardcoded promo/marketing text in `plan-promo.tsx`
-- [ ] Zero hardcoded upgrade messaging text in `persona-card.tsx`
-- [ ] Promo text comes from admin-configurable source via `effective-promo-content.ts` resolver
-- [ ] Admin UI section for editing promo text in `/admin/settings`
-- [ ] Build passes, tests pass
-
----
-
-## HIGH — Global Error Boundary (PM audit #74 — Architect finding)
-
-### Phase 163 HIGH — Add `global-error.tsx` for root layout error recovery
-
-> No `global-error.tsx` exists. In Next.js, `global-error.tsx` catches errors in the root layout itself. Without it, a root layout error produces a raw browser error page with no recovery path.
-
-**File:** `src/app/global-error.tsx` (new)
-
-**What to do:**
-
-1. Create `src/app/global-error.tsx` as a client component (`"use client"`).
-2. Render a minimal error UI with "Something went wrong" message, a "Try again" button (calls `reset()`), and a "Return home" link.
-3. Include required `<html>` and `<body>` tags (Next.js requirement for global-error).
-4. Apply basic Droplet styling inline (no theme dependency since root layout may have failed).
-
-**Acceptance criteria:**
-
-- [ ] `src/app/global-error.tsx` exists and is a valid `"use client"` component
-- [ ] Contains `<html>` and `<body>` tags
-- [ ] Shows error recovery UI with "Try again" and "Return home"
-- [ ] Build passes
-
----
-
-## MEDIUM — Environment Variable Runtime Validation (PM audit #67)
-
-### Phase 143 MEDIUM — Replace `as string` / `!` casts on env vars with runtime validation
-
-> Architect finding W-2, Engineer finding H-1/H-2/H-4. 4 `as string` casts and 4 `!` non-null assertions on `process.env` values. If any env var is missing, broken clients are silently constructed.
-
-**Files:**
-
-1. `src/constants/aws.tsx` — 3 `as string` casts on `AWS_S3_REGION`, `AWS_S3_ACCESS_ID`, `AWS_S3_SECRET_KEY`
-2. `src/constants/openai.tsx` — 3 `!` on `OPENAI_ORG`, `OPENAI_PRJ`, `OPENAI_KEY`
-3. `src/lib/database/mongoose.tsx` — 1 `as string` on `MONGODB_URL`
-4. `src/lib/actions/transaction.action.tsx` — 1 `!` on `STRIPE_SECRET_KEY`
-
-**What to do:**
-
-1. Create a shared `requireEnv(name: string): string` utility that throws with a clear message.
+1. Create a shared `requireEnv(name: string): string` utility that throws with a clear message if undefined.
 2. Replace all `process.env.VAR as string` and `process.env.VAR!` with `requireEnv("VAR")`.
 
 **Acceptance criteria:**
@@ -253,9 +283,7 @@ After deploying Phase 169, have the owner:
 
 ---
 
-## MEDIUM — Admin Config In-Memory Cache (PM audit #67)
-
-### Phase 144 MEDIUM — Cache admin config queries with short TTL
+## MEDIUM — Phase 144 — Admin Config In-Memory Cache
 
 > 5+ DB round trips per `/api/openai` request for admin settings that change infrequently.
 
@@ -272,9 +300,7 @@ After deploying Phase 169, have the owner:
 
 ---
 
-## MEDIUM — Upload Filename Collision Prevention (PM audit #67)
-
-### Phase 145 MEDIUM — Use `crypto.randomUUID()` for upload filenames
+## MEDIUM — Phase 145 — Upload Filename Collision Prevention
 
 **File:** `src/app/api/upload/route.tsx`
 
@@ -287,9 +313,7 @@ After deploying Phase 169, have the owner:
 
 ---
 
-## LOW — Admin User Detail Transaction Limit (PM audit #67)
-
-### Phase 146 LOW — Add `.limit(50)` to admin user detail transaction query
+## LOW — Phase 146 — Admin User Detail Transaction Limit
 
 **File:** `src/lib/utils/admin-queries.ts`
 
@@ -302,9 +326,7 @@ After deploying Phase 169, have the owner:
 
 ---
 
-## LOW — Rename `.tsx` Utility Files to `.ts` (PM audit #67)
-
-### Phase 147 LOW — Rename utility files with `.tsx` extension that contain no JSX
+## LOW — Phase 147 — Rename `.tsx` Utility Files to `.ts`
 
 **Files to evaluate:**
 
@@ -320,11 +342,9 @@ After deploying Phase 169, have the owner:
 - [ ] All imports updated
 - [ ] Build passes, tests pass
 
-## LOW — Bulk Operations Partial-Failure Reporting (PM audit #67)
+---
 
-### Phase 148 LOW — Report partial success/failure in admin bulk operations
-
-> Engineer finding H-6. `bulkRemoveUsersAction` fails midway through a batch with no partial-failure reporting. Users deleted so far are not reported and no rollback is possible.
+## LOW — Phase 148 — Bulk Operations Partial-Failure Reporting
 
 **File:** `src/lib/actions/admin.actions.tsx`
 
@@ -357,10 +377,9 @@ After deploying Phase 169, have the owner:
 
 ### Legal/nav/footer admin configurability — Deferred to v2
 
-### TypeScript 6 / @typescript-eslint compatibility — Monitor for official TS 6 support in `@typescript-eslint` (Engineer finding M-3, PM audit #66)
+### TypeScript 6 / @typescript-eslint compatibility — Monitor for official TS 6 support in `@typescript-eslint`
 
 ---
 
 > **Completed phases** archived in [`DONE.md`](DONE.md).
-> All phases through 166 complete + 160.1 + 164 complete (incl. 135–142, 149–161, 160.1, 164, 166, 74.2, 104, 125.3, 126.2, 134, plus 107.1–107.3, 108, 114, 125.1, 131, 132, 133, 120.1–120.7, 121–130, 128.2, 106, 156).
-> All Milestones 0–25 COMPLETE.
+> All phases through 168 complete + 160.1 + 164 + 170 + 171 + 168.1 complete. Milestones 0–25 COMPLETE.
