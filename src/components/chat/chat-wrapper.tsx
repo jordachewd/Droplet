@@ -19,6 +19,12 @@ import { TaskEndAction, TaskEndedReason, TaskStatus } from "@/types/TaskData.d";
 import { useChatStore } from "@/lib/hooks/use-chat-store";
 import { usePreferencesStore } from "@/lib/hooks/use-preferences-store";
 import type { ChatApiResponse, ChatStreamEvent } from "@/types/chat-api";
+import {
+  STREAM_PROACTIVE_TIMEOUT_MESSAGE,
+  STREAM_PROACTIVE_TIMEOUT_TITLE,
+  STREAM_REQUEST_TIMEOUT_MS,
+  STREAM_REQUEST_TIMEOUT_MESSAGE,
+} from "@/constants/chat-stream";
 
 interface ChatWrapperProps {
   personas: Persona[];
@@ -32,13 +38,6 @@ interface ChatWrapperProps {
   initialEndedReason?: TaskEndedReason;
   initialEndAction?: TaskEndAction;
 }
-
-const STREAM_REQUEST_TIMEOUT_MS = 70_000;
-const STREAM_REQUEST_TIMEOUT_MESSAGE =
-  "The response timed out. Please try again.";
-const STREAM_PROACTIVE_TIMEOUT_MESSAGE =
-  "Your request is taking longer than expected. Media generation may still be processing in the background. Please check your library or start a new conversation.";
-const STREAM_PROACTIVE_TIMEOUT_TITLE = "Request taking longer than expected";
 
 function isAbortError(error: unknown): boolean {
   return (
@@ -594,6 +593,8 @@ export default function ChatWrapper({
           isNewTask && "items-center justify-center gap-12",
         )}
       >
+        {!isNewTask && <p>Checking if is new task...</p>}
+
         {isNewTask ? (
           <ChatIntro
             persona={selectedPersona}

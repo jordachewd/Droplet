@@ -13,20 +13,8 @@ interface ChatIntroProps {
 export default function ChatIntro({ persona, sendPrompt }: ChatIntroProps) {
   const { user, isLoaded } = useUser();
 
-  function handleSendPrompt(prompt: string) {
-    sendPrompt(prompt);
-  }
-
-  if (!isLoaded) {
-    return (
-      <section className="ChatIntro flex w-full items-center justify-center">
-        <LoadingBubbles size="large" />
-      </section>
-    );
-  }
-
   const introWrapperClass = classNames(
-    "ChatIntro mx-auto flex w-full max-w-4xl flex-col gap-6",
+    "ChatIntro mx-auto flex w-full max-w-4xl flex-col gap-8",
   );
 
   const introPromptButtonClass = classNames(
@@ -34,12 +22,26 @@ export default function ChatIntro({ persona, sendPrompt }: ChatIntroProps) {
     "border-slate-400 hover:bg-lavenderHaze-200/60 dark:border-slate-500 dark:hover:bg-nightIndigo-500/25",
   );
 
+  function handleSendPrompt(prompt: string) {
+    sendPrompt(prompt);
+  }
+
+  if (!isLoaded) {
+    return (
+      <div className={introWrapperClass}>
+        <div className="flex justify-center items-center min-h-[35vh]">
+          <LoadingBubbles size="large" />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={introWrapperClass}>
       <div className="ChatIntroHead flex flex-col gap-2 justify-center items-center">
         <h1 className="heading-2">Hello {user?.firstName || "there"},</h1>
         <h2 className="heading-5">welcome to your chat dashboard.</h2>
-        <p className="body-2 mt-10">
+        <p className="body-2">
           Active persona: <strong>{persona.label}</strong> - {persona.tagline}
         </p>
       </div>
