@@ -66,6 +66,7 @@ const persistMode = (nextMode: ThemeMode) => {
 export default function DropletTheme({ children }: ThemeProps) {
   const [mode, setModeState] = useState<ThemeMode>(getInitialMode);
   const [systemMode, setSystemMode] = useState<ResolvedThemeMode>("light");
+  const [hasHydratedTheme, setHasHydratedTheme] = useState(false);
   const resolvedMode: ResolvedThemeMode = mode === "system" ? systemMode : mode;
 
   useEffect(() => {
