@@ -5,123 +5,98 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #79 (2026-04-01). DEPLOYED TO PRODUCTION. 1 CRITICAL production bug active (streaming timeout). 2 NEW bugs (hydration mismatch + script tag warning). Phase 168 CODE-COMPLETE (archived to DONE.md). BUG-PAYMENT RESOLVED. 592 unit tests (101 suites). 49 E2E tests (8 spec files). Build passes. TSC clean. Node.js 24.12.0 runtime.**
-> **GATE STATUS: All 7 validation gates GREEN locally. Product Gate RED (1 CRITICAL + 2 NEW bugs). Admin Gate YELLOW (Phase 162 pending).**
+> **STATUS: PM audit #80 (2026-04-01). DEPLOYED TO PRODUCTION. Phases 169, 170, 160.2 COMPLETED this session. BUG-HYDRATION RESOLVED. BUG-SCRIPT RESOLVED. BUG-STREAM MITIGATED (proactive 55s timeout). BUG-PAYMENT RESOLVED. BUG-AUDIO RESOLVED. 2 unit test failures remain (test assertions stale vs component). E2E: 49 tests (8 spec files). Build passes. TSC clean. Node.js 24.12.0 runtime.**
+> **GATE STATUS: Validation Gate YELLOW (2 unit test failures). Product Gate YELLOW (streaming mitigated, not fully resolved). Admin Gate YELLOW (Phase 162 pending).**
 > **Zero: `as never`, `as any`, `console.log`, `console.error`, `window.alert`, `window.confirm`, `strict: false`, `droplet-scrollbar`, stale TODOs — all in `src/`.**
 >
-> **ACTIVE BUGS (PM audit #79):**
+> **ACTIVE ISSUES (PM audit #80):**
 >
-> - ✅ ~~BUG-PAYMENT~~: **RESOLVED.** Stripe webhook returning 200 OK. Payment test successful.
-> - ✅ ~~BUG-AUDIO~~: **RESOLVED (Phase 168 CODE-COMPLETE, archived to DONE.md).** All three paths implemented.
-> - 🔴 BUG-HYDRATION (NEW): ToggleTheme hydration mismatch — server/client state divergence. **Phase 169.**
-> - 🔴 BUG-SCRIPT (NEW): Script tag warning in root layout — React warning on hydration. **Phase 170.**
-> - 🔴 BUG-STREAM: Stream ends unexpectedly on media gen. Vercel 60s timeout. **Phase 160.2.**
-> - ⚠️ Admin configurability (Phase 162): PENDING — after critical bugs resolved.
+> - ✅ ~~BUG-PAYMENT~~: **RESOLVED.** Stripe webhook returning 200 OK.
+> - ✅ ~~BUG-AUDIO~~: **RESOLVED (Phase 168, archived).**
+> - ✅ ~~BUG-HYDRATION~~: **RESOLVED (Phase 169, archived).**
+> - ✅ ~~BUG-SCRIPT~~: **RESOLVED (Phase 170, archived).**
+> - ✅ ~~BUG-STREAM~~: **MITIGATED (Phase 160.2, proactive 55s timeout — archived).** Root cause persists (Vercel Hobby 60s limit). Full fix requires Vercel Pro upgrade or architecture change.
+> - 🔴 TEST-FAIL-01: `chat-body.test.tsx:160` — stale amber class assertions vs current component.
+> - 🔴 TEST-FAIL-02: `chat-sidebar-promo.test.tsx:19` — expects "Manage Plan" but component renders "Upgrade Now".
+> - 🔴 BRAND-LEGACY: 5 src files still reference `cellesseon` (owner directs immediate rename to `droplet`).
+> - ⚠️ CATCH-BLOCKS: 34 parameterless `catch {}` blocks in `src/`.
+> - ⚠️ HARDCODED-TEXT: ~15 hardcoded promo/marketing strings across 4 components.
 >
-> **EXECUTION ORDER (PM audit #79 — critical bugs first, then hardening):**
+> **EXECUTION ORDER (PM audit #80 — test fixes + owner directives first, then hardening):**
 >
-> 1. **🔴 Phase 169 CRITICAL** — ToggleTheme hydration mismatch fix.
-> 2. **🔴 Phase 170 HIGH** — Script tag warning fix in root layout.
-> 3. **🔴 Phase 160.2 CRITICAL** — Proactive timeout safety net (55s timer before Vercel kill).
-> 4. **Phase 167.2 HIGH** — Remaining 34 empty catch blocks.
-> 5. **Phase 162 HIGH** — Promo text admin-configurable.
-> 6. **Phase 163 HIGH** — Global error boundary.
-> 7. **Phase 165 MEDIUM** — Checkout success page DB polling (safety net).
-> 8. **Phase 143 MEDIUM** — Env var runtime validation.
-> 9. **Phase 144–148 MEDIUM/LOW** — Backlog.
+> 1. **🔴 Phase 171 CRITICAL** — Fix 2 failing unit tests (stale assertions).
+> 2. **🔴 Phase 172 CRITICAL** — `cellesseon` → `droplet` localStorage key migration (owner override).
+> 3. **Phase 167.2 HIGH** — Remaining 34 empty catch blocks.
+> 4. **Phase 162 HIGH** — Promo text admin-configurable (expanded scope).
+> 5. **Phase 163 HIGH** — Global error boundary.
+> 6. **Phase 165 MEDIUM** — Checkout success page DB polling (safety net).
+> 7. **Phase 143 MEDIUM** — Env var runtime validation.
+> 8. **Phase 144–148 MEDIUM/LOW** — Backlog.
 >
-> _Critical bugs block ALL other work. No exceptions._
+> _Test failures and owner directives block ALL other work. No exceptions._
 
 ---
 
-## 🔴 ENGINEER START HERE — Phase 169 CRITICAL — ToggleTheme Hydration Mismatch Fix (PM audit #79, owner-reported 2026-04-01)
+## 🔴 ENGINEER START HERE — Phase 171 CRITICAL — Fix 2 Failing Unit Tests (PM audit #80)
 
-> **NEW.** `DropletTheme` component reads localStorage during `useState(getInitialMode)` initialization. Server returns `mode="system"` → `resolvedMode="light"`. Client may return `mode="dark"` from localStorage → `resolvedMode="dark"`. `ToggleTheme` derives `darkActive` from context, producing `aria-checked="false"` / "Dark Mode" on server but `aria-checked={true}` / "Light Mode" on client. Same bug class as Phase 153 (AdminSettingsTabs hydration fix — already resolved using useEffect-after-mount pattern). This is also a WCAG 2.2 AA regression — `aria-checked` must match component state.
+> **2 unit tests failing due to stale assertions.** Test expectations do not match current component implementation. Test-component drift from recent refactoring.
 
-**File:** `src/components/layout/droplet-theme.tsx`
+### Test 1: `chat-body.test.tsx` line 160 — "applies amber ended-conversation styling"
+
+**Root cause:** Test expects `.ChatBody` to have conditional amber border/bg classes (`border-amber-400/45`, `bg-amber-50/40`) when `conversationEnded=true`, and `.ChatBodyEndNotice` to have `border-amber-500/60` and `bg-amber-100/85`. But the component uses:
+
+- `.ChatBody` has NO conditional amber classes (static class only)
+- `.ChatBodyEndNotice` uses `border-amber-500/30 bg-amber-500/10` (different opacity values)
+
+**File:** `tests/unit/components/chat-body.test.tsx`
 
 **What to do:**
 
-1. Change `getInitialMode()` to always return `"system"` — remove the `typeof window` check and localStorage read from the initializer function. The `useState(getInitialMode)` call must produce the same value on server and client during SSR.
-2. Change the `systemMode` useState initializer to always return `"light"` — remove the `typeof window === "undefined"` ternary at line 75. Both initializers must be deterministic.
-3. Add a `useEffect` that runs once on mount to read from localStorage via `getStoredMode()` and call `setModeState(storedMode)`. Also call `setSystemMode(getSystemMode())` in the same effect. This is the identical pattern used in Phase 153 for admin settings tabs.
-4. The inline `<script>` in `layout.tsx` sets `data-droplet-theme` attribute before hydration for CSS — this prevents FOUC and must be kept unchanged. The fix here is purely for React state consistency.
+1. Update test assertions to match actual component classes:
+   - Remove assertions for `border-amber-400/45` and `bg-amber-50/40` on `.ChatBody` (component has no conditional amber styling)
+   - Change `.ChatBodyEndNotice` assertions from `border-amber-500/60` to `border-amber-500/30` and from `bg-amber-100/85` to `bg-amber-500/10`
+2. Keep the test's intent (verify end-notice renders with amber styling) but align with current implementation.
+
+### Test 2: `chat-sidebar-promo.test.tsx` line 19 — "shows the upgrade CTA"
+
+**Root cause:** Test expects `screen.getByRole("link", { name: "Manage Plan" })` but the component renders `"Upgrade Now"` as the CTA link text.
+
+**File:** `tests/unit/components/chat-sidebar-promo.test.tsx`
+
+**What to do:**
+
+1. Change `{ name: "Manage Plan" }` to `{ name: "Upgrade Now" }`.
 
 **Acceptance criteria:**
 
-- [ ] `getInitialMode()` always returns `"system"` (no localStorage read in initializer)
-- [ ] `systemMode` initializer always returns `"light"` (no `window` access in initializer)
-- [ ] `useEffect` on mount syncs mode from localStorage and system preference
-- [ ] Zero React hydration mismatch warnings from ToggleTheme
-- [ ] `aria-checked` value matches visual state after hydration
-- [ ] Theme still persists correctly across page loads
-- [ ] Build passes, tests pass
+- [ ] Both tests pass
+- [ ] All 7 validation gates GREEN
+- [ ] No behavioral changes to components
 
 ---
 
-## 🔴 Phase 170 HIGH — Script Tag Warning Fix (PM audit #79, owner-reported 2026-04-01)
+## 🔴 Phase 172 CRITICAL — `cellesseon` → `droplet` localStorage Key Migration (PM audit #80, owner override)
 
-> **NEW.** `<Script id="theme-init" strategy="beforeInteractive">` in `src/app/layout.tsx` produces React warning: "Encountered a script tag while rendering React component. Scripts inside React components are never executed when rendering on the client." Next.js 16.2.2 renders the Script component inside body during hydration. This uses the `next/script` component which is not appropriate for inline theme scripts in the App Router body.
+> **Owner directive OI18: ALL `cellesseon` references in `/src` must be changed to `droplet`.** The previous deprecation cycle protection (AGENTS.md Rule 9) is hereby OVERRIDDEN by the owner. Legacy migration keys must be replaced, not just kept for backward compatibility.
 
-**File:** `src/app/layout.tsx`
+**Files and changes:**
 
-**What to do:**
+1. **`src/components/layout/droplet-theme.tsx` line 26** — Remove `LEGACY_STORAGE_KEY` constant and its one-time migration logic. The migration has had sufficient time. Remove the `getStoredMode()` legacy fallback read.
 
-1. Replace `<Script id="theme-init" strategy="beforeInteractive">{...}</Script>` with a raw `<script>` tag using `dangerouslySetInnerHTML` placed inside the `<head>` element.
-2. Add a `<head>` element before `<body>` in the layout JSX.
-3. Move the theme initialization script content from the `<Script>` component to the raw `<script>` tag.
-4. Remove the `import Script from "next/script"` if no other `Script` usage remains in the file.
+2. **`src/app/layout.tsx` line 59** — Remove `legacyStorageKey` variable and the `localStorage.getItem(legacyStorageKey)` fallback in the inline theme init script. Keep reading from `"droplet-theme-mode"` only.
 
-**Example structure:**
+3. **`src/components/chat/sidebar/chat-sidebar-shell.tsx` line 29** — Remove `legacySidebarStorageKey` constant and the migration logic. Keep reading from `"droplet-sidebar-collapsed"` only.
 
-```tsx
-<html lang="en" suppressHydrationWarning className={...}>
-  <head>
-    <script
-      dangerouslySetInnerHTML={{
-        __html: `(() => { /* existing theme init code */ })();`,
-      }}
-    />
-  </head>
-  <body>
-    {/* existing body content */}
-  </body>
-</html>
-```
+4. **`src/json/privacy.json` line 35** — Remove references to "legacy migration keys cellesseon-theme-mode and cellesseon-sidebar-collapsed". Update text to reference only `droplet-theme-mode` and `droplet-sidebar-collapsed`.
+
+5. **`src/json/cookies.json` line 9** — Remove references to "legacy migration keys cellesseon-theme-mode and cellesseon-sidebar-collapsed". Update text to reference only `droplet-theme-mode` and `droplet-sidebar-collapsed`.
 
 **Acceptance criteria:**
 
-- [ ] No `<Script>` component from `next/script` in layout.tsx (unless used elsewhere)
-- [ ] Theme initialization script runs before hydration via raw `<script>` in `<head>`
-- [ ] Zero React "script tag" warnings during hydration
-- [ ] Theme flash prevention (FOUC) still works correctly
-- [ ] Build passes, tests pass
-
----
-
-## 🔴 Phase 160.2 CRITICAL — Proactive Timeout Safety Net (PM audit #78)
-
-> Stream error on media gen still failing in production. Code mitigations (heartbeat, didSendFinal, maxDuration=60) are deployed but do NOT fix root cause: Vercel Hobby 60s function timeout kills server before pipeline completes. This phase adds a proactive safety net.
-
-**File:** `src/app/api/openai/route.tsx`
-
-**What to do:**
-
-1. At the start of the `ReadableStream.start(controller)` callback, record `const startTime = Date.now();`.
-2. Define `const TIMEOUT_SAFETY_MS = (maxDuration - 5) * 1000;` (55s for current maxDuration=60).
-3. Start a `setTimeout` (the "safety timer") that fires at `TIMEOUT_SAFETY_MS`:
-   - Sends `writeErrorEvent("Your request is taking longer than expected. Media generation may still be processing in the background. Please check your library or start a new conversation.", "proactive timeout safety net")`
-   - Calls `stopGeneralHeartbeat()` and `stopMediaHeartbeat()`
-   - Calls `controller.close()` (wrapped in try/catch)
-4. Clear the safety timer in the `finally` block if the pipeline completes normally.
-5. **Additionally**: update `src/components/chat/chat-wrapper.tsx` to display this specific error message gracefully (not as a red alert — use orange/warning since media may still be processing).
-
-**Acceptance criteria:**
-
-- [ ] Safety timer fires at `maxDuration - 5s` and sends graceful error event
-- [ ] Client receives and displays the timeout message (not raw "stream ended unexpectedly")
-- [ ] Normal-speed requests are unaffected (timer cleared before firing)
-- [ ] Video gen requests get a clear message instead of silent crash
+- [ ] Zero `cellesseon` references in `src/` (verified by `grep -r "cellesseon" src/`)
+- [ ] Theme mode reads from `droplet-theme-mode` only
+- [ ] Sidebar state reads from `droplet-sidebar-collapsed` only
+- [ ] Privacy and cookies JSON files updated
 - [ ] Build passes, tests pass
 
 ---
