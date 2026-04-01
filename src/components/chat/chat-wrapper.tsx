@@ -36,6 +36,9 @@ interface ChatWrapperProps {
 const STREAM_REQUEST_TIMEOUT_MS = 70_000;
 const STREAM_REQUEST_TIMEOUT_MESSAGE =
   "The response timed out. Please try again.";
+const STREAM_PROACTIVE_TIMEOUT_MESSAGE =
+  "Your request is taking longer than expected. Media generation may still be processing in the background. Please check your library or start a new conversation.";
+const STREAM_PROACTIVE_TIMEOUT_TITLE = "Request taking longer than expected";
 
 function isAbortError(error: unknown): boolean {
   return (
@@ -340,8 +343,16 @@ export default function ChatWrapper({
       }
 
       if (event.type === "error") {
-        showAlert("Error", event.error);
         finalEventReceived = true;
+
+        if (event.error === STREAM_PROACTIVE_TIMEOUT_MESSAGE) {
+          showAlert(STREAM_PROACTIVE_TIMEOUT_TITLE, event.error, {
+            severity: "warning",
+          });
+          return;
+        }
+
+        showAlert("Error", event.error);
         return;
       }
 
@@ -555,9 +566,19 @@ export default function ChatWrapper({
     setIsLoading(false);
   };
 
-  const showAlert = (title: string, text: string) => {
+  const showAlert = (
+    title: string,
+    text: string,
+    options?: Pick<AlertParams, "severity" | "variant">,
+  ) => {
     nextAlertId.current += 1;
-    setAlert({ id: nextAlertId.current, title, text });
+    setAlert({
+      id: nextAlertId.current,
+      title,
+      text,
+      severity: options?.severity,
+      variant: options?.variant,
+    });
     setIsLoading(false);
     setMessages((previousMessages) => previousMessages.slice(0, -1));
   };
@@ -589,17 +610,14 @@ export default function ChatWrapper({
           />
         )}
 
-      <ChatInput
-        sendMessage={sendMessage}
-        loading={isLoading}
-        disabled={isConversationEnded}
-        startPrompt={startMsg}
-        personaLabel={selectedPersona.label}
-      />
-
+        <ChatInput
+          sendMessage={sendMessage}
+          loading={isLoading}
+          disabled={isConversationEnded}
+          startPrompt={startMsg}
+          personaLabel={selectedPersona.label}
+        />
       </div>
-
-
     </section>
   );
 }

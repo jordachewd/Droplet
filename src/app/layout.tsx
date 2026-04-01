@@ -2,7 +2,6 @@ import { ClerkProvider } from "@clerk/nextjs";
 import DropletTheme from "@/components/layout/droplet-theme";
 import type { Metadata, Viewport } from "next";
 import { Albert_Sans, Dosis } from "next/font/google";
-import Script from "next/script";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import "@/app/globals.css";
 import MainWrapper from "@/components/layout/main-wrapper";
@@ -49,17 +48,11 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${dosis.variable} ${albertsans.variable}`}
     >
-      <body>
-        <ClerkProvider
-          appearance={{
-            variables: {
-              colorPrimary: "#4B0082",
-              colorText: "#191970",
-            },
-          }}
-        >
-          <Script id="theme-init" strategy="beforeInteractive">
-            {`
+      <head>
+        <script
+          id="theme-init"
+          dangerouslySetInnerHTML={{
+            __html: `
               (() => {
                 try {
                   const storageKey = "droplet-theme-mode";
@@ -74,9 +67,19 @@ export default function RootLayout({
                   document.documentElement.setAttribute("data-droplet-theme", "light");
                 }
               })();
-            `}
-          </Script>
-
+            `,
+          }}
+        />
+      </head>
+      <body>
+        <ClerkProvider
+          appearance={{
+            variables: {
+              colorPrimary: "#4B0082",
+              colorText: "#191970",
+            },
+          }}
+        >
           <DropletTheme>
             <MainWrapper>{children}</MainWrapper>
           </DropletTheme>

@@ -53,13 +53,7 @@ const getStoredMode = (): ThemeMode => {
   return "system";
 };
 
-const getInitialMode = (): ThemeMode => {
-  if (typeof window === "undefined") {
-    return "system";
-  }
-
-  return getStoredMode();
-};
+const getInitialMode = (): ThemeMode => "system";
 
 const persistMode = (nextMode: ThemeMode) => {
   try {
@@ -71,15 +65,24 @@ const persistMode = (nextMode: ThemeMode) => {
 
 export default function DropletTheme({ children }: ThemeProps) {
   const [mode, setModeState] = useState<ThemeMode>(getInitialMode);
-  const [systemMode, setSystemMode] = useState<ResolvedThemeMode>(() =>
-    typeof window === "undefined" ? "light" : getSystemMode(),
-  );
+  const [systemMode, setSystemMode] = useState<ResolvedThemeMode>("light");
   const resolvedMode: ResolvedThemeMode = mode === "system" ? systemMode : mode;
 
   useEffect(() => {
     document.documentElement.classList.add("DropletTheme");
     document.documentElement.setAttribute(THEME_ATTRIBUTE, resolvedMode);
   }, [resolvedMode]);
+
+  useEffect(() => {
+    const restoreTimer = window.setTimeout(() => {
+      setModeState(getStoredMode());
+      setSystemMode(getSystemMode());
+    }, 0);
+
+    return () => {
+      window.clearTimeout(restoreTimer);
+    };
+  }, []);
 
   useEffect(() => {
     if (mode !== "system") return;
