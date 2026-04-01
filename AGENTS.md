@@ -2,6 +2,7 @@
 
 - ALWAYS check available SKILL first for performing tasks.
 - ALWAYS check available MCPs for documentation first.
+- ALWAYS do `npm run knip` at the end of each session and verify each returned item if it is truly needed by the app; If not needed, remove; if needed, edit `knip.json` accordingly.
 
 # Repository Guidelines
 
