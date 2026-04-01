@@ -127,8 +127,10 @@ function collectOwnedTaskAssetObjectKeys(
   return [...objectKeys];
 }
 
-function logTaskAssetCleanupFailure() {
-  process.stderr.write("[task.actions] deleteTask S3 cleanup failed.\n");
+function logTaskAssetCleanupFailure(error: unknown) {
+  process.stderr.write(
+    `[task.actions] deleteTask S3 cleanup failed: ${error instanceof Error ? error.message : "unknown"}\n`,
+  );
 }
 
 // CREATE TASK
@@ -335,8 +337,8 @@ export async function deleteTask(taskId: string) {
     for (const objectKey of ownedAssetObjectKeys) {
       try {
         await deleteFileFromAWS(objectKey);
-      } catch {
-        logTaskAssetCleanupFailure();
+      } catch (error) {
+        logTaskAssetCleanupFailure(error);
       }
     }
 
@@ -345,7 +347,10 @@ export async function deleteTask(taskId: string) {
       status: 200,
       source: "deleteTask",
     });
-  } catch {
+  } catch (error) {
+    process.stderr.write(
+      `[task.actions] deleteTask failed: ${error instanceof Error ? error.message : "unknown"}\n`,
+    );
     return serializeForClient({
       message: "Conversation deletion failed.",
       status: 500,

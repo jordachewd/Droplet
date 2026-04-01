@@ -422,7 +422,10 @@ async function buildOpenAIResponsePayload({
     const parsedArgs = (() => {
       try {
         return JSON.parse(argsStr);
-      } catch {
+      } catch (error) {
+        process.stderr.write(
+          `[generateResponse] Failed to parse tool arguments: ${error instanceof Error ? error.message : "unknown"}\n`,
+        );
         return {};
       }
     })();

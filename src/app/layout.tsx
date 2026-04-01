@@ -56,14 +56,14 @@ export default function RootLayout({
               (() => {
                 try {
                   const storageKey = "droplet-theme-mode";
-                  const legacyStorageKey = "cellesseon-theme-mode";
-                  const savedMode = localStorage.getItem(storageKey) || localStorage.getItem(legacyStorageKey) || "system";
+                  const savedMode = localStorage.getItem(storageKey) || "system";
                   const mode = savedMode === "light" || savedMode === "dark" ? savedMode : "system";
                   const resolvedMode = mode === "system"
                     ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
                     : mode;
                   document.documentElement.setAttribute("data-droplet-theme", resolvedMode);
                 } catch {
+                  // Storage access can fail in restricted browser contexts; fallback to light theme.
                   document.documentElement.setAttribute("data-droplet-theme", "light");
                 }
               })();

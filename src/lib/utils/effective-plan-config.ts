@@ -265,6 +265,7 @@ export async function getEffectivePlanConfig(): Promise<EffectivePlanConfig> {
       trialLimits: normalizeTrialLimitsValue(trialLimitsValue),
     };
   } catch {
+    // Intentional fallback to defaults — admin config DB errors are non-fatal.
     return {
       pricing: { ...DEFAULT_PLAN_PRICING },
       limits: structuredClone(PLAN_LIMITS),
@@ -283,6 +284,7 @@ export async function getEffectiveCurrencySymbol(): Promise<string> {
 
     return normalizeCurrencySymbol(setting?.value);
   } catch {
+    // Intentional fallback to defaults — admin config DB errors are non-fatal.
     return DEFAULT_PLAN_PRICING.currencySymbol;
   }
 }
@@ -297,6 +299,7 @@ export async function getEffectiveSupportEmail(): Promise<string> {
 
     return normalizeSupportEmail(setting?.value);
   } catch {
+    // Intentional fallback to defaults — admin config DB errors are non-fatal.
     return SUPPORT_EMAIL;
   }
 }

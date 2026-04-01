@@ -231,15 +231,15 @@ describe("POST /api/openai - streaming", () => {
       .spyOn(process.stderr, "write")
       .mockImplementation(() => true);
 
-    vi.spyOn(globalThis, "setTimeout").mockImplementation(
-      ((callback: TimerHandler) => {
-        if (typeof callback === "function") {
-          timeoutCallbacks.push(callback as () => void);
-        }
+    vi.spyOn(globalThis, "setTimeout").mockImplementation(((
+      callback: TimerHandler,
+    ) => {
+      if (typeof callback === "function") {
+        timeoutCallbacks.push(callback as () => void);
+      }
 
-        return 1 as unknown as ReturnType<typeof setTimeout>;
-      }) as unknown as typeof setTimeout,
-    );
+      return 1 as unknown as ReturnType<typeof setTimeout>;
+    }) as unknown as typeof setTimeout);
     vi.spyOn(globalThis, "clearTimeout").mockImplementation(() => {
       return;
     });

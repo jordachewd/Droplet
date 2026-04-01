@@ -11,6 +11,7 @@ import {
   LandingContentSettingsFormValue,
   PersonaAccessSettingsFormValue,
   PersonaContentSettingsFormValue,
+  PromoContentSettingsFormValue,
   PricingSettingsFormValue,
   StopReasonMessagesSettingsFormValue,
   SupportSettingsFormValue,
@@ -226,6 +227,118 @@ export function normalizeSupportSettingsValue(
   return emailPattern.test(trimmedValue)
     ? { supportEmail: trimmedValue }
     : defaults;
+}
+
+export function normalizePromoContentSettings(
+  value: unknown,
+  defaults: PromoContentSettingsFormValue,
+): PromoContentSettingsFormValue {
+  if (!isObjectRecord(value)) {
+    return defaults;
+  }
+
+  return {
+    promoTitlePro: readStringValue(
+      value,
+      "promoTitlePro",
+      defaults.promoTitlePro,
+    ),
+    promoTitlePremium: readStringValue(
+      value,
+      "promoTitlePremium",
+      defaults.promoTitlePremium,
+    ),
+    promoDescriptionPro: readStringValue(
+      value,
+      "promoDescriptionPro",
+      defaults.promoDescriptionPro,
+    ),
+    promoDescriptionPremium: readStringValue(
+      value,
+      "promoDescriptionPremium",
+      defaults.promoDescriptionPremium,
+    ),
+    promoUpgradeCta: readStringValue(
+      value,
+      "promoUpgradeCta",
+      defaults.promoUpgradeCta,
+    ),
+    promoAdminLabel: readStringValue(
+      value,
+      "promoAdminLabel",
+      defaults.promoAdminLabel,
+    ),
+    promoAdminDescription: readStringValue(
+      value,
+      "promoAdminDescription",
+      defaults.promoAdminDescription,
+    ),
+    promoSuspensionTitle: readStringValue(
+      value,
+      "promoSuspensionTitle",
+      defaults.promoSuspensionTitle,
+    ),
+    promoSuspensionDescription: readStringValue(
+      value,
+      "promoSuspensionDescription",
+      defaults.promoSuspensionDescription,
+    ),
+    promoFreeLabel: readStringValue(
+      value,
+      "promoFreeLabel",
+      defaults.promoFreeLabel,
+    ),
+    promoCurrentPlanLabel: readStringValue(
+      value,
+      "promoCurrentPlanLabel",
+      defaults.promoCurrentPlanLabel,
+    ),
+    promoUpgradeMessage: readStringValue(
+      value,
+      "promoUpgradeMessage",
+      defaults.promoUpgradeMessage,
+    ),
+    promoTrialLabel: readStringValue(
+      value,
+      "promoTrialLabel",
+      defaults.promoTrialLabel,
+    ),
+    promoPersonaUpgrade: readStringValue(
+      value,
+      "promoPersonaUpgrade",
+      defaults.promoPersonaUpgrade,
+    ),
+    promoPersonaUpgradeFallback: readStringValue(
+      value,
+      "promoPersonaUpgradeFallback",
+      defaults.promoPersonaUpgradeFallback,
+    ),
+    promoContactSupportCta: readStringValue(
+      value,
+      "promoContactSupportCta",
+      defaults.promoContactSupportCta,
+    ),
+    chatConversationEndedLabel: readStringValue(
+      value,
+      "chatConversationEndedLabel",
+      defaults.chatConversationEndedLabel,
+    ),
+    chatStartConversationCta: readStringValue(
+      value,
+      "chatStartConversationCta",
+      defaults.chatStartConversationCta,
+    ),
+    chatUpgradePlanCta: readStringValue(
+      value,
+      "chatUpgradePlanCta",
+      defaults.chatUpgradePlanCta,
+    ),
+    chatContactSupportCta: readStringValue(
+      value,
+      "chatContactSupportCta",
+      defaults.chatContactSupportCta,
+    ),
+  };
 }
 
 export function normalizeStopReasonMessagesSettings(

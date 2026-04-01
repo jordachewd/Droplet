@@ -101,7 +101,10 @@ export async function deleteUser(clerkId: string) {
     try {
       const client = await clerkClient();
       await client.users.deleteUser(parsedClerkId.data);
-    } catch {
+    } catch (error) {
+      process.stderr.write(
+        `[user.actions] deleteUser Clerk deletion failed: ${error instanceof Error ? error.message : "unknown"}\n`,
+      );
       return serializeForClient({
         message: "Account deletion failed. Please try again.",
         status: 500,

@@ -52,6 +52,7 @@ export function isAllowedDownloadUrl(
 
     return allowedHosts.has(normalizedHost);
   } catch {
+    // URL/path parse failure is non-fatal; invalid URLs are treated as disallowed.
     return false;
   }
 }

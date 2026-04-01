@@ -5,6 +5,7 @@ import {
   getEffectivePersonaConfig,
   getPersonaFromConfig,
 } from "@/lib/utils/effective-persona-config";
+import { getEffectivePromoContent } from "@/lib/utils/effective-promo-content";
 import { getRecentTasksByUserId } from "@/lib/utils/task-queries";
 import { mapDateToLabel } from "@/lib/utils/map-date-to-label";
 import { ConversationListItem } from "@/types/PersonaData.d";
@@ -17,6 +18,7 @@ export default async function ChatSidebar() {
   let userRole: UserRoles | undefined;
   let userPlanName: PlanName | null = null;
   let isSuspended = false;
+  const promoContent = await getEffectivePromoContent();
 
   if (userId) {
     const userData = await ensureUserSynced(userId);
@@ -59,6 +61,7 @@ export default async function ChatSidebar() {
       userRole={userRole}
       userPlanName={userPlanName}
       isSuspended={isSuspended}
+      promoContent={promoContent}
     />
   );
 }

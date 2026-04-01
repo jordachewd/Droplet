@@ -1,4 +1,5 @@
 import type { PersonaTrialLimits, PlanLimits } from "@/constants/plans";
+import type { PromoContent } from "@/constants/promo-content";
 import { AboutContent } from "@/constants/about-data";
 import type { FaqItem } from "@/constants/faqs";
 import { HeroContent } from "@/constants/hero-content";
@@ -50,6 +51,7 @@ export type HeroContentSettingsFormValue = HeroContent;
 export type LandingContentSettingsFormValue = LandingContent;
 
 export type AboutContentSettingsFormValue = AboutContent;
+export type PromoContentSettingsFormValue = PromoContent;
 
 export const PERSONA_ACCESS_KEY_BY_PLAN = {
   Lite: "persona_access_lite",

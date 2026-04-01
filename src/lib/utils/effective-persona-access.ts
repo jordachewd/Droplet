@@ -67,6 +67,7 @@ export async function getEffectivePersonaAccessByPlan(): Promise<FullPersonaAcce
       ),
     };
   } catch {
+    // Intentional fallback to defaults — admin config DB errors are non-fatal.
     return {
       Lite: [...DEFAULT_FULL_PERSONA_ACCESS_BY_PLAN.Lite],
       Pro: [...DEFAULT_FULL_PERSONA_ACCESS_BY_PLAN.Pro],

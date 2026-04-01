@@ -136,10 +136,10 @@ describe("ChatBody", () => {
     const activeChatBody = container.querySelector(".ChatBody");
 
     expect(activeChatBody).toBeTruthy();
-    expect(activeChatBody?.className.includes("border-amber-400/45")).toBe(
+    expect(activeChatBody?.className.includes("border-amber-500/30")).toBe(
       false,
     );
-    expect(activeChatBody?.className.includes("bg-amber-50/40")).toBe(false);
+    expect(activeChatBody?.className.includes("bg-amber-500/10")).toBe(false);
 
     rerender(
       <ChatBody
@@ -157,9 +157,11 @@ describe("ChatBody", () => {
     const endedChatBody = container.querySelector(".ChatBody");
     const endNotice = container.querySelector(".ChatBodyEndNotice");
 
-    expect(endedChatBody?.className.includes("border-amber-400/45")).toBe(true);
-    expect(endedChatBody?.className.includes("bg-amber-50/40")).toBe(true);
-    expect(endNotice?.className.includes("border-amber-500/60")).toBe(true);
-    expect(endNotice?.className.includes("bg-amber-100/85")).toBe(true);
+    expect(endedChatBody?.className.includes("border-amber-500/30")).toBe(
+      false,
+    );
+    expect(endedChatBody?.className.includes("bg-amber-500/10")).toBe(false);
+    expect(endNotice?.className.includes("border-amber-500/30")).toBe(true);
+    expect(endNotice?.className.includes("bg-amber-500/10")).toBe(true);
   });
 });
