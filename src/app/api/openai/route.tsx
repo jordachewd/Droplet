@@ -770,6 +770,8 @@ async function finalizeAIResponse({
 }
 
 export async function POST(req: Request): Promise<Response> {
+  const functionStartTime = Date.now();
+
   try {
     const streamingResponseRequested = shouldStreamResponse(req);
     let rawRequestBody: unknown;
@@ -1438,8 +1440,12 @@ export async function POST(req: Request): Promise<Response> {
       const stream = new ReadableStream<Uint8Array>({
         async start(controller) {
           const startTime = Date.now();
-          const timeoutSafetyMs =
-            (maxDuration - STREAM_TIMEOUT_SAFETY_BUFFER_SECONDS) * 1000;
+          const elapsedSetupMs = startTime - functionStartTime;
+          const timeoutSafetyMs = Math.max(
+            0,
+            (maxDuration - STREAM_TIMEOUT_SAFETY_BUFFER_SECONDS) * 1000 -
+              elapsedSetupMs,
+          );
           let didSendFinal = false;
           let controllerClosed = false;
           let generalHeartbeatInterval: ReturnType<typeof setInterval> | null =

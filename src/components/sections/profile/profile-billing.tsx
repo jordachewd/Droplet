@@ -1,7 +1,6 @@
 import getFormattedDate from "@/lib/utils/getFormattedDate";
 import classNames from "classnames";
 import { Transaction } from "@/types/TransactionData.d";
-import { TooltipArrow } from "@/components/shared/tooltip-arrow";
 
 interface BillingProps {
   stripeId: string | null;
@@ -35,12 +34,6 @@ export default function ProfileBilling({ stripeId, userTxns }: BillingProps) {
             <p className="hidden flex-1 text-center md:flex">Purchased</p>
             <p className="hidden flex-1 text-center md:flex">Expires</p>
             <p className="min-w-14 text-center">Status</p>
-            <TooltipArrow title="Invoice" placement="top">
-              <i
-                className="bi bi-cloud-download ml-4 text-base"
-                aria-hidden="true"
-              ></i>
-            </TooltipArrow>
           </div>
 
           {userTxns.map((txn, index) => {

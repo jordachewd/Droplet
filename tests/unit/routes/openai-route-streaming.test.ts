@@ -272,6 +272,7 @@ describe("POST /api/openai - streaming", () => {
 
   it("clears the proactive timeout timer when streaming completes normally", async () => {
     const timeoutToken = 42 as unknown as ReturnType<typeof setTimeout>;
+    const dateNowSpy = vi.spyOn(Date, "now").mockImplementation(() => 1_000);
     const clearTimeoutSpy = vi
       .spyOn(globalThis, "clearTimeout")
       .mockImplementation(() => {
@@ -292,6 +293,59 @@ describe("POST /api/openai - streaming", () => {
 
     expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), 55_000);
     expect(clearTimeoutSpy).toHaveBeenCalledWith(timeoutToken);
+    dateNowSpy.mockRestore();
+  });
+
+  it("uses remaining function budget when scheduling proactive timeout", async () => {
+    const timeoutToken = 7 as unknown as ReturnType<typeof setTimeout>;
+    const dateNowSpy = vi
+      .spyOn(Date, "now")
+      .mockImplementationOnce(() => 1_000)
+      .mockImplementation(() => 8_000);
+    const clearTimeoutSpy = vi
+      .spyOn(globalThis, "clearTimeout")
+      .mockImplementation(() => {
+        return;
+      });
+    const setTimeoutSpy = vi
+      .spyOn(globalThis, "setTimeout")
+      .mockImplementation((() => timeoutToken) as unknown as typeof setTimeout);
+
+    const response = await POST(
+      buildOpenAiRequest(
+        { messages: [{ role: "user", whois: "user", content: "new chat" }] },
+        { Accept: "text/event-stream", "x-droplet-stream": "1" },
+      ),
+    );
+
+    await response.text();
+
+    expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), 48_000);
+    expect(clearTimeoutSpy).toHaveBeenCalledWith(timeoutToken);
+    dateNowSpy.mockRestore();
+  });
+
+  it("clamps proactive timeout delay at zero when setup time exceeds remaining budget", async () => {
+    const timeoutToken = 9 as unknown as ReturnType<typeof setTimeout>;
+    const dateNowSpy = vi
+      .spyOn(Date, "now")
+      .mockImplementationOnce(() => 1_000)
+      .mockImplementation(() => 100_000);
+    const setTimeoutSpy = vi
+      .spyOn(globalThis, "setTimeout")
+      .mockImplementation((() => timeoutToken) as unknown as typeof setTimeout);
+
+    const response = await POST(
+      buildOpenAiRequest(
+        { messages: [{ role: "user", whois: "user", content: "new chat" }] },
+        { Accept: "text/event-stream", "x-droplet-stream": "1" },
+      ),
+    );
+
+    await response.text();
+
+    expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), 0);
+    dateNowSpy.mockRestore();
   });
 
   it("skips heartbeat writes after the stream controller is closed", async () => {
