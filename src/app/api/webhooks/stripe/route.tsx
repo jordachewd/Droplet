@@ -339,7 +339,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     logStripeWebhookInfo(`Unhandled Stripe event type: ${eventType}`);
 
-    return NextResponse.json({ message: "Unhandled event" }, { status: 200 });
+    return NextResponse.json(
+      { message: "Unhandled event", eventType },
+      { status: 200 },
+    );
   } catch (error) {
     logStripeWebhookError(
       `Unhandled webhook processing error for session ${checkoutSessionId}: ${

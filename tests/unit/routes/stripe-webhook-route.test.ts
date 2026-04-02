@@ -381,6 +381,7 @@ describe("POST /api/webhooks/stripe", () => {
 
     expect(response.status).toBe(200);
     expect(payload.message).toBe("Unhandled event");
+    expect(payload.eventType).toBe("customer.created");
     expect(stderrWriteMock).toHaveBeenCalledWith(
       "[stripe-webhook] Unhandled Stripe event type: customer.created\n",
     );
