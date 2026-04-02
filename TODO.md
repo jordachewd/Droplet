@@ -5,174 +5,161 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #82 (2026-04-01). DEPLOYED TO PRODUCTION. All 7 validation gates GREEN (601 tests, lint 0/0, TSC clean, build passes, knip 0). All Milestones 0–25 COMPLETE. Phases 173–177 COMPLETED this session. Phase 178 NOT completed (fake icon still present).**
+> **STATUS: PM audit #83 (2026-04-02). DEPLOYED TO PRODUCTION. All 7 validation gates GREEN (603 tests, lint 0/0, TSC clean, build passes, knip 0). All Milestones 0–25 COMPLETE. Phases 178, 181, 182 COMPLETED this session.**
 >
-> **GATE STATUS: Validation GREEN. Architecture RED (C1 stream timeout). Product RED (C1 media gen broken, C2 payment flow broken). Admin YELLOW (~20-30 hardcoded strings). Public GREEN. Contract GREEN.**
+> **GATE STATUS: Validation GREEN. Architecture YELLOW (C1 code-complete, pending production deploy verification). Product YELLOW (C1 pending deploy; C2 ops investigation pending). Admin YELLOW (~12 hardcoded marketing strings). Public GREEN. Contract GREEN.**
 >
-> **ACTIVE CRITICAL ISSUES (PM audit #82 — triple-audit: Architect + Engineer + PM):**
+> **CRITICAL ISSUES STATUS (PM audit #83):**
 >
-> - 🔴 C1: Stream timeout miscalculated — proactive 55s timer starts from STREAM START, not FUNCTION START. Setup takes 10-20s, so timer fires at 65-75s — AFTER Vercel kills at 60s. Media gen and large text responses fail with "The response stream ended unexpectedly."
-> - 🔴 C2: Stripe webhook returns 200 but no Transaction created / User plan not updated. Code verified correct by triple audit — issue is operational (event type config, endpoint URL, or signing secret in Stripe dashboard).
+> - 🟡 C1: Stream timeout — CODE-COMPLETE (Phase 181). `functionStartTime` budget fix implemented. Needs production deploy + verification with media gen request.
+> - 🟡 C2: Stripe webhook — DIAGNOSTIC DONE (Phase 182). `eventType` added to unhandled response. Code verified correct by quintuple audit. Issue is operational — owner must verify Stripe Dashboard config (`checkout.session.completed` enabled, endpoint URL, signing secret).
 >
 > **ACTIVE NON-CRITICAL ISSUES:**
 >
-> - ⚠️ H4: Fake download icon in `profile-billing.tsx` — styled clickable, no handler, no keyboard access. Phase 178 NOT done.
-> - ⚠️ M1: No video player error state (unlike audio player).
-> - ⚠️ M2: ~20-30 hardcoded display strings across 8+ components (AGENTS.md Rule 11 violation). Owner escalated to HIGH.
-> - ⚠️ M3: Hardcoded persona IDs `["strategist", "teacher", "creator"]` in homepage spotlight.
+> - ⚠️ M1: No video player error state (unlike audio player). Phase 179.
+> - ⚠️ M2: ~12 hardcoded marketing/configurable strings across 5 components. Owner escalated to HIGH. Phase 180 split into 180.1–180.4.
+> - ⚠️ M3: Hardcoded persona IDs `["strategist", "teacher", "creator"]` in homepage spotlight. Covered by Phase 180.1.
+> - ⚠️ M4: Hardcoded `$` currency symbol in `profile-billing.tsx`. Should use `getEffectiveCurrencySymbol()` per SPEC.md.
 >
-> **EXECUTION ORDER (PM audit #82 — critical production fixes FIRST, everything else blocked):**
+> **EXECUTION ORDER (PM audit #83):**
 >
-> 1. **🔴 Phase 181 CRITICAL** — Fix stream timeout miscalculation.
-> 2. **🔴 Phase 182 CRITICAL** — Diagnose and fix Stripe webhook payment flow (ops investigation + code hardening).
-> 3. **HIGH Phase 178** — Fix/remove fake download icon (was not completed by Engineer).
-> 4. **HIGH Phase 180** — Hardcoded display text sweep (owner escalated).
-> 5. **MEDIUM Phase 179** — Add video player error state.
-> 6. **MEDIUM Phase 143** — Env var runtime validation.
-> 7. **MEDIUM Phase 144** — Admin config cache.
-> 8. **MEDIUM Phase 145–165** — Remaining backlog.
->
-> _Critical issues block ALL other work. No exceptions._
+> 1. **🟠 DEPLOY + VERIFY (OWNER ACTION)** — Deploy latest build. Verify C1 (media gen timeout fix) and C2 (Stripe payment flow) in production.
+> 2. **HIGH Phase 180.1** — Homepage marketing text extraction (cta-banner + persona-spotlight).
+> 3. **HIGH Phase 180.2** — Chat display text extraction (chat-intro + chat-input).
+> 4. **HIGH Phase 180.3** — Plans display text extraction (plans-section + plan-card).
+> 5. **HIGH Phase 180.4** — Currency symbol compliance (profile-billing).
+> 6. **MEDIUM Phase 179** — Video player error state.
+> 7. **MEDIUM Phase 143** — Env var runtime validation.
+> 8. **MEDIUM Phase 144** — Admin config cache.
+> 9. **MEDIUM Phase 145–165** — Remaining backlog.
 
 ---
 
-## 🔴 ENGINEER START HERE — Phase 181 CRITICAL — Fix Stream Timeout Miscalculation
+## 🟠 DEPLOY + VERIFY — Owner Action Required
 
-> **Root cause confirmed by triple-audit (Architect + Engineer + PM).** The proactive safety timeout (55s) is measured from STREAM START (`ReadableStream.start()` callback), NOT from FUNCTION START (`POST()` entry point). Setup work (auth, DB queries, title generation) consumes 2-20s before the stream begins. The proactive timeout fires 55s after stream start = 57-75s from function start — AFTER Vercel kills the function at 60s (`maxDuration`). The client never receives a clean error event; instead Vercel hard-terminates the function and the client gets "The response stream ended unexpectedly."
+> **Not an engineering task.** Owner must deploy and verify production behavior.
 
-**File:** `src/app/api/openai/route.tsx`
+**C1 Verification (Stream Timeout Fix):**
 
-**Root cause location:**
+1. Deploy the latest build to production.
+2. Start a conversation and request image generation.
+3. If the request takes longer than expected, verify the client receives a clean timeout warning (amber alert: "Your request is taking longer than expected...") instead of "The response stream ended unexpectedly."
+4. Check Vercel function logs for `proactive-timeout` entries.
 
-- `POST()` function starts at ~line 772
-- Setup work (auth, rate limit, DB queries, title generation) runs from ~line 772 to ~line 1438
-- `startTime = Date.now()` captured at ~line 1440 inside `ReadableStream.start()`
-- `timeoutSafetyMs = (maxDuration - STREAM_TIMEOUT_SAFETY_BUFFER_SECONDS) * 1000` = 55,000ms at ~line 1441-1442
-- Proactive timeout scheduled at ~line 1587: `setTimeout(() => {...}, timeoutSafetyMs)` — 55s from stream start, NOT function start
+**C2 Verification (Stripe Payment Flow):**
+
+1. Make a test payment in production.
+2. Check Vercel function logs for `[stripe-webhook] Event type received: checkout.session.completed` entry.
+3. If that log entry is ABSENT — `checkout.session.completed` is not reaching the handler. Fix in Stripe Dashboard:
+   - Go to Stripe Dashboard → Webhooks → Endpoint
+   - Verify `checkout.session.completed` is in the enabled events list
+   - Verify endpoint URL matches production URL (`https://droplet.jwd-apps.com/api/webhooks/stripe`)
+   - Verify signing secret matches `STRIPE_WEBHOOK_SECRET` env var in Vercel
+4. If log shows receipt but no Transaction created — escalate back to engineering.
+
+---
+
+## 🔵 ENGINEER START HERE — Phase 180.1 HIGH — Homepage Marketing Text Extraction
+
+> AGENTS.md Rule 11: "No hardcoded display text." Owner escalated to HIGH. Homepage is the highest-visibility surface.
+
+**Files:** `src/components/sections/homepage/cta-banner.tsx`, `src/components/sections/homepage/persona-spotlight.tsx`
+
+**Strings to extract (7 marketing + 1 config):**
+
+1. `cta-banner.tsx`: `"Create an account, pick a persona, and let the conversation stay focused."` — heading
+2. `cta-banner.tsx`: `"Explore the persona catalog first, or compare the plan limits if you already know how much capacity you need."` — body
+3. `cta-banner.tsx`: `"Create account"` — CTA button label
+4. `cta-banner.tsx`: `"Explore plans"` — CTA button label
+5. `persona-spotlight.tsx`: `"Persona spotlight"` — section label
+6. `persona-spotlight.tsx`: `"Different jobs need different voices."` — heading
+7. `persona-spotlight.tsx`: `"Droplet starts with purpose-built personas so planning, teaching, and creative work do not feel like the same assistant wearing a different label."` — body
+8. `persona-spotlight.tsx`: `["strategist", "teacher", "creator"]` — hardcoded featured persona IDs
 
 **What to do:**
 
-1. Add `const functionStartTime = Date.now();` as the **very first line** inside `POST()`, before the `try` block (or as first line inside try).
-2. Inside `ReadableStream.start()`, replace:
-   ```typescript
-   const startTime = Date.now();
-   const timeoutSafetyMs =
-     (maxDuration - STREAM_TIMEOUT_SAFETY_BUFFER_SECONDS) * 1000;
-   ```
-   with:
-   ```typescript
-   const startTime = Date.now();
-   const elapsedSetupMs = startTime - functionStartTime;
-   const timeoutSafetyMs = Math.max(
-     0,
-     (maxDuration - STREAM_TIMEOUT_SAFETY_BUFFER_SECONDS) * 1000 -
-       elapsedSetupMs,
-   );
-   ```
-3. `Math.max(0, ...)` prevents negative timeout in pathological cases (setup exceeds full budget).
-4. Update unit tests for the new timeout computation if existing tests assert `timeoutSafetyMs` value.
+1. Add new admin-configurable keys to the existing `effective-promo-content.ts` resolver (or create `effective-website-copy.ts` if the existing resolver scope doesn't fit).
+2. Add corresponding defaults to `DEFAULT_PROMO_CONTENT` (or new defaults constant).
+3. Update both components to receive configurable text as props from Server Component parents.
+4. For featured persona IDs: add admin setting key `admin.homepageFeaturedPersonas` with default `["strategist", "teacher", "creator"]`.
 
 **Acceptance criteria:**
 
-- [ ] `functionStartTime` captured at `POST()` entry, before any async work
-- [ ] Proactive timeout computation accounts for setup elapsed time
-- [ ] Proactive timeout always fires BEFORE Vercel's 60s kill regardless of setup duration
-- [ ] `Math.max(0, ...)` guard against negative timeout
-- [ ] Build passes, tests pass
-- [ ] Deploy and verify: image generation request should produce a clean proactive timeout message instead of "stream ended unexpectedly"
-
-**Important note:** This fix ensures the proactive timeout fires correctly. However, media generation operations that inherently exceed 60s total (e.g., video at 30-120s + setup) will still fail on Vercel Hobby. The proactive timeout will now correctly send a clean error message instead of an abrupt stream death. Full media gen reliability requires either Vercel Pro ($20/mo, 300s limit) or architecture change.
-
----
-
-## 🔴 Phase 182 CRITICAL — Diagnose and Fix Stripe Webhook Payment Flow
-
-> **Code verified correct by triple-audit (Architect + Engineer + PM).** All code paths that return 200 for `checkout.session.completed` DO create a Transaction and update the User plan. The 200 responses the owner sees are most likely for NON-checkout events (`charge.succeeded`, `payment_intent.created`, etc.) which correctly return 200 "Unhandled event" without creating records.
-
-**File:** `src/app/api/webhooks/stripe/route.tsx`
-
-**Investigation steps (OWNER/OPS — must be done before code changes):**
-
-1. **Check Vercel function logs** during a test payment — search for `[stripe-webhook]` entries. Look for `"Event type received: checkout.session.completed"`. If this log line is ABSENT, the `checkout.session.completed` event is not reaching the handler.
-2. **Check Stripe Dashboard → Webhooks → Endpoint configuration** — verify `checkout.session.completed` is in the enabled events list. Stripe sends multiple events per checkout (`payment_intent.created`, `charge.succeeded`, etc.) — only `checkout.session.completed` triggers Transaction+Plan updates.
-3. **Check Stripe Dashboard → Webhooks → Endpoint URL** — verify it matches the current production deployment URL (e.g., `https://droplet.jwd-apps.com/api/webhooks/stripe`).
-4. **Check Vercel env vars** — verify `STRIPE_WEBHOOK_SECRET` matches the signing secret shown on the webhook endpoint page in Stripe Dashboard.
-5. **Check Stripe live vs test mode** — ensure webhook events, endpoint, and secrets are all in the same mode.
-
-**Code hardening (after ops investigation):**
-
-1. Add the event type to the "Unhandled event" response body so it's visible in Stripe Dashboard delivery logs:
-   ```typescript
-   return NextResponse.json(
-     { message: "Unhandled event", eventType },
-     { status: 200 },
-   );
-   ```
-2. This makes it immediately clear when the webhook is receiving non-checkout events.
-
-**Acceptance criteria:**
-
-- [ ] Owner confirms `checkout.session.completed` event reaches the handler (via Vercel logs)
-- [ ] If event is not reaching handler: fix Stripe Dashboard config (enable event type, verify URL, verify secret)
-- [ ] "Unhandled event" response includes `eventType` field for easier diagnosis
-- [ ] Test payment creates Transaction AND updates User plan
+- [ ] All 7 marketing strings flow from admin-configurable settings
+- [ ] Featured persona IDs flow from admin setting
+- [ ] Default values match current hardcoded strings
+- [ ] Admin panel shows editable fields for these strings
 - [ ] Build passes, tests pass
 
 ---
 
-## HIGH — Phase 178 — Fix Profile Billing Fake Download Icon
+## HIGH — Phase 180.2 — Chat Display Text Extraction
 
-> **NOT COMPLETED by Engineer despite Phase 178 being in the work report.** The icon is still present at `profile-billing.tsx` line 49. It renders a styled `<i>` element inside a `<TooltipArrow>` with no click handler, no button wrapper, and `aria-hidden="true"`.
+> Both are Client Components — admin settings must be passed as props from parent Server Components.
 
-**File:** `src/components/sections/profile/profile-billing.tsx` ~line 45-53
+**Files:** `src/components/chat/chat-intro.tsx`, `src/components/chat/chat-input.tsx`
 
-**Current code:**
+**Strings to extract (2-3 configurable):**
 
-```tsx
-<TooltipArrow title="Invoice" placement="top">
-  <i className="bi bi-cloud-download ml-4 text-base" aria-hidden="true"></i>
-</TooltipArrow>
-```
+1. `chat-intro.tsx`: `"welcome to your chat dashboard."` — greeting subheading
+2. `chat-input.tsx`: `"Ask Droplet..."` — input placeholder (brand-adjacent)
 
-**What to do:**
+**Structural strings (EXEMPT — no extraction):**
 
-1. Remove the entire `<TooltipArrow>` + `<i>` block from the billing table header.
-2. No download functionality exists — remove is the correct action.
+- `"Active persona:"` — UI label
+- `"This conversation has ended."` — system state indicator
+- `"Send message"` / `"Write a message first"` — tooltips
+- `"Attach media"` — tooltip
+- Error messages — system text
 
 **Acceptance criteria:**
 
-- [ ] No fake clickable elements in profile billing
+- [ ] Configurable strings flow from admin settings via props
+- [ ] Default values match current text
 - [ ] Build passes, tests pass
 
 ---
 
-## HIGH — Phase 180 — Hardcoded Display Text Sweep
+## HIGH — Phase 180.3 — Plans Display Text Extraction
 
-> AGENTS.md Rule 11: "No hardcoded display text — all user-facing marketing/promo text must flow from admin-configurable settings." ~20-30 strings across 8+ components violate this. **Owner escalated to HIGH priority.**
+**Files:** `src/components/sections/shared/plans-section.tsx`, `src/components/shared/plan-card.tsx`
 
-**Files and strings to evaluate:**
+**Strings to extract (2 configurable):**
 
-1. `src/components/sections/homepage/cta-banner.tsx` — 4 strings: heading, body, 2 CTA button labels
-2. `src/components/sections/homepage/persona-spotlight.tsx` — 3 strings + hardcoded persona IDs `["strategist", "teacher", "creator"]`
-3. `src/components/chat/chat-intro.tsx` — 2 strings: greeting subheading, "Active persona:" label
-4. `src/components/sections/shared/plans-section.tsx` — "Subscribe Now"
-5. `src/components/chat/chat-input.tsx` — 2 strings: ended placeholder, active placeholder
-6. `src/components/sections/profile/profile-usage.tsx` — media generation labels
-7. `src/components/sections/profile/profile-hero.tsx` — "Member since:", "Last update:"
-8. `src/components/shared/plan-card.tsx` — "Current", "Popular", "Free", "/Mo"
-9. `src/components/sections/profile/profile-danger-zone.tsx` — "Danger zone", "Deleting your account..."
+1. `plans-section.tsx`: `"Subscribe Now"` — CTA button label
+2. `plan-card.tsx`: `"Popular"` — marketing badge
 
-**What to do:**
+**Structural strings (EXEMPT — no extraction):**
 
-1. Evaluate each string: structural UI label (exempt per Rule 11) vs marketing/configurable text.
-2. For configurable text: add to `effective-promo-content.ts` or create new `effective-ui-labels.ts` resolver.
-3. For structural UI labels: document as intentionally exempt with brief comment if needed.
-
-**Note:** This is a large phase. PM may split into sub-phases (180.1, 180.2, etc.) if needed.
+- `"Current"` — plan status badge
+- `"Free"` — pricing display
+- `"/Mo"` — billing period abbreviation
 
 **Acceptance criteria:**
 
-- [ ] Every hardcoded string classified as exempt or extracted
+- [ ] Both configurable strings flow from admin settings
+- [ ] Default values match current text
+- [ ] Build passes, tests pass
+
+---
+
+## HIGH — Phase 180.4 — Currency Symbol Compliance
+
+> SPEC.md Section 4, Rule 8: "Currency symbol must be admin-configurable. Resolved via `getEffectiveCurrencySymbol()`."
+
+**File:** `src/components/sections/profile/profile-billing.tsx`
+
+**Issue:** Line 55 uses hardcoded `$` in `${txn.amount}`. Should use `getEffectiveCurrencySymbol()`.
+
+**What to do:**
+
+1. Pass currency symbol as prop from parent Server Component (which calls `getEffectiveCurrencySymbol()`).
+2. Replace `$` with the prop value in the template literal.
+
+**Acceptance criteria:**
+
+- [ ] Currency symbol resolved from admin setting
+- [ ] Default remains `$` (USD)
 - [ ] Build passes, tests pass
 
 ---

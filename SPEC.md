@@ -2,19 +2,17 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-04-01 (PM audit #82). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. **DEPLOYED TO PRODUCTION.** Brand rename complete (Phase 172). Catch blocks documented (Phase 167.2). Promo text admin-configurable (Phase 162). Global error boundary live (Phase 163). Phases 173–177 COMPLETE. E2E: 49 tests (8 spec files). Coverage: 85/80/85/85. 601 tests (101 suites). Build passing. Node.js 24.12.0.
+> Last updated: 2026-04-02 (PM audit #83). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. **DEPLOYED TO PRODUCTION.** Brand rename complete (Phase 172). Catch blocks documented (Phase 167.2). Promo text admin-configurable (Phase 162). Global error boundary live (Phase 163). Phases 173–178, 181, 182 COMPLETE. E2E: 49 tests (8 spec files). Coverage: 85/80/85/85. 603 tests (101 suites). Build passing. Node.js 24.12.0.
 >
-> **Active CRITICAL Issues (PM audit #82):**
+> **Active Issues (PM audit #83):**
 >
-> - **TD-STREAM-05** — Stream proactive timeout miscalculated: 55s timer starts from STREAM START, not FUNCTION START. Setup consumes 10-20s. Timer fires at 65-75s from function start — AFTER Vercel's 60s kill. Phase 181.
-> - **TD-PAYMENT-02** — Stripe webhook returns 200 but no Transaction/User plan update. Code verified correct — issue is operational (event config in Stripe dashboard). Phase 182.
->
-> **Active Non-Critical Issues:**
->
-> - **TD-A11Y-01** — Fake download icon in `profile-billing.tsx` (Phase 178, NOT done).
+> - **TD-STREAM-05** — ✅ RESOLVED (Phase 181). Stream proactive timeout now computes remaining budget from `functionStartTime` at `POST()` entry. `Math.max(0, ...)` clamp guard. Pending production deploy verification.
+> - **TD-PAYMENT-02** — 🟡 OPS ISSUE (Phase 182 diagnostic done). Code quintuple-audited correct. `eventType` added to unhandled response for Stripe Dashboard diagnosis. Owner must verify Stripe Dashboard config.
+> - **TD-A11Y-01** — ✅ RESOLVED (Phase 178). Fake download icon removed from `profile-billing.tsx`.
 > - **TD-UX-01** — No video player error state (Phase 179).
-> - **TD-HARDCODE-02** — ~20-30 hardcoded display strings across 8+ components (Phase 180).
-> - **TD-HARDCODE-03** — Hardcoded persona IDs in homepage spotlight (Phase 180).
+> - **TD-HARDCODE-02** — ~12 hardcoded marketing strings across 5 components (Phase 180.1–180.4). Audited and classified: 12 configurable, ~25+ structural/exempt.
+> - **TD-HARDCODE-03** — Hardcoded persona IDs in homepage spotlight (Phase 180.1).
+> - **TD-HARDCODE-04** — Hardcoded `$` currency symbol in `profile-billing.tsx` (Phase 180.4). SPEC.md requires `getEffectiveCurrencySymbol()`.
 > - **TD-ENV-01** — 4 `as string` + 4 `!` casts on `process.env` values (Phase 143).
 
 ---
@@ -635,7 +633,7 @@ Client consumes via `ReadableStream.getReader()` in `chat-wrapper.tsx` with JSON
 All auth/limit checks execute before streaming begins. Final task persistence and usage event emission happen after stream completion.
 
 > **✅ RESOLVED (Phase 149 COMPLETE, TD-STREAM-01 CLOSED):** SSE heartbeat mechanism implemented. 12s keepalive interval during media generation via `onMediaGenerationStart`/`onMediaGenerationEnd` lifecycle callbacks. Client timeout reset on every received event (including heartbeats). `heartbeat` event type added to `ChatStreamEvent` union.
-> **⚠️ TD-STREAM-05 OPEN (PM audit #82):** Proactive timeout miscalculated. `startTime` captured inside `ReadableStream.start()` instead of at `POST()` entry. Setup (auth, DB queries, title gen) consumes 10-20s before stream begins. 55s timer fires at 65-75s from function start — AFTER Vercel's 60s kill. Client gets "The response stream ended unexpectedly" instead of a clean error. Phase 181 fix: capture `functionStartTime` at `POST()` top, compute remaining budget in stream `start()`.
+> **✅ TD-STREAM-05 RESOLVED (Phase 181 COMPLETE, PM audit #83):** Proactive timeout now uses `functionStartTime` captured at `POST()` entry. Remaining budget computed as `Math.max(0, 55000 - elapsedSetupMs)` inside `ReadableStream.start()`. Clamp guard prevents negative timeout. Proactive timeout fires BEFORE Vercel's 60s kill regardless of setup duration.
 > **✅ TD-STREAM-04 RESOLVED (Phase 160.1 COMPLETE, PM audit #76):** `maxDuration` reduced from 300 to 60 for Vercel Hobby compliance. Deployment unblocked. Video generation (up to 180s) will time out on Hobby — accepted trade-off. Owner can upgrade to Vercel Pro ($20/mo) for 300s support.
 > **⚠️ TD-AUDIO-01 RESOLVED (PM audit #79, Phase 168 CODE-COMPLETE):** Audio player `ERR_INVALID_STATE` error. Triple-audit root cause: (A) SSE controller race — `controllerClosed` boolean flag added, checked by `emitHeartbeat()` before enqueuing, (B) download route HTTP Range support implemented — `parseByteRangeHeader()`, `Accept-Ranges: bytes`, `206 Partial Content`, (C) audio player lifecycle hardened — `previousAudioUrlRef` reset in cleanup, `src=""` disposal, error event listener. All three paths implemented. Phase 168 archived to DONE.md.
 > **Client timeout:** `STREAM_REQUEST_TIMEOUT_MS = 70_000` (Phase 160.1 COMPLETE). Aligned with server maxDuration=60 + 10s margin.
@@ -846,28 +844,29 @@ All button styles use Lime Green as the accent color in **both** light and dark 
 ## 15. Technical Debt Summary
 
 > Only unresolved items live here. All resolved TDs are archived in `DONE.md`.
-> Last updated: PM audit #82 (2026-04-01).
+> Last updated: PM audit #83 (2026-04-02).
 
-### Active — CRITICAL Priority
+### Resolved This Session
 
-| ID            | Area    | Description                                                                                                                                                                                                                                                                                       | Phase |
-| ------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
-| TD-STREAM-05  | SSE     | **CRITICAL (PM audit #82).** Stream proactive timeout miscalculated. `startTime` captured inside `ReadableStream.start()` instead of at `POST()` entry. Setup (auth, DB, title gen) consumes 10-20s. 55s timeout fires at 65-75s from function start — AFTER Vercel's 60s kill. Media gen broken. | 181   |
-| TD-PAYMENT-02 | Billing | **CRITICAL (PM audit #82).** Stripe webhook returns 200 but no Transaction created / User plan not updated. Code verified correct by triple audit — issue is operational (event type config, endpoint URL, or signing secret mismatch in Stripe Dashboard).                                       | 182   |
+| ID            | Area    | Description                                                                                          | Phase | Status                                       |
+| ------------- | ------- | ---------------------------------------------------------------------------------------------------- | ----- | -------------------------------------------- |
+| TD-STREAM-05  | SSE     | Stream proactive timeout miscalculated — fired after Vercel's 60s kill.                              | 181   | ✅ CODE-COMPLETE. Pending production deploy. |
+| TD-PAYMENT-02 | Billing | Stripe webhook returns 200 but no Transaction/plan update. Code verified correct — ops config issue. | 182   | 🟡 Diagnostic done. Owner ops verification.  |
+| TD-A11Y-01    | A11y    | Fake download icon in `profile-billing.tsx` — styled clickable, no handler.                          | 178   | ✅ RESOLVED. Icon removed.                   |
 
 ### Active — HIGH Priority
 
-| ID             | Area    | Description                                                                                                                                                           | Phase |
-| -------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
-| TD-A11Y-01     | A11y    | **HIGH (PM audit #82).** `profile-billing.tsx` — download icon styled as clickable but has no onClick handler, no button wrapper, and `aria-hidden="true"`. NOT done. | 178   |
-| TD-HARDCODE-02 | Content | **HIGH (PM audit #82, owner escalated).** ~20-30 hardcoded display strings across `cta-banner.tsx`, `persona-spotlight.tsx`, `chat-intro.tsx`, etc.                   | 180   |
-| TD-HARDCODE-03 | Content | **HIGH (PM audit #82).** Hardcoded persona IDs `["strategist", "teacher", "creator"]` in `persona-spotlight.tsx`. Admin persona changes won't reflect on homepage.    | 180   |
+| ID             | Area    | Description                                                                                                                                                        | Phase   |
+| -------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------- |
+| TD-HARDCODE-02 | Content | **HIGH (PM audit #83, owner escalated).** ~12 hardcoded marketing strings across `cta-banner.tsx`, `persona-spotlight.tsx`, `chat-intro.tsx`, etc.                 | 180.1-3 |
+| TD-HARDCODE-03 | Content | **HIGH (PM audit #83).** Hardcoded persona IDs `["strategist", "teacher", "creator"]` in `persona-spotlight.tsx`. Admin persona changes won't reflect on homepage. | 180.1   |
+| TD-HARDCODE-04 | Content | **HIGH (PM audit #83).** Hardcoded `$` currency symbol in `profile-billing.tsx`. SPEC requires `getEffectiveCurrencySymbol()`.                                     | 180.4   |
 
 ### Active — MEDIUM Priority
 
 | ID        | Area | Description                                                                                                                   | Phase |
 | --------- | ---- | ----------------------------------------------------------------------------------------------------------------------------- | ----- |
-| TD-UX-01  | UX   | **MEDIUM (PM audit #82).** `video-player.tsx` has no error handling. Failed video loads show raw broken element.              | 179   |
+| TD-UX-01  | UX   | **MEDIUM (PM audit #83).** `video-player.tsx` has no error handling. Failed video loads show raw broken element.              | 179   |
 | TD-ENV-01 | Code | 4 `as string` + 4 `!` casts on `process.env` values. Missing env vars produce cryptic runtime errors instead of failing fast. | 143   |
 
 ### Active — Low Priority

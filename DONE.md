@@ -2,7 +2,49 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-04-01 — PM audit #82. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4, 105.1, 105.2, 106, 107.1, 107.2, 107.3, 108, 110, 111.1, 112.1, 112.2, 109, 113.1, 113.2, 114, 115, 116, 117, 120.1, 120.2-A, 120.2-B, 120.2-C, 120.3, 120.4, 120.5, 120.6, 120.7, 121, 122, 123, 124, 125, 125.1, 125.2, 126, 126.1, 126.2, 127, 128.1, 128.2, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 149, 150, 151, 152, 153, 154, 155, 155.1, 156, 157, 158, 159, 160, 160.1, 160.2, 161, 162, 163, 164, 166, 167, 167.2, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 74.2, 104, 125.3 complete. Milestones 0–25 COMPLETE. E2E: 49 tests (8 spec files). Build passing. Node.js 24.12.0 runtime. Coverage: 85/80/85/85. Zero `as never` casts. Lint: 0 errors, 0 warnings. 601 tests (101 suites).
+> Last updated: 2026-04-02 — PM audit #83. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4, 105.1, 105.2, 106, 107.1, 107.2, 107.3, 108, 110, 111.1, 112.1, 112.2, 109, 113.1, 113.2, 114, 115, 116, 117, 120.1, 120.2-A, 120.2-B, 120.2-C, 120.3, 120.4, 120.5, 120.6, 120.7, 121, 122, 123, 124, 125, 125.1, 125.2, 126, 126.1, 126.2, 127, 128.1, 128.2, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 149, 150, 151, 152, 153, 154, 155, 155.1, 156, 157, 158, 159, 160, 160.1, 160.2, 161, 162, 163, 164, 166, 167, 167.2, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 181, 182, 74.2, 104, 125.3 complete. Milestones 0–25 COMPLETE. E2E: 49 tests (8 spec files). Build passing. Node.js 24.12.0 runtime. Coverage: 85/80/85/85. Zero `as never` casts. Lint: 0 errors, 0 warnings. 603 tests (101 suites).
+
+---
+
+## Phase 182 CRITICAL — Stripe Webhook Diagnostic `eventType` in Unhandled Response — COMPLETED (2026-04-02, PM audit #83)
+
+> Engineer delivered. Diagnostic-only change. Adds `eventType` field to the "Unhandled event" response body so non-checkout events are immediately identifiable in Stripe Dashboard delivery logs. No behavioral changes to webhook logic was done; all `checkout.session.completed` paths remain intact. C2 payment issue confirmed as ops/config — awaiting owner Stripe Dashboard verification.
+
+- [x] Unhandled event response changed from `{ message: "Unhandled event" }` to `{ message: "Unhandled event", eventType }`
+- [x] Diagnostic logging already in place from Phase 169 (`logStripeWebhookInfo` on all critical paths)
+- [x] Unit test updated to assert `eventType` field in unhandled event response
+- [x] No behavioral changes to checkout processing logic
+- [x] Build passes, all 603 tests pass
+
+**Files:** `src/app/api/webhooks/stripe/route.tsx`, `tests/unit/routes/stripe-webhook-route.test.ts`
+
+---
+
+## Phase 181 CRITICAL — Fix Stream Timeout Miscalculation — COMPLETED (2026-04-02, PM audit #83)
+
+> Engineer delivered. Root cause: proactive timeout (55s) was measured from STREAM START inside `ReadableStream.start()`, not from FUNCTION START at `POST()` entry. Setup work (auth, DB queries, title generation) consumed 2-20s before stream begins, causing timeout to fire at 57-75s from function start — AFTER Vercel kills at 60s. Fix: `functionStartTime` captured at `POST()` entry; remaining budget computed inside stream as `Math.max(0, 55000 - elapsedSetupMs)`.
+
+- [x] `const functionStartTime = Date.now()` added as first line inside `POST()` at line 773
+- [x] `elapsedSetupMs = startTime - functionStartTime` computed inside `ReadableStream.start()`
+- [x] `timeoutSafetyMs = Math.max(0, (maxDuration - 5) * 1000 - elapsedSetupMs)` — correct budget math
+- [x] `Math.max(0, ...)` guard prevents negative timeout in pathological cases
+- [x] Three streaming timeout unit tests: normal (55s), budget-aware (7s setup → 48s), clamped (exceeded → 0)
+- [x] Build passes, all 603 tests pass
+
+**Files:** `src/app/api/openai/route.tsx`, `tests/unit/routes/openai-route-streaming.test.ts`
+
+---
+
+## Phase 178 HIGH — Remove Fake Download Icon from Profile Billing — COMPLETED (2026-04-02, PM audit #83)
+
+> Engineer delivered. Removed the `<TooltipArrow>` + `<i className="bi bi-cloud-download">` block from profile-billing.tsx billing table header. The icon was styled to look clickable but had no click handler, no button wrapper, and `aria-hidden="true"` — a fake interactive element that violated WCAG.
+
+- [x] `TooltipArrow` import removed
+- [x] `<TooltipArrow title="Invoice" placement="top"><i className="bi bi-cloud-download ml-4 text-base" aria-hidden="true"></i></TooltipArrow>` block removed
+- [x] No orphaned imports remain
+- [x] Build passes, tests pass
+
+**Files:** `src/components/sections/profile/profile-billing.tsx`
 
 ---
 
