@@ -4,6 +4,10 @@ import { getDefaultAboutContent } from "@/constants/about-data";
 import { buildFaqs } from "@/constants/faqs";
 import { getDefaultHeroContent } from "@/constants/hero-content";
 import { getDefaultLandingContent } from "@/constants/landing-data";
+import {
+  getDefaultHomepageCopy,
+  getDefaultHomepageFeaturedPersonas,
+} from "@/constants/homepage-copy";
 import { DEFAULT_PROMO_CONTENT } from "@/constants/promo-content";
 import {
   DEFAULT_PLAN_PRICING,
@@ -821,6 +825,8 @@ export async function getAdminSettingsSnapshot() {
       faqContent: buildFaqs(),
       heroContent: getDefaultHeroContent(),
       landingContent: getDefaultLandingContent(),
+      homepageCopy: getDefaultHomepageCopy(),
+      homepageFeaturedPersonas: getDefaultHomepageFeaturedPersonas(),
       aboutContent: getDefaultAboutContent(),
       promoContent: { ...DEFAULT_PROMO_CONTENT },
     },

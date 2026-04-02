@@ -2,6 +2,7 @@ import { clerkClient } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 import { getDefaultAboutContent } from "@/constants/about-data";
 import { buildFaqs } from "@/constants/faqs";
+import { getDefaultHomepageFeaturedPersonas } from "@/constants/homepage-copy";
 import { getDefaultLandingContent } from "@/constants/landing-data";
 import {
   bulkDeletePublicPagesAction,
@@ -504,6 +505,89 @@ describe("admin.actions behavior", () => {
       expect.any(Object),
     );
     expect(revalidatePath).toHaveBeenCalledWith("/");
+  });
+
+  it("updateAdminSettingAction parses homepage CTA and spotlight copy", async () => {
+    await updateAdminSettingAction(
+      buildFormData({
+        key: "admin.homepageCopy",
+        category: "features",
+        homepageCtaHeading: "Updated CTA heading",
+        homepageCtaDescription: "Updated CTA description",
+        homepageCtaPrimaryLabel: "Join now",
+        homepageCtaSecondaryLabel: "View plans",
+        homepageSpotlightLabel: "Focus area",
+        homepageSpotlightHeading: "Different work, different voices.",
+        homepageSpotlightDescription:
+          "Use specialist personas for specialist outcomes.",
+      }),
+    );
+
+    expect(appSettingFindOneAndUpdateMock).toHaveBeenCalledWith(
+      { key: "admin.homepageCopy" },
+      expect.objectContaining({
+        $set: expect.objectContaining({
+          value: {
+            ctaHeading: "Updated CTA heading",
+            ctaDescription: "Updated CTA description",
+            ctaPrimaryLabel: "Join now",
+            ctaSecondaryLabel: "View plans",
+            spotlightLabel: "Focus area",
+            spotlightHeading: "Different work, different voices.",
+            spotlightDescription:
+              "Use specialist personas for specialist outcomes.",
+          },
+        }),
+      }),
+      expect.any(Object),
+    );
+    expect(revalidatePath).toHaveBeenCalledWith("/");
+  });
+
+  it("updateAdminSettingAction parses homepage featured personas", async () => {
+    await updateAdminSettingAction(
+      buildFormData({
+        key: "admin.homepageFeaturedPersonas",
+        category: "features",
+        homepageFeaturedPersonaIds: [
+          "teacher",
+          "creator",
+          "teacher",
+          "invalid-id",
+        ],
+      }),
+    );
+
+    expect(appSettingFindOneAndUpdateMock).toHaveBeenCalledWith(
+      { key: "admin.homepageFeaturedPersonas" },
+      expect.objectContaining({
+        $set: expect.objectContaining({
+          value: ["teacher", "creator"],
+        }),
+      }),
+      expect.any(Object),
+    );
+    expect(revalidatePath).toHaveBeenCalledWith("/");
+  });
+
+  it("updateAdminSettingAction falls back to default featured personas when all ids are invalid", async () => {
+    await updateAdminSettingAction(
+      buildFormData({
+        key: "admin.homepageFeaturedPersonas",
+        category: "features",
+        homepageFeaturedPersonaIds: ["invalid-id"],
+      }),
+    );
+
+    expect(appSettingFindOneAndUpdateMock).toHaveBeenCalledWith(
+      { key: "admin.homepageFeaturedPersonas" },
+      expect.objectContaining({
+        $set: expect.objectContaining({
+          value: getDefaultHomepageFeaturedPersonas(),
+        }),
+      }),
+      expect.any(Object),
+    );
   });
 
   it("updateAdminSettingAction parses about content and revalidates about page", async () => {

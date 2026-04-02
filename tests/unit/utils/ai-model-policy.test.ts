@@ -136,7 +136,7 @@ describe("ai-model-policy", () => {
     expect(policy.notes).toContain("TTS fallback blocked");
   });
 
-  it("supports premium video upshift and admin override", () => {
+  it("supports premium video model and admin override", () => {
     const premiumFinalPolicy = resolveModelPolicy({
       plan: premiumPlanTier,
       feature: "video_generation",
@@ -153,7 +153,7 @@ describe("ai-model-policy", () => {
       },
     });
 
-    expect(premiumFinalPolicy.model).toBe("sora-2-pro");
+    expect(premiumFinalPolicy.model).toBe("sora-2");
     expect(premiumFinalPolicy.fallbackModel).toBe("sora-2");
     expect(overriddenPolicy.model).toBe("sora-2-custom");
     expect(overriddenPolicy.notes).toContain(

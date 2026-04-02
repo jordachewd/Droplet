@@ -14,9 +14,16 @@ import {
   LandingWorkflowCopy,
   LandingWorkflowRhythmCard,
 } from "@/constants/landing-data";
+import {
+  getDefaultHomepageCopy,
+  getDefaultHomepageFeaturedPersonas,
+  HomepageCopy,
+} from "@/constants/homepage-copy";
+import { VALID_PERSONA_ID_SET } from "@/constants/assistant-personas";
 import AppSetting from "@/lib/database/models/app-setting.model";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import { isObjectRecord } from "@/lib/utils/type-guards";
+import { PersonaId } from "@/types/PersonaData.d";
 
 type AppSettingRecord = {
   key: string;
@@ -26,6 +33,8 @@ type AppSettingRecord = {
 export interface LandingPageContent {
   heroContent: HeroContent;
   landingContent: LandingContent;
+  homepageCopy: HomepageCopy;
+  homepageFeaturedPersonaIds: PersonaId[];
 }
 
 function normalizeText({
@@ -68,6 +77,76 @@ function normalizeHeroContent(value: unknown): HeroContent {
       fallback: defaults.imageAlt,
     }),
   };
+}
+
+function normalizeHomepageCopy(value: unknown): HomepageCopy {
+  const defaults = getDefaultHomepageCopy();
+
+  if (!isObjectRecord(value)) {
+    return defaults;
+  }
+
+  return {
+    ctaHeading: normalizeText({
+      value: value.ctaHeading,
+      fallback: defaults.ctaHeading,
+    }),
+    ctaDescription: normalizeText({
+      value: value.ctaDescription,
+      fallback: defaults.ctaDescription,
+    }),
+    ctaPrimaryLabel: normalizeText({
+      value: value.ctaPrimaryLabel,
+      fallback: defaults.ctaPrimaryLabel,
+    }),
+    ctaSecondaryLabel: normalizeText({
+      value: value.ctaSecondaryLabel,
+      fallback: defaults.ctaSecondaryLabel,
+    }),
+    spotlightLabel: normalizeText({
+      value: value.spotlightLabel,
+      fallback: defaults.spotlightLabel,
+    }),
+    spotlightHeading: normalizeText({
+      value: value.spotlightHeading,
+      fallback: defaults.spotlightHeading,
+    }),
+    spotlightDescription: normalizeText({
+      value: value.spotlightDescription,
+      fallback: defaults.spotlightDescription,
+    }),
+  };
+}
+
+function normalizeHomepageFeaturedPersonaIds(value: unknown): PersonaId[] {
+  const defaults = getDefaultHomepageFeaturedPersonas();
+
+  if (!Array.isArray(value)) {
+    return defaults;
+  }
+
+  const resolvedPersonaIds: PersonaId[] = [];
+  const seenPersonaIds = new Set<PersonaId>();
+
+  for (const entry of value) {
+    if (
+      typeof entry !== "string" ||
+      !VALID_PERSONA_ID_SET.has(entry as PersonaId)
+    ) {
+      continue;
+    }
+
+    const personaId = entry as PersonaId;
+
+    if (seenPersonaIds.has(personaId)) {
+      continue;
+    }
+
+    seenPersonaIds.add(personaId);
+    resolvedPersonaIds.push(personaId);
+  }
+
+  return resolvedPersonaIds.length > 0 ? resolvedPersonaIds : defaults;
 }
 
 function normalizeFeatureCard({
@@ -310,11 +389,15 @@ async function getSettingValues(keys: string[]): Promise<Map<string, unknown>> {
 export async function getEffectiveLandingPageContent(): Promise<LandingPageContent> {
   const heroFallback = getDefaultHeroContent();
   const landingFallback = getDefaultLandingContent();
+  const homepageCopyFallback = getDefaultHomepageCopy();
+  const featuredPersonaIdsFallback = getDefaultHomepageFeaturedPersonas();
 
   try {
     const settings = await getSettingValues([
       "admin.heroContent",
       "admin.landingContent",
+      "admin.homepageCopy",
+      "admin.homepageFeaturedPersonas",
     ]);
 
     return {
@@ -322,12 +405,18 @@ export async function getEffectiveLandingPageContent(): Promise<LandingPageConte
       landingContent: normalizeLandingContent(
         settings.get("admin.landingContent"),
       ),
+      homepageCopy: normalizeHomepageCopy(settings.get("admin.homepageCopy")),
+      homepageFeaturedPersonaIds: normalizeHomepageFeaturedPersonaIds(
+        settings.get("admin.homepageFeaturedPersonas"),
+      ),
     };
   } catch {
     // Intentional fallback to defaults — admin config DB errors are non-fatal.
     return {
       heroContent: heroFallback,
       landingContent: landingFallback,
+      homepageCopy: homepageCopyFallback,
+      homepageFeaturedPersonaIds: featuredPersonaIdsFallback,
     };
   }
 }

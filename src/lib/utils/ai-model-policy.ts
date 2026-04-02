@@ -341,7 +341,7 @@ export const MODEL_POLICY_MATRIX = {
         final: {
           model: "sora-2",
           fallbackModel: "sora-2",
-          notes: "sora-2-pro requires explicitPremium — see resolver override.",
+          notes: "Premium final video renders use sora-2.",
         },
       },
     },
@@ -383,10 +383,6 @@ const MODEL_PRICING: Record<string, TokenPricing> = {
   },
   "sora-2": {
     flatUsd: 0.1,
-    // Flat-rate estimate is intentional until duration metadata is reliably available in usage logs.
-  },
-  "sora-2-pro": {
-    flatUsd: 0.3,
     // Flat-rate estimate is intentional until duration metadata is reliably available in usage logs.
   },
 };
@@ -643,20 +639,6 @@ export function resolveModelPolicy(
       notes,
       "Explicit premium complex chat request upgraded to gpt-5.4.",
     );
-  }
-
-  if (input.feature === "video_generation" && plan === "premium") {
-    if (taskClass === "final" && input.explicitPremium) {
-      model = "sora-2-pro";
-      fallbackModel = "sora-2";
-      notes = joinNotes(
-        notes,
-        "Explicit premium final video render enabled sora-2-pro.",
-      );
-    } else {
-      model = "sora-2";
-      fallbackModel = "sora-2";
-    }
   }
 
   if (

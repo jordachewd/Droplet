@@ -7,12 +7,23 @@ import {
   AboutContentSettingsFormValue,
   FaqContentSettingsFormValue,
   HeroContentSettingsFormValue,
+  HomepageCopySettingsFormValue,
+  HomepageFeaturedPersonasSettingsFormValue,
   LandingContentSettingsFormValue,
 } from "@/components/admin/settings/types";
+import { PersonaId } from "@/types/PersonaData.d";
+
+type HomepagePersonaOption = {
+  id: PersonaId;
+  label: string;
+};
 
 interface AdminWebsiteContentSectionProps {
   faqContentValue: FaqContentSettingsFormValue;
   heroContentValue: HeroContentSettingsFormValue;
+  homepageCopyValue: HomepageCopySettingsFormValue;
+  homepageFeaturedPersonasValue: HomepageFeaturedPersonasSettingsFormValue;
+  homepagePersonaOptions: HomepagePersonaOption[];
   landingContentValue: LandingContentSettingsFormValue;
   aboutContentValue: AboutContentSettingsFormValue;
 }
@@ -20,9 +31,23 @@ interface AdminWebsiteContentSectionProps {
 export function AdminWebsiteContentSection({
   faqContentValue,
   heroContentValue,
+  homepageCopyValue,
+  homepageFeaturedPersonasValue,
+  homepagePersonaOptions,
   landingContentValue,
   aboutContentValue,
 }: AdminWebsiteContentSectionProps) {
+  const defaultFeaturedPersonaIds = homepagePersonaOptions
+    .slice(0, 3)
+    .map((persona) => persona.id);
+  const featuredPersonaFieldValues = [0, 1, 2].map(
+    (index) =>
+      homepageFeaturedPersonasValue[index] ??
+      defaultFeaturedPersonaIds[index] ??
+      homepagePersonaOptions[0]?.id ??
+      "strategist",
+  );
+
   return (
     <div className="AdminWebsiteContentSection flex flex-col gap-6">
       <AdminManagedForm
@@ -76,6 +101,158 @@ export function AdminWebsiteContentSection({
           <AdminFormSubmitButton
             label="Save FAQ Content"
             pendingLabel="Saving FAQ content..."
+          />
+        </div>
+      </AdminManagedForm>
+
+      <AdminManagedForm
+        action={updateAdminSettingAction}
+        className="admin-surface flex flex-col gap-4"
+      >
+        <input type="hidden" name="key" value="admin.homepageCopy" />
+        <input type="hidden" name="category" value="features" />
+
+        <h2 className="heading-6">Homepage CTA and Spotlight Copy</h2>
+        <p className="text-sm text-midnightBlue-600 dark:text-lavenderHaze-600">
+          Configure CTA banner and persona spotlight text shown on the homepage.
+        </p>
+
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="font-medium">CTA Heading</span>
+          <textarea
+            name="homepageCtaHeading"
+            defaultValue={homepageCopyValue.ctaHeading}
+            rows={3}
+            required
+            aria-required="true"
+            className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+          />
+        </label>
+
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="font-medium">CTA Description</span>
+          <textarea
+            name="homepageCtaDescription"
+            defaultValue={homepageCopyValue.ctaDescription}
+            rows={3}
+            required
+            aria-required="true"
+            className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+          />
+        </label>
+
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="font-medium">Primary CTA Label</span>
+          <input
+            type="text"
+            name="homepageCtaPrimaryLabel"
+            defaultValue={homepageCopyValue.ctaPrimaryLabel}
+            required
+            aria-required="true"
+            className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+          />
+        </label>
+
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="font-medium">Secondary CTA Label</span>
+          <input
+            type="text"
+            name="homepageCtaSecondaryLabel"
+            defaultValue={homepageCopyValue.ctaSecondaryLabel}
+            required
+            aria-required="true"
+            className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+          />
+        </label>
+
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="font-medium">Spotlight Eyebrow</span>
+          <input
+            type="text"
+            name="homepageSpotlightLabel"
+            defaultValue={homepageCopyValue.spotlightLabel}
+            required
+            aria-required="true"
+            className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+          />
+        </label>
+
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="font-medium">Spotlight Heading</span>
+          <input
+            type="text"
+            name="homepageSpotlightHeading"
+            defaultValue={homepageCopyValue.spotlightHeading}
+            required
+            aria-required="true"
+            className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+          />
+        </label>
+
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="font-medium">Spotlight Description</span>
+          <textarea
+            name="homepageSpotlightDescription"
+            defaultValue={homepageCopyValue.spotlightDescription}
+            rows={3}
+            required
+            aria-required="true"
+            className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+          />
+        </label>
+
+        <div className="flex justify-end">
+          <AdminFormSubmitButton
+            label="Save Homepage CTA and Spotlight Copy"
+            pendingLabel="Saving homepage copy..."
+          />
+        </div>
+      </AdminManagedForm>
+
+      <AdminManagedForm
+        action={updateAdminSettingAction}
+        className="admin-surface flex flex-col gap-4"
+      >
+        <input
+          type="hidden"
+          name="key"
+          value="admin.homepageFeaturedPersonas"
+        />
+        <input type="hidden" name="category" value="features" />
+
+        <h2 className="heading-6">Homepage Featured Personas</h2>
+        <p className="text-sm text-midnightBlue-600 dark:text-lavenderHaze-600">
+          Select and order the three persona cards highlighted on the homepage.
+        </p>
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          {featuredPersonaFieldValues.map((selectedPersonaId, index) => (
+            <label
+              key={`homepage-featured-persona-${index}`}
+              className="flex flex-col gap-1 text-sm"
+            >
+              <span className="font-medium">Featured Persona #{index + 1}</span>
+              <select
+                name="homepageFeaturedPersonaIds"
+                defaultValue={selectedPersonaId}
+                required
+                aria-required="true"
+                className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+              >
+                {homepagePersonaOptions.map((persona) => (
+                  <option key={persona.id} value={persona.id}>
+                    {persona.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ))}
+        </div>
+
+        <div className="flex justify-end">
+          <AdminFormSubmitButton
+            label="Save Homepage Featured Personas"
+            pendingLabel="Saving featured personas..."
           />
         </div>
       </AdminManagedForm>

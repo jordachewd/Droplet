@@ -6,6 +6,22 @@
 
 ---
 
+## Phase 185 CRITICAL - Remove `sora-2-pro` from Codebase - COMPLETED (2026-04-02)
+
+> Engineer delivered. Owner decision implemented: `sora-2` is now the only video model across all plans, including Premium final renders.
+
+- [x] Removed `sora-2-pro` pricing entry from `MODEL_PRICING`
+- [x] Removed Premium video resolver override that switched to `sora-2-pro`
+- [x] Updated Premium final video policy note to `sora-2` wording
+- [x] Reduced admin video model options to `["sora-2"]`
+- [x] Updated policy unit test expectation to assert Premium final video model is `sora-2`
+- [x] Zero `sora-2-pro` references in `src/` and `tests/`
+- [x] Full 7-gate validation green (prettier, lint, tsc, unit, e2e, build, knip)
+
+**Files:** `src/lib/utils/ai-model-policy.ts`, `src/constants/admin-options.ts`, `tests/unit/utils/ai-model-policy.test.ts`
+
+---
+
 ## Phase 182 CRITICAL — Stripe Webhook Diagnostic `eventType` in Unhandled Response — COMPLETED (2026-04-02, PM audit #83)
 
 > Engineer delivered. Diagnostic-only change. Adds `eventType` field to the "Unhandled event" response body so non-checkout events are immediately identifiable in Stripe Dashboard delivery logs. No behavioral changes to webhook logic was done; all `checkout.session.completed` paths remain intact. C2 payment issue confirmed as ops/config — awaiting owner Stripe Dashboard verification.

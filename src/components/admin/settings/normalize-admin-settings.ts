@@ -7,6 +7,8 @@ import {
   AboutContentSettingsFormValue,
   FaqContentSettingsFormValue,
   HeroContentSettingsFormValue,
+  HomepageCopySettingsFormValue,
+  HomepageFeaturedPersonasSettingsFormValue,
   LimitsSettingsFormValue,
   LandingContentSettingsFormValue,
   PersonaAccessSettingsFormValue,
@@ -434,6 +436,81 @@ export function normalizeHeroContentSettings(
     ctaLabel: readStringValue(value, "ctaLabel", defaults.ctaLabel),
     imageAlt: readStringValue(value, "imageAlt", defaults.imageAlt),
   };
+}
+
+export function normalizeHomepageCopySettings(
+  value: unknown,
+  defaults: HomepageCopySettingsFormValue,
+): HomepageCopySettingsFormValue {
+  if (!isObjectRecord(value)) {
+    return defaults;
+  }
+
+  return {
+    ctaHeading: readStringValue(value, "ctaHeading", defaults.ctaHeading),
+    ctaDescription: readStringValue(
+      value,
+      "ctaDescription",
+      defaults.ctaDescription,
+    ),
+    ctaPrimaryLabel: readStringValue(
+      value,
+      "ctaPrimaryLabel",
+      defaults.ctaPrimaryLabel,
+    ),
+    ctaSecondaryLabel: readStringValue(
+      value,
+      "ctaSecondaryLabel",
+      defaults.ctaSecondaryLabel,
+    ),
+    spotlightLabel: readStringValue(
+      value,
+      "spotlightLabel",
+      defaults.spotlightLabel,
+    ),
+    spotlightHeading: readStringValue(
+      value,
+      "spotlightHeading",
+      defaults.spotlightHeading,
+    ),
+    spotlightDescription: readStringValue(
+      value,
+      "spotlightDescription",
+      defaults.spotlightDescription,
+    ),
+  };
+}
+
+export function normalizeHomepageFeaturedPersonasSettings(
+  value: unknown,
+  defaults: HomepageFeaturedPersonasSettingsFormValue,
+): HomepageFeaturedPersonasSettingsFormValue {
+  if (!Array.isArray(value)) {
+    return [...defaults];
+  }
+
+  const resolvedPersonaIds: PersonaId[] = [];
+  const seenPersonaIds = new Set<PersonaId>();
+
+  for (const entry of value) {
+    if (
+      typeof entry !== "string" ||
+      !VALID_PERSONA_ID_SET.has(entry as PersonaId)
+    ) {
+      continue;
+    }
+
+    const personaId = entry as PersonaId;
+
+    if (seenPersonaIds.has(personaId)) {
+      continue;
+    }
+
+    seenPersonaIds.add(personaId);
+    resolvedPersonaIds.push(personaId);
+  }
+
+  return resolvedPersonaIds.length > 0 ? resolvedPersonaIds : [...defaults];
 }
 
 function normalizeLandingFeatureCards({

@@ -1,24 +1,40 @@
 import { getEffectivePersonaConfig } from "@/lib/utils/effective-persona-config";
+import { HomepageCopy } from "@/constants/homepage-copy";
+import { PersonaId } from "@/types/PersonaData.d";
 import classNames from "classnames";
 
-export default async function PersonaSpotlight() {
+interface PersonaSpotlightProps {
+  copy: Pick<
+    HomepageCopy,
+    "spotlightLabel" | "spotlightHeading" | "spotlightDescription"
+  >;
+  featuredPersonaIds: PersonaId[];
+}
+
+export default async function PersonaSpotlight({
+  copy,
+  featuredPersonaIds,
+}: PersonaSpotlightProps) {
   const effectivePersonas = await getEffectivePersonaConfig();
-  const featuredPersonas = effectivePersonas.filter((persona) =>
-    ["strategist", "teacher", "creator"].includes(persona.id),
+  const effectivePersonasById = new Map(
+    effectivePersonas.map((persona) => [persona.id, persona] as const),
   );
+  const featuredPersonas = featuredPersonaIds
+    .map((personaId) => effectivePersonasById.get(personaId))
+    .filter(
+      (persona): persona is (typeof effectivePersonas)[number] =>
+        persona !== undefined,
+    );
+
   return (
     <section className="PersonaSpotlight mx-auto flex w-full max-w-screen-2xl flex-col gap-6 px-4">
       <div className="flex flex-col gap-3 text-center">
         <p className="text-xxs font-semibold uppercase tracking-[0.3em] text-midnightBlue-700 dark:text-lavenderHaze-700">
-          Persona spotlight
+          {copy.spotlightLabel}
         </p>
-        <h2 className="heading-4 leading-tight">
-          Different jobs need different voices.
-        </h2>
+        <h2 className="heading-4 leading-tight">{copy.spotlightHeading}</h2>
         <p className="body-2 mx-auto max-w-3xl text-sm md:text-base">
-          Droplet starts with purpose-built personas so planning, teaching, and
-          creative work do not feel like the same assistant wearing a different
-          label.
+          {copy.spotlightDescription}
         </p>
       </div>
 
