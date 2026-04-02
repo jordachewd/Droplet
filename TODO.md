@@ -5,163 +5,161 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #81 (2026-04-01). DEPLOYED TO PRODUCTION. All 7 validation gates GREEN (601 tests, lint 0/0, TSC clean, build passes, knip 0). All Milestones 0–25 COMPLETE. Phases 171–172, 167.2, 162, 163 ALL COMPLETED this session. Brand rename complete in `src/`. Catch blocks documented. Promo text admin-configurable. Global error boundary live.**
+> **STATUS: PM audit #83 (2026-04-02). DEPLOYED TO PRODUCTION. All 7 validation gates GREEN (603 tests, lint 0/0, TSC clean, build passes, knip 0). All Milestones 0–25 COMPLETE. Phases 178, 181, 182 COMPLETED this session.**
 >
-> **GATE STATUS: Validation GREEN. Architecture GREEN. Admin GREEN. Public GREEN. Contract GREEN. Product YELLOW (C1 debug text in production).**
+> **GATE STATUS: Validation GREEN. Architecture YELLOW (C1 code-complete, pending production deploy verification). Product YELLOW (C1 pending deploy; C2 ops investigation pending). Admin YELLOW (~12 hardcoded marketing strings). Public GREEN. Contract GREEN.**
 >
-> **ACTIVE ISSUES (PM audit #81 — triple-audit: Architect + Engineer + PM):**
+> **CRITICAL ISSUES STATUS (PM audit #83):**
 >
-> - 🔴 C1: Debug text "Checking if is new task..." visible to all users in production (`chat-wrapper.tsx:601`).
-> - ⚠️ H1: Dead `public/scripts/theme-init.js` — orphaned since Phase 170, last `cellesseon` reference.
-> - ⚠️ H2: Duplicate `STREAM_PROACTIVE_TIMEOUT_MESSAGE` constant — desync risk between server and client.
-> - ⚠️ H3: Dead `conversationEnded` prop in `ChatBodyProps` — accepted but never consumed.
-> - ⚠️ H4: Fake download icon in `profile-billing.tsx` — styled clickable, no handler, no keyboard access.
-> - ⚠️ H5: Download route S3 path forces 206 from request Range header, not upstream ContentRange.
-> - ⚠️ H6: Audio player button permanently disabled after transient error (no retry mechanism).
-> - ⚠️ M1: No video player error state (unlike audio player).
-> - ⚠️ M2: ~30 hardcoded display strings across 8+ components (AGENTS.md Rule 11 violation).
-> - ⚠️ M3: Hardcoded persona IDs `["strategist", "teacher", "creator"]` in homepage spotlight.
+> - 🟡 C1: Stream timeout — CODE-COMPLETE (Phase 181). `functionStartTime` budget fix implemented. Needs production deploy + verification with media gen request.
+> - 🟡 C2: Stripe webhook — DIAGNOSTIC DONE (Phase 182). `eventType` added to unhandled response. Code verified correct by quintuple audit. Issue is operational — owner must verify Stripe Dashboard config (`checkout.session.completed` enabled, endpoint URL, signing secret).
 >
-> **EXECUTION ORDER (PM audit #81 — critical production fix first, then audit findings, then backlog):**
+> **ACTIVE NON-CRITICAL ISSUES:**
 >
-> 1. **🔴 Phase 173 CRITICAL** — Remove debug text from production.
-> 2. **HIGH Phase 174** — Delete dead file + update knip.json.
-> 3. **HIGH Phase 175** — Remove dead prop from ChatBodyProps.
-> 4. **HIGH Phase 176** — Fix download route 206 status logic.
-> 5. **HIGH Phase 177** — Deduplicate timeout message constant.
-> 6. **HIGH Phase 178** — Fix/remove fake download icon.
-> 7. **MEDIUM Phase 179** — Add video player error state.
-> 8. **MEDIUM Phase 180** — Hardcoded display text sweep.
-> 9. **MEDIUM Phase 143** — Env var runtime validation.
-> 10. **MEDIUM Phase 144** — Admin config cache.
-> 11. **MEDIUM Phase 145–165** — Remaining backlog.
+> - ⚠️ M1: No video player error state (unlike audio player). Phase 179.
+> - ⚠️ M2: ~12 hardcoded marketing/configurable strings across 5 components. Owner escalated to HIGH. Phase 180 split into 180.1–180.4.
+> - ⚠️ M3: Hardcoded persona IDs `["strategist", "teacher", "creator"]` in homepage spotlight. Covered by Phase 180.1.
+> - ⚠️ M4: Hardcoded `$` currency symbol in `profile-billing.tsx`. Should use `getEffectiveCurrencySymbol()` per SPEC.md.
 >
-> _Debug text in production blocks ALL other work. No exceptions._
+> **EXECUTION ORDER (PM audit #83):**
+>
+> 1. **🟠 DEPLOY + VERIFY (OWNER ACTION)** — Deploy latest build. Verify C1 (media gen timeout fix) and C2 (Stripe payment flow) in production.
+> 2. **HIGH Phase 180.1** — Homepage marketing text extraction (cta-banner + persona-spotlight).
+> 3. **HIGH Phase 180.2** — Chat display text extraction (chat-intro + chat-input).
+> 4. **HIGH Phase 180.3** — Plans display text extraction (plans-section + plan-card).
+> 5. **HIGH Phase 180.4** — Currency symbol compliance (profile-billing).
+> 6. **MEDIUM Phase 179** — Video player error state.
+> 7. **MEDIUM Phase 143** — Env var runtime validation.
+> 8. **MEDIUM Phase 144** — Admin config cache.
+> 9. **MEDIUM Phase 145–165** — Remaining backlog.
 
 ---
 
-## 🔴 ENGINEER START HERE — Phase 173 CRITICAL — Remove Debug Text from Production
+## 🟠 DEPLOY + VERIFY — Owner Action Required
 
-> **Debug text `<p>Checking if is new task...</p>` visible to every user on every existing conversation.** This is a production-visible debug artifact that must be removed immediately.
+> **Not an engineering task.** Owner must deploy and verify production behavior.
 
-**File:** `src/components/chat/chat-wrapper.tsx` line 601
+**C1 Verification (Stream Timeout Fix):**
 
-**Current code:**
+1. Deploy the latest build to production.
+2. Start a conversation and request image generation.
+3. If the request takes longer than expected, verify the client receives a clean timeout warning (amber alert: "Your request is taking longer than expected...") instead of "The response stream ended unexpectedly."
+4. Check Vercel function logs for `proactive-timeout` entries.
 
-```tsx
-{
-  !isNewTask && <p>Checking if is new task...</p>;
-}
-```
+**C2 Verification (Stripe Payment Flow):**
+
+1. Make a test payment in production.
+2. Check Vercel function logs for `[stripe-webhook] Event type received: checkout.session.completed` entry.
+3. If that log entry is ABSENT — `checkout.session.completed` is not reaching the handler. Fix in Stripe Dashboard:
+   - Go to Stripe Dashboard → Webhooks → Endpoint
+   - Verify `checkout.session.completed` is in the enabled events list
+   - Verify endpoint URL matches production URL (`https://droplet.jwd-apps.com/api/webhooks/stripe`)
+   - Verify signing secret matches `STRIPE_WEBHOOK_SECRET` env var in Vercel
+4. If log shows receipt but no Transaction created — escalate back to engineering.
+
+---
+
+## 🔵 ENGINEER START HERE — Phase 180.1 HIGH — Homepage Marketing Text Extraction
+
+> AGENTS.md Rule 11: "No hardcoded display text." Owner escalated to HIGH. Homepage is the highest-visibility surface.
+
+**Files:** `src/components/sections/homepage/cta-banner.tsx`, `src/components/sections/homepage/persona-spotlight.tsx`
+
+**Strings to extract (7 marketing + 1 config):**
+
+1. `cta-banner.tsx`: `"Create an account, pick a persona, and let the conversation stay focused."` — heading
+2. `cta-banner.tsx`: `"Explore the persona catalog first, or compare the plan limits if you already know how much capacity you need."` — body
+3. `cta-banner.tsx`: `"Create account"` — CTA button label
+4. `cta-banner.tsx`: `"Explore plans"` — CTA button label
+5. `persona-spotlight.tsx`: `"Persona spotlight"` — section label
+6. `persona-spotlight.tsx`: `"Different jobs need different voices."` — heading
+7. `persona-spotlight.tsx`: `"Droplet starts with purpose-built personas so planning, teaching, and creative work do not feel like the same assistant wearing a different label."` — body
+8. `persona-spotlight.tsx`: `["strategist", "teacher", "creator"]` — hardcoded featured persona IDs
 
 **What to do:**
 
-1. Remove the entire line `{!isNewTask && <p>Checking if is new task...</p>}`.
+1. Add new admin-configurable keys to the existing `effective-promo-content.ts` resolver (or create `effective-website-copy.ts` if the existing resolver scope doesn't fit).
+2. Add corresponding defaults to `DEFAULT_PROMO_CONTENT` (or new defaults constant).
+3. Update both components to receive configurable text as props from Server Component parents.
+4. For featured persona IDs: add admin setting key `admin.homepageFeaturedPersonas` with default `["strategist", "teacher", "creator"]`.
 
 **Acceptance criteria:**
 
-- [ ] Zero debug text visible in production
+- [ ] All 7 marketing strings flow from admin-configurable settings
+- [ ] Featured persona IDs flow from admin setting
+- [ ] Default values match current hardcoded strings
+- [ ] Admin panel shows editable fields for these strings
 - [ ] Build passes, tests pass
 
 ---
 
-## HIGH — Phase 174 — Delete Orphaned `public/scripts/theme-init.js`
+## HIGH — Phase 180.2 — Chat Display Text Extraction
 
-> Dead file orphaned since Phase 170 (inline script replaced it). Contains last `cellesseon` reference in the repository. Listed in `knip.json` ignoreFiles because it's unreferenced by code.
+> Both are Client Components — admin settings must be passed as props from parent Server Components.
 
-**What to do:**
+**Files:** `src/components/chat/chat-intro.tsx`, `src/components/chat/chat-input.tsx`
 
-1. Delete `public/scripts/theme-init.js`.
-2. Remove `"public/scripts/theme-init.js"` from `knip.json` `ignoreFiles` array.
+**Strings to extract (2-3 configurable):**
 
-**Acceptance criteria:**
+1. `chat-intro.tsx`: `"welcome to your chat dashboard."` — greeting subheading
+2. `chat-input.tsx`: `"Ask Droplet..."` — input placeholder (brand-adjacent)
 
-- [ ] File deleted
-- [ ] `knip.json` updated
-- [ ] Zero `cellesseon` references in entire repository (verify with `grep -r "cellesseon" .`)
-- [ ] Knip still clean
-- [ ] Build passes
+**Structural strings (EXEMPT — no extraction):**
 
----
-
-## HIGH — Phase 175 — Remove Dead `conversationEnded` Prop from ChatBodyProps
-
-> `conversationEnded` is declared in `ChatBodyProps` (line 18) and passed from `ChatWrapper` (line 612), but is NOT destructured or consumed by `ChatBody`. Dead API surface.
-
-**Files:** `src/components/chat/chat-body.tsx`, `src/components/chat/chat-wrapper.tsx`
-
-**What to do:**
-
-1. Remove `conversationEnded?: boolean;` from `ChatBodyProps` interface in `chat-body.tsx`.
-2. Remove `conversationEnded={isConversationEnded}` from the `<ChatBody>` JSX in `chat-wrapper.tsx`.
-3. Update any test that references this prop.
+- `"Active persona:"` — UI label
+- `"This conversation has ended."` — system state indicator
+- `"Send message"` / `"Write a message first"` — tooltips
+- `"Attach media"` — tooltip
+- Error messages — system text
 
 **Acceptance criteria:**
 
-- [ ] `conversationEnded` removed from interface and call site
+- [ ] Configurable strings flow from admin settings via props
+- [ ] Default values match current text
 - [ ] Build passes, tests pass
 
 ---
 
-## HIGH — Phase 176 — Fix Download Route S3 206 Status Logic
+## HIGH — Phase 180.3 — Plans Display Text Extraction
 
-> S3 path returns `status: byteRange ? 206 : 200` — derives HTTP 206 from client request, not S3 response. Should check `response.ContentRange` (upstream-derived). If S3 ignores the range and returns full file, proxy incorrectly returns 206 without a Content-Range header.
+**Files:** `src/components/sections/shared/plans-section.tsx`, `src/components/shared/plan-card.tsx`
 
-**File:** `src/app/api/download/route.tsx` ~line 232
+**Strings to extract (2 configurable):**
 
-**Current code:**
+1. `plans-section.tsx`: `"Subscribe Now"` — CTA button label
+2. `plan-card.tsx`: `"Popular"` — marketing badge
 
-```ts
-status: byteRange ? 206 : 200,
-```
+**Structural strings (EXEMPT — no extraction):**
 
-**What to do:**
-
-1. Change to `status: response.ContentRange ? 206 : 200,`.
+- `"Current"` — plan status badge
+- `"Free"` — pricing display
+- `"/Mo"` — billing period abbreviation
 
 **Acceptance criteria:**
 
-- [ ] 206 returned only when upstream S3 response includes ContentRange
+- [ ] Both configurable strings flow from admin settings
+- [ ] Default values match current text
 - [ ] Build passes, tests pass
 
 ---
 
-## HIGH — Phase 177 — Deduplicate `STREAM_PROACTIVE_TIMEOUT_MESSAGE` Constant
+## HIGH — Phase 180.4 — Currency Symbol Compliance
 
-> Same string defined independently in `src/app/api/openai/route.tsx:81` (local const) and `src/constants/chat-stream.ts:4` (shared export). If either side changes, the client's proactive timeout detection silently breaks (it compares by string equality).
+> SPEC.md Section 4, Rule 8: "Currency symbol must be admin-configurable. Resolved via `getEffectiveCurrencySymbol()`."
 
-**Files:** `src/app/api/openai/route.tsx`, `src/constants/chat-stream.ts`
+**File:** `src/components/sections/profile/profile-billing.tsx`
 
-**What to do:**
-
-1. In `route.tsx`, remove the local `const STREAM_PROACTIVE_TIMEOUT_MESSAGE = "..."`.
-2. Import `STREAM_PROACTIVE_TIMEOUT_MESSAGE` from `@/constants/chat-stream`.
-3. Note: `chat-stream.ts` needs `import "server-only"` if not already present, OR this constant must be moved to a file without server-only guard since it's used by both server (`route.tsx`) and client (`chat-wrapper.tsx`). Verify the import chain works.
-
-**Acceptance criteria:**
-
-- [ ] Single source of truth for the timeout message string
-- [ ] Both server and client import from the same location
-- [ ] Build passes, tests pass
-
----
-
-## HIGH — Phase 178 — Fix Profile Billing Fake Download Icon
-
-> `profile-billing.tsx:75` renders `<i className="bi bi-file-earmark-arrow-down cursor-pointer" aria-hidden="true">` — styled as clickable (`cursor-pointer`) but has no `onClick` handler, no `<button>` wrapper, and `aria-hidden="true"`. Users expect a download action but nothing happens.
-
-**File:** `src/components/sections/profile/profile-billing.tsx` ~line 75
+**Issue:** Line 55 uses hardcoded `$` in `${txn.amount}`. Should use `getEffectiveCurrencySymbol()`.
 
 **What to do:**
 
-Option A (preferred): Remove the icon entirely (no download functionality exists).
-Option B: Make it a functional download button (would require receipt/invoice generation — likely out of scope).
-
-1. Remove the `<i>` element entirely.
+1. Pass currency symbol as prop from parent Server Component (which calls `getEffectiveCurrencySymbol()`).
+2. Replace `$` with the prop value in the template literal.
 
 **Acceptance criteria:**
 
-- [ ] No fake clickable elements in profile billing
+- [ ] Currency symbol resolved from admin setting
+- [ ] Default remains `$` (USD)
 - [ ] Build passes, tests pass
 
 ---
@@ -181,37 +179,6 @@ Option B: Make it a functional download button (would require receipt/invoice ge
 
 - [ ] Video player shows error message on failed load
 - [ ] Build passes
-
----
-
-## MEDIUM — Phase 180 — Hardcoded Display Text Sweep
-
-> AGENTS.md Rule 11: "No hardcoded display text — all user-facing marketing/promo text must flow from admin-configurable settings." ~30 strings across 8+ components violate this.
-
-**Files and strings to evaluate:**
-
-1. `src/components/sections/homepage/cta-banner.tsx` — "Create an account, pick a persona...", "Explore the persona catalog...", "Create account", "Explore plans"
-2. `src/components/sections/homepage/persona-spotlight.tsx` — "Persona spotlight", "Different jobs need different voices.", hardcoded IDs `["strategist", "teacher", "creator"]`
-3. `src/components/chat/chat-intro.tsx` — "Hello {name},", "welcome to your chat dashboard.", "Active persona:"
-4. `src/components/sections/shared/plans-section.tsx` — "Subscribe Now"
-5. `src/components/chat/chat-input.tsx` — "This conversation has ended.", "Ask Droplet...", "can still make mistakes."
-6. `src/components/sections/profile/profile-usage.tsx` — "Image Generations", "Audio Generations", etc.
-7. `src/components/sections/profile/profile-hero.tsx` — "Member since:", "Last update:"
-8. `src/components/shared/plan-card.tsx` — "Current", "Popular", "Free", "/Mo"
-9. `src/components/sections/profile/profile-danger-zone.tsx` — "Danger zone", "Deleting your account..."
-
-**What to do:**
-
-1. Evaluate each string: structural UI label (exempt per Rule 11) vs marketing/configurable text.
-2. For configurable text: add to `effective-promo-content.ts` or create new `effective-ui-labels.ts` resolver.
-3. For structural UI labels: document as intentionally exempt with brief comment if needed.
-
-**Note:** This is a large phase. PM may split into sub-phases (180.1, 180.2, etc.) if needed.
-
-**Acceptance criteria:**
-
-- [ ] Every hardcoded string classified as exempt or extracted
-- [ ] Build passes, tests pass
 
 ---
 

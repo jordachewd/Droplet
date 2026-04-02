@@ -2,19 +2,18 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-04-01 (PM audit #81). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. **DEPLOYED TO PRODUCTION — streaming timeout MITIGATED (Phase 160.2 proactive 55s safety net). Root cause persists (Vercel Hobby 60s limit).** BUG-PAYMENT RESOLVED. BUG-AUDIO RESOLVED (Phase 168). All unit test failures RESOLVED (Phase 171). Brand rename complete in `src/` (Phase 172). Empty catch blocks documented (Phase 167.2). Promo text admin-configurable (Phase 162). Global error boundary live (Phase 163). Admin configurability COMPLETE (core). E2E: 49 tests (8 spec files). Coverage: 85/80/85/85. 601 tests (101 suites). Build passing. Node.js 24.12.0.
+> Last updated: 2026-04-02 (PM audit #83). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. **DEPLOYED TO PRODUCTION.** Brand rename complete (Phase 172). Catch blocks documented (Phase 167.2). Promo text admin-configurable (Phase 162). Global error boundary live (Phase 163). Phases 173–178, 181, 182 COMPLETE. E2E: 49 tests (8 spec files). Coverage: 85/80/85/85. 603 tests (101 suites). Build passing. Node.js 24.12.0.
 >
-> **Active Technical Debt (PM audit #81):**
+> **Active Issues (PM audit #83):**
 >
-> - **TD-DEBUG-01** — Debug text `<p>Checking if is new task...</p>` visible in production (`chat-wrapper.tsx:601`). Phase 173.
-> - **TD-DEAD-01** — Orphaned `public/scripts/theme-init.js` (dead file, last `cellesseon` reference). Phase 174.
-> - **TD-DESYNC-01** — Duplicate `STREAM_PROACTIVE_TIMEOUT_MESSAGE` constant in `route.tsx` and `chat-stream.ts`. Phase 177.
-> - **TD-DEAD-02** — Dead `conversationEnded` prop in `ChatBodyProps`. Phase 175.
-> - **TD-A11Y-01** — Fake download icon in `profile-billing.tsx` (no handler, no keyboard access). Phase 178.
-> - **TD-HTTP-01** — Download route S3 path forces 206 from request Range, not upstream ContentRange. Phase 176.
-> - **TD-UX-01** — No video player error state. Phase 179.
-> - **TD-HARDCODE-02** — ~30 hardcoded UI strings across 8+ components. Phase 180.
-> - **TD-HARDCODE-03** — Hardcoded persona IDs in homepage spotlight. Phase 180.
+> - **TD-STREAM-05** — ✅ RESOLVED (Phase 181). Stream proactive timeout now computes remaining budget from `functionStartTime` at `POST()` entry. `Math.max(0, ...)` clamp guard. Pending production deploy verification.
+> - **TD-PAYMENT-02** — 🟡 OPS ISSUE (Phase 182 diagnostic done). Code quintuple-audited correct. `eventType` added to unhandled response for Stripe Dashboard diagnosis. Owner must verify Stripe Dashboard config.
+> - **TD-A11Y-01** — ✅ RESOLVED (Phase 178). Fake download icon removed from `profile-billing.tsx`.
+> - **TD-UX-01** — No video player error state (Phase 179).
+> - **TD-HARDCODE-02** — ~12 hardcoded marketing strings across 5 components (Phase 180.1–180.4). Audited and classified: 12 configurable, ~25+ structural/exempt.
+> - **TD-HARDCODE-03** — Hardcoded persona IDs in homepage spotlight (Phase 180.1).
+> - **TD-HARDCODE-04** — Hardcoded `$` currency symbol in `profile-billing.tsx` (Phase 180.4). SPEC.md requires `getEffectiveCurrencySymbol()`.
+> - **TD-ENV-01** — 4 `as string` + 4 `!` casts on `process.env` values (Phase 143).
 
 ---
 
@@ -634,7 +633,7 @@ Client consumes via `ReadableStream.getReader()` in `chat-wrapper.tsx` with JSON
 All auth/limit checks execute before streaming begins. Final task persistence and usage event emission happen after stream completion.
 
 > **✅ RESOLVED (Phase 149 COMPLETE, TD-STREAM-01 CLOSED):** SSE heartbeat mechanism implemented. 12s keepalive interval during media generation via `onMediaGenerationStart`/`onMediaGenerationEnd` lifecycle callbacks. Client timeout reset on every received event (including heartbeats). `heartbeat` event type added to `ChatStreamEvent` union.
-> **⚠️ TD-STREAM-03 RE-OPENED (PM audit #78):** Streaming still fails in production for media generation. Root cause: Vercel Hobby 60s function timeout kills the server function before the media generation pipeline (image: 15-30s, audio: 10-20s, video: 180s) completes AFTER initial prompt processing. Heartbeats prevent CLIENT timeout but NOT Vercel function timeout. The `didSendFinal` guard fires error event correctly, but Vercel kills the function before it can complete. Phase 160.2 adds proactive 55s timeout safety net for graceful degradation within the 60s limit.
+> **✅ TD-STREAM-05 RESOLVED (Phase 181 COMPLETE, PM audit #83):** Proactive timeout now uses `functionStartTime` captured at `POST()` entry. Remaining budget computed as `Math.max(0, 55000 - elapsedSetupMs)` inside `ReadableStream.start()`. Clamp guard prevents negative timeout. Proactive timeout fires BEFORE Vercel's 60s kill regardless of setup duration.
 > **✅ TD-STREAM-04 RESOLVED (Phase 160.1 COMPLETE, PM audit #76):** `maxDuration` reduced from 300 to 60 for Vercel Hobby compliance. Deployment unblocked. Video generation (up to 180s) will time out on Hobby — accepted trade-off. Owner can upgrade to Vercel Pro ($20/mo) for 300s support.
 > **⚠️ TD-AUDIO-01 RESOLVED (PM audit #79, Phase 168 CODE-COMPLETE):** Audio player `ERR_INVALID_STATE` error. Triple-audit root cause: (A) SSE controller race — `controllerClosed` boolean flag added, checked by `emitHeartbeat()` before enqueuing, (B) download route HTTP Range support implemented — `parseByteRangeHeader()`, `Accept-Ranges: bytes`, `206 Partial Content`, (C) audio player lifecycle hardened — `previousAudioUrlRef` reset in cleanup, `src=""` disposal, error event listener. All three paths implemented. Phase 168 archived to DONE.md.
 > **Client timeout:** `STREAM_REQUEST_TIMEOUT_MS = 70_000` (Phase 160.1 COMPLETE). Aligned with server maxDuration=60 + 10s margin.
@@ -845,33 +844,30 @@ All button styles use Lime Green as the accent color in **both** light and dark 
 ## 15. Technical Debt Summary
 
 > Only unresolved items live here. All resolved TDs are archived in `DONE.md`.
-> Last updated: PM audit #81 (2026-04-01).
+> Last updated: PM audit #83 (2026-04-02).
 
-### Active — CRITICAL Priority
+### Resolved This Session
 
-| ID           | Area | Description                                                                                                                                                                                                                                                                                             | Phase |
-| ------------ | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
-| TD-DEBUG-01  | UX   | **CRITICAL (PM audit #81).** Debug text `<p>Checking if is new task...</p>` rendered in production to every user viewing an existing conversation. Must be removed immediately.                                                                                                                         | 173   |
-| TD-STREAM-03 | SSE  | **MITIGATED (PM audit #80).** Streaming fails in production for media gen exceeding 60s. Proactive 55s timeout safety net (Phase 160.2) sends graceful error before Vercel kill. Root cause persists: Vercel Hobby 60s limit. Full fix requires Vercel Pro ($20/mo, 300s limit) or architecture change. | 160.2 |
+| ID            | Area    | Description                                                                                          | Phase | Status                                       |
+| ------------- | ------- | ---------------------------------------------------------------------------------------------------- | ----- | -------------------------------------------- |
+| TD-STREAM-05  | SSE     | Stream proactive timeout miscalculated — fired after Vercel's 60s kill.                              | 181   | ✅ CODE-COMPLETE. Pending production deploy. |
+| TD-PAYMENT-02 | Billing | Stripe webhook returns 200 but no Transaction/plan update. Code verified correct — ops config issue. | 182   | 🟡 Diagnostic done. Owner ops verification.  |
+| TD-A11Y-01    | A11y    | Fake download icon in `profile-billing.tsx` — styled clickable, no handler.                          | 178   | ✅ RESOLVED. Icon removed.                   |
 
 ### Active — HIGH Priority
 
-| ID           | Area     | Description                                                                                                                                                                                                           | Phase |
-| ------------ | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
-| TD-DEAD-01   | Brand    | **HIGH (PM audit #81).** Orphaned `public/scripts/theme-init.js` — dead since Phase 170, contains last `cellesseon` reference in the repo. Listed in knip.json ignoreFiles.                                           | 174   |
-| TD-DESYNC-01 | SSE      | **HIGH (PM audit #81).** `STREAM_PROACTIVE_TIMEOUT_MESSAGE` defined independently in `openai/route.tsx:81` and `constants/chat-stream.ts:4`. If either changes, timeout detection silently breaks on the client side. | 177   |
-| TD-DEAD-02   | Frontend | **HIGH (PM audit #81).** `conversationEnded` prop declared in `ChatBodyProps` but never destructured or consumed by `ChatBody`. Passed from `ChatWrapper` line 612 for no effect.                                     | 175   |
-| TD-A11Y-01   | A11y     | **HIGH (PM audit #81).** `profile-billing.tsx:75` — download icon styled as clickable (`cursor-pointer`) but has no onClick handler, no button wrapper, and `aria-hidden="true"`.                                     | 178   |
-| TD-HTTP-01   | API      | **HIGH (PM audit #81).** Download route S3 path uses `byteRange ? 206 : 200` (request-derived, not upstream). Should use `response.ContentRange ? 206 : 200` per HTTP spec.                                           | 176   |
+| ID             | Area    | Description                                                                                                                                                        | Phase   |
+| -------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------- |
+| TD-HARDCODE-02 | Content | **HIGH (PM audit #83, owner escalated).** ~12 hardcoded marketing strings across `cta-banner.tsx`, `persona-spotlight.tsx`, `chat-intro.tsx`, etc.                 | 180.1-3 |
+| TD-HARDCODE-03 | Content | **HIGH (PM audit #83).** Hardcoded persona IDs `["strategist", "teacher", "creator"]` in `persona-spotlight.tsx`. Admin persona changes won't reflect on homepage. | 180.1   |
+| TD-HARDCODE-04 | Content | **HIGH (PM audit #83).** Hardcoded `$` currency symbol in `profile-billing.tsx`. SPEC requires `getEffectiveCurrencySymbol()`.                                     | 180.4   |
 
 ### Active — MEDIUM Priority
 
-| ID             | Area    | Description                                                                                                                                                                               | Phase |
-| -------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
-| TD-UX-01       | UX      | **MEDIUM (PM audit #81).** `video-player.tsx` has no error handling. Failed video loads show raw broken element — no user-facing error message (unlike audio player).                     | 179   |
-| TD-HARDCODE-02 | Content | **MEDIUM (PM audit #81).** ~30 hardcoded display strings across `cta-banner.tsx`, `persona-spotlight.tsx`, `chat-intro.tsx`, `plans-section.tsx`, `chat-input.tsx`, `profile-*.tsx`, etc. | 180   |
-| TD-HARDCODE-03 | Content | **MEDIUM (PM audit #81).** Hardcoded persona IDs `["strategist", "teacher", "creator"]` in `persona-spotlight.tsx:6`. Admin persona changes won't reflect on homepage.                    | 180   |
-| TD-ENV-01      | Code    | 4 `as string` + 4 `!` casts on `process.env` values. Missing env vars produce cryptic runtime errors instead of failing fast.                                                             | 143   |
+| ID        | Area | Description                                                                                                                   | Phase |
+| --------- | ---- | ----------------------------------------------------------------------------------------------------------------------------- | ----- |
+| TD-UX-01  | UX   | **MEDIUM (PM audit #83).** `video-player.tsx` has no error handling. Failed video loads show raw broken element.              | 179   |
+| TD-ENV-01 | Code | 4 `as string` + 4 `!` casts on `process.env` values. Missing env vars produce cryptic runtime errors instead of failing fast. | 143   |
 
 ### Active — Low Priority
 
@@ -883,57 +879,13 @@ All button styles use Lime Green as the accent color in **both** light and dark 
 | TD-AI-18   | OpenAI  | errorMessage forwarding pattern in `/api/openai` is safe but fragile.          | Advisory |
 | TD-API-09  | API     | `messageTextContentSchema` uses `.strict()` — may reject extra fields.         | Monitor  |
 
-### Resolved (PM audit #81)
+### Resolved (PM audit #82)
 
-| ID           | Area     | Description                                                                                                                                               | Phase |
-| ------------ | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
-| TD-LEGACY-01 | Brand    | ~~5 src files reference `cellesseon`.~~ **RESOLVED (Phase 172).** All legacy migration logic removed from `src/`. Zero `cellesseon` references in `src/`. | 172   |
-| TD-TEST-01   | Testing  | ~~2 unit tests failing (stale assertions).~~ **RESOLVED (Phase 171).** Assertions aligned with current component implementation. 601 tests pass.          | 171   |
-| TD-CATCH-01  | Code     | ~~34 parameterless `catch {}` blocks remaining.~~ **RESOLVED (Phase 167.2).** All catches now have error capture with logging or explanatory comments.    | 167.2 |
-| TD-PROMO-01  | Content  | ~~~15 hardcoded promo/marketing strings.~~ **RESOLVED (Phase 162).** All promo text extracted to `effective-promo-content.ts` resolver with admin UI.     | 162   |
-| TD-GERROR-01 | Frontend | ~~No `global-error.tsx`.~~ **RESOLVED (Phase 163).** Global error boundary implemented with brand styling, "Try again" and "Return home" actions.         | 163   |
-
-### Resolved (PM audit #79)
-
-| ID          | Area  | Description                                                                                                                                                                                                                                                | Phase |
-| ----------- | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
-| TD-AUDIO-01 | Audio | ~~**CRITICAL.** Audio player `ERR_INVALID_STATE` error.~~ **RESOLVED (Phase 168 CODE-COMPLETE, PM audit #79).** SSE `controllerClosed` guard, download Range support, audio player lifecycle hardening — all three paths implemented. Archived to DONE.md. | 168   |
-
-### Resolved (PM audit #78.1)
-
-| ID            | Area    | Description                                                                                                                                                                                                                   | Phase |
-| ------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
-| TD-PAYMENT-01 | Billing | ~~**CRITICAL.** Payment succeeds but no Transaction/plan update.~~ **RESOLVED (PM audit #78.1).** Owner verified Stripe webhook 200 OK + payment test passed. Code was correct (Phase 161). Ops fix only — zero code changes. | 161   |
-
-### Resolved (PM audit #78)
-
-| ID            | Area     | Description                                                                                                                                                                  | Phase      |
-| ------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
-| TD-MAXDUR-01  | API      | ~~**CRITICAL-PRE-DEPLOY.** 5 of 6 API routes missing `export const maxDuration`.~~ **RESOLVED (Phase 166, PM audit #77).** All 6 API routes have `export const maxDuration`. | 166        |
-| TD-CATCH-API  | API      | ~~**HIGH.** 3 API route outer catches without logging.~~ **RESOLVED (Phase 167 partial).** Targeted catch blocks fixed in aws/upload/openai routes. Merged into TD-CATCH-01. | 167        |
-| TD-TIMEOUT-01 | Frontend | ~~Client stream timeout misaligned with server maxDuration.~~ **RESOLVED (Phase 164 + 160.1, PM audit #76).** Client timeout = 70_000ms, server maxDuration = 60s. Aligned.  | 164, 160.1 |
-| TD-STREAM-04  | SSE      | ~~**CRITICAL.** Vercel Hobby rejects maxDuration=300.~~ **RESOLVED (Phase 160.1).** Reduced to 60. Deployment unblocked.                                                     | 160.1      |
-
-### Resolved (PM audit #76)
-
-| ID           | Area | Description                                                                                                                                                                                                                                | Phase      |
-| ------------ | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------- |
-| TD-STREAM-03 | SSE  | ~~**CRITICAL.** Stream error on media generation.~~ **RESOLVED (Phases 160 + 160.1).** maxDuration=60, dual heartbeat, didSendFinal guard, stderr logging. Client timeout aligned. **RE-OPENED PM audit #78 — still fails in production.** | 160, 160.1 |
-
-### Resolved (PM audit #73)
-
-| ID               | Area     | Description                                                                                                                                                                                                                    | Phase |
-| ---------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----- |
-| TD-SCROLLBAR-02  | UX       | ~~2 dangling `droplet-scrollbar` refs in `admin-layout-shell.tsx`.~~ **RESOLVED (Phase 155.1).** Both removed. Zero refs in codebase.                                                                                          | 155.1 |
-| TD-STREAM-02     | SSE      | ~~Streaming catch/finally can throw on closed controller.~~ **RESOLVED (Phase 158).** `writeStreamEvent` in catch and `controller.close()` in finally wrapped in try/catch.                                                    | 158   |
-| TD-BTN-TEST      | Test     | ~~Button test asserts `btn-md` but component defaults `btn-sm`.~~ **RESOLVED (Phase 159).** Test corrected to assert `btn-sm`.                                                                                                 | 159   |
-| TD-WEBHOOK-01    | Billing  | ~~Stripe webhook `checkoutSessionMetadataSchema.strict()` rejects valid payment metadata.~~ **RESOLVED (Phase 157).** Changed to `.strip()`. Unused `name` field removed from sender. Defense-in-depth. Regression test added. | 157   |
-| TD-SERVERONLY-01 | Security | ~~4 constants files missing `server-only` guards.~~ **RESOLVED (Phase 156).** All 4 files have `import "server-only"`.                                                                                                         | 156   |
-| TD-RATELIMIT-02  | Security | ~~No rate limiting on `/api/upload`, `/api/aws`, `/api/download`.~~ **RESOLVED (Phase 142).** All 3 routes have `enforceSlidingWindowRateLimit`.                                                                               | 142   |
-| TD-CHECKOUT-01   | Billing  | ~~`redirect()` inside try/catch in `checkoutPlan()`.~~ **RESOLVED (Phase 152).** `redirectUrl` variable declared outside try/catch.                                                                                            | 152   |
-| TD-CASCADE-01    | Data     | ~~User deletion cascade incomplete.~~ **RESOLVED (Phase 150).** Shared `deleteUserCascade()` utility. RateLimitEntry + Upload cleanup included.                                                                                | 150   |
-| TD-UPLOAD-01     | Feature  | ~~Library has no "Uploaded" tab.~~ **RESOLVED (Phase 151).** Upload model, API persistence, library tab delivered.                                                                                                             | 151   |
-| TD-HYDRATION-01  | Admin    | ~~AdminSettingsTabs SSR/client mismatch.~~ **RESOLVED (Phase 153).** localStorage read moved to useEffect after mount.                                                                                                         | 153   |
-| TD-SUSPEND-UX-01 | UX       | ~~Suspended users see normal upgrade CTAs.~~ **RESOLVED (Phase 154).** `isSuspended` prop with suspension-specific messaging.                                                                                                  | 154   |
-| TD-SCROLLBAR-01  | UX       | ~~Custom scrollbar CSS must be removed.~~ **RESOLVED (Phase 155).** `.droplet-scrollbar` class and all usages deleted.                                                                                                         | 155   |
-| TD-STREAM-01     | SSE      | ~~SSE stream goes silent during media generation.~~ **RESOLVED (Phase 149).** Heartbeat mechanism with 12s interval, lifecycle callbacks, 200s client timeout.                                                                 | 149   |
+| ID           | Area     | Description                                                                                                                                                                                | Phase |
+| ------------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----- |
+| TD-DEBUG-01  | UX       | ~~Debug text `<p>Checking if is new task...</p>` in production.~~ **RESOLVED (Phase 173).** Removed.                                                                                       | 173   |
+| TD-DEAD-01   | Brand    | ~~Orphaned `public/scripts/theme-init.js` (last `cellesseon` reference).~~ **RESOLVED (Phase 174).** File deleted, knip.json cleaned.                                                      | 174   |
+| TD-DEAD-02   | Frontend | ~~Dead `conversationEnded` prop in ChatBodyProps.~~ **RESOLVED (Phase 175).** Prop and call site removed.                                                                                  | 175   |
+| TD-HTTP-01   | API      | ~~Download route S3 path forces 206 from request Range.~~ **RESOLVED (Phase 176).** Now uses `response.ContentRange ? 206 : 200`.                                                          | 176   |
+| TD-DESYNC-01 | SSE      | ~~Duplicate `STREAM_PROACTIVE_TIMEOUT_MESSAGE` constant.~~ **RESOLVED (Phase 177).** Single source of truth in `chat-stream.ts`.                                                           | 177   |
+| TD-STREAM-03 | SSE      | ~~Streaming fails for media gen exceeding 60s.~~ **MITIGATED (Phase 160.2).** Proactive timeout safety net. **RE-CLASSIFIED as TD-STREAM-05** — timeout calculation wrong, not just limit. | 160.2 |
