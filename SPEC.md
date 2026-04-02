@@ -2,14 +2,14 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-04-02 (PM audit #84). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. **DEPLOYED TO PRODUCTION.** Brand rename complete (Phase 172). Catch blocks documented (Phase 167.2). Promo text admin-configurable (Phase 162). Global error boundary live (Phase 163). Phases 173–178, 181, 182 COMPLETE. E2E: 49 tests (8 spec files). Coverage: 85/80/85/85. 603 tests (101 suites). Build passing. Node.js 24.12.0.
+> Last updated: 2026-04-02 (PM audit #84-B). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. **DEPLOYED TO PRODUCTION.** Brand rename complete (Phase 172). Catch blocks documented (Phase 167.2). Promo text admin-configurable (Phase 162). Global error boundary live (Phase 163). Phases 173–178, 181, 182, 183 COMPLETE. E2E: 49 tests (8 spec files). Coverage: 85/80/85/85. 603 tests (101 suites). Build passing. Node.js 24.12.0.
 >
-> **Active Issues (PM audit #84):**
+> **Active Issues (PM audit #84-B):**
 >
-> - **TD-STREAM-05** — ✅ PRODUCTION-CONFIRMED (Phase 181). Proactive timeout fires correctly in production. Clean user-facing message. Not a code bug.
-> - **TD-MEDIA-01** — 🔴 ARCHITECTURE LIMITATION. Media generation (image 30–90s, audio 15–60s, video 60–180s) exceeds Vercel Hobby 60s function timeout. Phase 181 proactive timeout handles this gracefully. Fix: Vercel Pro upgrade ($20/mo, 300s maxDuration) or async media gen.
-> - **TD-PAYMENT-02** — 🔴 CRITICAL (Phase 183). Stripe payment processes but no Transaction/plan update in MongoDB. Code sextuple-audited correct by PM + Architect + Engineer. Primary suspect: `STRIPE_WEBHOOK_SECRET` not set or mismatched in Vercel production env vars. Owner must verify Vercel Dashboard env vars (NOT .env.local).
-> - **TD-LOGIN-01** — 🔴 CRITICAL (Phase 184). Facebook login returns "Feature Unavailable." Zero Facebook code in src/ — 100% Clerk + Meta Developer Console configuration issue.
+> - **TD-STREAM-05** — ✅ PRODUCTION-CONFIRMED (Phase 181). Proactive timeout fires correctly in production.
+> - **TD-PAYMENT-02** — ✅ RESOLVED (Phase 183). Root cause: Stripe webhook was **disabled**. Owner re-enabled. Vercel logs confirm HTTP 200 + plan update success.
+> - **TD-MEDIA-01** — 🟡 ACCEPTED LIMITATION. Media gen (image 30–90s, audio 15–60s, video 60–180s) exceeds Vercel Hobby 60s timeout. Owner decided to stay on Hobby plan. Phase 181 proactive timeout handles gracefully.
+> - **TD-VIDEO-01** — Phase 185: Remove `sora-2-pro` from codebase. Owner decision: use `sora-2` for all plans.
 > - **TD-UX-01** — No video player error state (Phase 179).
 > - **TD-HARDCODE-02** — ~12 hardcoded marketing strings across 5 components (Phase 180.1–180.4). Audited and classified: 12 configurable, ~25+ structural/exempt.
 > - **TD-HARDCODE-03** — Hardcoded persona IDs in homepage spotlight (Phase 180.1).
@@ -48,7 +48,7 @@ The product monetises through tiered subscription plans paid via Stripe.
 - Image upload support
 - Image generation (all tiers, with enforced usage limits)
 - Audio generation (all tiers, with enforced usage limits)
-- Video generation (all tiers, with enforced usage limits — **Phase 34 COMPLETE, Phase 34.9 quality fixes COMPLETE, Phase 51.1 prompt fix COMPLETE**). `sora-2` and `sora-2-pro` operational. Async job model: create → poll → download MP4 → upload to S3. Duration: 4s default. `supportsVideoGeneration` is `true` for all non-suspended plans. Platform prompt includes media-tool awareness.
+- Video generation (all tiers, with enforced usage limits — **Phase 34 COMPLETE, Phase 34.9 quality fixes COMPLETE, Phase 51.1 prompt fix COMPLETE**). `sora-2` only (owner decision: `sora-2-pro` removed Phase 185). Async job model: create → poll → download MP4 → upload to S3. Duration: 4s default. `supportsVideoGeneration` is `true` for all non-suspended plans. Platform prompt includes media-tool awareness.
 - Account-required access � no anonymous usage
 - Authenticated `/app` experience with persona-led UX
 - Real conversation history (list, resume, delete)
@@ -515,7 +515,7 @@ Central resolver: `resolveModelPolicy()` in `src/lib/utils/ai-model-policy.ts`. 
 | Audio            | Premium | `gpt-audio-mini`   | `gpt-4o-mini-tts`              | `gpt-audio-1.5` inaccessible (403) in current OpenAI project � verified live 2026-03-16. Using `gpt-audio-mini` until access restored.                         |
 | Video            | Lite    | `sora-2`           | _(none)_                       | Monthly quota: 1. Budget tier � differentiated by quantity only.                                                                                               |
 | Video            | Pro     | `sora-2`           | _(none)_                       | Monthly quota: 10. Differentiated by quantity only.                                                                                                            |
-| Video            | Premium | `sora-2-pro`       | `sora-2`                       | `sora-2` for previews/drafts. `sora-2-pro` only for final renders with `explicitPremium`.                                                                      |
+| Video            | Premium | `sora-2`           | _(none)_                       | Owner decision (PM audit #84-B): `sora-2` for all plans. `sora-2-pro` removed (Phase 185).                                                                    |
 
 ### 8.3 Task Classes
 
@@ -667,9 +667,9 @@ Webhook idempotency checks **must verify the complete operation**, not just the 
 
 ### OpenAI Technical Debt
 
-- **TD-AI-08**: Video generation IMPLEMENTED (Phase 34, COMPLETED 2026-03-17). Phase 34.9 quality fixes COMPLETED. Sora API (`sora-2`, `sora-2-pro`) operational. Full tool chain delivered. `supportsVideoGeneration` is `true`.
+- **TD-AI-08**: Video generation IMPLEMENTED (Phase 34, COMPLETED 2026-03-17). Phase 34.9 quality fixes COMPLETED. Sora API (`sora-2`) operational. `sora-2-pro` removed (Phase 185, owner decision). Full tool chain delivered. `supportsVideoGeneration` is `true`.
 - **TD-AI-09**: Image/audio generation prompts not yet persona-aware. Chat prompts are fully persona-aware (Phase 22). Tracked as Phase 26.1.
-- **TD-AI-13**: 5 model pricing entries in `ai-model-policy.ts` are placeholders pending OpenAI confirmation (`gpt-audio-mini`, `gpt-audio-1.5`, `gpt-4o-mini-tts`, `sora-2`, `sora-2-pro`).
+- **TD-AI-13**: 4 model pricing entries in `ai-model-policy.ts` are placeholders pending OpenAI confirmation (`gpt-audio-mini`, `gpt-audio-1.5`, `gpt-4o-mini-tts`, `sora-2`).
 - **TD-AI-18** (advisory): OpenAI route `errorMessage` forwarding pattern is safe today but fragile — if any future code sets `aiPayload.errorMessage` to a raw OpenAI error, it will leak to clients. Consider always using generic constants.
 - **TD-AI-25**: ~~Persona system prompts had zero video generation awareness~~ — **RESOLVED (Phase 51.1)**: `CHAT_PLATFORM_PROMPT` updated to include explicit media-tool awareness (images, audio, video). Model now knows it can invoke `getGeneratedVideo` tool.
 
@@ -845,27 +845,23 @@ All button styles use Lime Green as the accent color in **both** light and dark 
 ## 15. Technical Debt Summary
 
 > Only unresolved items live here. All resolved TDs are archived in `DONE.md`.
-> Last updated: PM audit #83 (2026-04-02).
+> Last updated: PM audit #84-B (2026-04-02).
 
-### Resolved This Session (PM audit #84)
+### Resolved This Session (PM audit #84-B)
 
-| ID           | Area | Description                                                                 | Phase | Status                                                      |
-| ------------ | ---- | --------------------------------------------------------------------------- | ----- | ----------------------------------------------------------- |
-| TD-STREAM-05 | SSE  | Stream proactive timeout miscalculated — fired after Vercel's 60s kill.     | 181   | ✅ PRODUCTION-CONFIRMED. Proactive timeout fires correctly. |
-| TD-A11Y-01   | A11y | Fake download icon in `profile-billing.tsx` — styled clickable, no handler. | 178   | ✅ RESOLVED. Icon removed.                                  |
-
-### Active — CRITICAL Priority
-
-| ID            | Area    | Description                                                                                                                                                                                                       | Phase |
-| ------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
-| TD-MEDIA-01   | Arch    | **CRITICAL (PM audit #84).** Media gen (image 30–90s, audio 15–60s, video 60–180s) exceeds Vercel Hobby 60s timeout. Phase 181 proactive timeout handles gracefully. Fix: Vercel Pro ($20/mo) or async media gen. | —     |
-| TD-PAYMENT-02 | Billing | **CRITICAL (PM audit #84).** Stripe payment processes, no Transaction/plan update. Code sextuple-audited correct. Primary suspect: Vercel env var mismatch for `STRIPE_WEBHOOK_SECRET`.                           | 183   |
-| TD-LOGIN-01   | Auth    | **CRITICAL (PM audit #84).** Facebook login "Feature Unavailable." Zero Facebook code in src/ — Clerk + Meta Developer Console config issue.                                                                      | 184   |
+| ID             | Area    | Description                                                                 | Phase | Status                                                                               |
+| -------------- | ------- | --------------------------------------------------------------------------- | ----- | ------------------------------------------------------------------------------------ |
+| TD-STREAM-05   | SSE     | Stream proactive timeout miscalculated — fired after Vercel's 60s kill.     | 181   | ✅ PRODUCTION-CONFIRMED. Proactive timeout fires correctly.                          |
+| TD-A11Y-01     | A11y    | Fake download icon in `profile-billing.tsx` — styled clickable, no handler. | 178   | ✅ RESOLVED. Icon removed.                                                           |
+| TD-PAYMENT-02  | Billing | Stripe webhook — payment processed but no Transaction/plan update.          | 183   | ✅ RESOLVED. Root cause: webhook disabled in Stripe. Re-enabled, HTTP 200 confirmed. |
+| TD-LOGIN-01    | Auth    | Facebook login "Feature Unavailable."                                       | 184   | ✅ CLOSED. Facebook login removed from product (owner decision).                     |
 
 ### Active — HIGH Priority
 
 | ID             | Area    | Description                                                                                                                                                        | Phase   |
 | -------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------- |
+| TD-VIDEO-01    | AI      | **HIGH (PM audit #84-B).** Remove `sora-2-pro` from codebase. Owner decision: use `sora-2` for all plans including Premium.                                       | 185     |
+| TD-MEDIA-01    | Arch    | **ACCEPTED (PM audit #84-B).** Media gen exceeds Vercel Hobby 60s timeout. Owner staying on Hobby. Phase 181 proactive timeout handles gracefully. Async media gen deferred to v2. | —       |
 | TD-HARDCODE-02 | Content | **HIGH (PM audit #83, owner escalated).** ~12 hardcoded marketing strings across `cta-banner.tsx`, `persona-spotlight.tsx`, `chat-intro.tsx`, etc.                 | 180.1-3 |
 | TD-HARDCODE-03 | Content | **HIGH (PM audit #83).** Hardcoded persona IDs `["strategist", "teacher", "creator"]` in `persona-spotlight.tsx`. Admin persona changes won't reflect on homepage. | 180.1   |
 | TD-HARDCODE-04 | Content | **HIGH (PM audit #83).** Hardcoded `$` currency symbol in `profile-billing.tsx`. SPEC requires `getEffectiveCurrencySymbol()`.                                     | 180.4   |
@@ -882,7 +878,7 @@ All button styles use Lime Green as the accent color in **both** light and dark 
 | ID         | Area    | Description                                                                    | Phase    |
 | ---------- | ------- | ------------------------------------------------------------------------------ | -------- |
 | TD-AI-09   | OpenAI  | Image/audio generation prompts not persona-aware (chat prompts done Phase 22). | 26.1     |
-| TD-AI-13   | OpenAI  | 5 model pricing entries are placeholders pending OpenAI confirmation.          | Deferred |
+| TD-AI-13   | OpenAI  | 4 model pricing entries are placeholders pending OpenAI confirmation.           | Deferred |
 | TD-PLAN-01 | Billing | No recurring subscriptions (deferred v1).                                      | Deferred |
 | TD-AI-18   | OpenAI  | errorMessage forwarding pattern in `/api/openai` is safe but fragile.          | Advisory |
 | TD-API-09  | API     | `messageTextContentSchema` uses `.strict()` — may reject extra fields.         | Monitor  |

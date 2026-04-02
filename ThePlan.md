@@ -1,9 +1,9 @@
-# Droplet — Completion Plan
+﻿# Droplet — Completion Plan
 
 > Purpose: one execution document for finishing the SaaS without avoidable rework.
 > Audience: Project Manager, Architect, and Senior Software Agents.
 > Rule: this plan is based on verified repository state. If older docs disagree with code, code wins until this file is updated.
-> Last verified: Architect audit #84, 2026-04-02. Post owner production test (C1 confirmed, C2 persists, C3 new).
+> Last verified: PM audit #84-B, 2026-04-02. Owner investigation completed. C2 RESOLVED, C3 CLOSED, C1 ACCEPTED.
 
 ---
 
@@ -11,16 +11,16 @@
 
 Droplet is deployed to production with all 25 milestones complete. The TDD testing rebuild is done (101 suites, 603 tests, 8 E2E specs, 85/80/85/85 coverage). WCAG 2.2 AA is complete. Admin configurability (promo text, FAQ, landing, stop reasons, persona content) is done. Global error boundary is done. Brand rename (cellesseon → droplet) is complete.
 
-**Owner production test (2026-04-02) found THREE critical issues:**
+**Owner investigation results (2026-04-02, PM audit #84-B):**
 
-1. **🟢 CRITICAL C1 — Media generation timeout (ARCHITECTURE LIMITATION, not code bug).** Owner tested image, audio, and video generation on Lite and Pro plans. ALL return the Phase 181 proactive timeout message: “Request taking longer than expected. Your request is taking longer than expected. Media generation may still be processing in the background.” **This confirms Phase 181 IS WORKING CORRECTLY** — the proactive timeout fires cleanly before Vercel kills the function, producing a user-friendly message instead of a stream death. The root cause is an **architecture limitation**: media generation (30–120s) exceeds the Vercel Hobby plan’s 60s function timeout. **Resolution: upgrade to Vercel Pro ($20/mo, 300s maxDuration) or implement async media generation (background job + polling).**
+1. **✅ C1 — Media generation timeout — ACCEPTED.** Owner decided to stay on Vercel Hobby plan. Phase 181 proactive timeout handles gracefully. **Owner decision: use `sora-2` for ALL plans, remove `sora-2-pro` entirely (Phase 185).** Async media gen deferred to v2.
 
-2. **🔴 CRITICAL C2 — Stripe payment processed but no transaction or plan update (PERSISTS after ops verification).** Owner confirmed ALL ops items previously requested: (a) payment processed in Stripe dashboard ✅, (b) redirected to /checkout-success ✅, (c) checkout.session.completed IS enabled in webhook events ✅, (d) endpoint URL is https://droplet.jwd-apps.com/api/webhooks/stripe ✅, (e) signing secret matches STRIPE_WEBHOOK_SECRET in .env.local ✅. Despite this, user plan stays Lite, no transaction in MongoDB, can re-subscribe. **Architect audit #84 confirmed webhook CODE is correct** — no bugs found. The .env.local signing secret match is irrelevant: Vercel production uses dashboard env vars, NOT .env.local. **PRIMARY SUSPECT: Vercel production env var mismatch.** Phase 183 created for deeper investigation.
+2. **✅ C2 — Stripe payment — RESOLVED.** Root cause: Stripe webhook endpoint was **disabled** in Stripe Dashboard. Owner re-enabled it. All env vars verified correct. Vercel log confirms HTTP 200 + plan update. Revenue flow operational.
 
-3. **🔴 CRITICAL C3 — Facebook login not working (NEW).** Error: “Feature Unavailable / Facebook Login is currently unavailable for this app.” This is a Clerk + Facebook Developer Console configuration issue (not code). Phase 184 created.
+3. **✅ C3 — Facebook login — CLOSED.** Owner removed Facebook login from product. No longer used.
 
 **Phases completed since last plan update:**
-Phase 178 (fake download icon removal) — DONE. Phase 181 (stream timeout budget fix) — CONFIRMED WORKING IN PRODUCTION. Phase 182 (Stripe diagnostic hardening) — CODE-COMPLETE. 603 tests, all pass. DONE.md not yet updated for Phases 173–178, 181–182.
+Phase 178, 181, 182 — DONE. Phase 183 (Stripe) — RESOLVED (webhook was disabled). Phase 184 (Facebook) — CLOSED (removed from product).
 
 ---
 
@@ -38,55 +38,56 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 
 ### Architecture Status — SOUND (core), TWO ISSUES REQUIRING INVESTIGATION
 
-| Area                | Status | Evidence                                                                           |
-| ------------------- | ------ | ---------------------------------------------------------------------------------- |
-| Route boundaries    | ✅     | Clean `/app(.*)` + `/admin(.*)` proxy protection                                   |
-| Server/client split | ✅     | Server Components for pages, client for UX only                                    |
-| Auth in all actions | ✅     | All server actions + API routes verify auth                                        |
-| Admin double-check  | ✅     | All 15 admin functions use `requireAdminAccess`                                    |
-| Schema strict mode  | ✅     | All 9 Mongoose models have `strict: true`                                          |
-| Index coverage      | ✅     | 18 indexed fields across all query-filtered cols                                   |
-| maxDuration exports | ✅     | All 6 API routes (openai=60, clerk=60, rest=30)                                    |
-| Server-only guards  | ✅     | 50+ utility files with `import "server-only"`                                      |
-| Rate limiting       | ✅     | MongoDB-backed, durable, all API routes covered                                    |
-| SSRF prevention     | ✅     | `isAllowedDownloadUrl()` allowlist                                                 |
-| Error handling      | ✅     | All catches documented, `handleError` → `never`                                    |
-| **Stream timeout**  | ✅     | **Phase 181 CONFIRMED WORKING in production. Proactive timeout fires correctly.**  |
-| **Stripe webhook**  | 🔴     | **Code audited — no bugs. Suspected Vercel env var mismatch. Phase 183 required.** |
-| **Facebook login**  | 🔴     | **Clerk + Facebook Developer Console config issue. Phase 184 required.**           |
-| Knip                | ✅     | 0 findings                                                                         |
-| TSC                 | ✅     | 0 errors                                                                           |
-| Lint                | ✅     | 0 errors, 0 warnings                                                               |
-| Tests               | ✅     | 101 suites, 603 tests, all pass                                                    |
-| E2E                 | ✅     | 8 specs, 49 tests                                                                  |
+| Area                | Status | Evidence                                                                          |
+| ------------------- | ------ | --------------------------------------------------------------------------------- |
+| Route boundaries    | ✅     | Clean `/app(.*)` + `/admin(.*)` proxy protection                                  |
+| Server/client split | ✅     | Server Components for pages, client for UX only                                   |
+| Auth in all actions | ✅     | All server actions + API routes verify auth                                       |
+| Admin double-check  | ✅     | All 15 admin functions use `requireAdminAccess`                                   |
+| Schema strict mode  | ✅     | All 9 Mongoose models have `strict: true`                                         |
+| Index coverage      | ✅     | 18 indexed fields across all query-filtered cols                                  |
+| maxDuration exports | ✅     | All 6 API routes (openai=60, clerk=60, rest=30)                                   |
+| Server-only guards  | ✅     | 50+ utility files with `import "server-only"`                                     |
+| Rate limiting       | ✅     | MongoDB-backed, durable, all API routes covered                                   |
+| SSRF prevention     | ✅     | `isAllowedDownloadUrl()` allowlist                                                |
+| Error handling      | ✅     | All catches documented, `handleError` → `never`                                   |
+| **Stream timeout**  | ✅     | **Phase 181 CONFIRMED WORKING in production. Proactive timeout fires correctly.** |
+| **Stripe webhook**  | ✅     | **RESOLVED. Root cause: webhook was disabled. Re-enabled, HTTP 200 confirmed.**   |
+| **Facebook login**  | ✅     | **CLOSED. Owner removed Facebook login from product.**                            |
+| Knip                | ✅     | 0 findings                                                                        |
+| TSC                 | ✅     | 0 errors                                                                          |
+| Lint                | ✅     | 0 errors, 0 warnings                                                              |
+| Tests               | ✅     | 101 suites, 603 tests, all pass                                                   |
+| E2E                 | ✅     | 8 specs, 49 tests                                                                 |
 
 ### Issues Found by Audit #82–#84 — Updated Status
 
-| #   | Severity           | Issue                                                                    | Status                                                                                                         |
-| --- | ------------------ | ------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------- |
-| C1  | ✅ ARCH-LIMITATION | Media gen timeout — Phase 181 proactive timeout confirmed working        | Not a code bug. Vercel Hobby 60s limit. Fix: upgrade Vercel Pro ($20/mo) or async media gen.                   |
-| C2  | 🔴 INVESTIGATION   | Stripe webhook — payment processed, no transaction, no plan update       | Code audited — no bugs found. Owner confirmed ops items. Vercel env var mismatch suspected. Phase 183 created. |
-| C3  | 🔴 CONFIG-ISSUE    | Facebook login — “Feature Unavailable” error                             | Clerk + Facebook Developer Console configuration. Phase 184 created.                                           |
-| H4  | ✅ RESOLVED        | Fake download icon — removed in Phase 178                                | Icon removed from `profile-billing.tsx`                                                                        |
-| H6  | HIGH               | Audio player button permanently disabled after transient error           | `audio-player.tsx:171` — not yet addressed                                                                     |
-| M1  | MEDIUM             | No video player error state (unlike audio player)                        | `video-player.tsx` — not yet addressed                                                                         |
-| M2  | MEDIUM             | ~20–30 hardcoded display strings across homepage/chat/profile components | Phase 180 — next code priority                                                                                 |
-| M3  | MEDIUM             | Hardcoded persona IDs in homepage spotlight                              | Part of Phase 180                                                                                              |
+| #   | Severity           | Issue                                                                    | Status                                                                                       |
+| --- | ------------------ | ------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
+| C1  | ✅ ARCH-LIMITATION | Media gen timeout — Phase 181 proactive timeout confirmed working        | Not a code bug. Vercel Hobby 60s limit. Fix: upgrade Vercel Pro ($20/mo) or async media gen. |
+| C2  | ✅ RESOLVED        | Stripe webhook — payment processed, no transaction, no plan update       | Root cause: webhook was disabled in Stripe Dashboard. Re-enabled. HTTP 200 confirmed.        |
+| C3  | ✅ CLOSED          | Facebook login — "Feature Unavailable" error                             | Owner removed Facebook login from product.                                                   |
+| H4  | ✅ RESOLVED        | Fake download icon — removed in Phase 178                                | Icon removed from `profile-billing.tsx`                                                      |
+| H6  | HIGH               | Audio player button permanently disabled after transient error           | `audio-player.tsx:171` — not yet addressed                                                   |
+| M1  | MEDIUM             | No video player error state (unlike audio player)                        | `video-player.tsx` — not yet addressed                                                       |
+| M2  | MEDIUM             | ~20–30 hardcoded display strings across homepage/chat/profile components | Phase 180 — next code priority                                                               |
+| M3  | MEDIUM             | Hardcoded persona IDs in homepage spotlight                              | Part of Phase 180                                                                            |
 
 ### Phase 173–184 Completion Status
 
-| Phase | Task                                         | Status                  | Evidence                                                        |
-| ----- | -------------------------------------------- | ----------------------- | --------------------------------------------------------------- |
-| 173   | Remove debug text from chat-wrapper.tsx      | ✅ DONE                 | Grep confirms text removed                                      |
-| 174   | Delete theme-init.js + clean knip.json       | ✅ DONE                 | File deleted; knip.json cleaned; layout.tsx has inline script   |
-| 175   | Remove dead conversationEnded prop           | ✅ DONE                 | Prop removed from ChatBodyProps interface                       |
-| 176   | Fix download route 206 status                | ✅ DONE                 | Now uses `response.ContentRange ? 206 : 200`                    |
-| 177   | Deduplicate STREAM_PROACTIVE_TIMEOUT_MESSAGE | ✅ DONE                 | route.tsx imports from `@/constants/chat-stream`                |
-| 178   | Fix fake download icon in profile-billing    | ✅ DONE                 | Icon removed from `profile-billing.tsx`                         |
-| 181   | Fix stream timeout budget miscalculation     | ✅ PRODUCTION-CONFIRMED | Owner tested — proactive timeout fires correctly with clean msg |
-| 182   | Stripe webhook diagnostic hardening          | ✅ CODE-COMPLETE        | `eventType` added to unhandled response body                    |
-| 183   | Stripe payment investigation (Vercel envs)   | 🔴 NOT STARTED          | Phase created — investigate Vercel env vars + Stripe mode match |
-| 184   | Facebook login investigation                 | 🔴 NOT STARTED          | Phase created — Clerk + Facebook Developer Console config       |
+| Phase | Task                                         | Status                  | Evidence                                                            |
+| ----- | -------------------------------------------- | ----------------------- | ------------------------------------------------------------------- |
+| 173   | Remove debug text from chat-wrapper.tsx      | ✅ DONE                 | Grep confirms text removed                                          |
+| 174   | Delete theme-init.js + clean knip.json       | ✅ DONE                 | File deleted; knip.json cleaned; layout.tsx has inline script       |
+| 175   | Remove dead conversationEnded prop           | ✅ DONE                 | Prop removed from ChatBodyProps interface                           |
+| 176   | Fix download route 206 status                | ✅ DONE                 | Now uses `response.ContentRange ? 206 : 200`                        |
+| 177   | Deduplicate STREAM_PROACTIVE_TIMEOUT_MESSAGE | ✅ DONE                 | route.tsx imports from `@/constants/chat-stream`                    |
+| 178   | Fix fake download icon in profile-billing    | ✅ DONE                 | Icon removed from `profile-billing.tsx`                             |
+| 181   | Fix stream timeout budget miscalculation     | ✅ PRODUCTION-CONFIRMED | Owner tested — proactive timeout fires correctly with clean msg     |
+| 182   | Stripe webhook diagnostic hardening          | ✅ CODE-COMPLETE        | `eventType` added to unhandled response body                        |
+| 183   | Stripe payment investigation (Vercel envs)   | ✅ RESOLVED             | Root cause: webhook disabled. Owner re-enabled. HTTP 200 confirmed. |
+| 184   | Facebook login investigation                 | ✅ CLOSED               | Owner removed Facebook login from product.                          |
+| 185   | Remove `sora-2-pro` from codebase            | 🔴 NOT STARTED          | Owner decision: `sora-2` for all plans including Premium.           |
 
 **NOTE:** DONE.md was NOT updated for Phases 173–178, 181–182. Engineer must update DONE.md.
 
@@ -125,38 +126,22 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 
 ## 6. Current Execution Order
 
-> C2 (Stripe) is the #1 BLOCKER — blocks all revenue. C3 (Facebook login) is #2. Media gen timeout requires Vercel Pro upgrade (owner decision). Phase 180 is the next code task after critical issues resolved.
+> All 3 critical issues RESOLVED/CLOSED. Phase 185 (`sora-2-pro` removal) is next engineering task. Phase 180 is the next feature task.
 
 ### Confirmed Working
 
-- **✅ Phase 181** — Stream timeout budget fix. PRODUCTION-CONFIRMED. Proactive timeout fires correctly.
+- **✅ Phase 181** — Stream timeout budget fix. PRODUCTION-CONFIRMED.
 - **✅ Phase 178** — Fake download icon removed. DONE.
 - **✅ Phase 182** — Stripe diagnostic hardening. CODE-COMPLETE.
-
-### Critical Priority (Revenue/Auth Blockers)
-
-1. **🔴 Phase 183 — Stripe payment deep investigation (REVENUE BLOCKER).**
-   Owner action + potential code work. Investigation checklist:
-   - [ ] **Verify Vercel production env vars**: Owner must check Vercel Dashboard → Project → Settings → Environment Variables. Confirm `STRIPE_WEBHOOK_SECRET` exists and matches the webhook signing secret from Stripe Dashboard → Developers → Webhooks → endpoint → Signing secret. These are DIFFERENT from `.env.local`.
-   - [ ] **Check Stripe mode alignment**: Verify that the Stripe API keys (`STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`) in Vercel env vars are for the SAME mode (test vs live) as the webhook endpoint. Test mode keys start with `sk_test_` / `pk_test_`. Live mode keys start with `sk_live_` / `pk_live_`.
-   - [ ] **Check Stripe webhook delivery logs**: Stripe Dashboard → Developers → Webhooks → select endpoint → Recent deliveries. Look for failed attempts (HTTP 400 = signature mismatch, HTTP 500 = server error). If no delivery attempts, the endpoint URL or event selection is wrong.
-   - [ ] **Check Vercel function logs**: Vercel Dashboard → Project → Logs. Filter for `/api/webhooks/stripe`. Look for `[stripe-webhook]` log lines. If no logs at all, Stripe is not reaching the endpoint. If logs show “Invalid webhook signature”, the signing secret is wrong.
-   - [ ] **Verify env var scope**: Vercel env vars can be scoped to Production/Preview/Development. Ensure `STRIPE_WEBHOOK_SECRET` and `STRIPE_SECRET_KEY` are set for the **Production** environment.
-
-2. **🔴 Phase 184 — Facebook login investigation (AUTH BLOCKER).**
-   Owner action (Clerk + Facebook config). Investigation checklist:
-   - [ ] Clerk Dashboard → Social Connections → Facebook: verify enabled and configured
-   - [ ] Facebook Developer Console → App Dashboard: verify app is in “Live” mode (not “Development”)
-   - [ ] Facebook App → Settings → Basic: verify App Domain matches `droplet.jwd-apps.com`
-   - [ ] Facebook App → Facebook Login → Settings: verify Valid OAuth Redirect URI matches Clerk’s expected callback URL
-   - [ ] If Facebook app is still in Development mode, submit for App Review
-
-3. **🟠 Vercel Pro Upgrade (OWNER DECISION).**
-   Required to make media generation functional. Current architecture is correct — Phase 181 proactive timeout works — but Vercel Hobby’s 60s limit is too short for image/audio/video generation. Vercel Pro ($20/mo) raises `maxDuration` to 300s, which covers all media gen operations.
+- **✅ Phase 183** — Stripe payment flow. RESOLVED (webhook was disabled).
+- **✅ Phase 184** — Facebook login. CLOSED (removed from product).
 
 ### Active Code Priority Order
 
-4. **HIGH Phase 180 — Hardcoded display text sweep.** Owner escalated. Split into sub-phases:
+1. **🔴 Phase 185 — Remove `sora-2-pro` from codebase.**
+   Owner decision: use `sora-2` for ALL plans. Remove `sora-2-pro` from `ai-model-policy.ts`, `admin-options.ts`, and tests.
+
+2. **HIGH Phase 180 — Hardcoded display text sweep.** Owner escalated. Split into sub-phases:
 
    **Phase 180.1 — Homepage public display text** (≤ 30 min)
    - `cta-banner.tsx`: heading, body paragraph, 2 button labels (“Create account”, “Explore plans”)
@@ -183,51 +168,51 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
    - Update affected unit tests to mock admin settings
    - Verify existing tests still pass with new prop/resolver patterns
 
-5. **MEDIUM Phase 179** — Add error state to `video-player.tsx` (match audio-player pattern).
+3. **MEDIUM Phase 179** — Add error state to `video-player.tsx` (match audio-player pattern).
 
-6. **MEDIUM Phase 143** — Env var runtime validation (replace `as string` / `!` casts).
+4. **MEDIUM Phase 143** — Env var runtime validation (replace `as string` / `!` casts).
 
-7. **MEDIUM Phase 144** — Admin config in-memory cache with 30s TTL.
+5. **MEDIUM Phase 144** — Admin config in-memory cache with 30s TTL.
 
-8. **MEDIUM Phase 145** — Upload filename collision fix (`crypto.randomUUID()`).
+6. **MEDIUM Phase 145** — Upload filename collision fix (`crypto.randomUUID()`).
 
-9. **MEDIUM Phase 165** — Checkout success page DB polling (safety net).
+7. **MEDIUM Phase 165** — Checkout success page DB polling (safety net).
 
-10. **LOW Phase 146** — Admin user detail transaction `.limit(50)`.
+8. **LOW Phase 146** — Admin user detail transaction `.limit(50)`.
 
-11. **LOW Phase 147** — Rename `.tsx` utility files to `.ts` where no JSX.
+9. **LOW Phase 147** — Rename `.tsx` utility files to `.ts` where no JSX.
 
-12. **LOW Phase 148** — Admin bulk operations partial-failure reporting.
+10. **LOW Phase 148** — Admin bulk operations partial-failure reporting.
 
-13. **CLEANUP** — Update DONE.md for Phases 173–178, 181–182.
+11. **CLEANUP** — Update DONE.md for Phases 173–178, 181–182.
 
 ---
 
 ## 7. Owner Directives Status
 
-| #    | Directive                              | Status                                                                                                             |
-| ---- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| OI1  | TDD rebuild ALL tests                  | ✅ COMPLETE. 603 tests, 101 suites.                                                                                |
-| OI2  | No hardcoded data — admin-configurable | ⚠️ INCOMPLETE. Core done. ~20–30 UI strings remain (Phase 180). Owner escalated to HIGH.                           |
-| OI3  | Reuse repetitive code                  | ✅ COMPLETE.                                                                                                       |
-| OI4  | WCAG 2.2 AA compliance                 | ✅ COMPLETE.                                                                                                       |
-| OI5  | Components = data consumers            | ✅ COMPLETE.                                                                                                       |
-| OI6  | Reduce renders/leaks                   | ✅ COMPLETE.                                                                                                       |
-| OI7  | Server-side utilities                  | ✅ COMPLETE. 50+ server-only guards.                                                                               |
-| OI8  | User removal cascades                  | ✅ COMPLETE. Shared `deleteUserCascade()`.                                                                         |
-| OI9  | Knip clean                             | ✅ COMPLETE (0 findings).                                                                                          |
-| OI10 | Admin fully configurable               | ⚠️ INCOMPLETE. Core done. Remaining strings need admin config (Phase 180).                                         |
-| OI11 | Node.js 24.12.0                        | ✅ COMPLETE.                                                                                                       |
-| OI12 | Deep techstack config audit            | ✅ COMPLETE.                                                                                                       |
-| OI13 | Profile displays plan limits/usage     | ✅ COMPLETE.                                                                                                       |
-| OI14 | Admin panel design matches /app        | ✅ COMPLETE.                                                                                                       |
-| OI15 | Admin shows usage/limits               | ✅ COMPLETE.                                                                                                       |
-| OI16 | Fix merging leftovers                  | ✅ COMPLETE.                                                                                                       |
-| OI17 | Plans/prices/features configurable     | ✅ COMPLETE (core).                                                                                                |
-| OI18 | `cellesseon` → `droplet` rename        | ✅ COMPLETE. All references resolved.                                                                              |
-| OI19 | Fix stream error on media gen          | ✅ PRODUCTION-CONFIRMED. Phase 181 proactive timeout works. Timeout is architecture limitation (Vercel Hobby 60s). |
-| OI20 | Fix payment transaction registration   | 🔴 PERSISTS. Code audited — no bugs. Vercel env var mismatch suspected. Phase 183 investigation created.           |
-| OI21 | Fix Facebook login                     | 🔴 NEW. Clerk + Facebook Developer Console config issue. Phase 184 investigation created.                          |
+| #    | Directive                              | Status                                                                                                                              |
+| ---- | -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| OI1  | TDD rebuild ALL tests                  | ✅ COMPLETE. 603 tests, 101 suites.                                                                                                 |
+| OI2  | No hardcoded data — admin-configurable | ⚠️ INCOMPLETE. Core done. ~20–30 UI strings remain (Phase 180). Owner escalated to HIGH.                                            |
+| OI3  | Reuse repetitive code                  | ✅ COMPLETE.                                                                                                                        |
+| OI4  | WCAG 2.2 AA compliance                 | ✅ COMPLETE.                                                                                                                        |
+| OI5  | Components = data consumers            | ✅ COMPLETE.                                                                                                                        |
+| OI6  | Reduce renders/leaks                   | ✅ COMPLETE.                                                                                                                        |
+| OI7  | Server-side utilities                  | ✅ COMPLETE. 50+ server-only guards.                                                                                                |
+| OI8  | User removal cascades                  | ✅ COMPLETE. Shared `deleteUserCascade()`.                                                                                          |
+| OI9  | Knip clean                             | ✅ COMPLETE (0 findings).                                                                                                           |
+| OI10 | Admin fully configurable               | ⚠️ INCOMPLETE. Core done. Remaining strings need admin config (Phase 180).                                                          |
+| OI11 | Node.js 24.12.0                        | ✅ COMPLETE.                                                                                                                        |
+| OI12 | Deep techstack config audit            | ✅ COMPLETE.                                                                                                                        |
+| OI13 | Profile displays plan limits/usage     | ✅ COMPLETE.                                                                                                                        |
+| OI14 | Admin panel design matches /app        | ✅ COMPLETE.                                                                                                                        |
+| OI15 | Admin shows usage/limits               | ✅ COMPLETE.                                                                                                                        |
+| OI16 | Fix merging leftovers                  | ✅ COMPLETE.                                                                                                                        |
+| OI17 | Plans/prices/features configurable     | ✅ COMPLETE (core).                                                                                                                 |
+| OI18 | `cellesseon` → `droplet` rename        | ✅ COMPLETE. All references resolved.                                                                                               |
+| OI19 | Fix stream error on media gen          | ✅ PRODUCTION-CONFIRMED. Phase 181 proactive timeout works. Timeout is architecture limitation (Vercel Hobby 60s).                  |
+| OI20 | Fix payment transaction registration   | ✅ RESOLVED. Root cause: Stripe webhook endpoint was disabled in Stripe Dashboard. Owner re-enabled — confirmed working (HTTP 200). |
+| OI21 | Fix Facebook login                     | ✅ CLOSED. Owner removed Facebook login from product entirely.                                                                      |
 
 ---
 

@@ -5,126 +5,70 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #84 (2026-04-02). DEPLOYED TO PRODUCTION. All 7 validation gates GREEN (603 tests, lint 0/0, TSC clean, build passes, knip 0). All Milestones 0–25 COMPLETE. Phases 178, 181, 182 COMPLETED. Owner production test confirmed THREE critical issues.**
+> **STATUS: PM audit #84-B (2026-04-02). DEPLOYED TO PRODUCTION. All 7 validation gates GREEN (603 tests, lint 0/0, TSC clean, build passes, knip 0). All Milestones 0–25 COMPLETE. Phases 178, 181, 182, 183 COMPLETED. C2 Stripe RESOLVED. C3 Facebook CLOSED (removed). C1 media gen ACCEPTED (Hobby plan stays).**
 >
-> **GATE STATUS: Validation GREEN. Architecture YELLOW (media gen architecture-limited by Vercel Hobby 60s timeout). Product RED (C2 Stripe payment broken, C3 Facebook login broken, C1 media gen architecture-limited). Admin YELLOW (~12 hardcoded marketing strings). Public GREEN. Contract GREEN.**
+> **GATE STATUS: Validation GREEN. Architecture YELLOW (media gen architecture-limited by Vercel Hobby 60s timeout — accepted). Product YELLOW (media gen limited, `sora-2-pro` removal pending). Admin YELLOW (~12 hardcoded marketing strings). Public GREEN. Contract GREEN.**
 >
-> **CRITICAL ISSUES STATUS (PM audit #84):**
+> **CRITICAL ISSUES STATUS (PM audit #84-B):**
 >
-> - 🔴 C1: Media generation timeout — ARCHITECTURE LIMITATION (NOT code bug). Phase 181 proactive timeout CONFIRMED WORKING in production. Vercel Hobby 60s limit too short for media gen (image 30–90s, audio 15–60s, video 60–180s). Fix: Vercel Pro upgrade ($20/mo) or async media gen.
-> - 🔴 C2: Stripe payment — REVENUE BLOCKER. Payment processes in Stripe, but no Transaction in MongoDB and no plan update. Code sextuple-audited correct (PM + Architect + Engineer, zero bugs found). PRIMARY SUSPECT: `STRIPE_WEBHOOK_SECRET` not set or wrong in Vercel production env vars. Owner must verify Vercel Dashboard (NOT .env.local). Phase 183.
-> - 🔴 C3: Facebook login — "Feature Unavailable." Zero Facebook-related code in src/. 100% Clerk + Meta Developer Console configuration issue. Phase 184.
+> - ✅ C1: Media generation timeout — ACCEPTED LIMITATION. Owner staying on Vercel Hobby. Phase 181 proactive timeout works correctly.
+> - ✅ C2: Stripe payment — RESOLVED. Root cause: webhook was **disabled** in Stripe Dashboard. Owner re-enabled. Vercel logs confirm HTTP 200 + `User plan updated successfully.`
+> - ✅ C3: Facebook login — CLOSED. Owner removed Facebook login from product entirely.
 >
-> **EXECUTION ORDER (PM audit #84):**
+> **EXECUTION ORDER (PM audit #84-B):**
 >
-> 1. **🔴 Phase 183 — OWNER ACTION** — Stripe payment investigation (Vercel env vars + Stripe delivery logs). REVENUE BLOCKER.
-> 2. **🔴 Phase 184 — OWNER ACTION** — Facebook login investigation (Clerk + Meta Developer Console config).
-> 3. **🟠 OWNER DECISION** — Vercel Pro upgrade ($20/mo) to unlock media generation (raises maxDuration to 300s).
-> 4. **HIGH Phase 180.1** — Homepage marketing text extraction (cta-banner + persona-spotlight).
-> 5. **HIGH Phase 180.2** — Chat display text extraction (chat-intro + chat-input).
-> 6. **HIGH Phase 180.3** — Plans display text extraction (plans-section + plan-card).
-> 7. **HIGH Phase 180.4** — Currency symbol compliance (profile-billing).
-> 8. **MEDIUM Phase 179** — Video player error state.
-> 9. **MEDIUM Phase 143** — Env var runtime validation.
-> 10. **MEDIUM Phase 144** — Admin config cache.
-> 11. **MEDIUM Phase 145–165** — Remaining backlog.
+> 1. **🔴 Phase 185 — ENGINEER** — Remove `sora-2-pro` from codebase (owner decision: `sora-2` for all plans).
+> 2. **HIGH Phase 180.1** — Homepage marketing text extraction (cta-banner + persona-spotlight).
+> 3. **HIGH Phase 180.2** — Chat display text extraction (chat-intro + chat-input).
+> 4. **HIGH Phase 180.3** — Plans display text extraction (plans-section + plan-card).
+> 5. **HIGH Phase 180.4** — Currency symbol compliance (profile-billing).
+> 6. **MEDIUM Phase 179** — Video player error state.
+> 7. **MEDIUM Phase 143** — Env var runtime validation.
+> 8. **MEDIUM Phase 144** — Admin config cache.
+> 9. **MEDIUM Phase 145–165** — Remaining backlog.
 
 ---
 
-## � CRITICAL — Phase 183 — Stripe Payment Investigation (REVENUE BLOCKER)
+## ✅ Phase 183 — Stripe Payment — RESOLVED (2026-04-02)
 
-> **OWNER ACTION REQUIRED.** No code fix needed. Code sextuple-audited correct by PM, Architect, and Engineer. The issue is almost certainly a Vercel production environment variable mismatch.
-
-**Investigation Checklist:**
-
-1. **Verify Vercel production env vars:**
-   - Go to Vercel Dashboard → Project → Settings → Environment Variables
-   - Confirm `STRIPE_WEBHOOK_SECRET` exists and is set for the **Production** environment
-   - Confirm its value matches the signing secret from: Stripe Dashboard → Developers → Webhooks → select the endpoint → Signing secret
-   - **IMPORTANT:** `.env.local` is LOCAL ONLY. Vercel production uses dashboard env vars, NOT `.env.local`.
-
-2. **Check Stripe mode alignment:**
-   - Verify `STRIPE_SECRET_KEY` in Vercel env vars. Test keys start with `sk_test_`, live keys start with `sk_live_`.
-   - The webhook endpoint's signing secret must be from the SAME mode (test vs live) as the API keys.
-   - If you have separate test and live webhook endpoints in Stripe, each has a DIFFERENT signing secret.
-
-3. **Check Stripe webhook delivery logs:**
-   - Stripe Dashboard → Developers → Webhooks → select the production endpoint → Recent deliveries
-   - Look for `checkout.session.completed` events. Check HTTP status code:
-     - **400** = signature verification failed (signing secret mismatch — most likely)
-     - **500** = server error (DB connection or other runtime failure)
-     - **No delivery attempts** = endpoint URL wrong or event type not enabled
-   - Click on a failed delivery to see the response body for diagnostic info.
-
-4. **Check Vercel function logs:**
-   - Vercel Dashboard → Project → Logs → Filter for `/api/webhooks/stripe`
-   - Look for `[stripe-webhook]` log lines. If no logs exist, Stripe is not reaching the endpoint at all.
-   - If logs show "Invalid webhook signature", the `STRIPE_WEBHOOK_SECRET` value is wrong.
-
-5. **Also verify these env vars exist in Vercel for Production:**
-   - `STRIPE_SECRET_KEY` (confirmed working — checkout-success page uses it successfully)
-   - `MONGODB_URL` and `MONGODB_DB_NAME` (must match the DB you're reading from in the admin panel)
-   - `NEXT_PUBLIC_API_BASE_URL` (used for checkout redirect URLs)
-
-**After fix:** Make a test payment and verify:
-
-- [ ] Transaction appears in MongoDB (admin panel → Transactions)
-- [ ] User plan updates from Lite to purchased plan
-- [ ] Stripe Dashboard shows 200 response on webhook delivery
+> Root cause: Stripe webhook endpoint was **disabled** in Stripe Dashboard. Owner re-enabled it. Vercel logs confirm: `[stripe-webhook] Checkout session cs_test_...: User plan updated successfully.` HTTP 200. All env vars verified correct.
 
 ---
 
-## 🔴 CRITICAL — Phase 184 — Facebook Login Investigation (AUTH BLOCKER)
+## ✅ Phase 184 — Facebook Login — CLOSED (2026-04-02)
 
-> **OWNER ACTION REQUIRED.** Zero Facebook-related code in `src/`. This is 100% a Clerk + Meta Developer Console configuration issue.
-
-**Investigation Checklist:**
-
-1. **Clerk Dashboard → Social Connections → Facebook:**
-   - Verify Facebook is enabled as a social connection
-   - Verify Facebook App ID and App Secret are configured
-   - Note the OAuth callback URL Clerk expects (you'll need this for Facebook)
-
-2. **Meta Developer Console (developers.facebook.com):**
-   - Verify the Facebook App is in **Live** mode (not Development mode)
-   - If in Development mode, only test users can log in — regular users get "Feature Unavailable"
-   - Go to App Review and submit for review if needed (usually `email` + `public_profile` permissions)
-
-3. **Facebook App → Facebook Login → Settings:**
-   - Verify **Valid OAuth Redirect URIs** includes Clerk's callback URL
-   - The callback URL is typically: `https://clerk.droplet.jwd-apps.com/v1/oauth_callback` (or similar — check Clerk Dashboard)
-
-4. **Facebook App → Settings → Basic:**
-   - Verify App Domains includes `droplet.jwd-apps.com`
-   - Verify Privacy Policy URL and Terms of Service URL are set (required for Live mode)
-
-**After fix:** Test Facebook login from the sign-in page. Verify redirect + account creation works.
+> Owner decision: Facebook login/register option **removed** from product. No longer used. No code changes needed (zero Facebook code in `src/`).
 
 ---
 
-## 🟠 OWNER DECISION — Vercel Pro Upgrade (Media Generation)
+## 🔴 ENGINEER START HERE — Phase 185 — Remove `sora-2-pro` from Codebase
 
-> **Not a code bug.** Phase 181 proactive timeout IS working correctly in production — users get a clean warning message instead of a stream death. The issue is that media generation operations exceed the Vercel Hobby plan's 60s function timeout.
+> Owner decision: use `sora-2` for ALL plans. Remove `sora-2-pro` entirely.
 
-**Timing analysis (Engineer audit):**
+**Files to modify:**
 
-| Operation          | Best Case | Worst Case | Fits in 55s budget?    |
-| ------------------ | --------- | ---------- | ---------------------- |
-| Image gen          | ~19s      | ~58s       | Marginal — often fails |
-| Audio gen (TTS)    | ~11s      | ~33s       | Usually OK             |
-| Audio gen (in/out) | ~15s      | ~40s       | Usually OK             |
-| Video gen          | ~42s      | ~223s      | NEVER fits             |
+1. `src/lib/utils/ai-model-policy.ts`:
+   - Remove the `"sora-2-pro"` entry from `MODEL_PRICING` (~line 388)
+   - Remove the Premium video resolver override that sets `model = "sora-2-pro"` (~line 650). Premium video should use `sora-2` like all other plans.
+   - Update the `final` task class notes in Premium `video_generation` policy (~line 344) — remove `sora-2-pro` reference.
 
-**Options:**
+2. `src/constants/admin-options.ts`:
+   - Change `VIDEO_MODEL_OPTIONS` from `["sora-2", "sora-2-pro"]` to `["sora-2"]`.
 
-1. **Vercel Pro ($20/mo)** — raises `maxDuration` to 300s. Engineer changes one line (`export const maxDuration = 300`). Image/audio immediately functional. Video likely works. **RECOMMENDED.**
-2. **Async media gen** — background job + polling pattern. Major architecture change. Deferred to v2.
+3. `tests/unit/utils/ai-model-policy.test.ts`:
+   - Update the test at ~line 156 that asserts `premiumFinalPolicy.model` is `"sora-2-pro"` — should now be `"sora-2"`.
 
-**After decision:** If upgrading, tell Engineer to update `maxDuration` in [route.tsx](src/app/api/openai/route.tsx) and [route.tsx](src/app/api/download/route.tsx).
+**Acceptance criteria:**
+
+- [ ] Zero `sora-2-pro` references in `src/`
+- [ ] Zero `sora-2-pro` references in `tests/`
+- [ ] Premium video generation resolves to `sora-2`
+- [ ] Admin video model options show only `sora-2`
+- [ ] Build passes, tests pass
 
 ---
 
-## 🔵 ENGINEER START HERE — Phase 180.1 HIGH — Homepage Marketing Text Extraction
+## HIGH — Phase 180.1 — Homepage Marketing Text Extraction
 
 > AGENTS.md Rule 11: "No hardcoded display text." Owner escalated to HIGH. Homepage is the highest-visibility surface.
 
