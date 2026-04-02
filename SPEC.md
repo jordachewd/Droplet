@@ -2,13 +2,14 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-04-02 (PM audit #83). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. **DEPLOYED TO PRODUCTION.** Brand rename complete (Phase 172). Catch blocks documented (Phase 167.2). Promo text admin-configurable (Phase 162). Global error boundary live (Phase 163). Phases 173–178, 181, 182 COMPLETE. E2E: 49 tests (8 spec files). Coverage: 85/80/85/85. 603 tests (101 suites). Build passing. Node.js 24.12.0.
+> Last updated: 2026-04-02 (PM audit #84). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. **DEPLOYED TO PRODUCTION.** Brand rename complete (Phase 172). Catch blocks documented (Phase 167.2). Promo text admin-configurable (Phase 162). Global error boundary live (Phase 163). Phases 173–178, 181, 182 COMPLETE. E2E: 49 tests (8 spec files). Coverage: 85/80/85/85. 603 tests (101 suites). Build passing. Node.js 24.12.0.
 >
-> **Active Issues (PM audit #83):**
+> **Active Issues (PM audit #84):**
 >
-> - **TD-STREAM-05** — ✅ RESOLVED (Phase 181). Stream proactive timeout now computes remaining budget from `functionStartTime` at `POST()` entry. `Math.max(0, ...)` clamp guard. Pending production deploy verification.
-> - **TD-PAYMENT-02** — 🟡 OPS ISSUE (Phase 182 diagnostic done). Code quintuple-audited correct. `eventType` added to unhandled response for Stripe Dashboard diagnosis. Owner must verify Stripe Dashboard config.
-> - **TD-A11Y-01** — ✅ RESOLVED (Phase 178). Fake download icon removed from `profile-billing.tsx`.
+> - **TD-STREAM-05** — ✅ PRODUCTION-CONFIRMED (Phase 181). Proactive timeout fires correctly in production. Clean user-facing message. Not a code bug.
+> - **TD-MEDIA-01** — 🔴 ARCHITECTURE LIMITATION. Media generation (image 30–90s, audio 15–60s, video 60–180s) exceeds Vercel Hobby 60s function timeout. Phase 181 proactive timeout handles this gracefully. Fix: Vercel Pro upgrade ($20/mo, 300s maxDuration) or async media gen.
+> - **TD-PAYMENT-02** — 🔴 CRITICAL (Phase 183). Stripe payment processes but no Transaction/plan update in MongoDB. Code sextuple-audited correct by PM + Architect + Engineer. Primary suspect: `STRIPE_WEBHOOK_SECRET` not set or mismatched in Vercel production env vars. Owner must verify Vercel Dashboard env vars (NOT .env.local).
+> - **TD-LOGIN-01** — 🔴 CRITICAL (Phase 184). Facebook login returns "Feature Unavailable." Zero Facebook code in src/ — 100% Clerk + Meta Developer Console configuration issue.
 > - **TD-UX-01** — No video player error state (Phase 179).
 > - **TD-HARDCODE-02** — ~12 hardcoded marketing strings across 5 components (Phase 180.1–180.4). Audited and classified: 12 configurable, ~25+ structural/exempt.
 > - **TD-HARDCODE-03** — Hardcoded persona IDs in homepage spotlight (Phase 180.1).
@@ -846,13 +847,20 @@ All button styles use Lime Green as the accent color in **both** light and dark 
 > Only unresolved items live here. All resolved TDs are archived in `DONE.md`.
 > Last updated: PM audit #83 (2026-04-02).
 
-### Resolved This Session
+### Resolved This Session (PM audit #84)
 
-| ID            | Area    | Description                                                                                          | Phase | Status                                       |
-| ------------- | ------- | ---------------------------------------------------------------------------------------------------- | ----- | -------------------------------------------- |
-| TD-STREAM-05  | SSE     | Stream proactive timeout miscalculated — fired after Vercel's 60s kill.                              | 181   | ✅ CODE-COMPLETE. Pending production deploy. |
-| TD-PAYMENT-02 | Billing | Stripe webhook returns 200 but no Transaction/plan update. Code verified correct — ops config issue. | 182   | 🟡 Diagnostic done. Owner ops verification.  |
-| TD-A11Y-01    | A11y    | Fake download icon in `profile-billing.tsx` — styled clickable, no handler.                          | 178   | ✅ RESOLVED. Icon removed.                   |
+| ID           | Area | Description                                                                 | Phase | Status                                                      |
+| ------------ | ---- | --------------------------------------------------------------------------- | ----- | ----------------------------------------------------------- |
+| TD-STREAM-05 | SSE  | Stream proactive timeout miscalculated — fired after Vercel's 60s kill.     | 181   | ✅ PRODUCTION-CONFIRMED. Proactive timeout fires correctly. |
+| TD-A11Y-01   | A11y | Fake download icon in `profile-billing.tsx` — styled clickable, no handler. | 178   | ✅ RESOLVED. Icon removed.                                  |
+
+### Active — CRITICAL Priority
+
+| ID            | Area    | Description                                                                                                                                                                                                       | Phase |
+| ------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| TD-MEDIA-01   | Arch    | **CRITICAL (PM audit #84).** Media gen (image 30–90s, audio 15–60s, video 60–180s) exceeds Vercel Hobby 60s timeout. Phase 181 proactive timeout handles gracefully. Fix: Vercel Pro ($20/mo) or async media gen. | —     |
+| TD-PAYMENT-02 | Billing | **CRITICAL (PM audit #84).** Stripe payment processes, no Transaction/plan update. Code sextuple-audited correct. Primary suspect: Vercel env var mismatch for `STRIPE_WEBHOOK_SECRET`.                           | 183   |
+| TD-LOGIN-01   | Auth    | **CRITICAL (PM audit #84).** Facebook login "Feature Unavailable." Zero Facebook code in src/ — Clerk + Meta Developer Console config issue.                                                                      | 184   |
 
 ### Active — HIGH Priority
 
