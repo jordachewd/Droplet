@@ -5,9 +5,14 @@ import { Transaction } from "@/types/TransactionData.d";
 interface BillingProps {
   stripeId: string | null;
   userTxns: Transaction[] | null;
+  currencySymbol?: string;
 }
 
-export default function ProfileBilling({ stripeId, userTxns }: BillingProps) {
+export default function ProfileBilling({
+  stripeId,
+  userTxns,
+  currencySymbol = "$",
+}: BillingProps) {
   const billingTableHeaderClass = classNames(
     "mb-3 flex items-center justify-between gap-4 rounded-md px-3 py-1.5",
     "bg-slate-300/30 text-xs font-medium uppercase tracking-wider text-slate-600",
@@ -52,7 +57,8 @@ export default function ProfileBilling({ stripeId, userTxns }: BillingProps) {
               <div key={txnKey} className={billingRowClass}>
                 <p className="flex-1 font-medium">{txn.plan}</p>
                 <p className="flex-1 text-center font-medium">
-                  ${txn.amount}
+                  {currencySymbol}
+                  {txn.amount}
                   <span className="text-xxs font-normal"> / {payCycle}</span>
                 </p>
                 <p className="hidden flex-1 text-center text-xxs md:flex">

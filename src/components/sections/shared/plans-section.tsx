@@ -13,6 +13,8 @@ interface PlansProps {
   hasLoader?: boolean;
   plansData: Plan[];
   currencySymbol?: string;
+  subscribeCtaLabel?: string;
+  popularBadgeLabel?: string;
   className?: string;
 }
 
@@ -21,6 +23,8 @@ export default function Plans({
   hasLoader = false,
   plansData,
   currencySymbol = "$",
+  subscribeCtaLabel = "Subscribe Now",
+  popularBadgeLabel = "Popular",
   className = "",
 }: PlansProps) {
   const { isSignedIn } = useUser();
@@ -47,6 +51,7 @@ export default function Plans({
               plan={plan}
               userData={userData}
               currencySymbol={currencySymbol}
+              popularBadgeLabel={popularBadgeLabel}
             />
           );
         })}
@@ -58,7 +63,7 @@ export default function Plans({
             className="btn btn-lg btn-outlined mt-4 w-full max-w-70 p-4 uppercase"
             href="/sign-up"
           >
-            Subscribe Now
+            {subscribeCtaLabel}
           </Link>
         </div>
       )}

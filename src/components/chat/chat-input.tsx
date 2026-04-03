@@ -12,6 +12,7 @@ interface ChatInputProps {
   disabled?: boolean;
   startPrompt?: string;
   personaLabel?: string;
+  placeholder?: string;
   sendMessage: (message: Message) => void;
 }
 
@@ -20,6 +21,7 @@ export default function ChatInput({
   disabled = false,
   startPrompt,
   personaLabel = "Droplet",
+  placeholder = "Ask Droplet...",
   sendMessage,
 }: ChatInputProps) {
   const [prompt, setPrompt] = useState<string>(startPrompt || "");
@@ -201,7 +203,7 @@ export default function ChatInput({
             value={prompt}
             disabled={loading || disabled}
             placeholder={
-              disabled ? "This conversation has ended." : "Ask Droplet..."
+              disabled ? "This conversation has ended." : placeholder
             }
             onChange={handlePromptChange}
             rows={2}

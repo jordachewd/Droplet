@@ -47,7 +47,7 @@ describe("mongoose connection utility", () => {
 
     const connectToDatabase = await loadConnectToDatabase();
     await expect(connectToDatabase()).rejects.toThrow(
-      "MONGODB_URL is not defined",
+      "Missing required environment variable: MONGODB_URL",
     );
     expect(connectMock).not.toHaveBeenCalled();
   });

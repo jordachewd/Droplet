@@ -7,6 +7,7 @@ import {
   getEffectiveSupportEmail,
 } from "@/lib/utils/effective-plan-config";
 import { getEffectivePersonaAccessByPlan } from "@/lib/utils/effective-persona-access";
+import { getEffectivePromoContent } from "@/lib/utils/effective-promo-content";
 import Link from "next/link";
 import PageWrapper from "@/components/layout/page-wrapper";
 import PageHead from "@/components/layout/page-head";
@@ -14,18 +15,21 @@ import PageHead from "@/components/layout/page-head";
 export const dynamic = "force-dynamic";
 
 export default async function PlansPage() {
-  const [effectivePlanConfig, personaAccessByPlan, supportEmail] =
+  const [effectivePlanConfig, personaAccessByPlan, supportEmail, promoContent] =
     await Promise.all([
       getEffectivePlanConfig(),
       getEffectivePersonaAccessByPlan(),
       getEffectiveSupportEmail(),
+      getEffectivePromoContent(),
     ]);
+
   const plans = buildPlans({
     pricing: effectivePlanConfig.pricing,
     limits: effectivePlanConfig.limits,
     personaAccess: personaAccessByPlan,
     trialLimits: effectivePlanConfig.trialLimits,
   });
+  
   const faqs = await getEffectiveFaqContent({
     pricing: effectivePlanConfig.pricing,
     personaAccessByPlan,
@@ -44,6 +48,8 @@ export default async function PlansPage() {
       <Plans
         plansData={plans}
         currencySymbol={effectivePlanConfig.pricing.currencySymbol}
+        subscribeCtaLabel={promoContent.plansSubscribeCta}
+        popularBadgeLabel={promoContent.planPopularBadge}
       />
 
       <Faqs faqsData={faqs} />
@@ -58,11 +64,8 @@ export default async function PlansPage() {
           </p>
 
           <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-            <Link className="btn btn-lg btn-contained uppercase" href="/plans">
-              View plans
-            </Link>
             <Link
-              className="btn btn-lg btn-outlined uppercase"
+              className="btn btn-md btn-outlined uppercase"
               href={`mailto:${supportEmail}`}
             >
               Contact support

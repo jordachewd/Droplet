@@ -332,6 +332,26 @@ export function normalizePromoContentSettings(
       "chatContactSupportCta",
       defaults.chatContactSupportCta,
     ),
+    chatIntroSubheading: readStringValue(
+      value,
+      "chatIntroSubheading",
+      defaults.chatIntroSubheading,
+    ),
+    chatInputPlaceholder: readStringValue(
+      value,
+      "chatInputPlaceholder",
+      defaults.chatInputPlaceholder,
+    ),
+    plansSubscribeCta: readStringValue(
+      value,
+      "plansSubscribeCta",
+      defaults.plansSubscribeCta,
+    ),
+    planPopularBadge: readStringValue(
+      value,
+      "planPopularBadge",
+      defaults.planPopularBadge,
+    ),
   };
 }
 

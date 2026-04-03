@@ -29,14 +29,14 @@ export const DEFAULT_PLAN_PRICING: PlanPricing = {
 
 export const PLAN_LIMITS: PlanLimits = {
   Lite: {
-    images: 3,
-    audio: 3,
-    conversationsPerDay: 5,
-    promptsPerConversation: 10,
+    images: 1,
+    audio: 1,
+    conversationsPerDay: 3,
+    promptsPerConversation: 5,
   },
   Pro: {
-    images: 50,
-    audio: 50,
+    images: 30,
+    audio: 30,
     conversationsPerDay: 50,
     promptsPerConversation: 100,
   },
@@ -50,8 +50,8 @@ export const PLAN_LIMITS: PlanLimits = {
 
 export const PERSONA_TRIAL_LIMITS = {
   promptsPerConversation: 5,
-  images: 3,
-  audio: 2,
+  images: 1,
+  audio: 1,
 } as const;
 
 export interface PersonaTrialLimits {
@@ -117,7 +117,7 @@ function formatMediaLimitLabel({
   }
 
   if (limit === 0) {
-    return `✕ ${plural}${suffix}`;
+    return `No ${plural}${suffix}`;
   }
 
   const noun = limit === 1 ? singular : plural;

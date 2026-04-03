@@ -1,8 +1,9 @@
 import "server-only";
 
 import mongoose, { Mongoose } from "mongoose";
+import { requireEnv } from "@/lib/utils/require-env";
 
-const MONGODB_URL = process.env.MONGODB_URL as string;
+const MONGODB_URL = process.env.MONGODB_URL?.trim();
 const MONGODB_URL_FALLBACK = process.env.MONGODB_URL_FALLBACK?.trim();
 const MONGODB_DB_NAME = process.env.MONGODB_DB_NAME?.trim();
 
@@ -45,20 +46,18 @@ async function connectWithUrl(url: string): Promise<Mongoose> {
 }
 
 async function connectWithFallbackIfNeeded(): Promise<Mongoose> {
-  if (!MONGODB_URL) {
-    throw new Error("MONGODB_URL is not defined");
-  }
+  const primaryMongoUrl = MONGODB_URL ?? requireEnv("MONGODB_URL").trim();
 
   if (!MONGODB_DB_NAME) {
     throw new Error("MONGODB_DB_NAME is not defined");
   }
 
   try {
-    return await connectWithUrl(MONGODB_URL);
+    return await connectWithUrl(primaryMongoUrl);
   } catch (primaryError) {
     const canUseFallback =
       Boolean(MONGODB_URL_FALLBACK) &&
-      MONGODB_URL.startsWith("mongodb+srv://") &&
+      primaryMongoUrl.startsWith("mongodb+srv://") &&
       isSrvDnsLookupError(primaryError);
 
     if (!canUseFallback || !MONGODB_URL_FALLBACK) {

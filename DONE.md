@@ -2,7 +2,95 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-04-03 — PM audit #86.
+> Last updated: 2026-04-03 — PM audit #87.
+
+---
+
+## Phase 187-D — Download Rate-Limit Key Cleanup — COMPLETED (2026-04-03)
+
+> Engineer delivered (PM audit #87). Added `download:${clerkId}` to `getRateLimitKeys()` in `delete-user-cascade.ts`. All 4 rate-limit key types now cleaned on user deletion cascade.
+
+- [x] `download:` key added to cascade cleanup
+- [x] Tests updated
+
+---
+
+## Phase 180.3 — Plans Display Text Extraction — COMPLETED (2026-04-03)
+
+> Engineer delivered (PM audit #87). "Subscribe Now" CTA and "Popular" badge are now admin-configurable via promo content resolver.
+
+- [x] `plans-section.tsx` receives `subscribeCtaLabel` prop (default: "Subscribe Now")
+- [x] `plan-card.tsx` receives `popularBadgeLabel` prop (default: "Popular")
+- [x] Public and app plans pages wire props from `getEffectivePromoContent()`
+- [x] Admin promo content section includes both fields
+- [x] Tests updated
+
+---
+
+## Phase 180.2 — Chat Display Text Extraction — COMPLETED (2026-04-03)
+
+> Engineer delivered (PM audit #87). Chat intro subheading and input placeholder are now admin-configurable via promo content resolver.
+
+- [x] `chat-intro.tsx` receives `subheading` prop (default: "welcome to your chat dashboard.")
+- [x] `chat-input.tsx` receives `placeholder` prop (default: "Ask Droplet...")
+- [x] `chat-wrapper.tsx` passes promo content to both components
+- [x] Admin promo content section includes both fields
+- [x] Tests updated
+
+---
+
+## Phase 180.4 — Currency Symbol Compliance — COMPLETED (2026-04-03)
+
+> Engineer delivered (PM audit #87). Profile billing currency symbol is now admin-configurable.
+
+- [x] `profile-billing.tsx` accepts `currencySymbol` prop (default: "$")
+- [x] `profile/page.tsx` calls `getEffectiveCurrencySymbol()` and passes value
+- [x] Tests updated
+
+---
+
+## Phase 143 — Env Var Runtime Validation — COMPLETED (2026-04-03)
+
+> Engineer delivered (PM audit #87). Created `requireEnv()` utility. Replaced all 7 unsafe `process.env` casts.
+
+- [x] Created `src/lib/utils/require-env.ts` with clear error message
+- [x] `src/constants/openai.tsx`: 3x `!` → `requireEnv()`
+- [x] `src/constants/aws.tsx`: 3x `as string` → `requireEnv()`
+- [x] `src/lib/database/mongoose.tsx`: 1x `as string` → `requireEnv()`
+- [x] `src/lib/actions/transaction.action.tsx`: 1x `!` → `requireEnv()`
+- [x] Zero `process.env.*!` and zero `process.env.* as string` remain in `src/`
+- [x] Tests added for `requireEnv()` behavior
+
+---
+
+## Phase 187-C — Fix Audio Player Error Recovery — COMPLETED (2026-04-03)
+
+> Engineer delivered (PM audit #87). Audio player now clears error state before play retry. Users can recover from transient failures without page reload.
+
+- [x] `setAudioError(null)` added before `play()` in `togglePlay()`
+- [x] Play button `disabled` no longer references `audioError`
+- [x] Tests updated
+
+---
+
+## Phase 187-B — Fix Clerk Webhook Cascade Order — COMPLETED (2026-04-03)
+
+> Engineer delivered (PM audit #87). Clerk `user.deleted` webhook now runs cascade cleanup BEFORE deleting the User document, matching the safer pattern in `user.actions.tsx`.
+
+- [x] `deleteUserCascade(clerkId)` runs before `User.findByIdAndDelete()`
+- [x] If cascade fails, User record remains for retry
+- [x] Tests updated
+
+---
+
+## Phase 187-A — Add Admin Error Boundary — COMPLETED (2026-04-03)
+
+> Engineer delivered (PM audit #87). Admin route group now has its own error boundary, preserving sidebar navigation context on render errors.
+
+- [x] Created `src/app/(admin)/error.tsx`
+- [x] "Back to Admin" link to `/admin`
+- [x] Error reset button
+- [x] Admin layout context preserved
 
 ---
 

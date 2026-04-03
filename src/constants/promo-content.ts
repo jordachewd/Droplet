@@ -21,6 +21,10 @@ export interface PromoContent {
   chatStartConversationCta: string;
   chatUpgradePlanCta: string;
   chatContactSupportCta: string;
+  chatIntroSubheading: string;
+  chatInputPlaceholder: string;
+  plansSubscribeCta: string;
+  planPopularBadge: string;
 }
 
 export const DEFAULT_PROMO_CONTENT: PromoContent = {
@@ -48,6 +52,10 @@ export const DEFAULT_PROMO_CONTENT: PromoContent = {
   chatStartConversationCta: "Start a new conversation",
   chatUpgradePlanCta: "Upgrade your plan",
   chatContactSupportCta: "Contact support",
+  chatIntroSubheading: "welcome to your chat dashboard.",
+  chatInputPlaceholder: "Ask Droplet...",
+  plansSubscribeCta: "Subscribe Now",
+  planPopularBadge: "Popular",
 };
 
 export function resolvePersonaUpgradeMessage({

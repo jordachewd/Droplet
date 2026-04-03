@@ -142,6 +142,7 @@ function AudioPlayerSession({ audioSrc }: AudioPlayerProps) {
       audioElement.pause();
       setIsPlaying(false);
     } else {
+      setAudioError(null);
       audioElement
         .play()
         .then(() => setIsPlaying(true))
@@ -171,7 +172,7 @@ function AudioPlayerSession({ audioSrc }: AudioPlayerProps) {
           onClick={togglePlay}
           variant="outlined"
           size="sm"
-          disabled={!audioSrc || audioError !== null}
+          disabled={!audioSrc}
           aria-label={playbackControlLabel}
         >
           <i
