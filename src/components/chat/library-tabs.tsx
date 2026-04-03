@@ -138,16 +138,23 @@ export default function LibraryTabs({
               aria-controls={`library-panel-${tab.id}`}
               tabIndex={selected ? 0 : -1}
               className={classNames(
-                "inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm transition-all",
-                "hover:-translate-y-0.5",
+                "inline-flex items-center gap-2 rounded-lg px-3 py-1.5",
+                "hover:-translate-y-0.5 text-sm transition-all",
                 selected
-                  ? "bg-dustyBlue-400/80 font-semibold dark:bg-twilightPurple-500/80"
+                  ? "bg-twilightPurple-500/80 text-lavenderHaze-200 dark:bg-dustyBlue-500/80 font-semibold"
                   : "bg-lavenderHaze-500/80 dark:bg-twilightPurple-900/80",
               )}
               onClick={() => handleTabChange(tab.id)}
             >
               <span>{tab.label}</span>
-              <span className="rounded-full px-1.5 py-0.5 text-xxs opacity-75 bg-twilightPurple-200 dark:bg-nightIndigo-1000">
+              <span
+                className={classNames(
+                  "rounded-full px-1.5 py-0.5 text-xxs opacity-75",
+                  selected
+                    ? "bg-twilightPurple-1000 dark:bg-nightIndigo-1000"
+                    : "bg-twilightPurple-200 dark:bg-dustyBlue-1000/70",
+                )}
+              >
                 {tab.count}
               </span>
             </button>

@@ -97,7 +97,7 @@ export default function ChatSidebarShell({
 
   const chatSidebarClass = classNames(
     "ChatSidebar fixed bottom-0 left-0 top-0 z-30 flex w-72 flex-col justify-between",
-    "bg-lavenderHaze-100/40 shadow-sm transition-all duration-300 backdrop-blur-lg",
+    "bg-lavenderHaze-100/40 transition-all duration-300 backdrop-blur-lg",
     "lg:relative lg:z-10 lg:translate-x-0 dark:bg-nightIndigo-1000/40",
     mobileOpen ? "translate-x-0" : "-translate-x-full",
     desktopCollapsed ? "lg:w-16" : "lg:w-72",
