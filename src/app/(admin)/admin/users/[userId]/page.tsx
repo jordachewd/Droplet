@@ -43,26 +43,26 @@ export default async function AdminUserDetailPage({
               <dt className="text-xs font-semibold uppercase text-midnightBlue-700 dark:text-lavenderHaze-700">
                 Email:
               </dt>
-              <dd className="text-sm">{user.email}</dd>
+              <dd className="text-xs">{user.email}</dd>
             </div>
 
             <div className="flex w-full gap-2 items-center">
               <dt className="text-xs font-semibold uppercase text-midnightBlue-700 dark:text-lavenderHaze-700">
                 Clerk ID:
               </dt>
-              <dd className="text-sm">{user.clerkId}</dd>
+              <dd className="text-xs">{user.clerkId}</dd>
             </div>
             <div className="flex w-full gap-2 items-center">
               <dt className="text-xs font-semibold uppercase text-midnightBlue-700 dark:text-lavenderHaze-700">
                 Role:
               </dt>
-              <dd className="mt-1 text-sm capitalize">{user.role}</dd>
+              <dd className="text-xs">{user.role}</dd>
             </div>
             <div className="flex w-full gap-2 items-center">
               <dt className="text-xs font-semibold uppercase text-midnightBlue-700 dark:text-lavenderHaze-700">
                 State:
               </dt>
-              <dd className="text-sm">
+              <dd className="text-xs">
                 {user.suspended ? "Suspended" : "Active"}
               </dd>
             </div>
@@ -70,7 +70,7 @@ export default async function AdminUserDetailPage({
               <dt className="text-xs font-semibold uppercase text-midnightBlue-700 dark:text-lavenderHaze-700">
                 Plan:
               </dt>
-              <dd className="mt-1 text-sm">
+              <dd className="text-xs">
                 {user.role === "admin"
                   ? user.planName
                   : `${user.planName} (${currencySymbol}${user.planAmount})`}
@@ -80,13 +80,13 @@ export default async function AdminUserDetailPage({
               <dt className="text-xs font-semibold uppercase text-midnightBlue-700 dark:text-lavenderHaze-700">
                 Billing:
               </dt>
-              <dd className="text-sm">{user.billing}</dd>
+              <dd className="text-xs">{user.billing}</dd>
             </div>
             <div className="flex w-full gap-2 items-center">
               <dt className="text-xs font-semibold uppercase text-midnightBlue-700 dark:text-lavenderHaze-700">
                 Plan Expires:
               </dt>
-              <dd className="text-sm">
+              <dd className="text-xs">
                 {user.expiresOn
                   ? new Date(user.expiresOn).toLocaleString()
                   : "Never"}
@@ -96,7 +96,7 @@ export default async function AdminUserDetailPage({
               <dt className="text-xs font-semibold uppercase text-midnightBlue-700 dark:text-lavenderHaze-700">
                 Registered:
               </dt>
-              <dd className="text-sm">
+              <dd className="text-xs">
                 {user.registerAt
                   ? new Date(user.registerAt).toLocaleString()
                   : "-"}
