@@ -2,18 +2,21 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-04-03 (PM audit #85). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. **DEPLOYED TO PRODUCTION.** Brand rename complete (Phase 172). Catch blocks documented (Phase 167.2). Promo text admin-configurable (Phase 162). Global error boundary live (Phase 163). Phases 173–178, 181, 182, 183, 185, 180.1 COMPLETE. E2E: 49 tests (8 spec files). Coverage: 85/80/85/85. 606 tests. Build passing. Node.js 24.12.0.
+> Last updated: 2026-04-03 (PM audit #86). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. **DEPLOYED TO PRODUCTION.** Brand rename complete (Phase 172). Catch blocks documented (Phase 167.2). Promo text admin-configurable (Phase 162). Global error boundary live (Phase 163). Phases 173–178, 181–186 COMPLETE. E2E: 49 tests (8 spec files). Coverage: 85/80/85/85. 594 tests. Build passing. Node.js 24.12.0.
 >
-> **Active Issues (PM audit #85):**
+> **Active Issues (PM audit #86 — v1.0 pre-release):**
 >
 > - **TD-STREAM-05** — ✅ PRODUCTION-CONFIRMED (Phase 181). Proactive timeout fires correctly in production.
 > - **TD-PAYMENT-02** — ✅ RESOLVED (Phase 183). Root cause: Stripe webhook was **disabled**. Owner re-enabled. Vercel logs confirm HTTP 200 + plan update success.
-> - **TD-MEDIA-01** — 🟡 ACCEPTED LIMITATION. Media gen (image 30–90s, audio 15–60s) exceeds Vercel Hobby 60s timeout. Owner decided to stay on Hobby plan. Phase 181 proactive timeout handles gracefully. Video generation removed from product (PM audit #85).
-> - **TD-VIDEO-02** — 🔴 Phase 186-A: Remove ALL video generation from codebase. Owner directive: both `sora-2` and `sora-2-pro` deprecated. Video feature removed from product.
-> - **TD-TOKEN-01** — 🔴 Phase 186-B: Increase token limits to maximum possible. Owner directive.
-> - **TD-HARDCODE-02** — ~12 hardcoded marketing strings across 5 components (Phase 180.2–180.4). Audited and classified: 12 configurable, ~25+ structural/exempt. Phase 180.1 DONE.
-> - **TD-HARDCODE-04** — Hardcoded `$` currency symbol in `profile-billing.tsx` (Phase 180.4). SPEC.md requires `getEffectiveCurrencySymbol()`.
-> - **TD-ENV-01** — 4 `as string` + 4 `!` casts on `process.env` values (Phase 143).
+> - **TD-MEDIA-01** — 🟡 ACCEPTED LIMITATION. Media gen (image 30–90s, audio 15–60s) may approach Vercel Hobby 60s timeout. Phase 181 proactive timeout handles gracefully. Video removed.
+> - **TD-VIDEO-02** — ✅ DONE (Phase 186-A). ALL video generation removed from codebase. 58 files modified/deleted. All validation gates GREEN.
+> - **TD-TOKEN-01** — ✅ DONE (Phase 186-B). Token limits increased to near-maximum model capacity. All 9 chat tiers updated.
+> - **TD-ADMIN-ERR** — 🔴 Missing admin route error boundary (`src/app/(admin)/error.tsx`). Admin loses navigation on render error.
+> - **TD-WEBHOOK-ORDER** — 🟡 Clerk `user.deleted` webhook deletes User before cascade. If cascade fails, orphaned data can't retry.
+> - **TD-AUDIO-RECOVERY** — 🟡 Audio player error is permanent. No retry path after transient failure.
+> - **TD-HARDCODE-02** — ~8 hardcoded marketing strings across 4 components (Phase 180.2–180.3). Phase 180.1 DONE.
+> - **TD-HARDCODE-04** — Hardcoded `$` currency symbol in `profile-billing.tsx` (Phase 180.4).
+> - **TD-ENV-01** — 7 unsafe `process.env` casts: 4 `as string` + 3 `!` (Phase 143).
 
 ---
 
@@ -507,9 +510,8 @@ Central resolver: `resolveModelPolicy()` in `src/lib/utils/ai-model-policy.ts`. 
 | Audio            | Lite    | `gpt-4o-mini-tts`  | _(none)_                       | TTS only (no `audio_in_out`). Monthly quota: 3. Cheapest audio model for budget tier.                                                                          |
 | Audio            | Pro     | `gpt-audio-mini`   | `gpt-4o-mini-tts`              | TTS-only fallback. Do NOT use TTS fallback for `audio_in_out` mode.                                                                                            |
 | Audio            | Premium | `gpt-audio-mini`   | `gpt-4o-mini-tts`              | `gpt-audio-1.5` inaccessible (403) in current OpenAI project � verified live 2026-03-16. Using `gpt-audio-mini` until access restored.                         |
-| Video            | Lite    | `sora-2`           | _(none)_                       | Monthly quota: 1. Budget tier � differentiated by quantity only.                                                                                               |
-| Video            | Pro     | `sora-2`           | _(none)_                       | Monthly quota: 10. Differentiated by quantity only.                                                                                                            |
-| Video            | Premium | `sora-2`           | _(none)_                       | Owner decision (PM audit #84-B): `sora-2` for all plans. `sora-2-pro` removed (Phase 185).                                                                     |
+
+> **Video generation REMOVED from product (PM audit #85, Phase 186-A).** Both `sora-2` and `sora-2-pro` deprecated. All video model rows deleted.
 
 ### 8.3 Task Classes
 
@@ -531,15 +533,17 @@ Each AI request is classified into a task class that affects model selection and
 | Feature | Plan    | Task Class | Max Input Tokens | Max Output Tokens |
 | ------- | ------- | ---------- | ---------------- | ----------------- |
 | Title   | All     | utility    | 1,200            | 20                |
-| Chat    | Lite    | simple     | 8,000            | 600               |
-| Chat    | Lite    | standard   | 12,000           | 900               |
-| Chat    | Lite    | complex    | 14,000           | 1,200             |
-| Chat    | Pro     | simple     | 12,000           | 700               |
-| Chat    | Pro     | standard   | 24,000           | 1,400             |
-| Chat    | Pro     | complex    | 32,000           | 2,000             |
-| Chat    | Premium | simple     | 16,000           | 900               |
-| Chat    | Premium | standard   | 32,000           | 1,800             |
-| Chat    | Premium | complex    | 48,000           | 2,800             |
+| Chat    | Lite    | simple     | 32,000           | 4,096             |
+| Chat    | Lite    | standard   | 64,000           | 8,192             |
+| Chat    | Lite    | complex    | 128,000          | 16,384            |
+| Chat    | Pro     | simple     | 64,000           | 8,192             |
+| Chat    | Pro     | standard   | 128,000          | 16,384            |
+| Chat    | Pro     | complex    | 200,000          | 32,768            |
+| Chat    | Premium | simple     | 128,000          | 16,384            |
+| Chat    | Premium | standard   | 200,000          | 32,768            |
+| Chat    | Premium | complex    | 500,000          | 32,768            |
+
+> **Token limits increased to near-maximum model capacity (PM audit #85, Phase 186-B).** gpt-4o-mini: 128K context / 16,384 output max. gpt-4.1: 1M context / 32,768 output max.
 
 ### 8.5 Downgrade Triggers
 
@@ -832,9 +836,9 @@ All button styles use Lime Green as the accent color in **both** light and dark 
 ## 15. Technical Debt Summary
 
 > Only unresolved items live here. All resolved TDs are archived in `DONE.md`.
-> Last updated: PM audit #85 (2026-04-03).
+> Last updated: PM audit #86 (2026-04-03).
 
-### Resolved This Session (PM audit #85)
+### Resolved This Session (PM audit #86)
 
 | ID             | Area    | Description                                                                 | Phase | Status                                                                               |
 | -------------- | ------- | --------------------------------------------------------------------------- | ----- | ------------------------------------------------------------------------------------ |
@@ -844,27 +848,26 @@ All button styles use Lime Green as the accent color in **both** light and dark 
 | TD-LOGIN-01    | Auth    | Facebook login "Feature Unavailable."                                       | 184   | ✅ CLOSED. Facebook login removed from product (owner decision).                     |
 | TD-VIDEO-01    | AI      | Remove `sora-2-pro` from codebase.                                          | 185   | ✅ DONE. `sora-2` for all plans.                                                     |
 | TD-HARDCODE-03 | Content | Hardcoded persona IDs in `persona-spotlight.tsx`.                           | 180.1 | ✅ DONE. Admin-configurable featured persona IDs.                                    |
+| TD-VIDEO-02    | AI      | Remove ALL video generation from app entirely.                              | 186-A | ✅ DONE. 58 files modified/deleted. All gates GREEN.                                 |
+| TD-TOKEN-01    | AI      | Increase token limits to maximum possible.                                  | 186-B | ✅ DONE. All 9 chat tiers updated to near-max model capacity.                        |
 
-### Active — CRITICAL (Owner Directive)
+### Active — HIGH Priority (V1.0 Pre-Release)
 
-| ID          | Area | Description                                                                                                                       | Phase |
-| ----------- | ---- | --------------------------------------------------------------------------------------------------------------------------------- | ----- |
-| TD-VIDEO-02 | AI   | **🔴 CRITICAL (PM audit #85, owner directive).** Remove ALL video generation from app. Both `sora-2` and `sora-2-pro` deprecated. | 186-A |
-| TD-TOKEN-01 | AI   | **🔴 CRITICAL (PM audit #85, owner directive).** Increase token limits to maximum possible.                                       | 186-B |
-
-### Active — HIGH Priority
-
-| ID             | Area    | Description                                                                                                                                                     | Phase   |
-| -------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
-| TD-MEDIA-01    | Arch    | **ACCEPTED (PM audit #84-B).** Media gen (image/audio) may approach Vercel Hobby 60s timeout. Phase 181 proactive timeout handles gracefully. Video removed.    | —       |
-| TD-HARDCODE-02 | Content | **HIGH (PM audit #83, owner escalated).** ~8 hardcoded marketing strings across `chat-intro.tsx`, `chat-input.tsx`, `plans-section.tsx`, etc. Phase 180.1 DONE. | 180.2-4 |
-| TD-HARDCODE-04 | Content | **HIGH (PM audit #83).** Hardcoded `$` currency symbol in `profile-billing.tsx`. SPEC requires `getEffectiveCurrencySymbol()`.                                  | 180.4   |
+| ID                | Area    | Description                                                                                                                                                     | Phase   |
+| ----------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| TD-ADMIN-ERR      | UX      | **HIGH (PM audit #86).** Missing admin route error boundary (`src/app/(admin)/error.tsx`). Admin loses sidebar navigation on render error.                      | 187-A   |
+| TD-WEBHOOK-ORDER  | Webhook | **HIGH (PM audit #86).** Clerk `user.deleted` webhook deletes User before cascade. If cascade fails mid-way, orphaned data can't retry. Should cascade first.   | 187-B   |
+| TD-AUDIO-RECOVERY | UX      | **HIGH (PM audit #86).** Audio player error is permanent — `audioError` never cleared. No retry path after transient `play()` failure.                          | 187-C   |
+| TD-ENV-01         | Code    | **HIGH (PM audit #86, escalated).** 7 unsafe `process.env` casts (4 `as string` + 3 `!`). Missing env vars produce cryptic runtime crashes.                     | 143     |
+| TD-HARDCODE-02    | Content | **HIGH (PM audit #83, owner escalated).** ~8 hardcoded marketing strings across `chat-intro.tsx`, `chat-input.tsx`, `plans-section.tsx`, etc. Phase 180.1 DONE. | 180.2-3 |
+| TD-HARDCODE-04    | Content | **HIGH (PM audit #83).** Hardcoded `$` currency symbol in `profile-billing.tsx`. SPEC requires `getEffectiveCurrencySymbol()`.                                  | 180.4   |
 
 ### Active — MEDIUM Priority
 
-| ID        | Area | Description                                                                                                                   | Phase |
-| --------- | ---- | ----------------------------------------------------------------------------------------------------------------------------- | ----- |
-| TD-ENV-01 | Code | 4 `as string` + 4 `!` casts on `process.env` values. Missing env vars produce cryptic runtime errors instead of failing fast. | 143   |
+| ID              | Area | Description                                                                                                                                   | Phase |
+| --------------- | ---- | --------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| TD-MEDIA-01     | Arch | **ACCEPTED (PM audit #84-B).** Media gen (image/audio) may approach Vercel Hobby 60s timeout. Phase 181 proactive timeout handles gracefully. | —     |
+| TD-RATE-CLEANUP | Data | **MEDIUM (PM audit #86).** `download:${userId}` rate-limit keys not cleaned in `deleteUserCascade`.                                           | 187-D |
 
 ### Active — Low Priority
 

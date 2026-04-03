@@ -56,7 +56,7 @@ All seven gates must pass.
 7. **Central policy — no scattered plan logic** — plan limits, model selection, and entitlements must be resolved through central utilities (`resolve-entitlements.tsx`, `ai-model-policy.ts`, `PLAN_LIMITS`). Never hardcode plan rules in UI components, routes, or action files.
 8. **Admin audit trail** — every admin mutation must log to `AdminAuditLog` model.
 9. **Code reuse** — extract repetitive patterns into shared utilities, components, or constants. Do not duplicate logic across admin/client/public surfaces. If a pattern appears 3+ times, extract it.
-10. **API route timeouts** — all API routes that call external services (OpenAI, Stripe, AWS) must export `maxDuration` with an appropriate value. Default serverless timeouts (10-60s) are insufficient for media generation (up to 180s) and webhook processing.
+10. **API route timeouts** — all API routes that call external services (OpenAI, Stripe, AWS) must export `maxDuration` with an appropriate value. Vercel Hobby limits `maxDuration` to 60s. Image gen (15–30s) and audio gen (10–20s) should fit within 60s. Proactive timeout (Phase 181) handles edge cases gracefully.
 11. **No hardcoded display text** — all user-facing marketing/promo text must flow from admin-configurable settings via `effective-*` resolver pattern. CSS class names and route paths are structural (exempt). Plan enum values (`Lite`/`Pro`/`Premium`) used as type literals are structural (exempt).
 
 ## Route Boundaries

@@ -2,7 +2,51 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-04-03 — PM audit #85.
+> Last updated: 2026-04-03 — PM audit #86.
+
+---
+
+## Phase 186-B — Increase Token Limits to Maximum — COMPLETED (2026-04-03)
+
+> Engineer delivered (PM audit #86). Owner directive: increase all token limits to maximum possible. All 9 chat tiers updated to near-maximum model capacity.
+
+- [x] Lite simple: 8K/600 → 32K/4,096
+- [x] Lite standard: 12K/900 → 64K/8,192
+- [x] Lite complex: 14K/1,200 → 128K/16,384
+- [x] Pro simple: 12K/700 → 64K/8,192
+- [x] Pro standard: 24K/1,400 → 128K/16,384
+- [x] Pro complex: 32K/2,000 → 200K/32,768
+- [x] Premium simple: 16K/900 → 128K/16,384
+- [x] Premium standard: 32K/1,800 → 200K/32,768
+- [x] Premium complex: 48K/2,800 → 500K/32,768
+- [x] Title generation unchanged (1,200/20)
+- [x] Tests updated to match new limits
+- [x] Full 7-gate validation green (594 tests)
+
+---
+
+## Phase 186-A — Remove ALL Video Generation — COMPLETED (2026-04-03)
+
+> Engineer delivered (PM audit #86). Owner directive: both `sora-2` and `sora-2-pro` deprecated. Complete removal of video generation feature from entire codebase.
+
+**Deleted files:**
+
+- `src/lib/utils/openai/generateVideo.tsx`
+- `src/components/shared/video-player.tsx`
+- `tests/unit/utils/generate-video.test.tsx`
+
+**Modified (~55 files):** All video code paths removed from backend (generateResponse, openai route, ai-model-policy, resolve-entitlements), types (index, PlanData, TaskData, AdminData), models (user, tasks), frontend (chat-body, library-tabs, library page, profile-usage, profile page), admin (settings models/limits sections, normalize, users table, user detail, settings page, admin actions, admin queries), utilities (effective-model-config, effective-plan-config, filterAssistantMsg, task-queries, validation-schemas), actions (user, task, admin), webhooks (stripe), constants (openai, plans, stop-reasons, admin-options, persona-prompts, assistant-personas), public (about page), config (vitest.config.mts), and 27 test files.
+
+**Backward compatibility:** `"video_limit_reached"` retained in `tasks.model.tsx` `endedReason` enum with deprecation comment. Orphaned MongoDB `video_url` fields and S3 MP4 files safe (ignored on read).
+
+- [x] Zero `sora` references in `src/`
+- [x] Zero `video_generation` references in `src/`
+- [x] Zero `VideoPlayer` references in `src/`
+- [x] Library shows 4 tabs (Chats, Images, Audios, Uploaded) — no Videos tab
+- [x] Profile usage shows Image + Audio only — no Video bar
+- [x] Admin settings — no video model selector, no video limits
+- [x] Playwright browser verification passed
+- [x] Full 7-gate validation green (594 tests, lint 0/0, TSC clean, build passes, knip 0)
 
 ---
 
