@@ -21,7 +21,7 @@ export default async function AdminTransactionDetailPage({
   }
 
   return (
-    <section className="AdminTransactionDetailPage mx-auto flex w-full max-w-5xl flex-col gap-6">
+    <section className="AdminTransactionDetailPage mx-auto flex w-full max-w-7xl flex-col gap-6">
       <PageHead
         title="Transaction Detail"
         subtitle="View billing metadata, effective dates, and the associated user account."

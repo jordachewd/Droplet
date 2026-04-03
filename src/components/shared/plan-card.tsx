@@ -27,45 +27,43 @@ export default function PlanCard({
   });
 
   const { isCurrent, isPopular } = planStatus as PlanStatus;
+
   const accentStyles = isCurrent
-    ? "bg-lavenderHaze-600 text-twilightPurple-1000/60"
+    ? "bg-dustyBlue-200 text-midnightBlue-500/50"
     : isPopular
       ? "bg-twilightPurple-500 text-white"
-      : "bg-lavenderHaze-500 text-midnightBlue-500";
+      : "bg-lavenderHaze-500 text-twilightPurple-500";
 
   const titleStyles = isPopular
     ? "text-white"
     : isCurrent
-      ? "text-twilightPurple-1000/60"
-      : "text-midnightBlue-500";
+      ? "text-midnightBlue-500/50"
+      : "text-twilightPurple-500";
 
-  console.warn("PlanCard / Plan:", plan.name,  plan.inclusions);
+  const cardStyles = classNames(
+    "PlanCard relative flex w-full flex-col gap-10 overflow-hidden rounded-lg px-10 py-14 shadow-xl align-top",
+    accentStyles,
+  );
+
+  const badgeStyles = classNames(
+    "PlanCardBadge absolute -left-8 top-3.5 flex -rotate-45 p-1.5 text-2xs",
+    "font-bold uppercase leading-none tracking-widest shadow-sm px-8",
+    isCurrent && "bg-dustyBlue-500 text-lavenderHaze-200",
+    isPopular && "bg-limeGreen-500 text-midnightBlue-600",
+  );
+
+  const planIconStyles = classNames(plan.icon, "text-7xl pb-12");
 
   return (
-    <div
-      className={classNames(
-        "PlanCard relative flex w-full flex-col gap-10 overflow-hidden rounded-lg px-10 py-14 shadow-xl align-top",
-        accentStyles,
-      )}
-    >
+    <div className={cardStyles}>
       {(isPopular || isCurrent) && (
-        <div
-          className={classNames(
-            "PlanCardBadge absolute -left-8 top-3.5 flex -rotate-45 p-1.5 text-2xs",
-            "font-bold uppercase leading-none tracking-widest shadow-md px-8",
-            isCurrent && "bg-lavenderHaze-500 text-midnightBlue-600",
-            isPopular && "bg-limeGreen-500 text-midnightBlue-600",
-          )}
-        >
+        <div className={badgeStyles}>
           {isCurrent ? "Current" : popularBadgeLabel}
         </div>
       )}
 
       <div className="PlanCardHead flex flex-col items-center justify-between">
-        <i
-          className={classNames(plan.icon, "text-7xl pb-10")}
-          aria-hidden="true"
-        ></i>
+        <i className={planIconStyles} aria-hidden="true"></i>
 
         <div className="flex w-full items-center justify-between">
           <h2 className={classNames("heading-4", titleStyles)}>{plan.name}</h2>

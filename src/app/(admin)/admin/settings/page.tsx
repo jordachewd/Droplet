@@ -156,7 +156,7 @@ export default async function AdminSettingsPage() {
   }));
 
   return (
-    <section className="AdminSettingsPage mx-auto flex w-full max-w-6xl flex-col gap-6">
+    <section className="AdminSettingsPage mx-auto flex w-full max-w-7xl flex-col gap-6">
       <PageHead
         title="Settings"
         subtitle="Persist mutable operational settings for models, pricing, limits, persona content/access, and default theme."

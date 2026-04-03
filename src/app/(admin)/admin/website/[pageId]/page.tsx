@@ -21,7 +21,7 @@ export default async function AdminWebsiteEditorPage({
   }
 
   return (
-    <section className="AdminWebsiteEditorPage mx-auto flex w-full max-w-6xl flex-col gap-6">
+    <section className="AdminWebsiteEditorPage mx-auto flex w-full max-w-7xl flex-col gap-6">
       <PageHead
         title={`Edit ${page.title}`}
         subtitle="Update page copy and rich content, then persist the latest HTML output."
