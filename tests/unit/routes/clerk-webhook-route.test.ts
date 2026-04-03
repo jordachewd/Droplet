@@ -476,14 +476,23 @@ describe("POST /api/webhooks/clerk", () => {
 
     expect(response.status).toBe(200);
     expect(connectToDatabase).toHaveBeenCalledOnce();
-    expect(User.findOne).toHaveBeenCalledWith({ clerkId: "clerk_user_1" });
-    expect(User.findByIdAndDelete).toHaveBeenCalledWith("mongo_user_1");
+    expect(User.findOne).toHaveBeenCalledWith(
+      { clerkId: "clerk_user_1" },
+      "_id",
+      { lean: true },
+    );
     expect(deleteUserCascade).toHaveBeenCalledWith(
       "clerk_user_1",
       expect.objectContaining({
         onStepError: expect.any(Function),
       }),
     );
+    expect(User.findByIdAndDelete).toHaveBeenCalledWith("mongo_user_1");
+    const cascadeCallOrder =
+      vi.mocked(deleteUserCascade).mock.invocationCallOrder[0];
+    const deleteUserCallOrder = vi.mocked(User.findByIdAndDelete).mock
+      .invocationCallOrder[0];
+    expect(cascadeCallOrder).toBeLessThan(deleteUserCallOrder);
     expect(payload).toEqual({ message: "OK" });
     expect(stderrWriteMock).toHaveBeenCalledWith(
       "[clerk-webhook] user.deleted cleanup counts user=1 transactions=3 tasks=8 usageEvents=11 rateLimitEntries=4 uploads=6 s3Objects=5\n",

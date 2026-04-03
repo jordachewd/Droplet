@@ -2,21 +2,23 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-04-03 (PM audit #86). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. **DEPLOYED TO PRODUCTION.** Brand rename complete (Phase 172). Catch blocks documented (Phase 167.2). Promo text admin-configurable (Phase 162). Global error boundary live (Phase 163). Phases 173–178, 181–186 COMPLETE. E2E: 49 tests (8 spec files). Coverage: 85/80/85/85. 594 tests. Build passing. Node.js 24.12.0.
+> Last updated: 2026-04-03 (PM audit #87). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. **DEPLOYED TO PRODUCTION.** Brand rename complete (Phase 172). Catch blocks documented (Phase 167.2). Promo text admin-configurable (Phase 162, 180.2–180.3). Global error boundary live (Phase 163). Admin error boundary live (Phase 187-A). Phases 173–178, 180.1–180.4, 181–187 COMPLETE. E2E: 49 tests (8 spec files). Coverage: 85/80/85/85. 599 tests. Build passing. Node.js 24.12.0.
 >
-> **Active Issues (PM audit #86 — v1.0 pre-release):**
+> **V1.0 MVP Release Status (PM audit #87):**
 >
-> - **TD-STREAM-05** — ✅ PRODUCTION-CONFIRMED (Phase 181). Proactive timeout fires correctly in production.
-> - **TD-PAYMENT-02** — ✅ RESOLVED (Phase 183). Root cause: Stripe webhook was **disabled**. Owner re-enabled. Vercel logs confirm HTTP 200 + plan update success.
-> - **TD-MEDIA-01** — 🟡 ACCEPTED LIMITATION. Media gen (image 30–90s, audio 15–60s) may approach Vercel Hobby 60s timeout. Phase 181 proactive timeout handles gracefully. Video removed.
-> - **TD-VIDEO-02** — ✅ DONE (Phase 186-A). ALL video generation removed from codebase. 58 files modified/deleted. All validation gates GREEN.
-> - **TD-TOKEN-01** — ✅ DONE (Phase 186-B). Token limits increased to near-maximum model capacity. All 9 chat tiers updated.
-> - **TD-ADMIN-ERR** — 🔴 Missing admin route error boundary (`src/app/(admin)/error.tsx`). Admin loses navigation on render error.
-> - **TD-WEBHOOK-ORDER** — 🟡 Clerk `user.deleted` webhook deletes User before cascade. If cascade fails, orphaned data can't retry.
-> - **TD-AUDIO-RECOVERY** — 🟡 Audio player error is permanent. No retry path after transient failure.
-> - **TD-HARDCODE-02** — ~8 hardcoded marketing strings across 4 components (Phase 180.2–180.3). Phase 180.1 DONE.
-> - **TD-HARDCODE-04** — Hardcoded `$` currency symbol in `profile-billing.tsx` (Phase 180.4).
-> - **TD-ENV-01** — 7 unsafe `process.env` casts: 4 `as string` + 3 `!` (Phase 143).
+> - ✅ All v1.0 pre-release fixes DONE (Phases 187-A through 187-D, 143, 180.2–180.4).
+> - ✅ All owner directives DONE (186-A, 186-B, pre-release task list).
+> - ✅ All validation gates GREEN (599 tests, lint 0/0, TSC clean, build passes, knip 0).
+> - ✅ Playwright browser verification passed on all surfaces.
+>
+> **Remaining Issues (non-blocking):**
+>
+> - **TD-MEDIA-01** — 🟡 ACCEPTED LIMITATION. Media gen (image/audio) may approach Vercel Hobby 60s timeout. Phase 181 proactive timeout handles gracefully.
+> - **TD-AI-09** — Image/audio prompts not persona-aware (deferred to v1.1).
+> - **TD-AI-13** — 3 model pricing placeholders (awaiting OpenAI confirmation).
+> - **TD-PLAN-01** — No recurring subscriptions (deferred to v2).
+> - **TD-AI-18** — Advisory: errorMessage forwarding pattern is safe but fragile.
+> - **TD-API-09** — Monitor: `.strict()` in messageTextContentSchema.
 
 ---
 
@@ -836,38 +838,33 @@ All button styles use Lime Green as the accent color in **both** light and dark 
 ## 15. Technical Debt Summary
 
 > Only unresolved items live here. All resolved TDs are archived in `DONE.md`.
-> Last updated: PM audit #86 (2026-04-03).
+> Last updated: PM audit #87 (2026-04-03).
 
-### Resolved This Session (PM audit #86)
+### Resolved This Session (PM audit #87)
 
-| ID             | Area    | Description                                                                 | Phase | Status                                                                               |
-| -------------- | ------- | --------------------------------------------------------------------------- | ----- | ------------------------------------------------------------------------------------ |
-| TD-STREAM-05   | SSE     | Stream proactive timeout miscalculated — fired after Vercel's 60s kill.     | 181   | ✅ PRODUCTION-CONFIRMED. Proactive timeout fires correctly.                          |
-| TD-A11Y-01     | A11y    | Fake download icon in `profile-billing.tsx` — styled clickable, no handler. | 178   | ✅ RESOLVED. Icon removed.                                                           |
-| TD-PAYMENT-02  | Billing | Stripe webhook — payment processed but no Transaction/plan update.          | 183   | ✅ RESOLVED. Root cause: webhook disabled in Stripe. Re-enabled, HTTP 200 confirmed. |
-| TD-LOGIN-01    | Auth    | Facebook login "Feature Unavailable."                                       | 184   | ✅ CLOSED. Facebook login removed from product (owner decision).                     |
-| TD-VIDEO-01    | AI      | Remove `sora-2-pro` from codebase.                                          | 185   | ✅ DONE. `sora-2` for all plans.                                                     |
-| TD-HARDCODE-03 | Content | Hardcoded persona IDs in `persona-spotlight.tsx`.                           | 180.1 | ✅ DONE. Admin-configurable featured persona IDs.                                    |
-| TD-VIDEO-02    | AI      | Remove ALL video generation from app entirely.                              | 186-A | ✅ DONE. 58 files modified/deleted. All gates GREEN.                                 |
-| TD-TOKEN-01    | AI      | Increase token limits to maximum possible.                                  | 186-B | ✅ DONE. All 9 chat tiers updated to near-max model capacity.                        |
+| ID                | Area    | Description                                                                 | Phase   | Status                                                                               |
+| ----------------- | ------- | --------------------------------------------------------------------------- | ------- | ------------------------------------------------------------------------------------ |
+| TD-STREAM-05      | SSE     | Stream proactive timeout miscalculated — fired after Vercel's 60s kill.     | 181     | ✅ PRODUCTION-CONFIRMED. Proactive timeout fires correctly.                          |
+| TD-A11Y-01        | A11y    | Fake download icon in `profile-billing.tsx` — styled clickable, no handler. | 178     | ✅ RESOLVED. Icon removed.                                                           |
+| TD-PAYMENT-02     | Billing | Stripe webhook — payment processed but no Transaction/plan update.          | 183     | ✅ RESOLVED. Root cause: webhook disabled in Stripe. Re-enabled, HTTP 200 confirmed. |
+| TD-LOGIN-01       | Auth    | Facebook login "Feature Unavailable."                                       | 184     | ✅ CLOSED. Facebook login removed from product (owner decision).                     |
+| TD-VIDEO-01       | AI      | Remove `sora-2-pro` from codebase.                                          | 185     | ✅ DONE. `sora-2` for all plans.                                                     |
+| TD-HARDCODE-03    | Content | Hardcoded persona IDs in `persona-spotlight.tsx`.                           | 180.1   | ✅ DONE. Admin-configurable featured persona IDs.                                    |
+| TD-VIDEO-02       | AI      | Remove ALL video generation from app entirely.                              | 186-A   | ✅ DONE. 58 files modified/deleted. All gates GREEN.                                 |
+| TD-TOKEN-01       | AI      | Increase token limits to maximum possible.                                  | 186-B   | ✅ DONE. All 9 chat tiers updated to near-max model capacity.                        |
+| TD-ADMIN-ERR      | UX      | Missing admin error boundary.                                               | 187-A   | ✅ DONE. `(admin)/error.tsx` created.                                                |
+| TD-WEBHOOK-ORDER  | Webhook | Clerk `user.deleted` cascade before delete.                                 | 187-B   | ✅ DONE. Cascade now runs before user deletion.                                      |
+| TD-AUDIO-RECOVERY | UX      | Audio player permanent error state.                                         | 187-C   | ✅ DONE. `audioError` cleared before retry.                                          |
+| TD-ENV-01         | Code    | 7 unsafe `process.env` casts.                                               | 143     | ✅ DONE. `requireEnv()` utility, zero unsafe casts remain.                           |
+| TD-HARDCODE-02    | Content | ~8 hardcoded marketing strings.                                             | 180.2-3 | ✅ DONE. Promo content admin-configurable via `effective-promo-content.ts`.          |
+| TD-HARDCODE-04    | Content | Hardcoded `$` currency symbol.                                              | 180.4   | ✅ DONE. Currency via `getEffectiveCurrencySymbol()` prop.                           |
+| TD-RATE-CLEANUP   | Data    | `download:` rate-limit keys not cleaned.                                    | 187-D   | ✅ DONE. Key added to `getRateLimitKeys()`.                                          |
 
-### Active — HIGH Priority (V1.0 Pre-Release)
+### Active — MEDIUM Priority (Non-Blocking)
 
-| ID                | Area    | Description                                                                                                                                                     | Phase   |
-| ----------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
-| TD-ADMIN-ERR      | UX      | **HIGH (PM audit #86).** Missing admin route error boundary (`src/app/(admin)/error.tsx`). Admin loses sidebar navigation on render error.                      | 187-A   |
-| TD-WEBHOOK-ORDER  | Webhook | **HIGH (PM audit #86).** Clerk `user.deleted` webhook deletes User before cascade. If cascade fails mid-way, orphaned data can't retry. Should cascade first.   | 187-B   |
-| TD-AUDIO-RECOVERY | UX      | **HIGH (PM audit #86).** Audio player error is permanent — `audioError` never cleared. No retry path after transient `play()` failure.                          | 187-C   |
-| TD-ENV-01         | Code    | **HIGH (PM audit #86, escalated).** 7 unsafe `process.env` casts (4 `as string` + 3 `!`). Missing env vars produce cryptic runtime crashes.                     | 143     |
-| TD-HARDCODE-02    | Content | **HIGH (PM audit #83, owner escalated).** ~8 hardcoded marketing strings across `chat-intro.tsx`, `chat-input.tsx`, `plans-section.tsx`, etc. Phase 180.1 DONE. | 180.2-3 |
-| TD-HARDCODE-04    | Content | **HIGH (PM audit #83).** Hardcoded `$` currency symbol in `profile-billing.tsx`. SPEC requires `getEffectiveCurrencySymbol()`.                                  | 180.4   |
-
-### Active — MEDIUM Priority
-
-| ID              | Area | Description                                                                                                                                   | Phase |
-| --------------- | ---- | --------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
-| TD-MEDIA-01     | Arch | **ACCEPTED (PM audit #84-B).** Media gen (image/audio) may approach Vercel Hobby 60s timeout. Phase 181 proactive timeout handles gracefully. | —     |
-| TD-RATE-CLEANUP | Data | **MEDIUM (PM audit #86).** `download:${userId}` rate-limit keys not cleaned in `deleteUserCascade`.                                           | 187-D |
+| ID          | Area | Description                                                                                                                                   | Phase |
+| ----------- | ---- | --------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| TD-MEDIA-01 | Arch | **ACCEPTED (PM audit #84-B).** Media gen (image/audio) may approach Vercel Hobby 60s timeout. Phase 181 proactive timeout handles gracefully. | —     |
 
 ### Active — Low Priority
 

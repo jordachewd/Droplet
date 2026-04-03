@@ -79,7 +79,12 @@ describe("deleteUserCascade", () => {
     });
     expect(RateLimitEntry.deleteMany).toHaveBeenCalledWith({
       key: {
-        $in: ["openai:user_123", "upload:user_123", "aws:user_123"],
+        $in: [
+          "openai:user_123",
+          "upload:user_123",
+          "aws:user_123",
+          "download:user_123",
+        ],
       },
     });
     expect(Upload.deleteMany).toHaveBeenCalledWith({ userId: "user_123" });

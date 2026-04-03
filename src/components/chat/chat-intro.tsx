@@ -7,10 +7,15 @@ import type { Persona } from "@/types/PersonaData.d";
 
 interface ChatIntroProps {
   persona: Persona;
+  subheading?: string;
   sendPrompt: (prompt: string) => void;
 }
 
-export default function ChatIntro({ persona, sendPrompt }: ChatIntroProps) {
+export default function ChatIntro({
+  persona,
+  subheading = "welcome to your chat dashboard.",
+  sendPrompt,
+}: ChatIntroProps) {
   const { user, isLoaded } = useUser();
 
   const introWrapperClass = classNames(
@@ -40,7 +45,7 @@ export default function ChatIntro({ persona, sendPrompt }: ChatIntroProps) {
     <div className={introWrapperClass}>
       <div className="ChatIntroHead flex flex-col gap-2 justify-center items-center">
         <h1 className="heading-2">Hello {user?.firstName || "there"},</h1>
-        <h2 className="heading-5">welcome to your chat dashboard.</h2>
+        <h2 className="heading-5">{subheading}</h2>
         <p className="body-2">
           Active persona: <strong>{persona.label}</strong> - {persona.tagline}
         </p>

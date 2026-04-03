@@ -85,6 +85,13 @@ describe("Plans section", () => {
     expect(subscribeLink.getAttribute("href")).toBe("/sign-up");
   });
 
+  it("renders a custom subscribe CTA label when provided", () => {
+    render(<Plans plansData={plansData} subscribeCtaLabel="Upgrade Today" />);
+
+    const subscribeLink = screen.getByRole("link", { name: "Upgrade Today" });
+    expect(subscribeLink.getAttribute("href")).toBe("/sign-up");
+  });
+
   it("hides subscribe CTA for signed-in users", () => {
     vi.mocked(useUser).mockReturnValue({
       isLoaded: true,

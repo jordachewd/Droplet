@@ -8,6 +8,7 @@ import AccountLoadErrorState from "@/components/shared/account-load-error-state"
 import { getAllTransactions } from "@/lib/actions/transaction.action";
 import { ensureUserSynced } from "@/lib/utils/ensure-user-synced";
 import {
+  getEffectiveCurrencySymbol,
   getEffectivePlanConfig,
   getEffectiveSupportEmail,
 } from "@/lib/utils/effective-plan-config";
@@ -21,11 +22,13 @@ export default async function AppProfilePage() {
   const userData = userId ? await ensureUserSynced(userId) : null;
   let userTxns: Transaction[] | null = null;
 
-  const [effectivePlanConfig, supportEmail, promoContent] = await Promise.all([
-    getEffectivePlanConfig(),
-    getEffectiveSupportEmail(),
-    getEffectivePromoContent(),
-  ]);
+  const [effectivePlanConfig, supportEmail, promoContent, currencySymbol] =
+    await Promise.all([
+      getEffectivePlanConfig(),
+      getEffectiveSupportEmail(),
+      getEffectivePromoContent(),
+      getEffectiveCurrencySymbol(),
+    ]);
 
   if (userData?.plan) {
     userTxns = (await getAllTransactions(userId!)) || null;
@@ -63,7 +66,11 @@ export default async function AppProfilePage() {
         dailyConversationsUsed={dailyConversationsUsed}
         usagePeriodStart={usagePeriodStart}
       />
-      <ProfileBilling stripeId={stripeId} userTxns={userTxns} />
+      <ProfileBilling
+        stripeId={stripeId}
+        userTxns={userTxns}
+        currencySymbol={currencySymbol}
+      />
       <ProfileDangerZone userData={userData} />
     </ChatPageWrapper>
   ) : (

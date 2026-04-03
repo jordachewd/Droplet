@@ -288,6 +288,60 @@ export function AdminPromoContentSection({
         </label>
       </div>
 
+      <h3 className="heading-6 text-base">Chat Intro And Plans Labels</h3>
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="font-medium">Chat Intro Subheading</span>
+          <input
+            type="text"
+            name="chatIntroSubheading"
+            defaultValue={promoContentValue.chatIntroSubheading}
+            required
+            aria-required="true"
+            className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+          />
+        </label>
+
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="font-medium">Chat Input Placeholder</span>
+          <input
+            type="text"
+            name="chatInputPlaceholder"
+            defaultValue={promoContentValue.chatInputPlaceholder}
+            required
+            aria-required="true"
+            className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+          />
+        </label>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="font-medium">Plans Subscribe CTA</span>
+          <input
+            type="text"
+            name="plansSubscribeCta"
+            defaultValue={promoContentValue.plansSubscribeCta}
+            required
+            aria-required="true"
+            className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+          />
+        </label>
+
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="font-medium">Plan Popular Badge</span>
+          <input
+            type="text"
+            name="planPopularBadge"
+            defaultValue={promoContentValue.planPopularBadge}
+            required
+            aria-required="true"
+            className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+          />
+        </label>
+      </div>
+
       <div className="flex justify-end">
         <AdminFormSubmitButton
           label="Save Promo Content"

@@ -59,6 +59,21 @@ describe("ChatInput", () => {
     expect((input as HTMLInputElement).value).toBe("Preset message");
   });
 
+  it("renders a custom placeholder when provided", () => {
+    const onSend = vi.fn();
+    render(
+      <ChatInput
+        loading={false}
+        placeholder="Type your strategy prompt..."
+        sendMessage={onSend}
+      />,
+    );
+
+    expect(
+      screen.getByPlaceholderText("Type your strategy prompt..."),
+    ).toBeTruthy();
+  });
+
   it("sends a user message when Enter is pressed", async () => {
     const onSend = vi.fn();
     render(<ChatInput loading={false} sendMessage={onSend} />);

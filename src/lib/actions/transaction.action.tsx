@@ -13,6 +13,7 @@ import { auth } from "@clerk/nextjs/server";
 import { nonEmptyStringSchema } from "@/lib/utils/validation-schemas";
 import { z } from "zod";
 import { getEffectivePlanConfig } from "@/lib/utils/effective-plan-config";
+import { requireEnv } from "@/lib/utils/require-env";
 
 const checkoutPlanSchema = z
   .object({
@@ -49,8 +50,8 @@ export async function checkoutPlan(transaction: CheckoutTransactionParams) {
     );
     if (!currentUser) throw new Error("User not found");
 
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
-    const BASEURL = process.env.NEXT_PUBLIC_API_BASE_URL;
+    const stripe = new Stripe(requireEnv("STRIPE_SECRET_KEY"));
+    const BASEURL = requireEnv("NEXT_PUBLIC_API_BASE_URL");
 
     const {
       id: planId,

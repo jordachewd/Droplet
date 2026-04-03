@@ -492,15 +492,15 @@ export async function POST(req: NextRequest) {
       let deletedRateLimitEntryCount: number | null = null;
       let deletedUploadCount: number | null = null;
       let deletedObjectCount: number | null = null;
+      let userToDelete: {
+        _id: unknown;
+      } | null = null;
 
       try {
-        const userToDelete = await User.findOne({ clerkId });
-        if (userToDelete) {
-          await User.findByIdAndDelete(userToDelete._id);
-          deletedUserCount = 1;
-        } else {
-          deletedUserCount = 0;
-        }
+        userToDelete = await User.findOne({ clerkId }, "_id", {
+          lean: true,
+        });
+        deletedUserCount = userToDelete ? null : 0;
       } catch (error) {
         logUserDeletedCleanupFailure("user", error);
       }
@@ -514,6 +514,16 @@ export async function POST(req: NextRequest) {
       deletedRateLimitEntryCount = cascadeResult.deletedRateLimitEntries;
       deletedUploadCount = cascadeResult.deletedUploads;
       deletedObjectCount = cascadeResult.deletedObjectsCount;
+
+      if (userToDelete) {
+        try {
+          const deletedUser = await User.findByIdAndDelete(userToDelete._id);
+          deletedUserCount = deletedUser ? 1 : 0;
+        } catch (error) {
+          deletedUserCount = null;
+          logUserDeletedCleanupFailure("user", error);
+        }
+      }
 
       logUserDeletedCleanupSummary({
         deletedUserCount,

@@ -8,12 +8,14 @@ interface PlanCardProps {
   plan: Plan;
   userData?: UserData | null;
   currencySymbol?: string;
+  popularBadgeLabel?: string;
 }
 
 export default function PlanCard({
   plan,
   userData,
   currencySymbol = "$",
+  popularBadgeLabel = "Popular",
 }: PlanCardProps) {
   const hasUserData = userData && Object.keys(userData).length > 0;
   const planFee = plan.price;
@@ -55,7 +57,7 @@ export default function PlanCard({
             isPopular && "bg-limeGreen-500 text-midnightBlue-600",
           )}
         >
-          {isCurrent ? "Current" : "Popular"}
+          {isCurrent ? "Current" : popularBadgeLabel}
         </div>
       )}
 

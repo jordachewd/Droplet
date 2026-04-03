@@ -461,6 +461,10 @@ function parseStructuredAdminSettingValue({
       ),
       chatUpgradePlanCta: getStringField(formData, "chatUpgradePlanCta"),
       chatContactSupportCta: getStringField(formData, "chatContactSupportCta"),
+      chatIntroSubheading: getStringField(formData, "chatIntroSubheading"),
+      chatInputPlaceholder: getStringField(formData, "chatInputPlaceholder"),
+      plansSubscribeCta: getStringField(formData, "plansSubscribeCta"),
+      planPopularBadge: getStringField(formData, "planPopularBadge"),
     };
   }
 
@@ -726,6 +730,7 @@ export async function updateAdminSettingAction(
     }
 
     if (key === "admin.promoContent") {
+      revalidatePath("/plans");
       revalidatePath("/app");
       revalidatePath("/app/new");
       revalidatePath("/app/personas");

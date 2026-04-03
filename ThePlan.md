@@ -3,13 +3,13 @@
 > Purpose: one execution document for finishing the SaaS without avoidable rework.
 > Audience: Project Manager, Architect, and Senior Software Agents.
 > Rule: this plan is based on verified repository state. If older docs disagree with code, code wins until this file is updated.
-> Last verified: PM audit #86, 2026-04-03. V1.0 pre-release phase. All video generation removed, token limits maximized. Pre-release bug fix sequence active.
+> Last verified: PM audit #87, 2026-04-03. V1.0 release ready. All v1.0 pre-release phases complete. No critical bugs remaining.
 
 ---
 
 ## 1. Executive Judgment
 
-Droplet is deployed to production with all 25 milestones complete. The TDD testing rebuild is done (99 suites, 594 tests, 8 E2E specs, 85/80/85/85 coverage). WCAG 2.2 AA is complete. Admin configurability (promo text, FAQ, landing, stop reasons, persona content) is done. Global error boundary is done. Brand rename (cellesseon ? droplet) is complete.
+Droplet is deployed to production with all 25 milestones complete. The TDD testing rebuild is done (101 suites, 599 tests, 8 E2E specs, 85/80/85/85 coverage). WCAG 2.2 AA is complete. Admin configurability (promo text, FAQ, landing, stop reasons, persona content) is done. Global error boundary is done. Brand rename (cellesseon ? droplet) is complete.
 
 **Owner investigation results (2026-04-02, PM audit #84-B):**
 
@@ -20,7 +20,7 @@ Droplet is deployed to production with all 25 milestones complete. The TDD testi
 3. **? C3 � Facebook login � CLOSED.** Owner removed Facebook login from product. No longer used.
 
 **Phases completed since last plan update:**
-Phase 178, 181, 182 � DONE. Phase 183 (Stripe) � RESOLVED (webhook was disabled). Phase 184 (Facebook) � CLOSED (removed from product). Phase 185 (sora-2-pro removal) � DONE. Phase 180.1 (homepage text extraction) � DONE. Phase 186-A (video generation removal) � DONE. Phase 186-B (token limits maximized) � DONE.
+Phase 178, 181, 182 � DONE. Phase 183 (Stripe) � RESOLVED (webhook was disabled). Phase 184 (Facebook) � CLOSED (removed from product). Phase 185 (sora-2-pro removal) � DONE. Phase 180.1 (homepage text extraction) � DONE. Phase 186-A (video generation removal) � DONE. Phase 186-B (token limits maximized) � DONE. Phase 187-A (admin error boundary) � DONE. Phase 187-B (Clerk webhook cascade order) � DONE. Phase 187-C (audio player error recovery) � DONE. Phase 187-D (download rate-limit key cleanup) � DONE. Phase 143 (env var runtime validation) � DONE. Phase 180.2 (chat display text extraction) � DONE. Phase 180.3 (plans display text extraction) � DONE. Phase 180.4 (currency symbol compliance) � DONE.
 
 ---
 
@@ -28,7 +28,7 @@ Phase 178, 181, 182 � DONE. Phase 183 (Stripe) � RESOLVED (webhook was disab
 
 > **Milestones 0�25 ALL COMPLETE.** Detailed phase records archived in DONE.md.
 
-Key deliverables: Next.js 16 App Router, Clerk auth + proxy route protection, Stripe checkout + webhooks, MongoDB persistence (Mongoose, strict mode, indexes), 6 personas with three-tier gating, streaming SSE chat, image/audio generation (OpenAI tools + S3 storage), AI model policy resolver, central entitlement resolver, admin control plane (users, transactions, usage, settings, website), 7 public marketing/legal routes, WCAG 2.2 AA compliance, TDD test suite (594 tests), E2E suite (49 tests, 8 specs), brand color palette v2, lime green accent, admin-configurable promo/FAQ/landing/stop-reason/persona content, global error boundary, user deletion cascade, rate limiting, Node.js 24.12.0, all config hardening, video generation removal (Phase 186-A), token limits maximized to near-maximum model capacity (Phase 186-B).
+Key deliverables: Next.js 16 App Router, Clerk auth + proxy route protection, Stripe checkout + webhooks, MongoDB persistence (Mongoose, strict mode, indexes), 6 personas with three-tier gating, streaming SSE chat, image/audio generation (OpenAI tools + S3 storage), AI model policy resolver, central entitlement resolver, admin control plane (users, transactions, usage, settings, website), 7 public marketing/legal routes, WCAG 2.2 AA compliance, TDD test suite (599 tests), E2E suite (49 tests, 8 specs), brand color palette v2, lime green accent, admin-configurable promo/FAQ/landing/stop-reason/persona content, global error boundary, user deletion cascade, rate limiting, Node.js 24.12.0, all config hardening, video generation removal (Phase 186-A), token limits maximized to near-maximum model capacity (Phase 186-B), admin error boundary (Phase 187-A), Clerk webhook cascade fix (Phase 187-B), audio player error recovery (Phase 187-C), env var runtime validation (Phase 143), all display text admin-configurable (Phases 180.2�180.4), download rate-limit cleanup (Phase 187-D).
 
 Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 169), script tag warning (Phase 170), payment webhook schema (Phase 157/161), catch block documentation (Phase 167+167.2), test failures (Phase 171), cellesseon rename (Phase 172), debug text (Phase 173), dead files (Phase 174�175), download 206 (Phase 176), constant dedup (Phase 177), fake download icon (Phase 178), stream timeout budget (Phase 181 � **confirmed working in production**), Stripe diagnostic hardening (Phase 182).
 
@@ -36,7 +36,7 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 
 ## 3. Verified Baseline (Architect Audit #84, 2026-04-02)
 
-### Architecture Status � SOUND (core), TWO ISSUES REQUIRING INVESTIGATION
+### Architecture Status � SOUND. ALL GATES GREEN.
 
 | Area                | Status | Evidence                                                                          |
 | ------------------- | ------ | --------------------------------------------------------------------------------- |
@@ -57,7 +57,7 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 | Knip                | ?      | 0 findings                                                                        |
 | TSC                 | ?      | 0 errors                                                                          |
 | Lint                | ?      | 0 errors, 0 warnings                                                              |
-| Tests               | ?      | 99 suites, 594 tests, all pass                                                    |
+| Tests               | ?      | 101 suites, 599 tests, all pass                                                   |
 | E2E                 | ?      | 8 specs, 49 tests                                                                 |
 
 ### Issues Found by Audit #82�#84 � Updated Status
@@ -70,8 +70,8 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 | H4  | ? RESOLVED  | Fake download icon � removed in Phase 178                          | Icon removed from `profile-billing.tsx`                                               |
 | H6  | HIGH        | Audio player button permanently disabled after transient error     | `audio-player.tsx:171` � not yet addressed                                            |
 | M1  | ? CANCELLED | No video player error state (unlike audio player)                  | CANCELLED � video-player being removed (Phase 186).                                   |
-| M2  | MEDIUM      | ~8 hardcoded display strings across chat/profile components        | Phase 180.2�180.4 � remaining after 180.1 DONE                                        |
-| M3  | MEDIUM      | Hardcoded persona IDs in homepage spotlight                        | Part of Phase 180                                                                     |
+| M2  | ? RESOLVED  | ~8 hardcoded display strings across chat/profile components        | Phases 180.2, 180.3, 180.4 DONE. All strings admin-configurable.                      |
+| M3  | ? RESOLVED  | Hardcoded persona IDs in homepage spotlight                        | Phase 180.1 DONE. Homepage spotlight admin-configurable.                              |
 
 ### Phase 173�184 Completion Status
 
@@ -91,8 +91,16 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 | 186-A | Remove all video generation from codebase      | ? DONE                 | 58 files modified/deleted. All gates GREEN. 594 tests passing.      |
 | 186-B | Increase token limits to near-maximum capacity | ? DONE                 | All 9 chat tiers updated. All gates GREEN.                          |
 | 180.1 | Homepage text extraction                       | ? DONE                 | Public display text extracted to admin config.                      |
+| 180.2 | Chat display text extraction                   | ? DONE                 | Chat display strings extracted to admin config.                     |
+| 180.3 | Plans display text extraction                  | ? DONE                 | Plans display strings extracted to admin config.                    |
+| 180.4 | Currency symbol compliance                     | ? DONE                 | Currency display uses admin-configurable values.                    |
+| 187-A | Add admin error boundary                       | ? DONE                 | Admin error.tsx added for production resilience.                    |
+| 187-B | Fix Clerk webhook cascade order                | ? DONE                 | Cascade deletion order corrected for reliability.                   |
+| 187-C | Fix audio player error recovery                | ? DONE                 | Error recovery implemented, button no longer stuck disabled.        |
+| 187-D | Download rate-limit key cleanup                | ? DONE                 | Rate-limit key cascade cleanup for download routes.                 |
+| 143   | Env var runtime validation                     | ? DONE                 | All unsafe casts replaced with proper validation.                   |
 
-**NOTE:** DONE.md was NOT updated for Phases 173�178, 181�182. Engineer must update DONE.md.
+**NOTE:** DONE.md was NOT updated for Phases 173�178, 181�182, 187-A/B/C/D, 143, 180.2�180.4. Engineer must update DONE.md.
 
 ### Ongoing Constraints
 
@@ -102,34 +110,34 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 
 ---
 
-## 4. SWOT Analysis (Updated 2026-04-03, post PM audit #86)
+## 4. SWOT Analysis (Updated 2026-04-03, post PM audit #87)
 
-**Strengths:** Clean architecture, strong auth, comprehensive tests (594+49), central policy resolvers, WCAG 2.2 AA complete, durable usage counters, thorough user deletion cascade, zero lint/type/knip issues, correct webhook code structure (audit #84 confirmed), Stream timeout fix confirmed working in production (Phase 181), SSE heartbeat + proactive timeout pattern is robust, video generation cleanly removed (Phase 186-A), token limits maximized (Phase 186-B).
+**Strengths:** Clean architecture, strong auth, comprehensive tests (599+49), central policy resolvers, WCAG 2.2 AA complete, durable usage counters, thorough user deletion cascade, zero lint/type/knip issues, correct webhook code structure (audit #84 confirmed), Stream timeout fix confirmed working in production (Phase 181), SSE heartbeat + proactive timeout pattern is robust, video generation cleanly removed (Phase 186-A), token limits maximized (Phase 186-B), admin error boundary (Phase 187-A), env var runtime validation (Phase 143), all display text admin-configurable (Phases 180.1�180.4), audio player error recovery (Phase 187-C).
 
-**Weaknesses:** ~8 hardcoded display strings remain (Phase 180.2�180.4), DONE.md not updated for 10 phases, audio player error recovery (H6), admin missing error boundary (error.tsx).
+**Weaknesses:** DONE.md not updated for multiple phases.
 
 **Opportunities:** Vercel Pro upgrade unlocks media generation ($20/mo), admin config cache (5+ DB hits/request ? 30s TTL), env var validation (8 unsafe casts), checkout success polling (webhook delay safety net), structured SSE error codes.
 
-**Threats:** Hardcoded display text undermines admin configurability promise, single-document growth risk.
+**Threats:** Single-document growth risk.
 
 ---
 
 ## 5. Release Gates
 
-| Gate | Name            | Status | Notes                                                                                                        |
-| ---- | --------------- | ------ | ------------------------------------------------------------------------------------------------------------ |
-| A    | Contract Gate   | GREEN  | Billing, tier limits, Premium extras � all frozen and verified                                               |
-| B    | Architecture    | GREEN  | Phase 181 confirmed. Stripe RESOLVED. Video generation removed from product.                                 |
-| C    | Product Gate    | YELLOW | ~8 hardcoded display strings remain (Phase 180.2�180.4). Video removed. Stripe + Facebook resolved.          |
-| D    | Admin Gate      | YELLOW | Core admin config done. ~8 hardcoded strings remain (Phase 180.2�180.4). Missing error boundary (error.tsx). |
-| E    | Public Gate     | GREEN  | All 7 public routes accurate, legal content real, no obsolete trial messaging                                |
-| F    | Validation Gate | GREEN  | 594 tests, lint 0/0, TSC clean, knip 0, E2E 49 tests, coverage 85/80/85/85                                   |
+| Gate | Name            | Status | Notes                                                                                      |
+| ---- | --------------- | ------ | ------------------------------------------------------------------------------------------ |
+| A    | Contract Gate   | GREEN  | Billing, tier limits, Premium extras � all frozen and verified                             |
+| B    | Architecture    | GREEN  | Phase 181 confirmed. Stripe RESOLVED. Video generation removed from product.               |
+| C    | Product Gate    | GREEN  | All display strings admin-configurable. Video removed. Stripe + Facebook resolved.         |
+| D    | Admin Gate      | GREEN  | Admin config complete. Error boundary added (Phase 187-A). All strings admin-configurable. |
+| E    | Public Gate     | GREEN  | All 7 public routes accurate, legal content real, no obsolete trial messaging              |
+| F    | Validation Gate | GREEN  | 599 tests, lint 0/0, TSC clean, knip 0, E2E 49 tests, coverage 85/80/85/85                 |
 
 ---
 
 ## 6. Current Execution Order
 
-> All 3 critical issues RESOLVED/CLOSED. Phase 185, 186-A, 186-B DONE. **V1.0 pre-release phase active** � fix all crucial bugs/errors for production release (OI24).
+> All 3 critical issues RESOLVED/CLOSED. All v1.0 pre-release phases DONE. **V1.0 MVP is RELEASE READY.** No critical bugs, no HIGH priority items remaining.
 
 ### Confirmed Working
 
@@ -142,39 +150,32 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 - **? Phase 180.1** � Homepage text extraction. DONE.
 - **? Phase 186-A** � Remove all video generation from codebase. DONE (58 files, all gates GREEN).
 - **? Phase 186-B** � Token limits increased to near-maximum model capacity. DONE (all 9 chat tiers).
+- **? Phase 187-A** � Admin error boundary added. DONE.
+- **? Phase 187-B** � Clerk webhook cascade order fixed. DONE.
+- **? Phase 187-C** � Audio player error recovery. DONE.
+- **? Phase 187-D** � Download rate-limit key cleanup. DONE.
+- **? Phase 143** � Env var runtime validation. DONE.
+- **? Phase 180.2** � Chat display text extraction. DONE.
+- **? Phase 180.3** � Plans display text extraction. DONE.
+- **? Phase 180.4** � Currency symbol compliance. DONE.
 
-### Active Code Priority Order � V1.0 Pre-Release
+### Post-Release Backlog
 
-> Owner directive OI24: fix all crucial bugs and errors for v1.0 MVP production release. HIGH.
+> All v1.0 pre-release phases COMPLETE (OI24). Remaining items are post-release improvements.
 
-1. **HIGH Phase 187-A � Add admin error boundary.**
-   Missing `error.tsx` in admin route group. Required for production resilience.
-
-2. **HIGH Phase 187-B � Fix Clerk webhook `user.deleted` cascade order.**
-   Cascade deletion order must be corrected for reliability.
-
-3. **HIGH Phase 187-C � Fix audio player permanent error state.**
-   `audio-player.tsx` � button permanently disabled after transient error (H6).
-
-4. **HIGH Phase 143 � Env var runtime validation.**
-   Replace `as string` / `!` casts with proper validation. Escalated from MEDIUM to HIGH for v1.0.
-
-5. **HIGH Phase 180.4 � Currency symbol compliance.**
-   Plan card `/Mo` suffix and currency display must use admin-configurable values.
-
-6. **MEDIUM Phase 180.2�180.3 � Hardcoded marketing strings.**
-   ~8 remaining hardcoded display strings in chat/profile components.
-
-7. **MEDIUM Phase 187-D � Download rate-limit key cascade cleanup.**
-   Rate-limit key cascade cleanup for download routes.
-
-8. **MEDIUM Phase 144 � Admin config in-memory cache.**
+1. **MEDIUM Phase 144 � Admin config in-memory cache.**
    5+ DB hits/request for admin settings. Add 30s TTL cache.
 
-9. **MEDIUM Phase 165 � Checkout success page DB polling.**
+2. **MEDIUM Phase 145 � Upload filename sanitization.**
+   Sanitize uploaded filenames before S3 storage.
+
+3. **MEDIUM Phase 165 � Checkout success page DB polling.**
    Safety net for webhook delay � poll DB for plan update on success page.
 
-10. **CLEANUP** � Update DONE.md for Phases 173�178, 181�182, 186-A, 186-B.
+4. **LOW Phase 146�148 � Low priority improvements.**
+   Deferred from v1.0.
+
+5. **CLEANUP** � Update DONE.md for all completed phases.
 
 ---
 
@@ -183,7 +184,7 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 | #    | Directive                              | Status                                                                                                                             |
 | ---- | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
 | OI1  | TDD rebuild ALL tests                  | ? COMPLETE. 594 tests, 99 suites.                                                                                                  |
-| OI2  | No hardcoded data � admin-configurable | ?? INCOMPLETE. Core done. ~8 UI strings remain (Phase 180.2�180.4). Owner escalated to HIGH.                                       |
+| OI2  | No hardcoded data � admin-configurable | ? COMPLETE. All display strings extracted to admin config (Phases 180.1�180.4).                                                    |
 | OI3  | Reuse repetitive code                  | ? COMPLETE.                                                                                                                        |
 | OI4  | WCAG 2.2 AA compliance                 | ? COMPLETE.                                                                                                                        |
 | OI5  | Components = data consumers            | ? COMPLETE.                                                                                                                        |
@@ -191,7 +192,7 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 | OI7  | Server-side utilities                  | ? COMPLETE. 50+ server-only guards.                                                                                                |
 | OI8  | User removal cascades                  | ? COMPLETE. Shared `deleteUserCascade()`.                                                                                          |
 | OI9  | Knip clean                             | ? COMPLETE (0 findings).                                                                                                           |
-| OI10 | Admin fully configurable               | ?? INCOMPLETE. Core done. ~8 remaining strings need admin config (Phase 180.2�180.4).                                              |
+| OI10 | Admin fully configurable               | ? COMPLETE. All display strings admin-configurable (Phases 180.1�180.4).                                                           |
 | OI11 | Node.js 24.12.0                        | ? COMPLETE.                                                                                                                        |
 | OI12 | Deep techstack config audit            | ? COMPLETE.                                                                                                                        |
 | OI13 | Profile displays plan limits/usage     | ? COMPLETE.                                                                                                                        |
@@ -205,7 +206,7 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 | OI21 | Fix Facebook login                     | ? CLOSED. Owner removed Facebook login from product entirely.                                                                      |
 | OI22 | Remove all video generation            | ? COMPLETE. Phase 186-A DONE. 58 files modified/deleted. All gates GREEN.                                                          |
 | OI23 | Increase token limits to maximum       | ? COMPLETE. Phase 186-B DONE. All 9 chat tiers updated to near-maximum model capacity.                                             |
-| OI24 | V1.0 MVP pre-release task list         | ?? NEW. Fix all crucial bugs/errors for production release. HIGH. Phase 187-A/B/C/D created.                                       |
+| OI24 | V1.0 MVP pre-release task list         | ? COMPLETE. All 8 pre-release phases DONE (187-A/B/C/D, 143, 180.2/3/4).                                                           |
 
 ---
 

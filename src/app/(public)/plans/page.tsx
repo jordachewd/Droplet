@@ -7,6 +7,7 @@ import {
   getEffectiveSupportEmail,
 } from "@/lib/utils/effective-plan-config";
 import { getEffectivePersonaAccessByPlan } from "@/lib/utils/effective-persona-access";
+import { getEffectivePromoContent } from "@/lib/utils/effective-promo-content";
 import Link from "next/link";
 import PageWrapper from "@/components/layout/page-wrapper";
 import PageHead from "@/components/layout/page-head";
@@ -14,11 +15,12 @@ import PageHead from "@/components/layout/page-head";
 export const dynamic = "force-dynamic";
 
 export default async function PlansPage() {
-  const [effectivePlanConfig, personaAccessByPlan, supportEmail] =
+  const [effectivePlanConfig, personaAccessByPlan, supportEmail, promoContent] =
     await Promise.all([
       getEffectivePlanConfig(),
       getEffectivePersonaAccessByPlan(),
       getEffectiveSupportEmail(),
+      getEffectivePromoContent(),
     ]);
 
   const plans = buildPlans({
@@ -46,6 +48,8 @@ export default async function PlansPage() {
       <Plans
         plansData={plans}
         currencySymbol={effectivePlanConfig.pricing.currencySymbol}
+        subscribeCtaLabel={promoContent.plansSubscribeCta}
+        popularBadgeLabel={promoContent.planPopularBadge}
       />
 
       <Faqs faqsData={faqs} />

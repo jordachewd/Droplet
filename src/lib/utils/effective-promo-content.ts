@@ -110,6 +110,22 @@ function normalizePromoContent(value: unknown): PromoContent {
       value: value.chatContactSupportCta,
       fallback: DEFAULT_PROMO_CONTENT.chatContactSupportCta,
     }),
+    chatIntroSubheading: normalizePromoText({
+      value: value.chatIntroSubheading,
+      fallback: DEFAULT_PROMO_CONTENT.chatIntroSubheading,
+    }),
+    chatInputPlaceholder: normalizePromoText({
+      value: value.chatInputPlaceholder,
+      fallback: DEFAULT_PROMO_CONTENT.chatInputPlaceholder,
+    }),
+    plansSubscribeCta: normalizePromoText({
+      value: value.plansSubscribeCta,
+      fallback: DEFAULT_PROMO_CONTENT.plansSubscribeCta,
+    }),
+    planPopularBadge: normalizePromoText({
+      value: value.planPopularBadge,
+      fallback: DEFAULT_PROMO_CONTENT.planPopularBadge,
+    }),
   };
 }
 
