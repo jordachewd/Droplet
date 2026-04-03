@@ -118,7 +118,7 @@ const ABOUT_CONTENT_DEFAULTS: AboutContent = {
         "Text is the core experience, with media tools layered in where they help.",
       paragraphs: [
         "Droplet supports text conversations first, then extends into media workflows such as image and audio generation when the selected persona and the user's plan allow it.",
-        "Premium is the top-tier plan for the most advanced media workflows, including the plan area reserved for video generation, while Lite and Pro keep the focus on day-to-day chat plus capped media usage.",
+        "Premium is the top-tier plan for the most advanced media workflows, while Lite and Pro keep the focus on day-to-day chat plus capped media usage.",
       ],
     },
     {

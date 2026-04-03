@@ -28,7 +28,6 @@ const ContentItemSchema = new Schema<ContentItem>(
       url: { type: String, default: null },
     },
     audio_url: { type: String },
-    video_url: { type: String },
   },
   { _id: false },
 );
@@ -80,6 +79,7 @@ const TaskSchema = new Schema<ITask>(
         "media_limit_reached",
         "image_limit_reached",
         "audio_limit_reached",
+        // Deprecated: retained for backward compat with existing tasks.
         "video_limit_reached",
         "daily_conversation_limit_reached",
         "conversation_storage_limit_reached",

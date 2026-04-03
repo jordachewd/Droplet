@@ -220,7 +220,6 @@ function parseStructuredAdminSettingValue({
       premiumChatModel: getStringField(formData, "premiumChatModel"),
       imageModel: getStringField(formData, "imageModel"),
       audioModel: getStringField(formData, "audioModel"),
-      videoModel: getStringField(formData, "videoModel"),
     };
   }
 
@@ -256,7 +255,6 @@ function parseStructuredAdminSettingValue({
         ),
         images: getNumericField(formData, "liteImages"),
         audio: getNumericField(formData, "liteAudio"),
-        video: getNumericField(formData, "liteVideo"),
       },
       Pro: {
         conversationsPerDay: getNumericField(
@@ -269,7 +267,6 @@ function parseStructuredAdminSettingValue({
         ),
         images: getNumericField(formData, "proImages"),
         audio: getNumericField(formData, "proAudio"),
-        video: getNumericField(formData, "proVideo"),
       },
       Premium: {
         conversationsPerDay: getNumericField(
@@ -282,7 +279,6 @@ function parseStructuredAdminSettingValue({
         ),
         images: getNumericField(formData, "premiumImages"),
         audio: getNumericField(formData, "premiumAudio"),
-        video: getNumericField(formData, "premiumVideo"),
       },
     };
   }
@@ -292,7 +288,6 @@ function parseStructuredAdminSettingValue({
       promptsPerConversation: getNumericField(formData, "trialPrompts"),
       images: getNumericField(formData, "trialImages"),
       audio: getNumericField(formData, "trialAudio"),
-      video: getNumericField(formData, "trialVideo"),
     };
   }
 

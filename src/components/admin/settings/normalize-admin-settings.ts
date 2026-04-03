@@ -80,10 +80,6 @@ export function normalizeModelSettingsValue(
     typeof value.audioModel === "string"
       ? value.audioModel
       : defaults.audioModel;
-  const videoModel =
-    typeof value.videoModel === "string"
-      ? value.videoModel
-      : defaults.videoModel;
 
   return {
     liteChatModel,
@@ -91,7 +87,6 @@ export function normalizeModelSettingsValue(
     premiumChatModel,
     imageModel,
     audioModel,
-    videoModel,
   };
 }
 
@@ -167,7 +162,6 @@ export function normalizeLimitsSettingsValue(
       ),
       images: readNumericValue(liteValue, "images", defaults.Lite.images),
       audio: readNumericValue(liteValue, "audio", defaults.Lite.audio),
-      video: readNumericValue(liteValue, "video", defaults.Lite.video),
     },
     Pro: {
       conversationsPerDay: readNumericValue(
@@ -182,7 +176,6 @@ export function normalizeLimitsSettingsValue(
       ),
       images: readNumericValue(proValue, "images", defaults.Pro.images),
       audio: readNumericValue(proValue, "audio", defaults.Pro.audio),
-      video: readNumericValue(proValue, "video", defaults.Pro.video),
     },
     Premium: {
       conversationsPerDay: readNumericValue(
@@ -197,7 +190,6 @@ export function normalizeLimitsSettingsValue(
       ),
       images: readNumericValue(premiumValue, "images", defaults.Premium.images),
       audio: readNumericValue(premiumValue, "audio", defaults.Premium.audio),
-      video: readNumericValue(premiumValue, "video", defaults.Premium.video),
     },
   };
 }
@@ -381,7 +373,6 @@ export function normalizeTrialLimitsSettingsValue(
     ),
     images: readNumericValue(value, "images", defaults.images),
     audio: readNumericValue(value, "audio", defaults.audio),
-    video: readNumericValue(value, "video", defaults.video),
   };
 }
 

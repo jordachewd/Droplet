@@ -113,28 +113,24 @@ describe("transaction.action", () => {
           promptsPerConversation: 10,
           images: 3,
           audio: 3,
-          video: 1,
         },
         Pro: {
           conversationsPerDay: 50,
           promptsPerConversation: 100,
           images: 50,
           audio: 50,
-          video: 10,
         },
         Premium: {
           conversationsPerDay: -1,
           promptsPerConversation: -1,
           images: -1,
           audio: -1,
-          video: -1,
         },
       },
       trialLimits: {
         promptsPerConversation: 5,
         images: 3,
         audio: 2,
-        video: 1,
       },
     });
 

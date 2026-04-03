@@ -5,7 +5,7 @@ import { PlanName } from "@/types/PlanData.d";
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
-export type UsageLimitType = "images" | "audio" | "video";
+export type UsageLimitType = "images" | "audio";
 
 interface CheckUsageLimitParams {
   planName?: PlanName | null;

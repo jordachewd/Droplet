@@ -23,7 +23,7 @@ const basePlan: Plan = {
   price: 19,
   inclusions: [
     { label: "50 conversations/day", isIncluded: true },
-    { label: "10 video generations/month", isIncluded: true },
+    { label: "10 audio generations/month", isIncluded: true },
   ],
 };
 
@@ -56,7 +56,7 @@ describe("PlanCard", () => {
     expect(screen.getByText("$19")).toBeTruthy();
     expect(screen.getByText("For growing teams")).toBeTruthy();
     expect(screen.getByText("50 conversations/day")).toBeTruthy();
-    expect(screen.getByText("10 video generations/month")).toBeTruthy();
+    expect(screen.getByText("10 audio generations/month")).toBeTruthy();
   });
 
   it("renders checkout CTA when user data is available", () => {

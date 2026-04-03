@@ -25,7 +25,6 @@ const updateUserPlanSchema = z
     stripeId: z.string().optional(),
     imageGenerations: z.number().optional(),
     audioGenerations: z.number().optional(),
-    videoGenerations: z.number().optional(),
     usagePeriodStart: z.date().optional(),
   })
   .strict();

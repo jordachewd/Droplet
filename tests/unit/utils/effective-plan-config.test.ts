@@ -85,7 +85,6 @@ describe("effective-plan-config", () => {
             promptsPerConversation: 15.2,
             images: 4,
             audio: -2,
-            video: 2,
           },
         },
       },
@@ -95,7 +94,6 @@ describe("effective-plan-config", () => {
           promptsPerConversation: 6.9,
           images: 4,
           audio: 3,
-          video: 2,
         },
       },
     ]);
@@ -113,13 +111,11 @@ describe("effective-plan-config", () => {
       promptsPerConversation: 15,
       images: 4,
       audio: PLAN_LIMITS.Lite.audio,
-      video: 2,
     });
     expect(config.trialLimits).toEqual({
       promptsPerConversation: 6,
       images: 4,
       audio: 3,
-      video: 2,
     });
   });
 

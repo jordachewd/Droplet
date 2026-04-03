@@ -36,7 +36,6 @@ export default async function AppProfilePage() {
   const planLimits = effectivePlanConfig.limits[planName];
   const imageUsed = userData?.plan?.imageGenerations ?? 0;
   const audioUsed = userData?.plan?.audioGenerations ?? 0;
-  const videoUsed = userData?.plan?.videoGenerations ?? 0;
   const dailyConversationsUsed = userData?.dailyConversationsStarted ?? 0;
   const usagePeriodStart = userData?.plan?.usagePeriodStart
     ? new Date(userData.plan.usagePeriodStart)
@@ -61,7 +60,6 @@ export default async function AppProfilePage() {
         planLimits={planLimits}
         imageUsed={imageUsed}
         audioUsed={audioUsed}
-        videoUsed={videoUsed}
         dailyConversationsUsed={dailyConversationsUsed}
         usagePeriodStart={usagePeriodStart}
       />

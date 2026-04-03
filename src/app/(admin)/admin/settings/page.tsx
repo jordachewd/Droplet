@@ -15,7 +15,6 @@ import {
   AUDIO_MODEL_OPTIONS,
   CHAT_MODEL_OPTIONS,
   IMAGE_MODEL_OPTIONS,
-  VIDEO_MODEL_OPTIONS,
 } from "@/constants/admin-options";
 import {
   normalizeAboutContentSettings,
@@ -175,7 +174,6 @@ export default async function AdminSettingsPage() {
                   chat: CHAT_MODEL_OPTIONS,
                   image: IMAGE_MODEL_OPTIONS,
                   audio: AUDIO_MODEL_OPTIONS,
-                  video: VIDEO_MODEL_OPTIONS,
                 }}
               />
             ),

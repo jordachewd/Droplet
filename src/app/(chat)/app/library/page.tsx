@@ -20,7 +20,7 @@ import {
   getPersonaFromConfig,
 } from "@/lib/utils/effective-persona-config";
 
-type LibraryTabId = "chats" | "images" | "audios" | "videos" | "uploaded";
+type LibraryTabId = "chats" | "images" | "audios" | "uploaded";
 
 interface LibraryPageProps {
   searchParams: Promise<{
@@ -28,7 +28,6 @@ interface LibraryPageProps {
     chatsPage?: string;
     imagesPage?: string;
     audiosPage?: string;
-    videosPage?: string;
     uploadedPage?: string;
   }>;
 }
@@ -47,12 +46,7 @@ function parsePage(value: string | undefined): number {
 }
 
 function parseTab(value: string | undefined): LibraryTabId {
-  if (
-    value === "images" ||
-    value === "audios" ||
-    value === "videos" ||
-    value === "uploaded"
-  ) {
+  if (value === "images" || value === "audios" || value === "uploaded") {
     return value;
   }
 
@@ -60,26 +54,23 @@ function parseTab(value: string | undefined): LibraryTabId {
 }
 
 export default async function LibraryPage({ searchParams }: LibraryPageProps) {
-  const { tab, chatsPage, imagesPage, audiosPage, videosPage, uploadedPage } =
+  const { tab, chatsPage, imagesPage, audiosPage, uploadedPage } =
     await searchParams;
   const { userId } = await auth();
   const activeTabId = parseTab(tab);
   const conversationsPage = parsePage(chatsPage);
   const imagesPageNumber = parsePage(imagesPage);
   const audiosPageNumber = parsePage(audiosPage);
-  const videosPageNumber = parsePage(videosPage);
   const uploadedPageNumber = parsePage(uploadedPage);
 
   const conversationsOffset = (conversationsPage - 1) * CHAT_PAGE_SIZE;
   const imagesOffset = (imagesPageNumber - 1) * MEDIA_PAGE_SIZE;
   const audiosOffset = (audiosPageNumber - 1) * MEDIA_PAGE_SIZE;
-  const videosOffset = (videosPageNumber - 1) * MEDIA_PAGE_SIZE;
   const uploadedOffset = (uploadedPageNumber - 1) * MEDIA_PAGE_SIZE;
 
   let conversations: LibraryConversationCardItem[] = [];
   let imageItems: LibraryMediaCardItem[] = [];
   let audioItems: LibraryMediaCardItem[] = [];
-  let videoItems: LibraryMediaCardItem[] = [];
   let uploadItems: LibraryUploadCardItem[] = [];
   let conversationsPagination: LibraryPaginationState = {
     currentPage: conversationsPage,
@@ -96,11 +87,6 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
     hasPreviousPage: audiosPageNumber > 1,
     hasNextPage: false,
   };
-  let videosPagination: LibraryPaginationState = {
-    currentPage: videosPageNumber,
-    hasPreviousPage: videosPageNumber > 1,
-    hasNextPage: false,
-  };
   let uploadsPagination: LibraryPaginationState = {
     currentPage: uploadedPageNumber,
     hasPreviousPage: uploadedPageNumber > 1,
@@ -113,35 +99,27 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
   }
 
   try {
-    const [taskHistory, images, audios, videos, uploads, personas] =
-      await Promise.all([
-        getRecentTasksByUserId(userId, CHAT_PAGE_SIZE + 1, conversationsOffset),
-        getMediaItemsByUserId(
-          userId,
-          "image_url",
-          MEDIA_PAGE_SIZE + 1,
-          imagesOffset,
-        ),
-        getMediaItemsByUserId(
-          userId,
-          "audio_url",
-          MEDIA_PAGE_SIZE + 1,
-          audiosOffset,
-        ),
-        getMediaItemsByUserId(
-          userId,
-          "video_url",
-          MEDIA_PAGE_SIZE + 1,
-          videosOffset,
-        ),
-        getUploadsByUserId(userId, MEDIA_PAGE_SIZE + 1, uploadedOffset),
-        getEffectivePersonaConfig(),
-      ]);
+    const [taskHistory, images, audios, uploads, personas] = await Promise.all([
+      getRecentTasksByUserId(userId, CHAT_PAGE_SIZE + 1, conversationsOffset),
+      getMediaItemsByUserId(
+        userId,
+        "image_url",
+        MEDIA_PAGE_SIZE + 1,
+        imagesOffset,
+      ),
+      getMediaItemsByUserId(
+        userId,
+        "audio_url",
+        MEDIA_PAGE_SIZE + 1,
+        audiosOffset,
+      ),
+      getUploadsByUserId(userId, MEDIA_PAGE_SIZE + 1, uploadedOffset),
+      getEffectivePersonaConfig(),
+    ]);
 
     const pagedTaskHistory = taskHistory.slice(0, CHAT_PAGE_SIZE);
     const pagedImages = images.slice(0, MEDIA_PAGE_SIZE);
     const pagedAudios = audios.slice(0, MEDIA_PAGE_SIZE);
-    const pagedVideos = videos.slice(0, MEDIA_PAGE_SIZE);
     const pagedUploads = uploads.slice(0, MEDIA_PAGE_SIZE);
 
     conversationsPagination = {
@@ -158,11 +136,6 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
       currentPage: audiosPageNumber,
       hasPreviousPage: audiosPageNumber > 1,
       hasNextPage: audios.length > MEDIA_PAGE_SIZE,
-    };
-    videosPagination = {
-      currentPage: videosPageNumber,
-      hasPreviousPage: videosPageNumber > 1,
-      hasNextPage: videos.length > MEDIA_PAGE_SIZE,
     };
     uploadsPagination = {
       currentPage: uploadedPageNumber,
@@ -216,21 +189,6 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
       };
     });
 
-    videoItems = pagedVideos.map((item) => {
-      const persona = getPersonaFromConfig({
-        personas,
-        personaId: item.personaId,
-      });
-
-      return {
-        ...item,
-        personaLabel: persona.label,
-        personaIcon: persona.icon,
-        createdAtLabel: mapDateToLabel(item.createdAt),
-        href: `/app/c/${item.taskId}`,
-      };
-    });
-
     uploadItems = pagedUploads.map((item) => ({
       id: item.id,
       fileName: item.fileName,
@@ -261,13 +219,11 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
         conversations={conversations}
         images={imageItems}
         audios={audioItems}
-        videos={videoItems}
         uploads={uploadItems}
         initialTabId={activeTabId}
         conversationsPagination={conversationsPagination}
         imagesPagination={imagesPagination}
         audiosPagination={audiosPagination}
-        videosPagination={videosPagination}
         uploadsPagination={uploadsPagination}
         hasLoadError={hasLoadError}
       />

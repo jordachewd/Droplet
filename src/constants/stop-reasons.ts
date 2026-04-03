@@ -8,7 +8,6 @@ export const STOP_REASON_CODES = [
   "media_limit_reached",
   "image_limit_reached",
   "audio_limit_reached",
-  "video_limit_reached",
   "daily_conversation_limit_reached",
   "conversation_storage_limit_reached",
   "billing_state_invalid",
@@ -25,8 +24,6 @@ export const STOP_REASON_MESSAGES: Record<TaskEndedReason, string> = {
     "You've reached your image generation limit for this billing period. You can continue chatting. Start a new conversation to keep going.",
   audio_limit_reached:
     "You've reached your audio generation limit for this billing period. You can continue chatting. Start a new conversation to keep going.",
-  video_limit_reached:
-    "You've reached your video generation limit for this billing period. You can continue chatting. Start a new conversation to keep going.",
   daily_conversation_limit_reached:
     "You've reached the daily conversation limit for your plan.",
   conversation_storage_limit_reached:

@@ -193,28 +193,11 @@ export default async function AdminUserDetailPage({
             </div>
             <div className="admin-surface-subtle">
               <p className="text-xxs uppercase text-midnightBlue-700 dark:text-lavenderHaze-700">
-                Video Generations
-              </p>
-              <p className="heading-6 mt-2">
-                {formatUsageLabel(user.mediaUsage.video)}
-              </p>
-              <div className="mt-2 h-2 overflow-hidden rounded-full bg-lavenderHaze-300 dark:bg-nightIndigo-500/40">
-                <div
-                  className="h-full bg-limeGreen-500"
-                  style={{
-                    width: `${getUsagePercent(user.mediaUsage.video)}%`,
-                  }}
-                />
-              </div>
-            </div>
-            <div className="admin-surface-subtle">
-              <p className="text-xxs uppercase text-midnightBlue-700 dark:text-lavenderHaze-700">
-                Trial Usage (Img / Audio / Video)
+                Trial Usage (Img / Audio)
               </p>
               <p className="mt-1 text-sm">
                 {formatUsageLabel(user.trialUsage.images)} |{" "}
-                {formatUsageLabel(user.trialUsage.audio)} |{" "}
-                {formatUsageLabel(user.trialUsage.video)}
+                {formatUsageLabel(user.trialUsage.audio)}
               </p>
             </div>
           </div>

@@ -27,12 +27,10 @@ export interface PlanData {
   stripeId?: string;
   imageGenerations?: number;
   audioGenerations?: number;
-  videoGenerations?: number;
   usagePeriodStart?: Date;
   trialUsage?: {
     trialImageGenerations?: number;
     trialAudioGenerations?: number;
-    trialVideoGenerations?: number;
     trialUsagePeriodStart?: Date;
   };
 }

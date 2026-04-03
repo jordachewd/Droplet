@@ -13,7 +13,6 @@ describe("filterAssistantMsg", () => {
         { type: "temp", text: "Keep temp item" },
         { type: "image_url", image_url: { url: "https://example.com/i.png" } },
         { type: "audio_url", audio_url: "https://example.com/a.mp3" },
-        { type: "video_url", video_url: "https://example.com/v.mp4" },
       ],
     });
 

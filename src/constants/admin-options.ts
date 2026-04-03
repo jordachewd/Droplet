@@ -17,5 +17,3 @@ export const AUDIO_MODEL_OPTIONS = [
   "gpt-audio-mini",
   "gpt-audio-1.5",
 ];
-
-export const VIDEO_MODEL_OPTIONS = ["sora-2"];

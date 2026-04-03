@@ -9,7 +9,6 @@ interface AdminModelOptions {
   chat: string[];
   image: string[];
   audio: string[];
-  video: string[];
 }
 
 interface AdminModelsSectionProps {
@@ -98,20 +97,6 @@ export function AdminModelsSection({
           >
             {modelOptions.audio.map((modelId) => (
               <option key={`audio-${modelId}`} value={modelId}>
-                {modelId}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="text-sm">
-          <span className="mb-1 block font-medium">Default Video Model</span>
-          <select
-            name="videoModel"
-            defaultValue={modelValue.videoModel}
-            className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
-          >
-            {modelOptions.video.map((modelId) => (
-              <option key={`video-${modelId}`} value={modelId}>
                 {modelId}
               </option>
             ))}

@@ -83,7 +83,6 @@ function setupDefaultMocks() {
         expiresOn: new Date(Date.now() + 86_400_000),
         imageGenerations: 0,
         audioGenerations: 0,
-        videoGenerations: 0,
         usagePeriodStart: new Date(),
       },
     }),

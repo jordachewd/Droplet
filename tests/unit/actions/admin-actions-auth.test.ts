@@ -176,7 +176,6 @@ describe("admin.actions auth boundaries", () => {
             premiumChatModel: "gpt-5.4",
             imageModel: "gpt-image-1",
             audioModel: "gpt-audio-mini",
-            videoModel: "sora-2",
           }),
         ),
       expectedErrorMessage: "Unable to update settings.",

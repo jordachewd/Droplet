@@ -14,7 +14,6 @@ const litePlan: PlanData = {
   expiresOn: new Date("9999-12-31T23:59:59.999Z"),
   imageGenerations: 0,
   audioGenerations: 0,
-  videoGenerations: 0,
 };
 
 describe("PlanPromo", () => {

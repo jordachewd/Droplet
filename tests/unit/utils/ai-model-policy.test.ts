@@ -136,29 +136,71 @@ describe("ai-model-policy", () => {
     expect(policy.notes).toContain("TTS fallback blocked");
   });
 
-  it("supports premium video model and admin override", () => {
-    const premiumFinalPolicy = resolveModelPolicy({
-      plan: premiumPlanTier,
-      feature: "video_generation",
-      taskClass: "final",
-      explicitPremium: true,
+  it("applies updated chat token limits by plan and task class", () => {
+    const liteSimple = resolveModelPolicy({
+      plan: litePlanTier,
+      feature: "chat",
+      taskClass: "simple",
     });
-    const overriddenPolicy = resolveModelPolicy({
+    const liteStandard = resolveModelPolicy({
+      plan: litePlanTier,
+      feature: "chat",
+      taskClass: "standard",
+    });
+    const liteComplex = resolveModelPolicy({
+      plan: litePlanTier,
+      feature: "chat",
+      taskClass: "complex",
+    });
+    const proSimple = resolveModelPolicy({
+      plan: proPlanTier,
+      feature: "chat",
+      taskClass: "simple",
+    });
+    const proStandard = resolveModelPolicy({
+      plan: proPlanTier,
+      feature: "chat",
+      taskClass: "standard",
+    });
+    const proComplex = resolveModelPolicy({
+      plan: proPlanTier,
+      feature: "chat",
+      taskClass: "complex",
+    });
+    const premiumSimple = resolveModelPolicy({
       plan: premiumPlanTier,
-      feature: "video_generation",
-      taskClass: "final",
-      explicitPremium: true,
-      modelOverrides: {
-        videoGenerationModel: "sora-2-custom",
-      },
+      feature: "chat",
+      taskClass: "simple",
+    });
+    const premiumStandard = resolveModelPolicy({
+      plan: premiumPlanTier,
+      feature: "chat",
+      taskClass: "standard",
+    });
+    const premiumComplex = resolveModelPolicy({
+      plan: premiumPlanTier,
+      feature: "chat",
+      taskClass: "complex",
     });
 
-    expect(premiumFinalPolicy.model).toBe("sora-2");
-    expect(premiumFinalPolicy.fallbackModel).toBe("sora-2");
-    expect(overriddenPolicy.model).toBe("sora-2-custom");
-    expect(overriddenPolicy.notes).toContain(
-      "Admin override applied for video generation model.",
-    );
+    expect(liteSimple.maxInputTokens).toBe(32_000);
+    expect(liteSimple.maxOutputTokens).toBe(4_096);
+    expect(liteStandard.maxInputTokens).toBe(64_000);
+    expect(liteStandard.maxOutputTokens).toBe(8_192);
+    expect(liteComplex.maxInputTokens).toBe(128_000);
+    expect(liteComplex.maxOutputTokens).toBe(16_384);
+    expect(proSimple.maxInputTokens).toBe(64_000);
+    expect(proSimple.maxOutputTokens).toBe(8_192);
+    expect(proStandard.maxInputTokens).toBe(128_000);
+    expect(proStandard.maxOutputTokens).toBe(16_384);
+    expect(proComplex.maxInputTokens).toBe(200_000);
+    expect(proComplex.maxOutputTokens).toBe(32_768);
+    expect(premiumSimple.maxInputTokens).toBe(128_000);
+    expect(premiumSimple.maxOutputTokens).toBe(16_384);
+    expect(premiumStandard.maxInputTokens).toBe(200_000);
+    expect(premiumStandard.maxOutputTokens).toBe(32_768);
+    expect(premiumComplex.maxInputTokens).toBe(500_000);
+    expect(premiumComplex.maxOutputTokens).toBe(32_768);
   });
 
   it("applies per-feature admin model overrides", () => {

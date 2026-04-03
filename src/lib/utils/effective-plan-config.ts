@@ -146,10 +146,6 @@ function normalizePlanLimitsValue(value: unknown): PlanLimits {
         value: (value.Lite as { audio?: unknown })?.audio,
         fallback: PLAN_LIMITS.Lite.audio,
       }),
-      video: normalizePositiveInteger({
-        value: (value.Lite as { video?: unknown })?.video,
-        fallback: PLAN_LIMITS.Lite.video,
-      }),
     },
     Pro: {
       conversationsPerDay: normalizePositiveInteger({
@@ -170,10 +166,6 @@ function normalizePlanLimitsValue(value: unknown): PlanLimits {
         value: (value.Pro as { audio?: unknown })?.audio,
         fallback: PLAN_LIMITS.Pro.audio,
       }),
-      video: normalizePositiveInteger({
-        value: (value.Pro as { video?: unknown })?.video,
-        fallback: PLAN_LIMITS.Pro.video,
-      }),
     },
     Premium: {
       conversationsPerDay: normalizePositiveInteger({
@@ -193,10 +185,6 @@ function normalizePlanLimitsValue(value: unknown): PlanLimits {
       audio: normalizePositiveInteger({
         value: (value.Premium as { audio?: unknown })?.audio,
         fallback: PLAN_LIMITS.Premium.audio,
-      }),
-      video: normalizePositiveInteger({
-        value: (value.Premium as { video?: unknown })?.video,
-        fallback: PLAN_LIMITS.Premium.video,
       }),
     },
   };
@@ -219,10 +207,6 @@ function normalizeTrialLimitsValue(value: unknown): PersonaTrialLimits {
     audio: normalizePositiveInteger({
       value: value.audio,
       fallback: PERSONA_TRIAL_LIMITS.audio,
-    }),
-    video: normalizePositiveInteger({
-      value: value.video,
-      fallback: PERSONA_TRIAL_LIMITS.video,
     }),
   };
 }

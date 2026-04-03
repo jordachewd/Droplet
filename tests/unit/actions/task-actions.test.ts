@@ -453,10 +453,6 @@ describe("task.actions", () => {
                   type: "audio_url",
                   audio_url: "/api/download?key=user_123%2Faudio%2Fclip.mp3",
                 },
-                {
-                  type: "video_url",
-                  video_url: "/api/download?key=other_user%2Fvideo%2Fmovie.mp4",
-                },
               ],
             }),
           ],

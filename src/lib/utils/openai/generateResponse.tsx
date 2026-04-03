@@ -9,7 +9,6 @@ import { PlanName } from "@/types/PlanData.d";
 import { ContentItem, Message, MessageRole } from "@/types";
 import { generateImage } from "./generateImage";
 import { generateAudio } from "./generateAudio";
-import { generateVideo } from "./generateVideo";
 import {
   ChatCompletionMessageParam,
   ChatCompletionTool,
@@ -41,10 +40,10 @@ interface GenerateResponseParams {
   explicitPremium?: boolean;
   modelOverrides?: ModelPolicyModelOverrides;
   claimMediaGenerationSlot?: (params: {
-    limitType: "images" | "audio" | "video";
+    limitType: "images" | "audio";
   }) => Promise<{ claimed: boolean }>;
   rollbackMediaGenerationSlot?: (params: {
-    limitType: "images" | "audio" | "video";
+    limitType: "images" | "audio";
   }) => Promise<void>;
 }
 
@@ -66,17 +65,14 @@ type BlockedReason =
   | "media_limit_reached"
   | "image_limit_reached"
   | "audio_limit_reached"
-  | "video_limit_reached"
   | "image_disabled"
-  | "audio_disabled"
-  | "video_disabled";
+  | "audio_disabled";
 
 export interface OpenAIResponsePayload {
   taskData?: Message;
   taskUsage?: number;
   generatedImage?: boolean;
   generatedAudio?: boolean;
-  generatedVideo?: boolean;
   blockedReason?: BlockedReason;
   errorType?: OpenAIErrorType;
   errorMessage?: string;
@@ -282,7 +278,7 @@ function resolveFeaturePolicy({
   modelOverrides,
 }: {
   planName: PlanName;
-  feature: "chat" | "image_generation" | "video_generation";
+  feature: "chat" | "image_generation";
   taskClass: TaskClass;
   budgetState?: BudgetState;
   retryAttempt?: number;
@@ -323,11 +319,7 @@ function resolveFeaturePolicy({
   modelOverrides,
 }: {
   planName: PlanName;
-  feature:
-    | "chat"
-    | "image_generation"
-    | "audio_generation"
-    | "video_generation";
+  feature: "chat" | "image_generation" | "audio_generation";
   taskClass: TaskClass;
   budgetState?: BudgetState;
   retryAttempt?: number;
@@ -406,10 +398,10 @@ async function buildOpenAIResponsePayload({
   entitlements: Entitlements;
   modelOverrides?: ModelPolicyModelOverrides;
   claimMediaGenerationSlot?: (params: {
-    limitType: "images" | "audio" | "video";
+    limitType: "images" | "audio";
   }) => Promise<{ claimed: boolean }>;
   rollbackMediaGenerationSlot?: (params: {
-    limitType: "images" | "audio" | "video";
+    limitType: "images" | "audio";
   }) => Promise<void>;
   onMediaGenerationStart?: () => void;
   onMediaGenerationEnd?: () => void;
@@ -663,121 +655,6 @@ async function buildOpenAIResponsePayload({
         }
       }
     }
-
-    if (functionName === "getGeneratedVideo") {
-      const videoPolicy = resolveFeaturePolicy({
-        planName,
-        feature: "video_generation",
-        taskClass: "final",
-        modelOverrides,
-      });
-
-      if (!entitlements.supportsVideoGeneration || videoPolicy.hardBlocked) {
-        const blockedReason: BlockedReason = entitlements.videoLimitReached
-          ? "video_limit_reached"
-          : "video_disabled";
-
-        maybeAddBlockedMetric({
-          requestMetrics,
-          policy: videoPolicy,
-          requestType: "video",
-          blockedReason,
-        });
-
-        return createBlockedResponsePayload({
-          message:
-            blockedReason === "video_limit_reached"
-              ? "Video generation limit reached for your current plan."
-              : "Video generation is not enabled for the current plan.",
-          taskUsage,
-          blockedReason,
-          requestMetrics,
-        });
-      }
-
-      let videoSlotClaimed = false;
-
-      if (claimMediaGenerationSlot) {
-        const claimResult = await claimMediaGenerationSlot({
-          limitType: "video",
-        });
-
-        if (!claimResult.claimed) {
-          maybeAddBlockedMetric({
-            requestMetrics,
-            policy: videoPolicy,
-            requestType: "video",
-            blockedReason: "video_limit_reached",
-          });
-
-          return createBlockedResponsePayload({
-            message: "Video generation limit reached for your current plan.",
-            taskUsage,
-            blockedReason: "video_limit_reached",
-            requestMetrics,
-          });
-        }
-
-        videoSlotClaimed = true;
-      }
-
-      let didStartMediaGeneration = false;
-      try {
-        if (onMediaGenerationStart) {
-          onMediaGenerationStart();
-          didStartMediaGeneration = true;
-        }
-
-        const videoPayload = await generateVideo({
-          prompt:
-            typeof parsedArgs.prompt === "string" ? parsedArgs.prompt : "",
-          role: message.role,
-          taskId,
-          userId,
-          planName,
-          modelOverrides,
-        });
-
-        if (videoPayload.requestMetric) {
-          requestMetrics.push(videoPayload.requestMetric);
-        }
-
-        return {
-          ...videoPayload,
-          taskUsage,
-          requestMetrics,
-        };
-      } catch (videoError) {
-        if (videoSlotClaimed && rollbackMediaGenerationSlot) {
-          try {
-            await rollbackMediaGenerationSlot({
-              limitType: "video",
-            });
-          } catch (rollbackError) {
-            process.stderr.write(
-              `[generateResponse] video slot rollback failed: ${rollbackError instanceof Error ? rollbackError.message : "unknown"}\n`,
-            );
-          }
-        }
-
-        const status =
-          videoError instanceof Error && "status" in videoError
-            ? (videoError as { status?: number }).status
-            : undefined;
-        process.stderr.write(
-          `[generateResponse] video generation failed model=${videoPolicy.model} status=${status ?? "unknown"}\n`,
-        );
-        return {
-          errorType: "service_error",
-          errorMessage: "Video generation failed. Please try again.",
-          requestMetrics,
-        };
-      } finally {
-        if (didStartMediaGeneration) {
-          onMediaGenerationEnd?.();
-        }
-      }
-    }
   }
 
   return {
@@ -794,7 +671,6 @@ async function buildOpenAIResponsePayload({
     taskUsage,
     generatedImage: false,
     generatedAudio: false,
-    generatedVideo: false,
     requestMetrics,
   };
 }
@@ -883,7 +759,6 @@ async function runChatCompletion({
   const tools = getChatTools({
     supportsImageGeneration: entitlements.supportsImageGeneration,
     supportsAudioGeneration: entitlements.supportsAudioGeneration,
-    supportsVideoGeneration: entitlements.supportsVideoGeneration,
   });
   const chatRequestSettings = buildChatCompletionRequestSettings({
     personaId: selectedPersona.id,
@@ -984,7 +859,6 @@ async function runStreamingChatCompletion({
   const tools = getChatTools({
     supportsImageGeneration: entitlements.supportsImageGeneration,
     supportsAudioGeneration: entitlements.supportsAudioGeneration,
-    supportsVideoGeneration: entitlements.supportsVideoGeneration,
   });
   const chatRequestSettings = buildChatCompletionRequestSettings({
     personaId: selectedPersona.id,

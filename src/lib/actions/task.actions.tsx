@@ -26,7 +26,6 @@ const taskEndedReasonSchema = z.enum([
   "media_limit_reached",
   "image_limit_reached",
   "audio_limit_reached",
-  "video_limit_reached",
   "daily_conversation_limit_reached",
   "conversation_storage_limit_reached",
   "billing_state_invalid",
@@ -104,11 +103,7 @@ function collectOwnedTaskAssetObjectKeys(
     }
 
     for (const contentItem of message.content) {
-      const rawValues = [
-        contentItem.image_url?.url,
-        contentItem.audio_url,
-        contentItem.video_url,
-      ];
+      const rawValues = [contentItem.image_url?.url, contentItem.audio_url];
 
       for (const rawValue of rawValues) {
         if (!rawValue) {

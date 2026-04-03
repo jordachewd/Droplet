@@ -39,7 +39,7 @@ describe("check-usage-limit", () => {
     const result = checkUsageLimit({
       planName: premiumUser.plan.name,
       currentCount: 500,
-      limitType: "video",
+      limitType: "audio",
     });
 
     expect(result).toEqual({
@@ -70,15 +70,15 @@ describe("check-usage-limit", () => {
     const result = checkUsageLimit({
       planName: liteUser.plan.name,
       currentCount: 1,
-      limitType: "video",
+      limitType: "audio",
       usagePeriodStart: "invalid-date",
       now: new Date("2026-03-24T00:00:00.000Z"),
     });
 
     expect(result.didReset).toBe(false);
     expect(result.effectiveCount).toBe(1);
-    expect(result.remaining).toBe(0);
-    expect(result.allowed).toBe(false);
+    expect(result.remaining).toBe(2);
+    expect(result.allowed).toBe(true);
   });
 
   it("uses override limits when provided", () => {

@@ -26,10 +26,6 @@ interface AdminUsersTableItem {
       used: number;
       limit: number;
     };
-    video: {
-      used: number;
-      limit: number;
-    };
   };
   conversationUsage: {
     used: number;
@@ -248,7 +244,7 @@ function AdminUsersTableContent({
                 </td>
                 <td className="px-3 py-4 align-middle">{user.planName}</td>
                 <td className="truncate px-3 py-4 text-xs text-midnightBlue-600 dark:text-lavenderHaze-600">
-                  {`${user.mediaUsage.images.used}/${formatLimit(user.mediaUsage.images.limit)} img | ${user.mediaUsage.audio.used}/${formatLimit(user.mediaUsage.audio.limit)} aud | ${user.mediaUsage.video.used}/${formatLimit(user.mediaUsage.video.limit)} vid`}
+                  {`${user.mediaUsage.images.used}/${formatLimit(user.mediaUsage.images.limit)} img | ${user.mediaUsage.audio.used}/${formatLimit(user.mediaUsage.audio.limit)} aud`}
                 </td>
                 <td className="px-3 py-4 text-xs font-medium">
                   {`${user.conversationUsage.used}/${formatLimit(user.conversationUsage.limit)}`}

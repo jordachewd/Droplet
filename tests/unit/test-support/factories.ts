@@ -61,12 +61,10 @@ const DEFAULT_PLAN_DATA: PlanData = {
   stripeId: undefined,
   imageGenerations: 0,
   audioGenerations: 0,
-  videoGenerations: 0,
   usagePeriodStart: new Date(),
   trialUsage: {
     trialImageGenerations: 0,
     trialAudioGenerations: 0,
-    trialVideoGenerations: 0,
     trialUsagePeriodStart: new Date(),
   },
 };

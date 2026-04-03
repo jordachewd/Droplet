@@ -15,7 +15,6 @@ const {
   streamChatCompletionMock,
   generateImageMock,
   generateAudioMock,
-  generateVideoMock,
   normalizePlanTierMock,
   resolveModelPolicyMock,
   compactMessagesToTokenLimitMock,
@@ -28,7 +27,6 @@ const {
   streamChatCompletionMock: vi.fn(),
   generateImageMock: vi.fn(),
   generateAudioMock: vi.fn(),
-  generateVideoMock: vi.fn(),
   normalizePlanTierMock: vi.fn(),
   resolveModelPolicyMock: vi.fn(),
   compactMessagesToTokenLimitMock: vi.fn(),
@@ -63,10 +61,6 @@ vi.mock("@/lib/utils/openai/generateAudio", () => ({
   generateAudio: generateAudioMock,
 }));
 
-vi.mock("@/lib/utils/openai/generateVideo", () => ({
-  generateVideo: generateVideoMock,
-}));
-
 vi.mock("@/lib/utils/ai-model-policy", () => ({
   normalizePlanTier: normalizePlanTierMock,
   resolveModelPolicy: resolveModelPolicyMock,
@@ -83,15 +77,12 @@ type TestEntitlements = {
     promptsPerConversation: number;
     images: number;
     audio: number;
-    video: number;
   };
   allowedPersonaIds: PersonaId[];
   supportsImageGeneration: boolean;
   supportsAudioGeneration: boolean;
-  supportsVideoGeneration: boolean;
   imageLimitReached: boolean;
   audioLimitReached: boolean;
-  videoLimitReached: boolean;
 };
 
 type TestPolicy = {
@@ -116,15 +107,12 @@ function createEntitlements(
       promptsPerConversation: 10,
       images: 3,
       audio: 3,
-      video: 1,
     },
     allowedPersonaIds: ["strategist", "developer"],
     supportsImageGeneration: true,
     supportsAudioGeneration: true,
-    supportsVideoGeneration: true,
     imageLimitReached: false,
     audioLimitReached: false,
-    videoLimitReached: false,
     ...overrides,
   };
 }
@@ -220,8 +208,6 @@ describe("generateResponse", () => {
                   : "gpt-audio-mini",
               taskClass: "final",
             });
-          case "video_generation":
-            return createPolicy({ model: "sora-2", taskClass: "final" });
           default:
             return createPolicy({ model: "gpt-4.1", taskClass: "standard" });
         }
@@ -288,7 +274,6 @@ describe("generateResponse", () => {
       taskUsage: number;
       generatedImage: boolean;
       generatedAudio: boolean;
-      generatedVideo: boolean;
       requestMetrics: Array<{ requestType: string; model: string }>;
     }>(serialized);
 
@@ -299,7 +284,6 @@ describe("generateResponse", () => {
     expect(payload.taskUsage).toBe(28);
     expect(payload.generatedImage).toBe(false);
     expect(payload.generatedAudio).toBe(false);
-    expect(payload.generatedVideo).toBe(false);
     expect(payload.requestMetrics).toEqual([
       expect.objectContaining({
         requestType: "chat",
@@ -638,118 +622,6 @@ describe("generateResponse", () => {
       limitType: "audio",
     });
     expect(generateAudioMock).not.toHaveBeenCalled();
-  });
-
-  it("handles video tool calls and merges generated video payload", async () => {
-    createChatCompletionMock.mockResolvedValue({
-      usage: {
-        prompt_tokens: 8,
-        completion_tokens: 6,
-        total_tokens: 14,
-      },
-      choices: [
-        {
-          message: {
-            role: "assistant",
-            tool_calls: [
-              {
-                type: "function",
-                function: {
-                  name: "getGeneratedVideo",
-                  arguments: JSON.stringify({
-                    prompt: "Time-lapse city lights",
-                  }),
-                },
-              },
-            ],
-          },
-        },
-      ],
-    });
-
-    const claimMediaGenerationSlot = vi.fn().mockResolvedValue({
-      claimed: true,
-    });
-    generateVideoMock.mockResolvedValue({
-      taskData: {
-        role: "assistant",
-        whois: "assistant",
-        content: [{ type: "text", text: "Time-lapse city lights" }],
-      },
-      generatedVideo: true,
-      requestMetric: {
-        requestType: "video",
-        model: "sora-2",
-        latencyMs: 99,
-      },
-    });
-
-    const serialized = await generateResponse(
-      createResponseRequest({
-        claimMediaGenerationSlot,
-      }),
-    );
-
-    const payload = parsePayload<{
-      taskUsage: number;
-      generatedVideo: boolean;
-      requestMetrics: Array<{ requestType: string }>;
-    }>(serialized);
-
-    expect(payload.taskUsage).toBe(14);
-    expect(payload.generatedVideo).toBe(true);
-    expect(payload.requestMetrics).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ requestType: "chat" }),
-        expect.objectContaining({ requestType: "video" }),
-      ]),
-    );
-  });
-
-  it("returns video_limit_reached when video tool is unavailable due to limit state", async () => {
-    createChatCompletionMock.mockResolvedValue({
-      usage: {
-        prompt_tokens: 8,
-        completion_tokens: 6,
-        total_tokens: 14,
-      },
-      choices: [
-        {
-          message: {
-            role: "assistant",
-            tool_calls: [
-              {
-                type: "function",
-                function: {
-                  name: "getGeneratedVideo",
-                  arguments: JSON.stringify({
-                    prompt: "Do not generate",
-                  }),
-                },
-              },
-            ],
-          },
-        },
-      ],
-    });
-
-    const serialized = await generateResponse(
-      createResponseRequest({
-        entitlements: createEntitlements({
-          supportsVideoGeneration: false,
-          videoLimitReached: true,
-        }),
-      }),
-    );
-
-    const payload = parsePayload<{
-      blockedReason: string;
-      taskData: { content: Array<{ text: string }> };
-    }>(serialized);
-
-    expect(payload.blockedReason).toBe("video_limit_reached");
-    expect(payload.taskData.content[0]?.text).toContain("limit reached");
-    expect(generateVideoMock).not.toHaveBeenCalled();
   });
 
   it("returns unknown error type when chat completion throws a non-API error", async () => {

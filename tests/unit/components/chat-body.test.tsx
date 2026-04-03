@@ -47,11 +47,6 @@ const stopReasonCases: Array<{
       "You've reached your audio generation limit for this billing period. You can continue chatting. Start a new conversation to keep going.",
   },
   {
-    stopReason: "video_limit_reached",
-    expectedTitle:
-      "You've reached your video generation limit for this billing period. You can continue chatting. Start a new conversation to keep going.",
-  },
-  {
     stopReason: "daily_conversation_limit_reached",
     expectedTitle: "You've reached the daily conversation limit for your plan.",
   },

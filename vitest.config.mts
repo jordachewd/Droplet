@@ -14,7 +14,6 @@ export default defineConfig({
       exclude: [
         "src/components/chat/chat-body.tsx",
         "src/components/shared/image-holder.tsx",
-        "src/components/shared/video-player.tsx",
         "src/lib/utils/admin-queries.ts",
         "src/lib/utils/openai/generateResponse.tsx",
         "src/lib/utils/openai/message-policy.ts",

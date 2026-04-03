@@ -4,5 +4,4 @@ export interface ModelSettingsFormValue {
   premiumChatModel: string;
   imageModel: string;
   audioModel: string;
-  videoModel: string;
 }

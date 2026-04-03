@@ -13,7 +13,6 @@ interface ProfileUsageProps {
   planLimits: PlanLimits[PlanName];
   imageUsed: number;
   audioUsed: number;
-  videoUsed: number;
   dailyConversationsUsed: number;
   usagePeriodStart?: Date;
 }
@@ -77,7 +76,6 @@ export default function ProfileUsage({
   planLimits,
   imageUsed,
   audioUsed,
-  videoUsed,
   dailyConversationsUsed,
   usagePeriodStart,
 }: ProfileUsageProps) {
@@ -105,11 +103,6 @@ export default function ProfileUsage({
             label="Audio Generations"
             used={audioUsed}
             limit={planLimits.audio}
-          />
-          <UsageMetricRow
-            label="Video Generations"
-            used={videoUsed}
-            limit={planLimits.video}
           />
           <UsageMetricRow
             label="Daily Conversations"
