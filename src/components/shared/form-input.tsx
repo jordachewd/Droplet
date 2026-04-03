@@ -36,11 +36,11 @@ interface FormInputProps extends Omit<
 }
 
 export const FORM_INPUT_CONTROL_CLASS = classNames(
-  "w-full rounded-xl border border-slate-400 px-3 py-2 text-sm",
+  "w-full rounded-lg border border-dustyBlue-600 px-3 py-2 text-sm",
   "bg-lavenderHaze-100 text-midnightBlue-900",
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lavenderHaze-300/60",
   "disabled:cursor-not-allowed disabled:opacity-60",
-  "dark:border-slate-500 dark:bg-nightIndigo-1000 dark:text-white",
+  "dark:border-dustyBlue-500/60 dark:bg-nightIndigo-1000 dark:text-white",
   "dark:focus-visible:ring-nightIndigo-500/40",
 );
 
