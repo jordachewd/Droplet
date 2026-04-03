@@ -31,8 +31,8 @@ export const PLAN_LIMITS: PlanLimits = {
   Lite: {
     images: 1,
     audio: 1,
-    conversationsPerDay: 3,
-    promptsPerConversation: 5,
+    conversationsPerDay: 10,
+    promptsPerConversation: 10,
   },
   Pro: {
     images: 30,
