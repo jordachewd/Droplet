@@ -83,9 +83,7 @@ export default function ChatSidebarPromo({
       <article className={promoCardClass}>
         <div className={planPromoAccentClass}></div>
         <div className="z-10 flex w-full flex-col gap-2 text-center">
-          <h6 className="heading-6 text-lavenderHaze-300">
-            {promoTitle}
-          </h6>
+          <h6 className="heading-6 text-lavenderHaze-300">{promoTitle}</h6>
           <p className="text-xs leading-4">{promoMessage}</p>
 
           <Link

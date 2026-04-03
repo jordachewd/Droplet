@@ -96,7 +96,28 @@ export async function deleteUser(clerkId: string) {
     if (!authedUserId) throw new Error("Unauthorized");
     if (authedUserId !== parsedClerkId.data) throw new Error("Forbidden");
 
-    // Delete Clerk account first — if this fails, skip MongoDB cleanup
+    await connectToDatabase();
+
+    const userToDelete = await User.findOne({ clerkId: parsedClerkId.data })
+      .select("_id role")
+      .lean();
+
+    if (!userToDelete) {
+      return serializeForClient({
+        message: "User does not exist!",
+        status: 404,
+        source: "deleteUser",
+      });
+    }
+
+    if (userToDelete.role === "admin") {
+      return serializeForClient({
+        message: "Admin accounts cannot be deleted.",
+        status: 403,
+        source: "deleteUser",
+      });
+    }
+
     try {
       const client = await clerkClient();
       await client.users.deleteUser(parsedClerkId.data);
@@ -111,24 +132,8 @@ export async function deleteUser(clerkId: string) {
       });
     }
 
-    await connectToDatabase();
-
-    // Find user to delete
-    const userToDelete = await User.findOne({ clerkId: parsedClerkId.data })
-      .select("_id")
-      .lean();
-
-    if (!userToDelete) {
-      return serializeForClient({
-        message: "User does not exist!",
-        status: 404,
-        source: "deleteUser",
-      });
-    }
-
     const cascadeResult = await deleteUserCascade(parsedClerkId.data);
 
-    // Delete user after all user-owned data and assets are cleaned up
     const deletedUser = await User.findByIdAndDelete(userToDelete._id);
     if (!deletedUser) {
       return serializeForClient({

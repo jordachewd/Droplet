@@ -1,36 +1,14 @@
-import classNames from "classnames";
 import type { PlanLimits } from "@/constants/plans";
 import { PlanName } from "@/types/PlanData.d";
-
-interface UsageMetric {
-  label: string;
-  used: number;
-  limit: number;
-}
+import UsageMetricRow from "@/components/shared/usage-metric-row";
 
 interface ProfileUsageProps {
-  planName: PlanName;
+  planName: string;
   planLimits: PlanLimits[PlanName];
   imageUsed: number;
   audioUsed: number;
   dailyConversationsUsed: number;
   usagePeriodStart?: Date;
-}
-
-function formatLimit(limit: number): string {
-  return limit === -1 ? "Unlimited" : String(limit);
-}
-
-function resolveProgressPercent(used: number, limit: number): number {
-  if (limit === -1) {
-    return 100;
-  }
-
-  if (limit <= 0) {
-    return 0;
-  }
-
-  return Math.min(100, Math.round((used / limit) * 100));
 }
 
 function formatDate(value: Date): string {
@@ -45,30 +23,6 @@ function addThirtyDays(date: Date): Date {
   const next = new Date(date);
   next.setDate(next.getDate() + 30);
   return next;
-}
-
-function UsageMetricRow({ label, used, limit }: UsageMetric) {
-  const progress = resolveProgressPercent(used, limit);
-
-  return (
-    <div className="ProfileUsageMetric flex flex-col gap-1.5">
-      <div className="flex items-center justify-between gap-2 text-sm">
-        <span className="font-medium">{label}</span>
-        <span className="font-semibold">
-          {used} / {formatLimit(limit)}
-        </span>
-      </div>
-      <div className="h-2.5 w-full rounded-full bg-lavenderHaze-300/70 dark:bg-nightIndigo-500/50">
-        <div
-          className={classNames(
-            "h-full rounded-full bg-twilightPurple-500 transition-all dark:bg-dustyBlue-500",
-            progress >= 90 && limit !== -1 && "bg-amber-500 dark:bg-amber-400",
-          )}
-          style={{ width: `${progress}%` }}
-        ></div>
-      </div>
-    </div>
-  );
 }
 
 export default function ProfileUsage({
@@ -98,16 +52,19 @@ export default function ProfileUsage({
             label="Image Generations"
             used={imageUsed}
             limit={planLimits.images}
+            className="rounded-lg bg-lavenderHaze-200/60 p-3 dark:bg-nightIndigo-900/50"
           />
           <UsageMetricRow
             label="Audio Generations"
             used={audioUsed}
             limit={planLimits.audio}
+            className="rounded-lg bg-lavenderHaze-200/60 p-3 dark:bg-nightIndigo-900/50"
           />
           <UsageMetricRow
             label="Daily Conversations"
             used={dailyConversationsUsed}
             limit={planLimits.conversationsPerDay}
+            className="rounded-lg bg-lavenderHaze-200/60 p-3 dark:bg-nightIndigo-900/50"
           />
         </div>
 

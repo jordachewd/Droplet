@@ -32,4 +32,11 @@ describe("ChatSidebarPromo", () => {
     ).toBeTruthy();
     expect(screen.queryByRole("link", { name: "Upgrade Now" })).toBeNull();
   });
+
+  it('renders "ADMIN" label for admin users', () => {
+    render(<ChatSidebarPromo isOpen planName="Lite" userRole="admin" />);
+
+    expect(screen.getByText("ADMIN")).toBeTruthy();
+    expect(screen.queryByRole("link", { name: "Upgrade Now" })).toBeNull();
+  });
 });

@@ -13,6 +13,10 @@ import {
   getEffectiveSupportEmail,
 } from "@/lib/utils/effective-plan-config";
 import { getEffectivePromoContent } from "@/lib/utils/effective-promo-content";
+import {
+  getDisplayPlanName,
+  UNLIMITED_USAGE_LIMITS,
+} from "@/lib/utils/plan-display";
 import { Transaction } from "@/types/TransactionData.d";
 import { auth } from "@clerk/nextjs/server";
 import PageHead from "@/components/layout/page-head";
@@ -36,7 +40,14 @@ export default async function AppProfilePage() {
 
   const stripeId = userData?.plan?.stripeId || null;
   const planName = userData?.plan?.name ?? "Lite";
-  const planLimits = effectivePlanConfig.limits[planName];
+  const isAdmin = userData?.role === "admin";
+  const planLimits = isAdmin
+    ? UNLIMITED_USAGE_LIMITS
+    : effectivePlanConfig.limits[planName];
+  const displayPlanName = getDisplayPlanName({
+    role: userData?.role,
+    planName,
+  });
   const imageUsed = userData?.plan?.imageGenerations ?? 0;
   const audioUsed = userData?.plan?.audioGenerations ?? 0;
   const dailyConversationsUsed = userData?.dailyConversationsStarted ?? 0;
@@ -62,7 +73,7 @@ export default async function AppProfilePage() {
       <ProfileHeroEditor userData={userData} />
 
       <ProfileUsage
-        planName={planName}
+        planName={displayPlanName}
         planLimits={planLimits}
         imageUsed={imageUsed}
         audioUsed={audioUsed}

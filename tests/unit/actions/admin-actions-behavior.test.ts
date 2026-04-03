@@ -30,6 +30,7 @@ const {
   deleteUserCascadeMock,
   deleteClerkUserMock,
   userFindByIdAndUpdateMock,
+  userFindMock,
   userFindByIdMock,
   userFindByIdAndDeleteMock,
   userUpdateManyMock,
@@ -48,6 +49,7 @@ const {
   deleteUserCascadeMock: vi.fn(),
   deleteClerkUserMock: vi.fn(),
   userFindByIdAndUpdateMock: vi.fn(),
+  userFindMock: vi.fn(),
   userFindByIdMock: vi.fn(),
   userFindByIdAndDeleteMock: vi.fn(),
   userUpdateManyMock: vi.fn(),
@@ -80,6 +82,7 @@ vi.mock("@/lib/database/mongoose", () => ({
 vi.mock("@/lib/database/models/user.model", () => ({
   default: {
     findByIdAndUpdate: userFindByIdAndUpdateMock,
+    find: userFindMock,
     findById: userFindByIdMock,
     findByIdAndDelete: userFindByIdAndDeleteMock,
     updateMany: userUpdateManyMock,
@@ -236,8 +239,10 @@ describe("admin.actions behavior", () => {
         clerkId: "user_123",
         email: "user@example.com",
         username: "user",
+        role: "client",
       }),
     );
+    userFindMock.mockReturnValue(mockMongooseModel([]));
   });
 
   it("toggleUserSuspensionAction updates status and logs audit", async () => {
@@ -305,6 +310,25 @@ describe("admin.actions behavior", () => {
     );
 
     expectErrorState(response, "Unable to remove user.");
+  });
+
+  it("removeUserByAdminAction blocks admin-user deletion", async () => {
+    userFindByIdMock.mockReturnValueOnce(
+      mockMongooseModel({
+        clerkId: "admin_1",
+        email: "admin@example.com",
+        username: "admin",
+        role: "admin",
+      }),
+    );
+
+    const response = await removeUserByAdminAction(
+      buildFormData({ userId: targetUserId }),
+    );
+
+    expectErrorState(response, "Unable to remove user.");
+    expect(deleteClerkUserMock).not.toHaveBeenCalled();
+    expect(deleteUserCascadeMock).not.toHaveBeenCalled();
   });
 
   it("updateAdminSettingAction updates model settings", async () => {
@@ -844,6 +868,24 @@ describe("admin.actions behavior", () => {
         message: "3 pages unpublished.",
       }),
     );
+  });
+
+  it("bulkRemoveUsersAction skips admin ids and removes only client users", async () => {
+    userFindMock.mockReturnValueOnce(
+      mockMongooseModel([{ _id: secondUserId }]),
+    );
+
+    const response = await bulkRemoveUsersAction(
+      buildFormData({ userIds: [targetUserId, secondUserId] }),
+    );
+
+    expect(response).toEqual({
+      status: "success",
+      message: "1 users removed.",
+      severity: "warning",
+    });
+    expect(deleteClerkUserMock).toHaveBeenCalledTimes(1);
+    expect(deleteClerkUserMock).toHaveBeenCalledWith("user_123");
   });
 
   it("bulk actions handle missing ids edge inputs", async () => {

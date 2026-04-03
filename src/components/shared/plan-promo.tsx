@@ -1,6 +1,7 @@
 import classNames from "classnames";
 import { getPlanIcon } from "@/constants/plans";
 import { DEFAULT_PROMO_CONTENT, PromoContent } from "@/constants/promo-content";
+import { ADMIN_PLAN_LABEL } from "@/lib/utils/plan-display";
 import { PlanData, PlanName } from "@/types/PlanData.d";
 import Link from "next/link";
 import { UserRoles } from "@/types/UserData.d";
@@ -59,7 +60,7 @@ export default function PlanPromo({
             ></i>
           )}
 
-          <span>{isAdmin ? promoContent.promoAdminLabel : name}</span>
+          <span>{isAdmin ? ADMIN_PLAN_LABEL : name}</span>
         </h2>
 
         {isAdmin ? (
