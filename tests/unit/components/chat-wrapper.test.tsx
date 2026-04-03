@@ -185,11 +185,11 @@ describe("ChatWrapper", () => {
             content: [
               {
                 type: "text",
-                text: "You've reached your video generation limit for this billing period. You can continue chatting. Start a new conversation to keep going.",
+                text: "You've reached your audio generation limit for this billing period. You can continue chatting. Start a new conversation to keep going.",
               },
             ],
           },
-          stopReason: "video_limit_reached",
+          stopReason: "audio_limit_reached",
           endAction: "start_new_conversation",
           taskStatus: "active",
           acceptedPrompt: true,
@@ -217,7 +217,7 @@ describe("ChatWrapper", () => {
 
     expect(screen.getByTestId("chat-body").textContent).not.toContain("ended");
     expect(screen.getByTestId("chat-body-messages").textContent).toContain(
-      "You've reached your video generation limit for this billing period.",
+      "You've reached your audio generation limit for this billing period.",
     );
     expect(
       screen

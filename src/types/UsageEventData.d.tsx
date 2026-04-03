@@ -1,11 +1,6 @@
 import { PersonaId } from "./PersonaData.d";
 
-export type UsageEventRequestType =
-  | "chat"
-  | "image"
-  | "audio"
-  | "video"
-  | "title";
+export type UsageEventRequestType = "chat" | "image" | "audio" | "title";
 
 export interface UsageEventData {
   userId: string;

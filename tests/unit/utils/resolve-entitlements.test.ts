@@ -36,7 +36,6 @@ describe("resolve-entitlements", () => {
     expect(entitlements.limits).toEqual(PLAN_LIMITS.Lite);
     expect(entitlements.supportsImageGeneration).toBe(true);
     expect(entitlements.supportsAudioGeneration).toBe(true);
-    expect(entitlements.supportsVideoGeneration).toBe(true);
     expect(entitlements.allowedPersonaIds).toHaveLength(PERSONAS.length);
     expect(entitlements.trialPersonaIds).toEqual([
       "teacher",
@@ -59,10 +58,8 @@ describe("resolve-entitlements", () => {
     expect(entitlements.trialPersonaIds).toEqual([]);
     expect(entitlements.supportsImageGeneration).toBe(false);
     expect(entitlements.supportsAudioGeneration).toBe(false);
-    expect(entitlements.supportsVideoGeneration).toBe(false);
     expect(entitlements.imageLimitReached).toBe(true);
     expect(entitlements.audioLimitReached).toBe(true);
-    expect(entitlements.videoLimitReached).toBe(true);
     expect(
       Object.values(entitlements.personaAccess ?? {}).every(
         (accessLevel) => accessLevel === "blocked",
@@ -82,7 +79,6 @@ describe("resolve-entitlements", () => {
       promptsPerConversation: -1,
       images: -1,
       audio: -1,
-      video: -1,
     });
     expect(entitlements.allowedPersonaIds).toHaveLength(PERSONAS.length);
     expect(entitlements.trialPersonaIds).toEqual([]);
@@ -113,7 +109,6 @@ describe("resolve-entitlements", () => {
         promptsPerConversation: 15,
         images: 4,
         audio: 5,
-        video: 2,
       },
       Pro: PLAN_LIMITS.Pro,
       Premium: PLAN_LIMITS.Premium,

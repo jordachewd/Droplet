@@ -137,7 +137,7 @@ interface ConversationStopPayload {
 
 type StopReasonMessages = Record<TaskEndedReason, string>;
 
-type MediaUsageLimitType = "images" | "audio" | "video";
+type MediaUsageLimitType = "images" | "audio";
 type MediaCounterScope = "plan" | "trial";
 
 interface MediaSlotClaimResult {
@@ -168,8 +168,7 @@ function createStopTaskData({
   const endActionInstructions = buildEndActionInstructions(supportEmail);
   const shouldAppendInstruction =
     stopReason !== "image_limit_reached" &&
-    stopReason !== "audio_limit_reached" &&
-    stopReason !== "video_limit_reached";
+    stopReason !== "audio_limit_reached";
   const endActionInstruction = shouldAppendInstruction
     ? ` ${endActionInstructions[endAction]}`
     : "";
@@ -240,27 +239,18 @@ function isMediaLimitStopReason(
 ): value is
   | "media_limit_reached"
   | "image_limit_reached"
-  | "audio_limit_reached"
-  | "video_limit_reached" {
+  | "audio_limit_reached" {
   return (
     value === "media_limit_reached" ||
     value === "image_limit_reached" ||
-    value === "audio_limit_reached" ||
-    value === "video_limit_reached"
+    value === "audio_limit_reached"
   );
 }
 
 function isMediaSpecificLimitStopReason(
   value: OpenAIResponsePayload["blockedReason"],
-): value is
-  | "image_limit_reached"
-  | "audio_limit_reached"
-  | "video_limit_reached" {
-  return (
-    value === "image_limit_reached" ||
-    value === "audio_limit_reached" ||
-    value === "video_limit_reached"
-  );
+): value is "image_limit_reached" | "audio_limit_reached" {
+  return value === "image_limit_reached" || value === "audio_limit_reached";
 }
 
 function resolveMediaCounterField(
@@ -269,31 +259,21 @@ function resolveMediaCounterField(
 ):
   | "plan.imageGenerations"
   | "plan.audioGenerations"
-  | "plan.videoGenerations"
   | "plan.trialUsage.trialImageGenerations"
-  | "plan.trialUsage.trialAudioGenerations"
-  | "plan.trialUsage.trialVideoGenerations" {
+  | "plan.trialUsage.trialAudioGenerations" {
   if (counterScope === "trial") {
     if (limitType === "images") {
       return "plan.trialUsage.trialImageGenerations";
     }
 
-    if (limitType === "audio") {
-      return "plan.trialUsage.trialAudioGenerations";
-    }
-
-    return "plan.trialUsage.trialVideoGenerations";
+    return "plan.trialUsage.trialAudioGenerations";
   }
 
   if (limitType === "images") {
     return "plan.imageGenerations";
   }
 
-  if (limitType === "audio") {
-    return "plan.audioGenerations";
-  }
-
-  return "plan.videoGenerations";
+  return "plan.audioGenerations";
 }
 
 async function claimMediaGenerationSlot({
@@ -345,14 +325,10 @@ async function claimMediaGenerationSlot({
     counterScope === "trial"
       ? limitType === "images"
         ? updatedUser.plan?.trialUsage?.trialImageGenerations
-        : limitType === "audio"
-          ? updatedUser.plan?.trialUsage?.trialAudioGenerations
-          : updatedUser.plan?.trialUsage?.trialVideoGenerations
+        : updatedUser.plan?.trialUsage?.trialAudioGenerations
       : limitType === "images"
         ? updatedUser.plan?.imageGenerations
-        : limitType === "audio"
-          ? updatedUser.plan?.audioGenerations
-          : updatedUser.plan?.videoGenerations;
+        : updatedUser.plan?.audioGenerations;
   const nextCount =
     typeof nextCountRaw === "number" && Number.isFinite(nextCountRaw)
       ? nextCountRaw
@@ -896,7 +872,6 @@ export async function POST(req: Request): Promise<Response> {
       },
       imageGenerationModel: effectiveModelConfig.imageModel,
       audioGenerationModel: effectiveModelConfig.audioModel,
-      videoGenerationModel: effectiveModelConfig.videoModel,
     };
     const persistedTask = providedTaskId
       ? await getTaskByIdForUser({
@@ -1067,24 +1042,7 @@ export async function POST(req: Request): Promise<Response> {
         : userData?.plan?.usagePeriodStart,
       planLimits: effectivePlanLimits,
     });
-    const videoUsage = checkUsageLimit({
-      planName,
-      currentCount: isTrialPersona
-        ? userData?.plan?.trialUsage?.trialVideoGenerations
-        : userData?.plan?.videoGenerations,
-      limitType: "video",
-      overrideLimit: isAdminUser
-        ? -1
-        : isTrialPersona
-          ? effectiveTrialLimits.video
-          : undefined,
-      usagePeriodStart: isTrialPersona
-        ? userData?.plan?.trialUsage?.trialUsagePeriodStart
-        : userData?.plan?.usagePeriodStart,
-      planLimits: effectivePlanLimits,
-    });
-
-    if (imageUsage.didReset || audioUsage.didReset || videoUsage.didReset) {
+    if (imageUsage.didReset || audioUsage.didReset) {
       await User.findOneAndUpdate(
         { clerkId: userId },
         isTrialPersona
@@ -1092,7 +1050,6 @@ export async function POST(req: Request): Promise<Response> {
               $set: {
                 "plan.trialUsage.trialImageGenerations": 0,
                 "plan.trialUsage.trialAudioGenerations": 0,
-                "plan.trialUsage.trialVideoGenerations": 0,
                 "plan.trialUsage.trialUsagePeriodStart": new Date(),
               },
             }
@@ -1100,7 +1057,6 @@ export async function POST(req: Request): Promise<Response> {
               $set: {
                 "plan.imageGenerations": 0,
                 "plan.audioGenerations": 0,
-                "plan.videoGenerations": 0,
                 "plan.usagePeriodStart": new Date(),
               },
             },
@@ -1115,14 +1071,11 @@ export async function POST(req: Request): Promise<Response> {
       entitlements.supportsImageGeneration && !imageUsage.allowed;
     const audioLimitReached =
       entitlements.supportsAudioGeneration && !audioUsage.allowed;
-    const videoLimitReached =
-      entitlements.supportsVideoGeneration && !videoUsage.allowed;
 
     const resolvedEntitlements = {
       ...entitlements,
       imageLimitReached,
       audioLimitReached,
-      videoLimitReached,
     };
 
     const storedMessagesBeforePrompt = ensureMessagesHaveId(
@@ -1429,11 +1382,6 @@ export async function POST(req: Request): Promise<Response> {
         : isTrialPersona
           ? effectiveTrialLimits.audio
           : effectivePlanLimits[planName].audio,
-      video: isAdminUser
-        ? -1
-        : isTrialPersona
-          ? effectiveTrialLimits.video
-          : effectivePlanLimits[planName].video,
     } as const;
 
     if (streamingResponseRequested) {

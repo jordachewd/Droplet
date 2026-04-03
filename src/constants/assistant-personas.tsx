@@ -82,7 +82,7 @@ export const PERSONAS: Persona[] = [
     heroImage: "/personas/creator.svg",
     starterPrompts: [
       "Write a short cinematic product launch script.",
-      "Give me 10 video ideas for a coding education channel.",
+      "Give me 10 content series ideas for a coding education channel.",
       "Create a storytelling framework for a personal brand post.",
       "Draft a hook and outline for a newsletter about AI trends.",
       "Generate 5 creative taglines for a fitness app launch.",

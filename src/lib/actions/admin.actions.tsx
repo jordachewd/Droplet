@@ -7,6 +7,7 @@ import { getDefaultAboutContent } from "@/constants/about-data";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import { PERSONAS, VALID_PERSONA_ID_SET } from "@/constants/assistant-personas";
 import { buildFaqs } from "@/constants/faqs";
+import { getDefaultHomepageFeaturedPersonas } from "@/constants/homepage-copy";
 import { getDefaultLandingContent } from "@/constants/landing-data";
 import { STOP_REASON_CODES } from "@/constants/stop-reasons";
 import AppSetting from "@/lib/database/models/app-setting.model";
@@ -219,7 +220,6 @@ function parseStructuredAdminSettingValue({
       premiumChatModel: getStringField(formData, "premiumChatModel"),
       imageModel: getStringField(formData, "imageModel"),
       audioModel: getStringField(formData, "audioModel"),
-      videoModel: getStringField(formData, "videoModel"),
     };
   }
 
@@ -255,7 +255,6 @@ function parseStructuredAdminSettingValue({
         ),
         images: getNumericField(formData, "liteImages"),
         audio: getNumericField(formData, "liteAudio"),
-        video: getNumericField(formData, "liteVideo"),
       },
       Pro: {
         conversationsPerDay: getNumericField(
@@ -268,7 +267,6 @@ function parseStructuredAdminSettingValue({
         ),
         images: getNumericField(formData, "proImages"),
         audio: getNumericField(formData, "proAudio"),
-        video: getNumericField(formData, "proVideo"),
       },
       Premium: {
         conversationsPerDay: getNumericField(
@@ -281,7 +279,6 @@ function parseStructuredAdminSettingValue({
         ),
         images: getNumericField(formData, "premiumImages"),
         audio: getNumericField(formData, "premiumAudio"),
-        video: getNumericField(formData, "premiumVideo"),
       },
     };
   }
@@ -291,7 +288,6 @@ function parseStructuredAdminSettingValue({
       promptsPerConversation: getNumericField(formData, "trialPrompts"),
       images: getNumericField(formData, "trialImages"),
       audio: getNumericField(formData, "trialAudio"),
-      video: getNumericField(formData, "trialVideo"),
     };
   }
 
@@ -342,6 +338,37 @@ function parseStructuredAdminSettingValue({
       ctaLabel: getStringField(formData, "heroCtaLabel"),
       imageAlt: getStringField(formData, "heroImageAlt"),
     };
+  }
+
+  if (key === "admin.homepageCopy") {
+    return {
+      ctaHeading: getStringField(formData, "homepageCtaHeading"),
+      ctaDescription: getStringField(formData, "homepageCtaDescription"),
+      ctaPrimaryLabel: getStringField(formData, "homepageCtaPrimaryLabel"),
+      ctaSecondaryLabel: getStringField(formData, "homepageCtaSecondaryLabel"),
+      spotlightLabel: getStringField(formData, "homepageSpotlightLabel"),
+      spotlightHeading: getStringField(formData, "homepageSpotlightHeading"),
+      spotlightDescription: getStringField(
+        formData,
+        "homepageSpotlightDescription",
+      ),
+    };
+  }
+
+  if (key === "admin.homepageFeaturedPersonas") {
+    const selectedPersonaIds = formData
+      .getAll("homepageFeaturedPersonaIds")
+      .filter(
+        (value): value is PersonaId =>
+          typeof value === "string" &&
+          VALID_PERSONA_ID_SET.has(value as PersonaId),
+      );
+
+    const dedupedPersonaIds = Array.from(new Set(selectedPersonaIds));
+
+    return dedupedPersonaIds.length > 0
+      ? dedupedPersonaIds
+      : getDefaultHomepageFeaturedPersonas();
   }
 
   if (key === "admin.landingContent") {
@@ -685,7 +712,12 @@ export async function updateAdminSettingAction(
       revalidatePath("/app/plans");
     }
 
-    if (key === "admin.heroContent" || key === "admin.landingContent") {
+    if (
+      key === "admin.heroContent" ||
+      key === "admin.landingContent" ||
+      key === "admin.homepageCopy" ||
+      key === "admin.homepageFeaturedPersonas"
+    ) {
       revalidatePath("/");
     }
 

@@ -3,6 +3,10 @@ import { getDefaultAboutContent } from "@/constants/about-data";
 import { getDefaultHeroContent } from "@/constants/hero-content";
 import { getDefaultLandingContent } from "@/constants/landing-data";
 import {
+  getDefaultHomepageCopy,
+  getDefaultHomepageFeaturedPersonas,
+} from "@/constants/homepage-copy";
+import {
   getEffectiveAboutContent,
   getEffectiveLandingPageContent,
 } from "@/lib/utils/effective-website-copy";
@@ -48,6 +52,10 @@ describe("effective-website-copy", () => {
 
     expect(result.heroContent).toEqual(getDefaultHeroContent());
     expect(result.landingContent).toEqual(getDefaultLandingContent());
+    expect(result.homepageCopy).toEqual(getDefaultHomepageCopy());
+    expect(result.homepageFeaturedPersonaIds).toEqual(
+      getDefaultHomepageFeaturedPersonas(),
+    );
   });
 
   it("normalizes configured hero and landing values", async () => {
@@ -92,6 +100,22 @@ describe("effective-website-copy", () => {
           },
         },
       },
+      {
+        key: "admin.homepageCopy",
+        value: {
+          ctaHeading: "  New CTA heading  ",
+          ctaDescription: "New CTA description",
+          ctaPrimaryLabel: "Join now",
+          ctaSecondaryLabel: "Compare plans",
+          spotlightLabel: "Team spotlight",
+          spotlightHeading: "Pick a specialist voice.",
+          spotlightDescription: "Focused assistants for focused tasks.",
+        },
+      },
+      {
+        key: "admin.homepageFeaturedPersonas",
+        value: ["teacher", "creator", "teacher", "invalid-id"],
+      },
     ]);
 
     const result = await getEffectiveLandingPageContent();
@@ -118,6 +142,16 @@ describe("effective-website-copy", () => {
     expect(result.landingContent.workflow.rhythmCards[1]).toEqual(
       landingDefaults.workflow.rhythmCards[1],
     );
+    expect(result.homepageCopy).toEqual({
+      ctaHeading: "New CTA heading",
+      ctaDescription: "New CTA description",
+      ctaPrimaryLabel: "Join now",
+      ctaSecondaryLabel: "Compare plans",
+      spotlightLabel: "Team spotlight",
+      spotlightHeading: "Pick a specialist voice.",
+      spotlightDescription: "Focused assistants for focused tasks.",
+    });
+    expect(result.homepageFeaturedPersonaIds).toEqual(["teacher", "creator"]);
   });
 
   it("normalizes configured about content and preserves fallback sections", async () => {
@@ -172,6 +206,10 @@ describe("effective-website-copy", () => {
 
     expect(landingResult.heroContent).toEqual(getDefaultHeroContent());
     expect(landingResult.landingContent).toEqual(getDefaultLandingContent());
+    expect(landingResult.homepageCopy).toEqual(getDefaultHomepageCopy());
+    expect(landingResult.homepageFeaturedPersonaIds).toEqual(
+      getDefaultHomepageFeaturedPersonas(),
+    );
 
     connectToDatabaseMock.mockRejectedValueOnce(new Error("db unavailable"));
     const aboutResult = await getEffectiveAboutContent();

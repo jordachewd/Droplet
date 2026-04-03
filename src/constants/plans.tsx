@@ -11,7 +11,6 @@ export type PlanLimits = Record<
   {
     images: number;
     audio: number;
-    video: number;
     conversationsPerDay: number;
     promptsPerConversation: number;
   }
@@ -32,21 +31,18 @@ export const PLAN_LIMITS: PlanLimits = {
   Lite: {
     images: 3,
     audio: 3,
-    video: 1,
     conversationsPerDay: 5,
     promptsPerConversation: 10,
   },
   Pro: {
     images: 50,
     audio: 50,
-    video: 10,
     conversationsPerDay: 50,
     promptsPerConversation: 100,
   },
   Premium: {
     images: -1,
     audio: -1,
-    video: -1,
     conversationsPerDay: -1,
     promptsPerConversation: -1,
   },
@@ -56,14 +52,12 @@ export const PERSONA_TRIAL_LIMITS = {
   promptsPerConversation: 5,
   images: 3,
   audio: 2,
-  video: 1,
 } as const;
 
 export interface PersonaTrialLimits {
   promptsPerConversation: number;
   images: number;
   audio: number;
-  video: number;
 }
 
 type PersonaAccessByPlan = Record<PlanName, PersonaId[]>;
@@ -154,7 +148,7 @@ export function buildPlans({
     return `${fullAccessCount} personas (full access) + try all others (limited access)`;
   }
 
-  const trialLimitsLabel = `Trial personas: ${trialLimits.promptsPerConversation} prompts, ${trialLimits.images} images, ${trialLimits.audio} audio, ${trialLimits.video} video / 30 days`;
+  const trialLimitsLabel = `Trial personas: ${trialLimits.promptsPerConversation} prompts, ${trialLimits.images} images, ${trialLimits.audio} audio / 30 days`;
 
   return [
     {
@@ -198,15 +192,6 @@ export function buildPlans({
             limit: limits.Lite.audio,
             singular: "audio generation",
             plural: "audio generations",
-            suffix: " per month",
-          }),
-          isIncluded: true,
-        },
-        {
-          label: formatMediaLimitLabel({
-            limit: limits.Lite.video,
-            singular: "video generation",
-            plural: "video generations",
             suffix: " per month",
           }),
           isIncluded: true,
@@ -262,15 +247,6 @@ export function buildPlans({
             limit: limits.Pro.audio,
             singular: "audio generation",
             plural: "audio generations",
-            suffix: " per month",
-          }),
-          isIncluded: true,
-        },
-        {
-          label: formatMediaLimitLabel({
-            limit: limits.Pro.video,
-            singular: "video generation",
-            plural: "video generations",
             suffix: " per month",
           }),
           isIncluded: true,
@@ -336,15 +312,6 @@ export function buildPlans({
         },
         {
           label: "Quality audio generation (Premium)",
-          isIncluded: true,
-        },
-        {
-          label: formatMediaLimitLabel({
-            limit: limits.Premium.video,
-            singular: "video generation",
-            plural: "video generations",
-            suffix: " per month",
-          }),
           isIncluded: true,
         },
         {

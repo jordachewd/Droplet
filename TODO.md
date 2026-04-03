@@ -5,90 +5,115 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #83 (2026-04-02). DEPLOYED TO PRODUCTION. All 7 validation gates GREEN (603 tests, lint 0/0, TSC clean, build passes, knip 0). All Milestones 0–25 COMPLETE. Phases 178, 181, 182 COMPLETED this session.**
+> **STATUS: PM audit #86 (2026-04-03). DEPLOYED TO PRODUCTION. All 7 validation gates GREEN (594 tests, lint 0/0, TSC clean, build passes, knip 0). All Milestones 0–25 COMPLETE. Phases 185, 186-A, 186-B, 180.1 COMPLETE. V1.0 MVP pre-release phase.**
 >
-> **GATE STATUS: Validation GREEN. Architecture YELLOW (C1 code-complete, pending production deploy verification). Product YELLOW (C1 pending deploy; C2 ops investigation pending). Admin YELLOW (~12 hardcoded marketing strings). Public GREEN. Contract GREEN.**
+> **GATE STATUS: Validation GREEN. Architecture GREEN. Product YELLOW (~8 hardcoded marketing strings remain). Admin YELLOW (missing error boundary). Public GREEN. Contract GREEN.**
 >
-> **CRITICAL ISSUES STATUS (PM audit #83):**
+> **OWNER DIRECTIVES (PM audit #85 — ALL DONE):**
 >
-> - 🟡 C1: Stream timeout — CODE-COMPLETE (Phase 181). `functionStartTime` budget fix implemented. Needs production deploy + verification with media gen request.
-> - 🟡 C2: Stripe webhook — DIAGNOSTIC DONE (Phase 182). `eventType` added to unhandled response. Code verified correct by quintuple audit. Issue is operational — owner must verify Stripe Dashboard config (`checkout.session.completed` enabled, endpoint URL, signing secret).
+> - ✅ Remove ALL video generation from the app entirely — **DONE (Phase 186-A).**
+> - ✅ Increase Token Limits by Plan and Task Class to the maximum possible — **DONE (Phase 186-B).**
 >
-> **ACTIVE NON-CRITICAL ISSUES:**
+> **OWNER DIRECTIVE (PM audit #86 — NEW):**
 >
-> - ⚠️ M1: No video player error state (unlike audio player). Phase 179.
-> - ⚠️ M2: ~12 hardcoded marketing/configurable strings across 5 components. Owner escalated to HIGH. Phase 180 split into 180.1–180.4.
-> - ⚠️ M3: Hardcoded persona IDs `["strategist", "teacher", "creator"]` in homepage spotlight. Covered by Phase 180.1.
-> - ⚠️ M4: Hardcoded `$` currency symbol in `profile-billing.tsx`. Should use `getEffectiveCurrencySymbol()` per SPEC.md.
+> - 🔴 Prepare pre-release task list for Engineer — fix all crucial bugs and errors for v1.0 MVP release. HIGH!
 >
-> **EXECUTION ORDER (PM audit #83):**
+> **EXECUTION ORDER (PM audit #86 — V1.0 Pre-Release):**
 >
-> 1. **🟠 DEPLOY + VERIFY (OWNER ACTION)** — Deploy latest build. Verify C1 (media gen timeout fix) and C2 (Stripe payment flow) in production.
-> 2. **HIGH Phase 180.1** — Homepage marketing text extraction (cta-banner + persona-spotlight).
-> 3. **HIGH Phase 180.2** — Chat display text extraction (chat-intro + chat-input).
-> 4. **HIGH Phase 180.3** — Plans display text extraction (plans-section + plan-card).
-> 5. **HIGH Phase 180.4** — Currency symbol compliance (profile-billing).
-> 6. **MEDIUM Phase 179** — Video player error state.
-> 7. **MEDIUM Phase 143** — Env var runtime validation.
-> 8. **MEDIUM Phase 144** — Admin config cache.
-> 9. **MEDIUM Phase 145–165** — Remaining backlog.
+> 1. **🔴 Phase 187-A — ENGINEER** — Add admin error boundary (missing `error.tsx`). Blocks release.
+> 2. **🔴 Phase 187-B — ENGINEER** — Fix Clerk webhook `user.deleted` cascade order. Data integrity risk.
+> 3. **🔴 Phase 187-C — ENGINEER** — Fix audio player permanent error state. UX defect in paid feature.
+> 4. **HIGH Phase 143** — Env var runtime validation (7 unsafe casts). Deployment risk.
+> 5. **HIGH Phase 180.4** — Currency symbol compliance (hardcoded `$`). Spec violation.
+> 6. **HIGH Phase 180.2** — Chat display text extraction.
+> 7. **HIGH Phase 180.3** — Plans display text extraction.
+> 8. **MEDIUM Phase 187-D** — Add `download:` rate-limit key to cascade cleanup.
+> 9. **MEDIUM Phase 144** — Admin config cache.
+> 10. **MEDIUM Phase 165** — Checkout success page DB polling.
 
 ---
 
-## 🟠 DEPLOY + VERIFY — Owner Action Required
+## ✅ Phase 185 — Remove `sora-2-pro` — DONE (2026-04-02)
 
-> **Not an engineering task.** Owner must deploy and verify production behavior.
-
-**C1 Verification (Stream Timeout Fix):**
-
-1. Deploy the latest build to production.
-2. Start a conversation and request image generation.
-3. If the request takes longer than expected, verify the client receives a clean timeout warning (amber alert: "Your request is taking longer than expected...") instead of "The response stream ended unexpectedly."
-4. Check Vercel function logs for `proactive-timeout` entries.
-
-**C2 Verification (Stripe Payment Flow):**
-
-1. Make a test payment in production.
-2. Check Vercel function logs for `[stripe-webhook] Event type received: checkout.session.completed` entry.
-3. If that log entry is ABSENT — `checkout.session.completed` is not reaching the handler. Fix in Stripe Dashboard:
-   - Go to Stripe Dashboard → Webhooks → Endpoint
-   - Verify `checkout.session.completed` is in the enabled events list
-   - Verify endpoint URL matches production URL (`https://droplet.jwd-apps.com/api/webhooks/stripe`)
-   - Verify signing secret matches `STRIPE_WEBHOOK_SECRET` env var in Vercel
-4. If log shows receipt but no Transaction created — escalate back to engineering.
+> Archived in DONE.md.
 
 ---
 
-## 🔵 ENGINEER START HERE — Phase 180.1 HIGH — Homepage Marketing Text Extraction
+## ✅ Phase 180.1 — Homepage Marketing Text Extraction — DONE (2026-04-03)
 
-> AGENTS.md Rule 11: "No hardcoded display text." Owner escalated to HIGH. Homepage is the highest-visibility surface.
+> Archived in DONE.md.
 
-**Files:** `src/components/sections/homepage/cta-banner.tsx`, `src/components/sections/homepage/persona-spotlight.tsx`
+---
 
-**Strings to extract (7 marketing + 1 config):**
+## ✅ Phase 186-A — Remove ALL Video Generation — DONE (2026-04-03)
 
-1. `cta-banner.tsx`: `"Create an account, pick a persona, and let the conversation stay focused."` — heading
-2. `cta-banner.tsx`: `"Explore the persona catalog first, or compare the plan limits if you already know how much capacity you need."` — body
-3. `cta-banner.tsx`: `"Create account"` — CTA button label
-4. `cta-banner.tsx`: `"Explore plans"` — CTA button label
-5. `persona-spotlight.tsx`: `"Persona spotlight"` — section label
-6. `persona-spotlight.tsx`: `"Different jobs need different voices."` — heading
-7. `persona-spotlight.tsx`: `"Droplet starts with purpose-built personas so planning, teaching, and creative work do not feel like the same assistant wearing a different label."` — body
-8. `persona-spotlight.tsx`: `["strategist", "teacher", "creator"]` — hardcoded featured persona IDs
+> Archived in DONE.md.
+
+---
+
+## ✅ Phase 186-B — Increase Token Limits — DONE (2026-04-03)
+
+> Archived in DONE.md.
+
+---
+
+## 🔴 ENGINEER START HERE — Phase 187-A — Add Admin Error Boundary
+
+> PM audit #86 (v1.0 pre-release). Missing error boundary for admin route group. When an admin page throws at render time, the error bubbles to root boundary — admin loses sidebar navigation and must manually navigate back.
+
+**File to CREATE:** `src/app/(admin)/error.tsx`
 
 **What to do:**
 
-1. Add new admin-configurable keys to the existing `effective-promo-content.ts` resolver (or create `effective-website-copy.ts` if the existing resolver scope doesn't fit).
-2. Add corresponding defaults to `DEFAULT_PROMO_CONTENT` (or new defaults constant).
-3. Update both components to receive configurable text as props from Server Component parents.
-4. For featured persona IDs: add admin setting key `admin.homepageFeaturedPersonas` with default `["strategist", "teacher", "creator"]`.
+1. Create an error boundary component following the same pattern as `src/app/(chat)/error.tsx`.
+2. Wrap in admin layout styling (maintain sidebar context).
+3. Include a "Back to Admin" link to `/admin`.
+4. Include the error reset button.
 
 **Acceptance criteria:**
 
-- [ ] All 7 marketing strings flow from admin-configurable settings
-- [ ] Featured persona IDs flow from admin setting
-- [ ] Default values match current hardcoded strings
-- [ ] Admin panel shows editable fields for these strings
+- [ ] `src/app/(admin)/error.tsx` exists
+- [ ] Admin render errors show within admin layout context
+- [ ] "Back to Admin" navigation link present
+- [ ] Error reset button present
+- [ ] Build passes, tests pass
+
+---
+
+## 🔴 Phase 187-B — Fix Clerk Webhook `user.deleted` Cascade Order
+
+> PM audit #86 (v1.0 pre-release). Clerk webhook deletes User document FIRST, then runs cascade. If cascade fails mid-way, orphaned tasks/transactions/uploads remain with no user record to reference for retry. The `user.actions.tsx` `deleteUser` does it correctly: cascade first, then delete user.
+
+**File:** `src/app/api/webhooks/clerk/route.tsx`
+
+**What to do:**
+
+1. Move the `deleteUserCascade(clerkId, ...)` call BEFORE `User.findByIdAndDelete(userToDelete._id)`.
+2. Match the pattern in `src/lib/actions/user.actions.tsx` (cascade first, delete user last).
+
+**Acceptance criteria:**
+
+- [ ] `deleteUserCascade` executes before `User.findByIdAndDelete`
+- [ ] If cascade fails, User record remains for retry
+- [ ] Build passes, tests pass
+
+---
+
+## 🔴 Phase 187-C — Fix Audio Player Permanent Error State
+
+> PM audit #86 (v1.0 pre-release). When `audioElement.play()` rejects (network blip, autoplay policy), `setAudioError("Audio unavailable.")` is called and the play button becomes permanently disabled (`disabled={audioError !== null}`). No recovery path — user must reload the page.
+
+**File:** `src/components/shared/audio-player.tsx`
+
+**What to do:**
+
+1. Clear `audioError` at the start of `togglePlay()` before attempting `play()`.
+2. This allows the user to retry after a transient failure.
+
+**Acceptance criteria:**
+
+- [ ] `audioError` is cleared before each play attempt
+- [ ] User can retry audio playback after a transient error
 - [ ] Build passes, tests pass
 
 ---
@@ -164,27 +189,11 @@
 
 ---
 
-## MEDIUM — Phase 179 — Add Video Player Error State
+## HIGH — Phase 143 — Env Var Runtime Validation
 
-> `video-player.tsx` has no error handling. If the video URL fails to load, the browser shows a default broken element with no user-facing message. The audio player (`audio-player.tsx`) already handles this well — match that pattern.
+> **Escalated to HIGH (PM audit #86).** 7 unsafe `process.env` casts: 4 `as string` + 3 `!`. Missing env vars produce cryptic runtime crashes. Deployment risk.
 
-**File:** `src/components/shared/video-player.tsx`
-
-**What to do:**
-
-1. Add `onError` handler to the `<video>` element.
-2. Show user-facing error state ("Video unavailable.") similar to `AudioPlayer`.
-
-**Acceptance criteria:**
-
-- [ ] Video player shows error message on failed load
-- [ ] Build passes
-
----
-
-## MEDIUM — Phase 143 — Env Var Runtime Validation
-
-> 8 unsafe `process.env` casts: 4 `as string` + 4 `!`. Missing env vars produce cryptic runtime crashes.
+**Files:** `src/constants/openai.tsx` (3x `!`), `src/constants/aws.tsx` (3x `as string`), `src/lib/database/mongoose.tsx` (1x `as string`), `src/lib/actions/transaction.action.tsx` (1x `!`)
 
 **What to do:**
 
@@ -211,6 +220,23 @@
 **Acceptance criteria:**
 
 - [ ] Admin config queries cached with 30s TTL
+- [ ] Build passes, tests pass
+
+---
+
+## MEDIUM — Phase 187-D — Add `download:` Rate-Limit Key to Cascade Cleanup
+
+> PM audit #86 (v1.0 pre-release). `download:${userId}` rate-limit entries are NOT cleaned up in `deleteUserCascade`. Keys have TTL (expire naturally) but should be cleaned for data hygiene.
+
+**File:** `src/lib/utils/delete-user-cascade.ts`
+
+**What to do:**
+
+1. Add `download:${clerkId}` to the `getRateLimitKeys()` array.
+
+**Acceptance criteria:**
+
+- [ ] `download:` rate-limit key included in cascade cleanup
 - [ ] Build passes, tests pass
 
 ---

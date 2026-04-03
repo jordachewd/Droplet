@@ -59,42 +59,14 @@ const audioGenerationTool = {
   },
 };
 
-const videoGenerationTool = {
-  type: "function",
-  function: {
-    name: "getGeneratedVideo",
-    description:
-      "Generates a video when requested by the user. Use this function if the user asks for a video," +
-      " e.g., when prompted with 'generate video ...', 'create video ...' or anything related." +
-      " USE PREVIOUS PROMPTS for generating videos as well. Trim prompts to maximum 4000 characters.",
-    strict: true,
-    parameters: {
-      type: "object",
-      properties: {
-        prompt: {
-          type: "string",
-          description: "Description of the video to generate",
-        },
-      },
-      required: ["prompt"],
-      additionalProperties: false,
-    },
-  },
-};
-
-type ChatTool =
-  | typeof imageGenerationTool
-  | typeof audioGenerationTool
-  | typeof videoGenerationTool;
+type ChatTool = typeof imageGenerationTool | typeof audioGenerationTool;
 
 export function getChatTools({
   supportsImageGeneration,
   supportsAudioGeneration,
-  supportsVideoGeneration,
 }: {
   supportsImageGeneration: boolean;
   supportsAudioGeneration: boolean;
-  supportsVideoGeneration: boolean;
 }) {
   const tools: ChatTool[] = [];
 
@@ -104,10 +76,6 @@ export function getChatTools({
 
   if (supportsAudioGeneration) {
     tools.push(audioGenerationTool);
-  }
-
-  if (supportsVideoGeneration) {
-    tools.push(videoGenerationTool);
   }
 
   return tools;

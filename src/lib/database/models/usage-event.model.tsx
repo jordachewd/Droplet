@@ -12,7 +12,7 @@ const UsageEventSchema = new Schema<UsageEventData>(
     requestType: {
       type: String,
       required: true,
-      enum: ["chat", "image", "audio", "video", "title"],
+      enum: ["chat", "image", "audio", "title"],
       index: true,
     },
     tokensIn: { type: Number },

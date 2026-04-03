@@ -38,7 +38,6 @@ const baseUserData: UserData = {
     expiresOn: new Date("2027-01-01T00:00:00.000Z"),
     imageGenerations: 0,
     audioGenerations: 0,
-    videoGenerations: 0,
   },
   __v: 0,
 };

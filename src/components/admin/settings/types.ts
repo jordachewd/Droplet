@@ -1,5 +1,6 @@
 import type { PersonaTrialLimits, PlanLimits } from "@/constants/plans";
 import type { PromoContent } from "@/constants/promo-content";
+import { HomepageCopy } from "@/constants/homepage-copy";
 import { AboutContent } from "@/constants/about-data";
 import type { FaqItem } from "@/constants/faqs";
 import { HeroContent } from "@/constants/hero-content";
@@ -49,6 +50,8 @@ export type FaqContentSettingsFormValue = FaqItem[];
 export type HeroContentSettingsFormValue = HeroContent;
 
 export type LandingContentSettingsFormValue = LandingContent;
+export type HomepageCopySettingsFormValue = HomepageCopy;
+export type HomepageFeaturedPersonasSettingsFormValue = PersonaId[];
 
 export type AboutContentSettingsFormValue = AboutContent;
 export type PromoContentSettingsFormValue = PromoContent;

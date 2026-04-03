@@ -173,8 +173,7 @@ function renderAboutVisual(
       },
       {
         label: "Premium",
-        detail:
-          "Reserved for the highest-capacity media workflows, including video.",
+        detail: "Reserved for the highest-capacity media workflows.",
       },
     ];
 

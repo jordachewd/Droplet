@@ -60,21 +60,18 @@ describe("plans constants", () => {
     expect(PLAN_LIMITS.Lite).toEqual({
       images: 3,
       audio: 3,
-      video: 1,
       conversationsPerDay: 5,
       promptsPerConversation: 10,
     });
     expect(PLAN_LIMITS.Pro).toEqual({
       images: 50,
       audio: 50,
-      video: 10,
       conversationsPerDay: 50,
       promptsPerConversation: 100,
     });
     expect(PLAN_LIMITS.Premium).toEqual({
       images: -1,
       audio: -1,
-      video: -1,
       conversationsPerDay: -1,
       promptsPerConversation: -1,
     });
@@ -95,8 +92,7 @@ describe("plans constants", () => {
               isIncluded: true,
             }),
             expect.objectContaining({
-              label:
-                "Trial personas: 5 prompts, 3 images, 2 audio, 1 video / 30 days",
+              label: "Trial personas: 5 prompts, 3 images, 2 audio / 30 days",
               isIncluded: true,
             }),
             expect.objectContaining({
@@ -115,10 +111,6 @@ describe("plans constants", () => {
               label: "3 audio generations per month",
               isIncluded: true,
             }),
-            expect.objectContaining({
-              label: "1 video generation per month",
-              isIncluded: true,
-            }),
           ]),
         }),
         expect.objectContaining({
@@ -132,16 +124,11 @@ describe("plans constants", () => {
               isIncluded: true,
             }),
             expect.objectContaining({
-              label:
-                "Trial personas: 5 prompts, 3 images, 2 audio, 1 video / 30 days",
+              label: "Trial personas: 5 prompts, 3 images, 2 audio / 30 days",
               isIncluded: true,
             }),
             expect.objectContaining({
               label: "100 prompts per conversation",
-              isIncluded: true,
-            }),
-            expect.objectContaining({
-              label: "10 video generations per month",
               isIncluded: true,
             }),
           ]),
@@ -165,10 +152,6 @@ describe("plans constants", () => {
             }),
             expect.objectContaining({
               label: "Quality audio generation (Premium)",
-              isIncluded: true,
-            }),
-            expect.objectContaining({
-              label: "Unlimited video generations per month",
               isIncluded: true,
             }),
           ]),
@@ -202,21 +185,18 @@ describe("plans constants", () => {
           promptsPerConversation: 12,
           images: 4,
           audio: 5,
-          video: 2,
         },
         Pro: {
           conversationsPerDay: 60,
           promptsPerConversation: 120,
           images: 55,
           audio: 65,
-          video: 12,
         },
         Premium: {
           conversationsPerDay: -1,
           promptsPerConversation: -1,
           images: -1,
-          audio: -1,
-          video: 20,
+          audio: 20,
         },
       },
     });
@@ -240,7 +220,7 @@ describe("plans constants", () => {
     ).toBe(true);
     expect(
       premiumPlan?.inclusions.some(
-        (inclusion) => inclusion.label === "20 video generations per month",
+        (inclusion) => inclusion.label === "20 audio generations",
       ),
     ).toBe(true);
   });

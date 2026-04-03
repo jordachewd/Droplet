@@ -32,7 +32,7 @@ type PersonaPromptMatrix = Record<
 >;
 
 const CHAT_PLATFORM_PROMPT =
-  "You are Droplet, a persona-based AI assistant platform with access to tools for generating images, audio, and video. Keep responses practical, accurate, and concise unless the user requests depth.";
+  "You are Droplet, a persona-based AI assistant platform with access to tools for generating images and audio. Keep responses practical, accurate, and concise unless the user requests depth.";
 
 const MODEL_FAMILY_GUIDANCE: Record<PersonaPromptModelFamily, string> = {
   nano: "Assume a very small model budget. Use direct language, compact structure, and only the most important context. Ask at most one clarifying question when it is necessary to avoid a wrong answer.",

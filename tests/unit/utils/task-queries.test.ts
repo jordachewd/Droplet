@@ -127,10 +127,6 @@ describe("task-queries", () => {
               type: "audio_url",
               audio_url: "https://example.com/audio.wav",
             },
-            {
-              type: "video_url",
-              video_url: "https://example.com/video.mp4",
-            },
           ],
         },
       ],

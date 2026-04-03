@@ -108,11 +108,6 @@ export function AdminLimitsSection({
                     name={`${fieldPrefix}Audio`}
                     defaultValue={planLimits.audio}
                   />
-                  <LimitInput
-                    label="Video Generations"
-                    name={`${fieldPrefix}Video`}
-                    defaultValue={planLimits.video}
-                  />
                 </div>
               </fieldset>
             );
@@ -166,16 +161,6 @@ export function AdminLimitsSection({
               min={0}
               name="trialAudio"
               defaultValue={trialLimitsValue.audio}
-              className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
-            />
-          </label>
-          <label className="text-sm">
-            <span className="mb-1 block font-medium">Video Generations</span>
-            <input
-              type="number"
-              min={0}
-              name="trialVideo"
-              defaultValue={trialLimitsValue.video}
               className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
             />
           </label>

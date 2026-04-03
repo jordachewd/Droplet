@@ -7,6 +7,8 @@ import {
   AboutContentSettingsFormValue,
   FaqContentSettingsFormValue,
   HeroContentSettingsFormValue,
+  HomepageCopySettingsFormValue,
+  HomepageFeaturedPersonasSettingsFormValue,
   LimitsSettingsFormValue,
   LandingContentSettingsFormValue,
   PersonaAccessSettingsFormValue,
@@ -78,10 +80,6 @@ export function normalizeModelSettingsValue(
     typeof value.audioModel === "string"
       ? value.audioModel
       : defaults.audioModel;
-  const videoModel =
-    typeof value.videoModel === "string"
-      ? value.videoModel
-      : defaults.videoModel;
 
   return {
     liteChatModel,
@@ -89,7 +87,6 @@ export function normalizeModelSettingsValue(
     premiumChatModel,
     imageModel,
     audioModel,
-    videoModel,
   };
 }
 
@@ -165,7 +162,6 @@ export function normalizeLimitsSettingsValue(
       ),
       images: readNumericValue(liteValue, "images", defaults.Lite.images),
       audio: readNumericValue(liteValue, "audio", defaults.Lite.audio),
-      video: readNumericValue(liteValue, "video", defaults.Lite.video),
     },
     Pro: {
       conversationsPerDay: readNumericValue(
@@ -180,7 +176,6 @@ export function normalizeLimitsSettingsValue(
       ),
       images: readNumericValue(proValue, "images", defaults.Pro.images),
       audio: readNumericValue(proValue, "audio", defaults.Pro.audio),
-      video: readNumericValue(proValue, "video", defaults.Pro.video),
     },
     Premium: {
       conversationsPerDay: readNumericValue(
@@ -195,7 +190,6 @@ export function normalizeLimitsSettingsValue(
       ),
       images: readNumericValue(premiumValue, "images", defaults.Premium.images),
       audio: readNumericValue(premiumValue, "audio", defaults.Premium.audio),
-      video: readNumericValue(premiumValue, "video", defaults.Premium.video),
     },
   };
 }
@@ -379,7 +373,6 @@ export function normalizeTrialLimitsSettingsValue(
     ),
     images: readNumericValue(value, "images", defaults.images),
     audio: readNumericValue(value, "audio", defaults.audio),
-    video: readNumericValue(value, "video", defaults.video),
   };
 }
 
@@ -434,6 +427,81 @@ export function normalizeHeroContentSettings(
     ctaLabel: readStringValue(value, "ctaLabel", defaults.ctaLabel),
     imageAlt: readStringValue(value, "imageAlt", defaults.imageAlt),
   };
+}
+
+export function normalizeHomepageCopySettings(
+  value: unknown,
+  defaults: HomepageCopySettingsFormValue,
+): HomepageCopySettingsFormValue {
+  if (!isObjectRecord(value)) {
+    return defaults;
+  }
+
+  return {
+    ctaHeading: readStringValue(value, "ctaHeading", defaults.ctaHeading),
+    ctaDescription: readStringValue(
+      value,
+      "ctaDescription",
+      defaults.ctaDescription,
+    ),
+    ctaPrimaryLabel: readStringValue(
+      value,
+      "ctaPrimaryLabel",
+      defaults.ctaPrimaryLabel,
+    ),
+    ctaSecondaryLabel: readStringValue(
+      value,
+      "ctaSecondaryLabel",
+      defaults.ctaSecondaryLabel,
+    ),
+    spotlightLabel: readStringValue(
+      value,
+      "spotlightLabel",
+      defaults.spotlightLabel,
+    ),
+    spotlightHeading: readStringValue(
+      value,
+      "spotlightHeading",
+      defaults.spotlightHeading,
+    ),
+    spotlightDescription: readStringValue(
+      value,
+      "spotlightDescription",
+      defaults.spotlightDescription,
+    ),
+  };
+}
+
+export function normalizeHomepageFeaturedPersonasSettings(
+  value: unknown,
+  defaults: HomepageFeaturedPersonasSettingsFormValue,
+): HomepageFeaturedPersonasSettingsFormValue {
+  if (!Array.isArray(value)) {
+    return [...defaults];
+  }
+
+  const resolvedPersonaIds: PersonaId[] = [];
+  const seenPersonaIds = new Set<PersonaId>();
+
+  for (const entry of value) {
+    if (
+      typeof entry !== "string" ||
+      !VALID_PERSONA_ID_SET.has(entry as PersonaId)
+    ) {
+      continue;
+    }
+
+    const personaId = entry as PersonaId;
+
+    if (seenPersonaIds.has(personaId)) {
+      continue;
+    }
+
+    seenPersonaIds.add(personaId);
+    resolvedPersonaIds.push(personaId);
+  }
+
+  return resolvedPersonaIds.length > 0 ? resolvedPersonaIds : [...defaults];
 }
 
 function normalizeLandingFeatureCards({

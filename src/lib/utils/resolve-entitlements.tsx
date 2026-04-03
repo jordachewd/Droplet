@@ -16,10 +16,8 @@ export interface Entitlements {
   trialPersonaIds?: PersonaId[];
   supportsImageGeneration: boolean;
   supportsAudioGeneration: boolean;
-  supportsVideoGeneration: boolean;
   imageLimitReached: boolean;
   audioLimitReached: boolean;
-  videoLimitReached: boolean;
 }
 
 interface ResolveEntitlementOptions {
@@ -156,10 +154,8 @@ export function resolveEntitlements(
       trialPersonaIds: [],
       supportsImageGeneration: false,
       supportsAudioGeneration: false,
-      supportsVideoGeneration: false,
       imageLimitReached: true,
       audioLimitReached: true,
-      videoLimitReached: true,
     };
   }
 
@@ -173,17 +169,14 @@ export function resolveEntitlements(
         promptsPerConversation: -1,
         images: -1,
         audio: -1,
-        video: -1,
       },
       personaAccess,
       allowedPersonaIds: getAllowedPersonaIds(personaAccess),
       trialPersonaIds: [],
       supportsImageGeneration: true,
       supportsAudioGeneration: true,
-      supportsVideoGeneration: true,
       imageLimitReached: false,
       audioLimitReached: false,
-      videoLimitReached: false,
     };
   }
 
@@ -207,10 +200,8 @@ export function resolveEntitlements(
     trialPersonaIds: getTrialPersonaIds(personaAccess),
     supportsImageGeneration: true,
     supportsAudioGeneration: true,
-    supportsVideoGeneration: true,
     imageLimitReached: false,
     audioLimitReached: false,
-    videoLimitReached: false,
   };
 }
 

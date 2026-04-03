@@ -6,8 +6,12 @@ import WorkflowSection from "@/components/sections/homepage/workflow-section";
 import { getEffectiveLandingPageContent } from "@/lib/utils/effective-website-copy";
 
 export default async function HomePage() {
-  const { heroContent, landingContent } =
-    await getEffectiveLandingPageContent();
+  const {
+    heroContent,
+    landingContent,
+    homepageCopy,
+    homepageFeaturedPersonaIds,
+  } = await getEffectiveLandingPageContent();
 
   return (
     <div className="HomePageWrapper relative z-10 -mt-16 mb-10 mx-auto flex w-full flex-1 flex-col items-center gap-20">
@@ -17,8 +21,22 @@ export default async function HomePage() {
         howItWorksSteps={landingContent.howItWorksSteps}
         workflowCopy={landingContent.workflow}
       />
-      <PersonaSpotlight />
-      <CtaBanner />
+      <PersonaSpotlight
+        copy={{
+          spotlightLabel: homepageCopy.spotlightLabel,
+          spotlightHeading: homepageCopy.spotlightHeading,
+          spotlightDescription: homepageCopy.spotlightDescription,
+        }}
+        featuredPersonaIds={homepageFeaturedPersonaIds}
+      />
+      <CtaBanner
+        copy={{
+          ctaHeading: homepageCopy.ctaHeading,
+          ctaDescription: homepageCopy.ctaDescription,
+          ctaPrimaryLabel: homepageCopy.ctaPrimaryLabel,
+          ctaSecondaryLabel: homepageCopy.ctaSecondaryLabel,
+        }}
+      />
     </div>
   );
 }

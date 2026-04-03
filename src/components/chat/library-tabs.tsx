@@ -17,30 +17,26 @@ interface LibraryTabsProps {
   conversations: LibraryConversationCardItem[];
   images: LibraryMediaCardItem[];
   audios: LibraryMediaCardItem[];
-  videos: LibraryMediaCardItem[];
   uploads: LibraryUploadCardItem[];
   initialTabId?: LibraryTabId;
   conversationsPagination: LibraryPaginationState;
   imagesPagination: LibraryPaginationState;
   audiosPagination: LibraryPaginationState;
-  videosPagination: LibraryPaginationState;
   uploadsPagination: LibraryPaginationState;
   hasLoadError?: boolean;
 }
 
-type LibraryTabId = "chats" | "images" | "audios" | "videos" | "uploaded";
+type LibraryTabId = "chats" | "images" | "audios" | "uploaded";
 
 export default function LibraryTabs({
   conversations,
   images,
   audios,
-  videos,
   uploads,
   initialTabId = "chats",
   conversationsPagination,
   imagesPagination,
   audiosPagination,
-  videosPagination,
   uploadsPagination,
   hasLoadError = false,
 }: LibraryTabsProps) {
@@ -55,16 +51,9 @@ export default function LibraryTabs({
       { id: "chats" as const, label: "Chats", count: conversations.length },
       { id: "images" as const, label: "Images", count: images.length },
       { id: "audios" as const, label: "Audios", count: audios.length },
-      { id: "videos" as const, label: "Videos", count: videos.length },
       { id: "uploaded" as const, label: "Uploaded", count: uploads.length },
     ],
-    [
-      audios.length,
-      conversations.length,
-      images.length,
-      uploads.length,
-      videos.length,
-    ],
+    [audios.length, conversations.length, images.length, uploads.length],
   );
 
   const handleTabChange = (tabId: LibraryTabId) => {
@@ -303,38 +292,6 @@ export default function LibraryTabs({
       </section>
 
       <section
-        id="library-panel-videos"
-        role="tabpanel"
-        aria-labelledby="library-tab-videos"
-        hidden={activeTabId !== "videos"}
-      >
-        {hasLoadError ? (
-          <EmptyState
-            title="Failed to load videos"
-            text="Please refresh and try again."
-          />
-        ) : videos.length === 0 ? (
-          <EmptyState
-            title="No generated videos yet"
-            text="Video generations will appear here with playback and download controls."
-          />
-        ) : (
-          <>
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-              {videos.map((item) => (
-                <LibraryVideoCard
-                  key={`${item.taskId}-${item.url}`}
-                  item={item}
-                />
-              ))}
-            </div>
-
-            <LibraryPagination tabId="videos" pagination={videosPagination} />
-          </>
-        )}
-      </section>
-
-      <section
         id="library-panel-uploaded"
         role="tabpanel"
         aria-labelledby="library-tab-uploaded"
@@ -508,55 +465,6 @@ function LibraryAudioCard({ item }: { item: LibraryMediaCardItem }) {
   );
 }
 
-function LibraryVideoCard({ item }: { item: LibraryMediaCardItem }) {
-  const resolvedVideoUrl = resolveStoredAssetUrl(item.url);
-  const downloadVideoUrl = resolveStoredAssetUrl(item.url, { download: true });
-
-  return (
-    <article
-      className={classNames(
-        "LibraryVideoCard rounded-xl border p-4",
-        "border-slate-400 bg-lavenderHaze-100/80",
-        "dark:border-slate-500 dark:bg-nightIndigo-900/80",
-      )}
-    >
-      <Link
-        href={item.href}
-        className="mb-3 line-clamp-1 block text-sm font-semibold hover:underline"
-      >
-        {item.taskTitle}
-      </Link>
-
-      <video controls preload="metadata" className="w-full rounded-lg">
-        <source src={resolvedVideoUrl} type="video/mp4" />
-        Your browser does not support the video player.
-      </video>
-
-      <div className="mt-3 flex items-center justify-between text-xs opacity-80">
-        <span className="inline-flex items-center gap-1.5">
-          <i className={item.personaIcon} aria-hidden="true"></i>
-          {item.personaLabel}
-        </span>
-        <span>{item.createdAtLabel}</span>
-      </div>
-
-      <div className="mt-3 flex items-center gap-2">
-        <a
-          href={downloadVideoUrl}
-          className={classNames(
-            "inline-flex items-center gap-1 rounded-md border px-2.5 py-1.5 text-xs font-medium transition-all",
-            "border-slate-400 hover:bg-lavenderHaze-300/70",
-            "dark:border-slate-500 dark:hover:bg-nightIndigo-500/30",
-          )}
-        >
-          <i className="bi bi-download" aria-hidden="true"></i>
-          Download
-        </a>
-      </div>
-    </article>
-  );
-}
-
 function formatUploadSize(sizeBytes: number): string {
   if (sizeBytes < 1024) {
     return `${sizeBytes} B`;
@@ -665,10 +573,7 @@ function LibraryPagination({
   tabId,
   pagination,
 }: {
-  tabId: Extract<
-    LibraryTabId,
-    "chats" | "images" | "audios" | "videos" | "uploaded"
-  >;
+  tabId: Extract<LibraryTabId, "chats" | "images" | "audios" | "uploaded">;
   pagination: LibraryPaginationState;
 }) {
   if (!pagination.hasPreviousPage && !pagination.hasNextPage) {
@@ -679,7 +584,6 @@ function LibraryPagination({
     chats: "chatsPage",
     images: "imagesPage",
     audios: "audiosPage",
-    videos: "videosPage",
     uploaded: "uploadedPage",
   } as const;
 

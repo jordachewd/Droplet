@@ -25,8 +25,6 @@ const DEFAULT_MODEL_SETTINGS: ModelSettingsFormValue = {
   premiumChatModel: MODEL_POLICY_MATRIX.premium.chat.taskClasses.standard.model,
   imageModel: MODEL_POLICY_MATRIX.pro.image_generation.taskClasses.final.model,
   audioModel: MODEL_POLICY_MATRIX.pro.audio_generation.taskClasses.final.model,
-  videoModel:
-    MODEL_POLICY_MATRIX.pro.video_generation.taskClasses.preview.model,
 };
 
 function mockModelsSetting(value: unknown): void {
@@ -56,7 +54,6 @@ describe("effective-model-config", () => {
       premiumChatModel: "gpt-premium-custom",
       imageModel: "gpt-image-custom",
       audioModel: "gpt-audio-custom",
-      videoModel: "sora-custom",
     });
 
     const config = await getEffectiveModelConfig();
@@ -67,7 +64,6 @@ describe("effective-model-config", () => {
       premiumChatModel: "gpt-premium-custom",
       imageModel: "gpt-image-custom",
       audioModel: "gpt-audio-custom",
-      videoModel: "sora-custom",
     });
     expect(premiumUser.plan.name).toBe("Premium");
   });
@@ -79,7 +75,6 @@ describe("effective-model-config", () => {
       premiumChatModel: "gpt-premium-custom",
       imageModel: null,
       audioModel: "gpt-audio-custom",
-      videoModel: "",
     });
 
     const config = await getEffectiveModelConfig();
@@ -90,7 +85,6 @@ describe("effective-model-config", () => {
       premiumChatModel: "gpt-premium-custom",
       imageModel: DEFAULT_MODEL_SETTINGS.imageModel,
       audioModel: "gpt-audio-custom",
-      videoModel: DEFAULT_MODEL_SETTINGS.videoModel,
     });
   });
 

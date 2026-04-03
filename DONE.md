@@ -2,7 +2,84 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-04-02 — PM audit #83. All Phases 1–85, 80.1, 73.1, 73.3, 74.1, 72.1–72.4, 75, 86, 88.1, 88.2, 89.1–89.4, 90.1–90.3, 90.6, 90.7, 91.1–91.5, 92.1, 92.2, 93.1, 93.2, 94.1–94.5, 95.1–95.4, 95-R, 96.1–96.8, 97.1, 99.1–99.5, 100.1–100.4, 101, 102, 103.1–103.4, 105.1, 105.2, 106, 107.1, 107.2, 107.3, 108, 110, 111.1, 112.1, 112.2, 109, 113.1, 113.2, 114, 115, 116, 117, 120.1, 120.2-A, 120.2-B, 120.2-C, 120.3, 120.4, 120.5, 120.6, 120.7, 121, 122, 123, 124, 125, 125.1, 125.2, 126, 126.1, 126.2, 127, 128.1, 128.2, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 149, 150, 151, 152, 153, 154, 155, 155.1, 156, 157, 158, 159, 160, 160.1, 160.2, 161, 162, 163, 164, 166, 167, 167.2, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 181, 182, 74.2, 104, 125.3 complete. Milestones 0–25 COMPLETE. E2E: 49 tests (8 spec files). Build passing. Node.js 24.12.0 runtime. Coverage: 85/80/85/85. Zero `as never` casts. Lint: 0 errors, 0 warnings. 603 tests (101 suites).
+> Last updated: 2026-04-03 — PM audit #86.
+
+---
+
+## Phase 186-B — Increase Token Limits to Maximum — COMPLETED (2026-04-03)
+
+> Engineer delivered (PM audit #86). Owner directive: increase all token limits to maximum possible. All 9 chat tiers updated to near-maximum model capacity.
+
+- [x] Lite simple: 8K/600 → 32K/4,096
+- [x] Lite standard: 12K/900 → 64K/8,192
+- [x] Lite complex: 14K/1,200 → 128K/16,384
+- [x] Pro simple: 12K/700 → 64K/8,192
+- [x] Pro standard: 24K/1,400 → 128K/16,384
+- [x] Pro complex: 32K/2,000 → 200K/32,768
+- [x] Premium simple: 16K/900 → 128K/16,384
+- [x] Premium standard: 32K/1,800 → 200K/32,768
+- [x] Premium complex: 48K/2,800 → 500K/32,768
+- [x] Title generation unchanged (1,200/20)
+- [x] Tests updated to match new limits
+- [x] Full 7-gate validation green (594 tests)
+
+---
+
+## Phase 186-A — Remove ALL Video Generation — COMPLETED (2026-04-03)
+
+> Engineer delivered (PM audit #86). Owner directive: both `sora-2` and `sora-2-pro` deprecated. Complete removal of video generation feature from entire codebase.
+
+**Deleted files:**
+
+- `src/lib/utils/openai/generateVideo.tsx`
+- `src/components/shared/video-player.tsx`
+- `tests/unit/utils/generate-video.test.tsx`
+
+**Modified (~55 files):** All video code paths removed from backend (generateResponse, openai route, ai-model-policy, resolve-entitlements), types (index, PlanData, TaskData, AdminData), models (user, tasks), frontend (chat-body, library-tabs, library page, profile-usage, profile page), admin (settings models/limits sections, normalize, users table, user detail, settings page, admin actions, admin queries), utilities (effective-model-config, effective-plan-config, filterAssistantMsg, task-queries, validation-schemas), actions (user, task, admin), webhooks (stripe), constants (openai, plans, stop-reasons, admin-options, persona-prompts, assistant-personas), public (about page), config (vitest.config.mts), and 27 test files.
+
+**Backward compatibility:** `"video_limit_reached"` retained in `tasks.model.tsx` `endedReason` enum with deprecation comment. Orphaned MongoDB `video_url` fields and S3 MP4 files safe (ignored on read).
+
+- [x] Zero `sora` references in `src/`
+- [x] Zero `video_generation` references in `src/`
+- [x] Zero `VideoPlayer` references in `src/`
+- [x] Library shows 4 tabs (Chats, Images, Audios, Uploaded) — no Videos tab
+- [x] Profile usage shows Image + Audio only — no Video bar
+- [x] Admin settings — no video model selector, no video limits
+- [x] Playwright browser verification passed
+- [x] Full 7-gate validation green (594 tests, lint 0/0, TSC clean, build passes, knip 0)
+
+---
+
+## Phase 180.1 — Homepage Marketing Text Extraction — COMPLETED (2026-04-03)
+
+> Engineer delivered. All 7 hardcoded marketing strings and 1 config value in homepage components now flow from admin-configurable settings with safe defaults.
+
+- [x] Created `src/constants/homepage-copy.ts` with centralized default values
+- [x] Extended `effective-website-copy.ts` resolver with normalized homepage copy + featured persona IDs
+- [x] Updated `cta-banner.tsx` to receive configurable text as props from Server Component
+- [x] Updated `persona-spotlight.tsx` to receive configurable text + featured persona IDs as props
+- [x] Wired public homepage `page.tsx` to pass resolver-driven values to components
+- [x] Added admin settings support (types, normalize, queries, page wiring, action parsing)
+- [x] Added/updated tests for new behavior
+- [x] Full 7-gate validation green (606 tests, lint 0/0, TSC clean, build passes, knip 0)
+
+**Files:** `src/constants/homepage-copy.ts`, `src/lib/utils/effective-website-copy.ts`, `src/app/(public)/page.tsx`, `src/components/sections/homepage/cta-banner.tsx`, `src/components/sections/homepage/persona-spotlight.tsx`, `src/components/admin/settings/types.ts`, `src/components/admin/settings/normalize-admin-settings.ts`, `src/lib/utils/admin-queries.ts`, `src/app/(admin)/admin/settings/page.tsx`, `src/components/admin/settings/admin-website-content-section.tsx`, `src/lib/actions/admin.actions.tsx`, `tests/unit/utils/effective-website-copy.test.ts`, `tests/unit/actions/admin-actions-behavior.test.ts`
+
+---
+
+## Phase 185 CRITICAL - Remove `sora-2-pro` from Codebase - COMPLETED (2026-04-02)
+
+> Engineer delivered. Owner decision implemented: `sora-2` is now the only video model across all plans, including Premium final renders.
+
+- [x] Removed `sora-2-pro` pricing entry from `MODEL_PRICING`
+- [x] Removed Premium video resolver override that switched to `sora-2-pro`
+- [x] Updated Premium final video policy note to `sora-2` wording
+- [x] Reduced admin video model options to `["sora-2"]`
+- [x] Updated policy unit test expectation to assert Premium final video model is `sora-2`
+- [x] Zero `sora-2-pro` references in `src/` and `tests/`
+- [x] Full 7-gate validation green (prettier, lint, tsc, unit, e2e, build, knip)
+
+**Files:** `src/lib/utils/ai-model-policy.ts`, `src/constants/admin-options.ts`, `tests/unit/utils/ai-model-policy.test.ts`
 
 ---
 

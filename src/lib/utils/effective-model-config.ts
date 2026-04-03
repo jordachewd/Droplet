@@ -16,8 +16,6 @@ const DEFAULT_MODEL_SETTINGS: ModelSettingsFormValue = {
   premiumChatModel: MODEL_POLICY_MATRIX.premium.chat.taskClasses.standard.model,
   imageModel: MODEL_POLICY_MATRIX.pro.image_generation.taskClasses.final.model,
   audioModel: MODEL_POLICY_MATRIX.pro.audio_generation.taskClasses.final.model,
-  videoModel:
-    MODEL_POLICY_MATRIX.pro.video_generation.taskClasses.preview.model,
 };
 
 function readStringValue({
@@ -71,11 +69,6 @@ function normalizeModelSettings(
       source: value,
       key: "audioModel",
       fallback: defaults.audioModel,
-    }),
-    videoModel: readStringValue({
-      source: value,
-      key: "videoModel",
-      fallback: defaults.videoModel,
     }),
   };
 }

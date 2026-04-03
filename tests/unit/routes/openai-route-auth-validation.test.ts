@@ -105,7 +105,6 @@ const MOCK_ENTITLEMENTS: Entitlements = {
     promptsPerConversation: 10,
     images: 3,
     audio: 3,
-    video: 1,
   },
   personaAccess: {
     strategist: "full",
@@ -126,10 +125,8 @@ const MOCK_ENTITLEMENTS: Entitlements = {
   trialPersonaIds: ["teacher", "creator", "wellness", "interviewer"],
   supportsImageGeneration: true,
   supportsAudioGeneration: true,
-  supportsVideoGeneration: true,
   imageLimitReached: false,
   audioLimitReached: false,
-  videoLimitReached: false,
 };
 
 function buildOpenAiRequest(
@@ -166,7 +163,6 @@ function setupDefaultMocks() {
         expiresOn: new Date(Date.now() + 86_400_000),
         imageGenerations: 0,
         audioGenerations: 0,
-        videoGenerations: 0,
         usagePeriodStart: new Date(),
       },
     }),

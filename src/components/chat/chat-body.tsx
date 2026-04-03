@@ -9,7 +9,6 @@ import remarkGfm from "remark-gfm";
 import LoadingBubbles from "@/components/shared/loading-bubbles";
 import ImageHolder from "@/components/shared/image-holder";
 import AudioPlayer from "@/components/shared/audio-player";
-import VideoPlayer from "@/components/shared/video-player";
 import { TaskEndAction, TaskEndedReason } from "@/types/TaskData.d";
 
 interface ChatBodyProps {
@@ -72,10 +71,6 @@ function buildMessageFallbackKey(message: Message): string {
             return `${item.type}:${item.audio_url ?? ""}`;
           }
 
-          if (item.type === "video_url") {
-            return `${item.type}:${item.video_url ?? ""}`;
-          }
-
           return item.type;
         })
         .join("|")
@@ -95,10 +90,6 @@ function buildContentFallbackKey(content: ContentItem): string {
 
   if (content.type === "audio_url") {
     return `${content.type}:${content.audio_url ?? ""}`;
-  }
-
-  if (content.type === "video_url") {
-    return `${content.type}:${content.video_url ?? ""}`;
   }
 
   return content.type;
@@ -215,15 +206,6 @@ export default function ChatBody({
                       <AudioPlayer
                         key={contentKey}
                         audioSrc={reply.audio_url || null}
-                      />
-                    );
-                  }
-
-                  if (reply.type === "video_url") {
-                    return (
-                      <VideoPlayer
-                        key={contentKey}
-                        videoSrc={reply.video_url || null}
                       />
                     );
                   }

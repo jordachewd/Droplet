@@ -48,16 +48,6 @@ describe("LibraryTabs media cards", () => {
     href: "/app/c/task_2",
   };
 
-  const videoItem = {
-    url: "user_123/media/generated-video.mp4",
-    taskId: "task_3",
-    taskTitle: "Showreel clip",
-    personaLabel: "Creator",
-    personaIcon: "bi bi-camera-reels",
-    createdAtLabel: "Today",
-    href: "/app/c/task_3",
-  };
-
   const uploadItem = {
     id: "upload_1",
     fileName: "brief.pdf",
@@ -74,7 +64,6 @@ describe("LibraryTabs media cards", () => {
         conversations={[]}
         images={[imageItem]}
         audios={[]}
-        videos={[]}
         uploads={[]}
         conversationsPagination={defaultPagination}
         imagesPagination={{
@@ -83,7 +72,6 @@ describe("LibraryTabs media cards", () => {
           hasNextPage: true,
         }}
         audiosPagination={defaultPagination}
-        videosPagination={defaultPagination}
         uploadsPagination={defaultPagination}
       />,
     );
@@ -117,12 +105,10 @@ describe("LibraryTabs media cards", () => {
         conversations={[]}
         images={[]}
         audios={[audioItem]}
-        videos={[]}
         uploads={[]}
         conversationsPagination={defaultPagination}
         imagesPagination={defaultPagination}
         audiosPagination={defaultPagination}
-        videosPagination={defaultPagination}
         uploadsPagination={defaultPagination}
       />,
     );
@@ -140,59 +126,16 @@ describe("LibraryTabs media cards", () => {
     );
   });
 
-  it("renders video card playback and download controls", () => {
-    const { container } = render(
-      <LibraryTabs
-        conversations={[]}
-        images={[]}
-        audios={[]}
-        videos={[videoItem]}
-        uploads={[]}
-        conversationsPagination={defaultPagination}
-        imagesPagination={defaultPagination}
-        audiosPagination={defaultPagination}
-        videosPagination={{
-          currentPage: 2,
-          hasPreviousPage: true,
-          hasNextPage: true,
-        }}
-        uploadsPagination={defaultPagination}
-      />,
-    );
-
-    fireEvent.click(screen.getByRole("tab", { name: /Videos/i }));
-
-    const videoElement = container.querySelector("video") as HTMLVideoElement;
-
-    expect(videoElement.tagName).toBe("VIDEO");
-    expect(videoElement.querySelector("source")?.getAttribute("src")).toContain(
-      "/api/download?key=",
-    );
-
-    const downloadLink = screen.getByRole("link", { name: /Download/i });
-    expect(downloadLink.getAttribute("href")).toContain(
-      "/api/download?key=user_123%2Fmedia%2Fgenerated-video.mp4&download=1",
-    );
-    expect(
-      screen.getByRole("link", { name: "Previous" }).getAttribute("href"),
-    ).toBe("/app/library?tab=videos&videosPage=1");
-    expect(
-      screen.getByRole("link", { name: "Next" }).getAttribute("href"),
-    ).toBe("/app/library?tab=videos&videosPage=3");
-  });
-
   it("renders uploaded file card with download and pagination controls", () => {
     render(
       <LibraryTabs
         conversations={[]}
         images={[]}
         audios={[]}
-        videos={[]}
         uploads={[uploadItem]}
         conversationsPagination={defaultPagination}
         imagesPagination={defaultPagination}
         audiosPagination={defaultPagination}
-        videosPagination={defaultPagination}
         uploadsPagination={{
           currentPage: 2,
           hasPreviousPage: true,

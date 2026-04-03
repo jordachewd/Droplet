@@ -30,7 +30,7 @@ type TaskRecord = {
   endAction?: TaskEndAction;
 };
 
-export type MediaContentType = "image_url" | "audio_url" | "video_url";
+export type MediaContentType = "image_url" | "audio_url";
 
 export interface MediaLibraryItem {
   url: string;
@@ -101,14 +101,13 @@ function toPlainContent(content: unknown): Message["content"] {
       return items;
     }
 
-    const { type, text, image_url, audio_url, video_url } = entry;
+    const { type, text, image_url, audio_url } = entry;
 
     if (
       type !== "text" &&
       type !== "temp" &&
       type !== "image_url" &&
-      type !== "audio_url" &&
-      type !== "video_url"
+      type !== "audio_url"
     ) {
       return items;
     }
@@ -128,10 +127,6 @@ function toPlainContent(content: unknown): Message["content"] {
 
     if (typeof audio_url === "string" || audio_url === null) {
       item.audio_url = audio_url;
-    }
-
-    if (typeof video_url === "string" || video_url === null) {
-      item.video_url = video_url;
     }
 
     items.push(item);
@@ -250,7 +245,6 @@ export async function getMediaItemsByUserId(
   const projectUrlExpression: Record<MediaContentType, string> = {
     image_url: "$messages.content.image_url.url",
     audio_url: "$messages.content.audio_url",
-    video_url: "$messages.content.video_url",
   };
 
   const mediaItems = (await Task.aggregate([

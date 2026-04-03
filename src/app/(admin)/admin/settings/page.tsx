@@ -15,12 +15,13 @@ import {
   AUDIO_MODEL_OPTIONS,
   CHAT_MODEL_OPTIONS,
   IMAGE_MODEL_OPTIONS,
-  VIDEO_MODEL_OPTIONS,
 } from "@/constants/admin-options";
 import {
   normalizeAboutContentSettings,
   normalizeFaqContentSettings,
   normalizeHeroContentSettings,
+  normalizeHomepageCopySettings,
+  normalizeHomepageFeaturedPersonasSettings,
   normalizeLandingContentSettings,
   normalizeLimitsSettingsValue,
   normalizeModelSettingsValue,
@@ -37,6 +38,8 @@ import {
   AboutContentSettingsFormValue,
   FaqContentSettingsFormValue,
   HeroContentSettingsFormValue,
+  HomepageCopySettingsFormValue,
+  HomepageFeaturedPersonasSettingsFormValue,
   LandingContentSettingsFormValue,
   LimitsSettingsFormValue,
   PersonaAccessSettingsFormValue,
@@ -70,6 +73,10 @@ export default async function AdminSettingsPage() {
     .faqContent as FaqContentSettingsFormValue;
   const heroContentDefaults = snapshot.defaults
     .heroContent as HeroContentSettingsFormValue;
+  const homepageCopyDefaults = snapshot.defaults
+    .homepageCopy as HomepageCopySettingsFormValue;
+  const homepageFeaturedPersonasDefaults = snapshot.defaults
+    .homepageFeaturedPersonas as HomepageFeaturedPersonasSettingsFormValue;
   const landingContentDefaults = snapshot.defaults
     .landingContent as LandingContentSettingsFormValue;
   const aboutContentDefaults = snapshot.defaults
@@ -121,6 +128,15 @@ export default async function AdminSettingsPage() {
     snapshot.settingsByKey["admin.heroContent"]?.value,
     heroContentDefaults,
   );
+  const homepageCopyValue = normalizeHomepageCopySettings(
+    snapshot.settingsByKey["admin.homepageCopy"]?.value,
+    homepageCopyDefaults,
+  );
+  const homepageFeaturedPersonasValue =
+    normalizeHomepageFeaturedPersonasSettings(
+      snapshot.settingsByKey["admin.homepageFeaturedPersonas"]?.value,
+      homepageFeaturedPersonasDefaults,
+    );
   const landingContentValue = normalizeLandingContentSettings(
     snapshot.settingsByKey["admin.landingContent"]?.value,
     landingContentDefaults,
@@ -134,6 +150,10 @@ export default async function AdminSettingsPage() {
     promoContentDefaults,
   );
   const personaIds = Object.keys(personaContentDefaults) as PersonaId[];
+  const homepagePersonaOptions = personaIds.map((personaId) => ({
+    id: personaId,
+    label: personaContentDefaults[personaId].label,
+  }));
 
   return (
     <section className="AdminSettingsPage mx-auto flex w-full max-w-6xl flex-col gap-6">
@@ -154,7 +174,6 @@ export default async function AdminSettingsPage() {
                   chat: CHAT_MODEL_OPTIONS,
                   image: IMAGE_MODEL_OPTIONS,
                   audio: AUDIO_MODEL_OPTIONS,
-                  video: VIDEO_MODEL_OPTIONS,
                 }}
               />
             ),
@@ -219,6 +238,9 @@ export default async function AdminSettingsPage() {
               <AdminWebsiteContentSection
                 faqContentValue={faqContentValue}
                 heroContentValue={heroContentValue}
+                homepageCopyValue={homepageCopyValue}
+                homepageFeaturedPersonasValue={homepageFeaturedPersonasValue}
+                homepagePersonaOptions={homepagePersonaOptions}
                 landingContentValue={landingContentValue}
                 aboutContentValue={aboutContentValue}
               />

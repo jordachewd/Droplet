@@ -61,7 +61,6 @@ const pageOneUsers = [
     mediaUsage: {
       images: { used: 1, limit: 3 },
       audio: { used: 0, limit: 3 },
-      video: { used: 0, limit: 1 },
     },
     conversationUsage: { used: 2, limit: 5 },
   },
@@ -76,7 +75,6 @@ const pageOneUsers = [
     mediaUsage: {
       images: { used: 0, limit: 3 },
       audio: { used: 1, limit: 3 },
-      video: { used: 0, limit: 1 },
     },
     conversationUsage: { used: 1, limit: 5 },
   },
@@ -94,7 +92,6 @@ const pageTwoUsers = [
     mediaUsage: {
       images: { used: 2, limit: 10 },
       audio: { used: 2, limit: 10 },
-      video: { used: 1, limit: 10 },
     },
     conversationUsage: { used: 4, limit: 20 },
   },
@@ -109,7 +106,6 @@ const pageTwoUsers = [
     mediaUsage: {
       images: { used: 0, limit: 10 },
       audio: { used: 0, limit: 10 },
-      video: { used: 0, limit: 10 },
     },
     conversationUsage: { used: 0, limit: 20 },
   },

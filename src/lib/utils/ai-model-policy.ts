@@ -18,8 +18,7 @@ export type FeatureType =
   | "title_generation"
   | "chat"
   | "image_generation"
-  | "audio_generation"
-  | "video_generation";
+  | "audio_generation";
 
 export type TaskClass =
   | "utility"
@@ -51,7 +50,6 @@ export interface ModelPolicyModelOverrides {
   chat?: Partial<Record<PlanTier, string>>;
   imageGenerationModel?: string;
   audioGenerationModel?: string;
-  videoGenerationModel?: string;
 }
 
 export interface ModelPolicyRule {
@@ -141,24 +139,24 @@ export const MODEL_POLICY_MATRIX = {
         simple: createChatRule({
           model: "gpt-4o-mini",
           fallbackModel: "gpt-4.1-nano",
-          maxInputTokens: 8_000,
-          maxOutputTokens: 600,
+          maxInputTokens: 32_000,
+          maxOutputTokens: 4_096,
           notes:
             "Strict context compaction; downgrade only when a cheaper fallback is available.",
         }),
         standard: createChatRule({
           model: "gpt-4o-mini",
           fallbackModel: "gpt-4.1-nano",
-          maxInputTokens: 12_000,
-          maxOutputTokens: 900,
+          maxInputTokens: 64_000,
+          maxOutputTokens: 8_192,
           notes:
             "Strict context compaction; downgrade only when a cheaper fallback is available.",
         }),
         complex: createChatRule({
           model: "gpt-4o-mini",
           fallbackModel: "gpt-4.1-nano",
-          maxInputTokens: 14_000,
-          maxOutputTokens: 1_200,
+          maxInputTokens: 128_000,
+          maxOutputTokens: 16_384,
           notes:
             "Strict context compaction; downgrade only when a cheaper fallback is available.",
         }),
@@ -185,21 +183,6 @@ export const MODEL_POLICY_MATRIX = {
         },
       },
     },
-    video_generation: {
-      defaultTaskClass: "preview",
-      taskClasses: {
-        preview: {
-          model: "sora-2",
-          fallbackModel: "sora-2",
-          notes: "Lite video previews use sora-2.",
-        },
-        final: {
-          model: "sora-2",
-          fallbackModel: "sora-2",
-          notes: "Lite final video renders use sora-2.",
-        },
-      },
-    },
   },
   pro: {
     title_generation: {
@@ -214,22 +197,22 @@ export const MODEL_POLICY_MATRIX = {
         simple: createChatRule({
           model: "gpt-4.1",
           fallbackModel: "gpt-4o-mini",
-          maxInputTokens: 12_000,
-          maxOutputTokens: 700,
+          maxInputTokens: 64_000,
+          maxOutputTokens: 8_192,
           notes: "Simple Pro chat should favor the cheaper fallback tier.",
         }),
         standard: createChatRule({
           model: "gpt-4.1",
           fallbackModel: "gpt-4o-mini",
-          maxInputTokens: 24_000,
-          maxOutputTokens: 1_400,
+          maxInputTokens: 128_000,
+          maxOutputTokens: 16_384,
           notes: "Downgrade on soft budget pressure, retries, or high latency.",
         }),
         complex: createChatRule({
           model: "gpt-4.1",
           fallbackModel: "gpt-4o-mini",
-          maxInputTokens: 32_000,
-          maxOutputTokens: 2_000,
+          maxInputTokens: 200_000,
+          maxOutputTokens: 32_768,
           notes: "Downgrade on soft budget pressure, retries, or high latency.",
         }),
       },
@@ -256,21 +239,6 @@ export const MODEL_POLICY_MATRIX = {
         },
       },
     },
-    video_generation: {
-      defaultTaskClass: "preview",
-      taskClasses: {
-        preview: {
-          model: "sora-2",
-          fallbackModel: "sora-2",
-          notes: "Pro video previews use sora-2.",
-        },
-        final: {
-          model: "sora-2",
-          fallbackModel: "sora-2",
-          notes: "Pro final video renders use sora-2.",
-        },
-      },
-    },
   },
   premium: {
     title_generation: {
@@ -285,24 +253,24 @@ export const MODEL_POLICY_MATRIX = {
         simple: createChatRule({
           model: "gpt-4.1",
           fallbackModel: "gpt-4o-mini",
-          maxInputTokens: 16_000,
-          maxOutputTokens: 900,
+          maxInputTokens: 128_000,
+          maxOutputTokens: 16_384,
           notes:
             "Premium simple chat defaults to gpt-4.1 and downgrades to gpt-4o-mini on retry/latency/budget pressure.",
         }),
         standard: createChatRule({
           model: "gpt-4.1",
           fallbackModel: "gpt-4o-mini",
-          maxInputTokens: 32_000,
-          maxOutputTokens: 1_800,
+          maxInputTokens: 200_000,
+          maxOutputTokens: 32_768,
           notes:
             "Premium standard chat defaults to gpt-4.1 and downgrades to gpt-4o-mini on retry/latency/budget pressure.",
         }),
         complex: createChatRule({
           model: "gpt-4.1",
           fallbackModel: "gpt-4.1-mini",
-          maxInputTokens: 48_000,
-          maxOutputTokens: 2_800,
+          maxInputTokens: 500_000,
+          maxOutputTokens: 32_768,
           notes:
             "Premium complex chat defaults to gpt-4.1, downgrades to gpt-4.1-mini, and only upgrades to gpt-5.4 when explicitly requested.",
         }),
@@ -327,21 +295,6 @@ export const MODEL_POLICY_MATRIX = {
           fallbackModel: "gpt-audio-mini",
           notes:
             "Premium uses the same verified full-audio model tier while keeping audio_in_out support.",
-        },
-      },
-    },
-    video_generation: {
-      defaultTaskClass: "preview",
-      taskClasses: {
-        preview: {
-          model: "sora-2",
-          fallbackModel: "sora-2",
-          notes: "Preview and draft video renders use sora-2.",
-        },
-        final: {
-          model: "sora-2",
-          fallbackModel: "sora-2",
-          notes: "sora-2-pro requires explicitPremium — see resolver override.",
         },
       },
     },
@@ -381,14 +334,6 @@ const MODEL_PRICING: Record<string, TokenPricing> = {
     outputUsdPerMillion: 12,
     // TTS cost estimation intentionally uses a blended output-token approximation for speech responses.
   },
-  "sora-2": {
-    flatUsd: 0.1,
-    // Flat-rate estimate is intentional until duration metadata is reliably available in usage logs.
-  },
-  "sora-2-pro": {
-    flatUsd: 0.3,
-    // Flat-rate estimate is intentional until duration metadata is reliably available in usage logs.
-  },
 };
 
 const MODEL_CAPABILITIES: Record<string, ModelCapability> = {
@@ -425,10 +370,6 @@ function getFeaturePolicyConfig(
 function getDefaultTaskClass(feature: FeatureType): TaskClass {
   if (feature === "title_generation") {
     return "utility";
-  }
-
-  if (feature === "video_generation") {
-    return "preview";
   }
 
   return feature === "chat" ? "standard" : "final";
@@ -642,32 +583,6 @@ export function resolveModelPolicy(
     notes = joinNotes(
       notes,
       "Explicit premium complex chat request upgraded to gpt-5.4.",
-    );
-  }
-
-  if (input.feature === "video_generation" && plan === "premium") {
-    if (taskClass === "final" && input.explicitPremium) {
-      model = "sora-2-pro";
-      fallbackModel = "sora-2";
-      notes = joinNotes(
-        notes,
-        "Explicit premium final video render enabled sora-2-pro.",
-      );
-    } else {
-      model = "sora-2";
-      fallbackModel = "sora-2";
-    }
-  }
-
-  if (
-    input.feature === "video_generation" &&
-    typeof input.modelOverrides?.videoGenerationModel === "string" &&
-    input.modelOverrides.videoGenerationModel.length > 0
-  ) {
-    model = input.modelOverrides.videoGenerationModel;
-    notes = joinNotes(
-      notes,
-      "Admin override applied for video generation model.",
     );
   }
 

@@ -108,27 +108,23 @@ function createEffectivePlanConfig() {
         promptsPerConversation: 10,
         images: 3,
         audio: 3,
-        video: 1,
       },
       Pro: {
         conversationsPerDay: 20,
         promptsPerConversation: 40,
         images: 50,
         audio: 50,
-        video: 10,
       },
       Premium: {
         conversationsPerDay: -1,
         promptsPerConversation: -1,
         images: -1,
         audio: -1,
-        video: -1,
       },
     },
     trialLimits: {
       images: 3,
       audio: 2,
-      video: 1,
     },
   };
 }
@@ -151,8 +147,7 @@ describe("admin-queries", () => {
     usageEventModelMock.countDocuments
       .mockResolvedValueOnce(31)
       .mockResolvedValueOnce(7)
-      .mockResolvedValueOnce(5)
-      .mockResolvedValueOnce(3);
+      .mockResolvedValueOnce(5);
 
     const result = await getAdminDashboardStats();
 
@@ -164,7 +159,6 @@ describe("admin-queries", () => {
       expect.objectContaining({ label: "Usage Events", value: 31 }),
       expect.objectContaining({ label: "Images Generated", value: 7 }),
       expect.objectContaining({ label: "Audio Generated", value: 5 }),
-      expect.objectContaining({ label: "Video Generated", value: 3 }),
     ]);
   });
 
@@ -175,7 +169,6 @@ describe("admin-queries", () => {
         name: "Lite",
         imageGenerations: 2,
         audioGenerations: 1,
-        videoGenerations: 1,
       },
       dailyConversationsStarted: 4,
     });
@@ -201,7 +194,6 @@ describe("admin-queries", () => {
         mediaUsage: {
           images: { used: 2, limit: 3 },
           audio: { used: 1, limit: 3 },
-          video: { used: 1, limit: 1 },
         },
         conversationUsage: {
           used: 4,
@@ -256,11 +248,9 @@ describe("admin-queries", () => {
         billing: "Monthly",
         imageGenerations: 2,
         audioGenerations: 1,
-        videoGenerations: 0,
         trialUsage: {
           trialImageGenerations: 1,
           trialAudioGenerations: 1,
-          trialVideoGenerations: 0,
         },
       },
       dailyConversationsStarted: 3,
@@ -295,7 +285,6 @@ describe("admin-queries", () => {
         trialUsage: {
           images: { used: 1, limit: 3, remaining: 2 },
           audio: { used: 1, limit: 2, remaining: 1 },
-          video: { used: 0, limit: 1, remaining: 1 },
         },
       }),
     );

@@ -37,7 +37,6 @@ Each persona is an independent AI agent — pragmatic, direct, and grounded in r
 - **Real-time Streaming** — watch responses appear as they're generated
 - **Image Generation** — create images through conversation
 - **Audio Generation** — generate audio content through conversation
-- **Video Generation** — create short video clips through conversation
 - **Conversation History** — save, resume, and manage your chats
 - **Media Library** — browse and download all generated images, audio, and uploaded files
 - **File Uploads** — share images with your AI assistant
@@ -56,7 +55,6 @@ Each persona is an independent AI agent — pragmatic, direct, and grounded in r
 | **Prompts/Conversation** | 10           | 100       | Unlimited |
 | **Image Generation**     | 3/month      | 50/month  | Unlimited |
 | **Audio Generation**     | 3/month      | 50/month  | Unlimited |
-| **Video Generation**     | 1/month      | 10/month  | Unlimited |
 
 All plans include all features — differentiated by usage limits, not by feature lockout. Personas not fully included in your plan are available as trials with reduced limits.
 
@@ -69,7 +67,7 @@ Create a free account and start chatting today. Upgrade anytime — no commitmen
 1. **Create an account** — sign up for free in seconds
 2. **Choose a persona** — pick the AI personality that fits your needs
 3. **Start chatting** — get personalized, streaming responses instantly
-4. **Generate media** — create images, audio, and video right in the conversation
+4. **Generate media** — create images and audio right in the conversation
 5. **Save & resume** — come back to any conversation anytime
 
 ---

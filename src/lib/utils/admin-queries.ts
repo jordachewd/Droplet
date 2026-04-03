@@ -4,6 +4,10 @@ import { getDefaultAboutContent } from "@/constants/about-data";
 import { buildFaqs } from "@/constants/faqs";
 import { getDefaultHeroContent } from "@/constants/hero-content";
 import { getDefaultLandingContent } from "@/constants/landing-data";
+import {
+  getDefaultHomepageCopy,
+  getDefaultHomepageFeaturedPersonas,
+} from "@/constants/homepage-copy";
 import { DEFAULT_PROMO_CONTENT } from "@/constants/promo-content";
 import {
   DEFAULT_PLAN_PRICING,
@@ -50,11 +54,9 @@ type UserRecord = {
     stripeId?: string;
     imageGenerations?: number;
     audioGenerations?: number;
-    videoGenerations?: number;
     trialUsage?: {
       trialImageGenerations?: number;
       trialAudioGenerations?: number;
-      trialVideoGenerations?: number;
     };
   };
 };
@@ -179,7 +181,6 @@ export async function getAdminDashboardStats() {
     usageEvents,
     imageGenerations,
     audioGenerations,
-    videoGenerations,
   ] = await Promise.all([
     User.countDocuments({}),
     Task.countDocuments({}),
@@ -187,7 +188,6 @@ export async function getAdminDashboardStats() {
     UsageEvent.countDocuments({}),
     UsageEvent.countDocuments({ requestType: "image", blocked: false }),
     UsageEvent.countDocuments({ requestType: "audio", blocked: false }),
-    UsageEvent.countDocuments({ requestType: "video", blocked: false }),
   ]);
 
   return [
@@ -227,12 +227,6 @@ export async function getAdminDashboardStats() {
       icon: "bi bi-mic",
       href: "/admin/usage",
     },
-    {
-      label: "Video Generated",
-      value: videoGenerations,
-      icon: "bi bi-camera-video",
-      href: "/admin/usage",
-    },
   ];
 }
 
@@ -262,7 +256,7 @@ export async function getAdminUsers(
     .skip(pagination.skip)
     .limit(pagination.pageSize)
     .select(
-      "clerkId username email role suspended registerAt dailyConversationsStarted plan.name plan.imageGenerations plan.audioGenerations plan.videoGenerations firstName lastName",
+      "clerkId username email role suspended registerAt dailyConversationsStarted plan.name plan.imageGenerations plan.audioGenerations firstName lastName",
     )
     .lean();
 
@@ -284,10 +278,6 @@ export async function getAdminUsers(
           audio: {
             used: user.plan?.audioGenerations ?? 0,
             limit: planLimits.audio,
-          },
-          video: {
-            used: user.plan?.videoGenerations ?? 0,
-            limit: planLimits.video,
           },
         },
         conversationUsage: {
@@ -353,13 +343,10 @@ export async function getAdminUserDetail(userId: string) {
   const trialLimits = effectivePlanConfig.trialLimits;
   const imageGenerations = user.plan?.imageGenerations ?? 0;
   const audioGenerations = user.plan?.audioGenerations ?? 0;
-  const videoGenerations = user.plan?.videoGenerations ?? 0;
   const trialImageGenerations =
     user.plan?.trialUsage?.trialImageGenerations ?? 0;
   const trialAudioGenerations =
     user.plan?.trialUsage?.trialAudioGenerations ?? 0;
-  const trialVideoGenerations =
-    user.plan?.trialUsage?.trialVideoGenerations ?? 0;
   const dailyConversationsStarted = user.dailyConversationsStarted ?? 0;
   const maxPromptCount = promptUsageAggregate.maxPromptCount ?? 0;
   const totalPromptCount = promptUsageAggregate.totalPromptCount ?? 0;
@@ -375,7 +362,6 @@ export async function getAdminUserDetail(userId: string) {
     expiresOn: toIsoString(user.plan?.expiresOn),
     imageGenerations,
     audioGenerations,
-    videoGenerations,
     mediaUsage: {
       images: {
         used: imageGenerations,
@@ -393,14 +379,6 @@ export async function getAdminUserDetail(userId: string) {
             ? -1
             : Math.max(0, planLimits.audio - audioGenerations),
       },
-      video: {
-        used: videoGenerations,
-        limit: planLimits.video,
-        remaining:
-          planLimits.video === -1
-            ? -1
-            : Math.max(0, planLimits.video - videoGenerations),
-      },
     },
     trialUsage: {
       images: {
@@ -412,11 +390,6 @@ export async function getAdminUserDetail(userId: string) {
         used: trialAudioGenerations,
         limit: trialLimits.audio,
         remaining: Math.max(0, trialLimits.audio - trialAudioGenerations),
-      },
-      video: {
-        used: trialVideoGenerations,
-        limit: trialLimits.video,
-        remaining: Math.max(0, trialLimits.video - trialVideoGenerations),
       },
     },
     conversationUsage: {
@@ -776,8 +749,6 @@ export async function getAdminSettingsSnapshot() {
           MODEL_POLICY_MATRIX.pro.image_generation.taskClasses.final.model,
         audioModel:
           MODEL_POLICY_MATRIX.pro.audio_generation.taskClasses.final.model,
-        videoModel:
-          MODEL_POLICY_MATRIX.pro.video_generation.taskClasses.preview.model,
       },
       pricing: {
         proPrice: DEFAULT_PLAN_PRICING.Pro,
@@ -821,6 +792,8 @@ export async function getAdminSettingsSnapshot() {
       faqContent: buildFaqs(),
       heroContent: getDefaultHeroContent(),
       landingContent: getDefaultLandingContent(),
+      homepageCopy: getDefaultHomepageCopy(),
+      homepageFeaturedPersonas: getDefaultHomepageFeaturedPersonas(),
       aboutContent: getDefaultAboutContent(),
       promoContent: { ...DEFAULT_PROMO_CONTENT },
     },
