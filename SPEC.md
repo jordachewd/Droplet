@@ -2,14 +2,15 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-04-03 (PM audit #87). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. **DEPLOYED TO PRODUCTION.** Brand rename complete (Phase 172). Catch blocks documented (Phase 167.2). Promo text admin-configurable (Phase 162, 180.2–180.3). Global error boundary live (Phase 163). Admin error boundary live (Phase 187-A). Phases 173–178, 180.1–180.4, 181–187 COMPLETE. E2E: 49 tests (8 spec files). Coverage: 85/80/85/85. 599 tests. Build passing. Node.js 24.12.0.
+> Last updated: 2026-04-03 (PM audit #88). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. **V1.0 MVP RELEASED.** Brand rename complete (Phase 172). Catch blocks documented (Phase 167.2). Promo text admin-configurable (Phase 162, 180.2–180.3). Global error boundary live (Phase 163). Admin error boundary live (Phase 187-A). Phases 173–178, 180.1–180.4, 181–187 COMPLETE. E2E: 49 tests (8 spec files). Coverage: 85/80/85/85. 599 tests. Build passing. Node.js 24.12.0.
 >
-> **V1.0 MVP Release Status (PM audit #87):**
+> **V1.0 MVP Released (PM audit #88):**
 >
 > - ✅ All v1.0 pre-release fixes DONE (Phases 187-A through 187-D, 143, 180.2–180.4).
 > - ✅ All owner directives DONE (186-A, 186-B, pre-release task list).
 > - ✅ All validation gates GREEN (599 tests, lint 0/0, TSC clean, build passes, knip 0).
 > - ✅ Playwright browser verification passed on all surfaces.
+> - 🔴 Phase 188: PlanCard `isIncluded` bug (owner-reported, post-release fix).
 >
 > **Remaining Issues (non-blocking):**
 >
@@ -859,6 +860,12 @@ All button styles use Lime Green as the accent color in **both** light and dark 
 | TD-HARDCODE-02    | Content | ~8 hardcoded marketing strings.                                             | 180.2-3 | ✅ DONE. Promo content admin-configurable via `effective-promo-content.ts`.          |
 | TD-HARDCODE-04    | Content | Hardcoded `$` currency symbol.                                              | 180.4   | ✅ DONE. Currency via `getEffectiveCurrencySymbol()` prop.                           |
 | TD-RATE-CLEANUP   | Data    | `download:` rate-limit keys not cleaned.                                    | 187-D   | ✅ DONE. Key added to `getRateLimitKeys()`.                                          |
+
+### Active — HIGH Priority (Post-Release)
+
+| ID             | Area    | Description                                                                                                                                                 | Phase |
+| -------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| TD-PLANCARD-01 | UX/Data | `buildPlans()` hardcodes `isIncluded: true` on limit-derived inclusions. When `limit === 0`, plan card shows checkmark next to `"✕"` label. Owner-reported. | 188   |
 
 ### Active — MEDIUM Priority (Non-Blocking)
 

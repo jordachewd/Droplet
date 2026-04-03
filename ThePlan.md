@@ -3,7 +3,7 @@
 > Purpose: one execution document for finishing the SaaS without avoidable rework.
 > Audience: Project Manager, Architect, and Senior Software Agents.
 > Rule: this plan is based on verified repository state. If older docs disagree with code, code wins until this file is updated.
-> Last verified: PM audit #87, 2026-04-03. V1.0 release ready. All v1.0 pre-release phases complete. No critical bugs remaining.
+> Last verified: PM audit #88, 2026-04-03. V1.0 MVP RELEASED. All v1.0 pre-release phases complete. No critical bugs remaining. One owner-reported post-release bug (Phase 188: PlanCard isIncluded).
 
 ---
 
@@ -100,8 +100,6 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 | 187-D | Download rate-limit key cleanup                | ? DONE                 | Rate-limit key cascade cleanup for download routes.                 |
 | 143   | Env var runtime validation                     | ? DONE                 | All unsafe casts replaced with proper validation.                   |
 
-**NOTE:** DONE.md was NOT updated for Phases 173�178, 181�182, 187-A/B/C/D, 143, 180.2�180.4. Engineer must update DONE.md.
-
 ### Ongoing Constraints
 
 - **Vercel Hobby 60s timeout** � Architecture limitation for media gen. Phase 181 proactive timeout works correctly (clean user message). With video removed, remaining media gen (images: 30�90s, audio: 15�60s) is closer to the 60s limit but not as severe. **Recommendation: upgrade to Vercel Pro ($20/mo) which raises maxDuration to 300s.**
@@ -114,7 +112,7 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 
 **Strengths:** Clean architecture, strong auth, comprehensive tests (599+49), central policy resolvers, WCAG 2.2 AA complete, durable usage counters, thorough user deletion cascade, zero lint/type/knip issues, correct webhook code structure (audit #84 confirmed), Stream timeout fix confirmed working in production (Phase 181), SSE heartbeat + proactive timeout pattern is robust, video generation cleanly removed (Phase 186-A), token limits maximized (Phase 186-B), admin error boundary (Phase 187-A), env var runtime validation (Phase 143), all display text admin-configurable (Phases 180.1�180.4), audio player error recovery (Phase 187-C).
 
-**Weaknesses:** DONE.md not updated for multiple phases.
+**Weaknesses:** None blocking. Post-release backlog contains quality-of-life improvements only.
 
 **Opportunities:** Vercel Pro upgrade unlocks media generation ($20/mo), admin config cache (5+ DB hits/request ? 30s TTL), env var validation (8 unsafe casts), checkout success polling (webhook delay safety net), structured SSE error codes.
 
@@ -137,7 +135,11 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 
 ## 6. Current Execution Order
 
-> All 3 critical issues RESOLVED/CLOSED. All v1.0 pre-release phases DONE. **V1.0 MVP is RELEASE READY.** No critical bugs, no HIGH priority items remaining.
+> All 3 critical issues RESOLVED/CLOSED. All v1.0 pre-release phases DONE. **V1.0 MVP RELEASED.** One post-release owner-reported bug (Phase 188).
+
+### Post-Release Active
+
+- **🔴 Phase 188** — Fix PlanCard `isIncluded` logic. Owner-reported bug. `buildPlans()` hardcodes `isIncluded: true` on limit-derived inclusions; should be `limit !== 0`.
 
 ### Confirmed Working
 
@@ -166,23 +168,21 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 1. **MEDIUM Phase 144 � Admin config in-memory cache.**
    5+ DB hits/request for admin settings. Add 30s TTL cache.
 
-2. **MEDIUM Phase 145 � Upload filename sanitization.**
-   Sanitize uploaded filenames before S3 storage.
+2. **MEDIUM Phase 145 — Upload filename collision prevention.**
+   Use `crypto.randomUUID()` instead of `Date.now()` for S3 filenames.
 
-3. **MEDIUM Phase 165 � Checkout success page DB polling.**
-   Safety net for webhook delay � poll DB for plan update on success page.
+3. **MEDIUM Phase 165 — Checkout success page DB polling.**
+   Safety net for webhook delay — poll DB for plan update on success page.
 
-4. **LOW Phase 146�148 � Low priority improvements.**
-   Deferred from v1.0.
-
-5. **CLEANUP** � Update DONE.md for all completed phases.
+4. **LOW Phase 146–148 — Low priority improvements.**
+   Admin user detail transaction limit, rename `.tsx` utility files to `.ts`, bulk operations partial-failure reporting.
 
 ---
 
 ## 7. Owner Directives Status
 
 | #    | Directive                              | Status                                                                                                                             |
-| ---- | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| ---- | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | --- | ---- | ---------------------------- | ------------------------------------------------------------------------------ |
 | OI1  | TDD rebuild ALL tests                  | ? COMPLETE. 594 tests, 99 suites.                                                                                                  |
 | OI2  | No hardcoded data � admin-configurable | ? COMPLETE. All display strings extracted to admin config (Phases 180.1�180.4).                                                    |
 | OI3  | Reuse repetitive code                  | ? COMPLETE.                                                                                                                        |
@@ -206,7 +206,9 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 | OI21 | Fix Facebook login                     | ? CLOSED. Owner removed Facebook login from product entirely.                                                                      |
 | OI22 | Remove all video generation            | ? COMPLETE. Phase 186-A DONE. 58 files modified/deleted. All gates GREEN.                                                          |
 | OI23 | Increase token limits to maximum       | ? COMPLETE. Phase 186-B DONE. All 9 chat tiers updated to near-maximum model capacity.                                             |
-| OI24 | V1.0 MVP pre-release task list         | ? COMPLETE. All 8 pre-release phases DONE (187-A/B/C/D, 143, 180.2/3/4).                                                           |
+| OI24 | V1.0 MVP pre-release task list         | ? COMPLETE. All 8 pre-release phases DONE (187-A/B/C/D, 143, 180.2/3/4).                                                           |     | OI25 | Env vars validated in Vercel | ✅ ACKNOWLEDGED. `requireEnv()` kept as defense-in-depth for local dev and CI. |
+| OI26 | PlanCard isIncluded bug                | 🔴 Phase 188. If `limit === 0` then `isIncluded: false`, otherwise `true`. Owner-reported.                                         |
+| OI27 | App is now released                    | ✅ V1.0 MVP RELEASED. Post-release backlog active.                                                                                 |
 
 ---
 
