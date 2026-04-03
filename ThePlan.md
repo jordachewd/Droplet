@@ -3,13 +3,13 @@
 > Purpose: one execution document for finishing the SaaS without avoidable rework.
 > Audience: Project Manager, Architect, and Senior Software Agents.
 > Rule: this plan is based on verified repository state. If older docs disagree with code, code wins until this file is updated.
-> Last verified: PM audit #88, 2026-04-03. V1.0 MVP RELEASED. All v1.0 pre-release phases complete. No critical bugs remaining. One owner-reported post-release bug (Phase 188: PlanCard isIncluded).
+> Last verified: PM audit #89, 2026-04-03. V1.0 MVP RELEASED. Phase 188 (PlanCard isIncluded fix) DONE. CRITICAL: Admin users can be deleted (Phase 189). 6 new owner directives (OI28–OI33).
 
 ---
 
 ## 1. Executive Judgment
 
-Droplet is deployed to production with all 25 milestones complete. The TDD testing rebuild is done (101 suites, 599 tests, 8 E2E specs, 85/80/85/85 coverage). WCAG 2.2 AA is complete. Admin configurability (promo text, FAQ, landing, stop reasons, persona content) is done. Global error boundary is done. Brand rename (cellesseon ? droplet) is complete.
+Droplet is deployed to production with all 25 milestones complete. The TDD testing rebuild is done (101 suites, 602 tests, 8 E2E specs, 85/80/85/85 coverage). WCAG 2.2 AA is complete. Admin configurability (promo text, FAQ, landing, stop reasons, persona content) is done. Global error boundary is done. Brand rename (cellesseon ? droplet) is complete.
 
 **Owner investigation results (2026-04-02, PM audit #84-B):**
 
@@ -28,7 +28,7 @@ Phase 178, 181, 182 � DONE. Phase 183 (Stripe) � RESOLVED (webhook was disab
 
 > **Milestones 0�25 ALL COMPLETE.** Detailed phase records archived in DONE.md.
 
-Key deliverables: Next.js 16 App Router, Clerk auth + proxy route protection, Stripe checkout + webhooks, MongoDB persistence (Mongoose, strict mode, indexes), 6 personas with three-tier gating, streaming SSE chat, image/audio generation (OpenAI tools + S3 storage), AI model policy resolver, central entitlement resolver, admin control plane (users, transactions, usage, settings, website), 7 public marketing/legal routes, WCAG 2.2 AA compliance, TDD test suite (599 tests), E2E suite (49 tests, 8 specs), brand color palette v2, lime green accent, admin-configurable promo/FAQ/landing/stop-reason/persona content, global error boundary, user deletion cascade, rate limiting, Node.js 24.12.0, all config hardening, video generation removal (Phase 186-A), token limits maximized to near-maximum model capacity (Phase 186-B), admin error boundary (Phase 187-A), Clerk webhook cascade fix (Phase 187-B), audio player error recovery (Phase 187-C), env var runtime validation (Phase 143), all display text admin-configurable (Phases 180.2�180.4), download rate-limit cleanup (Phase 187-D).
+Key deliverables: Next.js 16 App Router, Clerk auth + proxy route protection, Stripe checkout + webhooks, MongoDB persistence (Mongoose, strict mode, indexes), 6 personas with three-tier gating, streaming SSE chat, image/audio generation (OpenAI tools + S3 storage), AI model policy resolver, central entitlement resolver, admin control plane (users, transactions, usage, settings, website), 7 public marketing/legal routes, WCAG 2.2 AA compliance, TDD test suite (602 tests), E2E suite (49 tests, 8 specs), brand color palette v2, lime green accent, admin-configurable promo/FAQ/landing/stop-reason/persona content, global error boundary, user deletion cascade, rate limiting, Node.js 24.12.0, all config hardening, video generation removal (Phase 186-A), token limits maximized to near-maximum model capacity (Phase 186-B), admin error boundary (Phase 187-A), Clerk webhook cascade fix (Phase 187-B), audio player error recovery (Phase 187-C), env var runtime validation (Phase 143), all display text admin-configurable (Phases 180.2�180.4), download rate-limit cleanup (Phase 187-D).
 
 Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 169), script tag warning (Phase 170), payment webhook schema (Phase 157/161), catch block documentation (Phase 167+167.2), test failures (Phase 171), cellesseon rename (Phase 172), debug text (Phase 173), dead files (Phase 174�175), download 206 (Phase 176), constant dedup (Phase 177), fake download icon (Phase 178), stream timeout budget (Phase 181 � **confirmed working in production**), Stripe diagnostic hardening (Phase 182).
 
@@ -129,19 +129,27 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 | C    | Product Gate    | GREEN  | All display strings admin-configurable. Video removed. Stripe + Facebook resolved.         |
 | D    | Admin Gate      | GREEN  | Admin config complete. Error boundary added (Phase 187-A). All strings admin-configurable. |
 | E    | Public Gate     | GREEN  | All 7 public routes accurate, legal content real, no obsolete trial messaging              |
-| F    | Validation Gate | GREEN  | 599 tests, lint 0/0, TSC clean, knip 0, E2E 49 tests, coverage 85/80/85/85                 |
+| F    | Validation Gate | GREEN  | 602 tests, lint 0/0, TSC clean, knip 0, E2E 49 tests, coverage 85/80/85/85                 |
 
 ---
 
 ## 6. Current Execution Order
 
-> All 3 critical issues RESOLVED/CLOSED. All v1.0 pre-release phases DONE. **V1.0 MVP RELEASED.** One post-release owner-reported bug (Phase 188).
+> All 3 critical issues RESOLVED/CLOSED. All v1.0 pre-release phases DONE. **V1.0 MVP RELEASED.** CRITICAL: Admin deletion protection needed (Phase 189). 6 new owner directives.
 
 ### Post-Release Active
 
-- **🔴 Phase 188** — Fix PlanCard `isIncluded` logic. Owner-reported bug. `buildPlans()` hardcodes `isIncluded: true` on limit-derived inclusions; should be `limit !== 0`.
+- **🔴 Phase 189** — CRITICAL: Admin deletion protection. Admin users can be deleted from Profile and Admin/Users dashboard. Locks out admin panel permanently.
+- **🟡 Phase 190** — Admin "ADMIN" display + unlimited profile permissions.
+- **🟡 Phase 191** — Reusable FormInput component.
+- **🟡 Phase 192** — Reusable PersonaSelector component (depends on 191).
+- **🟡 Phase 193** — Reusable UsageMetricRow component.
+- **🟡 Phase 194** — TiptapEditor redesign (depends on 191).
 
 ### Confirmed Working
+
+- **✅ Phase 188** — PlanCard isIncluded fix. `buildPlans()` uses `limit !== 0`. 3 new tests. 602 total.
+- **✅ Phase 181** — Stream timeout budget fix. PRODUCTION-CONFIRMED.
 
 - **? Phase 181** � Stream timeout budget fix. PRODUCTION-CONFIRMED.
 - **? Phase 178** � Fake download icon removed. DONE.
@@ -207,8 +215,14 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 | OI22 | Remove all video generation            | ? COMPLETE. Phase 186-A DONE. 58 files modified/deleted. All gates GREEN.                                                          |
 | OI23 | Increase token limits to maximum       | ? COMPLETE. Phase 186-B DONE. All 9 chat tiers updated to near-maximum model capacity.                                             |
 | OI24 | V1.0 MVP pre-release task list         | ? COMPLETE. All 8 pre-release phases DONE (187-A/B/C/D, 143, 180.2/3/4).                                                           |     | OI25 | Env vars validated in Vercel | ✅ ACKNOWLEDGED. `requireEnv()` kept as defense-in-depth for local dev and CI. |
-| OI26 | PlanCard isIncluded bug                | 🔴 Phase 188. If `limit === 0` then `isIncluded: false`, otherwise `true`. Owner-reported.                                         |
+| OI26 | PlanCard isIncluded bug                | ✅ COMPLETE. Phase 188 DONE. `buildPlans()` uses `limit !== 0`. 602 tests.                                                         |
 | OI27 | App is now released                    | ✅ V1.0 MVP RELEASED. Post-release backlog active.                                                                                 |
+| OI28 | Admin cannot be deleted                | 🔴 Phase 189. CRITICAL. Neither from Profile nor Admin/Users dashboard.                                                            |
+| OI29 | Admin unlimited + "ADMIN" display      | 🟡 Phase 190. Show "ADMIN" not plan name. Display unlimited metrics.                                                               |
+| OI30 | Reusable input component               | 🟡 Phase 191. Create FormInput for all input types. Reduce JSX load.                                                               |
+| OI31 | Persona selector reusable              | 🟡 Phase 192. Extract from chat-header. No dotted border. Consistent styling.                                                      |
+| OI32 | UsageMetricRow reusable                | 🟡 Phase 193. Share between profile and admin user detail.                                                                         |
+| OI33 | TiptapEditor redesign                  | 🟡 Phase 194. WYSIWYG editor: bold/italic/underline/strike/align/lists/links/images. TinyMCE-style.                                |
 
 ---
 
@@ -264,7 +278,7 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 - Stripe subscription mode (auto-renewal)
 - Legal/nav/footer admin configurability (v2)
 - Supabase/PostgreSQL migration (future strategic direction)
-- Tiptap rich-text editor (admin forms use standard controls)
+- ~~Tiptap rich-text editor~~ — RECLASSIFIED. Now active as Phase 194 (OI33).
 
 ---
 

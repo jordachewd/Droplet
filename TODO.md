@@ -5,7 +5,7 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #88 (2026-04-03). V1.0 MVP RELEASED. All 7 validation gates GREEN (599 tests, lint 0/0, TSC clean, build passes, knip 0). All Milestones 0–25 COMPLETE. Phases 143, 180.1–180.4, 185, 186-A, 186-B, 187-A–187-D COMPLETE.**
+> **STATUS: PM audit #89 (2026-04-03). V1.0 MVP RELEASED. All 7 validation gates GREEN (602 tests, lint 0/0, TSC clean, build passes, knip 0). All Milestones 0–25 COMPLETE. Phase 188 COMPLETE.**
 >
 > **GATE STATUS: Validation GREEN. Architecture GREEN. Product GREEN. Admin GREEN. Public GREEN. Contract GREEN.**
 >
@@ -15,18 +15,29 @@
 > - ✅ Increase Token Limits to maximum — **DONE (Phase 186-B).**
 > - ✅ Pre-release task list — **DONE. All 8 phases complete (PM audit #87).**
 > - ✅ Env vars validated in Vercel — **ACKNOWLEDGED. `requireEnv()` kept as defense-in-depth.**
-> - 🔴 PlanCard `isIncluded` bug — **Phase 188. If `limit === 0` then `isIncluded: false`, otherwise `true`.**
+> - ✅ PlanCard `isIncluded` bug — **DONE (Phase 188). 602 tests.**
 > - ✅ App is now released — **V1.0 MVP RELEASED.**
+> - 🔴 Admin cannot be deleted — **Phase 189. CRITICAL. Neither from Profile nor Admin/Users dashboard.**
+> - 🔴 Admin unlimited permissions + "ADMIN" display — **Phase 190. HIGH.**
+> - 🟡 Reusable input component — **Phase 191. MEDIUM.**
+> - 🟡 Persona selector reusable component — **Phase 192. MEDIUM.**
+> - 🟡 TiptapEditor redesign (TinyMCE-style) — **Phase 194. MEDIUM.**
+> - 🟡 UsageMetricRow reusable component — **Phase 193. MEDIUM.**
 >
-> **EXECUTION ORDER (PM audit #88 — Post-Release):**
+> **EXECUTION ORDER (PM audit #89 — Post-Release):**
 >
-> 1. **HIGH Phase 188** — Fix PlanCard `isIncluded` logic (owner-reported bug).
-> 2. **MEDIUM Phase 144** — Admin config cache (30s TTL).
-> 3. **MEDIUM Phase 145** — Upload filename collision prevention.
-> 4. **MEDIUM Phase 165** — Checkout success page DB polling.
-> 5. **LOW Phase 146** — Admin user detail transaction limit.
-> 6. **LOW Phase 147** — Rename `.tsx` utility files to `.ts`.
-> 7. **LOW Phase 148** — Bulk operations partial-failure reporting.
+> 1. **CRITICAL Phase 189** — Admin deletion protection (security gap).
+> 2. **HIGH Phase 190** — Admin unlimited permissions + "ADMIN" display.
+> 3. **MEDIUM Phase 191** — Reusable `FormInput` component.
+> 4. **MEDIUM Phase 192** — Reusable `PersonaSelector` component (depends on 191).
+> 5. **MEDIUM Phase 193** — Reusable `UsageMetricRow` component.
+> 6. **MEDIUM Phase 194** — TiptapEditor redesign (depends on 191).
+> 7. **MEDIUM Phase 144** — Admin config cache (30s TTL).
+> 8. **MEDIUM Phase 145** — Upload filename collision prevention.
+> 9. **MEDIUM Phase 165** — Checkout success page DB polling.
+> 10. **LOW Phase 146** — Admin user detail transaction limit.
+> 11. **LOW Phase 147** — Rename `.tsx` utility files to `.ts`.
+> 12. **LOW Phase 148** — Bulk operations partial-failure reporting.
 
 ---
 
@@ -102,34 +113,152 @@
 
 ---
 
-## HIGH — Phase 188 — Fix PlanCard `isIncluded` Logic
+## ✅ Phase 188 — Fix PlanCard `isIncluded` Logic — DONE (2026-04-03)
 
-> **Owner-reported bug (PM audit #88).** In `buildPlans()`, limit-derived inclusions have `isIncluded: true` hardcoded. Per owner directive: if `limit === 0` then `isIncluded` must be `false`, otherwise `isIncluded: true`. Currently, `formatMediaLimitLabel()` shows `"✕"` prefix for `limit === 0` but the plan card renders a checkmark icon — contradictory UX.
+> Archived in DONE.md.
 
-**File:** `src/constants/plans.tsx`
+---
+
+## CRITICAL — Phase 189 — Admin Deletion Protection
+
+> **Owner directive (PM audit #89). SECURITY GAP.** Admin users can currently delete themselves from the Profile page (locks out admin panel permanently) and can be deleted by other admins via Admin/Users dashboard (bulk or single remove). All 4 deletion surfaces must refuse to delete users with `role === "admin"`.
+
+**Files:**
+
+- `src/lib/actions/user.actions.tsx` — `deleteUser()` self-delete action
+- `src/lib/actions/admin.actions.tsx` — `removeUserByAdmin()`, `bulkRemoveUsersAction()`
+- `src/components/sections/profile/profile-danger-zone.tsx` — Profile UI
+- `src/app/(admin)/admin/users/[userId]/page.tsx` — Admin user detail UI
+- `src/components/admin/users/admin-users-table.tsx` — Admin bulk actions UI
 
 **What to do:**
 
-1. In `buildPlans()`, change all 12 limit-derived inclusions (4 per plan × 3 plans) from `isIncluded: true` to `isIncluded: <limit> !== 0`.
-2. Affected fields per plan: `conversationsPerDay`, `promptsPerConversation`, `images`, `audio`.
-3. Static inclusions ("AI chat assistant", persona access, trial limits, file uploads, email support, quality labels) remain hardcoded — not limit-derived.
-4. Add unit tests in `tests/unit/constants/plans.test.ts`:
-   - Test: `isIncluded` is `false` when a limit is `0`.
-   - Test: `isIncluded` is `true` when a limit is positive.
-   - Test: `isIncluded` is `true` when a limit is `-1` (unlimited).
+1. **Backend — `deleteUser()`**: After auth check, query `User.findOne({ clerkId }).select("role").lean()`. If `role === "admin"`, return error: "Admin accounts cannot be deleted."
+2. **Backend — `removeUserByAdmin()`**: After finding target user (already has `select("clerkId email username")`), add `role` to select. If `targetUser.role === "admin"`, throw: "Cannot remove an admin user."
+3. **Backend — `bulkRemoveUsersAction()`**: Before the loop, query admin user IDs and filter them out. Log skipped admin users.
+4. **UI — `ProfileDangerZone`**: If `userData.role === "admin"`, do not render the danger zone section at all.
+5. **UI — Admin user detail page**: If `user.role === "admin"`, hide the "Remove User" form.
+6. **UI — Admin users table**: Disable checkbox selection for admin-role users in the table.
+7. **Tests**: Add unit tests for all 3 backend guards.
 
 **Acceptance criteria:**
 
-- [ ] All 12 limit-derived inclusions use `isIncluded: limit !== 0`
-- [ ] `limit === -1` (unlimited) → `isIncluded: true`
-- [ ] `limit === 0` → `isIncluded: false` with X icon on plan card
-- [ ] `limit > 0` → `isIncluded: true` with checkmark icon
-- [ ] 3 new unit tests pass
+- [ ] `deleteUser()` refuses to delete admin-role users with clear error message
+- [ ] `removeUserByAdmin()` refuses to delete admin-role users
+- [ ] `bulkRemoveUsersAction()` silently skips admin-role users
+- [ ] Profile page hides danger zone for admin users
+- [ ] Admin user detail page hides remove button for admin users
+- [ ] Admin users table prevents admin user selection for bulk remove
+- [ ] Unit tests for all 3 backend guards
 - [ ] Build passes, all existing tests pass
 
 ---
 
-## MEDIUM — Phase 144 — Admin Config In-Memory Cache
+## HIGH — Phase 190 — Admin Unlimited Permissions + "ADMIN" Display
+
+> **Owner directive (PM audit #89).** Admin users must display "ADMIN" instead of plan name (currently shows "LITE" in `/app/profile`) everywhere. Admin usage metrics must show unlimited.
+
+**What to do:**
+
+1. Identify all locations where plan name is displayed to the user (profile hero, profile usage, sidebar, plan promo, etc.).
+2. When `userData.role === "admin"`, display "ADMIN" instead of the plan name.
+3. When `userData.role === "admin"`, display unlimited usage metrics ("Unlimited" instead of numeric limits).
+4. Verify `resolveEntitlements()` already bypasses all limits for admin — this is about display, not enforcement.
+
+**Acceptance criteria:**
+
+- [ ] Profile page shows "ADMIN" instead of plan name for admin users
+- [ ] All plan name display locations show "ADMIN" for admin users
+- [ ] Usage metrics show "Unlimited" for admin users
+- [ ] Build passes, tests pass
+
+---
+
+## MEDIUM — Phase 191 — Reusable `FormInput` Component
+
+> **Owner directive (PM audit #89).** Create a reusable input component with improved styling for all input types (checkbox, date, email, number, password, radio, range, search, tel, text). Reduce JSX load across the app.
+
+**What to do:**
+
+1. Create `src/components/shared/form-input.tsx` with consistent styling for all input types.
+2. Support props: `type`, `label`, `name`, `value`, `placeholder`, `required`, `disabled`, `className`, `onChange`.
+3. Apply consistent styling aligned with the app’s design system (rounded, bordered, dark mode support).
+4. Migrate existing inline-styled inputs across admin and app surfaces.
+
+**Acceptance criteria:**
+
+- [ ] `FormInput` component supports all listed input types
+- [ ] Consistent styling across all input types
+- [ ] Dark mode support
+- [ ] Existing inputs migrated to use `FormInput`
+- [ ] Build passes, tests pass
+
+---
+
+## MEDIUM — Phase 192 — Reusable `PersonaSelector` Component
+
+> **Owner directive (PM audit #89).** Extract persona selector from `chat-header.tsx` into a reusable component. No dotted border. Styling consistent with `FormInput`.
+
+**Depends on:** Phase 191 (FormInput).
+
+**What to do:**
+
+1. Create `src/components/shared/persona-selector.tsx`.
+2. Move persona selection logic from `chat-header.tsx`.
+3. Remove dotted border. Use styling consistent with `FormInput`.
+4. Accept props: `personas`, `selectedPersonaId`, `disabled`, `onSelect`.
+
+**Acceptance criteria:**
+
+- [ ] Persona selector extracted into reusable component
+- [ ] No dotted border
+- [ ] Styling consistent with `FormInput`
+- [ ] `chat-header.tsx` uses the new component
+- [ ] Build passes, tests pass
+
+---
+
+## MEDIUM — Phase 193 — Reusable `UsageMetricRow` Component
+
+> **Owner directive (PM audit #89).** `<UsageMetricRow />` in `/app/profile` and "Usage Snapshot" in `/admin/users/[userId]` must share the same component and style.
+
+**What to do:**
+
+1. Identify the existing `UsageMetricRow` in profile and the usage display in admin user detail.
+2. Create a shared `src/components/shared/usage-metric-row.tsx`.
+3. Replace both implementations with the shared component.
+
+**Acceptance criteria:**
+
+- [ ] Single `UsageMetricRow` component used in both profile and admin
+- [ ] Same visual style in both locations
+- [ ] Build passes, tests pass
+
+---
+
+## MEDIUM — Phase 194 — TiptapEditor Redesign (TinyMCE-style)
+
+> **Owner directive (PM audit #89).** TiptapEditor must be redesigned to feel like a modern TinyMCE/WordPress text editor. Needs: bold, italic, underline, strikethrough, align (left, center, right, justify), lists (bullet, numbered), insert/edit link, insert/edit image. Styling consistent with `FormInput`.
+
+**Depends on:** Phase 191 (FormInput for consistent styling).
+
+**What to do:**
+
+1. Verify `@tiptap/*` package compatibility with React 19 / Next.js 16.
+2. Install required Tiptap extensions (Underline, TextAlign, Link, Image, etc.).
+3. Build a WYSIWYG toolbar with common formatting options.
+4. Apply consistent styling with the app’s design system.
+5. Replace the current TiptapEditor implementation.
+
+**Acceptance criteria:**
+
+- [ ] WYSIWYG toolbar with bold, italic, underline, strikethrough
+- [ ] Text alignment (left, center, right, justify)
+- [ ] Ordered and unordered lists
+- [ ] Insert/edit link
+- [ ] Insert/edit image
+- [ ] Styling consistent with `FormInput`
+- [ ] Build passes, tests pass
 
 > 5+ DB round trips per `/api/openai` request for admin settings that change infrequently.
 

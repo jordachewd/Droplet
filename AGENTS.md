@@ -95,6 +95,7 @@ All seven gates must pass.
 
 - **Zero trust**: protect all routes unless explicitly public. Verify auth in every server action and API route before DB writes.
 - **Admin double-check**: admin routes must verify `role === "admin"` at both proxy AND server-action/page level.
+- **Admin users cannot be deleted** — no deletion of `role === "admin"` users from any surface (profile self-delete, admin single remove, admin bulk remove). All deletion actions must check target user role and refuse if admin. UI must hide delete controls for admin users.
 - **Webhooks**: verify via `verifyWebhook()` from `@clerk/nextjs/webhooks` (Clerk) and `stripe.webhooks.constructEvent` (Stripe) before processing. Ensure idempotency — check for duplicate event IDs before creating records. Webhook handlers must not throw on replayed or missing documents. **Idempotency must verify the complete operation** — if a multi-step webhook (e.g., create Transaction + update User) partially fails, the idempotency check must not short-circuit; it must attempt to complete remaining steps.
 - **Webhook error boundaries** — all webhook POST handlers must have a top-level try/catch. Unhandled exceptions must return controlled error responses, not crash the function. Capture and log original error details (never empty `catch {}` in webhook code).
 - **Secrets**: never commit; use `.env.local`. Only `NEXT_PUBLIC_*` values reach the browser.
