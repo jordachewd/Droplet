@@ -2,7 +2,24 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-04-03 — PM audit #87.
+> Last updated: 2026-04-03 — PM audit #89.
+
+---
+
+## Phase 188 — Fix PlanCard `isIncluded` Logic — COMPLETED (2026-04-03)
+
+> Engineer delivered (PM audit #89). All 12 limit-derived inclusions in `buildPlans()` now use `limit !== 0` instead of hardcoded `true`. 3 new unit tests. 602 total tests. All 7 gates GREEN. Playwright browser verification passed.
+
+- [x] Lite: 4 limit-derived inclusions use `limits.Lite.<field> !== 0`
+- [x] Pro: 4 limit-derived inclusions use `limits.Pro.<field> !== 0`
+- [x] Premium: 4 limit-derived inclusions use `limits.Premium.<field> !== 0`
+- [x] Static inclusions unchanged (AI chat assistant, personas, trial, file uploads, email, quality)
+- [x] Test: `isIncluded` is `false` when limit is `0`
+- [x] Test: `isIncluded` is `true` when limit is positive
+- [x] Test: `isIncluded` is `true` when limit is `-1` (unlimited)
+- [x] Test helpers: `buildUniformLimits()` and `expectLimitDerivedInclusions()`
+- [x] Full 7-gate validation GREEN (602 tests)
+- [x] Playwright MCP browser verification passed on `/plans`
 
 ---
 

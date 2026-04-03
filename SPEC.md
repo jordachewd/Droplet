@@ -2,15 +2,16 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-04-03 (PM audit #88). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. **V1.0 MVP RELEASED.** Brand rename complete (Phase 172). Catch blocks documented (Phase 167.2). Promo text admin-configurable (Phase 162, 180.2–180.3). Global error boundary live (Phase 163). Admin error boundary live (Phase 187-A). Phases 173–178, 180.1–180.4, 181–187 COMPLETE. E2E: 49 tests (8 spec files). Coverage: 85/80/85/85. 599 tests. Build passing. Node.js 24.12.0.
+> Last updated: 2026-04-03 (PM audit #89). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. **V1.0 MVP RELEASED.** Brand rename complete (Phase 172). Catch blocks documented (Phase 167.2). Promo text admin-configurable (Phase 162, 180.2–180.3). Global error boundary live (Phase 163). Admin error boundary live (Phase 187-A). Phases 173–178, 180.1–180.4, 181–188 COMPLETE. E2E: 49 tests (8 spec files). Coverage: 85/80/85/85. 602 tests. Build passing. Node.js 24.12.0.
 >
-> **V1.0 MVP Released (PM audit #88):**
+> **V1.0 MVP Released (PM audit #89):**
 >
 > - ✅ All v1.0 pre-release fixes DONE (Phases 187-A through 187-D, 143, 180.2–180.4).
-> - ✅ All owner directives DONE (186-A, 186-B, pre-release task list).
-> - ✅ All validation gates GREEN (599 tests, lint 0/0, TSC clean, build passes, knip 0).
+> - ✅ Phase 188 DONE — PlanCard `isIncluded` bug fixed. 602 tests.
+> - ✅ All validation gates GREEN (602 tests, lint 0/0, TSC clean, build passes, knip 0).
 > - ✅ Playwright browser verification passed on all surfaces.
-> - 🔴 Phase 188: PlanCard `isIncluded` bug (owner-reported, post-release fix).
+> - 🔴 Phase 189: Admin deletion protection (CRITICAL security gap).
+> - 🔴 Phase 190–194: Owner directives for admin empowerment, UI components, TiptapEditor.
 >
 > **Remaining Issues (non-blocking):**
 >
@@ -861,11 +862,17 @@ All button styles use Lime Green as the accent color in **both** light and dark 
 | TD-HARDCODE-04    | Content | Hardcoded `$` currency symbol.                                              | 180.4   | ✅ DONE. Currency via `getEffectiveCurrencySymbol()` prop.                           |
 | TD-RATE-CLEANUP   | Data    | `download:` rate-limit keys not cleaned.                                    | 187-D   | ✅ DONE. Key added to `getRateLimitKeys()`.                                          |
 
+### Active — CRITICAL Priority
+
+| ID              | Area     | Description                                                                                                                                                                                                | Phase |
+| --------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| TD-ADMIN-DELETE | Security | Admin users can be deleted from Profile (self-delete) and Admin/Users dashboard (single + bulk remove). Locks out admin panel permanently. All 4 deletion surfaces must refuse `role === "admin"` targets. | 189   |
+
 ### Active — HIGH Priority (Post-Release)
 
-| ID             | Area    | Description                                                                                                                                                 | Phase |
-| -------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
-| TD-PLANCARD-01 | UX/Data | `buildPlans()` hardcodes `isIncluded: true` on limit-derived inclusions. When `limit === 0`, plan card shows checkmark next to `"✕"` label. Owner-reported. | 188   |
+| ID               | Area | Description                                                                                                              | Phase |
+| ---------------- | ---- | ------------------------------------------------------------------------------------------------------------------------ | ----- |
+| TD-ADMIN-DISPLAY | UX   | Admin profile shows "Lite" plan name. Must show "ADMIN" everywhere. Usage metrics must show "Unlimited" for admin users. | 190   |
 
 ### Active — MEDIUM Priority (Non-Blocking)
 
