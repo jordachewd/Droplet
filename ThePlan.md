@@ -3,7 +3,7 @@
 > Purpose: one execution document for finishing the SaaS without avoidable rework.
 > Audience: Project Manager, Architect, and Senior Software Agents.
 > Rule: this plan is based on verified repository state. If older docs disagree with code, code wins until this file is updated.
-> Last verified: PM audit #84-B, 2026-04-02. Owner investigation completed. C2 RESOLVED, C3 CLOSED, C1 ACCEPTED.
+> Last verified: PM audit #85, 2026-04-03. Owner directive: remove all video generation, increase token limits.
 
 ---
 
@@ -13,14 +13,14 @@ Droplet is deployed to production with all 25 milestones complete. The TDD testi
 
 **Owner investigation results (2026-04-02, PM audit #84-B):**
 
-1. **✅ C1 — Media generation timeout — ACCEPTED.** Owner decided to stay on Vercel Hobby plan. Phase 181 proactive timeout handles gracefully. **Owner decision: use `sora-2` for ALL plans, remove `sora-2-pro` entirely (Phase 185).** Async media gen deferred to v2.
+1. **✅ C1 — Video generation — REMOVED.** Owner directive (2026-04-03): remove ALL video generation from the app. Both `sora-2` and `sora-2-pro` are deprecated. Phase 186 created.
 
 2. **✅ C2 — Stripe payment — RESOLVED.** Root cause: Stripe webhook endpoint was **disabled** in Stripe Dashboard. Owner re-enabled it. All env vars verified correct. Vercel log confirms HTTP 200 + plan update. Revenue flow operational.
 
 3. **✅ C3 — Facebook login — CLOSED.** Owner removed Facebook login from product. No longer used.
 
 **Phases completed since last plan update:**
-Phase 178, 181, 182 — DONE. Phase 183 (Stripe) — RESOLVED (webhook was disabled). Phase 184 (Facebook) — CLOSED (removed from product).
+Phase 178, 181, 182 — DONE. Phase 183 (Stripe) — RESOLVED (webhook was disabled). Phase 184 (Facebook) — CLOSED (removed from product). Phase 185 (sora-2-pro removal) — DONE. Phase 180.1 (homepage text extraction) — DONE.
 
 ---
 
@@ -28,7 +28,7 @@ Phase 178, 181, 182 — DONE. Phase 183 (Stripe) — RESOLVED (webhook was disab
 
 > **Milestones 0–25 ALL COMPLETE.** Detailed phase records archived in DONE.md.
 
-Key deliverables: Next.js 16 App Router, Clerk auth + proxy route protection, Stripe checkout + webhooks, MongoDB persistence (Mongoose, strict mode, indexes), 6 personas with three-tier gating, streaming SSE chat, image/audio/video generation (OpenAI tools + S3 storage), AI model policy resolver, central entitlement resolver, admin control plane (users, transactions, usage, settings, website), 7 public marketing/legal routes, WCAG 2.2 AA compliance, TDD test suite (603 tests), E2E suite (49 tests, 8 specs), brand color palette v2, lime green accent, admin-configurable promo/FAQ/landing/stop-reason/persona content, global error boundary, user deletion cascade, rate limiting, Node.js 24.12.0, all config hardening.
+Key deliverables: Next.js 16 App Router, Clerk auth + proxy route protection, Stripe checkout + webhooks, MongoDB persistence (Mongoose, strict mode, indexes), 6 personas with three-tier gating, streaming SSE chat, image/audio generation (OpenAI tools + S3 storage), AI model policy resolver, central entitlement resolver, admin control plane (users, transactions, usage, settings, website), 7 public marketing/legal routes, WCAG 2.2 AA compliance, TDD test suite (603 tests), E2E suite (49 tests, 8 specs), brand color palette v2, lime green accent, admin-configurable promo/FAQ/landing/stop-reason/persona content, global error boundary, user deletion cascade, rate limiting, Node.js 24.12.0, all config hardening.
 
 Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 169), script tag warning (Phase 170), payment webhook schema (Phase 157/161), catch block documentation (Phase 167+167.2), test failures (Phase 171), cellesseon rename (Phase 172), debug text (Phase 173), dead files (Phase 174–175), download 206 (Phase 176), constant dedup (Phase 177), fake download icon (Phase 178), stream timeout budget (Phase 181 — **confirmed working in production**), Stripe diagnostic hardening (Phase 182).
 
@@ -62,38 +62,40 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 
 ### Issues Found by Audit #82–#84 — Updated Status
 
-| #   | Severity           | Issue                                                                    | Status                                                                                       |
-| --- | ------------------ | ------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
-| C1  | ✅ ARCH-LIMITATION | Media gen timeout — Phase 181 proactive timeout confirmed working        | Not a code bug. Vercel Hobby 60s limit. Fix: upgrade Vercel Pro ($20/mo) or async media gen. |
-| C2  | ✅ RESOLVED        | Stripe webhook — payment processed, no transaction, no plan update       | Root cause: webhook was disabled in Stripe Dashboard. Re-enabled. HTTP 200 confirmed.        |
-| C3  | ✅ CLOSED          | Facebook login — "Feature Unavailable" error                             | Owner removed Facebook login from product.                                                   |
-| H4  | ✅ RESOLVED        | Fake download icon — removed in Phase 178                                | Icon removed from `profile-billing.tsx`                                                      |
-| H6  | HIGH               | Audio player button permanently disabled after transient error           | `audio-player.tsx:171` — not yet addressed                                                   |
-| M1  | MEDIUM             | No video player error state (unlike audio player)                        | `video-player.tsx` — not yet addressed                                                       |
-| M2  | MEDIUM             | ~20–30 hardcoded display strings across homepage/chat/profile components | Phase 180 — next code priority                                                               |
-| M3  | MEDIUM             | Hardcoded persona IDs in homepage spotlight                              | Part of Phase 180                                                                            |
+| #   | Severity     | Issue                                                                    | Status                                                                                |
+| --- | ------------ | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------- |
+| C1  | ✅ REMOVED   | Video generation removed from product entirely per owner directive       | Owner directive: remove all video generation. Phase 186.                              |
+| C2  | ✅ RESOLVED  | Stripe webhook — payment processed, no transaction, no plan update       | Root cause: webhook was disabled in Stripe Dashboard. Re-enabled. HTTP 200 confirmed. |
+| C3  | ✅ CLOSED    | Facebook login — "Feature Unavailable" error                             | Owner removed Facebook login from product.                                            |
+| H4  | ✅ RESOLVED  | Fake download icon — removed in Phase 178                                | Icon removed from `profile-billing.tsx`                                               |
+| H6  | HIGH         | Audio player button permanently disabled after transient error           | `audio-player.tsx:171` — not yet addressed                                            |
+| M1  | ✅ CANCELLED | No video player error state (unlike audio player)                        | CANCELLED — video-player being removed (Phase 186).                                   |
+| M2  | MEDIUM       | ~20–30 hardcoded display strings across homepage/chat/profile components | Phase 180 — next code priority                                                        |
+| M3  | MEDIUM       | Hardcoded persona IDs in homepage spotlight                              | Part of Phase 180                                                                     |
 
 ### Phase 173–184 Completion Status
 
-| Phase | Task                                         | Status                  | Evidence                                                            |
-| ----- | -------------------------------------------- | ----------------------- | ------------------------------------------------------------------- |
-| 173   | Remove debug text from chat-wrapper.tsx      | ✅ DONE                 | Grep confirms text removed                                          |
-| 174   | Delete theme-init.js + clean knip.json       | ✅ DONE                 | File deleted; knip.json cleaned; layout.tsx has inline script       |
-| 175   | Remove dead conversationEnded prop           | ✅ DONE                 | Prop removed from ChatBodyProps interface                           |
-| 176   | Fix download route 206 status                | ✅ DONE                 | Now uses `response.ContentRange ? 206 : 200`                        |
-| 177   | Deduplicate STREAM_PROACTIVE_TIMEOUT_MESSAGE | ✅ DONE                 | route.tsx imports from `@/constants/chat-stream`                    |
-| 178   | Fix fake download icon in profile-billing    | ✅ DONE                 | Icon removed from `profile-billing.tsx`                             |
-| 181   | Fix stream timeout budget miscalculation     | ✅ PRODUCTION-CONFIRMED | Owner tested — proactive timeout fires correctly with clean msg     |
-| 182   | Stripe webhook diagnostic hardening          | ✅ CODE-COMPLETE        | `eventType` added to unhandled response body                        |
-| 183   | Stripe payment investigation (Vercel envs)   | ✅ RESOLVED             | Root cause: webhook disabled. Owner re-enabled. HTTP 200 confirmed. |
-| 184   | Facebook login investigation                 | ✅ CLOSED               | Owner removed Facebook login from product.                          |
-| 185   | Remove `sora-2-pro` from codebase            | 🔴 NOT STARTED          | Owner decision: `sora-2` for all plans including Premium.           |
+| Phase | Task                                            | Status                  | Evidence                                                            |
+| ----- | ----------------------------------------------- | ----------------------- | ------------------------------------------------------------------- |
+| 173   | Remove debug text from chat-wrapper.tsx         | ✅ DONE                 | Grep confirms text removed                                          |
+| 174   | Delete theme-init.js + clean knip.json          | ✅ DONE                 | File deleted; knip.json cleaned; layout.tsx has inline script       |
+| 175   | Remove dead conversationEnded prop              | ✅ DONE                 | Prop removed from ChatBodyProps interface                           |
+| 176   | Fix download route 206 status                   | ✅ DONE                 | Now uses `response.ContentRange ? 206 : 200`                        |
+| 177   | Deduplicate STREAM_PROACTIVE_TIMEOUT_MESSAGE    | ✅ DONE                 | route.tsx imports from `@/constants/chat-stream`                    |
+| 178   | Fix fake download icon in profile-billing       | ✅ DONE                 | Icon removed from `profile-billing.tsx`                             |
+| 181   | Fix stream timeout budget miscalculation        | ✅ PRODUCTION-CONFIRMED | Owner tested — proactive timeout fires correctly with clean msg     |
+| 182   | Stripe webhook diagnostic hardening             | ✅ CODE-COMPLETE        | `eventType` added to unhandled response body                        |
+| 183   | Stripe payment investigation (Vercel envs)      | ✅ RESOLVED             | Root cause: webhook disabled. Owner re-enabled. HTTP 200 confirmed. |
+| 184   | Facebook login investigation                    | ✅ CLOSED               | Owner removed Facebook login from product.                          |
+| 185   | Remove `sora-2-pro` from codebase               | ✅ DONE                 | Owner decision: `sora-2` for all plans including Premium.           |
+| 186   | Remove video generation + increase token limits | 🔴 NOT STARTED          | Owner directive (2026-04-03). Phase 186.                            |
+| 180.1 | Homepage text extraction                        | ✅ DONE                 | Public display text extracted to admin config.                      |
 
 **NOTE:** DONE.md was NOT updated for Phases 173–178, 181–182. Engineer must update DONE.md.
 
 ### Ongoing Constraints
 
-- **Vercel Hobby 60s timeout** — CONFIRMED architecture limitation for media gen. Phase 181 proactive timeout works correctly (clean user message). Media gen (images: 30–90s, audio: 15–60s, video: 60–180s) will consistently exceed 60s budget on Hobby plan. **Recommendation: upgrade to Vercel Pro ($20/mo) which raises maxDuration to 300s.** Alternative: async media gen architecture (background job + polling pattern) — significantly more complex.
+- **Vercel Hobby 60s timeout** — Architecture limitation for media gen. Phase 181 proactive timeout works correctly (clean user message). With video removed, remaining media gen (images: 30–90s, audio: 15–60s) is closer to the 60s limit but not as severe. **Recommendation: upgrade to Vercel Pro ($20/mo) which raises maxDuration to 300s.**
 - **Single-document conversation storage** — `Task` model with `estimatedBytes` guardrails. Future risk, not current blocker.
 - **Stripe billing is one-time purchase** — Recurring subscription deferred from v1.
 
@@ -103,30 +105,30 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 
 **Strengths:** Clean architecture, strong auth, comprehensive tests (603+49), central policy resolvers, WCAG 2.2 AA complete, durable usage counters, thorough user deletion cascade, zero lint/type/knip issues, correct webhook code structure (audit #84 confirmed), Stream timeout fix confirmed working in production (Phase 181), SSE heartbeat + proactive timeout pattern is robust.
 
-**Weaknesses:** Stripe payment flow non-functional in production (C2 — suspected env var mismatch), Facebook login broken (C3 — Clerk config), ~20–30 hardcoded display strings (Phase 180), no video error state (Phase 179), DONE.md not updated for 8 phases, audio player error recovery (H6), media gen impossible on Vercel Hobby (architecture limitation).
+**Weaknesses:** ~20–30 hardcoded display strings (Phase 180), DONE.md not updated for 8 phases, audio player error recovery (H6).
 
 **Opportunities:** Vercel Pro upgrade unlocks media generation ($20/mo), admin config cache (5+ DB hits/request → 30s TTL), env var validation (8 unsafe casts), checkout success polling (webhook delay safety net), structured SSE error codes.
 
-**Threats:** Stripe env var mismatch blocks ALL revenue until resolved, Facebook auth gap may lose social-login users, Vercel Hobby timeout makes media generation features non-functional (core product promise), hardcoded display text undermines admin configurability promise, single-document growth risk.
+**Threats:** Hardcoded display text undermines admin configurability promise, single-document growth risk.
 
 ---
 
 ## 5. Release Gates
 
-| Gate | Name            | Status | Notes                                                                                                            |
-| ---- | --------------- | ------ | ---------------------------------------------------------------------------------------------------------------- |
-| A    | Contract Gate   | GREEN  | Billing, tier limits, Premium extras — all frozen and verified                                                   |
-| B    | Architecture    | YELLOW | Phase 181 confirmed. Media gen is architecture-limited (Vercel Hobby). Stripe flow blocked (suspected env vars). |
-| C    | Product Gate    | RED    | Payment flow broken in production (C2). Facebook login broken (C3). Media gen timeout (architecture limitation). |
-| D    | Admin Gate      | YELLOW | Core admin config done. ~20–30 hardcoded strings remain (Phase 180).                                             |
-| E    | Public Gate     | GREEN  | All 7 public routes accurate, legal content real, no obsolete trial messaging                                    |
-| F    | Validation Gate | GREEN  | 603 tests, lint 0/0, TSC clean, knip 0, E2E 49 tests, coverage 85/80/85/85                                       |
+| Gate | Name            | Status | Notes                                                                                           |
+| ---- | --------------- | ------ | ----------------------------------------------------------------------------------------------- |
+| A    | Contract Gate   | GREEN  | Billing, tier limits, Premium extras — all frozen and verified                                  |
+| B    | Architecture    | GREEN  | Phase 181 confirmed. Stripe RESOLVED. Video generation removed from product.                    |
+| C    | Product Gate    | YELLOW | ~20–30 hardcoded display strings remain (Phase 180). Video removed. Stripe + Facebook resolved. |
+| D    | Admin Gate      | YELLOW | Core admin config done. ~20–30 hardcoded strings remain (Phase 180).                            |
+| E    | Public Gate     | GREEN  | All 7 public routes accurate, legal content real, no obsolete trial messaging                   |
+| F    | Validation Gate | GREEN  | 603 tests, lint 0/0, TSC clean, knip 0, E2E 49 tests, coverage 85/80/85/85                      |
 
 ---
 
 ## 6. Current Execution Order
 
-> All 3 critical issues RESOLVED/CLOSED. Phase 185 (`sora-2-pro` removal) is next engineering task. Phase 180 is the next feature task.
+> All 3 critical issues RESOLVED/CLOSED. Phase 185 DONE. Phase 180.1 DONE. Phase 186 (remove video generation + increase token limits) is next critical task.
 
 ### Confirmed Working
 
@@ -135,11 +137,13 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 - **✅ Phase 182** — Stripe diagnostic hardening. CODE-COMPLETE.
 - **✅ Phase 183** — Stripe payment flow. RESOLVED (webhook was disabled).
 - **✅ Phase 184** — Facebook login. CLOSED (removed from product).
+- **✅ Phase 185** — Remove sora-2-pro from codebase. DONE.
+- **✅ Phase 180.1** — Homepage text extraction. DONE.
 
 ### Active Code Priority Order
 
-1. **🔴 Phase 185 — Remove `sora-2-pro` from codebase.**
-   Owner decision: use `sora-2` for ALL plans. Remove `sora-2-pro` from `ai-model-policy.ts`, `admin-options.ts`, and tests.
+1. **🔴 Phase 186 — Remove all video generation + increase token limits.**
+   Owner directive (2026-04-03): remove ALL video generation from the app (`sora-2` and `sora-2-pro` deprecated). Increase token limits to maximum possible. CRITICAL.
 
 2. **HIGH Phase 180 — Hardcoded display text sweep.** Owner escalated. Split into sub-phases:
 
@@ -168,23 +172,21 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
    - Update affected unit tests to mock admin settings
    - Verify existing tests still pass with new prop/resolver patterns
 
-3. **MEDIUM Phase 179** — Add error state to `video-player.tsx` (match audio-player pattern).
+3. **MEDIUM Phase 143** — Env var runtime validation (replace `as string` / `!` casts).
 
-4. **MEDIUM Phase 143** — Env var runtime validation (replace `as string` / `!` casts).
+4. **MEDIUM Phase 144** — Admin config in-memory cache with 30s TTL.
 
-5. **MEDIUM Phase 144** — Admin config in-memory cache with 30s TTL.
+5. **MEDIUM Phase 145** — Upload filename collision fix (`crypto.randomUUID()`).
 
-6. **MEDIUM Phase 145** — Upload filename collision fix (`crypto.randomUUID()`).
+6. **MEDIUM Phase 165** — Checkout success page DB polling (safety net).
 
-7. **MEDIUM Phase 165** — Checkout success page DB polling (safety net).
+7. **LOW Phase 146** — Admin user detail transaction `.limit(50)`.
 
-8. **LOW Phase 146** — Admin user detail transaction `.limit(50)`.
+8. **LOW Phase 147** — Rename `.tsx` utility files to `.ts` where no JSX.
 
-9. **LOW Phase 147** — Rename `.tsx` utility files to `.ts` where no JSX.
+9. **LOW Phase 148** — Admin bulk operations partial-failure reporting.
 
-10. **LOW Phase 148** — Admin bulk operations partial-failure reporting.
-
-11. **CLEANUP** — Update DONE.md for Phases 173–178, 181–182.
+10. **CLEANUP** — Update DONE.md for Phases 173–178, 181–182.
 
 ---
 
@@ -213,6 +215,8 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 | OI19 | Fix stream error on media gen          | ✅ PRODUCTION-CONFIRMED. Phase 181 proactive timeout works. Timeout is architecture limitation (Vercel Hobby 60s).                  |
 | OI20 | Fix payment transaction registration   | ✅ RESOLVED. Root cause: Stripe webhook endpoint was disabled in Stripe Dashboard. Owner re-enabled — confirmed working (HTTP 200). |
 | OI21 | Fix Facebook login                     | ✅ CLOSED. Owner removed Facebook login from product entirely.                                                                      |
+| OI22 | Remove all video generation            | 🔴 NEW. Owner directive (2026-04-03). Phase 186 created.                                                                            |
+| OI23 | Increase token limits to maximum       | 🔴 NEW. Part of Phase 186.                                                                                                          |
 
 ---
 
@@ -226,20 +230,20 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 2. Lite is permanent and free — no expiry
 3. Personas are plan-gated (Lite: 2 full + 4 trial, Pro: 5 full + 1 trial, Premium: all 6 full)
 4. Pro = $19, Premium = $39
-5. Lite limits: 5 conv/day, 10 prompts/conv, 3 img/mo, 3 audio/mo, 1 video/mo
+5. Lite limits: 5 conv/day, 10 prompts/conv, 3 img/mo, 3 audio/mo
 6. Conversations end with stop reason + next-action when limits hit
 7. Users can only access their own data
 8. Admin routes under `/admin/*` protected at proxy + server level
 9. Admin role = full permissions, no limitations
-10. All features available in all plans — differentiated by quantity limits
+10. All features (image, audio) available in all plans — differentiated by quantity limits
 
 ### Tier contract
 
-| Tier    | Price | Chat Model            | Key Limits                                                    |
-| ------- | ----- | --------------------- | ------------------------------------------------------------- |
-| Lite    | Free  | `gpt-4o-mini`         | 5 conv/day, 10 prompts/conv, 3 img/mo, 3 audio/mo, 1 video/mo |
-| Pro     | $19   | `gpt-4.1`             | 50/day, 100/conv, 50 img, 50 audio, 10 video                  |
-| Premium | $39   | `gpt-4.1` / `gpt-5.4` | Unlimited                                                     |
+| Tier    | Price | Chat Model            | Key Limits                                        |
+| ------- | ----- | --------------------- | ------------------------------------------------- |
+| Lite    | Free  | `gpt-4o-mini`         | 5 conv/day, 10 prompts/conv, 3 img/mo, 3 audio/mo |
+| Pro     | $19   | `gpt-4.1`             | 50/day, 100/conv, 50 img, 50 audio                |
+| Premium | $39   | `gpt-4.1` / `gpt-5.4` | Unlimited                                         |
 
 ---
 
@@ -269,7 +273,6 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 - Legal/nav/footer admin configurability (v2)
 - Supabase/PostgreSQL migration (future strategic direction)
 - Tiptap rich-text editor (admin forms use standard controls)
-- Async media generation (background job + polling) — alternative to Vercel Pro upgrade
 
 ---
 

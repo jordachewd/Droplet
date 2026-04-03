@@ -2,17 +2,16 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-04-02 (PM audit #84-B). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. **DEPLOYED TO PRODUCTION.** Brand rename complete (Phase 172). Catch blocks documented (Phase 167.2). Promo text admin-configurable (Phase 162). Global error boundary live (Phase 163). Phases 173–178, 181, 182, 183 COMPLETE. E2E: 49 tests (8 spec files). Coverage: 85/80/85/85. 603 tests (101 suites). Build passing. Node.js 24.12.0.
+> Last updated: 2026-04-03 (PM audit #85). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. **DEPLOYED TO PRODUCTION.** Brand rename complete (Phase 172). Catch blocks documented (Phase 167.2). Promo text admin-configurable (Phase 162). Global error boundary live (Phase 163). Phases 173–178, 181, 182, 183, 185, 180.1 COMPLETE. E2E: 49 tests (8 spec files). Coverage: 85/80/85/85. 606 tests. Build passing. Node.js 24.12.0.
 >
-> **Active Issues (PM audit #84-B):**
+> **Active Issues (PM audit #85):**
 >
 > - **TD-STREAM-05** — ✅ PRODUCTION-CONFIRMED (Phase 181). Proactive timeout fires correctly in production.
 > - **TD-PAYMENT-02** — ✅ RESOLVED (Phase 183). Root cause: Stripe webhook was **disabled**. Owner re-enabled. Vercel logs confirm HTTP 200 + plan update success.
-> - **TD-MEDIA-01** — 🟡 ACCEPTED LIMITATION. Media gen (image 30–90s, audio 15–60s, video 60–180s) exceeds Vercel Hobby 60s timeout. Owner decided to stay on Hobby plan. Phase 181 proactive timeout handles gracefully.
-> - **TD-VIDEO-01** — Phase 185: Remove `sora-2-pro` from codebase. Owner decision: use `sora-2` for all plans.
-> - **TD-UX-01** — No video player error state (Phase 179).
-> - **TD-HARDCODE-02** — ~12 hardcoded marketing strings across 5 components (Phase 180.1–180.4). Audited and classified: 12 configurable, ~25+ structural/exempt.
-> - **TD-HARDCODE-03** — Hardcoded persona IDs in homepage spotlight (Phase 180.1).
+> - **TD-MEDIA-01** — 🟡 ACCEPTED LIMITATION. Media gen (image 30–90s, audio 15–60s) exceeds Vercel Hobby 60s timeout. Owner decided to stay on Hobby plan. Phase 181 proactive timeout handles gracefully. Video generation removed from product (PM audit #85).
+> - **TD-VIDEO-02** — 🔴 Phase 186-A: Remove ALL video generation from codebase. Owner directive: both `sora-2` and `sora-2-pro` deprecated. Video feature removed from product.
+> - **TD-TOKEN-01** — 🔴 Phase 186-B: Increase token limits to maximum possible. Owner directive.
+> - **TD-HARDCODE-02** — ~12 hardcoded marketing strings across 5 components (Phase 180.2–180.4). Audited and classified: 12 configurable, ~25+ structural/exempt. Phase 180.1 DONE.
 > - **TD-HARDCODE-04** — Hardcoded `$` currency symbol in `profile-billing.tsx` (Phase 180.4). SPEC.md requires `getEffectiveCurrencySymbol()`.
 > - **TD-ENV-01** — 4 `as string` + 4 `!` casts on `process.env` values (Phase 143).
 
@@ -32,7 +31,7 @@ The product monetises through tiered subscription plans paid via Stripe.
 
 ### Core Value Proposition
 
-- Multi-modal AI assistant (text + image + audio + video generation)
+- Multi-modal AI assistant (text + image + audio generation)
 - 6 predefined personas with distinct system prompts and capabilities
 - Streaming responses for real-time chat UX
 - Conversation history persisted per user with resume capability
@@ -48,7 +47,7 @@ The product monetises through tiered subscription plans paid via Stripe.
 - Image upload support
 - Image generation (all tiers, with enforced usage limits)
 - Audio generation (all tiers, with enforced usage limits)
-- Video generation (all tiers, with enforced usage limits — **Phase 34 COMPLETE, Phase 34.9 quality fixes COMPLETE, Phase 51.1 prompt fix COMPLETE**). `sora-2` only (owner decision: `sora-2-pro` removed Phase 185). Async job model: create → poll → download MP4 → upload to S3. Duration: 4s default. `supportsVideoGeneration` is `true` for all non-suspended plans. Platform prompt includes media-tool awareness.
+- Video generation — **REMOVED** (owner directive, PM audit #85). Both `sora-2` and `sora-2-pro` deprecated. Phase 186-A removes all video code.
 - Account-required access � no anonymous usage
 - Authenticated `/app` experience with persona-led UX
 - Real conversation history (list, resume, delete)
@@ -99,7 +98,7 @@ Admin access is enforced at the proxy level (`src/proxy.tsx`) via Clerk session 
 | `interviewer` | Interviewer | Career       | Yes   | Yes   | No   | No  | Yes     |
 
 > **Rule 3 (updated):** Personas use a three-tier access model: **full** (plan's normal limits), **limited** (trial limits for try-before-you-buy), or **blocked** (admin-disabled). Lite: 2 personas full access (Strategist, Developer) + 4 personas limited access. Pro: 5 personas full access (+ Teacher, Creator, Wellness) + 1 persona limited access. Premium: all 6 personas full access. Admin can override via settings.
-> **Rule 10:** All features (image, audio, video) are available for all personas � differentiated by persona purpose (prompt context), not blocked per persona. All plans provide all features � differentiated by plan limits (quantity).
+> **Rule 10:** All features (image, audio) are available for all personas — differentiated by persona purpose (prompt context), not blocked per persona. All plans provide all features — differentiated by plan limits (quantity). Video generation has been removed from the product (owner directive, PM audit #85).
 > **Rule (new):** Each persona acts as an independent AI agent trained and skilled for its field. Related tools and features are provided to each persona to perform best in its domain. Personas are displayed in a 3-per-row grid on desktop. Each persona has a representative hero image. All persona configuration (access, enablement) is managed exclusively from the admin panel by the admin role. Unavailable personas are clearly labeled as "PRO" or "PREMIUM" feature with a small-font indicator.
 
 ### Persona Trial Access (Limited Access Model)
@@ -113,7 +112,6 @@ Users can TEST personas outside their plan's full-access set with reduced limits
 | Prompts per conversation | 5     | Per conversation      |
 | Image generations        | 3     | 30-day rolling window |
 | Audio generations        | 2     | 30-day rolling window |
-| Video generations        | 1     | 30-day rolling window |
 
 **Rules:**
 
@@ -121,7 +119,7 @@ Users can TEST personas outside their plan's full-access set with reduced limits
 - Trial media counters are SEPARATE from plan media counters.
 - When trial prompt limit (5) is reached, conversation ends with upgrade CTA.
 - When trial media limit is reached, media generation is blocked with upgrade CTA.
-- Trial counters tracked on User model: `trialImageGenerations`, `trialAudioGenerations`, `trialVideoGenerations`, `trialUsagePeriodStart`.
+- Trial counters tracked on User model: `trialImageGenerations`, `trialAudioGenerations`, `trialUsagePeriodStart`.
 - Atomic enforcement via `findOneAndUpdate` with `$lt` guard (same pattern as plan counters).
 
 Each persona has: `id`, `label`, `tagline`, `description`, `category`, `icon`, `starterPrompts[]`, `systemPrompt`, `supportsImage`, `supportsAudio`.
@@ -182,11 +180,11 @@ Prompts are versioned and separated from request handlers. `buildPersonaAwareSys
 
 ## 4. Subscription Plans
 
-| Plan        | Price | Duration      | Chat Model (default)            | Limits                                                                                         |
-| ----------- | ----- | ------------- | ------------------------------- | ---------------------------------------------------------------------------------------------- |
-| **Lite**    | Free  | **Permanent** | `gpt-4o-mini`                   | 5 conversations/day, 10 prompts/conversation, 3 image/month, 3 audio/month, 1 video/month      |
-| **Pro**     | $19   | Monthly       | `gpt-4.1`                       | 50 conversations/day, 100 prompts/conversation, 50 image/month, 50 audio/month, 10 video/month |
-| **Premium** | $39   | Monthly       | `gpt-4.1` / `gpt-5.4` (complex) | Unlimited conversations, unlimited prompts, unlimited image + audio, unlimited video           |
+| Plan        | Price | Duration      | Chat Model (default)            | Limits                                                                         |
+| ----------- | ----- | ------------- | ------------------------------- | ------------------------------------------------------------------------------ |
+| **Lite**    | Free  | **Permanent** | `gpt-4o-mini`                   | 5 conversations/day, 10 prompts/conversation, 3 image/month, 3 audio/month     |
+| **Pro**     | $19   | Monthly       | `gpt-4.1`                       | 50 conversations/day, 100 prompts/conversation, 50 image/month, 50 audio/month |
+| **Premium** | $39   | Monthly       | `gpt-4.1` / `gpt-5.4` (complex) | Unlimited conversations, unlimited prompts, unlimited image + audio            |
 
 > Full model policy (all features � plans � task classes) in **Section 8**.
 
@@ -195,7 +193,7 @@ Prompts are versioned and separated from request handlers. `buildPersonaAwareSys
 1. **Lite is permanent and free.** There is no 3-day trial. There is no expiry. New users receive Lite by default upon account creation.
 2. **Personas are plan-gated.** Lite: Strategist, Developer (2). Pro: all Lite + Teacher, Creator, Wellness (5). Premium: all 6 personas. Admin can override persona access per plan via admin settings.
 3. **Pro and Premium are paid-only.** Activated via Stripe Checkout one-time payment.
-4. **Premium advantages over Pro:** higher audio quality model (when available), `gpt-5.4` for complex reasoning, unlimited image/audio quotas, and higher video quota. See Section 8 for full model policy. Note: `gpt-audio-1.5` is currently inaccessible (403) � Premium audio uses `gpt-audio-mini` until access is restored.
+4. **Premium advantages over Pro:** higher audio quality model (when available), `gpt-5.4` for complex reasoning, unlimited image/audio quotas. See Section 8 for full model policy. Note: `gpt-audio-1.5` is currently inaccessible (403) — Premium audio uses `gpt-audio-mini` until access is restored.
 5. When any limit is reached, the server **must end the conversation** with an exact stop reason and exact next-action instruction.
 6. After a forced stop, the user is told one of: start a new conversation (if resources remain), upgrade plan (if applicable), or contact support.
 7. **Plan cards must show ? for unavailable options** (not "0"). E.g., "? Audio generations per month" instead of "0 audio generations per month".
@@ -209,7 +207,6 @@ Prompts are versioned and separated from request handlers. `buildPersonaAwareSys
 | User prompts per conversation | 10    | Per conversation      |
 | Image generations             | 3     | 30-day rolling window |
 | Audio generations             | 3     | 30-day rolling window |
-| Video generations             | 1     | 30-day rolling window |
 
 ### Pro Plan Limits (Detailed)
 
@@ -219,7 +216,6 @@ Prompts are versioned and separated from request handlers. `buildPersonaAwareSys
 | User prompts per conversation | 100   | Per conversation      |
 | Image generations             | 50    | 30-day rolling window |
 | Audio generations             | 50    | 30-day rolling window |
-| Video generations             | 10    | 30-day rolling window |
 
 ### Premium Plan Limits (Detailed)
 
@@ -229,7 +225,6 @@ Prompts are versioned and separated from request handlers. `buildPersonaAwareSys
 | User prompts per conversation | Unlimited | N/A          |
 | Image generations             | Unlimited | N/A          |
 | Audio generations             | Unlimited | N/A          |
-| Video generations             | Unlimited | N/A          |
 
 ### Plan Lifecycle
 
@@ -259,7 +254,6 @@ Prompts are versioned and separated from request handlers. `buildPersonaAwareSys
 | `media_limit_reached`                | "You've reached your media generation limit." (legacy generic)          | `upgrade_plan` or `contact_support`        |
 | `image_limit_reached`                | "You've reached your image generation limit for this billing period."   | `upgrade_plan` or `contact_support`        |
 | `audio_limit_reached`                | "You've reached your audio generation limit for this billing period."   | `upgrade_plan` or `contact_support`        |
-| `video_limit_reached`                | "You've reached your video generation limit for this billing period."   | `upgrade_plan` or `contact_support`        |
 | `daily_conversation_limit_reached`   | "You've reached the daily conversation limit for your plan."            | `upgrade_plan` or `contact_support`        |
 | `conversation_storage_limit_reached` | "This conversation has reached its storage limit."                      | `start_new_conversation`                   |
 | `billing_state_invalid`              | "Your plan has expired."                                                | `upgrade_plan`                             |
@@ -350,21 +344,21 @@ Compound index: `{ userId: 1, updatedAt: -1 }`
 
 Purpose: Request-level usage logging for cost tracking and admin analytics.
 
-| Field         | Type    | Required | Index | Notes                                          |
-| ------------- | ------- | -------- | ----- | ---------------------------------------------- |
-| userId        | String  | Yes      | Yes   | User who made the request                      |
-| taskId        | String  | Yes      | Yes   | Conversation this event belongs to             |
-| personaId     | String  | Yes      | Yes   | Persona used                                   |
-| model         | String  | Yes      | Yes   | AI model used                                  |
-| provider      | String  | Yes      | No    | Provider (e.g., `openai`)                      |
-| requestType   | String  | Yes      | Yes   | `chat` / `image` / `audio` / `video` / `title` |
-| tokensIn      | Number  | No       | No    | Input tokens                                   |
-| tokensOut     | Number  | No       | No    | Output tokens                                  |
-| estimatedCost | Number  | No       | No    | Estimated cost in USD cents                    |
-| latencyMs     | Number  | No       | No    | Request latency                                |
-| blocked       | Boolean | Yes      | No    | Whether request was blocked by limits          |
-| blockedReason | String  | No       | No    | Reason code if blocked                         |
-| createdAt     | Date    | Yes      | Yes   | Indexed for time-range queries                 |
+| Field         | Type    | Required | Index | Notes                                 |
+| ------------- | ------- | -------- | ----- | ------------------------------------- |
+| userId        | String  | Yes      | Yes   | User who made the request             |
+| taskId        | String  | Yes      | Yes   | Conversation this event belongs to    |
+| personaId     | String  | Yes      | Yes   | Persona used                          |
+| model         | String  | Yes      | Yes   | AI model used                         |
+| provider      | String  | Yes      | No    | Provider (e.g., `openai`)             |
+| requestType   | String  | Yes      | Yes   | `chat` / `image` / `audio` / `title`  |
+| tokensIn      | Number  | No       | No    | Input tokens                          |
+| tokensOut     | Number  | No       | No    | Output tokens                         |
+| estimatedCost | Number  | No       | No    | Estimated cost in USD cents           |
+| latencyMs     | Number  | No       | No    | Request latency                       |
+| blocked       | Boolean | Yes      | No    | Whether request was blocked by limits |
+| blockedReason | String  | No       | No    | Reason code if blocked                |
+| createdAt     | Date    | Yes      | Yes   | Indexed for time-range queries        |
 
 ### 6.5 AppSetting
 
@@ -515,20 +509,20 @@ Central resolver: `resolveModelPolicy()` in `src/lib/utils/ai-model-policy.ts`. 
 | Audio            | Premium | `gpt-audio-mini`   | `gpt-4o-mini-tts`              | `gpt-audio-1.5` inaccessible (403) in current OpenAI project � verified live 2026-03-16. Using `gpt-audio-mini` until access restored.                         |
 | Video            | Lite    | `sora-2`           | _(none)_                       | Monthly quota: 1. Budget tier � differentiated by quantity only.                                                                                               |
 | Video            | Pro     | `sora-2`           | _(none)_                       | Monthly quota: 10. Differentiated by quantity only.                                                                                                            |
-| Video            | Premium | `sora-2`           | _(none)_                       | Owner decision (PM audit #84-B): `sora-2` for all plans. `sora-2-pro` removed (Phase 185).                                                                    |
+| Video            | Premium | `sora-2`           | _(none)_                       | Owner decision (PM audit #84-B): `sora-2` for all plans. `sora-2-pro` removed (Phase 185).                                                                     |
 
 ### 8.3 Task Classes
 
 Each AI request is classified into a task class that affects model selection and token limits.
 
-| Task Class | Purpose                   | Default For                            |
-| ---------- | ------------------------- | -------------------------------------- |
-| `utility`  | Metadata, always cheapest | `title_generation`                     |
-| `simple`   | Basic/general questions   | �                                      |
-| `standard` | Normal conversation turns | `chat`                                 |
-| `complex`  | Deep reasoning, analysis  | �                                      |
-| `preview`  | Draft/preview generation  | `video_generation`                     |
-| `final`    | Final quality render      | `image_generation`, `audio_generation` |
+| Task Class | Purpose                   | Default For        |
+| ---------- | ------------------------- | ------------------ |
+| `utility`  | Metadata, always cheapest | `title_generation` |
+| `simple`   | Basic/general questions   | �                  |
+| `standard` | Normal conversation turns | `chat`             |
+| `complex`  | Deep reasoning, analysis  | �                  |
+
+| `final` | Final quality render | `image_generation`, `audio_generation` |
 
 **Implementation (Phase 25.4):** Chat requests are classified server-side by `classifyTaskComplexity()` in `src/lib/utils/openai/classify-task-complexity.ts`. The classifier uses heuristics: message length, conversation history depth, analytical/technical keyword presence, and explicit deep-analysis intent (regex pattern). Returns `ChatTaskClass` (`simple` | `standard` | `complex`). The `/api/openai` route passes the classified `taskClass` to `resolveModelPolicy()`. Frontend does not send `taskClass` � all classification is backend-only.
 
@@ -586,16 +580,9 @@ type FeatureType =
   | "title_generation"
   | "chat"
   | "image_generation"
-  | "audio_generation"
-  | "video_generation";
+  | "audio_generation";
 
-type TaskClass =
-  | "utility"
-  | "simple"
-  | "standard"
-  | "complex"
-  | "preview"
-  | "final";
+type TaskClass = "utility" | "simple" | "standard" | "complex" | "final";
 type AudioMode = "tts" | "audio_in_out";
 type BudgetState = "normal" | "soft_limit_reached" | "hard_limit_reached";
 
@@ -635,7 +622,7 @@ All auth/limit checks execute before streaming begins. Final task persistence an
 
 > **✅ RESOLVED (Phase 149 COMPLETE, TD-STREAM-01 CLOSED):** SSE heartbeat mechanism implemented. 12s keepalive interval during media generation via `onMediaGenerationStart`/`onMediaGenerationEnd` lifecycle callbacks. Client timeout reset on every received event (including heartbeats). `heartbeat` event type added to `ChatStreamEvent` union.
 > **✅ TD-STREAM-05 RESOLVED (Phase 181 COMPLETE, PM audit #83):** Proactive timeout now uses `functionStartTime` captured at `POST()` entry. Remaining budget computed as `Math.max(0, 55000 - elapsedSetupMs)` inside `ReadableStream.start()`. Clamp guard prevents negative timeout. Proactive timeout fires BEFORE Vercel's 60s kill regardless of setup duration.
-> **✅ TD-STREAM-04 RESOLVED (Phase 160.1 COMPLETE, PM audit #76):** `maxDuration` reduced from 300 to 60 for Vercel Hobby compliance. Deployment unblocked. Video generation (up to 180s) will time out on Hobby — accepted trade-off. Owner can upgrade to Vercel Pro ($20/mo) for 300s support.
+> **✅ TD-STREAM-04 RESOLVED (Phase 160.1 COMPLETE, PM audit #76):** `maxDuration` reduced from 300 to 60 for Vercel Hobby compliance. Deployment unblocked. Video generation removed from product (PM audit #85). Image/audio gen may approach 60s limit — accepted trade-off.
 > **⚠️ TD-AUDIO-01 RESOLVED (PM audit #79, Phase 168 CODE-COMPLETE):** Audio player `ERR_INVALID_STATE` error. Triple-audit root cause: (A) SSE controller race — `controllerClosed` boolean flag added, checked by `emitHeartbeat()` before enqueuing, (B) download route HTTP Range support implemented — `parseByteRangeHeader()`, `Accept-Ranges: bytes`, `206 Partial Content`, (C) audio player lifecycle hardened — `previousAudioUrlRef` reset in cleanup, `src=""` disposal, error event listener. All three paths implemented. Phase 168 archived to DONE.md.
 > **Client timeout:** `STREAM_REQUEST_TIMEOUT_MS = 70_000` (Phase 160.1 COMPLETE). Aligned with server maxDuration=60 + 10s margin.
 
@@ -643,16 +630,16 @@ All auth/limit checks execute before streaming begins. Final task persistence an
 
 All API routes that call external services (OpenAI, Stripe, AWS) **must** export `maxDuration` to prevent serverless platform timeout kills:
 
-| Route                  | Required `maxDuration`   | Reason                                                                |
-| ---------------------- | ------------------------ | --------------------------------------------------------------------- |
-| `/api/openai`          | 60s (Hobby) / 300s (Pro) | ⚠️ Vercel Hobby max = 60s. Video gen needs 180s → requires Vercel Pro |
-| `/api/webhooks/stripe` | 30s                      | Stripe webhook processing with DB writes                              |
-| `/api/webhooks/clerk`  | 60s                      | Clerk webhook with cascade deletes (S3 prefix cleanup)                |
-| `/api/upload`          | 30s                      | S3 upload                                                             |
-| `/api/download`        | 30s                      | Proxied download                                                      |
-| `/api/aws`             | 30s                      | S3 operations                                                         |
+| Route                  | Required `maxDuration`   | Reason                                                        |
+| ---------------------- | ------------------------ | ------------------------------------------------------------- |
+| `/api/openai`          | 60s (Hobby) / 300s (Pro) | ⚠️ Vercel Hobby max = 60s. Image/audio gen may approach limit |
+| `/api/webhooks/stripe` | 30s                      | Stripe webhook processing with DB writes                      |
+| `/api/webhooks/clerk`  | 60s                      | Clerk webhook with cascade deletes (S3 prefix cleanup)        |
+| `/api/upload`          | 30s                      | S3 upload                                                     |
+| `/api/download`        | 30s                      | Proxied download                                              |
+| `/api/aws`             | 30s                      | S3 operations                                                 |
 
-> **Vercel Plan Constraint (PM audit #75):** Vercel Hobby limits `maxDuration` to 60 seconds. Only `/api/openai` is affected — all other routes fit within 30s. Video generation via Sora API needs up to 180s and CANNOT complete within the 60s Hobby limit. Upgrading to Vercel Pro ($20/mo) raises the limit to 300s. Text chat, image gen (~15-30s), and audio gen (~10-20s) should work within 60s.
+> **Vercel Plan Constraint (PM audit #75):** Vercel Hobby limits `maxDuration` to 60 seconds. Only `/api/openai` is affected — all other routes fit within 30s. Video generation has been removed from the product (PM audit #85). Text chat, image gen (~15-30s), and audio gen (~10-20s) should work within 60s.
 >
 > **Current state (PM audit #77):** All 6 API routes have `export const maxDuration`. Values: openai=60, clerk-webhook=60, upload/download/aws/stripe-webhook=30. Phase 166 VERIFIED COMPLETE.
 
@@ -667,11 +654,11 @@ Webhook idempotency checks **must verify the complete operation**, not just the 
 
 ### OpenAI Technical Debt
 
-- **TD-AI-08**: Video generation IMPLEMENTED (Phase 34, COMPLETED 2026-03-17). Phase 34.9 quality fixes COMPLETED. Sora API (`sora-2`) operational. `sora-2-pro` removed (Phase 185, owner decision). Full tool chain delivered. `supportsVideoGeneration` is `true`.
+- **TD-AI-08**: Video generation REMOVED from product (owner directive, PM audit #85). Previously implemented (Phase 34). All video code being removed in Phase 186-A.
 - **TD-AI-09**: Image/audio generation prompts not yet persona-aware. Chat prompts are fully persona-aware (Phase 22). Tracked as Phase 26.1.
-- **TD-AI-13**: 4 model pricing entries in `ai-model-policy.ts` are placeholders pending OpenAI confirmation (`gpt-audio-mini`, `gpt-audio-1.5`, `gpt-4o-mini-tts`, `sora-2`).
+- **TD-AI-13**: 3 model pricing entries in `ai-model-policy.ts` are placeholders pending OpenAI confirmation (`gpt-audio-mini`, `gpt-audio-1.5`, `gpt-4o-mini-tts`). `sora-2` removed (video generation removed from product).
 - **TD-AI-18** (advisory): OpenAI route `errorMessage` forwarding pattern is safe today but fragile — if any future code sets `aiPayload.errorMessage` to a raw OpenAI error, it will leak to clients. Consider always using generic constants.
-- **TD-AI-25**: ~~Persona system prompts had zero video generation awareness~~ — **RESOLVED (Phase 51.1)**: `CHAT_PLATFORM_PROMPT` updated to include explicit media-tool awareness (images, audio, video). Model now knows it can invoke `getGeneratedVideo` tool.
+- **TD-AI-25**: ~~Persona system prompts had zero video generation awareness~~ — **RESOLVED** then **REMOVED**: Video generation removed from product (PM audit #85). `CHAT_PLATFORM_PROMPT` to be updated to reference images and audio only (Phase 186-A).
 
 ---
 
@@ -704,32 +691,32 @@ All file handling technical debt has been resolved. S3 cleanup on task/user dele
 
 ### Route Map (Target)
 
-| Route                                 | Type      | Description                                                                                                                               |
-| ------------------------------------- | --------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| `/`                                   | Public    | Landing (Hero + product sections + CTAs)                                                                                                  |
-| `/about`                              | Public    | How app works (stacked sections)                                                                                                          |
-| `/plans`                              | Public    | Pricing (plan cards)                                                                                                                      |
-| `/personas`                           | Public    | Personas showcase                                                                                                                         |
-| `/privacy`                            | Public    | Privacy & Cookie Policy                                                                                                                   |
-| `/cookies`                            | Public    | Cookie Policy                                                                                                                             |
-| `/terms`                              | Public    | Terms & Conditions                                                                                                                        |
-| `/sign-in`, `/sign-up`                | Auth      | Clerk auth                                                                                                                                |
-| `/app`                                | Protected | Chat dashboard                                                                                                                            |
-| `/app/new`                            | Protected | New conversation                                                                                                                          |
-| `/app/library`                        | Protected | Media library (tabs: Chats, Images, Audios, Videos, Uploaded) — **Implemented (Phase 32.3 + 32.4 media cards + Phase 151 Uploaded tab).** |
-| `/app/personas`                       | Protected | In-app personas                                                                                                                           |
-| `/app/c/[conversationId]`             | Protected | Resume conversation                                                                                                                       |
-| `/app/profile`                        | Protected | User profile + plan + history                                                                                                             |
-| `/app/plans`                          | Protected | Plan upgrade + checkout                                                                                                                   |
-| `/admin`                              | Admin     | Dashboard overview                                                                                                                        |
-| `/admin/users`                        | Admin     | User management list                                                                                                                      |
-| `/admin/users/[userId]`               | Admin     | User detail + actions                                                                                                                     |
-| `/admin/transactions`                 | Admin     | Transaction management                                                                                                                    |
-| `/admin/transactions/[transactionId]` | Admin     | Transaction detail                                                                                                                        |
-| `/admin/usage`                        | Admin     | Usage analytics                                                                                                                           |
-| `/admin/settings`                     | Admin     | App settings                                                                                                                              |
-| `/admin/website`                      | Admin     | Content management                                                                                                                        |
-| `/admin/website/[pageId]`             | Admin     | Page editor (textarea fallback � Tiptap replaced)                                                                                         |
+| Route                                 | Type      | Description                                                                                                                                                          |
+| ------------------------------------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/`                                   | Public    | Landing (Hero + product sections + CTAs)                                                                                                                             |
+| `/about`                              | Public    | How app works (stacked sections)                                                                                                                                     |
+| `/plans`                              | Public    | Pricing (plan cards)                                                                                                                                                 |
+| `/personas`                           | Public    | Personas showcase                                                                                                                                                    |
+| `/privacy`                            | Public    | Privacy & Cookie Policy                                                                                                                                              |
+| `/cookies`                            | Public    | Cookie Policy                                                                                                                                                        |
+| `/terms`                              | Public    | Terms & Conditions                                                                                                                                                   |
+| `/sign-in`, `/sign-up`                | Auth      | Clerk auth                                                                                                                                                           |
+| `/app`                                | Protected | Chat dashboard                                                                                                                                                       |
+| `/app/new`                            | Protected | New conversation                                                                                                                                                     |
+| `/app/library`                        | Protected | Media library (tabs: Chats, Images, Audios, Uploaded) — **Implemented (Phase 32.3 + 32.4 media cards + Phase 151 Uploaded tab).** Videos tab removed (PM audit #85). |
+| `/app/personas`                       | Protected | In-app personas                                                                                                                                                      |
+| `/app/c/[conversationId]`             | Protected | Resume conversation                                                                                                                                                  |
+| `/app/profile`                        | Protected | User profile + plan + history                                                                                                                                        |
+| `/app/plans`                          | Protected | Plan upgrade + checkout                                                                                                                                              |
+| `/admin`                              | Admin     | Dashboard overview                                                                                                                                                   |
+| `/admin/users`                        | Admin     | User management list                                                                                                                                                 |
+| `/admin/users/[userId]`               | Admin     | User detail + actions                                                                                                                                                |
+| `/admin/transactions`                 | Admin     | Transaction management                                                                                                                                               |
+| `/admin/transactions/[transactionId]` | Admin     | Transaction detail                                                                                                                                                   |
+| `/admin/usage`                        | Admin     | Usage analytics                                                                                                                                                      |
+| `/admin/settings`                     | Admin     | App settings                                                                                                                                                         |
+| `/admin/website`                      | Admin     | Content management                                                                                                                                                   |
+| `/admin/website/[pageId]`             | Admin     | Page editor (textarea fallback � Tiptap replaced)                                                                                                                    |
 
 ### Public Pages Content
 
@@ -807,7 +794,7 @@ All button styles use Lime Green as the accent color in **both** light and dark 
 
 ## 13. Testing
 
-- **Unit tests**: 101 suites, 597 tests (Vitest) — organized by domain in `tests/unit/{actions,components,routes,utils,models,constants,stores}/`. TDD rebuild COMPLETE (Phases 120.1–120.7). All test files rebuilt from scratch using strict TDD methodology. Zero `as never` casts. All tests use shared factories from `tests/unit/test-support/`. Includes streaming, webhook, chat-wrapper, chat-body stop-state, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, persona prompt, rate limiting, task complexity classification, conversation stop enforcement, entitlement resolver, checkout-success page, admin audit trail, OpenAI route tests (split into 5 focused modules), atomic prompt limit, daily conversation limit, media error handling, universal feature access, trial access tests, video generation, validation schema security injection tests, AudioPlayer ARIA tests, abort behavior tests, Zustand store tests, upload file size validation, 24 component test files, user model tests, Button component TDD tests, PageHead heading-level TDD tests, suspended user enforcement tests, delete-user-cascade tests, upload model tests, admin-settings-tabs hydration tests, checkout redirect tests.
+- **Unit tests**: 101 suites, 606 tests (Vitest) — organized by domain in `tests/unit/{actions,components,routes,utils,models,constants,stores}/`. TDD rebuild COMPLETE (Phases 120.1–120.7). All test files rebuilt from scratch using strict TDD methodology. Zero `as never` casts. All tests use shared factories from `tests/unit/test-support/`. Includes streaming, webhook, chat-wrapper, chat-body stop-state, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, persona prompt, rate limiting, task complexity classification, conversation stop enforcement, entitlement resolver, checkout-success page, admin audit trail, OpenAI route tests (split into 5 focused modules), atomic prompt limit, daily conversation limit, media error handling, universal feature access, trial access tests, validation schema security injection tests, AudioPlayer ARIA tests, abort behavior tests, Zustand store tests, upload file size validation, 24 component test files, user model tests, Button component TDD tests, PageHead heading-level TDD tests, suspended user enforcement tests, delete-user-cascade tests, upload model tests, admin-settings-tabs hydration tests, checkout redirect tests.
 - **E2E tests**: 8 Playwright spec files. Specs: `admin-settings-propagation`, `auth-boundaries`, `authenticated-accessibility`, `chat-conversation-flow`, `public-structure`, `admin-user-operations`, `billing-checkout-flow`, `error-boundary-handling`. Default 3 browsers (Chromium, Firefox, WebKit); full 7-browser matrix via `PLAYWRIGHT_FULL_MATRIX=1`. WCAG E2E via @axe-core/playwright.
 - **Coverage**: v8 provider, thresholds: 85% statements / 80% branches / 85% functions / 85% lines. Gate PASSES. 7 files explicitly excluded from coverage (complex integration files). Reporters: text, json-summary, lcov. Setup file: `tests/unit/vitest.setup.ts`.
 - **Config**: Vitest `environmentMatchGlobs` for auto-jsdom on `.tsx`. Playwright `actionTimeout: 10s`, `expect.timeout: 5s`. ESLint `no-console` (error), `no-restricted-globals` (alert/confirm). TS `noFallthroughCasesInSwitch`, `forceConsistentCasingInFileNames`. All 7 validation gates GREEN (lint, knip, tsc, unit, E2E, build, prettier).
@@ -845,9 +832,9 @@ All button styles use Lime Green as the accent color in **both** light and dark 
 ## 15. Technical Debt Summary
 
 > Only unresolved items live here. All resolved TDs are archived in `DONE.md`.
-> Last updated: PM audit #84-B (2026-04-02).
+> Last updated: PM audit #85 (2026-04-03).
 
-### Resolved This Session (PM audit #84-B)
+### Resolved This Session (PM audit #85)
 
 | ID             | Area    | Description                                                                 | Phase | Status                                                                               |
 | -------------- | ------- | --------------------------------------------------------------------------- | ----- | ------------------------------------------------------------------------------------ |
@@ -855,22 +842,28 @@ All button styles use Lime Green as the accent color in **both** light and dark 
 | TD-A11Y-01     | A11y    | Fake download icon in `profile-billing.tsx` — styled clickable, no handler. | 178   | ✅ RESOLVED. Icon removed.                                                           |
 | TD-PAYMENT-02  | Billing | Stripe webhook — payment processed but no Transaction/plan update.          | 183   | ✅ RESOLVED. Root cause: webhook disabled in Stripe. Re-enabled, HTTP 200 confirmed. |
 | TD-LOGIN-01    | Auth    | Facebook login "Feature Unavailable."                                       | 184   | ✅ CLOSED. Facebook login removed from product (owner decision).                     |
+| TD-VIDEO-01    | AI      | Remove `sora-2-pro` from codebase.                                          | 185   | ✅ DONE. `sora-2` for all plans.                                                     |
+| TD-HARDCODE-03 | Content | Hardcoded persona IDs in `persona-spotlight.tsx`.                           | 180.1 | ✅ DONE. Admin-configurable featured persona IDs.                                    |
+
+### Active — CRITICAL (Owner Directive)
+
+| ID          | Area | Description                                                                                                                       | Phase |
+| ----------- | ---- | --------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| TD-VIDEO-02 | AI   | **🔴 CRITICAL (PM audit #85, owner directive).** Remove ALL video generation from app. Both `sora-2` and `sora-2-pro` deprecated. | 186-A |
+| TD-TOKEN-01 | AI   | **🔴 CRITICAL (PM audit #85, owner directive).** Increase token limits to maximum possible.                                       | 186-B |
 
 ### Active — HIGH Priority
 
-| ID             | Area    | Description                                                                                                                                                        | Phase   |
-| -------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------- |
-| TD-VIDEO-01    | AI      | **HIGH (PM audit #84-B).** Remove `sora-2-pro` from codebase. Owner decision: use `sora-2` for all plans including Premium.                                       | 185     |
-| TD-MEDIA-01    | Arch    | **ACCEPTED (PM audit #84-B).** Media gen exceeds Vercel Hobby 60s timeout. Owner staying on Hobby. Phase 181 proactive timeout handles gracefully. Async media gen deferred to v2. | —       |
-| TD-HARDCODE-02 | Content | **HIGH (PM audit #83, owner escalated).** ~12 hardcoded marketing strings across `cta-banner.tsx`, `persona-spotlight.tsx`, `chat-intro.tsx`, etc.                 | 180.1-3 |
-| TD-HARDCODE-03 | Content | **HIGH (PM audit #83).** Hardcoded persona IDs `["strategist", "teacher", "creator"]` in `persona-spotlight.tsx`. Admin persona changes won't reflect on homepage. | 180.1   |
-| TD-HARDCODE-04 | Content | **HIGH (PM audit #83).** Hardcoded `$` currency symbol in `profile-billing.tsx`. SPEC requires `getEffectiveCurrencySymbol()`.                                     | 180.4   |
+| ID             | Area    | Description                                                                                                                                                     | Phase   |
+| -------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| TD-MEDIA-01    | Arch    | **ACCEPTED (PM audit #84-B).** Media gen (image/audio) may approach Vercel Hobby 60s timeout. Phase 181 proactive timeout handles gracefully. Video removed.    | —       |
+| TD-HARDCODE-02 | Content | **HIGH (PM audit #83, owner escalated).** ~8 hardcoded marketing strings across `chat-intro.tsx`, `chat-input.tsx`, `plans-section.tsx`, etc. Phase 180.1 DONE. | 180.2-4 |
+| TD-HARDCODE-04 | Content | **HIGH (PM audit #83).** Hardcoded `$` currency symbol in `profile-billing.tsx`. SPEC requires `getEffectiveCurrencySymbol()`.                                  | 180.4   |
 
 ### Active — MEDIUM Priority
 
 | ID        | Area | Description                                                                                                                   | Phase |
 | --------- | ---- | ----------------------------------------------------------------------------------------------------------------------------- | ----- |
-| TD-UX-01  | UX   | **MEDIUM (PM audit #83).** `video-player.tsx` has no error handling. Failed video loads show raw broken element.              | 179   |
 | TD-ENV-01 | Code | 4 `as string` + 4 `!` casts on `process.env` values. Missing env vars produce cryptic runtime errors instead of failing fast. | 143   |
 
 ### Active — Low Priority
@@ -878,7 +871,7 @@ All button styles use Lime Green as the accent color in **both** light and dark 
 | ID         | Area    | Description                                                                    | Phase    |
 | ---------- | ------- | ------------------------------------------------------------------------------ | -------- |
 | TD-AI-09   | OpenAI  | Image/audio generation prompts not persona-aware (chat prompts done Phase 22). | 26.1     |
-| TD-AI-13   | OpenAI  | 4 model pricing entries are placeholders pending OpenAI confirmation.           | Deferred |
+| TD-AI-13   | OpenAI  | 3 model pricing entries are placeholders pending OpenAI confirmation.          | Deferred |
 | TD-PLAN-01 | Billing | No recurring subscriptions (deferred v1).                                      | Deferred |
 | TD-AI-18   | OpenAI  | errorMessage forwarding pattern in `/api/openai` is safe but fragile.          | Advisory |
 | TD-API-09  | API     | `messageTextContentSchema` uses `.strict()` — may reject extra fields.         | Monitor  |
