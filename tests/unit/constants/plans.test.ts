@@ -7,6 +7,64 @@ import {
   plans,
 } from "@/constants/plans";
 
+type BuiltPlan = ReturnType<typeof buildPlans>[number];
+
+function buildUniformLimits(
+  limit: number,
+): NonNullable<Parameters<typeof buildPlans>[0]>["limits"] {
+  return {
+    Lite: {
+      conversationsPerDay: limit,
+      promptsPerConversation: limit,
+      images: limit,
+      audio: limit,
+    },
+    Pro: {
+      conversationsPerDay: limit,
+      promptsPerConversation: limit,
+      images: limit,
+      audio: limit,
+    },
+    Premium: {
+      conversationsPerDay: limit,
+      promptsPerConversation: limit,
+      images: limit,
+      audio: limit,
+    },
+  };
+}
+
+function expectLimitDerivedInclusions(
+  plan: BuiltPlan,
+  expectedIncluded: boolean,
+): void {
+  const conversationsInclusion = plan.inclusions.find(
+    (inclusion) =>
+      inclusion.label === "Unlimited conversations" ||
+      inclusion.label.endsWith("conversations per day"),
+  );
+  const promptsInclusion = plan.inclusions.find(
+    (inclusion) =>
+      inclusion.label === "Unlimited prompts" ||
+      inclusion.label.endsWith("prompts per conversation"),
+  );
+  const imagesInclusion = plan.inclusions.find(
+    (inclusion) =>
+      inclusion.label.includes("image generations") &&
+      !inclusion.label.includes("Quality"),
+  );
+  const audioInclusion = plan.inclusions.find(
+    (inclusion) =>
+      inclusion.label.includes("audio generations") &&
+      !inclusion.label.includes("Quality"),
+  );
+
+  expect(conversationsInclusion?.isIncluded).toBe(expectedIncluded);
+  expect(promptsInclusion?.isIncluded).toBe(expectedIncluded);
+  expect(imagesInclusion?.isIncluded).toBe(expectedIncluded);
+  expect(audioInclusion?.isIncluded).toBe(expectedIncluded);
+}
+
 describe("plans constants", () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -223,5 +281,35 @@ describe("plans constants", () => {
         (inclusion) => inclusion.label === "20 audio generations",
       ),
     ).toBe(true);
+  });
+
+  it("marks limit-derived inclusions as excluded when limit is 0", () => {
+    const configuredPlans = buildPlans({
+      limits: buildUniformLimits(0),
+    });
+
+    for (const plan of configuredPlans) {
+      expectLimitDerivedInclusions(plan, false);
+    }
+  });
+
+  it("marks limit-derived inclusions as included when limit is positive", () => {
+    const configuredPlans = buildPlans({
+      limits: buildUniformLimits(7),
+    });
+
+    for (const plan of configuredPlans) {
+      expectLimitDerivedInclusions(plan, true);
+    }
+  });
+
+  it("marks limit-derived inclusions as included when limit is -1", () => {
+    const configuredPlans = buildPlans({
+      limits: buildUniformLimits(-1),
+    });
+
+    for (const plan of configuredPlans) {
+      expectLimitDerivedInclusions(plan, true);
+    }
   });
 });

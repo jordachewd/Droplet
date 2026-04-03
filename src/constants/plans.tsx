@@ -172,11 +172,11 @@ export function buildPlans({
         },
         {
           label: formatConversationsLabel(limits.Lite.conversationsPerDay),
-          isIncluded: true,
+          isIncluded: limits.Lite.conversationsPerDay !== 0,
         },
         {
           label: formatPromptsLabel(limits.Lite.promptsPerConversation),
-          isIncluded: true,
+          isIncluded: limits.Lite.promptsPerConversation !== 0,
         },
         {
           label: formatMediaLimitLabel({
@@ -185,7 +185,7 @@ export function buildPlans({
             plural: "image generations",
             suffix: " per month",
           }),
-          isIncluded: true,
+          isIncluded: limits.Lite.images !== 0,
         },
         {
           label: formatMediaLimitLabel({
@@ -194,7 +194,7 @@ export function buildPlans({
             plural: "audio generations",
             suffix: " per month",
           }),
-          isIncluded: true,
+          isIncluded: limits.Lite.audio !== 0,
         },
         {
           label: "File uploads (limited)",
@@ -227,11 +227,11 @@ export function buildPlans({
         },
         {
           label: formatConversationsLabel(limits.Pro.conversationsPerDay),
-          isIncluded: true,
+          isIncluded: limits.Pro.conversationsPerDay !== 0,
         },
         {
           label: formatPromptsLabel(limits.Pro.promptsPerConversation),
-          isIncluded: true,
+          isIncluded: limits.Pro.promptsPerConversation !== 0,
         },
         {
           label: formatMediaLimitLabel({
@@ -240,7 +240,7 @@ export function buildPlans({
             plural: "image generations",
             suffix: " per month",
           }),
-          isIncluded: true,
+          isIncluded: limits.Pro.images !== 0,
         },
         {
           label: formatMediaLimitLabel({
@@ -249,7 +249,7 @@ export function buildPlans({
             plural: "audio generations",
             suffix: " per month",
           }),
-          isIncluded: true,
+          isIncluded: limits.Pro.audio !== 0,
         },
         {
           label: "Unlimited file uploads",
@@ -282,11 +282,11 @@ export function buildPlans({
         },
         {
           label: formatConversationsLabel(limits.Premium.conversationsPerDay),
-          isIncluded: true,
+          isIncluded: limits.Premium.conversationsPerDay !== 0,
         },
         {
           label: formatPromptsLabel(limits.Premium.promptsPerConversation),
-          isIncluded: true,
+          isIncluded: limits.Premium.promptsPerConversation !== 0,
         },
         {
           label: formatMediaLimitLabel({
@@ -295,7 +295,7 @@ export function buildPlans({
             plural: "image generations",
             suffix: "",
           }),
-          isIncluded: true,
+          isIncluded: limits.Premium.images !== 0,
         },
         {
           label: formatMediaLimitLabel({
@@ -304,7 +304,7 @@ export function buildPlans({
             plural: "audio generations",
             suffix: "",
           }),
-          isIncluded: true,
+          isIncluded: limits.Premium.audio !== 0,
         },
         {
           label: "Quality image generation (Premium)",
