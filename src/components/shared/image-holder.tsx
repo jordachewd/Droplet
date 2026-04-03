@@ -1,6 +1,6 @@
 import classNames from "classnames";
 import LoadingBubbles from "./loading-bubbles";
-import { useState } from "react";
+import { MouseEvent, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { resolveStoredAssetUrl } from "@/lib/utils/aws/s3-file-reference";
 
@@ -21,11 +21,33 @@ export default function ImageHolder({
 }: ImageHolderProps) {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
+  const [isLightboxOpen, setIsLightboxOpen] = useState<boolean>(false);
+  const lightboxDialogRef = useRef<HTMLDialogElement | null>(null);
   const resolvedImageUrl = resolveStoredAssetUrl(imageUrl);
   const downloadUrl = resolveStoredAssetUrl(imageUrl, {
     download: true,
     filename: imageName,
   });
+
+  useEffect(() => {
+    const dialogElement = lightboxDialogRef.current;
+
+    if (!dialogElement) {
+      return;
+    }
+
+    const handleDialogClose = () => {
+      setIsLightboxOpen(false);
+    };
+
+    dialogElement.addEventListener("close", handleDialogClose);
+    dialogElement.addEventListener("cancel", handleDialogClose);
+
+    return () => {
+      dialogElement.removeEventListener("close", handleDialogClose);
+      dialogElement.removeEventListener("cancel", handleDialogClose);
+    };
+  }, []);
 
   const handleDownload = async () => {
     setIsDownloading(true);
@@ -52,6 +74,46 @@ export default function ImageHolder({
     }
   };
 
+  const handleOpenLightbox = () => {
+    if (isLoading) {
+      return;
+    }
+
+    const dialogElement = lightboxDialogRef.current;
+
+    if (!dialogElement) {
+      return;
+    }
+
+    if (!dialogElement.open) {
+      dialogElement.showModal();
+    }
+
+    setIsLightboxOpen(true);
+  };
+
+  const handleCloseLightbox = () => {
+    const dialogElement = lightboxDialogRef.current;
+
+    if (!dialogElement) {
+      return;
+    }
+
+    if (dialogElement.open) {
+      dialogElement.close();
+    }
+
+    setIsLightboxOpen(false);
+  };
+
+  const handleLightboxBackdropClick = (
+    event: MouseEvent<HTMLDialogElement>,
+  ) => {
+    if (event.target === event.currentTarget) {
+      handleCloseLightbox();
+    }
+  };
+
   const imageHolderClass = classNames(
     "ImageHolder relative mb-2 mt-3 flex max-h-max max-w-max items-center justify-center overflow-hidden rounded",
     "bg-nightIndigo-500/10 shadow-sm transition-all",
@@ -64,42 +126,100 @@ export default function ImageHolder({
   );
 
   return (
-    <div className={imageHolderClass}>
-      {isLoading ? (
-        <span className="flex p-4">
-          <LoadingBubbles size="small" />
-        </span>
-      ) : (
-        hasTools && (
-          <button
-            type="button"
-            className="icon-btn absolute bottom-2 right-2 z-10 bg-black/50 text-white hover:bg-black/60"
-            onClick={handleDownload}
-            disabled={isDownloading}
-            aria-label="Download generated image"
-          >
-            {isDownloading ? (
-              <LoadingBubbles size="small" className="w-auto! gap-0.5" />
-            ) : (
-              <i className="bi bi-download" aria-hidden="true"></i>
-            )}
-          </button>
-        )
-      )}
+    <>
+      <div className={imageHolderClass}>
+        {isLoading ? (
+          <span className="flex p-4">
+            <LoadingBubbles size="small" />
+          </span>
+        ) : (
+          hasTools && (
+            <button
+              type="button"
+              className="icon-btn absolute bottom-2 right-2 z-10 bg-black/50 text-white hover:bg-black/60"
+              onClick={handleDownload}
+              disabled={isDownloading}
+              aria-label="Download generated image"
+            >
+              {isDownloading ? (
+                <LoadingBubbles size="small" className="w-auto! gap-0.5" />
+              ) : (
+                <i className="bi bi-download" aria-hidden="true"></i>
+              )}
+            </button>
+          )
+        )}
 
-      <Image
-        priority
-        unoptimized
-        src={resolvedImageUrl}
-        width={width}
-        height={height}
-        loading="eager"
-        onLoad={() => setIsLoading(false)}
-        onError={() => setIsLoading(false)}
-        alt={imageName}
-        className={imageClass}
-        sizes={`(max-width: 768px) 100vw, (max-width: 1200px) 50vw, ${width}px`}
-      />
-    </div>
+        <button
+          type="button"
+          onClick={handleOpenLightbox}
+          disabled={isLoading}
+          className="ImageHolderPreviewButton block cursor-zoom-in border-0 bg-transparent p-0 disabled:cursor-default"
+          aria-label="Open image lightbox"
+        >
+          <Image
+            priority
+            unoptimized
+            src={resolvedImageUrl}
+            width={width}
+            height={height}
+            loading="eager"
+            onLoad={() => setIsLoading(false)}
+            onError={() => setIsLoading(false)}
+            alt={imageName}
+            className={imageClass}
+            sizes={`(max-width: 768px) 100vw, (max-width: 1200px) 50vw, ${width}px`}
+          />
+        </button>
+      </div>
+
+      <dialog
+        ref={lightboxDialogRef}
+        className={classNames(
+          "ImageHolderLightbox m-0 h-screen max-h-screen w-screen max-w-screen bg-black/85 p-0 text-white backdrop:bg-black/80",
+          !isLightboxOpen && "hidden",
+        )}
+        aria-label="Image lightbox"
+        onClick={handleLightboxBackdropClick}
+      >
+        <div className="ImageHolderLightboxContent relative flex h-full w-full flex-col items-center justify-center p-4">
+          <div className="ImageHolderLightboxActions absolute right-4 top-4 z-20 flex items-center gap-2">
+            <button
+              type="button"
+              className="icon-btn bg-black/50 text-white hover:bg-black/70"
+              onClick={handleDownload}
+              disabled={isDownloading}
+              aria-label="Download image"
+            >
+              {isDownloading ? (
+                <LoadingBubbles size="small" className="w-auto! gap-0.5" />
+              ) : (
+                <i className="bi bi-download" aria-hidden="true"></i>
+              )}
+            </button>
+
+            <button
+              type="button"
+              className="icon-btn bg-black/50 text-white hover:bg-black/70"
+              onClick={handleCloseLightbox}
+              aria-label="Close lightbox"
+            >
+              <i className="bi bi-x-lg" aria-hidden="true"></i>
+            </button>
+          </div>
+
+          <Image
+            priority
+            unoptimized
+            src={resolvedImageUrl}
+            width={1600}
+            height={1200}
+            alt={imageName}
+            className="max-h-[90vh] w-auto max-w-[92vw] rounded-md object-contain shadow-xl"
+            sizes="100vw"
+          />
+        </div>
+      </dialog>
+    </>
   );
 }

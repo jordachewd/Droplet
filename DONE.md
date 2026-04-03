@@ -2,7 +2,85 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-04-03 — PM audit #89.
+> Last updated: 2026-04-03 — PM audit #90.
+
+---
+
+## Phase 194 — TiptapEditor Redesign (TinyMCE-style) — COMPLETED (2026-04-03)
+
+> Engineer delivered (PM audit #90). TiptapEditor rebuilt as modern WYSIWYG with 10 toolbar actions. Tiptap extensions installed. Styling consistent with FormInput. 611 tests. All 7 gates GREEN.
+
+- [x] WYSIWYG toolbar with bold, italic, underline, strikethrough
+- [x] Text alignment (left, center, right, justify)
+- [x] Ordered and unordered lists
+- [x] Insert/edit link
+- [x] Insert/edit image
+- [x] Styling consistent with FormInput
+- [x] Tiptap extensions: Underline, TextAlign, Link, Image
+- [x] Build passes, tests pass
+
+---
+
+## Phase 193 — Reusable UsageMetricRow Component — COMPLETED (2026-04-03)
+
+> Engineer delivered (PM audit #90). Single `UsageMetricRow` shared between profile and admin user detail. Same visual style in both locations. 611 tests.
+
+- [x] `src/components/shared/usage-metric-row.tsx` created
+- [x] Profile page uses shared component
+- [x] Admin user detail uses shared component
+- [x] Same visual style in both locations
+- [x] Build passes, tests pass
+
+---
+
+## Phase 192 — Reusable PersonaSelector Component — COMPLETED (2026-04-03)
+
+> Engineer delivered (PM audit #90). Persona selector extracted from `chat-header.tsx` into `src/components/shared/persona-selector.tsx`. No dotted border. Styling consistent with FormInput.
+
+- [x] `src/components/shared/persona-selector.tsx` created
+- [x] No dotted border
+- [x] Styling consistent with FormInput
+- [x] `chat-header.tsx` uses the new component
+- [x] Build passes, tests pass
+
+---
+
+## Phase 191 — Reusable FormInput Component — COMPLETED (2026-04-03)
+
+> Engineer delivered (PM audit #90). `src/components/shared/form-input.tsx` created. Supports all input types with consistent styling. Dark mode support. Existing inputs migrated.
+
+- [x] FormInput supports all listed input types (checkbox, date, email, number, password, radio, range, search, tel, text)
+- [x] Consistent styling across all input types
+- [x] Dark mode support
+- [x] Existing inputs migrated to use FormInput
+- [x] Build passes, tests pass
+
+---
+
+## Phase 190 — Admin "ADMIN" Display + Unlimited — COMPLETED (2026-04-03)
+
+> Engineer delivered (PM audit #90). `src/lib/utils/plan-display.ts` created with `ADMIN_PLAN_LABEL`, `isAdminRole()`, `getDisplayPlanName()`, `getDisplayUsageLimit()`. All plan name display locations show "ADMIN" for admin users. Usage metrics show "Unlimited".
+
+- [x] `plan-display.ts` utility with admin display helpers
+- [x] Profile page shows "ADMIN" instead of plan name for admin users
+- [x] All plan name display locations show "ADMIN" for admin users
+- [x] Usage metrics show "Unlimited" for admin users
+- [x] Build passes, tests pass
+
+---
+
+## Phase 189 — Admin Deletion Protection — COMPLETED (2026-04-03)
+
+> Engineer delivered (PM audit #90). 5-layer protection: 3 backend guards (deleteUser, removeUserByAdmin, bulkRemoveUsersAction) + 3 UI blocks (ProfileDangerZone hidden, admin detail remove hidden, admin table checkbox disabled). 7 unit tests. 611 total tests.
+
+- [x] `deleteUser()` refuses to delete admin-role users with clear error message
+- [x] `removeUserByAdmin()` refuses to delete admin-role users
+- [x] `bulkRemoveUsersAction()` silently skips admin-role users
+- [x] Profile page hides danger zone for admin users
+- [x] Admin user detail page hides remove button for admin users
+- [x] Admin users table prevents admin user selection for bulk remove
+- [x] 7 unit tests for backend guards
+- [x] Build passes, all existing tests pass (611 total)
 
 ---
 

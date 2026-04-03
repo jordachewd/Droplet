@@ -5,7 +5,7 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #89 (2026-04-03). V1.0 MVP RELEASED. All 7 validation gates GREEN (602 tests, lint 0/0, TSC clean, build passes, knip 0). All Milestones 0–25 COMPLETE. Phase 188 COMPLETE.**
+> **STATUS: PM audit #90 (2026-04-03). V1.0 MVP RELEASED. All 7 validation gates GREEN (611 tests, lint 0/0, TSC clean, build passes, knip 0). All Milestones 0–25 COMPLETE. Phases 189–194 COMPLETE.**
 >
 > **GATE STATUS: Validation GREEN. Architecture GREEN. Product GREEN. Admin GREEN. Public GREEN. Contract GREEN.**
 >
@@ -17,27 +17,32 @@
 > - ✅ Env vars validated in Vercel — **ACKNOWLEDGED. `requireEnv()` kept as defense-in-depth.**
 > - ✅ PlanCard `isIncluded` bug — **DONE (Phase 188). 602 tests.**
 > - ✅ App is now released — **V1.0 MVP RELEASED.**
-> - 🔴 Admin cannot be deleted — **Phase 189. CRITICAL. Neither from Profile nor Admin/Users dashboard.**
-> - 🔴 Admin unlimited permissions + "ADMIN" display — **Phase 190. HIGH.**
-> - 🟡 Reusable input component — **Phase 191. MEDIUM.**
-> - 🟡 Persona selector reusable component — **Phase 192. MEDIUM.**
-> - 🟡 TiptapEditor redesign (TinyMCE-style) — **Phase 194. MEDIUM.**
-> - 🟡 UsageMetricRow reusable component — **Phase 193. MEDIUM.**
+> - ✅ Admin cannot be deleted — **DONE (Phase 189). 5-layer protection.**
+> - ✅ Admin unlimited permissions + "ADMIN" display — **DONE (Phase 190).**
+> - ✅ Reusable input component — **DONE (Phase 191).**
+> - ✅ Persona selector reusable component — **DONE (Phase 192).**
+> - ✅ UsageMetricRow reusable component — **DONE (Phase 193).**
+> - ✅ TiptapEditor redesign (TinyMCE-style) — **DONE (Phase 194).**
+> - 🔴 Image upload "describe image" error — **Phase 195. HIGH. S3 proxy URLs inaccessible to OpenAI.**
+> - 🔴 Audio player overlap — **Phase 196. MEDIUM-HIGH. Multiple audios play simultaneously.**
+> - 🟡 Image lightbox for generated images — **Phase 197. MEDIUM.**
+> - 🟡 Library Uploaded tab visual previews — **Phase 198. MEDIUM.**
+> - 🟢 useActionState console warning — **Phase 199. LOW. Trivial fix.**
+> - ⚪ PlanPromo + ChatSidebarPromo merge — **REJECTED. Acceptable pattern.**
 >
-> **EXECUTION ORDER (PM audit #89 — Post-Release):**
+> **EXECUTION ORDER (PM audit #90 — Post-Release):**
 >
-> 1. **CRITICAL Phase 189** — Admin deletion protection (security gap).
-> 2. **HIGH Phase 190** — Admin unlimited permissions + "ADMIN" display.
-> 3. **MEDIUM Phase 191** — Reusable `FormInput` component.
-> 4. **MEDIUM Phase 192** — Reusable `PersonaSelector` component (depends on 191).
-> 5. **MEDIUM Phase 193** — Reusable `UsageMetricRow` component.
-> 6. **MEDIUM Phase 194** — TiptapEditor redesign (depends on 191).
-> 7. **MEDIUM Phase 144** — Admin config cache (30s TTL).
-> 8. **MEDIUM Phase 145** — Upload filename collision prevention.
-> 9. **MEDIUM Phase 165** — Checkout success page DB polling.
-> 10. **LOW Phase 146** — Admin user detail transaction limit.
-> 11. **LOW Phase 147** — Rename `.tsx` utility files to `.ts`.
-> 12. **LOW Phase 148** — Bulk operations partial-failure reporting.
+> 1. **HIGH Phase 195** — Image upload "describe image" fix (S3 URL resolution).
+> 2. **LOW Phase 199** — useActionState startTransition fix (trivial, do first).
+> 3. **MEDIUM-HIGH Phase 196** — Audio player overlap fix (global audio coordination).
+> 4. **MEDIUM Phase 197** — Image lightbox for generated images.
+> 5. **MEDIUM Phase 198** — Library Uploaded tab visual previews.
+> 6. **MEDIUM Phase 144** — Admin config cache (30s TTL).
+> 7. **MEDIUM Phase 145** — Upload filename collision prevention.
+> 8. **MEDIUM Phase 165** — Checkout success page DB polling.
+> 9. **LOW Phase 146** — Admin user detail transaction limit.
+> 10. **LOW Phase 147** — Rename `.tsx` utility files to `.ts`.
+> 11. **LOW Phase 148** — Bulk operations partial-failure reporting.
 
 ---
 
@@ -119,146 +124,149 @@
 
 ---
 
-## CRITICAL — Phase 189 — Admin Deletion Protection
+## ✅ Phase 189 — Admin Deletion Protection — DONE (2026-04-03)
 
-> **Owner directive (PM audit #89). SECURITY GAP.** Admin users can currently delete themselves from the Profile page (locks out admin panel permanently) and can be deleted by other admins via Admin/Users dashboard (bulk or single remove). All 4 deletion surfaces must refuse to delete users with `role === "admin"`.
+> Archived in DONE.md.
+
+---
+
+## ✅ Phase 190 — Admin "ADMIN" Display + Unlimited — DONE (2026-04-03)
+
+> Archived in DONE.md.
+
+---
+
+## ✅ Phase 191 — Reusable FormInput Component — DONE (2026-04-03)
+
+> Archived in DONE.md.
+
+---
+
+## ✅ Phase 192 — Reusable PersonaSelector Component — DONE (2026-04-03)
+
+> Archived in DONE.md.
+
+---
+
+## ✅ Phase 193 — Reusable UsageMetricRow Component — DONE (2026-04-03)
+
+> Archived in DONE.md.
+
+---
+
+## ✅ Phase 194 — TiptapEditor Redesign — DONE (2026-04-03)
+
+> Archived in DONE.md.
+
+---
+
+## HIGH — Phase 195 — Image Upload "Describe Image" Fix
+
+> **Owner bug report (PM audit #90).** When uploading an image and asking the model to "describe image", user gets error: "An error occurred while processing your request." Root cause: uploaded image URL is a relative path (`/api/download?key=...`) that OpenAI's vision API cannot access.
 
 **Files:**
 
-- `src/lib/actions/user.actions.tsx` — `deleteUser()` self-delete action
-- `src/lib/actions/admin.actions.tsx` — `removeUserByAdmin()`, `bulkRemoveUsersAction()`
-- `src/components/sections/profile/profile-danger-zone.tsx` — Profile UI
-- `src/app/(admin)/admin/users/[userId]/page.tsx` — Admin user detail UI
-- `src/components/admin/users/admin-users-table.tsx` — Admin bulk actions UI
+- `src/lib/utils/openai/generateResponse.tsx` — message preparation before OpenAI call
+- `src/lib/utils/aws/s3-file-reference.ts` — `buildPrivateS3AssetUrl()` returns relative URL
+- `src/app/api/openai/route.tsx` — passes messages to `generateResponse`
 
 **What to do:**
 
-1. **Backend — `deleteUser()`**: After auth check, query `User.findOne({ clerkId }).select("role").lean()`. If `role === "admin"`, return error: "Admin accounts cannot be deleted."
-2. **Backend — `removeUserByAdmin()`**: After finding target user (already has `select("clerkId email username")`), add `role` to select. If `targetUser.role === "admin"`, throw: "Cannot remove an admin user."
-3. **Backend — `bulkRemoveUsersAction()`**: Before the loop, query admin user IDs and filter them out. Log skipped admin users.
-4. **UI — `ProfileDangerZone`**: If `userData.role === "admin"`, do not render the danger zone section at all.
-5. **UI — Admin user detail page**: If `user.role === "admin"`, hide the "Remove User" form.
-6. **UI — Admin users table**: Disable checkbox selection for admin-role users in the table.
-7. **Tests**: Add unit tests for all 3 backend guards.
+1. Before sending messages to OpenAI, scan user message content items for `image_url` entries with internal `/api/download` URLs.
+2. For each such URL, resolve the S3 object key and generate a pre-signed S3 URL with 15-minute TTL using `@aws-sdk/s3-request-presigner`.
+3. Replace the internal URL with the pre-signed URL in the message content before passing to OpenAI.
 
 **Acceptance criteria:**
 
-- [ ] `deleteUser()` refuses to delete admin-role users with clear error message
-- [ ] `removeUserByAdmin()` refuses to delete admin-role users
-- [ ] `bulkRemoveUsersAction()` silently skips admin-role users
-- [ ] Profile page hides danger zone for admin users
-- [ ] Admin user detail page hides remove button for admin users
-- [ ] Admin users table prevents admin user selection for bulk remove
-- [ ] Unit tests for all 3 backend guards
-- [ ] Build passes, all existing tests pass
-
----
-
-## HIGH — Phase 190 — Admin Unlimited Permissions + "ADMIN" Display
-
-> **Owner directive (PM audit #89).** Admin users must display "ADMIN" instead of plan name (currently shows "LITE" in `/app/profile`) everywhere. Admin usage metrics must show unlimited.
-
-**What to do:**
-
-1. Identify all locations where plan name is displayed to the user (profile hero, profile usage, sidebar, plan promo, etc.).
-2. When `userData.role === "admin"`, display "ADMIN" instead of the plan name.
-3. When `userData.role === "admin"`, display unlimited usage metrics ("Unlimited" instead of numeric limits).
-4. Verify `resolveEntitlements()` already bypasses all limits for admin — this is about display, not enforcement.
-
-**Acceptance criteria:**
-
-- [ ] Profile page shows "ADMIN" instead of plan name for admin users
-- [ ] All plan name display locations show "ADMIN" for admin users
-- [ ] Usage metrics show "Unlimited" for admin users
+- [ ] User-uploaded images with `/api/download` URLs are resolved to pre-signed S3 URLs before OpenAI call
+- [ ] Pre-signed URLs have appropriate TTL (15 minutes)
+- [ ] Image vision/description requests work correctly
 - [ ] Build passes, tests pass
 
 ---
 
-## MEDIUM — Phase 191 — Reusable `FormInput` Component
+## LOW — Phase 199 — useActionState startTransition Fix
 
-> **Owner directive (PM audit #89).** Create a reusable input component with improved styling for all input types (checkbox, date, email, number, password, radio, range, search, tel, text). Reduce JSX load across the app.
+> **Owner bug report (PM audit #90).** Console error when confirming bulk delete: "An async function with useActionState was called outside of a transition."
+
+**File:** `src/components/admin/admin-managed-form.tsx`
 
 **What to do:**
 
-1. Create `src/components/shared/form-input.tsx` with consistent styling for all input types.
-2. Support props: `type`, `label`, `name`, `value`, `placeholder`, `required`, `disabled`, `className`, `onChange`.
-3. Apply consistent styling aligned with the app’s design system (rounded, bordered, dark mode support).
-4. Migrate existing inline-styled inputs across admin and app surfaces.
+1. Import `startTransition` from React.
+2. Wrap `formAction(pendingFormData)` call in `handleConfirm` with `startTransition`.
 
 **Acceptance criteria:**
 
-- [ ] `FormInput` component supports all listed input types
-- [ ] Consistent styling across all input types
-- [ ] Dark mode support
-- [ ] Existing inputs migrated to use `FormInput`
+- [ ] `formAction` call wrapped in `startTransition`
+- [ ] Console error no longer appears
 - [ ] Build passes, tests pass
 
 ---
 
-## MEDIUM — Phase 192 — Reusable `PersonaSelector` Component
+## MEDIUM-HIGH — Phase 196 — Audio Player Overlap Fix
 
-> **Owner directive (PM audit #89).** Extract persona selector from `chat-header.tsx` into a reusable component. No dotted border. Styling consistent with `FormInput`.
+> **Owner bug report (PM audit #90).** Multiple audios play simultaneously when starting a new audio.
 
-**Depends on:** Phase 191 (FormInput).
+**Files:**
+
+- `src/components/shared/audio-player.tsx`
+- `src/components/chat/library-tabs.tsx`
 
 **What to do:**
 
-1. Create `src/components/shared/persona-selector.tsx`.
-2. Move persona selection logic from `chat-header.tsx`.
-3. Remove dotted border. Use styling consistent with `FormInput`.
-4. Accept props: `personas`, `selectedPersonaId`, `disabled`, `onSelect`.
+1. Create Zustand store (`useAudioStore`) with `activeAudioId` and coordination.
+2. When any audio player starts, pause any previously playing audio.
+3. Replace native `<audio controls>` in library with `AudioPlayer`.
 
 **Acceptance criteria:**
 
-- [ ] Persona selector extracted into reusable component
-- [ ] No dotted border
-- [ ] Styling consistent with `FormInput`
-- [ ] `chat-header.tsx` uses the new component
+- [ ] Only one audio plays at a time across the entire app
+- [ ] Starting a new audio pauses any currently playing audio
+- [ ] Library audios use `AudioPlayer` instead of native `<audio controls>`
 - [ ] Build passes, tests pass
 
 ---
 
-## MEDIUM — Phase 193 — Reusable `UsageMetricRow` Component
+## MEDIUM — Phase 197 — Image Lightbox for Generated Images
 
-> **Owner directive (PM audit #89).** `<UsageMetricRow />` in `/app/profile` and "Usage Snapshot" in `/admin/users/[userId]` must share the same component and style.
+> **Owner bug report (PM audit #90).** Generated images must be viewable at larger size.
+
+**File:** `src/components/shared/image-holder.tsx`
 
 **What to do:**
 
-1. Identify the existing `UsageMetricRow` in profile and the usage display in admin user detail.
-2. Create a shared `src/components/shared/usage-metric-row.tsx`.
-3. Replace both implementations with the shared component.
+1. Add click handler to open full-viewport lightbox overlay using `<dialog>`.
+2. Include close button and download button in the lightbox.
 
 **Acceptance criteria:**
 
-- [ ] Single `UsageMetricRow` component used in both profile and admin
-- [ ] Same visual style in both locations
+- [ ] Clicking an image opens a full-viewport lightbox
+- [ ] Close button and download button available
 - [ ] Build passes, tests pass
 
 ---
 
-## MEDIUM — Phase 194 — TiptapEditor Redesign (TinyMCE-style)
+## MEDIUM — Phase 198 — Library Uploaded Tab Visual Previews
 
-> **Owner directive (PM audit #89).** TiptapEditor must be redesigned to feel like a modern TinyMCE/WordPress text editor. Needs: bold, italic, underline, strikethrough, align (left, center, right, justify), lists (bullet, numbered), insert/edit link, insert/edit image. Styling consistent with `FormInput`.
+> **Owner bug report (PM audit #90).** Image uploads must show thumbnails, files must show icons.
 
-**Depends on:** Phase 191 (FormInput for consistent styling).
+**File:** `src/components/chat/library-tabs.tsx` — `LibraryUploadCard`
 
 **What to do:**
 
-1. Verify `@tiptap/*` package compatibility with React 19 / Next.js 16.
-2. Install required Tiptap extensions (Underline, TextAlign, Link, Image, etc.).
-3. Build a WYSIWYG toolbar with common formatting options.
-4. Apply consistent styling with the app’s design system.
-5. Replace the current TiptapEditor implementation.
+1. If `item.contentType` starts with `image/`, render `<Image>` thumbnail.
+2. For non-image types, render file-type icon.
 
 **Acceptance criteria:**
 
-- [ ] WYSIWYG toolbar with bold, italic, underline, strikethrough
-- [ ] Text alignment (left, center, right, justify)
-- [ ] Ordered and unordered lists
-- [ ] Insert/edit link
-- [ ] Insert/edit image
-- [ ] Styling consistent with `FormInput`
+- [ ] Image uploads show visual thumbnail preview
+- [ ] Non-image uploads show file-type icon
 - [ ] Build passes, tests pass
+
+---
+
+## MEDIUM — Phase 144 — Admin Config In-Memory Cache
 
 > 5+ DB round trips per `/api/openai` request for admin settings that change infrequently.
 
