@@ -29,9 +29,9 @@ export const DEFAULT_PLAN_PRICING: PlanPricing = {
 
 export const PLAN_LIMITS: PlanLimits = {
   Lite: {
-    images: 3,
-    audio: 3,
-    conversationsPerDay: 5,
+    images: 1,
+    audio: 1,
+    conversationsPerDay: 10,
     promptsPerConversation: 10,
   },
   Pro: {
@@ -117,7 +117,7 @@ function formatMediaLimitLabel({
   }
 
   if (limit === 0) {
-    return `No ${plural}${suffix}`;
+    return `${limit} ${plural}${suffix}`;
   }
 
   const noun = limit === 1 ? singular : plural;

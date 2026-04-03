@@ -47,24 +47,24 @@ export default function ProfileUsage({
           </span>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <UsageMetricRow
+            label="Daily Conversations"
+            used={dailyConversationsUsed}
+            limit={planLimits.conversationsPerDay}
+            className="rounded-lg bg-dustyBlue-300/20 p-3 dark:bg-nightIndigo-400/10"
+          />
           <UsageMetricRow
             label="Image Generations"
             used={imageUsed}
             limit={planLimits.images}
-            className="rounded-lg bg-lavenderHaze-200/60 p-3 dark:bg-nightIndigo-900/50"
+            className="rounded-lg bg-dustyBlue-300/20 p-3 dark:bg-nightIndigo-400/10"
           />
           <UsageMetricRow
             label="Audio Generations"
             used={audioUsed}
             limit={planLimits.audio}
-            className="rounded-lg bg-lavenderHaze-200/60 p-3 dark:bg-nightIndigo-900/50"
-          />
-          <UsageMetricRow
-            label="Daily Conversations"
-            used={dailyConversationsUsed}
-            limit={planLimits.conversationsPerDay}
-            className="rounded-lg bg-lavenderHaze-200/60 p-3 dark:bg-nightIndigo-900/50"
+            className="rounded-lg bg-dustyBlue-300/20 p-3 dark:bg-nightIndigo-400/10"
           />
         </div>
 

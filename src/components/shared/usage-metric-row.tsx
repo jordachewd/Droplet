@@ -51,7 +51,7 @@ export default function UsageMetricRow({
         </p>
       )}
 
-      <div className="h-2.5 w-full rounded-full bg-lavenderHaze-300/70 dark:bg-nightIndigo-500/50">
+      <div className="h-2.5 w-full rounded-full bg-twilightPurple-400/10 dark:bg-dustyBlue-500/10">
         <div
           className={classNames(
             "h-full rounded-full bg-twilightPurple-500 transition-all dark:bg-dustyBlue-500",

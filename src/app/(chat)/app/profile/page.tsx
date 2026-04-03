@@ -63,12 +63,15 @@ export default async function AppProfilePage() {
         align="center"
         className="px-4 mt-12"
       />
+
       <ProfileHero
         userData={userData}
         supportEmail={supportEmail}
         promoContent={promoContent}
       />
+
       <ProfileHeroEditor userData={userData} />
+
       <ProfileUsage
         planName={displayPlanName}
         planLimits={planLimits}
@@ -77,11 +80,13 @@ export default async function AppProfilePage() {
         dailyConversationsUsed={dailyConversationsUsed}
         usagePeriodStart={usagePeriodStart}
       />
+
       <ProfileBilling
         stripeId={stripeId}
         userTxns={userTxns}
         currencySymbol={currencySymbol}
       />
+
       <ProfileDangerZone userData={userData} />
     </ChatPageWrapper>
   ) : (

@@ -3,7 +3,6 @@
 import Link from "next/link";
 import classNames from "classnames";
 import { DEFAULT_PROMO_CONTENT, PromoContent } from "@/constants/promo-content";
-import { ADMIN_PLAN_LABEL } from "@/lib/utils/plan-display";
 import { PlanName } from "@/types/PlanData.d";
 import { UserRoles } from "@/types/UserData.d";
 import {
@@ -35,8 +34,8 @@ export default function ChatSidebarPromo({
         <article className={promoCardClass}>
           <div className={planPromoAccentClass}></div>
           <div className="z-10 flex w-full flex-col gap-2 text-center">
-            <h6 className="heading-6 text-twilightPurple-600">
-              {ADMIN_PLAN_LABEL}
+            <h6 className="heading-6 text-lavenderHaze-300">
+              {promoContent.promoAdminLabel}
             </h6>
             <p className="text-xs leading-4">
               {promoContent.promoAdminDescription}
@@ -53,7 +52,7 @@ export default function ChatSidebarPromo({
         <article className={promoCardClass}>
           <div className={planPromoAccentClass}></div>
           <div className="z-10 flex w-full flex-col gap-2 text-center">
-            <h6 className="heading-6 text-twilightPurple-600">
+            <h6 className="heading-6 text-lavenderHaze-300">
               {promoContent.promoSuspensionTitle}
             </h6>
             <p className="text-xs leading-4">
@@ -84,9 +83,7 @@ export default function ChatSidebarPromo({
       <article className={promoCardClass}>
         <div className={planPromoAccentClass}></div>
         <div className="z-10 flex w-full flex-col gap-2 text-center">
-          <h6 className="heading-6 font-semibold text-twilightPurple-600">
-            {promoTitle}
-          </h6>
+          <h6 className="heading-6 text-lavenderHaze-300">{promoTitle}</h6>
           <p className="text-xs leading-4">{promoMessage}</p>
 
           <Link
