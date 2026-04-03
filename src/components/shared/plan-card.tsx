@@ -37,6 +37,8 @@ export default function PlanCard({
       ? "text-twilightPurple-1000/60"
       : "text-midnightBlue-500";
 
+  console.warn("PlanCard / Plan:", plan.name,  plan.inclusions);
+
   return (
     <div
       className={classNames(

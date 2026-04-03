@@ -20,12 +20,14 @@ export default async function PlansPage() {
       getEffectivePersonaAccessByPlan(),
       getEffectiveSupportEmail(),
     ]);
+
   const plans = buildPlans({
     pricing: effectivePlanConfig.pricing,
     limits: effectivePlanConfig.limits,
     personaAccess: personaAccessByPlan,
     trialLimits: effectivePlanConfig.trialLimits,
   });
+  
   const faqs = await getEffectiveFaqContent({
     pricing: effectivePlanConfig.pricing,
     personaAccessByPlan,
@@ -58,11 +60,8 @@ export default async function PlansPage() {
           </p>
 
           <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-            <Link className="btn btn-lg btn-contained uppercase" href="/plans">
-              View plans
-            </Link>
             <Link
-              className="btn btn-lg btn-outlined uppercase"
+              className="btn btn-md btn-outlined uppercase"
               href={`mailto:${supportEmail}`}
             >
               Contact support
