@@ -1,15 +1,15 @@
-# Droplet � Completion Plan
+﻿# Droplet � Completion Plan
 
 > Purpose: one execution document for finishing the SaaS without avoidable rework.
 > Audience: Project Manager, Architect, and Senior Software Agents.
 > Rule: this plan is based on verified repository state. If older docs disagree with code, code wins until this file is updated.
-> Last verified: PM audit #89, 2026-04-03. V1.0 MVP RELEASED. Phase 188 (PlanCard isIncluded fix) DONE. CRITICAL: Admin users can be deleted (Phase 189). 6 new owner directives (OI28–OI33).
+> Last verified: PM audit #90, 2026-04-03. V1.0 MVP RELEASED. Phases 189–194 DONE (admin deletion protection, ADMIN display, FormInput, PersonaSelector, UsageMetricRow, TiptapEditor). 611 tests. 5 new owner bugs (OI34–OI38).
 
 ---
 
 ## 1. Executive Judgment
 
-Droplet is deployed to production with all 25 milestones complete. The TDD testing rebuild is done (101 suites, 602 tests, 8 E2E specs, 85/80/85/85 coverage). WCAG 2.2 AA is complete. Admin configurability (promo text, FAQ, landing, stop reasons, persona content) is done. Global error boundary is done. Brand rename (cellesseon ? droplet) is complete.
+Droplet is deployed to production with all 25 milestones complete. The TDD testing rebuild is done (101+ suites, 611 tests, 8 E2E specs, 85/80/85/85 coverage). WCAG 2.2 AA is complete. Admin configurability (promo text, FAQ, landing, stop reasons, persona content) is done. Global error boundary is done. Brand rename (cellesseon ? droplet) is complete.
 
 **Owner investigation results (2026-04-02, PM audit #84-B):**
 
@@ -20,7 +20,7 @@ Droplet is deployed to production with all 25 milestones complete. The TDD testi
 3. **? C3 � Facebook login � CLOSED.** Owner removed Facebook login from product. No longer used.
 
 **Phases completed since last plan update:**
-Phase 178, 181, 182 � DONE. Phase 183 (Stripe) � RESOLVED (webhook was disabled). Phase 184 (Facebook) � CLOSED (removed from product). Phase 185 (sora-2-pro removal) � DONE. Phase 180.1 (homepage text extraction) � DONE. Phase 186-A (video generation removal) � DONE. Phase 186-B (token limits maximized) � DONE. Phase 187-A (admin error boundary) � DONE. Phase 187-B (Clerk webhook cascade order) � DONE. Phase 187-C (audio player error recovery) � DONE. Phase 187-D (download rate-limit key cleanup) � DONE. Phase 143 (env var runtime validation) � DONE. Phase 180.2 (chat display text extraction) � DONE. Phase 180.3 (plans display text extraction) � DONE. Phase 180.4 (currency symbol compliance) � DONE.
+Phase 178, 181, 182 � DONE. Phase 183 (Stripe) � RESOLVED (webhook was disabled). Phase 184 (Facebook) � CLOSED (removed from product). Phase 185 (sora-2-pro removal) � DONE. Phase 180.1 (homepage text extraction) � DONE. Phase 186-A (video generation removal) � DONE. Phase 186-B (token limits maximized) � DONE. Phase 187-A (admin error boundary) � DONE. Phase 187-B (Clerk webhook cascade order) � DONE. Phase 187-C (audio player error recovery) � DONE. Phase 187-D (download rate-limit key cleanup) � DONE. Phase 143 (env var runtime validation) � DONE. Phase 180.2 (chat display text extraction) � DONE. Phase 180.3 (plans display text extraction) � DONE. Phase 180.4 (currency symbol compliance) � DONE. Phase 188 (PlanCard isIncluded fix) — DONE. Phase 189 (admin deletion protection) — DONE. Phase 190 (admin ADMIN display + unlimited) — DONE. Phase 191 (reusable FormInput) — DONE. Phase 192 (reusable PersonaSelector) — DONE. Phase 193 (reusable UsageMetricRow) — DONE. Phase 194 (TiptapEditor redesign) — DONE.
 
 ---
 
@@ -28,7 +28,7 @@ Phase 178, 181, 182 � DONE. Phase 183 (Stripe) � RESOLVED (webhook was disab
 
 > **Milestones 0�25 ALL COMPLETE.** Detailed phase records archived in DONE.md.
 
-Key deliverables: Next.js 16 App Router, Clerk auth + proxy route protection, Stripe checkout + webhooks, MongoDB persistence (Mongoose, strict mode, indexes), 6 personas with three-tier gating, streaming SSE chat, image/audio generation (OpenAI tools + S3 storage), AI model policy resolver, central entitlement resolver, admin control plane (users, transactions, usage, settings, website), 7 public marketing/legal routes, WCAG 2.2 AA compliance, TDD test suite (602 tests), E2E suite (49 tests, 8 specs), brand color palette v2, lime green accent, admin-configurable promo/FAQ/landing/stop-reason/persona content, global error boundary, user deletion cascade, rate limiting, Node.js 24.12.0, all config hardening, video generation removal (Phase 186-A), token limits maximized to near-maximum model capacity (Phase 186-B), admin error boundary (Phase 187-A), Clerk webhook cascade fix (Phase 187-B), audio player error recovery (Phase 187-C), env var runtime validation (Phase 143), all display text admin-configurable (Phases 180.2�180.4), download rate-limit cleanup (Phase 187-D).
+Key deliverables: Next.js 16 App Router, Clerk auth + proxy route protection, Stripe checkout + webhooks, MongoDB persistence (Mongoose, strict mode, indexes), 6 personas with three-tier gating, streaming SSE chat, image/audio generation (OpenAI tools + S3 storage), AI model policy resolver, central entitlement resolver, admin control plane (users, transactions, usage, settings, website), 7 public marketing/legal routes, WCAG 2.2 AA compliance, TDD test suite (602 tests), E2E suite (49 tests, 8 specs), brand color palette v2, lime green accent, admin-configurable promo/FAQ/landing/stop-reason/persona content, global error boundary, user deletion cascade, rate limiting, Node.js 24.12.0, all config hardening, video generation removal (Phase 186-A), token limits maximized to near-maximum model capacity (Phase 186-B), admin error boundary (Phase 187-A), Clerk webhook cascade fix (Phase 187-B), audio player error recovery (Phase 187-C), env var runtime validation (Phase 143), all display text admin-configurable (Phases 180.2�180.4), download rate-limit cleanup (Phase 187-D), PlanCard isIncluded fix (Phase 188), admin deletion protection (Phase 189), admin ADMIN display + unlimited permissions (Phase 190), reusable FormInput/PersonaSelector/UsageMetricRow components (Phases 191–193), TiptapEditor WYSIWYG redesign (Phase 194).
 
 Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 169), script tag warning (Phase 170), payment webhook schema (Phase 157/161), catch block documentation (Phase 167+167.2), test failures (Phase 171), cellesseon rename (Phase 172), debug text (Phase 173), dead files (Phase 174�175), download 206 (Phase 176), constant dedup (Phase 177), fake download icon (Phase 178), stream timeout budget (Phase 181 � **confirmed working in production**), Stripe diagnostic hardening (Phase 182).
 
@@ -57,7 +57,7 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 | Knip                | ?      | 0 findings                                                                        |
 | TSC                 | ?      | 0 errors                                                                          |
 | Lint                | ?      | 0 errors, 0 warnings                                                              |
-| Tests               | ?      | 101 suites, 599 tests, all pass                                                   |
+| Tests               | ?      | 101+ suites, 611 tests, all pass                                                   |
 | E2E                 | ?      | 8 specs, 49 tests                                                                 |
 
 ### Issues Found by Audit #82�#84 � Updated Status
@@ -68,7 +68,7 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 | C2  | ? RESOLVED  | Stripe webhook � payment processed, no transaction, no plan update | Root cause: webhook was disabled in Stripe Dashboard. Re-enabled. HTTP 200 confirmed. |
 | C3  | ? CLOSED    | Facebook login � "Feature Unavailable" error                       | Owner removed Facebook login from product.                                            |
 | H4  | ? RESOLVED  | Fake download icon � removed in Phase 178                          | Icon removed from `profile-billing.tsx`                                               |
-| H6  | HIGH        | Audio player button permanently disabled after transient error     | `audio-player.tsx:171` � not yet addressed                                            |
+| H6  | ✅ RESOLVED | Audio player button permanently disabled after transient error     | Phase 187-C DONE. Error recovery implemented.                                         |
 | M1  | ? CANCELLED | No video player error state (unlike audio player)                  | CANCELLED � video-player being removed (Phase 186).                                   |
 | M2  | ? RESOLVED  | ~8 hardcoded display strings across chat/profile components        | Phases 180.2, 180.3, 180.4 DONE. All strings admin-configurable.                      |
 | M3  | ? RESOLVED  | Hardcoded persona IDs in homepage spotlight                        | Phase 180.1 DONE. Homepage spotlight admin-configurable.                              |
@@ -99,6 +99,13 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 | 187-C | Fix audio player error recovery                | ? DONE                 | Error recovery implemented, button no longer stuck disabled.        |
 | 187-D | Download rate-limit key cleanup                | ? DONE                 | Rate-limit key cascade cleanup for download routes.                 |
 | 143   | Env var runtime validation                     | ? DONE                 | All unsafe casts replaced with proper validation.                   |
+| 188   | Fix PlanCard isIncluded logic                  | ✅ DONE                 | uildPlans() uses limit !== 0. 3 new tests. 602 total.         |
+| 189   | Admin deletion protection                      | ✅ DONE                 | 5-layer protection: server + UI. deleteUser(), removeUserByAdmin(), bulkRemoveUsersAction(), profile UI, admin UI. |
+| 190   | Admin ADMIN display + unlimited permissions    | ✅ DONE                 | plan-display.ts utility. ADMIN_PLAN_LABEL. Unlimited usage display. |
+| 191   | Reusable FormInput component                   | ✅ DONE                 | All input types, exported class constant, migrated across admin.   |
+| 192   | Reusable PersonaSelector component             | ✅ DONE                 | Extracted from chat-header.tsx. No dotted border. ARIA labels.     |
+| 193   | Reusable UsageMetricRow component              | ✅ DONE                 | Shared between profile + admin user detail. Unlimited + near-limit.|
+| 194   | TiptapEditor redesign                          | ✅ DONE                 | Full WYSIWYG: 10 toolbar actions, link/image mgmt, no base64.     |
 
 ### Ongoing Constraints
 
@@ -108,15 +115,15 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 
 ---
 
-## 4. SWOT Analysis (Updated 2026-04-03, post PM audit #87)
+## 4. SWOT Analysis (Updated 2026-04-03, post PM audit #90)
 
-**Strengths:** Clean architecture, strong auth, comprehensive tests (599+49), central policy resolvers, WCAG 2.2 AA complete, durable usage counters, thorough user deletion cascade, zero lint/type/knip issues, correct webhook code structure (audit #84 confirmed), Stream timeout fix confirmed working in production (Phase 181), SSE heartbeat + proactive timeout pattern is robust, video generation cleanly removed (Phase 186-A), token limits maximized (Phase 186-B), admin error boundary (Phase 187-A), env var runtime validation (Phase 143), all display text admin-configurable (Phases 180.1�180.4), audio player error recovery (Phase 187-C).
+**Strengths:** Clean architecture, strong auth, comprehensive tests (611+49), central policy resolvers, WCAG 2.2 AA complete, durable usage counters, thorough user deletion cascade, zero lint/type/knip issues, correct webhook code structure, stream timeout confirmed in production (Phase 181), video generation cleanly removed (Phase 186-A), token limits maximized (Phase 186-B), admin error boundary (Phase 187-A), env var runtime validation (Phase 143), all display text admin-configurable (Phases 180.1–180.4), audio player error recovery (Phase 187-C), admin deletion protection with 5-layer defense (Phase 189), reusable component library: FormInput/PersonaSelector/UsageMetricRow (Phases 191–193), TiptapEditor WYSIWYG (Phase 194), plan-display utility for admin ADMIN label (Phase 190).
 
-**Weaknesses:** None blocking. Post-release backlog contains quality-of-life improvements only.
+**Weaknesses:** Image vision completely broken — uploaded image URLs are relative (/api/download?key=...) and inaccessible to OpenAI. No global audio playback coordination (multiple players overlap). No image lightbox for generated images. Library Uploaded tab lacks visual previews. useActionState console warning in admin forms.
 
-**Opportunities:** Vercel Pro upgrade unlocks media generation ($20/mo), admin config cache (5+ DB hits/request ? 30s TTL), env var validation (8 unsafe casts), checkout success polling (webhook delay safety net), structured SSE error codes.
+**Opportunities:** Vercel Pro upgrade unlocks media generation (/mo), admin config cache (5+ DB hits/request → 30s TTL), checkout success polling (webhook delay safety net), Zustand audio store for singleton playback, image lightbox for chat and library.
 
-**Threats:** Single-document growth risk.
+**Threats:** Single-document growth risk. S3 URL inaccessibility for OpenAI vision API (image upload "describe image" broken in production).
 
 ---
 
@@ -129,45 +136,32 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 | C    | Product Gate    | GREEN  | All display strings admin-configurable. Video removed. Stripe + Facebook resolved.         |
 | D    | Admin Gate      | GREEN  | Admin config complete. Error boundary added (Phase 187-A). All strings admin-configurable. |
 | E    | Public Gate     | GREEN  | All 7 public routes accurate, legal content real, no obsolete trial messaging              |
-| F    | Validation Gate | GREEN  | 602 tests, lint 0/0, TSC clean, knip 0, E2E 49 tests, coverage 85/80/85/85                 |
+| F    | Validation Gate | GREEN  | 611 tests, lint 0/0, TSC clean, knip 0, E2E 49 tests, coverage 85/80/85/85                 |
 
 ---
 
 ## 6. Current Execution Order
 
-> All 3 critical issues RESOLVED/CLOSED. All v1.0 pre-release phases DONE. **V1.0 MVP RELEASED.** CRITICAL: Admin deletion protection needed (Phase 189). 6 new owner directives.
+> All critical issues RESOLVED. All v1.0 pre-release phases DONE. **V1.0 MVP RELEASED.** Phases 189-194 DONE. 5 new owner bugs queued (Phases 195-199).
 
 ### Post-Release Active
 
-- **🔴 Phase 189** — CRITICAL: Admin deletion protection. Admin users can be deleted from Profile and Admin/Users dashboard. Locks out admin panel permanently.
-- **🟡 Phase 190** — Admin "ADMIN" display + unlimited profile permissions.
-- **🟡 Phase 191** — Reusable FormInput component.
-- **🟡 Phase 192** — Reusable PersonaSelector component (depends on 191).
-- **🟡 Phase 193** — Reusable UsageMetricRow component.
-- **🟡 Phase 194** — TiptapEditor redesign (depends on 191).
+- **🔴 Phase 195** — HIGH: Image upload "describe image" broken. S3 proxy URLs inaccessible to OpenAI vision API.
+- **🔴 Phase 196** — MEDIUM-HIGH: Audio player overlap. Multiple audio players can play simultaneously.
+- **🟡 Phase 197** — Image lightbox for generated images in chat. UX gap for image generation product.
+- **🟡 Phase 198** — Library Uploaded tab visual previews. Image thumbnails + file icons.
+- **🟢 Phase 199** — useActionState startTransition fix in AdminManagedForm. Trivial one-line fix.
 
 ### Confirmed Working
 
-- **✅ Phase 188** — PlanCard isIncluded fix. `buildPlans()` uses `limit !== 0`. 3 new tests. 602 total.
+- **✅ Phase 189** — Admin deletion protection. DONE. 5-layer defense.
+- **✅ Phase 190** — Admin ADMIN display + unlimited permissions. DONE.
+- **✅ Phase 191** — Reusable FormInput component. DONE.
+- **✅ Phase 192** — Reusable PersonaSelector component. DONE.
+- **✅ Phase 193** — Reusable UsageMetricRow component. DONE.
+- **✅ Phase 194** — TiptapEditor redesign. DONE.
+- **✅ Phase 188** — PlanCard isIncluded fix. DONE. 602 tests.
 - **✅ Phase 181** — Stream timeout budget fix. PRODUCTION-CONFIRMED.
-
-- **? Phase 181** � Stream timeout budget fix. PRODUCTION-CONFIRMED.
-- **? Phase 178** � Fake download icon removed. DONE.
-- **? Phase 182** � Stripe diagnostic hardening. CODE-COMPLETE.
-- **? Phase 183** � Stripe payment flow. RESOLVED (webhook was disabled).
-- **? Phase 184** � Facebook login. CLOSED (removed from product).
-- **? Phase 185** � Remove sora-2-pro from codebase. DONE.
-- **? Phase 180.1** � Homepage text extraction. DONE.
-- **? Phase 186-A** � Remove all video generation from codebase. DONE (58 files, all gates GREEN).
-- **? Phase 186-B** � Token limits increased to near-maximum model capacity. DONE (all 9 chat tiers).
-- **? Phase 187-A** � Admin error boundary added. DONE.
-- **? Phase 187-B** � Clerk webhook cascade order fixed. DONE.
-- **? Phase 187-C** � Audio player error recovery. DONE.
-- **? Phase 187-D** � Download rate-limit key cleanup. DONE.
-- **? Phase 143** � Env var runtime validation. DONE.
-- **? Phase 180.2** � Chat display text extraction. DONE.
-- **? Phase 180.3** � Plans display text extraction. DONE.
-- **? Phase 180.4** � Currency symbol compliance. DONE.
 
 ### Post-Release Backlog
 
@@ -217,12 +211,17 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 | OI24 | V1.0 MVP pre-release task list         | ? COMPLETE. All 8 pre-release phases DONE (187-A/B/C/D, 143, 180.2/3/4).                                                           |     | OI25 | Env vars validated in Vercel | ✅ ACKNOWLEDGED. `requireEnv()` kept as defense-in-depth for local dev and CI. |
 | OI26 | PlanCard isIncluded bug                | ✅ COMPLETE. Phase 188 DONE. `buildPlans()` uses `limit !== 0`. 602 tests.                                                         |
 | OI27 | App is now released                    | ✅ V1.0 MVP RELEASED. Post-release backlog active.                                                                                 |
-| OI28 | Admin cannot be deleted                | 🔴 Phase 189. CRITICAL. Neither from Profile nor Admin/Users dashboard.                                                            |
-| OI29 | Admin unlimited + "ADMIN" display      | 🟡 Phase 190. Show "ADMIN" not plan name. Display unlimited metrics.                                                               |
-| OI30 | Reusable input component               | 🟡 Phase 191. Create FormInput for all input types. Reduce JSX load.                                                               |
-| OI31 | Persona selector reusable              | 🟡 Phase 192. Extract from chat-header. No dotted border. Consistent styling.                                                      |
-| OI32 | UsageMetricRow reusable                | 🟡 Phase 193. Share between profile and admin user detail.                                                                         |
-| OI33 | TiptapEditor redesign                  | 🟡 Phase 194. WYSIWYG editor: bold/italic/underline/strike/align/lists/links/images. TinyMCE-style.                                |
+| OI28 | Admin cannot be deleted                | ✅ COMPLETE. Phase 189 DONE. 5-layer protection (server + UI).                                                                     |
+| OI29 | Admin unlimited + "ADMIN" display      | ✅ COMPLETE. Phase 190 DONE. plan-display.ts utility.                                                                             |
+| OI30 | Reusable input component               | ✅ COMPLETE. Phase 191 DONE. FormInput with all types + exported class.                                                             |
+| OI31 | Persona selector reusable              | ✅ COMPLETE. Phase 192 DONE. Extracted, validated, consistent styling.                                                              |
+| OI32 | UsageMetricRow reusable                | ✅ COMPLETE. Phase 193 DONE. Shared between profile and admin.                                                                      |
+| OI33 | TiptapEditor redesign                  | ✅ COMPLETE. Phase 194 DONE. Full WYSIWYG toolbar.                                                                                  |
+| OI34 | Image upload describe error            | 🔴 Phase 195. HIGH. S3 proxy URLs inaccessible to OpenAI vision API. Image vision broken.                                          |
+| OI35 | Audio player overlap fix               | 🔴 Phase 196. MEDIUM-HIGH. Multiple audios play simultaneously. Need global coordination.                                          |
+| OI36 | Image lightbox for generated images    | 🟡 Phase 197. Click-to-enlarge modal for images in chat.                                                                           |
+| OI37 | Library uploaded tab visual previews   | 🟡 Phase 198. Image thumbnails + file icons in Uploaded tab.                                                                       |
+| OI38 | useActionState console warning         | 🟢 Phase 199. Wrap formAction in startTransition in AdminManagedForm.                                                              |
 
 ---
 
