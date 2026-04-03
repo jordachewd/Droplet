@@ -111,6 +111,37 @@ const pageTwoUsers = [
   },
 ];
 
+const usersWithAdmin = [
+  {
+    id: "user-client-1",
+    username: "client-one",
+    email: "client-one@example.com",
+    role: "client",
+    planName: "Lite",
+    registerAt: "2026-03-05T00:00:00.000Z",
+    suspended: false,
+    mediaUsage: {
+      images: { used: 0, limit: 3 },
+      audio: { used: 0, limit: 3 },
+    },
+    conversationUsage: { used: 1, limit: 5 },
+  },
+  {
+    id: "user-admin-1",
+    username: "admin-one",
+    email: "admin-one@example.com",
+    role: "admin",
+    planName: "ADMIN",
+    registerAt: "2026-03-06T00:00:00.000Z",
+    suspended: false,
+    mediaUsage: {
+      images: { used: 0, limit: -1 },
+      audio: { used: 0, limit: -1 },
+    },
+    conversationUsage: { used: 1, limit: -1 },
+  },
+];
+
 function getSelectAllCheckbox(): HTMLInputElement {
   return screen.getByLabelText("Select all users") as HTMLInputElement;
 }
@@ -171,5 +202,24 @@ describe("AdminUsersTable", () => {
     expect(getSelectAllCheckbox().checked).toBe(false);
     expect(screen.queryByText("Bulk Suspend")).toBeNull();
     expect(screen.queryByText("Bulk Remove")).toBeNull();
+  });
+
+  it("does not allow selecting admin rows in bulk actions", () => {
+    render(
+      <AdminUsersTable
+        users={usersWithAdmin}
+        pagination={{ total: 2, page: 1, pageSize: 2, totalPages: 1 }}
+      />,
+    );
+
+    fireEvent.click(getSelectAllCheckbox());
+
+    expect(screen.getByText("1 selected")).toBeTruthy();
+    expect(
+      (screen.getByLabelText("Select admin-one") as HTMLInputElement).disabled,
+    ).toBe(true);
+    expect(
+      (screen.getByLabelText("Select client-one") as HTMLInputElement).checked,
+    ).toBe(true);
   });
 });

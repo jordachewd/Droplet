@@ -8,6 +8,7 @@ import {
 } from "@/lib/actions/admin.actions";
 import { AdminManagedForm } from "@/components/admin/admin-managed-form";
 import { AdminFormSubmitButton } from "@/components/admin/admin-form-submit-button";
+import FormInput from "@/components/shared/form-input";
 
 interface AdminUsersTableItem {
   id: string;
@@ -74,14 +75,24 @@ function AdminUsersTableContent({
   const formatLimit = (limit: number) =>
     limit === -1 ? "Unlimited" : String(limit);
 
+  const selectableUsers = useMemo(
+    () => users.filter((user) => user.role !== "admin"),
+    [users],
+  );
   const selectedSet = useMemo(
     () => new Set(selectedUserIds),
     [selectedUserIds],
   );
   const allSelected =
-    users.length > 0 && selectedUserIds.length === users.length;
+    selectableUsers.length > 0 &&
+    selectableUsers.every((user) => selectedSet.has(user.id));
 
   const handleToggleUser = (userId: string) => {
+    const targetUser = users.find((user) => user.id === userId);
+    if (!targetUser || targetUser.role === "admin") {
+      return;
+    }
+
     setSelectedUserIds((current) =>
       current.includes(userId)
         ? current.filter((value) => value !== userId)
@@ -95,7 +106,7 @@ function AdminUsersTableContent({
       return;
     }
 
-    setSelectedUserIds(users.map((user) => user.id));
+    setSelectedUserIds(selectableUsers.map((user) => user.id));
   };
 
   const buildPageHref = (nextPage: number) => {
@@ -112,15 +123,14 @@ function AdminUsersTableContent({
   return (
     <div className="AdminUsersTable admin-table-shell">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-300 px-4 py-3 dark:border-slate-500">
-        <label className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
-          <input
-            type="checkbox"
-            checked={allSelected}
-            onChange={handleToggleAll}
-            aria-label="Select all users"
-          />
-          Select All
-        </label>
+        <FormInput
+          type="checkbox"
+          label="Select All"
+          checked={allSelected}
+          onChange={handleToggleAll}
+          aria-label="Select all users"
+          containerClassName="text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700"
+        />
 
         {selectedUserIds.length > 0 ? (
           <div className="flex flex-wrap items-center gap-2">
@@ -219,14 +229,14 @@ function AdminUsersTableContent({
             {users.map((user) => (
               <tr key={user.id} className="text-sm">
                 <td className="px-4 py-4 align-middle">
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={selectedSet.has(user.id)}
-                      onChange={() => handleToggleUser(user.id)}
-                      aria-label={`Select ${user.username}`}
-                    />
-                  </label>
+                  <FormInput
+                    type="checkbox"
+                    checked={selectedSet.has(user.id)}
+                    onChange={() => handleToggleUser(user.id)}
+                    aria-label={`Select ${user.username}`}
+                    disabled={user.role === "admin"}
+                    containerClassName="flex items-center"
+                  />
                 </td>
                 <td className="px-3 py-4 align-middle">
                   <Link

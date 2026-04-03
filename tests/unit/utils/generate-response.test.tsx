@@ -18,6 +18,7 @@ const {
   normalizePlanTierMock,
   resolveModelPolicyMock,
   compactMessagesToTokenLimitMock,
+  getSignedUrlMock,
 } = vi.hoisted(() => ({
   getPersonaMock: vi.fn(),
   buildPersonaAwareSystemPromptMock: vi.fn(),
@@ -30,6 +31,7 @@ const {
   normalizePlanTierMock: vi.fn(),
   resolveModelPolicyMock: vi.fn(),
   compactMessagesToTokenLimitMock: vi.fn(),
+  getSignedUrlMock: vi.fn(),
 }));
 
 vi.mock("@/constants/assistant-personas", () => ({
@@ -51,6 +53,14 @@ vi.mock("@/constants/openai", () => ({
       },
     },
   },
+}));
+
+vi.mock("@/constants/aws", () => ({
+  awsS3Client: {},
+}));
+
+vi.mock("@aws-sdk/s3-request-presigner", () => ({
+  getSignedUrl: getSignedUrlMock,
 }));
 
 vi.mock("@/lib/utils/openai/generateImage", () => ({
@@ -174,6 +184,7 @@ function parsePayload<TValue>(payload: unknown): TValue {
 describe("generateResponse", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.stubEnv("AWS_S3_BUCKET", "droplet-bucket");
 
     getPersonaMock.mockImplementation((personaId?: string | null) => ({
       id: personaId ?? "strategist",
@@ -189,6 +200,7 @@ describe("generateResponse", () => {
     compactMessagesToTokenLimitMock.mockImplementation(
       (messages: unknown) => messages,
     );
+    getSignedUrlMock.mockResolvedValue("https://signed.example.com/image.png");
     normalizePlanTierMock.mockImplementation(
       (planName?: string | null) => planName?.toLowerCase() ?? "lite",
     );
@@ -290,6 +302,70 @@ describe("generateResponse", () => {
         model: "gpt-4.1",
       }),
     ]);
+  });
+
+  it("replaces internal download image URLs with pre-signed URLs before chat completion", async () => {
+    createChatCompletionMock.mockResolvedValue({
+      usage: {
+        prompt_tokens: 16,
+        completion_tokens: 7,
+        total_tokens: 23,
+      },
+      choices: [
+        {
+          message: {
+            role: "assistant",
+            content: "Image analyzed",
+          },
+        },
+      ],
+    });
+    getSignedUrlMock.mockResolvedValueOnce(
+      "https://signed.example.com/user_1/uploads/photo.png",
+    );
+
+    await generateResponse(
+      createResponseRequest({
+        messages: [
+          {
+            role: "user",
+            whois: "user",
+            content: [
+              {
+                type: "text",
+                text: "Describe this image",
+              },
+              {
+                type: "image_url",
+                image_url: {
+                  url: "/api/download?key=user_1%2Fuploads%2Fphoto.png",
+                },
+              },
+            ],
+          },
+        ],
+      }),
+    );
+
+    expect(getSignedUrlMock).toHaveBeenCalledTimes(1);
+
+    const requestPayload = createChatCompletionMock.mock.calls[0]?.[0] as {
+      messages: Array<{
+        role: string;
+        content?: Array<{ type: string; image_url?: { url: string } }>;
+      }>;
+    };
+
+    const userMessage = requestPayload.messages.find(
+      (message) => message.role === "user",
+    );
+    const userImageContent = userMessage?.content?.find(
+      (contentItem) => contentItem.type === "image_url",
+    );
+
+    expect(userImageContent?.image_url?.url).toBe(
+      "https://signed.example.com/user_1/uploads/photo.png",
+    );
   });
 
   it("returns image_disabled when image tool is requested but image is not enabled", async () => {
@@ -644,6 +720,7 @@ describe("generateResponse", () => {
 describe("generateStreamingResponse", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.stubEnv("AWS_S3_BUCKET", "droplet-bucket");
 
     getPersonaMock.mockReturnValue({ id: "strategist" });
     buildPersonaAwareSystemPromptMock.mockReturnValue([
@@ -656,6 +733,7 @@ describe("generateStreamingResponse", () => {
     compactMessagesToTokenLimitMock.mockImplementation(
       (messages: unknown) => messages,
     );
+    getSignedUrlMock.mockResolvedValue("https://signed.example.com/image.png");
     normalizePlanTierMock.mockImplementation(
       (planName?: string | null) => planName?.toLowerCase() ?? "lite",
     );

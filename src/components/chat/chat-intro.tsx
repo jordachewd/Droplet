@@ -19,7 +19,7 @@ export default function ChatIntro({
   const { user, isLoaded } = useUser();
 
   const introWrapperClass = classNames(
-    "ChatIntro mx-auto flex w-full max-w-4xl flex-col gap-8",
+    "ChatIntro mx-auto flex w-full max-w-4xl flex-col gap-12",
   );
 
   const introPromptButtonClass = classNames(
@@ -51,7 +51,7 @@ export default function ChatIntro({
         </p>
       </div>
 
-      <div className="ChatIntroPrompts grid grid-cols-1 gap-3 md:grid-cols-2">
+      <div className="ChatIntroPrompts grid grid-cols-1 gap-4 md:grid-cols-2">
         {persona.starterPrompts.map((prompt) => (
           <button
             key={`${persona.id}-${prompt}`}

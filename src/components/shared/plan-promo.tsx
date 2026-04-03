@@ -1,6 +1,7 @@
 import classNames from "classnames";
 import { getPlanIcon } from "@/constants/plans";
 import { DEFAULT_PROMO_CONTENT, PromoContent } from "@/constants/promo-content";
+import { ADMIN_PLAN_LABEL } from "@/lib/utils/plan-display";
 import { PlanData, PlanName } from "@/types/PlanData.d";
 import Link from "next/link";
 import { UserRoles } from "@/types/UserData.d";
@@ -40,7 +41,7 @@ export default function PlanPromo({
             <span
               className={classNames(
                 "rounded-sm p-1 text-2xs uppercase leading-none tracking-wider",
-                "bg-twilightPurple-600 text-lavenderHaze-400",
+                "bg-dustyBlue-500 text-lavenderHaze-200",
                 { "min-w-20.5": !isLite },
               )}
             >
@@ -51,7 +52,7 @@ export default function PlanPromo({
           </div>
         )}
 
-        <h2 className="heading-6 flex items-center gap-2 capitalize text-twilightPurple-600">
+        <h2 className="heading-6 flex items-center gap-2 capitalize text-lavenderHaze-300">
           {!isAdmin && (
             <i
               className={classNames(getPlanIcon(name as PlanName), "text-2xl")}
@@ -59,7 +60,7 @@ export default function PlanPromo({
             ></i>
           )}
 
-          <span>{isAdmin ? promoContent.promoAdminLabel : name}</span>
+          <span>{isAdmin ? ADMIN_PLAN_LABEL : name}</span>
         </h2>
 
         {isAdmin ? (
@@ -68,7 +69,7 @@ export default function PlanPromo({
           </div>
         ) : isSuspended ? (
           <>
-            <div className="flex w-full items-center justify-center border-t border-dotted border-twilightPurple-600 pt-2.5 text-xs font-semibold uppercase tracking-wide dark:border-dustyBlue-1000">
+            <div className="flex w-full items-center justify-center pt-2.5 text-xs font-semibold uppercase tracking-wide">
               {promoContent.promoSuspensionTitle}
             </div>
             <p className="text-xs opacity-80">

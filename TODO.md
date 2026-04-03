@@ -5,7 +5,7 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #88 (2026-04-03). V1.0 MVP RELEASED. All 7 validation gates GREEN (599 tests, lint 0/0, TSC clean, build passes, knip 0). All Milestones 0–25 COMPLETE. Phases 143, 180.1–180.4, 185, 186-A, 186-B, 187-A–187-D COMPLETE.**
+> **STATUS: PM audit #90 (2026-04-03). V1.0 MVP RELEASED. All 7 validation gates GREEN (611 tests, lint 0/0, TSC clean, build passes, knip 0). All Milestones 0–25 COMPLETE. Phases 189–194 COMPLETE.**
 >
 > **GATE STATUS: Validation GREEN. Architecture GREEN. Product GREEN. Admin GREEN. Public GREEN. Contract GREEN.**
 >
@@ -15,18 +15,34 @@
 > - ✅ Increase Token Limits to maximum — **DONE (Phase 186-B).**
 > - ✅ Pre-release task list — **DONE. All 8 phases complete (PM audit #87).**
 > - ✅ Env vars validated in Vercel — **ACKNOWLEDGED. `requireEnv()` kept as defense-in-depth.**
-> - 🔴 PlanCard `isIncluded` bug — **Phase 188. If `limit === 0` then `isIncluded: false`, otherwise `true`.**
+> - ✅ PlanCard `isIncluded` bug — **DONE (Phase 188). 602 tests.**
 > - ✅ App is now released — **V1.0 MVP RELEASED.**
+> - ✅ Admin cannot be deleted — **DONE (Phase 189). 5-layer protection.**
+> - ✅ Admin unlimited permissions + "ADMIN" display — **DONE (Phase 190).**
+> - ✅ Reusable input component — **DONE (Phase 191).**
+> - ✅ Persona selector reusable component — **DONE (Phase 192).**
+> - ✅ UsageMetricRow reusable component — **DONE (Phase 193).**
+> - ✅ TiptapEditor redesign (TinyMCE-style) — **DONE (Phase 194).**
+> - 🔴 Image upload "describe image" error — **Phase 195. HIGH. S3 proxy URLs inaccessible to OpenAI.**
+> - 🔴 Audio player overlap — **Phase 196. MEDIUM-HIGH. Multiple audios play simultaneously.**
+> - 🟡 Image lightbox for generated images — **Phase 197. MEDIUM.**
+> - 🟡 Library Uploaded tab visual previews — **Phase 198. MEDIUM.**
+> - 🟢 useActionState console warning — **Phase 199. LOW. Trivial fix.**
+> - ⚪ PlanPromo + ChatSidebarPromo merge — **REJECTED. Acceptable pattern.**
 >
-> **EXECUTION ORDER (PM audit #88 — Post-Release):**
+> **EXECUTION ORDER (PM audit #90 — Post-Release):**
 >
-> 1. **HIGH Phase 188** — Fix PlanCard `isIncluded` logic (owner-reported bug).
-> 2. **MEDIUM Phase 144** — Admin config cache (30s TTL).
-> 3. **MEDIUM Phase 145** — Upload filename collision prevention.
-> 4. **MEDIUM Phase 165** — Checkout success page DB polling.
-> 5. **LOW Phase 146** — Admin user detail transaction limit.
-> 6. **LOW Phase 147** — Rename `.tsx` utility files to `.ts`.
-> 7. **LOW Phase 148** — Bulk operations partial-failure reporting.
+> 1. **HIGH Phase 195** — Image upload "describe image" fix (S3 URL resolution).
+> 2. **LOW Phase 199** — useActionState startTransition fix (trivial, do first).
+> 3. **MEDIUM-HIGH Phase 196** — Audio player overlap fix (global audio coordination).
+> 4. **MEDIUM Phase 197** — Image lightbox for generated images.
+> 5. **MEDIUM Phase 198** — Library Uploaded tab visual previews.
+> 6. **MEDIUM Phase 144** — Admin config cache (30s TTL).
+> 7. **MEDIUM Phase 145** — Upload filename collision prevention.
+> 8. **MEDIUM Phase 165** — Checkout success page DB polling.
+> 9. **LOW Phase 146** — Admin user detail transaction limit.
+> 10. **LOW Phase 147** — Rename `.tsx` utility files to `.ts`.
+> 11. **LOW Phase 148** — Bulk operations partial-failure reporting.
 
 ---
 
@@ -102,30 +118,151 @@
 
 ---
 
-## HIGH — Phase 188 — Fix PlanCard `isIncluded` Logic
+## ✅ Phase 188 — Fix PlanCard `isIncluded` Logic — DONE (2026-04-03)
 
-> **Owner-reported bug (PM audit #88).** In `buildPlans()`, limit-derived inclusions have `isIncluded: true` hardcoded. Per owner directive: if `limit === 0` then `isIncluded` must be `false`, otherwise `isIncluded: true`. Currently, `formatMediaLimitLabel()` shows `"✕"` prefix for `limit === 0` but the plan card renders a checkmark icon — contradictory UX.
+> Archived in DONE.md.
 
-**File:** `src/constants/plans.tsx`
+---
+
+## ✅ Phase 189 — Admin Deletion Protection — DONE (2026-04-03)
+
+> Archived in DONE.md.
+
+---
+
+## ✅ Phase 190 — Admin "ADMIN" Display + Unlimited — DONE (2026-04-03)
+
+> Archived in DONE.md.
+
+---
+
+## ✅ Phase 191 — Reusable FormInput Component — DONE (2026-04-03)
+
+> Archived in DONE.md.
+
+---
+
+## ✅ Phase 192 — Reusable PersonaSelector Component — DONE (2026-04-03)
+
+> Archived in DONE.md.
+
+---
+
+## ✅ Phase 193 — Reusable UsageMetricRow Component — DONE (2026-04-03)
+
+> Archived in DONE.md.
+
+---
+
+## ✅ Phase 194 — TiptapEditor Redesign — DONE (2026-04-03)
+
+> Archived in DONE.md.
+
+---
+
+## HIGH — Phase 195 — Image Upload "Describe Image" Fix
+
+> **Owner bug report (PM audit #90).** When uploading an image and asking the model to "describe image", user gets error: "An error occurred while processing your request." Root cause: uploaded image URL is a relative path (`/api/download?key=...`) that OpenAI's vision API cannot access.
+
+**Files:**
+
+- `src/lib/utils/openai/generateResponse.tsx` — message preparation before OpenAI call
+- `src/lib/utils/aws/s3-file-reference.ts` — `buildPrivateS3AssetUrl()` returns relative URL
+- `src/app/api/openai/route.tsx` — passes messages to `generateResponse`
 
 **What to do:**
 
-1. In `buildPlans()`, change all 12 limit-derived inclusions (4 per plan × 3 plans) from `isIncluded: true` to `isIncluded: <limit> !== 0`.
-2. Affected fields per plan: `conversationsPerDay`, `promptsPerConversation`, `images`, `audio`.
-3. Static inclusions ("AI chat assistant", persona access, trial limits, file uploads, email support, quality labels) remain hardcoded — not limit-derived.
-4. Add unit tests in `tests/unit/constants/plans.test.ts`:
-   - Test: `isIncluded` is `false` when a limit is `0`.
-   - Test: `isIncluded` is `true` when a limit is positive.
-   - Test: `isIncluded` is `true` when a limit is `-1` (unlimited).
+1. Before sending messages to OpenAI, scan user message content items for `image_url` entries with internal `/api/download` URLs.
+2. For each such URL, resolve the S3 object key and generate a pre-signed S3 URL with 15-minute TTL using `@aws-sdk/s3-request-presigner`.
+3. Replace the internal URL with the pre-signed URL in the message content before passing to OpenAI.
 
 **Acceptance criteria:**
 
-- [ ] All 12 limit-derived inclusions use `isIncluded: limit !== 0`
-- [ ] `limit === -1` (unlimited) → `isIncluded: true`
-- [ ] `limit === 0` → `isIncluded: false` with X icon on plan card
-- [ ] `limit > 0` → `isIncluded: true` with checkmark icon
-- [ ] 3 new unit tests pass
-- [ ] Build passes, all existing tests pass
+- [ ] User-uploaded images with `/api/download` URLs are resolved to pre-signed S3 URLs before OpenAI call
+- [ ] Pre-signed URLs have appropriate TTL (15 minutes)
+- [ ] Image vision/description requests work correctly
+- [ ] Build passes, tests pass
+
+---
+
+## LOW — Phase 199 — useActionState startTransition Fix
+
+> **Owner bug report (PM audit #90).** Console error when confirming bulk delete: "An async function with useActionState was called outside of a transition."
+
+**File:** `src/components/admin/admin-managed-form.tsx`
+
+**What to do:**
+
+1. Import `startTransition` from React.
+2. Wrap `formAction(pendingFormData)` call in `handleConfirm` with `startTransition`.
+
+**Acceptance criteria:**
+
+- [ ] `formAction` call wrapped in `startTransition`
+- [ ] Console error no longer appears
+- [ ] Build passes, tests pass
+
+---
+
+## MEDIUM-HIGH — Phase 196 — Audio Player Overlap Fix
+
+> **Owner bug report (PM audit #90).** Multiple audios play simultaneously when starting a new audio.
+
+**Files:**
+
+- `src/components/shared/audio-player.tsx`
+- `src/components/chat/library-tabs.tsx`
+
+**What to do:**
+
+1. Create Zustand store (`useAudioStore`) with `activeAudioId` and coordination.
+2. When any audio player starts, pause any previously playing audio.
+3. Replace native `<audio controls>` in library with `AudioPlayer`.
+
+**Acceptance criteria:**
+
+- [ ] Only one audio plays at a time across the entire app
+- [ ] Starting a new audio pauses any currently playing audio
+- [ ] Library audios use `AudioPlayer` instead of native `<audio controls>`
+- [ ] Build passes, tests pass
+
+---
+
+## MEDIUM — Phase 197 — Image Lightbox for Generated Images
+
+> **Owner bug report (PM audit #90).** Generated images must be viewable at larger size.
+
+**File:** `src/components/shared/image-holder.tsx`
+
+**What to do:**
+
+1. Add click handler to open full-viewport lightbox overlay using `<dialog>`.
+2. Include close button and download button in the lightbox.
+
+**Acceptance criteria:**
+
+- [ ] Clicking an image opens a full-viewport lightbox
+- [ ] Close button and download button available
+- [ ] Build passes, tests pass
+
+---
+
+## MEDIUM — Phase 198 — Library Uploaded Tab Visual Previews
+
+> **Owner bug report (PM audit #90).** Image uploads must show thumbnails, files must show icons.
+
+**File:** `src/components/chat/library-tabs.tsx` — `LibraryUploadCard`
+
+**What to do:**
+
+1. If `item.contentType` starts with `image/`, render `<Image>` thumbnail.
+2. For non-image types, render file-type icon.
+
+**Acceptance criteria:**
+
+- [ ] Image uploads show visual thumbnail preview
+- [ ] Non-image uploads show file-type icon
+- [ ] Build passes, tests pass
 
 ---
 

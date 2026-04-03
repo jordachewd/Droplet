@@ -595,7 +595,7 @@ export default function ChatWrapper({
         id="ChatWrapperContent"
         className={classNames(
           "ChatWrapperContent relative z-10 flex w-full h-dvh flex-col overflow-y-auto pt-14 px-4",
-          isNewTask && "items-center justify-center gap-12",
+          isNewTask && "items-center justify-center gap-16",
         )}
       >
         {isNewTask ? (

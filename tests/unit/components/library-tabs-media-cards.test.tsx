@@ -21,6 +21,12 @@ vi.mock("next/image", () => ({
   },
 }));
 
+vi.mock("@/components/shared/audio-player", () => ({
+  default: ({ audioSrc }: { audioSrc: string | null }) => (
+    <div data-testid="library-audio-player" data-audio-src={audioSrc ?? ""} />
+  ),
+}));
+
 describe("LibraryTabs media cards", () => {
   const defaultPagination = {
     currentPage: 1,
@@ -99,8 +105,8 @@ describe("LibraryTabs media cards", () => {
     ).toBe("/app/library?tab=images&imagesPage=3");
   });
 
-  it("renders audio card controls with secure download URL", () => {
-    const { container } = render(
+  it("renders audio card controls with AudioPlayer and secure download URL", () => {
+    render(
       <LibraryTabs
         conversations={[]}
         images={[]}
@@ -115,10 +121,10 @@ describe("LibraryTabs media cards", () => {
 
     fireEvent.click(screen.getByRole("tab", { name: /Audios/i }));
 
-    const audioElement = container.querySelector("audio") as HTMLAudioElement;
-
-    expect(audioElement.tagName).toBe("AUDIO");
-    expect(audioElement.getAttribute("src")).toContain("/api/download?key=");
+    const audioPlayer = screen.getByTestId("library-audio-player");
+    expect(audioPlayer.getAttribute("data-audio-src")).toContain(
+      "/api/download?key=",
+    );
 
     const downloadLink = screen.getByRole("link", { name: /Download/i });
     expect(downloadLink.getAttribute("href")).toContain(
@@ -126,7 +132,7 @@ describe("LibraryTabs media cards", () => {
     );
   });
 
-  it("renders uploaded file card with download and pagination controls", () => {
+  it("renders uploaded file card with icon preview, download and pagination controls", () => {
     render(
       <LibraryTabs
         conversations={[]}
@@ -148,6 +154,10 @@ describe("LibraryTabs media cards", () => {
 
     expect(screen.getByText("brief.pdf")).toBeTruthy();
     expect(screen.getByText("application/pdf")).toBeTruthy();
+    const iconElement = document.querySelector(
+      ".LibraryUploadCardPreview .bi-file-earmark-pdf",
+    );
+    expect(iconElement).toBeTruthy();
 
     const downloadLink = screen.getByRole("link", { name: /Download/i });
     expect(downloadLink.getAttribute("href")).toContain(
@@ -159,5 +169,37 @@ describe("LibraryTabs media cards", () => {
     expect(
       screen.getByRole("link", { name: "Next" }).getAttribute("href"),
     ).toBe("/app/library?tab=uploaded&uploadedPage=3");
+  });
+
+  it("renders uploaded image thumbnail preview for image uploads", () => {
+    render(
+      <LibraryTabs
+        conversations={[]}
+        images={[]}
+        audios={[]}
+        uploads={[
+          {
+            ...uploadItem,
+            id: "upload_image_1",
+            fileName: "moodboard.png",
+            contentType: "image/png",
+            url: "user_123/uploads/moodboard.png",
+          },
+        ]}
+        conversationsPagination={defaultPagination}
+        imagesPagination={defaultPagination}
+        audiosPagination={defaultPagination}
+        uploadsPagination={defaultPagination}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("tab", { name: /Uploaded/i }));
+
+    const imagePreview = screen.getByAltText(
+      "Uploaded file preview for moodboard.png",
+    );
+    expect(imagePreview.getAttribute("src")).toContain(
+      "/api/download?key=user_123%2Fuploads%2Fmoodboard.png",
+    );
   });
 });

@@ -154,11 +154,15 @@ async function removeUserByAdmin({
   assetCleanupStatus: "completed";
 }> {
   const targetUser = await User.findById(targetUserId)
-    .select("clerkId email username")
+    .select("clerkId email username role")
     .lean();
 
   if (!targetUser) {
     throw new Error("User not found.");
+  }
+
+  if (targetUser.role === "admin") {
+    throw new Error("Cannot remove an admin user.");
   }
 
   const client = await clerkClient();
@@ -1079,9 +1083,28 @@ export async function bulkRemoveUsersAction(
 
     await connectToDatabase();
 
+    const adminUsers = (await User.find({
+      _id: { $in: userIds },
+      role: "admin",
+    })
+      .select("_id")
+      .lean()) as Array<{ _id: unknown }>;
+    const adminUserIdSet = new Set(
+      adminUsers.map((adminUser) => String(adminUser._id)),
+    );
+    const removableUserIds = userIds.filter(
+      (targetUserId) => !adminUserIdSet.has(targetUserId),
+    );
+
+    if (adminUserIdSet.size > 0) {
+      process.stderr.write(
+        `[admin.actions] bulkRemoveUsersAction skipped admin users: ${Array.from(adminUserIdSet).join(",")}\n`,
+      );
+    }
+
     let removedCount = 0;
 
-    for (const targetUserId of userIds) {
+    for (const targetUserId of removableUserIds) {
       await removeUserByAdmin({ adminId, targetUserId });
       removedCount += 1;
     }

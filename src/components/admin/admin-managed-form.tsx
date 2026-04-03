@@ -1,6 +1,13 @@
 "use client";
 
-import { ReactNode, useActionState, useEffect, useMemo, useState } from "react";
+import {
+  ReactNode,
+  startTransition,
+  useActionState,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import AlertMessage, { AlertParams } from "@/components/shared/alert-message";
 import ConfirmationModal from "@/components/shared/confirmation-modal";
 import {
@@ -52,7 +59,9 @@ export function AdminManagedForm({
 
   const handleConfirm = () => {
     if (pendingFormData) {
-      formAction(pendingFormData);
+      startTransition(() => {
+        formAction(pendingFormData);
+      });
     }
 
     setPendingFormData(null);

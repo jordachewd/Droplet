@@ -40,7 +40,7 @@ export const DEFAULT_PROMO_CONTENT: PromoContent = {
   promoSuspensionTitle: "Account Suspended",
   promoSuspensionDescription:
     "Your account has been suspended. Contact support for assistance.",
-  promoFreeLabel: "Free forever",
+  promoFreeLabel: "Free",
   promoCurrentPlanLabel: "Your plan",
   promoUpgradeMessage: "Unlock premium features with an upgrade!",
   promoTrialLabel:

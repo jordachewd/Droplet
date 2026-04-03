@@ -89,4 +89,20 @@ describe("ProfileDangerZone", () => {
       ).toBeTruthy();
     });
   });
+
+  it("does not render the danger zone for admin users", () => {
+    render(
+      <ProfileDangerZone
+        userData={{
+          ...baseUserData,
+          role: "admin",
+        }}
+      />,
+    );
+
+    expect(screen.queryByText("Danger zone")).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Delete My Account" }),
+    ).toBeNull();
+  });
 });

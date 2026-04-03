@@ -7,6 +7,7 @@ import { useShallow } from "zustand/react/shallow";
 import ToggleTheme from "@/components/shared/toggle-theme";
 import AvatarMenu from "@/components/shared/avatar-menu";
 import SidebarToggle from "@/components/shared/sidebar-toggle";
+import PersonaSelector from "@/components/shared/persona-selector";
 import { useChatStore } from "@/lib/hooks/use-chat-store";
 import { useUiStore } from "@/lib/hooks/use-ui-store";
 import { Persona, PersonaId } from "@/types/PersonaData.d";
@@ -91,14 +92,13 @@ export default function ChatHeader({
     ? !desktopSidebarCollapsed
     : mobileSidebarOpen;
 
-  function handlePersonaChange(nextPersonaId: string) {
-    if (!selectablePersonaIds.includes(nextPersonaId as PersonaId)) {
+  function handlePersonaChange(nextPersonaId: PersonaId) {
+    if (!selectablePersonaIds.includes(nextPersonaId)) {
       return;
     }
 
-    const nextId = nextPersonaId as PersonaId;
-    setPersonaId(nextId);
-    setPreferredPersonaId(nextId);
+    setPersonaId(nextPersonaId);
+    setPreferredPersonaId(nextPersonaId);
   }
 
   const chatHeaderClass = classNames(
@@ -120,27 +120,12 @@ export default function ChatHeader({
           />
 
           {selectablePersonas.length > 0 && activePersonaId && (
-            <div className="flex items-center gap-2 rounded-full border border-dotted px-2.5 py-1 text-xs">
-              <select
-                aria-label="Select persona"
-                className={classNames(
-                  "rounded bg-transparent pr-1 text-xs font-semibold outline-none",
-                  "disabled:cursor-not-allowed disabled:opacity-80",
-                )}
-                value={activePersonaId}
-                onChange={(event) => handlePersonaChange(event.target.value)}
-                disabled={shouldDisablePersonaChange}
-              >
-                {selectablePersonas.map((persona) => (
-                  <option key={persona.id} value={persona.id}>
-                    {persona.label}
-                  </option>
-                ))}
-              </select>
-              <span className="text-midnightBlue-700 dark:text-lavenderHaze-700">
-                Persona
-              </span>
-            </div>
+            <PersonaSelector
+              personas={selectablePersonas}
+              selectedPersonaId={activePersonaId}
+              onSelect={handlePersonaChange}
+              disabled={shouldDisablePersonaChange}
+            />
           )}
 
           {messageCount > 0 && (

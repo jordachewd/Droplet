@@ -29,7 +29,7 @@ export default async function PlansPage() {
     personaAccess: personaAccessByPlan,
     trialLimits: effectivePlanConfig.trialLimits,
   });
-  
+
   const faqs = await getEffectiveFaqContent({
     pricing: effectivePlanConfig.pricing,
     personaAccessByPlan,

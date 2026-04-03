@@ -3,6 +3,7 @@ import PageHead from "@/components/layout/page-head";
 import TiptapEditor from "@/components/admin/tiptap-editor";
 import { AdminManagedForm } from "@/components/admin/admin-managed-form";
 import { AdminFormSubmitButton } from "@/components/admin/admin-form-submit-button";
+import FormInput from "@/components/shared/form-input";
 import { savePublicPageAction } from "@/lib/actions/admin.actions";
 import { getAdminPublicPage } from "@/lib/utils/admin-queries";
 
@@ -33,17 +34,14 @@ export default async function AdminWebsiteEditorPage({
       >
         <input type="hidden" name="pageId" value={page.id} />
 
-        <label className="flex flex-col gap-2 text-sm">
-          <span className="font-medium">Title</span>
-          <input
-            className="rounded-xl border border-slate-400 bg-lavenderHaze-100 px-3 py-2 dark:border-slate-500 dark:bg-nightIndigo-1000"
-            type="text"
-            name="title"
-            defaultValue={page.title}
-            required
-            aria-required="true"
-          />
-        </label>
+        <FormInput
+          type="text"
+          name="title"
+          label="Title"
+          defaultValue={page.title}
+          required
+          aria-required="true"
+        />
 
         <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
           <div className="admin-surface-subtle">
