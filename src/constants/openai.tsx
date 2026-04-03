@@ -1,10 +1,11 @@
 import "server-only";
 import OpenAI from "openai";
+import { requireEnv } from "@/lib/utils/require-env";
 
 export const openAiClient = new OpenAI({
-  organization: process.env.OPENAI_ORG!,
-  project: process.env.OPENAI_PRJ!,
-  apiKey: process.env.OPENAI_KEY!,
+  organization: requireEnv("OPENAI_ORG"),
+  project: requireEnv("OPENAI_PRJ"),
+  apiKey: requireEnv("OPENAI_KEY"),
 });
 
 /** Tools available for chat interactions */

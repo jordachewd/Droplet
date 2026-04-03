@@ -24,7 +24,12 @@ export interface DeleteUserCascadeResult {
 }
 
 function getRateLimitKeys(clerkId: string): string[] {
-  return [`openai:${clerkId}`, `upload:${clerkId}`, `aws:${clerkId}`];
+  return [
+    `openai:${clerkId}`,
+    `upload:${clerkId}`,
+    `aws:${clerkId}`,
+    `download:${clerkId}`,
+  ];
 }
 
 function logDeleteUserCascadeFailure(

@@ -601,6 +601,7 @@ export default function ChatWrapper({
         {isNewTask ? (
           <ChatIntro
             persona={selectedPersona}
+            subheading={promoContent.chatIntroSubheading}
             sendPrompt={(prompt) => setStartMsg(prompt)}
           />
         ) : (
@@ -619,6 +620,7 @@ export default function ChatWrapper({
           loading={isLoading}
           disabled={isConversationEnded}
           startPrompt={startMsg}
+          placeholder={promoContent.chatInputPlaceholder}
           personaLabel={selectedPersona.label}
         />
       </div>

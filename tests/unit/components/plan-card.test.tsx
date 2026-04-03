@@ -66,4 +66,17 @@ describe("PlanCard", () => {
 
     expect(screen.getByRole("button", { name: "Subscribe" })).toBeTruthy();
   });
+
+  it("renders a custom popular badge label when provided", () => {
+    render(
+      <PlanCard
+        plan={basePlan}
+        userData={baseUserData}
+        currencySymbol="$"
+        popularBadgeLabel="Most Chosen"
+      />,
+    );
+
+    expect(screen.getByText("Most Chosen")).toBeTruthy();
+  });
 });

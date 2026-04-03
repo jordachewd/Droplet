@@ -10,17 +10,19 @@ import {
   getEffectiveSupportEmail,
 } from "@/lib/utils/effective-plan-config";
 import { getEffectivePersonaAccessByPlan } from "@/lib/utils/effective-persona-access";
+import { getEffectivePromoContent } from "@/lib/utils/effective-promo-content";
 import PageHead from "@/components/layout/page-head";
 import AccountLoadErrorState from "@/components/shared/account-load-error-state";
 
 export default async function AppPlansPage() {
   const { userId } = await auth();
   const userData = userId ? await ensureUserSynced(userId) : null;
-  const [effectivePlanConfig, personaAccessByPlan, supportEmail] =
+  const [effectivePlanConfig, personaAccessByPlan, supportEmail, promoContent] =
     await Promise.all([
       getEffectivePlanConfig(),
       getEffectivePersonaAccessByPlan(),
       getEffectiveSupportEmail(),
+      getEffectivePromoContent(),
     ]);
   const plans = buildPlans({
     pricing: effectivePlanConfig.pricing,
@@ -49,6 +51,8 @@ export default async function AppPlansPage() {
         hasLoader
         plansData={plans}
         currencySymbol={effectivePlanConfig.pricing.currencySymbol}
+        subscribeCtaLabel={promoContent.plansSubscribeCta}
+        popularBadgeLabel={promoContent.planPopularBadge}
         className="max-w-7xl!"
       />
       <Faqs faqsData={faqs} />

@@ -138,7 +138,53 @@ describe("AudioPlayer", () => {
     const playbackButton = screen.getByRole("button", {
       name: "Play audio playback",
     });
-    expect(playbackButton.hasAttribute("disabled")).toBe(true);
+    expect(playbackButton.hasAttribute("disabled")).toBe(false);
+  });
+
+  it("allows retry after a transient play failure", async () => {
+    render(<AudioPlayer audioSrc="https://cdn.example.com/sample.wav" />);
+
+    await waitFor(() => {
+      const playbackButton = screen.getByRole("button", {
+        name: "Play audio playback",
+      });
+      expect(playbackButton.hasAttribute("disabled")).toBe(false);
+    });
+
+    const latestAudioInstance = MockAudio.instances.at(-1);
+    expect(latestAudioInstance).toBeDefined();
+
+    const playMock = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("temporary failure"))
+      .mockResolvedValueOnce(undefined);
+    latestAudioInstance!.play = playMock;
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Play audio playback",
+      }),
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Audio unavailable.")).toBeTruthy();
+    });
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Play audio playback",
+      }),
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", {
+          name: "Pause audio playback",
+        }),
+      ).toBeTruthy();
+    });
+
+    expect(playMock).toHaveBeenCalledTimes(2);
   });
 
   it("releases the audio source during cleanup", async () => {
