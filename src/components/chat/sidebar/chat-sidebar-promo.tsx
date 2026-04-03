@@ -3,6 +3,7 @@
 import Link from "next/link";
 import classNames from "classnames";
 import { DEFAULT_PROMO_CONTENT, PromoContent } from "@/constants/promo-content";
+import { ADMIN_PLAN_LABEL } from "@/lib/utils/plan-display";
 import { PlanName } from "@/types/PlanData.d";
 import { UserRoles } from "@/types/UserData.d";
 import {
@@ -35,7 +36,7 @@ export default function ChatSidebarPromo({
           <div className={planPromoAccentClass}></div>
           <div className="z-10 flex w-full flex-col gap-2 text-center">
             <h6 className="heading-6 text-twilightPurple-600">
-              {promoContent.promoAdminLabel}
+              {ADMIN_PLAN_LABEL}
             </h6>
             <p className="text-xs leading-4">
               {promoContent.promoAdminDescription}

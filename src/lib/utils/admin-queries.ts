@@ -29,6 +29,12 @@ import UsageEvent from "@/lib/database/models/usage-event.model";
 import User from "@/lib/database/models/user.model";
 import { getEffectivePlanConfig } from "@/lib/utils/effective-plan-config";
 import { getEffectivePersonaConfig } from "@/lib/utils/effective-persona-config";
+import {
+  getDisplayPlanName,
+  getDisplayUsageLimit,
+  isAdminRole,
+  UNLIMITED_USAGE_LIMITS,
+} from "@/lib/utils/plan-display";
 import { PersonaId } from "@/types/PersonaData.d";
 import { PlanName } from "@/types/PlanData.d";
 import { isValidObjectId } from "mongoose";
@@ -157,7 +163,11 @@ function toIsoString(value?: Date | string): string | null {
 }
 
 function toAdminUserListItem(user: UserRecord) {
-  const planName = user.plan?.name ?? "Lite";
+  const rawPlanName = user.plan?.name ?? "Lite";
+  const planName = getDisplayPlanName({
+    role: user.role,
+    planName: rawPlanName,
+  });
 
   return {
     id: String(user._id),
@@ -266,7 +276,9 @@ export async function getAdminUsers(
     items: typedUsers.map((user) => {
       const baseItem = toAdminUserListItem(user);
       const planName = user.plan?.name ?? "Lite";
-      const planLimits = effectivePlanConfig.limits[planName];
+      const planLimits = isAdminRole(user.role)
+        ? UNLIMITED_USAGE_LIMITS
+        : effectivePlanConfig.limits[planName];
 
       return {
         ...baseItem,
@@ -339,7 +351,9 @@ export async function getAdminUserDetail(userId: string) {
       | { totalPromptCount?: number; maxPromptCount?: number }
       | undefined) ?? {};
   const resolvedPlanName = user.plan?.name ?? "Lite";
-  const planLimits = effectivePlanConfig.limits[resolvedPlanName];
+  const planLimits = isAdminRole(user.role)
+    ? UNLIMITED_USAGE_LIMITS
+    : effectivePlanConfig.limits[resolvedPlanName];
   const trialLimits = effectivePlanConfig.trialLimits;
   const imageGenerations = user.plan?.imageGenerations ?? 0;
   const audioGenerations = user.plan?.audioGenerations ?? 0;
@@ -383,13 +397,23 @@ export async function getAdminUserDetail(userId: string) {
     trialUsage: {
       images: {
         used: trialImageGenerations,
-        limit: trialLimits.images,
-        remaining: Math.max(0, trialLimits.images - trialImageGenerations),
+        limit: getDisplayUsageLimit({
+          role: user.role,
+          limit: trialLimits.images,
+        }),
+        remaining: isAdminRole(user.role)
+          ? -1
+          : Math.max(0, trialLimits.images - trialImageGenerations),
       },
       audio: {
         used: trialAudioGenerations,
-        limit: trialLimits.audio,
-        remaining: Math.max(0, trialLimits.audio - trialAudioGenerations),
+        limit: getDisplayUsageLimit({
+          role: user.role,
+          limit: trialLimits.audio,
+        }),
+        remaining: isAdminRole(user.role)
+          ? -1
+          : Math.max(0, trialLimits.audio - trialAudioGenerations),
       },
     },
     conversationUsage: {

@@ -29,14 +29,14 @@ export const DEFAULT_PLAN_PRICING: PlanPricing = {
 
 export const PLAN_LIMITS: PlanLimits = {
   Lite: {
-    images: 1,
-    audio: 1,
-    conversationsPerDay: 3,
-    promptsPerConversation: 5,
+    images: 3,
+    audio: 3,
+    conversationsPerDay: 5,
+    promptsPerConversation: 10,
   },
   Pro: {
-    images: 30,
-    audio: 30,
+    images: 50,
+    audio: 50,
     conversationsPerDay: 50,
     promptsPerConversation: 100,
   },
@@ -50,8 +50,8 @@ export const PLAN_LIMITS: PlanLimits = {
 
 export const PERSONA_TRIAL_LIMITS = {
   promptsPerConversation: 5,
-  images: 1,
-  audio: 1,
+  images: 3,
+  audio: 2,
 } as const;
 
 export interface PersonaTrialLimits {

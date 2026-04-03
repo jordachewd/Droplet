@@ -221,6 +221,38 @@ describe("admin-queries", () => {
     expect(zeroResult.pageSize).toBe(25);
   });
 
+  it('returns "ADMIN" plan label and unlimited limits for admin users list rows', async () => {
+    const adminUser = createTestUser({
+      _id: "507f1f77bcf86cd799439099",
+      role: "admin",
+      plan: {
+        name: "Lite",
+        imageGenerations: 4,
+        audioGenerations: 2,
+      },
+      dailyConversationsStarted: 8,
+    });
+
+    userModelMock.countDocuments.mockResolvedValue(1);
+    userModelMock.find.mockReturnValue(mockMongooseModel([adminUser]));
+
+    const result = await getAdminUsers(undefined, 1, 25);
+
+    expect(result.items[0]).toEqual(
+      expect.objectContaining({
+        planName: "ADMIN",
+        mediaUsage: {
+          images: { used: 4, limit: -1 },
+          audio: { used: 2, limit: -1 },
+        },
+        conversationUsage: {
+          used: 8,
+          limit: -1,
+        },
+      }),
+    );
+  });
+
   it("returns null from getAdminUserDetail when object id is invalid", async () => {
     isValidObjectIdMock.mockReturnValue(false);
 
@@ -295,6 +327,54 @@ describe("admin-queries", () => {
         amount: 1900,
       }),
     ]);
+  });
+
+  it('returns "ADMIN" and unlimited usage limits in admin user detail', async () => {
+    const adminUser = createTestUser({
+      _id: "507f1f77bcf86cd799439155",
+      clerkId: "admin_123",
+      role: "admin",
+      plan: {
+        name: "Lite",
+        amount: 0,
+        billing: "Monthly",
+        imageGenerations: 3,
+        audioGenerations: 1,
+        trialUsage: {
+          trialImageGenerations: 2,
+          trialAudioGenerations: 1,
+        },
+      },
+      dailyConversationsStarted: 11,
+    });
+
+    userModelMock.findById.mockReturnValue(mockMongooseModel(adminUser));
+    taskModelMock.countDocuments.mockResolvedValue(5);
+    taskModelMock.aggregate.mockResolvedValue([
+      { totalPromptCount: 17, maxPromptCount: 9 },
+    ]);
+    transactionModelMock.find.mockReturnValue(mockMongooseModel([]));
+
+    const result = await getAdminUserDetail("507f1f77bcf86cd799439155");
+
+    expect(result).toEqual(
+      expect.objectContaining({
+        planName: "ADMIN",
+        promptUsage: expect.objectContaining({ limit: -1, remaining: -1 }),
+        conversationUsage: expect.objectContaining({
+          limit: -1,
+          remaining: -1,
+        }),
+        mediaUsage: {
+          images: expect.objectContaining({ limit: -1, remaining: -1 }),
+          audio: expect.objectContaining({ limit: -1, remaining: -1 }),
+        },
+        trialUsage: {
+          images: expect.objectContaining({ limit: -1, remaining: -1 }),
+          audio: expect.objectContaining({ limit: -1, remaining: -1 }),
+        },
+      }),
+    );
   });
 
   it("returns transactions page with mapped user data and active/expired status", async () => {

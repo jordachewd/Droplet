@@ -49,4 +49,11 @@ describe("PlanPromo", () => {
     ).toBe("mailto:support@droplet.example");
     expect(screen.queryByRole("link", { name: "Upgrade Now" })).toBeNull();
   });
+
+  it('renders "ADMIN" for admin-role users', () => {
+    render(<PlanPromo plan={litePlan} role="admin" />);
+
+    expect(screen.getByText("ADMIN")).toBeTruthy();
+    expect(screen.queryByText("Lite")).toBeNull();
+  });
 });

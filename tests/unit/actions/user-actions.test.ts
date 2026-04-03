@@ -224,7 +224,7 @@ describe("user.actions", () => {
       expect(deleteClerkUserMock).toHaveBeenCalledWith("user_123");
       expect(connectToDatabase).toHaveBeenCalledOnce();
       expect(userFindOneMock).toHaveBeenCalledWith({ clerkId: "user_123" });
-      expect(existingUserQuery.select).toHaveBeenCalledWith("_id");
+      expect(existingUserQuery.select).toHaveBeenCalledWith("_id role");
       expect(deleteUserCascadeMock).toHaveBeenCalledWith("user_123");
       expect(userFindByIdAndDeleteMock).toHaveBeenCalledWith("mongo_user_1");
       expect(revalidatePath).toHaveBeenCalledWith("/");
@@ -276,8 +276,8 @@ describe("user.actions", () => {
           source: "deleteUser",
         }),
       );
-      expect(connectToDatabase).not.toHaveBeenCalled();
-      expect(userFindOneMock).not.toHaveBeenCalled();
+      expect(connectToDatabase).toHaveBeenCalledOnce();
+      expect(userFindOneMock).toHaveBeenCalledWith({ clerkId: "user_123" });
       expect(deleteUserCascadeMock).not.toHaveBeenCalled();
       expect(userFindByIdAndDeleteMock).not.toHaveBeenCalled();
     });
@@ -294,6 +294,26 @@ describe("user.actions", () => {
           source: "deleteUser",
         }),
       );
+      expect(deleteClerkUserMock).not.toHaveBeenCalled();
+      expect(deleteUserCascadeMock).not.toHaveBeenCalled();
+      expect(userFindByIdAndDeleteMock).not.toHaveBeenCalled();
+    });
+
+    it("refuses deletion when target account has admin role", async () => {
+      userFindOneMock.mockReturnValue(
+        mockMongooseModel({ _id: "mongo_user_1", role: "admin" }),
+      );
+
+      const response = await deleteUser("user_123");
+
+      expect(response).toEqual(
+        expect.objectContaining({
+          status: 403,
+          message: "Admin accounts cannot be deleted.",
+          source: "deleteUser",
+        }),
+      );
+      expect(deleteClerkUserMock).not.toHaveBeenCalled();
       expect(deleteUserCascadeMock).not.toHaveBeenCalled();
       expect(userFindByIdAndDeleteMock).not.toHaveBeenCalled();
     });

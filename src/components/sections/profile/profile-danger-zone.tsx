@@ -25,6 +25,10 @@ export default function ProfileDangerZone({
     useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  if (userData.role === "admin") {
+    return null;
+  }
+
   async function handleDeleteAccount() {
     if (isDeleting) {
       return;

@@ -7,6 +7,7 @@ import {
 } from "@/lib/actions/admin.actions";
 import { AdminManagedForm } from "@/components/admin/admin-managed-form";
 import { AdminFormSubmitButton } from "@/components/admin/admin-form-submit-button";
+import UsageMetricRow from "@/components/shared/usage-metric-row";
 import { getAdminUserDetail } from "@/lib/utils/admin-queries";
 import { getEffectiveCurrencySymbol } from "@/lib/utils/effective-plan-config";
 
@@ -26,27 +27,6 @@ export default async function AdminUserDetailPage({
   if (!user) {
     notFound();
   }
-
-  const formatUsageLabel = (usage: {
-    used: number;
-    limit: number;
-    remaining: number;
-  }) =>
-    usage.limit === -1
-      ? `${usage.used} / Unlimited`
-      : `${usage.used} / ${usage.limit} (${usage.remaining} left)`;
-
-  const getUsagePercent = (usage: {
-    used: number;
-    limit: number;
-    remaining: number;
-  }) => {
-    if (usage.limit <= 0) {
-      return 0;
-    }
-
-    return Math.min(100, Math.round((usage.used / usage.limit) * 100));
-  };
 
   return (
     <section className="AdminUserDetailPage mx-auto flex w-full max-w-7xl flex-col gap-6">
@@ -90,8 +70,9 @@ export default async function AdminUserDetailPage({
                 Plan
               </dt>
               <dd className="mt-1 text-sm">
-                {user.planName} ({currencySymbol}
-                {user.planAmount})
+                {user.role === "admin"
+                  ? user.planName
+                  : `${user.planName} (${currencySymbol}${user.planAmount})`}
               </dd>
             </div>
             <div>
@@ -126,80 +107,43 @@ export default async function AdminUserDetailPage({
         <article className="admin-surface">
           <h2 className="heading-6 mb-4">Usage Snapshot</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            <div className="admin-surface-subtle">
-              <p className="text-xxs uppercase text-midnightBlue-700 dark:text-lavenderHaze-700">
-                Daily Conversations
-              </p>
-              <p className="heading-6 mt-2">
-                {formatUsageLabel(user.conversationUsage)}
-              </p>
-              <div className="mt-2 h-2 overflow-hidden rounded-full bg-lavenderHaze-300 dark:bg-nightIndigo-500/40">
-                <div
-                  className="h-full bg-limeGreen-500"
-                  style={{
-                    width: `${getUsagePercent(user.conversationUsage)}%`,
-                  }}
-                />
-              </div>
-            </div>
-            <div className="admin-surface-subtle">
-              <p className="text-xxs uppercase text-midnightBlue-700 dark:text-lavenderHaze-700">
-                Prompts / Conversation (Peak)
-              </p>
-              <p className="heading-6 mt-2">
-                {formatUsageLabel(user.promptUsage)}
-              </p>
-              <p className="mt-1 text-xs text-midnightBlue-600 dark:text-lavenderHaze-600">
-                Total prompts across tasks: {user.promptUsage.total}
-              </p>
-              <div className="mt-2 h-2 overflow-hidden rounded-full bg-lavenderHaze-300 dark:bg-nightIndigo-500/40">
-                <div
-                  className="h-full bg-limeGreen-500"
-                  style={{ width: `${getUsagePercent(user.promptUsage)}%` }}
-                />
-              </div>
-            </div>
-            <div className="admin-surface-subtle">
-              <p className="text-xxs uppercase text-midnightBlue-700 dark:text-lavenderHaze-700">
-                Image Generations
-              </p>
-              <p className="heading-6 mt-2">
-                {formatUsageLabel(user.mediaUsage.images)}
-              </p>
-              <div className="mt-2 h-2 overflow-hidden rounded-full bg-lavenderHaze-300 dark:bg-nightIndigo-500/40">
-                <div
-                  className="h-full bg-limeGreen-500"
-                  style={{
-                    width: `${getUsagePercent(user.mediaUsage.images)}%`,
-                  }}
-                />
-              </div>
-            </div>
-            <div className="admin-surface-subtle">
-              <p className="text-xxs uppercase text-midnightBlue-700 dark:text-lavenderHaze-700">
-                Audio Generations
-              </p>
-              <p className="heading-6 mt-2">
-                {formatUsageLabel(user.mediaUsage.audio)}
-              </p>
-              <div className="mt-2 h-2 overflow-hidden rounded-full bg-lavenderHaze-300 dark:bg-nightIndigo-500/40">
-                <div
-                  className="h-full bg-limeGreen-500"
-                  style={{
-                    width: `${getUsagePercent(user.mediaUsage.audio)}%`,
-                  }}
-                />
-              </div>
-            </div>
-            <div className="admin-surface-subtle">
-              <p className="text-xxs uppercase text-midnightBlue-700 dark:text-lavenderHaze-700">
-                Trial Usage (Img / Audio)
-              </p>
-              <p className="mt-1 text-sm">
-                {formatUsageLabel(user.trialUsage.images)} |{" "}
-                {formatUsageLabel(user.trialUsage.audio)}
-              </p>
-            </div>
+            <UsageMetricRow
+              label="Daily Conversations"
+              used={user.conversationUsage.used}
+              limit={user.conversationUsage.limit}
+              className="admin-surface-subtle"
+            />
+            <UsageMetricRow
+              label="Prompts / Conversation (Peak)"
+              used={user.promptUsage.used}
+              limit={user.promptUsage.limit}
+              details={`Total prompts across tasks: ${user.promptUsage.total}`}
+              className="admin-surface-subtle"
+            />
+            <UsageMetricRow
+              label="Image Generations"
+              used={user.mediaUsage.images.used}
+              limit={user.mediaUsage.images.limit}
+              className="admin-surface-subtle"
+            />
+            <UsageMetricRow
+              label="Audio Generations"
+              used={user.mediaUsage.audio.used}
+              limit={user.mediaUsage.audio.limit}
+              className="admin-surface-subtle"
+            />
+            <UsageMetricRow
+              label="Trial Image Usage"
+              used={user.trialUsage.images.used}
+              limit={user.trialUsage.images.limit}
+              className="admin-surface-subtle"
+            />
+            <UsageMetricRow
+              label="Trial Audio Usage"
+              used={user.trialUsage.audio.used}
+              limit={user.trialUsage.audio.limit}
+              className="admin-surface-subtle"
+            />
           </div>
         </article>
       </div>
@@ -223,17 +167,19 @@ export default async function AdminUserDetailPage({
             />
           </AdminManagedForm>
 
-          <AdminManagedForm
-            action={removeUserByAdminAction}
-            confirmMessage="Are you sure you want to permanently remove this user? This will delete all their data including conversations, transactions, and files. This action cannot be undone."
-          >
-            <input type="hidden" name="userId" value={user.id} />
-            <AdminFormSubmitButton
-              label="Remove User"
-              pendingLabel="Removing user..."
-              className="text-white bg-red-700 hover:bg-red-800 border-red-700 hover:border-red-800"
-            />
-          </AdminManagedForm>
+          {user.role !== "admin" && (
+            <AdminManagedForm
+              action={removeUserByAdminAction}
+              confirmMessage="Are you sure you want to permanently remove this user? This will delete all their data including conversations, transactions, and files. This action cannot be undone."
+            >
+              <input type="hidden" name="userId" value={user.id} />
+              <AdminFormSubmitButton
+                label="Remove User"
+                pendingLabel="Removing user..."
+                className="text-white bg-red-700 hover:bg-red-800 border-red-700 hover:border-red-800"
+              />
+            </AdminManagedForm>
+          )}
         </div>
       </article>
 
