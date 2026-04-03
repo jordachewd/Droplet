@@ -6,6 +6,7 @@ import Image from "next/image";
 import classNames from "classnames";
 import LibraryDeleteButton from "@/components/chat/library-delete-button";
 import { resolveStoredAssetUrl } from "@/lib/utils/aws/s3-file-reference";
+import AudioPlayer from "@/components/shared/audio-player";
 import {
   LibraryConversationCardItem,
   LibraryMediaCardItem,
@@ -443,9 +444,7 @@ function LibraryAudioCard({ item }: { item: LibraryMediaCardItem }) {
         {item.taskTitle}
       </Link>
 
-      <audio controls src={resolvedAudioUrl} className="w-full" preload="none">
-        Your browser does not support the audio player.
-      </audio>
+      <AudioPlayer audioSrc={resolvedAudioUrl} />
 
       <div className="mt-3 flex items-center justify-between text-xs opacity-80">
         <span className="inline-flex items-center gap-1.5">
@@ -484,11 +483,39 @@ function formatUploadSize(sizeBytes: number): string {
   return `${(sizeBytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+function getUploadFileIcon(contentType: string): string {
+  const normalizedContentType = contentType.toLowerCase();
+
+  if (normalizedContentType.includes("pdf")) {
+    return "bi bi-file-earmark-pdf";
+  }
+
+  if (normalizedContentType.includes("zip")) {
+    return "bi bi-file-earmark-zip";
+  }
+
+  if (normalizedContentType.includes("json")) {
+    return "bi bi-file-earmark-code";
+  }
+
+  if (
+    normalizedContentType.includes("text") ||
+    normalizedContentType.includes("markdown")
+  ) {
+    return "bi bi-file-earmark-text";
+  }
+
+  return "bi bi-file-earmark";
+}
+
 function LibraryUploadCard({ item }: { item: LibraryUploadCardItem }) {
   const downloadUploadUrl = resolveStoredAssetUrl(item.url, {
     download: true,
     filename: item.fileName,
   });
+  const normalizedContentType = item.contentType.toLowerCase();
+  const isImageUpload = normalizedContentType.startsWith("image/");
+  const previewUrl = isImageUpload ? resolveStoredAssetUrl(item.url) : null;
 
   return (
     <article
@@ -498,6 +525,33 @@ function LibraryUploadCard({ item }: { item: LibraryUploadCardItem }) {
         "dark:border-slate-500 dark:bg-nightIndigo-900/80",
       )}
     >
+      <div
+        className={classNames(
+          "LibraryUploadCardPreview mb-3 flex h-28 items-center justify-center overflow-hidden rounded-lg border",
+          "border-slate-400 bg-lavenderHaze-300/40",
+          "dark:border-slate-500 dark:bg-nightIndigo-500/20",
+        )}
+      >
+        {previewUrl ? (
+          <Image
+            src={previewUrl}
+            alt={`Uploaded file preview for ${item.fileName}`}
+            width={360}
+            height={180}
+            unoptimized
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <i
+            className={classNames(
+              "text-4xl opacity-80",
+              getUploadFileIcon(item.contentType),
+            )}
+            aria-hidden="true"
+          ></i>
+        )}
+      </div>
+
       <div className="mb-2 flex items-center justify-between gap-3">
         <h3 className="line-clamp-1 text-sm font-semibold">{item.fileName}</h3>
         <span className="text-xs opacity-80">{item.createdAtLabel}</span>

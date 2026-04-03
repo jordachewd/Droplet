@@ -3,6 +3,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import AudioPlayer from "@/components/shared/audio-player";
+import { useAudioStore } from "@/lib/hooks/use-audio-store";
 
 vi.mock("@/lib/utils/aws/s3-file-reference", () => ({
   resolveStoredAssetUrl: (value: string) => value,
@@ -73,6 +74,10 @@ describe("AudioPlayer", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
     MockAudio.instances = [];
+    useAudioStore.setState({
+      activeAudioId: null,
+      audioElements: {},
+    });
   });
 
   it("renders accessible controls with disabled playback when no source is provided", () => {
@@ -206,5 +211,47 @@ describe("AudioPlayer", () => {
 
     expect(latestAudioInstance?.pauseCalled).toBe(true);
     expect(latestAudioInstance?.src).toBe("");
+  });
+
+  it("pauses previously active audio when another player starts", async () => {
+    render(
+      <>
+        <AudioPlayer audioSrc="https://cdn.example.com/first.wav" />
+        <AudioPlayer audioSrc="https://cdn.example.com/second.wav" />
+      </>,
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getAllByRole("button", { name: "Play audio playback" }).length,
+      ).toBe(2);
+    });
+
+    const firstPlayButton = screen.getAllByRole("button", {
+      name: "Play audio playback",
+    })[0];
+    fireEvent.click(firstPlayButton);
+
+    await waitFor(() => {
+      expect(
+        screen.getAllByRole("button", {
+          name: "Pause audio playback",
+        }).length,
+      ).toBe(1);
+    });
+
+    const secondPlayButton = screen.getAllByRole("button", {
+      name: "Play audio playback",
+    })[0];
+    fireEvent.click(secondPlayButton);
+
+    await waitFor(() => {
+      expect(MockAudio.instances[0]?.pauseCalled).toBe(true);
+      expect(
+        screen.getAllByRole("button", {
+          name: "Pause audio playback",
+        }).length,
+      ).toBe(1);
+    });
   });
 });

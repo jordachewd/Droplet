@@ -1,7 +1,8 @@
 import classNames from "classnames";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { resolveStoredAssetUrl } from "@/lib/utils/aws/s3-file-reference";
 import Button from "@/components/shared/button";
+import { useAudioStore } from "@/lib/hooks/use-audio-store";
 
 interface AudioPlayerProps {
   audioSrc: string | null;
@@ -44,6 +45,7 @@ function createLegacyAudioBlobUrl(base64Audio: string): string {
 }
 
 function AudioPlayerSession({ audioSrc }: AudioPlayerProps) {
+  const audioInstanceId = useId();
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const previousAudioUrlRef = useRef<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -51,12 +53,23 @@ function AudioPlayerSession({ audioSrc }: AudioPlayerProps) {
   const [progress, setProgress] = useState(0);
   const [currentTime, setCurrentTime] = useState("0:00");
   const [duration, setDuration] = useState("0:00");
+  const activeAudioId = useAudioStore((state) => state.activeAudioId);
+  const registerAudio = useAudioStore((state) => state.registerAudio);
+  const unregisterAudio = useAudioStore((state) => state.unregisterAudio);
+  const activateAudio = useAudioStore((state) => state.activateAudio);
+  const clearActiveAudio = useAudioStore((state) => state.clearActiveAudio);
   const safeProgress = Number.isFinite(progress)
     ? Math.min(100, Math.max(0, progress))
     : 0;
   const playbackControlLabel = isPlaying
     ? "Pause audio playback"
     : "Play audio playback";
+
+  useEffect(() => {
+    if (activeAudioId !== audioInstanceId && isPlaying) {
+      setIsPlaying(false);
+    }
+  }, [activeAudioId, audioInstanceId, isPlaying]);
 
   useEffect(() => {
     if (!audioSrc || previousAudioUrlRef.current === audioSrc) {
@@ -76,6 +89,7 @@ function AudioPlayerSession({ audioSrc }: AudioPlayerProps) {
 
       const audioElement = new Audio(resolvedAudioSrc);
       audioRef.current = audioElement;
+      registerAudio(audioInstanceId, audioElement);
 
       audioElement.onloadedmetadata = () => {
         setDuration(formatTime(audioElement.duration));
@@ -90,23 +104,31 @@ function AudioPlayerSession({ audioSrc }: AudioPlayerProps) {
         setIsPlaying(false);
         setProgress(0);
         setCurrentTime("0:00");
+        clearActiveAudio(audioInstanceId);
+      };
+      const handlePause = () => {
+        setIsPlaying(false);
       };
       const handleError = () => {
         setIsPlaying(false);
         setAudioError("Audio unavailable.");
+        clearActiveAudio(audioInstanceId);
       };
       audioElement.addEventListener("timeupdate", updateProgress);
       audioElement.addEventListener("ended", handleEnded);
+      audioElement.addEventListener("pause", handlePause);
       audioElement.addEventListener("error", handleError);
 
       return () => {
         previousAudioUrlRef.current = null;
 
         audioElement.pause();
+        unregisterAudio(audioInstanceId);
         audioElement.src = "";
         audioElement.onloadedmetadata = null;
         audioElement.removeEventListener("timeupdate", updateProgress);
         audioElement.removeEventListener("ended", handleEnded);
+        audioElement.removeEventListener("pause", handlePause);
         audioElement.removeEventListener("error", handleError);
 
         if (generatedBlobUrl) {
@@ -129,7 +151,13 @@ function AudioPlayerSession({ audioSrc }: AudioPlayerProps) {
         );
       });
     }
-  }, [audioSrc]);
+  }, [
+    audioSrc,
+    audioInstanceId,
+    clearActiveAudio,
+    registerAudio,
+    unregisterAudio,
+  ]);
 
   const togglePlay = () => {
     const audioElement = audioRef.current;
@@ -140,13 +168,16 @@ function AudioPlayerSession({ audioSrc }: AudioPlayerProps) {
 
     if (isPlaying) {
       audioElement.pause();
+      clearActiveAudio(audioInstanceId);
       setIsPlaying(false);
     } else {
       setAudioError(null);
+      activateAudio(audioInstanceId);
       audioElement
         .play()
         .then(() => setIsPlaying(true))
         .catch(() => {
+          clearActiveAudio(audioInstanceId);
           setIsPlaying(false);
           setAudioError("Audio unavailable.");
         });
