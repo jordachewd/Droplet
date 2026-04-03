@@ -117,7 +117,7 @@ function formatMediaLimitLabel({
   }
 
   if (limit === 0) {
-    return `No ${plural}${suffix}`;
+    return `${limit} ${plural}${suffix}`;
   }
 
   const noun = limit === 1 ? singular : plural;

@@ -58,63 +58,64 @@ export default async function AdminUserDetailPage({
       <div className="flex flex-col gap-6">
         <article className="admin-surface">
           <h2 className="heading-6 mb-4">Account Details</h2>
-          <dl className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div>
+          <dl className="grid grid-cols-1 md:grid-cols-2 gap-1">
+            <div className="flex w-full gap-2 items-center">
               <dt className="text-xs font-semibold uppercase text-midnightBlue-700 dark:text-lavenderHaze-700">
-                Email
+                Email:
               </dt>
-              <dd className="mt-1 text-sm">{user.email}</dd>
+              <dd className="text-sm">{user.email}</dd>
             </div>
-            <div>
+
+            <div className="flex w-full gap-2 items-center">
               <dt className="text-xs font-semibold uppercase text-midnightBlue-700 dark:text-lavenderHaze-700">
-                Clerk ID
+                Clerk ID:
               </dt>
-              <dd className="mt-1 text-sm">{user.clerkId}</dd>
+              <dd className="text-sm">{user.clerkId}</dd>
             </div>
-            <div>
+            <div className="flex w-full gap-2 items-center">
               <dt className="text-xs font-semibold uppercase text-midnightBlue-700 dark:text-lavenderHaze-700">
-                Role
+                Role:
               </dt>
               <dd className="mt-1 text-sm capitalize">{user.role}</dd>
             </div>
-            <div>
+            <div className="flex w-full gap-2 items-center">
               <dt className="text-xs font-semibold uppercase text-midnightBlue-700 dark:text-lavenderHaze-700">
-                State
+                State:
               </dt>
-              <dd className="mt-1 text-sm">
+              <dd className="text-sm">
                 {user.suspended ? "Suspended" : "Active"}
               </dd>
             </div>
-            <div>
+            <div className="flex w-full gap-2 items-center">
               <dt className="text-xs font-semibold uppercase text-midnightBlue-700 dark:text-lavenderHaze-700">
-                Plan
+                Plan:
               </dt>
-              <dd className="mt-1 text-sm">
+              <dd className="text-sm">
                 {user.planName} ({currencySymbol}
                 {user.planAmount})
               </dd>
             </div>
-            <div>
+            <div className="flex w-full gap-2 items-center">
               <dt className="text-xs font-semibold uppercase text-midnightBlue-700 dark:text-lavenderHaze-700">
-                Billing
+                Billing:
               </dt>
-              <dd className="mt-1 text-sm">{user.billing}</dd>
+              <dd className="text-sm">{user.billing}</dd>
             </div>
-            <div>
+            <div className="flex w-full gap-2 items-center">
               <dt className="text-xs font-semibold uppercase text-midnightBlue-700 dark:text-lavenderHaze-700">
-                Plan Expires
+                Plan Expires:
               </dt>
-              <dd className="mt-1 text-sm">
+              <dd className="text-sm">
                 {user.expiresOn
                   ? new Date(user.expiresOn).toLocaleString()
                   : "Never"}
               </dd>
             </div>
-            <div>
+            <div className="flex w-full gap-2 items-center">
               <dt className="text-xs font-semibold uppercase text-midnightBlue-700 dark:text-lavenderHaze-700">
-                Registered
+                Registered:
               </dt>
-              <dd className="mt-1 text-sm">
+              <dd className="text-sm">
                 {user.registerAt
                   ? new Date(user.registerAt).toLocaleString()
                   : "-"}
