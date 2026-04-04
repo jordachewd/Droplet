@@ -16,6 +16,29 @@ interface ChatInputProps {
   sendMessage: (message: Message) => void;
 }
 
+const ALLOWED_IMAGE_UPLOAD_MIME_TYPES = new Set<string>([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+]);
+const ALLOWED_IMAGE_UPLOAD_ACCEPT_VALUE =
+  "image/jpeg,image/png,image/webp,image/gif";
+const INVALID_IMAGE_UPLOAD_TYPE_MESSAGE =
+  "Invalid file type. Allowed types: image/jpeg, image/png, image/webp, image/gif.";
+
+function validateSelectedImageFile(file: File | null): string | null {
+  if (!file) {
+    return null;
+  }
+
+  if (!ALLOWED_IMAGE_UPLOAD_MIME_TYPES.has(file.type)) {
+    return INVALID_IMAGE_UPLOAD_TYPE_MESSAGE;
+  }
+
+  return null;
+}
+
 export default function ChatInput({
   loading,
   disabled = false,
@@ -61,6 +84,15 @@ export default function ChatInput({
   function handleImageChange(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0] || null;
     setUploadError(null);
+
+    const fileValidationError = validateSelectedImageFile(file);
+    if (fileValidationError) {
+      setSelectedFile(null);
+      setUploadError(fileValidationError);
+      e.currentTarget.value = "";
+      return;
+    }
+
     setSelectedFile(file);
   }
 
@@ -111,13 +143,26 @@ export default function ChatInput({
     let uploadedFileUrl: string | null = null;
 
     if (selectedFile) {
+      const fileValidationError = validateSelectedImageFile(selectedFile);
+      if (fileValidationError) {
+        setUploadError(fileValidationError);
+        setSelectedFile(null);
+
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
+        return;
+      }
+
       try {
         setIsUploading(true);
         uploadedFileUrl = await uploadSelectedFile(selectedFile);
       } catch (error) {
-        void error;
-        // Upload errors are intentionally mapped to a generic UI-safe message.
-        setUploadError("Failed to upload file. Please try again.");
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Failed to upload file. Please try again.";
+        setUploadError(message);
         return;
       } finally {
         setIsUploading(false);
@@ -270,7 +315,7 @@ export default function ChatInput({
             ref={fileInputRef}
             id="addFile"
             type="file"
-            accept="image/*"
+            accept={ALLOWED_IMAGE_UPLOAD_ACCEPT_VALUE}
             disabled={loading || disabled}
             onChange={handleImageChange}
           />

@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  doesImageMagicBytesMatchMimeType,
   getUploadFileExtension,
   MAX_UPLOAD_SIZE_BYTES,
+  validateImageMagicBytes,
   validateUploadFile,
 } from "@/lib/utils/upload-file-validation";
 
@@ -74,5 +76,42 @@ describe("getUploadFileExtension", () => {
 
   it("returns null for unsupported MIME types", () => {
     expect(getUploadFileExtension("application/pdf")).toBeNull();
+  });
+});
+
+describe("validateImageMagicBytes", () => {
+  it("accepts JPEG, PNG, GIF, and WebP signatures", () => {
+    const jpeg = new Uint8Array([0xff, 0xd8, 0xff, 0xdb]).buffer;
+    const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
+      .buffer;
+    const gif = new Uint8Array([0x47, 0x49, 0x46, 0x38, 0x39, 0x61]).buffer;
+    const webp = new Uint8Array([
+      0x52, 0x49, 0x46, 0x46, 0x2a, 0x00, 0x00, 0x00, 0x57, 0x45, 0x42, 0x50,
+    ]).buffer;
+
+    expect(validateImageMagicBytes(jpeg)).toBe(true);
+    expect(validateImageMagicBytes(png)).toBe(true);
+    expect(validateImageMagicBytes(gif)).toBe(true);
+    expect(validateImageMagicBytes(webp)).toBe(true);
+  });
+
+  it("rejects unknown signatures", () => {
+    const textBuffer = new TextEncoder().encode("not-an-image").buffer;
+    expect(validateImageMagicBytes(textBuffer)).toBe(false);
+  });
+});
+
+describe("doesImageMagicBytesMatchMimeType", () => {
+  it("returns true when magic bytes match declared MIME type", () => {
+    const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
+      .buffer;
+
+    expect(doesImageMagicBytesMatchMimeType(png, "image/png")).toBe(true);
+  });
+
+  it("returns false when magic bytes and MIME type mismatch", () => {
+    const gif = new Uint8Array([0x47, 0x49, 0x46, 0x38, 0x39, 0x61]).buffer;
+
+    expect(doesImageMagicBytesMatchMimeType(gif, "image/png")).toBe(false);
   });
 });

@@ -3,7 +3,7 @@
 > Purpose: one execution document for finishing the SaaS without avoidable rework.
 > Audience: Project Manager, Architect, and Senior Software Agents.
 > Rule: this plan is based on verified repository state. If older docs disagree with code, code wins until this file is updated.
-> Last verified: PM audit #92, 2026-04-04. V1.0 MVP RELEASED. Phases 195-200 DONE. 617 tests. Phase 200 admin suspension protection VERIFIED. OI39 RESOLVED. PLAN_LIMITS owner override accepted.
+> Last verified: PM audit #94, 2026-04-05. V1.0 MVP RELEASED. Phases 204-207 DONE. 628 tests, 0 failures. All 7 gates GREEN. 0 critical issues.
 
 ---
 
@@ -21,6 +21,8 @@ Droplet is deployed to production with all 25 milestones complete. The TDD testi
 
 **Phases completed since last plan update:**
 Phase 178, 181, 182 ? DONE. Phase 183 (Stripe) ? RESOLVED (webhook was disabled). Phase 184 (Facebook) ? CLOSED (removed from product). Phase 185 (sora-2-pro removal) ? DONE. Phase 180.1 (homepage text extraction) ? DONE. Phase 186-A (video generation removal) ? DONE. Phase 186-B (token limits maximized) ? DONE. Phase 187-A (admin error boundary) ? DONE. Phase 187-B (Clerk webhook cascade order) ? DONE. Phase 187-C (audio player error recovery) ? DONE. Phase 187-D (download rate-limit key cleanup) ? DONE. Phase 143 (env var runtime validation) ? DONE. Phase 180.2 (chat display text extraction) ? DONE. Phase 180.3 (plans display text extraction) ? DONE. Phase 180.4 (currency symbol compliance) ? DONE. Phase 188 (PlanCard isIncluded fix) � DONE. Phase 189 (admin deletion protection) � DONE. Phase 190 (admin ADMIN display + unlimited) � DONE. Phase 191 (reusable FormInput) � DONE. Phase 192 (reusable PersonaSelector) � DONE. Phase 193 (reusable UsageMetricRow) � DONE. Phase 194 (TiptapEditor redesign) � DONE. Phase 195 (image vision presigned URLs) � DONE. Phase 196 (Zustand audio overlap fix) � DONE. Phase 197 (image lightbox) � DONE. Phase 198 (library upload previews) → DONE. Phase 199 (useActionState fix) → DONE. Phase 200 (admin suspension protection) → DONE.
+Phase 202 (unit test PLAN_LIMITS fix) → DONE. Phase 203 (E2E contrast fix) → DONE. Phase 201 (avatar sync) → DONE. Phase 144 (admin config cache) → DONE.
+Phase 204 (API route timeouts to max) → DONE. Phase 205 (sidebar live update) → DONE. Phase 206 (upload error propagation) → DONE. Phase 207 (upload magic byte validation) → DONE.
 
 ---
 
@@ -38,27 +40,27 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 
 ### Architecture Status ? SOUND. ALL GATES GREEN.
 
-| Area                | Status | Evidence                                                                                                                                                                          |
-| ------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Route boundaries    | ?      | Clean `/app(.*)` + `/admin(.*)` proxy protection                                                                                                                                  |
-| Server/client split | ?      | Server Components for pages, client for UX only                                                                                                                                   |
-| Auth in all actions | ?      | All server actions + API routes verify auth                                                                                                                                       |
-| Admin double-check  | ?      | All 15 admin functions use `requireAdminAccess`                                                                                                                                   |
-| Schema strict mode  | ?      | All 9 Mongoose models have `strict: true`                                                                                                                                         |
-| Index coverage      | ?      | 18 indexed fields across all query-filtered cols                                                                                                                                  |
-| maxDuration exports | ?      | All 6 API routes (openai=60, clerk=60, rest=30)                                                                                                                                   |
-| Server-only guards  | ?      | 50+ utility files with `import "server-only"`                                                                                                                                     |
-| Rate limiting       | ?      | MongoDB-backed, durable, all API routes covered                                                                                                                                   |
-| SSRF prevention     | ?      | `isAllowedDownloadUrl()` allowlist                                                                                                                                                |
-| Error handling      | ?      | All catches documented, `handleError` ? `never`                                                                                                                                   |
-| **Stream timeout**  | ?      | **Phase 181 CONFIRMED WORKING in production. Proactive timeout fires correctly.**                                                                                                 |
-| **Stripe webhook**  | ?      | **RESOLVED. Root cause: webhook was disabled. Re-enabled, HTTP 200 confirmed.**                                                                                                   |
-| **Facebook login**  | ?      | **CLOSED. Owner removed Facebook login from product.**                                                                                                                            |
-| Knip                | ?      | 0 findings                                                                                                                                                                        |
-| TSC                 | ?      | 0 errors                                                                                                                                                                          |
-| Lint                | ?      | 0 errors, 0 warnings                                                                                                                                                              |
-| Tests               | ✓      | 102 suites, 617 tests. 10 failures from owner PLAN_LIMITS changes (owner override accepted PM #92, tests pending Phase 202). 3 E2E failures from Free badge contrast (Phase 203). |
-| E2E                 | ?      | 8 specs, 49 tests                                                                                                                                                                 |
+| Area                | Status | Evidence                                                                          |
+| ------------------- | ------ | --------------------------------------------------------------------------------- |
+| Route boundaries    | ?      | Clean `/app(.*)` + `/admin(.*)` proxy protection                                  |
+| Server/client split | ?      | Server Components for pages, client for UX only                                   |
+| Auth in all actions | ?      | All server actions + API routes verify auth                                       |
+| Admin double-check  | ?      | All 15 admin functions use `requireAdminAccess`                                   |
+| Schema strict mode  | ?      | All 9 Mongoose models have `strict: true`                                         |
+| Index coverage      | ?      | 18 indexed fields across all query-filtered cols                                  |
+| maxDuration exports | ✓      | All 6 API routes at maxDuration=60 (Vercel Hobby ceiling)                         |
+| Server-only guards  | ?      | 50+ utility files with `import "server-only"`                                     |
+| Rate limiting       | ?      | MongoDB-backed, durable, all API routes covered                                   |
+| SSRF prevention     | ?      | `isAllowedDownloadUrl()` allowlist                                                |
+| Error handling      | ?      | All catches documented, `handleError` ? `never`                                   |
+| **Stream timeout**  | ?      | **Phase 181 CONFIRMED WORKING in production. Proactive timeout fires correctly.** |
+| **Stripe webhook**  | ?      | **RESOLVED. Root cause: webhook was disabled. Re-enabled, HTTP 200 confirmed.**   |
+| **Facebook login**  | ?      | **CLOSED. Owner removed Facebook login from product.**                            |
+| Knip                | ?      | 0 findings                                                                        |
+| TSC                 | ?      | 0 errors                                                                          |
+| Lint                | ?      | 0 errors, 0 warnings                                                              |
+| Tests               | ✓      | 102 suites, 628 tests. 0 failures. All gates GREEN.                               |
+| E2E                 | ?      | 8 specs, 49 tests                                                                 |
 
 ### Issues Found by Audit #82?#84 ? Updated Status
 
@@ -112,6 +114,14 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 | 198   | Library upload previews                        | ✅ DONE                | Image thumbnails, file-type icons.                                                                                 |
 | 199   | useActionState startTransition fix             | ✅ DONE                | formAction wrapped in startTransition.                                                                             |
 | 200   | Admin suspension protection                    | ✅ DONE                | 3-layer defense: role check in toggle, admin filter in bulk, UI guard. 2 new tests. 617 total.                     |
+| 202   | Fix 10 unit tests (PLAN_LIMITS alignment)      | ✅ DONE                | Tests match PLAN_LIMITS. `promoAdminLabel` → "ADMIN". 619 total.                                                   |
+| 203   | Fix 3 E2E contrast failures                    | ✅ DONE                | `text-midnightBlue-900` on `bg-dustyBlue-500`. All E2E pass.                                                       |
+| 201   | Avatar sync MongoDB→Clerk                      | ✅ DONE                | Non-blocking Clerk sync in updateUser. 2 tests.                                                                    |
+| 144   | Admin config cache                             | ✅ DONE                | 30s TTL, in-flight dedupe, 8 effective-\*.ts wrapped. clearConfigCache on admin writes.                            |
+| 204   | API route timeouts to max                      | ✅ DONE                | All 6 API routes at maxDuration=60 (Vercel Hobby ceiling).                                                         |
+| 205   | Sidebar live update on new chat                | ✅ DONE                | router.refresh() with ref-based one-time guard. 5 call sites.                                                      |
+| 206   | Upload error propagation + client validation   | ✅ DONE                | error.message propagation, narrowed accept, client MIME pre-validation.                                            |
+| 207   | Upload magic byte validation                   | ✅ DONE                | JPEG/PNG/GIF/WebP signatures. Cross-match MIME. Blocks before S3 write. 11 tests.                                  |
 
 ### Ongoing Constraints
 
@@ -121,15 +131,15 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 
 ---
 
-## 4. SWOT Analysis (Updated 2026-04-04, post PM audit #92)
+## 4. SWOT Analysis (Updated 2026-04-05, post PM audit #94)
 
-**Strengths:** Clean architecture, strong auth, comprehensive tests (617+49), central policy resolvers, WCAG 2.2 AA complete, durable usage counters, thorough user deletion cascade, zero lint/type/knip issues, correct webhook code structure, stream timeout confirmed in production (Phase 181), video generation cleanly removed (Phase 186-A), token limits maximized (Phase 186-B), admin error boundary (Phase 187-A), env var runtime validation (Phase 143), all display text admin-configurable (Phases 180.1–180.4), audio player error recovery (Phase 187-C), admin deletion protection with 5-layer defense (Phase 189), reusable component library: FormInput/PersonaSelector/UsageMetricRow (Phases 191–193), TiptapEditor WYSIWYG (Phase 194), plan-display utility for admin ADMIN label (Phase 190), admin suspension protection with symmetric 3-layer defense (Phase 200).
+**Strengths:** Clean architecture, strong auth, comprehensive tests (628+49), central policy resolvers, WCAG 2.2 AA complete, durable usage counters, thorough user deletion cascade, zero lint/type/knip issues, correct webhook code structure, stream timeout confirmed in production (Phase 181), video generation cleanly removed (Phase 186-A), token limits maximized (Phase 186-B), admin error boundary (Phase 187-A), env var runtime validation (Phase 143), all display text admin-configurable (Phases 180.1–180.4), audio player error recovery (Phase 187-C), admin deletion protection with 5-layer defense (Phase 189), reusable component library: FormInput/PersonaSelector/UsageMetricRow (Phases 191–193), TiptapEditor WYSIWYG (Phase 194), plan-display utility for admin ADMIN label (Phase 190), admin suspension protection with symmetric 3-layer defense (Phase 200), avatar sync MongoDB→Clerk (Phase 201), admin config cache 30s TTL (Phase 144), full test baseline (628 tests, 0 failures, Phase 202+203), all API routes at Vercel Hobby ceiling (Phase 204), sidebar live-updates on new chat without browser refresh (Phase 205), upload error messages propagated to user with client pre-validation (Phase 206), upload magic byte validation prevents MIME spoofing (Phase 207).
 
-**Weaknesses:** Avatar data-sync gap — ProfileHeroEditor saves to MongoDB, AvatarMenu reads from Clerk. 10 unit test failures from owner PLAN_LIMITS changes (tests need update, Phase 202 unblocked). 3 E2E failures from Free badge contrast ratio (Phase 203).
+**Weaknesses:** None critical. Remaining items are quality-of-life improvements (filename collision, checkout polling).
 
-**Opportunities:** Test baseline update (Phase 202, unblocked). Clerk avatar sync for UX consistency. Vercel Pro upgrade ($20/mo). Admin config cache (5+ DB hits/request → 30s TTL). Checkout success polling.
+**Opportunities:** Vercel Pro upgrade ($20/mo) for 300s maxDuration. Checkout success polling for webhook delay. Filename collision prevention via `crypto.randomUUID()`.
 
-**Threats:** Single-document growth risk.
+**Threats:** Single-document growth risk (Task model). Vercel Hobby 60s timeout remains architecture constraint for media generation edge cases.
 
 ---
 
@@ -142,23 +152,29 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 | C    | Product Gate    | GREEN  | All display strings admin-configurable. Video removed. Stripe + Facebook resolved.         |
 | D    | Admin Gate      | GREEN  | Admin config complete. Error boundary added (Phase 187-A). All strings admin-configurable. |
 | E    | Public Gate     | GREEN  | All 7 public routes accurate, legal content real, no obsolete trial messaging              |
-| F    | Validation Gate | GREEN  | 617 tests, lint 0/0, TSC clean, knip 0, E2E 49 tests, coverage 85/80/85/85                 |
+| F    | Validation Gate | GREEN  | 628 tests, lint 0/0, TSC clean, knip 0, E2E 49 tests, coverage 85/80/85/85                 |
 
 ---
 
 ## 6. Current Execution Order
 
-> All critical issues RESOLVED. All v1.0 pre-release phases DONE. **V1.0 MVP RELEASED.** Phases 195-200 DONE. 3 active phases (201-203).
+> All critical issues RESOLVED. All v1.0 pre-release phases DONE. **V1.0 MVP RELEASED.** Phases 195-207, 144 DONE. 0 critical issues.
 
 ### Post-Release Active
 
-- **🟡 Phase 202** — MEDIUM: Fix 10 unit test failures (align tests with owner PLAN_LIMITS changes). **UNBLOCKED.**
-- **🟡 Phase 203** — MEDIUM: Fix 3 E2E contrast failures (Free badge color, `bg-dustyBlue-500 text-lavenderHaze-200` → darker text).
-- **🟡 Phase 201** — MEDIUM: Avatar sync (ProfileHeroEditor → Clerk sync, OR AvatarMenu reads MongoDB).
+> No active critical work. All owner bugs resolved.
 
 ### Confirmed Working
 
+- **✅ Phase 207** — Upload magic byte validation. DONE. JPEG/PNG/GIF/WebP signatures. 11 tests.
+- **✅ Phase 206** — Upload error propagation + client validation. DONE. error.message + narrowed accept + pre-validation.
+- **✅ Phase 205** — Sidebar live update on new chat. DONE. router.refresh() with ref-based one-time guard.
+- **✅ Phase 204** — API route timeouts to max. DONE. All 6 routes at maxDuration=60.
 - **✅ Phase 200** — Admin suspension protection. DONE. Symmetric 3-layer defense matching Phase 189.
+- **✅ Phase 202** — Unit test PLAN_LIMITS alignment. DONE. 619 tests, 0 failures.
+- **✅ Phase 203** — E2E contrast fix. DONE. `text-midnightBlue-900` on badges.
+- **✅ Phase 201** — Avatar sync MongoDB→Clerk. DONE. Non-blocking Clerk sync.
+- **✅ Phase 144** — Admin config cache. DONE. 30s TTL, in-flight dedupe, 8 resolvers wrapped.
 - **✅ Phase 195** — Image vision presigned URL rewrite. DONE.
 - **✅ Phase 196** — Zustand audio overlap fix. DONE.
 - **✅ Phase 197** — Image lightbox. DONE.
@@ -177,16 +193,13 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 
 > All v1.0 pre-release phases COMPLETE (OI24). Remaining items are post-release improvements.
 
-1. **MEDIUM Phase 144 ? Admin config in-memory cache.**
-   5+ DB hits/request for admin settings. Add 30s TTL cache.
-
-2. **MEDIUM Phase 145 � Upload filename collision prevention.**
+1. **MEDIUM Phase 145 � Upload filename collision prevention.**
    Use `crypto.randomUUID()` instead of `Date.now()` for S3 filenames.
 
-3. **MEDIUM Phase 165 � Checkout success page DB polling.**
+2. **MEDIUM Phase 165 � Checkout success page DB polling.**
    Safety net for webhook delay � poll DB for plan update on success page.
 
-4. **LOW Phase 146�148 � Low priority improvements.**
+3. **LOW Phase 146�148 � Low priority improvements.**
    Admin user detail transaction limit, rename `.tsx` utility files to `.ts`, bulk operations partial-failure reporting.
 
 ---
@@ -233,7 +246,11 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 | OI37 | Library uploaded tab visual previews   | ✅ COMPLETE. Phase 198 DONE. Image thumbnails + file-type icons.                                                                   |
 | OI38 | useActionState console warning         | ✅ COMPLETE. Phase 199 DONE. formAction wrapped in startTransition.                                                                |
 | OI39 | Admin suspension protection gap        | ✅ COMPLETE. Phase 200 DONE. Symmetric 3-layer protection matching Phase 189.                                                      |
-| OI40 | Avatar sync MongoDB↔Clerk              | 🟡 Phase 201. MEDIUM. Profile saves MongoDB, header reads Clerk.                                                                   |
+| OI40 | Avatar sync MongoDB↔Clerk              | ✅ COMPLETE. Phase 201 DONE. Non-blocking Clerk sync in updateUser.                                                                |
+| OI41 | API route timeouts must be max         | ✅ COMPLETE. Phase 204 DONE. All 6 routes at maxDuration=60 (Vercel Hobby ceiling).                                                |
+| OI42 | New chat not appearing in sidebar      | ✅ COMPLETE. Phase 205 DONE. router.refresh() with ref-based one-time guard. 5 call sites.                                         |
+| OI43 | Image upload error messages generic    | ✅ COMPLETE. Phase 206 DONE. error.message propagation + narrowed accept + client pre-validation.                                  |
+| OI44 | Upload file sanitization security      | ✅ COMPLETE. Phase 207 DONE. Magic byte validation for JPEG/PNG/GIF/WebP. Defense-in-depth.                                        |
 
 ---
 

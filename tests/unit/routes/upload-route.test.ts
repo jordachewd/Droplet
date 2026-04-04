@@ -35,6 +35,31 @@ vi.mock("@/lib/utils/rate-limit", () => ({
   enforceSlidingWindowRateLimit: vi.fn(),
 }));
 
+const PNG_SIGNATURE = new Uint8Array([
+  0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
+]);
+const GIF_SIGNATURE = new Uint8Array([0x47, 0x49, 0x46, 0x38, 0x39, 0x61]);
+
+function createPngBytes(size: number = PNG_SIGNATURE.length): Uint8Array {
+  const byteSize = Math.max(size, PNG_SIGNATURE.length);
+  const bytes = new Uint8Array(byteSize);
+  bytes.set(PNG_SIGNATURE, 0);
+  return bytes;
+}
+
+function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
+  if (bytes.buffer instanceof ArrayBuffer) {
+    return bytes.buffer.slice(
+      bytes.byteOffset,
+      bytes.byteOffset + bytes.byteLength,
+    );
+  }
+
+  const copiedBytes = new Uint8Array(bytes.byteLength);
+  copiedBytes.set(bytes);
+  return copiedBytes.buffer;
+}
+
 function buildRequestWithFormData(formData: FormData): NextRequest {
   return {
     formData: async () => formData,
@@ -198,9 +223,13 @@ describe("POST /api/upload", () => {
     const formData = new FormData();
     formData.set(
       "file",
-      new File([new Uint8Array(MAX_UPLOAD_SIZE_BYTES)], "image.png", {
-        type: "image/png",
-      }),
+      new File(
+        [toArrayBuffer(createPngBytes(MAX_UPLOAD_SIZE_BYTES))],
+        "image.png",
+        {
+          type: "image/png",
+        },
+      ),
     );
 
     const response = await POST(buildRequestWithFormData(formData));
@@ -232,7 +261,7 @@ describe("POST /api/upload", () => {
     const formData = new FormData();
     formData.set(
       "file",
-      new File([new Uint8Array([1, 2, 3])], "image.png", {
+      new File([toArrayBuffer(createPngBytes(16))], "image.png", {
         type: "image/png",
       }),
     );
@@ -253,7 +282,7 @@ describe("POST /api/upload", () => {
         fileName: "uploaded_file_1700000000000.png",
         objectKey: "user_123/uploads/uploaded_file_1700000000000.png",
         contentType: "image/png",
-        sizeBytes: 3,
+        sizeBytes: 16,
       }),
     );
     expect(uploadFileToAWS).toHaveBeenCalledWith(
@@ -270,7 +299,9 @@ describe("POST /api/upload", () => {
     const formData = new FormData();
     formData.set(
       "file",
-      new File([new Uint8Array([1])], "image.png", { type: "image/png" }),
+      new File([toArrayBuffer(createPngBytes(16))], "image.png", {
+        type: "image/png",
+      }),
     );
 
     const response = await POST(buildRequestWithFormData(formData));
@@ -287,7 +318,7 @@ describe("POST /api/upload", () => {
     const formData = new FormData();
     formData.set(
       "file",
-      new File([new Uint8Array([1, 2, 3])], "image.png", {
+      new File([toArrayBuffer(createPngBytes(16))], "image.png", {
         type: "image/png",
       }),
     );
@@ -301,5 +332,24 @@ describe("POST /api/upload", () => {
         taskId: "task_abc123",
       }),
     );
+  });
+
+  it("returns 400 when file content does not match declared MIME type", async () => {
+    const formData = new FormData();
+    formData.set(
+      "file",
+      new File([toArrayBuffer(GIF_SIGNATURE)], "mismatch.png", {
+        type: "image/png",
+      }),
+    );
+
+    const response = await POST(buildRequestWithFormData(formData));
+    const payload = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(payload.error).toBe("File content does not match declared type.");
+    expect(uploadFileToAWS).not.toHaveBeenCalled();
+    expect(connectToDatabase).not.toHaveBeenCalled();
+    expect(Upload.create).not.toHaveBeenCalled();
   });
 });
