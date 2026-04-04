@@ -152,21 +152,23 @@ export default async function AdminUserDetailPage({
       <article className="admin-surface">
         <h2 className="heading-6 mb-4">Admin Actions</h2>
         <div className="flex flex-col gap-3 md:flex-row">
-          <AdminManagedForm
-            action={toggleUserSuspensionAction}
-            confirmMessage={`Are you sure you want to ${user.suspended ? "reinstate" : "suspend"} this user?`}
-          >
-            <input type="hidden" name="userId" value={user.id} />
-            <input
-              type="hidden"
-              name="suspended"
-              value={(!user.suspended).toString()}
-            />
-            <AdminFormSubmitButton
-              label={user.suspended ? "Reinstate User" : "Suspend User"}
-              pendingLabel="Updating user..."
-            />
-          </AdminManagedForm>
+          {user.role !== "admin" && (
+            <AdminManagedForm
+              action={toggleUserSuspensionAction}
+              confirmMessage={`Are you sure you want to ${user.suspended ? "reinstate" : "suspend"} this user?`}
+            >
+              <input type="hidden" name="userId" value={user.id} />
+              <input
+                type="hidden"
+                name="suspended"
+                value={(!user.suspended).toString()}
+              />
+              <AdminFormSubmitButton
+                label={user.suspended ? "Reinstate User" : "Suspend User"}
+                pendingLabel="Updating user..."
+              />
+            </AdminManagedForm>
+          )}
 
           {user.role !== "admin" && (
             <AdminManagedForm

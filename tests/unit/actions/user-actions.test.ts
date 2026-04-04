@@ -15,12 +15,14 @@ const {
   userFindByIdAndDeleteMock,
   deleteUserCascadeMock,
   deleteClerkUserMock,
+  updateClerkUserMock,
 } = vi.hoisted(() => ({
   userFindOneMock: vi.fn(),
   userFindOneAndUpdateMock: vi.fn(),
   userFindByIdAndDeleteMock: vi.fn(),
   deleteUserCascadeMock: vi.fn(),
   deleteClerkUserMock: vi.fn(),
+  updateClerkUserMock: vi.fn(),
 }));
 
 vi.mock("@clerk/nextjs/server", () => ({
@@ -28,6 +30,7 @@ vi.mock("@clerk/nextjs/server", () => ({
   clerkClient: vi.fn(async () => ({
     users: {
       deleteUser: deleteClerkUserMock,
+      updateUser: updateClerkUserMock,
     },
   })),
 }));
@@ -63,6 +66,7 @@ describe("user.actions", () => {
     });
     vi.mocked(connectToDatabase).mockResolvedValue(mongooseModuleMock);
     deleteClerkUserMock.mockResolvedValue(undefined);
+    updateClerkUserMock.mockResolvedValue(undefined);
     deleteUserCascadeMock.mockResolvedValue({
       deletedTasks: 4,
       deletedTransactions: 2,
@@ -145,6 +149,58 @@ describe("user.actions", () => {
           upsert: false,
         },
       );
+      expect(response).toEqual(
+        expect.objectContaining({
+          status: 200,
+          message: "User updated successfully (user.actions.tsx)",
+        }),
+      );
+      expect(updateClerkUserMock).not.toHaveBeenCalled();
+    });
+
+    it("syncs avatar updates to Clerk when userimg is provided", async () => {
+      userFindOneAndUpdateMock.mockResolvedValue(
+        createTestUser({
+          clerkId: "user_123",
+          userimg: "https://cdn.example.com/avatar-updated.png",
+        }),
+      );
+
+      const response = await updateUser("user_123", {
+        userimg: "https://cdn.example.com/avatar-updated.png",
+        updatedAt: new Date("2026-03-25T00:00:00.000Z"),
+      });
+
+      expect(vi.mocked(clerkClient)).toHaveBeenCalledOnce();
+      expect(updateClerkUserMock).toHaveBeenCalledWith("user_123", {
+        imageUrl: "https://cdn.example.com/avatar-updated.png",
+      });
+      expect(response).toEqual(
+        expect.objectContaining({
+          status: 200,
+          message: "User updated successfully (user.actions.tsx)",
+        }),
+      );
+    });
+
+    it("does not fail profile updates when Clerk avatar sync fails", async () => {
+      userFindOneAndUpdateMock.mockResolvedValue(
+        createTestUser({
+          clerkId: "user_123",
+          userimg: "https://cdn.example.com/avatar-updated.png",
+        }),
+      );
+      updateClerkUserMock.mockRejectedValueOnce(new Error("Clerk unavailable"));
+
+      const response = await updateUser("user_123", {
+        userimg: "https://cdn.example.com/avatar-updated.png",
+        updatedAt: new Date("2026-03-25T00:00:00.000Z"),
+      });
+
+      expect(vi.mocked(clerkClient)).toHaveBeenCalledOnce();
+      expect(updateClerkUserMock).toHaveBeenCalledWith("user_123", {
+        imageUrl: "https://cdn.example.com/avatar-updated.png",
+      });
       expect(response).toEqual(
         expect.objectContaining({
           status: 200,

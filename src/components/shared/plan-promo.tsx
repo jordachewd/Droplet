@@ -41,7 +41,7 @@ export default function PlanPromo({
             <span
               className={classNames(
                 "rounded-sm p-1 text-2xs uppercase leading-none tracking-wider",
-                "bg-dustyBlue-500 text-lavenderHaze-200",
+                "bg-dustyBlue-500 text-midnightBlue-900",
                 { "min-w-20.5": !isLite },
               )}
             >

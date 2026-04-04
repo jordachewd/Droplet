@@ -10,7 +10,7 @@ describe("check-usage-limit", () => {
   it("allows usage under the configured limit", () => {
     const result = checkUsageLimit({
       planName: liteUser.plan.name,
-      currentCount: 2,
+      currentCount: 0,
       limitType: "images",
     });
 
@@ -19,7 +19,7 @@ describe("check-usage-limit", () => {
       limit: PLAN_LIMITS.Lite.images,
       remaining: 1,
       didReset: false,
-      effectiveCount: 2,
+      effectiveCount: 0,
     });
   });
 
@@ -77,8 +77,8 @@ describe("check-usage-limit", () => {
 
     expect(result.didReset).toBe(false);
     expect(result.effectiveCount).toBe(1);
-    expect(result.remaining).toBe(2);
-    expect(result.allowed).toBe(true);
+    expect(result.remaining).toBe(0);
+    expect(result.allowed).toBe(false);
   });
 
   it("uses override limits when provided", () => {

@@ -2,28 +2,24 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-04-03 (PM audit #90). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. **V1.0 MVP RELEASED.** Brand rename complete (Phase 172). Catch blocks documented (Phase 167.2). Promo text admin-configurable (Phase 162, 180.2–180.3). Global error boundary live (Phase 163). Admin error boundary live (Phase 187-A). Phases 173–178, 180.1–180.4, 181–194 COMPLETE. E2E: 49 tests (8 spec files). Coverage: 85/80/85/85. 611 tests. Build passing. Node.js 24.12.0.
+> Last updated: 2026-04-04 (PM audit #92). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. **V1.0 MVP RELEASED.** Brand rename complete (Phase 172). Catch blocks documented (Phase 167.2). Promo text admin-configurable (Phase 162, 180.2–180.3). Global error boundary live (Phase 163). Admin error boundary live (Phase 187-A). Phases 173–178, 180.1–180.4, 181–200 COMPLETE. E2E: 49 tests (8 spec files). Coverage: 85/80/85/85. 617 tests. Build passing. Node.js 24.12.0.
 >
-> **V1.0 MVP Released (PM audit #90):**
+> **V1.0 MVP Released (PM audit #92):**
 >
 > - ✅ All v1.0 pre-release fixes DONE (Phases 187-A through 187-D, 143, 180.2–180.4).
 > - ✅ Phase 188 DONE — PlanCard `isIncluded` bug fixed. 602 tests.
-> - ✅ Phase 189 DONE — Admin deletion protection (5-layer). 611 tests.
-> - ✅ Phase 190 DONE — Admin "ADMIN" display + unlimited.
-> - ✅ Phase 191 DONE — Reusable FormInput component.
-> - ✅ Phase 192 DONE — Reusable PersonaSelector component.
-> - ✅ Phase 193 DONE — Reusable UsageMetricRow component.
-> - ✅ Phase 194 DONE — TiptapEditor redesign (TinyMCE-style).
-> - ✅ All validation gates GREEN (611 tests, lint 0/0, TSC clean, build passes, knip 0).
-> - 🔴 Phase 195: Image upload "describe image" broken (HIGH — S3 proxy URLs inaccessible to OpenAI).
-> - 🔴 Phase 196: Audio player overlap (MEDIUM-HIGH).
-> - 🟡 Phase 197–198: Image lightbox, library upload previews (MEDIUM).
-> - 🟢 Phase 199: useActionState console warning (LOW).
+> - ✅ Phases 189–194 DONE — Admin deletion protection, ADMIN display, FormInput, PersonaSelector, UsageMetricRow, TiptapEditor. 611 tests.
+> - ✅ Phases 195–199 DONE — Image vision presigned URLs, Zustand audio overlap, image lightbox, library upload previews, useActionState fix. 615 tests.
+> - ✅ Phase 200 DONE — Admin suspension protection. 3-layer defense symmetric with Phase 189. 617 tests.
+> - ✅ PLAN_LIMITS owner override accepted (PM audit #92). AGENTS.md Rule #5 updated.
+> - 🟡 Phase 202: Fix 10 unit test failures (PLAN_LIMITS baseline update). UNBLOCKED.
+> - 🟡 Phase 203: Fix 3 E2E contrast failures (Free badge color).
+> - 🟡 Phase 201: Avatar sync MongoDB↔Clerk.
 >
 > **Remaining Issues (non-blocking):**
 >
-> - **TD-VISION-01** — 🔴 Image upload "describe image" broken. S3 proxy URLs inaccessible to OpenAI vision API (Phase 195).
-> - **TD-AUDIO-OVERLAP** — 🔴 Multiple audios play simultaneously — no global coordination (Phase 196).
+> - **TD-AVATAR-SYNC** — 🟡 ProfileHeroEditor saves to MongoDB, AvatarMenu reads from Clerk. Avatar changes not reflected in header (Phase 201).
+> - **TD-CONTRAST-01** — 🟡 Free badge fails WCAG 2.2 AA contrast (2.76:1 vs 4.5:1 required). Phase 203.
 > - **TD-MEDIA-01** — 🟡 ACCEPTED LIMITATION. Media gen (image/audio) may approach Vercel Hobby 60s timeout. Phase 181 proactive timeout handles gracefully.
 > - **TD-AI-09** — Image/audio prompts not persona-aware (deferred to v1.1).
 > - **TD-AI-13** — 3 model pricing placeholders (awaiting OpenAI confirmation).
@@ -198,7 +194,7 @@ Prompts are versioned and separated from request handlers. `buildPersonaAwareSys
 
 | Plan        | Price | Duration      | Chat Model (default)            | Limits                                                                         |
 | ----------- | ----- | ------------- | ------------------------------- | ------------------------------------------------------------------------------ |
-| **Lite**    | Free  | **Permanent** | `gpt-4o-mini`                   | 5 conversations/day, 10 prompts/conversation, 3 image/month, 3 audio/month     |
+| **Lite**    | Free  | **Permanent** | `gpt-4o-mini`                   | 10 conversations/day, 10 prompts/conversation, 1 image/month, 1 audio/month    |
 | **Pro**     | $19   | Monthly       | `gpt-4.1`                       | 50 conversations/day, 100 prompts/conversation, 50 image/month, 50 audio/month |
 | **Premium** | $39   | Monthly       | `gpt-4.1` / `gpt-5.4` (complex) | Unlimited conversations, unlimited prompts, unlimited image + audio            |
 
@@ -849,16 +845,21 @@ All button styles use Lime Green as the accent color in **both** light and dark 
 ## 15. Technical Debt Summary
 
 > Only unresolved items live here. All resolved TDs are archived in `DONE.md`.
-> Last updated: PM audit #90 (2026-04-03).
+> Last updated: PM audit #91 (2026-04-03).
 
-### Resolved This Session (PM audit #90)
+### Resolved This Session (PM audit #91)
 
-| ID               | Area     | Description                                                                                                                                                                                                | Phase | Status                                                                      |
-| ---------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- | --------------------------------------------------------------------------- |
-| TD-ADMIN-DELETE  | Security | Admin users can be deleted from Profile (self-delete) and Admin/Users dashboard (single + bulk remove). Locks out admin panel permanently. All 4 deletion surfaces must refuse `role === "admin"` targets. | 189   | ✅ DONE. 5-layer protection: 3 backend guards + 3 UI blocks + 7 unit tests. |
-| TD-ADMIN-DISPLAY | UX       | Admin profile shows "Lite" plan name. Must show "ADMIN" everywhere. Usage metrics must show "Unlimited" for admin users.                                                                                   | 190   | ✅ DONE. `plan-display.ts` utility. All surfaces show "ADMIN"/"Unlimited".  |
+| ID               | Area     | Description                                                                                                                                                                                                | Phase | Status                                                                                   |
+| ---------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- | ---------------------------------------------------------------------------------------- |
+| TD-ADMIN-DELETE  | Security | Admin users can be deleted from Profile (self-delete) and Admin/Users dashboard (single + bulk remove). Locks out admin panel permanently. All 4 deletion surfaces must refuse `role === "admin"` targets. | 189   | ✅ DONE. 5-layer protection: 3 backend guards + 3 UI blocks + 7 unit tests.              |
+| TD-ADMIN-DISPLAY | UX       | Admin profile shows "Lite" plan name. Must show "ADMIN" everywhere. Usage metrics must show "Unlimited" for admin users.                                                                                   | 190   | ✅ DONE. `plan-display.ts` utility. All surfaces show "ADMIN"/"Unlimited".               |
+| TD-VISION-01     | OpenAI   | Image upload "describe image" returns error. Relative URL `/api/download?key=...` inaccessible to OpenAI vision API.                                                                                       | 195   | ✅ DONE. Pre-signed S3 URLs via `@aws-sdk/s3-request-presigner`. 15-min TTL.             |
+| TD-AUDIO-OVERLAP | UX       | Multiple audios play simultaneously. No global pause coordination.                                                                                                                                         | 196   | ✅ DONE. Zustand `useAudioStore` with singleton playback. Register/unregister lifecycle. |
+| TD-IMG-LIGHTBOX  | UX       | Generated images locked at 320×320. No click-to-enlarge.                                                                                                                                                   | 197   | ✅ DONE. Native `<dialog>` lightbox with close + download controls.                      |
+| TD-LIB-UPLOADS   | UX       | Library "Uploaded" tab shows text-only cards. No visual previews.                                                                                                                                          | 198   | ✅ DONE. Image thumbnails + file-type icons.                                             |
+| TD-ACTION-STATE  | React    | `useActionState` console error: `formAction()` called outside `startTransition`.                                                                                                                           | 199   | ✅ DONE. `startTransition` wrapper in `AdminManagedForm.handleConfirm`.                  |
 
-### Resolved Previous Session (PM audit #87–89)
+### Resolved Previous Sessions (PM audit #87–90)
 
 | ID                | Area    | Description                                                                 | Phase   | Status                                                                               |
 | ----------------- | ------- | --------------------------------------------------------------------------- | ------- | ------------------------------------------------------------------------------------ |
@@ -880,34 +881,32 @@ All button styles use Lime Green as the accent color in **both** light and dark 
 
 ### Active — HIGH Priority
 
-| ID           | Area   | Description                                                                                                                                                                        | Phase |
-| ------------ | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
-| TD-VISION-01 | OpenAI | Image upload "describe image" returns error. Root cause: `buildPrivateS3AssetUrl()` returns `/api/download?key=...` (relative URL). OpenAI vision API cannot access internal URLs. | 195   |
+_None. All HIGH issues resolved._
 
-### Active — MEDIUM-HIGH Priority
+### Resolved — HIGH Priority
 
-| ID               | Area | Description                                                                                                          | Phase |
-| ---------------- | ---- | -------------------------------------------------------------------------------------------------------------------- | ----- |
-| TD-AUDIO-OVERLAP | UX   | Multiple audios play simultaneously. Each `AudioPlayer` creates independent `Audio()`. No global pause coordination. | 196   |
+| ID               | Area     | Description                                                                                                                                                                | Phase | Resolution                                                                               |
+| ---------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- | ---------------------------------------------------------------------------------------- |
+| TD-ADMIN-SUSPEND | Security | Admin users can be suspended via `toggleUserSuspensionAction` (single) and `bulkSuspendUsersAction` (bulk). Phase 189 only blocked deletion, not suspension. Lockout risk. | 200   | ✅ DONE (PM #92). 3-layer defense: role check, bulk filter, UI guard. 2 new tests.       |
+| TD-LIMITS-01     | Config   | `PLAN_LIMITS.Lite` code values differ from AGENTS.md Rule #5. Owner changed via direct commits 09918e2, 100d47e.                                                           | 202   | ✅ RESOLVED (PM #92). Owner override accepted. AGENTS.md Rule #5 updated. Tests pending. |
 
 ### Active — MEDIUM Priority (Non-Blocking)
 
-| ID              | Area | Description                                                                                                                                   | Phase |
-| --------------- | ---- | --------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
-| TD-IMG-LIGHTBOX | UX   | Generated images render at fixed 320×320. No click-to-enlarge or lightbox.                                                                    | 197   |
-| TD-LIB-UPLOADS  | UX   | Library "Uploaded" tab shows text-only cards. Image uploads should show thumbnails, files should show icons.                                  | 198   |
-| TD-MEDIA-01     | Arch | **ACCEPTED (PM audit #84-B).** Media gen (image/audio) may approach Vercel Hobby 60s timeout. Phase 181 proactive timeout handles gracefully. | —     |
+| ID             | Area | Description                                                                                                                                          | Phase |
+| -------------- | ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| TD-AVATAR-SYNC | UX   | `ProfileHeroEditor` saves avatar to MongoDB (`userimg`). `AvatarMenu` reads from Clerk `useUser().imageUrl`. Avatar changes not reflected in header. | 201   |
+| TD-CONTRAST-01 | A11y | Profile page "Free" badge fails WCAG 2.2 AA contrast ratio (2.76:1 vs 4.5:1 required). `bg-dustyBlue-500 text-lavenderHaze-200` at 8px font.         | 203   |
+| TD-MEDIA-01    | Arch | **ACCEPTED (PM audit #84-B).** Media gen (image/audio) may approach Vercel Hobby 60s timeout. Phase 181 proactive timeout handles gracefully.        | —     |
 
 ### Active — Low Priority
 
-| ID              | Area    | Description                                                                                                               | Phase    |
-| --------------- | ------- | ------------------------------------------------------------------------------------------------------------------------- | -------- |
-| TD-ACTION-STATE | React   | `useActionState` console error: `formAction(pendingFormData)` called outside `startTransition` in admin-managed-form.tsx. | 199      |
-| TD-AI-09        | OpenAI  | Image/audio generation prompts not persona-aware (chat prompts done Phase 22).                                            | 26.1     |
-| TD-AI-13        | OpenAI  | 3 model pricing entries are placeholders pending OpenAI confirmation.                                                     | Deferred |
-| TD-PLAN-01      | Billing | No recurring subscriptions (deferred v1).                                                                                 | Deferred |
-| TD-AI-18        | OpenAI  | errorMessage forwarding pattern in `/api/openai` is safe but fragile.                                                     | Advisory |
-| TD-API-09       | API     | `messageTextContentSchema` uses `.strict()` — may reject extra fields.                                                    | Monitor  |
+| ID         | Area    | Description                                                                    | Phase    |
+| ---------- | ------- | ------------------------------------------------------------------------------ | -------- |
+| TD-AI-09   | OpenAI  | Image/audio generation prompts not persona-aware (chat prompts done Phase 22). | 26.1     |
+| TD-AI-13   | OpenAI  | 3 model pricing entries are placeholders pending OpenAI confirmation.          | Deferred |
+| TD-PLAN-01 | Billing | No recurring subscriptions (deferred v1).                                      | Deferred |
+| TD-AI-18   | OpenAI  | errorMessage forwarding pattern in `/api/openai` is safe but fragile.          | Advisory |
+| TD-API-09  | API     | `messageTextContentSchema` uses `.strict()` — may reject extra fields.         | Monitor  |
 
 ### Resolved (PM audit #82)
 

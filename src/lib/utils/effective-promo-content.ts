@@ -3,6 +3,7 @@ import "server-only";
 import { DEFAULT_PROMO_CONTENT, PromoContent } from "@/constants/promo-content";
 import AppSetting from "@/lib/database/models/app-setting.model";
 import { connectToDatabase } from "@/lib/database/mongoose";
+import { getCachedConfigValue } from "@/lib/utils/config-cache";
 import { isObjectRecord } from "@/lib/utils/type-guards";
 
 type AppSettingRecord = {
@@ -130,16 +131,21 @@ function normalizePromoContent(value: unknown): PromoContent {
 }
 
 export async function getEffectivePromoContent(): Promise<PromoContent> {
-  try {
-    await connectToDatabase();
+  return getCachedConfigValue({
+    key: "effective-promo-content",
+    resolver: async () => {
+      try {
+        await connectToDatabase();
 
-    const setting = (await AppSetting.findOne({ key: "admin.promoContent" })
-      .select("value")
-      .lean()) as AppSettingRecord | null;
+        const setting = (await AppSetting.findOne({ key: "admin.promoContent" })
+          .select("value")
+          .lean()) as AppSettingRecord | null;
 
-    return normalizePromoContent(setting?.value);
-  } catch {
-    // Intentional fallback to defaults — admin config DB errors are non-fatal.
-    return { ...DEFAULT_PROMO_CONTENT };
-  }
+        return normalizePromoContent(setting?.value);
+      } catch {
+        // Intentional fallback to defaults - admin config DB errors are non-fatal.
+        return { ...DEFAULT_PROMO_CONTENT };
+      }
+    },
+  });
 }

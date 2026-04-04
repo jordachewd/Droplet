@@ -7,6 +7,7 @@ import {
 } from "@/constants/assistant-personas";
 import AppSetting from "@/lib/database/models/app-setting.model";
 import { connectToDatabase } from "@/lib/database/mongoose";
+import { getCachedConfigValue } from "@/lib/utils/config-cache";
 import { isObjectRecord } from "@/lib/utils/type-guards";
 import { Persona, PersonaId } from "@/types/PersonaData.d";
 
@@ -146,24 +147,31 @@ function applyPersonaOverride({
 }
 
 export async function getEffectivePersonaConfig(): Promise<Persona[]> {
-  try {
-    await connectToDatabase();
+  return getCachedConfigValue({
+    key: "effective-persona-config",
+    resolver: async () => {
+      try {
+        await connectToDatabase();
 
-    const setting = (await AppSetting.findOne({ key: "admin.personaOverrides" })
-      .select("value")
-      .lean()) as AppSettingRecord | null;
-    const personaOverrides = normalizePersonaOverrides(setting?.value);
+        const setting = (await AppSetting.findOne({
+          key: "admin.personaOverrides",
+        })
+          .select("value")
+          .lean()) as AppSettingRecord | null;
+        const personaOverrides = normalizePersonaOverrides(setting?.value);
 
-    return PERSONAS.map((persona) =>
-      applyPersonaOverride({
-        persona,
-        overrides: personaOverrides[persona.id],
-      }),
-    );
-  } catch {
-    // Intentional fallback to defaults — admin config DB errors are non-fatal.
-    return PERSONAS.map((persona) => clonePersona(persona));
-  }
+        return PERSONAS.map((persona) =>
+          applyPersonaOverride({
+            persona,
+            overrides: personaOverrides[persona.id],
+          }),
+        );
+      } catch {
+        // Intentional fallback to defaults - admin config DB errors are non-fatal.
+        return PERSONAS.map((persona) => clonePersona(persona));
+      }
+    },
+  });
 }
 
 export function getPersonaFromConfig({

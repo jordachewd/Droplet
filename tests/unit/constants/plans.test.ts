@@ -116,9 +116,9 @@ describe("plans constants", () => {
 
   it("defines the approved limits for every plan", () => {
     expect(PLAN_LIMITS.Lite).toEqual({
-      images: 3,
-      audio: 3,
-      conversationsPerDay: 5,
+      images: 1,
+      audio: 1,
+      conversationsPerDay: 10,
       promptsPerConversation: 10,
     });
     expect(PLAN_LIMITS.Pro).toEqual({
@@ -154,7 +154,7 @@ describe("plans constants", () => {
               isIncluded: true,
             }),
             expect.objectContaining({
-              label: "5 conversations per day",
+              label: "10 conversations per day",
               isIncluded: true,
             }),
             expect.objectContaining({
@@ -162,11 +162,11 @@ describe("plans constants", () => {
               isIncluded: true,
             }),
             expect.objectContaining({
-              label: "3 image generations per month",
+              label: "1 image generation per month",
               isIncluded: true,
             }),
             expect.objectContaining({
-              label: "3 audio generations per month",
+              label: "1 audio generation per month",
               isIncluded: true,
             }),
           ]),

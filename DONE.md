@@ -2,7 +2,75 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-04-03 — PM audit #90.
+> Last updated: 2026-04-04 — PM audit #92.
+
+---
+
+## Phase 200 — Admin Suspension Protection — COMPLETED (2026-04-04)
+
+> Engineer delivered (PM audit #92). Symmetric with Phase 189 deletion protection. 3-layer defense: backend single action role check, backend bulk action admin ID filtering, UI guard.
+
+- [x] `toggleUserSuspensionAction()` checks target user role before suspension, returns error for admin targets
+- [x] `bulkSuspendUsersAction()` queries admin IDs, filters before `updateMany`, logs skipped, records `skippedAdminCount` in audit
+- [x] Admin user detail page wraps suspension form in `{user.role !== "admin"}` guard
+- [x] 2 new unit tests (single and bulk suspension guards)
+- [x] Build passes, knip clean, all gates GREEN (except 10+3 known pre-existing failures)
+
+---
+
+## Phase 199 — useActionState startTransition Fix — COMPLETED (2026-04-03)
+
+> Engineer delivered (PM audit #91). `formAction(pendingFormData)` wrapped in `startTransition` in `AdminManagedForm.handleConfirm`. Covers all confirmation paths (delete, suspend, etc.).
+
+- [x] `formAction` call wrapped in `startTransition`
+- [x] Console error no longer appears
+- [x] Covers both delete and suspend confirmation paths
+- [x] Build passes, tests pass
+
+---
+
+## Phase 198 — Library Upload Previews — COMPLETED (2026-04-03)
+
+> Engineer delivered (PM audit #91). `LibraryUploadCard` in library-tabs.tsx now renders image thumbnails for `image/*` MIME types and file-type icons for non-image types.
+
+- [x] Image uploads show visual thumbnail preview
+- [x] Non-image uploads show file-type icon
+- [x] Build passes, tests pass
+
+---
+
+## Phase 197 — Image Lightbox — COMPLETED (2026-04-03)
+
+> Engineer delivered (PM audit #91). `ImageHolder` now opens full-viewport lightbox overlay via native `<dialog>` on click. Close button and download button available in lightbox.
+
+- [x] Clicking an image opens a full-viewport lightbox
+- [x] Close button and download button available
+- [x] Uses native `<dialog>` element
+- [x] Build passes, tests pass
+
+---
+
+## Phase 196 — Audio Player Overlap Fix — COMPLETED (2026-04-03)
+
+> Engineer delivered (PM audit #91). Zustand store `useAudioStore` provides global audio coordination. Only one audio plays at a time. Library audios now use shared `AudioPlayer` instead of native `<audio controls>`.
+
+- [x] `src/lib/hooks/use-audio-store.ts` created with Zustand
+- [x] Only one audio plays at a time across the entire app
+- [x] Starting a new audio pauses any currently playing audio
+- [x] Library audios use `AudioPlayer` instead of native `<audio controls>`
+- [x] Build passes, tests pass
+
+---
+
+## Phase 195 — Image Upload "Describe Image" Fix — COMPLETED (2026-04-03)
+
+> Engineer delivered (PM audit #91). Before sending messages to OpenAI, user `image_url` entries with internal `/api/download?key=...` URLs are resolved to pre-signed S3 URLs via `@aws-sdk/s3-request-presigner` with 15-minute TTL. Applied to both streaming and non-streaming flows.
+
+- [x] Internal `/api/download` URLs detected and resolved to pre-signed S3 URLs
+- [x] Pre-signed URLs have 15-minute TTL
+- [x] Image vision/description requests work correctly
+- [x] Fallback: if presign fails, original URL kept
+- [x] Build passes, tests pass
 
 ---
 

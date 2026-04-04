@@ -2,6 +2,7 @@ import "server-only";
 
 import AppSetting from "@/lib/database/models/app-setting.model";
 import { connectToDatabase } from "@/lib/database/mongoose";
+import { getCachedConfigValue } from "@/lib/utils/config-cache";
 import {
   buildFaqs,
   cloneFaqItems,
@@ -78,20 +79,26 @@ export async function getEffectiveFaqContent(
   config?: BuildFaqsConfig,
 ): Promise<FaqItem[]> {
   const defaults = buildFaqs(config);
+  const cacheScope = config ? JSON.stringify(config) : "default";
 
-  try {
-    await connectToDatabase();
+  return getCachedConfigValue({
+    key: `effective-faq-content:${cacheScope}`,
+    resolver: async () => {
+      try {
+        await connectToDatabase();
 
-    const setting = (await AppSetting.findOne({ key: "admin.faqContent" })
-      .select("value")
-      .lean()) as AppSettingRecord | null;
+        const setting = (await AppSetting.findOne({ key: "admin.faqContent" })
+          .select("value")
+          .lean()) as AppSettingRecord | null;
 
-    return normalizeFaqContent({
-      value: setting?.value,
-      defaults,
-    });
-  } catch {
-    // Intentional fallback to defaults — admin config DB errors are non-fatal.
-    return defaults;
-  }
+        return normalizeFaqContent({
+          value: setting?.value,
+          defaults,
+        });
+      } catch {
+        // Intentional fallback to defaults - admin config DB errors are non-fatal.
+        return defaults;
+      }
+    },
+  });
 }

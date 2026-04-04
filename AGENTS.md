@@ -20,7 +20,7 @@ These rules are **non-negotiable**. All agents must respect them in every implem
 2. **Lite is permanent and free** — no 3-day trial, no expiry. Default plan on account creation.
 3. **Personas are plan-gated (three-tier access)** — **Full access:** Lite: Strategist, Developer (2). Pro: all Lite + Teacher, Creator, Wellness (5). Premium: all 6 personas. **Limited access (trial):** Non-full-access personas are available with reduced limits (5 prompts/conversation, 3 images, 2 audio per 30-day window). Trial limits are global across all limited personas and tracked separately from plan limits. **Blocked:** Admin can override and fully block personas per plan via admin settings. Personas are the core product differentiator.
 4. **Prices: Pro = $19, Premium = $39** — enforce everywhere.
-5. **Lite limits: 5 conversations/day, 10 prompts/conversation, 3 image generations/month, 3 audio generations/month.** All features limited, none blocked.
+5. **Lite limits: 10 conversations/day, 10 prompts/conversation, 1 image generation/month, 1 audio generation/month.** All features limited, none blocked. _(Updated PM audit #92: owner override via direct commits 09918e2, 100d47e accepted as intentional.)_
 6. **When limits are hit, conversation MUST end** with a stop reason and next-action instruction.
 7. **Users can only access their own data** — ownership enforcement on every query.
 8. **Admin routes under `/admin/*`** — protected by role at proxy AND server level.

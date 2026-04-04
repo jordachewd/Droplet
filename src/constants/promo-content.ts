@@ -35,7 +35,7 @@ export const DEFAULT_PROMO_CONTENT: PromoContent = {
   promoDescriptionPremium:
     "Upgrade to Premium for highest limits and premium workflows.",
   promoUpgradeCta: "Upgrade Now",
-  promoAdminLabel: "Admin",
+  promoAdminLabel: "ADMIN",
   promoAdminDescription: "You have admin access.",
   promoSuspensionTitle: "Account Suspended",
   promoSuspensionDescription:

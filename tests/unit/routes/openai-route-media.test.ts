@@ -278,7 +278,7 @@ describe("POST /api/openai - media generation limits", () => {
     expect(User.findOneAndUpdate).toHaveBeenCalledWith(
       {
         clerkId: "user_123",
-        "plan.imageGenerations": { $lt: 3 },
+        "plan.imageGenerations": { $lt: 1 },
       },
       {
         $inc: {
