@@ -5,11 +5,11 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #93 (2026-04-04). V1.0 MVP RELEASED. All 7 validation gates GREEN (619 tests, lint 0/0, TSC clean, build passes, knip 0). All Milestones 0–25 COMPLETE. Phases 189–203, 144 COMPLETE.**
+> **STATUS: PM audit #94 (2026-04-05). V1.0 MVP RELEASED. All 7 validation gates GREEN (628 tests, lint 0/0, TSC clean, build passes, knip 0). All Milestones 0–25 COMPLETE. Phases 189–207, 144 COMPLETE.**
 >
 > **GATE STATUS: Validation GREEN. Architecture GREEN. Product GREEN. Admin GREEN. Public GREEN. Contract GREEN.**
 >
-> **TEST STATUS: 619 tests (102 suites), 49 E2E (6 skipped). 0 failures. All gates GREEN.**
+> **TEST STATUS: 628 tests (102 suites), 49 E2E (6 skipped). 0 failures. All gates GREEN.**
 >
 > **OWNER DIRECTIVES:**
 >
@@ -35,22 +35,18 @@
 > - ✅ Avatar sync MongoDB↔Clerk — **DONE (Phase 201). Non-blocking Clerk sync.**
 > - ⚪ PlanPromo + ChatSidebarPromo merge — **REJECTED. Acceptable pattern.**
 > - ⚪ TiptapEditor useEffect concern — **ACKNOWLEDGED. Stable reference from DB fetch. No action needed.**
-> - 🔴 API route timeouts must be max — **Phase 204. HIGH. Owner directive PM #93.**
-> - 🔴 New chat not appearing in sidebar — **Phase 205. HIGH. Owner bug PM #93.**
-> - 🔴 Image upload error messages generic — **Phase 206. HIGH. Owner bug PM #93.**
-> - 🟡 Upload file sanitization (magic bytes) — **Phase 207. MEDIUM. Owner directive PM #93.**
+> - ✅ API route timeouts must be max — **DONE (Phase 204). All 6 routes at maxDuration=60.**
+> - ✅ New chat not appearing in sidebar — **DONE (Phase 205). router.refresh() with one-time guard.**
+> - ✅ Image upload error messages generic — **DONE (Phase 206). Error propagation + client MIME validation + narrowed accept.**
+> - ✅ Upload file sanitization (magic bytes) — **DONE (Phase 207). JPEG/PNG/GIF/WebP magic byte validation.**
 >
-> **EXECUTION ORDER (PM audit #93 — Post-Release):**
+> **EXECUTION ORDER (PM audit #94 — Post-Release):**
 >
-> 1. **HIGH Phase 204** — Set all API route `maxDuration` to 60 (Vercel Hobby ceiling). ~5 min.
-> 2. **HIGH Phase 205** — Sidebar live update on new chat (`router.refresh()` after task creation). ~15 min.
-> 3. **HIGH Phase 206** — Upload error propagation + client-side type validation + narrow `accept` attribute. ~30 min.
-> 4. **MEDIUM Phase 207** — Upload magic byte validation (JPEG/PNG/GIF/WebP signatures). ~30 min.
-> 5. **MEDIUM Phase 145** — Upload filename collision prevention (`crypto.randomUUID()`).
-> 6. **MEDIUM Phase 165** — Checkout success page DB polling.
-> 7. **LOW Phase 146** — Admin user detail transaction limit.
-> 8. **LOW Phase 147** — Rename `.tsx` utility files to `.ts`.
-> 9. **LOW Phase 148** — Bulk operations partial-failure reporting.
+> 1. **MEDIUM Phase 145** — Upload filename collision prevention (`crypto.randomUUID()`).
+> 2. **MEDIUM Phase 165** — Checkout success page DB polling.
+> 3. **LOW Phase 146** — Admin user detail transaction limit.
+> 4. **LOW Phase 147** — Rename `.tsx` utility files to `.ts`.
+> 5. **LOW Phase 148** — Bulk operations partial-failure reporting.
 
 ---
 
@@ -241,110 +237,27 @@
 
 ---
 
-## HIGH — Phase 204 — Set All API Route Timeouts to Maximum
+## ✅ Phase 204 — Set All API Route Timeouts to Maximum — DONE (2026-04-05)
 
-> **Owner directive (PM #93).** API route timeouts must be set to maximum possible to avoid/reduce stalled queries or incomplete requests to external services. Vercel Hobby ceiling is 60s.
-
-**Files:**
-
-- `src/app/api/webhooks/stripe/route.tsx` — currently `maxDuration = 30`, change to `60`
-- `src/app/api/upload/route.tsx` — currently `maxDuration = 30`, change to `60`
-- `src/app/api/download/route.tsx` — currently `maxDuration = 30`, change to `60`
-- `src/app/api/aws/route.tsx` — currently `maxDuration = 30`, change to `60`
-
-**Already at 60:** `/api/openai`, `/api/webhooks/clerk`.
-
-**What to do:** Change `export const maxDuration = 30` to `export const maxDuration = 60` in all 4 files.
-
-**Acceptance criteria:**
-
-- [ ] All API routes have `maxDuration = 60`
-- [ ] Build passes
+> Archived in DONE.md.
 
 ---
 
-## HIGH — Phase 205 — Sidebar Live Update on New Chat
+## ✅ Phase 205 — Sidebar Live Update on New Chat — DONE (2026-04-05)
 
-> **Owner bug (PM #93).** When starting a new chat with any persona, the new conversation does not appear in the sidebar until browser refresh. Root cause: `ChatSidebar` is a Server Component rendered at layout level, fetches data from `getRecentTasksByUserId()` during SSR. No `router.refresh()` or revalidation is called after client-side task creation in `ChatWrapper`.
-
-**Files:**
-
-- `src/components/chat/chat-wrapper.tsx` — needs `router.refresh()` after new task creation
-
-**What to do:**
-
-1. In `ChatWrapper`, after `setTaskId(responseData.taskId)` for a **new** conversation (when previous `dbTaskId` was `null`), call `router.refresh()` to trigger a Server Component re-render of the layout.
-2. This forces `ChatSidebar` to re-fetch from DB and display the new conversation.
-3. Use `useRouter()` from `next/navigation` (likely already imported).
-4. Only call `router.refresh()` on the first message of a new conversation, not on subsequent messages.
-
-**Acceptance criteria:**
-
-- [ ] New conversation appears in sidebar after first message without browser refresh
-- [ ] Subsequent messages in existing conversation do NOT trigger unnecessary refreshes
-- [ ] Build passes, tests pass
+> Archived in DONE.md.
 
 ---
 
-## HIGH — Phase 206 — Upload Error Message Propagation + Client-Side Validation
+## ✅ Phase 206 — Upload Error Message Propagation + Client-Side Validation — DONE (2026-04-05)
 
-> **Owner bug (PM #93).** Image upload in ChatInput shows "Failed to upload file. Please try again." for ALL errors instead of specific messages. `.avif` files are not supported but the user only sees "File upload failed" instead of listing allowed types. Root cause: `chat-input.tsx` catch block intentionally discards server error messages and replaces with generic text.
-
-**Files:**
-
-- `src/components/chat/chat-input.tsx` — Fix catch block to propagate server error messages
-- `src/components/chat/chat-input.tsx` — Narrow `accept` attribute from `image/*` to specific types
-- `src/components/chat/chat-input.tsx` — Add client-side pre-validation before upload
-
-**What to do:**
-
-1. **Fix error propagation:** Change catch block from:
-   ```typescript
-   void error;
-   setUploadError("Failed to upload file. Please try again.");
-   ```
-   to:
-   ```typescript
-   const message =
-     error instanceof Error
-       ? error.message
-       : "Failed to upload file. Please try again.";
-   setUploadError(message);
-   ```
-2. **Narrow accept attribute:** Change `accept="image/*"` to `accept="image/jpeg,image/png,image/webp,image/gif"` — prevents file picker from showing unsupported formats.
-3. **Add client-side pre-validation:** Before calling `uploadSelectedFile()`, check file type against the allowlist on the client side. Show immediate error for invalid types without making a round-trip.
-
-**Acceptance criteria:**
-
-- [ ] Server error messages (invalid type, too large, etc.) shown to user
-- [ ] File picker only shows supported image formats
-- [ ] `.avif` files rejected with specific error message listing allowed types
-- [ ] Build passes
+> Archived in DONE.md.
 
 ---
 
-## MEDIUM — Phase 207 — Upload Magic Byte Validation (Security)
+## ✅ Phase 207 — Upload Magic Byte Validation (Security) — DONE (2026-04-05)
 
-> **Owner directive (PM #93).** Upload sanitization: deep security audit performed. Server-side validation relies solely on browser-reported MIME type which is trivially spoofable. Must verify actual file content via magic byte signatures.
-
-**File:** `src/lib/utils/upload-file-validation.ts`
-
-**What to do:**
-
-1. Add a `validateImageMagicBytes(buffer: ArrayBuffer): boolean` function that checks the first 8-16 bytes against known image format signatures:
-   - JPEG: starts with `FF D8 FF`
-   - PNG: starts with `89 50 4E 47 0D 0A 1A 0A`
-   - GIF: starts with `47 49 46 38` (`GIF8`)
-   - WebP: starts with `52 49 46 46` at offset 0, `57 45 42 50` at offset 8
-2. Call this function in the upload route after reading the file buffer, before uploading to S3.
-3. Return a specific error message if magic bytes don't match claimed MIME type: "File content does not match declared type."
-
-**Acceptance criteria:**
-
-- [ ] Upload validates file content matches claimed MIME type
-- [ ] Spoofed MIME type with non-image content is rejected
-- [ ] Valid images with correct magic bytes still upload successfully
-- [ ] Build passes, tests pass
+> Archived in DONE.md.
 
 ---
 
