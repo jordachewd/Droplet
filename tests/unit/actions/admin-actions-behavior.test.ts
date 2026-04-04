@@ -276,6 +276,7 @@ describe("admin.actions behavior", () => {
   });
 
   it("toggleUserSuspensionAction returns not-found edge state", async () => {
+    userFindByIdMock.mockReturnValueOnce(mockMongooseModel(null));
     userFindByIdAndUpdateMock.mockResolvedValueOnce(null);
 
     const response = await toggleUserSuspensionAction(
@@ -283,6 +284,22 @@ describe("admin.actions behavior", () => {
     );
 
     expectErrorState(response, "User not found.");
+  });
+
+  it("toggleUserSuspensionAction blocks admin-user suspension", async () => {
+    userFindByIdMock.mockReturnValueOnce(
+      mockMongooseModel({
+        role: "admin",
+      }),
+    );
+
+    const response = await toggleUserSuspensionAction(
+      buildFormData({ userId: targetUserId, suspended: "true" }),
+    );
+
+    expectErrorState(response, "Admin accounts cannot be suspended.");
+    expect(userFindByIdAndUpdateMock).not.toHaveBeenCalled();
+    expect(createAdminAuditLogEntryMock).not.toHaveBeenCalled();
   });
 
   it("removeUserByAdminAction removes user and owned resources", async () => {
@@ -886,6 +903,36 @@ describe("admin.actions behavior", () => {
     });
     expect(deleteClerkUserMock).toHaveBeenCalledTimes(1);
     expect(deleteClerkUserMock).toHaveBeenCalledWith("user_123");
+  });
+
+  it("bulkSuspendUsersAction skips admin ids and suspends only client users", async () => {
+    userFindMock.mockReturnValueOnce(
+      mockMongooseModel([{ _id: secondUserId }]),
+    );
+    userUpdateManyMock.mockResolvedValueOnce({ modifiedCount: 1 });
+
+    const response = await bulkSuspendUsersAction(
+      buildFormData({ userIds: [targetUserId, secondUserId] }),
+    );
+
+    expect(response).toEqual({
+      status: "success",
+      message: "1 users suspended.",
+      severity: "warning",
+    });
+    expect(userUpdateManyMock).toHaveBeenCalledWith(
+      { _id: { $in: [targetUserId] } },
+      {
+        $set: {
+          suspended: true,
+          updatedAt: expect.any(Date),
+        },
+      },
+      {
+        strict: true,
+        upsert: false,
+      },
+    );
   });
 
   it("bulk actions handle missing ids edge inputs", async () => {

@@ -545,6 +545,18 @@ export async function toggleUserSuspensionAction(
 
     await connectToDatabase();
 
+    const targetUser = (await User.findById(targetUserId)
+      .select("role")
+      .lean()) as { role?: string } | null;
+
+    if (!targetUser) {
+      return errorState("User not found.");
+    }
+
+    if (targetUser.role === "admin") {
+      return errorState("Admin accounts cannot be suspended.");
+    }
+
     const updatedUser = await User.findByIdAndUpdate(
       targetUserId,
       {
@@ -1031,19 +1043,44 @@ export async function bulkSuspendUsersAction(
 
     await connectToDatabase();
 
-    const result = await User.updateMany(
-      { _id: { $in: userIds } },
-      {
-        $set: {
-          suspended: true,
-          updatedAt: new Date(),
-        },
-      },
-      {
-        strict: true,
-        upsert: false,
-      },
+    const adminUsers = (await User.find({
+      _id: { $in: userIds },
+      role: "admin",
+    })
+      .select("_id")
+      .lean()) as Array<{ _id: unknown }>;
+    const adminUserIdSet = new Set(
+      adminUsers.map((adminUser) => String(adminUser._id)),
     );
+    const suspendableUserIds = userIds.filter(
+      (targetUserId) => !adminUserIdSet.has(targetUserId),
+    );
+
+    if (adminUserIdSet.size > 0) {
+      process.stderr.write(
+        `[admin.actions] bulkSuspendUsersAction skipped admin users: ${Array.from(adminUserIdSet).join(",")}\n`,
+      );
+    }
+
+    let modifiedCount = 0;
+
+    if (suspendableUserIds.length > 0) {
+      const result = await User.updateMany(
+        { _id: { $in: suspendableUserIds } },
+        {
+          $set: {
+            suspended: true,
+            updatedAt: new Date(),
+          },
+        },
+        {
+          strict: true,
+          upsert: false,
+        },
+      );
+
+      modifiedCount = result.modifiedCount ?? 0;
+    }
 
     await createAdminAuditLogEntry({
       adminId,
@@ -1052,17 +1089,15 @@ export async function bulkSuspendUsersAction(
       targetId: userIds.join(","),
       details: {
         selectedCount: userIds.length,
-        modifiedCount: result.modifiedCount ?? 0,
+        modifiedCount,
+        skippedAdminCount: adminUserIdSet.size,
       },
     });
 
     revalidatePath("/admin");
     revalidatePath("/admin/users");
 
-    return successState(
-      `${result.modifiedCount ?? 0} users suspended.`,
-      "warning",
-    );
+    return successState(`${modifiedCount} users suspended.`, "warning");
   } catch (error) {
     logAdminActionError("bulkSuspendUsersAction", error);
     return errorState("Unable to suspend selected users.");
