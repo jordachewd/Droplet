@@ -3,7 +3,7 @@
 > Purpose: one execution document for finishing the SaaS without avoidable rework.
 > Audience: Project Manager, Architect, and Senior Software Agents.
 > Rule: this plan is based on verified repository state. If older docs disagree with code, code wins until this file is updated.
-> Last verified: PM audit #91, 2026-04-03. V1.0 MVP RELEASED. Phases 195-199 DONE (image vision presigned URLs, Zustand audio overlap, image lightbox, library upload previews, useActionState fix). 615 tests. 2 new owner bugs (OI39-OI40).
+> Last verified: PM audit #92, 2026-04-04. V1.0 MVP RELEASED. Phases 195-200 DONE. 617 tests. Phase 200 admin suspension protection VERIFIED. OI39 RESOLVED. PLAN_LIMITS owner override accepted.
 
 ---
 
@@ -20,7 +20,7 @@ Droplet is deployed to production with all 25 milestones complete. The TDD testi
 3. **? C3 ? Facebook login ? CLOSED.** Owner removed Facebook login from product. No longer used.
 
 **Phases completed since last plan update:**
-Phase 178, 181, 182 ? DONE. Phase 183 (Stripe) ? RESOLVED (webhook was disabled). Phase 184 (Facebook) ? CLOSED (removed from product). Phase 185 (sora-2-pro removal) ? DONE. Phase 180.1 (homepage text extraction) ? DONE. Phase 186-A (video generation removal) ? DONE. Phase 186-B (token limits maximized) ? DONE. Phase 187-A (admin error boundary) ? DONE. Phase 187-B (Clerk webhook cascade order) ? DONE. Phase 187-C (audio player error recovery) ? DONE. Phase 187-D (download rate-limit key cleanup) ? DONE. Phase 143 (env var runtime validation) ? DONE. Phase 180.2 (chat display text extraction) ? DONE. Phase 180.3 (plans display text extraction) ? DONE. Phase 180.4 (currency symbol compliance) ? DONE. Phase 188 (PlanCard isIncluded fix) � DONE. Phase 189 (admin deletion protection) � DONE. Phase 190 (admin ADMIN display + unlimited) � DONE. Phase 191 (reusable FormInput) � DONE. Phase 192 (reusable PersonaSelector) � DONE. Phase 193 (reusable UsageMetricRow) � DONE. Phase 194 (TiptapEditor redesign) � DONE. Phase 195 (image vision presigned URLs) � DONE. Phase 196 (Zustand audio overlap fix) � DONE. Phase 197 (image lightbox) � DONE. Phase 198 (library upload previews) � DONE. Phase 199 (useActionState fix) � DONE.
+Phase 178, 181, 182 ? DONE. Phase 183 (Stripe) ? RESOLVED (webhook was disabled). Phase 184 (Facebook) ? CLOSED (removed from product). Phase 185 (sora-2-pro removal) ? DONE. Phase 180.1 (homepage text extraction) ? DONE. Phase 186-A (video generation removal) ? DONE. Phase 186-B (token limits maximized) ? DONE. Phase 187-A (admin error boundary) ? DONE. Phase 187-B (Clerk webhook cascade order) ? DONE. Phase 187-C (audio player error recovery) ? DONE. Phase 187-D (download rate-limit key cleanup) ? DONE. Phase 143 (env var runtime validation) ? DONE. Phase 180.2 (chat display text extraction) ? DONE. Phase 180.3 (plans display text extraction) ? DONE. Phase 180.4 (currency symbol compliance) ? DONE. Phase 188 (PlanCard isIncluded fix) � DONE. Phase 189 (admin deletion protection) � DONE. Phase 190 (admin ADMIN display + unlimited) � DONE. Phase 191 (reusable FormInput) � DONE. Phase 192 (reusable PersonaSelector) � DONE. Phase 193 (reusable UsageMetricRow) � DONE. Phase 194 (TiptapEditor redesign) � DONE. Phase 195 (image vision presigned URLs) � DONE. Phase 196 (Zustand audio overlap fix) � DONE. Phase 197 (image lightbox) � DONE. Phase 198 (library upload previews) → DONE. Phase 199 (useActionState fix) → DONE. Phase 200 (admin suspension protection) → DONE.
 
 ---
 
@@ -38,27 +38,27 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 
 ### Architecture Status ? SOUND. ALL GATES GREEN.
 
-| Area                | Status | Evidence                                                                                                                                                  |
-| ------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Route boundaries    | ?      | Clean `/app(.*)` + `/admin(.*)` proxy protection                                                                                                          |
-| Server/client split | ?      | Server Components for pages, client for UX only                                                                                                           |
-| Auth in all actions | ?      | All server actions + API routes verify auth                                                                                                               |
-| Admin double-check  | ?      | All 15 admin functions use `requireAdminAccess`                                                                                                           |
-| Schema strict mode  | ?      | All 9 Mongoose models have `strict: true`                                                                                                                 |
-| Index coverage      | ?      | 18 indexed fields across all query-filtered cols                                                                                                          |
-| maxDuration exports | ?      | All 6 API routes (openai=60, clerk=60, rest=30)                                                                                                           |
-| Server-only guards  | ?      | 50+ utility files with `import "server-only"`                                                                                                             |
-| Rate limiting       | ?      | MongoDB-backed, durable, all API routes covered                                                                                                           |
-| SSRF prevention     | ?      | `isAllowedDownloadUrl()` allowlist                                                                                                                        |
-| Error handling      | ?      | All catches documented, `handleError` ? `never`                                                                                                           |
-| **Stream timeout**  | ?      | **Phase 181 CONFIRMED WORKING in production. Proactive timeout fires correctly.**                                                                         |
-| **Stripe webhook**  | ?      | **RESOLVED. Root cause: webhook was disabled. Re-enabled, HTTP 200 confirmed.**                                                                           |
-| **Facebook login**  | ?      | **CLOSED. Owner removed Facebook login from product.**                                                                                                    |
-| Knip                | ?      | 0 findings                                                                                                                                                |
-| TSC                 | ?      | 0 errors                                                                                                                                                  |
-| Lint                | ?      | 0 errors, 0 warnings                                                                                                                                      |
-| Tests               | ?      | 102 suites, 615 tests. 10 failures from owner PLAN_LIMITS changes (owner commits 09918e2, 100d47e). 3 E2E failures from pre-existing Free badge contrast. |
-| E2E                 | ?      | 8 specs, 49 tests                                                                                                                                         |
+| Area                | Status | Evidence                                                                                                                                                                          |
+| ------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Route boundaries    | ?      | Clean `/app(.*)` + `/admin(.*)` proxy protection                                                                                                                                  |
+| Server/client split | ?      | Server Components for pages, client for UX only                                                                                                                                   |
+| Auth in all actions | ?      | All server actions + API routes verify auth                                                                                                                                       |
+| Admin double-check  | ?      | All 15 admin functions use `requireAdminAccess`                                                                                                                                   |
+| Schema strict mode  | ?      | All 9 Mongoose models have `strict: true`                                                                                                                                         |
+| Index coverage      | ?      | 18 indexed fields across all query-filtered cols                                                                                                                                  |
+| maxDuration exports | ?      | All 6 API routes (openai=60, clerk=60, rest=30)                                                                                                                                   |
+| Server-only guards  | ?      | 50+ utility files with `import "server-only"`                                                                                                                                     |
+| Rate limiting       | ?      | MongoDB-backed, durable, all API routes covered                                                                                                                                   |
+| SSRF prevention     | ?      | `isAllowedDownloadUrl()` allowlist                                                                                                                                                |
+| Error handling      | ?      | All catches documented, `handleError` ? `never`                                                                                                                                   |
+| **Stream timeout**  | ?      | **Phase 181 CONFIRMED WORKING in production. Proactive timeout fires correctly.**                                                                                                 |
+| **Stripe webhook**  | ?      | **RESOLVED. Root cause: webhook was disabled. Re-enabled, HTTP 200 confirmed.**                                                                                                   |
+| **Facebook login**  | ?      | **CLOSED. Owner removed Facebook login from product.**                                                                                                                            |
+| Knip                | ?      | 0 findings                                                                                                                                                                        |
+| TSC                 | ?      | 0 errors                                                                                                                                                                          |
+| Lint                | ?      | 0 errors, 0 warnings                                                                                                                                                              |
+| Tests               | ✓      | 102 suites, 617 tests. 10 failures from owner PLAN_LIMITS changes (owner override accepted PM #92, tests pending Phase 202). 3 E2E failures from Free badge contrast (Phase 203). |
+| E2E                 | ?      | 8 specs, 49 tests                                                                                                                                                                 |
 
 ### Issues Found by Audit #82?#84 ? Updated Status
 
@@ -111,6 +111,7 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 | 197   | Image lightbox                                 | ✅ DONE                | Native <dialog>, fullscreen overlay, download.                                                                     |
 | 198   | Library upload previews                        | ✅ DONE                | Image thumbnails, file-type icons.                                                                                 |
 | 199   | useActionState startTransition fix             | ✅ DONE                | formAction wrapped in startTransition.                                                                             |
+| 200   | Admin suspension protection                    | ✅ DONE                | 3-layer defense: role check in toggle, admin filter in bulk, UI guard. 2 new tests. 617 total.                     |
 
 ### Ongoing Constraints
 
@@ -120,15 +121,15 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 
 ---
 
-## 4. SWOT Analysis (Updated 2026-04-03, post PM audit #90)
+## 4. SWOT Analysis (Updated 2026-04-04, post PM audit #92)
 
-**Strengths:** Clean architecture, strong auth, comprehensive tests (611+49), central policy resolvers, WCAG 2.2 AA complete, durable usage counters, thorough user deletion cascade, zero lint/type/knip issues, correct webhook code structure, stream timeout confirmed in production (Phase 181), video generation cleanly removed (Phase 186-A), token limits maximized (Phase 186-B), admin error boundary (Phase 187-A), env var runtime validation (Phase 143), all display text admin-configurable (Phases 180.1�180.4), audio player error recovery (Phase 187-C), admin deletion protection with 5-layer defense (Phase 189), reusable component library: FormInput/PersonaSelector/UsageMetricRow (Phases 191�193), TiptapEditor WYSIWYG (Phase 194), plan-display utility for admin ADMIN label (Phase 190).
+**Strengths:** Clean architecture, strong auth, comprehensive tests (617+49), central policy resolvers, WCAG 2.2 AA complete, durable usage counters, thorough user deletion cascade, zero lint/type/knip issues, correct webhook code structure, stream timeout confirmed in production (Phase 181), video generation cleanly removed (Phase 186-A), token limits maximized (Phase 186-B), admin error boundary (Phase 187-A), env var runtime validation (Phase 143), all display text admin-configurable (Phases 180.1–180.4), audio player error recovery (Phase 187-C), admin deletion protection with 5-layer defense (Phase 189), reusable component library: FormInput/PersonaSelector/UsageMetricRow (Phases 191–193), TiptapEditor WYSIWYG (Phase 194), plan-display utility for admin ADMIN label (Phase 190), admin suspension protection with symmetric 3-layer defense (Phase 200).
 
-**Weaknesses:** Admin suspension protection gap — admin users can be suspended (Phase 189 only blocked deletion). Avatar data-sync gap — ProfileHeroEditor saves to MongoDB, AvatarMenu reads from Clerk. 10 unit test failures from owner PLAN_LIMITS changes. 3 E2E failures from Free badge contrast ratio. PLAN_LIMITS code values (Lite images:1, conversations:10) differ from AGENTS.md frozen rule #5 (images:3, conversations:5) — owner override via direct commits.
+**Weaknesses:** Avatar data-sync gap — ProfileHeroEditor saves to MongoDB, AvatarMenu reads from Clerk. 10 unit test failures from owner PLAN_LIMITS changes (tests need update, Phase 202 unblocked). 3 E2E failures from Free badge contrast ratio (Phase 203).
 
-**Opportunities:** Structured test baseline update after PLAN_LIMITS clarification. Clerk avatar sync for UX consistency. Vercel Pro upgrade (/mo). Admin config cache (5+ DB hits/request → 30s TTL). Checkout success polling.
+**Opportunities:** Test baseline update (Phase 202, unblocked). Clerk avatar sync for UX consistency. Vercel Pro upgrade ($20/mo). Admin config cache (5+ DB hits/request → 30s TTL). Checkout success polling.
 
-**Threats:** Admin suspension gap allows locking out admin users. Single-document growth risk.
+**Threats:** Single-document growth risk.
 
 ---
 
@@ -141,23 +142,23 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 | C    | Product Gate    | GREEN  | All display strings admin-configurable. Video removed. Stripe + Facebook resolved.         |
 | D    | Admin Gate      | GREEN  | Admin config complete. Error boundary added (Phase 187-A). All strings admin-configurable. |
 | E    | Public Gate     | GREEN  | All 7 public routes accurate, legal content real, no obsolete trial messaging              |
-| F    | Validation Gate | GREEN  | 611 tests, lint 0/0, TSC clean, knip 0, E2E 49 tests, coverage 85/80/85/85                 |
+| F    | Validation Gate | GREEN  | 617 tests, lint 0/0, TSC clean, knip 0, E2E 49 tests, coverage 85/80/85/85                 |
 
 ---
 
 ## 6. Current Execution Order
 
-> All critical issues RESOLVED. All v1.0 pre-release phases DONE. **V1.0 MVP RELEASED.** Phases 195-199 DONE. 4 new phases queued (200-203).
+> All critical issues RESOLVED. All v1.0 pre-release phases DONE. **V1.0 MVP RELEASED.** Phases 195-200 DONE. 3 active phases (201-203).
 
 ### Post-Release Active
 
-- **🔴 Phase 200** — HIGH: Admin suspension protection (role check in toggleUserSuspensionAction, admin filter in bulkSuspendUsersAction, UI guard).
+- **🟡 Phase 202** — MEDIUM: Fix 10 unit test failures (align tests with owner PLAN_LIMITS changes). **UNBLOCKED.**
+- **🟡 Phase 203** — MEDIUM: Fix 3 E2E contrast failures (Free badge color, `bg-dustyBlue-500 text-lavenderHaze-200` → darker text).
 - **🟡 Phase 201** — MEDIUM: Avatar sync (ProfileHeroEditor → Clerk sync, OR AvatarMenu reads MongoDB).
-- **🟡 Phase 202** — MEDIUM: Fix 10 unit test failures (align tests with owner PLAN_LIMITS changes).
-- **🟡 Phase 203** — MEDIUM: Fix 3 E2E contrast failures (Free badge color).
 
 ### Confirmed Working
 
+- **✅ Phase 200** — Admin suspension protection. DONE. Symmetric 3-layer defense matching Phase 189.
 - **✅ Phase 195** — Image vision presigned URL rewrite. DONE.
 - **✅ Phase 196** — Zustand audio overlap fix. DONE.
 - **✅ Phase 197** — Image lightbox. DONE.
@@ -231,7 +232,7 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 | OI36 | Image lightbox for generated images    | ✅ COMPLETE. Phase 197 DONE. Native <dialog>, fullscreen overlay, download.                                                        |
 | OI37 | Library uploaded tab visual previews   | ✅ COMPLETE. Phase 198 DONE. Image thumbnails + file-type icons.                                                                   |
 | OI38 | useActionState console warning         | ✅ COMPLETE. Phase 199 DONE. formAction wrapped in startTransition.                                                                |
-| OI39 | Admin suspension protection gap        | 🔴 Phase 200. HIGH. Admin can be suspended.                                                                                        |
+| OI39 | Admin suspension protection gap        | ✅ COMPLETE. Phase 200 DONE. Symmetric 3-layer protection matching Phase 189.                                                      |
 | OI40 | Avatar sync MongoDB↔Clerk              | 🟡 Phase 201. MEDIUM. Profile saves MongoDB, header reads Clerk.                                                                   |
 
 ---
@@ -246,7 +247,7 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 2. Lite is permanent and free ? no expiry
 3. Personas are plan-gated (Lite: 2 full + 4 trial, Pro: 5 full + 1 trial, Premium: all 6 full)
 4. Pro = $19, Premium = $39
-5. Lite limits: 5 conv/day, 10 prompts/conv, 3 img/mo, 3 audio/mo
+5. Lite limits: 10 conv/day, 10 prompts/conv, 1 img/mo, 1 audio/mo
 6. Conversations end with stop reason + next-action when limits hit
 7. Users can only access their own data
 8. Admin routes under `/admin/*` protected at proxy + server level
@@ -255,11 +256,11 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 
 ### Tier contract
 
-| Tier    | Price | Chat Model            | Key Limits                                        |
-| ------- | ----- | --------------------- | ------------------------------------------------- |
-| Lite    | Free  | `gpt-4o-mini`         | 5 conv/day, 10 prompts/conv, 3 img/mo, 3 audio/mo |
-| Pro     | $19   | `gpt-4.1`             | 50/day, 100/conv, 50 img, 50 audio                |
-| Premium | $39   | `gpt-4.1` / `gpt-5.4` | Unlimited                                         |
+| Tier    | Price | Chat Model            | Key Limits                                         |
+| ------- | ----- | --------------------- | -------------------------------------------------- |
+| Lite    | Free  | `gpt-4o-mini`         | 10 conv/day, 10 prompts/conv, 1 img/mo, 1 audio/mo |
+| Pro     | $19   | `gpt-4.1`             | 50/day, 100/conv, 50 img, 50 audio                 |
+| Premium | $39   | `gpt-4.1` / `gpt-5.4` | Unlimited                                          |
 
 ---
 

@@ -2,34 +2,30 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-04-03 (PM audit #91). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. **V1.0 MVP RELEASED.** Brand rename complete (Phase 172). Catch blocks documented (Phase 167.2). Promo text admin-configurable (Phase 162, 180.2–180.3). Global error boundary live (Phase 163). Admin error boundary live (Phase 187-A). Phases 173–178, 180.1–180.4, 181–199 COMPLETE. E2E: 49 tests (8 spec files). Coverage: 85/80/85/85. 615 tests. Build passing. Node.js 24.12.0.
+> Last updated: 2026-04-04 (PM audit #92). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. **V1.0 MVP RELEASED.** Brand rename complete (Phase 172). Catch blocks documented (Phase 167.2). Promo text admin-configurable (Phase 162, 180.2–180.3). Global error boundary live (Phase 163). Admin error boundary live (Phase 187-A). Phases 173–178, 180.1–180.4, 181–200 COMPLETE. E2E: 49 tests (8 spec files). Coverage: 85/80/85/85. 617 tests. Build passing. Node.js 24.12.0.
 >
-> **V1.0 MVP Released (PM audit #91):**
+> **V1.0 MVP Released (PM audit #92):**
 >
 > - ✅ All v1.0 pre-release fixes DONE (Phases 187-A through 187-D, 143, 180.2–180.4).
 > - ✅ Phase 188 DONE — PlanCard `isIncluded` bug fixed. 602 tests.
 > - ✅ Phases 189–194 DONE — Admin deletion protection, ADMIN display, FormInput, PersonaSelector, UsageMetricRow, TiptapEditor. 611 tests.
-> - ✅ Phase 195 DONE — Image upload describe fix (pre-signed S3 URLs for OpenAI vision).
-> - ✅ Phase 196 DONE — Audio player overlap fix (Zustand global audio store).
-> - ✅ Phase 197 DONE — Image lightbox (native `<dialog>` overlay).
-> - ✅ Phase 198 DONE — Library upload previews (thumbnails + file-type icons).
-> - ✅ Phase 199 DONE — useActionState startTransition fix.
-> - ✅ 615 tests. Build passes. Knip clean.
-> - 🔴 Phase 200: Admin suspension protection gap (HIGH — admin users can be suspended).
-> - 🟡 Phase 201: Avatar sync MongoDB↔Clerk (MEDIUM).
-> - 🟡 Phase 202–203: Test baseline fixes (MEDIUM).
+> - ✅ Phases 195–199 DONE — Image vision presigned URLs, Zustand audio overlap, image lightbox, library upload previews, useActionState fix. 615 tests.
+> - ✅ Phase 200 DONE — Admin suspension protection. 3-layer defense symmetric with Phase 189. 617 tests.
+> - ✅ PLAN_LIMITS owner override accepted (PM audit #92). AGENTS.md Rule #5 updated.
+> - 🟡 Phase 202: Fix 10 unit test failures (PLAN_LIMITS baseline update). UNBLOCKED.
+> - 🟡 Phase 203: Fix 3 E2E contrast failures (Free badge color).
+> - 🟡 Phase 201: Avatar sync MongoDB↔Clerk.
 >
 > **Remaining Issues (non-blocking):**
 >
-> - **TD-ADMIN-SUSPEND** — 🔴 Admin users can be suspended via single and bulk actions. Phase 189 only blocked deletion (Phase 200).
 > - **TD-AVATAR-SYNC** — 🟡 ProfileHeroEditor saves to MongoDB, AvatarMenu reads from Clerk. Avatar changes not reflected in header (Phase 201).
+> - **TD-CONTRAST-01** — 🟡 Free badge fails WCAG 2.2 AA contrast (2.76:1 vs 4.5:1 required). Phase 203.
 > - **TD-MEDIA-01** — 🟡 ACCEPTED LIMITATION. Media gen (image/audio) may approach Vercel Hobby 60s timeout. Phase 181 proactive timeout handles gracefully.
 > - **TD-AI-09** — Image/audio prompts not persona-aware (deferred to v1.1).
 > - **TD-AI-13** — 3 model pricing placeholders (awaiting OpenAI confirmation).
 > - **TD-PLAN-01** — No recurring subscriptions (deferred to v2).
 > - **TD-AI-18** — Advisory: errorMessage forwarding pattern is safe but fragile.
 > - **TD-API-09** — Monitor: `.strict()` in messageTextContentSchema.
-> - **TD-LIMITS-01** — ⚠️ PLAN_LIMITS code values differ from AGENTS.md Rule #5 (owner direct commits). Awaiting owner confirmation.
 
 ---
 
@@ -198,7 +194,7 @@ Prompts are versioned and separated from request handlers. `buildPersonaAwareSys
 
 | Plan        | Price | Duration      | Chat Model (default)            | Limits                                                                         |
 | ----------- | ----- | ------------- | ------------------------------- | ------------------------------------------------------------------------------ |
-| **Lite**    | Free  | **Permanent** | `gpt-4o-mini`                   | 5 conversations/day, 10 prompts/conversation, 3 image/month, 3 audio/month     |
+| **Lite**    | Free  | **Permanent** | `gpt-4o-mini`                   | 10 conversations/day, 10 prompts/conversation, 1 image/month, 1 audio/month    |
 | **Pro**     | $19   | Monthly       | `gpt-4.1`                       | 50 conversations/day, 100 prompts/conversation, 50 image/month, 50 audio/month |
 | **Premium** | $39   | Monthly       | `gpt-4.1` / `gpt-5.4` (complex) | Unlimited conversations, unlimited prompts, unlimited image + audio            |
 
@@ -885,18 +881,22 @@ All button styles use Lime Green as the accent color in **both** light and dark 
 
 ### Active — HIGH Priority
 
-| ID               | Area     | Description                                                                                                                                                                | Phase |
-| ---------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
-| TD-ADMIN-SUSPEND | Security | Admin users can be suspended via `toggleUserSuspensionAction` (single) and `bulkSuspendUsersAction` (bulk). Phase 189 only blocked deletion, not suspension. Lockout risk. | 200   |
+_None. All HIGH issues resolved._
+
+### Resolved — HIGH Priority
+
+| ID               | Area     | Description                                                                                                                                                                | Phase | Resolution                                                                               |
+| ---------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- | ---------------------------------------------------------------------------------------- |
+| TD-ADMIN-SUSPEND | Security | Admin users can be suspended via `toggleUserSuspensionAction` (single) and `bulkSuspendUsersAction` (bulk). Phase 189 only blocked deletion, not suspension. Lockout risk. | 200   | ✅ DONE (PM #92). 3-layer defense: role check, bulk filter, UI guard. 2 new tests.       |
+| TD-LIMITS-01     | Config   | `PLAN_LIMITS.Lite` code values differ from AGENTS.md Rule #5. Owner changed via direct commits 09918e2, 100d47e.                                                           | 202   | ✅ RESOLVED (PM #92). Owner override accepted. AGENTS.md Rule #5 updated. Tests pending. |
 
 ### Active — MEDIUM Priority (Non-Blocking)
 
-| ID             | Area   | Description                                                                                                                                                                | Phase |
-| -------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
-| TD-AVATAR-SYNC | UX     | `ProfileHeroEditor` saves avatar to MongoDB (`userimg`). `AvatarMenu` reads from Clerk `useUser().imageUrl`. Avatar changes not reflected in header.                       | 201   |
-| TD-LIMITS-01   | Config | `PLAN_LIMITS.Lite` code values (images:1, audio:1, conversations:10) differ from AGENTS.md Rule #5 (images:3, audio:3, conversations:5). Owner changed via direct commits. | 202   |
-| TD-CONTRAST-01 | A11y   | Profile page "Free" badge fails WCAG 2.2 AA contrast ratio (below 4.5:1). Axe-core reports in E2E tests.                                                                   | 203   |
-| TD-MEDIA-01    | Arch   | **ACCEPTED (PM audit #84-B).** Media gen (image/audio) may approach Vercel Hobby 60s timeout. Phase 181 proactive timeout handles gracefully.                              | —     |
+| ID             | Area | Description                                                                                                                                          | Phase |
+| -------------- | ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| TD-AVATAR-SYNC | UX   | `ProfileHeroEditor` saves avatar to MongoDB (`userimg`). `AvatarMenu` reads from Clerk `useUser().imageUrl`. Avatar changes not reflected in header. | 201   |
+| TD-CONTRAST-01 | A11y | Profile page "Free" badge fails WCAG 2.2 AA contrast ratio (2.76:1 vs 4.5:1 required). `bg-dustyBlue-500 text-lavenderHaze-200` at 8px font.         | 203   |
+| TD-MEDIA-01    | Arch | **ACCEPTED (PM audit #84-B).** Media gen (image/audio) may approach Vercel Hobby 60s timeout. Phase 181 proactive timeout handles gracefully.        | —     |
 
 ### Active — Low Priority
 

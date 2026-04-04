@@ -2,7 +2,19 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-04-03 — PM audit #91.
+> Last updated: 2026-04-04 — PM audit #92.
+
+---
+
+## Phase 200 — Admin Suspension Protection — COMPLETED (2026-04-04)
+
+> Engineer delivered (PM audit #92). Symmetric with Phase 189 deletion protection. 3-layer defense: backend single action role check, backend bulk action admin ID filtering, UI guard.
+
+- [x] `toggleUserSuspensionAction()` checks target user role before suspension, returns error for admin targets
+- [x] `bulkSuspendUsersAction()` queries admin IDs, filters before `updateMany`, logs skipped, records `skippedAdminCount` in audit
+- [x] Admin user detail page wraps suspension form in `{user.role !== "admin"}` guard
+- [x] 2 new unit tests (single and bulk suspension guards)
+- [x] Build passes, knip clean, all gates GREEN (except 10+3 known pre-existing failures)
 
 ---
 
