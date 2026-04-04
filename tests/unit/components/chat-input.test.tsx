@@ -115,6 +115,21 @@ describe("ChatInput", () => {
     expect(attachButton.getAttribute("type")).toBe("button");
   });
 
+  it("uses a strict image accept allowlist on the file input", () => {
+    const onSend = vi.fn();
+    const { container } = render(
+      <ChatInput loading={false} sendMessage={onSend} />,
+    );
+
+    const fileInput = container.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+
+    expect(fileInput.getAttribute("accept")).toBe(
+      "image/jpeg,image/png,image/webp,image/gif",
+    );
+  });
+
   it("uploads the selected file before sending the user message", async () => {
     fetchMock.mockResolvedValue(
       new Response(
@@ -204,8 +219,37 @@ describe("ChatInput", () => {
     await waitFor(() => {
       expect(onSend).not.toHaveBeenCalled();
       expect(screen.getByRole("alert").textContent).toContain(
-        "Failed to upload file. Please try again.",
+        "Failed to upload file.",
       );
     });
+  });
+
+  it("rejects unsupported image types before upload request is made", async () => {
+    const onSend = vi.fn();
+    const { container } = render(
+      <ChatInput loading={false} sendMessage={onSend} />,
+    );
+
+    const fileInput = container.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    const file = new File(["image-bytes"], "sample.avif", {
+      type: "image/avif",
+    });
+
+    fireEvent.change(fileInput, {
+      target: {
+        files: [file],
+      },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert").textContent).toContain(
+        "Invalid file type. Allowed types: image/jpeg, image/png, image/webp, image/gif.",
+      );
+    });
+
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(onSend).not.toHaveBeenCalled();
   });
 });

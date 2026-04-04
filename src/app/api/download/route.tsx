@@ -14,7 +14,7 @@ import { auth } from "@clerk/nextjs/server";
 import { nonEmptyStringSchema } from "@/lib/utils/validation-schemas";
 import { z } from "zod";
 
-export const maxDuration = 30;
+export const maxDuration = 60;
 
 const DOWNLOAD_RATE_LIMIT_MAX_REQUESTS = 60;
 const DOWNLOAD_RATE_LIMIT_WINDOW_MS = 60_000;

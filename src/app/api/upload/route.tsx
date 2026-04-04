@@ -13,7 +13,9 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import {
+  doesImageMagicBytesMatchMimeType,
   getUploadFileExtension,
+  validateImageMagicBytes,
   validateUploadFile,
 } from "@/lib/utils/upload-file-validation";
 import uploadFileToAWS from "@/lib/utils/aws/uploadFileToAWS";
@@ -25,7 +27,7 @@ import { enforceSlidingWindowRateLimit } from "@/lib/utils/rate-limit";
 import { auth } from "@clerk/nextjs/server";
 import { z } from "zod";
 
-export const maxDuration = 30;
+export const maxDuration = 60;
 
 const uploadFormDataSchema = z
   .object({
@@ -120,9 +122,21 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         { status: 400 },
       );
     }
+
+    const fileArrayBuffer = await file.arrayBuffer();
+    if (
+      !validateImageMagicBytes(fileArrayBuffer) ||
+      !doesImageMagicBytesMatchMimeType(fileArrayBuffer, file.type)
+    ) {
+      return NextResponse.json(
+        { error: "File content does not match declared type." },
+        { status: 400 },
+      );
+    }
+
     const fileName = `uploaded_file_${Date.now()}.${fileExtension}`;
 
-    const buffer = Buffer.from(await file.arrayBuffer());
+    const buffer = Buffer.from(fileArrayBuffer);
     const folder = `${userId}/uploads`;
     const objectKey = buildS3ObjectKey(folder, fileName);
     const fileUrl = await uploadFileToAWS(buffer, fileName, file.type, folder);

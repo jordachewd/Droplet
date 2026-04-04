@@ -13,6 +13,14 @@ import ChatWrapper from "@/components/chat/chat-wrapper";
 import { PERSONAS } from "@/constants/assistant-personas";
 import { STOP_REASON_MESSAGES } from "@/constants/stop-reasons";
 
+const refreshMock = vi.hoisted(() => vi.fn());
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({
+    refresh: refreshMock,
+  }),
+}));
+
 vi.mock("@/components/chat/chat-header", () => ({
   default: () => <div data-testid="chat-header" />,
 }));
@@ -98,6 +106,7 @@ describe("ChatWrapper", () => {
 
   beforeEach(() => {
     vi.restoreAllMocks();
+    refreshMock.mockReset();
   });
 
   it("shows API error payload text for non-200 responses", async () => {
@@ -287,6 +296,83 @@ describe("ChatWrapper", () => {
     });
 
     expect(screen.queryByRole("alert")).toBeNull();
+    expect(refreshMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("refreshes the router once when a new conversation receives its first taskId", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          taskData: {
+            whois: "assistant",
+            role: "assistant",
+            content: [{ type: "text", text: "First response" }],
+          },
+          taskId: "task_new_123",
+          acceptedPrompt: true,
+        }),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        },
+      ),
+    );
+
+    render(<ChatWrapper {...chatWrapperProps} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Send message" }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("chat-body-messages").textContent).toContain(
+        "First response",
+      );
+    });
+
+    expect(refreshMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not refresh the router for existing conversations", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          taskData: {
+            whois: "assistant",
+            role: "assistant",
+            content: [{ type: "text", text: "Follow-up response" }],
+          },
+          taskId: "task_existing",
+          acceptedPrompt: true,
+        }),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        },
+      ),
+    );
+
+    render(
+      <ChatWrapper
+        {...chatWrapperProps}
+        initialTaskId="task_existing"
+        initialMessages={[
+          {
+            whois: "user",
+            role: "user",
+            content: [{ type: "text", text: "hi" }],
+          },
+        ]}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Send message" }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("chat-body-messages").textContent).toContain(
+        "Follow-up response",
+      );
+    });
+
+    expect(refreshMock).not.toHaveBeenCalled();
   });
 
   it("shows proactive stream timeout errors as warning alerts", async () => {
