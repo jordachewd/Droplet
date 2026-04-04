@@ -2,7 +2,52 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-04-04 — PM audit #92.
+> Last updated: 2026-04-04 — PM audit #93.
+
+---
+
+## Phase 144 — Admin Config In-Memory Cache — COMPLETED (2026-04-04)
+
+> Engineer delivered (PM audit #93). `config-cache.ts` with 30s TTL, in-flight request deduplication, test bypass. All 8 `effective-*.ts` resolvers wrapped with `getCachedConfigValue()`. Cache invalidated on admin setting writes via `clearConfigCache()`.
+
+- [x] `config-cache.ts` created with TTL-based cache and in-flight deduplication
+- [x] All `getEffective*` resolvers use `getCachedConfigValue()`
+- [x] `clearConfigCache()` called on admin setting updates
+- [x] Test environment bypasses cache
+- [x] Build passes, tests pass
+
+---
+
+## Phase 201 — Avatar Sync MongoDB↔Clerk — COMPLETED (2026-04-04)
+
+> Engineer delivered (PM audit #93). After `updateUser()` saves to MongoDB, calls `clerkClient().users.updateUser()` to sync avatar URL to Clerk. Non-blocking on Clerk failure (try/catch with stderr logging). 2 new unit tests.
+
+- [x] Avatar change in profile updates both MongoDB and Clerk
+- [x] Clerk sync failure does not block profile save
+- [x] 2 new unit tests (sync success + failure)
+- [x] Build passes, tests pass
+
+---
+
+## Phase 202 — Fix 10 Unit Test Failures (PLAN_LIMITS Baseline) — COMPLETED (2026-04-04)
+
+> Engineer delivered (PM audit #93). All test expectations updated to match owner-approved `PLAN_LIMITS.Lite` values (images: 1, audio: 1, conversationsPerDay: 10). `promoAdminLabel` fixed to `"ADMIN"`. All 619 tests pass.
+
+- [x] All 10 failing unit tests pass
+- [x] `promoAdminLabel` consistent with `ADMIN_PLAN_LABEL` ("ADMIN")
+- [x] AGENTS.md Rule #5 reflects approved values (updated PM #92)
+- [x] Build passes
+
+---
+
+## Phase 203 — Fix 3 E2E Contrast Failures — COMPLETED (2026-04-04)
+
+> Engineer delivered (PM audit #93). Badge text color changed from `text-lavenderHaze-200` to `text-midnightBlue-900` on `bg-dustyBlue-500` background. Contrast ratio now exceeds WCAG 2.2 AA 4.5:1 requirement. All E2E tests pass.
+
+- [x] `plan-promo.tsx` and `plan-card.tsx` updated
+- [x] Contrast ratio meets WCAG 2.2 AA (4.5:1+)
+- [x] E2E accessibility tests pass on all 3 browsers
+- [x] Build passes
 
 ---
 

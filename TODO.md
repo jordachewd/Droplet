@@ -5,11 +5,11 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #92 (2026-04-04). V1.0 MVP RELEASED. All 7 validation gates GREEN (617 tests, lint 0/0, TSC clean, build passes, knip 0). All Milestones 0–25 COMPLETE. Phases 189–200 COMPLETE.**
+> **STATUS: PM audit #93 (2026-04-04). V1.0 MVP RELEASED. All 7 validation gates GREEN (619 tests, lint 0/0, TSC clean, build passes, knip 0). All Milestones 0–25 COMPLETE. Phases 189–203, 144 COMPLETE.**
 >
 > **GATE STATUS: Validation GREEN. Architecture GREEN. Product GREEN. Admin GREEN. Public GREEN. Contract GREEN.**
 >
-> **TEST STATUS: 617 tests (102 suites). 10 unit tests failing from owner PLAN_LIMITS changes (owner override accepted PM #92 — tests need update). 3 E2E tests failing from Free badge contrast issue.**
+> **TEST STATUS: 619 tests (102 suites), 49 E2E (6 skipped). 0 failures. All gates GREEN.**
 >
 > **OWNER DIRECTIVES:**
 >
@@ -32,17 +32,21 @@
 > - ✅ useActionState console warning — **DONE (Phase 199). `startTransition` fix.**
 > - ✅ Admin suspension protection gap — **DONE (Phase 200). 3-layer defense.**
 > - ✅ PLAN_LIMITS frozen rule override — **RESOLVED (PM #92). Owner override accepted. AGENTS.md Rule #5 updated.**
+> - ✅ Avatar sync MongoDB↔Clerk — **DONE (Phase 201). Non-blocking Clerk sync.**
 > - ⚪ PlanPromo + ChatSidebarPromo merge — **REJECTED. Acceptable pattern.**
 > - ⚪ TiptapEditor useEffect concern — **ACKNOWLEDGED. Stable reference from DB fetch. No action needed.**
-> - 🟡 Avatar sync MongoDB↔Clerk — **Phase 201. MEDIUM. Profile saves to MongoDB, header reads Clerk.**
+> - 🔴 API route timeouts must be max — **Phase 204. HIGH. Owner directive PM #93.**
+> - 🔴 New chat not appearing in sidebar — **Phase 205. HIGH. Owner bug PM #93.**
+> - 🔴 Image upload error messages generic — **Phase 206. HIGH. Owner bug PM #93.**
+> - 🟡 Upload file sanitization (magic bytes) — **Phase 207. MEDIUM. Owner directive PM #93.**
 >
-> **EXECUTION ORDER (PM audit #92 — Post-Release):**
+> **EXECUTION ORDER (PM audit #93 — Post-Release):**
 >
-> 1. **MEDIUM Phase 202** — Fix 10 unit test failures (align tests with owner PLAN_LIMITS). **UNBLOCKED.**
-> 2. **MEDIUM Phase 203** — Fix 3 E2E contrast failures (Free badge).
-> 3. **MEDIUM Phase 201** — Avatar sync MongoDB↔Clerk.
-> 4. **MEDIUM Phase 144** — Admin config cache (30s TTL).
-> 5. **MEDIUM Phase 145** — Upload filename collision prevention.
+> 1. **HIGH Phase 204** — Set all API route `maxDuration` to 60 (Vercel Hobby ceiling). ~5 min.
+> 2. **HIGH Phase 205** — Sidebar live update on new chat (`router.refresh()` after task creation). ~15 min.
+> 3. **HIGH Phase 206** — Upload error propagation + client-side type validation + narrow `accept` attribute. ~30 min.
+> 4. **MEDIUM Phase 207** — Upload magic byte validation (JPEG/PNG/GIF/WebP signatures). ~30 min.
+> 5. **MEDIUM Phase 145** — Upload filename collision prevention (`crypto.randomUUID()`).
 > 6. **MEDIUM Phase 165** — Checkout success page DB polling.
 > 7. **LOW Phase 146** — Admin user detail transaction limit.
 > 8. **LOW Phase 147** — Rename `.tsx` utility files to `.ts`.
@@ -200,102 +204,27 @@
 
 ---
 
-## MEDIUM — Phase 202 — Fix 10 Unit Test Failures (PLAN_LIMITS Baseline)
+## ✅ Phase 202 — Fix 10 Unit Test Failures (PLAN_LIMITS Baseline) — DONE (2026-04-04)
 
-> **PM audit #92.** Owner changed `PLAN_LIMITS.Lite` via direct commits (09918e2, 100d47e). PM accepted owner override. AGENTS.md Rule #5 updated. Current code: `images: 1, audio: 1, conversationsPerDay: 10, promptsPerConversation: 10`. Tests still expect old values. Also `promoAdminLabel` is `"Admin"` (title case) but test expects `"ADMIN"` (uppercase).
-
-**UNBLOCKED — owner override accepted PM audit #92.**
-
-**Files:**
-
-- `tests/unit/constants/plans.test.ts` — 2 failures (Lite limits + plan copy labels)
-- `tests/unit/utils/check-daily-conversations.test.ts` — 4 failures (remaining count calculations)
-- `tests/unit/utils/check-usage-limit.test.ts` — 2 failures (allowed/remaining calculations)
-- `tests/unit/routes/openai-route-media.test.ts` — 1 failure (`$lt` guard value)
-- `tests/unit/components/chat-sidebar-promo.test.tsx` — 1 failure (admin label casing)
-- `src/constants/promo-content.ts` — `promoAdminLabel` should use `"ADMIN"` for consistency with `ADMIN_PLAN_LABEL`
-
-**What to do:**
-
-1. Update all test expectations to match current `PLAN_LIMITS.Lite` values: `images: 1, audio: 1, conversationsPerDay: 10`.
-2. Fix `promoAdminLabel` in `DEFAULT_PROMO_CONTENT` from `"Admin"` to `"ADMIN"` (or import `ADMIN_PLAN_LABEL`).
-3. Update plan copy label tests to match: "10 conversations per day", "1 image generation per month", "1 audio generation per month".
-
-**Acceptance criteria:**
-
-- [ ] All 10 failing unit tests pass
-- [ ] `promoAdminLabel` consistent with `ADMIN_PLAN_LABEL`
-- [ ] Build passes
-
-- [ ] All 10 failing unit tests pass
-- [ ] AGENTS.md Rule #5 reflects approved values
-- [ ] `promoAdminLabel` consistent with `ADMIN_PLAN_LABEL`
-- [ ] Build passes
+> Archived in DONE.md.
 
 ---
 
-## MEDIUM — Phase 203 — Fix 3 E2E Contrast Failures
+## ✅ Phase 203 — Fix 3 E2E Contrast Failures — DONE (2026-04-04)
 
-> **PM audit #92.** `tests/e2e/authenticated-accessibility.spec.ts` fails on profile page "Free" badge contrast (chromium, firefox, webkit). Axe-core reports 2.76:1 ratio vs 4.5:1 required.
-
-**Exact element:** `<span class="... bg-dustyBlue-500 text-lavenderHaze-200">Free</span>` at 8px (`text-2xs`).
-
-**Files:**
-
-- `src/components/shared/plan-promo.tsx` — line ~44: `"bg-dustyBlue-500 text-lavenderHaze-200"`
-- `src/components/shared/plan-card.tsx` — line ~51: same classes for `isCurrent` badge
-
-**What to do:**
-
-1. Change `text-lavenderHaze-200` to a darker text color (e.g., `text-midnightBlue-950`) to achieve 4.5:1+ contrast ratio on `bg-dustyBlue-500` background.
-2. Apply same fix to both files.
-
-**Acceptance criteria:**
-
-- [ ] Contrast ratio meets WCAG 2.2 AA (4.5:1 for normal text)
-- [ ] E2E accessibility tests pass on all 3 browsers
-- [ ] Build passes
+> Archived in DONE.md.
 
 ---
 
-## MEDIUM — Phase 201 — Avatar Sync MongoDB↔Clerk
+## ✅ Phase 201 — Avatar Sync MongoDB↔Clerk — DONE (2026-04-04)
 
-> **Owner directive (PM audit #91).** When user changes avatar in `ProfileHeroEditor`, it saves to MongoDB (`userimg`) but not to Clerk. `AvatarMenu` reads from `useUser().imageUrl` (Clerk), so header avatar is stale after profile update.
-
-**Files:**
-
-- `src/components/sections/profile/profile-hero-editor.tsx` — avatar save flow
-- `src/lib/actions/user.actions.tsx` — `updateUser()` action
-- `src/components/shared/avatar-menu.tsx` — reads from `useUser()`
-
-**Recommended approach (sync to Clerk):**
-
-1. In `updateUser()` action (or a dedicated helper), after saving `userimg` to MongoDB, call `clerkClient.users.updateUser(clerkId, { imageUrl })` to sync the avatar URL to Clerk.
-2. This keeps Clerk as the authoritative source for header avatar display.
-3. Handle errors gracefully — if Clerk sync fails, MongoDB update should still succeed.
-
-**Acceptance criteria:**
-
-- [ ] Avatar change in profile updates both MongoDB and Clerk
-- [ ] `AvatarMenu` reflects updated avatar without page refresh
-- [ ] Clerk sync failure does not block profile save
-- [ ] Build passes, tests pass
+> Archived in DONE.md.
 
 ---
 
-## MEDIUM — Phase 144 — Admin Config In-Memory Cache
+## ✅ Phase 144 — Admin Config In-Memory Cache — DONE (2026-04-04)
 
-> 5+ DB round trips per `/api/openai` request for admin settings that change infrequently.
-
-**What to do:**
-
-1. Create `src/lib/utils/config-cache.ts` — simple in-memory cache with 30s TTL.
-2. Wrap each `getEffective*` resolver's DB calls in the cache.
-
-**Acceptance criteria:**
-
-- [ ] Admin config queries cached with 30s TTL
-- [ ] Build passes, tests pass
+> Archived in DONE.md.
 
 ---
 
@@ -309,6 +238,113 @@
 
 - [ ] Upload filenames use `crypto.randomUUID()`
 - [ ] Build passes
+
+---
+
+## HIGH — Phase 204 — Set All API Route Timeouts to Maximum
+
+> **Owner directive (PM #93).** API route timeouts must be set to maximum possible to avoid/reduce stalled queries or incomplete requests to external services. Vercel Hobby ceiling is 60s.
+
+**Files:**
+
+- `src/app/api/webhooks/stripe/route.tsx` — currently `maxDuration = 30`, change to `60`
+- `src/app/api/upload/route.tsx` — currently `maxDuration = 30`, change to `60`
+- `src/app/api/download/route.tsx` — currently `maxDuration = 30`, change to `60`
+- `src/app/api/aws/route.tsx` — currently `maxDuration = 30`, change to `60`
+
+**Already at 60:** `/api/openai`, `/api/webhooks/clerk`.
+
+**What to do:** Change `export const maxDuration = 30` to `export const maxDuration = 60` in all 4 files.
+
+**Acceptance criteria:**
+
+- [ ] All API routes have `maxDuration = 60`
+- [ ] Build passes
+
+---
+
+## HIGH — Phase 205 — Sidebar Live Update on New Chat
+
+> **Owner bug (PM #93).** When starting a new chat with any persona, the new conversation does not appear in the sidebar until browser refresh. Root cause: `ChatSidebar` is a Server Component rendered at layout level, fetches data from `getRecentTasksByUserId()` during SSR. No `router.refresh()` or revalidation is called after client-side task creation in `ChatWrapper`.
+
+**Files:**
+
+- `src/components/chat/chat-wrapper.tsx` — needs `router.refresh()` after new task creation
+
+**What to do:**
+
+1. In `ChatWrapper`, after `setTaskId(responseData.taskId)` for a **new** conversation (when previous `dbTaskId` was `null`), call `router.refresh()` to trigger a Server Component re-render of the layout.
+2. This forces `ChatSidebar` to re-fetch from DB and display the new conversation.
+3. Use `useRouter()` from `next/navigation` (likely already imported).
+4. Only call `router.refresh()` on the first message of a new conversation, not on subsequent messages.
+
+**Acceptance criteria:**
+
+- [ ] New conversation appears in sidebar after first message without browser refresh
+- [ ] Subsequent messages in existing conversation do NOT trigger unnecessary refreshes
+- [ ] Build passes, tests pass
+
+---
+
+## HIGH — Phase 206 — Upload Error Message Propagation + Client-Side Validation
+
+> **Owner bug (PM #93).** Image upload in ChatInput shows "Failed to upload file. Please try again." for ALL errors instead of specific messages. `.avif` files are not supported but the user only sees "File upload failed" instead of listing allowed types. Root cause: `chat-input.tsx` catch block intentionally discards server error messages and replaces with generic text.
+
+**Files:**
+
+- `src/components/chat/chat-input.tsx` — Fix catch block to propagate server error messages
+- `src/components/chat/chat-input.tsx` — Narrow `accept` attribute from `image/*` to specific types
+- `src/components/chat/chat-input.tsx` — Add client-side pre-validation before upload
+
+**What to do:**
+
+1. **Fix error propagation:** Change catch block from:
+   ```typescript
+   void error;
+   setUploadError("Failed to upload file. Please try again.");
+   ```
+   to:
+   ```typescript
+   const message =
+     error instanceof Error
+       ? error.message
+       : "Failed to upload file. Please try again.";
+   setUploadError(message);
+   ```
+2. **Narrow accept attribute:** Change `accept="image/*"` to `accept="image/jpeg,image/png,image/webp,image/gif"` — prevents file picker from showing unsupported formats.
+3. **Add client-side pre-validation:** Before calling `uploadSelectedFile()`, check file type against the allowlist on the client side. Show immediate error for invalid types without making a round-trip.
+
+**Acceptance criteria:**
+
+- [ ] Server error messages (invalid type, too large, etc.) shown to user
+- [ ] File picker only shows supported image formats
+- [ ] `.avif` files rejected with specific error message listing allowed types
+- [ ] Build passes
+
+---
+
+## MEDIUM — Phase 207 — Upload Magic Byte Validation (Security)
+
+> **Owner directive (PM #93).** Upload sanitization: deep security audit performed. Server-side validation relies solely on browser-reported MIME type which is trivially spoofable. Must verify actual file content via magic byte signatures.
+
+**File:** `src/lib/utils/upload-file-validation.ts`
+
+**What to do:**
+
+1. Add a `validateImageMagicBytes(buffer: ArrayBuffer): boolean` function that checks the first 8-16 bytes against known image format signatures:
+   - JPEG: starts with `FF D8 FF`
+   - PNG: starts with `89 50 4E 47 0D 0A 1A 0A`
+   - GIF: starts with `47 49 46 38` (`GIF8`)
+   - WebP: starts with `52 49 46 46` at offset 0, `57 45 42 50` at offset 8
+2. Call this function in the upload route after reading the file buffer, before uploading to S3.
+3. Return a specific error message if magic bytes don't match claimed MIME type: "File content does not match declared type."
+
+**Acceptance criteria:**
+
+- [ ] Upload validates file content matches claimed MIME type
+- [ ] Spoofed MIME type with non-image content is rejected
+- [ ] Valid images with correct magic bytes still upload successfully
+- [ ] Build passes, tests pass
 
 ---
 
