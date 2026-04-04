@@ -76,6 +76,23 @@ export async function updateUser(clerkId: string, user: UpdateUserParams) {
       });
     }
 
+    if (typeof parsedUser.data.userimg === "string") {
+      try {
+        const client = await clerkClient();
+        type ClerkUpdateUserParams = Parameters<
+          typeof client.users.updateUser
+        >[1];
+
+        await client.users.updateUser(parsedClerkId.data, {
+          imageUrl: parsedUser.data.userimg,
+        } as unknown as ClerkUpdateUserParams);
+      } catch (error) {
+        process.stderr.write(
+          `[user.actions] updateUser Clerk avatar sync failed for ${parsedClerkId.data}: ${error instanceof Error ? error.message : "unknown"}\n`,
+        );
+      }
+    }
+
     return serializeForClient({
       mongoResponse: updatedUser,
       message: "User updated successfully (user.actions.tsx)",

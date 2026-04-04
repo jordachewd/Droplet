@@ -2,6 +2,7 @@ import "server-only";
 
 import AppSetting from "@/lib/database/models/app-setting.model";
 import { connectToDatabase } from "@/lib/database/mongoose";
+import { getCachedConfigValue } from "@/lib/utils/config-cache";
 import { MODEL_POLICY_MATRIX } from "@/lib/utils/ai-model-policy";
 import { isObjectRecord } from "@/lib/utils/type-guards";
 import { ModelSettingsFormValue } from "@/types/AdminData.d";
@@ -74,16 +75,21 @@ function normalizeModelSettings(
 }
 
 export async function getEffectiveModelConfig(): Promise<ModelSettingsFormValue> {
-  try {
-    await connectToDatabase();
+  return getCachedConfigValue({
+    key: "effective-model-config",
+    resolver: async () => {
+      try {
+        await connectToDatabase();
 
-    const setting = (await AppSetting.findOne({ key: "admin.models" })
-      .select("value")
-      .lean()) as AppSettingRecord | null;
+        const setting = (await AppSetting.findOne({ key: "admin.models" })
+          .select("value")
+          .lean()) as AppSettingRecord | null;
 
-    return normalizeModelSettings(setting?.value, DEFAULT_MODEL_SETTINGS);
-  } catch {
-    // Intentional fallback to defaults — admin config DB errors are non-fatal.
-    return { ...DEFAULT_MODEL_SETTINGS };
-  }
+        return normalizeModelSettings(setting?.value, DEFAULT_MODEL_SETTINGS);
+      } catch {
+        // Intentional fallback to defaults - admin config DB errors are non-fatal.
+        return { ...DEFAULT_MODEL_SETTINGS };
+      }
+    },
+  });
 }

@@ -6,6 +6,7 @@ import {
 } from "@/constants/stop-reasons";
 import AppSetting from "@/lib/database/models/app-setting.model";
 import { connectToDatabase } from "@/lib/database/mongoose";
+import { getCachedConfigValue } from "@/lib/utils/config-cache";
 import { isObjectRecord } from "@/lib/utils/type-guards";
 import { TaskEndedReason } from "@/types/TaskData.d";
 
@@ -52,18 +53,23 @@ function normalizeStopReasonMessages(
 export async function getEffectiveStopReasonMessages(): Promise<
   Record<TaskEndedReason, string>
 > {
-  try {
-    await connectToDatabase();
+  return getCachedConfigValue({
+    key: "effective-stop-reasons",
+    resolver: async () => {
+      try {
+        await connectToDatabase();
 
-    const setting = (await AppSetting.findOne({
-      key: "admin.stopReasonMessages",
-    })
-      .select("value")
-      .lean()) as AppSettingRecord | null;
+        const setting = (await AppSetting.findOne({
+          key: "admin.stopReasonMessages",
+        })
+          .select("value")
+          .lean()) as AppSettingRecord | null;
 
-    return normalizeStopReasonMessages(setting?.value);
-  } catch {
-    // Intentional fallback to defaults — admin config DB errors are non-fatal.
-    return { ...STOP_REASON_MESSAGES };
-  }
+        return normalizeStopReasonMessages(setting?.value);
+      } catch {
+        // Intentional fallback to defaults - admin config DB errors are non-fatal.
+        return { ...STOP_REASON_MESSAGES };
+      }
+    },
+  });
 }

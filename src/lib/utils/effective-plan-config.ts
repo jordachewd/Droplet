@@ -11,6 +11,7 @@ import {
 import { SUPPORT_EMAIL } from "@/constants/support";
 import AppSetting from "@/lib/database/models/app-setting.model";
 import { connectToDatabase } from "@/lib/database/mongoose";
+import { getCachedConfigValue } from "@/lib/utils/config-cache";
 import { isObjectRecord } from "@/lib/utils/type-guards";
 
 type AppSettingRecord = {
@@ -212,78 +213,97 @@ function normalizeTrialLimitsValue(value: unknown): PersonaTrialLimits {
 }
 
 export async function getEffectivePlanConfig(): Promise<EffectivePlanConfig> {
-  try {
-    await connectToDatabase();
+  return getCachedConfigValue({
+    key: "effective-plan-config",
+    resolver: async () => {
+      try {
+        await connectToDatabase();
 
-    const settings = (await AppSetting.find({
-      key: {
-        $in: [
-          "admin.pricing",
-          "admin.limits",
-          "admin.trialLimits",
+        const settings = (await AppSetting.find({
+          key: {
+            $in: [
+              "admin.pricing",
+              "admin.limits",
+              "admin.trialLimits",
+              "admin.currencySymbol",
+            ],
+          },
+        })
+          .select("key value")
+          .lean()) as AppSettingRecord[];
+        const settingsMap = new Map(
+          settings.map((setting) => [setting.key, setting]),
+        );
+
+        const pricingValue = settingsMap.get("admin.pricing")?.value;
+        const currencySymbolValue = settingsMap.get(
           "admin.currencySymbol",
-        ],
-      },
-    })
-      .select("key value")
-      .lean()) as AppSettingRecord[];
-    const settingsMap = new Map(
-      settings.map((setting) => [setting.key, setting]),
-    );
+        )?.value;
+        const limitsValue = settingsMap.get("admin.limits")?.value;
+        const trialLimitsValue = settingsMap.get("admin.trialLimits")?.value;
+        const normalizedPricing = normalizePricingValue(pricingValue);
 
-    const pricingValue = settingsMap.get("admin.pricing")?.value;
-    const currencySymbolValue = settingsMap.get("admin.currencySymbol")?.value;
-    const limitsValue = settingsMap.get("admin.limits")?.value;
-    const trialLimitsValue = settingsMap.get("admin.trialLimits")?.value;
-    const normalizedPricing = normalizePricingValue(pricingValue);
-
-    return {
-      pricing: {
-        ...normalizedPricing,
-        currencySymbol:
-          currencySymbolValue !== undefined
-            ? normalizeCurrencySymbol(currencySymbolValue)
-            : normalizedPricing.currencySymbol,
-      },
-      limits: normalizePlanLimitsValue(limitsValue),
-      trialLimits: normalizeTrialLimitsValue(trialLimitsValue),
-    };
-  } catch {
-    // Intentional fallback to defaults — admin config DB errors are non-fatal.
-    return {
-      pricing: { ...DEFAULT_PLAN_PRICING },
-      limits: structuredClone(PLAN_LIMITS),
-      trialLimits: { ...PERSONA_TRIAL_LIMITS },
-    };
-  }
+        return {
+          pricing: {
+            ...normalizedPricing,
+            currencySymbol:
+              currencySymbolValue !== undefined
+                ? normalizeCurrencySymbol(currencySymbolValue)
+                : normalizedPricing.currencySymbol,
+          },
+          limits: normalizePlanLimitsValue(limitsValue),
+          trialLimits: normalizeTrialLimitsValue(trialLimitsValue),
+        };
+      } catch {
+        // Intentional fallback to defaults - admin config DB errors are non-fatal.
+        return {
+          pricing: { ...DEFAULT_PLAN_PRICING },
+          limits: structuredClone(PLAN_LIMITS),
+          trialLimits: { ...PERSONA_TRIAL_LIMITS },
+        };
+      }
+    },
+  });
 }
 
 export async function getEffectiveCurrencySymbol(): Promise<string> {
-  try {
-    await connectToDatabase();
+  return getCachedConfigValue({
+    key: "effective-currency-symbol",
+    resolver: async () => {
+      try {
+        await connectToDatabase();
 
-    const setting = (await AppSetting.findOne({ key: "admin.currencySymbol" })
-      .select("value")
-      .lean()) as AppSettingRecord | null;
+        const setting = (await AppSetting.findOne({
+          key: "admin.currencySymbol",
+        })
+          .select("value")
+          .lean()) as AppSettingRecord | null;
 
-    return normalizeCurrencySymbol(setting?.value);
-  } catch {
-    // Intentional fallback to defaults — admin config DB errors are non-fatal.
-    return DEFAULT_PLAN_PRICING.currencySymbol;
-  }
+        return normalizeCurrencySymbol(setting?.value);
+      } catch {
+        // Intentional fallback to defaults - admin config DB errors are non-fatal.
+        return DEFAULT_PLAN_PRICING.currencySymbol;
+      }
+    },
+  });
 }
 
 export async function getEffectiveSupportEmail(): Promise<string> {
-  try {
-    await connectToDatabase();
+  return getCachedConfigValue({
+    key: "effective-support-email",
+    resolver: async () => {
+      try {
+        await connectToDatabase();
 
-    const setting = (await AppSetting.findOne({ key: "admin.supportEmail" })
-      .select("value")
-      .lean()) as AppSettingRecord | null;
+        const setting = (await AppSetting.findOne({ key: "admin.supportEmail" })
+          .select("value")
+          .lean()) as AppSettingRecord | null;
 
-    return normalizeSupportEmail(setting?.value);
-  } catch {
-    // Intentional fallback to defaults — admin config DB errors are non-fatal.
-    return SUPPORT_EMAIL;
-  }
+        return normalizeSupportEmail(setting?.value);
+      } catch {
+        // Intentional fallback to defaults - admin config DB errors are non-fatal.
+        return SUPPORT_EMAIL;
+      }
+    },
+  });
 }

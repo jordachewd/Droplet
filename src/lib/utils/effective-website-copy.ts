@@ -22,6 +22,7 @@ import {
 import { VALID_PERSONA_ID_SET } from "@/constants/assistant-personas";
 import AppSetting from "@/lib/database/models/app-setting.model";
 import { connectToDatabase } from "@/lib/database/mongoose";
+import { getCachedConfigValue } from "@/lib/utils/config-cache";
 import { isObjectRecord } from "@/lib/utils/type-guards";
 import { PersonaId } from "@/types/PersonaData.d";
 
@@ -392,43 +393,55 @@ export async function getEffectiveLandingPageContent(): Promise<LandingPageConte
   const homepageCopyFallback = getDefaultHomepageCopy();
   const featuredPersonaIdsFallback = getDefaultHomepageFeaturedPersonas();
 
-  try {
-    const settings = await getSettingValues([
-      "admin.heroContent",
-      "admin.landingContent",
-      "admin.homepageCopy",
-      "admin.homepageFeaturedPersonas",
-    ]);
+  return getCachedConfigValue({
+    key: "effective-landing-page-content",
+    resolver: async () => {
+      try {
+        const settings = await getSettingValues([
+          "admin.heroContent",
+          "admin.landingContent",
+          "admin.homepageCopy",
+          "admin.homepageFeaturedPersonas",
+        ]);
 
-    return {
-      heroContent: normalizeHeroContent(settings.get("admin.heroContent")),
-      landingContent: normalizeLandingContent(
-        settings.get("admin.landingContent"),
-      ),
-      homepageCopy: normalizeHomepageCopy(settings.get("admin.homepageCopy")),
-      homepageFeaturedPersonaIds: normalizeHomepageFeaturedPersonaIds(
-        settings.get("admin.homepageFeaturedPersonas"),
-      ),
-    };
-  } catch {
-    // Intentional fallback to defaults — admin config DB errors are non-fatal.
-    return {
-      heroContent: heroFallback,
-      landingContent: landingFallback,
-      homepageCopy: homepageCopyFallback,
-      homepageFeaturedPersonaIds: featuredPersonaIdsFallback,
-    };
-  }
+        return {
+          heroContent: normalizeHeroContent(settings.get("admin.heroContent")),
+          landingContent: normalizeLandingContent(
+            settings.get("admin.landingContent"),
+          ),
+          homepageCopy: normalizeHomepageCopy(
+            settings.get("admin.homepageCopy"),
+          ),
+          homepageFeaturedPersonaIds: normalizeHomepageFeaturedPersonaIds(
+            settings.get("admin.homepageFeaturedPersonas"),
+          ),
+        };
+      } catch {
+        // Intentional fallback to defaults - admin config DB errors are non-fatal.
+        return {
+          heroContent: heroFallback,
+          landingContent: landingFallback,
+          homepageCopy: homepageCopyFallback,
+          homepageFeaturedPersonaIds: featuredPersonaIdsFallback,
+        };
+      }
+    },
+  });
 }
 
 export async function getEffectiveAboutContent(): Promise<AboutContent> {
   const fallback = getDefaultAboutContent();
 
-  try {
-    const settings = await getSettingValues(["admin.aboutContent"]);
-    return normalizeAboutContent(settings.get("admin.aboutContent"));
-  } catch {
-    // Intentional fallback to defaults — admin config DB errors are non-fatal.
-    return fallback;
-  }
+  return getCachedConfigValue({
+    key: "effective-about-content",
+    resolver: async () => {
+      try {
+        const settings = await getSettingValues(["admin.aboutContent"]);
+        return normalizeAboutContent(settings.get("admin.aboutContent"));
+      } catch {
+        // Intentional fallback to defaults - admin config DB errors are non-fatal.
+        return fallback;
+      }
+    },
+  });
 }

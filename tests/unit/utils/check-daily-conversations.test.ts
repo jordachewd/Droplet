@@ -78,7 +78,7 @@ describe("check-daily-conversations", () => {
       allowed: true,
       limit: PLAN_LIMITS.Lite.conversationsPerDay,
       used: 2,
-      remaining: 3,
+      remaining: 8,
     });
     expect(connectToDatabaseMock).toHaveBeenCalledTimes(1);
     expect(findOneMock).toHaveBeenCalledTimes(1);
@@ -100,7 +100,7 @@ describe("check-daily-conversations", () => {
       allowed: true,
       limit: PLAN_LIMITS.Lite.conversationsPerDay,
       used: 0,
-      remaining: 5,
+      remaining: 10,
     });
   });
 
@@ -119,7 +119,7 @@ describe("check-daily-conversations", () => {
       claimed: true,
       limit: PLAN_LIMITS.Lite.conversationsPerDay,
       used: 3,
-      remaining: 2,
+      remaining: 7,
     });
     expect(findOneAndUpdateMock).toHaveBeenCalledTimes(1);
   });
@@ -139,7 +139,7 @@ describe("check-daily-conversations", () => {
       claimed: true,
       limit: PLAN_LIMITS.Lite.conversationsPerDay,
       used: 1,
-      remaining: 4,
+      remaining: 9,
     });
     expect(findOneAndUpdateMock).toHaveBeenCalledTimes(2);
   });

@@ -16,6 +16,7 @@ import Transaction from "@/lib/database/models/transaction.model";
 import User from "@/lib/database/models/user.model";
 import { createAdminAuditLogEntry } from "@/lib/utils/admin-audit";
 import { requireAdminActionAccess } from "@/lib/utils/admin-auth";
+import { clearConfigCache } from "@/lib/utils/config-cache";
 import { deleteUserCascade } from "@/lib/utils/delete-user-cascade";
 import { AdminActionState } from "@/components/admin/admin-action-state";
 import { PersonaId } from "@/types/PersonaData.d";
@@ -670,6 +671,7 @@ export async function updateAdminSettingAction(
         upsert: true,
       },
     );
+    clearConfigCache();
 
     await createAdminAuditLogEntry({
       adminId,
