@@ -134,7 +134,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       );
     }
 
-    const fileName = `uploaded_file_${Date.now()}.${fileExtension}`;
+    const fileName = `uploaded_file_${globalThis.crypto.randomUUID()}.${fileExtension}`;
 
     const buffer = Buffer.from(fileArrayBuffer);
     const folder = `${userId}/uploads`;
