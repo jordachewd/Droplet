@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-04-05 (PM audit #94). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. **V1.0 MVP RELEASED.** Brand rename complete (Phase 172). Catch blocks documented (Phase 167.2). Promo text admin-configurable (Phase 162, 180.2–180.3). Global error boundary live (Phase 163). Admin error boundary live (Phase 187-A). Phases 173–178, 180.1–180.4, 181–207, 144 COMPLETE. E2E: 49 tests (8 spec files). Coverage: 85/80/85/85. 628 tests. Build passing. Node.js 24.12.0.
+> Last updated: 2026-04-06 (PM audit #95). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. **V1.0 MVP RELEASED.** Brand rename complete (Phase 172). Catch blocks documented (Phase 167.2). Promo text admin-configurable (Phase 162, 180.2–180.3). Global error boundary live (Phase 163). Admin error boundary live (Phase 187-A). Phases 143–207 COMPLETE. E2E: 49 tests (8 spec files). Coverage: 85/80/85/85. 638 tests. Build passing. Node.js 24.12.0.
 >
 > **V1.0 MVP Released (PM audit #94):**
 >
@@ -16,6 +16,8 @@
 > - ✅ Phase 205 DONE — Sidebar live update on new chat via `router.refresh()` with one-time guard.
 > - ✅ Phase 206 DONE — Upload error propagation, client MIME validation, narrowed `accept` attribute.
 > - ✅ Phase 207 DONE — Upload magic byte validation (JPEG/PNG/GIF/WebP). Defense-in-depth.
+> - ✅ Phase 145 DONE — Upload filename collision prevention via `crypto.randomUUID()`.
+> - ✅ Phase 165 DONE — Checkout success page DB polling (4s interval, 30s max, 3 states).
 >
 > **Remaining Issues (non-blocking):**
 >

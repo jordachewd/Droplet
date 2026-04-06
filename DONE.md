@@ -2,7 +2,29 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-04-05 — PM audit #94.
+> Last updated: 2026-04-06 — PM audit #95.
+
+---
+
+## Phase 165 — Checkout Success Page DB Polling — COMPLETED (2026-04-06)
+
+> Engineer delivered (PM audit #95). New API route `GET /api/checkout/plan-status?session_id=...` with auth enforcement (`auth()` + `requireActiveUser()`), Zod-validated `session_id`, user-scoped DB query. New client poller component with 4s interval, 30s max, 3 states (checking/confirmed/timed_out). Confirmation signal: `user.plan.stripeId === session_id`. Checkout success page updated to render poller for paid sessions. 10 new tests across 3 test files.
+
+- [x] Plan-status API route with auth, Zod validation, user-scoped query
+- [x] Client poller component with interval, timeout, abort controller
+- [x] Checkout success page integrates poller for paid sessions
+- [x] 7 route tests, 3 poller tests, 6 page tests
+- [x] Build passes, 638 tests, 0 failures
+
+---
+
+## Phase 145 — Upload Filename Collision Prevention — COMPLETED (2026-04-06)
+
+> Engineer delivered (PM audit #95). Replaced `Date.now()` with `globalThis.crypto.randomUUID()` in upload filename generation. Test mock uses fixed UUID. S3 URL assertions updated.
+
+- [x] Upload filenames use `crypto.randomUUID()`
+- [x] Test mock and assertions updated
+- [x] Build passes, tests pass
 
 ---
 
