@@ -144,9 +144,9 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 
 **Strengths:** Clean architecture, strong auth, comprehensive tests (640+49), central policy resolvers, WCAG 2.2 AA complete, durable usage counters, thorough user deletion cascade, zero lint/type/knip issues, correct webhook code structure, stream timeout confirmed in production (Phase 181), video generation cleanly removed (Phase 186-A), token limits maximized (Phase 186-B), admin error boundary (Phase 187-A), env var runtime validation (Phase 143), all display text admin-configurable (Phases 180.1–180.4), audio player error recovery (Phase 187-C), admin deletion protection with 5-layer defense (Phase 189), reusable component library: FormInput/PersonaSelector/UsageMetricRow (Phases 191–193), TiptapEditor WYSIWYG (Phase 194), plan-display utility for admin ADMIN label (Phase 190), admin suspension protection with symmetric 3-layer defense (Phase 200), avatar sync MongoDB→Clerk (Phase 201), admin config cache 30s TTL (Phase 144), full test baseline (640 tests, 0 failures), all API routes at Vercel Hobby ceiling (Phase 204), sidebar live-updates on new chat without browser refresh (Phase 205), upload error messages propagated to user with client pre-validation (Phase 206), upload magic byte validation prevents MIME spoofing (Phase 207), upload filenames collision-proof via UUID (Phase 145), checkout success page polls DB for webhook-delayed plan updates (Phase 165), plan-status route hardened with rate limiting and maxDuration (Phase 165.1), admin transaction query bounded (Phase 146), utility file extensions clean (Phase 147), bulk operations report partial failures for admin visibility (Phase 148), post-release active backlog fully cleared.
 
-**Weaknesses:** No active weaknesses. All identified issues resolved.
+**Weaknesses:** Admin actions (`admin.actions.tsx`) use per-field Zod helper pattern instead of per-action Zod schemas — functional and secure but inconsistent with rest of codebase. Phase 29.1–29.3 addresses this. One client component (`checkout-plan-status-poller.tsx`) uses unsafe `as` type assertion on API response — Phase 29.5 addresses this.
 
-**Opportunities:** Vercel Pro upgrade ($20/mo) for 300s maxDuration. Zod/Zustand app-wide modernization (Phase 29.x). Persona-aware media prompts (Phase 26.x).
+**Opportunities:** Vercel Pro upgrade ($20/mo) for 300s maxDuration. Persona-aware media prompts (Phase 26.x).
 
 **Threats:** Single-document growth risk (Task model). Vercel Hobby 60s timeout remains architecture constraint for media generation edge cases. jsdom pinned to 24.x — older version, lacks newer CSS/DOM APIs; monitor Vitest ESM environment loading progress for future upgrade.
 
@@ -167,7 +167,7 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 
 ## 6. Current Execution Order
 
-> All critical issues RESOLVED. All v1.0 pre-release phases DONE. **V1.0 MVP RELEASED.** Phases 143–208. 0 critical issues. **Post-release active backlog EMPTY.**
+> All critical issues RESOLVED. All v1.0 pre-release phases DONE. **V1.0 MVP RELEASED.** Phases 143–208. 0 critical issues. **Phase 29.x APPROVED — Zod modernization active. Zustand audit complete (no changes needed).**
 
 ### Confirmed Working
 
@@ -203,11 +203,19 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 
 ### Post-Release Backlog
 
-> All post-release active items COMPLETE. Only deferred items remain.
+> Phase 29.x APPROVED by owner (2026-04-06). Zustand audit complete — no changes needed. Zod refactor scoped to admin actions (13 actions) + client response validation.
+
+### Post-Release Active
+
+- **🟡 Phase 29.1** — MEDIUM: Admin single-value actions Zod schemas (4 actions: removeUser, createPage, deletePage, savePage).
+- **🟡 Phase 29.2** — MEDIUM: Admin toggle/numeric actions Zod schemas (3 actions: toggleSuspension, togglePublished, updateSortOrder).
+- **🟡 Phase 29.3** — MEDIUM: Admin bulk actions Zod schemas (6 actions: bulkSuspend, bulkRemove, bulkDeleteTx, bulkDeletePages, bulkPublish, bulkUnpublish).
+- **🟢 Phase 29.4** — LOW: Admin helper cleanup + schema consolidation.
+- **🟢 Phase 29.5** — LOW: Client-side API response Zod validation (poller).
 
 ### Deferred / ON HOLD
 
-1. **Phase 29.x** — Zod/Zustand app-wide modernization.
+1. **Phase 29.6** — updateAdminSettingAction Zod schema map. DEFERRED (15+ branches, high effort, low marginal value — current pattern works with Zod under the hood).
 2. **Phase 26.x** — Persona-aware media prompts, Stripe auto-renewal.
 3. **Legal/nav/footer admin configurability** — Deferred to v2.
 4. **TypeScript 6 / @typescript-eslint compatibility** — Monitor.
