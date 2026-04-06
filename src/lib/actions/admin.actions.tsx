@@ -18,12 +18,12 @@ import { createAdminAuditLogEntry } from "@/lib/utils/admin-audit";
 import { requireAdminActionAccess } from "@/lib/utils/admin-auth";
 import { clearConfigCache } from "@/lib/utils/config-cache";
 import { deleteUserCascade } from "@/lib/utils/delete-user-cascade";
+import { nonEmptyStringSchema } from "@/lib/utils/validation-schemas";
 import { AdminActionState } from "@/components/admin/admin-action-state";
 import { PersonaId } from "@/types/PersonaData.d";
 import { TaskEndedReason } from "@/types/TaskData.d";
 import { z } from "zod";
 
-const requiredStringSchema = z.string().trim().min(1);
 const numericFieldSchema = z.coerce.number().finite();
 const supportEmailSchema = z.string().trim().email();
 const adminSettingCategorySchema = z.enum([
@@ -40,10 +40,122 @@ const PERSONA_ACCESS_KEYS = new Set([
   "persona_access_pro",
   "persona_access_premium",
 ]);
+const booleanStringFieldSchema = z
+  .enum(["true", "false"])
+  .transform((value) => value === "true");
+const finiteNumericStringFieldSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .transform((value) => Number(value))
+  .refine((value) => Number.isFinite(value), {
+    message: "Invalid numeric value.",
+  });
+const removeUserByAdminActionSchema = z
+  .object({
+    userId: nonEmptyStringSchema,
+  })
+  .strict();
+const createPublicPageActionSchema = z
+  .object({
+    title: nonEmptyStringSchema,
+    slug: nonEmptyStringSchema,
+  })
+  .strict();
+const deletePublicPageActionSchema = z
+  .object({
+    pageId: nonEmptyStringSchema,
+  })
+  .strict();
+const savePublicPageActionSchema = z
+  .object({
+    pageId: nonEmptyStringSchema,
+    title: nonEmptyStringSchema,
+    content: nonEmptyStringSchema,
+  })
+  .strict();
+const toggleUserSuspensionActionSchema = z
+  .object({
+    userId: nonEmptyStringSchema,
+    suspended: booleanStringFieldSchema,
+  })
+  .strict();
+const togglePublicPagePublishedActionSchema = z
+  .object({
+    pageId: nonEmptyStringSchema,
+    isPublished: booleanStringFieldSchema,
+  })
+  .strict();
+const updatePublicPageSortOrderActionSchema = z
+  .object({
+    pageId: nonEmptyStringSchema,
+    sortOrder: finiteNumericStringFieldSchema,
+  })
+  .strict();
+const bulkSuspendUsersActionSchema = z
+  .object({
+    userIds: z.array(nonEmptyStringSchema).min(1),
+  })
+  .strict();
+const bulkRemoveUsersActionSchema = z
+  .object({
+    userIds: z.array(nonEmptyStringSchema).min(1),
+  })
+  .strict();
+const bulkDeleteTransactionsActionSchema = z
+  .object({
+    transactionIds: z.array(nonEmptyStringSchema).min(1),
+  })
+  .strict();
+const bulkDeletePublicPagesActionSchema = z
+  .object({
+    pageIds: z.array(nonEmptyStringSchema).min(1),
+  })
+  .strict();
+const bulkPublishPublicPagesActionSchema = z
+  .object({
+    pageIds: z.array(nonEmptyStringSchema).min(1),
+  })
+  .strict();
+const bulkUnpublishPublicPagesActionSchema = z
+  .object({
+    pageIds: z.array(nonEmptyStringSchema).min(1),
+  })
+  .strict();
+
+type RemoveUserByAdminActionInput = z.infer<
+  typeof removeUserByAdminActionSchema
+>;
+type CreatePublicPageActionInput = z.infer<typeof createPublicPageActionSchema>;
+type DeletePublicPageActionInput = z.infer<typeof deletePublicPageActionSchema>;
+type SavePublicPageActionInput = z.infer<typeof savePublicPageActionSchema>;
+type ToggleUserSuspensionActionInput = z.infer<
+  typeof toggleUserSuspensionActionSchema
+>;
+type TogglePublicPagePublishedActionInput = z.infer<
+  typeof togglePublicPagePublishedActionSchema
+>;
+type UpdatePublicPageSortOrderActionInput = z.infer<
+  typeof updatePublicPageSortOrderActionSchema
+>;
+type BulkSuspendUsersActionInput = z.infer<typeof bulkSuspendUsersActionSchema>;
+type BulkRemoveUsersActionInput = z.infer<typeof bulkRemoveUsersActionSchema>;
+type BulkDeleteTransactionsActionInput = z.infer<
+  typeof bulkDeleteTransactionsActionSchema
+>;
+type BulkDeletePublicPagesActionInput = z.infer<
+  typeof bulkDeletePublicPagesActionSchema
+>;
+type BulkPublishPublicPagesActionInput = z.infer<
+  typeof bulkPublishPublicPagesActionSchema
+>;
+type BulkUnpublishPublicPagesActionInput = z.infer<
+  typeof bulkUnpublishPublicPagesActionSchema
+>;
 
 function getStringField(formData: FormData, fieldName: string): string {
   const value = formData.get(fieldName);
-  const parsedValue = requiredStringSchema.safeParse(value);
+  const parsedValue = nonEmptyStringSchema.safeParse(value);
 
   if (!parsedValue.success) {
     throw new Error(`Missing required field: ${fieldName}`);
@@ -81,20 +193,6 @@ function getNumericField(formData: FormData, fieldName: string): number {
   }
 
   return parsedValue.data;
-}
-
-function getMultiStringField(formData: FormData, fieldName: string): string[] {
-  const values = formData
-    .getAll(fieldName)
-    .filter((value): value is string => typeof value === "string")
-    .map((value) => value.trim())
-    .filter((value) => value.length > 0);
-
-  if (values.length === 0) {
-    throw new Error(`Missing required field: ${fieldName}`);
-  }
-
-  return values;
 }
 
 function resolveActionFormData(
@@ -560,8 +658,17 @@ export async function toggleUserSuspensionAction(
       maybeFormData,
     );
     const adminId = await requireAdminActionAccess();
-    const targetUserId = getStringField(formData, "userId");
-    const suspended = getStringField(formData, "suspended") === "true";
+    const parsedInput = toggleUserSuspensionActionSchema.safeParse({
+      userId: formData.get("userId"),
+      suspended: formData.get("suspended"),
+    });
+
+    if (!parsedInput.success) {
+      return errorState("User selection and suspension state are required.");
+    }
+
+    const { userId: targetUserId, suspended }: ToggleUserSuspensionActionInput =
+      parsedInput.data;
 
     await connectToDatabase();
 
@@ -628,7 +735,16 @@ export async function removeUserByAdminAction(
       maybeFormData,
     );
     const adminId = await requireAdminActionAccess();
-    const targetUserId = getStringField(formData, "userId");
+    const parsedInput = removeUserByAdminActionSchema.safeParse({
+      userId: formData.get("userId"),
+    });
+
+    if (!parsedInput.success) {
+      return errorState("User selection is required.");
+    }
+
+    const { userId: targetUserId }: RemoveUserByAdminActionInput =
+      parsedInput.data;
 
     await connectToDatabase();
     await removeUserByAdmin({ adminId, targetUserId });
@@ -792,8 +908,16 @@ export async function createPublicPageAction(
       maybeFormData,
     );
     const adminId = await requireAdminActionAccess();
-    const title = getStringField(formData, "title");
-    const slug = getStringField(formData, "slug");
+    const parsedInput = createPublicPageActionSchema.safeParse({
+      title: formData.get("title"),
+      slug: formData.get("slug"),
+    });
+
+    if (!parsedInput.success) {
+      return errorState("Page title and slug are required.");
+    }
+
+    const { title, slug }: CreatePublicPageActionInput = parsedInput.data;
 
     await connectToDatabase();
 
@@ -850,8 +974,17 @@ export async function togglePublicPagePublishedAction(
       maybeFormData,
     );
     const adminId = await requireAdminActionAccess();
-    const pageId = getStringField(formData, "pageId");
-    const isPublished = getStringField(formData, "isPublished") === "true";
+    const parsedInput = togglePublicPagePublishedActionSchema.safeParse({
+      pageId: formData.get("pageId"),
+      isPublished: formData.get("isPublished"),
+    });
+
+    if (!parsedInput.success) {
+      return errorState("Page selection and publish state are required.");
+    }
+
+    const { pageId, isPublished }: TogglePublicPagePublishedActionInput =
+      parsedInput.data;
 
     await connectToDatabase();
 
@@ -906,7 +1039,15 @@ export async function deletePublicPageAction(
       maybeFormData,
     );
     const adminId = await requireAdminActionAccess();
-    const pageId = getStringField(formData, "pageId");
+    const parsedInput = deletePublicPageActionSchema.safeParse({
+      pageId: formData.get("pageId"),
+    });
+
+    if (!parsedInput.success) {
+      return errorState("Page selection is required.");
+    }
+
+    const { pageId }: DeletePublicPageActionInput = parsedInput.data;
 
     await connectToDatabase();
 
@@ -946,8 +1087,17 @@ export async function updatePublicPageSortOrderAction(
       maybeFormData,
     );
     const adminId = await requireAdminActionAccess();
-    const pageId = getStringField(formData, "pageId");
-    const sortOrder = Number(getStringField(formData, "sortOrder"));
+    const parsedInput = updatePublicPageSortOrderActionSchema.safeParse({
+      pageId: formData.get("pageId"),
+      sortOrder: formData.get("sortOrder"),
+    });
+
+    if (!parsedInput.success) {
+      return errorState("Page selection and sort order are required.");
+    }
+
+    const { pageId, sortOrder }: UpdatePublicPageSortOrderActionInput =
+      parsedInput.data;
 
     await connectToDatabase();
 
@@ -1002,9 +1152,18 @@ export async function savePublicPageAction(
       maybeFormData,
     );
     const adminId = await requireAdminActionAccess();
-    const pageId = getStringField(formData, "pageId");
-    const title = getStringField(formData, "title");
-    const content = getStringField(formData, "content");
+    const parsedInput = savePublicPageActionSchema.safeParse({
+      pageId: formData.get("pageId"),
+      title: formData.get("title"),
+      content: formData.get("content"),
+    });
+
+    if (!parsedInput.success) {
+      return errorState("Page ID, title, and content are required.");
+    }
+
+    const { pageId, title, content }: SavePublicPageActionInput =
+      parsedInput.data;
 
     await connectToDatabase();
 
@@ -1060,7 +1219,19 @@ export async function bulkSuspendUsersAction(
       maybeFormData,
     );
     const adminId = await requireAdminActionAccess();
-    const userIds = getMultiStringField(formData, "userIds");
+    const parsedInput = bulkSuspendUsersActionSchema.safeParse({
+      userIds: formData
+        .getAll("userIds")
+        .filter((value): value is string => typeof value === "string")
+        .map((value) => value.trim())
+        .filter((value) => value.length > 0),
+    });
+
+    if (!parsedInput.success) {
+      return errorState("Unable to suspend selected users.");
+    }
+
+    const { userIds }: BulkSuspendUsersActionInput = parsedInput.data;
 
     await connectToDatabase();
 
@@ -1179,7 +1350,19 @@ export async function bulkRemoveUsersAction(
       maybeFormData,
     );
     const adminId = await requireAdminActionAccess();
-    const userIds = getMultiStringField(formData, "userIds");
+    const parsedInput = bulkRemoveUsersActionSchema.safeParse({
+      userIds: formData
+        .getAll("userIds")
+        .filter((value): value is string => typeof value === "string")
+        .map((value) => value.trim())
+        .filter((value) => value.length > 0),
+    });
+
+    if (!parsedInput.success) {
+      return errorState("Unable to remove selected users.");
+    }
+
+    const { userIds }: BulkRemoveUsersActionInput = parsedInput.data;
 
     await connectToDatabase();
 
@@ -1297,7 +1480,20 @@ export async function bulkDeleteTransactionsAction(
       maybeFormData,
     );
     const adminId = await requireAdminActionAccess();
-    const transactionIds = getMultiStringField(formData, "transactionIds");
+    const parsedInput = bulkDeleteTransactionsActionSchema.safeParse({
+      transactionIds: formData
+        .getAll("transactionIds")
+        .filter((value): value is string => typeof value === "string")
+        .map((value) => value.trim())
+        .filter((value) => value.length > 0),
+    });
+
+    if (!parsedInput.success) {
+      return errorState("Unable to remove selected transactions.");
+    }
+
+    const { transactionIds }: BulkDeleteTransactionsActionInput =
+      parsedInput.data;
 
     await connectToDatabase();
 
@@ -1347,7 +1543,19 @@ export async function bulkDeletePublicPagesAction(
       maybeFormData,
     );
     const adminId = await requireAdminActionAccess();
-    const pageIds = getMultiStringField(formData, "pageIds");
+    const parsedInput = bulkDeletePublicPagesActionSchema.safeParse({
+      pageIds: formData
+        .getAll("pageIds")
+        .filter((value): value is string => typeof value === "string")
+        .map((value) => value.trim())
+        .filter((value) => value.length > 0),
+    });
+
+    if (!parsedInput.success) {
+      return errorState("Unable to delete selected pages.");
+    }
+
+    const { pageIds }: BulkDeletePublicPagesActionInput = parsedInput.data;
 
     await connectToDatabase();
 
@@ -1391,7 +1599,19 @@ export async function bulkPublishPublicPagesAction(
       maybeFormData,
     );
     const adminId = await requireAdminActionAccess();
-    const pageIds = getMultiStringField(formData, "pageIds");
+    const parsedInput = bulkPublishPublicPagesActionSchema.safeParse({
+      pageIds: formData
+        .getAll("pageIds")
+        .filter((value): value is string => typeof value === "string")
+        .map((value) => value.trim())
+        .filter((value) => value.length > 0),
+    });
+
+    if (!parsedInput.success) {
+      return errorState("Unable to publish selected pages.");
+    }
+
+    const { pageIds }: BulkPublishPublicPagesActionInput = parsedInput.data;
 
     await connectToDatabase();
 
@@ -1455,7 +1675,19 @@ export async function bulkUnpublishPublicPagesAction(
       maybeFormData,
     );
     const adminId = await requireAdminActionAccess();
-    const pageIds = getMultiStringField(formData, "pageIds");
+    const parsedInput = bulkUnpublishPublicPagesActionSchema.safeParse({
+      pageIds: formData
+        .getAll("pageIds")
+        .filter((value): value is string => typeof value === "string")
+        .map((value) => value.trim())
+        .filter((value) => value.length > 0),
+    });
+
+    if (!parsedInput.success) {
+      return errorState("Unable to unpublish selected pages.");
+    }
+
+    const { pageIds }: BulkUnpublishPublicPagesActionInput = parsedInput.data;
 
     await connectToDatabase();
 

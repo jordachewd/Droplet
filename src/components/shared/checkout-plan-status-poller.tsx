@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { z } from "zod";
 
 interface CheckoutPlanStatusPollerProps {
   sessionId: string;
@@ -11,6 +12,11 @@ type CheckoutPlanPollState = "checking" | "confirmed" | "timed_out";
 const POLL_INTERVAL_MS = 4_000;
 const MAX_POLL_DURATION_MS = 30_000;
 const REQUEST_TIMEOUT_MS = 2_500;
+const checkoutPlanStatusResponseSchema = z
+  .object({
+    confirmed: z.boolean(),
+  })
+  .strict();
 
 async function fetchCheckoutPlanConfirmation(
   sessionId: string,
@@ -34,9 +40,16 @@ async function fetchCheckoutPlanConfirmation(
       return false;
     }
 
-    const payload = (await response.json()) as { confirmed?: boolean };
-    return payload.confirmed === true;
-  } catch {
+    const payload: unknown = await response.json();
+    const parsedPayload = checkoutPlanStatusResponseSchema.safeParse(payload);
+
+    if (!parsedPayload.success) {
+      return false;
+    }
+
+    return parsedPayload.data.confirmed;
+  } catch (error) {
+    void error;
     return false;
   } finally {
     clearTimeout(requestTimeout);
