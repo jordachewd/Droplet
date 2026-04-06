@@ -1,10 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
-import { GET } from "@/app/api/checkout/plan-status/route";
+import { GET, maxDuration } from "@/app/api/checkout/plan-status/route";
 import { auth } from "@clerk/nextjs/server";
 import { requireActiveUser } from "@/lib/utils/require-active-user";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import User from "@/lib/database/models/user.model";
+import { enforceSlidingWindowRateLimit } from "@/lib/utils/rate-limit";
 import { mockAuth } from "../test-support";
 
 vi.mock("@clerk/nextjs/server", () => ({
@@ -17,6 +18,10 @@ vi.mock("@/lib/utils/require-active-user", () => ({
 
 vi.mock("@/lib/database/mongoose", () => ({
   connectToDatabase: vi.fn(),
+}));
+
+vi.mock("@/lib/utils/rate-limit", () => ({
+  enforceSlidingWindowRateLimit: vi.fn(),
 }));
 
 vi.mock("@/lib/database/models/user.model", () => ({
@@ -60,6 +65,13 @@ describe("GET /api/checkout/plan-status", () => {
     vi.mocked(connectToDatabase).mockResolvedValue(
       {} as Awaited<ReturnType<typeof connectToDatabase>>,
     );
+    vi.mocked(enforceSlidingWindowRateLimit).mockResolvedValue({
+      success: true,
+      limit: 30,
+      remaining: 29,
+      resetAt: Date.now() + 60_000,
+      retryAfterMs: 0,
+    });
     mockUserPlanProjection({
       plan: {
         name: "Pro",
@@ -89,6 +101,10 @@ describe("GET /api/checkout/plan-status", () => {
     expect(response.status).toBe(401);
     expect(payload.error).toBe("Authentication required.");
     expect(requireActiveUser).not.toHaveBeenCalled();
+  });
+
+  it("exports maxDuration for polling route timeout budget", () => {
+    expect(maxDuration).toBe(60);
   });
 
   it("returns 503 when account is not provisioned", async () => {
@@ -131,6 +147,28 @@ describe("GET /api/checkout/plan-status", () => {
 
     expect(response.status).toBe(400);
     expect(payload.error).toBe("A valid session_id is required.");
+    expect(User.findOne).not.toHaveBeenCalled();
+  });
+
+  it("returns 429 when plan-status route rate limit is exceeded", async () => {
+    vi.mocked(enforceSlidingWindowRateLimit).mockResolvedValue({
+      success: false,
+      limit: 30,
+      remaining: 0,
+      resetAt: Date.now() + 5_000,
+      retryAfterMs: 5_000,
+    });
+
+    const response = await GET(
+      buildRequest(
+        "http://localhost/api/checkout/plan-status?session_id=cs_test_paid_123",
+      ),
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(429);
+    expect(payload.error).toBe("Too many requests. Please try again shortly.");
+    expect(response.headers.get("Retry-After")).toBe("5");
     expect(User.findOne).not.toHaveBeenCalled();
   });
 

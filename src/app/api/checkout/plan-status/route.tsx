@@ -2,9 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { z } from "zod";
 import { requireActiveUser } from "@/lib/utils/require-active-user";
+import { enforceSlidingWindowRateLimit } from "@/lib/utils/rate-limit";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import User from "@/lib/database/models/user.model";
 import { PlanName } from "@/types/PlanData.d";
+
+export const maxDuration = 60;
+
+const PLAN_STATUS_RATE_LIMIT_MAX_REQUESTS = 30;
+const PLAN_STATUS_RATE_LIMIT_WINDOW_MS = 60_000;
 
 const checkoutPlanStatusQuerySchema = z
   .object({
@@ -44,6 +50,27 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       return NextResponse.json(
         { error: "Account suspended." },
         { status: 403 },
+      );
+    }
+
+    const rateLimit = await enforceSlidingWindowRateLimit({
+      key: `checkout-plan-status:${userId}`,
+      limit: PLAN_STATUS_RATE_LIMIT_MAX_REQUESTS,
+      windowMs: PLAN_STATUS_RATE_LIMIT_WINDOW_MS,
+    });
+
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: "Too many requests. Please try again shortly." },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(Math.ceil(rateLimit.retryAfterMs / 1000)),
+            "X-RateLimit-Limit": String(rateLimit.limit),
+            "X-RateLimit-Remaining": String(rateLimit.remaining),
+            "X-RateLimit-Reset": String(rateLimit.resetAt),
+          },
+        },
       );
     }
 

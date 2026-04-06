@@ -341,6 +341,7 @@ export async function getAdminUserDetail(userId: string) {
       ]),
       Transaction.find({ clerkId: user.clerkId })
         .sort({ createdAt: -1 })
+        .limit(50)
         .select("stripeId createdAt expiresOn amount plan billing")
         .lean(),
       getEffectivePlanConfig(),

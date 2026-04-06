@@ -137,6 +137,25 @@ function logAdminActionError(context: string, error: unknown): void {
   );
 }
 
+function pluralize(count: number, singular: string): string {
+  return count === 1 ? singular : `${singular}s`;
+}
+
+function withSummaryDetails(
+  baseMessage: string,
+  detailMessages: string[],
+): string {
+  const nonEmptyDetails = detailMessages.filter(
+    (detail) => detail.trim().length > 0,
+  );
+
+  if (nonEmptyDetails.length === 0) {
+    return baseMessage;
+  }
+
+  return `${baseMessage} ${nonEmptyDetails.join(" ")}`;
+}
+
 async function removeUserByAdmin({
   adminId,
   targetUserId,
@@ -1045,18 +1064,36 @@ export async function bulkSuspendUsersAction(
 
     await connectToDatabase();
 
-    const adminUsers = (await User.find({
+    const selectedUsers = (await User.find({
       _id: { $in: userIds },
-      role: "admin",
     })
-      .select("_id")
-      .lean()) as Array<{ _id: unknown }>;
-    const adminUserIdSet = new Set(
-      adminUsers.map((adminUser) => String(adminUser._id)),
+      .select("_id role")
+      .lean()) as Array<{ _id: unknown; role?: string }>;
+    const selectedUserMap = new Map(
+      selectedUsers.map((selectedUser) => [
+        String(selectedUser._id),
+        selectedUser.role ?? "client",
+      ]),
     );
-    const suspendableUserIds = userIds.filter(
-      (targetUserId) => !adminUserIdSet.has(targetUserId),
-    );
+    const adminUserIdSet = new Set<string>();
+    const missingUserIds: string[] = [];
+    const suspendableUserIds: string[] = [];
+
+    for (const userId of userIds) {
+      const userRole = selectedUserMap.get(userId);
+
+      if (!userRole) {
+        missingUserIds.push(userId);
+        continue;
+      }
+
+      if (userRole === "admin") {
+        adminUserIdSet.add(userId);
+        continue;
+      }
+
+      suspendableUserIds.push(userId);
+    }
 
     if (adminUserIdSet.size > 0) {
       process.stderr.write(
@@ -1064,7 +1101,14 @@ export async function bulkSuspendUsersAction(
       );
     }
 
+    if (missingUserIds.length > 0) {
+      process.stderr.write(
+        `[admin.actions] bulkSuspendUsersAction missing users: ${missingUserIds.join(",")}\n`,
+      );
+    }
+
     let modifiedCount = 0;
+    let matchedCount = 0;
 
     if (suspendableUserIds.length > 0) {
       const result = await User.updateMany(
@@ -1082,7 +1126,21 @@ export async function bulkSuspendUsersAction(
       );
 
       modifiedCount = result.modifiedCount ?? 0;
+      matchedCount = result.matchedCount ?? suspendableUserIds.length;
     }
+
+    const alreadySuspendedCount = Math.max(matchedCount - modifiedCount, 0);
+    const message = withSummaryDetails(`${modifiedCount} users suspended.`, [
+      adminUserIdSet.size > 0
+        ? `${adminUserIdSet.size} admin ${pluralize(adminUserIdSet.size, "user")} skipped.`
+        : "",
+      missingUserIds.length > 0
+        ? `${missingUserIds.length} ${pluralize(missingUserIds.length, "user")} not found.`
+        : "",
+      alreadySuspendedCount > 0
+        ? `${alreadySuspendedCount} ${pluralize(alreadySuspendedCount, "user")} already suspended.`
+        : "",
+    ]);
 
     await createAdminAuditLogEntry({
       adminId,
@@ -1092,14 +1150,19 @@ export async function bulkSuspendUsersAction(
       details: {
         selectedCount: userIds.length,
         modifiedCount,
+        matchedCount,
+        alreadySuspendedCount,
         skippedAdminCount: adminUserIdSet.size,
+        skippedAdminUserIds: Array.from(adminUserIdSet),
+        missingCount: missingUserIds.length,
+        missingUserIds,
       },
     });
 
     revalidatePath("/admin");
     revalidatePath("/admin/users");
 
-    return successState(`${modifiedCount} users suspended.`, "warning");
+    return successState(message, "warning");
   } catch (error) {
     logAdminActionError("bulkSuspendUsersAction", error);
     return errorState("Unable to suspend selected users.");
@@ -1120,18 +1183,36 @@ export async function bulkRemoveUsersAction(
 
     await connectToDatabase();
 
-    const adminUsers = (await User.find({
+    const selectedUsers = (await User.find({
       _id: { $in: userIds },
-      role: "admin",
     })
-      .select("_id")
-      .lean()) as Array<{ _id: unknown }>;
-    const adminUserIdSet = new Set(
-      adminUsers.map((adminUser) => String(adminUser._id)),
+      .select("_id role")
+      .lean()) as Array<{ _id: unknown; role?: string }>;
+    const selectedUserMap = new Map(
+      selectedUsers.map((selectedUser) => [
+        String(selectedUser._id),
+        selectedUser.role ?? "client",
+      ]),
     );
-    const removableUserIds = userIds.filter(
-      (targetUserId) => !adminUserIdSet.has(targetUserId),
-    );
+    const adminUserIdSet = new Set<string>();
+    const missingUserIds: string[] = [];
+    const removableUserIds: string[] = [];
+
+    for (const userId of userIds) {
+      const userRole = selectedUserMap.get(userId);
+
+      if (!userRole) {
+        missingUserIds.push(userId);
+        continue;
+      }
+
+      if (userRole === "admin") {
+        adminUserIdSet.add(userId);
+        continue;
+      }
+
+      removableUserIds.push(userId);
+    }
 
     if (adminUserIdSet.size > 0) {
       process.stderr.write(
@@ -1139,17 +1220,67 @@ export async function bulkRemoveUsersAction(
       );
     }
 
+    if (missingUserIds.length > 0) {
+      process.stderr.write(
+        `[admin.actions] bulkRemoveUsersAction missing users: ${missingUserIds.join(",")}\n`,
+      );
+    }
+
     let removedCount = 0;
+    const failedRemovals: Array<{ userId: string; reason: string }> = [];
 
     for (const targetUserId of removableUserIds) {
-      await removeUserByAdmin({ adminId, targetUserId });
-      removedCount += 1;
+      try {
+        await removeUserByAdmin({ adminId, targetUserId });
+        removedCount += 1;
+      } catch (error) {
+        const reason = error instanceof Error ? error.message : "unknown";
+        failedRemovals.push({ userId: targetUserId, reason });
+        process.stderr.write(
+          `[admin.actions] bulkRemoveUsersAction failed user ${targetUserId}: ${reason}\n`,
+        );
+      }
+    }
+
+    const message = withSummaryDetails(`${removedCount} users removed.`, [
+      adminUserIdSet.size > 0
+        ? `${adminUserIdSet.size} admin ${pluralize(adminUserIdSet.size, "user")} skipped.`
+        : "",
+      missingUserIds.length > 0
+        ? `${missingUserIds.length} ${pluralize(missingUserIds.length, "user")} not found.`
+        : "",
+      failedRemovals.length > 0
+        ? `${failedRemovals.length} ${pluralize(failedRemovals.length, "removal")} failed.`
+        : "",
+    ]);
+
+    await createAdminAuditLogEntry({
+      adminId,
+      action: "user.bulk_remove",
+      targetType: "User",
+      targetId: userIds.join(","),
+      details: {
+        selectedCount: userIds.length,
+        removedCount,
+        skippedAdminCount: adminUserIdSet.size,
+        skippedAdminUserIds: Array.from(adminUserIdSet),
+        missingCount: missingUserIds.length,
+        missingUserIds,
+        failedCount: failedRemovals.length,
+        failedRemovals,
+      },
+    });
+
+    if (failedRemovals.length > 0) {
+      process.stderr.write(
+        `[admin.actions] bulkRemoveUsersAction partial failure count: ${failedRemovals.length}\n`,
+      );
     }
 
     revalidatePath("/admin");
     revalidatePath("/admin/users");
 
-    return successState(`${removedCount} users removed.`, "warning");
+    return successState(message, "warning");
   } catch (error) {
     logAdminActionError("bulkRemoveUsersAction", error);
     return errorState("Unable to remove selected users.");
@@ -1173,6 +1304,16 @@ export async function bulkDeleteTransactionsAction(
     const result = await Transaction.deleteMany({
       _id: { $in: transactionIds },
     });
+    const deletedCount = result.deletedCount ?? 0;
+    const notFoundCount = Math.max(transactionIds.length - deletedCount, 0);
+    const message = withSummaryDetails(
+      `${deletedCount} transactions removed.`,
+      [
+        notFoundCount > 0
+          ? `${notFoundCount} ${pluralize(notFoundCount, "transaction")} not found.`
+          : "",
+      ],
+    );
 
     await createAdminAuditLogEntry({
       adminId,
@@ -1181,17 +1322,15 @@ export async function bulkDeleteTransactionsAction(
       targetId: transactionIds.join(","),
       details: {
         selectedCount: transactionIds.length,
-        deletedCount: result.deletedCount ?? 0,
+        deletedCount,
+        notFoundCount,
       },
     });
 
     revalidatePath("/admin");
     revalidatePath("/admin/transactions");
 
-    return successState(
-      `${result.deletedCount ?? 0} transactions removed.`,
-      "warning",
-    );
+    return successState(message, "warning");
   } catch (error) {
     logAdminActionError("bulkDeleteTransactionsAction", error);
     return errorState("Unable to remove selected transactions.");
@@ -1213,6 +1352,13 @@ export async function bulkDeletePublicPagesAction(
     await connectToDatabase();
 
     const result = await PublicPage.deleteMany({ _id: { $in: pageIds } });
+    const deletedCount = result.deletedCount ?? 0;
+    const notFoundCount = Math.max(pageIds.length - deletedCount, 0);
+    const message = withSummaryDetails(`${deletedCount} pages deleted.`, [
+      notFoundCount > 0
+        ? `${notFoundCount} ${pluralize(notFoundCount, "page")} not found.`
+        : "",
+    ]);
 
     await createAdminAuditLogEntry({
       adminId,
@@ -1221,16 +1367,14 @@ export async function bulkDeletePublicPagesAction(
       targetId: pageIds.join(","),
       details: {
         selectedCount: pageIds.length,
-        deletedCount: result.deletedCount ?? 0,
+        deletedCount,
+        notFoundCount,
       },
     });
 
     revalidatePath("/admin/website");
 
-    return successState(
-      `${result.deletedCount ?? 0} pages deleted.`,
-      "warning",
-    );
+    return successState(message, "warning");
   } catch (error) {
     logAdminActionError("bulkDeletePublicPagesAction", error);
     return errorState("Unable to delete selected pages.");
@@ -1265,6 +1409,18 @@ export async function bulkPublishPublicPagesAction(
         upsert: false,
       },
     );
+    const modifiedCount = result.modifiedCount ?? 0;
+    const matchedCount = result.matchedCount ?? modifiedCount;
+    const notFoundCount = Math.max(pageIds.length - matchedCount, 0);
+    const alreadyPublishedCount = Math.max(matchedCount - modifiedCount, 0);
+    const message = withSummaryDetails(`${modifiedCount} pages published.`, [
+      notFoundCount > 0
+        ? `${notFoundCount} ${pluralize(notFoundCount, "page")} not found.`
+        : "",
+      alreadyPublishedCount > 0
+        ? `${alreadyPublishedCount} ${pluralize(alreadyPublishedCount, "page")} already published.`
+        : "",
+    ]);
 
     await createAdminAuditLogEntry({
       adminId,
@@ -1273,13 +1429,16 @@ export async function bulkPublishPublicPagesAction(
       targetId: pageIds.join(","),
       details: {
         selectedCount: pageIds.length,
-        modifiedCount: result.modifiedCount ?? 0,
+        modifiedCount,
+        matchedCount,
+        notFoundCount,
+        alreadyPublishedCount,
       },
     });
 
     revalidatePath("/admin/website");
 
-    return successState(`${result.modifiedCount ?? 0} pages published.`);
+    return successState(message);
   } catch (error) {
     logAdminActionError("bulkPublishPublicPagesAction", error);
     return errorState("Unable to publish selected pages.");
@@ -1314,6 +1473,18 @@ export async function bulkUnpublishPublicPagesAction(
         upsert: false,
       },
     );
+    const modifiedCount = result.modifiedCount ?? 0;
+    const matchedCount = result.matchedCount ?? modifiedCount;
+    const notFoundCount = Math.max(pageIds.length - matchedCount, 0);
+    const alreadyUnpublishedCount = Math.max(matchedCount - modifiedCount, 0);
+    const message = withSummaryDetails(`${modifiedCount} pages unpublished.`, [
+      notFoundCount > 0
+        ? `${notFoundCount} ${pluralize(notFoundCount, "page")} not found.`
+        : "",
+      alreadyUnpublishedCount > 0
+        ? `${alreadyUnpublishedCount} ${pluralize(alreadyUnpublishedCount, "page")} already unpublished.`
+        : "",
+    ]);
 
     await createAdminAuditLogEntry({
       adminId,
@@ -1322,13 +1493,16 @@ export async function bulkUnpublishPublicPagesAction(
       targetId: pageIds.join(","),
       details: {
         selectedCount: pageIds.length,
-        modifiedCount: result.modifiedCount ?? 0,
+        modifiedCount,
+        matchedCount,
+        notFoundCount,
+        alreadyUnpublishedCount,
       },
     });
 
     revalidatePath("/admin/website");
 
-    return successState(`${result.modifiedCount ?? 0} pages unpublished.`);
+    return successState(message);
   } catch (error) {
     logAdminActionError("bulkUnpublishPublicPagesAction", error);
     return errorState("Unable to unpublish selected pages.");
