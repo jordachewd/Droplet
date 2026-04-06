@@ -2,7 +2,62 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-04-06 — PM audit #95.
+> Last updated: 2026-04-06 — PM audit #96.
+
+---
+
+## Phase 208 — jsdom ESM Compatibility Fix — COMPLETED (2026-04-06)
+
+> Engineer delivered (PM audit #96). `jsdom@29.0.1` pulled `@asamuzakjp/css-color@5.1.5` which uses top-level `await` in ESM — incompatible with Vitest's `forks` pool (uses `require()`). 33 `.test.tsx` files crashed before any test ran. Fix: downgraded jsdom from `^29.0.1` to `~24.1.3`. jsdom 24.x predates the ESM-only dependencies. Rejected alternatives: `vmThreads` pool (same error), `happy-dom` (121 behavioral test failures), npm overrides (only partly effective).
+
+- [x] jsdom pinned to `~24.1.3`
+- [x] All 104 suites, 640 tests pass — 0 failures
+- [x] Monitor item added for future upgrade when Vitest resolves ESM TLA in forks pool
+
+---
+
+## Phase 148 — Bulk Operations Partial-Failure Reporting — COMPLETED (2026-04-06)
+
+> Engineer delivered (PM audit #96). All 5 bulk admin actions now report partial-failure details: `bulkSuspendUsersAction` (skipped admin/missing/already-suspended), `bulkRemoveUsersAction` (per-user try/catch, `failedRemovals[]` with userId + reason, audit log), `bulkDeleteTransactionsAction` (not-found counts), `bulkPublishPublicPagesAction` (not-found + already-published), `bulkUnpublishPublicPagesAction` (not-found + already-unpublished). All use MongoDB `matchedCount vs modifiedCount` for state detection. `AdminActionState` return shape preserved (no breaking changes).
+
+- [x] 5 bulk actions report partial-failure details
+- [x] Per-user error isolation in bulk remove
+- [x] Audit log includes failure details
+- [x] Build passes, tests pass
+
+---
+
+## Phase 147 — Rename `.tsx` Utility Files to `.ts` — COMPLETED (2026-04-06)
+
+> Engineer delivered (PM audit #96). Renamed 5 utility files from `.tsx` to `.ts`: `handleError`, `getPlanStatus`, `getFullName`, `getFormattedDate`, `generateString`. None contained JSX — extension was incorrect per coding standards. Old `.tsx` files confirmed deleted. Zero source imports reference old extensions.
+
+- [x] 5 files renamed from `.tsx` to `.ts`
+- [x] All imports updated
+- [x] Old `.tsx` files deleted
+- [x] Build passes, tests pass
+
+---
+
+## Phase 146 — Admin User Detail Transaction Limit — COMPLETED (2026-04-06)
+
+> Engineer delivered (PM audit #96). Added `.limit(50)` to transaction query in `getAdminUserDetail` (`admin-queries.ts`). Sort by `createdAt: -1` preserved — returns latest 50 transactions. Prevents unbounded query results for heavy users.
+
+- [x] `.limit(50)` added to transaction query
+- [x] Sort order preserved (`createdAt: -1`)
+- [x] Test updated
+- [x] Build passes, tests pass
+
+---
+
+## Phase 165.1 — Plan-Status Route Hardening — COMPLETED (2026-04-06)
+
+> Engineer delivered (PM audit #96). Added `maxDuration = 60` and `enforceSlidingWindowRateLimit` (30 req/60s) to `/api/checkout/plan-status`. Rate limit key: `checkout-plan-status:${userId}`. Auth order: auth → requireActiveUser → rate limit → business logic. 429 response includes `Retry-After`, `X-RateLimit-Limit`, `X-RateLimit-Remaining` headers. Now consistent with all other API routes.
+
+- [x] `maxDuration = 60` exported
+- [x] Rate limiting applied (30 req/60s sliding window)
+- [x] 429 response with rate limit headers
+- [x] Test updated
+- [x] Build passes, 640 tests, 0 failures
 
 ---
 

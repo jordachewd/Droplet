@@ -5,57 +5,15 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #95 (2026-04-06). V1.0 MVP RELEASED. All 7 validation gates GREEN (638 tests, lint 0/0, TSC clean, build passes, knip 0). All Milestones 0–25 COMPLETE. Phases 143–207 COMPLETE.**
+> **STATUS: PM audit #96 (2026-04-06). V1.0 MVP RELEASED. All 7 validation gates GREEN (640 tests, lint 0/0, TSC clean, build passes, knip 0). All Milestones 0–25 COMPLETE. Phases 143–207, 165.1, 146–148 COMPLETE.**
 >
 > **GATE STATUS: Validation GREEN. Architecture GREEN. Product GREEN. Admin GREEN. Public GREEN. Contract GREEN.**
 >
-> **TEST STATUS: 638 tests (104 suites), 49 E2E (6 skipped). 0 failures. All gates GREEN.**
+> **TEST STATUS: 640 tests (104 suites), 49 E2E (6 skipped). 0 failures. All gates GREEN.**
 >
-> **EXECUTION ORDER (PM audit #95 — Post-Release):**
->
-> 1. **MEDIUM Phase 165.1** — Plan-status route hardening (rate limiting + `maxDuration`).
-> 2. **LOW Phase 146** — Admin user detail transaction limit.
-> 3. **LOW Phase 147** — Rename `.tsx` utility files to `.ts`.
-> 4. **LOW Phase 148** — Bulk operations partial-failure reporting.
+> **EXECUTION ORDER: No active tasks. All post-release backlog items COMPLETE. Only deferred items remain.**
 >
 > All owner directives (OI1–OI44) RESOLVED. See `DONE.md` for archive.
-
----
-
-## MEDIUM — Phase 165.1 — Plan-Status Route Hardening
-
-> **PM audit #95 follow-up.** `/api/checkout/plan-status` route is missing `maxDuration` export and rate limiting. All other API routes have both. Consistency gap found by PM + Architect + Engineer audits.
-
-**File:** `src/app/api/checkout/plan-status/route.tsx`
-
-**What to do:**
-
-1. Add `export const maxDuration = 60;` (Vercel Hobby ceiling, consistent with all 6 other API routes).
-2. Add `enforceSlidingWindowRateLimit` — suggested: 30 requests / 60s window (consistent with download route pattern).
-
-**Acceptance criteria:**
-
-- [ ] `maxDuration = 60` exported from plan-status route
-- [ ] Rate limiting applied with sliding window
-- [ ] Build passes, tests pass
-
----
-
-## LOW — Phase 146 — Admin User Detail Transaction Limit
-
-**What to do:** Add `.limit(50)` to the transaction query in `getAdminUserDetail`.
-
----
-
-## LOW — Phase 147 — Rename `.tsx` Utility Files to `.ts`
-
-**Files:** `handleError.tsx`, `getPlanStatus.tsx`, `getFullName.tsx`, `getFormattedDate.tsx`, `generateString.tsx`
-
----
-
-## LOW — Phase 148 — Bulk Operations Partial-Failure Reporting
-
-**What to do:** Track successful/failed operations in bulk admin actions, return partial results.
 
 ---
 
@@ -69,7 +27,9 @@
 
 ### TypeScript 6 / @typescript-eslint compatibility — Monitor
 
+### jsdom upgrade — Monitor (pinned to ~24.1.3 due to ESM top-level await incompatibility with Vitest forks pool; upgrade when Vitest resolves ESM environment loading)
+
 ---
 
 > **Completed phases** archived in [`DONE.md`](DONE.md).
-> Includes: Phases 143, 144, 145, 165, 180.1–180.4, 185–207.
+> Includes: Phases 143, 144, 145, 146, 147, 148, 165, 165.1, 180.1–180.4, 185–207, 208.

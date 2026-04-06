@@ -3,13 +3,13 @@
 > Purpose: one execution document for finishing the SaaS without avoidable rework.
 > Audience: Project Manager, Architect, and Senior Software Agents.
 > Rule: this plan is based on verified repository state. If older docs disagree with code, code wins until this file is updated.
-> Last verified: PM audit #95, 2026-04-06. V1.0 MVP RELEASED. Phases 145 + 165 DONE. 638 tests, 0 failures. All 7 gates GREEN. 0 critical issues.
+> Last verified: PM audit #96, 2026-04-06. V1.0 MVP RELEASED. Phases 165.1 + 146 + 147 + 148 + 208 DONE. 640 tests, 0 failures. All 7 gates GREEN. 0 critical issues. Post-release active backlog EMPTY.
 
 ---
 
 ## 1. Executive Judgment
 
-Droplet is deployed to production with all 25 milestones complete. The TDD testing rebuild is done (101+ suites, 611 tests, 8 E2E specs, 85/80/85/85 coverage). WCAG 2.2 AA is complete. Admin configurability (promo text, FAQ, landing, stop reasons, persona content) is done. Global error boundary is done. Brand rename (cellesseon ? droplet) is complete.
+Droplet is deployed to production with all 25 milestones complete. The TDD testing rebuild is done (104 suites, 640 tests, 8 E2E specs, 85/80/85/85 coverage). WCAG 2.2 AA is complete. Admin configurability (promo text, FAQ, landing, stop reasons, persona content) is done. Global error boundary is done. Brand rename (cellesseon → droplet) is complete. All post-release backlog items DONE (Phases 165.1, 146, 147, 148). jsdom ESM compatibility resolved (Phase 208).
 
 **Owner investigation results (2026-04-02, PM audit #84-B):**
 
@@ -24,6 +24,7 @@ Phase 178, 181, 182 ? DONE. Phase 183 (Stripe) ? RESOLVED (webhook was disabled)
 Phase 202 (unit test PLAN_LIMITS fix) → DONE. Phase 203 (E2E contrast fix) → DONE. Phase 201 (avatar sync) → DONE. Phase 144 (admin config cache) → DONE.
 Phase 204 (API route timeouts to max) → DONE. Phase 205 (sidebar live update) → DONE. Phase 206 (upload error propagation) → DONE. Phase 207 (upload magic byte validation) → DONE.
 Phase 145 (upload filename collision prevention) → DONE. Phase 165 (checkout success DB polling) → DONE.
+Phase 165.1 (plan-status route hardening) → DONE. Phase 146 (admin transaction limit) → DONE. Phase 147 (rename .tsx to .ts) → DONE. Phase 148 (bulk partial-failure reporting) → DONE. Phase 208 (jsdom ESM fix) → DONE.
 
 ---
 
@@ -31,7 +32,7 @@ Phase 145 (upload filename collision prevention) → DONE. Phase 165 (checkout s
 
 > **Milestones 0?25 ALL COMPLETE.** Detailed phase records archived in DONE.md.
 
-Key deliverables: Next.js 16 App Router, Clerk auth + proxy route protection, Stripe checkout + webhooks, MongoDB persistence (Mongoose, strict mode, indexes), 6 personas with three-tier gating, streaming SSE chat, image/audio generation (OpenAI tools + S3 storage), AI model policy resolver, central entitlement resolver, admin control plane (users, transactions, usage, settings, website), 7 public marketing/legal routes, WCAG 2.2 AA compliance, TDD test suite (602 tests), E2E suite (49 tests, 8 specs), brand color palette v2, lime green accent, admin-configurable promo/FAQ/landing/stop-reason/persona content, global error boundary, user deletion cascade, rate limiting, Node.js 24.12.0, all config hardening, video generation removal (Phase 186-A), token limits maximized to near-maximum model capacity (Phase 186-B), admin error boundary (Phase 187-A), Clerk webhook cascade fix (Phase 187-B), audio player error recovery (Phase 187-C), env var runtime validation (Phase 143), all display text admin-configurable (Phases 180.2?180.4), download rate-limit cleanup (Phase 187-D), PlanCard isIncluded fix (Phase 188), admin deletion protection (Phase 189), admin ADMIN display + unlimited permissions (Phase 190), reusable FormInput/PersonaSelector/UsageMetricRow components (Phases 191�193), TiptapEditor WYSIWYG redesign (Phase 194).
+Key deliverables: Next.js 16 App Router, Clerk auth + proxy route protection, Stripe checkout + webhooks, MongoDB persistence (Mongoose, strict mode, indexes), 6 personas with three-tier gating, streaming SSE chat, image/audio generation (OpenAI tools + S3 storage), AI model policy resolver, central entitlement resolver, admin control plane (users, transactions, usage, settings, website), 7 public marketing/legal routes, WCAG 2.2 AA compliance, TDD test suite (640 tests), E2E suite (49 tests, 8 specs), brand color palette v2, lime green accent, admin-configurable promo/FAQ/landing/stop-reason/persona content, global error boundary, user deletion cascade, rate limiting, Node.js 24.12.0, all config hardening, video generation removal (Phase 186-A), token limits maximized to near-maximum model capacity (Phase 186-B), admin error boundary (Phase 187-A), Clerk webhook cascade fix (Phase 187-B), audio player error recovery (Phase 187-C), env var runtime validation (Phase 143), all display text admin-configurable (Phases 180.2–180.4), download rate-limit cleanup (Phase 187-D), PlanCard isIncluded fix (Phase 188), admin deletion protection (Phase 189), admin ADMIN display + unlimited permissions (Phase 190), reusable FormInput/PersonaSelector/UsageMetricRow components (Phases 191–193), TiptapEditor WYSIWYG redesign (Phase 194), plan-status route hardening (Phase 165.1), admin transaction query limit (Phase 146), utility file extension cleanup (Phase 147), bulk operations partial-failure reporting (Phase 148).
 
 Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 169), script tag warning (Phase 170), payment webhook schema (Phase 157/161), catch block documentation (Phase 167+167.2), test failures (Phase 171), cellesseon rename (Phase 172), debug text (Phase 173), dead files (Phase 174?175), download 206 (Phase 176), constant dedup (Phase 177), fake download icon (Phase 178), stream timeout budget (Phase 181 ? **confirmed working in production**), Stripe diagnostic hardening (Phase 182).
 
@@ -49,7 +50,7 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 | Admin double-check  | ?      | All 15 admin functions use `requireAdminAccess`                                   |
 | Schema strict mode  | ?      | All 9 Mongoose models have `strict: true`                                         |
 | Index coverage      | ?      | 18 indexed fields across all query-filtered cols                                  |
-| maxDuration exports | ✓      | All 6 API routes at maxDuration=60 (Vercel Hobby ceiling)                         |
+| maxDuration exports | ✓      | All 7 API routes at maxDuration=60 (Vercel Hobby ceiling)                         |
 | Server-only guards  | ?      | 50+ utility files with `import "server-only"`                                     |
 | Rate limiting       | ?      | MongoDB-backed, durable, all API routes covered                                   |
 | SSRF prevention     | ?      | `isAllowedDownloadUrl()` allowlist                                                |
@@ -60,7 +61,7 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 | Knip                | ?      | 0 findings                                                                        |
 | TSC                 | ?      | 0 errors                                                                          |
 | Lint                | ?      | 0 errors, 0 warnings                                                              |
-| Tests               | ✓      | 104 suites, 638 tests. 0 failures. All gates GREEN.                               |
+| Tests               | ✓      | 104 suites, 640 tests. 0 failures. All gates GREEN.                               |
 | E2E                 | ?      | 8 specs, 49 tests                                                                 |
 
 ### Issues Found by Audit #82?#84 ? Updated Status
@@ -125,6 +126,11 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 | 207   | Upload magic byte validation                   | ✅ DONE                | JPEG/PNG/GIF/WebP signatures. Cross-match MIME. Blocks before S3 write. 11 tests.                                  |
 | 145   | Upload filename collision prevention           | ✅ DONE                | `crypto.randomUUID()` replaces `Date.now()`. UUID-based S3 filenames.                                              |
 | 165   | Checkout success page DB polling               | ✅ DONE                | Plan-status API + poller component + page integration. 10 new tests. 638 total.                                    |
+| 165.1 | Plan-status route hardening                    | ✅ DONE                | `maxDuration=60` + rate limiting (30 req/60s). 429 with headers. 640 tests.                                        |
+| 146   | Admin user detail transaction limit            | ✅ DONE                | `.limit(50)` on transaction query. Sort preserved.                                                                 |
+| 147   | Rename `.tsx` utility files to `.ts`           | ✅ DONE                | 5 files renamed. No JSX content. All imports updated.                                                              |
+| 148   | Bulk operations partial-failure reporting      | ✅ DONE                | All 5 bulk actions report skipped/failed/not-found counts. Per-user error isolation.                               |
+| 208   | jsdom ESM compatibility fix                    | ✅ DONE                | jsdom pinned `~24.1.3`. ESM top-level await incompatibility resolved. 640 tests.                                   |
 
 ### Ongoing Constraints
 
@@ -134,15 +140,15 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 
 ---
 
-## 4. SWOT Analysis (Updated 2026-04-06, post PM audit #95)
+## 4. SWOT Analysis (Updated 2026-04-06, post PM audit #96)
 
-**Strengths:** Clean architecture, strong auth, comprehensive tests (638+49), central policy resolvers, WCAG 2.2 AA complete, durable usage counters, thorough user deletion cascade, zero lint/type/knip issues, correct webhook code structure, stream timeout confirmed in production (Phase 181), video generation cleanly removed (Phase 186-A), token limits maximized (Phase 186-B), admin error boundary (Phase 187-A), env var runtime validation (Phase 143), all display text admin-configurable (Phases 180.1–180.4), audio player error recovery (Phase 187-C), admin deletion protection with 5-layer defense (Phase 189), reusable component library: FormInput/PersonaSelector/UsageMetricRow (Phases 191–193), TiptapEditor WYSIWYG (Phase 194), plan-display utility for admin ADMIN label (Phase 190), admin suspension protection with symmetric 3-layer defense (Phase 200), avatar sync MongoDB→Clerk (Phase 201), admin config cache 30s TTL (Phase 144), full test baseline (638 tests, 0 failures), all API routes at Vercel Hobby ceiling (Phase 204), sidebar live-updates on new chat without browser refresh (Phase 205), upload error messages propagated to user with client pre-validation (Phase 206), upload magic byte validation prevents MIME spoofing (Phase 207), upload filenames collision-proof via UUID (Phase 145), checkout success page polls DB for webhook-delayed plan updates (Phase 165).
+**Strengths:** Clean architecture, strong auth, comprehensive tests (640+49), central policy resolvers, WCAG 2.2 AA complete, durable usage counters, thorough user deletion cascade, zero lint/type/knip issues, correct webhook code structure, stream timeout confirmed in production (Phase 181), video generation cleanly removed (Phase 186-A), token limits maximized (Phase 186-B), admin error boundary (Phase 187-A), env var runtime validation (Phase 143), all display text admin-configurable (Phases 180.1–180.4), audio player error recovery (Phase 187-C), admin deletion protection with 5-layer defense (Phase 189), reusable component library: FormInput/PersonaSelector/UsageMetricRow (Phases 191–193), TiptapEditor WYSIWYG (Phase 194), plan-display utility for admin ADMIN label (Phase 190), admin suspension protection with symmetric 3-layer defense (Phase 200), avatar sync MongoDB→Clerk (Phase 201), admin config cache 30s TTL (Phase 144), full test baseline (640 tests, 0 failures), all API routes at Vercel Hobby ceiling (Phase 204), sidebar live-updates on new chat without browser refresh (Phase 205), upload error messages propagated to user with client pre-validation (Phase 206), upload magic byte validation prevents MIME spoofing (Phase 207), upload filenames collision-proof via UUID (Phase 145), checkout success page polls DB for webhook-delayed plan updates (Phase 165), plan-status route hardened with rate limiting and maxDuration (Phase 165.1), admin transaction query bounded (Phase 146), utility file extensions clean (Phase 147), bulk operations report partial failures for admin visibility (Phase 148), post-release active backlog fully cleared.
 
-**Weaknesses:** Plan-status API route missing rate limiting and `maxDuration` export (Phase 165.1 — trivial follow-up).
+**Weaknesses:** No active weaknesses. All identified issues resolved.
 
-**Opportunities:** Vercel Pro upgrade ($20/mo) for 300s maxDuration.
+**Opportunities:** Vercel Pro upgrade ($20/mo) for 300s maxDuration. Zod/Zustand app-wide modernization (Phase 29.x). Persona-aware media prompts (Phase 26.x).
 
-**Threats:** Single-document growth risk (Task model). Vercel Hobby 60s timeout remains architecture constraint for media generation edge cases.
+**Threats:** Single-document growth risk (Task model). Vercel Hobby 60s timeout remains architecture constraint for media generation edge cases. jsdom pinned to 24.x — older version, lacks newer CSS/DOM APIs; monitor Vitest ESM environment loading progress for future upgrade.
 
 ---
 
@@ -155,20 +161,21 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 | C    | Product Gate    | GREEN  | All display strings admin-configurable. Video removed. Stripe + Facebook resolved.         |
 | D    | Admin Gate      | GREEN  | Admin config complete. Error boundary added (Phase 187-A). All strings admin-configurable. |
 | E    | Public Gate     | GREEN  | All 7 public routes accurate, legal content real, no obsolete trial messaging              |
-| F    | Validation Gate | GREEN  | 638 tests, lint 0/0, TSC clean, knip 0, E2E 49 tests, coverage 85/80/85/85                 |
+| F    | Validation Gate | GREEN  | 640 tests, lint 0/0, TSC clean, knip 0, E2E 49 tests, coverage 85/80/85/85                 |
 
 ---
 
 ## 6. Current Execution Order
 
-> All critical issues RESOLVED. All v1.0 pre-release phases DONE. **V1.0 MVP RELEASED.** Phases 143–207, 145, 165 DONE. 0 critical issues.
-
-### Post-Release Active
-
-- **🟡 Phase 165.1** — MEDIUM: Add `maxDuration = 60` + rate limiting to `/api/checkout/plan-status`.
+> All critical issues RESOLVED. All v1.0 pre-release phases DONE. **V1.0 MVP RELEASED.** Phases 143–208. 0 critical issues. **Post-release active backlog EMPTY.**
 
 ### Confirmed Working
 
+- **✅ Phase 208** — jsdom ESM compatibility fix. DONE. Pinned `~24.1.3`. 640 tests passing.
+- **✅ Phase 165.1** — Plan-status route hardening. DONE. `maxDuration=60` + rate limiting (30 req/60s).
+- **✅ Phase 146** — Admin user detail transaction limit. DONE. `.limit(50)`.
+- **✅ Phase 147** — Rename `.tsx` utility files to `.ts`. DONE. 5 files renamed.
+- **✅ Phase 148** — Bulk operations partial-failure reporting. DONE. All 5 bulk actions.
 - **✅ Phase 165** — Checkout success page DB polling. DONE. Plan-status API + poller + page integration. 10 new tests.
 - **✅ Phase 145** — Upload filename collision prevention. DONE. `crypto.randomUUID()` replaces `Date.now()`.
 - **✅ Phase 207** — Upload magic byte validation. DONE. JPEG/PNG/GIF/WebP signatures. 11 tests.
@@ -196,10 +203,15 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 
 ### Post-Release Backlog
 
-> All v1.0 pre-release phases COMPLETE (OI24). Remaining items are post-release improvements.
+> All post-release active items COMPLETE. Only deferred items remain.
 
-1. **LOW Phase 146–148 — Low priority improvements.**
-   Admin user detail transaction limit, rename `.tsx` utility files to `.ts`, bulk operations partial-failure reporting.
+### Deferred / ON HOLD
+
+1. **Phase 29.x** — Zod/Zustand app-wide modernization.
+2. **Phase 26.x** — Persona-aware media prompts, Stripe auto-renewal.
+3. **Legal/nav/footer admin configurability** — Deferred to v2.
+4. **TypeScript 6 / @typescript-eslint compatibility** — Monitor.
+5. **jsdom upgrade** — Monitor. Pinned to `~24.1.3` (ESM TLA incompatibility). Upgrade when Vitest resolves ESM environment loading in forks pool.
 
 ---
 
