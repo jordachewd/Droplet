@@ -1,105 +1,33 @@
 "use client";
 
-import { useRef, useSyncExternalStore } from "react";
 import classNames from "classnames";
-import { usePathname } from "next/navigation";
 import { useShallow } from "zustand/react/shallow";
 import ToggleTheme from "@/components/shared/toggle-theme";
 import AvatarMenu from "@/components/shared/avatar-menu";
 import SidebarToggle from "@/components/shared/sidebar-toggle";
-import PersonaSelector from "@/components/shared/persona-selector";
 import { useChatStore } from "@/lib/hooks/use-chat-store";
 import { useUiStore } from "@/lib/hooks/use-ui-store";
-import { Persona, PersonaId } from "@/types/PersonaData.d";
-import { usePreferencesStore } from "@/lib/hooks/use-preferences-store";
 
 interface ChatHeaderProps {
-  personas: Persona[];
   className?: string;
-  allowedPersonaIds?: PersonaId[];
 }
 
-export default function ChatHeader({
-  personas,
-  className: style = "",
-  allowedPersonaIds,
-}: ChatHeaderProps) {
-  const pathname = usePathname();
-  const { messages, taskStatus, personaId, setPersonaId } = useChatStore(
+export default function ChatHeader({ className: style = "" }: ChatHeaderProps) {
+  const { messages, taskStatus } = useChatStore(
     useShallow((state) => ({
       messages: state.messages,
       taskStatus: state.taskStatus,
-      personaId: state.personaId,
-      setPersonaId: state.setPersonaId,
-    })),
-  );
-  const { preferredPersonaId, setPreferredPersonaId } = usePreferencesStore(
-    useShallow((state) => ({
-      preferredPersonaId: state.preferredPersonaId,
-      setPreferredPersonaId: state.setPreferredPersonaId,
     })),
   );
 
-  const {
-    desktopSidebarCollapsed,
-    mobileSidebarOpen,
-    toggleDesktopSidebarCollapsed,
-    toggleMobileSidebarOpen,
-  } = useUiStore(
+  const { mobileSidebarOpen, toggleMobileSidebarOpen } = useUiStore(
     useShallow((state) => ({
-      desktopSidebarCollapsed: state.desktopSidebarCollapsed,
       mobileSidebarOpen: state.mobileSidebarOpen,
-      toggleDesktopSidebarCollapsed: state.toggleDesktopSidebarCollapsed,
       toggleMobileSidebarOpen: state.toggleMobileSidebarOpen,
     })),
   );
 
-  const desktopQueryRef = useRef<MediaQueryList | null>(null);
-  const isDesktop = useSyncExternalStore(
-    (callback) => {
-      const mql = window.matchMedia("(min-width: 1024px)");
-      desktopQueryRef.current = mql;
-      mql.addEventListener("change", callback);
-      return () => mql.removeEventListener("change", callback);
-    },
-    () => window.matchMedia("(min-width: 1024px)").matches,
-    () => false,
-  );
-
-  function handleToggleSidebar() {
-    if (desktopQueryRef.current?.matches) {
-      toggleDesktopSidebarCollapsed();
-    } else {
-      toggleMobileSidebarOpen();
-    }
-  }
-
-  const selectablePersonaIds =
-    allowedPersonaIds === undefined
-      ? (personas.map((persona) => persona.id) as PersonaId[])
-      : allowedPersonaIds;
-  const selectablePersonas = personas.filter((persona) =>
-    selectablePersonaIds.includes(persona.id),
-  );
-  const activePersonaId = (personaId ??
-    preferredPersonaId ??
-    selectablePersonas[0]?.id) as PersonaId | null;
-  const isConversationRoute = pathname?.startsWith("/app/c/") ?? false;
   const messageCount = messages.length;
-  const shouldDisablePersonaChange =
-    isConversationRoute || messageCount > 0 || taskStatus === "ended";
-  const sidebarExpanded = isDesktop
-    ? !desktopSidebarCollapsed
-    : mobileSidebarOpen;
-
-  function handlePersonaChange(nextPersonaId: PersonaId) {
-    if (!selectablePersonaIds.includes(nextPersonaId)) {
-      return;
-    }
-
-    setPersonaId(nextPersonaId);
-    setPreferredPersonaId(nextPersonaId);
-  }
 
   const chatHeaderClass = classNames(
     "ChatHeader sticky left-0 right-0 top-0 z-20 flex w-full px-4",
@@ -111,22 +39,15 @@ export default function ChatHeader({
     <section className={chatHeaderClass}>
       <div className="mx-auto flex w-full items-center justify-between gap-4 py-2.5">
         <div className="flex items-center gap-2">
-          <SidebarToggle
-            icon="bi-layout-sidebar"
-            title={sidebarExpanded ? "Hide menu" : "Show menu"}
-            toggleSidebar={handleToggleSidebar}
-            expanded={sidebarExpanded}
-            controlsId="chat-sidebar"
-          />
-
-          {selectablePersonas.length > 0 && activePersonaId && (
-            <PersonaSelector
-              personas={selectablePersonas}
-              selectedPersonaId={activePersonaId}
-              onSelect={handlePersonaChange}
-              disabled={shouldDisablePersonaChange}
+          <div className="lg:hidden">
+            <SidebarToggle
+              icon="bi-layout-sidebar"
+              title={mobileSidebarOpen ? "Hide menu" : "Show menu"}
+              toggleSidebar={toggleMobileSidebarOpen}
+              expanded={mobileSidebarOpen}
+              controlsId="chat-sidebar"
             />
-          )}
+          </div>
 
           {messageCount > 0 && (
             <div className="hidden rounded-full border border-dotted px-2.5 py-1 text-xs opacity-80 md:flex">

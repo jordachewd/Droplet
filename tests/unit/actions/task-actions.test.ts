@@ -4,6 +4,7 @@ import {
   createTask,
   deleteTask,
   incrementPromptCountIfBelowLimit,
+  renameTask,
   updateTask,
 } from "@/lib/actions/task.actions";
 import {
@@ -300,6 +301,82 @@ describe("task.actions", () => {
 
       await expect(updateTask(validTaskId, { messages: [] })).rejects.toThrow(
         "Task update failed!",
+      );
+    });
+  });
+
+  describe("renameTask", () => {
+    it("renames an owned conversation title", async () => {
+      taskFindOneAndUpdateMock.mockResolvedValue(
+        createTestTask({
+          _id: validTaskId,
+          title: "Renamed conversation",
+        }),
+      );
+
+      const response = await renameTask(validTaskId, "Renamed conversation");
+
+      expect(taskFindOneAndUpdateMock).toHaveBeenCalledWith(
+        {
+          _id: validTaskId,
+          userId: "user_123",
+        },
+        {
+          title: "Renamed conversation",
+        },
+        {
+          new: true,
+          strict: true,
+          upsert: false,
+        },
+      );
+      expect(response).toEqual(
+        expect.objectContaining({
+          status: 200,
+          source: "renameTask",
+        }),
+      );
+    });
+
+    it("returns unauthorized when no authenticated user is present", async () => {
+      mockAuth(vi.mocked(auth), {
+        userId: null,
+        isAuthenticated: false,
+      });
+
+      const response = await renameTask(validTaskId, "Renamed conversation");
+
+      expect(connectToDatabase).not.toHaveBeenCalled();
+      expect(response).toEqual(
+        expect.objectContaining({
+          status: 401,
+          message: "Unauthorized",
+          source: "renameTask",
+        }),
+      );
+    });
+
+    it("returns invalid-input status for malformed identifiers and payloads", async () => {
+      const invalidTaskIdResponse = await renameTask(
+        "invalid-task-id",
+        "Rename attempt",
+      );
+      const invalidTitleResponse = await renameTask(validTaskId, "   ");
+
+      expect(connectToDatabase).not.toHaveBeenCalled();
+      expect(invalidTaskIdResponse).toEqual(
+        expect.objectContaining({
+          status: 400,
+          message: "Invalid conversation identifier",
+          source: "renameTask",
+        }),
+      );
+      expect(invalidTitleResponse).toEqual(
+        expect.objectContaining({
+          status: 400,
+          message: "Invalid conversation title",
+          source: "renameTask",
+        }),
       );
     });
   });

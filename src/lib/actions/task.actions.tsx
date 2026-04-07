@@ -70,6 +70,12 @@ const updateTaskSchema = z
   })
   .strict();
 
+const renameTaskSchema = z
+  .object({
+    title: nonEmptyStringSchema,
+  })
+  .strict();
+
 const incrementPromptCountSchema = z
   .object({
     taskId: nonEmptyStringSchema,
@@ -223,6 +229,86 @@ export async function updateTask(taskId: string, task: UpdateTaskParams) {
     return serializeForClient(updatedTask);
   } catch (error) {
     handleError({ error, source: "updateTask" });
+  }
+}
+
+// RENAME TASK
+export async function renameTask(taskId: string, title: string) {
+  try {
+    const parsedTaskId = nonEmptyStringSchema.safeParse(taskId);
+    if (!parsedTaskId.success) {
+      return serializeForClient({
+        message: "Invalid conversation identifier",
+        status: 400,
+        source: "renameTask",
+      });
+    }
+
+    const parsedInput = renameTaskSchema.safeParse({ title });
+    if (!parsedInput.success) {
+      return serializeForClient({
+        message: "Invalid conversation title",
+        status: 400,
+        source: "renameTask",
+      });
+    }
+
+    const { userId } = await auth();
+    if (!userId) {
+      return serializeForClient({
+        message: "Unauthorized",
+        status: 401,
+        source: "renameTask",
+      });
+    }
+
+    if (!isValidObjectId(parsedTaskId.data)) {
+      return serializeForClient({
+        message: "Invalid conversation identifier",
+        status: 400,
+        source: "renameTask",
+      });
+    }
+
+    await connectToDatabase();
+
+    const renamedTask = await Task.findOneAndUpdate(
+      {
+        _id: parsedTaskId.data,
+        userId,
+      },
+      {
+        title: parsedInput.data.title,
+      },
+      {
+        new: true,
+        strict: true,
+        upsert: false,
+      },
+    );
+
+    if (!renamedTask) {
+      return serializeForClient({
+        message: "Task not found or not owned by user",
+        status: 404,
+        source: "renameTask",
+      });
+    }
+
+    return serializeForClient({
+      status: 200,
+      source: "renameTask",
+    });
+  } catch (error) {
+    process.stderr.write(
+      `[task.actions] renameTask failed: ${error instanceof Error ? error.message : "unknown"}\n`,
+    );
+
+    return serializeForClient({
+      message: "Conversation rename failed.",
+      status: 500,
+      source: "renameTask",
+    });
   }
 }
 

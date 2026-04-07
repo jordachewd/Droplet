@@ -38,4 +38,19 @@ describe("next.config", () => {
       "127.0.0.1",
     ]);
   });
+
+  it("redirects /app/personas to /app/new for legacy bookmarks", async () => {
+    const { default: nextConfig } = await importNextConfig();
+    const redirects = await nextConfig.redirects?.();
+
+    expect(redirects).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          source: "/app/personas",
+          destination: "/app/new",
+          permanent: false,
+        }),
+      ]),
+    );
+  });
 });

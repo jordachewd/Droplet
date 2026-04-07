@@ -4,8 +4,10 @@ import { useState, ChangeEvent, useEffect, useRef, KeyboardEvent } from "react";
 import { Message } from "@/types";
 import { UploadRouteResponse } from "@/types/UploadData.d";
 import { UploadFileInput } from "@/components/shared/upload-file-input";
+import PersonaSelector from "@/components/shared/persona-selector";
 import { TooltipArrow } from "@/components/shared/tooltip-arrow";
 import DropletGlobe from "../shared/droplet-globe";
+import { Persona, PersonaId } from "@/types/PersonaData.d";
 
 interface ChatInputProps {
   loading: boolean;
@@ -13,6 +15,10 @@ interface ChatInputProps {
   startPrompt?: string;
   personaLabel?: string;
   placeholder?: string;
+  personas?: Persona[];
+  selectedPersonaId?: PersonaId;
+  onPersonaChange?: (personaId: PersonaId) => void;
+  personaSelectorDisabled?: boolean;
   sendMessage: (message: Message) => void;
 }
 
@@ -45,6 +51,10 @@ export default function ChatInput({
   startPrompt,
   personaLabel = "Droplet",
   placeholder = "Ask Droplet...",
+  personas = [],
+  selectedPersonaId,
+  onPersonaChange,
+  personaSelectorDisabled = false,
   sendMessage,
 }: ChatInputProps) {
   const [prompt, setPrompt] = useState<string>(startPrompt || "");
@@ -237,6 +247,12 @@ export default function ChatInput({
     "bi bi-x absolute -right-1.5 -top-1.5 rounded-full bg-orange-600 pt-[1px]",
     "leading-none text-white shadow-sm transition-all hover:bg-amber-600",
   );
+  const canRenderPersonaSelector =
+    personas.length > 0 &&
+    selectedPersonaId !== undefined &&
+    typeof onPersonaChange === "function";
+  const isPersonaSelectorDisabled =
+    loading || disabled || isUploading || personaSelectorDisabled;
 
   return (
     <div className={chatInputSectionClass}>
@@ -273,43 +289,54 @@ export default function ChatInput({
           </TooltipArrow>
         </div>
 
-        <div className="flex w-full">
-          {!selectedFile ? (
-            <TooltipArrow title="Attach media" placement="top">
+        <div className="ChatInputActions flex w-full items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            {!selectedFile ? (
+              <TooltipArrow title="Attach media" placement="top">
+                <button
+                  type="button"
+                  className={classNames("icon-btn text-base", {
+                    "cursor-not-allowed opacity-50":
+                      loading || disabled || isUploading,
+                  })}
+                  onClick={handleOpenFilePicker}
+                  aria-label="Attach media"
+                  disabled={loading || disabled || isUploading}
+                >
+                  <i
+                    className="bi bi-cloud-upload text-base"
+                    aria-hidden="true"
+                  ></i>
+                </button>
+              </TooltipArrow>
+            ) : previewUrl ? (
               <button
                 type="button"
-                className={classNames("icon-btn text-base", {
-                  "cursor-not-allowed opacity-50":
-                    loading || disabled || isUploading,
-                })}
-                onClick={handleOpenFilePicker}
-                aria-label="Attach media"
-                disabled={loading || disabled || isUploading}
+                className="relative flex cursor-pointer"
+                onClick={handleRemoveFile}
+                aria-label="Remove selected image"
               >
-                <i
-                  className="bi bi-cloud-upload text-base"
-                  aria-hidden="true"
-                ></i>
+                <i className={removeFileIconClass} aria-hidden="true"></i>
+                <Image
+                  priority
+                  width={40}
+                  height={40}
+                  className="max-h-10 max-w-10 rounded-sm"
+                  alt="Preview of selected image"
+                  src={previewUrl}
+                />
               </button>
-            </TooltipArrow>
-          ) : previewUrl ? (
-            <button
-              type="button"
-              className="relative flex cursor-pointer"
-              onClick={handleRemoveFile}
-              aria-label="Remove selected image"
-            >
-              <i className={removeFileIconClass} aria-hidden="true"></i>
-              <Image
-                priority
-                width={40}
-                height={40}
-                className="max-h-10 max-w-10 rounded-sm"
-                alt="Preview of selected image"
-                src={previewUrl}
+            ) : null}
+
+            {canRenderPersonaSelector ? (
+              <PersonaSelector
+                personas={personas}
+                selectedPersonaId={selectedPersonaId}
+                onSelect={onPersonaChange}
+                disabled={isPersonaSelectorDisabled}
               />
-            </button>
-          ) : null}
+            ) : null}
+          </div>
 
           <UploadFileInput
             ref={fileInputRef}

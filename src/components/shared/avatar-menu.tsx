@@ -187,28 +187,6 @@ export default function AvatarMenu() {
           )}
 
           <Link
-            href="/app/library"
-            className={accountMenuLinkClass}
-            onClick={handleCloseUserMenu}
-            role="menuitem"
-            tabIndex={-1}
-          >
-            <i className="bi bi-clock-history mr-4" aria-hidden="true"></i>
-            <span>Library</span>
-          </Link>
-
-          <Link
-            href="/app/personas"
-            className={accountMenuLinkClass}
-            onClick={handleCloseUserMenu}
-            role="menuitem"
-            tabIndex={-1}
-          >
-            <i className="bi bi-grid-3x3-gap mr-4" aria-hidden="true"></i>
-            <span>Personas</span>
-          </Link>
-
-          <Link
             href="/app/plans"
             className={accountMenuLinkClass}
             onClick={handleCloseUserMenu}

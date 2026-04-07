@@ -47,6 +47,15 @@ if (awsBucketName && awsRegion) {
 const nextConfig: NextConfig = {
   /* config options here */
   allowedDevOrigins: getAllowedDevOrigins(),
+  async redirects() {
+    return [
+      {
+        source: "/app/personas",
+        destination: "/app/new",
+        permanent: false,
+      },
+    ];
+  },
 
   // Disable source maps in production to avoid 404 errors
   productionBrowserSourceMaps: false,

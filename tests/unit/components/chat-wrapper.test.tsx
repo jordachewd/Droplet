@@ -16,6 +16,7 @@ import { STOP_REASON_MESSAGES } from "@/constants/stop-reasons";
 const refreshMock = vi.hoisted(() => vi.fn());
 
 vi.mock("next/navigation", () => ({
+  usePathname: () => "/app",
   useRouter: () => ({
     refresh: refreshMock,
   }),

@@ -1,12 +1,8 @@
 import ChatSidebar from "@/components/chat/chat-sidebar";
+import ChatSidebarLoading from "@/components/chat/sidebar/chat-sidebar-loading";
 import ChatHeader from "@/components/chat/chat-header";
 import ChatPageWrapper from "@/components/chat/chat-page-wrapper";
-import { auth } from "@clerk/nextjs/server";
-import { getEffectivePersonaAccessByPlan } from "@/lib/utils/effective-persona-access";
-import { getEffectivePersonaConfig } from "@/lib/utils/effective-persona-config";
-import { ensureUserSynced } from "@/lib/utils/ensure-user-synced";
-import { resolveEntitlements } from "@/lib/utils/resolve-entitlements";
-import { ReactNode } from "react";
+import { ReactNode, Suspense } from "react";
 
 interface ChatRouteLayoutProps {
   children: ReactNode;
@@ -15,34 +11,21 @@ interface ChatRouteLayoutProps {
 export default async function ChatRouteLayout({
   children,
 }: ChatRouteLayoutProps) {
-  const { userId } = await auth();
-  const userData = userId ? await ensureUserSynced(userId) : null;
-  const isAdmin = userData?.role === "admin";
-  const [fullPersonaAccessByPlan, personas] = await Promise.all([
-    getEffectivePersonaAccessByPlan(),
-    getEffectivePersonaConfig(),
-  ]);
-  const entitlements = resolveEntitlements(userData?.plan?.name ?? "Lite", {
-    isAdmin,
-    fullPersonaAccessByPlan,
-  });
-
   return (
     <ChatPageWrapper className="ChatRouteLayout flex-row!">
       <a href="#chat-main-content" className="skip-link">
         Skip to main content
       </a>
 
-      <ChatSidebar />
+      <Suspense fallback={<ChatSidebarLoading />}>
+        <ChatSidebar />
+      </Suspense>
 
       <main
         id="chat-main-content"
         className="ChatRouteLayoutMain relative flex flex-col h-full min-w-0 flex-1"
       >
-        <ChatHeader
-          personas={personas}
-          allowedPersonaIds={entitlements.allowedPersonaIds}
-        />
+        <ChatHeader />
         {children}
       </main>
     </ChatPageWrapper>

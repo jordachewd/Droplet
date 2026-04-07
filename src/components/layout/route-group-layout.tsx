@@ -1,20 +1,15 @@
 import ChatHeader from "@/components/chat/chat-header";
 import ChatPageWrapper from "@/components/chat/chat-page-wrapper";
-import { getEffectivePersonaConfig } from "@/lib/utils/effective-persona-config";
 import { ReactNode } from "react";
 
 interface RouteGroupLayoutProps {
   children: ReactNode;
 }
 
-export default async function RouteGroupLayout({
-  children,
-}: RouteGroupLayoutProps) {
-  const personas = await getEffectivePersonaConfig();
-
+export default function RouteGroupLayout({ children }: RouteGroupLayoutProps) {
   return (
     <>
-      <ChatHeader personas={personas} />
+      <ChatHeader />
       <ChatPageWrapper
         id="PageWrapperContent"
         scrollable
