@@ -167,7 +167,8 @@ export default function ChatSidebarNav({
   return (
     <nav className="ChatSidebarNav mb-auto flex flex-col gap-6 px-3 py-4">
       {alert ? <AlertMessage message={alert} /> : null}
-      <section className="ChatSidebarNavSection flex flex-col gap-1.5">
+
+      <section className="ChatSidebarNavSection flex flex-col gap-1">
         <p className={headingClass}>Workspace</p>
         {WORKSPACE_LINKS.map((link) => (
           <SidebarNavLink
@@ -179,8 +180,9 @@ export default function ChatSidebarNav({
         ))}
       </section>
 
-      <section className="ChatSidebarNavSection flex flex-col gap-1.5">
+      <section className="ChatSidebarNavSection flex flex-col gap-1">
         <p className={headingClass}>Recent</p>
+
         <div className="flex flex-col gap-1">
           {conversationItems.length === 0 && (
             <p
@@ -192,6 +194,7 @@ export default function ChatSidebarNav({
               No saved conversations yet.
             </p>
           )}
+          
           {conversationItems.slice(0, 6).map((item) => {
             const isActive = pathname === item.href;
             const isDeleting = deletingConversationId === item.id;
@@ -271,6 +274,7 @@ export default function ChatSidebarNav({
           })}
         </div>
       </section>
+      
       <ConfirmationModal
         isOpen={Boolean(pendingDeleteItem)}
         title="Delete conversation"
