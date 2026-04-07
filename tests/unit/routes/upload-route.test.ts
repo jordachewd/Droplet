@@ -39,6 +39,7 @@ const PNG_SIGNATURE = new Uint8Array([
   0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
 ]);
 const GIF_SIGNATURE = new Uint8Array([0x47, 0x49, 0x46, 0x38, 0x39, 0x61]);
+const MOCK_UPLOAD_UUID = "550e8400-e29b-41d4-a716-446655440000";
 
 function createPngBytes(size: number = PNG_SIGNATURE.length): Uint8Array {
   const byteSize = Math.max(size, PNG_SIGNATURE.length);
@@ -82,15 +83,16 @@ describe("POST /api/upload", () => {
   beforeEach(() => {
     mockAuthUser("user_123");
     mockActiveUserStatus("active");
+    vi.spyOn(globalThis.crypto, "randomUUID").mockReturnValue(MOCK_UPLOAD_UUID);
     vi.mocked(connectToDatabase).mockResolvedValue(
       {} as Awaited<ReturnType<typeof connectToDatabase>>,
     );
     vi.mocked(Upload.create).mockResolvedValue({
       _id: "upload_1",
     } as unknown as Awaited<ReturnType<typeof Upload.create>>);
-    vi.mocked(uploadFileToAWS).mockResolvedValue(
-      "/api/download?key=user_123%2Fuploads%2Fuploaded_file_1700000000000.png",
-    );
+    vi.mocked(uploadFileToAWS).mockImplementation(async (_buffer, fileName) => {
+      return `/api/download?key=user_123%2Fuploads%2F${fileName}`;
+    });
     vi.mocked(enforceSlidingWindowRateLimit).mockResolvedValue({
       success: true,
       limit: 30,
@@ -219,7 +221,6 @@ describe("POST /api/upload", () => {
   });
 
   it("accepts file exactly at max upload size", async () => {
-    vi.spyOn(Date, "now").mockReturnValue(1_700_000_000_111);
     const formData = new FormData();
     formData.set(
       "file",
@@ -236,10 +237,10 @@ describe("POST /api/upload", () => {
     const payload = await response.json();
 
     expect(response.status).toBe(200);
-    expect(payload.fileName).toBe("uploaded_file_1700000000111.png");
+    expect(payload.fileName).toBe(`uploaded_file_${MOCK_UPLOAD_UUID}.png`);
     expect(uploadFileToAWS).toHaveBeenCalledWith(
       expect.any(Buffer),
-      "uploaded_file_1700000000111.png",
+      `uploaded_file_${MOCK_UPLOAD_UUID}.png`,
       "image/png",
       "user_123/uploads",
     );
@@ -257,7 +258,6 @@ describe("POST /api/upload", () => {
   });
 
   it("uploads valid file to S3 and returns filename and URL", async () => {
-    vi.spyOn(Date, "now").mockReturnValue(1_700_000_000_000);
     const formData = new FormData();
     formData.set(
       "file",
@@ -270,24 +270,24 @@ describe("POST /api/upload", () => {
     const payload = await response.json();
 
     expect(response.status).toBe(200);
-    expect(payload.fileName).toBe("uploaded_file_1700000000000.png");
-    expect(payload.fileUrl).toContain("uploaded_file_1700000000000.png");
+    expect(payload.fileName).toBe(`uploaded_file_${MOCK_UPLOAD_UUID}.png`);
+    expect(payload.fileUrl).toContain(`uploaded_file_${MOCK_UPLOAD_UUID}.png`);
     expect(payload.objectKey).toBe(
-      "user_123/uploads/uploaded_file_1700000000000.png",
+      `user_123/uploads/uploaded_file_${MOCK_UPLOAD_UUID}.png`,
     );
     expect(connectToDatabase).toHaveBeenCalledOnce();
     expect(Upload.create).toHaveBeenCalledWith(
       expect.objectContaining({
         userId: "user_123",
-        fileName: "uploaded_file_1700000000000.png",
-        objectKey: "user_123/uploads/uploaded_file_1700000000000.png",
+        fileName: `uploaded_file_${MOCK_UPLOAD_UUID}.png`,
+        objectKey: `user_123/uploads/uploaded_file_${MOCK_UPLOAD_UUID}.png`,
         contentType: "image/png",
         sizeBytes: 16,
       }),
     );
     expect(uploadFileToAWS).toHaveBeenCalledWith(
       expect.any(Buffer),
-      "uploaded_file_1700000000000.png",
+      `uploaded_file_${MOCK_UPLOAD_UUID}.png`,
       "image/png",
       "user_123/uploads",
     );
@@ -314,7 +314,6 @@ describe("POST /api/upload", () => {
   });
 
   it("persists optional taskId when provided", async () => {
-    vi.spyOn(Date, "now").mockReturnValue(1_700_000_000_222);
     const formData = new FormData();
     formData.set(
       "file",

@@ -299,7 +299,8 @@ describe("admin-queries", () => {
     taskModelMock.aggregate.mockResolvedValue([
       { totalPromptCount: 15, maxPromptCount: 7 },
     ]);
-    transactionModelMock.find.mockReturnValue(mockMongooseModel([transaction]));
+    const transactionQuery = mockMongooseModel([transaction]);
+    transactionModelMock.find.mockReturnValue(transactionQuery);
 
     const result = await getAdminUserDetail("507f1f77bcf86cd799439011");
 
@@ -327,6 +328,7 @@ describe("admin-queries", () => {
         amount: 1900,
       }),
     ]);
+    expect(transactionQuery.limit).toHaveBeenCalledWith(50);
   });
 
   it('returns "ADMIN" and unlimited usage limits in admin user detail', async () => {

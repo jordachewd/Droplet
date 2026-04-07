@@ -1,4 +1,5 @@
 import PageWrapper from "@/components/layout/page-wrapper";
+import CheckoutPlanStatusPoller from "@/components/shared/checkout-plan-status-poller";
 import { auth } from "@clerk/nextjs/server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -98,9 +99,7 @@ export default async function CheckoutSuccessPage({
       >
         <div className="flex flex-col rounded-2xl gap-6 p-16 text-center shadow-sm bg-lavenderHaze-100/85 dark:bg-nightIndigo-900/85">
           <h1 className="heading-3">Payment successful</h1>
-          <p className="body-2 text-sm sm:text-base">
-            Your payment was confirmed. You can now continue in your profile.
-          </p>
+          <CheckoutPlanStatusPoller sessionId={sessionId} />
           <Link
             className="btn btn-outlined inline-flex uppercase self-center mt-6"
             href="/app/profile"

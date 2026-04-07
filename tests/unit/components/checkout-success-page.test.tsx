@@ -51,6 +51,10 @@ vi.mock("next/link", () => ({
   ),
 }));
 
+vi.mock("@/components/shared/checkout-plan-status-poller", () => ({
+  default: () => <p>Confirming your plan upgrade...</p>,
+}));
+
 async function renderCheckoutSuccessPage(searchParams: {
   session_id?: string | string[];
 }) {
@@ -101,6 +105,7 @@ describe("checkout-success page", () => {
     expect(
       screen.getByRole("heading", { name: "Payment successful" }),
     ).toBeTruthy();
+    expect(screen.getByText("Confirming your plan upgrade...")).toBeTruthy();
     expect(
       screen.getByRole("link", { name: "Go to profile" }).getAttribute("href"),
     ).toBe("/app/profile");

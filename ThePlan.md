@@ -3,13 +3,13 @@
 > Purpose: one execution document for finishing the SaaS without avoidable rework.
 > Audience: Project Manager, Architect, and Senior Software Agents.
 > Rule: this plan is based on verified repository state. If older docs disagree with code, code wins until this file is updated.
-> Last verified: PM audit #94, 2026-04-05. V1.0 MVP RELEASED. Phases 204-207 DONE. 628 tests, 0 failures. All 7 gates GREEN. 0 critical issues.
+> Last verified: PM audit #97, 2026-04-06. V1.0 MVP RELEASED. Phases 29.1-29.5 (Zod/Zustand modernization) DONE. 640 tests, 0 failures. All 7 gates GREEN. 0 critical issues.
 
 ---
 
 ## 1. Executive Judgment
 
-Droplet is deployed to production with all 25 milestones complete. The TDD testing rebuild is done (101+ suites, 611 tests, 8 E2E specs, 85/80/85/85 coverage). WCAG 2.2 AA is complete. Admin configurability (promo text, FAQ, landing, stop reasons, persona content) is done. Global error boundary is done. Brand rename (cellesseon ? droplet) is complete.
+Droplet is deployed to production with all 25 milestones complete. The TDD testing rebuild is done (104 suites, 640 tests, 8 E2E specs, 85/80/85/85 coverage). WCAG 2.2 AA is complete. Admin configurability (promo text, FAQ, landing, stop reasons, persona content) is done. Global error boundary is done. Brand rename (cellesseon → droplet) is complete. All post-release backlog items DONE (Phases 165.1, 146, 147, 148). jsdom ESM compatibility resolved (Phase 208). Zod/Zustand modernization DONE (Phases 29.1–29.5; 29.7 Zustand was already complete; 29.6 deferred).
 
 **Owner investigation results (2026-04-02, PM audit #84-B):**
 
@@ -23,6 +23,8 @@ Droplet is deployed to production with all 25 milestones complete. The TDD testi
 Phase 178, 181, 182 ? DONE. Phase 183 (Stripe) ? RESOLVED (webhook was disabled). Phase 184 (Facebook) ? CLOSED (removed from product). Phase 185 (sora-2-pro removal) ? DONE. Phase 180.1 (homepage text extraction) ? DONE. Phase 186-A (video generation removal) ? DONE. Phase 186-B (token limits maximized) ? DONE. Phase 187-A (admin error boundary) ? DONE. Phase 187-B (Clerk webhook cascade order) ? DONE. Phase 187-C (audio player error recovery) ? DONE. Phase 187-D (download rate-limit key cleanup) ? DONE. Phase 143 (env var runtime validation) ? DONE. Phase 180.2 (chat display text extraction) ? DONE. Phase 180.3 (plans display text extraction) ? DONE. Phase 180.4 (currency symbol compliance) ? DONE. Phase 188 (PlanCard isIncluded fix) � DONE. Phase 189 (admin deletion protection) � DONE. Phase 190 (admin ADMIN display + unlimited) � DONE. Phase 191 (reusable FormInput) � DONE. Phase 192 (reusable PersonaSelector) � DONE. Phase 193 (reusable UsageMetricRow) � DONE. Phase 194 (TiptapEditor redesign) � DONE. Phase 195 (image vision presigned URLs) � DONE. Phase 196 (Zustand audio overlap fix) � DONE. Phase 197 (image lightbox) � DONE. Phase 198 (library upload previews) → DONE. Phase 199 (useActionState fix) → DONE. Phase 200 (admin suspension protection) → DONE.
 Phase 202 (unit test PLAN_LIMITS fix) → DONE. Phase 203 (E2E contrast fix) → DONE. Phase 201 (avatar sync) → DONE. Phase 144 (admin config cache) → DONE.
 Phase 204 (API route timeouts to max) → DONE. Phase 205 (sidebar live update) → DONE. Phase 206 (upload error propagation) → DONE. Phase 207 (upload magic byte validation) → DONE.
+Phase 145 (upload filename collision prevention) → DONE. Phase 165 (checkout success DB polling) → DONE.
+Phase 165.1 (plan-status route hardening) → DONE. Phase 146 (admin transaction limit) → DONE. Phase 147 (rename .tsx to .ts) → DONE. Phase 148 (bulk partial-failure reporting) → DONE. Phase 208 (jsdom ESM fix) → DONE. Phase 29.1–29.5 (Zod/Zustand modernization) → DONE.
 
 ---
 
@@ -30,7 +32,7 @@ Phase 204 (API route timeouts to max) → DONE. Phase 205 (sidebar live update) 
 
 > **Milestones 0?25 ALL COMPLETE.** Detailed phase records archived in DONE.md.
 
-Key deliverables: Next.js 16 App Router, Clerk auth + proxy route protection, Stripe checkout + webhooks, MongoDB persistence (Mongoose, strict mode, indexes), 6 personas with three-tier gating, streaming SSE chat, image/audio generation (OpenAI tools + S3 storage), AI model policy resolver, central entitlement resolver, admin control plane (users, transactions, usage, settings, website), 7 public marketing/legal routes, WCAG 2.2 AA compliance, TDD test suite (602 tests), E2E suite (49 tests, 8 specs), brand color palette v2, lime green accent, admin-configurable promo/FAQ/landing/stop-reason/persona content, global error boundary, user deletion cascade, rate limiting, Node.js 24.12.0, all config hardening, video generation removal (Phase 186-A), token limits maximized to near-maximum model capacity (Phase 186-B), admin error boundary (Phase 187-A), Clerk webhook cascade fix (Phase 187-B), audio player error recovery (Phase 187-C), env var runtime validation (Phase 143), all display text admin-configurable (Phases 180.2?180.4), download rate-limit cleanup (Phase 187-D), PlanCard isIncluded fix (Phase 188), admin deletion protection (Phase 189), admin ADMIN display + unlimited permissions (Phase 190), reusable FormInput/PersonaSelector/UsageMetricRow components (Phases 191�193), TiptapEditor WYSIWYG redesign (Phase 194).
+Key deliverables: Next.js 16 App Router, Clerk auth + proxy route protection, Stripe checkout + webhooks, MongoDB persistence (Mongoose, strict mode, indexes), 6 personas with three-tier gating, streaming SSE chat, image/audio generation (OpenAI tools + S3 storage), AI model policy resolver, central entitlement resolver, admin control plane (users, transactions, usage, settings, website), 7 public marketing/legal routes, WCAG 2.2 AA compliance, TDD test suite (640 tests), E2E suite (49 tests, 8 specs), brand color palette v2, lime green accent, admin-configurable promo/FAQ/landing/stop-reason/persona content, global error boundary, user deletion cascade, rate limiting, Node.js 24.12.0, all config hardening, video generation removal (Phase 186-A), token limits maximized to near-maximum model capacity (Phase 186-B), admin error boundary (Phase 187-A), Clerk webhook cascade fix (Phase 187-B), audio player error recovery (Phase 187-C), env var runtime validation (Phase 143), all display text admin-configurable (Phases 180.2–180.4), download rate-limit cleanup (Phase 187-D), PlanCard isIncluded fix (Phase 188), admin deletion protection (Phase 189), admin ADMIN display + unlimited permissions (Phase 190), reusable FormInput/PersonaSelector/UsageMetricRow components (Phases 191–193), TiptapEditor WYSIWYG redesign (Phase 194), plan-status route hardening (Phase 165.1), admin transaction query limit (Phase 146), utility file extension cleanup (Phase 147), bulk operations partial-failure reporting (Phase 148), per-action Zod schemas for 13 admin actions + client response Zod validation (Phases 29.1–29.5).
 
 Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 169), script tag warning (Phase 170), payment webhook schema (Phase 157/161), catch block documentation (Phase 167+167.2), test failures (Phase 171), cellesseon rename (Phase 172), debug text (Phase 173), dead files (Phase 174?175), download 206 (Phase 176), constant dedup (Phase 177), fake download icon (Phase 178), stream timeout budget (Phase 181 ? **confirmed working in production**), Stripe diagnostic hardening (Phase 182).
 
@@ -48,7 +50,7 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 | Admin double-check  | ?      | All 15 admin functions use `requireAdminAccess`                                   |
 | Schema strict mode  | ?      | All 9 Mongoose models have `strict: true`                                         |
 | Index coverage      | ?      | 18 indexed fields across all query-filtered cols                                  |
-| maxDuration exports | ✓      | All 6 API routes at maxDuration=60 (Vercel Hobby ceiling)                         |
+| maxDuration exports | ✓      | All 7 API routes at maxDuration=60 (Vercel Hobby ceiling)                         |
 | Server-only guards  | ?      | 50+ utility files with `import "server-only"`                                     |
 | Rate limiting       | ?      | MongoDB-backed, durable, all API routes covered                                   |
 | SSRF prevention     | ?      | `isAllowedDownloadUrl()` allowlist                                                |
@@ -59,7 +61,7 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 | Knip                | ?      | 0 findings                                                                        |
 | TSC                 | ?      | 0 errors                                                                          |
 | Lint                | ?      | 0 errors, 0 warnings                                                              |
-| Tests               | ✓      | 102 suites, 628 tests. 0 failures. All gates GREEN.                               |
+| Tests               | ✓      | 104 suites, 640 tests. 0 failures. All gates GREEN.                               |
 | E2E                 | ?      | 8 specs, 49 tests                                                                 |
 
 ### Issues Found by Audit #82?#84 ? Updated Status
@@ -122,6 +124,18 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 | 205   | Sidebar live update on new chat                | ✅ DONE                | router.refresh() with ref-based one-time guard. 5 call sites.                                                      |
 | 206   | Upload error propagation + client validation   | ✅ DONE                | error.message propagation, narrowed accept, client MIME pre-validation.                                            |
 | 207   | Upload magic byte validation                   | ✅ DONE                | JPEG/PNG/GIF/WebP signatures. Cross-match MIME. Blocks before S3 write. 11 tests.                                  |
+| 145   | Upload filename collision prevention           | ✅ DONE                | `crypto.randomUUID()` replaces `Date.now()`. UUID-based S3 filenames.                                              |
+| 165   | Checkout success page DB polling               | ✅ DONE                | Plan-status API + poller component + page integration. 10 new tests. 638 total.                                    |
+| 165.1 | Plan-status route hardening                    | ✅ DONE                | `maxDuration=60` + rate limiting (30 req/60s). 429 with headers. 640 tests.                                        |
+| 146   | Admin user detail transaction limit            | ✅ DONE                | `.limit(50)` on transaction query. Sort preserved.                                                                 |
+| 147   | Rename `.tsx` utility files to `.ts`           | ✅ DONE                | 5 files renamed. No JSX content. All imports updated.                                                              |
+| 148   | Bulk operations partial-failure reporting      | ✅ DONE                | All 5 bulk actions report skipped/failed/not-found counts. Per-user error isolation.                               |
+| 208   | jsdom ESM compatibility fix                    | ✅ DONE                | jsdom pinned `~24.1.3`. ESM top-level await incompatibility resolved. 640 tests.                                   |
+| 29.1  | Admin single-value actions Zod schemas         | ✅ DONE                | 4 actions converted to per-action Zod schemas with z.infer types.                                                  |
+| 29.2  | Admin toggle/numeric actions Zod schemas       | ✅ DONE                | 3 actions converted to per-action Zod schemas.                                                                     |
+| 29.3  | Admin bulk actions Zod schemas                 | ✅ DONE                | 6 bulk actions converted to direct Zod array schemas.                                                              |
+| 29.4  | Admin helper cleanup + schema consolidation    | ✅ DONE                | getMultiStringField removed. requiredStringSchema consolidated to nonEmptyStringSchema.                            |
+| 29.5  | Client API response Zod validation (poller)    | ✅ DONE                | Unsafe type assertion replaced with Zod safeParse on unknown payload.                                              |
 
 ### Ongoing Constraints
 
@@ -131,15 +145,15 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 
 ---
 
-## 4. SWOT Analysis (Updated 2026-04-05, post PM audit #94)
+## 4. SWOT Analysis (Updated 2026-04-06, post PM audit #97)
 
-**Strengths:** Clean architecture, strong auth, comprehensive tests (628+49), central policy resolvers, WCAG 2.2 AA complete, durable usage counters, thorough user deletion cascade, zero lint/type/knip issues, correct webhook code structure, stream timeout confirmed in production (Phase 181), video generation cleanly removed (Phase 186-A), token limits maximized (Phase 186-B), admin error boundary (Phase 187-A), env var runtime validation (Phase 143), all display text admin-configurable (Phases 180.1–180.4), audio player error recovery (Phase 187-C), admin deletion protection with 5-layer defense (Phase 189), reusable component library: FormInput/PersonaSelector/UsageMetricRow (Phases 191–193), TiptapEditor WYSIWYG (Phase 194), plan-display utility for admin ADMIN label (Phase 190), admin suspension protection with symmetric 3-layer defense (Phase 200), avatar sync MongoDB→Clerk (Phase 201), admin config cache 30s TTL (Phase 144), full test baseline (628 tests, 0 failures, Phase 202+203), all API routes at Vercel Hobby ceiling (Phase 204), sidebar live-updates on new chat without browser refresh (Phase 205), upload error messages propagated to user with client pre-validation (Phase 206), upload magic byte validation prevents MIME spoofing (Phase 207).
+**Strengths:** Clean architecture, strong auth, comprehensive tests (640+49), central policy resolvers, WCAG 2.2 AA complete, durable usage counters, thorough user deletion cascade, zero lint/type/knip issues, correct webhook code structure, stream timeout confirmed in production (Phase 181), video generation cleanly removed (Phase 186-A), token limits maximized (Phase 186-B), admin error boundary (Phase 187-A), env var runtime validation (Phase 143), all display text admin-configurable (Phases 180.1–180.4), audio player error recovery (Phase 187-C), admin deletion protection with 5-layer defense (Phase 189), reusable component library: FormInput/PersonaSelector/UsageMetricRow (Phases 191–193), TiptapEditor WYSIWYG (Phase 194), plan-display utility for admin ADMIN label (Phase 190), admin suspension protection with symmetric 3-layer defense (Phase 200), avatar sync MongoDB→Clerk (Phase 201), admin config cache 30s TTL (Phase 144), full test baseline (640 tests, 0 failures), all API routes at Vercel Hobby ceiling (Phase 204), sidebar live-updates on new chat without browser refresh (Phase 205), upload error messages propagated to user with client pre-validation (Phase 206), upload magic byte validation prevents MIME spoofing (Phase 207), upload filenames collision-proof via UUID (Phase 145), checkout success page polls DB for webhook-delayed plan updates (Phase 165), plan-status route hardened with rate limiting and maxDuration (Phase 165.1), admin transaction query bounded (Phase 146), utility file extensions clean (Phase 147), bulk operations report partial failures for admin visibility (Phase 148), post-release active backlog fully cleared. Per-action Zod schemas for all 13 non-settings admin actions (Phases 29.1–29.3), shared nonEmptyStringSchema consolidation (Phase 29.4), client API response Zod validation replacing unsafe type assertions (Phase 29.5).
 
-**Weaknesses:** None critical. Remaining items are quality-of-life improvements (filename collision, checkout polling).
+**Weaknesses:** `updateAdminSettingAction` still uses per-field Zod helper pattern (deferred — 15+ branches, low marginal value, Zod enforced under the hood). `getStringField`/`getNumericField` helpers retained for this action only.
 
-**Opportunities:** Vercel Pro upgrade ($20/mo) for 300s maxDuration. Checkout success polling for webhook delay. Filename collision prevention via `crypto.randomUUID()`.
+**Opportunities:** Vercel Pro upgrade ($20/mo) for 300s maxDuration. Persona-aware media prompts (Phase 26.x).
 
-**Threats:** Single-document growth risk (Task model). Vercel Hobby 60s timeout remains architecture constraint for media generation edge cases.
+**Threats:** Single-document growth risk (Task model). Vercel Hobby 60s timeout remains architecture constraint for media generation edge cases. jsdom pinned to 24.x — older version, lacks newer CSS/DOM APIs; monitor Vitest ESM environment loading progress for future upgrade.
 
 ---
 
@@ -152,23 +166,31 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 | C    | Product Gate    | GREEN  | All display strings admin-configurable. Video removed. Stripe + Facebook resolved.         |
 | D    | Admin Gate      | GREEN  | Admin config complete. Error boundary added (Phase 187-A). All strings admin-configurable. |
 | E    | Public Gate     | GREEN  | All 7 public routes accurate, legal content real, no obsolete trial messaging              |
-| F    | Validation Gate | GREEN  | 628 tests, lint 0/0, TSC clean, knip 0, E2E 49 tests, coverage 85/80/85/85                 |
+| F    | Validation Gate | GREEN  | 640 tests, lint 0/0, TSC clean, knip 0, E2E 49 tests, coverage 85/80/85/85                 |
 
 ---
 
 ## 6. Current Execution Order
 
-> All critical issues RESOLVED. All v1.0 pre-release phases DONE. **V1.0 MVP RELEASED.** Phases 195-207, 144 DONE. 0 critical issues.
-
-### Post-Release Active
-
-> No active critical work. All owner bugs resolved.
+> All critical issues RESOLVED. All v1.0 pre-release phases DONE. **V1.0 MVP RELEASED.** Phases 143–208. 0 critical issues. **Phase 29.x COMPLETE — Zod modernization done (Phases 29.1–29.5). Zustand audit complete (no changes needed).**
 
 ### Confirmed Working
 
+- **✅ Phase 208** — jsdom ESM compatibility fix. DONE. Pinned `~24.1.3`. 640 tests passing.
+- **✅ Phase 29.1** — Admin single-value actions Zod schemas. DONE. 4 actions with per-action schemas.
+- **✅ Phase 29.2** — Admin toggle/numeric actions Zod schemas. DONE. 3 actions.
+- **✅ Phase 29.3** — Admin bulk actions Zod schemas. DONE. 6 bulk actions.
+- **✅ Phase 29.4** — Admin helper cleanup + schema consolidation. DONE. getMultiStringField removed.
+- **✅ Phase 29.5** — Client API response Zod validation. DONE. Poller type assertion removed.
+- **✅ Phase 165.1** — Plan-status route hardening. DONE. `maxDuration=60` + rate limiting (30 req/60s).
+- **✅ Phase 146** — Admin user detail transaction limit. DONE. `.limit(50)`.
+- **✅ Phase 147** — Rename `.tsx` utility files to `.ts`. DONE. 5 files renamed.
+- **✅ Phase 148** — Bulk operations partial-failure reporting. DONE. All 5 bulk actions.
+- **✅ Phase 165** — Checkout success page DB polling. DONE. Plan-status API + poller + page integration. 10 new tests.
+- **✅ Phase 145** — Upload filename collision prevention. DONE. `crypto.randomUUID()` replaces `Date.now()`.
 - **✅ Phase 207** — Upload magic byte validation. DONE. JPEG/PNG/GIF/WebP signatures. 11 tests.
-- **✅ Phase 206** — Upload error propagation + client validation. DONE. error.message + narrowed accept + pre-validation.
-- **✅ Phase 205** — Sidebar live update on new chat. DONE. router.refresh() with ref-based one-time guard.
+- **✅ Phase 206** — Upload error propagation + client validation. DONE.
+- **✅ Phase 205** — Sidebar live update on new chat. DONE.
 - **✅ Phase 204** — API route timeouts to max. DONE. All 6 routes at maxDuration=60.
 - **✅ Phase 200** — Admin suspension protection. DONE. Symmetric 3-layer defense matching Phase 189.
 - **✅ Phase 202** — Unit test PLAN_LIMITS alignment. DONE. 619 tests, 0 failures.
@@ -191,16 +213,19 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 
 ### Post-Release Backlog
 
-> All v1.0 pre-release phases COMPLETE (OI24). Remaining items are post-release improvements.
+> Phase 29.x COMPLETE (PM audit #97, 2026-04-06). Phases 29.1–29.5 DONE. Phase 29.6 DEFERRED. Phase 29.7 (Zustand) was already complete — no changes needed.
 
-1. **MEDIUM Phase 145 � Upload filename collision prevention.**
-   Use `crypto.randomUUID()` instead of `Date.now()` for S3 filenames.
+### Post-Release Active
 
-2. **MEDIUM Phase 165 � Checkout success page DB polling.**
-   Safety net for webhook delay � poll DB for plan update on success page.
+> No active items. All Phase 29.x work complete.
 
-3. **LOW Phase 146�148 � Low priority improvements.**
-   Admin user detail transaction limit, rename `.tsx` utility files to `.ts`, bulk operations partial-failure reporting.
+### Deferred / ON HOLD
+
+1. **Phase 29.6** — updateAdminSettingAction Zod schema map. DEFERRED (15+ branches, high effort, low marginal value — current pattern works with Zod under the hood).
+2. **Phase 26.x** — Persona-aware media prompts, Stripe auto-renewal.
+3. **Legal/nav/footer admin configurability** — Deferred to v2.
+4. **TypeScript 6 / @typescript-eslint compatibility** — Monitor.
+5. **jsdom upgrade** — Monitor. Pinned to `~24.1.3` (ESM TLA incompatibility). Upgrade when Vitest resolves ESM environment loading in forks pool.
 
 ---
 

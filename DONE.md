@@ -2,7 +2,154 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-04-05 — PM audit #94.
+> Last updated: 2026-04-06 — PM audit #97.
+
+---
+
+## Phase 29.7 — Zustand Audit — COMPLETE (2026-04-06)
+
+> PM audit #96 determined no changes needed. 4 stores (`useUiStore`, `useChatStore`, `usePreferencesStore`, `useAudioStore`), all properly implemented with `useShallow` selectors, `persist` middleware, no prop drilling, no state duplication. Zustand v5.0.11.
+
+- [x] All 4 Zustand stores audited
+- [x] No changes needed — already follows best practices
+- [x] No state needing Zustand migration found
+
+---
+
+## Phase 29.5 — Client API Response Zod Validation — COMPLETED (2026-04-06)
+
+> Engineer delivered (PM audit #97). `checkout-plan-status-poller.tsx` unsafe `as { confirmed?: boolean }` type assertion replaced with Zod `safeParse()` on `unknown` payload. Schema: `z.object({ confirmed: z.boolean() }).strict()`. Parse failure safely returns `false` (continues polling). No external data casts remain.
+
+- [x] Zod response schema defined
+- [x] `safeParse()` on API response
+- [x] No `as` type assertions on external data
+- [x] Safe fallback on parse failure
+- [x] Build passes, tests pass
+
+---
+
+## Phase 29.4 — Admin Helper Cleanup + Schema Consolidation — COMPLETED (2026-04-06)
+
+> Engineer delivered (PM audit #97). `getMultiStringField` helper removed (no longer used after Phase 29.3). `requiredStringSchema` local duplicate removed — `getStringField` now uses shared `nonEmptyStringSchema` from `validation-schemas.ts`. `getStringField` and `getNumericField` retained — still used by `updateAdminSettingAction` (deferred Phase 29.6). Knip: 0 findings.
+
+- [x] `getMultiStringField` removed
+- [x] `requiredStringSchema` consolidated to shared `nonEmptyStringSchema`
+- [x] No duplicate schemas remain
+- [x] Knip passes, build passes, tests pass
+
+---
+
+## Phase 29.3 — Admin Bulk Actions Zod Schemas — COMPLETED (2026-04-06)
+
+> Engineer delivered (PM audit #97). All 6 bulk admin actions converted to per-action Zod array schemas with `.strict()` and `.min(1)`. Each uses `z.array(nonEmptyStringSchema).min(1)` for the ID array field. FormData extraction via `getAll()` with string filtering, then `safeParse()`. Returns `AdminActionState` error on validation failure. Types derived via `z.infer`.
+
+- [x] `bulkSuspendUsersAction` — Zod schema
+- [x] `bulkRemoveUsersAction` — Zod schema
+- [x] `bulkDeleteTransactionsAction` — Zod schema
+- [x] `bulkDeletePublicPagesAction` — Zod schema
+- [x] `bulkPublishPublicPagesAction` — Zod schema
+- [x] `bulkUnpublishPublicPagesAction` — Zod schema
+- [x] Build passes, tests pass
+
+---
+
+## Phase 29.2 — Admin Toggle/Numeric Actions Zod Schemas — COMPLETED (2026-04-06)
+
+> Engineer delivered (PM audit #97). 3 admin actions converted to per-action Zod schemas with proper coercion. `booleanStringFieldSchema` uses `z.enum(["true","false"]).transform(v => v === "true")` for FormData boolean coercion. `finiteNumericStringFieldSchema` uses `.transform(Number).refine(isFinite)` for numeric coercion. All schemas use `.strict()`, `safeParse()`, and `z.infer` types.
+
+- [x] `toggleUserSuspensionAction` — Zod schema with boolean coercion
+- [x] `togglePublicPagePublishedAction` — Zod schema with boolean coercion
+- [x] `updatePublicPageSortOrderAction` — Zod schema with numeric coercion
+- [x] Build passes, tests pass
+
+---
+
+## Phase 29.1 — Admin Single-Value Actions Zod Schemas — COMPLETED (2026-04-06)
+
+> Engineer delivered (PM audit #97). 4 admin actions converted from `getStringField()` helper pattern to per-action Zod schemas. Each defines a `z.object().strict()` schema, validates via `safeParse()`, returns `AdminActionState` error on failure (no throw), and derives types via `z.infer`. Uses shared `nonEmptyStringSchema` from `validation-schemas.ts`.
+
+- [x] `removeUserByAdminAction` — Zod schema + safeParse
+- [x] `createPublicPageAction` — Zod schema + safeParse
+- [x] `deletePublicPageAction` — Zod schema + safeParse
+- [x] `savePublicPageAction` — Zod schema + safeParse
+- [x] Build passes, tests pass
+
+---
+
+## Phase 208 — jsdom ESM Compatibility Fix — COMPLETED (2026-04-06)
+
+> Engineer delivered (PM audit #96). `jsdom@29.0.1` pulled `@asamuzakjp/css-color@5.1.5` which uses top-level `await` in ESM — incompatible with Vitest's `forks` pool (uses `require()`). 33 `.test.tsx` files crashed before any test ran. Fix: downgraded jsdom from `^29.0.1` to `~24.1.3`. jsdom 24.x predates the ESM-only dependencies. Rejected alternatives: `vmThreads` pool (same error), `happy-dom` (121 behavioral test failures), npm overrides (only partly effective).
+
+- [x] jsdom pinned to `~24.1.3`
+- [x] All 104 suites, 640 tests pass — 0 failures
+- [x] Monitor item added for future upgrade when Vitest resolves ESM TLA in forks pool
+
+---
+
+## Phase 148 — Bulk Operations Partial-Failure Reporting — COMPLETED (2026-04-06)
+
+> Engineer delivered (PM audit #96). All 5 bulk admin actions now report partial-failure details: `bulkSuspendUsersAction` (skipped admin/missing/already-suspended), `bulkRemoveUsersAction` (per-user try/catch, `failedRemovals[]` with userId + reason, audit log), `bulkDeleteTransactionsAction` (not-found counts), `bulkPublishPublicPagesAction` (not-found + already-published), `bulkUnpublishPublicPagesAction` (not-found + already-unpublished). All use MongoDB `matchedCount vs modifiedCount` for state detection. `AdminActionState` return shape preserved (no breaking changes).
+
+- [x] 5 bulk actions report partial-failure details
+- [x] Per-user error isolation in bulk remove
+- [x] Audit log includes failure details
+- [x] Build passes, tests pass
+
+---
+
+## Phase 147 — Rename `.tsx` Utility Files to `.ts` — COMPLETED (2026-04-06)
+
+> Engineer delivered (PM audit #96). Renamed 5 utility files from `.tsx` to `.ts`: `handleError`, `getPlanStatus`, `getFullName`, `getFormattedDate`, `generateString`. None contained JSX — extension was incorrect per coding standards. Old `.tsx` files confirmed deleted. Zero source imports reference old extensions.
+
+- [x] 5 files renamed from `.tsx` to `.ts`
+- [x] All imports updated
+- [x] Old `.tsx` files deleted
+- [x] Build passes, tests pass
+
+---
+
+## Phase 146 — Admin User Detail Transaction Limit — COMPLETED (2026-04-06)
+
+> Engineer delivered (PM audit #96). Added `.limit(50)` to transaction query in `getAdminUserDetail` (`admin-queries.ts`). Sort by `createdAt: -1` preserved — returns latest 50 transactions. Prevents unbounded query results for heavy users.
+
+- [x] `.limit(50)` added to transaction query
+- [x] Sort order preserved (`createdAt: -1`)
+- [x] Test updated
+- [x] Build passes, tests pass
+
+---
+
+## Phase 165.1 — Plan-Status Route Hardening — COMPLETED (2026-04-06)
+
+> Engineer delivered (PM audit #96). Added `maxDuration = 60` and `enforceSlidingWindowRateLimit` (30 req/60s) to `/api/checkout/plan-status`. Rate limit key: `checkout-plan-status:${userId}`. Auth order: auth → requireActiveUser → rate limit → business logic. 429 response includes `Retry-After`, `X-RateLimit-Limit`, `X-RateLimit-Remaining` headers. Now consistent with all other API routes.
+
+- [x] `maxDuration = 60` exported
+- [x] Rate limiting applied (30 req/60s sliding window)
+- [x] 429 response with rate limit headers
+- [x] Test updated
+- [x] Build passes, 640 tests, 0 failures
+
+---
+
+## Phase 165 — Checkout Success Page DB Polling — COMPLETED (2026-04-06)
+
+> Engineer delivered (PM audit #95). New API route `GET /api/checkout/plan-status?session_id=...` with auth enforcement (`auth()` + `requireActiveUser()`), Zod-validated `session_id`, user-scoped DB query. New client poller component with 4s interval, 30s max, 3 states (checking/confirmed/timed_out). Confirmation signal: `user.plan.stripeId === session_id`. Checkout success page updated to render poller for paid sessions. 10 new tests across 3 test files.
+
+- [x] Plan-status API route with auth, Zod validation, user-scoped query
+- [x] Client poller component with interval, timeout, abort controller
+- [x] Checkout success page integrates poller for paid sessions
+- [x] 7 route tests, 3 poller tests, 6 page tests
+- [x] Build passes, 638 tests, 0 failures
+
+---
+
+## Phase 145 — Upload Filename Collision Prevention — COMPLETED (2026-04-06)
+
+> Engineer delivered (PM audit #95). Replaced `Date.now()` with `globalThis.crypto.randomUUID()` in upload filename generation. Test mock uses fixed UUID. S3 URL assertions updated.
+
+- [x] Upload filenames use `crypto.randomUUID()`
+- [x] Test mock and assertions updated
+- [x] Build passes, tests pass
 
 ---
 

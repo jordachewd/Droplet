@@ -242,7 +242,12 @@ describe("admin.actions behavior", () => {
         role: "client",
       }),
     );
-    userFindMock.mockReturnValue(mockMongooseModel([]));
+    userFindMock.mockReturnValue(
+      mockMongooseModel([
+        { _id: targetUserId, role: "client" },
+        { _id: secondUserId, role: "client" },
+      ]),
+    );
   });
 
   it("toggleUserSuspensionAction updates status and logs audit", async () => {
@@ -889,7 +894,10 @@ describe("admin.actions behavior", () => {
 
   it("bulkRemoveUsersAction skips admin ids and removes only client users", async () => {
     userFindMock.mockReturnValueOnce(
-      mockMongooseModel([{ _id: secondUserId }]),
+      mockMongooseModel([
+        { _id: targetUserId, role: "client" },
+        { _id: secondUserId, role: "admin" },
+      ]),
     );
 
     const response = await bulkRemoveUsersAction(
@@ -898,7 +906,7 @@ describe("admin.actions behavior", () => {
 
     expect(response).toEqual({
       status: "success",
-      message: "1 users removed.",
+      message: "1 users removed. 1 admin user skipped.",
       severity: "warning",
     });
     expect(deleteClerkUserMock).toHaveBeenCalledTimes(1);
@@ -907,7 +915,10 @@ describe("admin.actions behavior", () => {
 
   it("bulkSuspendUsersAction skips admin ids and suspends only client users", async () => {
     userFindMock.mockReturnValueOnce(
-      mockMongooseModel([{ _id: secondUserId }]),
+      mockMongooseModel([
+        { _id: targetUserId, role: "client" },
+        { _id: secondUserId, role: "admin" },
+      ]),
     );
     userUpdateManyMock.mockResolvedValueOnce({ modifiedCount: 1 });
 
@@ -917,7 +928,7 @@ describe("admin.actions behavior", () => {
 
     expect(response).toEqual({
       status: "success",
-      message: "1 users suspended.",
+      message: "1 users suspended. 1 admin user skipped.",
       severity: "warning",
     });
     expect(userUpdateManyMock).toHaveBeenCalledWith(
@@ -972,22 +983,20 @@ describe("admin.actions behavior", () => {
     expectErrorState(deleteFailure, "Unable to remove user.");
   });
 
-  it("bulkRemoveUsersAction fails when one selected user is missing", async () => {
-    userFindByIdMock
-      .mockReturnValueOnce(
-        mockMongooseModel({
-          clerkId: "user_123",
-          email: "one@example.com",
-          username: "one",
-        }),
-      )
-      .mockReturnValueOnce(mockMongooseModel(null));
+  it("bulkRemoveUsersAction reports partial completion when one selected user is missing", async () => {
+    userFindMock.mockReturnValueOnce(
+      mockMongooseModel([{ _id: targetUserId, role: "client" }]),
+    );
 
     const response = await bulkRemoveUsersAction(
       buildFormData({ userIds: [targetUserId, secondUserId] }),
     );
 
-    expectErrorState(response, "Unable to remove selected users.");
+    expect(response).toEqual({
+      status: "success",
+      message: "1 users removed. 1 user not found.",
+      severity: "warning",
+    });
   });
 
   it("removeUserByAdminAction checks user existence by id before deletion", async () => {
