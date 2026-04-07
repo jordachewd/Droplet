@@ -583,7 +583,7 @@ export default function ChatSidebarNav({
                           role="menu"
                           aria-label={`Conversation actions for ${item.title}`}
                           className={classNames(
-                            "SidebarConversationMenu absolute right-0 top-full z-40 mt-1 min-w-[10rem] rounded-lg border border-lavenderHaze-300 bg-lavenderHaze-100 p-1 shadow-lg",
+                            "SidebarConversationMenu absolute right-0 top-full z-40 mt-1 min-w-40 rounded-lg border border-lavenderHaze-300 bg-lavenderHaze-100 p-1 shadow-lg",
                             "dark:border-nightIndigo-400 dark:bg-nightIndigo-900",
                           )}
                           onKeyDown={handleConversationMenuKeyDown}
