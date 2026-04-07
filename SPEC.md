@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-04-06 (PM audit #97). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. **V1.0 MVP RELEASED.** Brand rename complete (Phase 172). Catch blocks documented (Phase 167.2). Promo text admin-configurable (Phase 162, 180.2–180.3). Global error boundary live (Phase 163). Admin error boundary live (Phase 187-A). Phases 143–208 COMPLETE. Phase 165.1 COMPLETE. Phases 146–148 COMPLETE. Phases 29.1–29.5 COMPLETE. E2E: 49 tests (8 spec files). Coverage: 85/80/85/85. 640 tests. Build passing. Node.js 24.12.0. jsdom pinned to ~24.1.3 (ESM compat). Zod schema consistency across all server actions and API routes.
+> Last updated: 2026-04-07 (PM audit #98). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. **V1.0 MVP RELEASED.** Brand rename complete (Phase 172). Catch blocks documented (Phase 167.2). Promo text admin-configurable (Phase 162, 180.2–180.3). Global error boundary live (Phase 163). Admin error boundary live (Phase 187-A). Phases 143–208 COMPLETE. Phase 165.1 COMPLETE. Phases 146–148 COMPLETE. Phases 29.1–29.5 COMPLETE. E2E: 49 tests (8 spec files). Coverage: 85/80/85/85. 640 tests. Build passing. Node.js 24.12.0. jsdom pinned to ~24.1.3 (ESM compat). Zod schema consistency across all server actions and API routes. **Sidebar restructure planned (Phases 209–216). Stripe recurring billing planned (Phases 217-A–D).**
 >
 > **V1.0 MVP Released (PM audit #94):**
 >
@@ -30,9 +30,11 @@
 > - **TD-MEDIA-01** — 🟡 ACCEPTED LIMITATION. Media gen (image/audio) may approach Vercel Hobby 60s timeout. Phase 181 proactive timeout handles gracefully.
 > - **TD-AI-09** — Image/audio prompts not persona-aware (deferred to v1.1).
 > - **TD-AI-13** — 3 model pricing placeholders (awaiting OpenAI confirmation).
-> - **TD-PLAN-01** — No recurring subscriptions (deferred to v2).
+> - **TD-PLAN-01** — No recurring subscriptions (planned: Phases 217-A–D, blocked pending owner decisions).
 > - **TD-AI-18** — Advisory: errorMessage forwarding pattern is safe but fragile.
 > - **TD-API-09** — Monitor: `.strict()` in messageTextContentSchema.
+> - **TD-NAV-01** — `/app/personas` route removal planned (Phase 210). Duplicate of `/app/new`.
+> - **TD-TASK-01** — `updateTaskSchema` missing `title` field; `messages` required. New `renameTask` action planned (Phase 215.0).
 
 ---
 
@@ -147,7 +149,7 @@ Each persona has: `id`, `label`, `tagline`, `description`, `category`, `icon`, `
 
 - **Personas are plan-gated** (Lite: 2 personas, Pro: 5 personas, Premium: all 6 personas).
 - Default persona access per plan is hardcoded in constants but overridable by admin via AppSetting.
-- Persona selection UI: `ChatHeader` includes a persona dropdown selector for quick persona switching across all `/app` pages � selector is disabled during active conversations (`messages.length > 0` or `taskStatus === "ended"` � persona is bound per-task). `ChatPersonaPicker` component available on `/app/personas` page for full persona browsing with trial badges.
+- Persona selection UI: `ChatHeader` includes a persona dropdown selector for quick persona switching across all `/app` pages — selector is disabled during active conversations (`messages.length > 0` or `taskStatus === "ended"` — persona is bound per-task). `ChatPersonaPicker` component available on `/app/personas` page for full persona browsing with trial badges. **Planned change (Phase 216):** PersonaSelector moves from ChatHeader to ChatInput (next to file upload button). **Planned change (Phase 210):** `/app/personas` route removed (duplicate of `/app/new`); `/app/new` serves as the persona browsing page, renamed to "Personas" in sidebar.
 - Persona is stored per task in `Task.personaId`.
 - System prompt is built per-persona via `buildPersonaAwareSystemPrompt()`.
 - Entitlements resolved via `resolveEntitlements()` in `src/lib/utils/resolve-entitlements.tsx`.
@@ -251,7 +253,7 @@ Prompts are versioned and separated from request handlers. `buildPersonaAwareSys
 2. Upgrade via Stripe Checkout (one-time payment per billing cycle).
 3. On successful `checkout.session.completed` webhook, the user's plan and expiration are updated.
 4. Expired paid plans revert to Lite behavior (checked in `/api/openai` route).
-5. No auto-renewal � plans are one-time payments with set expiration dates for paid tiers.
+5. No auto-renewal — plans are one-time payments with set expiration dates for paid tiers. **Recurring subscription billing planned (Phases 217-A–D, blocked pending owner decisions).**
 
 ### Usage Limit Enforcement
 
@@ -711,32 +713,32 @@ All file handling technical debt has been resolved. S3 cleanup on task/user dele
 
 ### Route Map (Target)
 
-| Route                                 | Type      | Description                                                                                                                                                          |
-| ------------------------------------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `/`                                   | Public    | Landing (Hero + product sections + CTAs)                                                                                                                             |
-| `/about`                              | Public    | How app works (stacked sections)                                                                                                                                     |
-| `/plans`                              | Public    | Pricing (plan cards)                                                                                                                                                 |
-| `/personas`                           | Public    | Personas showcase                                                                                                                                                    |
-| `/privacy`                            | Public    | Privacy & Cookie Policy                                                                                                                                              |
-| `/cookies`                            | Public    | Cookie Policy                                                                                                                                                        |
-| `/terms`                              | Public    | Terms & Conditions                                                                                                                                                   |
-| `/sign-in`, `/sign-up`                | Auth      | Clerk auth                                                                                                                                                           |
-| `/app`                                | Protected | Chat dashboard                                                                                                                                                       |
-| `/app/new`                            | Protected | New conversation                                                                                                                                                     |
-| `/app/library`                        | Protected | Media library (tabs: Chats, Images, Audios, Uploaded) — **Implemented (Phase 32.3 + 32.4 media cards + Phase 151 Uploaded tab).** Videos tab removed (PM audit #85). |
-| `/app/personas`                       | Protected | In-app personas                                                                                                                                                      |
-| `/app/c/[conversationId]`             | Protected | Resume conversation                                                                                                                                                  |
-| `/app/profile`                        | Protected | User profile + plan + history                                                                                                                                        |
-| `/app/plans`                          | Protected | Plan upgrade + checkout                                                                                                                                              |
-| `/admin`                              | Admin     | Dashboard overview                                                                                                                                                   |
-| `/admin/users`                        | Admin     | User management list                                                                                                                                                 |
-| `/admin/users/[userId]`               | Admin     | User detail + actions                                                                                                                                                |
-| `/admin/transactions`                 | Admin     | Transaction management                                                                                                                                               |
-| `/admin/transactions/[transactionId]` | Admin     | Transaction detail                                                                                                                                                   |
-| `/admin/usage`                        | Admin     | Usage analytics                                                                                                                                                      |
-| `/admin/settings`                     | Admin     | App settings                                                                                                                                                         |
-| `/admin/website`                      | Admin     | Content management                                                                                                                                                   |
-| `/admin/website/[pageId]`             | Admin     | Page editor (textarea fallback � Tiptap replaced)                                                                                                                    |
+| Route                                 | Type      | Description                                                                                                                                                                                                                                        |
+| ------------------------------------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/`                                   | Public    | Landing (Hero + product sections + CTAs)                                                                                                                                                                                                           |
+| `/about`                              | Public    | How app works (stacked sections)                                                                                                                                                                                                                   |
+| `/plans`                              | Public    | Pricing (plan cards)                                                                                                                                                                                                                               |
+| `/personas`                           | Public    | Personas showcase                                                                                                                                                                                                                                  |
+| `/privacy`                            | Public    | Privacy & Cookie Policy                                                                                                                                                                                                                            |
+| `/cookies`                            | Public    | Cookie Policy                                                                                                                                                                                                                                      |
+| `/terms`                              | Public    | Terms & Conditions                                                                                                                                                                                                                                 |
+| `/sign-in`, `/sign-up`                | Auth      | Clerk auth                                                                                                                                                                                                                                         |
+| `/app`                                | Protected | Chat dashboard                                                                                                                                                                                                                                     |
+| `/app/new`                            | Protected | New conversation (persona browsing). **Renamed to \"Personas\" in sidebar (Phase 209). Will absorb `/app/personas` functionality (Phase 210).**                                                                                                    |
+| `/app/library`                        | Protected | Media library (tabs: Chats, Images, Audios, Uploaded) — **Implemented (Phase 32.3 + 32.4 media cards + Phase 151 Uploaded tab).** Videos tab removed (PM audit #85). **Planned: move to sidebar navigation, remove from avatar menu (Phase 209).** |
+| `/app/personas`                       | Protected | In-app personas **— PLANNED FOR REMOVAL (Phase 210). Duplicate of `/app/new`. Redirect to `/app/new`.**                                                                                                                                            |
+| `/app/c/[conversationId]`             | Protected | Resume conversation                                                                                                                                                                                                                                |
+| `/app/profile`                        | Protected | User profile + plan + history                                                                                                                                                                                                                      |
+| `/app/plans`                          | Protected | Plan upgrade + checkout                                                                                                                                                                                                                            |
+| `/admin`                              | Admin     | Dashboard overview                                                                                                                                                                                                                                 |
+| `/admin/users`                        | Admin     | User management list                                                                                                                                                                                                                               |
+| `/admin/users/[userId]`               | Admin     | User detail + actions                                                                                                                                                                                                                              |
+| `/admin/transactions`                 | Admin     | Transaction management                                                                                                                                                                                                                             |
+| `/admin/transactions/[transactionId]` | Admin     | Transaction detail                                                                                                                                                                                                                                 |
+| `/admin/usage`                        | Admin     | Usage analytics                                                                                                                                                                                                                                    |
+| `/admin/settings`                     | Admin     | App settings                                                                                                                                                                                                                                       |
+| `/admin/website`                      | Admin     | Content management                                                                                                                                                                                                                                 |
+| `/admin/website/[pageId]`             | Admin     | Page editor (textarea fallback � Tiptap replaced)                                                                                                                                                                                                  |
 
 ### Public Pages Content
 

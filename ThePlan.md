@@ -3,7 +3,7 @@
 > Purpose: one execution document for finishing the SaaS without avoidable rework.
 > Audience: Project Manager, Architect, and Senior Software Agents.
 > Rule: this plan is based on verified repository state. If older docs disagree with code, code wins until this file is updated.
-> Last verified: PM audit #97, 2026-04-06. V1.0 MVP RELEASED. Phases 29.1-29.5 (Zod/Zustand modernization) DONE. 640 tests, 0 failures. All 7 gates GREEN. 0 critical issues.
+> Last verified: PM audit #98, 2026-04-07. V1.0 MVP RELEASED. Owner directives OI45–OI51 received (sidebar restructure + Stripe recurring). Phases 209–217-D planned. 640 tests, 0 failures. All 7 gates GREEN. 0 critical issues.
 
 ---
 
@@ -217,12 +217,33 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 
 ### Post-Release Active
 
-> No active items. All Phase 29.x work complete.
+> PM audit #98 (2026-04-07). Owner directives OI45–OI51 received. Sidebar UI restructure + Stripe recurring billing planning.
+
+#### Sidebar & Navigation Restructure (Phases 209–216)
+
+- **Phase 209** — Sidebar label renames + Library link migration. Rename "Chat Dashboard" → "Home", "New Conversation" → "Personas". Add Library link to sidebar under Personas. Remove Library and Personas links from avatar menu. **Dependencies:** None. **Effort:** ~20min. **Risk:** Low.
+- **Phase 210** — Remove `/app/personas` route (duplicate of `/app/new`). Delete route directory, add Next.js redirect for bookmarks, update `revalidatePath` calls in admin.actions.tsx (3 occurrences), verify public `/personas` route untouched. Ensure `/app/new` page retains full persona access visibility (lock badges, trial indicators, required plan info). **Dependencies:** Phase 209. **Effort:** ~25min. **Risk:** Medium.
+- **Phase 211** — Sidebar collapsed state hides entire Recent section. When sidebar closed (desktop collapsed or mobile closed), Recent heading + conversation items must not render. Only visible when sidebar is open. **Dependencies:** None. **Effort:** ~15min. **Risk:** Low.
+- **Phase 212** — Sidebar loading state. Add LoadingBubbles or skeleton in ChatSidebarShell/ChatSidebarNav while server-side data loads. Use Suspense boundary in layout. **Dependencies:** None. **Effort:** ~20min. **Risk:** Low.
+- **Phase 213** — Sidebar smooth transitions. CSS transitions for Workspace/Recent section appear/disappear. Fluid animation when sidebar opens/closes. **Dependencies:** Phase 211. **Effort:** ~15min. **Risk:** Low.
+- **Phase 214** — Move sidebar toggle from ChatHeader into SidebarHead. When sidebar open: button on right side of SidebarHead, same level as logo. When sidebar closed: button hidden, appears on hover/focus-within over the logo symbol. **CRITICAL:** Must keep a mobile-only hamburger button accessible when sidebar is off-screen (mobile closed state). **Dependencies:** None. **Effort:** ~25min. **Risk:** Medium.
+- **Phase 215.0** — Create `renameTask` server action. Dedicated Zod schema (`{ title: nonEmptyStringSchema }`). Auth + ownership enforcement. Atomic `findOneAndUpdate` on `title` field only. **Prerequisite for Phase 215.** **Dependencies:** None. **Effort:** ~20min. **Risk:** Medium.
+- **Phase 215** — Conversation item dropdown menu (horizontal three-dot icon). Options: Rename (inline edit using `renameTask` action) and Delete (existing confirmation flow via `ConfirmationModal`). Replaces standalone delete button. **Dependencies:** Phases 211, 213, 215.0. **Effort:** ~30min. **Risk:** Medium.
+- **Phase 216** — Move PersonaSelector from ChatHeader to ChatInput (next to attach file button, same level). Pass persona props through ChatWrapper → ChatInput. Keep disable logic (conversation route, messages > 0, taskStatus ended). ChatHeader loses persona selector — verify no code depends on it being there. **Dependencies:** None. **Effort:** ~25min. **Risk:** Medium.
+
+#### Stripe Recurring Payment (Phases 217-A through 217-D)
+
+> Promoted from deferred (was Phase 26.x). Owner directive OI51. HIGH RISK — billing architecture migration. **Requires owner answers before implementation:** (1) What happens to existing one-time paid users? (2) Monthly only or Monthly + Yearly? (3) Stripe Customer Portal or custom cancel UI?
+
+- **Phase 217-A** — Schema + Stripe Product setup. Add `stripeCustomerId`, `stripeSubscriptionId`, `subscriptionStatus` fields to User model. Create recurring Stripe Products + Prices in Stripe Dashboard. Additive schema changes only — no behavior change. **Dependencies:** Stripe Dashboard product creation + owner decisions. **Effort:** ~30min. **Risk:** Low (additive). **BLOCKED until owner answers migration questions.**
+- **Phase 217-B** — Checkout mode change + webhook expansion. Switch `mode: "payment"` → `mode: "subscription"`. Add Stripe Customer creation. Handle new webhook events: `invoice.paid`, `invoice.payment_failed`, `customer.subscription.updated`, `customer.subscription.deleted`. Idempotent handlers. **Dependencies:** Phase 217-A. **Effort:** Large. **Risk:** High.
+- **Phase 217-C** — Cancellation flow + Customer Portal. Cancel subscription server action, profile UI update, FAQ/SPEC.md updates. **Dependencies:** Phase 217-B. **Effort:** Medium. **Risk:** Medium.
+- **Phase 217-D** — Migration strategy + comprehensive tests. Existing-user migration plan, 20-30+ new unit tests, doc updates. **Dependencies:** Phase 217-C. **Effort:** Large. **Risk:** High.
 
 ### Deferred / ON HOLD
 
 1. **Phase 29.6** — updateAdminSettingAction Zod schema map. DEFERRED (15+ branches, high effort, low marginal value — current pattern works with Zod under the hood).
-2. **Phase 26.x** — Persona-aware media prompts, Stripe auto-renewal.
+2. **Phase 26.x** — Persona-aware media prompts. (Stripe auto-renewal promoted to active as Phase 217-A–D, PM audit #98.)
 3. **Legal/nav/footer admin configurability** — Deferred to v2.
 4. **TypeScript 6 / @typescript-eslint compatibility** — Monitor.
 5. **jsdom upgrade** — Monitor. Pinned to `~24.1.3` (ESM TLA incompatibility). Upgrade when Vitest resolves ESM environment loading in forks pool.
@@ -231,51 +252,58 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 
 ## 7. Owner Directives Status
 
-| #    | Directive                              | Status                                                                                                                             |
-| ---- | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | --- | ---- | ---------------------------- | ----------------------------------------------------------------------------- |
-| OI1  | TDD rebuild ALL tests                  | ? COMPLETE. 594 tests, 99 suites.                                                                                                  |
-| OI2  | No hardcoded data ? admin-configurable | ? COMPLETE. All display strings extracted to admin config (Phases 180.1?180.4).                                                    |
-| OI3  | Reuse repetitive code                  | ? COMPLETE.                                                                                                                        |
-| OI4  | WCAG 2.2 AA compliance                 | ? COMPLETE.                                                                                                                        |
-| OI5  | Components = data consumers            | ? COMPLETE.                                                                                                                        |
-| OI6  | Reduce renders/leaks                   | ? COMPLETE.                                                                                                                        |
-| OI7  | Server-side utilities                  | ? COMPLETE. 50+ server-only guards.                                                                                                |
-| OI8  | User removal cascades                  | ? COMPLETE. Shared `deleteUserCascade()`.                                                                                          |
-| OI9  | Knip clean                             | ? COMPLETE (0 findings).                                                                                                           |
-| OI10 | Admin fully configurable               | ? COMPLETE. All display strings admin-configurable (Phases 180.1?180.4).                                                           |
-| OI11 | Node.js 24.12.0                        | ? COMPLETE.                                                                                                                        |
-| OI12 | Deep techstack config audit            | ? COMPLETE.                                                                                                                        |
-| OI13 | Profile displays plan limits/usage     | ? COMPLETE.                                                                                                                        |
-| OI14 | Admin panel design matches /app        | ? COMPLETE.                                                                                                                        |
-| OI15 | Admin shows usage/limits               | ? COMPLETE.                                                                                                                        |
-| OI16 | Fix merging leftovers                  | ? COMPLETE.                                                                                                                        |
-| OI17 | Plans/prices/features configurable     | ? COMPLETE (core).                                                                                                                 |
-| OI18 | `cellesseon` ? `droplet` rename        | ? COMPLETE. All references resolved.                                                                                               |
-| OI19 | Fix stream error on media gen          | ? PRODUCTION-CONFIRMED. Phase 181 proactive timeout works. Timeout is architecture limitation (Vercel Hobby 60s).                  |
-| OI20 | Fix payment transaction registration   | ? RESOLVED. Root cause: Stripe webhook endpoint was disabled in Stripe Dashboard. Owner re-enabled ? confirmed working (HTTP 200). |
-| OI21 | Fix Facebook login                     | ? CLOSED. Owner removed Facebook login from product entirely.                                                                      |
-| OI22 | Remove all video generation            | ? COMPLETE. Phase 186-A DONE. 58 files modified/deleted. All gates GREEN.                                                          |
-| OI23 | Increase token limits to maximum       | ? COMPLETE. Phase 186-B DONE. All 9 chat tiers updated to near-maximum model capacity.                                             |
-| OI24 | V1.0 MVP pre-release task list         | ? COMPLETE. All 8 pre-release phases DONE (187-A/B/C/D, 143, 180.2/3/4).                                                           |     | OI25 | Env vars validated in Vercel | ? ACKNOWLEDGED. `requireEnv()` kept as defense-in-depth for local dev and CI. |
-| OI26 | PlanCard isIncluded bug                | ? COMPLETE. Phase 188 DONE. `buildPlans()` uses `limit !== 0`. 602 tests.                                                          |
-| OI27 | App is now released                    | ? V1.0 MVP RELEASED. Post-release backlog active.                                                                                  |
-| OI28 | Admin cannot be deleted                | ? COMPLETE. Phase 189 DONE. 5-layer protection (server + UI).                                                                      |
-| OI29 | Admin unlimited + "ADMIN" display      | ? COMPLETE. Phase 190 DONE. plan-display.ts utility.                                                                               |
-| OI30 | Reusable input component               | ? COMPLETE. Phase 191 DONE. FormInput with all types + exported class.                                                             |
-| OI31 | Persona selector reusable              | ? COMPLETE. Phase 192 DONE. Extracted, validated, consistent styling.                                                              |
-| OI32 | UsageMetricRow reusable                | ? COMPLETE. Phase 193 DONE. Shared between profile and admin.                                                                      |
-| OI33 | TiptapEditor redesign                  | ? COMPLETE. Phase 194 DONE. Full WYSIWYG toolbar.                                                                                  |
-| OI34 | Image upload describe error            | ✅ COMPLETE. Phase 195 DONE. S3 presigned URLs for OpenAI vision API.                                                              |
-| OI35 | Audio player overlap fix               | ✅ COMPLETE. Phase 196 DONE. Zustand global audio store, singleton playback.                                                       |
-| OI36 | Image lightbox for generated images    | ✅ COMPLETE. Phase 197 DONE. Native <dialog>, fullscreen overlay, download.                                                        |
-| OI37 | Library uploaded tab visual previews   | ✅ COMPLETE. Phase 198 DONE. Image thumbnails + file-type icons.                                                                   |
-| OI38 | useActionState console warning         | ✅ COMPLETE. Phase 199 DONE. formAction wrapped in startTransition.                                                                |
-| OI39 | Admin suspension protection gap        | ✅ COMPLETE. Phase 200 DONE. Symmetric 3-layer protection matching Phase 189.                                                      |
-| OI40 | Avatar sync MongoDB↔Clerk              | ✅ COMPLETE. Phase 201 DONE. Non-blocking Clerk sync in updateUser.                                                                |
-| OI41 | API route timeouts must be max         | ✅ COMPLETE. Phase 204 DONE. All 6 routes at maxDuration=60 (Vercel Hobby ceiling).                                                |
-| OI42 | New chat not appearing in sidebar      | ✅ COMPLETE. Phase 205 DONE. router.refresh() with ref-based one-time guard. 5 call sites.                                         |
-| OI43 | Image upload error messages generic    | ✅ COMPLETE. Phase 206 DONE. error.message propagation + narrowed accept + client pre-validation.                                  |
-| OI44 | Upload file sanitization security      | ✅ COMPLETE. Phase 207 DONE. Magic byte validation for JPEG/PNG/GIF/WebP. Defense-in-depth.                                        |
+| #    | Directive                                                               | Status                                                                                                                             |
+| ---- | ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | --- | ---- | ---------------------------- | ----------------------------------------------------------------------------- |
+| OI1  | TDD rebuild ALL tests                                                   | ? COMPLETE. 594 tests, 99 suites.                                                                                                  |
+| OI2  | No hardcoded data ? admin-configurable                                  | ? COMPLETE. All display strings extracted to admin config (Phases 180.1?180.4).                                                    |
+| OI3  | Reuse repetitive code                                                   | ? COMPLETE.                                                                                                                        |
+| OI4  | WCAG 2.2 AA compliance                                                  | ? COMPLETE.                                                                                                                        |
+| OI5  | Components = data consumers                                             | ? COMPLETE.                                                                                                                        |
+| OI6  | Reduce renders/leaks                                                    | ? COMPLETE.                                                                                                                        |
+| OI7  | Server-side utilities                                                   | ? COMPLETE. 50+ server-only guards.                                                                                                |
+| OI8  | User removal cascades                                                   | ? COMPLETE. Shared `deleteUserCascade()`.                                                                                          |
+| OI9  | Knip clean                                                              | ? COMPLETE (0 findings).                                                                                                           |
+| OI10 | Admin fully configurable                                                | ? COMPLETE. All display strings admin-configurable (Phases 180.1?180.4).                                                           |
+| OI11 | Node.js 24.12.0                                                         | ? COMPLETE.                                                                                                                        |
+| OI12 | Deep techstack config audit                                             | ? COMPLETE.                                                                                                                        |
+| OI13 | Profile displays plan limits/usage                                      | ? COMPLETE.                                                                                                                        |
+| OI14 | Admin panel design matches /app                                         | ? COMPLETE.                                                                                                                        |
+| OI15 | Admin shows usage/limits                                                | ? COMPLETE.                                                                                                                        |
+| OI16 | Fix merging leftovers                                                   | ? COMPLETE.                                                                                                                        |
+| OI17 | Plans/prices/features configurable                                      | ? COMPLETE (core).                                                                                                                 |
+| OI18 | `cellesseon` ? `droplet` rename                                         | ? COMPLETE. All references resolved.                                                                                               |
+| OI19 | Fix stream error on media gen                                           | ? PRODUCTION-CONFIRMED. Phase 181 proactive timeout works. Timeout is architecture limitation (Vercel Hobby 60s).                  |
+| OI20 | Fix payment transaction registration                                    | ? RESOLVED. Root cause: Stripe webhook endpoint was disabled in Stripe Dashboard. Owner re-enabled ? confirmed working (HTTP 200). |
+| OI21 | Fix Facebook login                                                      | ? CLOSED. Owner removed Facebook login from product entirely.                                                                      |
+| OI22 | Remove all video generation                                             | ? COMPLETE. Phase 186-A DONE. 58 files modified/deleted. All gates GREEN.                                                          |
+| OI23 | Increase token limits to maximum                                        | ? COMPLETE. Phase 186-B DONE. All 9 chat tiers updated to near-maximum model capacity.                                             |
+| OI24 | V1.0 MVP pre-release task list                                          | ? COMPLETE. All 8 pre-release phases DONE (187-A/B/C/D, 143, 180.2/3/4).                                                           |     | OI25 | Env vars validated in Vercel | ? ACKNOWLEDGED. `requireEnv()` kept as defense-in-depth for local dev and CI. |
+| OI26 | PlanCard isIncluded bug                                                 | ? COMPLETE. Phase 188 DONE. `buildPlans()` uses `limit !== 0`. 602 tests.                                                          |
+| OI27 | App is now released                                                     | ? V1.0 MVP RELEASED. Post-release backlog active.                                                                                  |
+| OI28 | Admin cannot be deleted                                                 | ? COMPLETE. Phase 189 DONE. 5-layer protection (server + UI).                                                                      |
+| OI29 | Admin unlimited + "ADMIN" display                                       | ? COMPLETE. Phase 190 DONE. plan-display.ts utility.                                                                               |
+| OI30 | Reusable input component                                                | ? COMPLETE. Phase 191 DONE. FormInput with all types + exported class.                                                             |
+| OI31 | Persona selector reusable                                               | ? COMPLETE. Phase 192 DONE. Extracted, validated, consistent styling.                                                              |
+| OI32 | UsageMetricRow reusable                                                 | ? COMPLETE. Phase 193 DONE. Shared between profile and admin.                                                                      |
+| OI33 | TiptapEditor redesign                                                   | ? COMPLETE. Phase 194 DONE. Full WYSIWYG toolbar.                                                                                  |
+| OI34 | Image upload describe error                                             | ✅ COMPLETE. Phase 195 DONE. S3 presigned URLs for OpenAI vision API.                                                              |
+| OI35 | Audio player overlap fix                                                | ✅ COMPLETE. Phase 196 DONE. Zustand global audio store, singleton playback.                                                       |
+| OI36 | Image lightbox for generated images                                     | ✅ COMPLETE. Phase 197 DONE. Native <dialog>, fullscreen overlay, download.                                                        |
+| OI37 | Library uploaded tab visual previews                                    | ✅ COMPLETE. Phase 198 DONE. Image thumbnails + file-type icons.                                                                   |
+| OI38 | useActionState console warning                                          | ✅ COMPLETE. Phase 199 DONE. formAction wrapped in startTransition.                                                                |
+| OI39 | Admin suspension protection gap                                         | ✅ COMPLETE. Phase 200 DONE. Symmetric 3-layer protection matching Phase 189.                                                      |
+| OI40 | Avatar sync MongoDB↔Clerk                                               | ✅ COMPLETE. Phase 201 DONE. Non-blocking Clerk sync in updateUser.                                                                |
+| OI41 | API route timeouts must be max                                          | ✅ COMPLETE. Phase 204 DONE. All 6 routes at maxDuration=60 (Vercel Hobby ceiling).                                                |
+| OI42 | New chat not appearing in sidebar                                       | ✅ COMPLETE. Phase 205 DONE. router.refresh() with ref-based one-time guard. 5 call sites.                                         |
+| OI43 | Image upload error messages generic                                     | ✅ COMPLETE. Phase 206 DONE. error.message propagation + narrowed accept + client pre-validation.                                  |
+| OI44 | Upload file sanitization security                                       | ✅ COMPLETE. Phase 207 DONE. Magic byte validation for JPEG/PNG/GIF/WebP. Defense-in-depth.                                        |
+| OI45 | Sidebar UI improvements (loader, hide recent, transitions, toggle move) | ⏳ ACTIVE. Phases 211–214.                                                                                                         |
+| OI46 | Rename "Chat Dashboard" → "Home", "New Conversation" → "Personas"       | ⏳ ACTIVE. Phase 209.                                                                                                              |
+| OI47 | Remove `/app/personas` route (duplicate of `/app/new`)                  | ⏳ ACTIVE. Phase 210.                                                                                                              |
+| OI48 | Library link moves to sidebar, removed from avatar menu                 | ⏳ ACTIVE. Phase 209.                                                                                                              |
+| OI49 | Conversation dropdown menu with Rename + Delete                         | ⏳ ACTIVE. Phase 215.                                                                                                              |
+| OI50 | PersonaSelector moves from ChatHeader to ChatInput                      | ⏳ ACTIVE. Phase 216.                                                                                                              |
+| OI51 | Stripe recurring payment (monthly auto-renewal)                         | ⏳ ACTIVE. Promoted from deferred. Phases 217-A through 217-D. BLOCKED pending owner decisions.                                    |
 
 ---
 
