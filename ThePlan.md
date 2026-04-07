@@ -3,13 +3,13 @@
 > Purpose: one execution document for finishing the SaaS without avoidable rework.
 > Audience: Project Manager, Architect, and Senior Software Agents.
 > Rule: this plan is based on verified repository state. If older docs disagree with code, code wins until this file is updated.
-> Last verified: PM audit #98, 2026-04-07. V1.0 MVP RELEASED. Owner directives OI45–OI51 received (sidebar restructure + Stripe recurring). Phases 209–217-D planned. 640 tests, 0 failures. All 7 gates GREEN. 0 critical issues.
+> Last verified: PM audit #99, 2026-04-07. V1.0 MVP RELEASED. Owner directives OI45–OI50 COMPLETE (sidebar restructure). OI51 (Stripe recurring) ON HOLD. Phases 209–216 DONE. 644 tests, 0 failures. All 7 gates GREEN. 0 critical issues.
 
 ---
 
 ## 1. Executive Judgment
 
-Droplet is deployed to production with all 25 milestones complete. The TDD testing rebuild is done (104 suites, 640 tests, 8 E2E specs, 85/80/85/85 coverage). WCAG 2.2 AA is complete. Admin configurability (promo text, FAQ, landing, stop reasons, persona content) is done. Global error boundary is done. Brand rename (cellesseon → droplet) is complete. All post-release backlog items DONE (Phases 165.1, 146, 147, 148). jsdom ESM compatibility resolved (Phase 208). Zod/Zustand modernization DONE (Phases 29.1–29.5; 29.7 Zustand was already complete; 29.6 deferred).
+Droplet is deployed to production with all 25 milestones complete. The TDD testing rebuild is done (104 suites, 644 tests, 8 E2E specs, 85/80/85/85 coverage). WCAG 2.2 AA is complete. Admin configurability (promo text, FAQ, landing, stop reasons, persona content) is done. Global error boundary is done. Brand rename (cellesseon → droplet) is complete. All post-release backlog items DONE (Phases 165.1, 146, 147, 148). jsdom ESM compatibility resolved (Phase 208). Zod/Zustand modernization DONE (Phases 29.1–29.5; 29.7 Zustand was already complete; 29.6 deferred). Sidebar restructure DONE (Phases 209–216): label renames, Library migration, Recent conditional, loading fallback, CSS transitions, toggle relocation, renameTask action, conversation dropdown, PersonaSelector move.
 
 **Owner investigation results (2026-04-02, PM audit #84-B):**
 
@@ -25,6 +25,7 @@ Phase 202 (unit test PLAN_LIMITS fix) → DONE. Phase 203 (E2E contrast fix) →
 Phase 204 (API route timeouts to max) → DONE. Phase 205 (sidebar live update) → DONE. Phase 206 (upload error propagation) → DONE. Phase 207 (upload magic byte validation) → DONE.
 Phase 145 (upload filename collision prevention) → DONE. Phase 165 (checkout success DB polling) → DONE.
 Phase 165.1 (plan-status route hardening) → DONE. Phase 146 (admin transaction limit) → DONE. Phase 147 (rename .tsx to .ts) → DONE. Phase 148 (bulk partial-failure reporting) → DONE. Phase 208 (jsdom ESM fix) → DONE. Phase 29.1–29.5 (Zod/Zustand modernization) → DONE.
+Phase 209 (sidebar labels + Library migration) → DONE. Phase 210 (/app/personas route removal) → DONE. Phase 211 (Recent section conditional) → DONE. Phase 212 (sidebar loading fallback) → DONE. Phase 213 (sidebar smooth transitions) → DONE. Phase 214 (sidebar toggle relocation) → DONE. Phase 215.0 (renameTask server action) → DONE. Phase 215 (conversation dropdown menu) → DONE. Phase 216 (PersonaSelector move to ChatInput) → DONE.
 
 ---
 
@@ -61,7 +62,7 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 | Knip                | ?      | 0 findings                                                                        |
 | TSC                 | ?      | 0 errors                                                                          |
 | Lint                | ?      | 0 errors, 0 warnings                                                              |
-| Tests               | ✓      | 104 suites, 640 tests. 0 failures. All gates GREEN.                               |
+| Tests               | ✓      | 104 suites, 644 tests. 0 failures. All gates GREEN.                               |
 | E2E                 | ?      | 8 specs, 49 tests                                                                 |
 
 ### Issues Found by Audit #82?#84 ? Updated Status
@@ -145,13 +146,13 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 
 ---
 
-## 4. SWOT Analysis (Updated 2026-04-06, post PM audit #97)
+## 4. SWOT Analysis (Updated 2026-04-07, post PM audit #99)
 
-**Strengths:** Clean architecture, strong auth, comprehensive tests (640+49), central policy resolvers, WCAG 2.2 AA complete, durable usage counters, thorough user deletion cascade, zero lint/type/knip issues, correct webhook code structure, stream timeout confirmed in production (Phase 181), video generation cleanly removed (Phase 186-A), token limits maximized (Phase 186-B), admin error boundary (Phase 187-A), env var runtime validation (Phase 143), all display text admin-configurable (Phases 180.1–180.4), audio player error recovery (Phase 187-C), admin deletion protection with 5-layer defense (Phase 189), reusable component library: FormInput/PersonaSelector/UsageMetricRow (Phases 191–193), TiptapEditor WYSIWYG (Phase 194), plan-display utility for admin ADMIN label (Phase 190), admin suspension protection with symmetric 3-layer defense (Phase 200), avatar sync MongoDB→Clerk (Phase 201), admin config cache 30s TTL (Phase 144), full test baseline (640 tests, 0 failures), all API routes at Vercel Hobby ceiling (Phase 204), sidebar live-updates on new chat without browser refresh (Phase 205), upload error messages propagated to user with client pre-validation (Phase 206), upload magic byte validation prevents MIME spoofing (Phase 207), upload filenames collision-proof via UUID (Phase 145), checkout success page polls DB for webhook-delayed plan updates (Phase 165), plan-status route hardened with rate limiting and maxDuration (Phase 165.1), admin transaction query bounded (Phase 146), utility file extensions clean (Phase 147), bulk operations report partial failures for admin visibility (Phase 148), post-release active backlog fully cleared. Per-action Zod schemas for all 13 non-settings admin actions (Phases 29.1–29.3), shared nonEmptyStringSchema consolidation (Phase 29.4), client API response Zod validation replacing unsafe type assertions (Phase 29.5).
+**Strengths:** Clean architecture, strong auth, comprehensive tests (644+49), central policy resolvers, WCAG 2.2 AA complete, durable usage counters, thorough user deletion cascade, zero lint/type/knip issues, correct webhook code structure, stream timeout confirmed in production (Phase 181), video generation cleanly removed (Phase 186-A), token limits maximized (Phase 186-B), admin error boundary (Phase 187-A), env var runtime validation (Phase 143), all display text admin-configurable (Phases 180.1–180.4), audio player error recovery (Phase 187-C), admin deletion protection with 5-layer defense (Phase 189), reusable component library: FormInput/PersonaSelector/UsageMetricRow (Phases 191–193), TiptapEditor WYSIWYG (Phase 194), plan-display utility for admin ADMIN label (Phase 190), admin suspension protection with symmetric 3-layer defense (Phase 200), avatar sync MongoDB→Clerk (Phase 201), admin config cache 30s TTL (Phase 144), full test baseline (644 tests, 0 failures), all API routes at Vercel Hobby ceiling (Phase 204), sidebar live-updates on new chat without browser refresh (Phase 205), upload error messages propagated to user with client pre-validation (Phase 206), upload magic byte validation prevents MIME spoofing (Phase 207), upload filenames collision-proof via UUID (Phase 145), checkout success page polls DB for webhook-delayed plan updates (Phase 165), plan-status route hardened with rate limiting and maxDuration (Phase 165.1), admin transaction query bounded (Phase 146), utility file extensions clean (Phase 147), bulk operations report partial failures for admin visibility (Phase 148), post-release active backlog fully cleared. Per-action Zod schemas for all 13 non-settings admin actions (Phases 29.1–29.3), shared nonEmptyStringSchema consolidation (Phase 29.4), client API response Zod validation replacing unsafe type assertions (Phase 29.5). Sidebar restructured with Suspense loading, conditional Recent rendering, CSS transitions, Zustand-driven toggle state (Phases 209–214). Conversation dropdown menu with full ARIA compliance, keyboard navigation, inline rename (Phase 215). PersonaSelector moved to ChatInput for better UX flow (Phase 216). `renameTask` server action with Zod validation, auth, ownership enforcement (Phase 215.0). `/app/personas` route removed with redirect (Phase 210).
 
-**Weaknesses:** `updateAdminSettingAction` still uses per-field Zod helper pattern (deferred — 15+ branches, low marginal value, Zod enforced under the hood). `getStringField`/`getNumericField` helpers retained for this action only.
+**Weaknesses:** `updateAdminSettingAction` still uses per-field Zod helper pattern (deferred — 15+ branches, low marginal value, Zod enforced under the hood). `getStringField`/`getNumericField` helpers retained for this action only. No dedicated unit tests for sidebar dropdown menu interaction patterns (keyboard/outside-click/blur race).
 
-**Opportunities:** Vercel Pro upgrade ($20/mo) for 300s maxDuration. Persona-aware media prompts (Phase 26.x).
+**Opportunities:** Vercel Pro upgrade ($20/mo) for 300s maxDuration. Persona-aware media prompts (Phase 26.x). Stripe recurring subscription billing (Phases 217-A–D, pending owner decisions).
 
 **Threats:** Single-document growth risk (Task model). Vercel Hobby 60s timeout remains architecture constraint for media generation edge cases. jsdom pinned to 24.x — older version, lacks newer CSS/DOM APIs; monitor Vitest ESM environment loading progress for future upgrade.
 
@@ -166,16 +167,25 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 | C    | Product Gate    | GREEN  | All display strings admin-configurable. Video removed. Stripe + Facebook resolved.         |
 | D    | Admin Gate      | GREEN  | Admin config complete. Error boundary added (Phase 187-A). All strings admin-configurable. |
 | E    | Public Gate     | GREEN  | All 7 public routes accurate, legal content real, no obsolete trial messaging              |
-| F    | Validation Gate | GREEN  | 640 tests, lint 0/0, TSC clean, knip 0, E2E 49 tests, coverage 85/80/85/85                 |
+| F    | Validation Gate | GREEN  | 644 tests, lint 0/0, TSC clean, knip 0, E2E 49 tests, coverage 85/80/85/85                 |
 
 ---
 
 ## 6. Current Execution Order
 
-> All critical issues RESOLVED. All v1.0 pre-release phases DONE. **V1.0 MVP RELEASED.** Phases 143–208. 0 critical issues. **Phase 29.x COMPLETE — Zod modernization done (Phases 29.1–29.5). Zustand audit complete (no changes needed).**
+> All critical issues RESOLVED. All v1.0 pre-release phases DONE. **V1.0 MVP RELEASED.** Phases 143–216. 0 critical issues. **Phase 29.x COMPLETE — Zod modernization done (Phases 29.1–29.5). Zustand audit complete (no changes needed). Sidebar restructure COMPLETE (Phases 209–216).**
 
 ### Confirmed Working
 
+- **✅ Phase 209** — Sidebar label renames + Library link migration. DONE. Home/Personas/Library. Avatar menu cleaned.
+- **✅ Phase 210** — Remove `/app/personas` route. DONE. Route deleted, Next.js redirect added, admin revalidation updated.
+- **✅ Phase 211** — Sidebar Recent section conditional on open state. DONE.
+- **✅ Phase 212** — Sidebar loading fallback with Suspense boundary. DONE. Skeleton + LoadingBubbles.
+- **✅ Phase 213** — Sidebar smooth CSS transitions. DONE. duration-300 on open/collapse.
+- **✅ Phase 214** — Sidebar toggle moved to SidebarHead. DONE. Mobile toggle retained in ChatHeader.
+- **✅ Phase 215.0** — `renameTask` server action. DONE. Zod schema, auth, ownership, atomic update. 3 tests.
+- **✅ Phase 215** — Conversation dropdown menu (Rename + Delete). DONE. Full ARIA, keyboard nav, ConfirmationModal.
+- **✅ Phase 216** — PersonaSelector moved from ChatHeader to ChatInput. DONE. Disable logic preserved.
 - **✅ Phase 208** — jsdom ESM compatibility fix. DONE. Pinned `~24.1.3`. 640 tests passing.
 - **✅ Phase 29.1** — Admin single-value actions Zod schemas. DONE. 4 actions with per-action schemas.
 - **✅ Phase 29.2** — Admin toggle/numeric actions Zod schemas. DONE. 3 actions.
@@ -217,19 +227,11 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 
 ### Post-Release Active
 
-> PM audit #98 (2026-04-07). Owner directives OI45–OI51 received. Sidebar UI restructure + Stripe recurring billing planning.
+> PM audit #99 (2026-04-07). Sidebar restructure COMPLETE (Phases 209–216). Stripe recurring billing ON HOLD.
 
-#### Sidebar & Navigation Restructure (Phases 209–216)
+#### Sidebar & Navigation Restructure (Phases 209–216) — COMPLETE
 
-- **Phase 209** — Sidebar label renames + Library link migration. Rename "Chat Dashboard" → "Home", "New Conversation" → "Personas". Add Library link to sidebar under Personas. Remove Library and Personas links from avatar menu. **Dependencies:** None. **Effort:** ~20min. **Risk:** Low.
-- **Phase 210** — Remove `/app/personas` route (duplicate of `/app/new`). Delete route directory, add Next.js redirect for bookmarks, update `revalidatePath` calls in admin.actions.tsx (3 occurrences), verify public `/personas` route untouched. Ensure `/app/new` page retains full persona access visibility (lock badges, trial indicators, required plan info). **Dependencies:** Phase 209. **Effort:** ~25min. **Risk:** Medium.
-- **Phase 211** — Sidebar collapsed state hides entire Recent section. When sidebar closed (desktop collapsed or mobile closed), Recent heading + conversation items must not render. Only visible when sidebar is open. **Dependencies:** None. **Effort:** ~15min. **Risk:** Low.
-- **Phase 212** — Sidebar loading state. Add LoadingBubbles or skeleton in ChatSidebarShell/ChatSidebarNav while server-side data loads. Use Suspense boundary in layout. **Dependencies:** None. **Effort:** ~20min. **Risk:** Low.
-- **Phase 213** — Sidebar smooth transitions. CSS transitions for Workspace/Recent section appear/disappear. Fluid animation when sidebar opens/closes. **Dependencies:** Phase 211. **Effort:** ~15min. **Risk:** Low.
-- **Phase 214** — Move sidebar toggle from ChatHeader into SidebarHead. When sidebar open: button on right side of SidebarHead, same level as logo. When sidebar closed: button hidden, appears on hover/focus-within over the logo symbol. **CRITICAL:** Must keep a mobile-only hamburger button accessible when sidebar is off-screen (mobile closed state). **Dependencies:** None. **Effort:** ~25min. **Risk:** Medium.
-- **Phase 215.0** — Create `renameTask` server action. Dedicated Zod schema (`{ title: nonEmptyStringSchema }`). Auth + ownership enforcement. Atomic `findOneAndUpdate` on `title` field only. **Prerequisite for Phase 215.** **Dependencies:** None. **Effort:** ~20min. **Risk:** Medium.
-- **Phase 215** — Conversation item dropdown menu (horizontal three-dot icon). Options: Rename (inline edit using `renameTask` action) and Delete (existing confirmation flow via `ConfirmationModal`). Replaces standalone delete button. **Dependencies:** Phases 211, 213, 215.0. **Effort:** ~30min. **Risk:** Medium.
-- **Phase 216** — Move PersonaSelector from ChatHeader to ChatInput (next to attach file button, same level). Pass persona props through ChatWrapper → ChatInput. Keep disable logic (conversation route, messages > 0, taskStatus ended). ChatHeader loses persona selector — verify no code depends on it being there. **Dependencies:** None. **Effort:** ~25min. **Risk:** Medium.
+All phases DONE. See DONE.md for detailed records.
 
 #### Stripe Recurring Payment (Phases 217-A through 217-D)
 
@@ -297,12 +299,12 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 | OI42 | New chat not appearing in sidebar                                       | ✅ COMPLETE. Phase 205 DONE. router.refresh() with ref-based one-time guard. 5 call sites.                                         |
 | OI43 | Image upload error messages generic                                     | ✅ COMPLETE. Phase 206 DONE. error.message propagation + narrowed accept + client pre-validation.                                  |
 | OI44 | Upload file sanitization security                                       | ✅ COMPLETE. Phase 207 DONE. Magic byte validation for JPEG/PNG/GIF/WebP. Defense-in-depth.                                        |
-| OI45 | Sidebar UI improvements (loader, hide recent, transitions, toggle move) | ⏳ ACTIVE. Phases 211–214.                                                                                                         |
-| OI46 | Rename "Chat Dashboard" → "Home", "New Conversation" → "Personas"       | ⏳ ACTIVE. Phase 209.                                                                                                              |
-| OI47 | Remove `/app/personas` route (duplicate of `/app/new`)                  | ⏳ ACTIVE. Phase 210.                                                                                                              |
-| OI48 | Library link moves to sidebar, removed from avatar menu                 | ⏳ ACTIVE. Phase 209.                                                                                                              |
-| OI49 | Conversation dropdown menu with Rename + Delete                         | ⏳ ACTIVE. Phase 215.                                                                                                              |
-| OI50 | PersonaSelector moves from ChatHeader to ChatInput                      | ⏳ ACTIVE. Phase 216.                                                                                                              |
+| OI45 | Sidebar UI improvements (loader, hide recent, transitions, toggle move) | ✅ COMPLETE. Phases 211–214 DONE.                                                                                                  |
+| OI46 | Rename "Chat Dashboard" → "Home", "New Conversation" → "Personas"       | ✅ COMPLETE. Phase 209 DONE.                                                                                                       |
+| OI47 | Remove `/app/personas` route (duplicate of `/app/new`)                  | ✅ COMPLETE. Phase 210 DONE. Next.js redirect in place.                                                                            |
+| OI48 | Library link moves to sidebar, removed from avatar menu                 | ✅ COMPLETE. Phase 209 DONE.                                                                                                       |
+| OI49 | Conversation dropdown menu with Rename + Delete                         | ✅ COMPLETE. Phase 215 DONE. Full ARIA + keyboard nav. renameTask action (Phase 215.0).                                            |
+| OI50 | PersonaSelector moves from ChatHeader to ChatInput                      | ✅ COMPLETE. Phase 216 DONE.                                                                                                       |
 | OI51 | Stripe recurring payment (monthly auto-renewal)                         | ⏳ ACTIVE. Promoted from deferred. Phases 217-A through 217-D. BLOCKED pending owner decisions.                                    |
 
 ---

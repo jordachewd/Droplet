@@ -834,7 +834,6 @@ export async function updateAdminSettingAction(
     if (PERSONA_ACCESS_KEYS.has(key)) {
       revalidatePath("/app");
       revalidatePath("/app/new");
-      revalidatePath("/app/new");
     }
 
     if (key === "admin.personaOverrides") {
@@ -842,7 +841,6 @@ export async function updateAdminSettingAction(
       revalidatePath("/about");
       revalidatePath("/personas");
       revalidatePath("/app");
-      revalidatePath("/app/new");
       revalidatePath("/app/new");
       revalidatePath("/app/library");
       revalidatePath("/admin/usage");

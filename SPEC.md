@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-04-07 (PM audit #98). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. **V1.0 MVP RELEASED.** Brand rename complete (Phase 172). Catch blocks documented (Phase 167.2). Promo text admin-configurable (Phase 162, 180.2–180.3). Global error boundary live (Phase 163). Admin error boundary live (Phase 187-A). Phases 143–208 COMPLETE. Phase 165.1 COMPLETE. Phases 146–148 COMPLETE. Phases 29.1–29.5 COMPLETE. E2E: 49 tests (8 spec files). Coverage: 85/80/85/85. 640 tests. Build passing. Node.js 24.12.0. jsdom pinned to ~24.1.3 (ESM compat). Zod schema consistency across all server actions and API routes. **Sidebar restructure planned (Phases 209–216). Stripe recurring billing planned (Phases 217-A–D).**
+> Last updated: 2026-04-07 (PM audit #99). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. **V1.0 MVP RELEASED.** Brand rename complete (Phase 172). Catch blocks documented (Phase 167.2). Promo text admin-configurable (Phase 162, 180.2–180.3). Global error boundary live (Phase 163). Admin error boundary live (Phase 187-A). Phases 143–216 COMPLETE. Phase 165.1 COMPLETE. Phases 146–148 COMPLETE. Phases 29.1–29.5 COMPLETE. **Sidebar restructure COMPLETE (Phases 209–216).** E2E: 49 tests (8 spec files). Coverage: 85/80/85/85. 644 tests. Build passing. Node.js 24.12.0. jsdom pinned to ~24.1.3 (ESM compat). Zod schema consistency across all server actions and API routes. **Stripe recurring billing planned (Phases 217-A–D).**
 >
 > **V1.0 MVP Released (PM audit #94):**
 >
@@ -24,6 +24,7 @@
 > - ✅ Phase 148 DONE — Bulk operations partial-failure reporting (all 5 bulk admin actions).
 > - ✅ Phase 208 DONE — jsdom ESM compatibility fix (pinned to `~24.1.3`). 640 tests.
 > - ✅ Phases 29.1–29.5 DONE — Zod/Zustand modernization. 13 admin actions converted to per-action Zod schemas. Client poller Zod validated. Helper cleanup. Zustand audit: no changes needed.
+> - ✅ Phases 209–216 DONE — Sidebar restructure: label renames, Library link migration, Recent conditional, loading fallback, CSS transitions, toggle relocation, renameTask action, dropdown menu, PersonaSelector move. 644 tests.
 >
 > **Remaining Issues (non-blocking):**
 >
@@ -33,8 +34,6 @@
 > - **TD-PLAN-01** — No recurring subscriptions (planned: Phases 217-A–D, blocked pending owner decisions).
 > - **TD-AI-18** — Advisory: errorMessage forwarding pattern is safe but fragile.
 > - **TD-API-09** — Monitor: `.strict()` in messageTextContentSchema.
-> - **TD-NAV-01** — `/app/personas` route removal planned (Phase 210). Duplicate of `/app/new`.
-> - **TD-TASK-01** — `updateTaskSchema` missing `title` field; `messages` required. New `renameTask` action planned (Phase 215.0).
 
 ---
 
@@ -149,7 +148,7 @@ Each persona has: `id`, `label`, `tagline`, `description`, `category`, `icon`, `
 
 - **Personas are plan-gated** (Lite: 2 personas, Pro: 5 personas, Premium: all 6 personas).
 - Default persona access per plan is hardcoded in constants but overridable by admin via AppSetting.
-- Persona selection UI: `ChatHeader` includes a persona dropdown selector for quick persona switching across all `/app` pages — selector is disabled during active conversations (`messages.length > 0` or `taskStatus === "ended"` — persona is bound per-task). `ChatPersonaPicker` component available on `/app/personas` page for full persona browsing with trial badges. **Planned change (Phase 216):** PersonaSelector moves from ChatHeader to ChatInput (next to file upload button). **Planned change (Phase 210):** `/app/personas` route removed (duplicate of `/app/new`); `/app/new` serves as the persona browsing page, renamed to "Personas" in sidebar.
+- Persona selection UI: `ChatInput` includes a `PersonaSelector` dropdown next to the file upload button for quick persona switching — selector is disabled during active conversations (`messages.length > 0` or `taskStatus === "ended"` — persona is bound per-task). `ChatPersonaPicker` component on `/app/new` page provides full persona browsing with trial badges. `/app/personas` route removed (Phase 210) — redirects to `/app/new`. `/app/new` is labeled "Personas" in sidebar.
 - Persona is stored per task in `Task.personaId`.
 - System prompt is built per-persona via `buildPersonaAwareSystemPrompt()`.
 - Entitlements resolved via `resolveEntitlements()` in `src/lib/utils/resolve-entitlements.tsx`.
@@ -713,32 +712,32 @@ All file handling technical debt has been resolved. S3 cleanup on task/user dele
 
 ### Route Map (Target)
 
-| Route                                 | Type      | Description                                                                                                                                                                                                                                        |
-| ------------------------------------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `/`                                   | Public    | Landing (Hero + product sections + CTAs)                                                                                                                                                                                                           |
-| `/about`                              | Public    | How app works (stacked sections)                                                                                                                                                                                                                   |
-| `/plans`                              | Public    | Pricing (plan cards)                                                                                                                                                                                                                               |
-| `/personas`                           | Public    | Personas showcase                                                                                                                                                                                                                                  |
-| `/privacy`                            | Public    | Privacy & Cookie Policy                                                                                                                                                                                                                            |
-| `/cookies`                            | Public    | Cookie Policy                                                                                                                                                                                                                                      |
-| `/terms`                              | Public    | Terms & Conditions                                                                                                                                                                                                                                 |
-| `/sign-in`, `/sign-up`                | Auth      | Clerk auth                                                                                                                                                                                                                                         |
-| `/app`                                | Protected | Chat dashboard                                                                                                                                                                                                                                     |
-| `/app/new`                            | Protected | New conversation (persona browsing). **Renamed to \"Personas\" in sidebar (Phase 209). Will absorb `/app/personas` functionality (Phase 210).**                                                                                                    |
-| `/app/library`                        | Protected | Media library (tabs: Chats, Images, Audios, Uploaded) — **Implemented (Phase 32.3 + 32.4 media cards + Phase 151 Uploaded tab).** Videos tab removed (PM audit #85). **Planned: move to sidebar navigation, remove from avatar menu (Phase 209).** |
-| `/app/personas`                       | Protected | In-app personas **— PLANNED FOR REMOVAL (Phase 210). Duplicate of `/app/new`. Redirect to `/app/new`.**                                                                                                                                            |
-| `/app/c/[conversationId]`             | Protected | Resume conversation                                                                                                                                                                                                                                |
-| `/app/profile`                        | Protected | User profile + plan + history                                                                                                                                                                                                                      |
-| `/app/plans`                          | Protected | Plan upgrade + checkout                                                                                                                                                                                                                            |
-| `/admin`                              | Admin     | Dashboard overview                                                                                                                                                                                                                                 |
-| `/admin/users`                        | Admin     | User management list                                                                                                                                                                                                                               |
-| `/admin/users/[userId]`               | Admin     | User detail + actions                                                                                                                                                                                                                              |
-| `/admin/transactions`                 | Admin     | Transaction management                                                                                                                                                                                                                             |
-| `/admin/transactions/[transactionId]` | Admin     | Transaction detail                                                                                                                                                                                                                                 |
-| `/admin/usage`                        | Admin     | Usage analytics                                                                                                                                                                                                                                    |
-| `/admin/settings`                     | Admin     | App settings                                                                                                                                                                                                                                       |
-| `/admin/website`                      | Admin     | Content management                                                                                                                                                                                                                                 |
-| `/admin/website/[pageId]`             | Admin     | Page editor (textarea fallback � Tiptap replaced)                                                                                                                                                                                                  |
+| Route                                 | Type      | Description                                                                                                                                                         |
+| ------------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/`                                   | Public    | Landing (Hero + product sections + CTAs)                                                                                                                            |
+| `/about`                              | Public    | How app works (stacked sections)                                                                                                                                    |
+| `/plans`                              | Public    | Pricing (plan cards)                                                                                                                                                |
+| `/personas`                           | Public    | Personas showcase                                                                                                                                                   |
+| `/privacy`                            | Public    | Privacy & Cookie Policy                                                                                                                                             |
+| `/cookies`                            | Public    | Cookie Policy                                                                                                                                                       |
+| `/terms`                              | Public    | Terms & Conditions                                                                                                                                                  |
+| `/sign-in`, `/sign-up`                | Auth      | Clerk auth                                                                                                                                                          |
+| `/app`                                | Protected | Chat dashboard                                                                                                                                                      |
+| `/app/new`                            | Protected | New conversation + persona browsing. Labeled "Personas" in sidebar (Phase 209). Serves as the primary persona selection page.                                       |
+| `/app/library`                        | Protected | Media library (tabs: Chats, Images, Audios, Uploaded). Videos tab removed (PM audit #85). Accessible from sidebar navigation (Phase 209). Removed from avatar menu. |
+| `/app/personas`                       | Redirect  | Redirects to `/app/new` (Phase 210). Route directory deleted. Next.js config redirect for bookmarks.                                                                |
+| `/app/c/[conversationId]`             | Protected | Resume conversation                                                                                                                                                 |
+| `/app/profile`                        | Protected | User profile + plan + history                                                                                                                                       |
+| `/app/plans`                          | Protected | Plan upgrade + checkout                                                                                                                                             |
+| `/admin`                              | Admin     | Dashboard overview                                                                                                                                                  |
+| `/admin/users`                        | Admin     | User management list                                                                                                                                                |
+| `/admin/users/[userId]`               | Admin     | User detail + actions                                                                                                                                               |
+| `/admin/transactions`                 | Admin     | Transaction management                                                                                                                                              |
+| `/admin/transactions/[transactionId]` | Admin     | Transaction detail                                                                                                                                                  |
+| `/admin/usage`                        | Admin     | Usage analytics                                                                                                                                                     |
+| `/admin/settings`                     | Admin     | App settings                                                                                                                                                        |
+| `/admin/website`                      | Admin     | Content management                                                                                                                                                  |
+| `/admin/website/[pageId]`             | Admin     | Page editor (textarea fallback � Tiptap replaced)                                                                                                                   |
 
 ### Public Pages Content
 
@@ -808,15 +807,15 @@ All button styles use Lime Green as the accent color in **both** light and dark 
 
 ### Navigation (Authenticated App)
 
-- **Sidebar**: Chat Dashboard, New Conversation, recent conversation history. No Library, Personas, Plans, or Profile links (moved to AvatarMenu � Phase 38.4).
-- **AvatarMenu** (header): Dashboard (admin only) ? Library ? Personas ? Plans ? Profile ? Logout.
-- **ChatHeader**: Present on all `/app/*` pages. Contains sidebar toggle (left), persona dropdown selector, conversation info (persona label, message count, ended badge).
+- **Sidebar**: Home (`/app`), Personas (`/app/new`), Library (`/app/library`), Recent conversation history (visible only when sidebar is open). Sidebar toggle in SidebarHead (visible when open, hover-reveal when collapsed). Loading skeleton via Suspense fallback. CSS transitions on open/collapse (Phase 213). Each recent conversation item has a three-dot dropdown menu with Rename and Delete options (Phase 215).
+- **AvatarMenu** (header): Dashboard (admin only) → Plans → Profile → Logout. Library and Personas removed from avatar menu (Phase 209).
+- **ChatHeader**: Present on all `/app/*` pages. Contains mobile-only sidebar toggle, conversation info (persona label, message count, ended badge). PersonaSelector moved to ChatInput (Phase 216).
 
 ---
 
 ## 13. Testing
 
-- **Unit tests**: 101 suites, 606 tests (Vitest) — organized by domain in `tests/unit/{actions,components,routes,utils,models,constants,stores}/`. TDD rebuild COMPLETE (Phases 120.1–120.7). All test files rebuilt from scratch using strict TDD methodology. Zero `as never` casts. All tests use shared factories from `tests/unit/test-support/`. Includes streaming, webhook, chat-wrapper, chat-body stop-state, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, persona prompt, rate limiting, task complexity classification, conversation stop enforcement, entitlement resolver, checkout-success page, admin audit trail, OpenAI route tests (split into 5 focused modules), atomic prompt limit, daily conversation limit, media error handling, universal feature access, trial access tests, validation schema security injection tests, AudioPlayer ARIA tests, abort behavior tests, Zustand store tests, upload file size validation, 24 component test files, user model tests, Button component TDD tests, PageHead heading-level TDD tests, suspended user enforcement tests, delete-user-cascade tests, upload model tests, admin-settings-tabs hydration tests, checkout redirect tests.
+- **Unit tests**: 104 suites, 644 tests (Vitest) — organized by domain in `tests/unit/{actions,components,routes,utils,models,constants,stores}/`. TDD rebuild COMPLETE (Phases 120.1–120.7). All test files rebuilt from scratch using strict TDD methodology. Zero `as never` casts. All tests use shared factories from `tests/unit/test-support/`. Includes streaming, webhook, chat-wrapper, chat-body stop-state, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, persona prompt, rate limiting, task complexity classification, conversation stop enforcement, entitlement resolver, checkout-success page, admin audit trail, OpenAI route tests (split into 5 focused modules), atomic prompt limit, daily conversation limit, media error handling, universal feature access, trial access tests, validation schema security injection tests, AudioPlayer ARIA tests, abort behavior tests, Zustand store tests, upload file size validation, 24 component test files, user model tests, Button component TDD tests, PageHead heading-level TDD tests, suspended user enforcement tests, delete-user-cascade tests, upload model tests, admin-settings-tabs hydration tests, checkout redirect tests.
 - **E2E tests**: 8 Playwright spec files. Specs: `admin-settings-propagation`, `auth-boundaries`, `authenticated-accessibility`, `chat-conversation-flow`, `public-structure`, `admin-user-operations`, `billing-checkout-flow`, `error-boundary-handling`. Default 3 browsers (Chromium, Firefox, WebKit); full 7-browser matrix via `PLAYWRIGHT_FULL_MATRIX=1`. WCAG E2E via @axe-core/playwright.
 - **Coverage**: v8 provider, thresholds: 85% statements / 80% branches / 85% functions / 85% lines. Gate PASSES. 7 files explicitly excluded from coverage (complex integration files). Reporters: text, json-summary, lcov. Setup file: `tests/unit/vitest.setup.ts`.
 - **Config**: Vitest `environmentMatchGlobs` for auto-jsdom on `.tsx`. Playwright `actionTimeout: 10s`, `expect.timeout: 5s`. ESLint `no-console` (error), `no-restricted-globals` (alert/confirm). TS `noFallthroughCasesInSwitch`, `forceConsistentCasingInFileNames`. All 7 validation gates GREEN (lint, knip, tsc, unit, E2E, build, prettier).
@@ -890,12 +889,7 @@ All button styles use Lime Green as the accent color in **both** light and dark 
 
 ### Active — HIGH Priority
 
-### Active — HIGH Priority
-
-| ID            | Area | Description                                                                                                                                                                                                                 | Phase |
-| ------------- | ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
-| TD-SIDEBAR-01 | UX   | New chat does not appear in sidebar until browser refresh. `ChatSidebar` is a Server Component rendered at layout level; no `router.refresh()` called after client-side task creation.                                      | 205   |
-| TD-UPLOAD-ERR | UX   | Generic upload error messages. Client catch block discards server error details. `.avif` rejected with "File upload failed" instead of listing allowed types. `accept="image/*"` allows unsupported formats in file picker. | 206   |
+_(None currently.)_
 
 ### Resolved — HIGH Priority
 
@@ -906,12 +900,21 @@ All button styles use Lime Green as the accent color in **both** light and dark 
 | TD-AVATAR-SYNC   | UX       | `ProfileHeroEditor` saves avatar to MongoDB, `AvatarMenu` reads from Clerk. Avatar changes not reflected in header.                                                        | 201   | ✅ DONE (PM #93). Non-blocking Clerk sync in `updateUser()`. 2 tests.                         |
 | TD-CONTRAST-01   | A11y     | Profile page "Free" badge fails WCAG 2.2 AA contrast ratio (2.76:1 vs 4.5:1 required).                                                                                     | 203   | ✅ DONE (PM #93). `text-midnightBlue-900` on `bg-dustyBlue-500`. All E2E pass.                |
 
+### Resolved (PM audit #99 — Sidebar Restructure)
+
+| ID            | Area     | Description                                                                                                                                            | Phase | Resolution                                                                             |
+| ------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ----- | -------------------------------------------------------------------------------------- |
+| TD-SIDEBAR-01 | UX       | New chat does not appear in sidebar until browser refresh. `ChatSidebar` is a Server Component rendered at layout level; no `router.refresh()` called. | 205   | ✅ DONE (PM #94). `router.refresh()` with ref-based one-time guard.                    |
+| TD-UPLOAD-ERR | UX       | Generic upload error messages. Client catch block discards server error details. `accept="image/*"` allows unsupported formats.                        | 206   | ✅ DONE (PM #94). error.message propagation + narrowed accept + client pre-validation. |
+| TD-UPLOAD-SEC | Security | Upload validation relies on browser-reported MIME type only. No magic byte verification.                                                               | 207   | ✅ DONE (PM #94). Magic byte validation for JPEG/PNG/GIF/WebP. Defense-in-depth.       |
+| TD-NAV-01     | UX       | `/app/personas` route is duplicate of `/app/new`.                                                                                                      | 210   | ✅ DONE (PM #99). Route deleted. Next.js redirect. Admin revalidation updated.         |
+| TD-TASK-01    | Backend  | `updateTaskSchema` missing `title` field; `messages` required. No dedicated rename action.                                                             | 215.0 | ✅ DONE (PM #99). `renameTask` action with Zod schema, auth, ownership enforcement.    |
+
 ### Active — MEDIUM Priority (Non-Blocking)
 
-| ID            | Area     | Description                                                                                                                                   | Phase |
-| ------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
-| TD-UPLOAD-SEC | Security | Upload validation relies on browser-reported MIME type only. No magic byte verification. Spoofed MIME can store malicious content on S3.      | 207   |
-| TD-MEDIA-01   | Arch     | **ACCEPTED (PM audit #84-B).** Media gen (image/audio) may approach Vercel Hobby 60s timeout. Phase 181 proactive timeout handles gracefully. | —     |
+| ID          | Area | Description                                                                                                                                   | Phase |
+| ----------- | ---- | --------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| TD-MEDIA-01 | Arch | **ACCEPTED (PM audit #84-B).** Media gen (image/audio) may approach Vercel Hobby 60s timeout. Phase 181 proactive timeout handles gracefully. | —     |
 
 ### Active — Low Priority
 

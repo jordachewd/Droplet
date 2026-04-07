@@ -2,7 +2,116 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-04-06 — PM audit #97.
+> Last updated: 2026-04-07 — PM audit #99.
+
+---
+
+## Phase 216 — Move PersonaSelector to ChatInput — COMPLETED (2026-04-07)
+
+> Engineer delivered (PM audit #99). PersonaSelector removed from ChatHeader, added to ChatInput next to file upload button. Persona state threaded from ChatWrapper → ChatInput. Disable logic preserved: conversation route, messages > 0, taskStatus ended.
+
+- [x] PersonaSelector removed from `chat-header.tsx`
+- [x] PersonaSelector added to `chat-input.tsx` next to attach button
+- [x] Persona props threaded through ChatWrapper
+- [x] Disable logic preserved (route, message count, task status)
+- [x] Build passes, tests pass (644 tests)
+
+---
+
+## Phase 215 — Conversation Dropdown Menu (Rename + Delete) — COMPLETED (2026-04-07)
+
+> Engineer delivered (PM audit #99). Standalone delete button replaced with three-dot dropdown menu. Rename triggers inline edit mode (Enter/blur save, Escape cancel). Delete uses existing ConfirmationModal flow. Full ARIA: role="menu", role="menuitem", keyboard navigation. Outside-click and Escape dismiss.
+
+- [x] Three-dot dropdown replaces standalone delete
+- [x] Rename inline edit mode with Enter/blur save, Escape cancel
+- [x] Delete uses ConfirmationModal flow
+- [x] ARIA roles and keyboard navigation
+- [x] AlertMessage on rename success/failure
+- [x] Build passes, tests pass
+
+---
+
+## Phase 215.0 — Create `renameTask` Server Action — COMPLETED (2026-04-07)
+
+> Engineer delivered (PM audit #99). Dedicated `renameTask(taskId, title)` action with Zod `renameTaskSchema`, auth check, ObjectId validation, ownership-enforced atomic `findOneAndUpdate`. Returns structured `{status, message, source}` responses. 3 unit tests.
+
+- [x] `renameTaskSchema = z.object({ title: nonEmptyStringSchema }).strict()`
+- [x] Auth check + ObjectId validation
+- [x] Ownership enforcement via `findOneAndUpdate({ _id, userId })`
+- [x] Structured error responses (no throw)
+- [x] 3 unit tests (success, unauthorized, invalid input)
+- [x] Build passes, tests pass
+
+---
+
+## Phase 214 — Move Sidebar Toggle to SidebarHead — COMPLETED (2026-04-07)
+
+> Engineer delivered (PM audit #99). Sidebar toggle moved from ChatHeader to SidebarHead. When open: visible on right side, same level as logo. When collapsed: hidden by default, hover/focus-within reveal. Mobile hamburger toggle retained in ChatHeader.
+
+- [x] Toggle added to SidebarHead with hover/focus-within reveal
+- [x] Desktop collapsed state: toggle appears on hover over logo area
+- [x] Mobile: hamburger button retained in ChatHeader
+- [x] Keyboard accessible (focus-within)
+- [x] Build passes, tests pass
+
+---
+
+## Phase 213 — Sidebar Smooth Transitions (CSS) — COMPLETED (2026-04-07)
+
+> Engineer delivered (PM audit #99). CSS `transition-all duration-300` added to sidebar section wrappers. Workspace labels and Recent section fade/slide smoothly on sidebar open/close.
+
+- [x] Transition classes on sidebar section wrappers
+- [x] No layout jumps or content flashes
+- [x] Build passes, tests pass
+
+---
+
+## Phase 212 — Sidebar Loading State — COMPLETED (2026-04-07)
+
+> Engineer delivered (PM audit #99). Created `ChatSidebarLoading` component with skeleton + LoadingBubbles. ChatSidebar wrapped in Suspense with loading fallback in chat layout.
+
+- [x] `chat-sidebar-loading.tsx` with skeleton and LoadingBubbles
+- [x] Suspense boundary in chat layout
+- [x] Loading indicator visible during server-side data fetch
+- [x] Build passes, tests pass
+
+---
+
+## Phase 211 — Hide Recent Section When Sidebar Collapsed — COMPLETED (2026-04-07)
+
+> Engineer delivered (PM audit #99). Recent section renders conditionally based on sidebar open state. When collapsed, only Workspace icons visible.
+
+- [x] Recent section conditional on `isOpen`
+- [x] Desktop collapsed: no Recent heading or items
+- [x] Desktop open: Recent visible with conversation items
+- [x] Build passes, tests pass
+
+---
+
+## Phase 210 — Remove `/app/personas` Route — COMPLETED (2026-04-07)
+
+> Engineer delivered (PM audit #99). Duplicate route page deleted. Next.js redirect `/app/personas → /app/new` in next.config.ts. Admin revalidation paths updated. Public `/personas` route untouched.
+
+- [x] `src/app/(chat)/app/personas/page.tsx` deleted
+- [x] Next.js redirect added in next.config.ts
+- [x] `revalidatePath` calls updated in admin.actions.tsx
+- [x] Test assertions updated
+- [x] Public `/personas` route untouched
+- [x] Build passes, tests pass
+
+---
+
+## Phase 209 — Sidebar Label Renames + Library Link Migration — COMPLETED (2026-04-07)
+
+> Engineer delivered (PM audit #99). Sidebar workspace links renamed: "Chat Dashboard" → "Home", "New Conversation" → "Personas". Library link added to sidebar. Library and Personas removed from avatar menu.
+
+- [x] "Chat Dashboard" → "Home"
+- [x] "New Conversation" → "Personas"
+- [x] Library link added to sidebar after Personas
+- [x] Library link removed from avatar menu
+- [x] Personas link removed from avatar menu
+- [x] Sidebar order: Home → Personas → Library
+- [x] Build passes, tests pass
 
 ---
 
