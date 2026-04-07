@@ -2,7 +2,77 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-04-06 — PM audit #96.
+> Last updated: 2026-04-06 — PM audit #97.
+
+---
+
+## Phase 29.7 — Zustand Audit — COMPLETE (2026-04-06)
+
+> PM audit #96 determined no changes needed. 4 stores (`useUiStore`, `useChatStore`, `usePreferencesStore`, `useAudioStore`), all properly implemented with `useShallow` selectors, `persist` middleware, no prop drilling, no state duplication. Zustand v5.0.11.
+
+- [x] All 4 Zustand stores audited
+- [x] No changes needed — already follows best practices
+- [x] No state needing Zustand migration found
+
+---
+
+## Phase 29.5 — Client API Response Zod Validation — COMPLETED (2026-04-06)
+
+> Engineer delivered (PM audit #97). `checkout-plan-status-poller.tsx` unsafe `as { confirmed?: boolean }` type assertion replaced with Zod `safeParse()` on `unknown` payload. Schema: `z.object({ confirmed: z.boolean() }).strict()`. Parse failure safely returns `false` (continues polling). No external data casts remain.
+
+- [x] Zod response schema defined
+- [x] `safeParse()` on API response
+- [x] No `as` type assertions on external data
+- [x] Safe fallback on parse failure
+- [x] Build passes, tests pass
+
+---
+
+## Phase 29.4 — Admin Helper Cleanup + Schema Consolidation — COMPLETED (2026-04-06)
+
+> Engineer delivered (PM audit #97). `getMultiStringField` helper removed (no longer used after Phase 29.3). `requiredStringSchema` local duplicate removed — `getStringField` now uses shared `nonEmptyStringSchema` from `validation-schemas.ts`. `getStringField` and `getNumericField` retained — still used by `updateAdminSettingAction` (deferred Phase 29.6). Knip: 0 findings.
+
+- [x] `getMultiStringField` removed
+- [x] `requiredStringSchema` consolidated to shared `nonEmptyStringSchema`
+- [x] No duplicate schemas remain
+- [x] Knip passes, build passes, tests pass
+
+---
+
+## Phase 29.3 — Admin Bulk Actions Zod Schemas — COMPLETED (2026-04-06)
+
+> Engineer delivered (PM audit #97). All 6 bulk admin actions converted to per-action Zod array schemas with `.strict()` and `.min(1)`. Each uses `z.array(nonEmptyStringSchema).min(1)` for the ID array field. FormData extraction via `getAll()` with string filtering, then `safeParse()`. Returns `AdminActionState` error on validation failure. Types derived via `z.infer`.
+
+- [x] `bulkSuspendUsersAction` — Zod schema
+- [x] `bulkRemoveUsersAction` — Zod schema
+- [x] `bulkDeleteTransactionsAction` — Zod schema
+- [x] `bulkDeletePublicPagesAction` — Zod schema
+- [x] `bulkPublishPublicPagesAction` — Zod schema
+- [x] `bulkUnpublishPublicPagesAction` — Zod schema
+- [x] Build passes, tests pass
+
+---
+
+## Phase 29.2 — Admin Toggle/Numeric Actions Zod Schemas — COMPLETED (2026-04-06)
+
+> Engineer delivered (PM audit #97). 3 admin actions converted to per-action Zod schemas with proper coercion. `booleanStringFieldSchema` uses `z.enum(["true","false"]).transform(v => v === "true")` for FormData boolean coercion. `finiteNumericStringFieldSchema` uses `.transform(Number).refine(isFinite)` for numeric coercion. All schemas use `.strict()`, `safeParse()`, and `z.infer` types.
+
+- [x] `toggleUserSuspensionAction` — Zod schema with boolean coercion
+- [x] `togglePublicPagePublishedAction` — Zod schema with boolean coercion
+- [x] `updatePublicPageSortOrderAction` — Zod schema with numeric coercion
+- [x] Build passes, tests pass
+
+---
+
+## Phase 29.1 — Admin Single-Value Actions Zod Schemas — COMPLETED (2026-04-06)
+
+> Engineer delivered (PM audit #97). 4 admin actions converted from `getStringField()` helper pattern to per-action Zod schemas. Each defines a `z.object().strict()` schema, validates via `safeParse()`, returns `AdminActionState` error on failure (no throw), and derives types via `z.infer`. Uses shared `nonEmptyStringSchema` from `validation-schemas.ts`.
+
+- [x] `removeUserByAdminAction` — Zod schema + safeParse
+- [x] `createPublicPageAction` — Zod schema + safeParse
+- [x] `deletePublicPageAction` — Zod schema + safeParse
+- [x] `savePublicPageAction` — Zod schema + safeParse
+- [x] Build passes, tests pass
 
 ---
 
