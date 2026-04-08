@@ -3,7 +3,7 @@
 > Purpose: one execution document for finishing the SaaS without avoidable rework.
 > Audience: Project Manager, Architect, and Senior Software Agents.
 > Rule: this plan is based on verified repository state. If older docs disagree with code, code wins until this file is updated.
-> Last verified: PM audit #100, 2026-04-08. V1.0 MVP RELEASED. Owner directives OI45–OI50 COMPLETE (sidebar restructure). OI51 (Stripe recurring) ON HOLD. OI52 (CSS modular architecture) APPROVED. Phases 209–216 DONE. Phase 218 ACTIVE. 644 tests, 0 failures. All 7 gates GREEN. 0 critical issues.
+> Last verified: PM audit #101, 2026-04-08. V1.0 MVP RELEASED. Owner directives OI45–OI50 COMPLETE (sidebar restructure). OI51 (Stripe recurring) ON HOLD. OI52 (CSS modular architecture) COMPLETE. Phases 209–218 DONE. Phases 219–222 ACTIVE (orphan cleanup, useIsDesktop hook, layout CSS extraction, shared layout shell). 644 tests, 0 failures. All 7 gates GREEN. 0 critical issues.
 
 ---
 
@@ -146,13 +146,13 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 
 ---
 
-## 4. SWOT Analysis (Updated 2026-04-07, post PM audit #99)
+## 4. SWOT Analysis (Updated 2026-04-08, post PM audit #101)
 
-**Strengths:** Clean architecture, strong auth, comprehensive tests (644+49), central policy resolvers, WCAG 2.2 AA complete, durable usage counters, thorough user deletion cascade, zero lint/type/knip issues, correct webhook code structure, stream timeout confirmed in production (Phase 181), video generation cleanly removed (Phase 186-A), token limits maximized (Phase 186-B), admin error boundary (Phase 187-A), env var runtime validation (Phase 143), all display text admin-configurable (Phases 180.1–180.4), audio player error recovery (Phase 187-C), admin deletion protection with 5-layer defense (Phase 189), reusable component library: FormInput/PersonaSelector/UsageMetricRow (Phases 191–193), TiptapEditor WYSIWYG (Phase 194), plan-display utility for admin ADMIN label (Phase 190), admin suspension protection with symmetric 3-layer defense (Phase 200), avatar sync MongoDB→Clerk (Phase 201), admin config cache 30s TTL (Phase 144), full test baseline (644 tests, 0 failures), all API routes at Vercel Hobby ceiling (Phase 204), sidebar live-updates on new chat without browser refresh (Phase 205), upload error messages propagated to user with client pre-validation (Phase 206), upload magic byte validation prevents MIME spoofing (Phase 207), upload filenames collision-proof via UUID (Phase 145), checkout success page polls DB for webhook-delayed plan updates (Phase 165), plan-status route hardened with rate limiting and maxDuration (Phase 165.1), admin transaction query bounded (Phase 146), utility file extensions clean (Phase 147), bulk operations report partial failures for admin visibility (Phase 148), post-release active backlog fully cleared. Per-action Zod schemas for all 13 non-settings admin actions (Phases 29.1–29.3), shared nonEmptyStringSchema consolidation (Phase 29.4), client API response Zod validation replacing unsafe type assertions (Phase 29.5). Sidebar restructured with Suspense loading, conditional Recent rendering, CSS transitions, Zustand-driven toggle state (Phases 209–214). Conversation dropdown menu with full ARIA compliance, keyboard navigation, inline rename (Phase 215). PersonaSelector moved to ChatInput for better UX flow (Phase 216). `renameTask` server action with Zod validation, auth, ownership enforcement (Phase 215.0). `/app/personas` route removed with redirect (Phase 210).
+**Strengths:** Clean architecture, strong auth, comprehensive tests (644+49), central policy resolvers, WCAG 2.2 AA complete, durable usage counters, thorough user deletion cascade, zero lint/type/knip issues, correct webhook code structure, stream timeout confirmed in production (Phase 181), video generation cleanly removed (Phase 186-A), token limits maximized (Phase 186-B), admin error boundary (Phase 187-A), env var runtime validation (Phase 143), all display text admin-configurable (Phases 180.1–180.4), audio player error recovery (Phase 187-C), admin deletion protection with 5-layer defense (Phase 189), reusable component library: FormInput/PersonaSelector/UsageMetricRow (Phases 191–193), TiptapEditor WYSIWYG (Phase 194), plan-display utility for admin ADMIN label (Phase 190), admin suspension protection with symmetric 3-layer defense (Phase 200), avatar sync MongoDB→Clerk (Phase 201), admin config cache 30s TTL (Phase 144), full test baseline (644 tests, 0 failures), all API routes at Vercel Hobby ceiling (Phase 204), sidebar live-updates on new chat without browser refresh (Phase 205), upload error messages propagated to user with client pre-validation (Phase 206), upload magic byte validation prevents MIME spoofing (Phase 207), upload filenames collision-proof via UUID (Phase 145), checkout success page polls DB for webhook-delayed plan updates (Phase 165), plan-status route hardened with rate limiting and maxDuration (Phase 165.1), admin transaction query bounded (Phase 146), utility file extensions clean (Phase 147), bulk operations report partial failures for admin visibility (Phase 148), post-release active backlog fully cleared. Per-action Zod schemas for all 13 non-settings admin actions (Phases 29.1–29.3), shared nonEmptyStringSchema consolidation (Phase 29.4), client API response Zod validation replacing unsafe type assertions (Phase 29.5). Sidebar restructured with Suspense loading, conditional Recent rendering, CSS transitions, Zustand-driven toggle state (Phases 209–214). Conversation dropdown menu with full ARIA compliance, keyboard navigation, inline rename (Phase 215). PersonaSelector moved to ChatInput for better UX flow (Phase 216). `renameTask` server action with Zod validation, auth, ownership enforcement (Phase 215.0). `/app/personas` route removed with redirect (Phase 210). CSS modular architecture complete with 12 files under `src/styles/` (Phase 218).
 
-**Weaknesses:** `updateAdminSettingAction` still uses per-field Zod helper pattern (deferred — 15+ branches, low marginal value, Zod enforced under the hood). `getStringField`/`getNumericField` helpers retained for this action only. No dedicated unit tests for sidebar dropdown menu interaction patterns (keyboard/outside-click/blur race).
+**Weaknesses:** `updateAdminSettingAction` still uses per-field Zod helper pattern (deferred — 15+ branches, low marginal value, Zod enforced under the hood). `getStringField`/`getNumericField` helpers retained for this action only. No dedicated unit tests for sidebar dropdown menu interaction patterns (keyboard/outside-click/blur race). **Significant layout duplication between admin and chat** — ~60% of sidebar/header/layout code is identical but maintained separately (3 copies of desktop media query hook, duplicate sidebar CSS, duplicate header structure, duplicate mobile backdrop/close logic). 50+ admin form inputs share identical inline Tailwind class string with no shared CSS class.
 
-**Opportunities:** Vercel Pro upgrade ($20/mo) for 300s maxDuration. Persona-aware media prompts (Phase 26.x). Stripe recurring subscription billing (Phases 217-A–D, pending owner decisions).
+**Opportunities:** Vercel Pro upgrade ($20/mo) for 300s maxDuration. Persona-aware media prompts (Phase 26.x). Stripe recurring subscription billing (Phases 217-A–D, pending owner decisions). **Shared layout extraction** (Phases 219–222) — consolidate admin/chat layout to shared components, reducing ~300 lines of duplicated code.
 
 **Threats:** Single-document growth risk (Task model). Vercel Hobby 60s timeout remains architecture constraint for media generation edge cases. jsdom pinned to 24.x — older version, lacks newer CSS/DOM APIs; monitor Vitest ESM environment loading progress for future upgrade.
 
@@ -227,17 +227,30 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 
 ### Post-Release Active
 
-> PM audit #100 (2026-04-08). Sidebar restructure COMPLETE (Phases 209–216). Phase 218 ACTIVE (CSS modular architecture). Stripe recurring billing ON HOLD.
+> PM audit #101 (2026-04-08). Sidebar restructure COMPLETE (Phases 209–216). Phase 218 COMPLETE (CSS modular architecture). Phases 219–222 ACTIVE (codebase cleanup + shared layout). Stripe recurring billing ON HOLD.
 
-#### CSS Modular Architecture (Phase 218) — ACTIVE
+#### CSS Modular Architecture (Phase 218) — COMPLETE
 
-> DX/maintainability improvement. Zero visual changes. Zero runtime cost. Owner directive OI52.
-
-- **Phase 218** — Tailwind CSS modular architecture. Split monolithic `src/app/globals.css` (423 lines) into `src/styles/` folder with 12 files organized by concern: theme tokens (colors, layout, typography), base resets (compatibility, elements, gradient), component classes (typography, buttons, admin, chat, tooltip). Entry point moves to `src/styles/index.css`. Uses Tailwind v4's native `@import` inlining — identical build output, better DX. **Dependencies:** None. **Effort:** ~30min. **Risk:** Low (pure structural refactor, validation gates catch regressions).
+> Phase 218 DONE (PM audit #101). See DONE.md for detailed completion record.
 
 #### Sidebar & Navigation Restructure (Phases 209–216) — COMPLETE
 
 All phases DONE. See DONE.md for detailed records.
+
+#### Codebase Cleanup & Shared Layout (Phases 219–222) — ACTIVE
+
+> Owner directives OI53–OI57 (PM audit #101). DX/maintainability improvements. Shared layout unification between admin and chat.
+
+- **Phase 219** — Orphan cleanup. Delete dead `RouteGroupLayout` component (`route-group-layout.tsx`), remove from `knip.json` ignoreFiles. Deduplicate `LegalSection` interface (move to `legal-shared.ts`). Delete obsolete `plan-reorganizeTailwindCssStyles.prompt.md` from repo root. **Dependencies:** None. **Effort:** ~10min. **Risk:** None (dead code removal).
+
+- **Phase 220** — Extract `useIsDesktop()` hook. Consolidate 3 separate `useSyncExternalStore` + `window.matchMedia("(min-width: 1024px)")` implementations into single shared hook at `src/lib/hooks/use-is-desktop.ts`. Replace in `admin-layout-shell.tsx`, `chat-sidebar-shell.tsx`, `sidebar-head.tsx`. **Dependencies:** None. **Effort:** ~15min. **Risk:** Low (pure refactor, identical behavior).
+
+- **Phase 221** — Extract shared layout CSS classes. Create `src/styles/components/layout.css` with `.app-sidebar`, `.sidebar-backdrop`, `.app-header-bar`, `.sidebar-nav-link`, `.surface-card`. Create `src/styles/components/forms.css` with `.form-input`, `.form-field`, `.admin-label`. Add imports to `src/styles/index.css`. Apply in all consuming components. **Dependencies:** None. **Effort:** ~20min. **Risk:** Low (CSS extraction, same pattern as Phase 218).
+
+- **Phase 222** — Shared `AppLayoutShell` + `SidebarShell` components. Unify admin and chat layout patterns: shared outer shell with sidebar slot, header slot, main content slot. Shared sidebar shell with header/navigation/footer slots. Shared mobile backdrop + close-on-pathname-change. Both admin and chat layouts become thin wrappers. **Dependencies:** Phases 220, 221. **Effort:** ~30min. **Risk:** Medium (affects both layouts simultaneously, needs full E2E verification). Break into sub-phases if needed:
+  - **222-A** — `SidebarShell` shared component (sidebar wrapper, backdrop, mobile close)
+  - **222-B** — `AppHeader` shared component (sticky bar, left/right content slots)
+  - **222-C** — `AppLayoutShell` integration (wire admin + chat layouts to shared components)
 
 #### Stripe Recurring Payment (Phases 217-A through 217-D)
 
@@ -312,7 +325,12 @@ All phases DONE. See DONE.md for detailed records.
 | OI49 | Conversation dropdown menu with Rename + Delete                         | ✅ COMPLETE. Phase 215 DONE. Full ARIA + keyboard nav. renameTask action (Phase 215.0).                                            |
 | OI50 | PersonaSelector moves from ChatHeader to ChatInput                      | ✅ COMPLETE. Phase 216 DONE.                                                                                                       |
 | OI51 | Stripe recurring payment (monthly auto-renewal)                         | ⏳ ACTIVE. Promoted from deferred. Phases 217-A through 217-D. BLOCKED pending owner decisions.                                    |
-| OI52 | Tailwind CSS modular architecture (`src/styles/` folder)                | ⏳ ACTIVE. Phase 218. DX improvement. Zero visual changes. Architect + Engineer + PM APPROVED.                                     |
+| OI52 | Tailwind CSS modular architecture (`src/styles/` folder)                | ✅ COMPLETE. Phase 218 DONE. 12 modular files under `src/styles/`. Zero visual changes.                                            |
+| OI53 | Orphan cleanup — dead code, duplicate types, obsolete artifacts         | 🆕 NEW. Phase 219. Delete `RouteGroupLayout`, dedup `LegalSection`, delete prompt file.                                            |
+| OI54 | Shared admin/chat layout — unify sidebar + header + main wrappers       | 🆕 NEW. Phase 222. Extract `AppLayoutShell` + `SidebarShell` shared components.                                                    |
+| OI55 | Extract CSS layout classes — sidebar, header, nav, form input to styles | 🆕 NEW. Phase 221. `.app-sidebar`, `.app-header-bar`, `.form-input`, `.admin-label`.                                               |
+| OI56 | Extract `useIsDesktop()` hook — consolidate 3 media query copies        | 🆕 NEW. Phase 220. Single shared hook in `src/lib/hooks/use-is-desktop.ts`.                                                        |
+| OI57 | Reuse styles, functions, utilities, components across admin/chat        | 🆕 NEW. Phases 219–222 collectively. Check for similarities, create multifunction classes/components.                              |
 
 ---
 

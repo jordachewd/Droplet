@@ -1,4 +1,4 @@
-# Droplet Project Audit — PM Audit #100 (2026-04-08)
+# Droplet Project Audit — PM Audit #101 (2026-04-08)
 
 ## Current State
 
@@ -8,28 +8,33 @@
 - Brand rename `cellesseon` → `droplet` complete in `src/`
 - Node.js 24.12.0, Next.js 16 App Router
 - CSS modular architecture: `src/styles/` (Phase 218 COMPLETE)
+- Sidebar restructure: Phases 209–216 COMPLETE
+- Zod modernization: Phases 29.1–29.5 COMPLETE
 
-## Critical Finding
+## Triple Audit Findings (Architect + Engineer + PM, audit #101)
 
-- **TD-DEBUG-01**: Debug text `<p>Checking if is new task...</p>` visible in production (chat-wrapper.tsx:601)
+### Orphaned Code (VERIFIED)
+- `src/components/layout/route-group-layout.tsx` — DEAD, zero imports, suppressed in knip.json
+- `LegalSection` interface duplicated identically in `privacy-data.ts` and `terms-data.ts`
+- `plan-reorganizeTailwindCssStyles.prompt.md` — obsolete Phase 218 planning artifact in repo root
 
-## Key Findings (PM audit #81 triple-audit)
+### Layout Duplication (VERIFIED ~60% shared code)
+- 3 independent copies of desktop media query hook (useSyncExternalStore)
+- Identical sidebar base CSS classes (admin-sidebar, chat-sidebar-shell, chat-sidebar-loading)
+- Identical sidebar backdrop overlay (admin-sidebar, chat-sidebar-shell)
+- Identical header bar structure (admin-layout-shell, chat-header)
+- Identical mobile close-on-pathname-change effect
+- 50+ admin form inputs share identical inline Tailwind class string
 
-- Dead file: `public/scripts/theme-init.js` (last cellesseon ref, orphaned since Phase 170)
-- Duplicate constant: `STREAM_PROACTIVE_TIMEOUT_MESSAGE` in route.tsx and chat-stream.ts
-- Dead prop: `conversationEnded` in ChatBodyProps (unused)
-- Fake interactive element: profile-billing.tsx download icon (no handler)
-- Download route 206 logic uses request Range, not upstream ContentRange
-- ~30 hardcoded display strings across 8+ components
-- Hardcoded persona IDs in homepage spotlight
-- No video player error state
-- Audio player retry blocked after transient error
+### Active Phase Plan
+- Phase 219: Orphan cleanup (dead RouteGroupLayout, LegalSection dedup, obsolete prompt file)
+- Phase 220: Extract useIsDesktop() hook (consolidate 3 copies)
+- Phase 221: Extract shared layout CSS classes (layout.css + forms.css)
+- Phase 222: Shared AppLayoutShell + SidebarShell components (222-A/B/C sub-phases)
 
-## Completed This Session
-
-- Phases 171 (test fixes), 172 (cellesseon rename), 167.2 (catch blocks), 162 (promo text), 163 (global error boundary)
-- All confirmed completed by Engineer, verified by PM
-
-## Next Execution Order
-
-Phase 173 (debug text) → 174 (dead file) → 175 (dead prop) → 176 (206 fix) → 177 (dedup constant) → 178 (fake icon) → 179 (video error) → 180 (hardcoded text) → 143-165 (backlog)
+### Owner Directives Added
+- OI53: Orphan cleanup
+- OI54: Shared admin/chat layout
+- OI55: CSS layout class extraction
+- OI56: useIsDesktop() hook extraction
+- OI57: General reuse directive (styles, functions, utilities, components)

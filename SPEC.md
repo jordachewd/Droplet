@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-04-08 (PM audit #100). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. **V1.0 MVP RELEASED.** Brand rename complete (Phase 172). Catch blocks documented (Phase 167.2). Promo text admin-configurable (Phase 162, 180.2–180.3). Global error boundary live (Phase 163). Admin error boundary live (Phase 187-A). Phases 143–216 COMPLETE. Phase 165.1 COMPLETE. Phases 146–148 COMPLETE. Phases 29.1–29.5 COMPLETE. **Sidebar restructure COMPLETE (Phases 209–216).** **Phase 218 ACTIVE (CSS modular architecture).** E2E: 49 tests (8 spec files). Coverage: 85/80/85/85. 644 tests. Build passing. Node.js 24.12.0. jsdom pinned to ~24.1.3 (ESM compat). Zod schema consistency across all server actions and API routes. **Stripe recurring billing planned (Phases 217-A–D).**
+> ...04-08 (PM audit #101). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. **V1.0 MVP RELEASED.** Brand rename complete (Phase 172). Catch blocks documented (Phase 167.2). Promo text admin-configurable (Phase 162, 180.2–180.3). Global error boundary live (Phase 163). Admin error boundary live (Phase 187-A). Phases 143–216 COMPLETE. Phase 165.1 COMPLETE. Phases 146–148 COMPLETE. Phases 29.1–29.5 COMPLETE. **Sidebar restructure COMPLETE (Phases 209–216).** **Phase 218 COMPLETE (CSS modular architecture).** **Phases 219–222 ACTIVE (orphan cleanup, shared hooks, layout CSS extraction, shared layout shell).** E2E: 49 tests (8 spec files). Coverage: 85/80/85/85. 644 tests. Build passing. Node.js 24.12.0. jsdom pinned to ~24.1.3 (ESM compat). Zod schema consistency across all server actions and API routes. **Stripe recurring billing planned (Phases 217-A–D).**
 >
 > **V1.0 MVP Released (PM audit #94):**
 >
@@ -749,7 +749,7 @@ All file handling technical debt has been resolved. S3 cleanup on task/user dele
 ### Design System
 
 - Tailwind CSS v4.2 with custom design tokens
-- CSS architecture: modular `src/styles/` folder (Phase 218) — entry point `src/styles/index.css`, split into theme tokens (`theme/colors.css`, `theme/layout.css`, `theme/typography.css`), base resets (`base/compatibility.css`, `base/elements.css`, `base/gradient.css`), component classes (`components/typography.css`, `components/buttons.css`, `components/admin.css`, `components/tooltip.css`, `components/chat.css`). Uses Tailwind v4 native `@import` inlining — identical build output.
+- CSS architecture: modular `src/styles/` folder (Phase 218 COMPLETE) — entry point `src/styles/index.css`, split into theme tokens (`theme/colors.css`, `theme/layout.css`, `theme/typography.css`), base resets (`base/compatibility.css`, `base/elements.css`, `base/gradient.css`), component classes (`components/typography.css`, `components/buttons.css`, `components/admin.css`, `components/tooltip.css`, `components/chat.css`). Phases 221 adds `components/layout.css` (shared sidebar, header, nav-link classes) and `components/forms.css` (shared form input, field, label classes). Uses Tailwind v4 native `@import` inlining — identical build output.
 - Custom fonts: Dosis + Albert Sans
 - Dark/light themes via `data-Droplet-theme` attribute
 - Bootstrap Icons
@@ -808,9 +808,9 @@ All button styles use Lime Green as the accent color in **both** light and dark 
 
 ### Navigation (Authenticated App)
 
-- **Sidebar**: Home (`/app`), Personas (`/app/new`), Library (`/app/library`), Recent conversation history (visible only when sidebar is open). Sidebar toggle in SidebarHead (visible when open, hover-reveal when collapsed). Loading skeleton via Suspense fallback. CSS transitions on open/collapse (Phase 213). Each recent conversation item has a three-dot dropdown menu with Rename and Delete options (Phase 215).
+- **Sidebar**: Home (`/app`), Personas (`/app/new`), Library (`/app/library`), Recent conversation history (visible only when sidebar is open). Sidebar toggle in SidebarHead (visible when open, hover-reveal when collapsed). Loading skeleton via Suspense fallback. CSS transitions on open/collapse (Phase 213). Each recent conversation item has a three-dot dropdown menu with Rename and Delete options (Phase 215). **Admin and chat sidebars share identical structural CSS** (sidebar base, backdrop overlay, nav-link styling). Phase 222 planned: shared `SidebarShell` component for both layouts.
 - **AvatarMenu** (header): Dashboard (admin only) → Plans → Profile → Logout. Library and Personas removed from avatar menu (Phase 209).
-- **ChatHeader**: Present on all `/app/*` pages. Contains mobile-only sidebar toggle, conversation info (persona label, message count, ended badge). PersonaSelector moved to ChatInput (Phase 216).
+- **ChatHeader**: Present on all `/app/*` pages. Contains mobile-only sidebar toggle, conversation info (persona label, message count, ended badge). PersonaSelector moved to ChatInput (Phase 216). **Admin and chat headers share identical structural CSS** (sticky bar, blur bg, flex container). Phase 222-B planned: shared `AppHeader` component.
 
 ---
 

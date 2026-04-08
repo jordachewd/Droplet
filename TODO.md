@@ -5,13 +5,99 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #100 (2026-04-08). V1.0 MVP RELEASED. Sidebar restructure COMPLETE (Phases 209–216). CSS modular architecture COMPLETE (Phase 218). OI51 (Stripe recurring) ON HOLD.**
+> **STATUS: PM audit #101 (2026-04-08). V1.0 MVP RELEASED. Phase 218 COMPLETE. Phases 219–222 ACTIVE (codebase cleanup + shared layout). OI51 (Stripe recurring) ON HOLD.**
 >
 > **GATE STATUS: Validation GREEN. Architecture GREEN. Product GREEN. Admin GREEN. Public GREEN. Contract GREEN.**
 >
 > **TEST STATUS: 644 tests (104 suites), 49 E2E (6 skipped). 0 failures. All gates GREEN.**
 >
-> **EXECUTION ORDER: No active phases. Phase 217 ON HOLD pending owner decisions.**
+> **EXECUTION ORDER: Phase 219 → 220 → 221 → 222 (222-A → 222-B → 222-C). Phase 217 ON HOLD pending owner decisions.**
+
+---
+
+## ACTIVE — Codebase Cleanup & Shared Layout (Phases 219–222)
+
+> Owner directives OI53–OI57 (PM audit #101). DX/maintainability improvements. Shared layout unification between admin and chat. All findings verified by triple-audit (Architect + Engineer + PM).
+
+### Phase 219 — Orphan Cleanup
+
+> **Owner:** OI53. **Risk:** NONE (dead code removal). **Effort:** ~10min. **Dependencies:** None.
+>
+> **Acceptance Criteria:**
+
+- [ ] **219.1** — Delete `src/components/layout/route-group-layout.tsx` (dead component — zero imports across entire codebase, suppressed in `knip.json`)
+- [ ] **219.2** — Remove `src/components/layout/route-group-layout.tsx` from `knip.json` `ignoreFiles` array
+- [ ] **219.3** — Move `LegalSection` interface from `src/constants/privacy-data.ts` and `src/constants/terms-data.ts` to `src/constants/legal-shared.ts` (currently duplicated identically in both files)
+- [ ] **219.4** — Update `privacy-data.ts` and `terms-data.ts` to import `LegalSection` from `legal-shared.ts`
+- [ ] **219.5** — Delete `plan-reorganizeTailwindCssStyles.prompt.md` from repo root (obsolete Phase 218 planning artifact)
+- [ ] **219.6** — Validation: knip ✓, tsc ✓, lint ✓, tests ✓, build ✓
+
+### Phase 220 — Extract `useIsDesktop()` Hook
+
+> **Owner:** OI56. **Risk:** LOW (pure refactor, identical behavior). **Effort:** ~15min. **Dependencies:** None.
+>
+> 3 independent implementations of `useSyncExternalStore` + `window.matchMedia("(min-width: 1024px)")` exist in:
+>
+> - `src/components/admin/admin-layout-shell.tsx` (module-level functions)
+> - `src/components/chat/sidebar/chat-sidebar-shell.tsx` (inline useCallback)
+> - `src/components/chat/sidebar/sidebar-head.tsx` (inline with useRef)
+>
+> **Acceptance Criteria:**
+
+- [ ] **220.1** — Create `src/lib/hooks/use-is-desktop.ts` with shared `useIsDesktop()` hook using `useSyncExternalStore`
+- [ ] **220.2** — Replace implementation in `admin-layout-shell.tsx` with `useIsDesktop()` import
+- [ ] **220.3** — Replace implementation in `chat-sidebar-shell.tsx` with `useIsDesktop()` import
+- [ ] **220.4** — Replace implementation in `sidebar-head.tsx` with `useIsDesktop()` import
+- [ ] **220.5** — Delete the 3 sets of module-level/inline functions that are now unused
+- [ ] **220.6** — Validation: knip ✓, tsc ✓, lint ✓, tests ✓, build ✓
+
+### Phase 221 — Extract Shared Layout CSS Classes
+
+> **Owner:** OI55. **Risk:** LOW (CSS extraction, same pattern as Phase 218). **Effort:** ~20min. **Dependencies:** None.
+>
+> Inline Tailwind patterns used 2-50+ times across different files should be extracted to `src/styles/components/`.
+>
+> **Acceptance Criteria:**
+
+- [ ] **221.1** — Create `src/styles/components/layout.css` with: `.app-sidebar` (sidebar base classes), `.sidebar-backdrop` (mobile overlay), `.app-header-bar` (sticky header), `.app-header-inner` (header flex container), `.sidebar-nav-link` (navigation link)
+- [ ] **221.2** — Create `src/styles/components/forms.css` with: `.form-input` (input field base), `.form-field` (label+input container), `.admin-label` (section label), `.admin-form-surface` (admin surface + form gap)
+- [ ] **221.3** — Add `@import "./components/layout.css"` and `@import "./components/forms.css"` to `src/styles/index.css`
+- [ ] **221.4** — Apply `.app-sidebar` in `admin-sidebar.tsx`, `chat-sidebar-shell.tsx`, `chat-sidebar-loading.tsx`
+- [ ] **221.5** — Apply `.sidebar-backdrop` in `admin-sidebar.tsx`, `chat-sidebar-shell.tsx`
+- [ ] **221.6** — Apply `.app-header-bar` + `.app-header-inner` in `admin-layout-shell.tsx`, `chat-header.tsx`
+- [ ] **221.7** — Apply `.sidebar-nav-link` in `admin-sidebar.tsx`, `chat-sidebar-nav.tsx`
+- [ ] **221.8** — Apply `.form-input` in all admin form sections (50+ occurrences across admin settings forms)
+- [ ] **221.9** — Apply `.admin-label` in admin tables and form sections (20+ occurrences)
+- [ ] **221.10** — Validation: prettier ✓, lint ✓, tsc ✓, tests ✓, build ✓, knip ✓. Zero visual changes.
+
+### Phase 222 — Shared `AppLayoutShell` + `SidebarShell` Components
+
+> **Owner:** OI54. **Risk:** MEDIUM (affects both layouts simultaneously). **Effort:** ~30min. **Dependencies:** Phases 220, 221.
+>
+> Admin and chat layouts share ~60% identical code: sidebar wrapper, mobile backdrop, close-on-pathname, sticky header, main content wrapper. Extract shared components with slot-based composition.
+>
+> **Sub-phases for safety:**
+
+#### Phase 222-A — `SidebarShell` Shared Component
+
+- [ ] **222-A.1** — Create `src/components/shared/sidebar-shell.tsx` (client component) with: sidebar wrapper (uses `.app-sidebar`), mobile backdrop (uses `.sidebar-backdrop`), close-on-pathname effect, Zustand sidebar state. Accepts `header`, `navigation`, `footer` slot props + `id` + `expandedWidth` (w-72 vs w-56).
+- [ ] **222-A.2** — Refactor `AdminSidebar` to use `SidebarShell` wrapper (pass admin nav links, head, footer as slots)
+- [ ] **222-A.3** — Refactor `ChatSidebarShell` to use `SidebarShell` wrapper (pass chat nav, head, recent section as slots)
+- [ ] **222-A.4** — Validation: all gates GREEN. E2E regression check.
+
+#### Phase 222-B — `AppHeader` Shared Component
+
+- [ ] **222-B.1** — Create `src/components/shared/app-header.tsx` (client component) with: sticky header bar (uses `.app-header-bar` + `.app-header-inner`), left content slot, right content slot (default: `ToggleTheme` + `AvatarMenu`)
+- [ ] **222-B.2** — Refactor `AdminLayoutShell` header to use `AppHeader` (pass `SidebarToggle` + "Open App" link as left/right content)
+- [ ] **222-B.3** — Refactor `ChatHeader` to use `AppHeader` (pass mobile-only `SidebarToggle` + badges as left content)
+- [ ] **222-B.4** — Validation: all gates GREEN.
+
+#### Phase 222-C — `AppLayoutShell` Integration
+
+- [ ] **222-C.1** — Create `src/components/shared/app-layout-shell.tsx` with: outer section wrapper, sidebar slot, main content column, skip link. Accepts `sidebar`, `header`, `children`, `mainId`, `skipLinkTarget`.
+- [ ] **222-C.2** — Refactor `AdminLayoutShell` to use `AppLayoutShell` (pass `AdminSidebar`, `AppHeader` with admin actions)
+- [ ] **222-C.3** — Refactor `(chat)/layout.tsx` to use `AppLayoutShell` (pass `ChatSidebar` with Suspense, `AppHeader` with chat badges)
+- [ ] **222-C.4** — Validation: all gates GREEN. Full E2E suite. Zero visual regression.
 
 ---
 
