@@ -1,0 +1,21 @@
+@import "tailwindcss";
+@plugin "tailwindcss-animated";
+
+@custom-variant dark (&:is([data-droplet-theme="dark"] *));
+
+/* Theme tokens */
+@import "./theme/colors.css";
+@import "./theme/layout.css";
+@import "./theme/typography.css";
+
+/* Base resets */
+@import "./base/compatibility.css";
+@import "./base/elements.css";
+@import "./base/gradient.css";
+
+/* Component classes */
+@import "./components/typography.css";
+@import "./components/buttons.css";
+@import "./components/admin.css";
+@import "./components/tooltip.css";
+@import "./components/chat.css";

@@ -2,7 +2,30 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-04-07 — PM audit #99.
+> Last updated: 2026-04-08 — PM audit #100.
+
+---
+
+## Phase 218 — Tailwind CSS Modular Architecture — COMPLETED (2026-04-08)
+
+> Owner directive OI52. Engineer delivered (PM audit #100). Monolithic `src/app/globals.css` (423 lines) split into 12 modular files under `src/styles/`. Zero visual changes. Zero runtime cost. DX/maintainability improvement only.
+
+- [x] **218.1** — Created `src/styles/index.css` orchestrator (imports tailwindcss, plugin, custom-variant, then all partials)
+- [x] **218.2** — Created `src/styles/theme/colors.css` (6 palettes, 60 color vars)
+- [x] **218.3** — Created `src/styles/theme/layout.css` (breakpoints + container tokens)
+- [x] **218.4** — Created `src/styles/theme/typography.css` (text size tokens)
+- [x] **218.5** — Created `src/styles/base/compatibility.css` (border-color v3→v4 compat)
+- [x] **218.6** — Created `src/styles/base/elements.css` (body/html/button/focus-visible + media resets + links + skip-link)
+- [x] **218.7** — Created `src/styles/base/gradient.css` (AppGradientBg in @layer base)
+- [x] **218.8** — Created `src/styles/components/typography.css` (heading-1–6 + body-1–2)
+- [x] **218.9** — Created `src/styles/components/buttons.css` (btn + sizes + variants + icon-btn)
+- [x] **218.10** — Created `src/styles/components/admin.css` (admin surfaces)
+- [x] **218.11** — Created `src/styles/components/tooltip.css` (tooltip-content)
+- [x] **218.12** — Created `src/styles/components/chat.css` (chat-markdown + responsive table)
+- [x] **218.13** — Updated `src/app/layout.tsx` import: `@/app/globals.css` → `@/styles/index.css`
+- [x] **218.14** — Deleted `src/app/globals.css`
+- [x] **218.15** — Validation: prettier ✓, lint ✓, tsc ✓, tests (644/644) ✓, build ✓, knip ✓
+- [x] **218.16** — Zero remaining `globals.css` references in src/
 
 ---
 

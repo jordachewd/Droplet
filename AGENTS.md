@@ -144,6 +144,11 @@ src/app/
   (chat)/app/       — authenticated chat routes (/app, /app/new, /app/library, /app/c/[conversationId], /app/profile, /app/plans)
   (admin)/admin/    — admin routes (/admin, /admin/users, /admin/transactions, /admin/usage, /admin/settings, /admin/website)
   api/              — API route handlers
+src/styles/         — Tailwind CSS modular architecture (Phase 218)
+  index.css         — Entry point: @import "tailwindcss" + orchestrator
+  theme/            — @theme tokens: colors.css, layout.css, typography.css
+  base/             — @layer base: compatibility.css, elements.css, gradient.css
+  components/       — @layer components: typography.css, buttons.css, admin.css, tooltip.css, chat.css
 src/components/     — UI components by domain (chat, layout, sections, shared)
 src/lib/actions/    — server actions (mutations only)
 src/lib/database/   — Mongoose models and connection

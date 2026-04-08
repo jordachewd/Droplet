@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last updated: 2026-04-07 (PM audit #99). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. **V1.0 MVP RELEASED.** Brand rename complete (Phase 172). Catch blocks documented (Phase 167.2). Promo text admin-configurable (Phase 162, 180.2–180.3). Global error boundary live (Phase 163). Admin error boundary live (Phase 187-A). Phases 143–216 COMPLETE. Phase 165.1 COMPLETE. Phases 146–148 COMPLETE. Phases 29.1–29.5 COMPLETE. **Sidebar restructure COMPLETE (Phases 209–216).** E2E: 49 tests (8 spec files). Coverage: 85/80/85/85. 644 tests. Build passing. Node.js 24.12.0. jsdom pinned to ~24.1.3 (ESM compat). Zod schema consistency across all server actions and API routes. **Stripe recurring billing planned (Phases 217-A–D).**
+> Last updated: 2026-04-08 (PM audit #100). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. **V1.0 MVP RELEASED.** Brand rename complete (Phase 172). Catch blocks documented (Phase 167.2). Promo text admin-configurable (Phase 162, 180.2–180.3). Global error boundary live (Phase 163). Admin error boundary live (Phase 187-A). Phases 143–216 COMPLETE. Phase 165.1 COMPLETE. Phases 146–148 COMPLETE. Phases 29.1–29.5 COMPLETE. **Sidebar restructure COMPLETE (Phases 209–216).** **Phase 218 ACTIVE (CSS modular architecture).** E2E: 49 tests (8 spec files). Coverage: 85/80/85/85. 644 tests. Build passing. Node.js 24.12.0. jsdom pinned to ~24.1.3 (ESM compat). Zod schema consistency across all server actions and API routes. **Stripe recurring billing planned (Phases 217-A–D).**
 >
 > **V1.0 MVP Released (PM audit #94):**
 >
@@ -749,6 +749,7 @@ All file handling technical debt has been resolved. S3 cleanup on task/user dele
 ### Design System
 
 - Tailwind CSS v4.2 with custom design tokens
+- CSS architecture: modular `src/styles/` folder (Phase 218) — entry point `src/styles/index.css`, split into theme tokens (`theme/colors.css`, `theme/layout.css`, `theme/typography.css`), base resets (`base/compatibility.css`, `base/elements.css`, `base/gradient.css`), component classes (`components/typography.css`, `components/buttons.css`, `components/admin.css`, `components/tooltip.css`, `components/chat.css`). Uses Tailwind v4 native `@import` inlining — identical build output.
 - Custom fonts: Dosis + Albert Sans
 - Dark/light themes via `data-Droplet-theme` attribute
 - Bootstrap Icons

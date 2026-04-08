@@ -3,7 +3,7 @@
 > Purpose: one execution document for finishing the SaaS without avoidable rework.
 > Audience: Project Manager, Architect, and Senior Software Agents.
 > Rule: this plan is based on verified repository state. If older docs disagree with code, code wins until this file is updated.
-> Last verified: PM audit #99, 2026-04-07. V1.0 MVP RELEASED. Owner directives OI45–OI50 COMPLETE (sidebar restructure). OI51 (Stripe recurring) ON HOLD. Phases 209–216 DONE. 644 tests, 0 failures. All 7 gates GREEN. 0 critical issues.
+> Last verified: PM audit #100, 2026-04-08. V1.0 MVP RELEASED. Owner directives OI45–OI50 COMPLETE (sidebar restructure). OI51 (Stripe recurring) ON HOLD. OI52 (CSS modular architecture) APPROVED. Phases 209–216 DONE. Phase 218 ACTIVE. 644 tests, 0 failures. All 7 gates GREEN. 0 critical issues.
 
 ---
 
@@ -227,7 +227,13 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 
 ### Post-Release Active
 
-> PM audit #99 (2026-04-07). Sidebar restructure COMPLETE (Phases 209–216). Stripe recurring billing ON HOLD.
+> PM audit #100 (2026-04-08). Sidebar restructure COMPLETE (Phases 209–216). Phase 218 ACTIVE (CSS modular architecture). Stripe recurring billing ON HOLD.
+
+#### CSS Modular Architecture (Phase 218) — ACTIVE
+
+> DX/maintainability improvement. Zero visual changes. Zero runtime cost. Owner directive OI52.
+
+- **Phase 218** — Tailwind CSS modular architecture. Split monolithic `src/app/globals.css` (423 lines) into `src/styles/` folder with 12 files organized by concern: theme tokens (colors, layout, typography), base resets (compatibility, elements, gradient), component classes (typography, buttons, admin, chat, tooltip). Entry point moves to `src/styles/index.css`. Uses Tailwind v4's native `@import` inlining — identical build output, better DX. **Dependencies:** None. **Effort:** ~30min. **Risk:** Low (pure structural refactor, validation gates catch regressions).
 
 #### Sidebar & Navigation Restructure (Phases 209–216) — COMPLETE
 
@@ -306,6 +312,7 @@ All phases DONE. See DONE.md for detailed records.
 | OI49 | Conversation dropdown menu with Rename + Delete                         | ✅ COMPLETE. Phase 215 DONE. Full ARIA + keyboard nav. renameTask action (Phase 215.0).                                            |
 | OI50 | PersonaSelector moves from ChatHeader to ChatInput                      | ✅ COMPLETE. Phase 216 DONE.                                                                                                       |
 | OI51 | Stripe recurring payment (monthly auto-renewal)                         | ⏳ ACTIVE. Promoted from deferred. Phases 217-A through 217-D. BLOCKED pending owner decisions.                                    |
+| OI52 | Tailwind CSS modular architecture (`src/styles/` folder)                | ⏳ ACTIVE. Phase 218. DX improvement. Zero visual changes. Architect + Engineer + PM APPROVED.                                     |
 
 ---
 

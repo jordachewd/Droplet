@@ -1,12 +1,13 @@
-import { ClerkProvider } from "@clerk/nextjs";
-import DropletTheme from "@/components/layout/droplet-theme";
-import type { Metadata, Viewport } from "next";
 import { Albert_Sans, Dosis } from "next/font/google";
 import "bootstrap-icons/font/bootstrap-icons.css";
-import "@/app/globals.css";
+import "@/styles/index.css";
+import DropletTheme from "@/components/layout/droplet-theme";
 import MainWrapper from "@/components/layout/main-wrapper";
-import { Analytics } from "@vercel/analytics/next";
 import AppGradientBg from "@/components/shared/app-gradient-bg";
+import { ClerkProvider } from "@clerk/nextjs";
+import type { Metadata, Viewport } from "next";
+import { ReactNode } from "react";
+import { Analytics } from "@vercel/analytics/next";
 
 export const metadata: Metadata = {
   title: "Droplet",
@@ -36,11 +37,7 @@ const albertsans = Albert_Sans({
   display: "swap",
 });
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html
       lang="en"

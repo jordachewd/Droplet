@@ -1,0 +1,8 @@
+@theme {
+  --breakpoint-xls: 1366px;
+  --breakpoint-xxl: 1440px;
+  --breakpoint-3xl: 1600px;
+
+  --container-edge: 96%;
+  --max-height-edge: 92%;
+}

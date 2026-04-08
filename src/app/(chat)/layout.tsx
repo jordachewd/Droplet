@@ -4,13 +4,11 @@ import ChatHeader from "@/components/chat/chat-header";
 import ChatPageWrapper from "@/components/chat/chat-page-wrapper";
 import { ReactNode, Suspense } from "react";
 
-interface ChatRouteLayoutProps {
+interface ChatLayoutProps {
   children: ReactNode;
 }
 
-export default async function ChatRouteLayout({
-  children,
-}: ChatRouteLayoutProps) {
+export default async function ChatRouteLayout({ children }: ChatLayoutProps) {
   return (
     <ChatPageWrapper className="ChatRouteLayout flex-row!">
       <a href="#chat-main-content" className="skip-link">
