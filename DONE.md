@@ -2,7 +2,20 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-04-08 — PM audit #100.
+> Last updated: 2026-04-08 — PM audit #102.
+
+---
+
+## Phase 219 — Orphan Cleanup — COMPLETED (2026-04-08)
+
+> Owner directive OI53. Engineer delivered (PM audit #102). Dead code removal, type deduplication, knip cleanup, obsolete artifact deletion. Zero behavior change. All 7 gates GREEN. 644 tests passing. Knip: 0 findings.
+
+- [x] **219.1** — Deleted `src/components/layout/route-group-layout.tsx` (dead component — zero imports, suppressed in knip.json)
+- [x] **219.2** — Removed `route-group-layout.tsx` from `knip.json` `ignoreFiles` array
+- [x] **219.3** — Created `src/constants/legal-shared.ts` with shared `LegalSection` interface + `legalReviewDisclaimer` constant
+- [x] **219.4** — Updated `privacy-data.ts` and `terms-data.ts` to import `LegalSection` from `legal-shared.ts` (removed duplicate interfaces)
+- [x] **219.5** — Deleted `plan-reorganizeTailwindCssStyles.prompt.md` from repo root (obsolete Phase 218 planning artifact)
+- [x] **219.6** — Validation: knip ✓, tsc ✓, lint ✓, tests (644/644) ✓, build ✓, prettier ✓
 
 ---
 

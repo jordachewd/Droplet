@@ -5,32 +5,23 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #101 (2026-04-08). V1.0 MVP RELEASED. Phase 218 COMPLETE. Phases 219–222 ACTIVE (codebase cleanup + shared layout). OI51 (Stripe recurring) ON HOLD.**
+> **STATUS: PM audit #102 (2026-04-08). V1.0 MVP RELEASED. Phases 218–219 COMPLETE. Phases 220–222 ACTIVE (shared hook + layout CSS + shared layout shell). OI51 (Stripe recurring) ON HOLD.**
 >
 > **GATE STATUS: Validation GREEN. Architecture GREEN. Product GREEN. Admin GREEN. Public GREEN. Contract GREEN.**
 >
 > **TEST STATUS: 644 tests (104 suites), 49 E2E (6 skipped). 0 failures. All gates GREEN.**
 >
-> **EXECUTION ORDER: Phase 219 → 220 → 221 → 222 (222-A → 222-B → 222-C). Phase 217 ON HOLD pending owner decisions.**
+> **EXECUTION ORDER: Phase 220 → 221 → 222 (222-A → 222-B → 222-C). Phase 217 ON HOLD pending owner decisions.**
 
 ---
 
 ## ACTIVE — Codebase Cleanup & Shared Layout (Phases 219–222)
 
-> Owner directives OI53–OI57 (PM audit #101). DX/maintainability improvements. Shared layout unification between admin and chat. All findings verified by triple-audit (Architect + Engineer + PM).
+> Owner directives OI53–OI57 (PM audit #102). DX/maintainability improvements. Shared layout unification between admin and chat. All findings verified by triple-audit (Architect + Engineer + PM).
 
-### Phase 219 — Orphan Cleanup
+### Phase 219 — Orphan Cleanup — COMPLETED
 
-> **Owner:** OI53. **Risk:** NONE (dead code removal). **Effort:** ~10min. **Dependencies:** None.
->
-> **Acceptance Criteria:**
-
-- [ ] **219.1** — Delete `src/components/layout/route-group-layout.tsx` (dead component — zero imports across entire codebase, suppressed in `knip.json`)
-- [ ] **219.2** — Remove `src/components/layout/route-group-layout.tsx` from `knip.json` `ignoreFiles` array
-- [ ] **219.3** — Move `LegalSection` interface from `src/constants/privacy-data.ts` and `src/constants/terms-data.ts` to `src/constants/legal-shared.ts` (currently duplicated identically in both files)
-- [ ] **219.4** — Update `privacy-data.ts` and `terms-data.ts` to import `LegalSection` from `legal-shared.ts`
-- [ ] **219.5** — Delete `plan-reorganizeTailwindCssStyles.prompt.md` from repo root (obsolete Phase 218 planning artifact)
-- [ ] **219.6** — Validation: knip ✓, tsc ✓, lint ✓, tests ✓, build ✓
+> ✅ DONE (PM audit #102). See [DONE.md](DONE.md) for detailed completion record.
 
 ### Phase 220 — Extract `useIsDesktop()` Hook
 
@@ -101,9 +92,9 @@
 
 ---
 
-## COMPLETED — Phase 218: Tailwind CSS Modular Architecture (Archived to DONE.md)
+## COMPLETED — Phases 218–219: CSS Architecture + Orphan Cleanup (Archived to DONE.md)
 
-> Phase 218 ALL COMPLETE. See [DONE.md](DONE.md) for detailed completion record.
+> Phase 218 (CSS modular architecture) ALL COMPLETE. Phase 219 (orphan cleanup) ALL COMPLETE. See [DONE.md](DONE.md) for detailed completion records.
 
 ---
 
