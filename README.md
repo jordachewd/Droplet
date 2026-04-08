@@ -46,17 +46,17 @@ Each persona is an independent AI agent — pragmatic, direct, and grounded in r
 
 ## Plans & Pricing
 
-|                          | Lite         | Pro       | Premium   |
-| ------------------------ | ------------ | --------- | --------- |
-| **Price**                | Free forever | $19/month | $39/month |
-| **Personas (full)**      | 2            | 5         | All 6     |
-| **Trial access**         | All others   | Remaining | —         |
-| **Conversations/Day**    | 5            | 50        | Unlimited |
-| **Prompts/Conversation** | 10           | 100       | Unlimited |
-| **Image Generation**     | 3/month      | 50/month  | Unlimited |
-| **Audio Generation**     | 3/month      | 50/month  | Unlimited |
+|                          | Lite         | Pro         | Premium     |
+| ------------------------ | ------------ | ----------- | ----------- |
+| **Price**                | Free forever | From $19/mo | From $39/mo |
+| **Personas (full)**      | 2            | 5           | All 6       |
+| **Trial access**         | All others   | Remaining   | —           |
+| **Conversations/Day**    | 5            | 50          | Unlimited   |
+| **Prompts/Conversation** | 10           | 100         | Unlimited   |
+| **Image Generation**     | 3/month      | 50/month    | Unlimited   |
+| **Audio Generation**     | 3/month      | 50/month    | Unlimited   |
 
-All plans include all features — differentiated by usage limits, not by feature lockout. Personas not fully included in your plan are available as trials with reduced limits.
+All plans include all features — differentiated by usage limits, not by feature lockout. Personas not fully included in your plan are available as trials with reduced limits. Yearly billing available with 30% discount.
 
 Create a free account and start chatting today. Upgrade anytime — no commitment.
 

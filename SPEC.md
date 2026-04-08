@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> ...04-08 (PM audit #102). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. **V1.0 MVP RELEASED.** Brand rename complete (Phase 172). Catch blocks documented (Phase 167.2). Promo text admin-configurable (Phase 162, 180.2–180.3). Global error boundary live (Phase 163). Admin error boundary live (Phase 187-A). Phases 143–216 COMPLETE. Phase 165.1 COMPLETE. Phases 146–148 COMPLETE. Phases 29.1–29.5 COMPLETE. **Sidebar restructure COMPLETE (Phases 209–216).** **Phases 218–219 COMPLETE (CSS modular architecture + orphan cleanup).** **Phases 220–222 ACTIVE (shared hooks, layout CSS extraction, shared layout shell).** E2E: 49 tests (8 spec files). Coverage: 85/80/85/85. 644 tests. Build passing. Node.js 24.12.0. jsdom pinned to ~24.1.3 (ESM compat). Zod schema consistency across all server actions and API routes. **Stripe recurring billing planned (Phases 217-A–D).**
+> ...04-08 (PM audit #103). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. **V1.0 MVP RELEASED.** Brand rename complete (Phase 172). Catch blocks documented (Phase 167.2). Promo text admin-configurable (Phase 162, 180.2–180.3). Global error boundary live (Phase 163). Admin error boundary live (Phase 187-A). Phases 143–220 COMPLETE. Phase 165.1 COMPLETE. Phases 146–148 COMPLETE. Phases 29.1–29.5 COMPLETE. **Sidebar restructure COMPLETE (Phases 209–216).** **Phases 218–220 COMPLETE (CSS modular architecture + orphan cleanup + useIsDesktop hook).** **Phases 221–222 ACTIVE (layout CSS extraction, shared layout shell).** **Stripe recurring billing UNBLOCKED (Phases 217-A–G).** E2E: 49 tests (8 spec files). Coverage: 85/80/85/85. 644 tests. Build passing. Node.js 24.12.0. jsdom pinned to ~24.1.3 (ESM compat). TypeScript 6.0.2 + ESLint 10 fully compatible (audit #103). Zod schema consistency across all server actions and API routes. **Stripe recurring billing planned (Phases 217-A–G) — owner answers received.**
 >
 > **V1.0 MVP Released (PM audit #94):**
 >
@@ -252,7 +252,18 @@ Prompts are versioned and separated from request handlers. `buildPersonaAwareSys
 2. Upgrade via Stripe Checkout (one-time payment per billing cycle).
 3. On successful `checkout.session.completed` webhook, the user's plan and expiration are updated.
 4. Expired paid plans revert to Lite behavior (checked in `/api/openai` route).
-5. No auto-renewal — plans are one-time payments with set expiration dates for paid tiers. **Recurring subscription billing planned (Phases 217-A–D, blocked pending owner decisions).**
+5. No auto-renewal — plans are one-time payments with set expiration dates for paid tiers. **Recurring subscription billing UNBLOCKED (Phases 217-A–G). Owner decisions:** grandfather existing one-time users until expiry then revert to Lite; Monthly + Yearly billing (30% yearly discount); custom cancel UI (not Stripe Customer Portal).
+
+#### Planned Subscription Changes (Phase 217)
+
+Once Phase 217 is implemented:
+
+- Billing switches from `mode: "payment"` to `mode: "subscription"` in Stripe Checkout
+- Yearly billing option added: Pro $159.60/year, Premium $327.60/year (30% discount)
+- Stripe Customer object created per user (`stripeCustomerId`)
+- Subscription lifecycle managed via webhook events: `invoice.paid`, `invoice.payment_failed`, `customer.subscription.updated`, `customer.subscription.deleted`
+- Custom cancellation UI with `cancel_at_period_end: true` (access retained until period end)
+- Existing one-time paid users grandfathered until `expiresOn`, then naturally revert to Lite
 
 ### Usage Limit Enforcement
 
@@ -281,7 +292,7 @@ Prompts are versioned and separated from request handlers. `buildPersonaAwareSys
 
 ### Plan Technical Debt
 
-- **TD-PLAN-01**: No recurring subscriptions (deferred v1).
+- **TD-PLAN-01**: No recurring subscriptions (planned: Phases 217-A–G, UNBLOCKED).
 
 ---
 
@@ -921,9 +932,9 @@ _(None currently.)_
 
 | ID         | Area    | Description                                                                    | Phase    |
 | ---------- | ------- | ------------------------------------------------------------------------------ | -------- |
-| TD-AI-09   | OpenAI  | Image/audio generation prompts not persona-aware (chat prompts done Phase 22). | 26.1     |
+| TD-AI-09   | OpenAI  | Image/audio generation prompts not persona-aware (chat prompts done Phase 22). | 26.x     |
 | TD-AI-13   | OpenAI  | 3 model pricing entries are placeholders pending OpenAI confirmation.          | Deferred |
-| TD-PLAN-01 | Billing | No recurring subscriptions (deferred v1).                                      | Deferred |
+| TD-PLAN-01 | Billing | No recurring subscriptions (Phases 217-A–G UNBLOCKED, owner answers received). | 217      |
 | TD-AI-18   | OpenAI  | errorMessage forwarding pattern in `/api/openai` is safe but fragile.          | Advisory |
 | TD-API-09  | API     | `messageTextContentSchema` uses `.strict()` — may reject extra fields.         | Monitor  |
 
