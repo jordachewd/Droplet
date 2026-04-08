@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useSyncExternalStore } from "react";
+import { useEffect } from "react";
 import classNames from "classnames";
 import { PromoContent } from "@/constants/promo-content";
 import SidebarHead from "@/components/chat/sidebar/sidebar-head";
@@ -10,6 +10,7 @@ import { ConversationListItem } from "@/types/PersonaData.d";
 import { PlanName } from "@/types/PlanData.d";
 import { UserRoles } from "@/types/UserData.d";
 import { usePathname } from "next/navigation";
+import { useIsDesktop } from "@/lib/hooks/use-is-desktop";
 import { useUiStore } from "@/lib/hooks/use-ui-store";
 import { useShallow } from "zustand/react/shallow";
 
@@ -29,22 +30,7 @@ export default function ChatSidebarShell({
   promoContent,
 }: ChatSidebarShellProps) {
   const sidebarStorageKey = "droplet-sidebar-collapsed";
-
-  const subscribeToDesktopQuery = useCallback((callback: () => void) => {
-    const mql = window.matchMedia("(min-width: 1024px)");
-    mql.addEventListener("change", callback);
-    return () => mql.removeEventListener("change", callback);
-  }, []);
-  const getDesktopSnapshot = useCallback(
-    () => window.matchMedia("(min-width: 1024px)").matches,
-    [],
-  );
-  const getDesktopServerSnapshot = useCallback(() => false, []);
-  const isDesktopViewport = useSyncExternalStore(
-    subscribeToDesktopQuery,
-    getDesktopSnapshot,
-    getDesktopServerSnapshot,
-  );
+  const isDesktopViewport = useIsDesktop();
   const {
     desktopSidebarCollapsed: desktopCollapsed,
     mobileSidebarOpen: mobileOpen,

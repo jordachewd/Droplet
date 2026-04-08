@@ -1,10 +1,10 @@
 "use client";
 
-import { useRef, useSyncExternalStore } from "react";
 import classNames from "classnames";
 import Logo from "@/components/shared/app-logo";
 import SidebarToggle from "@/components/shared/sidebar-toggle";
 import { useShallow } from "zustand/react/shallow";
+import { useIsDesktop } from "@/lib/hooks/use-is-desktop";
 import { useUiStore } from "@/lib/hooks/use-ui-store";
 
 interface SidebarHeadProps {
@@ -27,21 +27,10 @@ export default function SidebarHead({
       toggleMobileSidebarOpen: state.toggleMobileSidebarOpen,
     })),
   );
-
-  const desktopQueryRef = useRef<MediaQueryList | null>(null);
-  const isDesktop = useSyncExternalStore(
-    (callback) => {
-      const mql = window.matchMedia("(min-width: 1024px)");
-      desktopQueryRef.current = mql;
-      mql.addEventListener("change", callback);
-      return () => mql.removeEventListener("change", callback);
-    },
-    () => window.matchMedia("(min-width: 1024px)").matches,
-    () => false,
-  );
+  const isDesktop = useIsDesktop();
 
   function handleToggleSidebar() {
-    if (desktopQueryRef.current?.matches) {
+    if (isDesktop) {
       toggleDesktopSidebarCollapsed();
       return;
     }

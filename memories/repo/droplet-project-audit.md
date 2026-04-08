@@ -16,6 +16,7 @@
 ## Triple Audit Findings (Architect + Engineer + PM, audit #102)
 
 ### Orphan Scan — CLEAN
+
 - No dead files, exports, types, or unreferenced components
 - No TODO/FIXME/HACK comments in src/
 - No console.log/console.error in src/
@@ -23,6 +24,7 @@
 - Knip: 0 issues
 
 ### Layout Duplication (VERIFIED ~60% shared code)
+
 - 3 independent copies of desktop media query hook (useSyncExternalStore)
 - Identical sidebar base CSS classes (admin-sidebar, chat-sidebar-shell, chat-sidebar-loading)
 - Identical sidebar backdrop overlay (admin-sidebar, chat-sidebar-shell)
@@ -33,6 +35,7 @@
 - 5 near-identical useUiStore + useShallow destructurings
 
 ### CSS Extraction Candidates (Phase 221)
+
 - `.app-sidebar` — 3 files (admin-sidebar, chat-sidebar-shell, chat-sidebar-loading)
 - `.sidebar-backdrop` — 2 files (admin-sidebar, chat-sidebar-shell)
 - `.app-header-bar` + `.app-header-inner` — 2 files (admin-layout-shell, chat-header)
@@ -41,16 +44,19 @@
 - `.admin-form-surface` — 8 occurrences
 
 ### Active Phase Plan
+
 - Phase 220: Extract useIsDesktop() hook (consolidate 3 copies)
 - Phase 221: Extract shared layout CSS classes (layout.css + forms.css)
 - Phase 222: Shared AppLayoutShell + SidebarShell components (222-A/B/C sub-phases)
 
 ### Noted Info Items
+
 - Admin sidebar expanded width: lg:w-72; Chat sidebar: lg:w-56 (parameterized in Phase 222)
 - Admin sidebar does NOT persist collapsed state to localStorage (chat does)
 - FORM_INPUT_CONTROL_CLASS JS constant pattern already works for form inputs (3 consumers)
 
 ### Owner Directives Status
+
 - OI53: Orphan cleanup — COMPLETE
 - OI54: Shared admin/chat layout — ACTIVE (Phase 222)
 - OI55: CSS layout class extraction — ACTIVE (Phase 221)

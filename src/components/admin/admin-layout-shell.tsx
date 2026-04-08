@@ -1,12 +1,12 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
 import Link from "next/link";
 import classNames from "classnames";
 import AdminSidebar from "@/components/admin/admin-sidebar";
 import ToggleTheme from "@/components/shared/toggle-theme";
 import AvatarMenu from "@/components/shared/avatar-menu";
 import SidebarToggle from "@/components/shared/sidebar-toggle";
+import { useIsDesktop } from "@/lib/hooks/use-is-desktop";
 import { useUiStore } from "@/lib/hooks/use-ui-store";
 import { useShallow } from "zustand/react/shallow";
 
@@ -18,30 +18,6 @@ interface AdminLayoutShellProps {
     icon: string;
     exact?: boolean;
   }>;
-}
-
-const DESKTOP_MEDIA_QUERY = "(min-width: 1024px)";
-
-function subscribeToDesktopQuery(onStoreChange: () => void): () => void {
-  if (typeof window === "undefined") {
-    return () => {};
-  }
-
-  const mediaQueryList = window.matchMedia(DESKTOP_MEDIA_QUERY);
-  const handleChange = () => onStoreChange();
-  mediaQueryList.addEventListener("change", handleChange);
-
-  return () => {
-    mediaQueryList.removeEventListener("change", handleChange);
-  };
-}
-
-function getDesktopSnapshot(): boolean {
-  if (typeof window === "undefined") {
-    return false;
-  }
-
-  return window.matchMedia(DESKTOP_MEDIA_QUERY).matches;
 }
 
 export default function AdminLayoutShell({
@@ -61,11 +37,7 @@ export default function AdminLayoutShell({
       toggleMobileSidebarOpen: state.toggleMobileSidebarOpen,
     })),
   );
-  const isDesktop = useSyncExternalStore(
-    subscribeToDesktopQuery,
-    getDesktopSnapshot,
-    () => false,
-  );
+  const isDesktop = useIsDesktop();
 
   function handleToggleSidebar() {
     if (isDesktop) {
