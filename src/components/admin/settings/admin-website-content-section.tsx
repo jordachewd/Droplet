@@ -52,7 +52,7 @@ export function AdminWebsiteContentSection({
     <div className="AdminWebsiteContentSection flex flex-col gap-6">
       <AdminManagedForm
         action={updateAdminSettingAction}
-        className="admin-surface flex flex-col gap-4"
+        className="admin-form-surface"
       >
         <input type="hidden" name="key" value="admin.faqContent" />
         <input type="hidden" name="category" value="features" />
@@ -68,10 +68,8 @@ export function AdminWebsiteContentSection({
               key={faqEntry.id}
               className="rounded-2xl border border-slate-300 bg-lavenderHaze-100/60 p-4 dark:border-slate-500 dark:bg-nightIndigo-1000/50"
             >
-              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
-                FAQ #{faqEntry.id + 1}
-              </p>
-              <label className="mb-3 flex flex-col gap-1 text-sm">
+              <p className="mb-3 admin-label">FAQ #{faqEntry.id + 1}</p>
+              <label className="mb-3 form-field">
                 <span className="font-medium">Question</span>
                 <input
                   type="text"
@@ -79,10 +77,10 @@ export function AdminWebsiteContentSection({
                   defaultValue={faqEntry.question}
                   required
                   aria-required="true"
-                  className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+                  className="form-input"
                 />
               </label>
-              <label className="flex flex-col gap-1 text-sm">
+              <label className="form-field">
                 <span className="font-medium">Answer</span>
                 <textarea
                   name={`faqAnswer_${faqEntry.id}`}
@@ -90,7 +88,7 @@ export function AdminWebsiteContentSection({
                   required
                   aria-required="true"
                   rows={4}
-                  className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+                  className="form-input"
                 />
               </label>
             </div>
@@ -107,7 +105,7 @@ export function AdminWebsiteContentSection({
 
       <AdminManagedForm
         action={updateAdminSettingAction}
-        className="admin-surface flex flex-col gap-4"
+        className="admin-form-surface"
       >
         <input type="hidden" name="key" value="admin.homepageCopy" />
         <input type="hidden" name="category" value="features" />
@@ -117,7 +115,7 @@ export function AdminWebsiteContentSection({
           Configure CTA banner and persona spotlight text shown on the homepage.
         </p>
 
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="form-field">
           <span className="font-medium">CTA Heading</span>
           <textarea
             name="homepageCtaHeading"
@@ -125,11 +123,11 @@ export function AdminWebsiteContentSection({
             rows={3}
             required
             aria-required="true"
-            className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+            className="form-input"
           />
         </label>
 
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="form-field">
           <span className="font-medium">CTA Description</span>
           <textarea
             name="homepageCtaDescription"
@@ -137,11 +135,11 @@ export function AdminWebsiteContentSection({
             rows={3}
             required
             aria-required="true"
-            className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+            className="form-input"
           />
         </label>
 
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="form-field">
           <span className="font-medium">Primary CTA Label</span>
           <input
             type="text"
@@ -149,11 +147,11 @@ export function AdminWebsiteContentSection({
             defaultValue={homepageCopyValue.ctaPrimaryLabel}
             required
             aria-required="true"
-            className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+            className="form-input"
           />
         </label>
 
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="form-field">
           <span className="font-medium">Secondary CTA Label</span>
           <input
             type="text"
@@ -161,11 +159,11 @@ export function AdminWebsiteContentSection({
             defaultValue={homepageCopyValue.ctaSecondaryLabel}
             required
             aria-required="true"
-            className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+            className="form-input"
           />
         </label>
 
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="form-field">
           <span className="font-medium">Spotlight Eyebrow</span>
           <input
             type="text"
@@ -173,11 +171,11 @@ export function AdminWebsiteContentSection({
             defaultValue={homepageCopyValue.spotlightLabel}
             required
             aria-required="true"
-            className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+            className="form-input"
           />
         </label>
 
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="form-field">
           <span className="font-medium">Spotlight Heading</span>
           <input
             type="text"
@@ -185,11 +183,11 @@ export function AdminWebsiteContentSection({
             defaultValue={homepageCopyValue.spotlightHeading}
             required
             aria-required="true"
-            className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+            className="form-input"
           />
         </label>
 
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="form-field">
           <span className="font-medium">Spotlight Description</span>
           <textarea
             name="homepageSpotlightDescription"
@@ -197,7 +195,7 @@ export function AdminWebsiteContentSection({
             rows={3}
             required
             aria-required="true"
-            className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+            className="form-input"
           />
         </label>
 
@@ -211,7 +209,7 @@ export function AdminWebsiteContentSection({
 
       <AdminManagedForm
         action={updateAdminSettingAction}
-        className="admin-surface flex flex-col gap-4"
+        className="admin-form-surface"
       >
         <input
           type="hidden"
@@ -229,7 +227,7 @@ export function AdminWebsiteContentSection({
           {featuredPersonaFieldValues.map((selectedPersonaId, index) => (
             <label
               key={`homepage-featured-persona-${index}`}
-              className="flex flex-col gap-1 text-sm"
+              className="form-field"
             >
               <span className="font-medium">Featured Persona #{index + 1}</span>
               <select
@@ -237,7 +235,7 @@ export function AdminWebsiteContentSection({
                 defaultValue={selectedPersonaId}
                 required
                 aria-required="true"
-                className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+                className="form-input"
               >
                 {homepagePersonaOptions.map((persona) => (
                   <option key={persona.id} value={persona.id}>
@@ -259,7 +257,7 @@ export function AdminWebsiteContentSection({
 
       <AdminManagedForm
         action={updateAdminSettingAction}
-        className="admin-surface flex flex-col gap-4"
+        className="admin-form-surface"
       >
         <input type="hidden" name="key" value="admin.heroContent" />
         <input type="hidden" name="category" value="features" />
@@ -270,7 +268,7 @@ export function AdminWebsiteContentSection({
           text.
         </p>
 
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="form-field">
           <span className="font-medium">Heading</span>
           <textarea
             name="heroHeading"
@@ -278,11 +276,11 @@ export function AdminWebsiteContentSection({
             rows={3}
             required
             aria-required="true"
-            className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+            className="form-input"
           />
         </label>
 
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="form-field">
           <span className="font-medium">Subtitle</span>
           <textarea
             name="heroSubheading"
@@ -290,11 +288,11 @@ export function AdminWebsiteContentSection({
             rows={3}
             required
             aria-required="true"
-            className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+            className="form-input"
           />
         </label>
 
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="form-field">
           <span className="font-medium">CTA Label</span>
           <input
             type="text"
@@ -302,11 +300,11 @@ export function AdminWebsiteContentSection({
             defaultValue={heroContentValue.ctaLabel}
             required
             aria-required="true"
-            className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+            className="form-input"
           />
         </label>
 
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="form-field">
           <span className="font-medium">Hero Image Alt Text</span>
           <input
             type="text"
@@ -314,7 +312,7 @@ export function AdminWebsiteContentSection({
             defaultValue={heroContentValue.imageAlt}
             required
             aria-required="true"
-            className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+            className="form-input"
           />
         </label>
 
@@ -328,7 +326,7 @@ export function AdminWebsiteContentSection({
 
       <AdminManagedForm
         action={updateAdminSettingAction}
-        className="admin-surface flex flex-col gap-4"
+        className="admin-form-surface"
       >
         <input type="hidden" name="key" value="admin.landingContent" />
         <input type="hidden" name="category" value="features" />
@@ -345,10 +343,8 @@ export function AdminWebsiteContentSection({
               key={`feature-${index}`}
               className="rounded-2xl border border-slate-300 bg-lavenderHaze-100/60 p-4 dark:border-slate-500 dark:bg-nightIndigo-1000/50"
             >
-              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
-                Card #{index + 1}
-              </p>
-              <label className="mb-3 flex flex-col gap-1 text-sm">
+              <p className="mb-3 admin-label">Card #{index + 1}</p>
+              <label className="mb-3 form-field">
                 <span className="font-medium">Icon Class</span>
                 <input
                   type="text"
@@ -356,10 +352,10 @@ export function AdminWebsiteContentSection({
                   defaultValue={featureCard.icon}
                   required
                   aria-required="true"
-                  className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+                  className="form-input"
                 />
               </label>
-              <label className="mb-3 flex flex-col gap-1 text-sm">
+              <label className="mb-3 form-field">
                 <span className="font-medium">Title</span>
                 <input
                   type="text"
@@ -367,10 +363,10 @@ export function AdminWebsiteContentSection({
                   defaultValue={featureCard.title}
                   required
                   aria-required="true"
-                  className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+                  className="form-input"
                 />
               </label>
-              <label className="flex flex-col gap-1 text-sm">
+              <label className="form-field">
                 <span className="font-medium">Description</span>
                 <textarea
                   name={`featureDescription_${index}`}
@@ -378,14 +374,14 @@ export function AdminWebsiteContentSection({
                   rows={3}
                   required
                   aria-required="true"
-                  className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+                  className="form-input"
                 />
               </label>
             </div>
           ))}
         </div>
 
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="form-field">
           <span className="font-medium">How It Works Eyebrow</span>
           <input
             type="text"
@@ -393,11 +389,11 @@ export function AdminWebsiteContentSection({
             defaultValue={landingContentValue.workflow.eyebrow}
             required
             aria-required="true"
-            className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+            className="form-input"
           />
         </label>
 
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="form-field">
           <span className="font-medium">How It Works Title</span>
           <input
             type="text"
@@ -405,11 +401,11 @@ export function AdminWebsiteContentSection({
             defaultValue={landingContentValue.workflow.title}
             required
             aria-required="true"
-            className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+            className="form-input"
           />
         </label>
 
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="form-field">
           <span className="font-medium">How It Works Description</span>
           <textarea
             name="workflowDescription"
@@ -417,7 +413,7 @@ export function AdminWebsiteContentSection({
             rows={3}
             required
             aria-required="true"
-            className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+            className="form-input"
           />
         </label>
 
@@ -428,10 +424,8 @@ export function AdminWebsiteContentSection({
               key={`how-step-${index}`}
               className="rounded-2xl border border-slate-300 bg-lavenderHaze-100/60 p-4 dark:border-slate-500 dark:bg-nightIndigo-1000/50"
             >
-              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
-                Step #{index + 1}
-              </p>
-              <label className="mb-3 flex flex-col gap-1 text-sm">
+              <p className="mb-3 admin-label">Step #{index + 1}</p>
+              <label className="mb-3 form-field">
                 <span className="font-medium">Step Number</span>
                 <input
                   type="text"
@@ -439,10 +433,10 @@ export function AdminWebsiteContentSection({
                   defaultValue={step.step}
                   required
                   aria-required="true"
-                  className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+                  className="form-input"
                 />
               </label>
-              <label className="mb-3 flex flex-col gap-1 text-sm">
+              <label className="mb-3 form-field">
                 <span className="font-medium">Title</span>
                 <input
                   type="text"
@@ -450,10 +444,10 @@ export function AdminWebsiteContentSection({
                   defaultValue={step.title}
                   required
                   aria-required="true"
-                  className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+                  className="form-input"
                 />
               </label>
-              <label className="flex flex-col gap-1 text-sm">
+              <label className="form-field">
                 <span className="font-medium">Description</span>
                 <textarea
                   name={`howDescription_${index}`}
@@ -461,14 +455,14 @@ export function AdminWebsiteContentSection({
                   rows={3}
                   required
                   aria-required="true"
-                  className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+                  className="form-input"
                 />
               </label>
             </div>
           ))}
         </div>
 
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="form-field">
           <span className="font-medium">Conversation Rhythm Eyebrow</span>
           <input
             type="text"
@@ -476,7 +470,7 @@ export function AdminWebsiteContentSection({
             defaultValue={landingContentValue.workflow.rhythmEyebrow}
             required
             aria-required="true"
-            className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+            className="form-input"
           />
         </label>
 
@@ -487,10 +481,8 @@ export function AdminWebsiteContentSection({
               key={`rhythm-card-${index}`}
               className="rounded-2xl border border-slate-300 bg-lavenderHaze-100/60 p-4 dark:border-slate-500 dark:bg-nightIndigo-1000/50"
             >
-              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
-                Rhythm Card #{index + 1}
-              </p>
-              <label className="mb-3 flex flex-col gap-1 text-sm">
+              <p className="mb-3 admin-label">Rhythm Card #{index + 1}</p>
+              <label className="mb-3 form-field">
                 <span className="font-medium">Label</span>
                 <input
                   type="text"
@@ -498,10 +490,10 @@ export function AdminWebsiteContentSection({
                   defaultValue={card.label}
                   required
                   aria-required="true"
-                  className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+                  className="form-input"
                 />
               </label>
-              <label className="flex flex-col gap-1 text-sm">
+              <label className="form-field">
                 <span className="font-medium">Message</span>
                 <textarea
                   name={`rhythmDetail_${index}`}
@@ -509,7 +501,7 @@ export function AdminWebsiteContentSection({
                   rows={3}
                   required
                   aria-required="true"
-                  className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+                  className="form-input"
                 />
               </label>
             </div>
@@ -526,7 +518,7 @@ export function AdminWebsiteContentSection({
 
       <AdminManagedForm
         action={updateAdminSettingAction}
-        className="admin-surface flex flex-col gap-4"
+        className="admin-form-surface"
       >
         <input type="hidden" name="key" value="admin.aboutContent" />
         <input type="hidden" name="category" value="features" />
@@ -537,7 +529,7 @@ export function AdminWebsiteContentSection({
           text.
         </p>
 
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="form-field">
           <span className="font-medium">Page Title</span>
           <input
             type="text"
@@ -545,11 +537,11 @@ export function AdminWebsiteContentSection({
             defaultValue={aboutContentValue.pageTitle}
             required
             aria-required="true"
-            className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+            className="form-input"
           />
         </label>
 
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="form-field">
           <span className="font-medium">Page Subtitle</span>
           <textarea
             name="aboutPageSubtitle"
@@ -557,7 +549,7 @@ export function AdminWebsiteContentSection({
             rows={3}
             required
             aria-required="true"
-            className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+            className="form-input"
           />
         </label>
 
@@ -568,10 +560,8 @@ export function AdminWebsiteContentSection({
               key={section.id}
               className="rounded-2xl border border-slate-300 bg-lavenderHaze-100/60 p-4 dark:border-slate-500 dark:bg-nightIndigo-1000/50"
             >
-              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
-                {section.id}
-              </p>
-              <label className="mb-3 flex flex-col gap-1 text-sm">
+              <p className="mb-3 admin-label">{section.id}</p>
+              <label className="mb-3 form-field">
                 <span className="font-medium">Eyebrow</span>
                 <input
                   type="text"
@@ -579,10 +569,10 @@ export function AdminWebsiteContentSection({
                   defaultValue={section.eyebrow}
                   required
                   aria-required="true"
-                  className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+                  className="form-input"
                 />
               </label>
-              <label className="mb-3 flex flex-col gap-1 text-sm">
+              <label className="mb-3 form-field">
                 <span className="font-medium">Title</span>
                 <input
                   type="text"
@@ -590,10 +580,10 @@ export function AdminWebsiteContentSection({
                   defaultValue={section.title}
                   required
                   aria-required="true"
-                  className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+                  className="form-input"
                 />
               </label>
-              <label className="mb-3 flex flex-col gap-1 text-sm">
+              <label className="mb-3 form-field">
                 <span className="font-medium">Paragraph 1</span>
                 <textarea
                   name={`aboutParagraph1_${section.id}`}
@@ -601,10 +591,10 @@ export function AdminWebsiteContentSection({
                   rows={3}
                   required
                   aria-required="true"
-                  className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+                  className="form-input"
                 />
               </label>
-              <label className="flex flex-col gap-1 text-sm">
+              <label className="form-field">
                 <span className="font-medium">Paragraph 2</span>
                 <textarea
                   name={`aboutParagraph2_${section.id}`}
@@ -612,14 +602,14 @@ export function AdminWebsiteContentSection({
                   rows={3}
                   required
                   aria-required="true"
-                  className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+                  className="form-input"
                 />
               </label>
             </div>
           ))}
         </div>
 
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="form-field">
           <span className="font-medium">Bottom CTA Title</span>
           <input
             type="text"
@@ -627,11 +617,11 @@ export function AdminWebsiteContentSection({
             defaultValue={aboutContentValue.ctaTitle}
             required
             aria-required="true"
-            className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+            className="form-input"
           />
         </label>
 
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="form-field">
           <span className="font-medium">Bottom CTA Description</span>
           <textarea
             name="aboutCtaDescription"
@@ -639,11 +629,11 @@ export function AdminWebsiteContentSection({
             rows={3}
             required
             aria-required="true"
-            className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+            className="form-input"
           />
         </label>
 
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="form-field">
           <span className="font-medium">Primary CTA Label</span>
           <input
             type="text"
@@ -651,11 +641,11 @@ export function AdminWebsiteContentSection({
             defaultValue={aboutContentValue.ctaPrimaryLabel}
             required
             aria-required="true"
-            className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+            className="form-input"
           />
         </label>
 
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="form-field">
           <span className="font-medium">Secondary CTA Label</span>
           <input
             type="text"
@@ -663,7 +653,7 @@ export function AdminWebsiteContentSection({
             defaultValue={aboutContentValue.ctaSecondaryLabel}
             required
             aria-required="true"
-            className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+            className="form-input"
           />
         </label>
 

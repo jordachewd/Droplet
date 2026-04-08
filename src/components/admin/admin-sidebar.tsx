@@ -38,19 +38,14 @@ export default function AdminSidebar({ links }: AdminSidebarProps) {
   }, [pathname, setMobileSidebarOpen]);
 
   const sidebarClass = classNames(
-    "AdminSidebar fixed bottom-0 left-0 top-0 z-30 flex w-72 flex-col justify-between",
-    "bg-lavenderHaze-100/40 transition-all duration-300 backdrop-blur-lg",
-    "lg:relative lg:z-10 lg:translate-x-0 dark:bg-nightIndigo-1000/40",
+    "AdminSidebar app-sidebar justify-between transition-all duration-300 lg:translate-x-0",
     mobileOpen ? "translate-x-0" : "-translate-x-full",
     desktopCollapsed ? "lg:w-16" : "lg:w-72",
   );
 
   const isOpen = !desktopCollapsed;
 
-  const backdropClass = classNames(
-    "fixed inset-0 z-20 bg-black/35 backdrop-blur-[1px] lg:hidden",
-    !mobileOpen && "hidden",
-  );
+  const backdropClass = classNames("sidebar-backdrop", !mobileOpen && "hidden");
 
   return (
     <>
@@ -96,7 +91,7 @@ export default function AdminSidebar({ links }: AdminSidebarProps) {
                   title={!isOpen ? link.label : undefined}
                   aria-current={isActive ? "page" : undefined}
                   className={classNames(
-                    "flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-sm transition-all",
+                    "sidebar-nav-link",
                     "hover:bg-lavenderHaze-300/70 dark:hover:bg-nightIndigo-500/30",
                     isActive &&
                       "bg-lavenderHaze-100 font-semibold dark:bg-nightIndigo-500/25",

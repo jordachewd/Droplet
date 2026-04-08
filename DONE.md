@@ -2,7 +2,20 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-04-08 — PM audit #102.
+> Last updated: 2026-04-08 — PM audit #103.
+
+---
+
+## Phase 220 — Extract `useIsDesktop()` Hook — COMPLETED (2026-04-08)
+
+> Owner directive OI56. Engineer delivered (PM audit #103). Consolidated 3 independent `useSyncExternalStore` + `window.matchMedia("(min-width: 1024px)")` implementations into single shared hook. Replaced in admin-layout-shell, chat-sidebar-shell, sidebar-head. All 7 gates GREEN. Playwright verified desktop + mobile behavior. 644 tests passing.
+
+- [x] **220.1** — Created `src/lib/hooks/use-is-desktop.ts` with shared `useIsDesktop()` hook
+- [x] **220.2** — Replaced implementation in `admin-layout-shell.tsx` with `useIsDesktop()` import
+- [x] **220.3** — Replaced implementation in `chat-sidebar-shell.tsx` with `useIsDesktop()` import
+- [x] **220.4** — Replaced implementation in `sidebar-head.tsx` with `useIsDesktop()` import
+- [x] **220.5** — Deleted 3 sets of module-level/inline media query functions (now unused)
+- [x] **220.6** — Validation: knip ✓, tsc ✓, lint ✓, tests (644/644) ✓, build ✓, E2E ✓, Playwright MCP ✓
 
 ---
 

@@ -15,7 +15,7 @@ export function AdminPromoContentSection({
   return (
     <AdminManagedForm
       action={updateAdminSettingAction}
-      className="AdminPromoContentSection admin-surface flex flex-col gap-4"
+      className="AdminPromoContentSection admin-form-surface"
     >
       <input type="hidden" name="key" value="admin.promoContent" />
       <input type="hidden" name="category" value="features" />
@@ -27,7 +27,7 @@ export function AdminPromoContentSection({
       </p>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="form-field">
           <span className="font-medium">Pro Promo Title</span>
           <input
             type="text"
@@ -35,11 +35,11 @@ export function AdminPromoContentSection({
             defaultValue={promoContentValue.promoTitlePro}
             required
             aria-required="true"
-            className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+            className="form-input"
           />
         </label>
 
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="form-field">
           <span className="font-medium">Premium Promo Title</span>
           <input
             type="text"
@@ -47,13 +47,13 @@ export function AdminPromoContentSection({
             defaultValue={promoContentValue.promoTitlePremium}
             required
             aria-required="true"
-            className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+            className="form-input"
           />
         </label>
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="form-field">
           <span className="font-medium">Pro Promo Description</span>
           <textarea
             name="promoDescriptionPro"
@@ -61,11 +61,11 @@ export function AdminPromoContentSection({
             rows={3}
             required
             aria-required="true"
-            className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+            className="form-input"
           />
         </label>
 
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="form-field">
           <span className="font-medium">Premium Promo Description</span>
           <textarea
             name="promoDescriptionPremium"
@@ -73,13 +73,13 @@ export function AdminPromoContentSection({
             rows={3}
             required
             aria-required="true"
-            className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+            className="form-input"
           />
         </label>
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="form-field">
           <span className="font-medium">Upgrade CTA Label</span>
           <input
             type="text"
@@ -87,11 +87,11 @@ export function AdminPromoContentSection({
             defaultValue={promoContentValue.promoUpgradeCta}
             required
             aria-required="true"
-            className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+            className="form-input"
           />
         </label>
 
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="form-field">
           <span className="font-medium">Contact Support CTA Label</span>
           <input
             type="text"
@@ -99,13 +99,13 @@ export function AdminPromoContentSection({
             defaultValue={promoContentValue.promoContactSupportCta}
             required
             aria-required="true"
-            className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+            className="form-input"
           />
         </label>
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="form-field">
           <span className="font-medium">Admin Label</span>
           <input
             type="text"
@@ -113,11 +113,11 @@ export function AdminPromoContentSection({
             defaultValue={promoContentValue.promoAdminLabel}
             required
             aria-required="true"
-            className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+            className="form-input"
           />
         </label>
 
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="form-field">
           <span className="font-medium">Admin Description</span>
           <input
             type="text"
@@ -125,13 +125,13 @@ export function AdminPromoContentSection({
             defaultValue={promoContentValue.promoAdminDescription}
             required
             aria-required="true"
-            className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+            className="form-input"
           />
         </label>
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="form-field">
           <span className="font-medium">Suspension Title</span>
           <input
             type="text"
@@ -139,11 +139,11 @@ export function AdminPromoContentSection({
             defaultValue={promoContentValue.promoSuspensionTitle}
             required
             aria-required="true"
-            className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+            className="form-input"
           />
         </label>
 
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="form-field">
           <span className="font-medium">Suspension Description</span>
           <input
             type="text"
@@ -151,13 +151,13 @@ export function AdminPromoContentSection({
             defaultValue={promoContentValue.promoSuspensionDescription}
             required
             aria-required="true"
-            className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+            className="form-input"
           />
         </label>
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="form-field">
           <span className="font-medium">Free Plan Badge Label</span>
           <input
             type="text"
@@ -165,11 +165,11 @@ export function AdminPromoContentSection({
             defaultValue={promoContentValue.promoFreeLabel}
             required
             aria-required="true"
-            className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+            className="form-input"
           />
         </label>
 
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="form-field">
           <span className="font-medium">Current Plan Badge Label</span>
           <input
             type="text"
@@ -177,12 +177,12 @@ export function AdminPromoContentSection({
             defaultValue={promoContentValue.promoCurrentPlanLabel}
             required
             aria-required="true"
-            className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+            className="form-input"
           />
         </label>
       </div>
 
-      <label className="flex flex-col gap-1 text-sm">
+      <label className="form-field">
         <span className="font-medium">Generic Upgrade Message</span>
         <textarea
           name="promoUpgradeMessage"
@@ -190,11 +190,11 @@ export function AdminPromoContentSection({
           rows={3}
           required
           aria-required="true"
-          className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+          className="form-input"
         />
       </label>
 
-      <label className="flex flex-col gap-1 text-sm">
+      <label className="form-field">
         <span className="font-medium">Trial Persona Message</span>
         <textarea
           name="promoTrialLabel"
@@ -202,12 +202,12 @@ export function AdminPromoContentSection({
           rows={3}
           required
           aria-required="true"
-          className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+          className="form-input"
         />
       </label>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="form-field">
           <span className="font-medium">
             Persona Upgrade Template (use {"{plan}"})
           </span>
@@ -217,11 +217,11 @@ export function AdminPromoContentSection({
             rows={3}
             required
             aria-required="true"
-            className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+            className="form-input"
           />
         </label>
 
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="form-field">
           <span className="font-medium">Persona Upgrade Fallback</span>
           <textarea
             name="promoPersonaUpgradeFallback"
@@ -229,7 +229,7 @@ export function AdminPromoContentSection({
             rows={3}
             required
             aria-required="true"
-            className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+            className="form-input"
           />
         </label>
       </div>
@@ -237,7 +237,7 @@ export function AdminPromoContentSection({
       <h3 className="heading-6 text-base">Conversation End Messaging</h3>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="form-field">
           <span className="font-medium">End Notice Label</span>
           <input
             type="text"
@@ -245,11 +245,11 @@ export function AdminPromoContentSection({
             defaultValue={promoContentValue.chatConversationEndedLabel}
             required
             aria-required="true"
-            className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+            className="form-input"
           />
         </label>
 
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="form-field">
           <span className="font-medium">Start New Conversation CTA</span>
           <input
             type="text"
@@ -257,13 +257,13 @@ export function AdminPromoContentSection({
             defaultValue={promoContentValue.chatStartConversationCta}
             required
             aria-required="true"
-            className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+            className="form-input"
           />
         </label>
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="form-field">
           <span className="font-medium">Upgrade Plan CTA</span>
           <input
             type="text"
@@ -271,11 +271,11 @@ export function AdminPromoContentSection({
             defaultValue={promoContentValue.chatUpgradePlanCta}
             required
             aria-required="true"
-            className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+            className="form-input"
           />
         </label>
 
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="form-field">
           <span className="font-medium">Contact Support CTA</span>
           <input
             type="text"
@@ -283,7 +283,7 @@ export function AdminPromoContentSection({
             defaultValue={promoContentValue.chatContactSupportCta}
             required
             aria-required="true"
-            className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+            className="form-input"
           />
         </label>
       </div>
@@ -291,7 +291,7 @@ export function AdminPromoContentSection({
       <h3 className="heading-6 text-base">Chat Intro And Plans Labels</h3>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="form-field">
           <span className="font-medium">Chat Intro Subheading</span>
           <input
             type="text"
@@ -299,11 +299,11 @@ export function AdminPromoContentSection({
             defaultValue={promoContentValue.chatIntroSubheading}
             required
             aria-required="true"
-            className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+            className="form-input"
           />
         </label>
 
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="form-field">
           <span className="font-medium">Chat Input Placeholder</span>
           <input
             type="text"
@@ -311,13 +311,13 @@ export function AdminPromoContentSection({
             defaultValue={promoContentValue.chatInputPlaceholder}
             required
             aria-required="true"
-            className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+            className="form-input"
           />
         </label>
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="form-field">
           <span className="font-medium">Plans Subscribe CTA</span>
           <input
             type="text"
@@ -325,11 +325,11 @@ export function AdminPromoContentSection({
             defaultValue={promoContentValue.plansSubscribeCta}
             required
             aria-required="true"
-            className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+            className="form-input"
           />
         </label>
 
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="form-field">
           <span className="font-medium">Plan Popular Badge</span>
           <input
             type="text"
@@ -337,7 +337,7 @@ export function AdminPromoContentSection({
             defaultValue={promoContentValue.planPopularBadge}
             required
             aria-required="true"
-            className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+            className="form-input"
           />
         </label>
       </div>

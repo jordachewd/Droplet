@@ -37,7 +37,7 @@ export function AdminModelsSection({
           <select
             name="liteChatModel"
             defaultValue={modelValue.liteChatModel}
-            className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+            className="form-input"
           >
             {modelOptions.chat.map((modelId) => (
               <option key={`lite-chat-${modelId}`} value={modelId}>
@@ -51,7 +51,7 @@ export function AdminModelsSection({
           <select
             name="proChatModel"
             defaultValue={modelValue.proChatModel}
-            className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+            className="form-input"
           >
             {modelOptions.chat.map((modelId) => (
               <option key={`pro-chat-${modelId}`} value={modelId}>
@@ -65,7 +65,7 @@ export function AdminModelsSection({
           <select
             name="premiumChatModel"
             defaultValue={modelValue.premiumChatModel}
-            className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+            className="form-input"
           >
             {modelOptions.chat.map((modelId) => (
               <option key={`premium-chat-${modelId}`} value={modelId}>
@@ -79,7 +79,7 @@ export function AdminModelsSection({
           <select
             name="imageModel"
             defaultValue={modelValue.imageModel}
-            className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+            className="form-input"
           >
             {modelOptions.image.map((modelId) => (
               <option key={`image-${modelId}`} value={modelId}>
@@ -93,7 +93,7 @@ export function AdminModelsSection({
           <select
             name="audioModel"
             defaultValue={modelValue.audioModel}
-            className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+            className="form-input"
           >
             {modelOptions.audio.map((modelId) => (
               <option key={`audio-${modelId}`} value={modelId}>

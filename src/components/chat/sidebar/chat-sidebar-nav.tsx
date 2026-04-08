@@ -55,7 +55,7 @@ function SidebarNavLink({
       href={item.href}
       aria-label={item.label}
       className={classNames(
-        "group flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-sm transition-all duration-300",
+        "group sidebar-nav-link duration-300",
         "hover:bg-lavenderHaze-300/70 dark:hover:bg-nightIndigo-500/30",
         isActive &&
           "bg-lavenderHaze-100 font-semibold dark:bg-nightIndigo-500/25",

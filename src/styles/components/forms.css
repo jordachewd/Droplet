@@ -1,0 +1,18 @@
+@layer components {
+  .form-input {
+    @apply w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000;
+  }
+
+  .form-field {
+    @apply flex flex-col gap-1 text-sm;
+  }
+
+  .admin-label {
+    @apply text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700;
+  }
+
+  .admin-form-surface {
+    @apply rounded-2xl bg-lavenderHaze-100/78 p-5 shadow-sm backdrop-blur-sm;
+    @apply flex flex-col gap-4 dark:bg-nightIndigo-900/72;
+  }
+}
