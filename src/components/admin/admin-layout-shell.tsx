@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import classNames from "classnames";
 import AdminSidebar from "@/components/admin/admin-sidebar";
 import ToggleTheme from "@/components/shared/toggle-theme";
 import AvatarMenu from "@/components/shared/avatar-menu";
@@ -56,13 +55,8 @@ export default function AdminLayoutShell({
       <AdminSidebar links={adminLinks} />
 
       <div className="AdminMainWrapper relative flex flex-1 flex-col z-10 h-dvh w-full p-0 m-0 overflow-y-auto">
-        <header
-          className={classNames(
-            "AdminLayoutHeader sticky left-0 right-0 top-0 z-20 flex w-full px-4",
-            "bg-lavenderHaze-500/50 backdrop-blur-lg dark:bg-nightIndigo-500/50",
-          )}
-        >
-          <div className="mx-auto flex w-full items-center justify-between gap-4 py-2.5">
+        <header className="AdminLayoutHeader app-header-bar">
+          <div className="app-header-inner">
             <div className="flex items-center gap-2">
               <SidebarToggle
                 icon="bi-layout-sidebar"

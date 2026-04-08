@@ -129,12 +129,12 @@ function AdminUsersTableContent({
           checked={allSelected}
           onChange={handleToggleAll}
           aria-label="Select all users"
-          containerClassName="text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700"
+          containerClassName="admin-label"
         />
 
         {selectedUserIds.length > 0 ? (
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
+            <span className="admin-label">
               {selectedUserIds.length} selected
             </span>
 
@@ -184,7 +184,7 @@ function AdminUsersTableContent({
       <div className="overflow-x-auto">
         <table className="w-full min-w-270 table-fixed border-collapse">
           <thead className="border-b border-slate-300 dark:border-slate-500">
-            <tr className="text-left text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
+            <tr className="text-left admin-label">
               <th scope="col" className="w-12 px-4 py-3">
                 <span className="sr-only">Select</span>
               </th>

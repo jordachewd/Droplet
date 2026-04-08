@@ -53,7 +53,7 @@ export function AdminPersonasSection({
                   <label className="text-sm">
                     <span className="mb-1 block font-medium">Label</span>
                     <input
-                      className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+                      className="form-input"
                       name={`label_${personaId}`}
                       defaultValue={contentValue.label}
                       required
@@ -64,7 +64,7 @@ export function AdminPersonasSection({
                   <label className="text-sm">
                     <span className="mb-1 block font-medium">Tagline</span>
                     <input
-                      className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+                      className="form-input"
                       name={`tagline_${personaId}`}
                       defaultValue={contentValue.tagline}
                       required
@@ -72,10 +72,10 @@ export function AdminPersonasSection({
                     />
                   </label>
 
-                  <label className="text-sm md:col-span-2">
+                  <label className="form-field md:col-span-2">
                     <span className="mb-1 block font-medium">Description</span>
                     <textarea
-                      className="min-h-24 w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+                      className="form-input min-h-24"
                       name={`description_${personaId}`}
                       defaultValue={contentValue.description}
                       required
@@ -83,12 +83,12 @@ export function AdminPersonasSection({
                     />
                   </label>
 
-                  <label className="text-sm md:col-span-2">
+                  <label className="form-field md:col-span-2">
                     <span className="mb-1 block font-medium">
                       Starter prompts (one per line)
                     </span>
                     <textarea
-                      className="min-h-32 w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+                      className="form-input min-h-32"
                       name={`starterPrompts_${personaId}`}
                       defaultValue={contentValue.starterPrompts.join("\n")}
                       required

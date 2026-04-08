@@ -3,7 +3,7 @@ import LoadingBubbles from "@/components/shared/loading-bubbles";
 export default function ChatSidebarLoading() {
   return (
     <aside
-      className="ChatSidebarLoading fixed bottom-0 left-0 top-0 z-30 flex w-72 flex-col bg-lavenderHaze-100/40 backdrop-blur-lg lg:relative lg:z-10 lg:w-56 dark:bg-nightIndigo-1000/40"
+      className="ChatSidebarLoading app-sidebar lg:w-56"
       aria-label="Loading sidebar"
       aria-busy="true"
     >

@@ -51,7 +51,7 @@ export function AdminStopReasonsSection({
               required
               aria-required="true"
               rows={3}
-              className="w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000"
+              className="form-input"
             />
           </label>
         ))}

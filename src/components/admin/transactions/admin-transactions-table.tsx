@@ -87,7 +87,7 @@ export function AdminTransactionsTable({
   return (
     <div className="AdminTransactionsTable admin-table-shell">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-300 px-4 py-3 dark:border-slate-500">
-        <label className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
+        <label className="inline-flex items-center gap-2 admin-label">
           <input
             type="checkbox"
             checked={allSelected}
@@ -99,7 +99,7 @@ export function AdminTransactionsTable({
 
         {visibleSelectedTransactionIds.length > 0 ? (
           <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
+            <span className="admin-label">
               {visibleSelectedTransactionIds.length} selected
             </span>
             <AdminManagedForm
@@ -128,7 +128,7 @@ export function AdminTransactionsTable({
       <div className="overflow-x-auto">
         <table className="w-full min-w-[920px] table-fixed border-collapse">
           <thead className="border-b border-slate-300 dark:border-slate-500">
-            <tr className="text-left text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700">
+            <tr className="text-left admin-label">
               <th scope="col" className="w-12 px-4 py-3">
                 <span className="sr-only">Select</span>
               </th>

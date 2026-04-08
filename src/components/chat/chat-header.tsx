@@ -29,15 +29,11 @@ export default function ChatHeader({ className: style = "" }: ChatHeaderProps) {
 
   const messageCount = messages.length;
 
-  const chatHeaderClass = classNames(
-    "ChatHeader sticky left-0 right-0 top-0 z-20 flex w-full px-4",
-    "bg-lavenderHaze-500/50 backdrop-blur-lg dark:bg-nightIndigo-500/50",
-    style,
-  );
+  const chatHeaderClass = classNames("ChatHeader app-header-bar", style);
 
   return (
     <section className={chatHeaderClass}>
-      <div className="mx-auto flex w-full items-center justify-between gap-4 py-2.5">
+      <div className="app-header-inner">
         <div className="flex items-center gap-2">
           <div className="lg:hidden">
             <SidebarToggle
