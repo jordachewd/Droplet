@@ -1,9 +1,4 @@
-export interface LegalSection {
-  title: string;
-  paragraphs: string[];
-}
-
-import { legalReviewDisclaimer } from "@/constants/legal-shared";
+import { LegalSection, legalReviewDisclaimer } from "@/constants/legal-shared";
 import privacyData from "@/json/privacy.json";
 
 export { legalReviewDisclaimer };

@@ -1,11 +1,6 @@
 import { PlanPricing } from "@/constants/plans";
-import { legalReviewDisclaimer } from "@/constants/legal-shared";
+import { LegalSection, legalReviewDisclaimer } from "@/constants/legal-shared";
 import termsData from "@/json/terms.json";
-
-export interface LegalSection {
-  title: string;
-  paragraphs: string[];
-}
 
 export { legalReviewDisclaimer };
 
