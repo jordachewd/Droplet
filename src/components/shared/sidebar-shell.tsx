@@ -81,9 +81,10 @@ export default function SidebarShell({
     isDesktopViewport,
   };
 
+
   const sidebarClass = classNames(
     className,
-    "app-sidebar justify-between transition-all duration-300 lg:translate-x-0",
+    "app-sidebar",
     mobileSidebarOpen ? "translate-x-0" : "-translate-x-full",
     isDesktopCollapsed ? "lg:w-16" : expandedWidth,
   );
@@ -106,11 +107,11 @@ export default function SidebarShell({
         aria-label="Close sidebar overlay"
       />
 
-      <aside className={sidebarClass} id={id}>
+      <div className={sidebarClass} id={id}>
         {renderSlot(header, slotState)}
         {renderSlot(navigation, slotState)}
         {renderSlot(footer, slotState)}
-      </aside>
+      </div>
     </>
   );
 }

@@ -3,7 +3,7 @@
 import classNames from "classnames";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import Logo from "../shared/app-logo";
+import Logo from "@/components/shared/app-logo";
 import SidebarShell from "@/components/shared/sidebar-shell";
 
 interface AdminSidebarLink {
