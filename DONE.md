@@ -2,7 +2,29 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-04-09 — PM audit #109.
+> Last updated: 2026-04-10 — PM audit #110.
+
+---
+
+## Phase 217-B — Checkout Mode Switch + Customer Management — COMPLETED (2026-04-10)
+
+> Engineer delivered (PM audit #110). Stripe checkout switched from `mode: "payment"` to `mode: "subscription"`. Stripe Customer management utility created. Persistent Price IDs from AppSetting replace inline `price_data`. Yearly billing option added. All 7 gates GREEN. 652 tests (106 suites).
+
+- [x] **217-B.1** — Created `src/lib/utils/stripe-customer.ts`: `getOrCreateStripeCustomer()` utility with `import "server-only"`, retrieves existing Stripe Customer (validates not deleted), creates new if needed, persists `stripeCustomerId` on User model via `findOneAndUpdate` with ownership enforcement (`_id` + `clerkId`), `strict: true`, `upsert: false`.
+- [x] **217-B.2** — Switched `checkoutPlan()` in `transaction.action.tsx` from `mode: "payment"` to `mode: "subscription"` with `customer` param from `getOrCreateStripeCustomer()`.
+- [x] **217-B.3** — Replaced inline `price_data` with persistent Stripe Price ID from `getEffectiveStripeBillingConfig()`. New resolver in `src/lib/utils/effective-stripe-billing-config.ts` with `import "server-only"`, config cache integration, defensive normalizers (`normalizeStripePriceIds`, `normalizeYearlyDiscount`), price resolver (`resolveStripePriceId`), amount resolver (`resolveExpectedCheckoutAmount`).
+- [x] **217-B.4** — Added yearly billing option: `billing: "Monthly" | "Yearly"` param routed to correct Stripe Price ID. Yearly checkout amount computed with admin-configurable discount.
+- [x] **217-B.5** — Added `subscription_data.metadata` with `userId`, `clerkId`, `plan`, `billing` for webhook access.
+- [x] **217-B.6** — Validation: prettier ✓, lint ✓, tsc ✓, tests (652/652) ✓, build ✓, knip ✓. 3 new tests added to `transaction-action.test.ts` (subscription mode, customer reuse, yearly routing, missing price-id failure paths).
+
+---
+
+## Prettier Reformat — PM audit #110 (2026-04-10)
+
+> 37 files had formatting drift from Phase 217-B changes. Fixed by `npx prettier . --write`. All gates GREEN.
+
+- [x] Ran `npx prettier . --write` to reformat 37 files
+- [x] Validation: prettier ✓, lint ✓, tsc ✓, tests (652/652) ✓, build ✓, knip ✓
 
 ---
 

@@ -14,4 +14,3 @@ export default async function AdminLayout({ children }: AdminLayoutProps) {
     <AdminLayoutShell adminLinks={ADMIN_LINKS}>{children}</AdminLayoutShell>
   );
 }
-

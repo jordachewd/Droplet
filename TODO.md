@@ -5,13 +5,13 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #109 (2026-04-09). V1.0 MVP RELEASED. Phase 222 COMPLETE. Phase 217-A COMPLETE. Phase 217-B COMPLETE. POST-DEPENDENCY-UPDATE AUDIT CLEAN. Prettier pinned ~3.8.1. Phase 217-C NEXT.**
+> **STATUS: PM audit #110 (2026-04-10). V1.0 MVP RELEASED. Phase 222 COMPLETE. Phase 217-A COMPLETE. Phase 217-B COMPLETE. Phase 217-C NEXT. Prettier clean (37 files reformatted). All 7 gates GREEN.**
 >
 > **GATE STATUS: All 7 gates GREEN. 0 vulnerabilities. 0 critical issues.**
 >
 > **TEST STATUS: 652 tests (106 suites), 49 E2E (6 skipped). 0 failures. All gates GREEN.**
 >
-> **EXECUTION ORDER: 217-B → 217-C → 217-D → 217-E → 217-F → 217-G → 26.x.**
+> **EXECUTION ORDER: 217-C → 217-D → 217-E → 217-F → 217-G → 218-B → 26.x.**
 
 ---
 
@@ -25,16 +25,9 @@
 
 > ✅ Phase 217-A COMPLETE (PM audit #108). All 6 subtasks delivered: schema fields, types, Stripe products, AppSettings, seed script, validation. See [DONE.md](DONE.md) for detailed completion records.
 
-### Phase 217-B — Checkout Mode Switch + Customer Management
+## COMPLETED — Phase 217-B: Checkout Mode Switch + Customer Management (Archived to DONE.md)
 
-> **Risk:** MEDIUM. **Effort:** ~45min. **Dependencies:** Phase 217-A.
-
-- [x] **217-B.1** — Create `getOrCreateStripeCustomer(user)` utility that creates/retrieves Stripe Customer and stores `stripeCustomerId` on User
-- [x] **217-B.2** — Switch `checkoutPlan()` from `mode: "payment"` to `mode: "subscription"` with `customer` param
-- [x] **217-B.3** — Replace inline `price_data` with persistent Stripe Price ID from AppSetting
-- [x] **217-B.4** — Add yearly billing option: accept `billing: "Monthly" | "Yearly"` param, route to correct Price ID
-- [x] **217-B.5** — Add `subscription_data.metadata` with `userId`, `clerkId`, `plan`, `billing`
-- [x] **217-B.6** — Validation: all 7 gates GREEN.
+> ✅ Phase 217-B COMPLETE (PM audit #110). All 6 subtasks delivered: Stripe Customer utility, subscription mode, persistent Price IDs, yearly billing, subscription metadata, validation. See [DONE.md](DONE.md) for detailed completion records.
 
 ### Phase 217-C — Webhook Expansion for Subscription Events
 
@@ -92,6 +85,16 @@
 ---
 
 ## QUEUED — Post-Stripe Improvements
+
+### Phase 218-B — CSS Component Class Extraction (Muted Text + Danger Button)
+
+> **Owner directive:** CSS/Tailwind audit. Move duplicated inline patterns into `.css` files under `src/styles/`. **Risk:** LOW. **Effort:** ~30min. **Dependencies:** None.
+
+- [ ] **218-B.1** — Create `.admin-muted-text` class in `src/styles/components/admin/admin.css` for `text-sm text-midnightBlue-600 dark:text-lavenderHaze-600` pattern (20+ duplicates across 12 component files)
+- [ ] **218-B.2** — Replace all 20+ inline instances across admin settings, tables, confirmation-modal, and website-manager with `.admin-muted-text` class
+- [ ] **218-B.3** — Extract `.btn-danger` class in `src/styles/components/buttons.css` for destructive action button patterns if duplicated 3+ times
+- [ ] **218-B.4** — Audit `toggle-theme.tsx` for ~310-char className extraction opportunity
+- [ ] **218-B.5** — Validation: all 7 gates GREEN. Zero visual regression.
 
 ### Phase 26.x — Persona-aware Media Prompts
 
