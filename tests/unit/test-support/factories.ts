@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 import type { BillingCycle, PlanData, PlanName } from "@/types/PlanData.d";
 import type { PersonaId } from "@/types/PersonaData.d";
 import type { TaskConversation } from "@/types/TaskData.d";
+import type { TransactionType } from "@/types/TransactionData.d";
 import type { UserData, UserRoles } from "@/types/UserData.d";
 import type { ContentItem, Message, MessageRole } from "@/types";
 
@@ -28,6 +29,7 @@ type TestUserOverrides = Omit<Partial<UserData>, "plan"> & {
 export type TestTransaction = {
   _id: string;
   stripeId: string;
+  stripeInvoiceId?: string;
   userId: string;
   clerkId: string;
   createdAt: Date;
@@ -35,6 +37,7 @@ export type TestTransaction = {
   amount: number;
   plan: PlanName;
   billing: BillingCycle;
+  type?: TransactionType;
 };
 
 export type TestClerkUser = {
@@ -120,6 +123,7 @@ const DEFAULT_TRANSACTION_DATA: TestTransaction = {
   amount: 0,
   plan: "Lite",
   billing: "Monthly",
+  type: "one_time",
 };
 
 type TestMessageOverrides = Omit<Partial<Message>, "content" | "role"> & {

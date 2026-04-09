@@ -21,6 +21,9 @@ export interface UpdateUserParams {
   userimg?: string;
   firstName?: string | undefined;
   lastName?: string | undefined;
+  stripeCustomerId?: string;
+  stripeSubscriptionId?: string;
+  subscriptionStatus?: PlanData["subscriptionStatus"];
   updatedAt: Date;
   plan?: PlanData;
   suspended?: boolean;
@@ -39,6 +42,9 @@ export interface UserData {
   updatedAt?: Date;
   userimg?: string;
   suspended?: boolean;
+  stripeCustomerId?: string;
+  stripeSubscriptionId?: string;
+  subscriptionStatus?: PlanData["subscriptionStatus"];
   dailyConversationsStarted?: number;
   dailyConversationWindowStart?: Date | null;
   plan: PlanData;

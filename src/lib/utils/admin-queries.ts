@@ -109,6 +109,13 @@ type UsageAggregateRecord = {
 
 const DEFAULT_ADMIN_PAGE_SIZE = 25;
 const MAX_ADMIN_PAGE_SIZE = 100;
+const DEFAULT_YEARLY_DISCOUNT = 30;
+const DEFAULT_STRIPE_PRICE_IDS = {
+  proMonthly: "",
+  proYearly: "",
+  premiumMonthly: "",
+  premiumYearly: "",
+};
 
 type AdminPaginationResult = {
   total: number;
@@ -779,6 +786,10 @@ export async function getAdminSettingsSnapshot() {
         proPrice: DEFAULT_PLAN_PRICING.Pro,
         premiumPrice: DEFAULT_PLAN_PRICING.Premium,
         currencySymbol: DEFAULT_PLAN_PRICING.currencySymbol,
+      },
+      stripePriceIds: { ...DEFAULT_STRIPE_PRICE_IDS },
+      yearlyDiscount: {
+        yearlyDiscount: DEFAULT_YEARLY_DISCOUNT,
       },
       limits: structuredClone(PLAN_LIMITS) as PlanLimits,
       trialLimits: { ...PERSONA_TRIAL_LIMITS },

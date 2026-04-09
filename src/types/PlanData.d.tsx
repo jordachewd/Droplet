@@ -7,6 +7,7 @@ interface Inclusion {
 
 export type PlanName = "Lite" | "Pro" | "Premium";
 export type BillingCycle = "Monthly" | "Yearly";
+export type SubscriptionStatus = "active" | "past_due" | "canceled" | "unpaid";
 
 export interface Plan {
   id: number;
@@ -25,6 +26,9 @@ export interface PlanData {
   expiresOn: Date;
   startedOn: Date;
   stripeId?: string;
+  stripeCustomerId?: string;
+  stripeSubscriptionId?: string;
+  subscriptionStatus?: SubscriptionStatus | null;
   imageGenerations?: number;
   audioGenerations?: number;
   usagePeriodStart?: Date;

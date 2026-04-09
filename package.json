@@ -13,6 +13,7 @@
     "test:live:audio-models": "node scripts/live-test-audio-models.mjs",
     "test:live:image-models": "node scripts/live-test-image-models.mjs",
     "migrate:removed-personas": "node scripts/migrate-removed-personas.mjs",
+    "seed:stripe-billing-settings": "node scripts/seed-stripe-billing-settings.mjs",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",

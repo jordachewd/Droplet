@@ -571,6 +571,15 @@ describe("admin-queries", () => {
           proPrice: expect.any(Number),
           premiumPrice: expect.any(Number),
         }),
+        stripePriceIds: expect.objectContaining({
+          proMonthly: expect.any(String),
+          proYearly: expect.any(String),
+          premiumMonthly: expect.any(String),
+          premiumYearly: expect.any(String),
+        }),
+        yearlyDiscount: expect.objectContaining({
+          yearlyDiscount: expect.any(Number),
+        }),
         limits: expect.any(Object),
         personaAccess: expect.any(Object),
       }),

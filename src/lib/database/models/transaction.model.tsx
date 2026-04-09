@@ -1,9 +1,11 @@
 import "server-only";
 import { BillingCycle, PlanName } from "@/types/PlanData.d";
+import { TransactionType } from "@/types/TransactionData.d";
 import { Schema, model, models, ObjectId, Document } from "mongoose";
 
 interface ITransaction extends Document {
   stripeId: string;
+  stripeInvoiceId?: string;
   userId: ObjectId | string;
   clerkId: string;
   createdAt: Date;
@@ -11,6 +13,7 @@ interface ITransaction extends Document {
   amount: number;
   plan: PlanName;
   billing: BillingCycle;
+  type: TransactionType;
 }
 
 const TransactionSchema = new Schema<ITransaction>(
@@ -25,6 +28,11 @@ const TransactionSchema = new Schema<ITransaction>(
       type: String,
       required: true,
       unique: true,
+    },
+    stripeInvoiceId: {
+      type: String,
+      unique: true,
+      sparse: true,
     },
     clerkId: {
       type: String,
@@ -52,6 +60,13 @@ const TransactionSchema = new Schema<ITransaction>(
       enum: ["Monthly", "Yearly"],
       required: true,
       default: "Monthly",
+    },
+    type: {
+      type: String,
+      enum: ["one_time", "subscription_initial", "subscription_renewal"],
+      required: true,
+      default: "one_time",
+      index: true,
     },
     amount: {
       type: Number,
