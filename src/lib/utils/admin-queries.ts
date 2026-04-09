@@ -30,6 +30,10 @@ import User from "@/lib/database/models/user.model";
 import { getEffectivePlanConfig } from "@/lib/utils/effective-plan-config";
 import { getEffectivePersonaConfig } from "@/lib/utils/effective-persona-config";
 import {
+  DEFAULT_STRIPE_PRICE_IDS,
+  DEFAULT_YEARLY_DISCOUNT,
+} from "@/lib/utils/effective-stripe-billing-config";
+import {
   getDisplayPlanName,
   getDisplayUsageLimit,
   isAdminRole,
@@ -109,13 +113,6 @@ type UsageAggregateRecord = {
 
 const DEFAULT_ADMIN_PAGE_SIZE = 25;
 const MAX_ADMIN_PAGE_SIZE = 100;
-const DEFAULT_YEARLY_DISCOUNT = 30;
-const DEFAULT_STRIPE_PRICE_IDS = {
-  proMonthly: "",
-  proYearly: "",
-  premiumMonthly: "",
-  premiumYearly: "",
-};
 
 type AdminPaginationResult = {
   total: number;

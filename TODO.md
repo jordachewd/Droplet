@@ -5,11 +5,11 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #109 (2026-04-09). V1.0 MVP RELEASED. Phase 222 COMPLETE. Phase 217-A COMPLETE. POST-DEPENDENCY-UPDATE AUDIT CLEAN. Prettier pinned ~3.8.1. Phase 217-B NEXT.**
+> **STATUS: PM audit #109 (2026-04-09). V1.0 MVP RELEASED. Phase 222 COMPLETE. Phase 217-A COMPLETE. Phase 217-B COMPLETE. POST-DEPENDENCY-UPDATE AUDIT CLEAN. Prettier pinned ~3.8.1. Phase 217-C NEXT.**
 >
 > **GATE STATUS: All 7 gates GREEN. 0 vulnerabilities. 0 critical issues.**
 >
-> **TEST STATUS: 649 tests (106 suites), 49 E2E (6 skipped). 0 failures. All gates GREEN.**
+> **TEST STATUS: 652 tests (106 suites), 49 E2E (6 skipped). 0 failures. All gates GREEN.**
 >
 > **EXECUTION ORDER: 217-B → 217-C → 217-D → 217-E → 217-F → 217-G → 26.x.**
 
@@ -29,12 +29,12 @@
 
 > **Risk:** MEDIUM. **Effort:** ~45min. **Dependencies:** Phase 217-A.
 
-- [ ] **217-B.1** — Create `getOrCreateStripeCustomer(user)` utility that creates/retrieves Stripe Customer and stores `stripeCustomerId` on User
-- [ ] **217-B.2** — Switch `checkoutPlan()` from `mode: "payment"` to `mode: "subscription"` with `customer` param
-- [ ] **217-B.3** — Replace inline `price_data` with persistent Stripe Price ID from AppSetting
-- [ ] **217-B.4** — Add yearly billing option: accept `billing: "Monthly" | "Yearly"` param, route to correct Price ID
-- [ ] **217-B.5** — Add `subscription_data.metadata` with `userId`, `clerkId`, `plan`, `billing`
-- [ ] **217-B.6** — Validation: all 7 gates GREEN.
+- [x] **217-B.1** — Create `getOrCreateStripeCustomer(user)` utility that creates/retrieves Stripe Customer and stores `stripeCustomerId` on User
+- [x] **217-B.2** — Switch `checkoutPlan()` from `mode: "payment"` to `mode: "subscription"` with `customer` param
+- [x] **217-B.3** — Replace inline `price_data` with persistent Stripe Price ID from AppSetting
+- [x] **217-B.4** — Add yearly billing option: accept `billing: "Monthly" | "Yearly"` param, route to correct Price ID
+- [x] **217-B.5** — Add `subscription_data.metadata` with `userId`, `clerkId`, `plan`, `billing`
+- [x] **217-B.6** — Validation: all 7 gates GREEN.
 
 ### Phase 217-C — Webhook Expansion for Subscription Events
 

@@ -13,6 +13,12 @@ import { auth } from "@clerk/nextjs/server";
 import { nonEmptyStringSchema } from "@/lib/utils/validation-schemas";
 import { z } from "zod";
 import { getEffectivePlanConfig } from "@/lib/utils/effective-plan-config";
+import {
+  getEffectiveStripeBillingConfig,
+  resolveExpectedCheckoutAmount,
+  resolveStripePriceId,
+} from "@/lib/utils/effective-stripe-billing-config";
+import { getOrCreateStripeCustomer } from "@/lib/utils/stripe-customer";
 import { requireEnv } from "@/lib/utils/require-env";
 
 const checkoutPlanSchema = z
@@ -28,7 +34,15 @@ const checkoutPlanSchema = z
   })
   .strict();
 
-type CheckoutPlanInput = z.infer<typeof checkoutPlanSchema>;
+type CheckoutUserRecord = {
+  _id: { toString(): string };
+  clerkId: string;
+  firstName?: string;
+  lastName?: string;
+  username?: string;
+  email: string;
+  stripeCustomerId?: string;
+};
 
 export async function checkoutPlan(transaction: CheckoutTransactionParams) {
   let redirectUrl: string | undefined;
@@ -45,10 +59,12 @@ export async function checkoutPlan(transaction: CheckoutTransactionParams) {
 
     const currentUser = await User.findOne(
       { clerkId: authedUserId },
-      "_id firstName lastName username email",
+      "_id clerkId firstName lastName username email stripeCustomerId",
       { lean: true },
     );
     if (!currentUser) throw new Error("User not found");
+    const typedUser = currentUser as CheckoutUserRecord;
+    const normalizedUserId = typedUser._id.toString();
 
     const stripe = new Stripe(requireEnv("STRIPE_SECRET_KEY"));
     const BASEURL = requireEnv("NEXT_PUBLIC_API_BASE_URL");
@@ -58,37 +74,63 @@ export async function checkoutPlan(transaction: CheckoutTransactionParams) {
       billing: planBilling,
       name: planName,
       price: planPrice,
-    }: CheckoutPlanParams = (parsedTransaction.data as CheckoutPlanInput).plan;
+    }: CheckoutPlanParams = parsedTransaction.data.plan;
 
-    const { pricing } = await getEffectivePlanConfig();
-    const serverPlanPrice = pricing[planName];
+    const [{ pricing }, { stripePriceIds, yearlyDiscount }] = await Promise.all(
+      [getEffectivePlanConfig(), getEffectiveStripeBillingConfig()],
+    );
+    const expectedPlanPrice = resolveExpectedCheckoutAmount({
+      planName,
+      billing: planBilling,
+      pricing,
+      yearlyDiscount,
+    });
+    const priceId = resolveStripePriceId({
+      planName,
+      billing: planBilling,
+      stripePriceIds,
+    });
 
-    if (serverPlanPrice !== planPrice) {
+    if (expectedPlanPrice !== planPrice || !priceId) {
       throw new Error("Unable to start checkout.");
     }
+    const customerId = await getOrCreateStripeCustomer({
+      stripe,
+      user: {
+        _id: normalizedUserId,
+        clerkId: typedUser.clerkId,
+        firstName: typedUser.firstName,
+        lastName: typedUser.lastName,
+        username: typedUser.username,
+        email: typedUser.email,
+        stripeCustomerId: typedUser.stripeCustomerId,
+      },
+    });
 
     const session = await stripe.checkout.sessions.create({
-      mode: "payment",
+      mode: "subscription",
       payment_method_types: ["card"],
+      customer: customerId,
       line_items: [
         {
-          price_data: {
-            currency: "usd",
-            unit_amount: Number(serverPlanPrice) * 100,
-            product_data: {
-              name: planName,
-            },
-          },
+          price: priceId,
           quantity: 1,
         },
       ],
-      customer_email: currentUser.email,
       metadata: {
-        userId: currentUser._id.toString(),
+        userId: normalizedUserId,
         clerkId: authedUserId,
         plan: planName,
         billing: planBilling,
         planId: String(planId),
+      },
+      subscription_data: {
+        metadata: {
+          userId: normalizedUserId,
+          clerkId: authedUserId,
+          plan: planName,
+          billing: planBilling,
+        },
       },
       success_url: `${BASEURL}/checkout-success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${BASEURL}/app/plans`,
