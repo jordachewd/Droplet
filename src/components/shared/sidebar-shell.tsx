@@ -74,6 +74,7 @@ export default function SidebarShell({
   const isSidebarOpen = isDesktopViewport
     ? !isDesktopCollapsed
     : mobileSidebarOpen;
+
   const slotState: SidebarShellRenderState = {
     isSidebarOpen,
     isDesktopCollapsed,
@@ -81,11 +82,12 @@ export default function SidebarShell({
   };
 
   const sidebarClass = classNames(
-    "SidebarShell app-sidebar justify-between transition-all duration-300 lg:translate-x-0",
+    className,
+    "app-sidebar justify-between transition-all duration-300 lg:translate-x-0",
     mobileSidebarOpen ? "translate-x-0" : "-translate-x-full",
     isDesktopCollapsed ? "lg:w-16" : expandedWidth,
-    className,
   );
+
   const backdropClass = classNames(
     "sidebar-backdrop",
     !mobileSidebarOpen && "hidden",

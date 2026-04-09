@@ -175,11 +175,11 @@ export default function TiptapEditor({
 
   return (
     <div className="TiptapEditor flex flex-col gap-3">
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2 items-start">
         <Button
           type="button"
           variant={editor?.isActive("bold") ? "contained" : "outlined"}
-          size="sm"
+          size="xs"
           onClick={handleToggleBold}
         >
           Bold
@@ -187,7 +187,7 @@ export default function TiptapEditor({
         <Button
           type="button"
           variant={editor?.isActive("italic") ? "contained" : "outlined"}
-          size="sm"
+          size="xs"
           onClick={handleToggleItalic}
         >
           Italic
@@ -195,7 +195,7 @@ export default function TiptapEditor({
         <Button
           type="button"
           variant={editor?.isActive("underline") ? "contained" : "outlined"}
-          size="sm"
+          size="xs"
           onClick={handleToggleUnderline}
         >
           Underline
@@ -203,7 +203,7 @@ export default function TiptapEditor({
         <Button
           type="button"
           variant={editor?.isActive("strike") ? "contained" : "outlined"}
-          size="sm"
+          size="xs"
           onClick={handleToggleStrike}
         >
           Strike
@@ -213,7 +213,7 @@ export default function TiptapEditor({
           variant={
             editor?.isActive({ textAlign: "left" }) ? "contained" : "outlined"
           }
-          size="sm"
+          size="xs"
           onClick={handleAlignLeft}
         >
           Left
@@ -223,7 +223,7 @@ export default function TiptapEditor({
           variant={
             editor?.isActive({ textAlign: "center" }) ? "contained" : "outlined"
           }
-          size="sm"
+          size="xs"
           onClick={handleAlignCenter}
         >
           Center
@@ -233,7 +233,7 @@ export default function TiptapEditor({
           variant={
             editor?.isActive({ textAlign: "right" }) ? "contained" : "outlined"
           }
-          size="sm"
+          size="xs"
           onClick={handleAlignRight}
         >
           Right
@@ -245,7 +245,7 @@ export default function TiptapEditor({
               ? "contained"
               : "outlined"
           }
-          size="sm"
+          size="xs"
           onClick={handleAlignJustify}
         >
           Justify
@@ -253,7 +253,7 @@ export default function TiptapEditor({
         <Button
           type="button"
           variant={editor?.isActive("bulletList") ? "contained" : "outlined"}
-          size="sm"
+          size="xs"
           onClick={handleToggleBulletList}
         >
           Bullets
@@ -261,7 +261,7 @@ export default function TiptapEditor({
         <Button
           type="button"
           variant={editor?.isActive("orderedList") ? "contained" : "outlined"}
-          size="sm"
+          size="xs"
           onClick={handleToggleOrderedList}
         >
           Numbered
@@ -282,7 +282,7 @@ export default function TiptapEditor({
               <Button
                 type="button"
                 variant="outlined"
-                size="sm"
+                size="xs"
                 onClick={handleApplyLink}
               >
                 Set Link
@@ -290,7 +290,7 @@ export default function TiptapEditor({
               <Button
                 type="button"
                 variant="outlined"
-                size="sm"
+                size="xs"
                 onClick={handleRemoveLink}
               >
                 Remove Link
@@ -319,7 +319,7 @@ export default function TiptapEditor({
               <Button
                 type="button"
                 variant="outlined"
-                size="sm"
+                size="xs"
                 onClick={handleApplyImage}
               >
                 Insert / Update Image
@@ -327,7 +327,7 @@ export default function TiptapEditor({
               <Button
                 type="button"
                 variant="outlined"
-                size="sm"
+                size="xs"
                 onClick={handleRemoveImage}
               >
                 Remove Selected Image

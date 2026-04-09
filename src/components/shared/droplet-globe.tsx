@@ -59,20 +59,20 @@ export default function DropletGlobe({
 
   return (
     <div
-      className={`DropletGlobe relative inline-flex h-(--droplet-globe-size) w-(--droplet-globe-size) items-center justify-center ${className ?? ""}`}
+      className={`DropletGlobe globe ${className ?? ""}`}
       style={shadowStyle}
       aria-hidden="true"
     >
-      <div className="DropletGlobeOuter absolute inset-0 rounded-full bg-nightIndigo-500 shadow-(--droplet-globe-outer-glow-light) dark:bg-nightIndigo-600 dark:shadow-(--droplet-globe-outer-glow-dark)" />
-      <div className="DropletGlobeInner absolute left-1/2 top-1/2 h-(--droplet-globe-inner-size) w-(--droplet-globe-inner-size) -translate-x-1/2 -translate-y-1/2 rounded-full bg-twilightPurple-800 shadow-(--droplet-globe-inner-glow-light) animate-ping animate-duration-[1.6s] animate-ease-linear dark:bg-twilightPurple-600 dark:shadow-(--droplet-globe-inner-glow-dark)" />
+      <div className="DropletGlobeOuter globe-outer" />
+      <div className="DropletGlobeInner globe-inner" />
 
       <i
-        className={`DropletGlobeLogo ${icon} relative z-30 block text-lavenderHaze-200`}
+        className={`DropletGlobeLogo ${icon} globe-icon`}
         style={{ fontSize: "var(--droplet-globe-icon-size)" }}
         aria-hidden={ariaHidden}
       />
 
-      <div className="DropletGlobeShadow absolute inset-0 z-10 rounded-full animate-spin animate-duration-[1.6s] animate-ease-linear shadow-(--droplet-globe-shadow-light) dark:shadow-(--droplet-globe-shadow-dark)" />
+      <div className="DropletGlobeShadow globe-shadow" />
     </div>
   );
 }
