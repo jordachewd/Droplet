@@ -5,35 +5,13 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #108 (2026-04-09). V1.0 MVP RELEASED. Phase 222 COMPLETE. Phase 217-A COMPLETE (Stripe schema + product setup). POST-MERGE AUDIT CLEAN. Phase 217-B NEXT.**
+> **STATUS: PM audit #109 (2026-04-09). V1.0 MVP RELEASED. Phase 222 COMPLETE. Phase 217-A COMPLETE. POST-DEPENDENCY-UPDATE AUDIT CLEAN. Prettier pinned ~3.8.1. Phase 217-B NEXT.**
 >
-> **GATE STATUS: Validation GREEN. Architecture GREEN. Product GREEN. Admin GREEN. Public GREEN. Contract GREEN.**
+> **GATE STATUS: All 7 gates GREEN. 0 vulnerabilities. 0 critical issues.**
 >
 > **TEST STATUS: 649 tests (106 suites), 49 E2E (6 skipped). 0 failures. All gates GREEN.**
 >
 > **EXECUTION ORDER: 217-B → 217-C → 217-D → 217-E → 217-F → 217-G → 26.x.**
-
----
-
-## COMPLETED — Shared Layout Components (Phase 222) — ALL DONE
-
-> ✅ Phase 222 COMPLETE (PM audit #107). All sub-phases delivered: 222-A SidebarShell, 222-B AppHeader, 222-C AppLayoutShell. See [DONE.md](DONE.md) for detailed completion records.
-
----
-
-## COMPLETED — Phases 218–222: CSS Architecture + Orphan Cleanup + Hook + CSS Extraction + SidebarShell + AppHeader + AppLayoutShell (Archived to DONE.md)
-
-> Phases 218–222 ALL COMPLETE. See [DONE.md](DONE.md) for detailed completion records.
-
----
-
-## COMPLETED — Sidebar & Navigation Restructure (Archived to DONE.md)
-
-> Phases 209–216 ALL COMPLETE. See [DONE.md](DONE.md) for detailed completion records.
-
----
-
-## ON HOLD — (Legacy section removed — Stripe now UNBLOCKED)
 
 ---
 

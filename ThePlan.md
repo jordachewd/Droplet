@@ -3,7 +3,7 @@
 > Purpose: one execution document for finishing the SaaS without avoidable rework.
 > Audience: Project Manager, Architect, and Senior Software Agents.
 > Rule: this plan is based on verified repository state. If older docs disagree with code, code wins until this file is updated.
-> Last verified: PM audit #108, 2026-04-09. V1.0 MVP RELEASED. Phase 217-A COMPLETE (Stripe schema + product setup). Phase 222 COMPLETE. POST-MERGE AUDIT CLEAN. 649 tests (106 suites), 0 failures. All gates GREEN. 0 critical issues.
+> Last verified: PM audit #109, 2026-04-09. V1.0 MVP RELEASED. Phase 217-A COMPLETE (Stripe schema + product setup). Phase 222 COMPLETE. POST-DEPENDENCY-UPDATE AUDIT CLEAN. 649 tests (106 suites), 0 failures. All gates GREEN. Prettier pinned to ~3.8.1 (was ^3.4.2). 0 critical issues.
 
 ---
 
@@ -39,7 +39,7 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 
 ---
 
-## 3. Verified Baseline (Architect Audit #84, 2026-04-02)
+## 3. Verified Baseline (Architect Audit #109, 2026-04-09)
 
 ### Architecture Status ? SOUND. ALL GATES GREEN.
 
@@ -50,7 +50,7 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 | Auth in all actions | ?      | All server actions + API routes verify auth                                       |
 | Admin double-check  | ?      | All 15 admin functions use `requireAdminAccess`                                   |
 | Schema strict mode  | ?      | All 9 Mongoose models have `strict: true`                                         |
-| Index coverage      | ?      | 18 indexed fields across all query-filtered cols                                  |
+| Index coverage      | ?      | 20+ indexed fields across all query-filtered cols                                 |
 | maxDuration exports | ✓      | All 7 API routes at maxDuration=60 (Vercel Hobby ceiling)                         |
 | Server-only guards  | ?      | 50+ utility files with `import "server-only"`                                     |
 | Rate limiting       | ?      | MongoDB-backed, durable, all API routes covered                                   |
@@ -64,6 +64,7 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 | Lint                | ?      | 0 errors, 0 warnings                                                              |
 | Tests               | ✓      | 106 suites, 649 tests. 0 failures. All gates GREEN.                               |
 | E2E                 | ?      | 8 specs, 49 tests                                                                 |
+| Prettier            | ?      | Pinned to ~3.8.1. 66 files reformatted. Gate GREEN.                               |
 
 ### Issues Found by Audit #82?#84 ? Updated Status
 
@@ -121,7 +122,7 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 | 203   | Fix 3 E2E contrast failures                    | ✅ DONE                | `text-midnightBlue-900` on `bg-dustyBlue-500`. All E2E pass.                                                       |
 | 201   | Avatar sync MongoDB→Clerk                      | ✅ DONE                | Non-blocking Clerk sync in updateUser. 2 tests.                                                                    |
 | 144   | Admin config cache                             | ✅ DONE                | 30s TTL, in-flight dedupe, 8 effective-\*.ts wrapped. clearConfigCache on admin writes.                            |
-| 217-A | Stripe schema + product setup                    | ✅ DONE                 | User+Transaction model fields, indexes, types, admin-queries defaults, seed script, 3 new test files |
+| 217-A | Stripe schema + product setup                  | ✅ DONE                | User+Transaction model fields, indexes, types, admin-queries defaults, seed script, 3 new test files               |
 | 204   | API route timeouts to max                      | ✅ DONE                | All 7 API routes at maxDuration=60 (Vercel Hobby ceiling).                                                         |
 | 205   | Sidebar live update on new chat                | ✅ DONE                | router.refresh() with ref-based one-time guard. 5 call sites.                                                      |
 | 206   | Upload error propagation + client validation   | ✅ DONE                | error.message propagation, narrowed accept, client MIME pre-validation.                                            |
@@ -147,11 +148,11 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 
 ---
 
-## 4. SWOT Analysis (Updated 2026-04-09, post PM audit #108)
+## 4. SWOT Analysis (Updated 2026-04-09, PM audit #109)
 
 **Strengths:** Clean architecture, strong auth, comprehensive tests (649+49), central policy resolvers, WCAG 2.2 AA complete, durable usage counters, thorough user deletion cascade, zero lint/type/knip issues, correct webhook code structure, stream timeout confirmed in production (Phase 181), video generation cleanly removed (Phase 186-A), token limits maximized (Phase 186-B), admin error boundary (Phase 187-A), env var runtime validation (Phase 143), all display text admin-configurable (Phases 180.1–180.4), audio player error recovery (Phase 187-C), admin deletion protection with 5-layer defense (Phase 189), reusable component library: FormInput/PersonaSelector/UsageMetricRow (Phases 191–193), TiptapEditor WYSIWYG (Phase 194), plan-display utility for admin ADMIN label (Phase 190), admin suspension protection with symmetric 3-layer defense (Phase 200), avatar sync MongoDB→Clerk (Phase 201), admin config cache 30s TTL (Phase 144), full test baseline (649 tests, 0 failures), all API routes at Vercel Hobby ceiling (Phase 204), sidebar live-updates on new chat without browser refresh (Phase 205), upload error messages propagated to user with client pre-validation (Phase 206), upload magic byte validation prevents MIME spoofing (Phase 207), upload filenames collision-proof via UUID (Phase 145), checkout success page polls DB for webhook-delayed plan updates (Phase 165), plan-status route hardened with rate limiting and maxDuration (Phase 165.1), admin transaction query bounded (Phase 146), utility file extensions clean (Phase 147), bulk operations report partial failures for admin visibility (Phase 148), post-release active backlog fully cleared. Per-action Zod schemas for all 13 non-settings admin actions (Phases 29.1–29.3), shared nonEmptyStringSchema consolidation (Phase 29.4), client API response Zod validation replacing unsafe type assertions (Phase 29.5). Sidebar restructured with Suspense loading, conditional Recent rendering, CSS transitions, Zustand-driven toggle state (Phases 209–214). Conversation dropdown menu with full ARIA compliance, keyboard navigation, inline rename (Phase 215). PersonaSelector moved to ChatInput for better UX flow (Phase 216). `renameTask` server action with Zod validation, auth, ownership enforcement (Phase 215.0). `/app/personas` route removed with redirect (Phase 210). CSS modular architecture complete with 12 files under `src/styles/` (Phase 218). Orphan cleanup complete — zero dead code, no duplicate types (Phase 219). **Shared `useIsDesktop()` hook eliminates 3 duplicate media query implementations (Phase 220).** TypeScript 6 + ESLint 10 + eslint-config-next 16 fully compatible — no issues (audit #103). **Shared layout/form CSS classes eliminate 50+ inline Tailwind duplicates across admin/chat (Phase 221).** 9 classes in 2 files (`layout.css`, `forms.css`), zero duplication. **Shared `SidebarShell` component eliminates sidebar shell duplication between admin and chat (Phase 222-A).** Type-safe slot API with render-prop pattern. **Shared `AppHeader` component eliminates header duplication between admin and chat (Phase 222-B).** Type-safe `as` prop, ReactNode slot composition, centralized ToggleTheme + AvatarMenu defaults. E2E fragile homepage heading resolved — structural assertion replaces content-dependent check. **Shared AppLayoutShell component completes layout unification between admin and chat (Phase 222-C).** Slot-based layout scaffold with skip-link standardization, flexible mainId targeting. **Phase 222 COMPLETE** — entire shared layout chain (SidebarShell + AppHeader + AppLayoutShell) delivered. Both admin and chat layouts are now thin domain wrappers composing 3 shared components. Zero remaining layout-level duplication. 649 tests (up from 646), 106 suites. **Phase 217-A (Stripe schema + product setup) DONE** — additive schema changes for recurring billing foundation. User model: stripeCustomerId (unique/sparse), stripeSubscriptionId (indexed), subscriptionStatus (indexed, enum). Transaction model: type enum (one_time/subscription_initial/subscription_renewal, indexed), stripeInvoiceId (unique/sparse). admin-queries defaults: stripePriceIds (4 empty slots), yearlyDiscount (30%). Seed script for env setup. Post-merge audit CLEAN.
 
-**Weaknesses:** `updateAdminSettingAction` still uses per-field Zod helper pattern (deferred — 15+ branches, low marginal value, Zod enforced under the hood). `getStringField`/`getNumericField` helpers retained for this action only. No dedicated unit tests for sidebar dropdown menu interaction patterns (keyboard/outside-click/blur race). Layout component duplication fully resolved (Phase 222 COMPLETE). CSS duplication resolved (Phase 221). `FORM_INPUT_CONTROL_CLASS` JS constant and `.form-input` CSS class coexist with slightly different border colors — minor visual inconsistency (low priority). Admin sidebar does not persist collapsed state to localStorage (chat does via `droplet-sidebar-collapsed` key). **No recurring subscription billing** — Phase 217-A schema done but checkout still uses one-time mode (Phase 217-B next). Seed script requires manual run per environment.
+**Weaknesses:** Prettier version was unpinned (`^3.4.2` auto-upgraded to 3.8.1, causing 66-file formatting drift) — **FIXED: pinned to `~3.8.1`**, reformatted, gate GREEN. `updateAdminSettingAction` still uses per-field Zod helper pattern (deferred — 15+ branches, low marginal value, Zod enforced under the hood). `getStringField`/`getNumericField` helpers retained for this action only. No dedicated unit tests for sidebar dropdown menu interaction patterns (keyboard/outside-click/blur race). `FORM_INPUT_CONTROL_CLASS` JS constant and `.form-input` CSS class coexist with slightly different border colors — minor visual inconsistency (low priority). Admin sidebar does not persist collapsed state to localStorage (chat does via `droplet-sidebar-collapsed` key). **No recurring subscription billing** — Phase 217-A schema done but checkout still uses one-time mode (Phase 217-B next). Seed script requires manual run per environment.
 
 **Opportunities:** Vercel Pro upgrade ($20/mo) for 300s maxDuration. Persona-aware media prompts (Phase 26.x — low effort, product differentiation). **Stripe recurring subscription billing UNBLOCKED** (Phases 217-A–G — owner answers received: grandfather until expiry→Lite, Monthly+Yearly with 30% yearly discount, custom cancel UI). **Yearly billing with 30% discount** — revenue optimization and reduced churn. **Phase 217-B (checkout mode switch) is the immediate next priority** (Phases 217-A DONE, 217-B–G — all prerequisites resolved, shared layout work COMPLETE).
 
@@ -161,14 +162,14 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 
 ## 5. Release Gates
 
-| Gate | Name            | Status | Notes                                                                                      |
-| ---- | --------------- | ------ | ------------------------------------------------------------------------------------------ |
-| A    | Contract Gate   | GREEN  | Billing, tier limits, Premium extras ? all frozen and verified                             |
-| B    | Architecture    | GREEN  | Phase 181 confirmed. Stripe RESOLVED. Video generation removed from product.               |
-| C    | Product Gate    | GREEN  | All display strings admin-configurable. Video removed. Stripe + Facebook resolved.         |
-| D    | Admin Gate      | GREEN  | Admin config complete. Error boundary added (Phase 187-A). All strings admin-configurable. |
-| E    | Public Gate     | GREEN  | All 7 public routes accurate, legal content real, no obsolete trial messaging              |
-| F    | Validation Gate | GREEN  | 649 tests (106 suites), lint 0/0, TSC clean, knip 0, E2E 49 tests, coverage 85/80/85/85                 |
+| Gate | Name            | Status | Notes                                                                                                           |
+| ---- | --------------- | ------ | --------------------------------------------------------------------------------------------------------------- |
+| A    | Contract Gate   | GREEN  | Billing, tier limits, Premium extras ? all frozen and verified                                                  |
+| B    | Architecture    | GREEN  | Phase 181 confirmed. Stripe RESOLVED. Video generation removed from product.                                    |
+| C    | Product Gate    | GREEN  | All display strings admin-configurable. Video removed. Stripe + Facebook resolved.                              |
+| D    | Admin Gate      | GREEN  | Admin config complete. Error boundary added (Phase 187-A). All strings admin-configurable.                      |
+| E    | Public Gate     | GREEN  | All 7 public routes accurate, legal content real, no obsolete trial messaging                                   |
+| F    | Validation Gate | GREEN  | 649 tests (106 suites), lint 0/0, TSC clean, knip 0, E2E 49 tests, coverage 85/80/85/85. Prettier pinned ~3.8.1 |
 
 ---
 

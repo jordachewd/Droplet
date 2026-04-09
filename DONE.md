@@ -2,7 +2,17 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-04-09 — PM audit #108.
+> Last updated: 2026-04-09 — PM audit #109.
+
+---
+
+## Prettier Version Pin — COMPLETED (2026-04-09)
+
+> PM audit #109. Post-dependency-update audit found Prettier auto-upgraded from 3.4.x to 3.8.1 via caret range (`^3.4.2`), causing 66 files to fail `--check`. Fixed: reformatted all files, pinned to `~3.8.1` (tilde) to prevent future formatting drift from minor version bumps. All 7 gates GREEN.
+
+- [x] Ran `npx prettier . --write` to reformat 66 files
+- [x] Changed `package.json` from `"prettier": "^3.4.2"` to `"prettier": "~3.8.1"`
+- [x] Validation: prettier ✓, lint ✓, tsc ✓, tests (649/649) ✓, build ✓, knip ✓
 
 ---
 
