@@ -4,6 +4,7 @@ import { useUser } from "@clerk/nextjs";
 import classNames from "classnames";
 import LoadingBubbles from "@/components/shared/loading-bubbles";
 import type { Persona } from "@/types/PersonaData.d";
+import DropletGlobe from "@/components/shared/droplet-globe";
 
 interface ChatIntroProps {
   persona: Persona;
@@ -44,9 +45,10 @@ export default function ChatIntro({
   return (
     <div className={introWrapperClass}>
       <div className="ChatIntroHead flex flex-col gap-2 justify-center items-center">
+        <DropletGlobe size={96} />
         <h1 className="heading-2">Hello {user?.firstName || "there"},</h1>
         <h2 className="heading-5">{subheading}</h2>
-        <p className="body-2">
+        <p className="body-2 text-xs">
           Active persona: <strong>{persona.label}</strong> - {persona.tagline}
         </p>
       </div>
