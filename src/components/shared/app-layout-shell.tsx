@@ -24,9 +24,10 @@ export default function AppLayoutShell({
   const skipLinkHref = skipTarget.startsWith("#")
     ? skipTarget
     : `#${skipTarget}`;
+    
   const layoutClass = classNames(
-    "AppLayoutShell relative z-10 flex h-dvh min-h-dvh w-full p-0 m-0",
     className,
+    "relative z-10 flex h-dvh min-h-dvh w-full p-0 m-0",
   );
 
   return (

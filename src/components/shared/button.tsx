@@ -5,7 +5,7 @@ import { ButtonHTMLAttributes, ReactNode } from "react";
 import LoadingBubbles from "@/components/shared/loading-bubbles";
 
 type ButtonVariant = "contained" | "outlined" | "text";
-type ButtonSize = "sm" | "md" | "lg";
+type ButtonSize = "xs" | "sm" | "md" | "lg";
 
 interface ButtonProps extends Omit<
   ButtonHTMLAttributes<HTMLButtonElement>,
