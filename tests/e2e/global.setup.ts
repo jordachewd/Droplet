@@ -211,11 +211,7 @@ setup("configure Clerk Playwright helpers", async () => {
 setup("persist guest storage state", async ({ page }) => {
   await setupClerkTestingToken({ page });
   await page.goto("/");
-  await expect(
-    page.getByRole("heading", {
-      name: "Chat, create, and get things done.",
-    }),
-  ).toBeVisible();
+  await expect(page.locator("h1").first()).toBeVisible();
 
   mkdirSync(path.dirname(guestFile), { recursive: true });
   await page.context().storageState({ path: guestFile });

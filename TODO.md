@@ -5,68 +5,47 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #103 (2026-04-08). V1.0 MVP RELEASED. Phase 220 COMPLETE. Phases 221–222 ACTIVE (layout CSS + shared layout shell). Stripe recurring UNBLOCKED (Phases 217-A–G).**
+> **STATUS: PM audit #106 (2026-04-09). V1.0 MVP RELEASED. Phase 222-B COMPLETE (AppHeader). Phase 222-A COMPLETE (SidebarShell). Phase 222 ACTIVE (222-C AppLayoutShell remaining). Stripe recurring UNBLOCKED (Phases 217-A–G).**
 >
 > **GATE STATUS: Validation GREEN. Architecture GREEN. Product GREEN. Admin GREEN. Public GREEN. Contract GREEN.**
 >
 > **TEST STATUS: 644 tests (104 suites), 49 E2E (6 skipped). 0 failures. All gates GREEN.**
 >
-> **EXECUTION ORDER: Phase 221 → 222 (222-A → 222-B → 222-C) → 217 (217-A → 217-B → 217-C → 217-D → 217-E → 217-F → 217-G) → 26.x.**
+> **EXECUTION ORDER: Phase 222-C → 217 (217-A → 217-B → 217-C → 217-D → 217-E → 217-F → 217-G) → 26.x.**
 
 ---
 
-## ACTIVE — Codebase Cleanup & Shared Layout (Phases 221–222)
+## ACTIVE — Shared Layout Components (Phase 222)
 
-> Owner directives OI53–OI57 (PM audit #103). DX/maintainability improvements. Shared layout unification between admin and chat. All findings verified by triple-audit (Architect + Engineer + PM).
+> Owner directive OI54. DX/maintainability improvement. Shared layout unification between admin and chat. CSS foundation ready (Phase 221 DONE). SidebarShell DONE (Phase 222-A). AppHeader DONE (Phase 222-B).
 
-### Phase 219 — Orphan Cleanup — COMPLETED
+### Phase 221 — Extract Shared Layout CSS Classes — COMPLETED
 
-> ✅ DONE (PM audit #102). See [DONE.md](DONE.md) for detailed completion record.
+> ✅ DONE (PM audit #104). See [DONE.md](DONE.md) for detailed completion record.
 
-### Phase 220 — Extract `useIsDesktop()` Hook — COMPLETED
+### Phase 222-A — `SidebarShell` Shared Component — COMPLETED
 
-> ✅ DONE (PM audit #103). See [DONE.md](DONE.md) for detailed completion record.
+> ✅ DONE (PM audit #105). See [DONE.md](DONE.md) for detailed completion record.
 
-### Phase 221 — Extract Shared Layout CSS Classes
+### Phase 222-B — `AppHeader` Shared Component — COMPLETED
 
-> **Owner:** OI55. **Risk:** LOW (CSS extraction, same pattern as Phase 218). **Effort:** ~20min. **Dependencies:** None.
+> ✅ DONE (PM audit #106). See [DONE.md](DONE.md) for detailed completion record.
+
+### Phase 222 — Shared `AppLayoutShell` + `SidebarShell` + `AppHeader` Components
+
+> **Owner:** OI54. **Risk:** MEDIUM (affects both layouts simultaneously). **Effort:** ~30min. **Dependencies:** Phases 220, 221, 222-A, 222-B.
 >
-> Inline Tailwind patterns used 2-50+ times across different files should be extracted to `src/styles/components/`.
+> Phase 222-A (SidebarShell) COMPLETE. Phase 222-B (AppHeader) COMPLETE. Remaining: 222-C (AppLayoutShell).
 >
-> **Acceptance Criteria:**
+> **Sub-phases:**
 
-- [ ] **221.1** — Create `src/styles/components/layout.css` with: `.app-sidebar` (sidebar base classes), `.sidebar-backdrop` (mobile overlay), `.app-header-bar` (sticky header), `.app-header-inner` (header flex container), `.sidebar-nav-link` (navigation link)
-- [ ] **221.2** — Create `src/styles/components/forms.css` with: `.form-input` (input field base), `.form-field` (label+input container), `.admin-label` (section label), `.admin-form-surface` (admin surface + form gap)
-- [ ] **221.3** — Add `@import "./components/layout.css"` and `@import "./components/forms.css"` to `src/styles/index.css`
-- [ ] **221.4** — Apply `.app-sidebar` in `admin-sidebar.tsx`, `chat-sidebar-shell.tsx`, `chat-sidebar-loading.tsx`
-- [ ] **221.5** — Apply `.sidebar-backdrop` in `admin-sidebar.tsx`, `chat-sidebar-shell.tsx`
-- [ ] **221.6** — Apply `.app-header-bar` + `.app-header-inner` in `admin-layout-shell.tsx`, `chat-header.tsx`
-- [ ] **221.7** — Apply `.sidebar-nav-link` in `admin-sidebar.tsx`, `chat-sidebar-nav.tsx`
-- [ ] **221.8** — Apply `.form-input` in all admin form sections (50+ occurrences across admin settings forms)
-- [ ] **221.9** — Apply `.admin-label` in admin tables and form sections (20+ occurrences)
-- [ ] **221.10** — Validation: prettier ✓, lint ✓, tsc ✓, tests ✓, build ✓, knip ✓. Zero visual changes.
+#### Phase 222-A — `SidebarShell` Shared Component — COMPLETED
 
-### Phase 222 — Shared `AppLayoutShell` + `SidebarShell` Components
+> ✅ DONE (PM audit #105). See [DONE.md](DONE.md).
 
-> **Owner:** OI54. **Risk:** MEDIUM (affects both layouts simultaneously). **Effort:** ~30min. **Dependencies:** Phases 220, 221.
->
-> Admin and chat layouts share ~60% identical code: sidebar wrapper, mobile backdrop, close-on-pathname, sticky header, main content wrapper. Extract shared components with slot-based composition.
->
-> **Sub-phases for safety:**
+#### Phase 222-B — `AppHeader` Shared Component — COMPLETED
 
-#### Phase 222-A — `SidebarShell` Shared Component
-
-- [ ] **222-A.1** — Create `src/components/shared/sidebar-shell.tsx` (client component) with: sidebar wrapper (uses `.app-sidebar`), mobile backdrop (uses `.sidebar-backdrop`), close-on-pathname effect, Zustand sidebar state. Accepts `header`, `navigation`, `footer` slot props + `id` + `expandedWidth` (w-72 vs w-56).
-- [ ] **222-A.2** — Refactor `AdminSidebar` to use `SidebarShell` wrapper (pass admin nav links, head, footer as slots)
-- [ ] **222-A.3** — Refactor `ChatSidebarShell` to use `SidebarShell` wrapper (pass chat nav, head, recent section as slots)
-- [ ] **222-A.4** — Validation: all gates GREEN. E2E regression check.
-
-#### Phase 222-B — `AppHeader` Shared Component
-
-- [ ] **222-B.1** — Create `src/components/shared/app-header.tsx` (client component) with: sticky header bar (uses `.app-header-bar` + `.app-header-inner`), left content slot, right content slot (default: `ToggleTheme` + `AvatarMenu`)
-- [ ] **222-B.2** — Refactor `AdminLayoutShell` header to use `AppHeader` (pass `SidebarToggle` + "Open App" link as left/right content)
-- [ ] **222-B.3** — Refactor `ChatHeader` to use `AppHeader` (pass mobile-only `SidebarToggle` + badges as left content)
-- [ ] **222-B.4** — Validation: all gates GREEN.
+> ✅ DONE (PM audit #106). See [DONE.md](DONE.md).
 
 #### Phase 222-C — `AppLayoutShell` Integration
 
@@ -77,9 +56,9 @@
 
 ---
 
-## COMPLETED — Phases 218–219: CSS Architecture + Orphan Cleanup (Archived to DONE.md)
+## COMPLETED — Phases 218–222-B: CSS Architecture + Orphan Cleanup + Hook + CSS Extraction + SidebarShell + AppHeader (Archived to DONE.md)
 
-> Phase 218 (CSS modular architecture) ALL COMPLETE. Phase 219 (orphan cleanup) ALL COMPLETE. See [DONE.md](DONE.md) for detailed completion records.
+> Phases 218–221 + 222-A + 222-B ALL COMPLETE. See [DONE.md](DONE.md) for detailed completion records.
 
 ---
 
@@ -89,13 +68,7 @@
 
 ---
 
-## ON HOLD — Stripe Recurring Payment
-
-### Phase 217-A through 217-D — Stripe Subscription Billing
-
-> **Owner:** OI51. **Risk:** HIGH. **BLOCKED pending owner decisions.** See ThePlan.md for full phase breakdown.
->
-> **Questions for owner before implementation:**
+## ON HOLD — (Legacy section removed — Stripe now UNBLOCKED)
 
 ---
 
@@ -211,10 +184,15 @@
 
 > 1 test (`error-boundary-handling > API failure feedback`) fails intermittently on Firefox only. Chromium/WebKit pass. Browser timing issue, not product bug. Monitor.
 
+### E2E Fragile Homepage Heading — COMPLETED
+
+> ✅ FIXED (PM audit #105). `global.setup.ts` now uses `page.locator("h1").first()` structural assertion instead of hardcoded admin-configurable text. See [DONE.md](DONE.md).
+
 ---
 
 > **Completed phases** archived in [`DONE.md`](DONE.md).
-> Includes: Phases 143–148, 165, 165.1, 180.1–180.4, 185–220, 29.1–29.5, 29.7.
+> Includes: Phases 143–148, 165, 165.1, 180.1–180.4, 185–221, 222-A, 222-B, 29.1–29.5, 29.7.
 > Phase 29.7 (Zustand audit) — COMPLETE. No changes needed. 4 stores, all properly implemented.
 > TypeScript 6 / ESLint compatibility — **CLOSED** (audit #103). No issues.
 > jsdom upgrade — **PIN MAINTAINED** (audit #103). ~24.1.3 stable. ESM TLA incompatibility persists.
+> E2E fragile homepage heading — **FIXED** (audit #105). Structural assertion.

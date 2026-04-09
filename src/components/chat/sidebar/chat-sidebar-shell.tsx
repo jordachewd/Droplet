@@ -6,11 +6,10 @@ import { PromoContent } from "@/constants/promo-content";
 import SidebarHead from "@/components/chat/sidebar/sidebar-head";
 import ChatSidebarNav from "@/components/chat/sidebar/chat-sidebar-nav";
 import ChatSidebarPromo from "@/components/chat/sidebar/chat-sidebar-promo";
+import SidebarShell from "@/components/shared/sidebar-shell";
 import { ConversationListItem } from "@/types/PersonaData.d";
 import { PlanName } from "@/types/PlanData.d";
 import { UserRoles } from "@/types/UserData.d";
-import { usePathname } from "next/navigation";
-import { useIsDesktop } from "@/lib/hooks/use-is-desktop";
 import { useUiStore } from "@/lib/hooks/use-ui-store";
 import { useShallow } from "zustand/react/shallow";
 
@@ -22,6 +21,8 @@ interface ChatSidebarShellProps {
   promoContent?: PromoContent;
 }
 
+const SIDEBAR_STORAGE_KEY = "droplet-sidebar-collapsed";
+
 export default function ChatSidebarShell({
   historyItems,
   userRole,
@@ -29,90 +30,54 @@ export default function ChatSidebarShell({
   isSuspended,
   promoContent,
 }: ChatSidebarShellProps) {
-  const sidebarStorageKey = "droplet-sidebar-collapsed";
-  const isDesktopViewport = useIsDesktop();
   const {
     desktopSidebarCollapsed: desktopCollapsed,
-    mobileSidebarOpen: mobileOpen,
     setDesktopSidebarCollapsed,
-    setMobileSidebarOpen,
   } = useUiStore(
     useShallow((state) => ({
       desktopSidebarCollapsed: state.desktopSidebarCollapsed,
-      mobileSidebarOpen: state.mobileSidebarOpen,
       setDesktopSidebarCollapsed: state.setDesktopSidebarCollapsed,
-      setMobileSidebarOpen: state.setMobileSidebarOpen,
     })),
   );
-  const pathname = usePathname();
 
   useEffect(() => {
     try {
-      const collapsedFromStorage = localStorage.getItem(sidebarStorageKey);
+      const collapsedFromStorage = localStorage.getItem(SIDEBAR_STORAGE_KEY);
       setDesktopSidebarCollapsed(collapsedFromStorage === "true");
     } catch (error) {
       void error;
       setDesktopSidebarCollapsed(false);
     }
-  }, [setDesktopSidebarCollapsed, sidebarStorageKey]);
+  }, [setDesktopSidebarCollapsed]);
 
   useEffect(() => {
     try {
-      localStorage.setItem(sidebarStorageKey, String(desktopCollapsed));
+      localStorage.setItem(SIDEBAR_STORAGE_KEY, String(desktopCollapsed));
     } catch (error) {
       void error;
       // localStorage quota exceeded or unavailable - non-critical UI preference write.
     }
-  }, [desktopCollapsed, sidebarStorageKey]);
-
-  useEffect(() => {
-    if (isDesktopViewport) {
-      setMobileSidebarOpen(false);
-    }
-  }, [isDesktopViewport, setMobileSidebarOpen]);
-
-  useEffect(() => {
-    setMobileSidebarOpen(false);
-  }, [pathname, setMobileSidebarOpen]);
-
-  const isSidebarOpen = isDesktopViewport ? !desktopCollapsed : mobileOpen;
-
-  function handleCloseMobileSidebar() {
-    setMobileSidebarOpen(false);
-  }
-
-  const chatSidebarClass = classNames(
-    "ChatSidebar app-sidebar justify-between transition-all duration-300 lg:translate-x-0",
-    mobileOpen ? "translate-x-0" : "-translate-x-full",
-    desktopCollapsed ? "lg:w-16" : "lg:w-56",
-  );
-
-  const navWrapperClass = classNames(
-    "flex min-h-0 flex-1 flex-col overflow-y-auto",
-    !isSidebarOpen && "lg:items-center",
-  );
-
-  const sidebarBackdropClass = classNames(
-    "sidebar-backdrop",
-    !mobileOpen && "hidden",
-  );
+  }, [desktopCollapsed]);
 
   return (
-    <>
-      <button
-        type="button"
-        className={sidebarBackdropClass}
-        onClick={handleCloseMobileSidebar}
-        aria-label="Close sidebar overlay"
-      />
-
-      <aside className={chatSidebarClass} id="chat-sidebar">
-        <SidebarHead isDesktopCollapsed={desktopCollapsed} />
-
-        <div className={navWrapperClass}>
+    <SidebarShell
+      id="chat-sidebar"
+      expandedWidth="lg:w-56"
+      className="ChatSidebar"
+      header={({ isDesktopCollapsed }) => (
+        <SidebarHead isDesktopCollapsed={isDesktopCollapsed} />
+      )}
+      navigation={({ isSidebarOpen }) => (
+        <div
+          className={classNames(
+            "ChatSidebarNavWrapper flex min-h-0 flex-1 flex-col overflow-y-auto",
+            !isSidebarOpen && "lg:items-center",
+          )}
+        >
           <ChatSidebarNav isOpen={isSidebarOpen} historyItems={historyItems} />
         </div>
-
+      )}
+      footer={({ isSidebarOpen }) => (
         <ChatSidebarPromo
           isOpen={isSidebarOpen}
           userRole={userRole}
@@ -120,7 +85,7 @@ export default function ChatSidebarShell({
           isSuspended={isSuspended}
           promoContent={promoContent}
         />
-      </aside>
-    </>
+      )}
+    />
   );
 }

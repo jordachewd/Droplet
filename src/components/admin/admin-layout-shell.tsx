@@ -2,8 +2,7 @@
 
 import Link from "next/link";
 import AdminSidebar from "@/components/admin/admin-sidebar";
-import ToggleTheme from "@/components/shared/toggle-theme";
-import AvatarMenu from "@/components/shared/avatar-menu";
+import AppHeader from "@/components/shared/app-header";
 import SidebarToggle from "@/components/shared/sidebar-toggle";
 import { useIsDesktop } from "@/lib/hooks/use-is-desktop";
 import { useUiStore } from "@/lib/hooks/use-ui-store";
@@ -55,27 +54,24 @@ export default function AdminLayoutShell({
       <AdminSidebar links={adminLinks} />
 
       <div className="AdminMainWrapper relative flex flex-1 flex-col z-10 h-dvh w-full p-0 m-0 overflow-y-auto">
-        <header className="AdminLayoutHeader app-header-bar">
-          <div className="app-header-inner">
-            <div className="flex items-center gap-2">
-              <SidebarToggle
-                icon="bi-layout-sidebar"
-                title={sidebarExpanded ? "Hide menu" : "Show menu"}
-                toggleSidebar={handleToggleSidebar}
-                expanded={sidebarExpanded}
-                controlsId="admin-sidebar"
-              />
-            </div>
-
-            <div className="ml-auto flex items-center gap-3">
-              <Link className="btn btn-sm btn-outlined" href="/app">
-                Open App
-              </Link>
-              <ToggleTheme />
-              <AvatarMenu />
-            </div>
-          </div>
-        </header>
+        <AppHeader
+          as="header"
+          className="AdminLayoutHeader"
+          leftSlot={
+            <SidebarToggle
+              icon="bi-layout-sidebar"
+              title={sidebarExpanded ? "Hide menu" : "Show menu"}
+              toggleSidebar={handleToggleSidebar}
+              expanded={sidebarExpanded}
+              controlsId="admin-sidebar"
+            />
+          }
+          rightSlot={
+            <Link className="btn btn-sm btn-outlined" href="/app">
+              Open App
+            </Link>
+          }
+        />
 
         <main
           id="admin-main-content"

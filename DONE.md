@@ -2,7 +2,54 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-04-08 — PM audit #103.
+> Last updated: 2026-04-09 — PM audit #106.
+
+---
+
+## Phase 222-B — `AppHeader` Shared Component — COMPLETED (2026-04-09)
+
+> Owner directive OI54. Engineer delivered (PM audit #106). Extracted shared header logic into `src/components/shared/app-header.tsx` — a slot-based client component with type-safe `as` prop (`"header"` | `"section"`), `leftSlot`/`rightSlot` ReactNode props, and default right controls (`ToggleTheme` + `AvatarMenu`). Uses `.app-header-bar` + `.app-header-inner` CSS classes from Phase 221. Refactored `AdminLayoutShell` (`as="header"`, left: SidebarToggle, right: "Open App" link) and `ChatHeader` (`as="section"`, left: mobile SidebarToggle + badges). Admin `gap-3` normalized to `gap-2` (intentional). Playwright MCP verified admin `<header>` and chat `<section>` rendering. All 7 gates GREEN. 644 tests passing.
+
+- [x] **222-B.1** — Created `src/components/shared/app-header.tsx` with: sticky header bar (`.app-header-bar` + `.app-header-inner`), `as` prop for semantic element, `leftSlot`/`rightSlot` ReactNode slots, default `ToggleTheme` + `AvatarMenu` always rendered
+- [x] **222-B.2** — Refactored `AdminLayoutShell` header to use `AppHeader` (`as="header"`, `className="AdminLayoutHeader"`, SidebarToggle in left slot, "Open App" link in right slot). Removed direct ToggleTheme/AvatarMenu imports.
+- [x] **222-B.3** — Refactored `ChatHeader` to use `AppHeader` (`as="section"`, mobile-only SidebarToggle + message count badge + "Conversation ended" badge in left slot). No rightSlot — inherits defaults. Removed direct ToggleTheme/AvatarMenu imports.
+- [x] **222-B.4** — Validation: prettier ✓, lint ✓, tsc ✓, tests (644/644) ✓, E2E (49 passed, 6 skipped) ✓, build ✓, knip ✓, Playwright MCP ✓
+
+---
+
+## Phase 222-A — `SidebarShell` Shared Component — COMPLETED (2026-04-09)
+
+> Owner directive OI54. Engineer delivered (PM audit #105). Extracted shared sidebar logic into `src/components/shared/sidebar-shell.tsx` — a slot-based client component consuming `useUiStore`, `useIsDesktop`, and `usePathname`. Accepts `header`, `navigation`, `footer` slot props (ReactNode or render function receiving `SidebarShellRenderState`), `id`, and `expandedWidth` ("lg:w-56" | "lg:w-72"). Refactored `AdminSidebar` and `ChatSidebarShell` into thin wrappers. ~80 lines of duplicated sidebar logic eliminated. All 7 gates GREEN. 644 tests passing.
+
+- [x] **222-A.1** — Created `src/components/shared/sidebar-shell.tsx` with: sidebar wrapper (uses `.app-sidebar`), mobile backdrop (uses `.sidebar-backdrop`), close-on-pathname effect, close-on-desktop-resize effect, Zustand sidebar state via `useShallow`. Slot-based composition with `SidebarShellSlot` type and `SidebarShellRenderState`.
+- [x] **222-A.2** — Refactored `AdminSidebar` to use `SidebarShell` wrapper (`expandedWidth="lg:w-72"`, `id="admin-sidebar"`) — removed duplicated Zustand state, backdrop, close-on-pathname, viewport logic. Retains `usePathname` only for active link highlighting.
+- [x] **222-A.3** — Refactored `ChatSidebarShell` to use `SidebarShell` wrapper (`expandedWidth="lg:w-56"`, `id="chat-sidebar"`) — retains localStorage persistence (`SIDEBAR_STORAGE_KEY`). Removed duplicated viewport/backdrop/pathname logic.
+- [x] **222-A.4** — Validation: prettier ✓, lint ✓, tsc ✓, tests (644/644) ✓, build ✓, knip ✓, E2E ✓
+
+---
+
+## E2E Fragile Homepage Heading Fix — COMPLETED (2026-04-09)
+
+> Pre-Phase 222 prerequisite. Engineer delivered (PM audit #105). `tests/e2e/global.setup.ts` line 214: replaced `page.getByRole("heading", { name: "Chat, create, and get things done." })` with `page.locator("h1").first()` structural assertion. No longer breaks when admin changes homepage copy.
+
+- [x] Updated `tests/e2e/global.setup.ts` guest storage setup to use non-content-dependent assertion
+
+---
+
+## Phase 221 — Extract Shared Layout/Form CSS Classes — COMPLETED (2026-04-08)
+
+> Owner directive OI55. Engineer delivered (PM audit #104). Extracted 9 shared CSS classes from inline Tailwind duplicates into 2 new modular CSS files under `src/styles/components/`. Applied across 17 consuming components (admin sidebar, chat sidebar, admin/chat headers, 8 admin settings sections, 3 admin tables). All 7 gates GREEN. Playwright MCP verified runtime presence of all classes. Knip clean. 644 tests passing.
+
+- [x] **221.1** — Created `src/styles/components/layout.css` with: `.app-sidebar`, `.sidebar-backdrop`, `.app-header-bar`, `.app-header-inner`, `.sidebar-nav-link`
+- [x] **221.2** — Created `src/styles/components/forms.css` with: `.form-input`, `.form-field`, `.admin-label`, `.admin-form-surface`
+- [x] **221.3** — Added `@import "./components/layout.css"` and `@import "./components/forms.css"` to `src/styles/index.css`
+- [x] **221.4** — Applied `.app-sidebar` in `admin-sidebar.tsx`, `chat-sidebar-shell.tsx`, `chat-sidebar-loading.tsx`
+- [x] **221.5** — Applied `.sidebar-backdrop` in `admin-sidebar.tsx`, `chat-sidebar-shell.tsx`
+- [x] **221.6** — Applied `.app-header-bar` + `.app-header-inner` in `admin-layout-shell.tsx`, `chat-header.tsx`
+- [x] **221.7** — Applied `.sidebar-nav-link` in `admin-sidebar.tsx`, `chat-sidebar-nav.tsx`
+- [x] **221.8** — Applied `.form-input`, `.form-field`, `.admin-form-surface` across 8 admin settings forms (162 input instances, 118 field instances)
+- [x] **221.9** — Applied `.admin-label` in admin tables and form sections (21 instances across 4 components)
+- [x] **221.10** — Validation: prettier ✓, lint ✓, tsc ✓, tests (644/644) ✓, build ✓, knip ✓, Playwright MCP ✓
 
 ---
 

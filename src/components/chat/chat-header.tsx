@@ -2,8 +2,7 @@
 
 import classNames from "classnames";
 import { useShallow } from "zustand/react/shallow";
-import ToggleTheme from "@/components/shared/toggle-theme";
-import AvatarMenu from "@/components/shared/avatar-menu";
+import AppHeader from "@/components/shared/app-header";
 import SidebarToggle from "@/components/shared/sidebar-toggle";
 import { useChatStore } from "@/lib/hooks/use-chat-store";
 import { useUiStore } from "@/lib/hooks/use-ui-store";
@@ -29,12 +28,12 @@ export default function ChatHeader({ className: style = "" }: ChatHeaderProps) {
 
   const messageCount = messages.length;
 
-  const chatHeaderClass = classNames("ChatHeader app-header-bar", style);
-
   return (
-    <section className={chatHeaderClass}>
-      <div className="app-header-inner">
-        <div className="flex items-center gap-2">
+    <AppHeader
+      as="section"
+      className={classNames("ChatHeader", style)}
+      leftSlot={
+        <>
           <div className="lg:hidden">
             <SidebarToggle
               icon="bi-layout-sidebar"
@@ -56,13 +55,8 @@ export default function ChatHeader({ className: style = "" }: ChatHeaderProps) {
               Conversation ended
             </div>
           )}
-        </div>
-
-        <div className="ml-auto flex items-center gap-2">
-          <ToggleTheme />
-          <AvatarMenu />
-        </div>
-      </div>
-    </section>
+        </>
+      }
+    />
   );
 }
