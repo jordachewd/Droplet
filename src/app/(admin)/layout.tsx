@@ -11,11 +11,6 @@ export default async function AdminLayout({ children }: AdminLayoutProps) {
   await requireAdminPageAccess();
 
   return (
-    <>
-      <a href="#admin-main-content" className="skip-link">
-        Skip to main content
-      </a>
-      <AdminLayoutShell adminLinks={ADMIN_LINKS}>{children}</AdminLayoutShell>
-    </>
+    <AdminLayoutShell adminLinks={ADMIN_LINKS}>{children}</AdminLayoutShell>
   );
 }
