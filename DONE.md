@@ -2,7 +2,18 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-04-09 — PM audit #105.
+> Last updated: 2026-04-09 — PM audit #106.
+
+---
+
+## Phase 222-B — `AppHeader` Shared Component — COMPLETED (2026-04-09)
+
+> Owner directive OI54. Engineer delivered (PM audit #106). Extracted shared header logic into `src/components/shared/app-header.tsx` — a slot-based client component with type-safe `as` prop (`"header"` | `"section"`), `leftSlot`/`rightSlot` ReactNode props, and default right controls (`ToggleTheme` + `AvatarMenu`). Uses `.app-header-bar` + `.app-header-inner` CSS classes from Phase 221. Refactored `AdminLayoutShell` (`as="header"`, left: SidebarToggle, right: "Open App" link) and `ChatHeader` (`as="section"`, left: mobile SidebarToggle + badges). Admin `gap-3` normalized to `gap-2` (intentional). Playwright MCP verified admin `<header>` and chat `<section>` rendering. All 7 gates GREEN. 644 tests passing.
+
+- [x] **222-B.1** — Created `src/components/shared/app-header.tsx` with: sticky header bar (`.app-header-bar` + `.app-header-inner`), `as` prop for semantic element, `leftSlot`/`rightSlot` ReactNode slots, default `ToggleTheme` + `AvatarMenu` always rendered
+- [x] **222-B.2** — Refactored `AdminLayoutShell` header to use `AppHeader` (`as="header"`, `className="AdminLayoutHeader"`, SidebarToggle in left slot, "Open App" link in right slot). Removed direct ToggleTheme/AvatarMenu imports.
+- [x] **222-B.3** — Refactored `ChatHeader` to use `AppHeader` (`as="section"`, mobile-only SidebarToggle + message count badge + "Conversation ended" badge in left slot). No rightSlot — inherits defaults. Removed direct ToggleTheme/AvatarMenu imports.
+- [x] **222-B.4** — Validation: prettier ✓, lint ✓, tsc ✓, tests (644/644) ✓, E2E (49 passed, 6 skipped) ✓, build ✓, knip ✓, Playwright MCP ✓
 
 ---
 
