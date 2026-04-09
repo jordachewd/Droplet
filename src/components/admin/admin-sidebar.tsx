@@ -1,12 +1,10 @@
 "use client";
 
-import { useEffect } from "react";
 import classNames from "classnames";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useUiStore } from "@/lib/hooks/use-ui-store";
-import { useShallow } from "zustand/react/shallow";
 import Logo from "../shared/app-logo";
+import SidebarShell from "@/components/shared/sidebar-shell";
 
 interface AdminSidebarLink {
   href: string;
@@ -21,47 +19,18 @@ interface AdminSidebarProps {
 
 export default function AdminSidebar({ links }: AdminSidebarProps) {
   const pathname = usePathname();
-  const {
-    desktopSidebarCollapsed: desktopCollapsed,
-    mobileSidebarOpen: mobileOpen,
-    setMobileSidebarOpen,
-  } = useUiStore(
-    useShallow((state) => ({
-      desktopSidebarCollapsed: state.desktopSidebarCollapsed,
-      mobileSidebarOpen: state.mobileSidebarOpen,
-      setMobileSidebarOpen: state.setMobileSidebarOpen,
-    })),
-  );
-
-  useEffect(() => {
-    setMobileSidebarOpen(false);
-  }, [pathname, setMobileSidebarOpen]);
-
-  const sidebarClass = classNames(
-    "AdminSidebar app-sidebar justify-between transition-all duration-300 lg:translate-x-0",
-    mobileOpen ? "translate-x-0" : "-translate-x-full",
-    desktopCollapsed ? "lg:w-16" : "lg:w-72",
-  );
-
-  const isOpen = !desktopCollapsed;
-
-  const backdropClass = classNames("sidebar-backdrop", !mobileOpen && "hidden");
 
   return (
-    <>
-      <button
-        type="button"
-        className={backdropClass}
-        onClick={() => setMobileSidebarOpen(false)}
-        aria-label="Close sidebar overlay"
-      />
-
-      <aside className={sidebarClass} id="admin-sidebar">
+    <SidebarShell
+      id="admin-sidebar"
+      expandedWidth="lg:w-72"
+      className="AdminSidebar"
+      header={({ isSidebarOpen }) => (
         <div
           className={classNames(
             "AdminSidebarHead flex flex-col w-full px-4 h-14 justify-center",
             "bg-lavenderHaze-500 dark:bg-nightIndigo-500",
-            !isOpen && "lg:hidden",
+            !isSidebarOpen && "lg:hidden",
           )}
         >
           <h2 className="heading-6 leading-tight">Admin Control</h2>
@@ -69,13 +38,14 @@ export default function AdminSidebar({ links }: AdminSidebarProps) {
             Operational Command Center
           </p>
         </div>
-
+      )}
+      navigation={({ isSidebarOpen }) => (
         <div className="AdminSidebarNav flex flex-col flex-1 px-4 py-6">
           <nav
             aria-label="Admin navigation"
             className={classNames(
               "AdminSidebarNavItems flex flex-col gap-2 overflow-y-auto",
-              !isOpen && "lg:items-center",
+              !isSidebarOpen && "lg:items-center",
             )}
           >
             {links.map((link) => {
@@ -88,21 +58,21 @@ export default function AdminSidebar({ links }: AdminSidebarProps) {
                 <Link
                   key={link.href}
                   href={link.href}
-                  title={!isOpen ? link.label : undefined}
+                  title={!isSidebarOpen ? link.label : undefined}
                   aria-current={isActive ? "page" : undefined}
                   className={classNames(
                     "sidebar-nav-link",
                     "hover:bg-lavenderHaze-300/70 dark:hover:bg-nightIndigo-500/30",
                     isActive &&
                       "bg-lavenderHaze-100 font-semibold dark:bg-nightIndigo-500/25",
-                    !isOpen && "lg:w-auto lg:justify-center lg:px-2",
+                    !isSidebarOpen && "lg:w-auto lg:justify-center lg:px-2",
                   )}
                 >
                   <i
                     className={classNames(link.icon, "text-base")}
                     aria-hidden="true"
                   ></i>
-                  <span className={classNames(!isOpen && "lg:hidden")}>
+                  <span className={classNames(!isSidebarOpen && "lg:hidden")}>
                     {link.label}
                   </span>
                 </Link>
@@ -110,16 +80,17 @@ export default function AdminSidebar({ links }: AdminSidebarProps) {
             })}
           </nav>
         </div>
-
+      )}
+      footer={({ isSidebarOpen }) => (
         <div
           className={classNames(
             "AdminSidebarFooter p-4",
-            !isOpen && "lg:hidden",
+            !isSidebarOpen && "lg:hidden",
           )}
         >
-          <Logo size={32} iconOnly={!isOpen} />
+          <Logo size={32} iconOnly={!isSidebarOpen} />
         </div>
-      </aside>
-    </>
+      )}
+    />
   );
 }
