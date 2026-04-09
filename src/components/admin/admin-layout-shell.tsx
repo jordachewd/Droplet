@@ -3,6 +3,7 @@
 import Link from "next/link";
 import AdminSidebar from "@/components/admin/admin-sidebar";
 import AppHeader from "@/components/shared/app-header";
+import AppLayoutShell from "@/components/shared/app-layout-shell";
 import SidebarToggle from "@/components/shared/sidebar-toggle";
 import { useIsDesktop } from "@/lib/hooks/use-is-desktop";
 import { useUiStore } from "@/lib/hooks/use-ui-store";
@@ -50,10 +51,11 @@ export default function AdminLayoutShell({
     : mobileSidebarOpen;
 
   return (
-    <section className="AdminLayoutShell relative flex min-h-dvh w-full">
-      <AdminSidebar links={adminLinks} />
-
-      <div className="AdminMainWrapper relative flex flex-1 flex-col z-10 h-dvh w-full p-0 m-0 overflow-y-auto">
+    <AppLayoutShell
+      className="AdminLayoutShell"
+      mainId="admin-main-content"
+      sidebar={<AdminSidebar links={adminLinks} />}
+      header={
         <AppHeader
           as="header"
           className="AdminLayoutHeader"
@@ -72,15 +74,11 @@ export default function AdminLayoutShell({
             </Link>
           }
         />
-
-        <main
-          id="admin-main-content"
-          tabIndex={-1}
-          className="AdminLayoutMain relative z-10 flex-1 overflow-y-auto px-4 pb-16 pt-28 -mt-14"
-        >
-          {children}
-        </main>
+      }
+    >
+      <div className="AdminLayoutMain relative z-10 flex-1 overflow-y-auto px-4 pb-16 pt-28 -mt-14">
+        {children}
       </div>
-    </section>
+    </AppLayoutShell>
   );
 }
