@@ -5,38 +5,39 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #104 (2026-04-08). V1.0 MVP RELEASED. Phase 221 COMPLETE. Phase 222 ACTIVE (shared layout components). Stripe recurring UNBLOCKED (Phases 217-A–G).**
+> **STATUS: PM audit #105 (2026-04-09). V1.0 MVP RELEASED. Phase 222-A COMPLETE (SidebarShell). Phase 222 ACTIVE (222-B AppHeader + 222-C AppLayoutShell). Stripe recurring UNBLOCKED (Phases 217-A–G).**
 >
 > **GATE STATUS: Validation GREEN. Architecture GREEN. Product GREEN. Admin GREEN. Public GREEN. Contract GREEN.**
 >
 > **TEST STATUS: 644 tests (104 suites), 49 E2E (6 skipped). 0 failures. All gates GREEN.**
 >
-> **EXECUTION ORDER: Phase 222 (222-A → 222-B → 222-C) → 217 (217-A → 217-B → 217-C → 217-D → 217-E → 217-F → 217-G) → 26.x.**
+> **EXECUTION ORDER: Phase 222-B → 222-C → 217 (217-A → 217-B → 217-C → 217-D → 217-E → 217-F → 217-G) → 26.x.**
 
 ---
 
 ## ACTIVE — Shared Layout Components (Phase 222)
 
-> Owner directive OI54. DX/maintainability improvement. Shared layout unification between admin and chat. CSS foundation ready (Phase 221 DONE).
+> Owner directive OI54. DX/maintainability improvement. Shared layout unification between admin and chat. CSS foundation ready (Phase 221 DONE). SidebarShell DONE (Phase 222-A).
 
 ### Phase 221 — Extract Shared Layout CSS Classes — COMPLETED
 
 > ✅ DONE (PM audit #104). See [DONE.md](DONE.md) for detailed completion record.
 
+### Phase 222-A — `SidebarShell` Shared Component — COMPLETED
+
+> ✅ DONE (PM audit #105). See [DONE.md](DONE.md) for detailed completion record.
+
 ### Phase 222 — Shared `AppLayoutShell` + `SidebarShell` Components
 
-> **Owner:** OI54. **Risk:** MEDIUM (affects both layouts simultaneously). **Effort:** ~30min. **Dependencies:** Phases 220, 221.
+> **Owner:** OI54. **Risk:** MEDIUM (affects both layouts simultaneously). **Effort:** ~30min. **Dependencies:** Phases 220, 221, 222-A.
 >
-> Admin and chat layouts share ~60% identical code: sidebar wrapper, mobile backdrop, close-on-pathname, sticky header, main content wrapper. Extract shared components with slot-based composition.
+> Phase 222-A (SidebarShell) COMPLETE. Remaining: 222-B (AppHeader) and 222-C (AppLayoutShell).
 >
-> **Sub-phases for safety:**
+> **Sub-phases:**
 
-#### Phase 222-A — `SidebarShell` Shared Component
+#### Phase 222-A — `SidebarShell` Shared Component — COMPLETED
 
-- [ ] **222-A.1** — Create `src/components/shared/sidebar-shell.tsx` (client component) with: sidebar wrapper (uses `.app-sidebar`), mobile backdrop (uses `.sidebar-backdrop`), close-on-pathname effect, Zustand sidebar state. Accepts `header`, `navigation`, `footer` slot props + `id` + `expandedWidth` (w-72 vs w-56).
-- [ ] **222-A.2** — Refactor `AdminSidebar` to use `SidebarShell` wrapper (pass admin nav links, head, footer as slots)
-- [ ] **222-A.3** — Refactor `ChatSidebarShell` to use `SidebarShell` wrapper (pass chat nav, head, recent section as slots)
-- [ ] **222-A.4** — Validation: all gates GREEN. E2E regression check.
+> ✅ DONE (PM audit #105). See [DONE.md](DONE.md).
 
 #### Phase 222-B — `AppHeader` Shared Component
 
@@ -54,9 +55,9 @@
 
 ---
 
-## COMPLETED — Phases 218–221: CSS Architecture + Orphan Cleanup + Hook + CSS Extraction (Archived to DONE.md)
+## COMPLETED — Phases 218–221 + 222-A: CSS Architecture + Orphan Cleanup + Hook + CSS Extraction + SidebarShell (Archived to DONE.md)
 
-> Phases 218–221 ALL COMPLETE. See [DONE.md](DONE.md) for detailed completion records.
+> Phases 218–221 + 222-A ALL COMPLETE. See [DONE.md](DONE.md) for detailed completion records.
 
 ---
 
@@ -66,13 +67,7 @@
 
 ---
 
-## ON HOLD — Stripe Recurring Payment
-
-### Phase 217-A through 217-D — Stripe Subscription Billing
-
-> **Owner:** OI51. **Risk:** HIGH. **BLOCKED pending owner decisions.** See ThePlan.md for full phase breakdown.
->
-> **Questions for owner before implementation:**
+## ON HOLD — (Legacy section removed — Stripe now UNBLOCKED)
 
 ---
 
@@ -188,16 +183,15 @@
 
 > 1 test (`error-boundary-handling > API failure feedback`) fails intermittently on Firefox only. Chromium/WebKit pass. Browser timing issue, not product bug. Monitor.
 
-### E2E Fragile Homepage Heading — Fix Before Phase 222
+### E2E Fragile Homepage Heading — COMPLETED
 
-> `global.setup.ts` hardcodes admin-configurable homepage heading (`"Chat, create, and get things done."`). Breaks if admin changes copy. Replace with stable locator (e.g., `page.locator('h1').first()` or data-testid). ~5 min fix.
-
-- [ ] Update `tests/e2e/global.setup.ts` guest storage setup to use a non-content-dependent assertion for homepage verification
+> ✅ FIXED (PM audit #105). `global.setup.ts` now uses `page.locator("h1").first()` structural assertion instead of hardcoded admin-configurable text. See [DONE.md](DONE.md).
 
 ---
 
 > **Completed phases** archived in [`DONE.md`](DONE.md).
-> Includes: Phases 143–148, 165, 165.1, 180.1–180.4, 185–220, 29.1–29.5, 29.7.
+> Includes: Phases 143–148, 165, 165.1, 180.1–180.4, 185–221, 222-A, 29.1–29.5, 29.7.
 > Phase 29.7 (Zustand audit) — COMPLETE. No changes needed. 4 stores, all properly implemented.
 > TypeScript 6 / ESLint compatibility — **CLOSED** (audit #103). No issues.
 > jsdom upgrade — **PIN MAINTAINED** (audit #103). ~24.1.3 stable. ESM TLA incompatibility persists.
+> E2E fragile homepage heading — **FIXED** (audit #105). Structural assertion.

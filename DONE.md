@@ -2,7 +2,26 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-04-08 — PM audit #104.
+> Last updated: 2026-04-09 — PM audit #105.
+
+---
+
+## Phase 222-A — `SidebarShell` Shared Component — COMPLETED (2026-04-09)
+
+> Owner directive OI54. Engineer delivered (PM audit #105). Extracted shared sidebar logic into `src/components/shared/sidebar-shell.tsx` — a slot-based client component consuming `useUiStore`, `useIsDesktop`, and `usePathname`. Accepts `header`, `navigation`, `footer` slot props (ReactNode or render function receiving `SidebarShellRenderState`), `id`, and `expandedWidth` ("lg:w-56" | "lg:w-72"). Refactored `AdminSidebar` and `ChatSidebarShell` into thin wrappers. ~80 lines of duplicated sidebar logic eliminated. All 7 gates GREEN. 644 tests passing.
+
+- [x] **222-A.1** — Created `src/components/shared/sidebar-shell.tsx` with: sidebar wrapper (uses `.app-sidebar`), mobile backdrop (uses `.sidebar-backdrop`), close-on-pathname effect, close-on-desktop-resize effect, Zustand sidebar state via `useShallow`. Slot-based composition with `SidebarShellSlot` type and `SidebarShellRenderState`.
+- [x] **222-A.2** — Refactored `AdminSidebar` to use `SidebarShell` wrapper (`expandedWidth="lg:w-72"`, `id="admin-sidebar"`) — removed duplicated Zustand state, backdrop, close-on-pathname, viewport logic. Retains `usePathname` only for active link highlighting.
+- [x] **222-A.3** — Refactored `ChatSidebarShell` to use `SidebarShell` wrapper (`expandedWidth="lg:w-56"`, `id="chat-sidebar"`) — retains localStorage persistence (`SIDEBAR_STORAGE_KEY`). Removed duplicated viewport/backdrop/pathname logic.
+- [x] **222-A.4** — Validation: prettier ✓, lint ✓, tsc ✓, tests (644/644) ✓, build ✓, knip ✓, E2E ✓
+
+---
+
+## E2E Fragile Homepage Heading Fix — COMPLETED (2026-04-09)
+
+> Pre-Phase 222 prerequisite. Engineer delivered (PM audit #105). `tests/e2e/global.setup.ts` line 214: replaced `page.getByRole("heading", { name: "Chat, create, and get things done." })` with `page.locator("h1").first()` structural assertion. No longer breaks when admin changes homepage copy.
+
+- [x] Updated `tests/e2e/global.setup.ts` guest storage setup to use non-content-dependent assertion
 
 ---
 
