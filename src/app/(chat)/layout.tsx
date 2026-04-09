@@ -8,11 +8,11 @@ interface ChatLayoutProps {
   children: ReactNode;
 }
 
-export default function ChatRouteLayout({ children }: ChatLayoutProps) {
+export default function ChatLayout({ children }: ChatLayoutProps) {
   return (
     <AppLayoutShell
-      className="ChatRouteLayout"
-      mainId="chat-main-content"
+      className="ChatLayout"
+      mainId="chat-layout"
       sidebar={
         <Suspense fallback={<ChatSidebarLoading />}>
           <ChatSidebar />

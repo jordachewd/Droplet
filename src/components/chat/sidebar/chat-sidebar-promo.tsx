@@ -25,75 +25,53 @@ export default function ChatSidebarPromo({
   isSuspended,
   promoContent = DEFAULT_PROMO_CONTENT,
 }: ChatSidebarPromoProps) {
-  const sectionClass = classNames("ChatSidebarPromo p-3", !isOpen && "hidden");
-  const promoCardClass = classNames("ChatSidebarPromoCard", planPromoCardClass);
-
-  if (userRole === "admin") {
-    return (
-      <section className={sectionClass}>
-        <article className={promoCardClass}>
-          <div className={planPromoAccentClass}></div>
-          <div className="z-10 flex w-full flex-col gap-2 text-center">
-            <h6 className="heading-6 text-lavenderHaze-300">
-              {promoContent.promoAdminLabel}
-            </h6>
-            <p className="text-xs leading-4">
-              {promoContent.promoAdminDescription}
-            </p>
-          </div>
-        </article>
-      </section>
-    );
-  }
-
-  if (isSuspended) {
-    return (
-      <section className={sectionClass}>
-        <article className={promoCardClass}>
-          <div className={planPromoAccentClass}></div>
-          <div className="z-10 flex w-full flex-col gap-2 text-center">
-            <h6 className="heading-6 text-lavenderHaze-300">
-              {promoContent.promoSuspensionTitle}
-            </h6>
-            <p className="text-xs leading-4">
-              {promoContent.promoSuspensionDescription}
-            </p>
-          </div>
-        </article>
-      </section>
-    );
-  }
-
-  if (planName === "Premium") {
+  if (planName === "Premium" && userRole !== "admin" && !isSuspended) {
     return null;
   }
 
-  const promoTitle =
-    planName === "Pro"
-      ? promoContent.promoTitlePremium
-      : promoContent.promoTitlePro;
+  let title: string;
+  let description: string;
+  let showUpgradeLink = false;
 
-  const promoMessage =
-    planName === "Pro"
-      ? promoContent.promoDescriptionPremium
-      : promoContent.promoDescriptionPro;
+  if (userRole === "admin") {
+    title = promoContent.promoAdminLabel;
+    description = promoContent.promoAdminDescription;
+  } else if (isSuspended) {
+    title = promoContent.promoSuspensionTitle;
+    description = promoContent.promoSuspensionDescription;
+  } else {
+    title =
+      planName === "Pro"
+        ? promoContent.promoTitlePremium
+        : promoContent.promoTitlePro;
+    description =
+      planName === "Pro"
+        ? promoContent.promoDescriptionPremium
+        : promoContent.promoDescriptionPro;
+    showUpgradeLink = true;
+  }
+
+  const sectionClass = classNames("ChatSidebarPromo p-3", !isOpen && "hidden");
+  const promoCardClass = classNames("ChatSidebarPromoCard", planPromoCardClass);
 
   return (
-    <section className={sectionClass}>
-      <article className={promoCardClass}>
+    <div className={sectionClass}>
+      <div className={promoCardClass}>
         <div className={planPromoAccentClass}></div>
         <div className="z-10 flex w-full flex-col gap-2 text-center">
-          <h6 className="heading-6 text-lavenderHaze-300">{promoTitle}</h6>
-          <p className="text-xs leading-4">{promoMessage}</p>
+          <h6 className="heading-6 text-lavenderHaze-300">{title}</h6>
+          <p className="text-xs leading-4">{description}</p>
 
-          <Link
-            className="btn btn-sm btn-contained self-center mt-2"
-            href="/app/plans"
-          >
-            {promoContent.promoUpgradeCta}
-          </Link>
+          {showUpgradeLink && (
+            <Link
+              className="btn btn-sm btn-contained self-center mt-2"
+              href="/app/plans"
+            >
+              {promoContent.promoUpgradeCta}
+            </Link>
+          )}
         </div>
-      </article>
-    </section>
+      </div>
+    </div>
   );
 }

@@ -1,3 +1,3 @@
 export default function AppGradientBg() {
-  return <div className="AppGradientBg" />;
+  return <div className="droplet-gradient-bg" />;
 }

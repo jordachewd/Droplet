@@ -1,8 +1,9 @@
 @layer base {
-  .AppGradientBg {
+  .droplet-gradient-bg {
     @apply fixed inset-0 -z-10 w-dvw h-dvh transition-all animate-ease-in opacity-60 dark:opacity-80;
     @apply bg-lavenderHaze-300 text-midnightBlue-600 dark:bg-nightIndigo-800 dark:text-lavenderHaze-500;
     @apply bg-radial-[at_100%_0%,var(--color-dustyBlue-500)_0%,var(--color-twilightPurple-400)_30%,var(--color-twilightPurple-300)_50%,var(--color-lavenderHaze-300)_70%,transparent_100%];
     @apply dark:bg-radial-[at_100%_0%,var(--color-dustyBlue-1000)_0%,var(--color-twilightPurple-800)_30%,var(--color-twilightPurple-1000)_50%,var(--color-nightIndigo-800)_70%,transparent_100%];
   }
 }
+
