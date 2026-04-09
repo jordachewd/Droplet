@@ -5,46 +5,23 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #103 (2026-04-08). V1.0 MVP RELEASED. Phase 220 COMPLETE. Phases 221–222 ACTIVE (layout CSS + shared layout shell). Stripe recurring UNBLOCKED (Phases 217-A–G).**
+> **STATUS: PM audit #104 (2026-04-08). V1.0 MVP RELEASED. Phase 221 COMPLETE. Phase 222 ACTIVE (shared layout components). Stripe recurring UNBLOCKED (Phases 217-A–G).**
 >
 > **GATE STATUS: Validation GREEN. Architecture GREEN. Product GREEN. Admin GREEN. Public GREEN. Contract GREEN.**
 >
 > **TEST STATUS: 644 tests (104 suites), 49 E2E (6 skipped). 0 failures. All gates GREEN.**
 >
-> **EXECUTION ORDER: Phase 221 → 222 (222-A → 222-B → 222-C) → 217 (217-A → 217-B → 217-C → 217-D → 217-E → 217-F → 217-G) → 26.x.**
+> **EXECUTION ORDER: Phase 222 (222-A → 222-B → 222-C) → 217 (217-A → 217-B → 217-C → 217-D → 217-E → 217-F → 217-G) → 26.x.**
 
 ---
 
-## ACTIVE — Codebase Cleanup & Shared Layout (Phases 221–222)
+## ACTIVE — Shared Layout Components (Phase 222)
 
-> Owner directives OI53–OI57 (PM audit #103). DX/maintainability improvements. Shared layout unification between admin and chat. All findings verified by triple-audit (Architect + Engineer + PM).
+> Owner directive OI54. DX/maintainability improvement. Shared layout unification between admin and chat. CSS foundation ready (Phase 221 DONE).
 
-### Phase 219 — Orphan Cleanup — COMPLETED
+### Phase 221 — Extract Shared Layout CSS Classes — COMPLETED
 
-> ✅ DONE (PM audit #102). See [DONE.md](DONE.md) for detailed completion record.
-
-### Phase 220 — Extract `useIsDesktop()` Hook — COMPLETED
-
-> ✅ DONE (PM audit #103). See [DONE.md](DONE.md) for detailed completion record.
-
-### Phase 221 — Extract Shared Layout CSS Classes
-
-> **Owner:** OI55. **Risk:** LOW (CSS extraction, same pattern as Phase 218). **Effort:** ~20min. **Dependencies:** None.
->
-> Inline Tailwind patterns used 2-50+ times across different files should be extracted to `src/styles/components/`.
->
-> **Acceptance Criteria:**
-
-- [ ] **221.1** — Create `src/styles/components/layout.css` with: `.app-sidebar` (sidebar base classes), `.sidebar-backdrop` (mobile overlay), `.app-header-bar` (sticky header), `.app-header-inner` (header flex container), `.sidebar-nav-link` (navigation link)
-- [ ] **221.2** — Create `src/styles/components/forms.css` with: `.form-input` (input field base), `.form-field` (label+input container), `.admin-label` (section label), `.admin-form-surface` (admin surface + form gap)
-- [ ] **221.3** — Add `@import "./components/layout.css"` and `@import "./components/forms.css"` to `src/styles/index.css`
-- [ ] **221.4** — Apply `.app-sidebar` in `admin-sidebar.tsx`, `chat-sidebar-shell.tsx`, `chat-sidebar-loading.tsx`
-- [ ] **221.5** — Apply `.sidebar-backdrop` in `admin-sidebar.tsx`, `chat-sidebar-shell.tsx`
-- [ ] **221.6** — Apply `.app-header-bar` + `.app-header-inner` in `admin-layout-shell.tsx`, `chat-header.tsx`
-- [ ] **221.7** — Apply `.sidebar-nav-link` in `admin-sidebar.tsx`, `chat-sidebar-nav.tsx`
-- [ ] **221.8** — Apply `.form-input` in all admin form sections (50+ occurrences across admin settings forms)
-- [ ] **221.9** — Apply `.admin-label` in admin tables and form sections (20+ occurrences)
-- [ ] **221.10** — Validation: prettier ✓, lint ✓, tsc ✓, tests ✓, build ✓, knip ✓. Zero visual changes.
+> ✅ DONE (PM audit #104). See [DONE.md](DONE.md) for detailed completion record.
 
 ### Phase 222 — Shared `AppLayoutShell` + `SidebarShell` Components
 
@@ -77,9 +54,9 @@
 
 ---
 
-## COMPLETED — Phases 218–219: CSS Architecture + Orphan Cleanup (Archived to DONE.md)
+## COMPLETED — Phases 218–221: CSS Architecture + Orphan Cleanup + Hook + CSS Extraction (Archived to DONE.md)
 
-> Phase 218 (CSS modular architecture) ALL COMPLETE. Phase 219 (orphan cleanup) ALL COMPLETE. See [DONE.md](DONE.md) for detailed completion records.
+> Phases 218–221 ALL COMPLETE. See [DONE.md](DONE.md) for detailed completion records.
 
 ---
 
@@ -210,6 +187,12 @@
 ### E2E Firefox Flake — Monitor
 
 > 1 test (`error-boundary-handling > API failure feedback`) fails intermittently on Firefox only. Chromium/WebKit pass. Browser timing issue, not product bug. Monitor.
+
+### E2E Fragile Homepage Heading — Fix Before Phase 222
+
+> `global.setup.ts` hardcodes admin-configurable homepage heading (`"Chat, create, and get things done."`). Breaks if admin changes copy. Replace with stable locator (e.g., `page.locator('h1').first()` or data-testid). ~5 min fix.
+
+- [ ] Update `tests/e2e/global.setup.ts` guest storage setup to use a non-content-dependent assertion for homepage verification
 
 ---
 

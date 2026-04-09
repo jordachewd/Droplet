@@ -2,7 +2,24 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-04-08 — PM audit #103.
+> Last updated: 2026-04-08 — PM audit #104.
+
+---
+
+## Phase 221 — Extract Shared Layout/Form CSS Classes — COMPLETED (2026-04-08)
+
+> Owner directive OI55. Engineer delivered (PM audit #104). Extracted 9 shared CSS classes from inline Tailwind duplicates into 2 new modular CSS files under `src/styles/components/`. Applied across 17 consuming components (admin sidebar, chat sidebar, admin/chat headers, 8 admin settings sections, 3 admin tables). All 7 gates GREEN. Playwright MCP verified runtime presence of all classes. Knip clean. 644 tests passing.
+
+- [x] **221.1** — Created `src/styles/components/layout.css` with: `.app-sidebar`, `.sidebar-backdrop`, `.app-header-bar`, `.app-header-inner`, `.sidebar-nav-link`
+- [x] **221.2** — Created `src/styles/components/forms.css` with: `.form-input`, `.form-field`, `.admin-label`, `.admin-form-surface`
+- [x] **221.3** — Added `@import "./components/layout.css"` and `@import "./components/forms.css"` to `src/styles/index.css`
+- [x] **221.4** — Applied `.app-sidebar` in `admin-sidebar.tsx`, `chat-sidebar-shell.tsx`, `chat-sidebar-loading.tsx`
+- [x] **221.5** — Applied `.sidebar-backdrop` in `admin-sidebar.tsx`, `chat-sidebar-shell.tsx`
+- [x] **221.6** — Applied `.app-header-bar` + `.app-header-inner` in `admin-layout-shell.tsx`, `chat-header.tsx`
+- [x] **221.7** — Applied `.sidebar-nav-link` in `admin-sidebar.tsx`, `chat-sidebar-nav.tsx`
+- [x] **221.8** — Applied `.form-input`, `.form-field`, `.admin-form-surface` across 8 admin settings forms (162 input instances, 118 field instances)
+- [x] **221.9** — Applied `.admin-label` in admin tables and form sections (21 instances across 4 components)
+- [x] **221.10** — Validation: prettier ✓, lint ✓, tsc ✓, tests (644/644) ✓, build ✓, knip ✓, Playwright MCP ✓
 
 ---
 
