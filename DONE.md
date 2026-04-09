@@ -2,7 +2,22 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-04-09 — PM audit #106.
+> Last updated: 2026-04-09 — PM audit #107.
+
+---
+
+## Phase 222-C — `AppLayoutShell` Integration — COMPLETED (2026-04-09)
+
+> Owner directive OI54. Engineer delivered (PM audit #107). Extracted shared layout scaffold into `src/components/shared/app-layout-shell.tsx` — a slot-based client component with `sidebar`, `header`, `children`, `mainId`, `skipLinkTarget?`, `className?` props. Standardized skip-link placement inside the shared shell (removed duplicate from admin parent layout). Refactored `AdminLayoutShell` to compose `AppLayoutShell` (preserves admin-specific `AdminLayoutMain` inner wrapper). Refactored `(chat)/layout.tsx` to compose `AppLayoutShell` (Suspense stays in caller). Added 2 unit tests. Playwright MCP verified `/app` and `/admin` runtime behavior. All 7 gates GREEN. 646 tests passing (105 suites).
+>
+> **This completes the entire Phase 222 initiative** (shared layout components: 222-A SidebarShell + 222-B AppHeader + 222-C AppLayoutShell). Admin and chat layouts are now thin domain wrappers composing shared composition components.
+
+- [x] **222-C.1** — Created `src/components/shared/app-layout-shell.tsx` with: outer section wrapper, sidebar slot, main content column, skip link. Accepts `sidebar`, `header`, `children`, `mainId`, `skipLinkTarget`, `className`.
+- [x] **222-C.2** — Refactored `AdminLayoutShell` to use `AppLayoutShell` (`className="AdminLayoutShell"`, `mainId="admin-main-content"`, passes `AdminSidebar` + `AppHeader`). Admin-specific `AdminLayoutMain` inner wrapper preserved.
+- [x] **222-C.3** — Refactored `(chat)/layout.tsx` to use `AppLayoutShell` (`className="ChatRouteLayout"`, `mainId="chat-main-content"`, passes `ChatSidebar` in Suspense + `ChatHeader`).
+- [x] **222-C.4** — Removed duplicate skip link from admin parent layout (`src/app/(admin)/layout.tsx`).
+- [x] **222-C.5** — Added unit tests: `tests/unit/components/app-layout-shell.test.tsx` (2 tests: slot rendering + skip-link target).
+- [x] **222-C.6** — Validation: prettier ✓, lint ✓, tsc ✓, tests (646/646) ✓, E2E (49 passed, 6 skipped) ✓, build ✓, knip ✓, Playwright MCP ✓
 
 ---
 

@@ -5,60 +5,25 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #106 (2026-04-09). V1.0 MVP RELEASED. Phase 222-B COMPLETE (AppHeader). Phase 222-A COMPLETE (SidebarShell). Phase 222 ACTIVE (222-C AppLayoutShell remaining). Stripe recurring UNBLOCKED (Phases 217-A–G).**
+> **STATUS: PM audit #107 (2026-04-09). V1.0 MVP RELEASED. Phase 222 COMPLETE (all sub-phases: 222-A SidebarShell, 222-B AppHeader, 222-C AppLayoutShell). Stripe recurring NEXT (Phases 217-A–G).**
 >
 > **GATE STATUS: Validation GREEN. Architecture GREEN. Product GREEN. Admin GREEN. Public GREEN. Contract GREEN.**
 >
-> **TEST STATUS: 644 tests (104 suites), 49 E2E (6 skipped). 0 failures. All gates GREEN.**
+> **TEST STATUS: 646 tests (105 suites), 49 E2E (6 skipped). 0 failures. All gates GREEN.**
 >
-> **EXECUTION ORDER: Phase 222-C → 217 (217-A → 217-B → 217-C → 217-D → 217-E → 217-F → 217-G) → 26.x.**
+> **EXECUTION ORDER: 217-A → 217-B → 217-C → 217-D → 217-E → 217-F → 217-G → 26.x.**
 
 ---
 
-## ACTIVE — Shared Layout Components (Phase 222)
+## COMPLETED — Shared Layout Components (Phase 222) — ALL DONE
 
-> Owner directive OI54. DX/maintainability improvement. Shared layout unification between admin and chat. CSS foundation ready (Phase 221 DONE). SidebarShell DONE (Phase 222-A). AppHeader DONE (Phase 222-B).
-
-### Phase 221 — Extract Shared Layout CSS Classes — COMPLETED
-
-> ✅ DONE (PM audit #104). See [DONE.md](DONE.md) for detailed completion record.
-
-### Phase 222-A — `SidebarShell` Shared Component — COMPLETED
-
-> ✅ DONE (PM audit #105). See [DONE.md](DONE.md) for detailed completion record.
-
-### Phase 222-B — `AppHeader` Shared Component — COMPLETED
-
-> ✅ DONE (PM audit #106). See [DONE.md](DONE.md) for detailed completion record.
-
-### Phase 222 — Shared `AppLayoutShell` + `SidebarShell` + `AppHeader` Components
-
-> **Owner:** OI54. **Risk:** MEDIUM (affects both layouts simultaneously). **Effort:** ~30min. **Dependencies:** Phases 220, 221, 222-A, 222-B.
->
-> Phase 222-A (SidebarShell) COMPLETE. Phase 222-B (AppHeader) COMPLETE. Remaining: 222-C (AppLayoutShell).
->
-> **Sub-phases:**
-
-#### Phase 222-A — `SidebarShell` Shared Component — COMPLETED
-
-> ✅ DONE (PM audit #105). See [DONE.md](DONE.md).
-
-#### Phase 222-B — `AppHeader` Shared Component — COMPLETED
-
-> ✅ DONE (PM audit #106). See [DONE.md](DONE.md).
-
-#### Phase 222-C — `AppLayoutShell` Integration
-
-- [ ] **222-C.1** — Create `src/components/shared/app-layout-shell.tsx` with: outer section wrapper, sidebar slot, main content column, skip link. Accepts `sidebar`, `header`, `children`, `mainId`, `skipLinkTarget`.
-- [ ] **222-C.2** — Refactor `AdminLayoutShell` to use `AppLayoutShell` (pass `AdminSidebar`, `AppHeader` with admin actions)
-- [ ] **222-C.3** — Refactor `(chat)/layout.tsx` to use `AppLayoutShell` (pass `ChatSidebar` with Suspense, `AppHeader` with chat badges)
-- [ ] **222-C.4** — Validation: all gates GREEN. Full E2E suite. Zero visual regression.
+> ✅ Phase 222 COMPLETE (PM audit #107). All sub-phases delivered: 222-A SidebarShell, 222-B AppHeader, 222-C AppLayoutShell. See [DONE.md](DONE.md) for detailed completion records.
 
 ---
 
-## COMPLETED — Phases 218–222-B: CSS Architecture + Orphan Cleanup + Hook + CSS Extraction + SidebarShell + AppHeader (Archived to DONE.md)
+## COMPLETED — Phases 218–222: CSS Architecture + Orphan Cleanup + Hook + CSS Extraction + SidebarShell + AppHeader + AppLayoutShell (Archived to DONE.md)
 
-> Phases 218–221 + 222-A + 222-B ALL COMPLETE. See [DONE.md](DONE.md) for detailed completion records.
+> Phases 218–222 ALL COMPLETE. See [DONE.md](DONE.md) for detailed completion records.
 
 ---
 
@@ -76,7 +41,7 @@
 
 > **Owner:** OI51. **UNBLOCKED** (PM audit #103). Owner answers: (1) Grandfather existing one-time users until expiry then revert to Lite. (2) Both Monthly + Yearly billing (30% yearly discount). (3) Custom cancel UI (NOT Stripe Customer Portal). (4) Refactor plans and add admin edit capabilities.
 >
-> **Sequencing:** Complete Phases 221–222 first (low-risk pipeline completion), then proceed with Stripe.
+> **Sequencing:** Phase 222 COMPLETE. Stripe is NEXT.
 
 ### Phase 217-A — Schema + Stripe Product Setup
 
@@ -191,7 +156,7 @@
 ---
 
 > **Completed phases** archived in [`DONE.md`](DONE.md).
-> Includes: Phases 143–148, 165, 165.1, 180.1–180.4, 185–221, 222-A, 222-B, 29.1–29.5, 29.7.
+> Includes: Phases 143–148, 165, 165.1, 180.1–180.4, 185–222 (all sub-phases), 29.1–29.5, 29.7.
 > Phase 29.7 (Zustand audit) — COMPLETE. No changes needed. 4 stores, all properly implemented.
 > TypeScript 6 / ESLint compatibility — **CLOSED** (audit #103). No issues.
 > jsdom upgrade — **PIN MAINTAINED** (audit #103). ~24.1.3 stable. ESM TLA incompatibility persists.
