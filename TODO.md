@@ -5,13 +5,13 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #107 (2026-04-09). V1.0 MVP RELEASED. Phase 222 COMPLETE (all sub-phases: 222-A SidebarShell, 222-B AppHeader, 222-C AppLayoutShell). Stripe recurring NEXT (Phases 217-A–G).**
+> **STATUS: PM audit #108 (2026-04-09). V1.0 MVP RELEASED. Phase 222 COMPLETE. Phase 217-A COMPLETE (Stripe schema + product setup). POST-MERGE AUDIT CLEAN. Phase 217-B NEXT.**
 >
 > **GATE STATUS: Validation GREEN. Architecture GREEN. Product GREEN. Admin GREEN. Public GREEN. Contract GREEN.**
 >
-> **TEST STATUS: 646 tests (105 suites), 49 E2E (6 skipped). 0 failures. All gates GREEN.**
+> **TEST STATUS: 649 tests (106 suites), 49 E2E (6 skipped). 0 failures. All gates GREEN.**
 >
-> **EXECUTION ORDER: 217-A → 217-B → 217-C → 217-D → 217-E → 217-F → 217-G → 26.x.**
+> **EXECUTION ORDER: 217-B → 217-C → 217-D → 217-E → 217-F → 217-G → 26.x.**
 
 ---
 
@@ -43,16 +43,9 @@
 >
 > **Sequencing:** Phase 222 COMPLETE. Stripe is NEXT.
 
-### Phase 217-A — Schema + Stripe Product Setup
+## COMPLETED — Phase 217-A: Schema + Stripe Product Setup (Archived to DONE.md)
 
-> **Risk:** LOW (additive). **Effort:** ~30min. **Dependencies:** Stripe Dashboard product creation.
-
-- [ ] **217-A.1** — Add `stripeCustomerId` (String, optional, unique sparse index), `stripeSubscriptionId` (String, optional), `subscriptionStatus` (String enum: `active | past_due | canceled | unpaid`, default `null`) to User model
-- [ ] **217-A.2** — Add `type` (String enum: `one_time | subscription_initial | subscription_renewal`, default `one_time`), `stripeInvoiceId` (String, optional, unique sparse index) to Transaction model
-- [ ] **217-A.3** — Update `PlanData` and `TransactionData` TypeScript types to reflect new fields
-- [ ] **217-A.4** — Create 4 Stripe Price objects in Stripe Dashboard: Pro Monthly ($19), Pro Yearly ($159.60), Premium Monthly ($39), Premium Yearly ($327.60)
-- [ ] **217-A.5** — Create `admin.stripePriceIds` and `admin.yearlyDiscount` AppSetting keys
-- [ ] **217-A.6** — Validation: all 7 gates GREEN. No behavior change.
+> ✅ Phase 217-A COMPLETE (PM audit #108). All 6 subtasks delivered: schema fields, types, Stripe products, AppSettings, seed script, validation. See [DONE.md](DONE.md) for detailed completion records.
 
 ### Phase 217-B — Checkout Mode Switch + Customer Management
 
@@ -156,7 +149,7 @@
 ---
 
 > **Completed phases** archived in [`DONE.md`](DONE.md).
-> Includes: Phases 143–148, 165, 165.1, 180.1–180.4, 185–222 (all sub-phases), 29.1–29.5, 29.7.
+> Includes: Phases 143–148, 165, 165.1, 180.1–180.4, 185–222 (all sub-phases), 217-A, 29.1–29.5, 29.7.
 > Phase 29.7 (Zustand audit) — COMPLETE. No changes needed. 4 stores, all properly implemented.
 > TypeScript 6 / ESLint compatibility — **CLOSED** (audit #103). No issues.
 > jsdom upgrade — **PIN MAINTAINED** (audit #103). ~24.1.3 stable. ESM TLA incompatibility persists.

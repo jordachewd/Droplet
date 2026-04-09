@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> ...04-09 (PM audit #107). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. **V1.0 MVP RELEASED.** Brand rename complete (Phase 172). Catch blocks documented (Phase 167.2). Promo text admin-configurable (Phase 162, 180.2–180.3). Global error boundary live (Phase 163). Admin error boundary live (Phase 187-A). Phases 143–222 COMPLETE (all sub-phases). Phase 165.1 COMPLETE. Phases 146–148 COMPLETE. Phases 29.1–29.5 COMPLETE. **Sidebar restructure COMPLETE (Phases 209–216).** **Phases 218–222 COMPLETE (CSS modular architecture + orphan cleanup + useIsDesktop hook + shared layout/form CSS + SidebarShell + AppHeader + AppLayoutShell).** **Stripe recurring billing NEXT (Phases 217-A–G).** E2E: 49 tests (8 spec files). Coverage: 85/80/85/85. 646 tests (105 suites). Build passing. Node.js 24.12.0. jsdom pinned to ~24.1.3 (ESM compat). TypeScript 6.0.2 + ESLint 10 fully compatible (audit #103). Zod schema consistency across all server actions and API routes. **Stripe recurring billing planned (Phases 217-A–G) — owner answers received.**
+> ...04-09 (PM audit #108). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. **V1.0 MVP RELEASED.** Brand rename complete (Phase 172). Catch blocks documented (Phase 167.2). Promo text admin-configurable (Phase 162, 180.2–180.3). Global error boundary live (Phase 163). Admin error boundary live (Phase 187-A). Phases 143–222 COMPLETE (all sub-phases). Phase 165.1 COMPLETE. Phases 146–148 COMPLETE. Phases 29.1–29.5 COMPLETE. **Sidebar restructure COMPLETE (Phases 209–216).** **Phases 218–222 COMPLETE (CSS modular architecture + orphan cleanup + useIsDesktop hook + shared layout/form CSS + SidebarShell + AppHeader + AppLayoutShell).** **Phase 217-A COMPLETE (Stripe schema + product setup).** **Phase 217-B NEXT (checkout mode switch).** E2E: 49 tests (8 spec files). Coverage: 85/80/85/85. 649 tests (106 suites). Build passing. Node.js 24.12.0. jsdom pinned to ~24.1.3 (ESM compat). TypeScript 6.0.2 + ESLint 10 fully compatible (audit #103). Zod schema consistency across all server actions and API routes. **Stripe recurring billing in progress (Phase 217-A DONE, Phases 217-B–G remaining) — owner answers received.**
 >
 > **V1.0 MVP Released (PM audit #94):**
 >
@@ -31,7 +31,7 @@
 > - **TD-MEDIA-01** — 🟡 ACCEPTED LIMITATION. Media gen (image/audio) may approach Vercel Hobby 60s timeout. Phase 181 proactive timeout handles gracefully.
 > - **TD-AI-09** — Image/audio prompts not persona-aware (deferred to v1.1).
 > - **TD-AI-13** — 3 model pricing placeholders (awaiting OpenAI confirmation).
-> - **TD-PLAN-01** — No recurring subscriptions (planned: Phases 217-A–D, blocked pending owner decisions).
+> - **TD-PLAN-01** — Recurring subscriptions in progress (Phase 217-A COMPLETE, Phases 217-B–G remaining).
 > - **TD-AI-18** — Advisory: errorMessage forwarding pattern is safe but fragile.
 > - **TD-API-09** — Monitor: `.strict()` in messageTextContentSchema.
 
@@ -80,10 +80,10 @@ The product monetises through tiered subscription plans paid via Stripe.
 
 - Team/workspace features
 - Multi-provider LLM routing
-- Stripe subscription mode (auto-renewal)
 - User-created custom personas
-- Yearly billing pricing discount
 - Broad role systems beyond `client` and `admin`
+
+> **Moved to active development:** Stripe subscription mode (Phases 217-A–G, 217-A DONE), Yearly billing pricing discount (Phase 217-E).
 
 ---
 
@@ -292,7 +292,7 @@ Once Phase 217 is implemented:
 
 ### Plan Technical Debt
 
-- **TD-PLAN-01**: No recurring subscriptions (planned: Phases 217-A–G, UNBLOCKED).
+- **TD-PLAN-01**: Recurring subscriptions in progress (Phase 217-A schema DONE, Phases 217-B–G remaining).
 
 ---
 
@@ -865,7 +865,7 @@ All button styles use Lime Green as the accent color in **both** light and dark 
 ## 15. Technical Debt Summary
 
 > Only unresolved items live here. All resolved TDs are archived in `DONE.md`.
-> Last updated: PM audit #91 (2026-04-03).
+> Last updated: PM audit #108 (2026-04-09).
 
 ### Resolved This Session (PM audit #91)
 
@@ -934,7 +934,7 @@ _(None currently.)_
 | ---------- | ------- | ------------------------------------------------------------------------------ | -------- |
 | TD-AI-09   | OpenAI  | Image/audio generation prompts not persona-aware (chat prompts done Phase 22). | 26.x     |
 | TD-AI-13   | OpenAI  | 3 model pricing entries are placeholders pending OpenAI confirmation.          | Deferred |
-| TD-PLAN-01 | Billing | No recurring subscriptions (Phases 217-A–G UNBLOCKED, owner answers received). | 217      |
+| TD-PLAN-01 | Billing | Recurring subscriptions in progress (217-A schema DONE, 217-B–G remaining).    | 217      |
 | TD-AI-18   | OpenAI  | errorMessage forwarding pattern in `/api/openai` is safe but fragile.          | Advisory |
 | TD-API-09  | API     | `messageTextContentSchema` uses `.strict()` — may reject extra fields.         | Monitor  |
 

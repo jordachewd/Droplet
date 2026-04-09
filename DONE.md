@@ -2,7 +2,20 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-04-09 — PM audit #107.
+> Last updated: 2026-04-09 — PM audit #108.
+
+---
+
+## Phase 217-A — Schema + Stripe Product Setup — COMPLETED (2026-04-09)
+
+> Engineer delivered (PM audit #108). Post-merge audit CLEAN. Additive schema changes for recurring billing foundation. No behavior change. All 7 gates GREEN. 649 tests (106 suites).
+
+- [x] **217-A.1** — Added `stripeCustomerId` (String, optional, unique sparse index), `stripeSubscriptionId` (String, optional, indexed), `subscriptionStatus` (String enum: `active | past_due | canceled | unpaid`, default `null`, indexed) to User model. `IUser` interface updated.
+- [x] **217-A.2** — Added `type` (String enum: `one_time | subscription_initial | subscription_renewal`, default `one_time`, required, indexed), `stripeInvoiceId` (String, optional, unique sparse index) to Transaction model. `ITransaction` interface updated.
+- [x] **217-A.3** — Updated `PlanData.d.tsx` (`SubscriptionStatus`, `BillingCycle` types, 3 new optional fields), `TransactionData.d.tsx` (`TransactionType` union, `type?`, `stripeInvoiceId?`), `UserData.d.tsx` (3 new optional fields on `UpdateUserParams` and `UserData`).
+- [x] **217-A.4** — Created 4 Stripe Price objects in Stripe Dashboard: Pro Monthly ($19), Pro Yearly ($159.60), Premium Monthly ($39), Premium Yearly ($327.60). Sandbox account: `acct_1TAXA0Blnu3hh0Hd`.
+- [x] **217-A.5** — Created `admin.stripePriceIds` and `admin.yearlyDiscount` AppSetting keys. `DEFAULT_STRIPE_PRICE_IDS` (4 empty strings) and `DEFAULT_YEARLY_DISCOUNT` (30) in `admin-queries.ts`. Seed script: `scripts/seed-stripe-billing-settings.mjs` with idempotent upsert, env var validation, secure `.env` loading.
+- [x] **217-A.6** — Validation: prettier ✓, lint ✓, tsc ✓, tests (649/649) ✓, build ✓, knip ✓. 3 new tests added (user-model subscription fields, transaction-model type/invoice fields, admin-queries settings defaults). No behavior change confirmed.
 
 ---
 
