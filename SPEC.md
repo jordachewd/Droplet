@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> ...04-10 (PM audit #110). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. **V1.0 MVP RELEASED.** Brand rename complete (Phase 172). Catch blocks documented (Phase 167.2). Promo text admin-configurable (Phase 162, 180.2–180.3). Global error boundary live (Phase 163). Admin error boundary live (Phase 187-A). Phases 143–222 COMPLETE (all sub-phases). Phase 165.1 COMPLETE. Phases 146–148 COMPLETE. Phases 29.1–29.5 COMPLETE. **Sidebar restructure COMPLETE (Phases 209–216).** **Phases 218–222 COMPLETE (CSS modular architecture + orphan cleanup + useIsDesktop hook + shared layout/form CSS + SidebarShell + AppHeader + AppLayoutShell).** **Phase 217-A COMPLETE (Stripe schema + product setup).** **Phase 217-B COMPLETE (checkout mode switch + customer management).** **Phase 217-C COMPLETE (webhook expansion — 5 subscription event handlers with Zod schemas, idempotency guards; 1 HIGH bug in subscription.deleted path conflict, scoped to 217-C-fix).** E2E: 49 tests (8 spec files). Coverage: 85/80/85/85. 653 tests (106 suites). Build passing. Node.js 24.12.0. jsdom pinned to ~24.1.3 (ESM compat). TypeScript 6.0.2 + ESLint 10 fully compatible (audit #103). Zod schema consistency across all server actions and API routes. Prettier pinned to ~3.8.1 (dependency version stabilization). **Stripe recurring billing in progress (Phase 217-A DONE, Phase 217-B DONE, Phase 217-C DONE, Phase 217-C-fix NEXT, Phases 217-D–G remaining) — checkout uses `mode: "subscription"` with Stripe Customer management, webhooks handle 5 subscription lifecycle events.** 0 npm vulnerabilities. All 7 gates GREEN.
+> ...04-10 (PM audit #112). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. **V1.0 MVP RELEASED.** Brand rename complete (Phase 172). Catch blocks documented (Phase 167.2). Promo text admin-configurable (Phase 162, 180.2–180.3). Global error boundary live (Phase 163). Admin error boundary live (Phase 187-A). Phases 143–222 COMPLETE (all sub-phases). Phase 165.1 COMPLETE. Phases 146–148 COMPLETE. Phases 29.1–29.5 COMPLETE. **Sidebar restructure COMPLETE (Phases 209–216).** **Phases 218–222 COMPLETE (CSS modular architecture + orphan cleanup + useIsDesktop hook + shared layout/form CSS + SidebarShell + AppHeader + AppLayoutShell).** **Phase 217-A COMPLETE (Stripe schema + product setup).** **Phase 217-B COMPLETE (checkout mode switch + customer management).** **Phase 217-C COMPLETE (webhook expansion — 5 subscription event handlers).** **Phase 217-C-fix COMPLETE (path conflict + phantom writes fixed).** **Phase 217-D COMPLETE (custom cancellation flow — cancel/reactivate server actions, 5-state profile UI, webhook sync).** E2E: 49 tests (8 spec files). Coverage: 85/80/85/85. 663 tests (106 suites). Build passing. Node.js 24.12.0. jsdom pinned to ~24.1.3 (ESM compat). TypeScript 6.0.2 + ESLint 10 fully compatible (audit #103). Zod schema consistency across all server actions and API routes. Prettier pinned to ~3.8.1 (dependency version stabilization). **Stripe recurring billing in progress (Phases 217-A/B/C/C-fix/D DONE, Phases 217-E–G remaining) — complete subscription lifecycle: create/renew/cancel/reactivate with webhook sync.** 0 npm vulnerabilities. All 7 gates GREEN.
 >
 > **V1.0 MVP Released (PM audit #94):**
 >
@@ -31,7 +31,7 @@
 > - **TD-MEDIA-01** — 🟡 ACCEPTED LIMITATION. Media gen (image/audio) may approach Vercel Hobby 60s timeout. Phase 181 proactive timeout handles gracefully.
 > - **TD-AI-09** — Image/audio prompts not persona-aware (deferred to v1.1).
 > - **TD-AI-13** — 3 model pricing placeholders (awaiting OpenAI confirmation).
-> - **TD-PLAN-01** — Recurring subscriptions in progress (Phases 217-A/B/C COMPLETE, Phase 217-C-fix NEXT, Phases 217-D–G remaining).
+> - **TD-PLAN-01** — Recurring subscriptions in progress (Phases 217-A/B/C/C-fix/D COMPLETE, Phases 217-E–G remaining).
 > - **TD-AI-18** — Advisory: errorMessage forwarding pattern is safe but fragile.
 > - **TD-API-09** — Monitor: `.strict()` in messageTextContentSchema.
 
@@ -292,7 +292,7 @@ Once Phase 217 is implemented:
 
 ### Plan Technical Debt
 
-- **TD-PLAN-01**: Recurring subscriptions in progress (Phase 217-A/B/C DONE, Phase 217-C-fix NEXT for path conflict bug, Phases 217-D–G remaining).
+- **TD-PLAN-01**: Recurring subscriptions in progress (Phase 217-A/B/C/C-fix/D DONE, Phase 217-E–G remaining).
 
 ---
 
@@ -511,12 +511,22 @@ Tracks user-uploaded files stored in S3 (`{userId}/uploads/`). Created by `/api/
 - Per-event Zod schemas for payload validation (`checkoutSessionCompletedEventSchema`, `invoicePaidEventSchema`, `invoicePaymentFailedEventSchema`, `customerSubscriptionUpdatedEventSchema`, `customerSubscriptionDeletedEventSchema`)
 - Flexible multi-strategy user lookup via `findWebhookUser` (metadata userId → metadata clerkId → stripeSubscriptionId → stripeCustomerId)
 - Idempotent `findOneAndUpdate` with guard conditions on Transaction (`claimTransaction`) and User (`updateUserWithGuard`)
-- `checkout.session.completed`: creates Transaction (type: `subscription_initial`), sets `subscriptionStatus: "active"`, stores `stripeSubscriptionId`
-- `invoice.paid`: creates Transaction (type: `subscription_renewal`), refreshes `expiresOn`, resets usage counters
+- `checkout.session.completed`: creates Transaction (type: `subscription_initial`), sets `subscriptionStatus: "active"`, stores `stripeSubscriptionId`, sets `cancelAtPeriodEnd: false`
+- `invoice.paid`: creates Transaction (type: `subscription_renewal`), refreshes `expiresOn`, resets usage counters, preserves `cancelAtPeriodEnd`
 - `invoice.payment_failed`: sets `subscriptionStatus: "past_due"`
-- `customer.subscription.updated`: syncs plan on upgrade/downgrade
-- `customer.subscription.deleted`: reverts to Lite, sets `subscriptionStatus: "canceled"`, clears `stripeSubscriptionId`
-- **Known issue (Phase 217-C-fix):** `customer.subscription.deleted` handler has `$set: { plan }` + `$unset: { "plan.*" }` path conflict — will throw `ConflictingUpdateOperators` at runtime
+- `customer.subscription.updated`: syncs plan on upgrade/downgrade, syncs `cancelAtPeriodEnd` from `payload.cancel_at_period_end`
+- `customer.subscription.deleted`: reverts to Lite, sets `subscriptionStatus: "canceled"`, clears `stripeSubscriptionId`, resets `cancelAtPeriodEnd: false`
+- ~~Known issue (Phase 217-C-fix):~~ **RESOLVED** — `$set`/`$unset` path conflict fixed. No overlapping `plan.*` paths remain.
+
+### 7.7 Subscription Management Actions
+
+- `cancelSubscriptionAction()`: auth + ownership check, calls `stripe.subscriptions.update(id, { cancel_at_period_end: true })`, persists `plan.cancelAtPeriodEnd` + `subscriptionStatus`
+- `reactivateSubscriptionAction()`: auth + ownership check, calls `stripe.subscriptions.update(id, { cancel_at_period_end: false })`, persists state
+- Both share `updateSubscriptionCancellationPreference()` private handler
+- Admin guard: admin accounts cannot cancel subscriptions
+- Edge cases: already-canceled (409), already-in-state (200 warning), subscription not found (404), Stripe `resource_missing` (404), generic failures (500)
+- DB update: `findOneAndUpdate` with `_id` + `clerkId` ownership filter, `strict: true`, `upsert: false`
+- Self-healing: webhook events eventually correct local state even if action partially fails
 
 ---
 
@@ -938,13 +948,13 @@ _(None currently.)_
 
 ### Active — Low Priority
 
-| ID         | Area    | Description                                                                              | Phase    |
-| ---------- | ------- | ---------------------------------------------------------------------------------------- | -------- |
-| TD-AI-09   | OpenAI  | Image/audio generation prompts not persona-aware (chat prompts done Phase 22).           | 26.x     |
-| TD-AI-13   | OpenAI  | 3 model pricing entries are placeholders pending OpenAI confirmation.                    | Deferred |
-| TD-PLAN-01 | Billing | Recurring subscriptions in progress (217-A/B/C DONE, 217-C-fix NEXT, 217-D–G remaining). | 217      |
-| TD-AI-18   | OpenAI  | errorMessage forwarding pattern in `/api/openai` is safe but fragile.                    | Advisory |
-| TD-API-09  | API     | `messageTextContentSchema` uses `.strict()` — may reject extra fields.                   | Monitor  |
+| ID         | Area    | Description                                                                      | Phase    |
+| ---------- | ------- | -------------------------------------------------------------------------------- | -------- |
+| TD-AI-09   | OpenAI  | Image/audio generation prompts not persona-aware (chat prompts done Phase 22).   | 26.x     |
+| TD-AI-13   | OpenAI  | 3 model pricing entries are placeholders pending OpenAI confirmation.            | Deferred |
+| TD-PLAN-01 | Billing | Recurring subscriptions in progress (217-A/B/C/C-fix/D DONE, 217-E–G remaining). | 217      |
+| TD-AI-18   | OpenAI  | errorMessage forwarding pattern in `/api/openai` is safe but fragile.            | Advisory |
+| TD-API-09  | API     | `messageTextContentSchema` uses `.strict()` — may reject extra fields.           | Monitor  |
 
 ### Resolved (PM audit #82)
 

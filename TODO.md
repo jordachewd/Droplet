@@ -5,13 +5,13 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #111 (2026-04-10). V1.0 MVP RELEASED. Phase 222 COMPLETE. Phase 217-A COMPLETE. Phase 217-B COMPLETE. Phase 217-C COMPLETE. 1 HIGH bug (MongoDB path conflict). All 7 gates GREEN.**
+> **STATUS: PM audit #112 (2026-04-10). V1.0 MVP RELEASED. Phase 222 COMPLETE. Phase 217-A/B/C COMPLETE. Phase 217-C-fix COMPLETE. Phase 217-D COMPLETE. 0 HIGH bugs. All 7 gates GREEN.**
 >
-> **GATE STATUS: All 7 gates GREEN. 0 vulnerabilities. 1 HIGH runtime bug (path conflict in subscription.deleted handler).**
+> **GATE STATUS: All 7 gates GREEN. 0 vulnerabilities. 0 critical issues.**
 >
-> **TEST STATUS: 653 tests (106 suites), 49 E2E (6 skipped). 0 failures. All gates GREEN.**
+> **TEST STATUS: 663 tests (106 suites), 49 E2E (6 skipped). 0 failures. All gates GREEN.**
 >
-> **EXECUTION ORDER: 217-C-fix → 217-D → 217-E → 217-F → 217-G → 218-B → 26.x.**
+> **EXECUTION ORDER: 218-B (CSS extraction — owner directive) → 217-E → 217-F → 217-G → 26.x.**
 
 ---
 
@@ -33,29 +33,52 @@
 
 > ✅ Phase 217-C COMPLETE (PM audit #111). All 8 subtasks delivered: event dispatcher, 5 handlers, per-event Zod schemas, idempotency guards, flexible user lookup. 1 HIGH bug discovered during audit (path conflict). See [DONE.md](DONE.md) for detailed completion records.
 
-### Phase 217-C-fix — Webhook Bug Fixes (Path Conflict + Phantom Writes)
+## COMPLETED — Phase 217-C-fix: Webhook Bug Fixes (Archived to DONE.md)
 
-> **Risk:** HIGH (path conflict will crash subscription deletion in production). **Effort:** ~15min. **Dependencies:** Phase 217-C. **NEXT.**
+> ✅ Phase 217-C-fix COMPLETE (PM audit #112). Path conflict + phantom writes fixed. See [DONE.md](DONE.md).
+
+## COMPLETED — Phase 217-D: Custom Cancellation Flow (Archived to DONE.md)
+
+> ✅ Phase 217-D COMPLETE (PM audit #112). Cancel/reactivate server actions, 5-state profile UI, webhook sync. See [DONE.md](DONE.md).
+
+---
+
+## NEXT — CSS Class Extraction (Owner Directive — PM audit #112)
+
+> **Owner directive:** CSS branch merged with style changes. Similar Tailwind CSS class extraction must be done for other plain usage of Tailwind classes inside app files. **Promoted to NEXT** per owner priority.
+
+### Phase 218-B — CSS Component Class Extraction (Muted Text + Danger Button + Error Card)
+
+> **Owner directive:** CSS/Tailwind audit. Move duplicated inline patterns into `.css` files under `src/styles/`. **Risk:** LOW. **Effort:** ~30min. **Dependencies:** None. **NEXT.**
 >
-> **Bugs discovered during PM audit #111 Architect review, independently verified by PM:**
+> **Audit results (PM audit #112 independent verification):**
 >
-> 1. **HIGH-1 — MongoDB ConflictingUpdateOperators** in `handleCustomerSubscriptionDeleted` (~line 1131): `$set: { plan: litePlan }` overwrites the entire `plan` subdocument, but `$unset: { "plan.stripeSubscriptionId": "", "plan.stripeId": "" }` targets paths within `plan`. MongoDB will throw `ConflictingUpdateOperators` at runtime. Unit tests don't catch this because MongoDB is mocked. **Fix:** Remove `"plan.stripeSubscriptionId"` and `"plan.stripeId"` from `$unset` — the `$set: { plan: litePlan }` already replaces the entire subdocument so those fields won't exist.
-> 2. **MEDIUM-1 — Phantom writes silently stripped** in `handleInvoicePaymentFailed` (~line 916): writes `"plan.subscriptionStatus": "past_due"` and `"plan.stripeSubscriptionId": subscriptionId` but User model's `plan` subdocument schema has no `subscriptionStatus` or `stripeSubscriptionId` fields. Mongoose `strict: true` silently strips them. The top-level `subscriptionStatus` and `stripeSubscriptionId` fields are correct. **Fix:** Remove the phantom `plan.*` writes.
+> 1. `text-sm text-midnightBlue-600 dark:text-lavenderHaze-600` — **25 occurrences across 16 files**
+> 2. `btn btn-sm btn-contained bg-red-700 text-white hover:bg-red-800` — **5 occurrences across 4 files**
+> 3. Error card panel (`rounded-lg border border-slate-500 bg-lavenderHaze-100 p-6 text-center dark:border-slate-500 dark:bg-nightIndigo-900`) — **3 occurrences across 3 error boundary files**
 
-- [ ] **217-C-fix.1** — In `handleCustomerSubscriptionDeleted`: remove `"plan.stripeSubscriptionId": ""` and `"plan.stripeId": ""` from the `$unset` block. Keep `stripeSubscriptionId: ""` (top-level field unset is correct).
-- [ ] **217-C-fix.2** — In `handleInvoicePaymentFailed`: remove `"plan.subscriptionStatus": "past_due"` from `updateFields`. Remove `updateFields["plan.stripeSubscriptionId"] = subscriptionId` line. Keep top-level `subscriptionStatus` and `stripeSubscriptionId` writes.
-- [ ] **217-C-fix.3** — Add unit test: verify `handleCustomerSubscriptionDeleted` update operation does NOT have overlapping `$set`/`$unset` paths targeting `plan.*`.
-- [ ] **217-C-fix.4** — Validation: all 7 gates GREEN.
+- [ ] **218-B.1** — Create `.admin-muted-text` class in `src/styles/components/admin/admin.css` for `text-sm text-midnightBlue-600 dark:text-lavenderHaze-600` pattern (25 occurrences, 16 files)
+- [ ] **218-B.2** — Replace all 25 inline instances across admin settings, tables, confirmation-modal, and website-manager with `.admin-muted-text` class
+- [ ] **218-B.3** — Create `.btn-danger` class in `src/styles/components/buttons.css` for `btn btn-sm btn-contained bg-red-700 text-white hover:bg-red-800` pattern (5 occurrences, 4 files)
+- [ ] **218-B.4** — Replace all 5 inline danger button instances with `.btn-danger` class
+- [ ] **218-B.5** — Create `.error-card` class in `src/styles/components/layout.css` for the error boundary card panel (3 occurrences, 3 files)
+- [ ] **218-B.6** — Replace all 3 inline error card instances with `.error-card` class
+- [ ] **218-B.7** — Audit `toggle-theme.tsx` for ~350-char className extraction opportunity
+- [ ] **218-B.8** — Validation: all 7 gates GREEN. Zero visual regression.
 
-### Phase 217-D — Custom Cancellation Flow
+---
 
-> **Risk:** MEDIUM. **Effort:** ~1h. **Dependencies:** Phase 217-C.
+## QUEUED — Stripe Recurring Payment (Remaining Phases)
 
-- [ ] **217-D.1** — Create `cancelSubscriptionAction()` server action: auth check, calls `stripe.subscriptions.update(id, { cancel_at_period_end: true })`, updates `subscriptionStatus`
-- [ ] **217-D.2** — Create subscription management UI in profile: active/canceling/past_due status display, next billing date, cancel button with ConfirmationModal
-- [ ] **217-D.3** — Optional: reactivation path (`cancel_at_period_end: false`) to undo pending cancellation
-- [ ] **217-D.4** — Handle edge cases: already-canceled, past-due, subscription not found, Stripe API failures
-- [ ] **217-D.5** — Validation: all 7 gates GREEN.
+> **Owner:** OI51. Phases 217-A/B/C/C-fix/D COMPLETE. Remaining: 217-E → 217-F → 217-G.
+
+- [ ] **217-G.4** — Verify grandfathering: existing one-time paid users retain plan until `expiresOn`, then revert to Lite naturally
+- [ ] **217-G.5** — Full E2E suite pass + manual Stripe test mode verification
+- [ ] **217-G.6** — Validation: all 7 gates GREEN. Test count target: 670+.
+
+---
+
+## QUEUED — Post-CSS Improvements
 
 ### Phase 217-E — Yearly Billing UI + Pricing Display
 
@@ -87,20 +110,6 @@
 - [ ] **217-G.5** — Full E2E suite pass + manual Stripe test mode verification
 - [ ] **217-G.6** — Validation: all 7 gates GREEN. Test count target: 670+.
 
----
-
-## QUEUED — Post-Stripe Improvements
-
-### Phase 218-B — CSS Component Class Extraction (Muted Text + Danger Button)
-
-> **Owner directive:** CSS/Tailwind audit. Move duplicated inline patterns into `.css` files under `src/styles/`. **Risk:** LOW. **Effort:** ~30min. **Dependencies:** None.
-
-- [ ] **218-B.1** — Create `.admin-muted-text` class in `src/styles/components/admin/admin.css` for `text-sm text-midnightBlue-600 dark:text-lavenderHaze-600` pattern (20+ duplicates across 12 component files)
-- [ ] **218-B.2** — Replace all 20+ inline instances across admin settings, tables, confirmation-modal, and website-manager with `.admin-muted-text` class
-- [ ] **218-B.3** — Extract `.btn-danger` class in `src/styles/components/buttons.css` for destructive action button patterns if duplicated 3+ times
-- [ ] **218-B.4** — Audit `toggle-theme.tsx` for ~310-char className extraction opportunity
-- [ ] **218-B.5** — Validation: all 7 gates GREEN. Zero visual regression.
-
 ### Phase 26.x — Persona-aware Media Prompts
 
 > **Owner:** OI58. **Risk:** LOW. **Effort:** ~2h. **Dependencies:** None (can proceed after Stripe billing). **Files:** 4 (persona-prompts.ts, generateImage.tsx, generateAudio.tsx, generateResponse.tsx). **Lines:** ~60-80 added.
@@ -128,14 +137,10 @@
 
 > 1 test (`error-boundary-handling > API failure feedback`) fails intermittently on Firefox only. Chromium/WebKit pass. Browser timing issue, not product bug. Monitor.
 
-### E2E Fragile Homepage Heading — COMPLETED
-
-> ✅ FIXED (PM audit #105). `global.setup.ts` now uses `page.locator("h1").first()` structural assertion instead of hardcoded admin-configurable text. See [DONE.md](DONE.md).
-
 ---
 
 > **Completed phases** archived in [`DONE.md`](DONE.md).
-> Includes: Phases 143–148, 165, 165.1, 180.1–180.4, 185–222 (all sub-phases), 217-A, 29.1–29.5, 29.7.
+> Includes: Phases 143–148, 165, 165.1, 180.1–180.4, 185–222 (all sub-phases), 217-A/B/C/C-fix/D, 29.1–29.5, 29.7.
 > Phase 29.7 (Zustand audit) — COMPLETE. No changes needed. 4 stores, all properly implemented.
 > TypeScript 6 / ESLint compatibility — **CLOSED** (audit #103). No issues.
 > jsdom upgrade — **PIN MAINTAINED** (audit #103). ~24.1.3 stable. ESM TLA incompatibility persists.
