@@ -51,7 +51,7 @@ export function AdminStopReasonsSection({
               required
               aria-required="true"
               rows={3}
-              className="form-input"
+              className="form-textarea-input"
             />
           </label>
         ))}

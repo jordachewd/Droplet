@@ -1,5 +1,6 @@
 import classNames from "classnames";
 import LoadingBubbles from "./loading-bubbles";
+import Button from "@/components/shared/button";
 import { MouseEvent, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { resolveStoredAssetUrl } from "@/lib/utils/aws/s3-file-reference";
@@ -134,9 +135,9 @@ export default function ImageHolder({
           </span>
         ) : (
           hasTools && (
-            <button
-              type="button"
-              className="icon-btn absolute bottom-2 right-2 z-10 bg-black/50 text-white hover:bg-black/60"
+            <Button
+              variant="icon"
+              className="absolute bottom-2 right-2 z-10 bg-black/50 text-white hover:bg-black/60"
               onClick={handleDownload}
               disabled={isDownloading}
               aria-label="Download generated image"
@@ -146,7 +147,7 @@ export default function ImageHolder({
               ) : (
                 <i className="bi bi-download" aria-hidden="true"></i>
               )}
-            </button>
+            </Button>
           )
         )}
 
@@ -184,9 +185,9 @@ export default function ImageHolder({
       >
         <div className="ImageHolderLightboxContent relative flex h-full w-full flex-col items-center justify-center p-4">
           <div className="ImageHolderLightboxActions absolute right-4 top-4 z-20 flex items-center gap-2">
-            <button
-              type="button"
-              className="icon-btn bg-black/50 text-white hover:bg-black/70"
+            <Button
+              variant="icon"
+              className="bg-black/50 text-white hover:bg-black/70"
               onClick={handleDownload}
               disabled={isDownloading}
               aria-label="Download image"
@@ -196,16 +197,16 @@ export default function ImageHolder({
               ) : (
                 <i className="bi bi-download" aria-hidden="true"></i>
               )}
-            </button>
+            </Button>
 
-            <button
-              type="button"
-              className="icon-btn bg-black/50 text-white hover:bg-black/70"
+            <Button
+              variant="icon"
+              className="bg-black/50 text-white hover:bg-black/70"
               onClick={handleCloseLightbox}
               aria-label="Close lightbox"
             >
               <i className="bi bi-x-lg" aria-hidden="true"></i>
-            </button>
+            </Button>
           </div>
 
           <Image

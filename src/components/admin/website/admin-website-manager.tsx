@@ -62,7 +62,7 @@ export function AdminWebsiteManager({ pages }: AdminWebsiteManagerProps) {
         <label className="flex flex-col gap-2 text-sm">
           <span className="font-medium">Title</span>
           <input
-            className="rounded-xl border border-slate-400 bg-lavenderHaze-100 px-3 py-2 dark:border-slate-500 dark:bg-nightIndigo-1000"
+            className="form-text-input rounded-xl"
             type="text"
             name="title"
             placeholder="About Droplet"
@@ -73,7 +73,7 @@ export function AdminWebsiteManager({ pages }: AdminWebsiteManagerProps) {
         <label className="flex flex-col gap-2 text-sm">
           <span className="font-medium">Slug</span>
           <input
-            className="rounded-xl border border-slate-400 bg-lavenderHaze-100 px-3 py-2 dark:border-slate-500 dark:bg-nightIndigo-1000"
+            className="form-text-input rounded-xl"
             type="text"
             name="slug"
             placeholder="about"

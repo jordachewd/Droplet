@@ -143,7 +143,6 @@ export default function ProfileHeroEditor({
             label="First name"
             value={firstNameInput}
             onChange={(event) => setFirstNameInput(event.target.value)}
-            maxLength={120}
             autoComplete="given-name"
           />
 
@@ -152,7 +151,6 @@ export default function ProfileHeroEditor({
             label="Last name"
             value={lastNameInput}
             onChange={(event) => setLastNameInput(event.target.value)}
-            maxLength={120}
             autoComplete="family-name"
           />
         </div>
@@ -191,17 +189,12 @@ export default function ProfileHeroEditor({
               "IMG"
             )}
           </div>
+
           <FormInput
             type="file"
             label="Avatar image"
             accept="image/*"
             onChange={handleAvatarChange}
-            className={classNames(
-              "block w-full cursor-pointer text-sm",
-              "file:mr-4 file:rounded-md file:border file:px-3 file:py-2 file:text-sm file:font-medium",
-              "file:border-slate-500 file:bg-lavenderHaze-300/40 file:text-midnightBlue-900",
-              "dark:file:border-slate-500 dark:file:bg-nightIndigo-500/30 dark:file:text-white",
-            )}
           />
         </div>
 

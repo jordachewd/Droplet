@@ -33,7 +33,7 @@ export function AdminPricingSection({
               step={1}
               name="proPrice"
               defaultValue={pricingValue.proPrice}
-              className="form-input"
+              className="form-text-input"
             />
           </label>
           <label className="text-sm">
@@ -44,7 +44,7 @@ export function AdminPricingSection({
               step={1}
               name="premiumPrice"
               defaultValue={pricingValue.premiumPrice}
-              className="form-input"
+              className="form-text-input"
             />
           </label>
         </div>
@@ -71,7 +71,7 @@ export function AdminPricingSection({
           <select
             name="currencySymbol"
             defaultValue={pricingValue.currencySymbol}
-            className="form-input"
+            className="form-select-input"
           >
             <option value="$">USD ($)</option>
             <option value="€">EUR (€)</option>

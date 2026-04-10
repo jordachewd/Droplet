@@ -1,4 +1,5 @@
 import classNames from "classnames";
+import Button from "@/components/shared/button";
 import { TooltipArrow } from "./tooltip-arrow";
 
 interface SidebarToggleProps {
@@ -24,16 +25,15 @@ export default function SidebarToggle({
 
   return show ? (
     <TooltipArrow placement="right" title={show ? title : null}>
-      <button
-        type="button"
+      <Button
+        variant="icon"
         onClick={handleToggle}
-        className="icon-btn"
         aria-label={title || "Toggle sidebar"}
         aria-controls={controlsId}
         aria-expanded={expanded}
       >
         <i className={classNames("bi", icon)} aria-hidden="true"></i>
-      </button>
+      </Button>
     </TooltipArrow>
   ) : null;
 }
