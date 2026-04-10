@@ -7,7 +7,10 @@ const baseUserInput = {
   email: "adal@example.com",
 };
 
-type SchemaIndex = [Record<string, number>, { unique?: boolean }];
+type SchemaIndex = [
+  Record<string, number>,
+  { unique?: boolean; sparse?: boolean },
+];
 
 describe("User model", () => {
   it("defaults new users to a permanent Lite plan", () => {
@@ -18,6 +21,7 @@ describe("User model", () => {
     expect(user.plan.amount).toBe(0);
     expect(user.plan.billing).toBe("Monthly");
     expect(user.plan.expiresOn.toISOString()).toBe("9999-12-31T23:59:59.999Z");
+    expect(user.subscriptionStatus).toBeNull();
   });
 
   it("requires clerkId", () => {
@@ -48,7 +52,7 @@ describe("User model", () => {
     expect(error?.errors.role).toBeTruthy();
   });
 
-  it("defines clerkId unique index, email index, and suspended index", () => {
+  it("defines indexes for identity, subscription, and suspension fields", () => {
     const schemaIndexes = User.schema.indexes() as SchemaIndex[];
 
     expect(
@@ -58,6 +62,20 @@ describe("User model", () => {
     ).toBe(true);
     expect(schemaIndexes.some(([fields]) => fields.email === 1)).toBe(true);
     expect(schemaIndexes.some(([fields]) => fields.suspended === 1)).toBe(true);
+    expect(
+      schemaIndexes.some(
+        ([fields, options]) =>
+          fields.stripeCustomerId === 1 &&
+          options?.unique === true &&
+          options?.sparse === true,
+      ),
+    ).toBe(true);
+    expect(
+      schemaIndexes.some(([fields]) => fields.stripeSubscriptionId === 1),
+    ).toBe(true);
+    expect(
+      schemaIndexes.some(([fields]) => fields.subscriptionStatus === 1),
+    ).toBe(true);
   });
 
   it("rejects invalid plan name transitions outside allowed enum", () => {

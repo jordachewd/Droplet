@@ -33,7 +33,7 @@ export function AdminSupportSection({
           defaultValue={supportValue.supportEmail}
           required
           aria-required="true"
-          className="form-input"
+          className="form-text-input"
         />
       </label>
 

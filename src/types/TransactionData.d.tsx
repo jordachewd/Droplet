@@ -2,6 +2,11 @@
 
 import { BillingCycle, CheckoutPlanParams, PlanName } from "./PlanData.d";
 
+export type TransactionType =
+  | "one_time"
+  | "subscription_initial"
+  | "subscription_renewal";
+
 export interface CreateTransactionParams {
   stripeId: string;
   userId: string;
@@ -11,6 +16,8 @@ export interface CreateTransactionParams {
   plan: PlanName;
   billing: BillingCycle;
   amount: number;
+  type?: TransactionType;
+  stripeInvoiceId?: string;
 }
 
 export interface CheckoutTransactionParams {
@@ -25,4 +32,6 @@ export interface Transaction {
   expiresOn: Date;
   billing: BillingCycle;
   stripeId: string;
+  type?: TransactionType;
+  stripeInvoiceId?: string;
 }

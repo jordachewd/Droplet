@@ -13,6 +13,7 @@
     "test:live:audio-models": "node scripts/live-test-audio-models.mjs",
     "test:live:image-models": "node scripts/live-test-image-models.mjs",
     "migrate:removed-personas": "node scripts/migrate-removed-personas.mjs",
+    "seed:stripe-billing-settings": "node scripts/seed-stripe-billing-settings.mjs",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
@@ -66,7 +67,7 @@
     "jsdom": "~24.1.3",
     "knip": "^6.0.0",
     "postcss": "^8.5.1",
-    "prettier": "^3.4.2",
+    "prettier": "~3.8.1",
     "tailwindcss": "^4.2.1",
     "typescript": "^6.0.2",
     "vitest": "^4.0.18"

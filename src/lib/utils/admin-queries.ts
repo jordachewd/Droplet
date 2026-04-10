@@ -30,6 +30,10 @@ import User from "@/lib/database/models/user.model";
 import { getEffectivePlanConfig } from "@/lib/utils/effective-plan-config";
 import { getEffectivePersonaConfig } from "@/lib/utils/effective-persona-config";
 import {
+  DEFAULT_STRIPE_PRICE_IDS,
+  DEFAULT_YEARLY_DISCOUNT,
+} from "@/lib/utils/effective-stripe-billing-config";
+import {
   getDisplayPlanName,
   getDisplayUsageLimit,
   isAdminRole,
@@ -779,6 +783,10 @@ export async function getAdminSettingsSnapshot() {
         proPrice: DEFAULT_PLAN_PRICING.Pro,
         premiumPrice: DEFAULT_PLAN_PRICING.Premium,
         currencySymbol: DEFAULT_PLAN_PRICING.currencySymbol,
+      },
+      stripePriceIds: { ...DEFAULT_STRIPE_PRICE_IDS },
+      yearlyDiscount: {
+        yearlyDiscount: DEFAULT_YEARLY_DISCOUNT,
       },
       limits: structuredClone(PLAN_LIMITS) as PlanLimits,
       trialLimits: { ...PERSONA_TRIAL_LIMITS },

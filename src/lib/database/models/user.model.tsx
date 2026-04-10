@@ -4,11 +4,16 @@ import { PlanData } from "@/types/PlanData.d";
 import { UserRoles } from "@/types/UserData.d";
 import { Schema, model, models, Document } from "mongoose";
 
+type SubscriptionStatus = "active" | "past_due" | "canceled" | "unpaid";
+
 interface IUser extends Document {
   clerkId: string;
   username: string;
   email: string;
   role: UserRoles;
+  stripeCustomerId?: string;
+  stripeSubscriptionId?: string;
+  subscriptionStatus?: SubscriptionStatus | null;
   suspended?: boolean;
   registerAt: Date;
   plan: PlanData;
@@ -43,6 +48,21 @@ const UserSchema = new Schema<IUser>(
       enum: ["client", "admin"],
       default: "client",
     },
+    stripeCustomerId: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
+    stripeSubscriptionId: {
+      type: String,
+      index: true,
+    },
+    subscriptionStatus: {
+      type: String,
+      enum: ["active", "past_due", "canceled", "unpaid"],
+      default: null,
+      index: true,
+    },
     suspended: {
       type: Boolean,
       default: false,
@@ -71,6 +91,7 @@ const UserSchema = new Schema<IUser>(
         default: () => getExpiresOn("Lite"),
       },
       stripeId: { type: String },
+      cancelAtPeriodEnd: { type: Boolean, default: false },
       imageGenerations: { type: Number, default: 0 },
       audioGenerations: { type: Number, default: 0 },
       usagePeriodStart: { type: Date, default: Date.now },

@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> ...04-09 (PM audit #107). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. **V1.0 MVP RELEASED.** Brand rename complete (Phase 172). Catch blocks documented (Phase 167.2). Promo text admin-configurable (Phase 162, 180.2–180.3). Global error boundary live (Phase 163). Admin error boundary live (Phase 187-A). Phases 143–222 COMPLETE (all sub-phases). Phase 165.1 COMPLETE. Phases 146–148 COMPLETE. Phases 29.1–29.5 COMPLETE. **Sidebar restructure COMPLETE (Phases 209–216).** **Phases 218–222 COMPLETE (CSS modular architecture + orphan cleanup + useIsDesktop hook + shared layout/form CSS + SidebarShell + AppHeader + AppLayoutShell).** **Stripe recurring billing NEXT (Phases 217-A–G).** E2E: 49 tests (8 spec files). Coverage: 85/80/85/85. 646 tests (105 suites). Build passing. Node.js 24.12.0. jsdom pinned to ~24.1.3 (ESM compat). TypeScript 6.0.2 + ESLint 10 fully compatible (audit #103). Zod schema consistency across all server actions and API routes. **Stripe recurring billing planned (Phases 217-A–G) — owner answers received.**
+> ...04-10 (PM audit #110). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. **V1.0 MVP RELEASED.** Brand rename complete (Phase 172). Catch blocks documented (Phase 167.2). Promo text admin-configurable (Phase 162, 180.2–180.3). Global error boundary live (Phase 163). Admin error boundary live (Phase 187-A). Phases 143–222 COMPLETE (all sub-phases). Phase 165.1 COMPLETE. Phases 146–148 COMPLETE. Phases 29.1–29.5 COMPLETE. **Sidebar restructure COMPLETE (Phases 209–216).** **Phases 218–222 COMPLETE (CSS modular architecture + orphan cleanup + useIsDesktop hook + shared layout/form CSS + SidebarShell + AppHeader + AppLayoutShell).** **Phase 217-A COMPLETE (Stripe schema + product setup).** **Phase 217-B COMPLETE (checkout mode switch + customer management).** **Phase 217-C COMPLETE (webhook expansion — 5 subscription event handlers with Zod schemas, idempotency guards; 1 HIGH bug in subscription.deleted path conflict, scoped to 217-C-fix).** E2E: 49 tests (8 spec files). Coverage: 85/80/85/85. 653 tests (106 suites). Build passing. Node.js 24.12.0. jsdom pinned to ~24.1.3 (ESM compat). TypeScript 6.0.2 + ESLint 10 fully compatible (audit #103). Zod schema consistency across all server actions and API routes. Prettier pinned to ~3.8.1 (dependency version stabilization). **Stripe recurring billing in progress (Phase 217-A DONE, Phase 217-B DONE, Phase 217-C DONE, Phase 217-C-fix NEXT, Phases 217-D–G remaining) — checkout uses `mode: "subscription"` with Stripe Customer management, webhooks handle 5 subscription lifecycle events.** 0 npm vulnerabilities. All 7 gates GREEN.
 >
 > **V1.0 MVP Released (PM audit #94):**
 >
@@ -31,7 +31,7 @@
 > - **TD-MEDIA-01** — 🟡 ACCEPTED LIMITATION. Media gen (image/audio) may approach Vercel Hobby 60s timeout. Phase 181 proactive timeout handles gracefully.
 > - **TD-AI-09** — Image/audio prompts not persona-aware (deferred to v1.1).
 > - **TD-AI-13** — 3 model pricing placeholders (awaiting OpenAI confirmation).
-> - **TD-PLAN-01** — No recurring subscriptions (planned: Phases 217-A–D, blocked pending owner decisions).
+> - **TD-PLAN-01** — Recurring subscriptions in progress (Phases 217-A/B/C COMPLETE, Phase 217-C-fix NEXT, Phases 217-D–G remaining).
 > - **TD-AI-18** — Advisory: errorMessage forwarding pattern is safe but fragile.
 > - **TD-API-09** — Monitor: `.strict()` in messageTextContentSchema.
 
@@ -80,10 +80,10 @@ The product monetises through tiered subscription plans paid via Stripe.
 
 - Team/workspace features
 - Multi-provider LLM routing
-- Stripe subscription mode (auto-renewal)
 - User-created custom personas
-- Yearly billing pricing discount
 - Broad role systems beyond `client` and `admin`
+
+> **Moved to active development:** Stripe subscription mode (Phases 217-A–G, 217-A DONE), Yearly billing pricing discount (Phase 217-E).
 
 ---
 
@@ -252,7 +252,7 @@ Prompts are versioned and separated from request handlers. `buildPersonaAwareSys
 2. Upgrade via Stripe Checkout (one-time payment per billing cycle).
 3. On successful `checkout.session.completed` webhook, the user's plan and expiration are updated.
 4. Expired paid plans revert to Lite behavior (checked in `/api/openai` route).
-5. No auto-renewal — plans are one-time payments with set expiration dates for paid tiers. **Recurring subscription billing UNBLOCKED (Phases 217-A–G). Owner decisions:** grandfather existing one-time users until expiry then revert to Lite; Monthly + Yearly billing (30% yearly discount); custom cancel UI (not Stripe Customer Portal).
+5. Checkout now uses `mode: "subscription"` with Stripe Customer management (Phase 217-B DONE). Recurring subscription billing in progress (Phases 217-C–G). **Recurring subscription billing UNBLOCKED (Phases 217-A–G). Owner decisions:** grandfather existing one-time users until expiry then revert to Lite; Monthly + Yearly billing (30% yearly discount); custom cancel UI (not Stripe Customer Portal).
 
 #### Planned Subscription Changes (Phase 217)
 
@@ -292,7 +292,7 @@ Once Phase 217 is implemented:
 
 ### Plan Technical Debt
 
-- **TD-PLAN-01**: No recurring subscriptions (planned: Phases 217-A–G, UNBLOCKED).
+- **TD-PLAN-01**: Recurring subscriptions in progress (Phase 217-A/B/C DONE, Phase 217-C-fix NEXT for path conflict bug, Phases 217-D–G remaining).
 
 ---
 
@@ -506,9 +506,17 @@ Tracks user-uploaded files stored in S3 (`{userId}/uploads/`). Created by `/api/
 ### 7.6 POST /api/webhooks/stripe
 
 - Auth: `stripe.webhooks.constructEvent` verification
-- Handles: `checkout.session.completed`
-- Idempotency check on `Transaction.stripeId`
-- Resets usage counters on plan renewal
+- Event dispatcher: `dispatchStripeWebhookEvent` routes by `event.type`
+- Handles 5 events: `checkout.session.completed`, `invoice.paid`, `invoice.payment_failed`, `customer.subscription.updated`, `customer.subscription.deleted`
+- Per-event Zod schemas for payload validation (`checkoutSessionCompletedEventSchema`, `invoicePaidEventSchema`, `invoicePaymentFailedEventSchema`, `customerSubscriptionUpdatedEventSchema`, `customerSubscriptionDeletedEventSchema`)
+- Flexible multi-strategy user lookup via `findWebhookUser` (metadata userId → metadata clerkId → stripeSubscriptionId → stripeCustomerId)
+- Idempotent `findOneAndUpdate` with guard conditions on Transaction (`claimTransaction`) and User (`updateUserWithGuard`)
+- `checkout.session.completed`: creates Transaction (type: `subscription_initial`), sets `subscriptionStatus: "active"`, stores `stripeSubscriptionId`
+- `invoice.paid`: creates Transaction (type: `subscription_renewal`), refreshes `expiresOn`, resets usage counters
+- `invoice.payment_failed`: sets `subscriptionStatus: "past_due"`
+- `customer.subscription.updated`: syncs plan on upgrade/downgrade
+- `customer.subscription.deleted`: reverts to Lite, sets `subscriptionStatus: "canceled"`, clears `stripeSubscriptionId`
+- **Known issue (Phase 217-C-fix):** `customer.subscription.deleted` handler has `$set: { plan }` + `$unset: { "plan.*" }` path conflict — will throw `ConflictingUpdateOperators` at runtime
 
 ---
 
@@ -827,7 +835,7 @@ All button styles use Lime Green as the accent color in **both** light and dark 
 
 ## 13. Testing
 
-- **Unit tests**: 104 suites, 644 tests (Vitest) — organized by domain in `tests/unit/{actions,components,routes,utils,models,constants,stores}/`. TDD rebuild COMPLETE (Phases 120.1–120.7). All test files rebuilt from scratch using strict TDD methodology. Zero `as never` casts. All tests use shared factories from `tests/unit/test-support/`. Includes streaming, webhook, chat-wrapper, chat-body stop-state, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, persona prompt, rate limiting, task complexity classification, conversation stop enforcement, entitlement resolver, checkout-success page, admin audit trail, OpenAI route tests (split into 5 focused modules), atomic prompt limit, daily conversation limit, media error handling, universal feature access, trial access tests, validation schema security injection tests, AudioPlayer ARIA tests, abort behavior tests, Zustand store tests, upload file size validation, 24 component test files, user model tests, Button component TDD tests, PageHead heading-level TDD tests, suspended user enforcement tests, delete-user-cascade tests, upload model tests, admin-settings-tabs hydration tests, checkout redirect tests.
+- **Unit tests**: 106 suites, 652 tests (Vitest) — organized by domain in `tests/unit/{actions,components,routes,utils,models,constants,stores}/`. TDD rebuild COMPLETE (Phases 120.1–120.7). All test files rebuilt from scratch using strict TDD methodology. Zero `as never` casts. All tests use shared factories from `tests/unit/test-support/`. Includes streaming, webhook, chat-wrapper, chat-body stop-state, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, persona prompt, rate limiting, task complexity classification, conversation stop enforcement, entitlement resolver, checkout-success page, admin audit trail, OpenAI route tests (split into 5 focused modules), atomic prompt limit, daily conversation limit, media error handling, universal feature access, trial access tests, validation schema security injection tests, AudioPlayer ARIA tests, abort behavior tests, Zustand store tests, upload file size validation, 24 component test files, user model tests, Button component TDD tests, PageHead heading-level TDD tests, suspended user enforcement tests, delete-user-cascade tests, upload model tests, admin-settings-tabs hydration tests, checkout redirect tests.
 - **E2E tests**: 8 Playwright spec files. Specs: `admin-settings-propagation`, `auth-boundaries`, `authenticated-accessibility`, `chat-conversation-flow`, `public-structure`, `admin-user-operations`, `billing-checkout-flow`, `error-boundary-handling`. Default 3 browsers (Chromium, Firefox, WebKit); full 7-browser matrix via `PLAYWRIGHT_FULL_MATRIX=1`. WCAG E2E via @axe-core/playwright.
 - **Coverage**: v8 provider, thresholds: 85% statements / 80% branches / 85% functions / 85% lines. Gate PASSES. 7 files explicitly excluded from coverage (complex integration files). Reporters: text, json-summary, lcov. Setup file: `tests/unit/vitest.setup.ts`.
 - **Config**: Vitest `environmentMatchGlobs` for auto-jsdom on `.tsx`. Playwright `actionTimeout: 10s`, `expect.timeout: 5s`. ESLint `no-console` (error), `no-restricted-globals` (alert/confirm). TS `noFallthroughCasesInSwitch`, `forceConsistentCasingInFileNames`. All 7 validation gates GREEN (lint, knip, tsc, unit, E2E, build, prettier).
@@ -865,7 +873,7 @@ All button styles use Lime Green as the accent color in **both** light and dark 
 ## 15. Technical Debt Summary
 
 > Only unresolved items live here. All resolved TDs are archived in `DONE.md`.
-> Last updated: PM audit #91 (2026-04-03).
+> Last updated: PM audit #108 (2026-04-09).
 
 ### Resolved This Session (PM audit #91)
 
@@ -930,13 +938,13 @@ _(None currently.)_
 
 ### Active — Low Priority
 
-| ID         | Area    | Description                                                                    | Phase    |
-| ---------- | ------- | ------------------------------------------------------------------------------ | -------- |
-| TD-AI-09   | OpenAI  | Image/audio generation prompts not persona-aware (chat prompts done Phase 22). | 26.x     |
-| TD-AI-13   | OpenAI  | 3 model pricing entries are placeholders pending OpenAI confirmation.          | Deferred |
-| TD-PLAN-01 | Billing | No recurring subscriptions (Phases 217-A–G UNBLOCKED, owner answers received). | 217      |
-| TD-AI-18   | OpenAI  | errorMessage forwarding pattern in `/api/openai` is safe but fragile.          | Advisory |
-| TD-API-09  | API     | `messageTextContentSchema` uses `.strict()` — may reject extra fields.         | Monitor  |
+| ID         | Area    | Description                                                                              | Phase    |
+| ---------- | ------- | ---------------------------------------------------------------------------------------- | -------- |
+| TD-AI-09   | OpenAI  | Image/audio generation prompts not persona-aware (chat prompts done Phase 22).           | 26.x     |
+| TD-AI-13   | OpenAI  | 3 model pricing entries are placeholders pending OpenAI confirmation.                    | Deferred |
+| TD-PLAN-01 | Billing | Recurring subscriptions in progress (217-A/B/C DONE, 217-C-fix NEXT, 217-D–G remaining). | 217      |
+| TD-AI-18   | OpenAI  | errorMessage forwarding pattern in `/api/openai` is safe but fragile.                    | Advisory |
+| TD-API-09  | API     | `messageTextContentSchema` uses `.strict()` — may reject extra fields.                   | Monitor  |
 
 ### Resolved (PM audit #82)
 

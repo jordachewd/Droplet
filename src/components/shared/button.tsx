@@ -4,7 +4,7 @@ import classNames from "classnames";
 import { ButtonHTMLAttributes, ReactNode } from "react";
 import LoadingBubbles from "@/components/shared/loading-bubbles";
 
-type ButtonVariant = "contained" | "outlined" | "text";
+type ButtonVariant = "contained" | "outlined" | "text" | "icon";
 type ButtonSize = "xs" | "sm" | "md" | "lg";
 
 interface ButtonProps extends Omit<
@@ -18,6 +18,7 @@ interface ButtonProps extends Omit<
   children: ReactNode;
 }
 
+
 export default function Button({
   variant = "contained",
   size = "sm",
@@ -29,14 +30,13 @@ export default function Button({
   ...buttonProps
 }: ButtonProps) {
   const isDisabled = disabled || loading;
+  const isIcon = variant === "icon";
 
   return (
     <button
       className={classNames(
         "Button",
-        "btn",
-        `btn-${size}`,
-        `btn-${variant}`,
+        isIcon ? "icon-btn" : ["btn", `btn-${size}`, `btn-${variant}`],
         className,
       )}
       type={type}

@@ -35,7 +35,7 @@ export function AdminPromoContentSection({
             defaultValue={promoContentValue.promoTitlePro}
             required
             aria-required="true"
-            className="form-input"
+            className="form-text-input"
           />
         </label>
 
@@ -47,7 +47,7 @@ export function AdminPromoContentSection({
             defaultValue={promoContentValue.promoTitlePremium}
             required
             aria-required="true"
-            className="form-input"
+            className="form-text-input"
           />
         </label>
       </div>
@@ -61,7 +61,7 @@ export function AdminPromoContentSection({
             rows={3}
             required
             aria-required="true"
-            className="form-input"
+            className="form-textarea-input"
           />
         </label>
 
@@ -73,7 +73,7 @@ export function AdminPromoContentSection({
             rows={3}
             required
             aria-required="true"
-            className="form-input"
+            className="form-textarea-input"
           />
         </label>
       </div>
@@ -87,7 +87,7 @@ export function AdminPromoContentSection({
             defaultValue={promoContentValue.promoUpgradeCta}
             required
             aria-required="true"
-            className="form-input"
+            className="form-text-input"
           />
         </label>
 
@@ -99,7 +99,7 @@ export function AdminPromoContentSection({
             defaultValue={promoContentValue.promoContactSupportCta}
             required
             aria-required="true"
-            className="form-input"
+            className="form-text-input"
           />
         </label>
       </div>
@@ -113,7 +113,7 @@ export function AdminPromoContentSection({
             defaultValue={promoContentValue.promoAdminLabel}
             required
             aria-required="true"
-            className="form-input"
+            className="form-text-input"
           />
         </label>
 
@@ -125,7 +125,7 @@ export function AdminPromoContentSection({
             defaultValue={promoContentValue.promoAdminDescription}
             required
             aria-required="true"
-            className="form-input"
+            className="form-text-input"
           />
         </label>
       </div>
@@ -139,7 +139,7 @@ export function AdminPromoContentSection({
             defaultValue={promoContentValue.promoSuspensionTitle}
             required
             aria-required="true"
-            className="form-input"
+            className="form-text-input"
           />
         </label>
 
@@ -151,7 +151,7 @@ export function AdminPromoContentSection({
             defaultValue={promoContentValue.promoSuspensionDescription}
             required
             aria-required="true"
-            className="form-input"
+            className="form-text-input"
           />
         </label>
       </div>
@@ -165,7 +165,7 @@ export function AdminPromoContentSection({
             defaultValue={promoContentValue.promoFreeLabel}
             required
             aria-required="true"
-            className="form-input"
+            className="form-text-input"
           />
         </label>
 
@@ -177,7 +177,7 @@ export function AdminPromoContentSection({
             defaultValue={promoContentValue.promoCurrentPlanLabel}
             required
             aria-required="true"
-            className="form-input"
+            className="form-text-input"
           />
         </label>
       </div>
@@ -190,7 +190,7 @@ export function AdminPromoContentSection({
           rows={3}
           required
           aria-required="true"
-          className="form-input"
+          className="form-textarea-input"
         />
       </label>
 
@@ -202,7 +202,7 @@ export function AdminPromoContentSection({
           rows={3}
           required
           aria-required="true"
-          className="form-input"
+          className="form-textarea-input"
         />
       </label>
 
@@ -217,7 +217,7 @@ export function AdminPromoContentSection({
             rows={3}
             required
             aria-required="true"
-            className="form-input"
+            className="form-textarea-input"
           />
         </label>
 
@@ -229,7 +229,7 @@ export function AdminPromoContentSection({
             rows={3}
             required
             aria-required="true"
-            className="form-input"
+            className="form-textarea-input"
           />
         </label>
       </div>
@@ -245,7 +245,7 @@ export function AdminPromoContentSection({
             defaultValue={promoContentValue.chatConversationEndedLabel}
             required
             aria-required="true"
-            className="form-input"
+            className="form-text-input"
           />
         </label>
 
@@ -257,7 +257,7 @@ export function AdminPromoContentSection({
             defaultValue={promoContentValue.chatStartConversationCta}
             required
             aria-required="true"
-            className="form-input"
+            className="form-text-input"
           />
         </label>
       </div>
@@ -271,7 +271,7 @@ export function AdminPromoContentSection({
             defaultValue={promoContentValue.chatUpgradePlanCta}
             required
             aria-required="true"
-            className="form-input"
+            className="form-text-input"
           />
         </label>
 
@@ -283,7 +283,7 @@ export function AdminPromoContentSection({
             defaultValue={promoContentValue.chatContactSupportCta}
             required
             aria-required="true"
-            className="form-input"
+            className="form-text-input"
           />
         </label>
       </div>
@@ -299,7 +299,7 @@ export function AdminPromoContentSection({
             defaultValue={promoContentValue.chatIntroSubheading}
             required
             aria-required="true"
-            className="form-input"
+            className="form-text-input"
           />
         </label>
 
@@ -311,7 +311,7 @@ export function AdminPromoContentSection({
             defaultValue={promoContentValue.chatInputPlaceholder}
             required
             aria-required="true"
-            className="form-input"
+            className="form-text-input"
           />
         </label>
       </div>
@@ -325,7 +325,7 @@ export function AdminPromoContentSection({
             defaultValue={promoContentValue.plansSubscribeCta}
             required
             aria-required="true"
-            className="form-input"
+            className="form-text-input"
           />
         </label>
 
@@ -337,7 +337,7 @@ export function AdminPromoContentSection({
             defaultValue={promoContentValue.planPopularBadge}
             required
             aria-required="true"
-            className="form-input"
+            className="form-text-input"
           />
         </label>
       </div>

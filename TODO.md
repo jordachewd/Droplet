@@ -5,35 +5,13 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #107 (2026-04-09). V1.0 MVP RELEASED. Phase 222 COMPLETE (all sub-phases: 222-A SidebarShell, 222-B AppHeader, 222-C AppLayoutShell). Stripe recurring NEXT (Phases 217-A–G).**
+> **STATUS: PM audit #111 (2026-04-10). V1.0 MVP RELEASED. Phase 222 COMPLETE. Phase 217-A COMPLETE. Phase 217-B COMPLETE. Phase 217-C COMPLETE. 1 HIGH bug (MongoDB path conflict). All 7 gates GREEN.**
 >
-> **GATE STATUS: Validation GREEN. Architecture GREEN. Product GREEN. Admin GREEN. Public GREEN. Contract GREEN.**
+> **GATE STATUS: All 7 gates GREEN. 0 vulnerabilities. 1 HIGH runtime bug (path conflict in subscription.deleted handler).**
 >
-> **TEST STATUS: 646 tests (105 suites), 49 E2E (6 skipped). 0 failures. All gates GREEN.**
+> **TEST STATUS: 653 tests (106 suites), 49 E2E (6 skipped). 0 failures. All gates GREEN.**
 >
-> **EXECUTION ORDER: 217-A → 217-B → 217-C → 217-D → 217-E → 217-F → 217-G → 26.x.**
-
----
-
-## COMPLETED — Shared Layout Components (Phase 222) — ALL DONE
-
-> ✅ Phase 222 COMPLETE (PM audit #107). All sub-phases delivered: 222-A SidebarShell, 222-B AppHeader, 222-C AppLayoutShell. See [DONE.md](DONE.md) for detailed completion records.
-
----
-
-## COMPLETED — Phases 218–222: CSS Architecture + Orphan Cleanup + Hook + CSS Extraction + SidebarShell + AppHeader + AppLayoutShell (Archived to DONE.md)
-
-> Phases 218–222 ALL COMPLETE. See [DONE.md](DONE.md) for detailed completion records.
-
----
-
-## COMPLETED — Sidebar & Navigation Restructure (Archived to DONE.md)
-
-> Phases 209–216 ALL COMPLETE. See [DONE.md](DONE.md) for detailed completion records.
-
----
-
-## ON HOLD — (Legacy section removed — Stripe now UNBLOCKED)
+> **EXECUTION ORDER: 217-C-fix → 217-D → 217-E → 217-F → 217-G → 218-B → 26.x.**
 
 ---
 
@@ -43,40 +21,31 @@
 >
 > **Sequencing:** Phase 222 COMPLETE. Stripe is NEXT.
 
-### Phase 217-A — Schema + Stripe Product Setup
+## COMPLETED — Phase 217-A: Schema + Stripe Product Setup (Archived to DONE.md)
 
-> **Risk:** LOW (additive). **Effort:** ~30min. **Dependencies:** Stripe Dashboard product creation.
+> ✅ Phase 217-A COMPLETE (PM audit #108). All 6 subtasks delivered: schema fields, types, Stripe products, AppSettings, seed script, validation. See [DONE.md](DONE.md) for detailed completion records.
 
-- [ ] **217-A.1** — Add `stripeCustomerId` (String, optional, unique sparse index), `stripeSubscriptionId` (String, optional), `subscriptionStatus` (String enum: `active | past_due | canceled | unpaid`, default `null`) to User model
-- [ ] **217-A.2** — Add `type` (String enum: `one_time | subscription_initial | subscription_renewal`, default `one_time`), `stripeInvoiceId` (String, optional, unique sparse index) to Transaction model
-- [ ] **217-A.3** — Update `PlanData` and `TransactionData` TypeScript types to reflect new fields
-- [ ] **217-A.4** — Create 4 Stripe Price objects in Stripe Dashboard: Pro Monthly ($19), Pro Yearly ($159.60), Premium Monthly ($39), Premium Yearly ($327.60)
-- [ ] **217-A.5** — Create `admin.stripePriceIds` and `admin.yearlyDiscount` AppSetting keys
-- [ ] **217-A.6** — Validation: all 7 gates GREEN. No behavior change.
+## COMPLETED — Phase 217-B: Checkout Mode Switch + Customer Management (Archived to DONE.md)
 
-### Phase 217-B — Checkout Mode Switch + Customer Management
+> ✅ Phase 217-B COMPLETE (PM audit #110). All 6 subtasks delivered: Stripe Customer utility, subscription mode, persistent Price IDs, yearly billing, subscription metadata, validation. See [DONE.md](DONE.md) for detailed completion records.
 
-> **Risk:** MEDIUM. **Effort:** ~45min. **Dependencies:** Phase 217-A.
+## COMPLETED — Phase 217-C: Webhook Expansion for Subscription Events (Archived to DONE.md)
 
-- [ ] **217-B.1** — Create `getOrCreateStripeCustomer(user)` utility that creates/retrieves Stripe Customer and stores `stripeCustomerId` on User
-- [ ] **217-B.2** — Switch `checkoutPlan()` from `mode: "payment"` to `mode: "subscription"` with `customer` param
-- [ ] **217-B.3** — Replace inline `price_data` with persistent Stripe Price ID from AppSetting
-- [ ] **217-B.4** — Add yearly billing option: accept `billing: "Monthly" | "Yearly"` param, route to correct Price ID
-- [ ] **217-B.5** — Add `subscription_data.metadata` with `userId`, `clerkId`, `plan`, `billing`
-- [ ] **217-B.6** — Validation: all 7 gates GREEN.
+> ✅ Phase 217-C COMPLETE (PM audit #111). All 8 subtasks delivered: event dispatcher, 5 handlers, per-event Zod schemas, idempotency guards, flexible user lookup. 1 HIGH bug discovered during audit (path conflict). See [DONE.md](DONE.md) for detailed completion records.
 
-### Phase 217-C — Webhook Expansion for Subscription Events
+### Phase 217-C-fix — Webhook Bug Fixes (Path Conflict + Phantom Writes)
 
-> **Risk:** HIGH. **Effort:** ~2h. **Dependencies:** Phase 217-B. **Critical: idempotency on every handler.**
+> **Risk:** HIGH (path conflict will crash subscription deletion in production). **Effort:** ~15min. **Dependencies:** Phase 217-C. **NEXT.**
+>
+> **Bugs discovered during PM audit #111 Architect review, independently verified by PM:**
+>
+> 1. **HIGH-1 — MongoDB ConflictingUpdateOperators** in `handleCustomerSubscriptionDeleted` (~line 1131): `$set: { plan: litePlan }` overwrites the entire `plan` subdocument, but `$unset: { "plan.stripeSubscriptionId": "", "plan.stripeId": "" }` targets paths within `plan`. MongoDB will throw `ConflictingUpdateOperators` at runtime. Unit tests don't catch this because MongoDB is mocked. **Fix:** Remove `"plan.stripeSubscriptionId"` and `"plan.stripeId"` from `$unset` — the `$set: { plan: litePlan }` already replaces the entire subdocument so those fields won't exist.
+> 2. **MEDIUM-1 — Phantom writes silently stripped** in `handleInvoicePaymentFailed` (~line 916): writes `"plan.subscriptionStatus": "past_due"` and `"plan.stripeSubscriptionId": subscriptionId` but User model's `plan` subdocument schema has no `subscriptionStatus` or `stripeSubscriptionId` fields. Mongoose `strict: true` silently strips them. The top-level `subscriptionStatus` and `stripeSubscriptionId` fields are correct. **Fix:** Remove the phantom `plan.*` writes.
 
-- [ ] **217-C.1** — Refactor webhook handler to event dispatcher pattern (switch on `event.type`)
-- [ ] **217-C.2** — Modify `checkout.session.completed` handler: create Transaction (type: `subscription_initial`), set `subscriptionStatus: "active"`, store `stripeSubscriptionId`
-- [ ] **217-C.3** — Add `invoice.paid` handler: create Transaction (type: `subscription_renewal`), refresh `expiresOn`, reset usage counters, idempotency on `stripeInvoiceId`
-- [ ] **217-C.4** — Add `invoice.payment_failed` handler: set `subscriptionStatus: "past_due"`, log warning
-- [ ] **217-C.5** — Add `customer.subscription.updated` handler: handle plan upgrade/downgrade, update `subscriptionStatus` and plan details
-- [ ] **217-C.6** — Add `customer.subscription.deleted` handler: revert to Lite, set `subscriptionStatus: "canceled"`, clear `stripeSubscriptionId`
-- [ ] **217-C.7** — Add Zod schemas for each new webhook event payload
-- [ ] **217-C.8** — Validation: all 7 gates GREEN.
+- [ ] **217-C-fix.1** — In `handleCustomerSubscriptionDeleted`: remove `"plan.stripeSubscriptionId": ""` and `"plan.stripeId": ""` from the `$unset` block. Keep `stripeSubscriptionId: ""` (top-level field unset is correct).
+- [ ] **217-C-fix.2** — In `handleInvoicePaymentFailed`: remove `"plan.subscriptionStatus": "past_due"` from `updateFields`. Remove `updateFields["plan.stripeSubscriptionId"] = subscriptionId` line. Keep top-level `subscriptionStatus` and `stripeSubscriptionId` writes.
+- [ ] **217-C-fix.3** — Add unit test: verify `handleCustomerSubscriptionDeleted` update operation does NOT have overlapping `$set`/`$unset` paths targeting `plan.*`.
+- [ ] **217-C-fix.4** — Validation: all 7 gates GREEN.
 
 ### Phase 217-D — Custom Cancellation Flow
 
@@ -122,6 +91,16 @@
 
 ## QUEUED — Post-Stripe Improvements
 
+### Phase 218-B — CSS Component Class Extraction (Muted Text + Danger Button)
+
+> **Owner directive:** CSS/Tailwind audit. Move duplicated inline patterns into `.css` files under `src/styles/`. **Risk:** LOW. **Effort:** ~30min. **Dependencies:** None.
+
+- [ ] **218-B.1** — Create `.admin-muted-text` class in `src/styles/components/admin/admin.css` for `text-sm text-midnightBlue-600 dark:text-lavenderHaze-600` pattern (20+ duplicates across 12 component files)
+- [ ] **218-B.2** — Replace all 20+ inline instances across admin settings, tables, confirmation-modal, and website-manager with `.admin-muted-text` class
+- [ ] **218-B.3** — Extract `.btn-danger` class in `src/styles/components/buttons.css` for destructive action button patterns if duplicated 3+ times
+- [ ] **218-B.4** — Audit `toggle-theme.tsx` for ~310-char className extraction opportunity
+- [ ] **218-B.5** — Validation: all 7 gates GREEN. Zero visual regression.
+
 ### Phase 26.x — Persona-aware Media Prompts
 
 > **Owner:** OI58. **Risk:** LOW. **Effort:** ~2h. **Dependencies:** None (can proceed after Stripe billing). **Files:** 4 (persona-prompts.ts, generateImage.tsx, generateAudio.tsx, generateResponse.tsx). **Lines:** ~60-80 added.
@@ -156,7 +135,7 @@
 ---
 
 > **Completed phases** archived in [`DONE.md`](DONE.md).
-> Includes: Phases 143–148, 165, 165.1, 180.1–180.4, 185–222 (all sub-phases), 29.1–29.5, 29.7.
+> Includes: Phases 143–148, 165, 165.1, 180.1–180.4, 185–222 (all sub-phases), 217-A, 29.1–29.5, 29.7.
 > Phase 29.7 (Zustand audit) — COMPLETE. No changes needed. 4 stores, all properly implemented.
 > TypeScript 6 / ESLint compatibility — **CLOSED** (audit #103). No issues.
 > jsdom upgrade — **PIN MAINTAINED** (audit #103). ~24.1.3 stable. ESM TLA incompatibility persists.

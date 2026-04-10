@@ -2,7 +2,7 @@ import { Albert_Sans, Dosis } from "next/font/google";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import "@/styles/index.css";
 import DropletTheme from "@/components/layout/droplet-theme";
-import MainWrapper from "@/components/layout/main-wrapper";
+import BaseWrapper from "@/components/layout/base-wrapper";
 import AppGradientBg from "@/components/shared/app-gradient-bg";
 import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata, Viewport } from "next";
@@ -78,7 +78,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           }}
         >
           <DropletTheme>
-            <MainWrapper>{children}</MainWrapper>
+            <BaseWrapper>{children}</BaseWrapper>
           </DropletTheme>
         </ClerkProvider>
         <AppGradientBg />

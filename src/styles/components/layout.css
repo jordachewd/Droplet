@@ -1,6 +1,19 @@
 @layer components {
+  .app-layout-shell {
+    @apply relative z-10 flex h-dvh min-h-dvh w-full p-0 m-0;
+  }
+
+  .app-main {
+    @apply relative z-10 flex h-dvh w-full flex-1 flex-col p-0 m-0 overflow-y-auto;
+  }
+
+  .app-content {
+    @apply relative flex h-full min-w-0 flex-1 flex-col;
+  }
+
   .app-sidebar {
-    @apply fixed bottom-0 left-0 top-0 z-30 flex w-72 flex-col bg-lavenderHaze-100/40 backdrop-blur-lg lg:relative lg:z-10 dark:bg-nightIndigo-1000/40;
+    @apply flex fixed bottom-0 left-0 top-0 z-30 w-72 flex-col bg-lavenderHaze-100/40 dark:bg-nightIndigo-1000/40;
+    @apply justify-between transition-all duration-300 lg:relative lg:z-10 backdrop-blur-lg;
   }
 
   .sidebar-backdrop {

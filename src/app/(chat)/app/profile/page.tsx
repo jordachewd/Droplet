@@ -39,8 +39,12 @@ export default async function AppProfilePage() {
   }
 
   const stripeId = userData?.plan?.stripeId || null;
+  const stripeSubscriptionId = userData?.stripeSubscriptionId ?? null;
   const planName = userData?.plan?.name ?? "Lite";
   const isAdmin = userData?.role === "admin";
+  const subscriptionStatus = userData?.subscriptionStatus ?? null;
+  const cancelAtPeriodEnd = userData?.plan?.cancelAtPeriodEnd ?? false;
+  const nextBillingDate = userData?.plan?.expiresOn ?? null;
   const planLimits = isAdmin
     ? UNLIMITED_USAGE_LIMITS
     : effectivePlanConfig.limits[planName];
@@ -83,6 +87,12 @@ export default async function AppProfilePage() {
 
       <ProfileBilling
         stripeId={stripeId}
+        stripeSubscriptionId={stripeSubscriptionId}
+        planName={planName}
+        subscriptionStatus={subscriptionStatus}
+        cancelAtPeriodEnd={cancelAtPeriodEnd}
+        nextBillingDate={nextBillingDate}
+        isAdmin={isAdmin}
         userTxns={userTxns}
         currencySymbol={currencySymbol}
       />

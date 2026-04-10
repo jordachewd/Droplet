@@ -37,7 +37,7 @@ export function AdminModelsSection({
           <select
             name="liteChatModel"
             defaultValue={modelValue.liteChatModel}
-            className="form-input"
+            className="form-select-input"
           >
             {modelOptions.chat.map((modelId) => (
               <option key={`lite-chat-${modelId}`} value={modelId}>
@@ -51,7 +51,7 @@ export function AdminModelsSection({
           <select
             name="proChatModel"
             defaultValue={modelValue.proChatModel}
-            className="form-input"
+            className="form-select-input"
           >
             {modelOptions.chat.map((modelId) => (
               <option key={`pro-chat-${modelId}`} value={modelId}>
@@ -65,7 +65,7 @@ export function AdminModelsSection({
           <select
             name="premiumChatModel"
             defaultValue={modelValue.premiumChatModel}
-            className="form-input"
+            className="form-select-input"
           >
             {modelOptions.chat.map((modelId) => (
               <option key={`premium-chat-${modelId}`} value={modelId}>
@@ -79,7 +79,7 @@ export function AdminModelsSection({
           <select
             name="imageModel"
             defaultValue={modelValue.imageModel}
-            className="form-input"
+            className="form-select-input"
           >
             {modelOptions.image.map((modelId) => (
               <option key={`image-${modelId}`} value={modelId}>
@@ -93,7 +93,7 @@ export function AdminModelsSection({
           <select
             name="audioModel"
             defaultValue={modelValue.audioModel}
-            className="form-input"
+            className="form-select-input"
           >
             {modelOptions.audio.map((modelId) => (
               <option key={`audio-${modelId}`} value={modelId}>

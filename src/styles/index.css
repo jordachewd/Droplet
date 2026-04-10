@@ -9,6 +9,7 @@
 @import "./theme/typography.css";
 
 /* Base resets */
+@import "./base/base-wrapper.css";
 @import "./base/compatibility.css";
 @import "./base/elements.css";
 @import "./base/gradient.css";
@@ -16,9 +17,13 @@
 /* Component classes */
 @import "./components/typography.css";
 @import "./components/buttons.css";
-@import "./components/admin.css";
 @import "./components/tooltip.css";
-@import "./components/chat.css";
 @import "./components/layout.css";
 @import "./components/forms.css";
 @import "./components/droplet-globe.css";
+
+/* Component classes - Chat */
+@import "./components/chat/chat-markdown.css";
+
+/* Component classes - Admin */
+@import "./components/admin/admin.css";
