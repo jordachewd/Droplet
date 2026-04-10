@@ -47,9 +47,9 @@ export default function PlanCard({
 
   const badgeStyles = classNames(
     "PlanCardBadge absolute -left-8 top-3.5 flex -rotate-45 p-1.5 text-2xs",
-    "font-bold uppercase leading-none tracking-widest shadow-sm px-8",
-    isCurrent && "bg-dustyBlue-500 text-midnightBlue-900",
-    isPopular && "bg-limeGreen-500 text-midnightBlue-600",
+    "uppercase leading-none tracking-widest shadow-sm px-8 font-semibold",
+    isCurrent && "bg-dustyBlue-500 text-midnightBlue-900 text-white",
+    isPopular && "bg-limeGreen-500 text-midnightBlue-600 font-bold",
   );
 
   const planIconStyles = classNames(plan.icon, "text-7xl pb-12");

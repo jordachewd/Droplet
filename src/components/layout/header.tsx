@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import ToggleTheme from "@/components/shared/toggle-theme";
 import AvatarMenu from "@/components/shared/avatar-menu";
+import Button from "@/components/shared/button";
 import Logo from "@/components/shared/app-logo";
 
 const MAIN_NAV_LINKS = [
@@ -85,19 +86,19 @@ export default function Header() {
           </div>
 
           <div className="ml-auto flex items-center gap-2 md:gap-4">
-            <button
-              type="button"
+            <Button
+              variant="icon"
               aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
               aria-expanded={mobileMenuOpen}
               aria-controls="mobile-main-navigation"
-              className="icon-btn md:hidden"
+              className="md:hidden"
               onClick={handleMobileMenuToggle}
             >
               <i
                 className={mobileMenuOpen ? "bi bi-x-lg" : "bi bi-list"}
                 aria-hidden="true"
               ></i>
-            </button>
+            </Button>
 
             {!isSignedIn && (
               <Link className="btn btn-text btn-sm uppercase" href="/sign-in">

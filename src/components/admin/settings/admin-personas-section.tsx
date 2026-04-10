@@ -53,7 +53,7 @@ export function AdminPersonasSection({
                   <label className="text-sm">
                     <span className="mb-1 block font-medium">Label</span>
                     <input
-                      className="form-input"
+                      className="form-text-input"
                       name={`label_${personaId}`}
                       defaultValue={contentValue.label}
                       required
@@ -64,7 +64,7 @@ export function AdminPersonasSection({
                   <label className="text-sm">
                     <span className="mb-1 block font-medium">Tagline</span>
                     <input
-                      className="form-input"
+                      className="form-text-input"
                       name={`tagline_${personaId}`}
                       defaultValue={contentValue.tagline}
                       required
@@ -75,7 +75,7 @@ export function AdminPersonasSection({
                   <label className="form-field md:col-span-2">
                     <span className="mb-1 block font-medium">Description</span>
                     <textarea
-                      className="form-input min-h-24"
+                      className="form-textarea-input min-h-24"
                       name={`description_${personaId}`}
                       defaultValue={contentValue.description}
                       required
@@ -88,7 +88,7 @@ export function AdminPersonasSection({
                       Starter prompts (one per line)
                     </span>
                     <textarea
-                      className="form-input min-h-32"
+                      className="form-textarea-input min-h-32"
                       name={`starterPrompts_${personaId}`}
                       defaultValue={contentValue.starterPrompts.join("\n")}
                       required

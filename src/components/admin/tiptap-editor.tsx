@@ -8,9 +8,7 @@ import TextAlign from "@tiptap/extension-text-align";
 import Underline from "@tiptap/extension-underline";
 import StarterKit from "@tiptap/starter-kit";
 import { useEffect, useState } from "react";
-import FormInput, {
-  FORM_INPUT_CONTROL_CLASS,
-} from "@/components/shared/form-input";
+import FormInput from "@/components/shared/form-input";
 import Button from "@/components/shared/button";
 
 interface TiptapEditorProps {
@@ -339,8 +337,7 @@ export default function TiptapEditor({
 
       <div
         className={classNames(
-          FORM_INPUT_CONTROL_CLASS,
-          "min-h-80 px-4 py-3",
+          "form-text-input min-h-80 px-4 py-3",
           "[&_.ProseMirror]:min-h-72 [&_.ProseMirror]:outline-none",
           "[&_.ProseMirror]:prose [&_.ProseMirror]:max-w-none",
           "[&_.ProseMirror_ul]:list-disc [&_.ProseMirror_ol]:list-decimal",

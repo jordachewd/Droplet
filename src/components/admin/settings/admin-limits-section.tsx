@@ -37,10 +37,10 @@ function LimitInput({ label, name, defaultValue }: LimitInputProps) {
         name={name}
         defaultValue={defaultValue}
         onChange={(e) => setValue(Number(e.target.value))}
-        className={`form-input ${
+        className={`form-text-input ${
           changedFromUnlimited
             ? "border-amber-500 bg-amber-50 dark:border-amber-400 dark:bg-amber-950"
-            : "border-slate-400 bg-lavenderHaze-100 dark:border-slate-500 dark:bg-nightIndigo-1000"
+            : ""
         }`}
       />
       {changedFromUnlimited && (
@@ -141,7 +141,7 @@ export function AdminLimitsSection({
               min={0}
               name="trialPrompts"
               defaultValue={trialLimitsValue.promptsPerConversation}
-              className="form-input"
+              className="form-text-input"
             />
           </label>
           <label className="text-sm">
@@ -151,7 +151,7 @@ export function AdminLimitsSection({
               min={0}
               name="trialImages"
               defaultValue={trialLimitsValue.images}
-              className="form-input"
+              className="form-text-input"
             />
           </label>
           <label className="text-sm">
@@ -161,7 +161,7 @@ export function AdminLimitsSection({
               min={0}
               name="trialAudio"
               defaultValue={trialLimitsValue.audio}
-              className="form-input"
+              className="form-text-input"
             />
           </label>
         </div>

@@ -1,12 +1,76 @@
 @layer components {
-  .form-input {
-    @apply w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-2 py-1.75 text-sm dark:border-slate-500 dark:bg-nightIndigo-1000;
+  /* ── Base: shared across all text-like form controls ── */
+  .form-input,
+  .form-text-input,
+  .form-textarea-input,
+  .form-select-input,
+  .form-file-input {
+    @apply w-full rounded-lg border border-slate-400 bg-lavenderHaze-100 px-3 py-2 text-sm;
+    @apply text-midnightBlue-900 dark:text-white;
+    @apply dark:border-slate-500 dark:bg-nightIndigo-1000;
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lavenderHaze-300/60;
+    @apply dark:focus-visible:ring-nightIndigo-500/40;
+    @apply disabled:cursor-not-allowed disabled:opacity-60;
   }
 
+  /* ── Textarea particularities ── */
+  .form-textarea-input {
+    @apply resize-y;
+  }
+
+  /* ── File particularities ── */
+  .form-file-input {
+    @apply cursor-pointer;
+    @apply file:mr-4 file:rounded-md file:border file:px-3 file:py-2 file:text-sm file:font-medium;
+    @apply file:border-slate-500 file:bg-lavenderHaze-300/40 file:text-midnightBlue-900;
+    @apply dark:file:border-slate-500 dark:file:bg-nightIndigo-500/30 dark:file:text-white;
+  }
+
+  /* ── Checkbox & Radio ── */
+  .form-checkbox-input,
+  .form-radio-input {
+    @apply h-4 w-4 rounded border border-slate-500;
+    @apply accent-twilightPurple-600;
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lavenderHaze-300/60;
+    @apply dark:border-slate-400 dark:focus-visible:ring-nightIndigo-500/40;
+    @apply disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .form-radio-input {
+    @apply rounded-full;
+  }
+
+  /* ── Range ── */
+  .form-range-input {
+    @apply w-full accent-twilightPurple-600;
+    @apply disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  /* ── Chat textarea (specialised, no border, inset bg) ── */
+  .form-chat-textarea {
+    @apply flex min-h-11 w-full resize-none rounded-md bg-lavenderHaze-500 p-2 text-sm leading-tight;
+    @apply placeholder:text-sm placeholder:text-midnightBlue-500/50 dark:placeholder:text-lavenderHaze-500/50;
+    @apply focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:bg-nightIndigo-400/10;
+  }
+
+  /* ── Container: label + input + helper ── */
   .form-field {
-    @apply flex flex-col gap-1 text-sm;
+    @apply flex flex-col gap-2 text-sm;
   }
 
+  .form-field-inline {
+    @apply inline-flex items-center gap-2 text-sm;
+  }
+
+  .form-label {
+    @apply text-sm font-semibold;
+  }
+
+  .form-helper-text {
+    @apply text-xs text-midnightBlue-600 dark:text-lavenderHaze-600;
+  }
+
+  /* ── Admin: labels & surfaces ── */
   .admin-label {
     @apply text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:text-lavenderHaze-700;
   }

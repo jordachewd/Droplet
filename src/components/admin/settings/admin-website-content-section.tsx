@@ -77,7 +77,7 @@ export function AdminWebsiteContentSection({
                   defaultValue={faqEntry.question}
                   required
                   aria-required="true"
-                  className="form-input"
+                  className="form-text-input"
                 />
               </label>
               <label className="form-field">
@@ -88,7 +88,7 @@ export function AdminWebsiteContentSection({
                   required
                   aria-required="true"
                   rows={4}
-                  className="form-input"
+                  className="form-textarea-input"
                 />
               </label>
             </div>
@@ -123,7 +123,7 @@ export function AdminWebsiteContentSection({
             rows={3}
             required
             aria-required="true"
-            className="form-input"
+            className="form-textarea-input"
           />
         </label>
 
@@ -135,7 +135,7 @@ export function AdminWebsiteContentSection({
             rows={3}
             required
             aria-required="true"
-            className="form-input"
+            className="form-textarea-input"
           />
         </label>
 
@@ -147,7 +147,7 @@ export function AdminWebsiteContentSection({
             defaultValue={homepageCopyValue.ctaPrimaryLabel}
             required
             aria-required="true"
-            className="form-input"
+            className="form-text-input"
           />
         </label>
 
@@ -159,7 +159,7 @@ export function AdminWebsiteContentSection({
             defaultValue={homepageCopyValue.ctaSecondaryLabel}
             required
             aria-required="true"
-            className="form-input"
+            className="form-text-input"
           />
         </label>
 
@@ -171,7 +171,7 @@ export function AdminWebsiteContentSection({
             defaultValue={homepageCopyValue.spotlightLabel}
             required
             aria-required="true"
-            className="form-input"
+            className="form-text-input"
           />
         </label>
 
@@ -183,7 +183,7 @@ export function AdminWebsiteContentSection({
             defaultValue={homepageCopyValue.spotlightHeading}
             required
             aria-required="true"
-            className="form-input"
+            className="form-text-input"
           />
         </label>
 
@@ -195,7 +195,7 @@ export function AdminWebsiteContentSection({
             rows={3}
             required
             aria-required="true"
-            className="form-input"
+            className="form-textarea-input"
           />
         </label>
 
@@ -235,7 +235,7 @@ export function AdminWebsiteContentSection({
                 defaultValue={selectedPersonaId}
                 required
                 aria-required="true"
-                className="form-input"
+                className="form-select-input"
               >
                 {homepagePersonaOptions.map((persona) => (
                   <option key={persona.id} value={persona.id}>
@@ -276,7 +276,7 @@ export function AdminWebsiteContentSection({
             rows={3}
             required
             aria-required="true"
-            className="form-input"
+            className="form-textarea-input"
           />
         </label>
 
@@ -288,7 +288,7 @@ export function AdminWebsiteContentSection({
             rows={3}
             required
             aria-required="true"
-            className="form-input"
+            className="form-textarea-input"
           />
         </label>
 
@@ -300,7 +300,7 @@ export function AdminWebsiteContentSection({
             defaultValue={heroContentValue.ctaLabel}
             required
             aria-required="true"
-            className="form-input"
+            className="form-text-input"
           />
         </label>
 
@@ -312,7 +312,7 @@ export function AdminWebsiteContentSection({
             defaultValue={heroContentValue.imageAlt}
             required
             aria-required="true"
-            className="form-input"
+            className="form-text-input"
           />
         </label>
 
@@ -352,7 +352,7 @@ export function AdminWebsiteContentSection({
                   defaultValue={featureCard.icon}
                   required
                   aria-required="true"
-                  className="form-input"
+                  className="form-text-input"
                 />
               </label>
               <label className="mb-3 form-field">
@@ -363,7 +363,7 @@ export function AdminWebsiteContentSection({
                   defaultValue={featureCard.title}
                   required
                   aria-required="true"
-                  className="form-input"
+                  className="form-text-input"
                 />
               </label>
               <label className="form-field">
@@ -374,7 +374,7 @@ export function AdminWebsiteContentSection({
                   rows={3}
                   required
                   aria-required="true"
-                  className="form-input"
+                  className="form-textarea-input"
                 />
               </label>
             </div>
@@ -389,7 +389,7 @@ export function AdminWebsiteContentSection({
             defaultValue={landingContentValue.workflow.eyebrow}
             required
             aria-required="true"
-            className="form-input"
+            className="form-text-input"
           />
         </label>
 
@@ -401,7 +401,7 @@ export function AdminWebsiteContentSection({
             defaultValue={landingContentValue.workflow.title}
             required
             aria-required="true"
-            className="form-input"
+            className="form-text-input"
           />
         </label>
 
@@ -413,7 +413,7 @@ export function AdminWebsiteContentSection({
             rows={3}
             required
             aria-required="true"
-            className="form-input"
+            className="form-textarea-input"
           />
         </label>
 
@@ -433,7 +433,7 @@ export function AdminWebsiteContentSection({
                   defaultValue={step.step}
                   required
                   aria-required="true"
-                  className="form-input"
+                  className="form-text-input"
                 />
               </label>
               <label className="mb-3 form-field">
@@ -444,7 +444,7 @@ export function AdminWebsiteContentSection({
                   defaultValue={step.title}
                   required
                   aria-required="true"
-                  className="form-input"
+                  className="form-text-input"
                 />
               </label>
               <label className="form-field">
@@ -455,7 +455,7 @@ export function AdminWebsiteContentSection({
                   rows={3}
                   required
                   aria-required="true"
-                  className="form-input"
+                  className="form-textarea-input"
                 />
               </label>
             </div>
@@ -470,7 +470,7 @@ export function AdminWebsiteContentSection({
             defaultValue={landingContentValue.workflow.rhythmEyebrow}
             required
             aria-required="true"
-            className="form-input"
+            className="form-text-input"
           />
         </label>
 
@@ -490,7 +490,7 @@ export function AdminWebsiteContentSection({
                   defaultValue={card.label}
                   required
                   aria-required="true"
-                  className="form-input"
+                  className="form-text-input"
                 />
               </label>
               <label className="form-field">
@@ -501,7 +501,7 @@ export function AdminWebsiteContentSection({
                   rows={3}
                   required
                   aria-required="true"
-                  className="form-input"
+                  className="form-textarea-input"
                 />
               </label>
             </div>
@@ -537,7 +537,7 @@ export function AdminWebsiteContentSection({
             defaultValue={aboutContentValue.pageTitle}
             required
             aria-required="true"
-            className="form-input"
+            className="form-text-input"
           />
         </label>
 
@@ -549,7 +549,7 @@ export function AdminWebsiteContentSection({
             rows={3}
             required
             aria-required="true"
-            className="form-input"
+            className="form-textarea-input"
           />
         </label>
 
@@ -569,7 +569,7 @@ export function AdminWebsiteContentSection({
                   defaultValue={section.eyebrow}
                   required
                   aria-required="true"
-                  className="form-input"
+                  className="form-text-input"
                 />
               </label>
               <label className="mb-3 form-field">
@@ -580,7 +580,7 @@ export function AdminWebsiteContentSection({
                   defaultValue={section.title}
                   required
                   aria-required="true"
-                  className="form-input"
+                  className="form-text-input"
                 />
               </label>
               <label className="mb-3 form-field">
@@ -591,7 +591,7 @@ export function AdminWebsiteContentSection({
                   rows={3}
                   required
                   aria-required="true"
-                  className="form-input"
+                  className="form-textarea-input"
                 />
               </label>
               <label className="form-field">
@@ -602,7 +602,7 @@ export function AdminWebsiteContentSection({
                   rows={3}
                   required
                   aria-required="true"
-                  className="form-input"
+                  className="form-textarea-input"
                 />
               </label>
             </div>
@@ -617,7 +617,7 @@ export function AdminWebsiteContentSection({
             defaultValue={aboutContentValue.ctaTitle}
             required
             aria-required="true"
-            className="form-input"
+            className="form-text-input"
           />
         </label>
 
@@ -629,7 +629,7 @@ export function AdminWebsiteContentSection({
             rows={3}
             required
             aria-required="true"
-            className="form-input"
+            className="form-textarea-input"
           />
         </label>
 
@@ -641,7 +641,7 @@ export function AdminWebsiteContentSection({
             defaultValue={aboutContentValue.ctaPrimaryLabel}
             required
             aria-required="true"
-            className="form-input"
+            className="form-text-input"
           />
         </label>
 
@@ -653,7 +653,7 @@ export function AdminWebsiteContentSection({
             defaultValue={aboutContentValue.ctaSecondaryLabel}
             required
             aria-required="true"
-            className="form-input"
+            className="form-text-input"
           />
         </label>
 

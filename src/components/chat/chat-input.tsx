@@ -5,8 +5,8 @@ import { Message } from "@/types";
 import { UploadRouteResponse } from "@/types/UploadData.d";
 import { UploadFileInput } from "@/components/shared/upload-file-input";
 import PersonaSelector from "@/components/shared/persona-selector";
+import Button from "@/components/shared/button";
 import { TooltipArrow } from "@/components/shared/tooltip-arrow";
-import DropletGlobe from "../shared/droplet-globe";
 import { Persona, PersonaId } from "@/types/PersonaData.d";
 
 interface ChatInputProps {
@@ -235,13 +235,7 @@ export default function ChatInput({
       "border-amber-400 bg-amber-50/90 dark:border-amber-400/50 dark:bg-amber-500/10",
   );
 
-  const promptWrapperClass = classNames("flex w-full gap-2");
-
-  const textareaClass = classNames(
-    "flex min-h-11 w-full resize-none bg-lavenderHaze-500 rounded-md p-2 text-sm leading-tight",
-    "placeholder:text-sm placeholder:text-midnightBlue-500/50 dark:placeholder:text-lavenderHaze-500/50",
-    "focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:bg-nightIndigo-400/10",
-  );
+  const promptWrapperClass = classNames("flex w-full gap-2 items-start");
 
   const removeFileIconClass = classNames(
     "bi bi-x absolute -right-1.5 -top-1.5 rounded-full bg-orange-600 pt-[1px]",
@@ -268,7 +262,7 @@ export default function ChatInput({
             }
             onChange={handlePromptChange}
             rows={2}
-            className={textareaClass}
+            className="form-chat-textarea"
             onKeyDown={handlePromptKeyDown}
             aria-label="Message input"
           />
@@ -277,15 +271,15 @@ export default function ChatInput({
             title={canSend ? "Send message" : "Write a message first"}
             placement="top"
           >
-            <button
-              type="button"
-              className="px-2"
+            <Button
+              variant="icon"
+              className="p-4 text-lg bg-nightIndigo-500/90 text-lavenderHaze-200 dark:bg-twilightPurple-500/90"
               disabled={!canSend}
               onClick={handleSendButtonClick}
               aria-label="Send message"
             >
-              <DropletGlobe icon="bi-stars" size={38} />
-            </button>
+              <i className="bi bi-send" aria-hidden="true"></i>
+            </Button>
           </TooltipArrow>
         </div>
 
@@ -293,12 +287,9 @@ export default function ChatInput({
           <div className="flex items-center gap-2">
             {!selectedFile ? (
               <TooltipArrow title="Attach media" placement="top">
-                <button
-                  type="button"
-                  className={classNames("icon-btn text-base", {
-                    "cursor-not-allowed opacity-50":
-                      loading || disabled || isUploading,
-                  })}
+                <Button
+                  variant="icon"
+                  className="text-base"
                   onClick={handleOpenFilePicker}
                   aria-label="Attach media"
                   disabled={loading || disabled || isUploading}
@@ -307,7 +298,7 @@ export default function ChatInput({
                     className="bi bi-cloud-upload text-base"
                     aria-hidden="true"
                   ></i>
-                </button>
+                </Button>
               </TooltipArrow>
             ) : previewUrl ? (
               <button
@@ -319,8 +310,8 @@ export default function ChatInput({
                 <i className={removeFileIconClass} aria-hidden="true"></i>
                 <Image
                   priority
-                  width={40}
-                  height={40}
+                  width={32}
+                  height={32}
                   className="max-h-10 max-w-10 rounded-sm"
                   alt="Preview of selected image"
                   src={previewUrl}

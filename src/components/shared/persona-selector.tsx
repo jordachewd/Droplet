@@ -2,7 +2,6 @@
 
 import classNames from "classnames";
 import { useId } from "react";
-import { FORM_INPUT_CONTROL_CLASS } from "@/components/shared/form-input";
 import { Persona, PersonaId } from "@/types/PersonaData.d";
 
 interface PersonaSelectorProps {
@@ -43,10 +42,7 @@ export default function PersonaSelector({
       <select
         id={personaSelectId}
         aria-label="Select persona"
-        className={classNames(
-          FORM_INPUT_CONTROL_CLASS,
-          "min-w-36 py-1.5 pr-8 text-xs font-semibold",
-        )}
+        className="form-select-input py-2 pr-8 text-xs"
         value={selectedPersonaId}
         onChange={(event) => handleSelectPersona(event.target.value)}
         disabled={disabled}

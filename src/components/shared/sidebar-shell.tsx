@@ -83,7 +83,7 @@ export default function SidebarShell({
 
   const sidebarClass = classNames(
     className,
-    "app-sidebar",
+    "app-sidebar lg:translate-x-0",
     mobileSidebarOpen ? "translate-x-0" : "-translate-x-full",
     isDesktopCollapsed ? "lg:w-16" : expandedWidth,
   );

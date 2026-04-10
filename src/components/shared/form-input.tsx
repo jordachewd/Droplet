@@ -35,22 +35,21 @@ interface FormInputProps extends Omit<
   onChange?: ChangeEventHandler<HTMLInputElement>;
 }
 
-export const FORM_INPUT_CONTROL_CLASS = classNames(
-  "w-full rounded-lg border border-dustyBlue-600 px-3 py-2 text-sm",
-  "bg-lavenderHaze-100 text-midnightBlue-900",
-  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lavenderHaze-300/60",
-  "disabled:cursor-not-allowed disabled:opacity-60",
-  "dark:border-dustyBlue-500/60 dark:bg-nightIndigo-1000 dark:text-white",
-  "dark:focus-visible:ring-nightIndigo-500/40",
-);
-
-const FORM_INPUT_CHECKBOX_CLASS = classNames(
-  "h-4 w-4 rounded border border-slate-500",
-  "accent-twilightPurple-600",
-  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lavenderHaze-300/60",
-  "disabled:cursor-not-allowed disabled:opacity-60",
-  "dark:border-slate-400 dark:focus-visible:ring-nightIndigo-500/40",
-);
+const INPUT_CLASS_MAP: Record<FormInputType, string> = {
+  text: "form-text-input",
+  email: "form-text-input",
+  number: "form-text-input",
+  password: "form-text-input",
+  url: "form-text-input",
+  tel: "form-text-input",
+  search: "form-text-input",
+  date: "form-text-input",
+  checkbox: "form-checkbox-input",
+  radio: "form-radio-input",
+  range: "form-range-input",
+  file: "form-file-input",
+  hidden: "",
+};
 
 export default function FormInput({
   type,
@@ -72,53 +71,45 @@ export default function FormInput({
     return <input type="hidden" id={fieldId} name={name} {...inputProps} />;
   }
 
-  if (isToggleControl) {
-    return (
-      <label
-        htmlFor={fieldId}
-        className={classNames(
-          "FormInput inline-flex items-center gap-2 text-sm",
-          containerClassName,
-        )}
-      >
-        <input
-          id={fieldId}
-          name={name}
-          type={type}
-          onChange={onChange}
-          className={classNames(FORM_INPUT_CHECKBOX_CLASS, className)}
-          {...inputProps}
-        />
-        {label ? <span>{label}</span> : null}
-      </label>
-    );
-  }
+  const inputElement = (
+    <input
+      id={fieldId}
+      name={name}
+      type={type}
+      onChange={onChange}
+      className={classNames(INPUT_CLASS_MAP[type], className)}
+      {...inputProps}
+    />
+  );
 
   return (
     <div
       className={classNames(
-        "FormInput flex flex-col gap-2",
+        "FormInput",
+        isToggleControl ? "form-field-inline" : "form-field",
         containerClassName,
       )}
     >
-      {label ? (
-        <label htmlFor={fieldId} className="text-sm font-semibold">
-          {label}
-        </label>
-      ) : null}
-      <input
-        id={fieldId}
-        name={name}
-        type={type}
-        onChange={onChange}
-        className={classNames(FORM_INPUT_CONTROL_CLASS, className)}
-        {...inputProps}
-      />
-      {helperText ? (
-        <span className="text-xs text-midnightBlue-600 dark:text-lavenderHaze-600">
-          {helperText}
-        </span>
-      ) : null}
+      {isToggleControl ? (
+        <>
+          <label htmlFor={fieldId} className="form-field-inline">
+            {inputElement}
+            {label ? <span>{label}</span> : null}
+          </label>
+        </>
+      ) : (
+        <>
+          {label ? (
+            <label htmlFor={fieldId} className="form-label">
+              {label}
+            </label>
+          ) : null}
+          {inputElement}
+          {helperText ? (
+            <span className="form-helper-text">{helperText}</span>
+          ) : null}
+        </>
+      )}
     </div>
   );
 }
