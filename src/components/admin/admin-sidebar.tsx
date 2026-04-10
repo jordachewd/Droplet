@@ -28,7 +28,6 @@ export default function AdminSidebar({ links }: AdminSidebarProps) {
         <div
           className={classNames(
             "AdminSidebarHead flex flex-col w-full px-4 h-14 justify-center",
-            "bg-lavenderHaze-500 dark:bg-nightIndigo-500",
             !isSidebarOpen && "lg:hidden",
           )}
         >
@@ -39,7 +38,7 @@ export default function AdminSidebar({ links }: AdminSidebarProps) {
         </div>
       )}
       navigation={({ isSidebarOpen }) => (
-        <div className="AdminSidebarNav flex flex-col flex-1 px-4 py-6">
+        <div className="AdminSidebarNav flex flex-col flex-1 p-4">
           <nav
             aria-label="Admin navigation"
             className={classNames(

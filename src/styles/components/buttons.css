@@ -1,7 +1,7 @@
 @layer components {
   .btn {
     font-family: var(--font-jwd-dosis), sans-serif;
-    @apply inline-flex min-w-0 items-center justify-center border px-4 rounded-md py-3 uppercase leading-none tracking-wide
+    @apply inline-flex min-w-0 items-center justify-center border px-4 rounded-full py-3 uppercase leading-none tracking-wide
     transition-all duration-300 ease-in-out disabled:cursor-not-allowed disabled:opacity-50 text-base font-medium;
   }
 
@@ -22,16 +22,18 @@
   }
 
   .btn-text {
-    @apply border-transparent text-midnightBlue-500 hover:text-dustyBlue-500 dark:text-dustyBlue-400 dark:hover:text-dustyBlue-500 hover:bg-transparent;
+    @apply bg-transparent border-transparent text-twilightPurple-500 hover:text-dustyBlue-500
+    dark:text-lavenderHaze-500 dark:hover:text-dustyBlue-400;
   }
 
   .btn-outlined {
-    @apply border-twilightPurple-500 text-twilightPurple-500 hover:border-twilightPurple-400 hover:text-twilightPurple-400 bg-transparent hover:bg-transparent
-    dark:border-limeGreen-500 dark:text-limeGreen-500 dark:hover:border-limeGreen-600 dark:hover:text-limeGreen-600;
+    @apply bg-transparent border-2 border-dustyBlue-500 text-dustyBlue-500
+     hover:border-twilightPurple-500 hover:text-twilightPurple-500  
+     dark:hover:border-dustyBlue-400 dark:hover:text-dustyBlue-400;
   }
 
   .btn-contained {
-    @apply border-limeGreen-500 bg-limeGreen-500 text-midnightBlue-500 hover:border-limeGreen-600 hover:bg-limeGreen-600 hover:text-midnightBlue-500;
+    @apply border-dustyBlue-500 bg-dustyBlue-500 text-white hover:border-twilightPurple-500 hover:bg-twilightPurple-500;
   }
 
   .btn-danger {

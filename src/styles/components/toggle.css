@@ -1,0 +1,30 @@
+@layer components {
+  .toggle-switch {
+    @apply relative inline-flex h-8 w-15 items-center rounded-full p-1 transition-all duration-300 ease-in-out 
+    motion-reduce:transition-none bg-lavenderHaze-400;
+  }
+
+  .toggle-on {
+    @apply pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 transition-transform 
+     text-midnightBlue-500 dark:text-lavenderHaze-500 duration-300 motion-reduce:transition-none;
+  }
+
+  .toggle-off {
+    @apply pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 transition-transform 
+    text-midnightBlue-500 dark:text-lavenderHaze-500 duration-300 motion-reduce:transition-none;
+  }
+
+  .toggle-svg,
+  .toggle-svg-active {
+    @apply size-3.5 text-midnightBlue-500;
+  }
+
+  .toggle-active {
+    @apply pointer-events-none absolute left-1 top-1 size-6 rounded-full shadow-[0_2px_8px_rgba(11,0,26,0.25)] 
+    grid place-items-center transition-transform duration-300 ease-in-out motion-reduce:transition-none bg-dustyBlue-500;
+  }
+
+  .toggle-svg-active {
+    @apply text-white;
+  }
+}

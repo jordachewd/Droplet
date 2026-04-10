@@ -414,11 +414,10 @@ export default function ChatSidebarNav({
   }
 
   return (
-    <nav className="ChatSidebarNav mb-auto flex flex-col gap-6 px-3 py-4">
+    <nav className="ChatSidebarNav mb-auto flex flex-col gap-6 p-4">
       {alert ? <AlertMessage message={alert} /> : null}
 
       <section className="ChatSidebarNavSection flex flex-col gap-1 transition-all duration-300">
-        <p className={headingClass}>Workspace</p>
         {WORKSPACE_LINKS.map((link) => (
           <SidebarNavLink
             key={link.href}
