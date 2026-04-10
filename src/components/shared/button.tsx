@@ -18,7 +18,6 @@ interface ButtonProps extends Omit<
   children: ReactNode;
 }
 
-
 export default function Button({
   variant = "contained",
   size = "sm",

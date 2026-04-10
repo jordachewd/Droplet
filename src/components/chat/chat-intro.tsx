@@ -45,7 +45,7 @@ export default function ChatIntro({
   return (
     <div className={introWrapperClass}>
       <div className="ChatIntroHead flex flex-col gap-2 justify-center items-center">
-        <DropletGlobe size={96} className="mb-8"/>
+        <DropletGlobe size={96} className="mb-8" />
         <h1 className="heading-2">Hi {user?.firstName || "there"},</h1>
         <h2 className="heading-5">{subheading}</h2>
         <p className="body-2 text-xs">

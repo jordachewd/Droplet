@@ -2,7 +2,40 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-04-10 — PM audit #111.
+> Last updated: 2026-04-10 — PM audit #112.
+
+---
+
+## Phase 217-D — Custom Cancellation Flow — COMPLETED (2026-04-10)
+
+> Engineer delivered (PM audit #112). Complete subscription lifecycle management: cancel at period end, reactivate, 5-state profile UI, confirmation modals, webhook sync for `cancelAtPeriodEnd`. 663 tests (106 suites). All 7 gates GREEN.
+
+- [x] **217-D.1** — Created `cancelSubscriptionAction()` and `reactivateSubscriptionAction()` in `transaction.action.tsx` via shared `updateSubscriptionCancellationPreference()` handler. Auth check, admin guard, subscription existence check, already-in-state checks, Stripe API call with `cancel_at_period_end`, DB update with `strict: true` + ownership filter, `revalidatePath`, `resource_missing` error handling.
+- [x] **217-D.2** — Created subscription management UI in `profile-billing.tsx`: 5-state machine (none/active/canceling/past_due/canceled), status badge per state, next billing/access-end date display, cancel + reactivate buttons with `ConfirmationModal`, `AlertMessage` feedback, `isSubmitting` loading guard.
+- [x] **217-D.3** — Reactivation path implemented: `reactivateSubscriptionAction()` calls `stripe.subscriptions.update(id, { cancel_at_period_end: false })`. UI shows "Keep subscription active" button when in canceling state.
+- [x] **217-D.4** — Edge cases handled: already-canceled (409), already-in-state (200 warning), subscription not found (404), past-due + cancel (warning severity), Stripe `resource_missing` (404), generic Stripe failures (500).
+- [x] **217-D.5** — Added `cancelAtPeriodEnd` to User model plan subdocument, `PlanData` type, and webhook sync across all 4 relevant handlers (checkout=false, invoice.paid=preserve, subscription.updated=sync, subscription.deleted=false).
+- [x] **217-D.6** — Validation: prettier ✓, lint ✓, tsc ✓, tests (663/663) ✓, E2E (49 passed, 6 skipped) ✓, build ✓, knip ✓
+
+---
+
+## Phase 217-C-fix — Webhook Bug Fixes (Path Conflict + Phantom Writes) — COMPLETED (2026-04-10)
+
+> Engineer delivered (PM audit #112). Fixed HIGH-1 MongoDB `ConflictingUpdateOperators` bug in `handleCustomerSubscriptionDeleted` and MEDIUM-1 phantom writes in `handleInvoicePaymentFailed`. All 7 gates GREEN.
+
+- [x] **217-C-fix.1** — Removed `"plan.stripeSubscriptionId": ""` and `"plan.stripeId": ""` from `$unset` in `handleCustomerSubscriptionDeleted`. `$unset` now only targets top-level `stripeSubscriptionId`. The `$set: { plan: litePlan }` already replaces the entire subdocument.
+- [x] **217-C-fix.2** — Removed `"plan.subscriptionStatus": "past_due"` and `"plan.stripeSubscriptionId"` phantom writes from `handleInvoicePaymentFailed`. Only top-level `subscriptionStatus` and `stripeSubscriptionId` are written.
+- [x] **217-C-fix.3** — Added unit test verifying no overlapping `plan.*` paths between `$set` and `$unset` in `handleCustomerSubscriptionDeleted`.
+- [x] **217-C-fix.4** — Validation: prettier ✓, lint ✓, tsc ✓, tests (663/663) ✓, E2E (49 passed, 6 skipped) ✓, build ✓, knip ✓
+
+---
+
+## Prettier Reformat — PM audit #112 (2026-04-10)
+
+> 64 files had formatting drift from CSS branch merge + Phase 217-C-fix/217-D changes. Fixed by `npx prettier . --write`. All gates GREEN.
+
+- [x] Ran `npx prettier . --write` to reformat 64 files
+- [x] Validation: prettier ✓, lint ✓, tsc ✓, tests (663/663) ✓, build ✓, knip ✓
 
 ---
 

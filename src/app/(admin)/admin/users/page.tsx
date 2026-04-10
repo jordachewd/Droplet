@@ -48,7 +48,7 @@ export default async function AdminUsersPage({
           <Button size="sm" variant="contained" type="submit">
             Search
           </Button>
-          
+
           <Link className="btn btn-sm btn-outlined" href="/admin/users">
             Reset
           </Link>
