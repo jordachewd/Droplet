@@ -5,35 +5,13 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #107 (2026-04-09). V1.0 MVP RELEASED. Phase 222 COMPLETE (all sub-phases: 222-A SidebarShell, 222-B AppHeader, 222-C AppLayoutShell). Stripe recurring NEXT (Phases 217-A–G).**
+> **STATUS: PM audit #110 (2026-04-10). V1.0 MVP RELEASED. Phase 222 COMPLETE. Phase 217-A COMPLETE. Phase 217-B COMPLETE. Phase 217-C NEXT. Prettier clean (37 files reformatted). All 7 gates GREEN.**
 >
-> **GATE STATUS: Validation GREEN. Architecture GREEN. Product GREEN. Admin GREEN. Public GREEN. Contract GREEN.**
+> **GATE STATUS: All 7 gates GREEN. 0 vulnerabilities. 0 critical issues.**
 >
-> **TEST STATUS: 646 tests (105 suites), 49 E2E (6 skipped). 0 failures. All gates GREEN.**
+> **TEST STATUS: 652 tests (106 suites), 49 E2E (6 skipped). 0 failures. All gates GREEN.**
 >
-> **EXECUTION ORDER: 217-A → 217-B → 217-C → 217-D → 217-E → 217-F → 217-G → 26.x.**
-
----
-
-## COMPLETED — Shared Layout Components (Phase 222) — ALL DONE
-
-> ✅ Phase 222 COMPLETE (PM audit #107). All sub-phases delivered: 222-A SidebarShell, 222-B AppHeader, 222-C AppLayoutShell. See [DONE.md](DONE.md) for detailed completion records.
-
----
-
-## COMPLETED — Phases 218–222: CSS Architecture + Orphan Cleanup + Hook + CSS Extraction + SidebarShell + AppHeader + AppLayoutShell (Archived to DONE.md)
-
-> Phases 218–222 ALL COMPLETE. See [DONE.md](DONE.md) for detailed completion records.
-
----
-
-## COMPLETED — Sidebar & Navigation Restructure (Archived to DONE.md)
-
-> Phases 209–216 ALL COMPLETE. See [DONE.md](DONE.md) for detailed completion records.
-
----
-
-## ON HOLD — (Legacy section removed — Stripe now UNBLOCKED)
+> **EXECUTION ORDER: 217-C → 217-D → 217-E → 217-F → 217-G → 218-B → 26.x.**
 
 ---
 
@@ -43,27 +21,13 @@
 >
 > **Sequencing:** Phase 222 COMPLETE. Stripe is NEXT.
 
-### Phase 217-A — Schema + Stripe Product Setup
+## COMPLETED — Phase 217-A: Schema + Stripe Product Setup (Archived to DONE.md)
 
-> **Risk:** LOW (additive). **Effort:** ~30min. **Dependencies:** Stripe Dashboard product creation.
+> ✅ Phase 217-A COMPLETE (PM audit #108). All 6 subtasks delivered: schema fields, types, Stripe products, AppSettings, seed script, validation. See [DONE.md](DONE.md) for detailed completion records.
 
-- [ ] **217-A.1** — Add `stripeCustomerId` (String, optional, unique sparse index), `stripeSubscriptionId` (String, optional), `subscriptionStatus` (String enum: `active | past_due | canceled | unpaid`, default `null`) to User model
-- [ ] **217-A.2** — Add `type` (String enum: `one_time | subscription_initial | subscription_renewal`, default `one_time`), `stripeInvoiceId` (String, optional, unique sparse index) to Transaction model
-- [ ] **217-A.3** — Update `PlanData` and `TransactionData` TypeScript types to reflect new fields
-- [ ] **217-A.4** — Create 4 Stripe Price objects in Stripe Dashboard: Pro Monthly ($19), Pro Yearly ($159.60), Premium Monthly ($39), Premium Yearly ($327.60)
-- [ ] **217-A.5** — Create `admin.stripePriceIds` and `admin.yearlyDiscount` AppSetting keys
-- [ ] **217-A.6** — Validation: all 7 gates GREEN. No behavior change.
+## COMPLETED — Phase 217-B: Checkout Mode Switch + Customer Management (Archived to DONE.md)
 
-### Phase 217-B — Checkout Mode Switch + Customer Management
-
-> **Risk:** MEDIUM. **Effort:** ~45min. **Dependencies:** Phase 217-A.
-
-- [ ] **217-B.1** — Create `getOrCreateStripeCustomer(user)` utility that creates/retrieves Stripe Customer and stores `stripeCustomerId` on User
-- [ ] **217-B.2** — Switch `checkoutPlan()` from `mode: "payment"` to `mode: "subscription"` with `customer` param
-- [ ] **217-B.3** — Replace inline `price_data` with persistent Stripe Price ID from AppSetting
-- [ ] **217-B.4** — Add yearly billing option: accept `billing: "Monthly" | "Yearly"` param, route to correct Price ID
-- [ ] **217-B.5** — Add `subscription_data.metadata` with `userId`, `clerkId`, `plan`, `billing`
-- [ ] **217-B.6** — Validation: all 7 gates GREEN.
+> ✅ Phase 217-B COMPLETE (PM audit #110). All 6 subtasks delivered: Stripe Customer utility, subscription mode, persistent Price IDs, yearly billing, subscription metadata, validation. See [DONE.md](DONE.md) for detailed completion records.
 
 ### Phase 217-C — Webhook Expansion for Subscription Events
 
@@ -122,6 +86,16 @@
 
 ## QUEUED — Post-Stripe Improvements
 
+### Phase 218-B — CSS Component Class Extraction (Muted Text + Danger Button)
+
+> **Owner directive:** CSS/Tailwind audit. Move duplicated inline patterns into `.css` files under `src/styles/`. **Risk:** LOW. **Effort:** ~30min. **Dependencies:** None.
+
+- [ ] **218-B.1** — Create `.admin-muted-text` class in `src/styles/components/admin/admin.css` for `text-sm text-midnightBlue-600 dark:text-lavenderHaze-600` pattern (20+ duplicates across 12 component files)
+- [ ] **218-B.2** — Replace all 20+ inline instances across admin settings, tables, confirmation-modal, and website-manager with `.admin-muted-text` class
+- [ ] **218-B.3** — Extract `.btn-danger` class in `src/styles/components/buttons.css` for destructive action button patterns if duplicated 3+ times
+- [ ] **218-B.4** — Audit `toggle-theme.tsx` for ~310-char className extraction opportunity
+- [ ] **218-B.5** — Validation: all 7 gates GREEN. Zero visual regression.
+
 ### Phase 26.x — Persona-aware Media Prompts
 
 > **Owner:** OI58. **Risk:** LOW. **Effort:** ~2h. **Dependencies:** None (can proceed after Stripe billing). **Files:** 4 (persona-prompts.ts, generateImage.tsx, generateAudio.tsx, generateResponse.tsx). **Lines:** ~60-80 added.
@@ -156,7 +130,7 @@
 ---
 
 > **Completed phases** archived in [`DONE.md`](DONE.md).
-> Includes: Phases 143–148, 165, 165.1, 180.1–180.4, 185–222 (all sub-phases), 29.1–29.5, 29.7.
+> Includes: Phases 143–148, 165, 165.1, 180.1–180.4, 185–222 (all sub-phases), 217-A, 29.1–29.5, 29.7.
 > Phase 29.7 (Zustand audit) — COMPLETE. No changes needed. 4 stores, all properly implemented.
 > TypeScript 6 / ESLint compatibility — **CLOSED** (audit #103). No issues.
 > jsdom upgrade — **PIN MAINTAINED** (audit #103). ~24.1.3 stable. ESM TLA incompatibility persists.

@@ -81,7 +81,6 @@ export default function SidebarShell({
     isDesktopViewport,
   };
 
-
   const sidebarClass = classNames(
     className,
     "app-sidebar",

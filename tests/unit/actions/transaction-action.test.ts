@@ -6,6 +6,7 @@ import {
   getAllTransactions,
 } from "@/lib/actions/transaction.action";
 import { getEffectivePlanConfig } from "@/lib/utils/effective-plan-config";
+import { getEffectiveStripeBillingConfig } from "@/lib/utils/effective-stripe-billing-config";
 import {
   createTestTransaction,
   createTestUser,
@@ -13,12 +14,21 @@ import {
 } from "../test-support";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { stripeCreateSessionMock, userFindOneMock, transactionFindMock } =
-  vi.hoisted(() => ({
-    stripeCreateSessionMock: vi.fn(),
-    userFindOneMock: vi.fn(),
-    transactionFindMock: vi.fn(),
-  }));
+const {
+  stripeCreateSessionMock,
+  stripeCreateCustomerMock,
+  stripeRetrieveCustomerMock,
+  userFindOneMock,
+  userFindOneAndUpdateMock,
+  transactionFindMock,
+} = vi.hoisted(() => ({
+  stripeCreateSessionMock: vi.fn(),
+  stripeCreateCustomerMock: vi.fn(),
+  stripeRetrieveCustomerMock: vi.fn(),
+  userFindOneMock: vi.fn(),
+  userFindOneAndUpdateMock: vi.fn(),
+  transactionFindMock: vi.fn(),
+}));
 
 vi.mock("stripe", () => {
   const StripeMock = vi.fn(function StripeMock() {
@@ -27,6 +37,10 @@ vi.mock("stripe", () => {
         sessions: {
           create: stripeCreateSessionMock,
         },
+      },
+      customers: {
+        create: stripeCreateCustomerMock,
+        retrieve: stripeRetrieveCustomerMock,
       },
     };
   });
@@ -51,6 +65,7 @@ vi.mock("@/lib/database/mongoose", () => ({
 vi.mock("@/lib/database/models/user.model", () => ({
   default: {
     findOne: userFindOneMock,
+    findOneAndUpdate: userFindOneAndUpdateMock,
   },
 }));
 
@@ -63,6 +78,17 @@ vi.mock("@/lib/database/models/transaction.model", () => ({
 vi.mock("@/lib/utils/effective-plan-config", () => ({
   getEffectivePlanConfig: vi.fn(),
 }));
+
+vi.mock("@/lib/utils/effective-stripe-billing-config", async () => {
+  const actual = await vi.importActual<
+    typeof import("@/lib/utils/effective-stripe-billing-config")
+  >("@/lib/utils/effective-stripe-billing-config");
+
+  return {
+    ...actual,
+    getEffectiveStripeBillingConfig: vi.fn(),
+  };
+});
 
 const mongooseModuleMock = {} as typeof import("mongoose");
 
@@ -94,10 +120,17 @@ describe("transaction.action", () => {
       _id: {
         toString: () => user._id,
       },
+      clerkId: user.clerkId,
       firstName: user.firstName,
       lastName: user.lastName,
       username: user.username,
       email: user.email,
+      stripeCustomerId: undefined,
+    });
+    userFindOneAndUpdateMock.mockResolvedValue({
+      _id: user._id,
+      clerkId: user.clerkId,
+      stripeCustomerId: "cus_123",
     });
 
     vi.mocked(getEffectivePlanConfig).mockResolvedValue({
@@ -133,9 +166,21 @@ describe("transaction.action", () => {
         audio: 2,
       },
     });
+    vi.mocked(getEffectiveStripeBillingConfig).mockResolvedValue({
+      stripePriceIds: {
+        proMonthly: "price_pro_monthly",
+        proYearly: "price_pro_yearly",
+        premiumMonthly: "price_premium_monthly",
+        premiumYearly: "price_premium_yearly",
+      },
+      yearlyDiscount: 30,
+    });
 
     stripeCreateSessionMock.mockResolvedValue({
       url: "http://stripe.test/session",
+    });
+    stripeCreateCustomerMock.mockResolvedValue({
+      id: "cus_123",
     });
   });
 
@@ -155,14 +200,38 @@ describe("transaction.action", () => {
       expect(connectToDatabase).toHaveBeenCalledOnce();
       expect(userFindOneMock).toHaveBeenCalledWith(
         { clerkId: "user_123" },
-        "_id firstName lastName username email",
+        "_id clerkId firstName lastName username email stripeCustomerId",
         { lean: true },
       );
       expect(vi.mocked(getEffectivePlanConfig)).toHaveBeenCalledOnce();
+      expect(vi.mocked(getEffectiveStripeBillingConfig)).toHaveBeenCalledOnce();
+      expect(stripeCreateCustomerMock).toHaveBeenCalledWith({
+        email: "buyer@example.com",
+        name: "Buyer One",
+        metadata: {
+          userId: "507f1f77bcf86cd799439011",
+          clerkId: "user_123",
+        },
+      });
+      expect(userFindOneAndUpdateMock).toHaveBeenCalledWith(
+        { _id: "507f1f77bcf86cd799439011", clerkId: "user_123" },
+        {
+          $set: {
+            stripeCustomerId: "cus_123",
+            updatedAt: expect.any(Date),
+          },
+        },
+        {
+          returnDocument: "after",
+          strict: true,
+          upsert: false,
+        },
+      );
       expect(stripeCreateSessionMock).toHaveBeenCalledWith(
         expect.objectContaining({
-          mode: "payment",
-          customer_email: "buyer@example.com",
+          mode: "subscription",
+          customer: "cus_123",
+          line_items: [{ price: "price_pro_monthly", quantity: 1 }],
           success_url:
             "http://localhost:3000/checkout-success?session_id={CHECKOUT_SESSION_ID}",
           cancel_url: "http://localhost:3000/app/plans",
@@ -173,9 +242,83 @@ describe("transaction.action", () => {
             billing: "Monthly",
             planId: "2",
           }),
+          subscription_data: {
+            metadata: {
+              userId: "507f1f77bcf86cd799439011",
+              clerkId: "user_123",
+              plan: "Pro",
+              billing: "Monthly",
+            },
+          },
         }),
       );
       expect(redirect).toHaveBeenCalledWith("http://stripe.test/session");
+    });
+
+    it("reuses existing Stripe customer when user already has stripeCustomerId", async () => {
+      userFindOneMock.mockResolvedValue({
+        _id: {
+          toString: () => "507f1f77bcf86cd799439011",
+        },
+        clerkId: "user_123",
+        firstName: "Buyer",
+        lastName: "One",
+        username: "buyer",
+        email: "buyer@example.com",
+        stripeCustomerId: "cus_existing_123",
+      });
+      stripeRetrieveCustomerMock.mockResolvedValue({
+        id: "cus_existing_123",
+      });
+
+      await expect(
+        checkoutPlan({
+          plan: {
+            id: 2,
+            billing: "Monthly",
+            name: "Pro",
+            price: 19,
+          },
+        }),
+      ).rejects.toThrow("NEXT_REDIRECT:http://stripe.test/session");
+
+      expect(stripeRetrieveCustomerMock).toHaveBeenCalledWith(
+        "cus_existing_123",
+      );
+      expect(stripeCreateCustomerMock).not.toHaveBeenCalled();
+      expect(userFindOneAndUpdateMock).not.toHaveBeenCalled();
+      expect(stripeCreateSessionMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          customer: "cus_existing_123",
+        }),
+      );
+    });
+
+    it("routes yearly checkout to yearly Stripe price id", async () => {
+      await expect(
+        checkoutPlan({
+          plan: {
+            id: 2,
+            billing: "Yearly",
+            name: "Pro",
+            price: 159.6,
+          },
+        }),
+      ).rejects.toThrow("NEXT_REDIRECT:http://stripe.test/session");
+
+      expect(stripeCreateSessionMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          line_items: [{ price: "price_pro_yearly", quantity: 1 }],
+          metadata: expect.objectContaining({
+            billing: "Yearly",
+          }),
+          subscription_data: {
+            metadata: expect.objectContaining({
+              billing: "Yearly",
+            }),
+          },
+        }),
+      );
     });
 
     it("rejects invalid payload", async () => {
@@ -246,6 +389,33 @@ describe("transaction.action", () => {
       ).rejects.toThrow("Unable to start checkout.");
 
       expect(stripeCreateSessionMock).not.toHaveBeenCalled();
+      expect(redirect).not.toHaveBeenCalled();
+    });
+
+    it("rejects checkout when Stripe price id is missing for plan and billing", async () => {
+      vi.mocked(getEffectiveStripeBillingConfig).mockResolvedValue({
+        stripePriceIds: {
+          proMonthly: "",
+          proYearly: "price_pro_yearly",
+          premiumMonthly: "price_premium_monthly",
+          premiumYearly: "price_premium_yearly",
+        },
+        yearlyDiscount: 30,
+      });
+
+      await expect(
+        checkoutPlan({
+          plan: {
+            id: 2,
+            billing: "Monthly",
+            name: "Pro",
+            price: 19,
+          },
+        }),
+      ).rejects.toThrow("Unable to start checkout.");
+
+      expect(stripeCreateSessionMock).not.toHaveBeenCalled();
+      expect(stripeCreateCustomerMock).not.toHaveBeenCalled();
       expect(redirect).not.toHaveBeenCalled();
     });
   });

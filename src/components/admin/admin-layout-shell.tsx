@@ -36,7 +36,7 @@ export default function AdminLayoutShell({
       toggleMobileSidebarOpen: state.toggleMobileSidebarOpen,
     })),
   );
-  
+
   const isDesktop = useIsDesktop();
 
   function handleToggleSidebar() {
