@@ -31,4 +31,12 @@
   .sidebar-nav-link {
     @apply flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-sm transition-all;
   }
+
+  .error-card {
+    @apply rounded-lg border border-slate-500 bg-lavenderHaze-100 p-6 text-center dark:border-slate-500 dark:bg-nightIndigo-900;
+  }
+
+  .toggle-theme-button {
+    @apply relative inline-flex h-9 w-17 items-center rounded-full bg-lavenderHaze-500 p-1 text-midnightBlue-500 transition-all duration-300 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-limeGreen-500 focus-visible:ring-offset-2 focus-visible:ring-offset-lavenderHaze-500 motion-reduce:transition-none dark:bg-nightIndigo-500 dark:text-lavenderHaze-500 dark:focus-visible:ring-limeGreen-500 dark:focus-visible:ring-offset-nightIndigo-1000;
+  }
 }

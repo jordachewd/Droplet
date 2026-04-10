@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { updateAdminSettingAction } from "@/lib/actions/admin.actions";
 import { AdminManagedForm } from "@/components/admin/admin-managed-form";
@@ -18,7 +18,7 @@ export function AdminThemeSection({ themeValue }: AdminThemeSectionProps) {
       <input type="hidden" name="key" value="admin.theme" />
       <input type="hidden" name="category" value="theme" />
       <h2 className="heading-6 mb-2">Theme</h2>
-      <p className="mb-4 text-sm text-midnightBlue-600 dark:text-lavenderHaze-600">
+      <p className="mb-4 admin-muted-text">
         Set the default theme configuration used as the admin baseline.
       </p>
       <fieldset className="space-y-2">

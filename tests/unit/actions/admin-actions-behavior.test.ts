@@ -400,6 +400,30 @@ describe("admin.actions behavior", () => {
     expect(revalidatePath).toHaveBeenCalledWith("/app/plans");
   });
 
+  it("updateAdminSettingAction persists yearly discount and revalidates plans routes", async () => {
+    await updateAdminSettingAction(
+      buildFormData({
+        key: "admin.yearlyDiscount",
+        category: "plans",
+        yearlyDiscount: "35",
+      }),
+    );
+
+    expect(appSettingFindOneAndUpdateMock).toHaveBeenCalledWith(
+      { key: "admin.yearlyDiscount" },
+      expect.objectContaining({
+        $set: expect.objectContaining({
+          value: {
+            yearlyDiscount: 35,
+          },
+        }),
+      }),
+      expect.any(Object),
+    );
+    expect(revalidatePath).toHaveBeenCalledWith("/plans");
+    expect(revalidatePath).toHaveBeenCalledWith("/app/plans");
+  });
+
   it("updateAdminSettingAction filters invalid persona access ids", async () => {
     await updateAdminSettingAction(
       buildFormData({

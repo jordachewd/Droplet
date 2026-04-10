@@ -352,6 +352,18 @@ function parseStructuredAdminSettingValue({
     };
   }
 
+  if (key === "admin.yearlyDiscount") {
+    const yearlyDiscount = getNumericField(formData, "yearlyDiscount");
+
+    if (yearlyDiscount < 0 || yearlyDiscount > 100) {
+      throw new Error("Invalid yearly discount value.");
+    }
+
+    return {
+      yearlyDiscount,
+    };
+  }
+
   if (key === "admin.currencySymbol") {
     const parsedCurrencySymbol = currencySymbolSchema.safeParse(
       getStringField(formData, "currencySymbol"),
@@ -823,6 +835,7 @@ export async function updateAdminSettingAction(
 
     if (
       key === "admin.pricing" ||
+      key === "admin.yearlyDiscount" ||
       key === "admin.currencySymbol" ||
       key === "admin.limits" ||
       key === "admin.trialLimits"

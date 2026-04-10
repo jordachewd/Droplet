@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import PageHead from "@/components/layout/page-head";
 import { getAdminDashboardStats } from "@/lib/utils/admin-queries";
 
@@ -19,7 +19,7 @@ export default async function AdminDashboardPage() {
             href={stat.href}
             className="admin-surface transition-all hover:-translate-y-0.5 hover:shadow-md"
           >
-            <p className="mb-2 flex items-center gap-2 text-sm text-midnightBlue-600 dark:text-lavenderHaze-600">
+            <p className="mb-2 flex items-center gap-2 admin-muted-text">
               <i className={stat.icon} aria-hidden="true"></i>
               <span>{stat.label}</span>
             </p>

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { updateAdminSettingAction } from "@/lib/actions/admin.actions";
 import { AdminFormSubmitButton } from "@/components/admin/admin-form-submit-button";
@@ -58,7 +58,7 @@ export function AdminWebsiteContentSection({
         <input type="hidden" name="category" value="features" />
 
         <h2 className="heading-6">FAQ Content</h2>
-        <p className="text-sm text-midnightBlue-600 dark:text-lavenderHaze-600">
+        <p className="admin-muted-text">
           Update question and answer copy used on plans pages.
         </p>
 
@@ -111,7 +111,7 @@ export function AdminWebsiteContentSection({
         <input type="hidden" name="category" value="features" />
 
         <h2 className="heading-6">Homepage CTA and Spotlight Copy</h2>
-        <p className="text-sm text-midnightBlue-600 dark:text-lavenderHaze-600">
+        <p className="admin-muted-text">
           Configure CTA banner and persona spotlight text shown on the homepage.
         </p>
 
@@ -219,7 +219,7 @@ export function AdminWebsiteContentSection({
         <input type="hidden" name="category" value="features" />
 
         <h2 className="heading-6">Homepage Featured Personas</h2>
-        <p className="text-sm text-midnightBlue-600 dark:text-lavenderHaze-600">
+        <p className="admin-muted-text">
           Select and order the three persona cards highlighted on the homepage.
         </p>
 
@@ -263,7 +263,7 @@ export function AdminWebsiteContentSection({
         <input type="hidden" name="category" value="features" />
 
         <h2 className="heading-6">Hero Copy</h2>
-        <p className="text-sm text-midnightBlue-600 dark:text-lavenderHaze-600">
+        <p className="admin-muted-text">
           Configure homepage hero heading, subtitle, CTA label, and image alt
           text.
         </p>
@@ -332,7 +332,7 @@ export function AdminWebsiteContentSection({
         <input type="hidden" name="category" value="features" />
 
         <h2 className="heading-6">Landing Content</h2>
-        <p className="text-sm text-midnightBlue-600 dark:text-lavenderHaze-600">
+        <p className="admin-muted-text">
           Configure feature cards and how-it-works copy on the homepage.
         </p>
 
@@ -524,7 +524,7 @@ export function AdminWebsiteContentSection({
         <input type="hidden" name="category" value="features" />
 
         <h2 className="heading-6">About Page Copy</h2>
-        <p className="text-sm text-midnightBlue-600 dark:text-lavenderHaze-600">
+        <p className="admin-muted-text">
           Configure About page heading, section copy, and footer call-to-action
           text.
         </p>

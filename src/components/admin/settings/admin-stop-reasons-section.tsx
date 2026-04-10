@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { updateAdminSettingAction } from "@/lib/actions/admin.actions";
 import { AdminFormSubmitButton } from "@/components/admin/admin-form-submit-button";
@@ -31,7 +31,7 @@ export function AdminStopReasonsSection({
       <input type="hidden" name="category" value="features" />
 
       <h2 className="heading-6 mb-2">Stop Reason Messages</h2>
-      <p className="mb-4 text-sm text-midnightBlue-600 dark:text-lavenderHaze-600">
+      <p className="mb-4 admin-muted-text">
         Configure the user-facing message shown when the server ends or blocks a
         conversation.
       </p>

@@ -93,7 +93,34 @@ export function normalizeModelSettingsValue(
 export function normalizePricingSettingsValue(
   value: unknown,
   defaults: PricingSettingsFormValue,
+  yearlyDiscountValue?: unknown,
 ): PricingSettingsFormValue {
+  const normalizeYearlyDiscount = (
+    discountCandidate: unknown,
+    fallbackValue: number,
+  ): number => {
+    const rawDiscount =
+      isObjectRecord(discountCandidate) && "yearlyDiscount" in discountCandidate
+        ? discountCandidate.yearlyDiscount
+        : discountCandidate;
+    const parsedDiscount =
+      typeof rawDiscount === "number"
+        ? rawDiscount
+        : typeof rawDiscount === "string"
+          ? Number(rawDiscount)
+          : Number.NaN;
+
+    if (!Number.isFinite(parsedDiscount)) {
+      return fallbackValue;
+    }
+
+    return Math.min(100, Math.max(0, parsedDiscount));
+  };
+  const effectiveYearlyDiscount = normalizeYearlyDiscount(
+    yearlyDiscountValue,
+    defaults.yearlyDiscount,
+  );
+
   if (Array.isArray(value)) {
     const proPlan = value.find(
       (item): item is { name: string; price?: number } =>
@@ -114,12 +141,16 @@ export function normalizePricingSettingsValue(
         Number.isFinite(premiumPlan.price)
           ? premiumPlan.price
           : defaults.premiumPrice,
+      yearlyDiscount: effectiveYearlyDiscount,
       currencySymbol: defaults.currencySymbol,
     };
   }
 
   if (!isObjectRecord(value)) {
-    return defaults;
+    return {
+      ...defaults,
+      yearlyDiscount: effectiveYearlyDiscount,
+    };
   }
 
   return {
@@ -129,6 +160,7 @@ export function normalizePricingSettingsValue(
       "premiumPrice",
       defaults.premiumPrice,
     ),
+    yearlyDiscount: effectiveYearlyDiscount,
     currencySymbol:
       value.currencySymbol === "€" || value.currencySymbol === "$"
         ? value.currencySymbol

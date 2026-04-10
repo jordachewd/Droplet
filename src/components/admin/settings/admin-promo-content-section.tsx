@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { updateAdminSettingAction } from "@/lib/actions/admin.actions";
 import { AdminFormSubmitButton } from "@/components/admin/admin-form-submit-button";
@@ -21,7 +21,7 @@ export function AdminPromoContentSection({
       <input type="hidden" name="category" value="features" />
 
       <h2 className="heading-6">Promo Content</h2>
-      <p className="text-sm text-midnightBlue-600 dark:text-lavenderHaze-600">
+      <p className="admin-muted-text">
         Configure upgrade, suspension, and plan promo messaging used across the
         app shell, profile, personas, and end-of-conversation actions.
       </p>

@@ -91,6 +91,7 @@ export default async function AdminSettingsPage() {
   const pricingValue = normalizePricingSettingsValue(
     snapshot.settingsByKey["admin.pricing"]?.value,
     pricingDefaults,
+    snapshot.settingsByKey["admin.yearlyDiscount"]?.value,
   );
   const limitsValue = normalizeLimitsSettingsValue(
     snapshot.settingsByKey["admin.limits"]?.value,

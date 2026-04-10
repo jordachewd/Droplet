@@ -172,7 +172,7 @@ function AdminUsersTableContent({
                 />
               ))}
               <AdminFormSubmitButton
-                className="btn btn-sm btn-contained bg-red-700 text-white hover:bg-red-800"
+                className="btn-danger"
                 label="Bulk Remove"
                 pendingLabel="Removing..."
               />
@@ -217,10 +217,7 @@ function AdminUsersTableContent({
           <tbody className="divide-y divide-slate-300 dark:divide-slate-500">
             {users.length === 0 ? (
               <tr>
-                <td
-                  colSpan={9}
-                  className="px-4 py-6 text-sm text-midnightBlue-600 dark:text-lavenderHaze-600"
-                >
+                <td colSpan={9} className="px-4 py-6 admin-muted-text">
                   No users matched this search.
                 </td>
               </tr>

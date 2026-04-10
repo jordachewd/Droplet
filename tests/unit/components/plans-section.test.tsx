@@ -6,6 +6,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Plan } from "@/types/PlanData.d";
 import Plans from "@/components/sections/shared/plans-section";
 import { useUser } from "@clerk/nextjs";
+import { fireEvent } from "@testing-library/react";
+
+const { planCardRenderMock } = vi.hoisted(() => ({
+  planCardRenderMock: vi.fn(),
+}));
 
 vi.mock("@clerk/nextjs", () => ({
   useUser: vi.fn(),
@@ -27,9 +32,18 @@ vi.mock("next/link", () => ({
 }));
 
 vi.mock("@/components/shared/plan-card", () => ({
-  default: ({ plan }: { plan: Plan }) => (
-    <div data-testid={`plan-${plan.name}`} />
-  ),
+  default: ({
+    plan,
+    billingCycle,
+    yearlyDiscount,
+  }: {
+    plan: Plan;
+    billingCycle?: "Monthly" | "Yearly";
+    yearlyDiscount?: number;
+  }) => {
+    planCardRenderMock({ plan, billingCycle, yearlyDiscount });
+    return <div data-testid={`plan-${plan.name}`} />;
+  },
 }));
 
 vi.mock("@/components/shared/loading-bubbles", () => ({
@@ -58,6 +72,7 @@ const plansData: Plan[] = [
 describe("Plans section", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    planCardRenderMock.mockReset();
     vi.mocked(useUser).mockReturnValue({
       isLoaded: true,
       isSignedIn: false,
@@ -102,5 +117,22 @@ describe("Plans section", () => {
     render(<Plans plansData={plansData} />);
 
     expect(screen.queryByRole("link", { name: "Subscribe Now" })).toBeNull();
+  });
+
+  it("renders billing toggle and applies yearly selection to plan cards", () => {
+    render(<Plans plansData={plansData} yearlyDiscount={35} />);
+
+    expect(screen.getByRole("button", { name: "Monthly" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Yearly" })).toBeTruthy();
+    expect(screen.getByText("Save 35% yearly")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Yearly" }));
+
+    expect(planCardRenderMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        billingCycle: "Yearly",
+        yearlyDiscount: 35,
+      }),
+    );
   });
 });

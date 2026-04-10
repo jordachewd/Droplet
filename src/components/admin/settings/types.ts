@@ -11,6 +11,7 @@ import { TaskEndedReason } from "@/types/TaskData.d";
 export interface PricingSettingsFormValue {
   proPrice: number;
   premiumPrice: number;
+  yearlyDiscount: number;
   currencySymbol: "$" | "€";
 }
 

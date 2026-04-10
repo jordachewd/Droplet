@@ -782,6 +782,7 @@ export async function getAdminSettingsSnapshot() {
       pricing: {
         proPrice: DEFAULT_PLAN_PRICING.Pro,
         premiumPrice: DEFAULT_PLAN_PRICING.Premium,
+        yearlyDiscount: DEFAULT_YEARLY_DISCOUNT,
         currencySymbol: DEFAULT_PLAN_PRICING.currencySymbol,
       },
       stripePriceIds: { ...DEFAULT_STRIPE_PRICE_IDS },

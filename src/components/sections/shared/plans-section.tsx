@@ -1,7 +1,9 @@
 "use client";
 
 import { useUser } from "@clerk/nextjs";
+import { useState } from "react";
 import { Plan } from "@/types/PlanData.d";
+import { BillingCycle } from "@/types/PlanData.d";
 import { UserData } from "@/types/UserData.d";
 import PlanCard from "@/components/shared/plan-card";
 import LoadingBubbles from "@/components/shared/loading-bubbles";
@@ -15,6 +17,7 @@ interface PlansProps {
   currencySymbol?: string;
   subscribeCtaLabel?: string;
   popularBadgeLabel?: string;
+  yearlyDiscount?: number;
   className?: string;
 }
 
@@ -25,9 +28,11 @@ export default function Plans({
   currencySymbol = "$",
   subscribeCtaLabel = "Subscribe Now",
   popularBadgeLabel = "Popular",
+  yearlyDiscount = 30,
   className = "",
 }: PlansProps) {
   const { isSignedIn } = useUser();
+  const [billingCycle, setBillingCycle] = useState<BillingCycle>("Monthly");
 
   if (hasLoader && !userData)
     return (
@@ -40,9 +45,48 @@ export default function Plans({
     "Plans mx-auto flex w-full flex-col gap-20 px-4 max-w-screen-2xl",
     className,
   );
+  const hasPaidPlans = plansData.some((plan) => plan.price > 0);
+  const yearlyBadgeText =
+    yearlyDiscount > 0 ? `Save ${yearlyDiscount}% yearly` : "Yearly billing";
 
   return (
     <section className={wrapperClassName}>
+      {hasPaidPlans && (
+        <div className="PlansBillingToggle mx-auto flex w-full justify-center">
+          <div className="inline-flex items-center gap-1 rounded-full border border-slate-400 bg-lavenderHaze-300/80 p-1 dark:border-slate-500 dark:bg-nightIndigo-900/70">
+            <button
+              type="button"
+              onClick={() => setBillingCycle("Monthly")}
+              className={classNames(
+                "btn btn-sm rounded-full border-transparent px-4 py-2 normal-case",
+                billingCycle === "Monthly"
+                  ? "btn-contained"
+                  : "btn-text text-midnightBlue-600 dark:text-lavenderHaze-600",
+              )}
+              aria-pressed={billingCycle === "Monthly"}
+            >
+              Monthly
+            </button>
+            <button
+              type="button"
+              onClick={() => setBillingCycle("Yearly")}
+              className={classNames(
+                "btn btn-sm rounded-full border-transparent px-4 py-2 normal-case",
+                billingCycle === "Yearly"
+                  ? "btn-contained"
+                  : "btn-text text-midnightBlue-600 dark:text-lavenderHaze-600",
+              )}
+              aria-pressed={billingCycle === "Yearly"}
+            >
+              Yearly
+            </button>
+          </div>
+          <p className="ml-3 inline-flex items-center rounded-full bg-limeGreen-500/30 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:bg-limeGreen-500/20 dark:text-limeGreen-500">
+            {yearlyBadgeText}
+          </p>
+        </div>
+      )}
+
       <div className="PlanCards flex w-full flex-col justify-between gap-10 md:flex-row">
         {plansData.map((plan: Plan) => {
           return (
@@ -52,6 +96,8 @@ export default function Plans({
               userData={userData}
               currencySymbol={currencySymbol}
               popularBadgeLabel={popularBadgeLabel}
+              billingCycle={billingCycle}
+              yearlyDiscount={yearlyDiscount}
             />
           );
         })}

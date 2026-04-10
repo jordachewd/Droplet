@@ -6,13 +6,21 @@ import PlanCard from "@/components/shared/plan-card";
 import type { Plan } from "@/types/PlanData.d";
 import type { UserData } from "@/types/UserData.d";
 import { getPlanStatus } from "@/lib/utils/getPlanStatus";
+import type { CheckoutPlanParams } from "@/types/PlanData.d";
+
+const { checkoutRenderMock } = vi.hoisted(() => ({
+  checkoutRenderMock: vi.fn(),
+}));
 
 vi.mock("@/lib/utils/getPlanStatus", () => ({
   getPlanStatus: vi.fn(),
 }));
 
 vi.mock("@/components/shared/checkout-form", () => ({
-  default: () => <button type="button">Subscribe</button>,
+  default: ({ plan }: { plan: CheckoutPlanParams }) => {
+    checkoutRenderMock(plan);
+    return <button type="button">Subscribe</button>;
+  },
 }));
 
 const basePlan: Plan = {
@@ -40,6 +48,7 @@ const baseUserData = {
 
 describe("PlanCard", () => {
   beforeEach(() => {
+    checkoutRenderMock.mockReset();
     vi.mocked(getPlanStatus).mockReturnValue({
       isIncluded: false,
       isCurrent: false,
@@ -78,5 +87,26 @@ describe("PlanCard", () => {
     );
 
     expect(screen.getByText("Most Chosen")).toBeTruthy();
+  });
+
+  it("shows yearly pricing details and passes yearly checkout payload", () => {
+    render(
+      <PlanCard
+        plan={basePlan}
+        userData={baseUserData}
+        currencySymbol="$"
+        billingCycle="Yearly"
+        yearlyDiscount={30}
+      />,
+    );
+
+    expect(screen.getByText("$159.60")).toBeTruthy();
+    expect(screen.getByText("$159.60/year - Save 30%")).toBeTruthy();
+    expect(checkoutRenderMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        billing: "Yearly",
+        price: 159.6,
+      }),
+    );
   });
 });

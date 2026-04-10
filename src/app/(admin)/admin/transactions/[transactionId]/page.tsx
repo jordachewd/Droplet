@@ -117,7 +117,7 @@ export default async function AdminTransactionDetailPage({
             </div>
           </dl>
         ) : (
-          <p className="text-sm text-midnightBlue-600 dark:text-lavenderHaze-600">
+          <p className="admin-muted-text">
             The associated user record could not be loaded.
           </p>
         )}

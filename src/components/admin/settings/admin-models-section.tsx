@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { updateAdminSettingAction } from "@/lib/actions/admin.actions";
 import { AdminManagedForm } from "@/components/admin/admin-managed-form";
@@ -28,7 +28,7 @@ export function AdminModelsSection({
       <input type="hidden" name="key" value="admin.models" />
       <input type="hidden" name="category" value="models" />
       <h2 className="heading-6 mb-2">AI Models</h2>
-      <p className="mb-4 text-sm text-midnightBlue-600 dark:text-lavenderHaze-600">
+      <p className="mb-4 admin-muted-text">
         Choose model defaults by plan and media type.
       </p>
       <div className="grid grid-cols-1 gap-3">

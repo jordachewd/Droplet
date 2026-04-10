@@ -9,6 +9,7 @@ import {
   getEffectivePlanConfig,
   getEffectiveSupportEmail,
 } from "@/lib/utils/effective-plan-config";
+import { getEffectiveStripeBillingConfig } from "@/lib/utils/effective-stripe-billing-config";
 import { getEffectivePersonaAccessByPlan } from "@/lib/utils/effective-persona-access";
 import { getEffectivePromoContent } from "@/lib/utils/effective-promo-content";
 import PageHead from "@/components/layout/page-head";
@@ -17,13 +18,19 @@ import AccountLoadErrorState from "@/components/shared/account-load-error-state"
 export default async function AppPlansPage() {
   const { userId } = await auth();
   const userData = userId ? await ensureUserSynced(userId) : null;
-  const [effectivePlanConfig, personaAccessByPlan, supportEmail, promoContent] =
-    await Promise.all([
-      getEffectivePlanConfig(),
-      getEffectivePersonaAccessByPlan(),
-      getEffectiveSupportEmail(),
-      getEffectivePromoContent(),
-    ]);
+  const [
+    effectivePlanConfig,
+    personaAccessByPlan,
+    supportEmail,
+    promoContent,
+    stripeBillingConfig,
+  ] = await Promise.all([
+    getEffectivePlanConfig(),
+    getEffectivePersonaAccessByPlan(),
+    getEffectiveSupportEmail(),
+    getEffectivePromoContent(),
+    getEffectiveStripeBillingConfig(),
+  ]);
   const plans = buildPlans({
     pricing: effectivePlanConfig.pricing,
     limits: effectivePlanConfig.limits,
@@ -53,6 +60,7 @@ export default async function AppPlansPage() {
         currencySymbol={effectivePlanConfig.pricing.currencySymbol}
         subscribeCtaLabel={promoContent.plansSubscribeCta}
         popularBadgeLabel={promoContent.planPopularBadge}
+        yearlyDiscount={stripeBillingConfig.yearlyDiscount}
         className="max-w-7xl!"
       />
       <Faqs faqsData={faqs} />

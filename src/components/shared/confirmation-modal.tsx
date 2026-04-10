@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useId, useRef } from "react";
 import Button from "@/components/shared/button";
@@ -99,10 +99,7 @@ export default function ConfirmationModal({
         <h3 id={titleId} className="heading-6">
           {title}
         </h3>
-        <p
-          id={descriptionId}
-          className="mt-2 text-sm text-midnightBlue-600 dark:text-lavenderHaze-600"
-        >
+        <p id={descriptionId} className="mt-2 admin-muted-text">
           {description}
         </p>
 

@@ -6,6 +6,7 @@ import {
   getEffectivePlanConfig,
   getEffectiveSupportEmail,
 } from "@/lib/utils/effective-plan-config";
+import { getEffectiveStripeBillingConfig } from "@/lib/utils/effective-stripe-billing-config";
 import { getEffectivePersonaAccessByPlan } from "@/lib/utils/effective-persona-access";
 import { getEffectivePromoContent } from "@/lib/utils/effective-promo-content";
 import Link from "next/link";
@@ -15,13 +16,19 @@ import PageHead from "@/components/layout/page-head";
 export const dynamic = "force-dynamic";
 
 export default async function PlansPage() {
-  const [effectivePlanConfig, personaAccessByPlan, supportEmail, promoContent] =
-    await Promise.all([
-      getEffectivePlanConfig(),
-      getEffectivePersonaAccessByPlan(),
-      getEffectiveSupportEmail(),
-      getEffectivePromoContent(),
-    ]);
+  const [
+    effectivePlanConfig,
+    personaAccessByPlan,
+    supportEmail,
+    promoContent,
+    stripeBillingConfig,
+  ] = await Promise.all([
+    getEffectivePlanConfig(),
+    getEffectivePersonaAccessByPlan(),
+    getEffectiveSupportEmail(),
+    getEffectivePromoContent(),
+    getEffectiveStripeBillingConfig(),
+  ]);
 
   const plans = buildPlans({
     pricing: effectivePlanConfig.pricing,
@@ -50,6 +57,7 @@ export default async function PlansPage() {
         currencySymbol={effectivePlanConfig.pricing.currencySymbol}
         subscribeCtaLabel={promoContent.plansSubscribeCta}
         popularBadgeLabel={promoContent.planPopularBadge}
+        yearlyDiscount={stripeBillingConfig.yearlyDiscount}
       />
 
       <Faqs faqsData={faqs} />

@@ -16,9 +16,9 @@ export default function AdminErrorPage({
 
   return (
     <section className="AdminErrorPage flex w-full items-center justify-center px-4 py-8">
-      <div className="flex w-full max-w-xl flex-col items-center gap-4 rounded-lg border border-slate-500 bg-lavenderHaze-100 p-6 text-center dark:border-slate-500 dark:bg-nightIndigo-900">
+      <div className="flex w-full max-w-xl flex-col items-center gap-4 error-card">
         <h1 className="heading-4">Something went wrong</h1>
-        <p className="text-sm text-midnightBlue-600 dark:text-lavenderHaze-600">
+        <p className="admin-muted-text">
           The admin panel hit an unexpected error.
         </p>
 

@@ -23,7 +23,7 @@ export default function ToggleTheme() {
         aria-checked={darkActive}
         aria-label="Toggle theme mode"
         onClick={handleToggleTheme}
-        className="ToggleTheme relative inline-flex h-9 w-17 items-center rounded-full bg-lavenderHaze-500 text-midnightBlue-500 p-1 transition-all duration-300 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-limeGreen-500 focus-visible:ring-offset-2 focus-visible:ring-offset-lavenderHaze-500 motion-reduce:transition-none dark:bg-nightIndigo-500 dark:text-lavenderHaze-500 dark:focus-visible:ring-limeGreen-500 dark:focus-visible:ring-offset-nightIndigo-1000"
+        className="ToggleTheme toggle-theme-button"
       >
         <span className="sr-only">{tooltipTitle}</span>
 

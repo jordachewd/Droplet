@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { updateAdminSettingAction } from "@/lib/actions/admin.actions";
 import { AdminManagedForm } from "@/components/admin/admin-managed-form";
@@ -20,7 +20,7 @@ export function AdminSupportSection({
       <input type="hidden" name="key" value="admin.supportEmail" />
       <input type="hidden" name="category" value="features" />
       <h2 className="heading-6 mb-2">Support Contact</h2>
-      <p className="mb-4 text-sm text-midnightBlue-600 dark:text-lavenderHaze-600">
+      <p className="mb-4 admin-muted-text">
         Configure the support contact email used across chat, plans, legal
         pages, and stop-action guidance.
       </p>

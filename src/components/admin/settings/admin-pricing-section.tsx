@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { updateAdminSettingAction } from "@/lib/actions/admin.actions";
 import { AdminManagedForm } from "@/components/admin/admin-managed-form";
@@ -13,7 +13,7 @@ export function AdminPricingSection({
   pricingValue,
 }: AdminPricingSectionProps) {
   return (
-    <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+    <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
       <AdminManagedForm
         action={updateAdminSettingAction}
         className="admin-surface"
@@ -21,7 +21,7 @@ export function AdminPricingSection({
         <input type="hidden" name="key" value="admin.pricing" />
         <input type="hidden" name="category" value="plans" />
         <h2 className="heading-6 mb-2">Pricing</h2>
-        <p className="mb-4 text-sm text-midnightBlue-600 dark:text-lavenderHaze-600">
+        <p className="mb-4 admin-muted-text">
           Manage Pro and Premium monthly prices.
         </p>
         <div className="grid grid-cols-1 gap-3">
@@ -63,7 +63,7 @@ export function AdminPricingSection({
         <input type="hidden" name="key" value="admin.currencySymbol" />
         <input type="hidden" name="category" value="plans" />
         <h2 className="heading-6 mb-2">Currency</h2>
-        <p className="mb-4 text-sm text-midnightBlue-600 dark:text-lavenderHaze-600">
+        <p className="mb-4 admin-muted-text">
           Configure the currency symbol used across pricing surfaces.
         </p>
         <label className="text-sm">
@@ -81,6 +81,36 @@ export function AdminPricingSection({
           <AdminFormSubmitButton
             label="Save Currency"
             pendingLabel="Saving currency..."
+          />
+        </div>
+      </AdminManagedForm>
+
+      <AdminManagedForm
+        action={updateAdminSettingAction}
+        className="admin-surface"
+      >
+        <input type="hidden" name="key" value="admin.yearlyDiscount" />
+        <input type="hidden" name="category" value="plans" />
+        <h2 className="heading-6 mb-2">Yearly Discount</h2>
+        <p className="mb-4 admin-muted-text">
+          Configure the discount percentage applied to yearly subscriptions.
+        </p>
+        <label className="text-sm">
+          <span className="mb-1 block font-medium">Discount Percentage</span>
+          <input
+            type="number"
+            min={0}
+            max={100}
+            step={1}
+            name="yearlyDiscount"
+            defaultValue={pricingValue.yearlyDiscount}
+            className="form-text-input"
+          />
+        </label>
+        <div className="mt-4 flex justify-end">
+          <AdminFormSubmitButton
+            label="Save Discount"
+            pendingLabel="Saving discount..."
           />
         </div>
       </AdminManagedForm>

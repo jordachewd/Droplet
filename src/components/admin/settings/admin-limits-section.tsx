@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { updateAdminSettingAction } from "@/lib/actions/admin.actions";
@@ -45,7 +45,7 @@ function LimitInput({ label, name, defaultValue }: LimitInputProps) {
       />
       {changedFromUnlimited && (
         <span className="mt-1 block text-xs text-amber-700 dark:text-amber-300">
-          ⚠ Changing from unlimited to a finite limit
+          âš  Changing from unlimited to a finite limit
         </span>
       )}
     </label>
@@ -70,7 +70,7 @@ export function AdminLimitsSection({
         <input type="hidden" name="key" value="admin.limits" />
         <input type="hidden" name="category" value="limits" />
         <h2 className="heading-6 mb-2">Limits</h2>
-        <p className="mb-4 text-sm text-midnightBlue-600 dark:text-lavenderHaze-600">
+        <p className="mb-4 admin-muted-text">
           Adjust plan ceilings for conversations, prompts, and media generation.
           Use <strong>-1</strong> for unlimited.
         </p>
@@ -128,7 +128,7 @@ export function AdminLimitsSection({
         <input type="hidden" name="key" value="admin.trialLimits" />
         <input type="hidden" name="category" value="trial" />
         <h2 className="heading-6 mb-2">Trial Limits</h2>
-        <p className="mb-4 text-sm text-midnightBlue-600 dark:text-lavenderHaze-600">
+        <p className="mb-4 admin-muted-text">
           Set limits for limited-access persona trials across 30-day windows.
         </p>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">

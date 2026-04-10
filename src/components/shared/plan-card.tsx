@@ -1,6 +1,6 @@
 import classNames from "classnames";
 import { getPlanStatus } from "@/lib/utils/getPlanStatus";
-import { Plan, PlanData, PlanStatus } from "@/types/PlanData.d";
+import { BillingCycle, Plan, PlanData, PlanStatus } from "@/types/PlanData.d";
 import { UserData } from "@/types/UserData.d";
 import Checkout from "@/components/shared/checkout-form";
 
@@ -9,6 +9,25 @@ interface PlanCardProps {
   userData?: UserData | null;
   currencySymbol?: string;
   popularBadgeLabel?: string;
+  billingCycle?: BillingCycle;
+  yearlyDiscount?: number;
+}
+
+function resolveDisplayPrice({
+  monthlyPrice,
+  billingCycle,
+  yearlyDiscount,
+}: {
+  monthlyPrice: number;
+  billingCycle: BillingCycle;
+  yearlyDiscount: number;
+}): number {
+  if (billingCycle === "Monthly") {
+    return monthlyPrice;
+  }
+
+  const yearlyMultiplier = (100 - yearlyDiscount) / 100;
+  return Number((monthlyPrice * 12 * yearlyMultiplier).toFixed(2));
 }
 
 export default function PlanCard({
@@ -16,13 +35,30 @@ export default function PlanCard({
   userData,
   currencySymbol = "$",
   popularBadgeLabel = "Popular",
+  billingCycle = "Monthly",
+  yearlyDiscount = 30,
 }: PlanCardProps) {
   const hasUserData = userData && Object.keys(userData).length > 0;
-  const planFee = plan.price;
+  const monthlyPlanPrice = plan.price;
+  const displayPlanPrice = resolveDisplayPrice({
+    monthlyPrice: monthlyPlanPrice,
+    billingCycle,
+    yearlyDiscount,
+  });
+  const isYearlyBilling = billingCycle === "Yearly";
+  const savingsAmount = Number(
+    (monthlyPlanPrice * 12 - displayPlanPrice).toFixed(2),
+  );
+  const yearlyPricingLabel = `${currencySymbol}${displayPlanPrice.toFixed(
+    2,
+  )}/year - Save ${yearlyDiscount}%`;
+  const displayPriceLabel = isYearlyBilling
+    ? displayPlanPrice.toFixed(2)
+    : String(displayPlanPrice);
 
   const planStatus = getPlanStatus({
     plan,
-    planFee,
+    planFee: monthlyPlanPrice,
     userPlan: userData?.plan as PlanData,
   });
 
@@ -75,17 +111,25 @@ export default function PlanCard({
             )}
           >
             <span className="flex">
-              {plan.price !== 0 ? currencySymbol + planFee : "Free"}
+              {plan.price !== 0 ? currencySymbol + displayPriceLabel : "Free"}
             </span>
 
             {plan.price !== 0 && (
-              <span className="flex self-end text-sm opacity-70">/Mo</span>
+              <span className="flex self-end text-sm opacity-70">
+                {isYearlyBilling ? "/Yr" : "/Mo"}
+              </span>
             )}
           </p>
         </div>
         <div className="flex w-full items-center justify-between pl-0.5 text-xs opacity-70">
           <span className="flex">{plan.desc}</span>
         </div>
+        {plan.price !== 0 && isYearlyBilling && (
+          <p className="mt-2 w-full text-right text-xs font-semibold uppercase tracking-wide text-limeGreen-500">
+            {yearlyPricingLabel}
+            {savingsAmount > 0 ? "" : " (No savings)"}
+          </p>
+        )}
       </div>
 
       <div className="PlanCardList flex w-full flex-col gap-3">
@@ -111,9 +155,9 @@ export default function PlanCard({
           <Checkout
             plan={{
               id: plan.id,
-              billing: "Monthly",
+              billing: billingCycle,
               name: plan.name,
-              price: planFee,
+              price: displayPlanPrice,
             }}
             planStatus={planStatus}
           />

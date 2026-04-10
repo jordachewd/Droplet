@@ -196,7 +196,7 @@ export default async function AdminUserDetailPage({
 
         <div className="divide-y divide-slate-300 dark:divide-slate-500">
           {user.transactions.length === 0 && (
-            <p className="py-4 text-sm text-midnightBlue-600 dark:text-lavenderHaze-600">
+            <p className="py-4 admin-muted-text">
               No transactions found for this user.
             </p>
           )}

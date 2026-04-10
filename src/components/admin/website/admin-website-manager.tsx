@@ -161,7 +161,7 @@ export function AdminWebsiteManager({ pages }: AdminWebsiteManagerProps) {
                   />
                 ))}
                 <AdminFormSubmitButton
-                  className="btn btn-sm btn-contained bg-red-700 text-white hover:bg-red-800"
+                  className="btn-danger"
                   label="Bulk Delete"
                   pendingLabel="Deleting..."
                 />
@@ -181,7 +181,7 @@ export function AdminWebsiteManager({ pages }: AdminWebsiteManagerProps) {
 
         <div className="divide-y divide-slate-300 dark:divide-slate-500">
           {pages.length === 0 ? (
-            <p className="px-4 py-6 text-sm text-midnightBlue-600 dark:text-lavenderHaze-600">
+            <p className="px-4 py-6 admin-muted-text">
               No public pages created yet.
             </p>
           ) : null}
@@ -255,7 +255,7 @@ export function AdminWebsiteManager({ pages }: AdminWebsiteManagerProps) {
                 >
                   <input type="hidden" name="pageId" value={page.id} />
                   <AdminFormSubmitButton
-                    className="btn btn-sm btn-contained bg-red-700 text-white hover:bg-red-800"
+                    className="btn-danger"
                     label="Delete"
                     pendingLabel="Deleting..."
                   />
