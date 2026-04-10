@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { generateImage } from "@/lib/utils/openai/generateImage";
+import { PERSONA_IMAGE_STYLE_HINTS } from "@/constants/persona-prompts";
 import type { MessageRole } from "@/types";
 import { createTestTask, createTestUser } from "../test-support";
 
@@ -75,6 +76,7 @@ function createImageRequest(
     taskId: string;
     userId: string;
     planName: "Lite" | "Pro" | "Premium";
+    personaId: string | null;
   }> = {},
 ) {
   const task = createTestTask();
@@ -86,6 +88,7 @@ function createImageRequest(
     taskId: task._id,
     userId: user.clerkId,
     planName: "Lite" as const,
+    personaId: null,
     ...overrides,
   };
 }
@@ -156,7 +159,7 @@ describe("generateImage", () => {
 
     expect(imagesGenerateMock).toHaveBeenCalledWith({
       model: "gpt-image-1-mini",
-      prompt: request.prompt,
+      prompt: expect.stringContaining(`User request: ${request.prompt}`),
     });
     expect(uploadFileToAWSMock).toHaveBeenCalledWith(
       convertedBuffer,
@@ -203,6 +206,28 @@ describe("generateImage", () => {
       type: "text",
       text: "URL prompt",
     });
+  });
+
+  it("adds persona-specific image style hints when personaId is provided", async () => {
+    const rawBuffer = Buffer.from("persona-image");
+    const convertedBuffer = Buffer.from("persona-image-converted");
+    const request = createImageRequest({
+      prompt: "Design a coding workspace scene",
+      personaId: "developer",
+    });
+
+    imagesGenerateMock.mockResolvedValue({
+      data: [{ b64_json: rawBuffer.toString("base64") }],
+    });
+    sharpToBufferMock.mockResolvedValue(convertedBuffer);
+
+    await generateImage(request);
+
+    expect(imagesGenerateMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        prompt: `${PERSONA_IMAGE_STYLE_HINTS.developer}\n\nUser request: ${request.prompt}`,
+      }),
+    );
   });
 
   it("delegates to handleError when model policy hard-blocks the request", async () => {

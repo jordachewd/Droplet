@@ -164,6 +164,19 @@ function getStringField(formData: FormData, fieldName: string): string {
   return parsedValue.data;
 }
 
+function getTrimmedOptionalStringField(
+  formData: FormData,
+  fieldName: string,
+): string {
+  const value = formData.get(fieldName);
+
+  if (typeof value !== "string") {
+    return "";
+  }
+
+  return value.trim();
+}
+
 function parseJsonValue(rawValue: string): unknown {
   try {
     return JSON.parse(rawValue);
@@ -361,6 +374,21 @@ function parseStructuredAdminSettingValue({
 
     return {
       yearlyDiscount,
+    };
+  }
+
+  if (key === "admin.stripePriceIds") {
+    return {
+      proMonthly: getTrimmedOptionalStringField(formData, "proMonthlyPriceId"),
+      proYearly: getTrimmedOptionalStringField(formData, "proYearlyPriceId"),
+      premiumMonthly: getTrimmedOptionalStringField(
+        formData,
+        "premiumMonthlyPriceId",
+      ),
+      premiumYearly: getTrimmedOptionalStringField(
+        formData,
+        "premiumYearlyPriceId",
+      ),
     };
   }
 
@@ -836,6 +864,7 @@ export async function updateAdminSettingAction(
     if (
       key === "admin.pricing" ||
       key === "admin.yearlyDiscount" ||
+      key === "admin.stripePriceIds" ||
       key === "admin.currencySymbol" ||
       key === "admin.limits" ||
       key === "admin.trialLimits"

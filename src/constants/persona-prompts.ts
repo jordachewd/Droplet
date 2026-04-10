@@ -46,6 +46,36 @@ const MODEL_FAMILY_GUIDANCE: Record<PersonaPromptModelFamily, string> = {
 const WELLNESS_SAFETY_RULES =
   "Never provide medical, psychiatric, crisis, or diagnosis advice. Encourage professional support or emergency services when the user describes danger, self-harm, abuse, or severe symptoms.";
 
+export const PERSONA_IMAGE_STYLE_HINTS: Record<PersonaId, string> = {
+  strategist:
+    "Create a clear, structured visual with professional composition and practical detail. Avoid abstract symbolism unless explicitly requested.",
+  teacher:
+    "Create an instructional visual that is easy to understand at a glance, with clean labeling and step-friendly clarity.",
+  developer:
+    "Create a technically grounded visual with precise elements, realistic tooling cues, and no decorative clutter.",
+  creator:
+    "Create a bold, expressive visual with strong concept identity, distinct mood, and original creative direction.",
+  wellness:
+    "Create a calm, grounded visual with gentle tones, breathable composition, and supportive atmosphere.",
+  interviewer:
+    "Create a realistic interview or career-preparation visual with professional context, direct focus, and practical detail.",
+};
+
+export const PERSONA_AUDIO_STYLE_HINTS: Record<PersonaId, string> = {
+  strategist:
+    "Speak in a concise executive style: direct, structured, and action-oriented.",
+  teacher:
+    "Speak in a clear teaching style: step-by-step, patient, and easy to follow.",
+  developer:
+    "Speak in a pragmatic engineering style: precise terms, minimal fluff, and concrete guidance.",
+  creator:
+    "Speak in an energetic creative style: expressive cadence while staying clear and useful.",
+  wellness:
+    "Speak in a calm supportive style: steady pace, grounded tone, and practical reassurance.",
+  interviewer:
+    "Speak like an interviewer and coach: professional, focused, and feedback-oriented.",
+};
+
 function composePrompt(...sections: string[]): string {
   return sections.join(" ");
 }

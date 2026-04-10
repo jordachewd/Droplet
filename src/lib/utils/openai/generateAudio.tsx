@@ -1,5 +1,7 @@
 import "server-only";
 import { openAiClient } from "@/constants/openai";
+import { getPersona } from "@/constants/assistant-personas";
+import { PERSONA_AUDIO_STYLE_HINTS } from "@/constants/persona-prompts";
 import { PlanName } from "@/types/PlanData.d";
 import { Message, MessageRole } from "@/types";
 import { ChatCompletionMessageParam } from "openai/resources/chat/completions.mjs";
@@ -21,6 +23,7 @@ const GENERATED_AUDIO_CONTENT_TYPE = "audio/wav";
 interface GenerateAudioParams {
   messages?: Message[];
   ttsText?: string;
+  personaId?: string | null;
   role: MessageRole;
   taskId: string;
   userId: string;
@@ -53,9 +56,54 @@ function decodeGeneratedAudio(rawAudioData: string): Buffer {
   return audioBuffer;
 }
 
+function resolvePersonaAudioStyleHint(personaId?: string | null): string {
+  const resolvedPersona = getPersona(personaId);
+  return PERSONA_AUDIO_STYLE_HINTS[resolvedPersona.id] ?? "";
+}
+
+function buildPersonaAwareTtsInput({
+  input,
+  personaId,
+}: {
+  input: string;
+  personaId?: string | null;
+}): string {
+  const styleHint = resolvePersonaAudioStyleHint(personaId);
+
+  if (!styleHint) {
+    return input;
+  }
+
+  return `${styleHint}\n\nText to read aloud: ${input}`;
+}
+
+function buildPersonaAwareAudioMessages({
+  messages,
+  personaId,
+}: {
+  messages: Message[];
+  personaId?: string | null;
+}): ChatCompletionMessageParam[] {
+  const styleHint = resolvePersonaAudioStyleHint(personaId);
+  const baseMessages = [...messages] as ChatCompletionMessageParam[];
+
+  if (!styleHint) {
+    return baseMessages;
+  }
+
+  return [
+    {
+      role: "system",
+      content: styleHint,
+    },
+    ...baseMessages,
+  ];
+}
+
 export async function generateAudio({
   messages,
   ttsText,
+  personaId,
   role,
   taskId,
   userId,
@@ -85,11 +133,15 @@ export async function generateAudio({
     let requestMetric: AIRequestMetric;
 
     if (audioMode === "tts") {
-      const speechInput = ttsText ?? buildTextToSpeechInput(messages ?? []);
+      const baseSpeechInput = ttsText ?? buildTextToSpeechInput(messages ?? []);
 
-      if (!speechInput) {
+      if (!baseSpeechInput) {
         throw new Error("No text input available for TTS audio generation.");
       }
+      const speechInput = buildPersonaAwareTtsInput({
+        input: baseSpeechInput,
+        personaId,
+      });
 
       const speechResponse = await openAiClient.audio.speech.create({
         model: policy.model,
@@ -99,7 +151,7 @@ export async function generateAudio({
       });
 
       audioBuffer = Buffer.from(await speechResponse.arrayBuffer());
-      transcript = speechInput;
+      transcript = baseSpeechInput;
       taskUsage = 0;
       requestMetric = {
         requestType: "audio",
@@ -107,11 +159,15 @@ export async function generateAudio({
         latencyMs: Date.now() - startTime,
       };
     } else {
+      const audioMessages = buildPersonaAwareAudioMessages({
+        messages: messages ?? [],
+        personaId,
+      });
       const response = await openAiClient.chat.completions.create({
         model: policy.model,
         modalities: ["text", "audio"],
         audio: { voice: "alloy", format: GENERATED_AUDIO_FORMAT },
-        messages: [...(messages ?? [])] as ChatCompletionMessageParam[],
+        messages: audioMessages,
       });
 
       requestMetric = {

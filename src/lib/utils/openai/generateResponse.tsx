@@ -489,6 +489,7 @@ async function buildOpenAIResponsePayload({
   requestMetrics,
   taskId,
   userId,
+  personaId,
   planName,
   entitlements,
   modelOverrides,
@@ -512,6 +513,7 @@ async function buildOpenAIResponsePayload({
   requestMetrics: AIRequestMetric[];
   taskId: string;
   userId: string;
+  personaId?: string | null;
   planName: PlanName;
   entitlements: Entitlements;
   modelOverrides?: ModelPolicyModelOverrides;
@@ -607,6 +609,7 @@ async function buildOpenAIResponsePayload({
         const imagePayload = await generateImage({
           prompt:
             typeof parsedArgs.prompt === "string" ? parsedArgs.prompt : "",
+          personaId,
           role: message.role,
           taskId,
           userId,
@@ -725,6 +728,7 @@ async function buildOpenAIResponsePayload({
 
         const audioPayload = await generateAudio({
           ttsText,
+          personaId,
           role: message.role,
           taskId,
           userId,
@@ -924,6 +928,7 @@ async function runChatCompletion({
     requestMetrics,
     taskId,
     userId,
+    personaId,
     planName,
     entitlements,
     modelOverrides,
@@ -1033,6 +1038,7 @@ async function runStreamingChatCompletion({
     requestMetrics,
     taskId,
     userId,
+    personaId,
     planName,
     entitlements,
     modelOverrides,

@@ -3,17 +3,22 @@
 import { updateAdminSettingAction } from "@/lib/actions/admin.actions";
 import { AdminManagedForm } from "@/components/admin/admin-managed-form";
 import { AdminFormSubmitButton } from "@/components/admin/admin-form-submit-button";
-import { PricingSettingsFormValue } from "@/components/admin/settings/types";
+import {
+  PricingSettingsFormValue,
+  StripePriceIdsSettingsFormValue,
+} from "@/components/admin/settings/types";
 
 interface AdminPricingSectionProps {
   pricingValue: PricingSettingsFormValue;
+  stripePriceIdsValue: StripePriceIdsSettingsFormValue;
 }
 
 export function AdminPricingSection({
   pricingValue,
+  stripePriceIdsValue,
 }: AdminPricingSectionProps) {
   return (
-    <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+    <div className="grid grid-cols-1 gap-4 xl:grid-cols-4">
       <AdminManagedForm
         action={updateAdminSettingAction}
         className="admin-surface"
@@ -111,6 +116,71 @@ export function AdminPricingSection({
           <AdminFormSubmitButton
             label="Save Discount"
             pendingLabel="Saving discount..."
+          />
+        </div>
+      </AdminManagedForm>
+
+      <AdminManagedForm
+        action={updateAdminSettingAction}
+        className="admin-surface"
+      >
+        <input type="hidden" name="key" value="admin.stripePriceIds" />
+        <input type="hidden" name="category" value="plans" />
+        <h2 className="heading-6 mb-2">Stripe Price IDs</h2>
+        <p className="mb-4 admin-muted-text">
+          Set Stripe Price IDs used for checkout for each plan and billing
+          cycle.
+        </p>
+        <div className="grid grid-cols-1 gap-3">
+          <label className="text-sm">
+            <span className="mb-1 block font-medium">Pro Monthly Price ID</span>
+            <input
+              type="text"
+              name="proMonthlyPriceId"
+              defaultValue={stripePriceIdsValue.proMonthly}
+              className="form-text-input"
+              placeholder="price_..."
+            />
+          </label>
+          <label className="text-sm">
+            <span className="mb-1 block font-medium">Pro Yearly Price ID</span>
+            <input
+              type="text"
+              name="proYearlyPriceId"
+              defaultValue={stripePriceIdsValue.proYearly}
+              className="form-text-input"
+              placeholder="price_..."
+            />
+          </label>
+          <label className="text-sm">
+            <span className="mb-1 block font-medium">
+              Premium Monthly Price ID
+            </span>
+            <input
+              type="text"
+              name="premiumMonthlyPriceId"
+              defaultValue={stripePriceIdsValue.premiumMonthly}
+              className="form-text-input"
+              placeholder="price_..."
+            />
+          </label>
+          <label className="text-sm">
+            <span className="mb-1 block font-medium">
+              Premium Yearly Price ID
+            </span>
+            <input
+              type="text"
+              name="premiumYearlyPriceId"
+              defaultValue={stripePriceIdsValue.premiumYearly}
+              className="form-text-input"
+              placeholder="price_..."
+            />
+          </label>
+        </div>
+        <div className="mt-4 flex justify-end">
+          <AdminFormSubmitButton
+            label="Save Price IDs"
+            pendingLabel="Saving price IDs..."
           />
         </div>
       </AdminManagedForm>

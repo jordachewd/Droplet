@@ -212,7 +212,7 @@ Prompts are versioned and separated from request handlers. `buildPersonaAwareSys
 
 1. **Lite is permanent and free.** There is no 3-day trial. There is no expiry. New users receive Lite by default upon account creation.
 2. **Personas are plan-gated.** Lite: Strategist, Developer (2). Pro: all Lite + Teacher, Creator, Wellness (5). Premium: all 6 personas. Admin can override persona access per plan via admin settings.
-3. **Pro and Premium are paid-only.** Activated via Stripe Checkout one-time payment.
+3. **Pro and Premium are paid-only.** Activated via Stripe Checkout subscription mode (`mode: "subscription"`).
 4. **Premium advantages over Pro:** higher audio quality model (when available), `gpt-5.4` for complex reasoning, unlimited image/audio quotas. See Section 8 for full model policy. Note: `gpt-audio-1.5` is currently inaccessible (403) — Premium audio uses `gpt-audio-mini` until access is restored.
 5. When any limit is reached, the server **must end the conversation** with an exact stop reason and exact next-action instruction.
 6. After a forced stop, the user is told one of: start a new conversation (if resources remain), upgrade plan (if applicable), or contact support.
@@ -249,21 +249,18 @@ Prompts are versioned and separated from request handlers. `buildPersonaAwareSys
 ### Plan Lifecycle
 
 1. New users start on **Lite** (permanent, no expiry).
-2. Upgrade via Stripe Checkout (one-time payment per billing cycle).
-3. On successful `checkout.session.completed` webhook, the user's plan and expiration are updated.
-4. Expired paid plans revert to Lite behavior (checked in `/api/openai` route).
-5. Checkout now uses `mode: "subscription"` with Stripe Customer management (Phase 217-B DONE). Recurring subscription billing in progress (Phases 217-C–G). **Recurring subscription billing UNBLOCKED (Phases 217-A–G). Owner decisions:** grandfather existing one-time users until expiry then revert to Lite; Monthly + Yearly billing (30% yearly discount); custom cancel UI (not Stripe Customer Portal).
-
-#### Planned Subscription Changes (Phase 217)
-
-Once Phase 217 is implemented:
-
-- Billing switches from `mode: "payment"` to `mode: "subscription"` in Stripe Checkout
-- Yearly billing option added: Pro $159.60/year, Premium $327.60/year (30% discount)
-- Stripe Customer object created per user (`stripeCustomerId`)
-- Subscription lifecycle managed via webhook events: `invoice.paid`, `invoice.payment_failed`, `customer.subscription.updated`, `customer.subscription.deleted`
-- Custom cancellation UI with `cancel_at_period_end: true` (access retained until period end)
-- Existing one-time paid users grandfathered until `expiresOn`, then naturally revert to Lite
+2. Upgrade via Stripe Checkout in subscription mode using plan+billing-specific Stripe Price IDs.
+3. Yearly billing is supported with admin-configurable discount (`admin.yearlyDiscount`, default 30%).
+4. Stripe Customer lifecycle is persisted per user (`stripeCustomerId`) and reused for checkout.
+5. Webhooks drive subscription state transitions:
+   - `checkout.session.completed`: initial subscription transaction + active plan state.
+   - `invoice.paid`: renewal transaction + usage counter reset + expiry extension.
+   - `invoice.payment_failed`: `subscriptionStatus` set to `past_due`.
+   - `customer.subscription.updated`: plan/billing/period sync + `cancelAtPeriodEnd` sync.
+   - `customer.subscription.deleted`: revert to Lite, clear subscription id, keep trial usage.
+6. Custom cancellation flow is handled in-app via `cancelSubscriptionAction()` and `reactivateSubscriptionAction()` (no Stripe Customer Portal).
+7. Existing one-time paid users are grandfathered until `expiresOn`, then naturally resolve to Lite entitlements.
+8. Expired paid plans resolve to Lite entitlements through central entitlement resolution.
 
 ### Usage Limit Enforcement
 

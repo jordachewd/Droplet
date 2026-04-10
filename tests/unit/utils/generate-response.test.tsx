@@ -522,6 +522,7 @@ describe("generateResponse", () => {
 
     const serialized = await generateResponse(
       createResponseRequest({
+        personaId: "developer",
         claimMediaGenerationSlot,
       }),
     );
@@ -539,6 +540,12 @@ describe("generateResponse", () => {
         expect.objectContaining({ requestType: "chat" }),
         expect.objectContaining({ requestType: "image" }),
       ]),
+    );
+    expect(generateImageMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        personaId: "developer",
+        prompt: "sunset skyline",
+      }),
     );
   });
 
@@ -714,6 +721,74 @@ describe("generateResponse", () => {
       errorType: "unknown",
       requestMetrics: [],
     });
+  });
+
+  it("passes personaId to audio generation tool calls", async () => {
+    createChatCompletionMock.mockResolvedValue({
+      usage: {
+        prompt_tokens: 10,
+        completion_tokens: 4,
+        total_tokens: 14,
+      },
+      choices: [
+        {
+          message: {
+            role: "assistant",
+            tool_calls: [
+              {
+                type: "function",
+                function: {
+                  name: "getGeneratedAudio",
+                  arguments: JSON.stringify({
+                    content: "Read this in interviewer style",
+                  }),
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+    generateAudioMock.mockResolvedValue({
+      taskData: {
+        role: "assistant",
+        whois: "assistant",
+        content: [{ type: "text", text: "Read this in interviewer style" }],
+      },
+      taskUsage: 0,
+      generatedAudio: true,
+      model: "gpt-4o-mini-tts",
+      requestMetric: {
+        requestType: "audio",
+        model: "gpt-4o-mini-tts",
+        latencyMs: 12,
+      },
+    });
+
+    const serialized = await generateResponse(
+      createResponseRequest({
+        personaId: "interviewer",
+      }),
+    );
+
+    const payload = parsePayload<{
+      generatedAudio: boolean;
+      requestMetrics: Array<{ requestType: string }>;
+    }>(serialized);
+
+    expect(payload.generatedAudio).toBe(true);
+    expect(payload.requestMetrics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ requestType: "chat" }),
+        expect.objectContaining({ requestType: "audio" }),
+      ]),
+    );
+    expect(generateAudioMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        personaId: "interviewer",
+        ttsText: "Read this in interviewer style",
+      }),
+    );
   });
 });
 

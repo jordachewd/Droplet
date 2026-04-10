@@ -424,6 +424,36 @@ describe("admin.actions behavior", () => {
     expect(revalidatePath).toHaveBeenCalledWith("/app/plans");
   });
 
+  it("updateAdminSettingAction persists Stripe Price IDs and revalidates plans routes", async () => {
+    await updateAdminSettingAction(
+      buildFormData({
+        key: "admin.stripePriceIds",
+        category: "plans",
+        proMonthlyPriceId: " price_pro_monthly ",
+        proYearlyPriceId: "price_pro_yearly",
+        premiumMonthlyPriceId: "price_premium_monthly",
+        premiumYearlyPriceId: "",
+      }),
+    );
+
+    expect(appSettingFindOneAndUpdateMock).toHaveBeenCalledWith(
+      { key: "admin.stripePriceIds" },
+      expect.objectContaining({
+        $set: expect.objectContaining({
+          value: {
+            proMonthly: "price_pro_monthly",
+            proYearly: "price_pro_yearly",
+            premiumMonthly: "price_premium_monthly",
+            premiumYearly: "",
+          },
+        }),
+      }),
+      expect.any(Object),
+    );
+    expect(revalidatePath).toHaveBeenCalledWith("/plans");
+    expect(revalidatePath).toHaveBeenCalledWith("/app/plans");
+  });
+
   it("updateAdminSettingAction filters invalid persona access ids", async () => {
     await updateAdminSettingAction(
       buildFormData({

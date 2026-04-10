@@ -29,6 +29,7 @@ import {
   normalizePersonaContentSettings,
   normalizePromoContentSettings,
   normalizePricingSettingsValue,
+  normalizeStripePriceIdsSettingsValue,
   normalizeStopReasonMessagesSettings,
   normalizeSupportSettingsValue,
   normalizeThemeSettingsValue,
@@ -46,6 +47,7 @@ import {
   PersonaContentSettingsFormValue,
   PricingSettingsFormValue,
   PromoContentSettingsFormValue,
+  StripePriceIdsSettingsFormValue,
   StopReasonMessagesSettingsFormValue,
   SupportSettingsFormValue,
   ThemeSettingsFormValue,
@@ -58,6 +60,8 @@ export default async function AdminSettingsPage() {
   const snapshot = await getAdminSettingsSnapshot();
   const modelDefaults = snapshot.defaults.models as ModelSettingsFormValue;
   const pricingDefaults = snapshot.defaults.pricing as PricingSettingsFormValue;
+  const stripePriceIdsDefaults = snapshot.defaults
+    .stripePriceIds as StripePriceIdsSettingsFormValue;
   const limitsDefaults = snapshot.defaults.limits as LimitsSettingsFormValue;
   const trialLimitsDefaults = snapshot.defaults
     .trialLimits as TrialLimitsSettingsFormValue;
@@ -92,6 +96,10 @@ export default async function AdminSettingsPage() {
     snapshot.settingsByKey["admin.pricing"]?.value,
     pricingDefaults,
     snapshot.settingsByKey["admin.yearlyDiscount"]?.value,
+  );
+  const stripePriceIdsValue = normalizeStripePriceIdsSettingsValue(
+    snapshot.settingsByKey["admin.stripePriceIds"]?.value,
+    stripePriceIdsDefaults,
   );
   const limitsValue = normalizeLimitsSettingsValue(
     snapshot.settingsByKey["admin.limits"]?.value,
@@ -182,7 +190,12 @@ export default async function AdminSettingsPage() {
           {
             id: "plans-pricing",
             label: "Plans & Pricing",
-            content: <AdminPricingSection pricingValue={pricingValue} />,
+            content: (
+              <AdminPricingSection
+                pricingValue={pricingValue}
+                stripePriceIdsValue={stripePriceIdsValue}
+              />
+            ),
           },
           {
             id: "limits",

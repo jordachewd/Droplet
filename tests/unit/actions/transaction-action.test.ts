@@ -448,6 +448,72 @@ describe("transaction.action", () => {
   });
 
   describe("subscription cancellation actions", () => {
+    it("returns unauthorized when cancellation is requested without auth", async () => {
+      mockAuth(vi.mocked(auth), {
+        userId: null,
+        isAuthenticated: false,
+      });
+
+      const response = await cancelSubscriptionAction();
+
+      expect(response).toMatchObject({
+        status: 401,
+        severity: "error",
+      });
+      expect(connectToDatabase).not.toHaveBeenCalled();
+      expect(stripeUpdateSubscriptionMock).not.toHaveBeenCalled();
+    });
+
+    it("returns warning when admin tries to cancel subscription", async () => {
+      userFindOneMock.mockResolvedValue({
+        _id: {
+          toString: () => "507f1f77bcf86cd799439011",
+        },
+        clerkId: "user_123",
+        role: "admin",
+        stripeSubscriptionId: "sub_123",
+        subscriptionStatus: "active",
+        plan: {
+          name: "Lite",
+          cancelAtPeriodEnd: false,
+        },
+      });
+
+      const response = await cancelSubscriptionAction();
+
+      expect(response).toMatchObject({
+        status: 403,
+        severity: "warning",
+      });
+      expect(stripeUpdateSubscriptionMock).not.toHaveBeenCalled();
+    });
+
+    it("returns warning when user subscription is already canceled", async () => {
+      userFindOneMock.mockResolvedValue({
+        _id: {
+          toString: () => "507f1f77bcf86cd799439011",
+        },
+        clerkId: "user_123",
+        role: "client",
+        stripeSubscriptionId: "sub_123",
+        subscriptionStatus: "canceled",
+        plan: {
+          name: "Pro",
+          cancelAtPeriodEnd: true,
+          expiresOn: new Date("2026-04-01T00:00:00.000Z"),
+        },
+      });
+
+      const response = await cancelSubscriptionAction();
+
+      expect(response).toMatchObject({
+        status: 409,
+        severity: "warning",
+        subscriptionStatus: "canceled",
+      });
+      expect(stripeUpdateSubscriptionMock).not.toHaveBeenCalled();
+    });
+
     it("schedules cancellation at period end and updates user subscription state", async () => {
       const response = await cancelSubscriptionAction();
 
@@ -505,6 +571,24 @@ describe("transaction.action", () => {
       });
       expect(stripeUpdateSubscriptionMock).not.toHaveBeenCalled();
       expect(userFindOneAndUpdateMock).not.toHaveBeenCalled();
+    });
+
+    it("returns warning when cancellation is scheduled while subscription is past due", async () => {
+      stripeUpdateSubscriptionMock.mockResolvedValue({
+        id: "sub_123",
+        status: "past_due",
+        cancel_at_period_end: true,
+        current_period_end: 1_775_372_800,
+      });
+
+      const response = await cancelSubscriptionAction();
+
+      expect(response).toMatchObject({
+        status: 200,
+        severity: "warning",
+        subscriptionStatus: "past_due",
+        cancelAtPeriodEnd: true,
+      });
     });
 
     it("returns warning when user has no paid subscription id", async () => {
@@ -589,6 +673,38 @@ describe("transaction.action", () => {
       );
     });
 
+    it("returns warning when reactivation succeeds but subscription remains past due", async () => {
+      userFindOneMock.mockResolvedValue({
+        _id: {
+          toString: () => "507f1f77bcf86cd799439011",
+        },
+        clerkId: "user_123",
+        role: "client",
+        stripeSubscriptionId: "sub_123",
+        subscriptionStatus: "past_due",
+        plan: {
+          name: "Pro",
+          cancelAtPeriodEnd: true,
+          expiresOn: new Date("2026-04-01T00:00:00.000Z"),
+        },
+      });
+      stripeUpdateSubscriptionMock.mockResolvedValue({
+        id: "sub_123",
+        status: "past_due",
+        cancel_at_period_end: false,
+        current_period_end: 1_775_372_800,
+      });
+
+      const response = await reactivateSubscriptionAction();
+
+      expect(response).toMatchObject({
+        status: 200,
+        severity: "warning",
+        subscriptionStatus: "past_due",
+        cancelAtPeriodEnd: false,
+      });
+    });
+
     it("returns warning when reactivation is not needed", async () => {
       userFindOneMock.mockResolvedValue({
         _id: {
@@ -613,6 +729,20 @@ describe("transaction.action", () => {
         cancelAtPeriodEnd: false,
       });
       expect(stripeUpdateSubscriptionMock).not.toHaveBeenCalled();
+      expect(userFindOneAndUpdateMock).not.toHaveBeenCalled();
+    });
+
+    it("returns error on generic subscription provider failures", async () => {
+      stripeUpdateSubscriptionMock.mockRejectedValue(
+        new Error("provider down"),
+      );
+
+      const response = await cancelSubscriptionAction();
+
+      expect(response).toMatchObject({
+        status: 500,
+        severity: "error",
+      });
       expect(userFindOneAndUpdateMock).not.toHaveBeenCalled();
     });
   });

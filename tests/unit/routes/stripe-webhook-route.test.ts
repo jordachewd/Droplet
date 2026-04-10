@@ -278,6 +278,66 @@ describe("POST /api/webhooks/stripe", () => {
     expect(payload).toEqual({ message: "Already processed" });
   });
 
+  it("repairs user state for replayed checkout session when guard detects drift", async () => {
+    constructEventMock.mockReturnValue({
+      type: "checkout.session.completed",
+      data: {
+        object: {
+          id: "cs_test_repair",
+          amount_total: 1900,
+          subscription: "sub_test_repair",
+          metadata: {
+            userId: "mongo_user_1",
+            clerkId: "clerk_user_1",
+            planId: "1",
+            plan: "Pro",
+            billing: "Monthly",
+          },
+        },
+      },
+    });
+    vi.mocked(Transaction.findOneAndUpdate).mockResolvedValue({
+      _id: "txn_existing",
+    } as Awaited<ReturnType<typeof Transaction.findOneAndUpdate>>);
+    vi.mocked(User.findOneAndUpdate).mockResolvedValue({
+      _id: "user_updated",
+    } as Awaited<ReturnType<typeof User.findOneAndUpdate>>);
+
+    const response = await POST(buildRequest('{"valid":"payload"}', "sig_123"));
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload).toEqual({ message: "OK" });
+  });
+
+  it("returns 400 when checkout session payload has no subscription id", async () => {
+    constructEventMock.mockReturnValue({
+      type: "checkout.session.completed",
+      data: {
+        object: {
+          id: "cs_missing_subscription",
+          amount_total: 1900,
+          metadata: {
+            userId: "mongo_user_1",
+            clerkId: "clerk_user_1",
+            planId: "1",
+            plan: "Pro",
+            billing: "Monthly",
+          },
+        },
+      },
+    });
+
+    const response = await POST(buildRequest('{"valid":"payload"}', "sig_123"));
+    const payload = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(payload).toEqual({
+      message: "Webhook error",
+      error: "Webhook processing failed",
+    });
+  });
+
   it("processes invoice.paid renewal with idempotency on stripeInvoiceId", async () => {
     constructEventMock.mockReturnValue({
       type: "invoice.paid",
@@ -361,6 +421,113 @@ describe("POST /api/webhooks/stripe", () => {
     expect(payload).toEqual({ message: "Already processed" });
   });
 
+  it("uses invoice metadata fallback when price id is unavailable", async () => {
+    constructEventMock.mockReturnValue({
+      type: "invoice.paid",
+      data: {
+        object: {
+          id: "in_metadata_fallback",
+          amount_paid: 3900,
+          customer: "cus_test_1",
+          subscription: "sub_test_1",
+          subscription_details: {
+            metadata: {
+              userId: "mongo_user_1",
+              clerkId: "clerk_user_1",
+              plan: "Premium",
+              billing: "Monthly",
+            },
+          },
+          lines: {
+            data: [{ price: { id: "price_unknown", unit_amount: 3900 } }],
+          },
+        },
+      },
+    });
+
+    const response = await POST(buildRequest('{"valid":"payload"}', "sig_123"));
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload).toEqual({ message: "OK" });
+    expect(User.findOneAndUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        _id: "mongo_user_1",
+        clerkId: "clerk_user_1",
+      }),
+      expect.objectContaining({
+        $set: expect.objectContaining({
+          plan: expect.objectContaining({
+            name: "Premium",
+            billing: "Monthly",
+          }),
+        }),
+      }),
+      expect.objectContaining({ strict: true }),
+    );
+  });
+
+  it("preserves cancelAtPeriodEnd on invoice.paid renewals", async () => {
+    vi.mocked(User.findOne).mockResolvedValue({
+      ...buildDefaultUser(),
+      plan: {
+        ...buildDefaultUser().plan,
+        cancelAtPeriodEnd: true,
+      },
+    } as unknown as Awaited<ReturnType<typeof User.findOne>>);
+    constructEventMock.mockReturnValue({
+      type: "invoice.paid",
+      data: {
+        object: {
+          id: "in_keep_cancel_flag",
+          amount_paid: 1900,
+          customer: "cus_test_1",
+          subscription: "sub_test_1",
+          lines: {
+            data: [{ price: { id: "price_pro_monthly", unit_amount: 1900 } }],
+          },
+        },
+      },
+    });
+
+    const response = await POST(buildRequest('{"valid":"payload"}', "sig_123"));
+    await response.json();
+
+    expect(response.status).toBe(200);
+    expect(User.findOneAndUpdate).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.objectContaining({
+        $set: expect.objectContaining({
+          plan: expect.objectContaining({
+            cancelAtPeriodEnd: true,
+          }),
+        }),
+      }),
+      expect.any(Object),
+    );
+  });
+
+  it("returns 400 when invoice.paid payload is invalid", async () => {
+    constructEventMock.mockReturnValue({
+      type: "invoice.paid",
+      data: {
+        object: {
+          customer: "cus_test_1",
+          subscription: "sub_test_1",
+        },
+      },
+    });
+
+    const response = await POST(buildRequest('{"valid":"payload"}', "sig_123"));
+    const payload = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(payload).toEqual({
+      message: "Webhook error",
+      error: "Webhook processing failed",
+    });
+  });
+
   it("marks user past_due on invoice.payment_failed", async () => {
     constructEventMock.mockReturnValue({
       type: "invoice.payment_failed",
@@ -393,6 +560,28 @@ describe("POST /api/webhooks/stripe", () => {
         strict: true,
       }),
     );
+  });
+
+  it("returns OK when invoice.payment_failed update guard does not match", async () => {
+    constructEventMock.mockReturnValue({
+      type: "invoice.payment_failed",
+      data: {
+        object: {
+          id: "in_failed_noop",
+          customer: "cus_test_1",
+          subscription: "sub_test_1",
+        },
+      },
+    });
+    vi.mocked(User.findOneAndUpdate).mockResolvedValue(
+      null as unknown as Awaited<ReturnType<typeof User.findOneAndUpdate>>,
+    );
+
+    const response = await POST(buildRequest('{"valid":"payload"}', "sig_123"));
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload).toEqual({ message: "OK" });
   });
 
   it("updates plan and status on customer.subscription.updated", async () => {
@@ -438,6 +627,63 @@ describe("POST /api/webhooks/stripe", () => {
         strict: true,
       }),
     );
+  });
+
+  it("maps trialing subscription status to active on customer.subscription.updated", async () => {
+    constructEventMock.mockReturnValue({
+      type: "customer.subscription.updated",
+      data: {
+        object: {
+          id: "sub_trialing",
+          customer: "cus_test_1",
+          status: "trialing",
+          current_period_end: 1_778_889_600,
+          items: {
+            data: [{ price: { id: "price_pro_yearly", unit_amount: 15960 } }],
+          },
+        },
+      },
+    });
+
+    const response = await POST(buildRequest('{"valid":"payload"}', "sig_123"));
+    await response.json();
+
+    expect(response.status).toBe(200);
+    expect(User.findOneAndUpdate).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.objectContaining({
+        $set: expect.objectContaining({
+          subscriptionStatus: "active",
+        }),
+      }),
+      expect.any(Object),
+    );
+  });
+
+  it("returns Already processed when customer.subscription.updated guard does not match", async () => {
+    constructEventMock.mockReturnValue({
+      type: "customer.subscription.updated",
+      data: {
+        object: {
+          id: "sub_noop",
+          customer: "cus_test_1",
+          status: "active",
+          current_period_end: 1_778_889_600,
+          items: {
+            data: [{ price: { id: "price_pro_monthly", unit_amount: 1900 } }],
+          },
+        },
+      },
+    });
+    vi.mocked(User.findOneAndUpdate).mockResolvedValue(
+      null as unknown as Awaited<ReturnType<typeof User.findOneAndUpdate>>,
+    );
+
+    const response = await POST(buildRequest('{"valid":"payload"}', "sig_123"));
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload).toEqual({ message: "Already processed" });
   });
 
   it("reverts user to Lite on customer.subscription.deleted", async () => {
@@ -523,6 +769,57 @@ describe("POST /api/webhooks/stripe", () => {
     );
 
     expect(hasOverlappingPlanPaths).toBe(false);
+  });
+
+  it("preserves trial usage when reverting to Lite on customer.subscription.deleted", async () => {
+    constructEventMock.mockReturnValue({
+      type: "customer.subscription.deleted",
+      data: {
+        object: {
+          id: "sub_test_trial_usage",
+          customer: "cus_test_1",
+          status: "canceled",
+        },
+      },
+    });
+
+    const response = await POST(buildRequest('{"valid":"payload"}', "sig_123"));
+    await response.json();
+
+    expect(response.status).toBe(200);
+    expect(User.findOneAndUpdate).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.objectContaining({
+        $set: expect.objectContaining({
+          plan: expect.objectContaining({
+            trialUsage: buildDefaultUser().plan.trialUsage,
+          }),
+        }),
+      }),
+      expect.any(Object),
+    );
+  });
+
+  it("returns Already processed when customer.subscription.deleted guard does not match", async () => {
+    constructEventMock.mockReturnValue({
+      type: "customer.subscription.deleted",
+      data: {
+        object: {
+          id: "sub_deleted_noop",
+          customer: "cus_test_1",
+          status: "canceled",
+        },
+      },
+    });
+    vi.mocked(User.findOneAndUpdate).mockResolvedValue(
+      null as unknown as Awaited<ReturnType<typeof User.findOneAndUpdate>>,
+    );
+
+    const response = await POST(buildRequest('{"valid":"payload"}', "sig_123"));
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload).toEqual({ message: "Already processed" });
   });
 
   it("returns OK when invoice event cannot be matched to a user", async () => {

@@ -15,6 +15,13 @@ export interface PricingSettingsFormValue {
   currencySymbol: "$" | "€";
 }
 
+export interface StripePriceIdsSettingsFormValue {
+  proMonthly: string;
+  proYearly: string;
+  premiumMonthly: string;
+  premiumYearly: string;
+}
+
 export interface ThemeSettingsFormValue {
   defaultMode: "light" | "dark";
 }

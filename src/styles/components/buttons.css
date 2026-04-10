@@ -33,7 +33,7 @@
   }
 
   .btn-contained {
-    @apply border-dustyBlue-500 bg-dustyBlue-500 text-white hover:border-twilightPurple-500 hover:bg-twilightPurple-500;
+    @apply border-dustyBlue-700 bg-dustyBlue-700 text-white hover:border-twilightPurple-500 hover:bg-twilightPurple-500;
   }
 
   .btn-danger {

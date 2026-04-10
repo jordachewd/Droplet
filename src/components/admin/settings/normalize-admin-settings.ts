@@ -15,6 +15,7 @@ import {
   PersonaContentSettingsFormValue,
   PromoContentSettingsFormValue,
   PricingSettingsFormValue,
+  StripePriceIdsSettingsFormValue,
   StopReasonMessagesSettingsFormValue,
   SupportSettingsFormValue,
   ThemeSettingsFormValue,
@@ -165,6 +166,28 @@ export function normalizePricingSettingsValue(
       value.currencySymbol === "€" || value.currencySymbol === "$"
         ? value.currencySymbol
         : defaults.currencySymbol,
+  };
+}
+
+export function normalizeStripePriceIdsSettingsValue(
+  value: unknown,
+  defaults: StripePriceIdsSettingsFormValue,
+): StripePriceIdsSettingsFormValue {
+  if (!isObjectRecord(value)) {
+    return defaults;
+  }
+
+  return {
+    proMonthly: normalizeStringValue(value.proMonthly, defaults.proMonthly),
+    proYearly: normalizeStringValue(value.proYearly, defaults.proYearly),
+    premiumMonthly: normalizeStringValue(
+      value.premiumMonthly,
+      defaults.premiumMonthly,
+    ),
+    premiumYearly: normalizeStringValue(
+      value.premiumYearly,
+      defaults.premiumYearly,
+    ),
   };
 }
 

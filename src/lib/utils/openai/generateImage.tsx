@@ -1,5 +1,7 @@
 import "server-only";
 import { openAiClient } from "@/constants/openai";
+import { getPersona } from "@/constants/assistant-personas";
+import { PERSONA_IMAGE_STYLE_HINTS } from "@/constants/persona-prompts";
 import { PlanName } from "@/types/PlanData.d";
 import { ContentItem, Message, MessageRole } from "@/types";
 import { handleError } from "@/lib/utils/handleError";
@@ -15,6 +17,7 @@ import { AIRequestMetric } from "@/lib/utils/usage-event-utils";
 
 interface GenerateImageParams {
   prompt: string;
+  personaId?: string | null;
   role: MessageRole;
   taskId: string;
   userId: string;
@@ -27,6 +30,23 @@ export interface GeneratedImagePayload {
   generatedImage: true;
   model: string;
   requestMetric: AIRequestMetric;
+}
+
+function buildPersonaAwareImagePrompt({
+  prompt,
+  personaId,
+}: {
+  prompt: string;
+  personaId?: string | null;
+}): string {
+  const resolvedPersona = getPersona(personaId);
+  const styleHint = PERSONA_IMAGE_STYLE_HINTS[resolvedPersona.id];
+
+  if (!styleHint) {
+    return prompt;
+  }
+
+  return `${styleHint}\n\nUser request: ${prompt}`;
 }
 
 async function convertToPng(imageBuffer: Buffer): Promise<Buffer> {
@@ -60,6 +80,7 @@ async function getGeneratedImageBuffer(imageData: {
 
 export async function generateImage({
   prompt,
+  personaId,
   role,
   taskId,
   userId,
@@ -80,10 +101,14 @@ export async function generateImage({
       );
     }
 
+    const styledPrompt = buildPersonaAwareImagePrompt({
+      prompt,
+      personaId,
+    });
     const startTime = Date.now();
     const response = await openAiClient.images.generate({
       model: policy.model,
-      prompt,
+      prompt: styledPrompt,
     });
     const requestMetric: AIRequestMetric = {
       requestType: "image",

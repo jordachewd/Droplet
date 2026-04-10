@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { generateAudio } from "@/lib/utils/openai/generateAudio";
+import { PERSONA_AUDIO_STYLE_HINTS } from "@/constants/persona-prompts";
 import type { Message, MessageRole } from "@/types";
 import { createTestTask, createTestUser } from "../test-support";
 
@@ -82,6 +83,7 @@ function createAudioRequest(
     userId: string;
     planName: "Lite" | "Pro" | "Premium";
     audioMode: "tts" | "audio_in_out";
+    personaId: string | null;
   }> = {},
 ) {
   const task = createTestTask();
@@ -97,6 +99,7 @@ function createAudioRequest(
     userId: user.clerkId,
     planName: "Lite" as const,
     audioMode: "tts" as const,
+    personaId: null,
     ...overrides,
   };
 }
@@ -144,7 +147,7 @@ describe("generateAudio", () => {
     expect(speechCreateMock).toHaveBeenCalledWith({
       model: "gpt-4o-mini-tts",
       voice: "alloy",
-      input: request.ttsText,
+      input: expect.stringContaining(request.ttsText ?? ""),
       response_format: "wav",
     });
     expect(uploadFileToAWSMock).toHaveBeenCalledWith(
@@ -189,7 +192,27 @@ describe("generateAudio", () => {
     ]);
     expect(speechCreateMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        input: "Built speech input",
+        input: expect.stringContaining("Built speech input"),
+      }),
+    );
+  });
+
+  it("adds persona-specific TTS style hint to speech input", async () => {
+    const audioBuffer = Buffer.from("audio-style");
+    const request = createAudioRequest({
+      ttsText: "Keep this practical and direct.",
+      personaId: "strategist",
+    });
+
+    speechCreateMock.mockResolvedValue({
+      arrayBuffer: async () => audioBuffer,
+    });
+
+    await generateAudio(request);
+
+    expect(speechCreateMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        input: `${PERSONA_AUDIO_STYLE_HINTS.strategist}\n\nText to read aloud: ${request.ttsText}`,
       }),
     );
   });
@@ -395,5 +418,51 @@ describe("generateAudio", () => {
       type: "text",
       text: null,
     });
+  });
+
+  it("prepends persona style as a system message for audio_in_out mode", async () => {
+    const decodedAudio = Buffer.from("persona-audio-in-out");
+    const request = createAudioRequest({
+      messages: [{ role: "user", whois: "user", content: "Coach me quickly" }],
+      planName: "Pro",
+      audioMode: "audio_in_out",
+      personaId: "interviewer",
+    });
+
+    chatCompletionsCreateMock.mockResolvedValue({
+      usage: {
+        prompt_tokens: 18,
+        completion_tokens: 7,
+        total_tokens: 25,
+      },
+      choices: [
+        {
+          message: {
+            audio: {
+              data: decodedAudio.toString("base64"),
+              transcript: "Short coaching reply",
+            },
+          },
+        },
+      ],
+    });
+
+    await generateAudio(request);
+
+    expect(chatCompletionsCreateMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        messages: [
+          {
+            role: "system",
+            content: PERSONA_AUDIO_STYLE_HINTS.interviewer,
+          },
+          {
+            role: "user",
+            whois: "user",
+            content: "Coach me quickly",
+          },
+        ],
+      }),
+    );
   });
 });

@@ -102,6 +102,29 @@ describe("resolve-entitlements", () => {
     expect(entitlements.personaAccess?.teacher).toBe("limited");
   });
 
+  it("keeps paid plan entitlements while expiresOn is still in the future", () => {
+    const paidUser = createTestUser({ plan: { name: "Pro" } });
+    const entitlements = resolveEntitlements(paidUser.plan.name, {
+      expiresOn: new Date("2026-12-01T00:00:00.000Z"),
+      now: new Date("2026-03-24T12:00:00.000Z"),
+    });
+
+    expect(entitlements.planName).toBe("Pro");
+    expect(entitlements.limits).toEqual(PLAN_LIMITS.Pro);
+    expect(entitlements.personaAccess?.teacher).toBe("full");
+  });
+
+  it("does not downgrade paid plans when expiresOn value is invalid", () => {
+    const paidUser = createTestUser({ plan: { name: "Premium" } });
+    const entitlements = resolveEntitlements(paidUser.plan.name, {
+      expiresOn: "not-a-date",
+      now: new Date("2026-03-24T12:00:00.000Z"),
+    });
+
+    expect(entitlements.planName).toBe("Premium");
+    expect(entitlements.limits).toEqual(PLAN_LIMITS.Premium);
+  });
+
   it("supports custom plan limits and custom full persona mapping", () => {
     const customPlanLimits: PlanLimits = {
       Lite: {

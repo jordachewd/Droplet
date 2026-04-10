@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { getPersona } from "@/constants/assistant-personas";
 import {
+  PERSONA_AUDIO_STYLE_HINTS,
+  PERSONA_IMAGE_STYLE_HINTS,
   PERSONA_PROMPTS,
   PROMPT_VERSION,
   resolvePersonaPromptConfig,
@@ -11,6 +13,13 @@ describe("persona-prompts", () => {
   it("defines versioned prompt variants for all six personas", () => {
     expect(Object.keys(PERSONA_PROMPTS)).toHaveLength(6);
     expect(PROMPT_VERSION).toBe("1.0");
+  });
+
+  it("defines persona-aware media style hint maps for image and audio", () => {
+    expect(Object.keys(PERSONA_IMAGE_STYLE_HINTS)).toHaveLength(6);
+    expect(Object.keys(PERSONA_AUDIO_STYLE_HINTS)).toHaveLength(6);
+    expect(PERSONA_IMAGE_STYLE_HINTS.developer).toContain("technically");
+    expect(PERSONA_AUDIO_STYLE_HINTS.teacher).toContain("teaching style");
   });
 
   it("selects model-family prompt settings when the model is known", () => {
