@@ -91,6 +91,7 @@ const UserSchema = new Schema<IUser>(
         default: () => getExpiresOn("Lite"),
       },
       stripeId: { type: String },
+      cancelAtPeriodEnd: { type: Boolean, default: false },
       imageGenerations: { type: Number, default: 0 },
       audioGenerations: { type: Number, default: 0 },
       usagePeriodStart: { type: Date, default: Date.now },

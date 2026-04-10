@@ -2,8 +2,10 @@ import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import {
+  cancelSubscriptionAction,
   checkoutPlan,
   getAllTransactions,
+  reactivateSubscriptionAction,
 } from "@/lib/actions/transaction.action";
 import { getEffectivePlanConfig } from "@/lib/utils/effective-plan-config";
 import { getEffectiveStripeBillingConfig } from "@/lib/utils/effective-stripe-billing-config";
@@ -18,6 +20,7 @@ const {
   stripeCreateSessionMock,
   stripeCreateCustomerMock,
   stripeRetrieveCustomerMock,
+  stripeUpdateSubscriptionMock,
   userFindOneMock,
   userFindOneAndUpdateMock,
   transactionFindMock,
@@ -25,6 +28,7 @@ const {
   stripeCreateSessionMock: vi.fn(),
   stripeCreateCustomerMock: vi.fn(),
   stripeRetrieveCustomerMock: vi.fn(),
+  stripeUpdateSubscriptionMock: vi.fn(),
   userFindOneMock: vi.fn(),
   userFindOneAndUpdateMock: vi.fn(),
   transactionFindMock: vi.fn(),
@@ -42,6 +46,9 @@ vi.mock("stripe", () => {
         create: stripeCreateCustomerMock,
         retrieve: stripeRetrieveCustomerMock,
       },
+      subscriptions: {
+        update: stripeUpdateSubscriptionMock,
+      },
     };
   });
 
@@ -56,6 +63,12 @@ vi.mock("@clerk/nextjs/server", () => ({
 
 vi.mock("next/navigation", () => ({
   redirect: vi.fn(),
+}));
+
+const revalidatePathMock = vi.hoisted(() => vi.fn());
+
+vi.mock("next/cache", () => ({
+  revalidatePath: revalidatePathMock,
 }));
 
 vi.mock("@/lib/database/mongoose", () => ({
@@ -121,11 +134,19 @@ describe("transaction.action", () => {
         toString: () => user._id,
       },
       clerkId: user.clerkId,
+      role: "client",
       firstName: user.firstName,
       lastName: user.lastName,
       username: user.username,
       email: user.email,
       stripeCustomerId: undefined,
+      stripeSubscriptionId: "sub_123",
+      subscriptionStatus: "active",
+      plan: {
+        name: "Pro",
+        expiresOn: new Date("2026-04-01T00:00:00.000Z"),
+        cancelAtPeriodEnd: false,
+      },
     });
     userFindOneAndUpdateMock.mockResolvedValue({
       _id: user._id,
@@ -181,6 +202,12 @@ describe("transaction.action", () => {
     });
     stripeCreateCustomerMock.mockResolvedValue({
       id: "cus_123",
+    });
+    stripeUpdateSubscriptionMock.mockResolvedValue({
+      id: "sub_123",
+      status: "active",
+      cancel_at_period_end: true,
+      current_period_end: 1_775_372_800,
     });
   });
 
@@ -417,6 +444,176 @@ describe("transaction.action", () => {
       expect(stripeCreateSessionMock).not.toHaveBeenCalled();
       expect(stripeCreateCustomerMock).not.toHaveBeenCalled();
       expect(redirect).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("subscription cancellation actions", () => {
+    it("schedules cancellation at period end and updates user subscription state", async () => {
+      const response = await cancelSubscriptionAction();
+
+      expect(response).toMatchObject({
+        status: 200,
+        severity: "success",
+        subscriptionStatus: "active",
+        cancelAtPeriodEnd: true,
+      });
+      expect(stripeUpdateSubscriptionMock).toHaveBeenCalledWith("sub_123", {
+        cancel_at_period_end: true,
+      });
+      expect(userFindOneAndUpdateMock).toHaveBeenCalledWith(
+        { _id: "507f1f77bcf86cd799439011", clerkId: "user_123" },
+        {
+          $set: expect.objectContaining({
+            stripeSubscriptionId: "sub_123",
+            subscriptionStatus: "active",
+            "plan.cancelAtPeriodEnd": true,
+            updatedAt: expect.any(Date),
+          }),
+        },
+        {
+          returnDocument: "after",
+          strict: true,
+          upsert: false,
+        },
+      );
+      expect(revalidatePathMock).toHaveBeenCalledWith("/app/profile");
+      expect(revalidatePathMock).toHaveBeenCalledWith("/app/plans");
+    });
+
+    it("returns warning when cancellation is already scheduled", async () => {
+      userFindOneMock.mockResolvedValue({
+        _id: {
+          toString: () => "507f1f77bcf86cd799439011",
+        },
+        clerkId: "user_123",
+        role: "client",
+        stripeSubscriptionId: "sub_123",
+        subscriptionStatus: "active",
+        plan: {
+          name: "Pro",
+          cancelAtPeriodEnd: true,
+          expiresOn: new Date("2026-04-01T00:00:00.000Z"),
+        },
+      });
+
+      const response = await cancelSubscriptionAction();
+
+      expect(response).toMatchObject({
+        status: 200,
+        severity: "warning",
+        cancelAtPeriodEnd: true,
+      });
+      expect(stripeUpdateSubscriptionMock).not.toHaveBeenCalled();
+      expect(userFindOneAndUpdateMock).not.toHaveBeenCalled();
+    });
+
+    it("returns warning when user has no paid subscription id", async () => {
+      userFindOneMock.mockResolvedValue({
+        _id: {
+          toString: () => "507f1f77bcf86cd799439011",
+        },
+        clerkId: "user_123",
+        role: "client",
+        stripeSubscriptionId: null,
+        subscriptionStatus: "active",
+        plan: {
+          name: "Pro",
+          cancelAtPeriodEnd: false,
+          expiresOn: new Date("2026-04-01T00:00:00.000Z"),
+        },
+      });
+
+      const response = await cancelSubscriptionAction();
+
+      expect(response).toMatchObject({
+        status: 404,
+        severity: "warning",
+      });
+      expect(stripeUpdateSubscriptionMock).not.toHaveBeenCalled();
+    });
+
+    it("returns provider-not-found error when Stripe subscription is missing", async () => {
+      stripeUpdateSubscriptionMock.mockRejectedValue({
+        code: "resource_missing",
+      });
+
+      const response = await cancelSubscriptionAction();
+
+      expect(response).toMatchObject({
+        status: 404,
+        severity: "error",
+      });
+      expect(userFindOneAndUpdateMock).not.toHaveBeenCalled();
+    });
+
+    it("reactivates a pending cancellation", async () => {
+      userFindOneMock.mockResolvedValue({
+        _id: {
+          toString: () => "507f1f77bcf86cd799439011",
+        },
+        clerkId: "user_123",
+        role: "client",
+        stripeSubscriptionId: "sub_123",
+        subscriptionStatus: "active",
+        plan: {
+          name: "Pro",
+          cancelAtPeriodEnd: true,
+          expiresOn: new Date("2026-04-01T00:00:00.000Z"),
+        },
+      });
+      stripeUpdateSubscriptionMock.mockResolvedValue({
+        id: "sub_123",
+        status: "active",
+        cancel_at_period_end: false,
+        current_period_end: 1_775_372_800,
+      });
+
+      const response = await reactivateSubscriptionAction();
+
+      expect(response).toMatchObject({
+        status: 200,
+        severity: "success",
+        cancelAtPeriodEnd: false,
+      });
+      expect(stripeUpdateSubscriptionMock).toHaveBeenCalledWith("sub_123", {
+        cancel_at_period_end: false,
+      });
+      expect(userFindOneAndUpdateMock).toHaveBeenCalledWith(
+        { _id: "507f1f77bcf86cd799439011", clerkId: "user_123" },
+        {
+          $set: expect.objectContaining({
+            "plan.cancelAtPeriodEnd": false,
+          }),
+        },
+        expect.any(Object),
+      );
+    });
+
+    it("returns warning when reactivation is not needed", async () => {
+      userFindOneMock.mockResolvedValue({
+        _id: {
+          toString: () => "507f1f77bcf86cd799439011",
+        },
+        clerkId: "user_123",
+        role: "client",
+        stripeSubscriptionId: "sub_123",
+        subscriptionStatus: "active",
+        plan: {
+          name: "Pro",
+          cancelAtPeriodEnd: false,
+          expiresOn: new Date("2026-04-01T00:00:00.000Z"),
+        },
+      });
+
+      const response = await reactivateSubscriptionAction();
+
+      expect(response).toMatchObject({
+        status: 200,
+        severity: "warning",
+        cancelAtPeriodEnd: false,
+      });
+      expect(stripeUpdateSubscriptionMock).not.toHaveBeenCalled();
+      expect(userFindOneAndUpdateMock).not.toHaveBeenCalled();
     });
   });
 

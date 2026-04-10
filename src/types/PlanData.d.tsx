@@ -29,6 +29,7 @@ export interface PlanData {
   stripeCustomerId?: string;
   stripeSubscriptionId?: string;
   subscriptionStatus?: SubscriptionStatus | null;
+  cancelAtPeriodEnd?: boolean;
   imageGenerations?: number;
   audioGenerations?: number;
   usagePeriodStart?: Date;

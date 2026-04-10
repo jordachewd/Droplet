@@ -387,7 +387,6 @@ describe("POST /api/webhooks/stripe", () => {
       expect.objectContaining({
         $set: expect.objectContaining({
           subscriptionStatus: "past_due",
-          "plan.subscriptionStatus": "past_due",
         }),
       }),
       expect.objectContaining({
@@ -474,14 +473,56 @@ describe("POST /api/webhooks/stripe", () => {
         }),
         $unset: expect.objectContaining({
           stripeSubscriptionId: "",
-          "plan.stripeSubscriptionId": "",
-          "plan.stripeId": "",
         }),
       }),
       expect.objectContaining({
         strict: true,
       }),
     );
+  });
+
+  it("does not send overlapping plan paths in $set and $unset for customer.subscription.deleted", async () => {
+    constructEventMock.mockReturnValue({
+      type: "customer.subscription.deleted",
+      data: {
+        object: {
+          id: "sub_test_1",
+          customer: "cus_test_1",
+          status: "canceled",
+        },
+      },
+    });
+
+    const response = await POST(buildRequest('{"valid":"payload"}', "sig_123"));
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload).toEqual({ message: "OK" });
+    expect(User.findOneAndUpdate).toHaveBeenCalledTimes(1);
+
+    const updateDocument = vi.mocked(User.findOneAndUpdate).mock
+      .calls[0]?.[1] as
+      | {
+          $set?: Record<string, unknown>;
+          $unset?: Record<string, string>;
+        }
+      | undefined;
+    const setPaths = Object.keys(updateDocument?.$set ?? {}).filter(
+      (path) => path === "plan" || path.startsWith("plan."),
+    );
+    const unsetPaths = Object.keys(updateDocument?.$unset ?? {}).filter(
+      (path) => path === "plan" || path.startsWith("plan."),
+    );
+    const hasOverlappingPlanPaths = setPaths.some((setPath) =>
+      unsetPaths.some(
+        (unsetPath) =>
+          setPath === unsetPath ||
+          setPath.startsWith(`${unsetPath}.`) ||
+          unsetPath.startsWith(`${setPath}.`),
+      ),
+    );
+
+    expect(hasOverlappingPlanPaths).toBe(false);
   });
 
   it("returns OK when invoice event cannot be matched to a user", async () => {

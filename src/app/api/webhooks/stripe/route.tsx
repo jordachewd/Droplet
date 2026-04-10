@@ -189,6 +189,7 @@ const subscriptionPayloadSchema = z
   .object({
     id: nonEmptyStringSchema,
     status: nonEmptyStringSchema,
+    cancel_at_period_end: z.boolean().optional(),
     customer: expandableIdSchema.optional(),
     current_period_end: z.number().optional(),
     metadata: invoiceSubscriptionMetadataSchema.optional(),
@@ -245,6 +246,7 @@ interface WebhookUserPlanRecord {
   stripeId?: string | null;
   stripeSubscriptionId?: string | null;
   subscriptionStatus?: SubscriptionStatus | null;
+  cancelAtPeriodEnd?: boolean;
   imageGenerations?: number;
   audioGenerations?: number;
   usagePeriodStart?: Date;
@@ -617,6 +619,7 @@ async function handleCheckoutSessionCompleted(
     stripeId: checkoutSessionId,
     stripeSubscriptionId: subscriptionId,
     subscriptionStatus: "active",
+    cancelAtPeriodEnd: false,
     imageGenerations: 0,
     audioGenerations: 0,
     usagePeriodStart: now,
@@ -650,6 +653,7 @@ async function handleCheckoutSessionCompleted(
       { "plan.stripeId": { $ne: checkoutSessionId } },
       { stripeSubscriptionId: { $ne: subscriptionId } },
       { subscriptionStatus: { $ne: "active" } },
+      { "plan.cancelAtPeriodEnd": { $ne: false } },
       { "plan.name": { $ne: metadataPlanName } },
       { "plan.billing": { $ne: metadataBilling } },
       { "plan.amount": { $ne: amount } },
@@ -823,6 +827,7 @@ async function handleInvoicePaid(
     stripeId: invoiceId,
     stripeSubscriptionId: resolvedSubscriptionId ?? undefined,
     subscriptionStatus: "active",
+    cancelAtPeriodEnd: user.plan?.cancelAtPeriodEnd ?? false,
     imageGenerations: 0,
     audioGenerations: 0,
     usagePeriodStart: now,
@@ -837,6 +842,11 @@ async function handleInvoicePaid(
     { "plan.name": { $ne: normalizedPlanName } },
     { "plan.billing": { $ne: normalizedBilling } },
     { "plan.amount": { $ne: amount } },
+    {
+      "plan.cancelAtPeriodEnd": {
+        $ne: user.plan?.cancelAtPeriodEnd ?? false,
+      },
+    },
     { subscriptionStatus: { $ne: "active" } },
   ];
 
@@ -911,12 +921,10 @@ async function handleInvoicePaymentFailed(
   const updateFields: Record<string, unknown> = {
     updatedAt: new Date(),
     subscriptionStatus: "past_due",
-    "plan.subscriptionStatus": "past_due",
   };
 
   if (subscriptionId) {
     updateFields.stripeSubscriptionId = subscriptionId;
-    updateFields["plan.stripeSubscriptionId"] = subscriptionId;
   }
 
   const updateResult = await updateUserWithGuard({
@@ -992,6 +1000,7 @@ async function handleCustomerSubscriptionUpdated(
       ? centsToAmount(firstItemPrice.unit_amount)
       : (user.plan?.amount ?? 0);
   const subscriptionStatus = normalizeSubscriptionStatus(payload.status);
+  const cancelAtPeriodEnd = payload.cancel_at_period_end ?? false;
   const now = new Date();
   const existingPlanName = user.plan?.name ?? "Lite";
   const existingBilling = user.plan?.billing ?? "Monthly";
@@ -1017,6 +1026,7 @@ async function handleCustomerSubscriptionUpdated(
     stripeId: user.plan?.stripeId ?? undefined,
     stripeSubscriptionId: subscriptionId,
     subscriptionStatus,
+    cancelAtPeriodEnd,
     imageGenerations: user.plan?.imageGenerations ?? 0,
     audioGenerations: user.plan?.audioGenerations ?? 0,
     usagePeriodStart: user.plan?.usagePeriodStart ?? now,
@@ -1030,6 +1040,7 @@ async function handleCustomerSubscriptionUpdated(
     { "plan.billing": { $ne: targetBilling } },
     { "plan.amount": { $ne: amount } },
     { "plan.expiresOn": { $ne: expiresOn } },
+    { "plan.cancelAtPeriodEnd": { $ne: cancelAtPeriodEnd } },
   ];
 
   const updateResult = await updateUserWithGuard({
@@ -1106,6 +1117,7 @@ async function handleCustomerSubscriptionDeleted(
     startedOn: now,
     expiresOn: getExpiresOn("Lite", "Monthly"),
     subscriptionStatus: "canceled",
+    cancelAtPeriodEnd: false,
     imageGenerations: 0,
     audioGenerations: 0,
     usagePeriodStart: now,
@@ -1131,8 +1143,6 @@ async function handleCustomerSubscriptionDeleted(
       },
       $unset: {
         stripeSubscriptionId: "",
-        "plan.stripeSubscriptionId": "",
-        "plan.stripeId": "",
       },
     },
     context: `customer.subscription.deleted ${subscriptionId}`,
