@@ -55,7 +55,11 @@ export default function ToggleTheme() {
           }`}
         >
           {darkActive ? (
-            <svg viewBox="0 0 24 24" className="toggle-svg-active" fill="currentColor">
+            <svg
+              viewBox="0 0 24 24"
+              className="toggle-svg-active"
+              fill="currentColor"
+            >
               <path d="M15.1 14.9a6.2 6.2 0 0 1-6-6A6.79 6.79 0 0 1 9.9 4a.98.98 0 0 0-1.2-1.4A10.42 10.42 0 0 0 2 12.5c.2 5.1 4.4 9.3 9.5 9.5 4.5.2 8.5-2.6 9.9-6.6.3-.8-.6-1.7-1.4-1.2a6.78 6.78 0 0 1-4.9.7Z" />
             </svg>
           ) : (

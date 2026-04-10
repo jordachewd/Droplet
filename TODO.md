@@ -5,13 +5,13 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #114 (2026-04-10). V1.0 MVP RELEASED. Phase 218-B COMPLETE. Phase 217-E COMPLETE. 0 HIGH bugs. All 7 gates GREEN.**
+> **STATUS: PM audit #114 rescan (2026-04-10). V1.0 MVP RELEASED. Phase 218-C COMPLETE (UI design refresh + toggle CSS + sidebar simplification). 0 HIGH bugs. All 7 gates GREEN.**
 >
 > **GATE STATUS: All 7 gates GREEN. 0 vulnerabilities. 0 critical issues.**
 >
 > **TEST STATUS: 666 tests (106 suites), 49 E2E (6 skipped). 0 failures. All gates GREEN.**
 >
-> **EXECUTION ORDER: 217-F → 217-G → 26.x.**
+> **EXECUTION ORDER: 218-C-fix → 217-F → 217-G → 26.x.**
 
 ---
 
@@ -50,6 +50,19 @@
 ## COMPLETED — Phase 217-E: Yearly Billing UI + Pricing Display (Archived to DONE.md)
 
 > ✅ Phase 217-E COMPLETE (PM audit #114). Billing toggle, yearly pricing with savings badge, admin-configurable yearly discount, server-side price verification. 666 tests. See [DONE.md](DONE.md).
+
+## COMPLETED — Phase 218-C: UI Design Refresh + Toggle CSS Extraction + Sidebar Simplification (Archived to DONE.md)
+
+> ✅ Phase 218-C COMPLETE (PM audit #114 rescan). Button design refresh (pill-shaped, dustyBlue palette), dedicated toggle.css module (6 classes), SidebarLoading deleted, sidebar simplified, admin link refreshed. See [DONE.md](DONE.md).
+
+---
+
+### Phase 218-C-fix — Dead CSS Cleanup
+
+> **Risk:** NONE. **Effort:** ~1min. **Dependencies:** Phase 218-C.
+
+- [ ] **218-C-fix.1** — Remove dead `.toggle-theme-button` class from `src/styles/components/layout.css` (superseded by `.toggle-switch` in `toggle.css`)
+- [ ] **218-C-fix.2** — Validation: all 7 gates GREEN.
 
 ---
 
@@ -106,7 +119,7 @@
 ---
 
 > **Completed phases** archived in [`DONE.md`](DONE.md).
-> Includes: Phases 143–148, 165, 165.1, 180.1–180.4, 185–222 (all sub-phases), 217-A/B/C/C-fix/D/E, 218-B, 29.1–29.5, 29.7.
+> Includes: Phases 143–148, 165, 165.1, 180.1–180.4, 185–222 (all sub-phases), 217-A/B/C/C-fix/D/E, 218-B, 218-C, 29.1–29.5, 29.7.
 > Phase 29.7 (Zustand audit) — COMPLETE. No changes needed. 4 stores, all properly implemented.
 > TypeScript 6 / ESLint compatibility — **CLOSED** (audit #103). No issues.
 > jsdom upgrade — **PIN MAINTAINED** (audit #103). ~24.1.3 stable. ESM TLA incompatibility persists.

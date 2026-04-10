@@ -2,7 +2,18 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-04-10 — PM audit #114.
+> Last updated: 2026-04-10 — PM audit #114 (rescan).
+
+---
+
+## Phase 218-C — UI Design Refresh + Toggle CSS Extraction + Sidebar Simplification — COMPLETED (2026-04-10)
+
+> Owner-driven UI refinements (PM audit #114 rescan). Button design refresh (pill-shaped `rounded-full`, dustyBlue primary palette), dedicated `toggle.css` CSS module with 6 classes replacing `.toggle-theme-button`, sidebar simplification (SidebarLoading deleted, Suspense wrappers removed, "Workspace" label removed, padding normalized), admin "Open App" link simplified. 666 tests. All 7 gates GREEN.
+
+- [x] **218-C.1** — Button design refresh in `buttons.css`: `.btn` `rounded-md`→`rounded-full` (pill-shaped), `.btn-text` color update (twilightPurple/lavenderHaze), `.btn-outlined` border-2 dustyBlue-500, `.btn-contained` bg dustyBlue-500 replacing limeGreen-500.
+- [x] **218-C.2** — Created `src/styles/components/toggle.css` with 6 CSS classes: `.toggle-switch`, `.toggle-on`, `.toggle-off`, `.toggle-svg`, `.toggle-svg-active`, `.toggle-active`. Added to `index.css`. `toggle-theme.tsx` refactored from `.toggle-theme-button` to new classes with simplified structure.
+- [x] **218-C.3** — Sidebar simplification: `SidebarLoading` component deleted from `src/components/shared/sidebar-loading.tsx`. `Suspense` wrappers removed from chat layout and admin layout shell. Admin sidebar head background color removed. "Workspace" heading removed from chat sidebar nav. Padding normalized to `p-4`.
+- [x] **218-C.4** — Admin "Open App" link: `btn-outlined` → `btn-text`, label "Open App" → "App".
 
 ---
 
