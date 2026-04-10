@@ -22,8 +22,7 @@ export default function AdminSidebar({ links }: AdminSidebarProps) {
 
   return (
     <SidebarShell
-      id="admin-sidebar"
-      expandedWidth="lg:w-72"
+      id="admin-sidebar"    
       className="AdminSidebar"
       header={({ isSidebarOpen }) => (
         <div
