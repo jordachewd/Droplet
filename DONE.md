@@ -2,7 +2,31 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-04-10 — PM audit #113.
+> Last updated: 2026-04-10 — PM audit #114.
+
+---
+
+## Phase 217-E — Yearly Billing UI + Pricing Display — COMPLETED (2026-04-10)
+
+> Engineer delivered (PM audit #114). Monthly/Yearly billing toggle on both `/plans` and `/app/plans`. Yearly pricing with savings badge (`"Save {discount}% yearly"`). Admin-configurable yearly discount via `admin.yearlyDiscount` AppSetting. Server-side price verification via `resolveExpectedCheckoutAmount()` prevents client-side price manipulation. Checkout payload passes `billing` parameter. 666 tests (106 suites). All 7 gates GREEN. Playwright MCP verified.
+
+- [x] **217-E.1** — Added Monthly/Yearly billing toggle in `plans-section.tsx` with `useState<BillingCycle>("Monthly")`, `aria-pressed` on toggle buttons, conditional render gated by `hasPaidPlans`.
+- [x] **217-E.2** — Yearly price display with savings badge: `resolveDisplayPrice()` in `plan-card.tsx` computes `monthlyPrice * 12 * ((100 - yearlyDiscount) / 100)`. `/Yr` vs `/Mo` suffix. Savings badge with dynamic discount.
+- [x] **217-E.3** — Checkout passes `billing: billingCycle` to `<Checkout>`. `checkoutPlan()` resolves Stripe Price ID via `resolveStripePriceId(planName, billing)` server-side.
+- [x] **217-E.4** — Admin yearly discount: `admin.yearlyDiscount` branch in `updateAdminSettingAction` with 0–100 range validation. Admin pricing section form. Normalization + type support. `DEFAULT_YEARLY_DISCOUNT = 30`. Both `/plans` and `/app/plans` pages fetch via `getEffectiveStripeBillingConfig()`.
+- [x] **217-E.5** — Validation: prettier ✓, lint ✓, tsc ✓, tests (666/666) ✓, E2E (49 passed, 6 skipped) ✓, build ✓, knip ✓, Playwright MCP ✓
+
+---
+
+## Phase 218-B — CSS Component Class Extraction — COMPLETED (2026-04-10)
+
+> Engineer delivered (PM audit #114). 4 CSS classes extracted from inline Tailwind duplicates. 32+ replacements across admin, shared, and error boundary components. Zero visual regression. All 7 gates GREEN.
+
+- [x] **218-B.1** — Created `.admin-muted-text` in `src/styles/components/admin/admin.css`: `@apply text-sm text-midnightBlue-600 dark:text-lavenderHaze-600`. 25 inline occurrences replaced across 16 files.
+- [x] **218-B.2** — Created `.btn-danger` in `src/styles/components/buttons.css`: danger button pattern with `bg-red-700`. 4 inline occurrences replaced across 3 files.
+- [x] **218-B.3** — Created `.error-card` in `src/styles/components/layout.css`: error boundary card panel pattern. 3 inline occurrences replaced across 3 error boundary files.
+- [x] **218-B.4** — Created `.toggle-theme-button` in `src/styles/components/layout.css`: extracted ~350-char className from `toggle-theme.tsx`.
+- [x] **218-B.5** — Validation: prettier ✓, lint ✓, tsc ✓, tests (666/666) ✓, E2E (49 passed, 6 skipped) ✓, build ✓, knip ✓
 
 ---
 

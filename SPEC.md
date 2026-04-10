@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> ...04-10 (PM audit #113). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. **V1.0 MVP RELEASED.** Brand rename complete (Phase 172). Catch blocks documented (Phase 167.2). Promo text admin-configurable (Phase 162, 180.2–180.3). Global error boundary live (Phase 163). Admin error boundary live (Phase 187-A). Phases 143–222 COMPLETE (all sub-phases). Phase 165.1 COMPLETE. Phases 146–148 COMPLETE. Phases 29.1–29.5 COMPLETE. **Sidebar restructure COMPLETE (Phases 209–216).** **Phases 218–222 COMPLETE (CSS modular architecture + orphan cleanup + useIsDesktop hook + shared layout/form CSS + SidebarShell + AppHeader + AppLayoutShell).** **Phase 217-A COMPLETE (Stripe schema + product setup).** **Phase 217-B COMPLETE (checkout mode switch + customer management).** **Phase 217-C COMPLETE (webhook expansion — 5 subscription event handlers).** **Phase 217-C-fix COMPLETE (path conflict + phantom writes fixed).** **Phase 217-D COMPLETE (custom cancellation flow — cancel/reactivate server actions, 5-state profile UI, webhook sync).** E2E: 49 tests (8 spec files). Coverage: 85/80/85/85. 663 tests (106 suites). Build passing. Node.js 24.12.0. jsdom pinned to ~24.1.3 (ESM compat). TypeScript 6.0.2 + ESLint 10 fully compatible (audit #103). **Zod v4.1.12** — schema consistency across all server actions and API routes. Prettier pinned to ~3.8.1 (dependency version stabilization). **Stripe recurring billing in progress (Phases 217-A/B/C/C-fix/D DONE, Phases 217-E–G remaining) — complete subscription lifecycle: create/renew/cancel/reactivate with webhook sync.** 0 npm vulnerabilities. All 7 gates GREEN.
+> ...04-10 (PM audit #114). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. **V1.0 MVP RELEASED.** Brand rename complete (Phase 172). Catch blocks documented (Phase 167.2). Promo text admin-configurable (Phase 162, 180.2–180.3). Global error boundary live (Phase 163). Admin error boundary live (Phase 187-A). Phases 143–222 COMPLETE (all sub-phases). Phase 165.1 COMPLETE. Phases 146–148 COMPLETE. Phases 29.1–29.5 COMPLETE. **Sidebar restructure COMPLETE (Phases 209–216).** **Phases 218–222 COMPLETE (CSS modular architecture + orphan cleanup + useIsDesktop hook + shared layout/form CSS + SidebarShell + AppHeader + AppLayoutShell).** **Phase 218-B COMPLETE (CSS class extraction — 4 classes, 32+ replacements).** **Phase 217-A COMPLETE (Stripe schema + product setup).** **Phase 217-B COMPLETE (checkout mode switch + customer management).** **Phase 217-C COMPLETE (webhook expansion — 5 subscription event handlers).** **Phase 217-C-fix COMPLETE (path conflict + phantom writes fixed).** **Phase 217-D COMPLETE (custom cancellation flow — cancel/reactivate server actions, 5-state profile UI, webhook sync).** **Phase 217-E COMPLETE (yearly billing UI — billing toggle, yearly pricing, admin-configurable discount, server-side price verification).** E2E: 49 tests (8 spec files). Coverage: 85/80/85/85. 666 tests (106 suites). Build passing. Node.js 24.12.0. jsdom pinned to ~24.1.3 (ESM compat). TypeScript 6.0.2 + ESLint 10 fully compatible (audit #103). **Zod v4.1.12** — schema consistency across all server actions and API routes. Prettier pinned to ~3.8.1 (dependency version stabilization). **Stripe recurring billing in progress (Phases 217-A/B/C/C-fix/D/E DONE, Phases 217-F–G remaining) — complete subscription lifecycle: create/renew/cancel/reactivate with webhook sync + yearly billing UI.** 0 npm vulnerabilities. All 7 gates GREEN.
 >
 > **V1.0 MVP Released (PM audit #94):**
 >
@@ -31,7 +31,7 @@
 > - **TD-MEDIA-01** — 🟡 ACCEPTED LIMITATION. Media gen (image/audio) may approach Vercel Hobby 60s timeout. Phase 181 proactive timeout handles gracefully.
 > - **TD-AI-09** — Image/audio prompts not persona-aware (deferred to v1.1).
 > - **TD-AI-13** — 3 model pricing placeholders (awaiting OpenAI confirmation).
-> - **TD-PLAN-01** — Recurring subscriptions in progress (Phases 217-A/B/C/C-fix/D COMPLETE, Phases 217-E–G remaining).
+> - **TD-PLAN-01** — Recurring subscriptions in progress (Phases 217-A/B/C/C-fix/D/E COMPLETE, Phases 217-F–G remaining).
 > - **TD-AI-18** — Advisory: errorMessage forwarding pattern is safe but fragile.
 > - **TD-API-09** — Monitor: `.strict()` in messageTextContentSchema.
 
@@ -292,7 +292,7 @@ Once Phase 217 is implemented:
 
 ### Plan Technical Debt
 
-- **TD-PLAN-01**: Recurring subscriptions in progress (Phase 217-A/B/C/C-fix/D DONE, Phase 217-E–G remaining).
+- **TD-PLAN-01**: Recurring subscriptions in progress (Phase 217-A/B/C/C-fix/D/E DONE, Phase 217-F–G remaining).
 
 ---
 
@@ -948,13 +948,13 @@ _(None currently.)_
 
 ### Active — Low Priority
 
-| ID         | Area    | Description                                                                      | Phase    |
-| ---------- | ------- | -------------------------------------------------------------------------------- | -------- |
-| TD-AI-09   | OpenAI  | Image/audio generation prompts not persona-aware (chat prompts done Phase 22).   | 26.x     |
-| TD-AI-13   | OpenAI  | 3 model pricing entries are placeholders pending OpenAI confirmation.            | Deferred |
-| TD-PLAN-01 | Billing | Recurring subscriptions in progress (217-A/B/C/C-fix/D DONE, 217-E–G remaining). | 217      |
-| TD-AI-18   | OpenAI  | errorMessage forwarding pattern in `/api/openai` is safe but fragile.            | Advisory |
-| TD-API-09  | API     | `messageTextContentSchema` uses `.strict()` — may reject extra fields.           | Monitor  |
+| ID         | Area    | Description                                                                        | Phase    |
+| ---------- | ------- | ---------------------------------------------------------------------------------- | -------- |
+| TD-AI-09   | OpenAI  | Image/audio generation prompts not persona-aware (chat prompts done Phase 22).     | 26.x     |
+| TD-AI-13   | OpenAI  | 3 model pricing entries are placeholders pending OpenAI confirmation.              | Deferred |
+| TD-PLAN-01 | Billing | Recurring subscriptions in progress (217-A/B/C/C-fix/D/E DONE, 217-F–G remaining). | 217      |
+| TD-AI-18   | OpenAI  | errorMessage forwarding pattern in `/api/openai` is safe but fragile.              | Advisory |
+| TD-API-09  | API     | `messageTextContentSchema` uses `.strict()` — may reject extra fields.             | Monitor  |
 
 ### Resolved (PM audit #82)
 

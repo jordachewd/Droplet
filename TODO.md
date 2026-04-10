@@ -5,13 +5,13 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #113 (2026-04-10). V1.0 MVP RELEASED. Phase 222 COMPLETE. Phase 217-A/B/C/C-fix/D COMPLETE. Zod v4 upgrade COMPLETE. 0 HIGH bugs. All 7 gates GREEN.**
+> **STATUS: PM audit #114 (2026-04-10). V1.0 MVP RELEASED. Phase 218-B COMPLETE. Phase 217-E COMPLETE. 0 HIGH bugs. All 7 gates GREEN.**
 >
 > **GATE STATUS: All 7 gates GREEN. 0 vulnerabilities. 0 critical issues.**
 >
-> **TEST STATUS: 663 tests (106 suites), 49 E2E (6 skipped). 0 failures. All gates GREEN.**
+> **TEST STATUS: 666 tests (106 suites), 49 E2E (6 skipped). 0 failures. All gates GREEN.**
 >
-> **EXECUTION ORDER: 218-B (CSS extraction — owner directive) → 217-E → 217-F → 217-G → 26.x.**
+> **EXECUTION ORDER: 217-F → 217-G → 26.x.**
 
 ---
 
@@ -43,48 +43,19 @@
 
 ---
 
-## NEXT — CSS Class Extraction (Owner Directive — PM audit #112)
+## COMPLETED — Phase 218-B: CSS Component Class Extraction (Archived to DONE.md)
 
-> **Owner directive:** CSS branch merged with style changes. Similar Tailwind CSS class extraction must be done for other plain usage of Tailwind classes inside app files. **Promoted to NEXT** per owner priority.
+> ✅ Phase 218-B COMPLETE (PM audit #114). 4 CSS classes extracted (`.admin-muted-text`, `.btn-danger`, `.error-card`, `.toggle-theme-button`). 32+ inline replacements. Zero visual regression. See [DONE.md](DONE.md).
 
-### Phase 218-B — CSS Component Class Extraction (Muted Text + Danger Button + Error Card)
+## COMPLETED — Phase 217-E: Yearly Billing UI + Pricing Display (Archived to DONE.md)
 
-> **Owner directive:** CSS/Tailwind audit. Move duplicated inline patterns into `.css` files under `src/styles/`. **Risk:** LOW. **Effort:** ~30min. **Dependencies:** None. **NEXT.**
->
-> **Audit results (PM audit #112 independent verification):**
->
-> 1. `text-sm text-midnightBlue-600 dark:text-lavenderHaze-600` — **25 occurrences across 16 files**
-> 2. `btn btn-sm btn-contained bg-red-700 text-white hover:bg-red-800` — **5 occurrences across 4 files**
-> 3. Error card panel (`rounded-lg border border-slate-500 bg-lavenderHaze-100 p-6 text-center dark:border-slate-500 dark:bg-nightIndigo-900`) — **3 occurrences across 3 error boundary files**
-
-- [ ] **218-B.1** — Create `.admin-muted-text` class in `src/styles/components/admin/admin.css` for `text-sm text-midnightBlue-600 dark:text-lavenderHaze-600` pattern (25 occurrences, 16 files)
-- [ ] **218-B.2** — Replace all 25 inline instances across admin settings, tables, confirmation-modal, and website-manager with `.admin-muted-text` class
-- [ ] **218-B.3** — Create `.btn-danger` class in `src/styles/components/buttons.css` for `btn btn-sm btn-contained bg-red-700 text-white hover:bg-red-800` pattern (5 occurrences, 4 files)
-- [ ] **218-B.4** — Replace all 5 inline danger button instances with `.btn-danger` class
-- [ ] **218-B.5** — Create `.error-card` class in `src/styles/components/layout.css` for the error boundary card panel (3 occurrences, 3 files)
-- [ ] **218-B.6** — Replace all 3 inline error card instances with `.error-card` class
-- [ ] **218-B.7** — Audit `toggle-theme.tsx` for ~350-char className extraction opportunity
-- [ ] **218-B.8** — Validation: all 7 gates GREEN. Zero visual regression.
+> ✅ Phase 217-E COMPLETE (PM audit #114). Billing toggle, yearly pricing with savings badge, admin-configurable yearly discount, server-side price verification. 666 tests. See [DONE.md](DONE.md).
 
 ---
 
-## QUEUED — Stripe Recurring Payment (Remaining Phases)
+## NEXT — Stripe Recurring Payment (Remaining Phases)
 
-> **Owner:** OI51. Phases 217-A/B/C/C-fix/D COMPLETE. Remaining: 217-E → 217-F → 217-G.
-
----
-
-## QUEUED — Post-CSS Improvements
-
-### Phase 217-E — Yearly Billing UI + Pricing Display
-
-> **Risk:** MEDIUM. **Effort:** ~1h. **Dependencies:** Phase 217-B.
-
-- [ ] **217-E.1** — Add Monthly/Yearly billing toggle to plan cards (public `/plans` and authenticated `/app/plans`)
-- [ ] **217-E.2** — Display yearly price with savings info (e.g., "$159.60/year — Save 30%")
-- [ ] **217-E.3** — Checkout flow routes to correct Stripe Price ID based on billing toggle
-- [ ] **217-E.4** — Admin-configurable yearly discount via AppSetting `admin.yearlyDiscount`
-- [ ] **217-E.5** — Validation: all 7 gates GREEN. Zero visual regression on existing plan display.
+> **Owner:** OI51. Phases 217-A/B/C/C-fix/D/E COMPLETE. Remaining: 217-F → 217-G.
 
 ### Phase 217-F — Admin Stripe Settings
 
@@ -92,8 +63,7 @@
 
 - [ ] **217-F.1** — Add `admin.stripePriceIds` branch to `updateAdminSettingAction` for editing Stripe Price IDs per plan per billing cycle
 - [ ] **217-F.2** — Add admin UI section for Stripe Price ID management (4 price inputs: Pro Monthly/Yearly, Premium Monthly/Yearly)
-- [ ] **217-F.3** — Add `admin.yearlyDiscount` numeric input to admin settings
-- [ ] **217-F.4** — Validation: all 7 gates GREEN.
+- [ ] **217-F.3** — Validation: all 7 gates GREEN.
 
 ### Phase 217-G — Tests + Documentation + Grandfathering Verification
 
@@ -136,7 +106,7 @@
 ---
 
 > **Completed phases** archived in [`DONE.md`](DONE.md).
-> Includes: Phases 143–148, 165, 165.1, 180.1–180.4, 185–222 (all sub-phases), 217-A/B/C/C-fix/D, 29.1–29.5, 29.7.
+> Includes: Phases 143–148, 165, 165.1, 180.1–180.4, 185–222 (all sub-phases), 217-A/B/C/C-fix/D/E, 218-B, 29.1–29.5, 29.7.
 > Phase 29.7 (Zustand audit) — COMPLETE. No changes needed. 4 stores, all properly implemented.
 > TypeScript 6 / ESLint compatibility — **CLOSED** (audit #103). No issues.
 > jsdom upgrade — **PIN MAINTAINED** (audit #103). ~24.1.3 stable. ESM TLA incompatibility persists.
