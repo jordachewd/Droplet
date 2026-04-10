@@ -8,8 +8,6 @@ import SidebarToggle from "@/components/shared/sidebar-toggle";
 import { useIsDesktop } from "@/lib/hooks/use-is-desktop";
 import { useUiStore } from "@/lib/hooks/use-ui-store";
 import { useShallow } from "zustand/react/shallow";
-import { Suspense } from "react";
-import SidebarLoading from "@/components/shared/sidebar-loading";
 
 interface AdminLayoutShellProps {
   children: React.ReactNode;
@@ -57,11 +55,7 @@ export default function AdminLayoutShell({
     <AppLayoutShell
       className="AdminLayoutShell"
       mainId="admin-layout"
-      sidebar={
-        <Suspense fallback={<SidebarLoading />}>
-          <AdminSidebar links={adminLinks} />
-        </Suspense>
-      }
+      sidebar={<AdminSidebar links={adminLinks} />}
       header={
         <AppHeader
           as="header"
@@ -76,8 +70,8 @@ export default function AdminLayoutShell({
             />
           }
           rightSlot={
-            <Link className="btn btn-sm btn-outlined" href="/app">
-              Open App
+            <Link className="btn btn-sm btn-text" href="/app">
+              App
             </Link>
           }
         />
