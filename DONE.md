@@ -2,7 +2,26 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-04-10 — PM audit #112.
+> Last updated: 2026-04-10 — PM audit #113.
+
+---
+
+## Zod v3 → v4 Upgrade — COMPLETED (2026-04-10)
+
+> Zod upgraded from v3 to v4.1.12 (`package.json`: `"zod": "^4.1.12"`). No breaking changes — all 14 Zod-using files, 50+ schemas, 60+ `safeParse()` calls, 33 `.strict()` calls, and 30 `.passthrough()` calls fully compatible. No code changes required. v4 defaults objects to strict mode (existing explicit `.strict()` calls are harmless). 663 tests pass. All 7 gates GREEN.
+
+- [x] Upgraded `zod` from `^3.x` to `^4.1.12` in `package.json`
+- [x] Verified all 14 Zod-using files compatible (no deprecated APIs, no breaking patterns)
+- [x] Validation: prettier ✓, lint ✓, tsc ✓, tests (663/663) ✓, E2E (49 passed, 6 skipped) ✓, build ✓, knip ✓
+
+---
+
+## Prettier Reformat — PM audit #113 (2026-04-10)
+
+> 65 files had formatting drift from Zod v4 upgrade + dependency updates. Fixed by `npx prettier . --write`. All gates GREEN.
+
+- [x] Ran `npx prettier . --write` to reformat 65 files
+- [x] Validation: prettier ✓, lint ✓, tsc ✓, tests (663/663) ✓, build ✓, knip ✓
 
 ---
 

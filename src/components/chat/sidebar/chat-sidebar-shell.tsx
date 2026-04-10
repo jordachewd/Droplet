@@ -61,7 +61,7 @@ export default function ChatSidebarShell({
 
   return (
     <SidebarShell
-      id="chat-sidebar"     
+      id="chat-sidebar"
       className="ChatSidebar"
       header={({ isDesktopCollapsed }) => (
         <SidebarHead isDesktopCollapsed={isDesktopCollapsed} />

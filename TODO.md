@@ -5,7 +5,7 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #112 (2026-04-10). V1.0 MVP RELEASED. Phase 222 COMPLETE. Phase 217-A/B/C COMPLETE. Phase 217-C-fix COMPLETE. Phase 217-D COMPLETE. 0 HIGH bugs. All 7 gates GREEN.**
+> **STATUS: PM audit #113 (2026-04-10). V1.0 MVP RELEASED. Phase 222 COMPLETE. Phase 217-A/B/C/C-fix/D COMPLETE. Zod v4 upgrade COMPLETE. 0 HIGH bugs. All 7 gates GREEN.**
 >
 > **GATE STATUS: All 7 gates GREEN. 0 vulnerabilities. 0 critical issues.**
 >
@@ -71,10 +71,6 @@
 ## QUEUED — Stripe Recurring Payment (Remaining Phases)
 
 > **Owner:** OI51. Phases 217-A/B/C/C-fix/D COMPLETE. Remaining: 217-E → 217-F → 217-G.
-
-- [ ] **217-G.4** — Verify grandfathering: existing one-time paid users retain plan until `expiresOn`, then revert to Lite naturally
-- [ ] **217-G.5** — Full E2E suite pass + manual Stripe test mode verification
-- [ ] **217-G.6** — Validation: all 7 gates GREEN. Test count target: 670+.
 
 ---
 
