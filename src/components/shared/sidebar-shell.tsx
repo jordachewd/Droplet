@@ -7,8 +7,6 @@ import { useShallow } from "zustand/react/shallow";
 import { useIsDesktop } from "@/lib/hooks/use-is-desktop";
 import { useUiStore } from "@/lib/hooks/use-ui-store";
 
-export type SidebarShellExpandedWidth = "lg:w-56" | "lg:w-72";
-
 export interface SidebarShellRenderState {
   isSidebarOpen: boolean;
   isDesktopCollapsed: boolean;
@@ -21,7 +19,6 @@ type SidebarShellSlot =
 
 interface SidebarShellProps {
   id: string;
-  expandedWidth: SidebarShellExpandedWidth;
   header: SidebarShellSlot;
   navigation: SidebarShellSlot;
   footer?: SidebarShellSlot;
@@ -41,7 +38,6 @@ function renderSlot(
 
 export default function SidebarShell({
   id,
-  expandedWidth,
   header,
   navigation,
   footer,
@@ -85,7 +81,7 @@ export default function SidebarShell({
     className,
     "app-sidebar lg:translate-x-0",
     mobileSidebarOpen ? "translate-x-0" : "-translate-x-full",
-    isDesktopCollapsed ? "lg:w-16" : expandedWidth,
+    isDesktopCollapsed ? "lg:w-16" : "lg:w-56",
   );
 
   const backdropClass = classNames(
