@@ -33,13 +33,13 @@ export default function AppLayoutShell({
 
       {sidebar}
 
-      <div className="app-main">
+      <main className="app-main">
         {header}
 
         <div id={mainId} tabIndex={-1} className="app-content">
           {children}
         </div>
-      </div>
+      </main>
     </div>
   );
 }

@@ -5,13 +5,13 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #110 (2026-04-10). V1.0 MVP RELEASED. Phase 222 COMPLETE. Phase 217-A COMPLETE. Phase 217-B COMPLETE. Phase 217-C NEXT. Prettier clean (37 files reformatted). All 7 gates GREEN.**
+> **STATUS: PM audit #111 (2026-04-10). V1.0 MVP RELEASED. Phase 222 COMPLETE. Phase 217-A COMPLETE. Phase 217-B COMPLETE. Phase 217-C COMPLETE. 1 HIGH bug (MongoDB path conflict). All 7 gates GREEN.**
 >
-> **GATE STATUS: All 7 gates GREEN. 0 vulnerabilities. 0 critical issues.**
+> **GATE STATUS: All 7 gates GREEN. 0 vulnerabilities. 1 HIGH runtime bug (path conflict in subscription.deleted handler).**
 >
-> **TEST STATUS: 652 tests (106 suites), 49 E2E (6 skipped). 0 failures. All gates GREEN.**
+> **TEST STATUS: 653 tests (106 suites), 49 E2E (6 skipped). 0 failures. All gates GREEN.**
 >
-> **EXECUTION ORDER: 217-C → 217-D → 217-E → 217-F → 217-G → 218-B → 26.x.**
+> **EXECUTION ORDER: 217-C-fix → 217-D → 217-E → 217-F → 217-G → 218-B → 26.x.**
 
 ---
 
@@ -29,18 +29,23 @@
 
 > ✅ Phase 217-B COMPLETE (PM audit #110). All 6 subtasks delivered: Stripe Customer utility, subscription mode, persistent Price IDs, yearly billing, subscription metadata, validation. See [DONE.md](DONE.md) for detailed completion records.
 
-### Phase 217-C — Webhook Expansion for Subscription Events
+## COMPLETED — Phase 217-C: Webhook Expansion for Subscription Events (Archived to DONE.md)
 
-> **Risk:** HIGH. **Effort:** ~2h. **Dependencies:** Phase 217-B. **Critical: idempotency on every handler.**
+> ✅ Phase 217-C COMPLETE (PM audit #111). All 8 subtasks delivered: event dispatcher, 5 handlers, per-event Zod schemas, idempotency guards, flexible user lookup. 1 HIGH bug discovered during audit (path conflict). See [DONE.md](DONE.md) for detailed completion records.
 
-- [ ] **217-C.1** — Refactor webhook handler to event dispatcher pattern (switch on `event.type`)
-- [ ] **217-C.2** — Modify `checkout.session.completed` handler: create Transaction (type: `subscription_initial`), set `subscriptionStatus: "active"`, store `stripeSubscriptionId`
-- [ ] **217-C.3** — Add `invoice.paid` handler: create Transaction (type: `subscription_renewal`), refresh `expiresOn`, reset usage counters, idempotency on `stripeInvoiceId`
-- [ ] **217-C.4** — Add `invoice.payment_failed` handler: set `subscriptionStatus: "past_due"`, log warning
-- [ ] **217-C.5** — Add `customer.subscription.updated` handler: handle plan upgrade/downgrade, update `subscriptionStatus` and plan details
-- [ ] **217-C.6** — Add `customer.subscription.deleted` handler: revert to Lite, set `subscriptionStatus: "canceled"`, clear `stripeSubscriptionId`
-- [ ] **217-C.7** — Add Zod schemas for each new webhook event payload
-- [ ] **217-C.8** — Validation: all 7 gates GREEN.
+### Phase 217-C-fix — Webhook Bug Fixes (Path Conflict + Phantom Writes)
+
+> **Risk:** HIGH (path conflict will crash subscription deletion in production). **Effort:** ~15min. **Dependencies:** Phase 217-C. **NEXT.**
+>
+> **Bugs discovered during PM audit #111 Architect review, independently verified by PM:**
+>
+> 1. **HIGH-1 — MongoDB ConflictingUpdateOperators** in `handleCustomerSubscriptionDeleted` (~line 1131): `$set: { plan: litePlan }` overwrites the entire `plan` subdocument, but `$unset: { "plan.stripeSubscriptionId": "", "plan.stripeId": "" }` targets paths within `plan`. MongoDB will throw `ConflictingUpdateOperators` at runtime. Unit tests don't catch this because MongoDB is mocked. **Fix:** Remove `"plan.stripeSubscriptionId"` and `"plan.stripeId"` from `$unset` — the `$set: { plan: litePlan }` already replaces the entire subdocument so those fields won't exist.
+> 2. **MEDIUM-1 — Phantom writes silently stripped** in `handleInvoicePaymentFailed` (~line 916): writes `"plan.subscriptionStatus": "past_due"` and `"plan.stripeSubscriptionId": subscriptionId` but User model's `plan` subdocument schema has no `subscriptionStatus` or `stripeSubscriptionId` fields. Mongoose `strict: true` silently strips them. The top-level `subscriptionStatus` and `stripeSubscriptionId` fields are correct. **Fix:** Remove the phantom `plan.*` writes.
+
+- [ ] **217-C-fix.1** — In `handleCustomerSubscriptionDeleted`: remove `"plan.stripeSubscriptionId": ""` and `"plan.stripeId": ""` from the `$unset` block. Keep `stripeSubscriptionId: ""` (top-level field unset is correct).
+- [ ] **217-C-fix.2** — In `handleInvoicePaymentFailed`: remove `"plan.subscriptionStatus": "past_due"` from `updateFields`. Remove `updateFields["plan.stripeSubscriptionId"] = subscriptionId` line. Keep top-level `subscriptionStatus` and `stripeSubscriptionId` writes.
+- [ ] **217-C-fix.3** — Add unit test: verify `handleCustomerSubscriptionDeleted` update operation does NOT have overlapping `$set`/`$unset` paths targeting `plan.*`.
+- [ ] **217-C-fix.4** — Validation: all 7 gates GREEN.
 
 ### Phase 217-D — Custom Cancellation Flow
 

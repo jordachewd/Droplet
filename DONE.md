@@ -2,7 +2,31 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-04-10 — PM audit #110.
+> Last updated: 2026-04-10 — PM audit #111.
+
+---
+
+## E2E `<main>` Landmark Fix — COMPLETED (2026-04-10)
+
+> PM audit #111 investigation. E2E suite failed (9 failures across 3 browsers) on `getByRole('main')` not found on `/app/profile` and `/admin`. Root cause: `AppLayoutShell` used `<div className="app-main">` instead of `<main className="app-main">`. Engineer changed `<div>` to `<main>` in `src/components/shared/app-layout-shell.tsx`. All 49 E2E tests pass. WCAG landmark compliance restored.
+
+- [x] Changed `<div className="app-main">` to `<main className="app-main">` in `app-layout-shell.tsx`
+- [x] Validation: prettier ✓, lint ✓, tsc ✓, tests (653/653) ✓, E2E (49 passed, 6 skipped) ✓, build ✓, knip ✓
+
+---
+
+## Phase 217-C — Webhook Expansion for Subscription Events — COMPLETED (2026-04-10)
+
+> Engineer delivered (PM audit #111). Stripe webhook handler refactored from single `checkout.session.completed` to full event dispatcher handling 5 subscription lifecycle events. Per-event Zod schemas for payload validation. Idempotent `findOneAndUpdate` with guard conditions on every handler. Flexible multi-strategy user lookup (`findWebhookUser`) via metadata → stripeSubscriptionId → stripeCustomerId chain. Usage counter reset on renewal. All 7 gates GREEN. 653 tests (106 suites). **1 HIGH issue discovered during Architect audit: MongoDB path conflict in `customer.subscription.deleted` handler (`$set: { plan }` + `$unset: { "plan.stripeId" }` = ConflictingUpdateOperators). Scoped to Phase 217-C-fix.**
+
+- [x] **217-C.1** — Refactored webhook to `dispatchStripeWebhookEvent` dispatcher with `switch` on `event.type`
+- [x] **217-C.2** — Modified `checkout.session.completed` handler: Transaction type `subscription_initial`, stores `stripeSubscriptionId`, sets `subscriptionStatus: "active"`
+- [x] **217-C.3** — Added `invoice.paid` handler: Transaction type `subscription_renewal`, refresh `expiresOn`, reset usage counters, idempotency on `stripeInvoiceId`
+- [x] **217-C.4** — Added `invoice.payment_failed` handler: set `subscriptionStatus: "past_due"`, log warning
+- [x] **217-C.5** — Added `customer.subscription.updated` handler: plan sync on upgrade/downgrade, update `subscriptionStatus`
+- [x] **217-C.6** — Added `customer.subscription.deleted` handler: revert to Lite, set `subscriptionStatus: "canceled"`, clear `stripeSubscriptionId`
+- [x] **217-C.7** — Per-event Zod schemas: `checkoutSessionCompletedEventSchema`, `invoicePaidEventSchema`, `invoicePaymentFailedEventSchema`, `customerSubscriptionUpdatedEventSchema`, `customerSubscriptionDeletedEventSchema`
+- [x] **217-C.8** — Validation: prettier ✓, lint ✓, tsc ✓, tests (653/653) ✓, E2E (49 passed, 6 skipped) ✓, build ✓, knip ✓
 
 ---
 
