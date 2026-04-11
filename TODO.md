@@ -5,100 +5,58 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #114 rescan (2026-04-10). V1.0 MVP RELEASED. Phase 218-C COMPLETE (UI design refresh + toggle CSS + sidebar simplification). 0 HIGH bugs. All 7 gates GREEN.**
+> **STATUS: PM audit #115 (2026-04-11). V1.0 MVP RELEASED. Stripe recurring billing COMPLETE (all 217 phases). Phase 26.x COMPLETE. 0 HIGH bugs. All 7 gates GREEN.**
 >
 > **GATE STATUS: All 7 gates GREEN. 0 vulnerabilities. 0 critical issues.**
 >
-> **TEST STATUS: 666 tests (106 suites), 49 E2E (6 skipped). 0 failures. All gates GREEN.**
+> **TEST STATUS: 717 tests (109 suites), 49 E2E (6 skipped). 0 failures. All gates GREEN.**
 >
-> **EXECUTION ORDER: 218-C-fix → 217-F → 217-G → 26.x.**
+> **ACTIVE BACKLOG: EMPTY. All approved phases delivered. Awaiting owner direction.**
 
 ---
 
-## NEXT — Stripe Recurring Payment (Phases 217-A through 217-G)
+## COMPLETED — Stripe Recurring Billing (All Phases 217-A through 217-G) — Archived to DONE.md
 
-> **Owner:** OI51. **UNBLOCKED** (PM audit #103). Owner answers: (1) Grandfather existing one-time users until expiry then revert to Lite. (2) Both Monthly + Yearly billing (30% yearly discount). (3) Custom cancel UI (NOT Stripe Customer Portal). (4) Refactor plans and add admin edit capabilities.
->
-> **Sequencing:** Phase 222 COMPLETE. Stripe is NEXT.
+> ✅ Stripe billing COMPLETE (PM audit #115). All phases delivered: 217-A (schema), 217-B (checkout), 217-C (webhooks), 217-C-fix (path conflict), 217-D (cancellation), 217-E (yearly billing UI), 217-F (admin Price IDs), 217-G (tests + docs + grandfathering). See [DONE.md](DONE.md).
 
-## COMPLETED — Phase 217-A: Schema + Stripe Product Setup (Archived to DONE.md)
+## COMPLETED — Phase 218-C-fix: Dead CSS Cleanup — Archived to DONE.md
 
-> ✅ Phase 217-A COMPLETE (PM audit #108). All 6 subtasks delivered: schema fields, types, Stripe products, AppSettings, seed script, validation. See [DONE.md](DONE.md) for detailed completion records.
+> ✅ Phase 218-C-fix COMPLETE (PM audit #115). Dead `.toggle-theme-button` removed from `layout.css`. See [DONE.md](DONE.md).
 
-## COMPLETED — Phase 217-B: Checkout Mode Switch + Customer Management (Archived to DONE.md)
+## COMPLETED — Phase 26.x: Persona-aware Media Prompts — Archived to DONE.md
 
-> ✅ Phase 217-B COMPLETE (PM audit #110). All 6 subtasks delivered: Stripe Customer utility, subscription mode, persistent Price IDs, yearly billing, subscription metadata, validation. See [DONE.md](DONE.md) for detailed completion records.
-
-## COMPLETED — Phase 217-C: Webhook Expansion for Subscription Events (Archived to DONE.md)
-
-> ✅ Phase 217-C COMPLETE (PM audit #111). All 8 subtasks delivered: event dispatcher, 5 handlers, per-event Zod schemas, idempotency guards, flexible user lookup. 1 HIGH bug discovered during audit (path conflict). See [DONE.md](DONE.md) for detailed completion records.
-
-## COMPLETED — Phase 217-C-fix: Webhook Bug Fixes (Archived to DONE.md)
-
-> ✅ Phase 217-C-fix COMPLETE (PM audit #112). Path conflict + phantom writes fixed. See [DONE.md](DONE.md).
-
-## COMPLETED — Phase 217-D: Custom Cancellation Flow (Archived to DONE.md)
-
-> ✅ Phase 217-D COMPLETE (PM audit #112). Cancel/reactivate server actions, 5-state profile UI, webhook sync. See [DONE.md](DONE.md).
+> ✅ Phase 26.x COMPLETE (PM audit #115). `PERSONA_IMAGE_STYLE_HINTS` + `PERSONA_AUDIO_STYLE_HINTS` (6 personas each). `personaId` threaded through `generateImage()`, `generateAudio()`, `generateResponse()`. Both TTS and audio_in_out modes. Tests for all paths. See [DONE.md](DONE.md).
 
 ---
 
-## COMPLETED — Phase 218-B: CSS Component Class Extraction (Archived to DONE.md)
+## SWOT-DERIVED — Known Issues (from PM audit #115 SWOT analysis)
 
-> ✅ Phase 218-B COMPLETE (PM audit #114). 4 CSS classes extracted (`.admin-muted-text`, `.btn-danger`, `.error-card`, `.toggle-theme-button`). 32+ inline replacements. Zero visual regression. See [DONE.md](DONE.md).
+### MEDIUM — Duplicate Transaction on Initial Subscription
 
-## COMPLETED — Phase 217-E: Yearly Billing UI + Pricing Display (Archived to DONE.md)
+> **Source:** SWOT Threat. **Risk:** MEDIUM. **Impact:** Double transaction records on first payment.
+> Both `checkout.session.completed` and `invoice.paid` fire on first Stripe subscription payment, creating 2 Transaction documents.
+> Data integrity issue — not billing issue (Stripe only charges once). Overstates revenue in admin transaction view.
+> **Fix approach:** Deduplicate by checking for existing transaction with same Stripe session/invoice ID before creating.
 
-> ✅ Phase 217-E COMPLETE (PM audit #114). Billing toggle, yearly pricing with savings badge, admin-configurable yearly discount, server-side price verification. 666 tests. See [DONE.md](DONE.md).
+### MEDIUM — User Model Plan Subdoc Schema Gap
 
-## COMPLETED — Phase 218-C: UI Design Refresh + Toggle CSS Extraction + Sidebar Simplification (Archived to DONE.md)
+> **Source:** SWOT Weakness. **Risk:** MEDIUM. **Impact:** Webhook writes to `stripeSubscriptionId` and `subscriptionStatus` within `plan` subdoc are silently stripped by `strict: true`.
+> Top-level fields work correctly for now. Schema should add these fields to the `plan` subdocument to match actual usage.
+> **Fix approach:** Add `stripeSubscriptionId` and `subscriptionStatus` to `plan` subdoc schema in User model.
 
-> ✅ Phase 218-C COMPLETE (PM audit #114 rescan). Button design refresh (pill-shaped, dustyBlue palette), dedicated toggle.css module (6 classes), SidebarLoading deleted, sidebar simplified, admin link refreshed. See [DONE.md](DONE.md).
+### LOW — Admin Sidebar Collapsed State Not Persisted
 
----
+> **Source:** SWOT Weakness. **Risk:** LOW. **Impact:** Admin sidebar resets to open on page reload.
+> Chat sidebar persists via `droplet-sidebar-collapsed` localStorage key. Admin does not.
 
-### Phase 218-C-fix — Dead CSS Cleanup
+### LOW — FORM_INPUT_CONTROL_CLASS / .form-input Visual Inconsistency
 
-> **Risk:** NONE. **Effort:** ~1min. **Dependencies:** Phase 218-C.
+> **Source:** SWOT Weakness. **Risk:** LOW. **Impact:** Minor border color difference between JS constant and CSS class.
 
-- [ ] **218-C-fix.1** — Remove dead `.toggle-theme-button` class from `src/styles/components/layout.css` (superseded by `.toggle-switch` in `toggle.css`)
-- [ ] **218-C-fix.2** — Validation: all 7 gates GREEN.
+### LOW — catch {} Blocks Missing Comments
 
----
-
-## NEXT — Stripe Recurring Payment (Remaining Phases)
-
-> **Owner:** OI51. Phases 217-A/B/C/C-fix/D/E COMPLETE. Remaining: 217-F → 217-G.
-
-### Phase 217-F — Admin Stripe Settings
-
-> **Risk:** LOW. **Effort:** ~30min. **Dependencies:** Phase 217-E.
-
-- [ ] **217-F.1** — Add `admin.stripePriceIds` branch to `updateAdminSettingAction` for editing Stripe Price IDs per plan per billing cycle
-- [ ] **217-F.2** — Add admin UI section for Stripe Price ID management (4 price inputs: Pro Monthly/Yearly, Premium Monthly/Yearly)
-- [ ] **217-F.3** — Validation: all 7 gates GREEN.
-
-### Phase 217-G — Tests + Documentation + Grandfathering Verification
-
-> **Risk:** LOW. **Effort:** ~2h. **Dependencies:** All preceding 217 phases.
-
-- [ ] **217-G.1** — 30+ new unit tests: webhook event handlers (all 5 types), cancellation action, yearly pricing, Stripe Customer management, idempotency, edge cases
-- [ ] **217-G.2** — Update SPEC.md: subscription plan lifecycle, new webhook events, cancellation flow, yearly pricing
-- [ ] **217-G.3** — Update README.md: pricing table with yearly option
-- [ ] **217-G.4** — Verify grandfathering: existing one-time paid users retain plan until `expiresOn`, then revert to Lite naturally
-- [ ] **217-G.5** — Full E2E suite pass + manual Stripe test mode verification
-- [ ] **217-G.6** — Validation: all 7 gates GREEN. Test count target: 670+.
-
-### Phase 26.x — Persona-aware Media Prompts
-
-> **Owner:** OI58. **Risk:** LOW. **Effort:** ~2h. **Dependencies:** None (can proceed after Stripe billing). **Files:** 4 (persona-prompts.ts, generateImage.tsx, generateAudio.tsx, generateResponse.tsx). **Lines:** ~60-80 added.
-
-- [ ] **26.x.1** — Add `PERSONA_IMAGE_STYLE_HINTS` and `PERSONA_AUDIO_STYLE_HINTS` to `persona-prompts.ts`
-- [ ] **26.x.2** — Add `personaId` parameter to `generateImage()`, prefix prompt with persona style hint
-- [ ] **26.x.3** — Add `personaId` parameter to `generateAudio()`, apply persona voice/tone context
-- [ ] **26.x.4** — Pass `personaId` from `generateResponse()` tool call handlers to media generators
-- [ ] **26.x.5** — Unit tests for persona-specific media prompt generation
-- [ ] **26.x.6** — Validation: all 7 gates GREEN.
+> **Source:** SWOT Weakness. **Risk:** LOW. **Impact:** 20+ `catch {}` blocks without explanatory comments. Rule compliance gap.
+> Most are URL parsing with obvious intent.
 
 ---
 
@@ -106,7 +64,7 @@
 
 ### Phase 29.6 — updateAdminSettingAction Zod Schema Map (DEFERRED)
 
-> 17 branches, working correctly with Zod under the hood. Revisit only if branch count exceeds ~25 or bugs emerge. New branches added for Stripe settings (Phase 217-F) follow existing pattern.
+> 18 branches (including new `admin.stripePriceIds`), working correctly with Zod under the hood. Revisit only if branch count exceeds ~25 or bugs emerge.
 
 ### Legal/nav/footer admin configurability — Deferred to v2
 
@@ -116,10 +74,14 @@
 
 > 1 test (`error-boundary-handling > API failure feedback`) fails intermittently on Firefox only. Chromium/WebKit pass. Browser timing issue, not product bug. Monitor.
 
+### Vercel Pro Upgrade — Recommended
+
+> $20/mo. Raises `maxDuration` from 60s to 300s. Eliminates media generation timeout edge cases. Not a bug — architecture constraint.
+
 ---
 
 > **Completed phases** archived in [`DONE.md`](DONE.md).
-> Includes: Phases 143–148, 165, 165.1, 180.1–180.4, 185–222 (all sub-phases), 217-A/B/C/C-fix/D/E, 218-B, 218-C, 29.1–29.5, 29.7.
+> Includes: Phases 143–148, 165, 165.1, 180.1–180.4, 185–222 (all sub-phases), 217-A/B/C/C-fix/D/E/F/G, 218-B, 218-C, 218-C-fix, 26.x, 29.1–29.5, 29.7.
 > Phase 29.7 (Zustand audit) — COMPLETE. No changes needed. 4 stores, all properly implemented.
 > TypeScript 6 / ESLint compatibility — **CLOSED** (audit #103). No issues.
 > jsdom upgrade — **PIN MAINTAINED** (audit #103). ~24.1.3 stable. ESM TLA incompatibility persists.

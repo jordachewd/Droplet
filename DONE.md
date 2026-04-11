@@ -2,7 +2,52 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-04-10 — PM audit #114 (rescan).
+> Last updated: 2026-04-11 — PM audit #115.
+
+---
+
+## Phase 26.x — Persona-aware Media Prompts — COMPLETED (2026-04-11)
+
+> Owner directive OI58 COMPLETE (PM audit #115). `PERSONA_IMAGE_STYLE_HINTS` and `PERSONA_AUDIO_STYLE_HINTS` added to `persona-prompts.ts` (6 personas each). `personaId` parameter threaded through `generateImage()`, `generateAudio()`, and `generateResponse()`. Image generation prepends persona style prefix. Audio generation handles both TTS-only (`buildPersonaAwareTtsInput`) and audio_in_out (`buildPersonaAwareAudioMessages`) modes. Graceful fallback for unknown persona. Unit tests for all paths. 717 tests. All 7 gates GREEN.
+
+- [x] **26.x.1** — Added `PERSONA_IMAGE_STYLE_HINTS` (Record<string, string>, 6 entries) and `PERSONA_AUDIO_STYLE_HINTS` (6 entries) to `src/constants/persona-prompts.ts`.
+- [x] **26.x.2** — Added `personaId?: string | null` to `generateImage()` params. `buildPersonaAwareImagePrompt()` prepends style hint prefix from persona lookup.
+- [x] **26.x.3** — Added `personaId` to `generateAudio()` params. `buildPersonaAwareTtsInput()` for TTS mode, `buildPersonaAwareAudioMessages()` for audio_in_out system message injection.
+- [x] **26.x.4** — `generateResponse()` passes `personaId` to `generateImage()` (line 609/612) and `generateAudio()` (line 729/731/735) from tool call handlers.
+- [x] **26.x.5** — Unit tests: `persona-prompts.test.ts`, `generate-image.test.tsx`, `generate-audio.test.tsx`, `generate-response.test.tsx` — all persona-specific media prompt paths covered.
+- [x] **26.x.6** — Validation: prettier ✓, lint ✓, tsc ✓, tests (717/717) ✓, E2E ✓, build ✓, knip ✓.
+
+---
+
+## Phase 217-G — Tests + Documentation + Grandfathering Verification — COMPLETED (2026-04-11)
+
+> Engineer delivered (PM audit #115). 51 new unit tests (666→717, 106→109 suites). SPEC.md updated with Plan Lifecycle section (8-point lifecycle documentation). README.md updated with yearly pricing row ($159.60/yr Pro, $327.60/yr Premium, "30% discount"). Grandfathering verified: existing one-time users retain plan until `expiresOn`, then revert to Lite naturally. All 7 gates GREEN.
+
+- [x] **217-G.1** — 51 new tests across 3 new suites: `effective-stripe-billing-config.test.ts` (11 tests), `admin-settings-normalize.test.ts`, `stripe-customer.test.ts`, plus additions to existing suites (`transaction-action.test.ts`, `stripe-webhook-route.test.ts`, `resolve-entitlements.test.ts`).
+- [x] **217-G.2** — SPEC.md updated: Plan Lifecycle section at line 249 (8-point lifecycle: creation, upgrade, subscription mapping, grandfathering, cancellation, reactivation, payment failure, admin override).
+- [x] **217-G.3** — README.md updated: yearly pricing row with `$159.60/yr` (Pro) and `$327.60/yr` (Premium), "30% discount" text.
+- [x] **217-G.4** — Grandfathering verified: `expiresOn`-based natural expiry, entitlements resolve correctly, no migration script needed.
+- [x] **217-G.5** — Full E2E suite pass (49 passed, 6 skipped). Manual verification via Playwright MCP.
+- [x] **217-G.6** — Validation: prettier ✓, lint ✓, tsc ✓, tests (717/717) ✓, E2E ✓, build ✓, knip ✓.
+
+---
+
+## Phase 217-F — Admin Stripe Settings — COMPLETED (2026-04-11)
+
+> Engineer delivered (PM audit #115). `admin.stripePriceIds` branch in `updateAdminSettingAction` with 4 Price ID fields (proMonthly, proYearly, premiumMonthly, premiumYearly). Admin UI section with 4 inputs. Auth check + audit trail + cache invalidation + `revalidatePath` for `/plans` and `/app/plans`. Normalization + type support. All 7 gates GREEN.
+
+- [x] **217-F.1** — `admin.stripePriceIds` branch at line 380 of `admin.actions.tsx`. Extracts 4 trimmed string fields via `getTrimmedOptionalStringField()`. 18th branch (up from 17).
+- [x] **217-F.2** — `AdminPricingSection` component: 4 Price ID inputs (proMonthlyPriceId, proYearlyPriceId, premiumMonthlyPriceId, premiumYearlyPriceId) with hidden key `admin.stripePriceIds`. `normalizeStripePriceIdsSettingsValue()` + `StripePriceIdsSettingsFormValue` interface.
+- [x] **217-F.3** — Validation: prettier ✓, lint ✓, tsc ✓, tests ✓, E2E ✓, build ✓, knip ✓.
+
+---
+
+## Phase 218-C-fix — Dead CSS Cleanup — COMPLETED (2026-04-11)
+
+> Engineer delivered (PM audit #115). Removed dead `.toggle-theme-button` class from `src/styles/components/layout.css` (superseded by `.toggle-switch` in `toggle.css` since Phase 218-C). Zero grep hits in src/ post-removal. All 7 gates GREEN.
+
+- [x] **218-C-fix.1** — Removed `.toggle-theme-button` ruleset from `layout.css`. File now contains 9 clean CSS classes.
+- [x] **218-C-fix.2** — Validation: prettier ✓, lint ✓, tsc ✓, tests ✓, E2E ✓, build ✓, knip ✓.
 
 ---
 
