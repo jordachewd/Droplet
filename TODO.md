@@ -5,11 +5,11 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #115 (2026-04-11). V1.0 MVP RELEASED. Stripe recurring billing COMPLETE (all 217 phases). Phase 26.x COMPLETE. 0 HIGH bugs. All 7 gates GREEN.**
+> **STATUS: PM audit #117 (2026-04-11). V1.0 MVP RELEASED. Stripe recurring billing COMPLETE (all 217 phases). Phase 26.x COMPLETE. Phase 223 COMPLETE (3 SWOT fixes). 0 HIGH bugs. All 7 gates GREEN.**
 >
 > **GATE STATUS: All 7 gates GREEN. 0 vulnerabilities. 0 critical issues.**
 >
-> **TEST STATUS: 717 tests (109 suites), 49 E2E (6 skipped). 0 failures. All gates GREEN.**
+> **TEST STATUS: 719 tests (109 suites), 49 E2E (6 skipped). 0 failures. All gates GREEN.**
 >
 > **ACTIVE BACKLOG: EMPTY. All approved phases delivered. Awaiting owner direction.**
 
@@ -31,27 +31,22 @@
 
 ## SWOT-DERIVED — Known Issues (from PM audit #115 SWOT analysis)
 
-### MEDIUM — Duplicate Transaction on Initial Subscription
+### ✅ MEDIUM — Duplicate Transaction on Initial Subscription — RESOLVED (Phase 223)
 
-> **Source:** SWOT Threat. **Risk:** MEDIUM. **Impact:** Double transaction records on first payment.
-> Both `checkout.session.completed` and `invoice.paid` fire on first Stripe subscription payment, creating 2 Transaction documents.
-> Data integrity issue — not billing issue (Stripe only charges once). Overstates revenue in admin transaction view.
-> **Fix approach:** Deduplicate by checking for existing transaction with same Stripe session/invoice ID before creating.
+> Fixed by Phase 223. Checkout handler now stores `stripeInvoiceId` from checkout payload; claim filter uses `$or` on both `stripeId` and `stripeInvoiceId`. When `invoice.paid` fires with the same invoice ID, the existing transaction is found and no duplicate is created. See [DONE.md](DONE.md).
 
-### MEDIUM — User Model Plan Subdoc Schema Gap
+### ✅ MEDIUM — User Model Plan Subdoc Schema Gap — RESOLVED (Phase 223)
 
-> **Source:** SWOT Weakness. **Risk:** MEDIUM. **Impact:** Webhook writes to `stripeSubscriptionId` and `subscriptionStatus` within `plan` subdoc are silently stripped by `strict: true`.
-> Top-level fields work correctly for now. Schema should add these fields to the `plan` subdocument to match actual usage.
-> **Fix approach:** Add `stripeSubscriptionId` and `subscriptionStatus` to `plan` subdoc schema in User model.
+> Fixed by Phase 223. `stripeSubscriptionId` and `subscriptionStatus` added to plan subdocument schema in User model. Webhook writes to plan subdoc are no longer silently stripped by `strict: true`. See [DONE.md](DONE.md).
 
 ### LOW — Admin Sidebar Collapsed State Not Persisted
 
 > **Source:** SWOT Weakness. **Risk:** LOW. **Impact:** Admin sidebar resets to open on page reload.
 > Chat sidebar persists via `droplet-sidebar-collapsed` localStorage key. Admin does not.
 
-### LOW — catch {} Blocks Missing Comments
+### ✅ LOW — catch {} Blocks Missing Comments — RESOLVED (Phase 223)
 
-> **Source:** SWOT Weakness. **Risk:** LOW. **Impact:** 1 `catch {}` block without explanatory comment in `src/lib/utils/openai/generateResponse.tsx:287` (`isInternalDownloadKeyUrl` URL parse fallback). All other 20+ catch blocks are compliant.
+> Fixed by Phase 223. Missing comment added to `isInternalDownloadKeyUrl` catch block in `generateResponse.tsx`. All catch blocks in `src/` now have explanatory comments. See [DONE.md](DONE.md).
 
 ---
 
@@ -76,7 +71,7 @@
 ---
 
 > **Completed phases** archived in [`DONE.md`](DONE.md).
-> Includes: Phases 143–148, 165, 165.1, 180.1–180.4, 185–222 (all sub-phases), 217-A/B/C/C-fix/D/E/F/G, 218-B, 218-C, 218-C-fix, 26.x, 29.1–29.5, 29.7.
+> Includes: Phases 143–148, 165, 165.1, 180.1–180.4, 185–222 (all sub-phases), 217-A/B/C/C-fix/D/E/F/G, 218-B, 218-C, 218-C-fix, 26.x, 29.1–29.5, 29.7, 223.
 > Phase 29.7 (Zustand audit) — COMPLETE. No changes needed. 4 stores, all properly implemented.
 > TypeScript 6 / ESLint compatibility — **CLOSED** (audit #103). No issues.
 > jsdom upgrade — **PIN MAINTAINED** (audit #103). ~24.1.3 stable. ESM TLA incompatibility persists.

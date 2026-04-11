@@ -2,7 +2,19 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-04-11 — PM audit #115.
+> Last updated: 2026-04-11 — PM audit #117.
+
+---
+
+## Phase 223 — SWOT-Derived Fixes (Duplicate Transaction + Plan Subdoc Schema + Catch Comment) — COMPLETED (2026-04-11)
+
+> Engineer delivered (PM audit #117). 3 approved fixes from PM audit #116 SWOT analysis. Stripe duplicate transaction deduplication via checkout invoice ID cross-referencing. User model plan subdoc schema gap closed. Last remaining catch comment added. 719 tests (109 suites). All 7 gates GREEN.
+
+- [x] **223.1** — Stripe webhook checkout handler now parses `invoice` from checkout payload via `resolveExpandableId()`. Initial transaction stores `stripeInvoiceId`. Claim filter uses `$or` on `stripeId` and `stripeInvoiceId` when checkout invoice is present. When `invoice.paid` fires with the same invoice ID, the existing transaction is found (no duplicate created).
+- [x] **223.2** — Added `stripeSubscriptionId` (String) and `subscriptionStatus` (String enum: `active|past_due|canceled|unpaid`, default null) to User model plan subdocument schema. Webhook writes to plan subdoc no longer silently stripped by `strict: true`.
+- [x] **223.3** — Added explanatory comment to empty catch block in `isInternalDownloadKeyUrl()` in `generateResponse.tsx`. All catch blocks in `src/` now have comments per project rules.
+- [x] **223.4** — New tests: webhook test for checkout invoice dedupe key behavior (`stripe-webhook-route.test.ts`). User model test assertions for plan subdoc defaults (`stripeSubscriptionId: undefined`, `subscriptionStatus: null`) and enum validation (`user-model.test.ts`). 717→719 tests.
+- [x] **223.5** — Validation: prettier ✓, lint ✓, tsc ✓, tests (719/719) ✓, E2E (49 passed, 6 skipped) ✓, build ✓, knip ✓.
 
 ---
 
