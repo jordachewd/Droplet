@@ -49,14 +49,9 @@
 > **Source:** SWOT Weakness. **Risk:** LOW. **Impact:** Admin sidebar resets to open on page reload.
 > Chat sidebar persists via `droplet-sidebar-collapsed` localStorage key. Admin does not.
 
-### LOW — FORM_INPUT_CONTROL_CLASS / .form-input Visual Inconsistency
-
-> **Source:** SWOT Weakness. **Risk:** LOW. **Impact:** Minor border color difference between JS constant and CSS class.
-
 ### LOW — catch {} Blocks Missing Comments
 
-> **Source:** SWOT Weakness. **Risk:** LOW. **Impact:** 20+ `catch {}` blocks without explanatory comments. Rule compliance gap.
-> Most are URL parsing with obvious intent.
+> **Source:** SWOT Weakness. **Risk:** LOW. **Impact:** 1 `catch {}` block without explanatory comment in `src/lib/utils/openai/generateResponse.tsx:287` (`isInternalDownloadKeyUrl` URL parse fallback). All other 20+ catch blocks are compliant.
 
 ---
 

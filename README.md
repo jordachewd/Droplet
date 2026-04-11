@@ -52,10 +52,10 @@ Each persona is an independent AI agent — pragmatic, direct, and grounded in r
 | **Price (Yearly)**       | —            | $159.60/yr | $327.60/yr |
 | **Personas (full)**      | 2            | 5          | All 6      |
 | **Trial access**         | All others   | Remaining  | —          |
-| **Conversations/Day**    | 5            | 50         | Unlimited  |
+| **Conversations/Day**    | 10           | 50         | Unlimited  |
 | **Prompts/Conversation** | 10           | 100        | Unlimited  |
-| **Image Generation**     | 3/month      | 50/month   | Unlimited  |
-| **Audio Generation**     | 3/month      | 50/month   | Unlimited  |
+| **Image Generation**     | 1/month      | 50/month   | Unlimited  |
+| **Audio Generation**     | 1/month      | 50/month   | Unlimited  |
 
 All plans include all features — differentiated by usage limits, not by feature lockout. Personas not fully included in your plan are available as trials with reduced limits. Yearly billing available with 30% discount.
 
