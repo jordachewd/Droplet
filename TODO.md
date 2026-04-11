@@ -5,13 +5,13 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #117 (2026-04-11). V1.0 MVP RELEASED. Stripe recurring billing COMPLETE (all 217 phases). Phase 26.x COMPLETE. Phase 223 COMPLETE (3 SWOT fixes). 0 HIGH bugs. All 7 gates GREEN.**
+> **STATUS: PM audit #118 (2026-04-11). V1.0 MVP RELEASED. Stripe recurring billing COMPLETE (all 217 phases). Phase 26.x COMPLETE. Phase 223 COMPLETE (3 SWOT fixes). 0 HIGH bugs. All 7 gates GREEN.**
 >
 > **GATE STATUS: All 7 gates GREEN. 0 vulnerabilities. 0 critical issues.**
 >
 > **TEST STATUS: 719 tests (109 suites), 49 E2E (6 skipped). 0 failures. All gates GREEN.**
 >
-> **ACTIVE BACKLOG: EMPTY. All approved phases delivered. Awaiting owner direction.**
+> **ACTIVE BACKLOG: Architect audit #118 recommendations queued below.**
 
 ---
 
@@ -26,6 +26,135 @@
 ## COMPLETED — Phase 26.x: Persona-aware Media Prompts — Archived to DONE.md
 
 > ✅ Phase 26.x COMPLETE (PM audit #115). `PERSONA_IMAGE_STYLE_HINTS` + `PERSONA_AUDIO_STYLE_HINTS` (6 personas each). `personaId` threaded through `generateImage()`, `generateAudio()`, `generateResponse()`. Both TTS and audio_in_out modes. Tests for all paths. See [DONE.md](DONE.md).
+
+---
+
+## ARCHITECT AUDIT #118 — Structural Improvements (2026-04-11)
+
+> Source: Droplet-Architect deep codebase audit. All 7 gates GREEN. Zero security vulnerabilities. Zero critical issues. Improvements target maintainability, fragility reduction, and future velocity.
+
+### Phase 224 — Add `connectToDatabase()` to OpenAI Route (MEDIUM)
+
+> **Risk:** MEDIUM. **Effort:** 5 min. **Source:** Architect audit M2.
+> **Problem:** `src/app/api/openai/route.tsx` calls `User.findOneAndUpdate()` directly (lines 299, 355, 1046, 1289) without calling `connectToDatabase()`. It relies on `getUserById()` or `ensureUserSynced()` having established the connection first — a fragile implicit ordering dependency.
+> **Fix:** Add one `await connectToDatabase()` call at the top of `POST()` before any model operations.
+> **Acceptance criteria:**
+>
+> - `await connectToDatabase()` is called at the start of `POST()` in `src/app/api/openai/route.tsx`
+> - All existing tests pass
+> - All 7 gates GREEN
+
+### Phase 225 — Decompose OpenAI Route Into Focused Modules (MEDIUM)
+
+> **Risk:** MEDIUM. **Effort:** 2–3 hours (split into sub-phases). **Source:** Architect audit M1.
+> **Problem:** `src/app/api/openai/route.tsx` is 1,707 lines — the 2nd-largest file in the codebase. It owns the entire chat lifecycle: request validation, auth, rate limiting, entitlement resolution, plan expiry, prompt/daily/storage limit enforcement, media slot claim/rollback, streaming SSE orchestration, non-streaming orchestration, task creation, title generation, response finalization, and persistence. Any change to any of these concerns touches this file.
+> **Fix:** Extract into focused modules. Keep `POST()` as a thin coordinator.
+
+#### Phase 225-A — Extract media slot claim/rollback logic
+
+> Extract `claimMediaGenerationSlot()`, `rollbackMediaGenerationSlot()`, `resolveMediaCounterField()` into `src/lib/utils/openai/media-slot.ts`.
+> **Acceptance criteria:**
+>
+> - New file `src/lib/utils/openai/media-slot.ts` with exported functions
+> - `route.tsx` imports and uses them — no behavioral change
+> - All 7 gates GREEN
+
+#### Phase 225-B — Extract conversation lifecycle helpers
+
+> Extract `persistConversationStop()`, `persistConversationNotice()`, `createStopTaskData()`, `createStopResponsePayload()`, `buildEndActionInstructions()`, `getPlanBoundEndAction()`, `resolvePromptLimitEndAction()` into `src/lib/utils/openai/conversation-lifecycle.ts`.
+> **Acceptance criteria:**
+>
+> - New file with exported functions
+> - `route.tsx` imports and uses them — no behavioral change
+> - All 7 gates GREEN
+
+#### Phase 225-C — Extract streaming SSE orchestrator
+
+> Extract streaming logic (heartbeat management, proactive timeout, `writeStreamEvent()`, `writeErrorEvent()`, `writeFinalEvent()`, SSE `ReadableStream` construction) into `src/lib/utils/openai/stream-orchestrator.ts`.
+> **Acceptance criteria:**
+>
+> - New file with exported functions/classes
+> - `route.tsx` streaming path uses the new module — no behavioral change
+> - All 7 gates GREEN
+
+#### Phase 225-D — Extract route guard utilities
+
+> Extract `emitBlockedChatUsageEvent()`, `emitUsageEventsSafely()`, `estimateConversationBytes()`, `shouldStreamResponse()`, `getLatestUserMessage()`, `isMediaLimitStopReason()`, `isMediaSpecificLimitStopReason()`, `createUsageTaskId()` into `src/lib/utils/openai/route-helpers.ts`.
+> **Acceptance criteria:**
+>
+> - New file with exported functions
+> - `route.tsx` imports and uses them — no behavioral change
+> - `route.tsx` reduced to <500 lines (thin coordinator)
+> - All 7 gates GREEN
+
+### Phase 226 — Split Admin Actions Into Domain Files (LOW)
+
+> **Risk:** LOW. **Effort:** 1–2 hours. **Source:** Architect audit L1.
+> **Problem:** `src/lib/actions/admin.actions.tsx` is 1,782 lines — the largest file in the codebase. Houses all admin mutations in one file.
+> **Fix:** Split into domain-specific action files:
+>
+> - `src/lib/actions/admin-user.actions.tsx` — user CRUD, suspension, bulk operations
+> - `src/lib/actions/admin-settings.actions.tsx` — setting updates
+> - `src/lib/actions/admin-pages.actions.tsx` — public page CRUD
+>
+> **Acceptance criteria:**
+>
+> - Each new file exports its domain's server actions with `"use server"` directive
+> - All imports across `src/` updated to new paths
+> - Original `admin.actions.tsx` deleted or reduced to a re-export barrel
+> - All 7 gates GREEN, knip clean
+
+### Phase 227 — Reconcile SPEC.md / AGENTS.md Plan Limit Documentation (LOW)
+
+> **Risk:** LOW. **Effort:** 15 min. **Source:** Architect audit L6.
+> **Problem:** SPEC.md Section 4 shows Lite limits as `5 conversations/day, 10 prompts, 3 images, 3 audio`. AGENTS.md Rule 5 states `10 conversations/day, 10 prompts, 1 image, 1 audio`. The actual source of truth is `PLAN_LIMITS` in code. Docs must match code.
+> **Fix:** Read `PLAN_LIMITS` from `src/constants/plans.tsx` and update both SPEC.md and AGENTS.md to reflect actual values.
+> **Acceptance criteria:**
+>
+> - SPEC.md Lite/Pro/Premium limit tables match `PLAN_LIMITS` exactly
+> - AGENTS.md Rule 5 matches `PLAN_LIMITS` exactly
+> - No code changes required
+
+### Phase 228 — Extract Stripe Webhook Handlers Into Modules (LOW)
+
+> **Risk:** LOW. **Effort:** 1–2 hours. **Source:** Architect audit L3.
+> **Problem:** `src/app/api/webhooks/stripe/route.tsx` is 1,253 lines handling 5 event types in a single file. Each handler is well-structured internally but the file is hard to test in isolation.
+> **Fix:** Extract each handler into its own module under `src/lib/utils/stripe/`:
+>
+> - `handle-checkout-completed.ts`
+> - `handle-invoice-paid.ts`
+> - `handle-invoice-payment-failed.ts`
+> - `handle-subscription-updated.ts`
+> - `handle-subscription-deleted.ts`
+>
+> Keep shared Zod schemas and utility functions in `stripe-webhook-shared.ts`.
+> **Acceptance criteria:**
+>
+> - Each handler in its own file, exported as a single async function
+> - `route.tsx` reduced to dispatcher + Stripe signature verification
+> - All 7 gates GREEN, knip clean
+
+### Phase 229 — Extract generateResponse Retry/Tool Helpers (LOW)
+
+> **Risk:** LOW. **Effort:** 1–2 hours. **Source:** Architect audit L4.
+> **Problem:** `src/lib/utils/openai/generateResponse.tsx` is 1,188 lines. The retry logic (`withOpenAIRetry`) and tool call serialization could be extracted.
+> **Fix:** Extract `withOpenAIRetry()`, `classifyOpenAIError()`, `isRetryableOpenAIError()`, `serializeToolCalls()` into `src/lib/utils/openai/openai-retry.ts`.
+> **Acceptance criteria:**
+>
+> - New file with exported functions
+> - `generateResponse.tsx` imports and uses them — no behavioral change
+> - All 7 gates GREEN
+
+### Phase 230 — Rename Type Declaration `.d.tsx` → `.d.ts` (LOW)
+
+> **Risk:** LOW. **Effort:** 15 min. **Source:** Architect audit L7.
+> **Problem:** Type declaration files in `src/types/` use non-standard `.d.tsx` extension (e.g., `UserData.d.tsx`). Standard TypeScript convention is `.d.ts`. No functional impact but violates community conventions.
+> **Fix:** Rename all `.d.tsx` files in `src/types/` to `.d.ts`. Update all imports across `src/`.
+> **Acceptance criteria:**
+>
+> - All `.d.tsx` in `src/types/` renamed to `.d.ts`
+> - All imports updated
+> - All 7 gates GREEN, knip clean
 
 ---
 
