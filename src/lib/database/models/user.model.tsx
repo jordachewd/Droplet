@@ -91,6 +91,12 @@ const UserSchema = new Schema<IUser>(
         default: () => getExpiresOn("Lite"),
       },
       stripeId: { type: String },
+      stripeSubscriptionId: { type: String },
+      subscriptionStatus: {
+        type: String,
+        enum: ["active", "past_due", "canceled", "unpaid"],
+        default: null,
+      },
       cancelAtPeriodEnd: { type: Boolean, default: false },
       imageGenerations: { type: Number, default: 0 },
       audioGenerations: { type: Number, default: 0 },

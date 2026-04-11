@@ -21,6 +21,8 @@ describe("User model", () => {
     expect(user.plan.amount).toBe(0);
     expect(user.plan.billing).toBe("Monthly");
     expect(user.plan.expiresOn.toISOString()).toBe("9999-12-31T23:59:59.999Z");
+    expect(user.plan.stripeSubscriptionId).toBeUndefined();
+    expect(user.plan.subscriptionStatus).toBeNull();
     expect(user.subscriptionStatus).toBeNull();
   });
 
@@ -93,5 +95,23 @@ describe("User model", () => {
     const error = user.validateSync();
 
     expect(error?.errors["plan.name"]).toBeTruthy();
+  });
+
+  it("rejects invalid plan subscription status values", () => {
+    const user = new User({
+      ...baseUserInput,
+      plan: {
+        id: 1,
+        name: "Pro",
+        amount: 19,
+        billing: "Monthly",
+        startedOn: new Date("2026-01-01T00:00:00.000Z"),
+        expiresOn: new Date("2026-02-01T00:00:00.000Z"),
+        subscriptionStatus: "paused",
+      },
+    });
+    const error = user.validateSync();
+
+    expect(error?.errors["plan.subscriptionStatus"]).toBeTruthy();
   });
 });

@@ -285,6 +285,7 @@ function isInternalDownloadKeyUrl(rawUrl: string): boolean {
       parsedUrl.searchParams.has("key")
     );
   } catch {
+    // Invalid user-provided URLs are expected here; treat them as non-internal.
     return false;
   }
 }

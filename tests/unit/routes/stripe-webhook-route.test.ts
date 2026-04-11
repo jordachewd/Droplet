@@ -246,6 +246,53 @@ describe("POST /api/webhooks/stripe", () => {
     );
   });
 
+  it("uses checkout invoice id as an additional dedupe key", async () => {
+    constructEventMock.mockReturnValue({
+      type: "checkout.session.completed",
+      data: {
+        object: {
+          id: "cs_test_with_invoice",
+          invoice: "in_test_checkout_initial",
+          amount_total: 1900,
+          subscription: "sub_test_with_invoice",
+          metadata: {
+            userId: "mongo_user_1",
+            clerkId: "clerk_user_1",
+            planId: "1",
+            plan: "Pro",
+            billing: "Monthly",
+          },
+        },
+      },
+    });
+
+    const response = await POST(buildRequest('{"valid":"payload"}', "sig_123"));
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload).toEqual({ message: "OK" });
+    expect(Transaction.findOneAndUpdate).toHaveBeenCalledWith(
+      {
+        $or: [
+          { stripeId: "cs_test_with_invoice" },
+          { stripeInvoiceId: "in_test_checkout_initial" },
+        ],
+      },
+      expect.objectContaining({
+        $setOnInsert: expect.objectContaining({
+          stripeId: "cs_test_with_invoice",
+          stripeInvoiceId: "in_test_checkout_initial",
+          type: "subscription_initial",
+        }),
+      }),
+      expect.objectContaining({
+        upsert: true,
+        strict: true,
+        returnDocument: "before",
+      }),
+    );
+  });
+
   it("returns Already processed for replayed checkout session", async () => {
     constructEventMock.mockReturnValue({
       type: "checkout.session.completed",

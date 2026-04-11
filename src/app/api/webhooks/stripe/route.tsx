@@ -82,6 +82,7 @@ const checkoutSessionPayloadSchema = z
     id: nonEmptyStringSchema,
     amount_total: z.number().nullable().optional(),
     subscription: expandableIdSchema.optional(),
+    invoice: expandableIdSchema.optional(),
     metadata: checkoutSessionMetadataSchema,
   })
   .passthrough();
@@ -568,6 +569,7 @@ async function handleCheckoutSessionCompleted(
 
   const parsedSession: CheckoutSessionPayload = parsedEvent.data.data.object;
   const subscriptionId = resolveExpandableId(parsedSession.subscription);
+  const checkoutInvoiceId = resolveExpandableId(parsedSession.invoice);
 
   if (!subscriptionId) {
     logStripeWebhookError(
@@ -628,6 +630,7 @@ async function handleCheckoutSessionCompleted(
 
   const transaction: CreateTransactionParams = {
     stripeId: checkoutSessionId,
+    stripeInvoiceId: checkoutInvoiceId ?? undefined,
     userId: toStringId(existingUser._id),
     clerkId: metadataClerkId,
     createdAt: now,
@@ -638,8 +641,17 @@ async function handleCheckoutSessionCompleted(
     type: "subscription_initial",
   };
 
+  const transactionClaimFilter: Record<string, unknown> = checkoutInvoiceId
+    ? {
+        $or: [
+          { stripeId: checkoutSessionId },
+          { stripeInvoiceId: checkoutInvoiceId },
+        ],
+      }
+    : { stripeId: checkoutSessionId };
+
   const transactionClaim = await claimTransaction({
-    filter: { stripeId: checkoutSessionId },
+    filter: transactionClaimFilter,
     transaction,
     context: `checkout.session.completed ${checkoutSessionId}`,
   });
