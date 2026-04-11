@@ -133,6 +133,12 @@ function logUserDeletedCleanupSummary({
   );
 }
 
+function logAdminUserDeletionBlocked(clerkId: string) {
+  process.stderr.write(
+    `[clerk-webhook] WARNING: admin user deletion blocked clerkId=${clerkId}\n`,
+  );
+}
+
 function logWebhookProcessingFailure(eventType: string, error?: unknown) {
   process.stderr.write(
     `[clerk-webhook] ${eventType} processing failed${error ? `: ${error instanceof Error ? error.message : "unknown"}` : ""}.\n`,
@@ -494,12 +500,20 @@ export async function POST(req: NextRequest) {
       let deletedObjectCount: number | null = null;
       let userToDelete: {
         _id: unknown;
+        role?: string | null;
       } | null = null;
 
       try {
-        userToDelete = await User.findOne({ clerkId }, "_id", {
+        userToDelete = await User.findOne({ clerkId }, "_id role", {
           lean: true,
         });
+
+        if (userToDelete?.role === "admin") {
+          logAdminUserDeletionBlocked(clerkId);
+
+          return NextResponse.json({ message: "OK" });
+        }
+
         deletedUserCount = userToDelete ? null : 0;
       } catch (error) {
         logUserDeletedCleanupFailure("user", error);

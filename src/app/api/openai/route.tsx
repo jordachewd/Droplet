@@ -20,6 +20,7 @@ import { auth } from "@clerk/nextjs/server";
 import { getUserById } from "@/lib/actions/user.actions";
 import { ensureUserSynced } from "@/lib/utils/ensure-user-synced";
 import { UserData } from "@/types/UserData.d";
+import { connectToDatabase } from "@/lib/database/mongoose";
 import { enforceSlidingWindowRateLimit } from "@/lib/utils/rate-limit";
 import { resolveEntitlements } from "@/lib/utils/resolve-entitlements";
 import { getPersona } from "@/constants/assistant-personas";
@@ -61,6 +62,10 @@ import {
   getEffectiveSupportEmail,
 } from "@/lib/utils/effective-plan-config";
 import { getEffectiveStopReasonMessages } from "@/lib/utils/effective-stop-reasons";
+import {
+  claimMediaGenerationSlot,
+  rollbackMediaGenerationSlot,
+} from "@/lib/utils/openai/media-slot";
 import {
   chatMessageArraySchema,
   nonEmptyStringSchema,
@@ -136,15 +141,6 @@ interface ConversationStopPayload {
 }
 
 type StopReasonMessages = Record<TaskEndedReason, string>;
-
-type MediaUsageLimitType = "images" | "audio";
-type MediaCounterScope = "plan" | "trial";
-
-interface MediaSlotClaimResult {
-  claimed: boolean;
-  limit: number;
-  remaining: number;
-}
 
 function estimateConversationBytes(messages: Message[]): number {
   if (messages.length === 0) {
@@ -251,122 +247,6 @@ function isMediaSpecificLimitStopReason(
   value: OpenAIResponsePayload["blockedReason"],
 ): value is "image_limit_reached" | "audio_limit_reached" {
   return value === "image_limit_reached" || value === "audio_limit_reached";
-}
-
-function resolveMediaCounterField(
-  limitType: MediaUsageLimitType,
-  counterScope: MediaCounterScope,
-):
-  | "plan.imageGenerations"
-  | "plan.audioGenerations"
-  | "plan.trialUsage.trialImageGenerations"
-  | "plan.trialUsage.trialAudioGenerations" {
-  if (counterScope === "trial") {
-    if (limitType === "images") {
-      return "plan.trialUsage.trialImageGenerations";
-    }
-
-    return "plan.trialUsage.trialAudioGenerations";
-  }
-
-  if (limitType === "images") {
-    return "plan.imageGenerations";
-  }
-
-  return "plan.audioGenerations";
-}
-
-async function claimMediaGenerationSlot({
-  userId,
-  limitType,
-  limit,
-  counterScope,
-}: {
-  userId: string;
-  limitType: MediaUsageLimitType;
-  limit: number;
-  counterScope: MediaCounterScope;
-}): Promise<MediaSlotClaimResult> {
-  if (limit === -1) {
-    return {
-      claimed: true,
-      limit,
-      remaining: -1,
-    };
-  }
-
-  const counterField = resolveMediaCounterField(limitType, counterScope);
-  const updatedUser = await User.findOneAndUpdate(
-    {
-      clerkId: userId,
-      [counterField]: { $lt: limit },
-    },
-    {
-      $inc: {
-        [counterField]: 1,
-      },
-    },
-    {
-      new: true,
-      strict: true,
-      upsert: false,
-    },
-  );
-
-  if (!updatedUser) {
-    return {
-      claimed: false,
-      limit,
-      remaining: 0,
-    };
-  }
-
-  const nextCountRaw =
-    counterScope === "trial"
-      ? limitType === "images"
-        ? updatedUser.plan?.trialUsage?.trialImageGenerations
-        : updatedUser.plan?.trialUsage?.trialAudioGenerations
-      : limitType === "images"
-        ? updatedUser.plan?.imageGenerations
-        : updatedUser.plan?.audioGenerations;
-  const nextCount =
-    typeof nextCountRaw === "number" && Number.isFinite(nextCountRaw)
-      ? nextCountRaw
-      : 0;
-
-  return {
-    claimed: true,
-    limit,
-    remaining: Math.max(0, limit - nextCount),
-  };
-}
-
-async function rollbackMediaGenerationSlot({
-  userId,
-  limitType,
-  counterScope,
-}: {
-  userId: string;
-  limitType: MediaUsageLimitType;
-  counterScope: MediaCounterScope;
-}): Promise<void> {
-  const counterField = resolveMediaCounterField(limitType, counterScope);
-
-  await User.findOneAndUpdate(
-    {
-      clerkId: userId,
-      [counterField]: { $gt: 0 },
-    },
-    {
-      $inc: {
-        [counterField]: -1,
-      },
-    },
-    {
-      strict: true,
-      upsert: false,
-    },
-  );
 }
 
 function shouldStreamResponse(req: Request): boolean {
@@ -801,6 +681,8 @@ export async function POST(req: Request): Promise<Response> {
         { status: 400 },
       );
     }
+
+    await connectToDatabase();
 
     const rateLimit = await enforceSlidingWindowRateLimit({
       key: `openai:${userId}`,
@@ -1260,12 +1142,30 @@ export async function POST(req: Request): Promise<Response> {
         );
       }
 
-      const generatedTitle = await generateTitle(
-        promptPayloadMessages,
-        planName,
-        selectedPersona.id,
-        modelOverrides,
-      );
+      let generatedTitle: Awaited<ReturnType<typeof generateTitle>>;
+      try {
+        generatedTitle = await generateTitle(
+          promptPayloadMessages,
+          planName,
+          selectedPersona.id,
+          modelOverrides,
+        );
+      } catch (titleError) {
+        // Rollback the claimed slot — wrap in try/catch so rollback failure
+        // doesn't mask the original error.
+        try {
+          await User.findOneAndUpdate(
+            { clerkId: userId },
+            { $inc: { dailyConversationsStarted: -1 } },
+            { strict: true, upsert: false },
+          );
+        } catch (rollbackError) {
+          process.stderr.write(
+            `[openai/route] daily slot rollback failed after title generation error: ${rollbackError instanceof Error ? rollbackError.message : "unknown"}\\n`,
+          );
+        }
+        throw titleError;
+      }
       const {
         title,
         usage,

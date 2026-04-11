@@ -77,6 +77,8 @@ const TransactionSchema = new Schema<ITransaction>(
   { strict: true },
 );
 
+TransactionSchema.index({ createdAt: -1 });
+
 const Transaction =
   models?.Transaction || model("Transaction", TransactionSchema);
 

@@ -35,7 +35,7 @@ describe("Transaction model", () => {
     expect(error?.errors.type).toBeTruthy();
   });
 
-  it("defines indexes for stripe invoice and transaction type", () => {
+  it("defines indexes for stripe invoice, transaction type, and createdAt", () => {
     const schemaIndexes = Transaction.schema.indexes() as SchemaIndex[];
 
     expect(
@@ -47,5 +47,8 @@ describe("Transaction model", () => {
       ),
     ).toBe(true);
     expect(schemaIndexes.some(([fields]) => fields.type === 1)).toBe(true);
+    expect(schemaIndexes.some(([fields]) => fields.createdAt === -1)).toBe(
+      true,
+    );
   });
 });

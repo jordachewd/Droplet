@@ -14,6 +14,7 @@ import { getUserById } from "@/lib/actions/user.actions";
 import { ensureUserSynced } from "@/lib/utils/ensure-user-synced";
 import { auth } from "@clerk/nextjs/server";
 import User from "@/lib/database/models/user.model";
+import { connectToDatabase } from "@/lib/database/mongoose";
 import {
   checkDailyConversationLimit,
   claimDailyConversationSlot,
@@ -42,6 +43,9 @@ vi.mock("@clerk/nextjs/server", () => ({ auth: vi.fn() }));
 vi.mock("@/lib/actions/user.actions", () => ({ getUserById: vi.fn() }));
 vi.mock("@/lib/database/models/user.model", () => ({
   default: { findOneAndUpdate: vi.fn() },
+}));
+vi.mock("@/lib/database/mongoose", () => ({
+  connectToDatabase: vi.fn(),
 }));
 vi.mock("@/lib/utils/check-daily-conversations", () => ({
   checkDailyConversationLimit: vi.fn(),
@@ -139,6 +143,16 @@ function setupDefaultMocks() {
   });
   vi.mocked(updateTask).mockResolvedValue({});
   vi.mocked(User.findOneAndUpdate).mockResolvedValue({});
+  let connectCallCount = 0;
+  vi.mocked(connectToDatabase).mockImplementation(async () => {
+    connectCallCount += 1;
+
+    if (connectCallCount === 1) {
+      return {} as Awaited<ReturnType<typeof connectToDatabase>>;
+    }
+
+    throw new Error("Mock settings database unavailable");
+  });
   vi.mocked(ensureUserSynced).mockResolvedValue(null);
   vi.mocked(emitUsageEvents).mockImplementation(() => {
     return;
@@ -225,5 +239,27 @@ describe("POST /api/openai - resilience and rate limits", () => {
 
     expect(response.status).toBe(500);
     expect(payload.error).toBeTypeOf("string");
+  });
+
+  it("rolls back the daily conversation slot when title generation fails", async () => {
+    vi.mocked(generateTitle).mockRejectedValue(
+      new Error("title generation failed"),
+    );
+
+    const response = await POST(
+      buildOpenAiRequest({
+        messages: [{ role: "user", whois: "user", content: "new chat" }],
+      }),
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(payload.error).toBeTypeOf("string");
+    expect(User.findOneAndUpdate).toHaveBeenCalledWith(
+      { clerkId: "user_123" },
+      { $inc: { dailyConversationsStarted: -1 } },
+      { strict: true, upsert: false },
+    );
+    expect(createTask).not.toHaveBeenCalled();
   });
 });

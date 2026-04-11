@@ -458,6 +458,7 @@ describe("POST /api/webhooks/clerk", () => {
     });
     vi.mocked(User.findOne).mockResolvedValue({
       _id: "mongo_user_1",
+      role: "client",
     });
     vi.mocked(User.findByIdAndDelete).mockResolvedValue({
       acknowledged: true,
@@ -478,7 +479,7 @@ describe("POST /api/webhooks/clerk", () => {
     expect(connectToDatabase).toHaveBeenCalledOnce();
     expect(User.findOne).toHaveBeenCalledWith(
       { clerkId: "clerk_user_1" },
-      "_id",
+      "_id role",
       { lean: true },
     );
     expect(deleteUserCascade).toHaveBeenCalledWith(
@@ -497,6 +498,61 @@ describe("POST /api/webhooks/clerk", () => {
     expect(stderrWriteMock).toHaveBeenCalledWith(
       "[clerk-webhook] user.deleted cleanup counts user=1 transactions=3 tasks=8 usageEvents=11 rateLimitEntries=4 uploads=6 s3Objects=5\n",
     );
+  });
+
+  it("blocks user.deleted cleanup for admin users", async () => {
+    verifyWebhookMock.mockResolvedValue({
+      type: "user.deleted",
+      data: {
+        id: "clerk_admin_1",
+      },
+    });
+    vi.mocked(User.findOne).mockResolvedValue({
+      _id: "mongo_admin_1",
+      role: "admin",
+    });
+
+    const response = await POST(buildRequest({ event: "user.deleted" }));
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload).toEqual({ message: "OK" });
+    expect(User.findOne).toHaveBeenCalledWith(
+      { clerkId: "clerk_admin_1" },
+      "_id role",
+      { lean: true },
+    );
+    expect(deleteUserCascade).not.toHaveBeenCalled();
+    expect(User.findByIdAndDelete).not.toHaveBeenCalled();
+    expect(stderrWriteMock).toHaveBeenCalledWith(
+      expect.stringContaining(
+        "[clerk-webhook] WARNING: admin user deletion blocked",
+      ),
+    );
+  });
+
+  it("continues user.deleted cleanup for non-admin users", async () => {
+    verifyWebhookMock.mockResolvedValue({
+      type: "user.deleted",
+      data: {
+        id: "clerk_user_2",
+      },
+    });
+    vi.mocked(User.findOne).mockResolvedValue({
+      _id: "mongo_user_2",
+      role: "client",
+    });
+
+    const response = await POST(buildRequest({ event: "user.deleted" }));
+
+    expect(response.status).toBe(200);
+    expect(deleteUserCascade).toHaveBeenCalledWith(
+      "clerk_user_2",
+      expect.objectContaining({
+        onStepError: expect.any(Function),
+      }),
+    );
+    expect(User.findByIdAndDelete).toHaveBeenCalledWith("mongo_user_2");
   });
 
   it("returns 200 for replayed user.deleted when the user no longer exists", async () => {
