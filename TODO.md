@@ -5,13 +5,13 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #121 (2026-04-11). V1.0 MVP RELEASED. Stripe recurring billing COMPLETE (all 217 phases). Phase 26.x COMPLETE. Phase 223 COMPLETE. Phases 231/231-fix/232/224/233/225-A COMPLETE. 0 HIGH bugs. All 7 gates GREEN.**
+> **STATUS: PM audit #122 (2026-04-11). V1.0 MVP RELEASED. Phases 231/231-fix/232/224/233/225-A/225-B COMPLETE. 0 HIGH bugs. All 7 gates GREEN.**
 >
 > **GATE STATUS: All 7 gates GREEN. 0 vulnerabilities. 0 critical security issues.**
 >
 > **TEST STATUS: 729 tests (110 suites), 49 E2E (6 skipped). 0 failures. All gates GREEN.**
 >
-> **ACTIVE BACKLOG: PM audit #121 — 0 HIGH items. OpenAI route decomposition (225-B/C/D) is next priority.**
+> **ACTIVE BACKLOG: PM audit #122 — 0 HIGH items. OpenAI route decomposition continues (225-C/D next).**
 
 ---
 
@@ -64,12 +64,16 @@
 ### Phase 225 — Decompose OpenAI Route Into Focused Modules (MEDIUM)
 
 > **Risk:** MEDIUM. **Effort:** 2–3 hours (split into sub-phases). **Source:** Architect audit M1.
-> **Problem:** `src/app/api/openai/route.tsx` is 1,461 lines — the 2nd-largest file in the codebase. It owns the entire chat lifecycle: request validation, auth, rate limiting, entitlement resolution, plan expiry, prompt/daily/storage limit enforcement, media slot claim/rollback, streaming SSE orchestration, non-streaming orchestration, task creation, title generation, response finalization, and persistence. Any change to any of these concerns touches this file.
+> **Problem:** `src/app/api/openai/route.tsx` is 1,260 lines — the 2nd-largest file in the codebase. It owns the entire chat lifecycle: request validation, auth, rate limiting, entitlement resolution, plan expiry, prompt/daily/storage limit enforcement, streaming SSE orchestration, non-streaming orchestration, task creation, title generation, response finalization, and persistence. Any change to any of these concerns touches this file.
 > **Fix:** Extract into focused modules. Keep `POST()` as a thin coordinator.
 
 #### ~~Phase 225-A — Extract media slot claim/rollback logic~~ — DONE
 
 > ✅ Extracted to `src/lib/utils/openai/media-slot.ts` (122 lines). `claimMediaGenerationSlot()`, `rollbackMediaGenerationSlot()`, `resolveMediaCounterField()`. Atomic `$lt` guard, `$gt: 0` rollback guard, unlimited bypass, `import "server-only"`. 5 new tests. Route reduced from ~1,549 to 1,461 lines. All 7 gates GREEN.
+
+#### ~~Phase 225-B — Extract conversation lifecycle helpers~~ — DONE
+
+> ✅ Extracted to `src/lib/utils/openai/conversation-lifecycle.ts` (221 lines). 7 functions: `estimateConversationBytes`, `createStopTaskData`, `createStopResponsePayload`, `getPlanBoundEndAction`, `resolvePromptLimitEndAction`, `persistConversationStop`, `persistConversationNotice` + constant `TASK_STORAGE_WARNING_BYTES` + types `StopReasonMessages`, `ConversationStopPayload`. `buildEndActionInstructions` kept internal. Route reduced from 1,461 to 1,260 lines (201 line reduction). All 7 gates GREEN.
 
 #### Phase 225-B — Extract conversation lifecycle helpers
 

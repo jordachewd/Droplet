@@ -2,7 +2,19 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-04-11 — PM audit #121.
+> Last updated: 2026-04-11 — PM audit #122.
+
+---
+
+## Phase 225-B — Extract Conversation Lifecycle Helpers — COMPLETED (2026-04-11)
+
+> Engineer delivered (PM audit #122). 7 conversation lifecycle helpers extracted from OpenAI route to `src/lib/utils/openai/conversation-lifecycle.ts` (221 lines). `import "server-only"` present. `buildEndActionInstructions` correctly kept internal (non-exported). Route reduced from 1,461 to 1,260 lines (201 line reduction). Triple audit confirmed clean extraction. 729 tests (110 suites). All 7 gates GREEN.
+
+- [x] **225-B.1** — Created `src/lib/utils/openai/conversation-lifecycle.ts` with 7 exported functions: `estimateConversationBytes`, `createStopTaskData`, `createStopResponsePayload`, `getPlanBoundEndAction`, `resolvePromptLimitEndAction`, `persistConversationStop`, `persistConversationNotice`.
+- [x] **225-B.2** — Exported types `StopReasonMessages`, `ConversationStopPayload` and constant `TASK_STORAGE_WARNING_BYTES`.
+- [x] **225-B.3** — `route.tsx` imports all 7 functions + constant + type. No residual inline definitions.
+- [x] **225-B.4** — `buildEndActionInstructions` kept internal (non-exported) — Knip clean.
+- [x] **225-B.5** — Validation: prettier ✓, lint ✓, tsc ✓, tests (729/729) ✓, build ✓, knip ✓.
 
 ---
 
