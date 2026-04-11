@@ -6,6 +6,16 @@
 
 ---
 
+## Phase 227 — SPEC.md Plan Limit Reconciliation — COMPLETED (2026-04-11)
+
+> PM audit #119. SPEC.md Lite detailed limits table was stale (showed 5 conv/day, 3 images, 3 audio). Corrected to match `PLAN_LIMITS` code: 10 conv/day, 10 prompts, 1 image, 1 audio. AGENTS.md Rule 5 already matched code — no change needed. SPEC.md test count updated from 652 to 719 (109 suites).
+
+- [x] **227.1** — Fixed SPEC.md Lite Plan Limits (Detailed) table: conversations 5→10, images 3→1, audio 3→1.
+- [x] **227.2** — Updated SPEC.md Section 13 test count: 106 suites/652 tests → 109 suites/719 tests.
+- [x] **227.3** — Verified AGENTS.md Rule 5 already matches `PLAN_LIMITS` (no change needed).
+
+---
+
 ## Phase 223 — SWOT-Derived Fixes (Duplicate Transaction + Plan Subdoc Schema + Catch Comment) — COMPLETED (2026-04-11)
 
 > Engineer delivered (PM audit #117). 3 approved fixes from PM audit #116 SWOT analysis. Stripe duplicate transaction deduplication via checkout invoice ID cross-referencing. User model plan subdoc schema gap closed. Last remaining catch comment added. 719 tests (109 suites). All 7 gates GREEN.

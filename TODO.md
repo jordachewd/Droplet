@@ -5,13 +5,13 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #118 (2026-04-11). V1.0 MVP RELEASED. Stripe recurring billing COMPLETE (all 217 phases). Phase 26.x COMPLETE. Phase 223 COMPLETE (3 SWOT fixes). 0 HIGH bugs. All 7 gates GREEN.**
+> **STATUS: PM audit #119 (2026-04-11). V1.0 MVP RELEASED. Stripe recurring billing COMPLETE (all 217 phases). Phase 26.x COMPLETE. Phase 223 COMPLETE (3 SWOT fixes). 0 CRITICAL bugs. 2 HIGH items discovered (admin deletion guard, title gen slot rollback). All 7 gates GREEN.**
 >
-> **GATE STATUS: All 7 gates GREEN. 0 vulnerabilities. 0 critical issues.**
+> **GATE STATUS: All 7 gates GREEN. 0 vulnerabilities. 0 critical security issues.**
 >
 > **TEST STATUS: 719 tests (109 suites), 49 E2E (6 skipped). 0 failures. All gates GREEN.**
 >
-> **ACTIVE BACKLOG: Architect audit #118 recommendations queued below.**
+> **ACTIVE BACKLOG: PM audit #119 — 2 HIGH + 2 MEDIUM priority fixes queued above existing architect recommendations.**
 
 ---
 
@@ -33,6 +33,40 @@
 
 > Source: Droplet-Architect deep codebase audit. All 7 gates GREEN. Zero security vulnerabilities. Zero critical issues. Improvements target maintainability, fragility reduction, and future velocity.
 
+---
+
+## PM AUDIT #119 — HIGH Priority Fixes (2026-04-11)
+
+> Source: Deep ruthless audit by PM, Architect, and Engineer. Three separate audits compared. Items below are confirmed real by codebase verification.
+
+### Phase 231 — Guard Admin Users in Clerk `user.deleted` Webhook (HIGH)
+
+> **Risk:** HIGH. **Effort:** 15 min. **Source:** Engineer audit H-1, PM verification confirmed.
+> **Problem:** `src/app/api/webhooks/clerk/route.tsx` `user.deleted` handler processes the full cascade delete (User, Tasks, Transactions, UsageEvents, RateLimitEntries, Uploads, S3 objects) without checking if the user has `role === "admin"`. Per AGENTS.md security rule: "Admin users cannot be deleted." If an admin is deleted from the Clerk dashboard, all their MongoDB data is destroyed.
+> **Fix:** Before cascade deletion, query the user's role. If admin, log a warning and skip the MongoDB deletion cascade. Return 200 to Clerk (so the webhook doesn't retry) with a logged alert.
+> **Acceptance criteria:**
+>
+> - `user.deleted` handler queries `User.findOne({ clerkId }, "role")` before cascade
+> - If `role === "admin"`, log `[clerk-webhook] WARNING: admin user deletion blocked` via `process.stderr.write()` and return 200 with no cascade
+> - If `role !== "admin"`, proceed with existing cascade behavior unchanged
+> - New unit test verifying admin deletion is blocked
+> - New unit test verifying non-admin deletion proceeds normally
+> - All 7 gates GREEN
+
+### Phase 232 — Rollback Daily Slot on Title Generation Failure (HIGH)
+
+> **Risk:** HIGH. **Effort:** 15 min. **Source:** Engineer audit H-2, PM verification confirmed.
+> **Problem:** In `src/app/api/openai/route.tsx`, for non-admin new conversations: `claimDailyConversationSlot()` runs first (~line 1220), then `generateTitle()` (~line 1263). If `generateTitle()` throws (OpenAI outage, rate limit), control jumps to the top-level catch with NO rollback of the claimed daily slot. The `createTask` failure path has its own rollback (line 1295), but the `generateTitle` failure path between claim and createTask does not. Lite users (10/day) can silently lose conversation slots under OpenAI service pressure.
+> **Fix:** Wrap `generateTitle()` in a try/catch that rolls back `dailyConversationsStarted` on failure, mirroring the existing `createTask` rollback pattern.
+> **Acceptance criteria:**
+>
+> - `generateTitle()` call is wrapped in try/catch
+> - On failure, `User.findOneAndUpdate({ clerkId }, { $inc: { dailyConversationsStarted: -1 } })` is called
+> - Rollback is itself wrapped in try/catch with `process.stderr.write()` on failure
+> - The original error is re-thrown after rollback attempt
+> - New unit test verifying slot rollback on title generation failure
+> - All 7 gates GREEN
+
 ### Phase 224 — Add `connectToDatabase()` to OpenAI Route (MEDIUM)
 
 > **Risk:** MEDIUM. **Effort:** 5 min. **Source:** Architect audit M2.
@@ -42,6 +76,16 @@
 >
 > - `await connectToDatabase()` is called at the start of `POST()` in `src/app/api/openai/route.tsx`
 > - All existing tests pass
+> - All 7 gates GREEN
+
+### Phase 233 — Add Transaction `createdAt` Descending Index (MEDIUM)
+
+> **Risk:** MEDIUM. **Effort:** 5 min. **Source:** Engineer audit H-5/M-8, PM verification confirmed.
+> **Problem:** `src/lib/database/models/transaction.model.tsx` has no index on `createdAt`. Admin queries in `admin-queries.ts` sort by `{ createdAt: -1 }` and paginate with `.skip()`. `countDocuments({})` requires a full collection scan. As transaction volume grows with recurring subscriptions, this becomes a performance issue.
+> **Fix:** Add `TransactionSchema.index({ createdAt: -1 })` to the Transaction model.
+> **Acceptance criteria:**
+>
+> - `createdAt` has a descending index on Transaction model
 > - All 7 gates GREEN
 
 ### Phase 225 — Decompose OpenAI Route Into Focused Modules (MEDIUM)
@@ -90,7 +134,7 @@
 ### Phase 226 — Split Admin Actions Into Domain Files (LOW)
 
 > **Risk:** LOW. **Effort:** 1–2 hours. **Source:** Architect audit L1.
-> **Problem:** `src/lib/actions/admin.actions.tsx` is 1,782 lines — the largest file in the codebase. Houses all admin mutations in one file.
+> **Problem:** `src/lib/actions/admin.actions.tsx` is 1,564 lines — the largest file in the codebase. Houses all admin mutations in one file.
 > **Fix:** Split into domain-specific action files:
 >
 > - `src/lib/actions/admin-user.actions.tsx` — user CRUD, suspension, bulk operations
@@ -104,16 +148,9 @@
 > - Original `admin.actions.tsx` deleted or reduced to a re-export barrel
 > - All 7 gates GREEN, knip clean
 
-### Phase 227 — Reconcile SPEC.md / AGENTS.md Plan Limit Documentation (LOW)
+### ~~Phase 227 — Reconcile SPEC.md / AGENTS.md Plan Limit Documentation~~ — DONE (PM audit #119)
 
-> **Risk:** LOW. **Effort:** 15 min. **Source:** Architect audit L6.
-> **Problem:** SPEC.md Section 4 shows Lite limits as `5 conversations/day, 10 prompts, 3 images, 3 audio`. AGENTS.md Rule 5 states `10 conversations/day, 10 prompts, 1 image, 1 audio`. The actual source of truth is `PLAN_LIMITS` in code. Docs must match code.
-> **Fix:** Read `PLAN_LIMITS` from `src/constants/plans.tsx` and update both SPEC.md and AGENTS.md to reflect actual values.
-> **Acceptance criteria:**
->
-> - SPEC.md Lite/Pro/Premium limit tables match `PLAN_LIMITS` exactly
-> - AGENTS.md Rule 5 matches `PLAN_LIMITS` exactly
-> - No code changes required
+> ✅ SPEC.md Lite detailed limits table fixed by PM audit #119 to match `PLAN_LIMITS` (10 conv/day, 10 prompts, 1 image, 1 audio). AGENTS.md Rule 5 already matches code. No remaining discrepancy. Move to DONE.md.
 
 ### Phase 228 — Extract Stripe Webhook Handlers Into Modules (LOW)
 
