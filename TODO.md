@@ -5,13 +5,13 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #120 (2026-04-11). V1.0 MVP RELEASED. Stripe recurring billing COMPLETE (all 217 phases). Phase 26.x COMPLETE. Phase 223 COMPLETE. Phases 231/232/224/233/225-A COMPLETE. 1 HIGH bug discovered (Phase 231 admin guard DB-failure bypass). All 7 gates GREEN.**
+> **STATUS: PM audit #121 (2026-04-11). V1.0 MVP RELEASED. Stripe recurring billing COMPLETE (all 217 phases). Phase 26.x COMPLETE. Phase 223 COMPLETE. Phases 231/231-fix/232/224/233/225-A COMPLETE. 0 HIGH bugs. All 7 gates GREEN.**
 >
 > **GATE STATUS: All 7 gates GREEN. 0 vulnerabilities. 0 critical security issues.**
 >
-> **TEST STATUS: 728 tests (110 suites), 49 E2E (6 skipped). 0 failures. All gates GREEN.**
+> **TEST STATUS: 729 tests (110 suites), 49 E2E (6 skipped). 0 failures. All gates GREEN.**
 >
-> **ACTIVE BACKLOG: PM audit #120 — 1 HIGH fix (Phase 231-fix) queued above existing architect recommendations.**
+> **ACTIVE BACKLOG: PM audit #121 — 0 HIGH items. OpenAI route decomposition (225-B/C/D) is next priority.**
 
 ---
 
@@ -35,21 +35,9 @@
 
 ---
 
-## PM AUDIT #120 — CRITICAL Fix (2026-04-11)
+## ✅ PM AUDIT #120 — Phase 231-fix — COMPLETED (PM audit #121) — Archived to DONE.md
 
-> Source: Deep ruthless triple audit (PM + Architect + Engineer). All three audits independently confirmed the same vulnerability.
-
-### Phase 231-fix — Fail-Safe Admin Guard on DB Error in Clerk `user.deleted` Webhook (HIGH)
-
-> **Risk:** HIGH. **Effort:** 10 min. **Source:** PM audit #120, confirmed by Architect + Engineer.
-> **Problem:** Phase 231 added admin deletion guard but the `catch` block in `src/app/api/webhooks/clerk/route.tsx` (lines ~507-521) logs the error and falls through. If `User.findOne()` throws (DB timeout, replica-set failover), `userToDelete` remains `null`, the admin guard is never evaluated, and `deleteUserCascade()` runs unconditionally — destroying all admin user data (transactions, tasks, usage events, rate limit entries, uploads, S3 objects).
-> **Fix:** The `catch` block must fail-safe: add `return NextResponse.json({ message: "OK" });` inside the catch block. This prevents cascade when the admin check cannot be verified. Return 200 prevents Clerk retry loops.
-> **Acceptance criteria:**
->
-> - `catch` block for `User.findOne()` in the `user.deleted` handler returns `NextResponse.json({ message: "OK" })` after logging
-> - Admin data is preserved when DB is unreachable during webhook
-> - New unit test: `User.findOne` rejection during admin lookup → returns 200, cascade does NOT run
-> - All 7 gates GREEN
+> ✅ Phase 231-fix COMPLETE. Catch block in `user.deleted` webhook now returns 200 on DB lookup failure. Cascade blocked. Regression test added (729 tests). All 7 gates GREEN. See [DONE.md](DONE.md).
 
 ---
 
@@ -57,9 +45,9 @@
 
 > All 4 phases implemented by Droplet-Engineer and verified by triple audit (PM + Architect + Engineer). 728 tests (110 suites). All 7 gates GREEN.
 
-### ~~Phase 231 — Guard Admin Users in Clerk `user.deleted` Webhook~~ — DONE (with known issue → Phase 231-fix)
+### ~~Phase 231 — Guard Admin Users in Clerk `user.deleted` Webhook~~ — DONE (Phase 231-fix also DONE)
 
-> ✅ Implemented. Admin role check added before cascade. Returns 200 to prevent Clerk retry. Warning logged via `process.stderr.write()`. **Known issue:** catch block falls through on DB failure — addressed by Phase 231-fix above.
+> ✅ Implemented. Admin role check added before cascade. Returns 200 to prevent Clerk retry. Warning logged via `process.stderr.write()`. DB-failure bypass fixed by Phase 231-fix (catch block now returns early).
 
 ### ~~Phase 232 — Rollback Daily Slot on Title Generation Failure~~ — DONE
 

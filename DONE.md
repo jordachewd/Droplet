@@ -2,13 +2,23 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-04-11 — PM audit #120.
+> Last updated: 2026-04-11 — PM audit #121.
+
+---
+
+## Phase 231-fix — Fail-Safe Admin Guard on DB Error — COMPLETED (2026-04-11)
+
+> Engineer delivered (PM audit #121). Catch block in Clerk `user.deleted` webhook now returns 200 immediately when `User.findOne()` throws (DB timeout, replica-set failover). Prevents cascade delete from running when admin role check cannot be verified. Triple audit confirmed (PM + Architect + Engineer). 729 tests (110 suites). All 7 gates GREEN.
+
+- [x] **231-fix.1** — Added `return NextResponse.json({ message: "OK" })` in catch block at line 520 of `route.tsx`.
+- [x] **231-fix.2** — New regression test: `User.findOne` rejection → 200 response, `deleteUserCascade` NOT called, `User.findByIdAndDelete` NOT called, error logged to stderr.
+- [x] **231-fix.3** — Validation: prettier ✓, lint ✓, tsc ✓, tests (729/729) ✓, build ✓, knip ✓.
 
 ---
 
 ## Phase 231 — Guard Admin Users in Clerk `user.deleted` Webhook — COMPLETED (2026-04-11)
 
-> Engineer delivered (PM audit #120). Admin role check added before cascade deletion in Clerk `user.deleted` webhook handler. If `role === "admin"`, logs warning via `process.stderr.write()` and returns 200 to prevent Clerk retry. Non-admin path unchanged. 728 tests (110 suites). All 7 gates GREEN. **Known issue:** catch block falls through on DB failure — addressed by Phase 231-fix (pending).
+> Engineer delivered (PM audit #120). Admin role check added before cascade deletion in Clerk `user.deleted` webhook handler. If `role === "admin"`, logs warning via `process.stderr.write()` and returns 200 to prevent Clerk retry. Non-admin path unchanged. 728 tests (110 suites). All 7 gates GREEN. DB-failure bypass fixed by Phase 231-fix.
 
 - [x] **231.1** — Added `User.findOne({ clerkId }, "_id role", { lean: true })` before cascade in `user.deleted` handler.
 - [x] **231.2** — Admin check: if `role === "admin"`, call `logAdminUserDeletionBlocked()` and return 200 with no cascade.
