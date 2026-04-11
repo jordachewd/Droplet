@@ -2,7 +2,54 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-04-11 — PM audit #117.
+> Last updated: 2026-04-11 — PM audit #120.
+
+---
+
+## Phase 231 — Guard Admin Users in Clerk `user.deleted` Webhook — COMPLETED (2026-04-11)
+
+> Engineer delivered (PM audit #120). Admin role check added before cascade deletion in Clerk `user.deleted` webhook handler. If `role === "admin"`, logs warning via `process.stderr.write()` and returns 200 to prevent Clerk retry. Non-admin path unchanged. 728 tests (110 suites). All 7 gates GREEN. **Known issue:** catch block falls through on DB failure — addressed by Phase 231-fix (pending).
+
+- [x] **231.1** — Added `User.findOne({ clerkId }, "_id role", { lean: true })` before cascade in `user.deleted` handler.
+- [x] **231.2** — Admin check: if `role === "admin"`, call `logAdminUserDeletionBlocked()` and return 200 with no cascade.
+- [x] **231.3** — `logAdminUserDeletionBlocked()` logs `[clerk-webhook] WARNING: admin user deletion attempt blocked` via `process.stderr.write()`.
+- [x] **231.4** — New unit tests: admin deletion blocked, non-admin deletion proceeds normally.
+- [x] **231.5** — Validation: prettier ✓, lint ✓, tsc ✓, tests (728/728) ✓, build ✓, knip ✓.
+
+## Phase 232 — Rollback Daily Slot on Title Generation Failure — COMPLETED (2026-04-11)
+
+> Engineer delivered (PM audit #120). `generateTitle()` wrapped in try/catch with `dailyConversationsStarted` rollback on failure. Rollback itself wrapped in try/catch with stderr logging. Original error re-thrown after rollback attempt. Admin path correctly unprotected (no slot claimed). 728 tests (110 suites). All 7 gates GREEN.
+
+- [x] **232.1** — `generateTitle()` call in `route.tsx` wrapped in try/catch (lines ~1146-1172).
+- [x] **232.2** — On failure: `User.findOneAndUpdate({ clerkId }, { $inc: { dailyConversationsStarted: -1 } })` rolls back claimed slot.
+- [x] **232.3** — Rollback failure logged to stderr. Original `titleError` re-thrown.
+- [x] **232.4** — New unit test verifying rollback call shape on title generation failure.
+- [x] **232.5** — Validation: prettier ✓, lint ✓, tsc ✓, tests (728/728) ✓, build ✓, knip ✓.
+
+## Phase 224 — Add `connectToDatabase()` to OpenAI Route — COMPLETED (2026-04-11)
+
+> Engineer delivered (PM audit #120). `connectToDatabase()` called at line 685 in `POST()` handler, before any Mongoose model operations. Eliminates fragile implicit ordering dependency. 728 tests (110 suites). All 7 gates GREEN.
+
+- [x] **224.1** — Added `await connectToDatabase()` at line 685 in `src/app/api/openai/route.tsx`.
+- [x] **224.2** — New test assertion: `connectToDatabase` is called for valid requests.
+- [x] **224.3** — Validation: prettier ✓, lint ✓, tsc ✓, tests (728/728) ✓, build ✓, knip ✓.
+
+## Phase 233 — Add Transaction `createdAt` Descending Index — COMPLETED (2026-04-11)
+
+> Engineer delivered (PM audit #120). Descending index on `createdAt` added to Transaction model. Supports 3 admin queries that sort by `{ createdAt: -1 }`. 728 tests (110 suites). All 7 gates GREEN.
+
+- [x] **233.1** — Added `TransactionSchema.index({ createdAt: -1 })` at line 80 of `transaction.model.tsx`.
+- [x] **233.2** — New test: verifies index exists on schema with correct direction.
+- [x] **233.3** — Validation: prettier ✓, lint ✓, tsc ✓, tests (728/728) ✓, build ✓, knip ✓.
+
+## Phase 225-A — Extract Media Slot Claim/Rollback Logic — COMPLETED (2026-04-11)
+
+> Engineer delivered (PM audit #120). Media slot claim/rollback helpers extracted from OpenAI route to `src/lib/utils/openai/media-slot.ts` (122 lines). Atomic `$lt` guard for claims, `$gt: 0` guard for rollback, unlimited plan bypass, `import "server-only"`. Route reduced from ~1,549 to 1,461 lines. 728 tests (110 suites). All 7 gates GREEN.
+
+- [x] **225-A.1** — Created `src/lib/utils/openai/media-slot.ts` with `resolveMediaCounterField()`, `claimMediaGenerationSlot()`, `rollbackMediaGenerationSlot()`.
+- [x] **225-A.2** — `route.tsx` imports from `@/lib/utils/openai/media-slot`. No residual inline logic.
+- [x] **225-A.3** — 5 new tests: 4 counter field combinations, unlimited bypass, limited claim, failed claim, rollback guard.
+- [x] **225-A.4** — Validation: prettier ✓, lint ✓, tsc ✓, tests (728/728) ✓, build ✓, knip ✓.
 
 ---
 

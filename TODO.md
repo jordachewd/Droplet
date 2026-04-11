@@ -5,13 +5,13 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #119 (2026-04-11). V1.0 MVP RELEASED. Stripe recurring billing COMPLETE (all 217 phases). Phase 26.x COMPLETE. Phase 223 COMPLETE (3 SWOT fixes). 0 CRITICAL bugs. 2 HIGH items discovered (admin deletion guard, title gen slot rollback). All 7 gates GREEN.**
+> **STATUS: PM audit #120 (2026-04-11). V1.0 MVP RELEASED. Stripe recurring billing COMPLETE (all 217 phases). Phase 26.x COMPLETE. Phase 223 COMPLETE. Phases 231/232/224/233/225-A COMPLETE. 1 HIGH bug discovered (Phase 231 admin guard DB-failure bypass). All 7 gates GREEN.**
 >
 > **GATE STATUS: All 7 gates GREEN. 0 vulnerabilities. 0 critical security issues.**
 >
-> **TEST STATUS: 719 tests (109 suites), 49 E2E (6 skipped). 0 failures. All gates GREEN.**
+> **TEST STATUS: 728 tests (110 suites), 49 E2E (6 skipped). 0 failures. All gates GREEN.**
 >
-> **ACTIVE BACKLOG: PM audit #119 — 2 HIGH + 2 MEDIUM priority fixes queued above existing architect recommendations.**
+> **ACTIVE BACKLOG: PM audit #120 — 1 HIGH fix (Phase 231-fix) queued above existing architect recommendations.**
 
 ---
 
@@ -35,73 +35,53 @@
 
 ---
 
-## PM AUDIT #119 — HIGH Priority Fixes (2026-04-11)
+## PM AUDIT #120 — CRITICAL Fix (2026-04-11)
 
-> Source: Deep ruthless audit by PM, Architect, and Engineer. Three separate audits compared. Items below are confirmed real by codebase verification.
+> Source: Deep ruthless triple audit (PM + Architect + Engineer). All three audits independently confirmed the same vulnerability.
 
-### Phase 231 — Guard Admin Users in Clerk `user.deleted` Webhook (HIGH)
+### Phase 231-fix — Fail-Safe Admin Guard on DB Error in Clerk `user.deleted` Webhook (HIGH)
 
-> **Risk:** HIGH. **Effort:** 15 min. **Source:** Engineer audit H-1, PM verification confirmed.
-> **Problem:** `src/app/api/webhooks/clerk/route.tsx` `user.deleted` handler processes the full cascade delete (User, Tasks, Transactions, UsageEvents, RateLimitEntries, Uploads, S3 objects) without checking if the user has `role === "admin"`. Per AGENTS.md security rule: "Admin users cannot be deleted." If an admin is deleted from the Clerk dashboard, all their MongoDB data is destroyed.
-> **Fix:** Before cascade deletion, query the user's role. If admin, log a warning and skip the MongoDB deletion cascade. Return 200 to Clerk (so the webhook doesn't retry) with a logged alert.
+> **Risk:** HIGH. **Effort:** 10 min. **Source:** PM audit #120, confirmed by Architect + Engineer.
+> **Problem:** Phase 231 added admin deletion guard but the `catch` block in `src/app/api/webhooks/clerk/route.tsx` (lines ~507-521) logs the error and falls through. If `User.findOne()` throws (DB timeout, replica-set failover), `userToDelete` remains `null`, the admin guard is never evaluated, and `deleteUserCascade()` runs unconditionally — destroying all admin user data (transactions, tasks, usage events, rate limit entries, uploads, S3 objects).
+> **Fix:** The `catch` block must fail-safe: add `return NextResponse.json({ message: "OK" });` inside the catch block. This prevents cascade when the admin check cannot be verified. Return 200 prevents Clerk retry loops.
 > **Acceptance criteria:**
 >
-> - `user.deleted` handler queries `User.findOne({ clerkId }, "role")` before cascade
-> - If `role === "admin"`, log `[clerk-webhook] WARNING: admin user deletion blocked` via `process.stderr.write()` and return 200 with no cascade
-> - If `role !== "admin"`, proceed with existing cascade behavior unchanged
-> - New unit test verifying admin deletion is blocked
-> - New unit test verifying non-admin deletion proceeds normally
+> - `catch` block for `User.findOne()` in the `user.deleted` handler returns `NextResponse.json({ message: "OK" })` after logging
+> - Admin data is preserved when DB is unreachable during webhook
+> - New unit test: `User.findOne` rejection during admin lookup → returns 200, cascade does NOT run
 > - All 7 gates GREEN
 
-### Phase 232 — Rollback Daily Slot on Title Generation Failure (HIGH)
+---
 
-> **Risk:** HIGH. **Effort:** 15 min. **Source:** Engineer audit H-2, PM verification confirmed.
-> **Problem:** In `src/app/api/openai/route.tsx`, for non-admin new conversations: `claimDailyConversationSlot()` runs first (~line 1220), then `generateTitle()` (~line 1263). If `generateTitle()` throws (OpenAI outage, rate limit), control jumps to the top-level catch with NO rollback of the claimed daily slot. The `createTask` failure path has its own rollback (line 1295), but the `generateTitle` failure path between claim and createTask does not. Lite users (10/day) can silently lose conversation slots under OpenAI service pressure.
-> **Fix:** Wrap `generateTitle()` in a try/catch that rolls back `dailyConversationsStarted` on failure, mirroring the existing `createTask` rollback pattern.
-> **Acceptance criteria:**
->
-> - `generateTitle()` call is wrapped in try/catch
-> - On failure, `User.findOneAndUpdate({ clerkId }, { $inc: { dailyConversationsStarted: -1 } })` is called
-> - Rollback is itself wrapped in try/catch with `process.stderr.write()` on failure
-> - The original error is re-thrown after rollback attempt
-> - New unit test verifying slot rollback on title generation failure
-> - All 7 gates GREEN
+## ✅ PM AUDIT #119 — Phases 231/232/224/233 — COMPLETED (PM audit #120) — Move to DONE.md
 
-### Phase 224 — Add `connectToDatabase()` to OpenAI Route (MEDIUM)
+> All 4 phases implemented by Droplet-Engineer and verified by triple audit (PM + Architect + Engineer). 728 tests (110 suites). All 7 gates GREEN.
 
-> **Risk:** MEDIUM. **Effort:** 5 min. **Source:** Architect audit M2.
-> **Problem:** `src/app/api/openai/route.tsx` calls `User.findOneAndUpdate()` directly (lines 299, 355, 1046, 1289) without calling `connectToDatabase()`. It relies on `getUserById()` or `ensureUserSynced()` having established the connection first — a fragile implicit ordering dependency.
-> **Fix:** Add one `await connectToDatabase()` call at the top of `POST()` before any model operations.
-> **Acceptance criteria:**
->
-> - `await connectToDatabase()` is called at the start of `POST()` in `src/app/api/openai/route.tsx`
-> - All existing tests pass
-> - All 7 gates GREEN
+### ~~Phase 231 — Guard Admin Users in Clerk `user.deleted` Webhook~~ — DONE (with known issue → Phase 231-fix)
 
-### Phase 233 — Add Transaction `createdAt` Descending Index (MEDIUM)
+> ✅ Implemented. Admin role check added before cascade. Returns 200 to prevent Clerk retry. Warning logged via `process.stderr.write()`. **Known issue:** catch block falls through on DB failure — addressed by Phase 231-fix above.
 
-> **Risk:** MEDIUM. **Effort:** 5 min. **Source:** Engineer audit H-5/M-8, PM verification confirmed.
-> **Problem:** `src/lib/database/models/transaction.model.tsx` has no index on `createdAt`. Admin queries in `admin-queries.ts` sort by `{ createdAt: -1 }` and paginate with `.skip()`. `countDocuments({})` requires a full collection scan. As transaction volume grows with recurring subscriptions, this becomes a performance issue.
-> **Fix:** Add `TransactionSchema.index({ createdAt: -1 })` to the Transaction model.
-> **Acceptance criteria:**
->
-> - `createdAt` has a descending index on Transaction model
-> - All 7 gates GREEN
+### ~~Phase 232 — Rollback Daily Slot on Title Generation Failure~~ — DONE
+
+> ✅ Implemented. `generateTitle()` wrapped in try/catch with `dailyConversationsStarted` rollback. Rollback failure logged to stderr. Original error re-thrown. Admin path correctly unprotected. Tested.
+
+### ~~Phase 224 — Add `connectToDatabase()` to OpenAI Route~~ — DONE
+
+> ✅ Implemented. `connectToDatabase()` called at line 685, before any model operations. Tested.
+
+### ~~Phase 233 — Add Transaction `createdAt` Descending Index~~ — DONE
+
+> ✅ Implemented. `TransactionSchema.index({ createdAt: -1 })` at line 80. Benefits 3 admin sort queries. Tested.
 
 ### Phase 225 — Decompose OpenAI Route Into Focused Modules (MEDIUM)
 
 > **Risk:** MEDIUM. **Effort:** 2–3 hours (split into sub-phases). **Source:** Architect audit M1.
-> **Problem:** `src/app/api/openai/route.tsx` is 1,707 lines — the 2nd-largest file in the codebase. It owns the entire chat lifecycle: request validation, auth, rate limiting, entitlement resolution, plan expiry, prompt/daily/storage limit enforcement, media slot claim/rollback, streaming SSE orchestration, non-streaming orchestration, task creation, title generation, response finalization, and persistence. Any change to any of these concerns touches this file.
+> **Problem:** `src/app/api/openai/route.tsx` is 1,461 lines — the 2nd-largest file in the codebase. It owns the entire chat lifecycle: request validation, auth, rate limiting, entitlement resolution, plan expiry, prompt/daily/storage limit enforcement, media slot claim/rollback, streaming SSE orchestration, non-streaming orchestration, task creation, title generation, response finalization, and persistence. Any change to any of these concerns touches this file.
 > **Fix:** Extract into focused modules. Keep `POST()` as a thin coordinator.
 
-#### Phase 225-A — Extract media slot claim/rollback logic
+#### ~~Phase 225-A — Extract media slot claim/rollback logic~~ — DONE
 
-> Extract `claimMediaGenerationSlot()`, `rollbackMediaGenerationSlot()`, `resolveMediaCounterField()` into `src/lib/utils/openai/media-slot.ts`.
-> **Acceptance criteria:**
->
-> - New file `src/lib/utils/openai/media-slot.ts` with exported functions
-> - `route.tsx` imports and uses them — no behavioral change
-> - All 7 gates GREEN
+> ✅ Extracted to `src/lib/utils/openai/media-slot.ts` (122 lines). `claimMediaGenerationSlot()`, `rollbackMediaGenerationSlot()`, `resolveMediaCounterField()`. Atomic `$lt` guard, `$gt: 0` rollback guard, unlimited bypass, `import "server-only"`. 5 new tests. Route reduced from ~1,549 to 1,461 lines. All 7 gates GREEN.
 
 #### Phase 225-B — Extract conversation lifecycle helpers
 
@@ -148,7 +128,7 @@
 > - Original `admin.actions.tsx` deleted or reduced to a re-export barrel
 > - All 7 gates GREEN, knip clean
 
-### ~~Phase 227 — Reconcile SPEC.md / AGENTS.md Plan Limit Documentation~~ — DONE (PM audit #119)
+### ~~Phase 227 — Reconcile SPEC.md / AGENTS.md Plan Limit Documentation~~ — DONE (PM audit #119) — Archived to DONE.md
 
 > ✅ SPEC.md Lite detailed limits table fixed by PM audit #119 to match `PLAN_LIMITS` (10 conv/day, 10 prompts, 1 image, 1 audio). AGENTS.md Rule 5 already matches code. No remaining discrepancy. Move to DONE.md.
 
