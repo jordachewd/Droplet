@@ -531,6 +531,29 @@ describe("POST /api/webhooks/clerk", () => {
     );
   });
 
+  it("returns 200 and skips cascade when user lookup fails for user.deleted", async () => {
+    verifyWebhookMock.mockResolvedValue({
+      type: "user.deleted",
+      data: {
+        id: "clerk_user_errored_lookup",
+      },
+    });
+    vi.mocked(User.findOne).mockRejectedValue(new Error("lookup failed"));
+
+    const response = await POST(buildRequest({ event: "user.deleted" }));
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload).toEqual({ message: "OK" });
+    expect(deleteUserCascade).not.toHaveBeenCalled();
+    expect(User.findByIdAndDelete).not.toHaveBeenCalled();
+    expect(stderrWriteMock).toHaveBeenCalledWith(
+      expect.stringContaining(
+        "[clerk-webhook] user.deleted user cleanup failed: lookup failed",
+      ),
+    );
+  });
+
   it("continues user.deleted cleanup for non-admin users", async () => {
     verifyWebhookMock.mockResolvedValue({
       type: "user.deleted",

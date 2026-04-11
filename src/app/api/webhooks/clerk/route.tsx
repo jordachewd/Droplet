@@ -517,6 +517,7 @@ export async function POST(req: NextRequest) {
         deletedUserCount = userToDelete ? null : 0;
       } catch (error) {
         logUserDeletedCleanupFailure("user", error);
+        return NextResponse.json({ message: "OK" });
       }
 
       const cascadeResult = await deleteUserCascade(clerkId, {
