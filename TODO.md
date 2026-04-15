@@ -5,13 +5,13 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #123 (2026-04-11). V1.0 MVP RELEASED. ALL Phases through 233 COMPLETE. Phase 225 (full OpenAI route decomposition) COMPLETE. Phase 230 (.d.tsx rename) COMPLETE. 0 HIGH bugs. All 7 gates GREEN.**
+> **STATUS: PM audit #124 (2026-04-15). V1.0 MVP RELEASED. ALL Phases through 233 COMPLETE. Phase 225 (full OpenAI route decomposition) COMPLETE. Phase 230 (.d.tsx rename) COMPLETE. 0 HIGH bugs. All 7 gates GREEN.**
 >
-> **GATE STATUS: All 7 gates GREEN. 0 vulnerabilities. 0 critical security issues.**
+> **GATE STATUS: All 7 gates GREEN. 0 npm vulnerabilities. 0 critical security issues. Code hygiene 100% (0 console.log, 0 Math.random, 0 as any, 0 ts-ignore, 0 empty catch, 0 window.alert).**
 >
 > **TEST STATUS: 729 tests (110 suites), 49 E2E (6 skipped). 0 failures. All gates GREEN.**
 >
-> **ACTIVE BACKLOG: PM audit #123 — 0 HIGH items. OpenAI route decomposition COMPLETE (route 1,461→883 lines, 4 modules extracted). Next: god file decomposition (226/228/229).**
+> **ACTIVE BACKLOG: PM audit #124 — 0 HIGH items. 3 god files remain: admin.actions.tsx (1,782), stripe/route.tsx (1,253), generateResponse.tsx (1,188). Next: Phase 226 (admin actions split).**
 
 ---
 
@@ -41,19 +41,22 @@
 
 ### Phase 226 — Split Admin Actions Into Domain Files (LOW)
 
-> **Risk:** LOW. **Effort:** 1–2 hours. **Source:** Architect audit L1.
-> **Problem:** `src/lib/actions/admin.actions.tsx` is 1,564 lines — the largest file in the codebase. Houses all admin mutations in one file.
-> **Fix:** Split into domain-specific action files:
+> **Risk:** LOW. **Effort:** 1–2 hours. **Source:** Architect audit L1. PM audit #124 corrected size.
+> **Problem:** `src/lib/actions/admin.actions.tsx` is **1,782 lines** — the largest file in the codebase. 14 exported server actions + 13 private helpers (including `parseStructuredAdminSettingValue` at ~347 lines). Houses all admin mutations in one file.
+> **Fix:** Split into domain-specific action files + shared helpers:
 >
-> - `src/lib/actions/admin-user.actions.tsx` — user CRUD, suspension, bulk operations
-> - `src/lib/actions/admin-settings.actions.tsx` — setting updates
-> - `src/lib/actions/admin-pages.actions.tsx` — public page CRUD
+> - `src/lib/actions/admin-user.actions.tsx` — user CRUD, suspension, bulk operations (4 exported: `toggleUserSuspensionAction`, `removeUserByAdminAction`, `bulkSuspendUsersAction`, `bulkRemoveUsersAction` + private `removeUserByAdmin`)
+> - `src/lib/actions/admin-settings.actions.tsx` — setting updates (1 exported: `updateAdminSettingAction` + `parseStructuredAdminSettingValue`)
+> - `src/lib/actions/admin-pages.actions.tsx` — public page CRUD (8 exported: `createPublicPageAction`, `togglePublicPagePublishedAction`, `deletePublicPageAction`, `updatePublicPageSortOrderAction`, `savePublicPageAction`, `bulkDeletePublicPagesAction`, `bulkPublishPublicPagesAction`, `bulkUnpublishPublicPagesAction`)
+> - `src/lib/actions/admin-transaction.actions.tsx` — transaction bulk delete (1 exported: `bulkDeleteTransactionsAction`)
+> - `src/lib/actions/admin-action-helpers.ts` — shared infrastructure: `resolveActionFormData`, `successState`, `errorState`, `logAdminActionError`, `getStringField`, `getNumericField`, `pluralize`, `withSummaryDetails`, per-domain Zod schemas
 >
 > **Acceptance criteria:**
 >
 > - Each new file exports its domain's server actions with `"use server"` directive
 > - All imports across `src/` updated to new paths
-> - Original `admin.actions.tsx` deleted or reduced to a re-export barrel
+> - Original `admin.actions.tsx` deleted
+> - Shared helpers in `admin-action-helpers.ts` (no `"use server"` — plain utility)
 > - All 7 gates GREEN, knip clean
 
 ### ~~Phase 227 — Reconcile SPEC.md / AGENTS.md Plan Limit Documentation~~ — DONE (PM audit #119) — Archived to DONE.md
@@ -62,9 +65,9 @@
 
 ### Phase 228 — Extract Stripe Webhook Handlers Into Modules (LOW)
 
-> **Risk:** LOW. **Effort:** 1–2 hours. **Source:** Architect audit L3.
-> **Problem:** `src/app/api/webhooks/stripe/route.tsx` is 1,094 lines handling 5 event types in a single file. Each handler is well-structured internally but the file is hard to test in isolation.
-> **Fix:** Extract each handler into its own module under `src/lib/utils/stripe/`:
+> **Risk:** LOW. **Effort:** 1–2 hours. **Source:** Architect audit L3. PM audit #124 corrected size.
+> **Problem:** `src/app/api/webhooks/stripe/route.tsx` is **1,253 lines** handling 5 event types in a single file. 5 handler functions + 15 shared utilities + 10+ Zod schemas. Handlers are well-structured internally but the file is hard to test in isolation.
+> **Fix:** Extract handlers and shared utilities into modules under `src/lib/utils/stripe/`:
 >
 > - `handle-checkout-completed.ts`
 > - `handle-invoice-paid.ts`
@@ -81,8 +84,8 @@
 
 ### Phase 229 — Extract generateResponse Retry/Tool Helpers (LOW)
 
-> **Risk:** LOW. **Effort:** 1–2 hours. **Source:** Architect audit L4.
-> **Problem:** `src/lib/utils/openai/generateResponse.tsx` is 1,078 lines. The retry logic (`withOpenAIRetry`) and tool call serialization could be extracted.
+> **Risk:** LOW. **Effort:** 1–2 hours. **Source:** Architect audit L4. PM audit #124 corrected size.
+> **Problem:** `src/lib/utils/openai/generateResponse.tsx` is **1,188 lines**. The retry logic (`withOpenAIRetry`, `classifyOpenAIError`, `isRetryableOpenAIError`, `serializeToolCalls`, `getOpenAIErrorStatus`, `waitForRetry`, `logOpenAIRetry` — ~137 lines) and vision URL resolution (`resolveImageInputUrlsForOpenAI`, `buildVisionPresignedUrl`, `isInternalDownloadKeyUrl` — ~112 lines) could be extracted. `buildOpenAIResponsePayload` at ~314 lines is the single largest function in the codebase — future decomposition target.
 > **Fix:** Extract `withOpenAIRetry()`, `classifyOpenAIError()`, `isRetryableOpenAIError()`, `serializeToolCalls()` into `src/lib/utils/openai/openai-retry.ts`.
 > **Acceptance criteria:**
 >
