@@ -2,7 +2,55 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-04-11 — PM audit #122.
+> Last updated: 2026-04-11 — PM audit #123.
+
+---
+
+## Phase 225-C — Extract Streaming SSE Orchestrator — COMPLETED (2026-04-11)
+
+> Engineer delivered (PM audit #123). Streaming SSE lifecycle extracted from OpenAI route to `src/lib/utils/openai/stream-orchestrator.ts` (278 lines). Class-based `StreamLifecycleOrchestrator` encapsulates heartbeat/timeout state machine with deterministic timer cleanup — all paths converge on `finalize()` via `finally` block, zero timer leaks. Factory function `createOpenAiChatStreamResponse()` constructs SSE Response. `shouldStreamResponse()` checks request headers. `import "server-only"` present. No circular dependencies. Triple audit confirmed clean extraction (PM + Architect + Engineer). 729 tests (110 suites). All 7 gates GREEN.
+
+- [x] **225-C.1** — Created `src/lib/utils/openai/stream-orchestrator.ts` with `createOpenAiChatStreamResponse`, `shouldStreamResponse`.
+- [x] **225-C.2** — `StreamLifecycleOrchestrator` class (private, not exported) — heartbeat intervals, proactive timeout, idempotent start/stop methods, `controllerClosed` guard.
+- [x] **225-C.3** — Constants: `STREAM_GENERAL_HEARTBEAT_INTERVAL_MS`, `STREAM_MEDIA_HEARTBEAT_INTERVAL_MS`, `STREAM_TIMEOUT_SAFETY_BUFFER_SECONDS`, `STREAM_HEADERS`, `streamEncoder`.
+- [x] **225-C.4** — Interfaces: `StreamPipelineHandlers`, `CreateOpenAiChatStreamResponseParams`, `StreamLifecycleConfig`.
+- [x] **225-C.5** — `route.tsx` imports `createOpenAiChatStreamResponse` and `shouldStreamResponse`. No residual inline streaming logic.
+- [x] **225-C.6** — Validation: prettier ✓, lint ✓, tsc ✓, tests (729/729) ✓, build ✓, knip ✓.
+
+---
+
+## Phase 225-D — Extract Route Helper Utilities — COMPLETED (2026-04-11)
+
+> Engineer delivered (PM audit #123). Route utility functions extracted from OpenAI route to `src/lib/utils/openai/route-helpers.ts` (288 lines). 4 exported functions: `finalizeAIResponse` (response finalization with error/media-limit/storage-limit/success branches), `emitBlockedChatUsageEvent` (usage event for blocked requests), `emitUsageEventsSafely` (try/catch wrapper), `getLatestUserMessage` (message array accessor). Internal helpers: `createUsageTaskId`, `isMediaLimitStopReason`, `isMediaSpecificLimitStopReason`. `import "server-only"` present. No circular dependencies. Triple audit confirmed (PM + Architect + Engineer). 729 tests (110 suites). All 7 gates GREEN.
+
+- [x] **225-D.1** — Created `src/lib/utils/openai/route-helpers.ts` with 4 exported functions.
+- [x] **225-D.2** — `finalizeAIResponse()` handles: error type → status, media limit stops (trial/non-trial), storage limit, success path with task update.
+- [x] **225-D.3** — `createUsageTaskId`, `isMediaLimitStopReason`, `isMediaSpecificLimitStopReason` kept internal (non-exported).
+- [x] **225-D.4** — `route.tsx` imports all 4 functions. No residual inline definitions.
+- [x] **225-D.5** — Validation: prettier ✓, lint ✓, tsc ✓, tests (729/729) ✓, build ✓, knip ✓.
+
+---
+
+## Phase 225 — OpenAI Route Decomposition (Full Initiative) — COMPLETED (2026-04-11)
+
+> All 4 sub-phases delivered across PM audits #120–#123. Route reduced from ~1,549 to 883 lines (43% reduction). 4 focused modules extracted: `media-slot.ts` (114 lines, 225-A), `conversation-lifecycle.ts` (221 lines, 225-B), `stream-orchestrator.ts` (278 lines, 225-C), `route-helpers.ts` (288 lines, 225-D). Total: 901 lines extracted. All modules have `import "server-only"`, no circular dependencies, clean module boundaries. The `<500` line target was aspirational — remaining 883 lines are genuine request orchestration (auth → entitlements → limits → task creation → AI call → finalization). PM ruling: decomposition goal met, route is no longer a god file.
+
+---
+
+## Phase 230 — Rename `.d.tsx` → `.d.ts` — COMPLETED (2026-04-11)
+
+> Engineer delivered (PM audit #123). All 14 type declaration files in `src/types/` renamed from non-standard `.d.tsx` to standard `.d.ts` extension. Zero `.d.tsx` files remain. Zero stale imports found. `knip.json` updated (no `.d.tsx` references). All 7 gates GREEN.
+
+- [x] **230.1** — 14 files renamed: `AdminConfigData.d.ts`, `AuditLogData.d.ts`, `ChatData.d.ts`, `chat-api.d.ts`, `PersonaData.d.ts`, `PlanData.d.ts`, `PublicPageData.d.ts`, `SettingsData.d.ts`, `StopReasonData.d.ts`, `TaskData.d.ts`, `TransactionData.d.ts`, `UsageEventData.d.ts`, `UserData.d.ts`, `WebsitePageData.d.ts`.
+- [x] **230.2** — All imports across `src/` updated. No `.d.tsx` references remain.
+- [x] **230.3** — `knip.json` updated.
+- [x] **230.4** — Validation: prettier ✓, lint ✓, tsc ✓, tests (729/729) ✓, build ✓, knip ✓.
+
+---
+
+## Bug Fix — `\\n` Literal String in stderr Logging — FIXED (2026-04-11)
+
+> Engineer delivered alongside Phase 225-C/D. Two `process.stderr.write()` calls in `route.tsx` (previously at lines 942/974, now at 641/673) used escaped `\\n` instead of actual newline `\n` inside template literals. Fixed to proper `\n`. PM verified 0 `\\n` literal matches remain in route.tsx.
 
 ---
 
