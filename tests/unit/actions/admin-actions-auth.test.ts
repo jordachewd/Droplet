@@ -1,19 +1,21 @@
 import {
-  bulkDeletePublicPagesAction,
-  bulkDeleteTransactionsAction,
-  bulkPublishPublicPagesAction,
   bulkRemoveUsersAction,
   bulkSuspendUsersAction,
+  removeUserByAdminAction,
+  toggleUserSuspensionAction,
+} from "@/lib/actions/admin-user.actions";
+import { updateAdminSettingAction } from "@/lib/actions/admin-settings.actions";
+import {
+  bulkDeletePublicPagesAction,
+  bulkPublishPublicPagesAction,
   bulkUnpublishPublicPagesAction,
   createPublicPageAction,
   deletePublicPageAction,
-  removeUserByAdminAction,
   savePublicPageAction,
   togglePublicPagePublishedAction,
-  toggleUserSuspensionAction,
-  updateAdminSettingAction,
   updatePublicPageSortOrderAction,
-} from "@/lib/actions/admin.actions";
+} from "@/lib/actions/admin-pages.actions";
+import { bulkDeleteTransactionsAction } from "@/lib/actions/admin-transaction.actions";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const {

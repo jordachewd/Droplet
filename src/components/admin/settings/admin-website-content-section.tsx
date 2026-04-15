@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { updateAdminSettingAction } from "@/lib/actions/admin.actions";
+import { updateAdminSettingAction } from "@/lib/actions/admin-settings.actions";
 import { AdminFormSubmitButton } from "@/components/admin/admin-form-submit-button";
 import { AdminManagedForm } from "@/components/admin/admin-managed-form";
 import {
