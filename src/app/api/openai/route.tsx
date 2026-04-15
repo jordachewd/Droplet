@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { Message, Messages } from "@/types";
 import {
   generateResponse,
   generateStreamingResponse,
@@ -9,7 +8,6 @@ import { TaskEndAction, TaskEndedReason } from "@/types/TaskData.d";
 import {
   createTask,
   incrementPromptCountIfBelowLimit,
-  updateTask,
 } from "@/lib/actions/task.actions";
 import { auth } from "@clerk/nextjs/server";
 import { getUserById } from "@/lib/actions/user.actions";
@@ -21,10 +19,7 @@ import { resolveEntitlements } from "@/lib/utils/resolve-entitlements";
 import { getPersona } from "@/constants/assistant-personas";
 import User from "@/lib/database/models/user.model";
 import { checkUsageLimit } from "@/lib/utils/check-usage-limit";
-import type {
-  OpenAIErrorType,
-  OpenAIResponsePayload,
-} from "@/lib/utils/openai/generateResponse";
+import type { OpenAIErrorType } from "@/lib/utils/openai/generateResponse";
 import {
   classifyTaskComplexity,
   isExplicitDeepAnalysisRequest,
@@ -32,21 +27,11 @@ import {
 import { claimDailyConversationSlot } from "@/lib/utils/check-daily-conversations";
 import { getTaskByIdForUser } from "@/lib/utils/task-queries";
 import { filterAssistantMsg } from "@/lib/utils/openai/filterAssistantMsg";
-import {
-  ensureMessageHasId,
-  ensureMessagesHaveId,
-} from "@/lib/utils/message-id";
-import { PlanLimits } from "@/constants/plans";
-import { PlanName } from "@/types/PlanData.d";
-import { PersonaId } from "@/types/PersonaData.d";
+import { ensureMessagesHaveId } from "@/lib/utils/message-id";
 import {
   BudgetState,
   ModelPolicyModelOverrides,
-  TaskClass,
-  normalizePlanTier,
-  resolveModelPolicy,
 } from "@/lib/utils/ai-model-policy";
-import { emitUsageEvents } from "@/lib/utils/usage-event-utils";
 import { getEffectivePersonaAccessByPlan } from "@/lib/utils/effective-persona-access";
 import { getEffectiveModelConfig } from "@/lib/utils/effective-model-config";
 import {
@@ -63,35 +48,31 @@ import {
   createStopTaskData,
   estimateConversationBytes,
   getPlanBoundEndAction,
-  persistConversationNotice,
   persistConversationStop,
   resolvePromptLimitEndAction,
   TASK_STORAGE_WARNING_BYTES,
 } from "@/lib/utils/openai/conversation-lifecycle";
-import type { StopReasonMessages } from "@/lib/utils/openai/conversation-lifecycle";
 import {
   chatMessageArraySchema,
   nonEmptyStringSchema,
 } from "@/lib/utils/validation-schemas";
-import { STREAM_PROACTIVE_TIMEOUT_MESSAGE } from "@/constants/chat-stream";
-import type { ChatApiResponse, ChatStreamEvent } from "@/types/chat-api";
+import {
+  createOpenAiChatStreamResponse,
+  shouldStreamResponse,
+} from "@/lib/utils/openai/stream-orchestrator";
+import {
+  emitBlockedChatUsageEvent,
+  emitUsageEventsSafely,
+  finalizeAIResponse,
+  getLatestUserMessage,
+} from "@/lib/utils/openai/route-helpers";
 import { z } from "zod";
 
 export const maxDuration = 60;
 
 const OPENAI_RATE_LIMIT_MAX_REQUESTS = 20;
 const OPENAI_RATE_LIMIT_WINDOW_MS = 60_000;
-const DEFAULT_CHAT_TASK_CLASS: TaskClass = "standard";
 const DEFAULT_CHAT_BUDGET_STATE: BudgetState = "normal";
-const STREAM_GENERAL_HEARTBEAT_INTERVAL_MS = 30_000;
-const STREAM_MEDIA_HEARTBEAT_INTERVAL_MS = 12_000;
-const STREAM_TIMEOUT_SAFETY_BUFFER_SECONDS = 5;
-const STREAM_HEADERS = {
-  "Content-Type": "text/event-stream; charset=utf-8",
-  "Cache-Control": "no-store, no-transform",
-  "X-Accel-Buffering": "no",
-} as const;
-const streamEncoder = new TextEncoder();
 
 const OPENAI_ERROR_STATUS_MAP: Record<OpenAIErrorType, number> = {
   rate_limit: 429,
@@ -120,288 +101,6 @@ const openAiRequestBodySchema = z
   .strict();
 
 type OpenAiRequestBody = z.infer<typeof openAiRequestBodySchema>;
-
-function createUsageTaskId(taskId?: string): string {
-  return taskId ?? `request_${crypto.randomUUID()}`;
-}
-
-function isMediaLimitStopReason(
-  value: OpenAIResponsePayload["blockedReason"],
-): value is
-  | "media_limit_reached"
-  | "image_limit_reached"
-  | "audio_limit_reached" {
-  return (
-    value === "media_limit_reached" ||
-    value === "image_limit_reached" ||
-    value === "audio_limit_reached"
-  );
-}
-
-function isMediaSpecificLimitStopReason(
-  value: OpenAIResponsePayload["blockedReason"],
-): value is "image_limit_reached" | "audio_limit_reached" {
-  return value === "image_limit_reached" || value === "audio_limit_reached";
-}
-
-function shouldStreamResponse(req: Request): boolean {
-  return (
-    req.headers.get("x-droplet-stream") === "1" ||
-    req.headers.get("accept")?.includes("text/event-stream") === true
-  );
-}
-
-function writeStreamEvent(
-  controller: ReadableStreamDefaultController<Uint8Array>,
-  event: ChatStreamEvent,
-) {
-  controller.enqueue(
-    streamEncoder.encode(`data: ${JSON.stringify(event)}\n\n`),
-  );
-}
-
-function emitBlockedChatUsageEvent({
-  userId,
-  taskId,
-  personaId,
-  planName,
-  stopReason,
-  modelOverrides,
-}: {
-  userId: string;
-  taskId?: string;
-  personaId: PersonaId;
-  planName?: PlanName | null;
-  stopReason: TaskEndedReason;
-  modelOverrides?: ModelPolicyModelOverrides;
-}) {
-  const policy = resolveModelPolicy({
-    plan: normalizePlanTier(planName ?? "Lite"),
-    feature: "chat",
-    taskClass: DEFAULT_CHAT_TASK_CLASS,
-    budgetState: DEFAULT_CHAT_BUDGET_STATE,
-    modelOverrides,
-  });
-
-  if (policy.hardBlocked || policy.model === "blocked") {
-    return;
-  }
-
-  emitUsageEventsSafely({
-    userId,
-    taskId: createUsageTaskId(taskId),
-    personaId,
-    metrics: [
-      {
-        requestType: "chat",
-        model: policy.model,
-        blocked: true,
-        blockedReason: stopReason,
-        latencyMs: 0,
-      },
-    ],
-  });
-}
-
-function emitUsageEventsSafely(
-  payload: Parameters<typeof emitUsageEvents>[0],
-): void {
-  try {
-    emitUsageEvents(payload);
-  } catch (error) {
-    process.stderr.write(
-      `[openai/route] emitUsageEvents failed: ${error instanceof Error ? error.message : "unknown"}\n`,
-    );
-  }
-}
-
-function getLatestUserMessage(messages: Messages["messages"]): Message | null {
-  const latestMessage = messages.at(-1);
-
-  if (!latestMessage || latestMessage.role !== "user") {
-    return null;
-  }
-
-  return latestMessage;
-}
-
-async function finalizeAIResponse({
-  aiPayload,
-  taskId,
-  userId,
-  planName,
-  planLimits,
-  isTrialPersona,
-  modelOverrides,
-  selectedPersonaId,
-  storedMessagesWithIncomingPrompt,
-  estimatedBytesWithIncomingPrompt,
-  supportEmail,
-  stopReasonMessages,
-}: {
-  aiPayload: OpenAIResponsePayload;
-  taskId: string;
-  userId: string;
-  planName: PlanName;
-  planLimits: PlanLimits;
-  isTrialPersona: boolean;
-  modelOverrides?: ModelPolicyModelOverrides;
-  selectedPersonaId: PersonaId;
-  storedMessagesWithIncomingPrompt: Message[];
-  estimatedBytesWithIncomingPrompt: number;
-  supportEmail: string;
-  stopReasonMessages: StopReasonMessages;
-}): Promise<{
-  status: number;
-  payload: ChatApiResponse;
-}> {
-  if (aiPayload.requestMetrics?.length) {
-    emitUsageEventsSafely({
-      userId,
-      taskId,
-      personaId: selectedPersonaId,
-      metrics: aiPayload.requestMetrics,
-    });
-  }
-
-  if (aiPayload.errorType) {
-    return {
-      status: OPENAI_ERROR_STATUS_MAP[aiPayload.errorType],
-      payload: {
-        error:
-          aiPayload.errorMessage ?? OPENAI_ERROR_MESSAGES[aiPayload.errorType],
-      },
-    };
-  }
-
-  const normalizedStoredMessagesWithIncomingPrompt = ensureMessagesHaveId(
-    storedMessagesWithIncomingPrompt,
-  );
-  const { taskData, taskUsage } = aiPayload;
-
-  if (isMediaLimitStopReason(aiPayload.blockedReason)) {
-    const stopReason: TaskEndedReason = isTrialPersona
-      ? "trial_limit_reached"
-      : aiPayload.blockedReason;
-    const isNonTerminalMediaLimit =
-      !isTrialPersona &&
-      isMediaSpecificLimitStopReason(aiPayload.blockedReason);
-    const endAction: TaskEndAction = isTrialPersona
-      ? "upgrade_plan"
-      : isNonTerminalMediaLimit
-        ? "start_new_conversation"
-        : getPlanBoundEndAction({ planName, planLimits });
-    let taskDataToPersist: Message;
-
-    if (isNonTerminalMediaLimit) {
-      taskDataToPersist = createStopTaskData({
-        stopReason,
-        endAction,
-        supportEmail,
-        stopReasonMessages,
-      });
-      await persistConversationNotice({
-        taskId,
-        personaId: selectedPersonaId,
-        currentMessages: normalizedStoredMessagesWithIncomingPrompt,
-        noticeTaskData: taskDataToPersist,
-        estimatedBytes: estimatedBytesWithIncomingPrompt,
-      });
-    } else {
-      taskDataToPersist = await persistConversationStop({
-        taskId,
-        personaId: selectedPersonaId,
-        currentMessages: normalizedStoredMessagesWithIncomingPrompt,
-        stopReason,
-        endAction,
-        estimatedBytes: estimatedBytesWithIncomingPrompt,
-        supportEmail,
-        stopReasonMessages,
-      });
-    }
-
-    return {
-      status: 403,
-      payload: createStopResponsePayload({
-        taskData: taskDataToPersist,
-        taskId,
-        personaId: selectedPersonaId,
-        stopReason,
-        endAction,
-        taskStatus: isNonTerminalMediaLimit ? "active" : "ended",
-        acceptedPrompt: true,
-        stopReasonMessages,
-      }),
-    };
-  }
-
-  if (!taskData) {
-    throw new Error("AI response payload is missing task data.");
-  }
-
-  const normalizedTaskData = ensureMessageHasId(taskData);
-  const storedMessagesWithAssistant = [
-    ...normalizedStoredMessagesWithIncomingPrompt,
-    normalizedTaskData,
-  ];
-  const estimatedBytesWithAssistant = estimateConversationBytes(
-    storedMessagesWithAssistant,
-  );
-
-  if (estimatedBytesWithAssistant > TASK_STORAGE_WARNING_BYTES) {
-    const stopReason: TaskEndedReason = "conversation_storage_limit_reached";
-    const endAction: TaskEndAction = "start_new_conversation";
-    const taskDataToPersist = await persistConversationStop({
-      taskId,
-      personaId: selectedPersonaId,
-      currentMessages: storedMessagesWithIncomingPrompt,
-      stopReason,
-      endAction,
-      estimatedBytes: estimatedBytesWithIncomingPrompt,
-      supportEmail,
-      stopReasonMessages,
-    });
-
-    emitBlockedChatUsageEvent({
-      userId,
-      taskId,
-      personaId: selectedPersonaId,
-      planName,
-      stopReason,
-      modelOverrides,
-    });
-
-    return {
-      status: 403,
-      payload: createStopResponsePayload({
-        taskData: taskDataToPersist,
-        taskId,
-        personaId: selectedPersonaId,
-        stopReason,
-        endAction,
-        acceptedPrompt: true,
-        stopReasonMessages,
-      }),
-    };
-  }
-
-  await updateTask(taskId, {
-    messages: storedMessagesWithAssistant,
-    usage: taskUsage ?? 0,
-    personaId: selectedPersonaId,
-    estimatedBytes: estimatedBytesWithAssistant,
-  });
-
-  return {
-    status: 200,
-    payload: {
-      taskData: normalizedTaskData,
-      taskId,
-      personaId: selectedPersonaId,
-      acceptedPrompt: true,
-    },
-  };
-}
 
 export async function POST(req: Request): Promise<Response> {
   const functionStartTime = Date.now();
@@ -939,7 +638,7 @@ export async function POST(req: Request): Promise<Response> {
           );
         } catch (rollbackError) {
           process.stderr.write(
-            `[openai/route] daily slot rollback failed after title generation error: ${rollbackError instanceof Error ? rollbackError.message : "unknown"}\\n`,
+            `[openai/route] daily slot rollback failed after title generation error: ${rollbackError instanceof Error ? rollbackError.message : "unknown"}\n`,
           );
         }
         throw titleError;
@@ -971,7 +670,7 @@ export async function POST(req: Request): Promise<Response> {
           );
         } catch (rollbackError) {
           process.stderr.write(
-            `[openai/route] daily slot rollback failed after createTask error: ${rollbackError instanceof Error ? rollbackError.message : "unknown"}\\n`,
+            `[openai/route] daily slot rollback failed after createTask error: ${rollbackError instanceof Error ? rollbackError.message : "unknown"}\n`,
           );
         }
         throw createError;
@@ -1063,269 +762,66 @@ export async function POST(req: Request): Promise<Response> {
     } as const;
 
     if (streamingResponseRequested) {
-      const stream = new ReadableStream<Uint8Array>({
-        async start(controller) {
-          const startTime = Date.now();
-          const elapsedSetupMs = startTime - functionStartTime;
-          const timeoutSafetyMs = Math.max(
-            0,
-            (maxDuration - STREAM_TIMEOUT_SAFETY_BUFFER_SECONDS) * 1000 -
-              elapsedSetupMs,
-          );
-          let didSendFinal = false;
-          let controllerClosed = false;
-          let generalHeartbeatInterval: ReturnType<typeof setInterval> | null =
-            null;
-          let mediaHeartbeatInterval: ReturnType<typeof setInterval> | null =
-            null;
-          let proactiveTimeoutId: ReturnType<typeof setTimeout> | null = null;
+      return createOpenAiChatStreamResponse({
+        functionStartTime,
+        maxDurationSeconds: maxDuration,
+        taskId,
+        personaId: selectedPersona.id,
+        unknownErrorMessage: OPENAI_ERROR_MESSAGES.unknown,
+        runStreamPipeline: async ({
+          onContentChunk,
+          onMediaGenerationStart,
+          onMediaGenerationEnd,
+        }) => {
+          const aiPayload = await generateStreamingResponse({
+            messages: promptPayloadMessages,
+            taskId,
+            userId,
+            personaId: selectedPersona.id,
+            planName,
+            entitlements: resolvedEntitlements,
+            modelOverrides,
+            taskClass: chatTaskClass,
+            budgetState: DEFAULT_CHAT_BUDGET_STATE,
+            explicitPremium: explicitPremiumRequested,
+            claimMediaGenerationSlot: async ({ limitType }) =>
+              claimMediaGenerationSlot({
+                userId,
+                limitType,
+                limit: mediaGenerationLimitByType[limitType],
+                counterScope: isTrialPersona ? "trial" : "plan",
+              }),
+            rollbackMediaGenerationSlot: async ({ limitType }) =>
+              rollbackMediaGenerationSlot({
+                userId,
+                limitType,
+                counterScope: isTrialPersona ? "trial" : "plan",
+              }),
+            abortSignal: req.signal,
+            onContentChunk,
+            onMediaGenerationStart,
+            onMediaGenerationEnd,
+          });
 
-          const writeErrorEvent = (
-            errorMessage: string,
-            context: string,
-          ): boolean => {
-            try {
-              writeStreamEvent(controller, {
-                type: "error",
-                error: errorMessage,
-              });
-              didSendFinal = true;
-              return true;
-            } catch (error) {
-              process.stderr.write(
-                `[openai/route] ${context}: ${error instanceof Error ? error.message : "unknown"}\n`,
-              );
-              return false;
-            }
-          };
+          const finalResult = await finalizeAIResponse({
+            aiPayload,
+            taskId,
+            userId,
+            planName,
+            planLimits: effectivePlanLimits,
+            isTrialPersona,
+            modelOverrides,
+            selectedPersonaId: selectedPersona.id,
+            storedMessagesWithIncomingPrompt,
+            estimatedBytesWithIncomingPrompt,
+            supportEmail,
+            stopReasonMessages,
+            openAiErrorStatusMap: OPENAI_ERROR_STATUS_MAP,
+            openAiErrorMessages: OPENAI_ERROR_MESSAGES,
+          });
 
-          const writeFinalEvent = (
-            payload: ChatApiResponse,
-            context: string,
-          ): boolean => {
-            try {
-              writeStreamEvent(controller, {
-                type: "final",
-                payload,
-              });
-              didSendFinal = true;
-              return true;
-            } catch (error) {
-              process.stderr.write(
-                `[openai/route] ${context}: ${error instanceof Error ? error.message : "unknown"}\n`,
-              );
-              return false;
-            }
-          };
-
-          const stopGeneralHeartbeat = () => {
-            if (generalHeartbeatInterval === null) {
-              return;
-            }
-
-            clearInterval(generalHeartbeatInterval);
-            generalHeartbeatInterval = null;
-          };
-
-          const stopMediaHeartbeat = () => {
-            if (mediaHeartbeatInterval === null) {
-              return;
-            }
-
-            clearInterval(mediaHeartbeatInterval);
-            mediaHeartbeatInterval = null;
-          };
-
-          const emitHeartbeat = (): boolean => {
-            if (controllerClosed) {
-              return false;
-            }
-
-            try {
-              writeStreamEvent(controller, {
-                type: "heartbeat",
-              });
-              return true;
-            } catch (error) {
-              process.stderr.write(
-                `[openai/route] heartbeat write failed: ${error instanceof Error ? error.message : "unknown"}\n`,
-              );
-              return false;
-            }
-          };
-
-          const startGeneralHeartbeat = () => {
-            if (generalHeartbeatInterval !== null) {
-              return;
-            }
-
-            generalHeartbeatInterval = setInterval(() => {
-              if (!emitHeartbeat()) {
-                stopGeneralHeartbeat();
-              }
-            }, STREAM_GENERAL_HEARTBEAT_INTERVAL_MS);
-          };
-
-          const startMediaHeartbeat = () => {
-            if (mediaHeartbeatInterval !== null) {
-              return;
-            }
-
-            if (!emitHeartbeat()) {
-              return;
-            }
-
-            mediaHeartbeatInterval = setInterval(() => {
-              if (!emitHeartbeat()) {
-                stopMediaHeartbeat();
-              }
-            }, STREAM_MEDIA_HEARTBEAT_INTERVAL_MS);
-          };
-
-          const clearProactiveTimeout = () => {
-            if (proactiveTimeoutId === null) {
-              return;
-            }
-
-            clearTimeout(proactiveTimeoutId);
-            proactiveTimeoutId = null;
-          };
-
-          const startProactiveTimeout = () => {
-            if (proactiveTimeoutId !== null) {
-              return;
-            }
-
-            proactiveTimeoutId = setTimeout(() => {
-              const elapsedMs = Date.now() - startTime;
-
-              process.stderr.write(
-                `[openai/route] proactive timeout safety net fired after ${elapsedMs}ms\n`,
-              );
-              writeErrorEvent(
-                STREAM_PROACTIVE_TIMEOUT_MESSAGE,
-                "proactive timeout safety net",
-              );
-              stopGeneralHeartbeat();
-              stopMediaHeartbeat();
-              try {
-                controllerClosed = true;
-                controller.close();
-              } catch (error) {
-                process.stderr.write(
-                  `[openai/route] proactive timeout close failed: ${error instanceof Error ? error.message : "unknown"}\n`,
-                );
-              }
-            }, timeoutSafetyMs);
-          };
-
-          try {
-            writeStreamEvent(controller, {
-              type: "meta",
-              taskId,
-              personaId: selectedPersona.id,
-            });
-            startGeneralHeartbeat();
-            startProactiveTimeout();
-
-            const aiPayload = await generateStreamingResponse({
-              messages: promptPayloadMessages,
-              taskId,
-              userId,
-              personaId: selectedPersona.id,
-              planName,
-              entitlements: resolvedEntitlements,
-              modelOverrides,
-              taskClass: chatTaskClass,
-              budgetState: DEFAULT_CHAT_BUDGET_STATE,
-              explicitPremium: explicitPremiumRequested,
-              claimMediaGenerationSlot: async ({ limitType }) =>
-                claimMediaGenerationSlot({
-                  userId,
-                  limitType,
-                  limit: mediaGenerationLimitByType[limitType],
-                  counterScope: isTrialPersona ? "trial" : "plan",
-                }),
-              rollbackMediaGenerationSlot: async ({ limitType }) =>
-                rollbackMediaGenerationSlot({
-                  userId,
-                  limitType,
-                  counterScope: isTrialPersona ? "trial" : "plan",
-                }),
-              abortSignal: req.signal,
-              onContentChunk: (delta, snapshot) => {
-                if (controllerClosed) {
-                  return;
-                }
-
-                writeStreamEvent(controller, {
-                  type: "chunk",
-                  delta,
-                  snapshot,
-                });
-              },
-              onMediaGenerationStart: startMediaHeartbeat,
-              onMediaGenerationEnd: stopMediaHeartbeat,
-            });
-
-            const finalResult = await finalizeAIResponse({
-              aiPayload,
-              taskId,
-              userId,
-              planName,
-              planLimits: effectivePlanLimits,
-              isTrialPersona,
-              modelOverrides,
-              selectedPersonaId: selectedPersona.id,
-              storedMessagesWithIncomingPrompt,
-              estimatedBytesWithIncomingPrompt,
-              supportEmail,
-              stopReasonMessages,
-            });
-
-            if (finalResult.payload.error && !finalResult.payload.taskData) {
-              writeErrorEvent(
-                finalResult.payload.error,
-                "failed to write error event to stream",
-              );
-            } else {
-              writeFinalEvent(
-                finalResult.payload,
-                "failed to write final event to stream",
-              );
-            }
-          } catch (error) {
-            process.stderr.write(
-              `[openai/route] streaming pipeline failed: ${error instanceof Error ? error.message : "unknown"}\n`,
-            );
-            writeErrorEvent(
-              OPENAI_ERROR_MESSAGES.unknown,
-              "failed to write fallback error event to stream",
-            );
-          } finally {
-            stopGeneralHeartbeat();
-            stopMediaHeartbeat();
-            clearProactiveTimeout();
-            if (!didSendFinal) {
-              writeErrorEvent(
-                OPENAI_ERROR_MESSAGES.unknown,
-                "failed to write synthetic final error event to stream",
-              );
-            }
-            try {
-              controllerClosed = true;
-              controller.close();
-            } catch (error) {
-              process.stderr.write(
-                `[openai/route] failed to close stream controller: ${error instanceof Error ? error.message : "unknown"}\n`,
-              );
-            }
-          }
+          return finalResult.payload;
         },
-      });
-
-      return new Response(stream, {
-        headers: STREAM_HEADERS,
       });
     }
 
@@ -1368,6 +864,8 @@ export async function POST(req: Request): Promise<Response> {
       estimatedBytesWithIncomingPrompt,
       supportEmail,
       stopReasonMessages,
+      openAiErrorStatusMap: OPENAI_ERROR_STATUS_MAP,
+      openAiErrorMessages: OPENAI_ERROR_MESSAGES,
     });
 
     return NextResponse.json(finalResult.payload, {
