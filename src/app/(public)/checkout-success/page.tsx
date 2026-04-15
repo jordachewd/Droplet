@@ -94,7 +94,7 @@ export default async function CheckoutSuccessPage({
         ) : (
           <p className="body-2 text-sm sm:text-base">{message}</p>
         )}
-        <Link className="btn btn-outlined self-center mt-6" href={linkHref}>
+        <Link className="btn btn-sm btn-outlined self-center mt-6" href={linkHref}>
           {linkLabel}
         </Link>
       </div>

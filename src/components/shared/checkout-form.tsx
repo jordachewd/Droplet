@@ -5,6 +5,7 @@ import { checkoutPlan } from "@/lib/actions/transaction.action";
 import { CheckoutTransactionParams } from "@/types/TransactionData.d";
 import { CheckoutPlanParams, PlanStatus } from "@/types/PlanData.d";
 import { useFormStatus } from "react-dom";
+import Button from "@/components/shared/button";
 
 interface CheckoutProps {
   plan: CheckoutPlanParams;
@@ -14,12 +15,14 @@ interface CheckoutProps {
 interface CheckoutSubmitButtonProps {
   isIncluded: boolean;
   isCurrent: boolean;
+  variant: "outlined" | "text";
   className: string;
 }
 
 function CheckoutSubmitButton({
   isIncluded,
   isCurrent,
+  variant,
   className,
 }: CheckoutSubmitButtonProps) {
   const { pending } = useFormStatus();
@@ -30,9 +33,9 @@ function CheckoutSubmitButton({
     : (isCurrent && "Current") || (isIncluded && "Included") || "Subscribe";
 
   return (
-    <button type="submit" disabled={isDisabled} className={className}>
+    <Button type="submit" variant={variant} size="md" disabled={isDisabled} className={className}>
       {buttonLabel}
-    </button>
+    </Button>
   );
 }
 
@@ -47,11 +50,13 @@ const Checkout = ({ plan, planStatus }: CheckoutProps) => {
     await checkoutPlan(transaction);
   };
 
-  const buttonVariant =
+  const variant: "outlined" | "text" = isIncluded ? "text" : "outlined";
+
+  const extraStyles =
     (isPopular &&
-      "btn-outlined border-white text-white hover:text-white/75 hover:border-white/75") ||
-    (isIncluded && "btn-text border-transparent") ||
-    "btn-outlined dark:border-midnightBlue-500 dark:text-midnightBlue-500 dark:hover:border-dustyBlue-500 dark:hover:text-dustyBlue-500";
+      "border-white text-white hover:text-white/75 hover:border-white/75") ||
+    (isIncluded && "border-transparent") ||
+    "dark:border-midnightBlue-500 dark:text-midnightBlue-500 dark:hover:border-dustyBlue-500 dark:hover:text-dustyBlue-500";
 
   const disabledStyle = isIncluded
     ? isCurrent
@@ -64,9 +69,10 @@ const Checkout = ({ plan, planStatus }: CheckoutProps) => {
       <CheckoutSubmitButton
         isIncluded={isIncluded}
         isCurrent={isCurrent}
+        variant={variant}
         className={classNames(
-          "btn btn-md w-full min-w-48 sm:min-w-55",
-          buttonVariant,
+          "w-full min-w-48 sm:min-w-55",
+          extraStyles,
           disabledStyle,
         )}
       />

@@ -152,7 +152,7 @@ function AdminUsersTableContent({
                 />
               ))}
               <AdminFormSubmitButton
-                className="btn btn-sm btn-outlined"
+                variant="outlined"
                 label="Bulk Suspend"
                 pendingLabel="Suspending..."
               />
@@ -172,7 +172,7 @@ function AdminUsersTableContent({
                 />
               ))}
               <AdminFormSubmitButton
-                className="btn-danger"
+                variant="danger"
                 label="Bulk Remove"
                 pendingLabel="Removing..."
               />

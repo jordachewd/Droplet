@@ -121,7 +121,7 @@ export function AdminSettingsTabs({ tabs }: AdminSettingsTabsProps) {
               key={tab.id}
               id={tabId}
               type="button"
-              size="sm"
+              size="xs"
               variant={isActive ? "contained" : "outlined"}
               role="tab"
               aria-selected={isActive}

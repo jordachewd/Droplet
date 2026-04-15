@@ -3,9 +3,14 @@
 import { useFormStatus } from "react-dom";
 import Button from "@/components/shared/button";
 
+type ButtonVariant = "contained" | "outlined" | "text" | "icon" | "danger" | "hero";
+type ButtonSize = "xs" | "sm" | "md" | "lg";
+
 interface AdminFormSubmitButtonProps {
   label: string;
   pendingLabel?: string;
+  variant?: ButtonVariant;
+  size?: ButtonSize;
   className?: string;
   disabled?: boolean;
 }
@@ -13,6 +18,8 @@ interface AdminFormSubmitButtonProps {
 export function AdminFormSubmitButton({
   label,
   pendingLabel,
+  variant,
+  size,
   className,
   disabled = false,
 }: AdminFormSubmitButtonProps) {
@@ -21,6 +28,8 @@ export function AdminFormSubmitButton({
 
   return (
     <Button
+      variant={variant}
+      size={size}
       className={className}
       type="submit"
       disabled={disabled}

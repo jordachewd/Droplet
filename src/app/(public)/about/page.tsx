@@ -329,11 +329,11 @@ export default async function AboutPage() {
             </p>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row">
-            <Link className="btn btn-lg btn-contained uppercase" href="/plans">
+            <Link className="btn btn-lg btn-contained" href="/plans">
               {aboutContent.ctaPrimaryLabel}
             </Link>
             <Link
-              className="btn btn-lg btn-outlined uppercase"
+              className="btn btn-lg btn-outlined"
               href="/personas"
             >
               {aboutContent.ctaSecondaryLabel}
