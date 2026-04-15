@@ -7,6 +7,7 @@ import { BillingCycle } from "@/types/PlanData.d";
 import { UserData } from "@/types/UserData.d";
 import PlanCard from "@/components/shared/plan-card";
 import LoadingBubbles from "@/components/shared/loading-bubbles";
+import Button from "@/components/shared/button";
 import Link from "next/link";
 import classNames from "classnames";
 
@@ -54,32 +55,32 @@ export default function Plans({
       {hasPaidPlans && (
         <div className="PlansBillingToggle mx-auto flex w-full justify-center">
           <div className="inline-flex items-center gap-1 rounded-full border border-slate-400 bg-lavenderHaze-300/80 p-1 dark:border-slate-500 dark:bg-nightIndigo-900/70">
-            <button
-              type="button"
+            <Button
+              variant={billingCycle === "Monthly" ? "contained" : "text"}
+              size="sm"
               onClick={() => setBillingCycle("Monthly")}
               className={classNames(
-                "btn btn-sm rounded-full border-transparent px-4 py-2 normal-case",
-                billingCycle === "Monthly"
-                  ? "btn-contained"
-                  : "btn-text text-midnightBlue-600 dark:text-lavenderHaze-600",
+                "rounded-full border-transparent px-4 py-2 normal-case",
+                billingCycle !== "Monthly" &&
+                  "text-midnightBlue-600 dark:text-lavenderHaze-600",
               )}
               aria-pressed={billingCycle === "Monthly"}
             >
               Monthly
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
+              variant={billingCycle === "Yearly" ? "contained" : "text"}
+              size="sm"
               onClick={() => setBillingCycle("Yearly")}
               className={classNames(
-                "btn btn-sm rounded-full border-transparent px-4 py-2 normal-case",
-                billingCycle === "Yearly"
-                  ? "btn-contained"
-                  : "btn-text text-midnightBlue-600 dark:text-lavenderHaze-600",
+                "rounded-full border-transparent px-4 py-2 normal-case",
+                billingCycle !== "Yearly" &&
+                  "text-midnightBlue-600 dark:text-lavenderHaze-600",
               )}
               aria-pressed={billingCycle === "Yearly"}
             >
               Yearly
-            </button>
+            </Button>
           </div>
           <p className="ml-3 inline-flex items-center rounded-full bg-limeGreen-500/30 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:bg-limeGreen-500/20 dark:text-limeGreen-500">
             {yearlyBadgeText}
@@ -105,10 +106,7 @@ export default function Plans({
 
       {!isSignedIn && (
         <div className="mt-8 flex items-center justify-center">
-          <Link
-            className="btn btn-lg btn-outlined mt-4 w-full max-w-70 p-4 uppercase"
-            href="/sign-up"
-          >
+          <Link className="btn btn-lg btn-outlined mt-4" href="/sign-up">
             {subscribeCtaLabel}
           </Link>
         </div>

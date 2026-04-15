@@ -73,7 +73,7 @@ export default async function PlansPage() {
 
           <div className="mt-5 flex flex-col gap-3 sm:flex-row">
             <Link
-              className="btn btn-md btn-outlined uppercase"
+              className="btn btn-md btn-outlined"
               href={`mailto:${supportEmail}`}
             >
               Contact support

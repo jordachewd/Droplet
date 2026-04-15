@@ -116,7 +116,7 @@ export function AdminTransactionsTable({
                 />
               ))}
               <AdminFormSubmitButton
-                className="btn-danger"
+                variant="danger"
                 label="Bulk Remove"
                 pendingLabel="Removing..."
               />

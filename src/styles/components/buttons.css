@@ -1,49 +1,56 @@
 @layer components {
   .btn {
     font-family: var(--font-jwd-dosis), sans-serif;
-    @apply inline-flex min-w-0 items-center justify-center border px-4 rounded-full py-3 uppercase leading-none tracking-wide
-    transition-all duration-300 ease-in-out disabled:cursor-not-allowed disabled:opacity-50 text-base font-medium;
+    @apply inline-flex min-w-0 items-center justify-center px-5 py-3 capitalize leading-none tracking-wide rounded-full;
+    @apply transition-all duration-300 ease-in-out disabled:cursor-not-allowed disabled:opacity-50 text-base font-medium;
   }
 
   .btn-xs {
-    @apply text-xxs px-2 py-1.5 font-bold;
+    @apply text-xxs py-2 font-semibold;
   }
 
   .btn-sm {
-    @apply text-xs px-2.5 py-1.75 font-semibold;
+    @apply text-sm py-2.5;
   }
 
   .btn-md {
-    @apply text-xl px-8 py-4;
+    @apply text-lg px-10 py-3.5;
   }
 
   .btn-lg {
-    @apply text-2xl px-12 py-5;
+    @apply text-xl px-14 py-4.5;
   }
 
   .btn-text {
-    @apply bg-transparent border-transparent text-twilightPurple-500 hover:text-dustyBlue-500
-    dark:text-lavenderHaze-500 dark:hover:text-dustyBlue-400;
+    @apply bg-transparent uppercase border-transparent px-5 py-3;
+    @apply text-twilightPurple-500 hover:text-dustyBlue-500 dark:text-lavenderHaze-500 dark:hover:text-dustyBlue-500;
   }
 
   .btn-outlined {
-    @apply bg-transparent border-2 border-dustyBlue-500 text-dustyBlue-500
-     hover:border-twilightPurple-500 hover:text-twilightPurple-500  
-     dark:hover:border-dustyBlue-400 dark:hover:text-dustyBlue-400;
+    @apply bg-transparent border-2;
+    @apply text-twilightPurple-500 hover:text-dustyBlue-500 dark:text-lavenderHaze-500 dark:hover:text-dustyBlue-500;
+    @apply border-twilightPurple-500 hover:border-dustyBlue-500 dark:border-lavenderHaze-500 dark:hover:border-dustyBlue-500;
   }
 
   .btn-contained {
-    @apply border-dustyBlue-700 bg-dustyBlue-700 text-white hover:border-twilightPurple-500 hover:bg-twilightPurple-500;
+    @apply border-2 text-lavenderHaze-500 dark:text-twilightPurple-500 dark:hover:text-lavenderHaze-500;
+    @apply border-twilightPurple-500 hover:border-dustyBlue-500 dark:border-lavenderHaze-500 dark:hover:border-dustyBlue-500;
+    @apply bg-twilightPurple-500 hover:bg-dustyBlue-500 dark:bg-lavenderHaze-500 dark:hover:bg-dustyBlue-500;
+  }
+
+  .btn-hero {
+    @apply border-2 text-twilightPurple-500;
+    @apply border-limeGreen-500 hover:border-limeGreen-600;
+    @apply bg-limeGreen-500 hover:bg-limeGreen-600;
   }
 
   .btn-danger {
-    font-family: var(--font-jwd-dosis), sans-serif;
-    @apply inline-flex min-w-0 items-center justify-center rounded-md border px-2.5 py-1.75 text-xs font-semibold uppercase leading-none tracking-wide transition-all duration-300 ease-in-out disabled:cursor-not-allowed disabled:opacity-50;
-    @apply border-limeGreen-500 bg-red-700 text-white hover:border-limeGreen-600 hover:bg-red-800;
+    @apply border-2 text-lavenderHaze-500 bg-red-700 hover:bg-red-800 border-red-700 hover:border-red-800;
   }
 
   .icon-btn {
-    @apply inline-flex min-h-8 min-w-8 items-center justify-center rounded-lg px-2.5 py-1.5 leading-none transition-all duration-300 ease-in-out disabled:cursor-not-allowed disabled:opacity-50;
-    @apply text-midnightBlue-500 hover:bg-lavenderHaze-500 dark:text-lavenderHaze-500 dark:hover:bg-nightIndigo-500;
+    @apply inline-flex min-h-8 min-w-8 items-center justify-center rounded-md p-1.5 leading-none text-sm;
+    @apply transition-all duration-300 ease-in-out disabled:cursor-not-allowed disabled:opacity-50;
+    @apply text-midnightBlue-500 hover:bg-lavenderHaze-500 dark:text-lavenderHaze-500 dark:hover:bg-twilightPurple-500;
   }
 }

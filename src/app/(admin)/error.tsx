@@ -26,7 +26,7 @@ export default function AdminErrorPage({
           <Button type="button" onClick={reset}>
             Try again
           </Button>
-          <Link href="/admin" className="btn btn-outlined">
+          <Link href="/admin" className="btn btn-sm btn-outlined">
             Back to Admin
           </Link>
         </div>

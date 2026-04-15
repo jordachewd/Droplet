@@ -24,13 +24,10 @@ export default function CtaBanner({ copy }: CtaBannerProps) {
             <p className="body-2 text-sm md:text-base">{copy.ctaDescription}</p>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row">
-            <Link
-              className="btn btn-lg btn-contained uppercase"
-              href="/sign-up"
-            >
+            <Link className="btn btn-lg btn-contained" href="/sign-up">
               {copy.ctaPrimaryLabel}
             </Link>
-            <Link className="btn btn-lg btn-outlined uppercase" href="/plans">
+            <Link className="btn btn-lg btn-outlined" href="/plans">
               {copy.ctaSecondaryLabel}
             </Link>
           </div>

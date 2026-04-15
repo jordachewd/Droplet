@@ -65,68 +65,37 @@ export default async function CheckoutSuccessPage({
 
   const resolvedSearchParams = await searchParams;
   const sessionId = resolveSessionId(resolvedSearchParams.session_id);
+  const paymentVerified = sessionId
+    ? await isPaidCheckoutSession(sessionId)
+    : false;
 
-  if (!sessionId) {
-    return (
-      <PageWrapper
-        id="CheckoutSuccessPage"
-        className="h-[calc(100vh-120px)] py-0! items-center justify-center"
-      >
-        <div className="flex flex-col rounded-2xl gap-6 p-16 text-center shadow-sm bg-lavenderHaze-100/85 dark:bg-nightIndigo-900/85">
-          <h1 className="heading-3">Payment confirmation unavailable</h1>
-          <p className="body-2 text-sm sm:text-base">
-            We could not verify your checkout session. Please return to plans
-            and try again.
-          </p>
-          <Link
-            className="btn btn-outlined inline-flex uppercase self-center mt-6"
-            href="/app/plans"
-          >
-            Back to plans
-          </Link>
-        </div>
-      </PageWrapper>
-    );
-  }
+  const title = paymentVerified
+    ? "Payment successful"
+    : "Payment confirmation unavailable";
 
-  const paymentVerified = await isPaidCheckoutSession(sessionId);
+  const message = !sessionId
+    ? "We could not verify your checkout session. Please return to plans and try again."
+    : !paymentVerified
+      ? "We could not verify your payment. Please return to plans and try again."
+      : null;
 
-  if (paymentVerified) {
-    return (
-      <PageWrapper
-        id="CheckoutSuccessPage"
-        className="h-[calc(100vh-120px)] py-0! items-center justify-center"
-      >
-        <div className="flex flex-col rounded-2xl gap-6 p-16 text-center shadow-sm bg-lavenderHaze-100/85 dark:bg-nightIndigo-900/85">
-          <h1 className="heading-3">Payment successful</h1>
-          <CheckoutPlanStatusPoller sessionId={sessionId} />
-          <Link
-            className="btn btn-outlined inline-flex uppercase self-center mt-6"
-            href="/app/profile"
-          >
-            Go to profile
-          </Link>
-        </div>
-      </PageWrapper>
-    );
-  }
+  const linkHref = paymentVerified ? "/app/profile" : "/app/plans";
+  const linkLabel = paymentVerified ? "Go to profile" : "Back to plans";
 
   return (
     <PageWrapper
       id="CheckoutSuccessPage"
       className="h-[calc(100vh-120px)] py-0! items-center justify-center"
     >
-      <div className="flex flex-col rounded-2xl gap-6 p-16 text-center shadow-sm bg-lavenderHaze-100/85 dark:bg-nightIndigo-900/85">
-        <h1 className="heading-3">Payment confirmation unavailable</h1>
-        <p className="body-2 text-sm sm:text-base">
-          We could not verify your payment. Please return to plans and try
-          again.
-        </p>
-        <Link
-          className="btn btn-outlined inline-flex uppercase self-center mt-6"
-          href="/app/plans"
-        >
-          Back to plans
+      <div className="flex flex-col rounded-2xl gap-6 p-16 text-center shadow-sm bg-lavenderHaze-200 dark:bg-twilightPurple-700">
+        <h1 className="heading-3">{title}</h1>
+        {paymentVerified && sessionId ? (
+          <CheckoutPlanStatusPoller sessionId={sessionId} />
+        ) : (
+          <p className="body-2 text-sm sm:text-base">{message}</p>
+        )}
+        <Link className="btn btn-sm btn-outlined self-center mt-6" href={linkHref}>
+          {linkLabel}
         </Link>
       </div>
     </PageWrapper>

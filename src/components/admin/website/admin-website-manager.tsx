@@ -121,7 +121,7 @@ export function AdminWebsiteManager({ pages }: AdminWebsiteManagerProps) {
                   />
                 ))}
                 <AdminFormSubmitButton
-                  className="btn btn-sm btn-outlined"
+                  variant="outlined"
                   label="Bulk Publish"
                   pendingLabel="Publishing..."
                 />
@@ -141,7 +141,7 @@ export function AdminWebsiteManager({ pages }: AdminWebsiteManagerProps) {
                   />
                 ))}
                 <AdminFormSubmitButton
-                  className="btn btn-sm btn-outlined"
+                  variant="outlined"
                   label="Bulk Unpublish"
                   pendingLabel="Unpublishing..."
                 />
@@ -161,7 +161,7 @@ export function AdminWebsiteManager({ pages }: AdminWebsiteManagerProps) {
                   />
                 ))}
                 <AdminFormSubmitButton
-                  className="btn-danger"
+                  variant="danger"
                   label="Bulk Delete"
                   pendingLabel="Deleting..."
                 />
@@ -217,7 +217,8 @@ export function AdminWebsiteManager({ pages }: AdminWebsiteManagerProps) {
                   aria-label={`Sort order for ${page.title}`}
                 />
                 <AdminFormSubmitButton
-                  className="btn btn-sm btn-outlined"
+                  variant="outlined"
+                  size="xs"
                   label="Save"
                   pendingLabel="Saving..."
                 />
@@ -225,10 +226,10 @@ export function AdminWebsiteManager({ pages }: AdminWebsiteManagerProps) {
 
               <div className="flex flex-wrap items-center gap-2">
                 <Link
-                  className="btn btn-sm btn-outlined"
+                  className="btn btn-xs btn-outlined"
                   href={`/admin/website/${page.id}`}
                 >
-                  Edit
+                  Edit 
                 </Link>
 
                 <AdminManagedForm
@@ -242,7 +243,8 @@ export function AdminWebsiteManager({ pages }: AdminWebsiteManagerProps) {
                     value={(!page.isPublished).toString()}
                   />
                   <AdminFormSubmitButton
-                    className="btn btn-sm btn-outlined"
+                    variant="outlined"
+                    size="xs"
                     label={page.isPublished ? "Unpublish" : "Publish"}
                     pendingLabel="Updating..."
                   />
@@ -255,7 +257,8 @@ export function AdminWebsiteManager({ pages }: AdminWebsiteManagerProps) {
                 >
                   <input type="hidden" name="pageId" value={page.id} />
                   <AdminFormSubmitButton
-                    className="btn-danger"
+                    variant="danger"
+                    size="xs"
                     label="Delete"
                     pendingLabel="Deleting..."
                   />

@@ -6,6 +6,7 @@ import { UserData } from "@/types/UserData.d";
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { UploadRouteResponse } from "@/types/UploadData.d";
+import Button from "@/components/shared/button";
 import FormInput from "@/components/shared/form-input";
 
 type ProfileActionResponse = {
@@ -199,13 +200,14 @@ export default function ProfileHeroEditor({
         </div>
 
         <div className="flex justify-end">
-          <button
+          <Button
             type="submit"
-            className={classNames("btn btn-contained")}
+            variant="contained"
             disabled={isSaving}
+            loading={isSaving}
           >
             {isSaving ? "Saving..." : "Save profile"}
-          </button>
+          </Button>
         </div>
 
         {feedbackMessage && (
