@@ -2,7 +2,19 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-04-16 — PM audit #127.
+> Last updated: 2026-04-16 — PM audit #128.
+
+---
+
+## Admin Sidebar Collapsed State Persistence — COMPLETED (2026-04-16)
+
+> SWOT-derived weakness (PM audit #127 active backlog item). Admin sidebar collapsed state now persists across reloads using existing `droplet-sidebar-collapsed` localStorage key (shared with chat sidebar — unified global preference). All 7 gates GREEN. 729 tests (110 suites). 0 failures.
+
+- [x] Added `SIDEBAR_STORAGE_KEY` constant in [admin-layout-shell.tsx](src/components/admin/admin-layout-shell.tsx).
+- [x] Added mount `useEffect` to restore collapsed state from localStorage.
+- [x] Added persist `useEffect` to write collapsed state changes to localStorage.
+- [x] Error handling: try/catch with `void error` pattern (matches chat sidebar pattern, 13 other usage sites).
+- [x] Privacy docs ([privacy.json](src/json/privacy.json), [cookies.json](src/json/cookies.json)) already document the key. No update needed.
 
 ---
 
