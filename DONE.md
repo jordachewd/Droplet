@@ -2,7 +2,24 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-04-16 — PM audit #125.
+> Last updated: 2026-04-16 — PM audit #126.
+
+---
+
+## Type File Cleanup — COMPLETED (2026-04-16)
+
+> Owner cleanup (PM audit #126). Type declaration files in `src/types/` consolidated and reorganized. Several single-purpose type files merged into broader domain files. All imports updated. TSC passes, all 729 tests pass, knip clean.
+
+- [x] 14 `.d.ts` files in `src/types/`: `AdminData`, `AlertData`, `chat-api`, `css`, `globals`, `LibraryData`, `PersonaData`, `PlanData`, `TaskData`, `ThemeData`, `TransactionData`, `UploadData`, `UsageEventData`, `UserData`.
+- [x] Old files consolidated: `AdminConfigData` → `AdminData`, `AuditLogData`/`SettingsData`/`StopReasonData`/`WebsitePageData`/`PublicPageData`/`ChatData` merged into remaining domain files.
+- [x] New domain files added: `AlertData`, `css`, `globals`, `LibraryData`, `ThemeData`, `UploadData`.
+- [x] All imports across `src/` updated. Zero `.d.tsx` references remain. All 7 gates GREEN.
+
+---
+
+## Prettier Reformat — PM audit #126 (2026-04-16)
+
+> 93 files had formatting drift from type file cleanup and Phase 226 changes. Fixed by `npx prettier . --write`. All gates GREEN.
 
 ---
 
