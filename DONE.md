@@ -2,7 +2,20 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-04-11 — PM audit #123.
+> Last updated: 2026-04-15 — PM audit #125.
+
+---
+
+## Phase 226 — Split Admin Actions Into Domain Files — COMPLETED (2026-04-15)
+
+> Engineer delivered (PM audit #125). Monolithic `admin.actions.tsx` (1,782 lines, 14 exported functions + 13 private helpers) split into 5 domain-specific files. Legacy file deleted. All imports rewired across 18 consumers + 4 test files. Triple audit confirmed clean split (PM + Architect + Engineer). 729 tests (110 suites). All 7 gates GREEN.
+
+- [x] **226-A** — Created `admin-action-helpers.ts` (227 lines) — shared infrastructure: `resolveActionFormData`, `successState`, `errorState`, `logAdminActionError`, `getStringField`, `getNumericField`, `pluralize`, `withSummaryDetails`, per-domain Zod schemas. No `"use server"` (plain utility). `import "server-only"` present.
+- [x] **226-B** — Created `admin-user.actions.tsx` (474 lines) — 4 exported: `toggleUserSuspensionAction`, `removeUserByAdminAction`, `bulkSuspendUsersAction`, `bulkRemoveUsersAction` + private `removeUserByAdmin`. Auth via `requireAdminActionAccess()` in all 4.
+- [x] **226-C** — Created `admin-settings.actions.tsx` (550 lines) — 1 exported: `updateAdminSettingAction` + private `parseStructuredAdminSettingValue` (~347 lines). Auth verified.
+- [x] **226-D** — Created `admin-pages.actions.tsx` (553 lines) — 8 exported page actions. Auth in all 8.
+- [x] **226-E** — Created `admin-transaction.actions.tsx` (83 lines) — 1 exported: `bulkDeleteTransactionsAction`. Auth verified. Deleted `admin.actions.tsx`. All imports rewired. `[admin.actions]` log prefixes preserved for continuity.
+- [x] **226-F** — Validation: prettier ✓, lint ✓, tsc ✓, tests (729/729) ✓, e2e (49 passed, 6 skipped) ✓, build (19.3s) ✓, knip ✓.
 
 ---
 
