@@ -155,6 +155,7 @@ function AdminUsersTableContent({
                 variant="outlined"
                 label="Bulk Suspend"
                 pendingLabel="Suspending..."
+                size="xs"
               />
             </AdminManagedForm>
 
@@ -175,6 +176,7 @@ function AdminUsersTableContent({
                 variant="danger"
                 label="Bulk Remove"
                 pendingLabel="Removing..."
+                size="xs"
               />
             </AdminManagedForm>
           </div>

@@ -54,8 +54,8 @@ export default function UsageMetricRow({
       <div className="h-2.5 w-full rounded-full bg-twilightPurple-400/10 dark:bg-dustyBlue-500/10">
         <div
           className={classNames(
-            "h-full rounded-full bg-twilightPurple-500 transition-all dark:bg-dustyBlue-500",
-            isNearLimit && "bg-amber-500 dark:bg-amber-400",
+            "h-full rounded-full transition-all bg-dustyBlue-500",
+            isNearLimit && "bg-amber-500",
           )}
           style={{ width: `${progress}%` }}
         />

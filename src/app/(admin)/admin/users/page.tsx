@@ -45,13 +45,14 @@ export default async function AdminUsersPage({
           containerClassName="flex-1"
         />
         <div className="flex items-end gap-3">
-          <Button size="sm" variant="contained" type="submit">
+          <Button size="xs" variant="contained" type="submit">
             Search
           </Button>
 
-          <Link className="btn btn-sm btn-outlined" href="/admin/users">
+          <Link className="btn btn-xs btn-outlined" href="/admin/users">
             Reset
           </Link>
+
         </div>
       </form>
 

@@ -166,6 +166,7 @@ export default async function AdminUserDetailPage({
               <AdminFormSubmitButton
                 label={user.suspended ? "Reinstate User" : "Suspend User"}
                 pendingLabel="Updating user..."
+                size="xs"
               />
             </AdminManagedForm>
           )}
@@ -179,7 +180,8 @@ export default async function AdminUserDetailPage({
               <AdminFormSubmitButton
                 label="Remove User"
                 pendingLabel="Removing user..."
-                className="text-white bg-red-700 hover:bg-red-800 border-red-700 hover:border-red-800"
+                variant="danger"
+                size="xs"
               />
             </AdminManagedForm>
           )}
@@ -189,7 +191,7 @@ export default async function AdminUserDetailPage({
       <article className="admin-surface">
         <div className="mb-4 flex items-center justify-between gap-4">
           <h2 className="heading-6">Recent Transactions</h2>
-          <Link className="btn btn-sm btn-outlined" href="/admin/transactions">
+          <Link className="btn btn-xs btn-outlined" href="/admin/transactions">
             All Transactions
           </Link>
         </div>
