@@ -5,27 +5,19 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #125 (2026-04-15). V1.0 MVP RELEASED. ALL Phases through 233 COMPLETE. Phase 225 (full OpenAI route decomposition) COMPLETE. Phase 226 (admin actions split) COMPLETE. Phase 230 (.d.tsx rename) COMPLETE. 0 HIGH bugs. All 7 gates GREEN.**
+> **STATUS: PM audit #125 (2026-04-16). V1.0 MVP RELEASED. ALL Phases through 233 COMPLETE. Phase 226 (admin actions split) COMPLETE. 0 HIGH bugs. All 7 gates GREEN.**
 >
 > **GATE STATUS: All 7 gates GREEN. 0 npm vulnerabilities. 0 critical security issues. Code hygiene 100% (0 console.log, 0 Math.random, 0 as any, 0 ts-ignore, 0 empty catch, 0 window.alert).**
 >
 > **TEST STATUS: 729 tests (110 suites), 49 E2E (6 skipped). 0 failures. All gates GREEN.**
 >
-> **ACTIVE BACKLOG: PM audit #125 — 0 HIGH items. 2 god files remain: stripe/route.tsx (1,253), generateResponse.tsx (1,188). Next: Phase 228 (Stripe webhook extraction).**
+> **ACTIVE BACKLOG: PM audit #125 — 0 HIGH items. 2 god files remain: stripe/route.tsx (1,094), generateResponse.tsx (1,078). Next: Phase 228 (Stripe webhook split).**
 
 ---
 
-## COMPLETED — Stripe Recurring Billing (All Phases 217-A through 217-G) — Archived to DONE.md
+## Archived Phases — See [DONE.md](DONE.md)
 
-> ✅ Stripe billing COMPLETE (PM audit #115). All phases delivered: 217-A (schema), 217-B (checkout), 217-C (webhooks), 217-C-fix (path conflict), 217-D (cancellation), 217-E (yearly billing UI), 217-F (admin Price IDs), 217-G (tests + docs + grandfathering). See [DONE.md](DONE.md).
-
-## COMPLETED — Phase 218-C-fix: Dead CSS Cleanup — Archived to DONE.md
-
-> ✅ Phase 218-C-fix COMPLETE (PM audit #115). Dead `.toggle-theme-button` removed from `layout.css`. See [DONE.md](DONE.md).
-
-## COMPLETED — Phase 26.x: Persona-aware Media Prompts — Archived to DONE.md
-
-> ✅ Phase 26.x COMPLETE (PM audit #115). `PERSONA_IMAGE_STYLE_HINTS` + `PERSONA_AUDIO_STYLE_HINTS` (6 personas each). `personaId` threaded through `generateImage()`, `generateAudio()`, `generateResponse()`. Both TTS and audio_in_out modes. Tests for all paths. See [DONE.md](DONE.md).
+> All phases through 233 + Phase 226 archived. See DONE.md for completion records.
 
 ---
 
@@ -35,30 +27,15 @@
 
 ---
 
-## ✅ Phase 225 — OpenAI Route Decomposition — COMPLETED (PM audit #123) — Archived to DONE.md
+## ✅ Phase 226 — Split Admin Actions Into Domain Files — COMPLETED (PM audit #125) — Archived to DONE.md
 
-> ✅ All 4 sub-phases delivered (225-A/B/C/D). Route reduced from ~1,549 to 883 lines (43% reduction). 4 focused modules: `media-slot.ts` (114), `conversation-lifecycle.ts` (221), `stream-orchestrator.ts` (278), `route-helpers.ts` (288) = 901 lines extracted. `<500` target was aspirational — remaining 883 lines are genuine request orchestration. Class-based `StreamLifecycleOrchestrator` with zero timer leaks. All modules have `import "server-only"`, no circular dependencies. Phase 230 (.d.tsx → .d.ts rename) also DONE. Triple audit confirmed (PM + Architect + Engineer). 729 tests (110 suites). All 7 gates GREEN. See [DONE.md](DONE.md).
-
-### ✅ Phase 226 — Split Admin Actions Into Domain Files — COMPLETED (PM audit #125) — Archived to DONE.md
-
-> ✅ Monolithic `admin.actions.tsx` (1,782 lines) split into 5 domain files (1,887 total lines). 14 exported functions + shared helpers. All imports rewired. Legacy file deleted. Triple audit confirmed. 729 tests. All 7 gates GREEN. See [DONE.md](DONE.md).
-
-### ~~Phase 227 — Reconcile SPEC.md / AGENTS.md Plan Limit Documentation~~ — DONE (PM audit #119) — Archived to DONE.md
-
-> ✅ SPEC.md Lite detailed limits table fixed by PM audit #119 to match `PLAN_LIMITS` (10 conv/day, 10 prompts, 1 image, 1 audio). AGENTS.md Rule 5 already matches code. No remaining discrepancy. Move to DONE.md.
+> ✅ Phase 226 COMPLETE. `admin.actions.tsx` (1,782 lines) split into 5 domain files: `admin-user.actions.tsx` (409), `admin-settings.actions.tsx` (490), `admin-pages.actions.tsx` (481), `admin-transaction.actions.tsx` (73), `admin-action-helpers.ts` (206). Original deleted. All imports updated. All 7 gates GREEN, knip clean. See [DONE.md](DONE.md).
 
 ### Phase 228 — Extract Stripe Webhook Handlers Into Modules (LOW)
 
-> **Risk:** LOW. **Effort:** 1–2 hours. **Source:** Architect audit L3. PM audit #125 verified inventory.
-> **Problem:** `src/app/api/webhooks/stripe/route.tsx` is **1,253 lines** — now the largest file in the codebase. Contains 15 Zod schemas, 17 shared utility functions, 5 event handlers, 1 dispatcher, and the POST entry point.
-> **Fix:** Extract into 3 modules under `src/lib/utils/stripe/` + slim route:
->
-> **228-A: Create `stripe-webhook-shared.ts`** (~440 lines)
-> — 15 Zod schemas: `stripeWebhookEventSchema` (L49), `expandableIdSchema` (L58), `checkoutSessionMetadataSchema` (L64), `checkoutSessionPayloadSchema` (L80), `checkoutSessionCompletedEventSchema` (L90), `invoiceSubscriptionMetadataSchema` (L103), `stripePricePayloadSchema` (L113), `invoiceLineItemSchema` (L124), `invoicePayloadSchema` (L129), `invoicePaidEventSchema` (L160), `invoicePaymentFailedEventSchema` (L170), `subscriptionItemSchema` (L180), `subscriptionPayloadSchema` (L186), `customerSubscriptionUpdatedEventSchema` (L203), `customerSubscriptionDeletedEventSchema` (L214)
-> — 5 constants: `ALLOWED_PLAN_NAMES`, `ALLOWED_BILLING_CYCLES`, `ALLOWED_SUBSCRIPTION_STATUSES`, `WEBHOOK_FAILURE_MESSAGE`, `PLAN_ID_BY_NAME`
-> — 17 utility functions: `logStripeWebhookError` (L269), `logStripeWebhookInfo` (L273), `createWebhookErrorResponse` (L277), `toStringId` (L287), `resolveExpandableId` (L291), `centsToAmount` (L305), `intervalToBillingCycle` (L313), `normalizeSubscriptionStatus` (L327), `resolvePlanAndBillingFromPriceId` (L347), `pickInvoiceLinePrice` (L377), `resolveInvoiceSubscriptionMetadata` (L391), `resolvePlanId` (L405), `resolveSubscriptionPeriodEndDate` (L420), `findWebhookUser` (L440), `claimTransaction` (L492), `updateUserWithGuard` (L529), `resolveStripePlanFromPrice` (L735)
-> — All types/interfaces: `WebhookPlanUsageRecord`, `WebhookUserPlanRecord`, `WebhookUserRecord`, `TransactionClaimStatus`, `UserUpdateStatus`
-> — No `"use server"`. Add `import "server-only"`.
+> **Risk:** LOW. **Effort:** 1–2 hours. **Source:** Architect audit L3. PM audit #125 corrected size.
+> **Problem:** `src/app/api/webhooks/stripe/route.tsx` is **1,094 lines** handling 5 event types in a single file. 5 handler functions + 15 shared utilities + 10+ Zod schemas. Handlers are well-structured internally but the file is hard to test in isolation.
+> **Fix:** Extract handlers and shared utilities into modules under `src/lib/utils/stripe/`:
 >
 > **228-B: Create `stripe-webhook-handlers.ts`** (~650 lines)
 > — 5 event handlers: `handleCheckoutSessionCompleted` (L560, ~175 lines), `handleInvoicePaid` (L747, ~154 lines), `handleInvoicePaymentFailed` (L901, ~63 lines), `handleCustomerSubscriptionUpdated` (L964, ~128 lines), `handleCustomerSubscriptionDeleted` (L1092, ~98 lines)
@@ -80,8 +57,8 @@
 
 ### Phase 229 — Extract generateResponse Retry/Tool Helpers (LOW)
 
-> **Risk:** LOW. **Effort:** 1–2 hours. **Source:** Architect audit L4. PM audit #124 corrected size.
-> **Problem:** `src/lib/utils/openai/generateResponse.tsx` is **1,188 lines**. The retry logic (`withOpenAIRetry`, `classifyOpenAIError`, `isRetryableOpenAIError`, `serializeToolCalls`, `getOpenAIErrorStatus`, `waitForRetry`, `logOpenAIRetry` — ~137 lines) and vision URL resolution (`resolveImageInputUrlsForOpenAI`, `buildVisionPresignedUrl`, `isInternalDownloadKeyUrl` — ~112 lines) could be extracted. `buildOpenAIResponsePayload` at ~314 lines is the single largest function in the codebase — future decomposition target.
+> **Risk:** LOW. **Effort:** 1–2 hours. **Source:** Architect audit L4. PM audit #125 corrected size.
+> **Problem:** `src/lib/utils/openai/generateResponse.tsx` is **1,078 lines**. The retry logic (`withOpenAIRetry`, `classifyOpenAIError`, `isRetryableOpenAIError`, `serializeToolCalls`, `getOpenAIErrorStatus`, `waitForRetry`, `logOpenAIRetry` — ~137 lines) and vision URL resolution (`resolveImageInputUrlsForOpenAI`, `buildVisionPresignedUrl`, `isInternalDownloadKeyUrl` — ~112 lines) could be extracted. `buildOpenAIResponsePayload` at ~314 lines is the single largest function in the codebase — future decomposition target.
 > **Fix:** Extract `withOpenAIRetry()`, `classifyOpenAIError()`, `isRetryableOpenAIError()`, `serializeToolCalls()` into `src/lib/utils/openai/openai-retry.ts`.
 > **Acceptance criteria:**
 >

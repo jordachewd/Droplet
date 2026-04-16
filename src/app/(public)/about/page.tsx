@@ -332,10 +332,7 @@ export default async function AboutPage() {
             <Link className="btn btn-lg btn-contained" href="/plans">
               {aboutContent.ctaPrimaryLabel}
             </Link>
-            <Link
-              className="btn btn-lg btn-outlined"
-              href="/personas"
-            >
+            <Link className="btn btn-lg btn-outlined" href="/personas">
               {aboutContent.ctaSecondaryLabel}
             </Link>
           </div>
