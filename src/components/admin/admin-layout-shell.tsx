@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import AdminSidebar from "@/components/admin/admin-sidebar";
 import AppHeader from "@/components/shared/app-header";
@@ -19,6 +20,8 @@ interface AdminLayoutShellProps {
   }>;
 }
 
+const SIDEBAR_STORAGE_KEY = "droplet-sidebar-collapsed";
+
 export default function AdminLayoutShell({
   children,
   adminLinks,
@@ -26,18 +29,42 @@ export default function AdminLayoutShell({
   const {
     desktopSidebarCollapsed,
     mobileSidebarOpen,
+    setDesktopSidebarCollapsed,
     toggleDesktopSidebarCollapsed,
     toggleMobileSidebarOpen,
   } = useUiStore(
     useShallow((state) => ({
       desktopSidebarCollapsed: state.desktopSidebarCollapsed,
       mobileSidebarOpen: state.mobileSidebarOpen,
+      setDesktopSidebarCollapsed: state.setDesktopSidebarCollapsed,
       toggleDesktopSidebarCollapsed: state.toggleDesktopSidebarCollapsed,
       toggleMobileSidebarOpen: state.toggleMobileSidebarOpen,
     })),
   );
 
   const isDesktop = useIsDesktop();
+
+  useEffect(() => {
+    try {
+      const collapsedFromStorage = localStorage.getItem(SIDEBAR_STORAGE_KEY);
+      setDesktopSidebarCollapsed(collapsedFromStorage === "true");
+    } catch (error) {
+      void error;
+      setDesktopSidebarCollapsed(false);
+    }
+  }, [setDesktopSidebarCollapsed]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        SIDEBAR_STORAGE_KEY,
+        String(desktopSidebarCollapsed),
+      );
+    } catch (error) {
+      void error;
+      // localStorage quota exceeded or unavailable - non-critical UI preference write.
+    }
+  }, [desktopSidebarCollapsed]);
 
   function handleToggleSidebar() {
     if (isDesktop) {

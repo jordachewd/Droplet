@@ -2,7 +2,62 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-04-16 — PM audit #125.
+> Last updated: 2026-04-16 — PM audit #128.
+
+---
+
+## Admin Sidebar Collapsed State Persistence — COMPLETED (2026-04-16)
+
+> SWOT-derived weakness (PM audit #127 active backlog item). Admin sidebar collapsed state now persists across reloads using existing `droplet-sidebar-collapsed` localStorage key (shared with chat sidebar — unified global preference). All 7 gates GREEN. 729 tests (110 suites). 0 failures.
+
+- [x] Added `SIDEBAR_STORAGE_KEY` constant in [admin-layout-shell.tsx](src/components/admin/admin-layout-shell.tsx).
+- [x] Added mount `useEffect` to restore collapsed state from localStorage.
+- [x] Added persist `useEffect` to write collapsed state changes to localStorage.
+- [x] Error handling: try/catch with `void error` pattern (matches chat sidebar pattern, 13 other usage sites).
+- [x] Privacy docs ([privacy.json](src/json/privacy.json), [cookies.json](src/json/cookies.json)) already document the key. No update needed.
+
+---
+
+## Phase 229 — Extract generateResponse Retry/Vision Helpers — COMPLETED (2026-04-16)
+
+> God file decomposition (PM audit #126 task). `generateResponse.tsx` (1,078→861 lines) had retry logic and vision URL resolution extracted into dedicated modules. Zero behavioral change. All 7 gates GREEN, knip clean. 729 tests (110 suites). 0 failures.
+
+- [x] **229-A** — Created `src/lib/utils/openai/openai-retry.ts` (127 lines) — `classifyOpenAIError()`, `withOpenAIRetry()` (3 retries, 1s/2s/4s exponential backoff), `serializeToolCalls()`, `OpenAIErrorType` type. Has `import "server-only"`.
+- [x] **229-B** — Created `src/lib/utils/openai/vision-url.ts` (101 lines) — `resolveImageInputUrlsForOpenAI()` (exported), `isInternalDownloadKeyUrl()` + `buildVisionPresignedUrl()` (private). 15-min presigned URL TTL. Has `import "server-only"`. 1 bare `catch {}` with explanatory comment (compliant).
+- [x] **229-C** — Updated `generateResponse.tsx` to import from `./openai-retry` and `./vision-url`. Re-exports `OpenAIErrorType`. No residual inline definitions.
+
+---
+
+## Phase 228 — Extract Stripe Webhook Into Modules — COMPLETED (2026-04-16)
+
+> God file decomposition (PM audit #126 task). `stripe/route.tsx` (1,094→61 lines) split into 3 files: shared utilities, event handlers, and slim route entry point. Zero behavioral change. All idempotency patterns intact. All 7 gates GREEN, knip clean. 729 tests (110 suites). 0 failures.
+
+- [x] **228-A** — Created `src/lib/utils/stripe/stripe-webhook-shared.ts` (502 lines) — 6 Zod schemas, shared types, `findWebhookUser`, `claimTransaction` (atomic idempotency via `findOneAndUpdate`), `updateUserWithGuard`, `getLitePlanDefaults`, `calculateExpiresOn`, `resolveExpandableId`, 14+ utility functions. Has `import "server-only"`, no `"use server"`.
+- [x] **228-B** — Created `src/lib/utils/stripe/stripe-webhook-handlers.ts` (600 lines) — 5 event handlers + `dispatchStripeWebhookEvent` dispatcher. Has `import "server-only"`, no `"use server"`.
+- [x] **228-C** — Slimmed `src/app/api/webhooks/stripe/route.tsx` to 61 lines — POST entry point + Stripe signature verification + dispatch call. `maxDuration = 60` retained.
+
+---
+
+## Stale Artifact Cleanup — COMPLETED (2026-04-16)
+
+> PM audit #126 task. Deleted `tests/unit/phase-112.1-test-audit.md` (115 lines) — stale historical doc referencing deleted `admin.actions.tsx`. Knip clean.
+
+---
+
+## Type File Cleanup — COMPLETED (2026-04-16)
+
+> Owner cleanup (PM audit #126). Type declaration files in `src/types/` consolidated and reorganized. Several single-purpose type files merged into broader domain files. All imports updated. TSC passes, all 729 tests pass, knip clean.
+
+- [x] 14 `.d.ts` files in `src/types/`: `AdminData`, `AlertData`, `chat-api`, `css`, `globals`, `LibraryData`, `PersonaData`, `PlanData`, `TaskData`, `ThemeData`, `TransactionData`, `UploadData`, `UsageEventData`, `UserData`.
+- [x] Old files consolidated: `AdminConfigData` → `AdminData`, `AuditLogData`/`SettingsData`/`StopReasonData`/`WebsitePageData`/`PublicPageData`/`ChatData` merged into remaining domain files.
+- [x] New domain files added: `AlertData`, `css`, `globals`, `LibraryData`, `ThemeData`, `UploadData`.
+- [x] All imports across `src/` updated. Zero `.d.tsx` references remain. All 7 gates GREEN.
+
+---
+
+## Prettier Reformat — PM audit #126 (2026-04-16)
+
+> 93 files had formatting drift from type file cleanup and Phase 226 changes. Fixed by `npx prettier . --write`. All gates GREEN.
 
 ---
 

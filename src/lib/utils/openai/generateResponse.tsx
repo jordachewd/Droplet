@@ -13,10 +13,7 @@ import {
   ChatCompletionMessageParam,
   ChatCompletionTool,
 } from "openai/resources/chat/completions.mjs";
-import { GetObjectCommand } from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { Entitlements } from "@/lib/utils/resolve-entitlements";
-import { APIError } from "openai";
 import {
   BudgetState,
   ModelPolicyModelOverrides,
@@ -27,8 +24,13 @@ import {
 } from "@/lib/utils/ai-model-policy";
 import { AIRequestMetric } from "@/lib/utils/usage-event-utils";
 import { compactMessagesToTokenLimit } from "./message-policy";
-import { awsS3Client } from "@/constants/aws";
-import { resolveS3ObjectKey } from "@/lib/utils/aws/s3-file-reference";
+import {
+  classifyOpenAIError,
+  serializeToolCalls,
+  withOpenAIRetry,
+  type OpenAIErrorType,
+} from "./openai-retry";
+import { resolveImageInputUrlsForOpenAI } from "./vision-url";
 
 interface GenerateResponseParams {
   messages: Message[];
@@ -58,12 +60,7 @@ interface GenerateStreamingResponseParams extends GenerateResponseParams {
   onMediaGenerationEnd?: () => void;
 }
 
-export type OpenAIErrorType =
-  | "rate_limit"
-  | "timeout"
-  | "service_error"
-  | "policy_blocked"
-  | "unknown";
+export type { OpenAIErrorType } from "./openai-retry";
 
 type BlockedReason =
   | "media_limit_reached"
@@ -81,19 +78,6 @@ export interface OpenAIResponsePayload {
   errorType?: OpenAIErrorType;
   errorMessage?: string;
   requestMetrics?: AIRequestMetric[];
-}
-
-const MAX_OPENAI_RETRIES = 3;
-const OPENAI_RETRY_DELAYS_MS = [1_000, 2_000, 4_000] as const;
-const VISION_PRESIGNED_URL_TTL_SECONDS = 15 * 60;
-const INTERNAL_DOWNLOAD_ROUTE_PATH = "/api/download";
-
-function getOpenAIErrorStatus(error: unknown): number | null {
-  if (!(error instanceof APIError)) {
-    return null;
-  }
-
-  return error.status ?? null;
 }
 
 function createBlockedResponsePayload({
@@ -138,252 +122,6 @@ function createPolicyBlockedPayload({
       "This request is blocked for your current plan or context.",
     requestMetrics,
   };
-}
-
-function classifyOpenAIError(error: unknown): OpenAIErrorType {
-  const status = getOpenAIErrorStatus(error);
-
-  if (status === 429) {
-    return "rate_limit";
-  }
-
-  if (status === 408 || status === 504) {
-    return "timeout";
-  }
-
-  if ([500, 502, 503].includes(status ?? 0)) {
-    return "service_error";
-  }
-
-  return "unknown";
-}
-
-function isRetryableOpenAIError(error: unknown): boolean {
-  const status = getOpenAIErrorStatus(error);
-
-  if (status === null || [400, 401, 403].includes(status)) {
-    return false;
-  }
-
-  return [429, 500, 502, 503].includes(status);
-}
-
-async function waitForRetry(delayMs: number): Promise<void> {
-  await new Promise((resolve) => {
-    setTimeout(resolve, delayMs);
-  });
-}
-
-function logOpenAIRetry({
-  error,
-  operation,
-  retryNumber,
-  delayMs,
-  nextModel,
-}: {
-  error: unknown;
-  operation: "chat" | "stream";
-  retryNumber: number;
-  delayMs: number;
-  nextModel: string;
-}) {
-  const status = getOpenAIErrorStatus(error);
-  const normalizedStatus = status === null ? "unknown" : String(status);
-
-  process.stderr.write(
-    `[openai-retry] ${operation} retry ${retryNumber}/${MAX_OPENAI_RETRIES} in ${delayMs}ms after status ${normalizedStatus}; next model=${nextModel}\n`,
-  );
-}
-
-async function withOpenAIRetry<T>({
-  baseRetryAttempt = 0,
-  operation,
-  resolveNextModel,
-  shouldRetry,
-  execute,
-}: {
-  baseRetryAttempt?: number;
-  operation: "chat" | "stream";
-  resolveNextModel: (nextRetryAttempt: number) => string;
-  shouldRetry?: (error: unknown) => boolean;
-  execute: (retryAttempt: number) => Promise<T>;
-}): Promise<T> {
-  let lastError: unknown;
-
-  for (let retryIndex = 0; retryIndex <= MAX_OPENAI_RETRIES; retryIndex += 1) {
-    const currentRetryAttempt = baseRetryAttempt + retryIndex;
-
-    try {
-      return await execute(currentRetryAttempt);
-    } catch (error) {
-      lastError = error;
-
-      const canRetry =
-        retryIndex < MAX_OPENAI_RETRIES &&
-        isRetryableOpenAIError(error) &&
-        (shouldRetry?.(error) ?? true);
-
-      if (!canRetry) {
-        throw error;
-      }
-
-      const delayMs = OPENAI_RETRY_DELAYS_MS[retryIndex];
-      const nextRetryAttempt = currentRetryAttempt + 1;
-
-      logOpenAIRetry({
-        error,
-        operation,
-        retryNumber: retryIndex + 1,
-        delayMs,
-        nextModel: resolveNextModel(nextRetryAttempt),
-      });
-
-      await waitForRetry(delayMs);
-    }
-  }
-
-  throw lastError ?? new Error("OpenAI request failed.");
-}
-
-function serializeToolCalls(
-  toolCalls:
-    | {
-        type: string;
-        function?: {
-          name: string;
-          arguments: string;
-        };
-      }[]
-    | undefined,
-) {
-  return toolCalls?.map((toolCall) => {
-    if (toolCall.type === "function" && toolCall.function) {
-      return {
-        type: toolCall.type,
-        function: {
-          name: toolCall.function.name,
-          arguments: toolCall.function.arguments,
-        },
-      };
-    }
-
-    return {
-      type: toolCall.type,
-    };
-  });
-}
-
-function isInternalDownloadKeyUrl(rawUrl: string): boolean {
-  if (!rawUrl) {
-    return false;
-  }
-
-  try {
-    const parsedUrl = new URL(rawUrl, "https://droplet.local");
-    return (
-      parsedUrl.pathname === INTERNAL_DOWNLOAD_ROUTE_PATH &&
-      parsedUrl.searchParams.has("key")
-    );
-  } catch {
-    // Invalid user-provided URLs are expected here; treat them as non-internal.
-    return false;
-  }
-}
-
-async function buildVisionPresignedUrl(
-  objectKey: string,
-): Promise<string | null> {
-  const bucketName = process.env.AWS_S3_BUCKET?.trim();
-
-  if (!bucketName) {
-    process.stderr.write(
-      "[generateResponse] Failed to build vision pre-signed URL: missing AWS_S3_BUCKET\n",
-    );
-    return null;
-  }
-
-  try {
-    return await getSignedUrl(
-      awsS3Client,
-      new GetObjectCommand({
-        Bucket: bucketName,
-        Key: objectKey,
-      }),
-      {
-        expiresIn: VISION_PRESIGNED_URL_TTL_SECONDS,
-      },
-    );
-  } catch (error) {
-    process.stderr.write(
-      `[generateResponse] Failed to build vision pre-signed URL for objectKey=${objectKey}: ${error instanceof Error ? error.message : "unknown"}\n`,
-    );
-    return null;
-  }
-}
-
-async function resolveImageInputUrlsForOpenAI(
-  messages: Message[],
-): Promise<Message[]> {
-  let hasChanges = false;
-
-  const transformedMessages: Message[] = [];
-
-  for (const message of messages) {
-    if (message.role !== "user" || !Array.isArray(message.content)) {
-      transformedMessages.push(message);
-      continue;
-    }
-
-    let messageChanged = false;
-    const transformedContent: ContentItem[] = [];
-
-    for (const item of message.content) {
-      if (
-        item.type !== "image_url" ||
-        typeof item.image_url?.url !== "string"
-      ) {
-        transformedContent.push(item);
-        continue;
-      }
-
-      const imageUrl = item.image_url.url;
-
-      if (!isInternalDownloadKeyUrl(imageUrl)) {
-        transformedContent.push(item);
-        continue;
-      }
-
-      const objectKey = resolveS3ObjectKey(imageUrl);
-
-      if (!objectKey) {
-        transformedContent.push(item);
-        continue;
-      }
-
-      const presignedUrl = await buildVisionPresignedUrl(objectKey);
-
-      if (!presignedUrl) {
-        transformedContent.push(item);
-        continue;
-      }
-
-      messageChanged = true;
-      hasChanges = true;
-
-      transformedContent.push({
-        ...item,
-        image_url: {
-          url: presignedUrl,
-        },
-      });
-    }
-
-    transformedMessages.push(
-      messageChanged ? { ...message, content: transformedContent } : message,
-    );
-  }
-
-  return hasChanges ? transformedMessages : messages;
 }
 
 function resolveFeaturePolicy({
