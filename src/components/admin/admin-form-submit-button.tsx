@@ -3,7 +3,13 @@
 import { useFormStatus } from "react-dom";
 import Button from "@/components/shared/button";
 
-type ButtonVariant = "contained" | "outlined" | "text" | "icon" | "danger" | "hero";
+type ButtonVariant =
+  | "contained"
+  | "outlined"
+  | "text"
+  | "icon"
+  | "danger"
+  | "hero";
 type ButtonSize = "xs" | "sm" | "md" | "lg";
 
 interface AdminFormSubmitButtonProps {

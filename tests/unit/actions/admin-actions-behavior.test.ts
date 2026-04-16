@@ -5,21 +5,23 @@ import { buildFaqs } from "@/constants/faqs";
 import { getDefaultHomepageFeaturedPersonas } from "@/constants/homepage-copy";
 import { getDefaultLandingContent } from "@/constants/landing-data";
 import {
-  bulkDeletePublicPagesAction,
-  bulkDeleteTransactionsAction,
-  bulkPublishPublicPagesAction,
   bulkRemoveUsersAction,
   bulkSuspendUsersAction,
+  removeUserByAdminAction,
+  toggleUserSuspensionAction,
+} from "@/lib/actions/admin-user.actions";
+import { updateAdminSettingAction } from "@/lib/actions/admin-settings.actions";
+import {
+  bulkDeletePublicPagesAction,
+  bulkPublishPublicPagesAction,
   bulkUnpublishPublicPagesAction,
   createPublicPageAction,
   deletePublicPageAction,
-  removeUserByAdminAction,
   savePublicPageAction,
   togglePublicPagePublishedAction,
-  toggleUserSuspensionAction,
-  updateAdminSettingAction,
   updatePublicPageSortOrderAction,
-} from "@/lib/actions/admin.actions";
+} from "@/lib/actions/admin-pages.actions";
+import { bulkDeleteTransactionsAction } from "@/lib/actions/admin-transaction.actions";
 import { createTestUser, mockMongooseModel } from "../test-support";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 

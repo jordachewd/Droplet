@@ -20,7 +20,7 @@ vi.mock("next/link", () => ({
   ),
 }));
 
-vi.mock("@/lib/actions/admin.actions", () => ({
+vi.mock("@/lib/actions/admin-user.actions", () => ({
   bulkRemoveUsersAction: vi.fn(),
   bulkSuspendUsersAction: vi.fn(),
 }));

@@ -4,7 +4,7 @@ import TiptapEditor from "@/components/admin/tiptap-editor";
 import { AdminManagedForm } from "@/components/admin/admin-managed-form";
 import { AdminFormSubmitButton } from "@/components/admin/admin-form-submit-button";
 import FormInput from "@/components/shared/form-input";
-import { savePublicPageAction } from "@/lib/actions/admin.actions";
+import { savePublicPageAction } from "@/lib/actions/admin-pages.actions";
 import { getAdminPublicPage } from "@/lib/utils/admin-queries";
 
 interface AdminWebsiteEditorPageProps {

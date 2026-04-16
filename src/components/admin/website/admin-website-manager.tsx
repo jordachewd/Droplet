@@ -10,7 +10,7 @@ import {
   deletePublicPageAction,
   togglePublicPagePublishedAction,
   updatePublicPageSortOrderAction,
-} from "@/lib/actions/admin.actions";
+} from "@/lib/actions/admin-pages.actions";
 import { AdminManagedForm } from "@/components/admin/admin-managed-form";
 import { AdminFormSubmitButton } from "@/components/admin/admin-form-submit-button";
 
@@ -229,7 +229,7 @@ export function AdminWebsiteManager({ pages }: AdminWebsiteManagerProps) {
                   className="btn btn-xs btn-outlined"
                   href={`/admin/website/${page.id}`}
                 >
-                  Edit 
+                  Edit
                 </Link>
 
                 <AdminManagedForm

@@ -2,7 +2,21 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-04-11 — PM audit #123.
+> Last updated: 2026-04-16 — PM audit #125.
+
+---
+
+## Phase 226 — Split Admin Actions Into Domain Files — COMPLETED (2026-04-16)
+
+> Discovered complete during PM audit #125. `admin.actions.tsx` (1,782 lines — formerly the largest file in the codebase) split into 5 domain-specific files. Original deleted. All imports updated across `src/`. All 7 gates GREEN, knip clean. 729 tests (110 suites). 0 failures.
+
+- [x] **226.1** — Created `src/lib/actions/admin-user.actions.tsx` (409 lines) — user CRUD, suspension, bulk operations: `toggleUserSuspensionAction`, `removeUserByAdminAction`, `bulkSuspendUsersAction`, `bulkRemoveUsersAction` + private `removeUserByAdmin`.
+- [x] **226.2** — Created `src/lib/actions/admin-settings.actions.tsx` (490 lines) — `updateAdminSettingAction` + `parseStructuredAdminSettingValue`.
+- [x] **226.3** — Created `src/lib/actions/admin-pages.actions.tsx` (481 lines) — 8 exported page CRUD actions.
+- [x] **226.4** — Created `src/lib/actions/admin-transaction.actions.tsx` (73 lines) — `bulkDeleteTransactionsAction`.
+- [x] **226.5** — Created `src/lib/actions/admin-action-helpers.ts` (206 lines) — shared infrastructure: `resolveActionFormData`, `successState`, `errorState`, `logAdminActionError`, `getStringField`, `getNumericField`, `pluralize`, `withSummaryDetails`, Zod schemas.
+- [x] **226.6** — Original `admin.actions.tsx` deleted. All imports across `src/` updated to new paths.
+- [x] **226.7** — Validation: prettier ✓, lint ✓, tsc ✓, tests (729/729) ✓, build ✓, knip ✓.
 
 ---
 

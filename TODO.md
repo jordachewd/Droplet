@@ -5,27 +5,19 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #123 (2026-04-11). V1.0 MVP RELEASED. ALL Phases through 233 COMPLETE. Phase 225 (full OpenAI route decomposition) COMPLETE. Phase 230 (.d.tsx rename) COMPLETE. 0 HIGH bugs. All 7 gates GREEN.**
+> **STATUS: PM audit #125 (2026-04-16). V1.0 MVP RELEASED. ALL Phases through 233 COMPLETE. Phase 226 (admin actions split) COMPLETE. 0 HIGH bugs. All 7 gates GREEN.**
 >
-> **GATE STATUS: All 7 gates GREEN. 0 vulnerabilities. 0 critical security issues.**
+> **GATE STATUS: All 7 gates GREEN. 0 npm vulnerabilities. 0 critical security issues. Code hygiene 100% (0 console.log, 0 Math.random, 0 as any, 0 ts-ignore, 0 empty catch, 0 window.alert).**
 >
 > **TEST STATUS: 729 tests (110 suites), 49 E2E (6 skipped). 0 failures. All gates GREEN.**
 >
-> **ACTIVE BACKLOG: PM audit #123 — 0 HIGH items. OpenAI route decomposition COMPLETE (route 1,461→883 lines, 4 modules extracted). Next: god file decomposition (226/228/229).**
+> **ACTIVE BACKLOG: PM audit #125 — 0 HIGH items. 2 god files remain: stripe/route.tsx (1,094), generateResponse.tsx (1,078). Next: Phase 228 (Stripe webhook split).**
 
 ---
 
-## COMPLETED — Stripe Recurring Billing (All Phases 217-A through 217-G) — Archived to DONE.md
+## Archived Phases — See [DONE.md](DONE.md)
 
-> ✅ Stripe billing COMPLETE (PM audit #115). All phases delivered: 217-A (schema), 217-B (checkout), 217-C (webhooks), 217-C-fix (path conflict), 217-D (cancellation), 217-E (yearly billing UI), 217-F (admin Price IDs), 217-G (tests + docs + grandfathering). See [DONE.md](DONE.md).
-
-## COMPLETED — Phase 218-C-fix: Dead CSS Cleanup — Archived to DONE.md
-
-> ✅ Phase 218-C-fix COMPLETE (PM audit #115). Dead `.toggle-theme-button` removed from `layout.css`. See [DONE.md](DONE.md).
-
-## COMPLETED — Phase 26.x: Persona-aware Media Prompts — Archived to DONE.md
-
-> ✅ Phase 26.x COMPLETE (PM audit #115). `PERSONA_IMAGE_STYLE_HINTS` + `PERSONA_AUDIO_STYLE_HINTS` (6 personas each). `personaId` threaded through `generateImage()`, `generateAudio()`, `generateResponse()`. Both TTS and audio_in_out modes. Tests for all paths. See [DONE.md](DONE.md).
+> All phases through 233 + Phase 226 archived. See DONE.md for completion records.
 
 ---
 
@@ -35,36 +27,15 @@
 
 ---
 
-## ✅ Phase 225 — OpenAI Route Decomposition — COMPLETED (PM audit #123) — Archived to DONE.md
+## ✅ Phase 226 — Split Admin Actions Into Domain Files — COMPLETED (PM audit #125) — Archived to DONE.md
 
-> ✅ All 4 sub-phases delivered (225-A/B/C/D). Route reduced from ~1,549 to 883 lines (43% reduction). 4 focused modules: `media-slot.ts` (114), `conversation-lifecycle.ts` (221), `stream-orchestrator.ts` (278), `route-helpers.ts` (288) = 901 lines extracted. `<500` target was aspirational — remaining 883 lines are genuine request orchestration. Class-based `StreamLifecycleOrchestrator` with zero timer leaks. All modules have `import "server-only"`, no circular dependencies. Phase 230 (.d.tsx → .d.ts rename) also DONE. Triple audit confirmed (PM + Architect + Engineer). 729 tests (110 suites). All 7 gates GREEN. See [DONE.md](DONE.md).
-
-### Phase 226 — Split Admin Actions Into Domain Files (LOW)
-
-> **Risk:** LOW. **Effort:** 1–2 hours. **Source:** Architect audit L1.
-> **Problem:** `src/lib/actions/admin.actions.tsx` is 1,564 lines — the largest file in the codebase. Houses all admin mutations in one file.
-> **Fix:** Split into domain-specific action files:
->
-> - `src/lib/actions/admin-user.actions.tsx` — user CRUD, suspension, bulk operations
-> - `src/lib/actions/admin-settings.actions.tsx` — setting updates
-> - `src/lib/actions/admin-pages.actions.tsx` — public page CRUD
->
-> **Acceptance criteria:**
->
-> - Each new file exports its domain's server actions with `"use server"` directive
-> - All imports across `src/` updated to new paths
-> - Original `admin.actions.tsx` deleted or reduced to a re-export barrel
-> - All 7 gates GREEN, knip clean
-
-### ~~Phase 227 — Reconcile SPEC.md / AGENTS.md Plan Limit Documentation~~ — DONE (PM audit #119) — Archived to DONE.md
-
-> ✅ SPEC.md Lite detailed limits table fixed by PM audit #119 to match `PLAN_LIMITS` (10 conv/day, 10 prompts, 1 image, 1 audio). AGENTS.md Rule 5 already matches code. No remaining discrepancy. Move to DONE.md.
+> ✅ Phase 226 COMPLETE. `admin.actions.tsx` (1,782 lines) split into 5 domain files: `admin-user.actions.tsx` (409), `admin-settings.actions.tsx` (490), `admin-pages.actions.tsx` (481), `admin-transaction.actions.tsx` (73), `admin-action-helpers.ts` (206). Original deleted. All imports updated. All 7 gates GREEN, knip clean. See [DONE.md](DONE.md).
 
 ### Phase 228 — Extract Stripe Webhook Handlers Into Modules (LOW)
 
-> **Risk:** LOW. **Effort:** 1–2 hours. **Source:** Architect audit L3.
-> **Problem:** `src/app/api/webhooks/stripe/route.tsx` is 1,094 lines handling 5 event types in a single file. Each handler is well-structured internally but the file is hard to test in isolation.
-> **Fix:** Extract each handler into its own module under `src/lib/utils/stripe/`:
+> **Risk:** LOW. **Effort:** 1–2 hours. **Source:** Architect audit L3. PM audit #125 corrected size.
+> **Problem:** `src/app/api/webhooks/stripe/route.tsx` is **1,094 lines** handling 5 event types in a single file. 5 handler functions + 15 shared utilities + 10+ Zod schemas. Handlers are well-structured internally but the file is hard to test in isolation.
+> **Fix:** Extract handlers and shared utilities into modules under `src/lib/utils/stripe/`:
 >
 > - `handle-checkout-completed.ts`
 > - `handle-invoice-paid.ts`
@@ -81,8 +52,8 @@
 
 ### Phase 229 — Extract generateResponse Retry/Tool Helpers (LOW)
 
-> **Risk:** LOW. **Effort:** 1–2 hours. **Source:** Architect audit L4.
-> **Problem:** `src/lib/utils/openai/generateResponse.tsx` is 1,078 lines. The retry logic (`withOpenAIRetry`) and tool call serialization could be extracted.
+> **Risk:** LOW. **Effort:** 1–2 hours. **Source:** Architect audit L4. PM audit #125 corrected size.
+> **Problem:** `src/lib/utils/openai/generateResponse.tsx` is **1,078 lines**. The retry logic (`withOpenAIRetry`, `classifyOpenAIError`, `isRetryableOpenAIError`, `serializeToolCalls`, `getOpenAIErrorStatus`, `waitForRetry`, `logOpenAIRetry` — ~137 lines) and vision URL resolution (`resolveImageInputUrlsForOpenAI`, `buildVisionPresignedUrl`, `isInternalDownloadKeyUrl` — ~112 lines) could be extracted. `buildOpenAIResponsePayload` at ~314 lines is the single largest function in the codebase — future decomposition target.
 > **Fix:** Extract `withOpenAIRetry()`, `classifyOpenAIError()`, `isRetryableOpenAIError()`, `serializeToolCalls()` into `src/lib/utils/openai/openai-retry.ts`.
 > **Acceptance criteria:**
 >

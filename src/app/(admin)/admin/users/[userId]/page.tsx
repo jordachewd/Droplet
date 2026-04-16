@@ -4,7 +4,7 @@ import PageHead from "@/components/layout/page-head";
 import {
   removeUserByAdminAction,
   toggleUserSuspensionAction,
-} from "@/lib/actions/admin.actions";
+} from "@/lib/actions/admin-user.actions";
 import { AdminManagedForm } from "@/components/admin/admin-managed-form";
 import { AdminFormSubmitButton } from "@/components/admin/admin-form-submit-button";
 import UsageMetricRow from "@/components/shared/usage-metric-row";

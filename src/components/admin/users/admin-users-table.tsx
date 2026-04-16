@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 import {
   bulkRemoveUsersAction,
   bulkSuspendUsersAction,
-} from "@/lib/actions/admin.actions";
+} from "@/lib/actions/admin-user.actions";
 import { AdminManagedForm } from "@/components/admin/admin-managed-form";
 import { AdminFormSubmitButton } from "@/components/admin/admin-form-submit-button";
 import FormInput from "@/components/shared/form-input";
