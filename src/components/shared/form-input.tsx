@@ -77,7 +77,11 @@ export default function FormInput({
       name={name}
       type={type}
       onChange={onChange}
-      className={classNames(INPUT_CLASS_MAP[type], className)}
+      className={classNames(
+        INPUT_CLASS_MAP[type],
+        type === "search" && "form-search-input",
+        className,
+      )}
       {...inputProps}
     />
   );

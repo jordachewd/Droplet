@@ -86,3 +86,7 @@ a.menu-item {
 .skip-link:focus-visible {
   transform: translateY(0);
 }
+
+hr {
+  @apply border-t border-lavenderHaze-600/30 dark:border-midnightBlue-400/30 my-2;
+}

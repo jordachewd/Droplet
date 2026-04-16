@@ -34,9 +34,9 @@ export default function HeroSection({
     <section className={heroSectionClass}>
       <div className="mx-auto flex w-full max-w-screen-2xl px-4 flex-col items-center justify-between lg:flex-row">
         <div className={heroTextClass}>
-          <h1 className="heading-2 whitespace-pre-line">{content.heading}</h1>
+          <h1 className="heading-1 whitespace-pre-line">{content.heading}</h1>
 
-          <p className="heading-6 max-w-2xl whitespace-pre-line">
+          <p className="heading-5 max-w-2xl whitespace-pre-line">
             {content.subheading}
           </p>
 
