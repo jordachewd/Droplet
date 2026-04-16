@@ -33,7 +33,13 @@ function CheckoutSubmitButton({
     : (isCurrent && "Current") || (isIncluded && "Included") || "Subscribe";
 
   return (
-    <Button type="submit" variant={variant} size="md" disabled={isDisabled} className={className}>
+    <Button
+      type="submit"
+      variant={variant}
+      size="md"
+      disabled={isDisabled}
+      className={className}
+    >
       {buttonLabel}
     </Button>
   );
