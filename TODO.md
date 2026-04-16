@@ -37,17 +37,22 @@
 > **Problem:** `src/app/api/webhooks/stripe/route.tsx` is **1,094 lines** handling 5 event types in a single file. 5 handler functions + 15 shared utilities + 10+ Zod schemas. Handlers are well-structured internally but the file is hard to test in isolation.
 > **Fix:** Extract handlers and shared utilities into modules under `src/lib/utils/stripe/`:
 >
-> - `handle-checkout-completed.ts`
-> - `handle-invoice-paid.ts`
-> - `handle-invoice-payment-failed.ts`
-> - `handle-subscription-updated.ts`
-> - `handle-subscription-deleted.ts`
+> **228-B: Create `stripe-webhook-handlers.ts`** (~650 lines)
+> — 5 event handlers: `handleCheckoutSessionCompleted` (L560, ~175 lines), `handleInvoicePaid` (L747, ~154 lines), `handleInvoicePaymentFailed` (L901, ~63 lines), `handleCustomerSubscriptionUpdated` (L964, ~128 lines), `handleCustomerSubscriptionDeleted` (L1092, ~98 lines)
+> — 1 dispatcher: `dispatchStripeWebhookEvent` (L1190)
+> — Import shared from `stripe-webhook-shared.ts`
+> — No `"use server"`. Add `import "server-only"`.
 >
-> Keep shared Zod schemas and utility functions in `stripe-webhook-shared.ts`.
+> **228-C: Slim `route.tsx`** (~50 lines)
+> — POST entry point + Stripe signature verification + call `dispatchStripeWebhookEvent`
+> — Keep `maxDuration = 60` export
+>
 > **Acceptance criteria:**
 >
-> - Each handler in its own file, exported as a single async function
-> - `route.tsx` reduced to dispatcher + Stripe signature verification
+> - Shared module has all schemas + types + utilities, no `"use server"`, `import "server-only"`
+> - Handlers module has all 5 handlers + dispatcher, no `"use server"`, `import "server-only"`
+> - `route.tsx` reduced to ~50 lines (POST + sig verify + dispatch)
+> - All error messages, audit logging, and Stripe API interactions unchanged
 > - All 7 gates GREEN, knip clean
 
 ### Phase 229 — Extract generateResponse Retry/Tool Helpers (LOW)
@@ -63,24 +68,23 @@
 
 ---
 
+## Cleanup — Stale Docs (LOW)
+
+### Remove `tests/unit/phase-112.1-test-audit.md`
+
+> **Risk:** NONE. **Effort:** 1 minute. **Source:** PM audit #125.
+> **Problem:** Historical audit doc (115 lines) from Phase 112.1 references deleted `admin.actions.tsx`. Stale artifact in tests directory.
+> **Fix:** Delete the file. Committed code, no test depends on it.
+> **Acceptance criteria:** File deleted, knip clean.
+
+---
+
 ## SWOT-DERIVED — Known Issues (from PM audit #115 SWOT analysis)
-
-### ✅ MEDIUM — Duplicate Transaction on Initial Subscription — RESOLVED (Phase 223)
-
-> Fixed by Phase 223. Checkout handler now stores `stripeInvoiceId` from checkout payload; claim filter uses `$or` on both `stripeId` and `stripeInvoiceId`. When `invoice.paid` fires with the same invoice ID, the existing transaction is found and no duplicate is created. See [DONE.md](DONE.md).
-
-### ✅ MEDIUM — User Model Plan Subdoc Schema Gap — RESOLVED (Phase 223)
-
-> Fixed by Phase 223. `stripeSubscriptionId` and `subscriptionStatus` added to plan subdocument schema in User model. Webhook writes to plan subdoc are no longer silently stripped by `strict: true`. See [DONE.md](DONE.md).
 
 ### LOW — Admin Sidebar Collapsed State Not Persisted
 
 > **Source:** SWOT Weakness. **Risk:** LOW. **Impact:** Admin sidebar resets to open on page reload.
 > Chat sidebar persists via `droplet-sidebar-collapsed` localStorage key. Admin does not.
-
-### ✅ LOW — catch {} Blocks Missing Comments — RESOLVED (Phase 223)
-
-> Fixed by Phase 223. Missing comment added to `isInternalDownloadKeyUrl` catch block in `generateResponse.tsx`. All catch blocks in `src/` now have explanatory comments. See [DONE.md](DONE.md).
 
 ---
 
@@ -105,7 +109,7 @@
 ---
 
 > **Completed phases** archived in [`DONE.md`](DONE.md).
-> Includes: Phases 143–148, 165, 165.1, 180.1–180.4, 185–222 (all sub-phases), 217-A/B/C/C-fix/D/E/F/G, 218-B, 218-C, 218-C-fix, 26.x, 29.1–29.5, 29.7, 223, 224, 225-A/B/C/D, 227, 230, 231, 231-fix, 232, 233.
+> Includes: Phases 143–148, 165, 165.1, 180.1–180.4, 185–222 (all sub-phases), 217-A/B/C/C-fix/D/E/F/G, 218-B, 218-C, 218-C-fix, 26.x, 29.1–29.5, 29.7, 223, 224, 225-A/B/C/D, 226, 227, 230, 231, 231-fix, 232, 233.
 > Phase 29.7 (Zustand audit) — COMPLETE. No changes needed. 4 stores, all properly implemented.
 > TypeScript 6 / ESLint compatibility — **CLOSED** (audit #103). No issues.
 > jsdom upgrade — **PIN MAINTAINED** (audit #103). ~24.1.3 stable. ESM TLA incompatibility persists.
