@@ -4,7 +4,13 @@ import classNames from "classnames";
 import { ButtonHTMLAttributes, ReactNode } from "react";
 import LoadingBubbles from "@/components/shared/loading-bubbles";
 
-type ButtonVariant = "contained" | "outlined" | "text" | "icon" | "danger" | "hero";
+type ButtonVariant =
+  | "contained"
+  | "outlined"
+  | "text"
+  | "icon"
+  | "danger"
+  | "hero";
 type ButtonSize = "xs" | "sm" | "md" | "lg";
 
 interface ButtonProps extends Omit<
