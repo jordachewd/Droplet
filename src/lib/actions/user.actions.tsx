@@ -76,19 +76,30 @@ export async function updateUser(clerkId: string, user: UpdateUserParams) {
       });
     }
 
+    type ClerkUsersApi = Awaited<ReturnType<typeof clerkClient>>["users"];
+    type ClerkUpdateUserParams = Parameters<ClerkUsersApi["updateUser"]>[1];
+    const clerkSyncPayload: Record<string, string> = {};
+
     if (typeof parsedUser.data.userimg === "string") {
+      clerkSyncPayload.imageUrl = parsedUser.data.userimg;
+    }
+    if (typeof parsedUser.data.firstName === "string") {
+      clerkSyncPayload.firstName = parsedUser.data.firstName;
+    }
+    if (typeof parsedUser.data.lastName === "string") {
+      clerkSyncPayload.lastName = parsedUser.data.lastName;
+    }
+
+    if (Object.keys(clerkSyncPayload).length > 0) {
       try {
         const client = await clerkClient();
-        type ClerkUpdateUserParams = Parameters<
-          typeof client.users.updateUser
-        >[1];
-
-        await client.users.updateUser(parsedClerkId.data, {
-          imageUrl: parsedUser.data.userimg,
-        } as unknown as ClerkUpdateUserParams);
+        await client.users.updateUser(
+          parsedClerkId.data,
+          clerkSyncPayload as unknown as ClerkUpdateUserParams,
+        );
       } catch (error) {
         process.stderr.write(
-          `[user.actions] updateUser Clerk avatar sync failed for ${parsedClerkId.data}: ${error instanceof Error ? error.message : "unknown"}\n`,
+          `[user.actions] updateUser Clerk profile sync failed for ${parsedClerkId.data}: ${error instanceof Error ? error.message : "unknown"}\n`,
         );
       }
     }

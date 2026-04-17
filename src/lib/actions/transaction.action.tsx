@@ -442,7 +442,7 @@ export async function getAllTransactions(userId: string) {
         },
       },
     )
-      .select("plan amount billing createdAt expiresOn")
+      .select("plan amount billing createdAt expiresOn stripeId")
       .limit(100)
       .lean()
       .exec();
