@@ -34,7 +34,7 @@ export const DEFAULT_PROMO_CONTENT: PromoContent = {
     "Upgrade to Pro for higher usage limits and more persona access.",
   promoDescriptionPremium:
     "Upgrade to Premium for highest limits and premium workflows.",
-  promoUpgradeCta: "Upgrade Now",
+  promoUpgradeCta: "Upgrade",
   promoAdminLabel: "ADMIN",
   promoAdminDescription: "You have admin access.",
   promoSuspensionTitle: "Account Suspended",
@@ -47,14 +47,14 @@ export const DEFAULT_PROMO_CONTENT: PromoContent = {
     "Trial access with reduced limits. Upgrade to unlock full access.",
   promoPersonaUpgrade: "Upgrade to {plan} to unlock this persona.",
   promoPersonaUpgradeFallback: "Upgrade your plan to unlock this persona.",
-  promoContactSupportCta: "Contact support",
+  promoContactSupportCta: "Contact Support",
   chatConversationEndedLabel: "Conversation Ended",
   chatStartConversationCta: "Start a new conversation",
   chatUpgradePlanCta: "Upgrade your plan",
-  chatContactSupportCta: "Contact support",
+  chatContactSupportCta: "Contact Support",
   chatIntroSubheading: "welcome to your chat dashboard.",
   chatInputPlaceholder: "Ask Droplet...",
-  plansSubscribeCta: "Subscribe Now",
+  plansSubscribeCta: "Subscribe",
   planPopularBadge: "Popular",
 };
 

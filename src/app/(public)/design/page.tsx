@@ -357,7 +357,6 @@ export default async function DesignPage() {
             </div>
           </div>
 
-          
           <div className="flex flex-col gap-2">
             <h6 className="heading-6">Range</h6>
             <code>.form-range-input</code>
@@ -375,7 +374,6 @@ export default async function DesignPage() {
             </div>
           </div>
 
-         
           <div className="flex flex-col gap-2">
             <h6 className="heading-6">Chat Textarea</h6>
             <code>.form-chat-textarea</code>
@@ -388,7 +386,6 @@ export default async function DesignPage() {
             </div>
           </div>
 
-         
           <div className="flex flex-col gap-2">
             <h6 className="heading-6">Helper Text</h6>
             <code>.form-helper-text</code>
@@ -407,14 +404,12 @@ export default async function DesignPage() {
             </div>
           </div>
 
-          
           <div className="flex flex-col gap-2">
             <h6 className="heading-6">Admin Label</h6>
             <code>.admin-label</code>
             <span className="admin-label my-4">Admin Label Text</span>
           </div>
 
-          
           <div className="flex flex-col gap-2">
             <h6 className="heading-6">Admin Form Surface</h6>
             <code>.admin-form-surface</code>

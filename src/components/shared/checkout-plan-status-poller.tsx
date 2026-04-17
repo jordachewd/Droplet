@@ -132,8 +132,10 @@ export default function CheckoutPlanStatusPoller({
 
   if (pollState === "timed_out") {
     return (
-      <p className="CheckoutPlanStatusPoller body-2 text-sm sm:text-base text-midnightBlue-900">
-        Payment successful. Your plan will be updated shortly.
+      <p className="CheckoutPlanStatusPoller body-2 text-sm sm:text-base text-amber-800 inline-flex items-center justify-center gap-2">
+        <span className="h-2.5 w-2.5 rounded-full bg-amber-600" />
+        Payment successful, but confirmation is taking longer than expected. If
+        your plan hasn&apos;t updated within 10 minutes, please contact support.
       </p>
     );
   }

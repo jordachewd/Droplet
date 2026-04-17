@@ -36,7 +36,7 @@
   }
 
   .btn-contained {
-    @apply border-2 text-lavenderHaze-200;    
+    @apply border-2 text-lavenderHaze-200;
     @apply border-twilightPurple-500 bg-twilightPurple-500;
     @apply hover:border-twilightPurple-800 hover:bg-twilightPurple-800;
     @apply dark:bg-dustyBlue-500 dark:border-dustyBlue-500;

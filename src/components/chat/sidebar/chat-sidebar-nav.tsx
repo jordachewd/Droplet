@@ -101,7 +101,7 @@ export default function ChatSidebarNav({
     string | null
   >(null);
   const [alert, setAlert] = useState<{
-    id: number;
+    id: number | string;
     title: string;
     text: string;
     severity: "success" | "error";
@@ -177,7 +177,7 @@ export default function ChatSidebarNav({
     severity: "success" | "error";
   }) {
     setAlert({
-      id: Date.now(),
+      id: crypto.randomUUID(),
       title: message.title,
       text: message.text,
       severity: message.severity,

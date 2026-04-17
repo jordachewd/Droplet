@@ -114,12 +114,16 @@ describe("ensure-user-synced", () => {
 
   it("returns existing Mongo user when already synced", async () => {
     const user = createTestUser({ clerkId: "user_existing_1" });
-    findOneMock.mockReturnValue(createSelectLeanQuery(user));
+    const userQuery = createSelectLeanQuery(user);
+    findOneMock.mockReturnValue(userQuery);
 
     const result = await ensureUserSynced(user.clerkId);
 
     expect(connectToDatabaseMock).toHaveBeenCalledTimes(1);
     expect(findOneMock).toHaveBeenCalledWith({ clerkId: user.clerkId });
+    expect(userQuery.select).toHaveBeenCalledWith(
+      "clerkId username email role plan firstName lastName userimg registerAt updatedAt dailyConversationsStarted dailyConversationWindowStart stripeCustomerId stripeSubscriptionId subscriptionStatus suspended",
+    );
     expect(result).toEqual(user);
     expect(clerkClientFactoryMock).not.toHaveBeenCalled();
     expect(createMock).not.toHaveBeenCalled();

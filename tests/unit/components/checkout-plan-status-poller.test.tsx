@@ -58,10 +58,11 @@ describe("CheckoutPlanStatusPoller", () => {
       await Promise.resolve();
     });
 
-    expect(
-      screen.getByText(
-        "Payment successful. Your plan will be updated shortly.",
-      ),
-    ).toBeTruthy();
+    const timeoutMessage = screen.getByText(
+      "Payment successful, but confirmation is taking longer than expected. If your plan hasn't updated within 10 minutes, please contact support.",
+    );
+
+    expect(timeoutMessage).toBeTruthy();
+    expect(timeoutMessage.className).toContain("text-amber-800");
   });
 });
