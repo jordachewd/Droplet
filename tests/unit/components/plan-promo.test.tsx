@@ -23,7 +23,7 @@ describe("PlanPromo", () => {
     expect(
       screen.getByText("Unlock premium features with an upgrade!"),
     ).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Upgrade Now" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Upgrade" })).toBeTruthy();
   });
 
   it("shows suspension notice and contact support CTA for suspended users", () => {
@@ -44,10 +44,10 @@ describe("PlanPromo", () => {
     ).toBeTruthy();
     expect(
       screen
-        .getByRole("link", { name: "Contact support" })
+        .getByRole("link", { name: "Contact Support" })
         .getAttribute("href"),
     ).toBe("mailto:support@droplet.example");
-    expect(screen.queryByRole("link", { name: "Upgrade Now" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Upgrade" })).toBeNull();
   });
 
   it('renders "ADMIN" for admin-role users', () => {

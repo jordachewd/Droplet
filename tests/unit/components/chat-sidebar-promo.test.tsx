@@ -16,7 +16,7 @@ describe("ChatSidebarPromo", () => {
     );
 
     expect(screen.getByText("Go Pro")).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Upgrade Now" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Upgrade" })).toBeTruthy();
   });
 
   it("shows a suspension message and hides upgrade CTA for suspended users", () => {

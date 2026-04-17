@@ -132,7 +132,6 @@ describe("user.actions", () => {
 
       const response = await updateUser("user_123", {
         username: "updated-user",
-        firstName: "Updated",
         updatedAt: new Date("2026-03-25T00:00:00.000Z"),
       });
 
@@ -141,7 +140,6 @@ describe("user.actions", () => {
         { clerkId: "user_123" },
         expect.objectContaining({
           username: "updated-user",
-          firstName: "Updated",
         }),
         {
           returnDocument: "after",
@@ -183,23 +181,55 @@ describe("user.actions", () => {
       );
     });
 
-    it("does not fail profile updates when Clerk avatar sync fails", async () => {
+    it("syncs firstName and lastName to Clerk in one batched update call", async () => {
       userFindOneAndUpdateMock.mockResolvedValue(
         createTestUser({
           clerkId: "user_123",
-          userimg: "https://cdn.example.com/avatar-updated.png",
+          firstName: "Updated",
+          lastName: "Name",
+        }),
+      );
+
+      const response = await updateUser("user_123", {
+        firstName: "Updated",
+        lastName: "Name",
+        updatedAt: new Date("2026-03-25T00:00:00.000Z"),
+      });
+
+      expect(vi.mocked(clerkClient)).toHaveBeenCalledOnce();
+      expect(updateClerkUserMock).toHaveBeenCalledTimes(1);
+      expect(updateClerkUserMock).toHaveBeenCalledWith("user_123", {
+        firstName: "Updated",
+        lastName: "Name",
+      });
+      expect(response).toEqual(
+        expect.objectContaining({
+          status: 200,
+          message: "User updated successfully (user.actions.tsx)",
+        }),
+      );
+    });
+
+    it("does not fail profile updates when Clerk profile sync fails", async () => {
+      userFindOneAndUpdateMock.mockResolvedValue(
+        createTestUser({
+          clerkId: "user_123",
+          firstName: "Updated",
+          lastName: "Name",
         }),
       );
       updateClerkUserMock.mockRejectedValueOnce(new Error("Clerk unavailable"));
 
       const response = await updateUser("user_123", {
-        userimg: "https://cdn.example.com/avatar-updated.png",
+        firstName: "Updated",
+        lastName: "Name",
         updatedAt: new Date("2026-03-25T00:00:00.000Z"),
       });
 
       expect(vi.mocked(clerkClient)).toHaveBeenCalledOnce();
       expect(updateClerkUserMock).toHaveBeenCalledWith("user_123", {
-        imageUrl: "https://cdn.example.com/avatar-updated.png",
+        firstName: "Updated",
+        lastName: "Name",
       });
       expect(response).toEqual(
         expect.objectContaining({

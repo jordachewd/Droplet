@@ -75,10 +75,7 @@ export default function PlanPromo({
             <p className="text-xs opacity-80">
               {promoContent.promoSuspensionDescription}
             </p>
-            <a
-              className="btn btn-sm btn-contained self-center"
-              href={supportHref}
-            >
+            <a className="btn btn-sm btn-hero self-center" href={supportHref}>
               {promoContent.promoContactSupportCta}
             </a>
           </>
@@ -87,10 +84,7 @@ export default function PlanPromo({
             <div className="flex w-full items-center text-xs">
               {promoContent.promoUpgradeMessage}
             </div>
-            <Link
-              className="btn btn-sm btn-contained self-center"
-              href="/app/plans"
-            >
+            <Link className="btn btn-sm btn-hero self-center" href="/app/plans">
               {promoContent.promoUpgradeCta}
             </Link>
           </>

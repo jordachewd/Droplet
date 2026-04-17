@@ -57,7 +57,7 @@ export default function Plans({
           <div className="inline-flex items-center gap-1 rounded-full border border-slate-400 bg-lavenderHaze-300/80 p-1 dark:border-slate-500 dark:bg-nightIndigo-900/70">
             <Button
               variant={billingCycle === "Monthly" ? "contained" : "text"}
-              size="sm"
+              size="xs"
               onClick={() => setBillingCycle("Monthly")}
               className={classNames(
                 "rounded-full border-transparent px-4 py-2 normal-case",
@@ -70,7 +70,7 @@ export default function Plans({
             </Button>
             <Button
               variant={billingCycle === "Yearly" ? "contained" : "text"}
-              size="sm"
+              size="xs"
               onClick={() => setBillingCycle("Yearly")}
               className={classNames(
                 "rounded-full border-transparent px-4 py-2 normal-case",
@@ -82,7 +82,7 @@ export default function Plans({
               Yearly
             </Button>
           </div>
-          <p className="ml-3 inline-flex items-center rounded-full bg-limeGreen-500/30 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:bg-limeGreen-500/20 dark:text-limeGreen-500">
+          <p className="ml-3 inline-flex items-center rounded-full bg-limeGreen-500/30 px-3 text-xxs font-semibold uppercase tracking-wide text-midnightBlue-700 dark:bg-limeGreen-500/20 dark:text-limeGreen-500">
             {yearlyBadgeText}
           </p>
         </div>

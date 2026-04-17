@@ -79,7 +79,7 @@ describe("Checkout form", () => {
       />,
     );
 
-    const button = screen.getByRole("button", { name: "Current" });
+    const button = screen.getByRole("button", { name: "Current Plan" });
     expect(button.getAttribute("disabled")).not.toBeNull();
   });
 });

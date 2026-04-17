@@ -3,7 +3,7 @@
 > Purpose: one execution document for finishing the SaaS without avoidable rework.
 > Audience: Project Manager, Architect, and Senior Software Agents.
 > Rule: this plan is based on verified repository state. If older docs disagree with code, code wins until this file is updated.
-> Last verified: PM audit #128, 2026-04-16. V1.0 MVP RELEASED. Stripe recurring billing COMPLETE (all Phases 217-A through 217-G). Phase 218-C-fix COMPLETE (dead CSS cleanup). Phase 26.x COMPLETE (persona-aware media prompts). Phase 218-B COMPLETE (CSS class extraction). Phase 218-C COMPLETE (UI design refresh + toggle CSS + sidebar simplification). Phase 222 COMPLETE. Zod v4 upgrade COMPLETE. Phase 223 COMPLETE (SWOT fixes: duplicate transaction dedup, plan subdoc schema, catch comment). Phase 231 COMPLETE (admin deletion guard). Phase 232 COMPLETE (title gen slot rollback). Phase 224 COMPLETE (connectToDatabase in OpenAI route). Phase 233 COMPLETE (Transaction createdAt index). Phase 225-A COMPLETE (media slot extraction). Phase 231-fix COMPLETE (fail-safe admin guard DB-failure bypass). Phase 225-B COMPLETE (conversation lifecycle extraction — route 1,461→1,260 lines). Phase 225-C COMPLETE (stream orchestrator extraction). Phase 225-D COMPLETE (route helpers extraction). Phase 225 COMPLETE (full OpenAI route decomposition — route 1,549→883 lines, 4 modules extracted). Phase 230 COMPLETE (.d.tsx → .d.ts rename — 14 files). PM audit #128. Admin sidebar persistence COMPLETE. Phase 228 COMPLETE (Stripe webhook split). Phase 229 COMPLETE (generateResponse extraction). 0 god files. Active backlog EMPTY. 729 tests (110 suites), 0 failures. All gates GREEN. Prettier pinned to ~3.8.1. 0 HIGH issues.
+> Last verified: PM audit #130, 2026-04-17. Phase 234-A (USER_SYNC_PROJECTION fix), Phase 234-A2 (getAllTransactions stripeId fix), Phase 235 (MongoDB→Clerk bidirectional name sync), Phase 234-C (checkout timeout UX), Phase 236 (gate stabilization) COMPLETE. V1.0 MVP RELEASED. Stripe recurring billing COMPLETE (all Phases 217-A through 217-G). Phase 218-C-fix COMPLETE (dead CSS cleanup). Phase 26.x COMPLETE (persona-aware media prompts). Phase 218-B COMPLETE (CSS class extraction). Phase 218-C COMPLETE (UI design refresh + toggle CSS + sidebar simplification). Phase 222 COMPLETE. Zod v4 upgrade COMPLETE. Phase 223 COMPLETE (SWOT fixes: duplicate transaction dedup, plan subdoc schema, catch comment). Phase 231 COMPLETE (admin deletion guard). Phase 232 COMPLETE (title gen slot rollback). Phase 224 COMPLETE (connectToDatabase in OpenAI route). Phase 233 COMPLETE (Transaction createdAt index). Phase 225-A COMPLETE (media slot extraction). Phase 231-fix COMPLETE (fail-safe admin guard DB-failure bypass). Phase 225-B COMPLETE (conversation lifecycle extraction — route 1,461→1,260 lines). Phase 225-C COMPLETE (stream orchestrator extraction). Phase 225-D COMPLETE (route helpers extraction). Phase 225 COMPLETE (full OpenAI route decomposition — route 1,549→883 lines, 4 modules extracted). Phase 230 COMPLETE (.d.tsx → .d.ts rename — 14 files). PM audit #128. Admin sidebar persistence COMPLETE. Phase 228 COMPLETE (Stripe webhook split). Phase 229 COMPLETE (generateResponse extraction). 0 god files. Active backlog EMPTY. 729 tests (110 suites), 0 failures. All gates GREEN. Prettier pinned to ~3.8.1. 0 HIGH issues.
 
 ---
 
@@ -15,7 +15,7 @@ Droplet is deployed to production with all 25 milestones complete. The TDD testi
 
 1. **? C1 ? Video generation ? REMOVED.** Owner directive (2026-04-03): remove ALL video generation from the app. Both `sora-2` and `sora-2-pro` are deprecated. Phase 186-A DONE (58 files modified/deleted, all gates GREEN, 594 tests passing).
 
-2. **? C2 ? Stripe payment ? RESOLVED.** Root cause: Stripe webhook endpoint was **disabled** in Stripe Dashboard. Owner re-enabled it. All env vars verified correct. Vercel log confirms HTTP 200 + plan update. Revenue flow operational.
+2. **⚠️ C2 — Stripe payment — RECURRED (PM audit #130).** Root cause same pattern: Stripe Dashboard webhook misconfiguration. Additionally discovered: Stripe CLI was forwarding to wrong URL (`/api/stripe/webhook` instead of `/api/webhooks/stripe`). Two code-level projection bugs found and fixed (PM audit #130): `USER_SYNC_PROJECTION` missing 4 fields, `getAllTransactions` missing `stripeId`. Owner must verify Stripe Dashboard webhook config (Phase 234-B). Code fixes applied (Phases 234-A, 234-A2).
 
 3. **? C3 ? Facebook login ? CLOSED.** Owner removed Facebook login from product. No longer used.
 
@@ -31,6 +31,7 @@ Phase 218-C-fix (dead .toggle-theme-button CSS removed) → DONE. Phase 217-F (a
 Phase 231 (admin deletion guard) → DONE. Phase 232 (title gen slot rollback) → DONE. Phase 224 (connectToDatabase in OpenAI route) → DONE. Phase 233 (Transaction createdAt index) → DONE. Phase 225-A (media slot extraction) → DONE. Phase 231-fix (fail-safe admin guard DB-failure bypass) → DONE.
 Phase 225-B (conversation lifecycle extraction) → DONE.
 Phase 225-C (stream orchestrator extraction) → DONE. Phase 225-D (route helpers extraction) → DONE. Phase 225 COMPLETE (full OpenAI route decomposition) → DONE. Phase 230 (.d.tsx → .d.ts rename) → DONE.
+Phase 234-A (USER_SYNC_PROJECTION fix) → DONE. Phase 234-A2 (getAllTransactions stripeId fix) → DONE. Phase 235 (MongoDB→Clerk bidirectional name sync) → DONE. Phase 234-C (checkout timeout UX) → DONE. Phase 236 (gate stabilization — 5 test label drifts + lint Date.now() purity fix) → DONE.
 
 ---
 
@@ -48,28 +49,28 @@ Resolved production bugs: Audio playback (Phase 168), hydration mismatch (Phase 
 
 ### Architecture Status ? SOUND. ALL GATES GREEN.
 
-| Area                | Status | Evidence                                                                          |
-| ------------------- | ------ | --------------------------------------------------------------------------------- |
-| Route boundaries    | ?      | Clean `/app(.*)` + `/admin(.*)` proxy protection                                  |
-| Server/client split | ?      | Server Components for pages, client for UX only                                   |
-| Auth in all actions | ?      | All server actions + API routes verify auth                                       |
-| Admin double-check  | ?      | All 15 admin functions use `requireAdminAccess`                                   |
-| Schema strict mode  | ?      | All 9 Mongoose models have `strict: true`                                         |
-| Index coverage      | ?      | 20+ indexed fields across all query-filtered cols                                 |
-| maxDuration exports | ✓      | All 7 API routes at maxDuration=60 (Vercel Hobby ceiling)                         |
-| Server-only guards  | ?      | 60+ utility files with `import "server-only"`                                     |
-| Rate limiting       | ?      | MongoDB-backed, durable, all API routes covered                                   |
-| SSRF prevention     | ?      | `isAllowedDownloadUrl()` allowlist                                                |
-| Error handling      | ?      | All catches documented, `handleError` ? `never`                                   |
-| **Stream timeout**  | ?      | **Phase 181 CONFIRMED WORKING in production. Proactive timeout fires correctly.** |
-| **Stripe webhook**  | ?      | **RESOLVED. Root cause: webhook was disabled. Re-enabled, HTTP 200 confirmed.**   |
-| **Facebook login**  | ?      | **CLOSED. Owner removed Facebook login from product.**                            |
-| Knip                | ?      | 0 findings                                                                        |
-| TSC                 | ?      | 0 errors                                                                          |
-| Lint                | ?      | 0 errors, 0 warnings                                                              |
-| Tests               | ✓      | 110 suites, 729 tests. 0 failures. All gates GREEN.                               |
-| E2E                 | ?      | 8 specs, 49 tests                                                                 |
-| Prettier            | ?      | Pinned to ~3.8.1. 66 files reformatted. Gate GREEN.                               |
+| Area                | Status | Evidence                                                                                                       |
+| ------------------- | ------ | -------------------------------------------------------------------------------------------------------------- |
+| Route boundaries    | ?      | Clean `/app(.*)` + `/admin(.*)` proxy protection                                                               |
+| Server/client split | ?      | Server Components for pages, client for UX only                                                                |
+| Auth in all actions | ?      | All server actions + API routes verify auth                                                                    |
+| Admin double-check  | ?      | All 15 admin functions use `requireAdminAccess`                                                                |
+| Schema strict mode  | ?      | All 9 Mongoose models have `strict: true`                                                                      |
+| Index coverage      | ?      | 20+ indexed fields across all query-filtered cols                                                              |
+| maxDuration exports | ✓      | All 7 API routes at maxDuration=60 (Vercel Hobby ceiling)                                                      |
+| Server-only guards  | ?      | 60+ utility files with `import "server-only"`                                                                  |
+| Rate limiting       | ?      | MongoDB-backed, durable, all API routes covered                                                                |
+| SSRF prevention     | ?      | `isAllowedDownloadUrl()` allowlist                                                                             |
+| Error handling      | ?      | All catches documented, `handleError` ? `never`                                                                |
+| **Stream timeout**  | ?      | **Phase 181 CONFIRMED WORKING in production. Proactive timeout fires correctly.**                              |
+| **Stripe webhook**  | ⚠️     | **RECURRED — webhook misconfiguration pattern repeated. Code fixes applied. Owner Dashboard action required.** |
+| **Facebook login**  | ?      | **CLOSED. Owner removed Facebook login from product.**                                                         |
+| Knip                | ?      | 0 findings                                                                                                     |
+| TSC                 | ?      | 0 errors                                                                                                       |
+| Lint                | ?      | 0 errors, 0 warnings                                                                                           |
+| Tests               | ✓      | 110 suites, 729 tests. 0 failures. All gates GREEN.                                                            |
+| E2E                 | ?      | 8 specs, 49 tests                                                                                              |
+| Prettier            | ?      | Pinned to ~3.8.1. 66 files reformatted. Gate GREEN.                                                            |
 
 ### Issues Found by Audit #82?#84 ? Updated Status
 
