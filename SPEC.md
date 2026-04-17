@@ -26,12 +26,13 @@
 > - ✅ Phases 29.1–29.5 DONE — Zod/Zustand modernization. 13 admin actions converted to per-action Zod schemas. Client poller Zod validated. Helper cleanup. Zustand audit: no changes needed.
 > - ✅ Phases 209–216 DONE — Sidebar restructure: label renames, Library link migration, Recent conditional, loading fallback, CSS transitions, toggle relocation, renameTask action, dropdown menu, PersonaSelector move. 644 tests.
 >
-> **Remaining Issues (non-blocking):**
+> **Remaining Issues:**
 >
+> - **TD-PAYMENT-03** — 🔴 CRITICAL. Stripe webhook not delivering events post-payment. Plan stays Lite, no Transaction created, billing history empty. Webhook handler code is correct — root cause is Stripe Dashboard webhook configuration (endpoint URL, signing secret, enabled events, or mode mismatch). Owner must verify Stripe Dashboard. See PM audit #129.
+> - **TD-PROJECTION-01** — 🔴 CRITICAL. `USER_SYNC_PROJECTION` in `ensure-user-synced.ts` missing 4 top-level User fields: `stripeSubscriptionId`, `subscriptionStatus`, `stripeCustomerId`, `suspended`. Profile billing management always shows null for subscription data. Code fix required. See PM audit #129.
+> - **TD-CHECKOUT-UX-01** — 🟡 HIGH. Checkout success page shows "Payment successful" from Stripe API verification before webhook processes. Plan status poller times out after 30s with misleading "plan will be updated shortly" message. No follow-up if plan never updates. Needs clearer timeout messaging with support contact. See PM audit #129.
 > - **TD-MEDIA-01** — 🟡 ACCEPTED LIMITATION. Media gen (image/audio) may approach Vercel Hobby 60s timeout. Phase 181 proactive timeout handles gracefully.
-> - **TD-AI-09** — ✅ RESOLVED. Image/audio prompts now persona-aware (Phase 26.x COMPLETE).
 > - **TD-AI-13** — 3 model pricing placeholders (awaiting OpenAI confirmation).
-> - **TD-PLAN-01** — ✅ RESOLVED. Recurring subscriptions COMPLETE (all Phases 217-A through 217-G).
 > - **TD-AI-18** — Advisory: errorMessage forwarding pattern is safe but fragile.
 > - **TD-API-09** — Monitor: `.strict()` in messageTextContentSchema.
 
@@ -914,9 +915,18 @@ All button styles use Lime Green as the accent color in **both** light and dark 
 | TD-HARDCODE-04    | Content | Hardcoded `$` currency symbol.                                              | 180.4   | ✅ DONE. Currency via `getEffectiveCurrencySymbol()` prop.                           |
 | TD-RATE-CLEANUP   | Data    | `download:` rate-limit keys not cleaned.                                    | 187-D   | ✅ DONE. Key added to `getRateLimitKeys()`.                                          |
 
+### Active — CRITICAL Priority (PM audit #129)
+
+| ID               | Area    | Description                                                                                                                                                                                                | Phase |
+| ---------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| TD-PAYMENT-03    | Billing | Stripe webhook not delivering events. Payment succeeds in Stripe but plan not upgraded, no Transaction created, billing history empty. Webhook code is correct — Stripe Dashboard config must be verified. | 234   |
+| TD-PROJECTION-01 | Data    | `USER_SYNC_PROJECTION` in `ensure-user-synced.ts` missing `stripeSubscriptionId`, `subscriptionStatus`, `stripeCustomerId`, `suspended`. Profile billing management broken (always null).                  | 234   |
+
 ### Active — HIGH Priority
 
-_(None currently.)_
+| ID                | Area | Description                                                                                                                                                    | Phase |
+| ----------------- | ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| TD-CHECKOUT-UX-01 | UX   | Checkout success poller timeout message is misleading. Should warn user to contact support if plan doesn't update within 10 minutes. Needs support email link. | 234   |
 
 ### Resolved — HIGH Priority
 
