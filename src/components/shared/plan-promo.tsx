@@ -76,7 +76,7 @@ export default function PlanPromo({
               {promoContent.promoSuspensionDescription}
             </p>
             <a
-              className="btn btn-sm btn-contained self-center"
+              className="btn btn-sm btn-hero self-center"
               href={supportHref}
             >
               {promoContent.promoContactSupportCta}
@@ -88,7 +88,7 @@ export default function PlanPromo({
               {promoContent.promoUpgradeMessage}
             </div>
             <Link
-              className="btn btn-sm btn-contained self-center"
+              className="btn btn-sm btn-hero self-center"
               href="/app/plans"
             >
               {promoContent.promoUpgradeCta}
