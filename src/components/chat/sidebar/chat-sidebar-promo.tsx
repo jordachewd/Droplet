@@ -64,7 +64,7 @@ export default function ChatSidebarPromo({
 
           {showUpgradeLink && (
             <Link
-              className="btn btn-sm btn-contained self-center mt-2"
+              className="btn btn-sm btn-hero self-center mt-2"
               href="/app/plans"
             >
               {promoContent.promoUpgradeCta}

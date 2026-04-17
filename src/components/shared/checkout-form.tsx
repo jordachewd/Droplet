@@ -1,6 +1,5 @@
 "use client";
 
-import classNames from "classnames";
 import { checkoutPlan } from "@/lib/actions/transaction.action";
 import { CheckoutTransactionParams } from "@/types/TransactionData.d";
 import { CheckoutPlanParams, PlanStatus } from "@/types/PlanData.d";
@@ -15,7 +14,7 @@ interface CheckoutProps {
 interface CheckoutSubmitButtonProps {
   isIncluded: boolean;
   isCurrent: boolean;
-  variant: "outlined" | "text";
+  variant: "text" | "contained" | "outlined" | "hero";
   className: string;
 }
 
@@ -30,7 +29,7 @@ function CheckoutSubmitButton({
 
   const buttonLabel = pending
     ? "Processing..."
-    : (isCurrent && "Current") || (isIncluded && "Included") || "Subscribe";
+    : (isCurrent && "Current Plan") || (isIncluded && "Included") || "Subscribe";
 
   return (
     <Button
@@ -46,7 +45,7 @@ function CheckoutSubmitButton({
 }
 
 const Checkout = ({ plan, planStatus }: CheckoutProps) => {
-  const { isIncluded, isCurrent, isPopular } = planStatus as PlanStatus;
+  const { isIncluded, isCurrent } = planStatus as PlanStatus;
 
   const onCheckout = async () => {
     const transaction: CheckoutTransactionParams = {
@@ -56,19 +55,7 @@ const Checkout = ({ plan, planStatus }: CheckoutProps) => {
     await checkoutPlan(transaction);
   };
 
-  const variant: "outlined" | "text" = isIncluded ? "text" : "outlined";
-
-  const extraStyles =
-    (isPopular &&
-      "border-white text-white hover:text-white/75 hover:border-white/75") ||
-    (isIncluded && "border-transparent") ||
-    "dark:border-midnightBlue-500 dark:text-midnightBlue-500 dark:hover:border-dustyBlue-500 dark:hover:text-dustyBlue-500";
-
-  const disabledStyle = isIncluded
-    ? isCurrent
-      ? "disabled:text-midnightBlue-1000/50 hidden"
-      : "disabled:text-midnightBlue-700/50"
-    : "";
+  const variant: "hero" | "text" = isIncluded ? "text" : "hero";
 
   return (
     <form action={onCheckout} className="Checkout">
@@ -76,11 +63,7 @@ const Checkout = ({ plan, planStatus }: CheckoutProps) => {
         isIncluded={isIncluded}
         isCurrent={isCurrent}
         variant={variant}
-        className={classNames(
-          "w-full min-w-48 sm:min-w-55",
-          extraStyles,
-          disabledStyle,
-        )}
+        className="w-full min-w-48 sm:min-w-55"
       />
     </form>
   );

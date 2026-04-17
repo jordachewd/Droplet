@@ -5,13 +5,13 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #128 (2026-04-16). V1.0 MVP RELEASED. ALL Phases through 233 COMPLETE. Phase 226 COMPLETE. Phase 228 COMPLETE. Phase 229 COMPLETE. Admin sidebar persistence COMPLETE. Type file cleanup COMPLETE. 0 HIGH bugs. All 7 gates GREEN.**
+> **STATUS: PM audit #129 (2026-04-17). 2 CRITICAL bugs found. Stripe payment flow broken — webhook not delivering + projection fields missing. All other gates GREEN.**
 >
-> **GATE STATUS: All 7 gates GREEN. 0 npm vulnerabilities. 0 critical security issues. Code hygiene 100% (0 console.log, 0 Math.random, 0 as any, 0 ts-ignore, 0 empty catch, 0 window.alert).**
+> **GATE STATUS: All 7 gates GREEN. 0 npm vulnerabilities. Code hygiene 100%.**
 >
 > **TEST STATUS: 729 tests (110 suites), 49 E2E (6 skipped). 0 failures. All gates GREEN.**
 >
-> **ACTIVE BACKLOG: PM audit #128 — 0 HIGH items. 0 CRITICAL items. 0 god files (all under 900 lines). Largest: generateResponse.tsx (861), admin-queries.ts (826), normalize-admin-settings.ts (813), openai/route.tsx (805). Active backlog is EMPTY. All items deferred or closed.**
+> **ACTIVE BACKLOG: PM audit #129 — 2 CRITICAL items. 1 HIGH item. 0 god files. Largest: generateResponse.tsx (861), admin-queries.ts (826), normalize-admin-settings.ts (813), openai/route.tsx (805). All under 900 lines.**
 
 ---
 
@@ -21,9 +21,102 @@
 
 ---
 
-## Execution Order (PM audit #128)
+## Execution Order (PM audit #129) — CRITICAL PATH
 
-> **Active backlog is EMPTY.** No critical, high, or medium items. No god files. 0 active non-deferred tasks. Codebase is stable, well-tested, and production-ready. All remaining items are deferred or closed. Next action requires owner direction for v1.1 feature planning.
+> **2 CRITICAL + 1 HIGH items. All feature work ON HOLD until resolved.**
+
+### Phase 234-A — CRITICAL: Fix `USER_SYNC_PROJECTION` Missing Fields
+
+**Issue:** `ensure-user-synced.ts` `USER_SYNC_PROJECTION` constant does not include `stripeSubscriptionId`, `subscriptionStatus`, `stripeCustomerId`, or `suspended`. These top-level User fields are stripped from all queries that use `ensureUserSynced()`, causing the profile billing section to always show null for subscription data.
+
+**File:** `src/lib/utils/ensure-user-synced.ts` line 9–10.
+
+**Fix:** Add the 4 missing fields to the projection string:
+
+```
+Old: "clerkId username email role plan firstName lastName userimg registerAt updatedAt dailyConversationsStarted dailyConversationWindowStart"
+New: "clerkId username email role plan firstName lastName userimg registerAt updatedAt dailyConversationsStarted dailyConversationWindowStart stripeCustomerId stripeSubscriptionId subscriptionStatus suspended"
+```
+
+**Acceptance criteria:**
+
+- [ ] `USER_SYNC_PROJECTION` includes `stripeCustomerId stripeSubscriptionId subscriptionStatus suspended`
+- [ ] Profile page receives non-null `stripeSubscriptionId` and `subscriptionStatus` when user has active subscription
+- [ ] `ProfileBilling` shows correct subscription state (Active/Canceling/Past due/Canceled)
+- [ ] Sidebar suspension display works when `user.suspended === true`
+- [ ] All 7 gates pass
+
+---
+
+### Phase 234-B — CRITICAL: Stripe Webhook Verification (Owner Action Required)
+
+**Issue:** Stripe webhook is not delivering `checkout.session.completed` events to the app. Payment succeeds in Stripe but plan stays Lite, no Transaction created, billing history empty.
+
+**This was previously resolved as C2 (PM audit #84-B) — webhook was disabled. The issue has recurred.**
+
+**Owner must verify in Stripe Dashboard (cannot be fixed from code):**
+
+1. **Stripe Dashboard → Developers → Webhooks** — Verify endpoint exists.
+2. **Endpoint URL** — Must be `https://<production-domain>/api/webhooks/stripe` (NOT localhost).
+3. **Events to send** — Must include ALL of these:
+   - `checkout.session.completed`
+   - `invoice.paid`
+   - `invoice.payment_failed`
+   - `customer.subscription.updated`
+   - `customer.subscription.deleted`
+4. **Signing secret** — The webhook's signing secret (starts with `whsec_`) must match `STRIPE_WEBHOOK_SECRET` in **production** environment variables (Vercel Dashboard → Settings → Environment Variables). Not just `.env.local`.
+5. **Mode match** — Both the Stripe API keys (used for checkout) and the webhook endpoint must be in the **same mode** (Test or Live). A Live-mode checkout won't trigger Test-mode webhooks.
+6. **Recent deliveries** — Check the webhook's "Recent deliveries" tab for failed delivery attempts (HTTP 400/500 responses).
+7. **Endpoint status** — Must be "Enabled", not "Disabled".
+
+**Acceptance criteria:**
+
+- [ ] Stripe Dashboard shows webhook endpoint pointing to production URL
+- [ ] All 5 event types are enabled on the endpoint
+- [ ] Signing secret matches production `STRIPE_WEBHOOK_SECRET`
+- [ ] New test payment triggers `checkout.session.completed` webhook with HTTP 200 response
+- [ ] Transaction appears in MongoDB after payment
+- [ ] User `plan.name` updates to "Pro" in MongoDB after payment
+- [ ] Profile page shows correct plan name and billing history
+- [ ] Sidebar promo card reflects updated plan
+
+---
+
+### Phase 234-C — HIGH: Improve Checkout Success Timeout Message
+
+**Issue:** When the plan status poller times out (webhook delayed or failed), it shows a misleading message that implies the plan will update "shortly" — but if the webhook is broken, it never will.
+
+**File:** `src/components/shared/checkout-plan-status-poller.tsx`
+
+**Fix:** Change the timeout state message to include a warning and support contact instruction.
+
+**Acceptance criteria:**
+
+- [ ] Timeout message explicitly warns: "If your plan hasn't updated within 10 minutes, please contact support."
+- [ ] Message uses a warning color (amber/orange tone) to distinguish from the success state
+- [ ] All 7 gates pass
+
+---
+
+### Phase 234-D — MEDIUM: Email/Invoice Setup Guidance (Owner Action)
+
+**Issue:** No payment confirmation email, no downloadable invoice.
+
+**Stripe handles this natively — zero code changes required. Owner configuration:**
+
+1. **Payment receipts:** Stripe Dashboard → Settings → Customer emails → Enable "Successful payments" email receipts. Stripe will automatically send a receipt email to the customer's email address after each successful payment.
+
+2. **Invoices for subscriptions:** Stripe already generates invoices for all subscription payments. These are accessible via:
+   - Stripe Dashboard → Customers → [customer] → Invoices tab
+   - Programmatically via `invoice.hosted_invoice_url` (web view) or `invoice.invoice_pdf` (PDF download)
+
+3. **To show download links in the app (future enhancement — not required now):** The `invoice.paid` webhook already receives the invoice object. The app could store `hosted_invoice_url` in the Transaction model and display it in the billing history table. This is a v1.1 feature, not a v1.0 blocker.
+
+**Acceptance criteria:**
+
+- [ ] Stripe Dashboard "Successful payments" email enabled
+- [ ] New test payment triggers a receipt email to the customer
+- [ ] Owner has access to invoice PDFs via Stripe Dashboard
 
 ---
 
