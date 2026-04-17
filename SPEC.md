@@ -1,4 +1,4 @@
-﻿# Droplet — Application Specification
+# Droplet — Application Specification
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
