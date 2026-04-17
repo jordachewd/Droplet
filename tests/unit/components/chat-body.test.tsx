@@ -110,7 +110,7 @@ describe("ChatBody", () => {
 
     expect(
       screen
-        .getByRole("link", { name: "Contact support" })
+        .getByRole("link", { name: "Contact Support" })
         .getAttribute("href"),
     ).toBe(`mailto:${SUPPORT_EMAIL}`);
     expect(screen.getByText(SUPPORT_EMAIL)).toBeTruthy();

@@ -1,5 +1,5 @@
 export interface AlertParams {
-  id?: number;
+  id?: number | string;
   title: string;
   text?: string;
   severity?: "info" | "error" | "success" | "warning";

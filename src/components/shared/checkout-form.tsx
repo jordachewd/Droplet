@@ -29,7 +29,9 @@ function CheckoutSubmitButton({
 
   const buttonLabel = pending
     ? "Processing..."
-    : (isCurrent && "Current Plan") || (isIncluded && "Included") || "Subscribe";
+    : (isCurrent && "Current Plan") ||
+      (isIncluded && "Included") ||
+      "Subscribe";
 
   return (
     <Button

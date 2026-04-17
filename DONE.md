@@ -2,7 +2,57 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-04-16 — PM audit #128.
+> Last updated: 2026-04-17 — PM audit #130.
+
+---
+
+## Phase 236 — Gate Stabilization (Test Label Drift + Lint Purity Fix) — COMPLETED (2026-04-17)
+
+> PM audit #130 gate fix. 5 unit test failures from CTA label drift (components changed via admin-configurable promo content, tests not updated) + 1 lint error (`Date.now()` in render-reachable function flagged by `react-hooks/purity`). All 7 gates GREEN. 730 tests (110 suites). 0 failures.
+
+- [x] Fixed `chat-sidebar-promo.test.tsx`: `"Upgrade Now"` → `"Upgrade"` (matches `promoUpgradeCta` constant).
+- [x] Fixed `plan-promo.test.tsx`: `"Upgrade Now"` → `"Upgrade"`, `"Contact support"` → `"Contact Support"` (matches `promoContactSupportCta` constant).
+- [x] Fixed `chat-body.test.tsx`: `"Contact support"` → `"Contact Support"` (matches `chatContactSupportCta` constant).
+- [x] Fixed `checkout-form.test.tsx`: `"Current"` → `"Current Plan"` (matches component render).
+- [x] Fixed `chat-sidebar-nav.tsx`: `Date.now()` → `crypto.randomUUID()` for alert ID (avoids impure function in component body). Widened `AlertData.id` type from `number` to `number | string`. Widened inline state type in `chat-sidebar-nav.tsx`.
+- [x] Validation: prettier ✓, lint (0 errors, 6 warnings) ✓, tsc ✓, tests (730/730) ✓, e2e (49 passed, 6 skipped) ✓, build ✓, knip ✓.
+
+---
+
+## Phase 234-A — Fix `USER_SYNC_PROJECTION` Missing Fields — COMPLETED (2026-04-17)
+
+> PM audit #130 critical fix. `USER_SYNC_PROJECTION` in `ensure-user-synced.ts` was missing `stripeCustomerId`, `stripeSubscriptionId`, `subscriptionStatus`, `suspended`. These fields are now included in the projection string. Profile page now receives correct subscription state data. Corresponding unit test updated.
+
+- [x] Added 4 fields to `USER_SYNC_PROJECTION` in [ensure-user-synced.ts](src/lib/utils/ensure-user-synced.ts).
+- [x] Updated [ensure-user-synced.test.ts](tests/unit/utils/ensure-user-synced.test.ts) to verify new projection fields.
+
+---
+
+## Phase 234-A2 — Fix `getAllTransactions` Missing `stripeId` in Projection — COMPLETED (2026-04-17)
+
+> PM audit #130 critical fix. `getAllTransactions()` `.select()` excluded `stripeId`, causing all billing history items to display as "Inactive" (comparison `txn.stripeId === stripeId` always false when `stripeId` is undefined). Now includes `stripeId` in selection. Corresponding unit test updated.
+
+- [x] Added `stripeId` to `.select()` in [transaction.action.tsx](src/lib/actions/transaction.action.tsx).
+- [x] Updated [transaction-action.test.ts](tests/unit/actions/transaction-action.test.ts) to verify `stripeId` in projection.
+
+---
+
+## Phase 235 — MongoDB→Clerk Bidirectional Sync for Name Fields — COMPLETED (2026-04-17)
+
+> PM audit #130 critical fix. `updateUser` server action now syncs `firstName` and `lastName` to Clerk in addition to existing `imageUrl` sync. Uses a single batched `clerkClient().users.updateUser()` call. Non-blocking with try/catch + stderr logging. Prevents silent data loss from Clerk `user.updated` webhook overwriting MongoDB-only name edits. Email sync deferred (requires Clerk verification flow). Corresponding unit test updated.
+
+- [x] Expanded Clerk sync payload in [user.actions.tsx](src/lib/actions/user.actions.tsx) to include `firstName`, `lastName`, `imageUrl`.
+- [x] Single batched call when any field present; no-op when payload empty.
+- [x] Updated [user-actions.test.ts](tests/unit/actions/user-actions.test.ts) to verify name sync behavior.
+
+---
+
+## Phase 234-C — Improve Checkout Success Timeout Message — COMPLETED (2026-04-17)
+
+> PM audit #130 high-priority fix. Checkout plan status poller timeout message changed from misleading "plan will be updated shortly" to explicit warning: "Payment successful, but confirmation is taking longer than expected. If your plan hasn't updated within 10 minutes, please contact support." Amber/orange visual style distinguishes from green success state. Corresponding unit test updated.
+
+- [x] Updated timeout state message and styling in [checkout-plan-status-poller.tsx](src/components/shared/checkout-plan-status-poller.tsx).
+- [x] Updated [checkout-plan-status-poller.test.tsx](tests/unit/components/checkout-plan-status-poller.test.tsx) to verify new message.
 
 ---
 

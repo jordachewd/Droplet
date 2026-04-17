@@ -5,70 +5,25 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #130 (2026-04-17). 4 CRITICAL bugs found. Stripe billing UI broken (2 projection bugs + webhook config). Clerk sync incomplete (silent data loss risk). All other gates GREEN.**
+> **STATUS: PM audit #130 (2026-04-17). Phases 234-A, 234-A2, 235, 234-C, 236 COMPLETE. 2 remaining items: 1 CRITICAL owner action (Stripe webhook config), 1 MEDIUM owner action (email/invoice setup). All code fixes applied. All 7 gates GREEN.**
 >
-> **GATE STATUS: All 7 gates GREEN. 0 npm vulnerabilities. Code hygiene 100%.**
+> **GATE STATUS: All 7 gates GREEN. 0 lint errors. 0 npm vulnerabilities. Code hygiene 100%.**
 >
-> **TEST STATUS: 729 tests (110 suites), 49 E2E (6 skipped). 0 failures. All gates GREEN.**
+> **TEST STATUS: 730 tests (110 suites), 49 E2E (6 skipped). 0 failures. All gates GREEN.**
 >
-> **ACTIVE BACKLOG: PM audit #130 — 4 CRITICAL items. 1 HIGH item. 1 MEDIUM item. 0 god files. Largest: generateResponse.tsx (861), admin-queries.ts (826), normalize-admin-settings.ts (813), openai/route.tsx (805). All under 900 lines.**
+> **ACTIVE BACKLOG: PM audit #130 — 1 CRITICAL owner action. 1 MEDIUM owner action. 0 code items. 0 god files. Largest: generateResponse.tsx (861), admin-queries.ts (826), normalize-admin-settings.ts (813), openai/route.tsx (805). All under 900 lines.**
 
 ---
 
 ## Archived Phases — See [DONE.md](DONE.md)
 
-> All phases through 233 + Phase 226 + Phase 228 + Phase 229 + admin sidebar persistence + type file cleanup archived. See DONE.md for completion records.
+> All phases through 236 archived. See DONE.md for completion records.
 
 ---
 
-## Execution Order (PM audit #130) — CRITICAL PATH
+## Execution Order (PM audit #130) — REMAINING ITEMS
 
-> **4 CRITICAL + 1 HIGH + 1 MEDIUM items. All feature work ON HOLD until resolved.**
-
-### Phase 234-A — CRITICAL: Fix `USER_SYNC_PROJECTION` Missing Fields
-
-**Issue:** `ensure-user-synced.ts` `USER_SYNC_PROJECTION` constant does not include `stripeSubscriptionId`, `subscriptionStatus`, `stripeCustomerId`, or `suspended`. These top-level User fields are stripped from all queries that use `ensureUserSynced()`, causing the profile billing section to always show null for subscription data.
-
-**File:** `src/lib/utils/ensure-user-synced.ts` line 9–10.
-
-**Fix:** Add the 4 missing fields to the projection string:
-
-```
-Old: "clerkId username email role plan firstName lastName userimg registerAt updatedAt dailyConversationsStarted dailyConversationWindowStart"
-New: "clerkId username email role plan firstName lastName userimg registerAt updatedAt dailyConversationsStarted dailyConversationWindowStart stripeCustomerId stripeSubscriptionId subscriptionStatus suspended"
-```
-
-**Acceptance criteria:**
-
-- [ ] `USER_SYNC_PROJECTION` includes `stripeCustomerId stripeSubscriptionId subscriptionStatus suspended`
-- [ ] Profile page receives non-null `stripeSubscriptionId` and `subscriptionStatus` when user has active subscription
-- [ ] `ProfileBilling` shows correct subscription state (Active/Canceling/Past due/Canceled)
-- [ ] Sidebar suspension display works when `user.suspended === true`
-- [ ] All 7 gates pass
-
----
-
-### Phase 234-A2 — CRITICAL: Fix `getAllTransactions` Missing `stripeId` in Projection
-
-**Issue:** `getAllTransactions()` uses `.select("plan amount billing createdAt expiresOn")` — missing `stripeId`. The billing history UI in `ProfileBilling` compares `txn.stripeId === stripeId` to determine Active vs Inactive status. Since `stripeId` is never fetched, `txn.stripeId` is always `undefined`, causing ALL transactions to display as "Inactive" regardless of actual state.
-
-**File:** `src/lib/actions/transaction.action.tsx` line ~449.
-
-**Fix:** Add `stripeId` to the `.select()` projection:
-
-```
-Old: .select("plan amount billing createdAt expiresOn")
-New: .select("plan amount billing createdAt expiresOn stripeId")
-```
-
-**Acceptance criteria:**
-
-- [ ] `getAllTransactions` `.select()` includes `stripeId`
-- [ ] The current active subscription's transaction shows "Active" (green badge) in billing history
-- [ ] Previous/older transactions show "Inactive" (gray badge) — this is correct behavior
-- [ ] All 7 gates pass
-
----
+> **Code fixes COMPLETE. Remaining items are owner actions only.**
 
 ### Phase 234-B — CRITICAL: Stripe Webhook Verification (Owner Action Required)
 
@@ -112,78 +67,6 @@ stripe listen --events checkout.session.completed,invoice.paid,invoice.payment_f
 
 ---
 
-### Phase 235 — CRITICAL: MongoDB→Clerk Bidirectional Sync for Name Fields
-
-**Issue:** When users edit their profile (firstName, lastName) in the app, changes are saved to MongoDB but NOT synced to Clerk. This creates two problems:
-
-1. **Stale display:** Clerk-powered UI components (session tokens, Clerk-managed elements) show old name.
-2. **Silent data loss:** The next `user.updated` webhook from Clerk (triggered by any Clerk-side change) will OVERWRITE the MongoDB values with the stale Clerk values — effectively reverting the user's profile edits.
-
-**Current state (verified):**
-
-- Avatar (`userimg` → `imageUrl`) syncs MongoDB→Clerk ✅ (Phase 201)
-- `firstName` — NOT synced to Clerk ❌
-- `lastName` — NOT synced to Clerk ❌
-- `email` — NOT synced to Clerk ❌ (requires Clerk verification flow — see note below)
-
-**File:** `src/lib/actions/user.actions.tsx` lines 78–93.
-
-**Fix:** Expand the Clerk sync block to include `firstName` and `lastName`:
-
-```typescript
-// Current: only syncs imageUrl
-if (typeof parsedUser.data.userimg === "string") {
-  await client.users.updateUser(parsedClerkId.data, {
-    imageUrl: parsedUser.data.userimg,
-  });
-}
-
-// Fixed: sync imageUrl + firstName + lastName
-const clerkSyncPayload: Record<string, string> = {};
-if (typeof parsedUser.data.userimg === "string") {
-  clerkSyncPayload.imageUrl = parsedUser.data.userimg;
-}
-if (typeof parsedUser.data.firstName === "string") {
-  clerkSyncPayload.firstName = parsedUser.data.firstName;
-}
-if (typeof parsedUser.data.lastName === "string") {
-  clerkSyncPayload.lastName = parsedUser.data.lastName;
-}
-if (Object.keys(clerkSyncPayload).length > 0) {
-  await client.users.updateUser(parsedClerkId.data, clerkSyncPayload);
-}
-```
-
-**Email sync note:** Clerk treats email as a verified identity. Changing email requires Clerk's email verification flow (create → verify → set primary). This is complex and should be deferred. For now, email editing in the profile should either: (a) be disabled with a note directing users to Clerk's account settings, or (b) left as-is with the understanding that email changes are MongoDB-only. PM decision: defer email sync to a future phase. Document as known limitation.
-
-**Acceptance criteria:**
-
-- [ ] `updateUser` syncs `firstName` to Clerk when changed
-- [ ] `updateUser` syncs `lastName` to Clerk when changed
-- [ ] `updateUser` syncs `imageUrl` to Clerk when changed (existing, preserved)
-- [ ] All syncs are non-blocking (try/catch with stderr logging)
-- [ ] Clerk sync is batched into a single `updateUser` call (not 3 separate calls)
-- [ ] All 7 gates pass
-- [ ] After editing name in app, Clerk Dashboard shows updated name
-
----
-
-### Phase 234-C — HIGH: Improve Checkout Success Timeout Message
-
-**Issue:** When the plan status poller times out (webhook delayed or failed), it shows a misleading message that implies the plan will update "shortly" — but if the webhook is broken, it never will.
-
-**File:** `src/components/shared/checkout-plan-status-poller.tsx`
-
-**Fix:** Change the timeout state message to include a warning and support contact instruction.
-
-**Acceptance criteria:**
-
-- [ ] Timeout message explicitly warns: "If your plan hasn't updated within 10 minutes, please contact support."
-- [ ] Message uses a warning color (amber/orange tone) to distinguish from the success state
-- [ ] All 7 gates pass
-
----
-
 ### Phase 234-D — MEDIUM: Email/Invoice Setup Guidance (Owner Action)
 
 **Issue:** No payment confirmation email, no downloadable invoice.
@@ -203,6 +86,18 @@ if (Object.keys(clerkSyncPayload).length > 0) {
 - [ ] Stripe Dashboard "Successful payments" email enabled
 - [ ] New test payment triggers a receipt email to the customer
 - [ ] Owner has access to invoice PDFs via Stripe Dashboard
+
+---
+
+## Known Limitations (Documented, Not Blocking)
+
+### Email Sync to Clerk — DEFERRED
+
+> MongoDB→Clerk email sync requires Clerk's email verification flow (create → verify → set primary). Complex to implement, low user frequency. Profile email edits currently save to MongoDB only. If Clerk `user.updated` webhook fires for another reason, email in MongoDB may revert. **Accept for v1.0.** Consider adding an "email changes require Clerk account settings" note in profile editor for v1.1.
+
+### Lint Warnings — 6 `set-state-in-effect` Warnings — ACCEPTED
+
+> 6 pre-existing `react-hooks/set-state-in-effect` warnings in `chat-input.tsx` (2), `chat-wrapper.tsx` (1), `library-tabs.tsx` (1), `chat-sidebar-nav.tsx` (1), `profile-hero-editor.tsx` (1). All are warnings, not errors. All are patterns where setState in effect is intentional (initializing from external state). Lint gate is GREEN (0 errors). Monitor only — fix if React Compiler requires it.
 
 ---
 
@@ -229,7 +124,7 @@ if (Object.keys(clerkSyncPayload).length > 0) {
 ---
 
 > **Completed phases** archived in [`DONE.md`](DONE.md).
-> Includes: Phases 143–148, 165, 165.1, 180.1–180.4, 185–222 (all sub-phases), 217-A/B/C/C-fix/D/E/F/G, 218-B, 218-C, 218-C-fix, 26.x, 29.1–29.5, 29.7, 223, 224, 225-A/B/C/D, 226, 227, 228, 229, 230, 231, 231-fix, 232, 233, type file cleanup, admin sidebar persistence.
+> Includes: Phases 143–148, 165, 165.1, 180.1–180.4, 185–222 (all sub-phases), 217-A/B/C/C-fix/D/E/F/G, 218-B, 218-C, 218-C-fix, 26.x, 29.1–29.5, 29.7, 223, 224, 225-A/B/C/D, 226, 227, 228, 229, 230, 231, 231-fix, 232, 233, 234-A, 234-A2, 234-C, 235, 236, type file cleanup, admin sidebar persistence.
 > Phase 29.7 (Zustand audit) — COMPLETE. No changes needed. 4 stores, all properly implemented.
 > TypeScript 6 / ESLint compatibility — **CLOSED** (audit #103). No issues.
 > jsdom upgrade — **PIN MAINTAINED** (audit #103). ~24.1.3 stable. ESM TLA incompatibility persists.

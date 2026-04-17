@@ -52,7 +52,6 @@ export default async function AdminUsersPage({
           <Link className="btn btn-xs btn-outlined" href="/admin/users">
             Reset
           </Link>
-
         </div>
       </form>
 
