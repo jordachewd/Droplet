@@ -5,13 +5,13 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #129 (2026-04-17). 2 CRITICAL bugs found. Stripe payment flow broken — webhook not delivering + projection fields missing. All other gates GREEN.**
+> **STATUS: PM audit #130 (2026-04-17). 4 CRITICAL bugs found. Stripe billing UI broken (2 projection bugs + webhook config). Clerk sync incomplete (silent data loss risk). All other gates GREEN.**
 >
 > **GATE STATUS: All 7 gates GREEN. 0 npm vulnerabilities. Code hygiene 100%.**
 >
 > **TEST STATUS: 729 tests (110 suites), 49 E2E (6 skipped). 0 failures. All gates GREEN.**
 >
-> **ACTIVE BACKLOG: PM audit #129 — 2 CRITICAL items. 1 HIGH item. 0 god files. Largest: generateResponse.tsx (861), admin-queries.ts (826), normalize-admin-settings.ts (813), openai/route.tsx (805). All under 900 lines.**
+> **ACTIVE BACKLOG: PM audit #130 — 4 CRITICAL items. 1 HIGH item. 1 MEDIUM item. 0 god files. Largest: generateResponse.tsx (861), admin-queries.ts (826), normalize-admin-settings.ts (813), openai/route.tsx (805). All under 900 lines.**
 
 ---
 
@@ -21,9 +21,9 @@
 
 ---
 
-## Execution Order (PM audit #129) — CRITICAL PATH
+## Execution Order (PM audit #130) — CRITICAL PATH
 
-> **2 CRITICAL + 1 HIGH items. All feature work ON HOLD until resolved.**
+> **4 CRITICAL + 1 HIGH + 1 MEDIUM items. All feature work ON HOLD until resolved.**
 
 ### Phase 234-A — CRITICAL: Fix `USER_SYNC_PROJECTION` Missing Fields
 
@@ -48,16 +48,40 @@ New: "clerkId username email role plan firstName lastName userimg registerAt upd
 
 ---
 
+### Phase 234-A2 — CRITICAL: Fix `getAllTransactions` Missing `stripeId` in Projection
+
+**Issue:** `getAllTransactions()` uses `.select("plan amount billing createdAt expiresOn")` — missing `stripeId`. The billing history UI in `ProfileBilling` compares `txn.stripeId === stripeId` to determine Active vs Inactive status. Since `stripeId` is never fetched, `txn.stripeId` is always `undefined`, causing ALL transactions to display as "Inactive" regardless of actual state.
+
+**File:** `src/lib/actions/transaction.action.tsx` line ~449.
+
+**Fix:** Add `stripeId` to the `.select()` projection:
+
+```
+Old: .select("plan amount billing createdAt expiresOn")
+New: .select("plan amount billing createdAt expiresOn stripeId")
+```
+
+**Acceptance criteria:**
+
+- [ ] `getAllTransactions` `.select()` includes `stripeId`
+- [ ] The current active subscription's transaction shows "Active" (green badge) in billing history
+- [ ] Previous/older transactions show "Inactive" (gray badge) — this is correct behavior
+- [ ] All 7 gates pass
+
+---
+
 ### Phase 234-B — CRITICAL: Stripe Webhook Verification (Owner Action Required)
 
-**Issue:** Stripe webhook is not delivering `checkout.session.completed` events to the app. Payment succeeds in Stripe but plan stays Lite, no Transaction created, billing history empty.
+**Issue:** Stripe webhook is not delivering events to the app. Payment succeeds in Stripe but plan stays Lite, no Transaction created, billing history empty.
 
 **This was previously resolved as C2 (PM audit #84-B) — webhook was disabled. The issue has recurred.**
+
+**IMPORTANT: Stripe CLI localhost testing was using the WRONG URL.** Terminal shows `--forward-to http://localhost:3000/api/stripe/webhook` — the correct URL is `http://localhost:3000/api/webhooks/stripe`. This explains localhost test failures.
 
 **Owner must verify in Stripe Dashboard (cannot be fixed from code):**
 
 1. **Stripe Dashboard → Developers → Webhooks** — Verify endpoint exists.
-2. **Endpoint URL** — Must be `https://<production-domain>/api/webhooks/stripe` (NOT localhost).
+2. **Endpoint URL** — Must be `https://<production-domain>/api/webhooks/stripe` (NOT `/api/stripe/webhook`).
 3. **Events to send** — Must include ALL of these:
    - `checkout.session.completed`
    - `invoice.paid`
@@ -69,9 +93,15 @@ New: "clerkId username email role plan firstName lastName userimg registerAt upd
 6. **Recent deliveries** — Check the webhook's "Recent deliveries" tab for failed delivery attempts (HTTP 400/500 responses).
 7. **Endpoint status** — Must be "Enabled", not "Disabled".
 
+**For localhost testing with Stripe CLI — use this exact command:**
+
+```bash
+stripe listen --events checkout.session.completed,invoice.paid,invoice.payment_failed,customer.subscription.updated,customer.subscription.deleted --forward-to http://localhost:3000/api/webhooks/stripe
+```
+
 **Acceptance criteria:**
 
-- [ ] Stripe Dashboard shows webhook endpoint pointing to production URL
+- [ ] Stripe Dashboard shows webhook endpoint pointing to correct production URL (`/api/webhooks/stripe`)
 - [ ] All 5 event types are enabled on the endpoint
 - [ ] Signing secret matches production `STRIPE_WEBHOOK_SECRET`
 - [ ] New test payment triggers `checkout.session.completed` webhook with HTTP 200 response
@@ -79,6 +109,62 @@ New: "clerkId username email role plan firstName lastName userimg registerAt upd
 - [ ] User `plan.name` updates to "Pro" in MongoDB after payment
 - [ ] Profile page shows correct plan name and billing history
 - [ ] Sidebar promo card reflects updated plan
+
+---
+
+### Phase 235 — CRITICAL: MongoDB→Clerk Bidirectional Sync for Name Fields
+
+**Issue:** When users edit their profile (firstName, lastName) in the app, changes are saved to MongoDB but NOT synced to Clerk. This creates two problems:
+
+1. **Stale display:** Clerk-powered UI components (session tokens, Clerk-managed elements) show old name.
+2. **Silent data loss:** The next `user.updated` webhook from Clerk (triggered by any Clerk-side change) will OVERWRITE the MongoDB values with the stale Clerk values — effectively reverting the user's profile edits.
+
+**Current state (verified):**
+
+- Avatar (`userimg` → `imageUrl`) syncs MongoDB→Clerk ✅ (Phase 201)
+- `firstName` — NOT synced to Clerk ❌
+- `lastName` — NOT synced to Clerk ❌
+- `email` — NOT synced to Clerk ❌ (requires Clerk verification flow — see note below)
+
+**File:** `src/lib/actions/user.actions.tsx` lines 78–93.
+
+**Fix:** Expand the Clerk sync block to include `firstName` and `lastName`:
+
+```typescript
+// Current: only syncs imageUrl
+if (typeof parsedUser.data.userimg === "string") {
+  await client.users.updateUser(parsedClerkId.data, {
+    imageUrl: parsedUser.data.userimg,
+  });
+}
+
+// Fixed: sync imageUrl + firstName + lastName
+const clerkSyncPayload: Record<string, string> = {};
+if (typeof parsedUser.data.userimg === "string") {
+  clerkSyncPayload.imageUrl = parsedUser.data.userimg;
+}
+if (typeof parsedUser.data.firstName === "string") {
+  clerkSyncPayload.firstName = parsedUser.data.firstName;
+}
+if (typeof parsedUser.data.lastName === "string") {
+  clerkSyncPayload.lastName = parsedUser.data.lastName;
+}
+if (Object.keys(clerkSyncPayload).length > 0) {
+  await client.users.updateUser(parsedClerkId.data, clerkSyncPayload);
+}
+```
+
+**Email sync note:** Clerk treats email as a verified identity. Changing email requires Clerk's email verification flow (create → verify → set primary). This is complex and should be deferred. For now, email editing in the profile should either: (a) be disabled with a note directing users to Clerk's account settings, or (b) left as-is with the understanding that email changes are MongoDB-only. PM decision: defer email sync to a future phase. Document as known limitation.
+
+**Acceptance criteria:**
+
+- [ ] `updateUser` syncs `firstName` to Clerk when changed
+- [ ] `updateUser` syncs `lastName` to Clerk when changed
+- [ ] `updateUser` syncs `imageUrl` to Clerk when changed (existing, preserved)
+- [ ] All syncs are non-blocking (try/catch with stderr logging)
+- [ ] Clerk sync is batched into a single `updateUser` call (not 3 separate calls)
+- [ ] All 7 gates pass
+- [ ] After editing name in app, Clerk Dashboard shows updated name
 
 ---
 
