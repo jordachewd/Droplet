@@ -2,7 +2,16 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-04-17 — PM audit #130.
+> Last updated: 2026-04-18 — PM audit #131.
+
+---
+
+## Prettier Reformat — PM audit #131 (2026-04-18)
+
+> Ruthless tri-agent audit (PM + Architect + Engineer) discovered Prettier gate failing with 70 files. Fixed by `npx prettier . --write`. All 7 gates GREEN.
+
+- [x] Ran `npx prettier . --write` to reformat 70 files
+- [x] Validation: prettier ✓, lint (0 errors, 6 warnings) ✓, tsc ✓, tests (730/730) ✓, build ✓, knip ✓.
 
 ---
 

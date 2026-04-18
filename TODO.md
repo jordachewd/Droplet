@@ -5,25 +5,63 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #130 (2026-04-17). Phases 234-A, 234-A2, 235, 234-C, 236 COMPLETE. 2 remaining items: 1 CRITICAL owner action (Stripe webhook config), 1 MEDIUM owner action (email/invoice setup). All code fixes applied. All 7 gates GREEN.**
+> **STATUS: PM audit #131 (2026-04-18). RUTHLESS AUDIT complete. Tri-agent audit (PM + Architect + Engineer). 0 CRITICAL code bugs. 2 HIGH code items found. 1 CRITICAL owner action. 1 MEDIUM owner action. Prettier gate FIXED (70 files formatted). All 7 gates GREEN.**
 >
-> **GATE STATUS: All 7 gates GREEN. 0 lint errors. 0 npm vulnerabilities. Code hygiene 100%.**
+> **GATE STATUS: All 7 gates GREEN. 730 tests (110 suites). 0 failures. 0 lint errors. 0 npm vulnerabilities. Knip clean. TSC clean. Build clean.**
 >
-> **TEST STATUS: 730 tests (110 suites), 49 E2E (6 skipped). 0 failures. All gates GREEN.**
->
-> **ACTIVE BACKLOG: PM audit #130 — 1 CRITICAL owner action. 1 MEDIUM owner action. 0 code items. 0 god files. Largest: generateResponse.tsx (861), admin-queries.ts (826), normalize-admin-settings.ts (813), openai/route.tsx (805). All under 900 lines.**
+> **ACTIVE BACKLOG: 2 code tasks (HIGH). 1 CRITICAL owner action. 1 MEDIUM owner action. 8 model files need `.tsx`→`.ts` rename (LOW). 0 god files. All files under 900 lines.**
 
 ---
 
 ## Archived Phases — See [DONE.md](DONE.md)
 
 > All phases through 236 archived. See DONE.md for completion records.
+> Prettier reformat (PM audit #131) — 70 files fixed.
 
 ---
 
-## Execution Order (PM audit #130) — REMAINING ITEMS
+## Execution Order (PM audit #131) — ACTIVE
 
-> **Code fixes COMPLETE. Remaining items are owner actions only.**
+### Phase 237 — HIGH: Remove `/design` Page From Public Routes
+
+**Issue:** Development-only design system preview page at `/design` is publicly accessible. Shows internal typography, button styles, and CSS class names. Not listed in SPEC.md route table. Information leak in production.
+
+**Found by:** Architect audit (PM audit #131).
+
+**Acceptance criteria:**
+
+- [ ] `src/app/(public)/design/` directory deleted
+- [ ] No route exists at `/design` in production build
+- [ ] SPEC.md route table unchanged (page was never documented)
+- [ ] All 7 gates GREEN
+- [ ] Knip clean
+
+---
+
+### Phase 238 — HIGH: Rename 8 Mongoose Model Files `.tsx` → `.ts`
+
+**Issue:** 8 Mongoose model files use `.tsx` extension but contain zero JSX. Violates AGENTS.md coding standard: "Utility-only files: `.ts` extension (no JSX)." Phase 147 renamed 5 utility files but skipped models.
+
+**Files:**
+
+- `src/lib/database/models/user.model.tsx` → `.ts`
+- `src/lib/database/models/usage-event.model.tsx` → `.ts`
+- `src/lib/database/models/transaction.model.tsx` → `.ts`
+- `src/lib/database/models/tasks.model.tsx` → `.ts`
+- `src/lib/database/models/rate-limit-entry.model.tsx` → `.ts`
+- `src/lib/database/models/public-page.model.tsx` → `.ts`
+- `src/lib/database/models/app-setting.model.tsx` → `.ts`
+- `src/lib/database/models/admin-audit-log.model.tsx` → `.ts`
+
+**Acceptance criteria:**
+
+- [ ] All 8 files renamed from `.tsx` to `.ts`
+- [ ] All imports across `src/` and `tests/` updated
+- [ ] Zero `.tsx` references to model files remain
+- [ ] `knip.json` updated if needed
+- [ ] All 7 gates GREEN
+
+---
 
 ### Phase 234-B — CRITICAL: Stripe Webhook Verification (Owner Action Required)
 
@@ -101,30 +139,42 @@ stripe listen --events checkout.session.completed,invoice.paid,invoice.payment_f
 
 ---
 
-## SORTED DEFERRED ITEMS (PM audit #128)
+## SORTED DEFERRED ITEMS (PM audit #131 — Ruthless Re-Sort)
 
-> Owner requested all deferred items be sorted. Sorted by value, with PM verdict.
+> All deferred items sorted by value/risk with PM verdict.
 
 ### 1. Vercel Pro Upgrade — RECOMMENDED (Business Decision)
 
 > $20/mo. Raises `maxDuration` from 60s to 300s. Eliminates media generation timeout edge cases. Zero engineering effort. Highest-leverage infrastructure spend. **Promote when monthly revenue exceeds ~$100/mo or when first user reports a timeout.** Not a code change.
 
-### 2. Phase 29.6 — updateAdminSettingAction Zod Schema Map — MONITOR
+### 2. Phase 29.6 — updateAdminSettingAction Zod Schema Map — CLOSED/MONITOR
 
-> **Current state:** 18 branches in main update function (verified PM audit #128). Working correctly with Zod under the hood. Deferral threshold was ~25 branches. **Still 7 branches below threshold.** Revisit only if branch count approaches 25 or bugs emerge. CLOSED as accepted pattern — reopen only if growth resumes.
+> **Current state:** 18 branches in main update function (verified PM audit #128). Working correctly with Zod under the hood. Deferral threshold was ~25 branches. **Still 7 branches below threshold.** CLOSED as accepted pattern — reopen only if branch count approaches 25 or bugs emerge.
 
 ### 3. E2E Firefox Flake — MONITOR
 
 > 1 test (`error-boundary-handling > API failure feedback`) fails intermittently on Firefox only. Chromium/WebKit pass. Browser timing issue, not product bug. Fix only if it becomes persistent or blocks CI.
 
-### 4. Legal/Nav/Footer Admin Configurability — DEFERRED TO V2
+### 4. Stripe Webhook Handler Unit Tests — MEDIUM (Future Hardening)
+
+> **Found by:** Architect audit (PM audit #131). The Stripe webhook handlers (`stripe-webhook-handlers.ts`, `stripe-webhook-shared.ts`) are the most complex billing code paths but have no dedicated unit tests. The idempotency logic, user-matching fallback chain, and plan state transitions are tested only through the route-level integration test file (`stripe-webhook-route.test.ts`). Not blocking — current route-level tests cover the critical paths. Add dedicated unit tests when billing logic expands or bugs emerge.
+
+### 5. Config Cache Unit Tests — LOW (Future Hardening)
+
+> **Found by:** Architect audit (PM audit #131). `config-cache.ts` (30s TTL, in-flight dedup, `clearConfigCache()`) has no dedicated unit tests. The cache works correctly (proven by 730 passing tests that depend on it). Add tests when cache behavior changes.
+
+### 6. Audio Player `act()` Test Warnings — LOW (Test Noise)
+
+> **Found by:** Engineer audit (PM audit #131). `audio-player.test.tsx` produces `act(...)` warnings from React 19 strict mode. Tests still pass. Fix by wrapping state-triggering interactions in `act()` or `waitFor()`. Not blocking.
+
+### 7. Legal/Nav/Footer Admin Configurability — DEFERRED TO V2
 
 > Legal text requires legal review regardless of configurability. Nav is structural (tied to routes). Footer changes ~yearly. Zero user impact. Lowest priority of all deferred items.
 
 ---
 
 > **Completed phases** archived in [`DONE.md`](DONE.md).
-> Includes: Phases 143–148, 165, 165.1, 180.1–180.4, 185–222 (all sub-phases), 217-A/B/C/C-fix/D/E/F/G, 218-B, 218-C, 218-C-fix, 26.x, 29.1–29.5, 29.7, 223, 224, 225-A/B/C/D, 226, 227, 228, 229, 230, 231, 231-fix, 232, 233, 234-A, 234-A2, 234-C, 235, 236, type file cleanup, admin sidebar persistence.
+> Includes: Phases 143–148, 165, 165.1, 180.1–180.4, 185–222 (all sub-phases), 217-A/B/C/C-fix/D/E/F/G, 218-B, 218-C, 218-C-fix, 26.x, 29.1–29.5, 29.7, 223, 224, 225-A/B/C/D, 226, 227, 228, 229, 230, 231, 231-fix, 232, 233, 234-A, 234-A2, 234-C, 235, 236, type file cleanup, admin sidebar persistence, Prettier reformat (PM audit #131).
 > Phase 29.7 (Zustand audit) — COMPLETE. No changes needed. 4 stores, all properly implemented.
 > TypeScript 6 / ESLint compatibility — **CLOSED** (audit #103). No issues.
 > jsdom upgrade — **PIN MAINTAINED** (audit #103). ~24.1.3 stable. ESM TLA incompatibility persists.
