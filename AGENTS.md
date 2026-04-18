@@ -63,12 +63,16 @@ All seven gates must pass.
 
 > Route restructure is **complete** (Phase 17). Proxy protects `/app(.*)` and `/admin(.*)` only. Profile and plans are under `/app/*`. Admin is at `/admin/*`. The `(account)` route group has been deleted (Phase 17-C). Public pages (about, plans, personas, privacy, cookies, terms) are live (Phase 18). `/faqs` route removed — FAQs live in `/plans`. Orphan directories (`/dashboard`, `/pricing`) removed (Phase 20).
 
-| Area   | Namespace                                                              | Protection                           |
-| ------ | ---------------------------------------------------------------------- | ------------------------------------ |
-| Public | `/`, `/about`, `/plans`, `/personas`, `/privacy`, `/cookies`, `/terms` | None                                 |
-| Auth   | `/sign-in`, `/sign-up`                                                 | Clerk managed                        |
-| App    | `/app(.*)`                                                             | Auth required (proxy + server)       |
-| Admin  | `/admin(.*)`                                                           | Admin role required (proxy + server) |
+| Area     | Namespace                                                                         | Protection                                      |
+| -------- | --------------------------------------------------------------------------------- | ----------------------------------------------- |
+| Public   | `/`, `/about`, `/plans`, `/personas`, `/privacy`, `/cookies`, `/terms`, `/design` | None                                            |
+| Checkout | `/checkout-success`                                                               | Auth (page-level guard, Stripe redirect target) |
+| Auth     | `/sign-in`, `/sign-up`                                                            | Clerk managed                                   |
+| App      | `/app(.*)`                                                                        | Auth required (proxy + server)                  |
+| Admin    | `/admin(.*)`                                                                      | Admin role required (proxy + server)            |
+
+> **`/design`** is a development-only design system preview page. Must be removed before production deployment.
+> **`/checkout-success`** has its own `auth()` guard with redirect to `/sign-in`. Not proxy-protected because Stripe redirects here before the user reaches `/app`.
 
 ## Coding Standards
 

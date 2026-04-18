@@ -2,7 +2,19 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-04-18 — PM audit #131.
+> Last updated: 2026-04-18 — PM audit #132.
+
+---
+
+## Phase 237 — `/design` Page: CLOSED per Owner Override (PM audit #132, 2026-04-18)
+
+> Tri-agent audit (PM + Architect + Engineer) identified `/design` as publicly accessible dev-only design system preview page. Originally scoped for deletion. **Owner override: page must stay for development use.** Pure static page (408 lines), no data/auth/secrets, no sensitive information. Only imports `Link` from `next/link`. Documented in AGENTS.md and SPEC.md route tables as dev-only with "remove before production" note.
+
+- [x] Owner directive: KEEP `/design` page for development
+- [x] Added `/design` to AGENTS.md route boundary table as Public with production removal note
+- [x] Added `/design` to SPEC.md route map as dev-only
+- [x] TD-DESIGN-01 CLOSED in SPEC.md tech debt table
+- [x] `/checkout-success` undocumented route also added to both route tables (discovered during audit)
 
 ---
 

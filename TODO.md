@@ -5,44 +5,31 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #131 (2026-04-18). RUTHLESS AUDIT complete. Tri-agent audit (PM + Architect + Engineer). 0 CRITICAL code bugs. 2 HIGH code items found. 1 CRITICAL owner action. 1 MEDIUM owner action. Prettier gate FIXED (70 files formatted). All 7 gates GREEN.**
+> **STATUS: PM audit #132 (2026-04-18). RUTHLESS tri-agent audit (PM + Architect + Engineer). 0 CRITICAL code bugs. 1 HIGH code item (expanded). 1 CRITICAL owner action. 1 MEDIUM owner action. All 7 gates GREEN.**
 >
 > **GATE STATUS: All 7 gates GREEN. 730 tests (110 suites). 0 failures. 0 lint errors. 0 npm vulnerabilities. Knip clean. TSC clean. Build clean.**
 >
-> **ACTIVE BACKLOG: 2 code tasks (HIGH). 1 CRITICAL owner action. 1 MEDIUM owner action. 8 model files need `.tsx`→`.ts` rename (LOW). 0 god files. All files under 900 lines.**
+> **ACTIVE BACKLOG: 1 code task (HIGH — expanded to 31 files). 1 CRITICAL owner action. 1 MEDIUM owner action. 0 god files. All files under 900 lines. `/design` page KEPT per owner override (dev-only, remove before production).**
 
 ---
 
 ## Archived Phases — See [DONE.md](DONE.md)
 
-> All phases through 236 archived. See DONE.md for completion records.
+> All phases through 237 archived. See DONE.md for completion records.
+> Phase 237 CLOSED per owner override (PM audit #132) — `/design` page kept as dev-only design system preview.
 > Prettier reformat (PM audit #131) — 70 files fixed.
 
 ---
 
-## Execution Order (PM audit #131) — ACTIVE
+## Execution Order (PM audit #132) — ACTIVE
 
-### Phase 237 — HIGH: Remove `/design` Page From Public Routes
+### Phase 238 — HIGH: Rename 31 Non-JSX `.tsx` Files to `.ts`
 
-**Issue:** Development-only design system preview page at `/design` is publicly accessible. Shows internal typography, button styles, and CSS class names. Not listed in SPEC.md route table. Information leak in production.
+**Issue:** 31 files use `.tsx` extension but contain zero JSX. Violates AGENTS.md coding standard: "Utility-only files: `.ts` extension (no JSX)." Phase 147 renamed 5 utility files but missed models, constants, actions, and other utils. Original Phase 238 scope was only 8 model files — expanded to full violation surface by PM audit #132 tri-agent audit.
 
-**Found by:** Architect audit (PM audit #131).
+**Split into 4 sub-phases for safe execution:**
 
-**Acceptance criteria:**
-
-- [ ] `src/app/(public)/design/` directory deleted
-- [ ] No route exists at `/design` in production build
-- [ ] SPEC.md route table unchanged (page was never documented)
-- [ ] All 7 gates GREEN
-- [ ] Knip clean
-
----
-
-### Phase 238 — HIGH: Rename 8 Mongoose Model Files `.tsx` → `.ts`
-
-**Issue:** 8 Mongoose model files use `.tsx` extension but contain zero JSX. Violates AGENTS.md coding standard: "Utility-only files: `.ts` extension (no JSX)." Phase 147 renamed 5 utility files but skipped models.
-
-**Files:**
+#### Phase 238-A — Rename 8 Database Model Files (~15 min)
 
 - `src/lib/database/models/user.model.tsx` → `.ts`
 - `src/lib/database/models/usage-event.model.tsx` → `.ts`
@@ -55,11 +42,61 @@
 
 **Acceptance criteria:**
 
-- [ ] All 8 files renamed from `.tsx` to `.ts`
+- [ ] All 8 files renamed
 - [ ] All imports across `src/` and `tests/` updated
-- [ ] Zero `.tsx` references to model files remain
+- [ ] All 7 gates GREEN
+
+#### Phase 238-B — Rename Database + Constants + Types (~15 min)
+
+- `src/lib/database/mongoose.tsx` → `.ts`
+- `src/constants/assistant-personas.tsx` → `.ts`
+- `src/constants/aws.tsx` → `.ts`
+- `src/constants/faqs.tsx` → `.ts`
+- `src/constants/openai.tsx` → `.ts`
+- `src/constants/plans.tsx` → `.ts`
+- `src/types/index.tsx` → `.ts`
+
+**Acceptance criteria:**
+
+- [ ] All 7 files renamed
+- [ ] All imports across `src/` and `tests/` updated
+- [ ] All 7 gates GREEN
+
+#### Phase 238-C — Rename Server Action Files (~15 min)
+
+- `src/lib/actions/user.actions.tsx` → `.ts`
+- `src/lib/actions/transaction.action.tsx` → `.ts`
+- `src/lib/actions/task.actions.tsx` → `.ts`
+- `src/lib/actions/admin-user.actions.tsx` → `.ts`
+- `src/lib/actions/admin-transaction.actions.tsx` → `.ts`
+- `src/lib/actions/admin-settings.actions.tsx` → `.ts`
+- `src/lib/actions/admin-pages.actions.tsx` → `.ts`
+
+**Acceptance criteria:**
+
+- [ ] All 7 files renamed
+- [ ] All imports across `src/` and `tests/` updated
+- [ ] All 7 gates GREEN
+
+#### Phase 238-D — Rename Utility Files (~20 min)
+
+- `src/lib/utils/resolve-entitlements.tsx` → `.ts`
+- `src/lib/utils/task-queries.tsx` → `.ts`
+- `src/lib/utils/aws/deleteFileFromAWS.tsx` → `.ts`
+- `src/lib/utils/aws/uploadFileToAWS.tsx` → `.ts`
+- `src/lib/utils/openai/filterAssistantMsg.tsx` → `.ts`
+- `src/lib/utils/openai/generateAudio.tsx` → `.ts`
+- `src/lib/utils/openai/generateImage.tsx` → `.ts`
+- `src/lib/utils/openai/generateResponse.tsx` → `.ts`
+- `src/lib/utils/openai/generateTitle.tsx` → `.ts`
+
+**Acceptance criteria:**
+
+- [ ] All 9 files renamed
+- [ ] All imports across `src/` and `tests/` updated
 - [ ] `knip.json` updated if needed
 - [ ] All 7 gates GREEN
+- [ ] Zero non-route/non-page/non-component `.tsx` files with no JSX remain
 
 ---
 
@@ -139,9 +176,9 @@ stripe listen --events checkout.session.completed,invoice.paid,invoice.payment_f
 
 ---
 
-## SORTED DEFERRED ITEMS (PM audit #131 — Ruthless Re-Sort)
+## SORTED DEFERRED ITEMS (PM audit #132 — Ruthless Re-Sort)
 
-> All deferred items sorted by value/risk with PM verdict.
+> All deferred items sorted by value/risk. Tri-agent consensus: no promotions needed.
 
 ### 1. Vercel Pro Upgrade — RECOMMENDED (Business Decision)
 
@@ -171,10 +208,14 @@ stripe listen --events checkout.session.completed,invoice.paid,invoice.payment_f
 
 > Legal text requires legal review regardless of configurability. Nav is structural (tied to routes). Footer changes ~yearly. Zero user impact. Lowest priority of all deferred items.
 
+### 8. `generateResponse.tsx` at 861 lines — MONITOR
+
+> **Found by:** Engineer audit (PM audit #132). 39 lines from 900-line god file threshold. No action needed now. If any feature addition pushes it over, decompose proactively. Candidate extractions: tool call dispatch handlers, error recovery logic.
+
 ---
 
 > **Completed phases** archived in [`DONE.md`](DONE.md).
-> Includes: Phases 143–148, 165, 165.1, 180.1–180.4, 185–222 (all sub-phases), 217-A/B/C/C-fix/D/E/F/G, 218-B, 218-C, 218-C-fix, 26.x, 29.1–29.5, 29.7, 223, 224, 225-A/B/C/D, 226, 227, 228, 229, 230, 231, 231-fix, 232, 233, 234-A, 234-A2, 234-C, 235, 236, type file cleanup, admin sidebar persistence, Prettier reformat (PM audit #131).
+> Includes: Phases 143–148, 165, 165.1, 180.1–180.4, 185–222 (all sub-phases), 217-A/B/C/C-fix/D/E/F/G, 218-B, 218-C, 218-C-fix, 26.x, 29.1–29.5, 29.7, 223, 224, 225-A/B/C/D, 226, 227, 228, 229, 230, 231, 231-fix, 232, 233, 234-A, 234-A2, 234-C, 235, 236, 237 (closed), type file cleanup, admin sidebar persistence, Prettier reformat (PM audit #131).
 > Phase 29.7 (Zustand audit) — COMPLETE. No changes needed. 4 stores, all properly implemented.
 > TypeScript 6 / ESLint compatibility — **CLOSED** (audit #103). No issues.
 > jsdom upgrade — **PIN MAINTAINED** (audit #103). ~24.1.3 stable. ESM TLA incompatibility persists.
