@@ -5,11 +5,11 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #135 (2026-04-20). Phase 234-B CLOSED (localhost webhook verified by owner — HTTP 200, all 5 events). Phase 234-D CLOSED (sandbox email limitation — works in live mode). Prettier gate regression fixed (6 files). All 7 gates GREEN. 730 tests (110 suites). 0 lint errors. TSC clean. Build clean. Knip clean.**
+> **STATUS: PM audit #136 (2026-04-20). OpenAI Codex code review found 3 CRITICAL/HIGH regressions in onboarding+handoff code. All 3 verified against codebase. BLOCKING PRODUCTION.**
 >
-> **GATE STATUS: All 7 gates GREEN. 730 tests (110 suites). 0 failures. 0 lint errors. TSC clean. Build clean. Knip clean. Prettier GREEN.**
+> **GATE STATUS: All 7 gates GREEN. 730 tests (110 suites). 0 lint errors. TSC clean. Build clean. Knip clean. Prettier GREEN.**
 >
-> **ACTIVE BACKLOG: 0 code tasks. 0 owner actions. `/design` page KEPT per owner override (dev-only, remove before production). PRODUCTION DEPLOYMENT PENDING.**
+> **ACTIVE BACKLOG: 3 code fixes (1 CRITICAL, 1 HIGH, 1 HIGH). Production deployment BLOCKED until resolved.**
 
 ---
 
@@ -25,10 +25,115 @@
 
 ---
 
-## Execution Order (PM audit #135) — ACTIVE
+## Execution Order (PM audit #136) — ACTIVE
 
-> **No active code tasks. No pending owner actions. All phases COMPLETE.**
-> **Next milestone: Production deployment verification (Stripe live-mode webhook + email delivery).**
+> **3 regressions found by OpenAI Codex code review. All verified by PM. BLOCKING PRODUCTION.**
+> Source: Codex review of changes against `main` branch.
+
+---
+
+### Phase 251-A — CRITICAL: Handoff Auto-Send Races Store Hydration (~20 min)
+
+**Source:** Codex P1. Verified by PM against codebase.
+
+**Issue:** The handoff auto-send effect ([chat-wrapper.tsx](src/components/chat/chat-wrapper.tsx#L642-L644)) fires `sendMessage` immediately when `handoffContext` exists, but `sendMessage` closes over `task` and `dbTaskId` from the Zustand store. On a handoff navigation (from `/app/c/[ended-id]` to `/app?persona=X&handoff=Y`), the store still contains the **previous conversation's** `taskId` and messages on first render. The `hydrateConversation` effect (line 196) resets the store, but both effects are independent `useEffect` calls — React does not guarantee the hydration effect completes before the handoff effect fires.
+
+**Consequence:** `sendMessage` sends the handoff prompt to `/api/openai` with the **old task ID** from the ended conversation. The API returns a stop response ("conversation ended"), and the handoff fails silently. The user sees a dead chat with no response.
+
+**Root cause:** The handoff effect's guard conditions (`handoffContext && !handoffSentRef.current && !isLoading`) do not verify that the store has been reset to a clean state (no active task ID, empty messages).
+
+**Fix:** Add a post-hydration gate condition. The handoff auto-send should only fire when:
+
+1. `handoffContext` exists
+2. `handoffSentRef.current` is false
+3. `!isLoading`
+4. **`dbTaskId` is null** (store has been reset — no active task)
+5. **`task.length === 0`** (store has been reset — empty messages)
+
+This ensures `sendMessage` only fires after `hydrateConversation` has cleared the previous conversation state. Also add `dbTaskId` and `task.length` to the effect's dependency array (or use `task` with `task.length === 0` check).
+
+**Acceptance criteria:**
+
+- [ ] Handoff auto-send only fires after store hydration completes (no stale taskId)
+- [ ] `sendMessage` sends handoff prompt with `taskId: null` (new conversation)
+- [ ] Handoff from ended conversation creates a fresh chat in the new persona
+- [ ] No regression on direct `/app?persona=X` navigation (no handoff)
+- [ ] TypeScript compiles cleanly
+- [ ] All existing tests pass
+
+---
+
+### Phase 251-B — HIGH: getUserById Missing `preferences` Projection (~5 min)
+
+**Source:** Codex P2. Verified by PM against codebase.
+
+**Issue:** The `/api/openai` route (line 783, 836) passes `userData.preferences` into `generateResponse()` for system prompt personalization. But `getUserById()` in [user.actions.ts](src/lib/actions/user.actions.ts#L223-L224) projects only these fields:
+
+```
+clerkId username email role suspended plan firstName lastName userimg registerAt updatedAt dailyConversationsStarted dailyConversationWindowStart
+```
+
+`preferences` and `onboardingCompleted` are **not projected**. Since `getUserById` almost always succeeds (the user exists in MongoDB), the fallback path `ensureUserSynced` (which **does** include `preferences` in its projection) is never reached. Result: `userData.preferences` is `undefined`, and `buildUserPreferencesPrompt()` returns `null`, making all 4 onboarding preference fields (intent, challenge, expectation, communicationStyle) permanently invisible to the AI model.
+
+**Consequence:** The entire onboarding personalization pipeline (Phases 240-249) is effectively dead code in production. Users complete onboarding, preferences are stored in MongoDB, but the AI never receives them.
+
+**Fix:** Add `preferences onboardingCompleted` to the `.select()` string in `getUserById()`.
+
+**Acceptance criteria:**
+
+- [ ] `getUserById()` `.select()` includes `preferences` and `onboardingCompleted`
+- [ ] `/api/openai` route receives non-undefined `userData.preferences` for onboarded users
+- [ ] `buildUserPreferencesPrompt()` generates prompt text with user's intent/challenge/expectation/communicationStyle
+- [ ] Existing `user-actions.test.ts` updated to expect the new projection fields
+- [ ] TypeScript compiles cleanly
+- [ ] All existing tests pass
+
+---
+
+### Phase 251-C — HIGH: Onboarding Trial Badge Unreachable Condition (~10 min)
+
+**Source:** Codex P3. Verified by PM against codebase.
+
+**Issue:** In [onboarding-wizard.tsx](src/components/chat/onboarding/onboarding-wizard.tsx#L312), the trial badge renders with condition:
+
+```tsx
+{isTrial && !isAllowed && (
+  <span ...>Trial</span>
+)}
+```
+
+Where:
+
+- `isTrial = trialSet.has(persona.id)` (persona is in `trialPersonaIds`)
+- `isAllowed = allowedSet.has(persona.id)` (persona is in `allowedPersonaIds`)
+
+But in `resolveEntitlements()` ([resolve-entitlements.ts](src/lib/utils/resolve-entitlements.ts#L98-L112)):
+
+- `getAllowedPersonaIds` returns personas where access is **not** `"blocked"` — this includes both `"full"` and `"limited"` personas
+- `getTrialPersonaIds` returns personas where access is `"limited"`
+
+So every `"limited"` persona is in **both** `trialPersonaIds` AND `allowedPersonaIds`. The condition `isTrial && !isAllowed` is **always false** for trial personas. The "Trial" badge never renders.
+
+**Consequence:** A Lite user sees Teacher, Creator, and Wellness personas in onboarding with no indication they have reduced limits (5 prompts/conversation, 3 images, 2 audio per 30-day window). Users select trial personas thinking they have full access, which violates Critical Product Rule #3 (personas are plan-gated).
+
+**Fix:** Change condition to `isTrial` only (remove `&& !isAllowed`):
+
+```tsx
+{isTrial && (
+  <span ...>Trial</span>
+)}
+```
+
+This correctly shows the "Trial" badge on limited-access personas even though they're technically allowed (with reduced limits).
+
+**Acceptance criteria:**
+
+- [ ] "Trial" badge renders on limited-access personas for Lite users (Teacher, Creator, Wellness)
+- [ ] "Trial" badge does NOT render on full-access personas (Strategist, Developer for Lite)
+- [ ] "Trial" badge does NOT render for Pro/Premium users who have full access to those personas
+- [ ] Admin users see no trial badges (all personas are full access)
+- [ ] TypeScript compiles cleanly
+- [ ] No visual regression on persona card layout
 
 ---
 
