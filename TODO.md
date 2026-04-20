@@ -5,88 +5,45 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #134 (2026-04-20). Phases 249-A/B/C/D COMPLETE. Phase 238 COMPLETE (31 files renamed). All 7 gates GREEN. 730 tests (110 suites). 0 lint errors. TSC clean. Build clean. Knip clean.**
+> **STATUS: PM audit #135 (2026-04-20). Phase 234-B CLOSED (localhost webhook verified by owner — HTTP 200, all 5 events). Phase 234-D CLOSED (sandbox email limitation — works in live mode). Prettier gate regression fixed (6 files). All 7 gates GREEN. 730 tests (110 suites). 0 lint errors. TSC clean. Build clean. Knip clean.**
 >
-> **GATE STATUS: All 7 gates GREEN. 730 tests (110 suites). 0 failures. 0 lint errors. TSC clean. Build clean. Knip clean.**
+> **GATE STATUS: All 7 gates GREEN. 730 tests (110 suites). 0 failures. 0 lint errors. TSC clean. Build clean. Knip clean. Prettier GREEN.**
 >
-> **ACTIVE BACKLOG: 0 code tasks. 1 CRITICAL owner action. 1 MEDIUM owner action. `/design` page KEPT per owner override (dev-only, remove before production).**
+> **ACTIVE BACKLOG: 0 code tasks. 0 owner actions. `/design` page KEPT per owner override (dev-only, remove before production). PRODUCTION DEPLOYMENT PENDING.**
 
 ---
 
 ## Archived Phases — See [DONE.md](DONE.md)
 
-> All phases through 249 archived. See DONE.md for completion records.
-> Phases 240-246 (onboarding wizard) COMPLETE.
-> Phase 248 (persona selector to ChatInput) COMPLETE.
-> Phases 249-A/B/C/D (onboarding/handoff bug fixes) COMPLETE.
+> All phases through 250 archived. See DONE.md for completion records.
+> Phases 240-249 (onboarding + bug fixes) COMPLETE.
 > Phase 238 (31 non-JSX `.tsx` → `.ts` rename) COMPLETE.
+> Phase 234-B CLOSED (Stripe webhook localhost verified by owner).
+> Phase 234-D CLOSED (email/invoice config — sandbox limitation, works in live mode).
+> Phase 250 (prettier gate fix — 6 files) COMPLETE.
 > Phase 237 CLOSED per owner override (PM audit #132) — `/design` page kept as dev-only design system preview.
 
 ---
 
-## Execution Order (PM audit #134) — ACTIVE
+## Execution Order (PM audit #135) — ACTIVE
 
-### Phase 234-B — CRITICAL: Stripe Webhook Verification (Owner Action Required)
-
-**Issue:** Stripe webhook is not delivering events to the app. Payment succeeds in Stripe but plan stays Lite, no Transaction created, billing history empty.
-
-**This was previously resolved as C2 (PM audit #84-B) — webhook was disabled. The issue has recurred.**
-
-**IMPORTANT: Stripe CLI localhost testing was using the WRONG URL.** Terminal shows `--forward-to http://localhost:3000/api/stripe/webhook` — the correct URL is `http://localhost:3000/api/webhooks/stripe`. This explains localhost test failures.
-
-**Owner must verify in Stripe Dashboard (cannot be fixed from code):**
-
-1. **Stripe Dashboard → Developers → Webhooks** — Verify endpoint exists.
-2. **Endpoint URL** — Must be `https://<production-domain>/api/webhooks/stripe` (NOT `/api/stripe/webhook`).
-3. **Events to send** — Must include ALL of these:
-   - `checkout.session.completed`
-   - `invoice.paid`
-   - `invoice.payment_failed`
-   - `customer.subscription.updated`
-   - `customer.subscription.deleted`
-4. **Signing secret** — The webhook's signing secret (starts with `whsec_`) must match `STRIPE_WEBHOOK_SECRET` in **production** environment variables (Vercel Dashboard → Settings → Environment Variables). Not just `.env.local`.
-5. **Mode match** — Both the Stripe API keys (used for checkout) and the webhook endpoint must be in the **same mode** (Test or Live). A Live-mode checkout won't trigger Test-mode webhooks.
-6. **Recent deliveries** — Check the webhook's "Recent deliveries" tab for failed delivery attempts (HTTP 400/500 responses).
-7. **Endpoint status** — Must be "Enabled", not "Disabled".
-
-**For localhost testing with Stripe CLI — use this exact command:**
-
-```bash
-stripe listen --events checkout.session.completed,invoice.paid,invoice.payment_failed,customer.subscription.updated,customer.subscription.deleted --forward-to http://localhost:3000/api/webhooks/stripe
-```
-
-**Acceptance criteria:**
-
-- [ ] Stripe Dashboard shows webhook endpoint pointing to correct production URL (`/api/webhooks/stripe`)
-- [ ] All 5 event types are enabled on the endpoint
-- [ ] Signing secret matches production `STRIPE_WEBHOOK_SECRET`
-- [ ] New test payment triggers `checkout.session.completed` webhook with HTTP 200 response
-- [ ] Transaction appears in MongoDB after payment
-- [ ] User `plan.name` updates to "Pro" in MongoDB after payment
-- [ ] Profile page shows correct plan name and billing history
-- [ ] Sidebar promo card reflects updated plan
+> **No active code tasks. No pending owner actions. All phases COMPLETE.**
+> **Next milestone: Production deployment verification (Stripe live-mode webhook + email delivery).**
 
 ---
 
-### Phase 234-D — MEDIUM: Email/Invoice Setup Guidance (Owner Action)
+### Pre-Production Checklist (When Switching to Stripe Live Mode)
 
-**Issue:** No payment confirmation email, no downloadable invoice.
+The following must be verified when switching from Stripe sandbox to production live mode:
 
-**Stripe handles this natively — zero code changes required. Owner configuration:**
-
-1. **Payment receipts:** Stripe Dashboard → Settings → Customer emails → Enable "Successful payments" email receipts. Stripe will automatically send a receipt email to the customer's email address after each successful payment.
-
-2. **Invoices for subscriptions:** Stripe already generates invoices for all subscription payments. These are accessible via:
-   - Stripe Dashboard → Customers → [customer] → Invoices tab
-   - Programmatically via `invoice.hosted_invoice_url` (web view) or `invoice.invoice_pdf` (PDF download)
-
-3. **To show download links in the app (future enhancement — not required now):** The `invoice.paid` webhook already receives the invoice object. The app could store `hosted_invoice_url` in the Transaction model and display it in the billing history table. This is a v1.1 feature, not a v1.0 blocker.
-
-**Acceptance criteria:**
-
-- [ ] Stripe Dashboard "Successful payments" email enabled
-- [ ] New test payment triggers a receipt email to the customer
-- [ ] Owner has access to invoice PDFs via Stripe Dashboard
+1. **Stripe Dashboard → Developers → Webhooks** — Create live-mode endpoint at `https://<production-domain>/api/webhooks/stripe`
+2. **Live signing secret** → Set as `STRIPE_WEBHOOK_SECRET` in Vercel production environment variables
+3. **All 5 events enabled** on the live endpoint: `checkout.session.completed`, `invoice.paid`, `invoice.payment_failed`, `customer.subscription.updated`, `customer.subscription.deleted`
+4. **Live Stripe API keys** → Set `STRIPE_SECRET_KEY` and `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` in Vercel production env
+5. **Live Price IDs** → Update admin settings with production Stripe Price IDs (Pro Monthly/Yearly, Premium Monthly/Yearly)
+6. **Verify first live payment** triggers webhook → Transaction created → User plan updated → Profile reflects new plan
+7. **Customer emails** — Stripe will send payment receipts automatically in live mode (enabled in sandbox, but sandbox does not deliver emails)
+8. **Remove `/design` page** — Dev-only design system preview must be removed before production
 
 ---
 

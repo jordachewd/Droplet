@@ -2,7 +2,48 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-04-20 — PM audit #134.
+> Last updated: 2026-04-20 — PM audit #135.
+
+---
+
+## Phase 250 — Prettier Gate Fix — COMPLETED (2026-04-20)
+
+> 6 files from Phases 249/238 were not formatted. Discovered by Engineer audit #135.
+
+- [x] `src/app/(chat)/app/page.tsx` formatted
+- [x] `src/app/(chat)/layout.tsx` formatted
+- [x] `src/components/chat/chat-input.tsx` formatted
+- [x] `src/components/chat/settings/settings-form.tsx` formatted
+- [x] `src/constants/onboarding.ts` formatted
+- [x] `src/types/UserData.d.ts` formatted
+- [x] Prettier gate GREEN
+
+---
+
+## Phase 234-B — Stripe Webhook Verification — CLOSED (2026-04-20)
+
+> Owner action. Stripe CLI localhost testing verified by owner.
+
+- [x] Correct URL used: `http://localhost:3000/api/webhooks/stripe`
+- [x] All 5 event types enabled (`checkout.session.completed`, `invoice.paid`, `invoice.payment_failed`, `customer.subscription.updated`, `customer.subscription.deleted`)
+- [x] `invoice.paid` → HTTP 200
+- [x] `checkout.session.completed` → HTTP 200
+- [x] Transaction appears in MongoDB after payment (owner confirmed)
+- [x] User plan updates after payment (owner confirmed)
+- [x] Profile page shows correct plan and billing history (owner confirmed)
+- [x] Sidebar promo card reflects updated plan (owner confirmed)
+- **Note:** Tested in Stripe sandbox/test mode. Production live-mode verification pending deployment.
+
+---
+
+## Phase 234-D — Email/Invoice Setup — CLOSED (2026-04-20)
+
+> Owner action. Stripe Dashboard configuration.
+
+- [x] "Successful payments" email enabled in Stripe Dashboard → Settings → Customer emails
+- [x] Invoices visible in Stripe Dashboard → Customers → [customer] → Invoices
+- [x] "Create invoice" button available for manual invoicing
+- **Note:** Stripe does not deliver customer emails in sandbox/test mode. Emails will work automatically in live mode. No code changes required.
 
 ---
 

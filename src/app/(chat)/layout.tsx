@@ -21,7 +21,11 @@ export default async function ChatLayout({ children }: ChatLayoutProps) {
   const { userId } = await auth();
   if (userId) {
     const userData = await ensureUserSynced(userId);
-    if (userData && !userData.onboardingCompleted && userData.role !== "admin") {
+    if (
+      userData &&
+      !userData.onboardingCompleted &&
+      userData.role !== "admin"
+    ) {
       const headerList = await headers();
       const pathname = headerList.get("x-next-pathname") ?? "";
       const isExempt = ONBOARDING_EXEMPT_PATHS.has(pathname);

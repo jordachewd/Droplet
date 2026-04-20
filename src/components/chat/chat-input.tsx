@@ -242,7 +242,6 @@ export default function ChatInput({
     "leading-none text-white shadow-sm transition-all hover:bg-amber-600",
   );
 
-
   return (
     <div className={chatInputSectionClass}>
       <div className={chatInputWrapperClass}>

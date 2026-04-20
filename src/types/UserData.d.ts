@@ -18,11 +18,7 @@ export type UserChallenge =
   | "software"
   | "wellness";
 
-export type UserExpectation =
-  | "direct"
-  | "guided"
-  | "challenger"
-  | "explorer";
+export type UserExpectation = "direct" | "guided" | "challenger" | "explorer";
 
 export type UserCommunicationStyle =
   | "concise"

@@ -50,9 +50,7 @@ export default async function ChatPage({ searchParams }: ChatPageProps) {
       userId,
     });
     if (sourceTask) {
-      const sourcePersona = personas.find(
-        (p) => p.id === sourceTask.personaId,
-      );
+      const sourcePersona = personas.find((p) => p.id === sourceTask.personaId);
       handoffContext = buildHandoffContext({
         messages: sourceTask.messages,
         sourcePersonaLabel: sourcePersona?.label ?? sourceTask.personaId,

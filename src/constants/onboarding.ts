@@ -32,12 +32,14 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
       {
         value: "productivity",
         label: "Get work done faster",
-        description: "Decisions, planning, strategy — the stuff that moves projects forward.",
+        description:
+          "Decisions, planning, strategy — the stuff that moves projects forward.",
       },
       {
         value: "learning",
         label: "Learn and understand better",
-        description: "Break down complex topics. Build real knowledge, not surface-level summaries.",
+        description:
+          "Break down complex topics. Build real knowledge, not surface-level summaries.",
       },
       {
         value: "creative",
@@ -59,7 +61,8 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
   {
     id: "challenge",
     title: "What's your biggest challenge right now?",
-    subtitle: "Be honest. We work better when we know what you're dealing with.",
+    subtitle:
+      "Be honest. We work better when we know what you're dealing with.",
     options: [
       {
         value: "decisions",
@@ -149,7 +152,10 @@ interface PersonaScore {
   score: number;
 }
 
-const INTENT_PERSONA_WEIGHTS: Record<UserIntent, Partial<Record<PersonaId, number>>> = {
+const INTENT_PERSONA_WEIGHTS: Record<
+  UserIntent,
+  Partial<Record<PersonaId, number>>
+> = {
   productivity: { strategist: 3, developer: 1 },
   learning: { teacher: 3, strategist: 1 },
   creative: { creator: 3, wellness: 1 },
@@ -157,7 +163,10 @@ const INTENT_PERSONA_WEIGHTS: Record<UserIntent, Partial<Record<PersonaId, numbe
   career: { interviewer: 3, strategist: 1 },
 };
 
-const CHALLENGE_PERSONA_WEIGHTS: Record<UserChallenge, Partial<Record<PersonaId, number>>> = {
+const CHALLENGE_PERSONA_WEIGHTS: Record<
+  UserChallenge,
+  Partial<Record<PersonaId, number>>
+> = {
   decisions: { strategist: 3, teacher: 1 },
   learning: { teacher: 3, developer: 1 },
   content: { creator: 3, teacher: 1 },
@@ -171,7 +180,12 @@ export function recommendPersona(
 ): PersonaId {
   const scores = new Map<PersonaId, number>();
   const allPersonas: PersonaId[] = [
-    "strategist", "teacher", "developer", "creator", "wellness", "interviewer",
+    "strategist",
+    "teacher",
+    "developer",
+    "creator",
+    "wellness",
+    "interviewer",
   ];
 
   for (const p of allPersonas) {

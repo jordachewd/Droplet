@@ -17,18 +17,16 @@ interface SettingsFormProps {
   preferences: Partial<UserPreferences>;
 }
 
-export default function SettingsForm({
-  preferences,
-}: SettingsFormProps) {
+export default function SettingsForm({ preferences }: SettingsFormProps) {
   const [intent, setIntent] = useState<UserIntent | undefined>(
     preferences.intent ?? undefined,
   );
   const [challenge, setChallenge] = useState<UserChallenge | undefined>(
     preferences.challenge ?? undefined,
   );
-  const [expectation, setExpectation] = useState<
-    UserExpectation | undefined
-  >(preferences.expectation ?? undefined);
+  const [expectation, setExpectation] = useState<UserExpectation | undefined>(
+    preferences.expectation ?? undefined,
+  );
   const [communicationStyle, setCommunicationStyle] = useState<
     UserCommunicationStyle | undefined
   >(preferences.communicationStyle ?? undefined);
@@ -48,10 +46,18 @@ export default function SettingsForm({
       });
 
       if (result?.success) {
-        setAlert({ title: "Success", text: "Settings saved.", severity: "success" });
+        setAlert({
+          title: "Success",
+          text: "Settings saved.",
+          severity: "success",
+        });
       }
     } catch {
-      setAlert({ title: "Error", text: "Failed to save settings.", severity: "error" });
+      setAlert({
+        title: "Error",
+        text: "Failed to save settings.",
+        severity: "error",
+      });
     } finally {
       setIsSaving(false);
     }
@@ -66,9 +72,7 @@ export default function SettingsForm({
         </p>
       </div>
 
-      {alert && (
-        <AlertMessage message={alert} />
-      )}
+      {alert && <AlertMessage message={alert} />}
 
       {/* Communication Preferences */}
       <div className="flex flex-col gap-4">
