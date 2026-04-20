@@ -11,6 +11,7 @@ import type {
   UserPreferences,
 } from "@/types/UserData.d";
 import AlertMessage from "@/components/shared/alert-message";
+import type { AlertParams } from "@/types/AlertData.d";
 
 interface SettingsFormProps {
   preferences: Partial<UserPreferences>;
@@ -32,10 +33,7 @@ export default function SettingsForm({
     UserCommunicationStyle | undefined
   >(preferences.communicationStyle ?? undefined);
   const [isSaving, setIsSaving] = useState(false);
-  const [alert, setAlert] = useState<{
-    type: "success" | "error";
-    message: string;
-  } | null>(null);
+  const [alert, setAlert] = useState<AlertParams | null>(null);
 
   const handleSave = useCallback(async () => {
     setIsSaving(true);
@@ -50,10 +48,10 @@ export default function SettingsForm({
       });
 
       if (result?.success) {
-        setAlert({ type: "success", message: "Settings saved." });
+        setAlert({ title: "Success", text: "Settings saved.", severity: "success" });
       }
     } catch {
-      setAlert({ type: "error", message: "Failed to save settings." });
+      setAlert({ title: "Error", text: "Failed to save settings.", severity: "error" });
     } finally {
       setIsSaving(false);
     }
@@ -69,7 +67,7 @@ export default function SettingsForm({
       </div>
 
       {alert && (
-        <AlertMessage type={alert.type} message={alert.message} />
+        <AlertMessage message={alert} />
       )}
 
       {/* Communication Preferences */}

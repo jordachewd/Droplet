@@ -83,7 +83,7 @@ export async function completeOnboarding(input: CompleteOnboardingInput) {
     revalidatePath("/app");
     return { success: true };
   } catch (error) {
-    handleError(error);
+    handleError({ error, source: "completeOnboarding" });
   }
 }
 
@@ -129,6 +129,6 @@ export async function updatePreferences(input: UpdatePreferencesInput) {
     revalidatePath("/app/settings");
     return { success: true };
   } catch (error) {
-    handleError(error);
+    handleError({ error, source: "updatePreferences" });
   }
 }

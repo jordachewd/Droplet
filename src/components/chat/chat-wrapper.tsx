@@ -21,7 +21,7 @@ import { TaskEndAction, TaskEndedReason, TaskStatus } from "@/types/TaskData.d";
 import { useChatStore } from "@/lib/hooks/use-chat-store";
 import { usePreferencesStore } from "@/lib/hooks/use-preferences-store";
 import type { ChatApiResponse, ChatStreamEvent } from "@/types/chat-api";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import {
   STREAM_PROACTIVE_TIMEOUT_MESSAGE,
   STREAM_PROACTIVE_TIMEOUT_TITLE,
@@ -168,7 +168,6 @@ export default function ChatWrapper({
   const nextAlertId = useRef<number>(0);
   const activeRequestControllerRef = useRef<AbortController | null>(null);
   const hasRefreshedSidebarForCurrentTaskRef = useRef<boolean>(false);
-  const pathname = usePathname();
   const router = useRouter();
   const isConversationEnded = taskStatus === "ended";
   const isNewTask = task.length === 0 && !isConversationEnded;
@@ -193,7 +192,6 @@ export default function ChatWrapper({
     () => personaMap[selectedPersonaId] ?? fallbackPersona,
     [personaMap, selectedPersonaId, fallbackPersona],
   );
-  const isConversationRoute = pathname?.startsWith("/app/c/") ?? false;
 
   useEffect(() => {
     hydrateConversation({
@@ -624,18 +622,6 @@ export default function ChatWrapper({
     setIsLoading(false);
   };
 
-  useEffect(() => {
-    if (handoffContext && !handoffSentRef.current && !isLoading) {
-      handoffSentRef.current = true;
-      sendMessage({
-        whois: "user",
-        role: "user",
-        content: handoffContext,
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [handoffContext]);
-
   const showAlert = (
     title: string,
     text: string,
@@ -652,6 +638,18 @@ export default function ChatWrapper({
     setIsLoading(false);
     setMessages((previousMessages) => previousMessages.slice(0, -1));
   };
+
+  useEffect(() => {
+    if (handoffContext && !handoffSentRef.current && !isLoading) {
+      handoffSentRef.current = true;
+      sendMessage({
+        whois: "user",
+        role: "user",
+        content: handoffContext,
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [handoffContext]);
 
   const handleHandoffSelect = useCallback(
     (personaId: PersonaId) => {
