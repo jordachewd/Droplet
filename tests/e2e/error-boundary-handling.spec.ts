@@ -1,6 +1,7 @@
 import path from "node:path";
 import { expect, test } from "@playwright/test";
 import { getE2ETestUser, missingCredentialsError } from "./utils/e2e-test-user";
+import { ensureChatInputReady } from "./utils/ensure-chat-input-ready";
 
 const authFile = path.join(__dirname, ".clerk/user.json");
 const e2eTestUser = getE2ETestUser();
@@ -36,16 +37,8 @@ test.describe("error boundary handling", () => {
     });
 
     try {
-      await page.goto("/app/new");
-      const firstPersonaCard = page.locator(".PersonaCard").first();
-      const personaCardCount = await firstPersonaCard.count();
-      if (personaCardCount > 0) {
-        await firstPersonaCard.click();
-      }
-
+      await ensureChatInputReady(page);
       const chatInputField = page.locator("#chatInput");
-      await expect(chatInputField).toBeVisible({ timeout: 15000 });
-      await expect(chatInputField).toBeEditable();
       await chatInputField.fill("trigger error handling");
 
       const sendButton = page.getByRole("button", { name: "Send message" });

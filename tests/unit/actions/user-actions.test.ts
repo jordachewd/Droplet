@@ -150,7 +150,7 @@ describe("user.actions", () => {
       expect(response).toEqual(
         expect.objectContaining({
           status: 200,
-          message: "User updated successfully (user.actions.tsx)",
+          message: "User updated successfully (user.actions.ts)",
         }),
       );
       expect(updateClerkUserMock).not.toHaveBeenCalled();
@@ -176,7 +176,7 @@ describe("user.actions", () => {
       expect(response).toEqual(
         expect.objectContaining({
           status: 200,
-          message: "User updated successfully (user.actions.tsx)",
+          message: "User updated successfully (user.actions.ts)",
         }),
       );
     });
@@ -205,7 +205,7 @@ describe("user.actions", () => {
       expect(response).toEqual(
         expect.objectContaining({
           status: 200,
-          message: "User updated successfully (user.actions.tsx)",
+          message: "User updated successfully (user.actions.ts)",
         }),
       );
     });
@@ -234,7 +234,7 @@ describe("user.actions", () => {
       expect(response).toEqual(
         expect.objectContaining({
           status: 200,
-          message: "User updated successfully (user.actions.tsx)",
+          message: "User updated successfully (user.actions.ts)",
         }),
       );
     });

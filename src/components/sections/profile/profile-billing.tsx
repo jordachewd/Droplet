@@ -11,7 +11,7 @@ import {
 import getFormattedDate from "@/lib/utils/getFormattedDate";
 import classNames from "classnames";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { type SubscriptionStatus, type PlanName } from "@/types/PlanData.d";
 import { Transaction } from "@/types/TransactionData.d";
 
@@ -127,6 +127,12 @@ export default function ProfileBilling({
     useState<boolean>(false);
   const [alertMessage, setAlertMessage] = useState<AlertParams | null>(null);
   const [loadingInvoiceId, setLoadingInvoiceId] = useState<string | null>(null);
+  const nextAlertId = useRef<number>(0);
+
+  function createAlertId(): number {
+    nextAlertId.current += 1;
+    return nextAlertId.current;
+  }
 
   const billingTableHeaderClass = classNames(
     "mb-3 flex items-center justify-between gap-4 rounded-md px-3 py-1.5",
@@ -185,7 +191,7 @@ export default function ProfileBilling({
           ? await cancelSubscriptionAction()
           : await reactivateSubscriptionAction();
       setAlertMessage({
-        id: Date.now(),
+        id: createAlertId(),
         title:
           actionResult.status === 200
             ? "Billing updated"
@@ -198,7 +204,7 @@ export default function ProfileBilling({
     } catch (error) {
       void error;
       setAlertMessage({
-        id: Date.now(),
+        id: createAlertId(),
         title: "Billing update failed",
         text: "Unable to update subscription right now. Please try again.",
         severity: "error",
@@ -233,7 +239,7 @@ export default function ProfileBilling({
 
       if (!response.ok) {
         setAlertMessage({
-          id: Date.now(),
+          id: createAlertId(),
           title: "Invoice unavailable",
           text: "Unable to retrieve the invoice. Please try again.",
           severity: "warning",
@@ -255,7 +261,7 @@ export default function ProfileBilling({
     } catch (error) {
       void error;
       setAlertMessage({
-        id: Date.now(),
+        id: createAlertId(),
         title: "Invoice unavailable",
         text: "Unable to retrieve the invoice. Please try again.",
         severity: "warning",

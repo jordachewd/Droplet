@@ -1,10 +1,7 @@
 import "server-only";
 import { getExpiresOn } from "@/constants/plans";
 import { PlanData } from "@/types/PlanData.d";
-import {
-  UserRoles,
-  UserPreferences,
-} from "@/types/UserData.d";
+import { UserRoles, UserPreferences } from "@/types/UserData.d";
 import { Schema, model, models, Document } from "mongoose";
 
 type SubscriptionStatus = "active" | "past_due" | "canceled" | "unpaid";

@@ -38,10 +38,11 @@ const communicationStyleSchema = z.enum([
   "conversational",
 ]);
 
-const personaIdSchema = z.string().refine(
-  (id) => VALID_PERSONA_ID_SET.has(id as never),
-  { message: "Invalid persona ID" },
-);
+const personaIdSchema = z
+  .string()
+  .refine((id) => VALID_PERSONA_ID_SET.has(id as never), {
+    message: "Invalid persona ID",
+  });
 
 const completeOnboardingSchema = z.object({
   intent: intentSchema,
@@ -63,22 +64,35 @@ export async function completeOnboarding(input: CompleteOnboardingInput) {
 
     await connectToDatabase();
 
+    const now = new Date();
     const updatedUser = await User.findOneAndUpdate(
-      { clerkId: userId },
+      {
+        clerkId: userId,
+        onboardingCompleted: { $ne: true },
+      },
       {
         $set: {
           onboardingCompleted: true,
-          preferences: {
-            ...parsed.data,
-            onboardedAt: new Date(),
-          },
-          updatedAt: new Date(),
+          "preferences.intent": parsed.data.intent,
+          "preferences.challenge": parsed.data.challenge,
+          "preferences.expectation": parsed.data.expectation,
+          "preferences.communicationStyle": parsed.data.communicationStyle,
+          "preferences.defaultPersonaId": parsed.data.defaultPersonaId,
+          "preferences.onboardedAt": now,
+          updatedAt: now,
         },
       },
       { new: true, strict: true },
     ).lean();
 
-    if (!updatedUser) throw new Error("User not found.");
+    if (!updatedUser) {
+      const existingUser = await User.findOne({ clerkId: userId })
+        .select("onboardingCompleted")
+        .lean<{ onboardingCompleted?: boolean }>();
+
+      if (!existingUser) throw new Error("User not found.");
+      return { success: true };
+    }
 
     revalidatePath("/app");
     return { success: true };

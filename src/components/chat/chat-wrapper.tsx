@@ -174,8 +174,7 @@ export default function ChatWrapper({
   const isPersonaLocked = task.length > 0 || isConversationEnded;
 
   const selectablePersonas = useMemo(
-    () =>
-      personas.filter((p) => normalizedAllowedPersonaIds.includes(p.id)),
+    () => personas.filter((p) => normalizedAllowedPersonaIds.includes(p.id)),
     [personas, normalizedAllowedPersonaIds],
   );
 
@@ -708,7 +707,7 @@ export default function ChatWrapper({
 
       {showHandoffDialog && (
         <HandoffDialog
-          personas={personas}
+          personas={selectablePersonas}
           currentPersonaId={selectedPersonaId}
           onSelect={handleHandoffSelect}
           onClose={() => setShowHandoffDialog(false)}

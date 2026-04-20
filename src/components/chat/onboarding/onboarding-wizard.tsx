@@ -4,10 +4,7 @@ import { useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import classNames from "classnames";
 import Image from "next/image";
-import {
-  ONBOARDING_STEPS,
-  recommendPersona,
-} from "@/constants/onboarding";
+import { ONBOARDING_STEPS, recommendPersona } from "@/constants/onboarding";
 import { completeOnboarding } from "@/lib/actions/onboarding.actions";
 import type { Persona, PersonaId } from "@/types/PersonaData.d";
 import type {
@@ -67,13 +64,10 @@ export default function OnboardingWizard({
     return null;
   }, [answers.intent, answers.challenge]);
 
-  const handleQuizAnswer = useCallback(
-    (stepId: string, value: string) => {
-      setAnswers((prev) => ({ ...prev, [stepId]: value }));
-      setTimeout(() => setCurrentStep((s) => s + 1), 300);
-    },
-    [],
-  );
+  const handleQuizAnswer = useCallback((stepId: string, value: string) => {
+    setAnswers((prev) => ({ ...prev, [stepId]: value }));
+    setTimeout(() => setCurrentStep((s) => s + 1), 300);
+  }, []);
 
   const handlePersonaSelect = useCallback((personaId: PersonaId) => {
     setSelectedPersonaId(personaId);
@@ -152,9 +146,7 @@ export default function OnboardingWizard({
         <QuizStep
           step={ONBOARDING_STEPS[currentStep]}
           selectedValue={
-            answers[
-              ONBOARDING_STEPS[currentStep].id as keyof OnboardingAnswers
-            ]
+            answers[ONBOARDING_STEPS[currentStep].id as keyof OnboardingAnswers]
           }
           onSelect={(value) =>
             handleQuizAnswer(ONBOARDING_STEPS[currentStep].id, value)
@@ -209,7 +201,11 @@ function QuizStep({ step, selectedValue, onSelect, onBack }: QuizStepProps) {
         <p className="text-sm opacity-60">{step.subtitle}</p>
       </div>
 
-      <div className="flex flex-col gap-3" role="radiogroup" aria-label={step.title}>
+      <div
+        className="flex flex-col gap-3"
+        role="radiogroup"
+        aria-label={step.title}
+      >
         {step.options.map((option) => {
           const isSelected = selectedValue === option.value;
           const optionClass = classNames(
@@ -279,8 +275,8 @@ function PersonaStep({
           Meet your Droplet partner.
         </h2>
         <p className="text-sm opacity-60">
-          Pick the one that fits your work best. You can change this later in
-          Settings.
+          Pick the one that fits your work best. You can always pick a different
+          persona when starting a new conversation.
         </p>
       </div>
 
@@ -339,9 +335,7 @@ function PersonaStep({
                 </div>
               </div>
 
-              <p className="text-left text-sm opacity-70">
-                {persona.tagline}
-              </p>
+              <p className="text-left text-sm opacity-70">{persona.tagline}</p>
             </button>
           );
         })}
@@ -363,9 +357,7 @@ function PersonaStep({
           disabled={!selectedPersonaId}
           className={classNames(
             "btn btn-contained rounded-full px-6 py-2 text-sm font-semibold transition-all",
-            selectedPersonaId
-              ? "opacity-100"
-              : "cursor-not-allowed opacity-40",
+            selectedPersonaId ? "opacity-100" : "cursor-not-allowed opacity-40",
           )}
         >
           Continue
@@ -426,7 +418,7 @@ function ConfirmationStep({
       <div className="flex flex-col gap-2">
         <h2 className="heading-3 text-2xl font-bold">You&#39;re set.</h2>
         <p className="text-sm opacity-60">
-          Here&#39;s what we know. You can change any of this in Settings
+          Here&#39;s what we know. You can update your preferences in Settings
           anytime.
         </p>
       </div>
@@ -446,9 +438,7 @@ function ConfirmationStep({
               </div>
             )}
             <div className="flex flex-col gap-0.5">
-              <span className="text-lg font-bold">
-                {selectedPersona.label}
-              </span>
+              <span className="text-lg font-bold">{selectedPersona.label}</span>
               <span className="text-sm opacity-60">Your Droplet partner</span>
             </div>
           </div>

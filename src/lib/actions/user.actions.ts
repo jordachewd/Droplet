@@ -122,7 +122,7 @@ export async function updateUser(clerkId: string, user: UpdateUserParams) {
 
     return serializeForClient({
       mongoResponse: updatedUser,
-      message: "User updated successfully (user.actions.tsx)",
+      message: "User updated successfully (user.actions.ts)",
       status: 200,
     });
   } catch (error) {
