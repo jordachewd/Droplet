@@ -5,23 +5,96 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #132 (2026-04-18). RUTHLESS tri-agent audit (PM + Architect + Engineer). 0 CRITICAL code bugs. 1 HIGH code item (expanded). 1 CRITICAL owner action. 1 MEDIUM owner action. All 7 gates GREEN.**
+> **STATUS: PM audit #133 (2026-04-20). Tri-agent audit (PM + Architect + Engineer). Onboarding + Persona Selector + Handoff features DELIVERED (Phases 240-248). 3 HIGH code bugs found by audit. 1 CRITICAL owner action remaining. 1 MEDIUM owner action remaining. TSC clean. Lint clean on modified files.**
 >
-> **GATE STATUS: All 7 gates GREEN. 730 tests (110 suites). 0 failures. 0 lint errors. 0 npm vulnerabilities. Knip clean. TSC clean. Build clean.**
+> **GATE STATUS: TSC clean. Lint 0 errors (6 pre-existing warnings). Build not yet verified post-Phase 248.**
 >
-> **ACTIVE BACKLOG: 1 code task (HIGH — expanded to 31 files). 1 CRITICAL owner action. 1 MEDIUM owner action. 0 god files. All files under 900 lines. `/design` page KEPT per owner override (dev-only, remove before production).**
+> **ACTIVE BACKLOG: 3 HIGH code fixes (onboarding/handoff bugs). 1 HIGH code task (file rename — 31 files). 1 CRITICAL owner action. 1 MEDIUM owner action. `/design` page KEPT per owner override (dev-only, remove before production).**
 
 ---
 
 ## Archived Phases — See [DONE.md](DONE.md)
 
-> All phases through 237 archived. See DONE.md for completion records.
+> All phases through 248 archived. See DONE.md for completion records.
+> Phases 240-246 (onboarding wizard) COMPLETE.
+> Phase 248 (persona selector to ChatInput) COMPLETE.
 > Phase 237 CLOSED per owner override (PM audit #132) — `/design` page kept as dev-only design system preview.
 > Prettier reformat (PM audit #131) — 70 files fixed.
 
 ---
 
-## Execution Order (PM audit #132) — ACTIVE
+## Execution Order (PM audit #133) — ACTIVE
+
+### Phase 249-A — HIGH: HandoffDialog Must Filter by Plan Entitlement (~10 min)
+
+**Issue:** `HandoffDialog` receives the full unfiltered `personas` array. A Lite user sees all 6 personas in the handoff picker, including Premium-only personas they cannot access. Breaks Critical Product Rule #3 (persona plan gating).
+
+**Root cause:** [chat-wrapper.tsx](src/components/chat/chat-wrapper.tsx) line 710 passes `personas` instead of `selectablePersonas`.
+
+**Fix:** Change `personas={personas}` to `personas={selectablePersonas}` in the `HandoffDialog` render.
+
+**Acceptance criteria:**
+
+- [ ] `HandoffDialog` receives only plan-entitled personas
+- [ ] Lite user sees max 2 personas + trial-eligible in handoff dialog (not 6)
+- [ ] TypeScript compiles cleanly
+- [ ] No visual regression on handoff flow
+
+---
+
+### Phase 249-B — HIGH: System Prompt Must Use All 4 User Preferences (~20 min)
+
+**Issue:** `buildUserPreferencesPrompt()` in `persona-prompts.ts` only injects `expectation` and `communicationStyle` into the AI system prompt. The user's `intent` and `challenge` — the two most decision-relevant onboarding signals — are collected but never sent to the AI model. This means the AI has no awareness of why the user chose this persona or what their biggest challenge is.
+
+**Root cause:** [persona-prompts.ts](src/constants/persona-prompts.ts) — `buildUserPreferencesPrompt()` ignores `intent` and `challenge` fields.
+
+**Fix:** Add `INTENT_INSTRUCTIONS` and `CHALLENGE_INSTRUCTIONS` lookup maps (same pattern as existing `EXPECTATION_INSTRUCTIONS` and `COMMUNICATION_STYLE_INSTRUCTIONS`). Include their text in the returned prompt string.
+
+**Acceptance criteria:**
+
+- [ ] `buildUserPreferencesPrompt()` includes text derived from `intent` when present
+- [ ] `buildUserPreferencesPrompt()` includes text derived from `challenge` when present
+- [ ] Prompt text is concise (1 sentence each) and actionable for the AI
+- [ ] Existing tests pass
+- [ ] TypeScript compiles cleanly
+
+---
+
+### Phase 249-C — HIGH: Fix Onboarding "Change in Settings" Copy (~5 min)
+
+**Issue:** The onboarding wizard's persona selection step says "You can change this later in Settings." but the Settings page no longer has a persona selector (it was moved to ChatInput in Phase 248). This misleads users.
+
+**Root cause:** [onboarding-wizard.tsx](src/components/chat/onboarding/onboarding-wizard.tsx) — persona step subtitle.
+
+**Fix:** Change copy to: "You can always pick a different persona when starting a new conversation."
+
+**Acceptance criteria:**
+
+- [ ] Onboarding persona step no longer references "Settings"
+- [ ] Copy accurately describes where persona can be changed (ChatInput on new conversation)
+- [ ] No other references to "change in Settings" for persona exist in codebase
+
+---
+
+### Phase 249-D — MEDIUM: `completeOnboarding` Idempotency + Dot-Notation (~15 min)
+
+**Issue:** `completeOnboarding` uses `$set: { preferences: {...} }` which replaces the entire subdocument. Also lacks idempotency guard — can overwrite preferences if called twice.
+
+**Fix:**
+
+1. Change to dot-notation `$set`: `"preferences.intent": ..., "preferences.challenge": ..., etc.`
+2. Add `onboardingCompleted: { $ne: true }` to the query filter so it won't overwrite if already completed.
+3. If no document matched (already completed), return `{ success: true }` without error.
+
+**Acceptance criteria:**
+
+- [ ] Uses dot-notation for all preference fields
+- [ ] Query filter includes `onboardingCompleted: { $ne: true }`
+- [ ] Double-call is idempotent (returns success, doesn't overwrite)
+- [ ] TypeScript compiles cleanly
+- [ ] Existing tests pass
+
+---
 
 ### Phase 238 — HIGH: Rename 31 Non-JSX `.tsx` Files to `.ts`
 

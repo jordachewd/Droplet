@@ -2,7 +2,74 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-04-18 — PM audit #132.
+> Last updated: 2026-04-20 — PM audit #133.
+
+---
+
+## Phases 240-248 — Onboarding Wizard + Persona Selector + Handoff — COMPLETED (2026-04-20)
+
+> Owner directives: step-by-step onboarding, persona selector in ChatInput, conversation handoff.
+
+### Phase 240 — Onboarding Data Model
+
+- [x] `UserPreferences` interface with `intent`, `challenge`, `expectation`, `communicationStyle`, `defaultPersonaId`, `onboardedAt`
+- [x] `onboardingCompleted: boolean` field on User model
+- [x] Zod schemas for validation (intent, challenge, expectation, communicationStyle, personaId)
+- [x] `completeOnboarding` + `updatePreferences` server actions with auth + Zod
+
+### Phase 241 — Onboarding Wizard UI
+
+- [x] 6-step wizard: 4 quiz steps + persona selection + confirmation
+- [x] Quiz-style radio options with auto-advance (300ms delay)
+- [x] Persona recommendation algorithm (weighted scoring from intent × challenge)
+- [x] Trial badges on limited-access personas
+- [x] Confirmation step with answer summary + "Start your first conversation" CTA
+- [x] Progress bar with step indicator
+
+### Phase 242 — Onboarding Gate
+
+- [x] Layout-level redirect for non-onboarded users to `/app/onboarding`
+- [x] Exempt paths: `/app/onboarding`, `/app/profile`, `/app/plans`
+- [x] Admin bypass (admins skip onboarding entirely)
+- [x] `x-next-pathname` header from proxy used for path detection
+
+### Phase 243 — Settings Page
+
+- [x] `/app/settings` page with 4 preference dropdowns (intent, challenge, expectation, communicationStyle)
+- [x] `updatePreferences` server action with dot-notation partial updates
+- [x] AlertMessage feedback on save
+- [x] Settings link in avatar menu between Profile and Logout
+
+### Phase 244 — System Prompt Personalization
+
+- [x] `buildUserPreferencesPrompt()` injects expectation + communicationStyle into system prompt
+- [x] `EXPECTATION_INSTRUCTIONS` and `COMMUNICATION_STYLE_INSTRUCTIONS` lookup maps
+- [x] User preferences passed through OpenAI route to `buildPersonaAwareSystemPrompt()`
+
+### Phase 245 — Conversation Handoff
+
+- [x] `HandoffDialog` component: modal with persona cards, hero images, labels
+- [x] `buildHandoffContext()`: extracts last 20 messages as plaintext summary
+- [x] Handoff button in conversation end-state notice: "Continue with another persona"
+- [x] Navigation: `/app?persona=X&handoff=taskId`
+- [x] Auto-send handoff context as first message in new conversation (ref-guarded)
+- [x] Ownership validation on source task
+
+### Phase 248 — Persona Selector Restored to ChatInput
+
+- [x] `PersonaSelector` dropdown renders in ChatInput when conversation hasn't started
+- [x] Locked persona badge (lavender pill with droplet icon + label) shows once messages exist
+- [x] `isPersonaLocked = task.length > 0 || isConversationEnded`
+- [x] `selectablePersonas` filtered by `normalizedAllowedPersonaIds`
+- [x] `handlePersonaChange` callback with lock guard
+- [x] Persona grid removed from Settings form (persona selection is now ChatInput-only)
+- [x] Fixed pre-existing bugs: `AlertMessage` type, `handleError` signature, `showAlert` ordering
+- [x] TypeScript: 0 errors. ESLint: 0 new errors.
+
+### Owner Text Instructions Implemented
+
+- [x] Step 3 text: "What do you expect from a Droplet assistant?" (not "AI assistant")
+- [x] Step 5 text: "Meet your Droplet partner" (not "Meet your AI team")
 
 ---
 

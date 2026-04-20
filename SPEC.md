@@ -153,11 +153,12 @@ Each persona has: `id`, `label`, `tagline`, `description`, `category`, `icon`, `
 
 - **Personas are plan-gated** (Lite: 2 personas, Pro: 5 personas, Premium: all 6 personas).
 - Default persona access per plan is hardcoded in constants but overridable by admin via AppSetting.
-- Persona selection UI: `ChatInput` includes a `PersonaSelector` dropdown next to the file upload button for quick persona switching — selector is disabled during active conversations (`messages.length > 0` or `taskStatus === "ended"` — persona is bound per-task). `ChatPersonaPicker` component on `/app/new` page provides full persona browsing with trial badges. `/app/personas` route removed (Phase 210) — redirects to `/app/new`. `/app/new` is labeled "Personas" in sidebar.
+- Persona selection UI: `ChatInput` includes a `PersonaSelector` dropdown above the textarea for quick persona selection at conversation start — selector is locked once messages exist (`messages.length > 0` or conversation ended — persona is permanently bound per-task). Locked state displays a read-only badge (lavender pill with droplet icon + persona label). `ChatPersonaPicker` component on `/app/new` page provides full persona browsing with trial badges. `/app/personas` route removed (Phase 210) — redirects to `/app/new`. `/app/new` is labeled "Personas" in sidebar.
 - Persona is stored per task in `Task.personaId`.
 - System prompt is built per-persona via `buildPersonaAwareSystemPrompt()`.
 - Entitlements resolved via `resolveEntitlements()` in `src/lib/utils/resolve-entitlements.tsx`.
 - `allowedPersonaIds` normalization: `undefined` = all personas (no restriction), `[]` = all blocked, `[...ids]` = exact permitted set.
+- Conversation handoff: at conversation end, user can pick a new persona via `HandoffDialog`. Context (last 20 messages) is summarized and sent as first message in new conversation.
 
 ### Persona Behavioral Requirements
 
@@ -199,7 +200,82 @@ Current implementation covers:
 
 Prompts are versioned and separated from request handlers. `buildPersonaAwareSystemPrompt()` resolves prompts from the new config first, falling back to persona defaults.
 
-**Remaining gap**: Image and audio generation requests are not yet persona-aware � they do not receive persona-specific prompt context. Chat prompts are fully persona-aware.
+**Remaining gap**: ~~Image and audio generation requests are not yet persona-aware~~ — RESOLVED (Phase 26.x). All media generation is persona-aware via `PERSONA_IMAGE_STYLE_HINTS` and `PERSONA_AUDIO_STYLE_HINTS`.
+
+---
+
+## 3B. Onboarding & User Preferences (Phases 240-248)
+
+### Onboarding Flow
+
+New users are redirected to `/app/onboarding` on first login (gate in `(chat)/layout.tsx`). Admin users bypass onboarding entirely.
+
+**6-step wizard:**
+
+| Step | Question                                       | Options (values)                                    |
+| ---- | ---------------------------------------------- | --------------------------------------------------- |
+| 1    | "What brings you to Droplet?"                  | productivity, learning, creative, technical, career |
+| 2    | "What's your biggest challenge right now?"     | decisions, learning, content, software, wellness    |
+| 3    | "What do you expect from a Droplet assistant?" | direct, guided, challenger, explorer                |
+| 4    | "How do you like to receive information?"      | concise, detailed, structured, conversational       |
+| 5    | Persona selection with recommendation          | 6 personas (weighted scoring recommends best match) |
+| 6    | Confirmation with summary                      | Review answers + "Start your first conversation"    |
+
+**Persona recommendation algorithm:** Weighted scoring from `intent × challenge` mapped to persona affinities. Returns highest-scoring persona as "Recommended" badge.
+
+**Data stored:**
+
+- `User.onboardingCompleted: boolean`
+- `User.preferences.intent: UserIntent`
+- `User.preferences.challenge: UserChallenge`
+- `User.preferences.expectation: UserExpectation`
+- `User.preferences.communicationStyle: UserCommunicationStyle`
+- `User.preferences.defaultPersonaId: PersonaId`
+- `User.preferences.onboardedAt: Date`
+
+**Gate exempt paths:** `/app/onboarding`, `/app/profile`, `/app/plans`
+
+### Persona Selection (Per-Conversation)
+
+- **PersonaSelector dropdown** renders in `ChatInput` (above textarea) when starting a new conversation
+- **Persona locked** once first message is sent (`task.length > 0 || isConversationEnded`)
+- **Locked badge** (lavender pill with droplet icon + persona label) replaces selector
+- **No persona override** within a conversation — each conversation is permanently bound to its persona
+- Persona stored per task in `Task.personaId`
+- `selectablePersonas` filtered by `normalizedAllowedPersonaIds` (plan entitlement enforced)
+
+### Conversation Handoff
+
+At conversation end, user can continue with a different persona:
+
+1. "Continue with another persona" button appears in end-state notice
+2. `HandoffDialog` modal shows eligible personas (excluding current)
+3. Navigates to `/app?persona=X&handoff=taskId`
+4. Server fetches source task, builds context via `buildHandoffContext()` (last 20 messages as plaintext summary)
+5. New conversation auto-sends summary as first message (ref-guarded, single fire)
+6. New persona takes over with full context of previous conversation
+
+### Settings Page (`/app/settings`)
+
+- 4 preference dropdowns: Focus (intent), Challenge, Expectation, Communication Style
+- Persona selector NOT on settings (moved to ChatInput per Phase 248)
+- Uses `updatePreferences` server action with dot-notation partial updates
+- Settings link in avatar menu: Plans → Profile → **Settings** → Logout
+
+### System Prompt Integration
+
+`buildPersonaAwareSystemPrompt()` injects user preferences into AI context:
+
+- `EXPECTATION_INSTRUCTIONS[expectation]` — shapes AI answer style
+- `COMMUNICATION_STYLE_INSTRUCTIONS[communicationStyle]` — shapes AI formatting
+- **Known gap (TD-ONBOARDING-01):** `intent` and `challenge` are NOT yet injected into system prompt
+
+### Unresolved Onboarding Issues
+
+- **TD-ONBOARDING-01** — 🟡 HIGH. `intent` and `challenge` not used in system prompt. Phase 249-B.
+- **TD-ONBOARDING-02** — 🟡 HIGH. HandoffDialog shows non-entitled personas. Phase 249-A.
+- **TD-ONBOARDING-03** — 🟡 HIGH. Onboarding copy says "change in Settings" for persona. Phase 249-C.
+- **TD-ONBOARDING-04** — 🟠 MEDIUM. `completeOnboarding` uses full `$set` on preferences (not dot-notation). Phase 249-D.
 
 ---
 
