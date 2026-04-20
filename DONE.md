@@ -2,7 +2,55 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-04-20 — PM audit #133.
+> Last updated: 2026-04-20 — PM audit #134.
+
+---
+
+## Phase 238 — Rename 31 Non-JSX `.tsx` Files to `.ts` — COMPLETED (2026-04-20)
+
+> AGENTS.md coding standard: "Utility-only files: `.ts` extension (no JSX)." All 31 files renamed across models, constants, actions, utils, and types. All imports updated. All 7 gates GREEN. Knip clean.
+
+- [x] Phase 238-A: 8 database model files renamed
+- [x] Phase 238-B: 7 database/constants/types files renamed
+- [x] Phase 238-C: 7 server action files renamed
+- [x] Phase 238-D: 9 utility files renamed
+- [x] All imports across `src/` and `tests/` updated
+- [x] Zero non-route/non-page/non-component `.tsx` files with no JSX remain
+- [x] All 7 gates GREEN. 730 tests. Knip clean.
+
+---
+
+## Phase 249 — Onboarding/Handoff Bug Fixes — COMPLETED (2026-04-20)
+
+> Found by PM audit #133 tri-agent deep dive. All 4 fixes validated.
+
+### Phase 249-A — HandoffDialog Plan Entitlement Filter
+
+- [x] `HandoffDialog` receives `selectablePersonas` instead of full `personas` array
+- [x] Lite user no longer sees Premium-only personas in handoff picker
+- [x] Fixes Critical Product Rule #3 (persona plan gating)
+
+### Phase 249-B — System Prompt Uses All 4 User Preferences
+
+- [x] Added `INTENT_INSTRUCTIONS` lookup map (5 entries)
+- [x] Added `CHALLENGE_INSTRUCTIONS` lookup map (5 entries)
+- [x] `buildUserPreferencesPrompt()` now injects all 4 fields: intent, challenge, expectation, communicationStyle
+- [x] AI model is now fully aware of user's goals and challenges from onboarding
+
+### Phase 249-C — Onboarding Persona Copy Fix
+
+- [x] Changed "You can change this later in Settings" → "You can always pick a different persona when starting a new conversation"
+- [x] Accurately reflects that persona selection happens in ChatInput, not Settings
+
+### Phase 249-D — `completeOnboarding` Idempotency + Dot-Notation
+
+- [x] Uses dot-notation `$set` for all preference fields (`"preferences.intent"`, etc.)
+- [x] Query filter includes `onboardingCompleted: { $ne: true }` — replay-safe
+- [x] Returns `{ success: true }` for already-completed users without error
+
+### Additional Fix — `profile-billing.tsx` Lint Error
+
+- [x] Replaced `Date.now()` alert IDs with local ref counter (fixes `react-hooks/purity` lint error)
 
 ---
 

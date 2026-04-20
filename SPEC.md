@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> ...04-18 (PM audit #132). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. **V1.0 MVP RELEASED.** Brand rename complete (Phase 172). Catch blocks documented (Phase 167.2 + Phase 223). Promo text admin-configurable (Phase 162, 180.2–180.3). Global error boundary live (Phase 163). Admin error boundary live (Phase 187-A). Phases 143–236 COMPLETE (all sub-phases). Phase 226 COMPLETE (admin actions split into 5 domain files). Phase 228 COMPLETE (Stripe webhook split — route 1,094→61 lines). Phase 229 COMPLETE (generateResponse extraction — 1,078→861 lines). Phase 225 COMPLETE (full OpenAI route decomposition — 4 modules, route 1,549→883 lines). Phase 230 COMPLETE (.d.tsx → .d.ts rename). Admin sidebar persistence COMPLETE. E2E: 49 tests (8 spec files). Coverage: 85/80/85/85. 730 tests (110 suites). Build passing. Node.js 24.12.0. jsdom pinned to ~24.1.3 (ESM compat). TypeScript 6.0.2 + ESLint 10 fully compatible (audit #103). **Zod v4.1.12** — schema consistency across all server actions and API routes. Prettier pinned to ~3.8.1. **Stripe recurring billing COMPLETE (all Phases 217-A through 217-G).** 0 npm vulnerabilities. All 7 gates GREEN. **0 god files remaining.** Largest files: generateResponse.tsx (861), admin-queries.ts (826), normalize-admin-settings.ts (813), openai/route.tsx (805). All under 900 lines. **Active backlog: 2 HIGH code items + 1 CRITICAL owner action + 1 MEDIUM owner action (PM audit #131).**
+> ...04-20 (PM audit #134). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. **V1.0 MVP RELEASED.** Brand rename complete (Phase 172). Catch blocks documented (Phase 167.2 + Phase 223). Promo text admin-configurable (Phase 162, 180.2–180.3). Global error boundary live (Phase 163). Admin error boundary live (Phase 187-A). Phases 143–249 COMPLETE (all sub-phases). **Onboarding wizard COMPLETE (Phases 240-248).** System prompt uses all 4 onboarding preferences (Phase 249-B). HandoffDialog plan-gated (Phase 249-A). **Phase 238 COMPLETE (31 non-JSX `.tsx` → `.ts` rename).** Phase 226 COMPLETE (admin actions split into 5 domain files). Phase 228 COMPLETE (Stripe webhook split — route 1,094→61 lines). Phase 229 COMPLETE (generateResponse extraction — 1,078→861 lines). Phase 225 COMPLETE (full OpenAI route decomposition — 4 modules, route 1,549→883 lines). Phase 230 COMPLETE (.d.tsx → .d.ts rename). Admin sidebar persistence COMPLETE. E2E: 49 tests (8 spec files). Coverage: 85/80/85/85. 730 tests (110 suites). Build passing. Node.js 24.12.0. jsdom pinned to ~24.1.3 (ESM compat). TypeScript 6.0.2 + ESLint 10 fully compatible (audit #103). **Zod v4.1.12** — schema consistency across all server actions and API routes. Prettier pinned to ~3.8.1. **Stripe recurring billing COMPLETE (all Phases 217-A through 217-G).** 0 npm vulnerabilities. All 7 gates GREEN. **0 god files remaining.** All files under 900 lines. **Active backlog: 0 code tasks. 1 CRITICAL owner action + 1 MEDIUM owner action.**
 >
 > **V1.0 MVP Released (PM audit #94):**
 >
@@ -34,7 +34,7 @@
 > - **TD-SYNC-01** — ✅ RESOLVED (PM audit #130, Phase 235). MongoDB→Clerk sync expanded to include `firstName` and `lastName` in batched call. Email sync deferred (requires Clerk verification flow — documented as known limitation).
 > - **TD-CHECKOUT-UX-01** — ✅ RESOLVED (PM audit #130, Phase 234-C). Checkout timeout message now warns "If your plan hasn't updated within 10 minutes, please contact support." with amber visual style.
 > - **TD-DESIGN-01** — ✅ CLOSED (PM audit #132). Owner override: `/design` page must stay as dev-only design system preview. Pure static page, no data/auth/secrets. Documented in route table. Remove before production.
-> - **TD-MODEL-EXT-01** — 🟡 HIGH. **31 files** use `.tsx` extension with zero JSX content (8 models + 1 database + 5 constants + 7 server actions + 9 utils + 1 type). Violates AGENTS.md coding standard. Phase 238 expanded.
+> - **TD-MODEL-EXT-01** — ✅ RESOLVED (PM audit #134, Phase 238). All 31 non-JSX `.tsx` files renamed to `.ts`. Zero violations remaining.
 > - **TD-MEDIA-01** — 🟡 ACCEPTED LIMITATION. Media gen (image/audio) may approach Vercel Hobby 60s timeout. Phase 181 proactive timeout handles gracefully.
 > - **TD-AI-13** — 3 model pricing placeholders (awaiting OpenAI confirmation).
 > - **TD-AI-18** — Advisory: errorMessage forwarding pattern is safe but fragile.
@@ -266,16 +266,19 @@ At conversation end, user can continue with a different persona:
 
 `buildPersonaAwareSystemPrompt()` injects user preferences into AI context:
 
+- `INTENT_INSTRUCTIONS[intent]` — shapes AI focus toward user's primary goal
+- `CHALLENGE_INSTRUCTIONS[challenge]` — shapes AI approach to user's biggest obstacle
 - `EXPECTATION_INSTRUCTIONS[expectation]` — shapes AI answer style
 - `COMMUNICATION_STYLE_INSTRUCTIONS[communicationStyle]` — shapes AI formatting
-- **Known gap (TD-ONBOARDING-01):** `intent` and `challenge` are NOT yet injected into system prompt
 
-### Unresolved Onboarding Issues
+All 4 onboarding preference fields are now injected (Phase 249-B). No remaining gaps.
 
-- **TD-ONBOARDING-01** — 🟡 HIGH. `intent` and `challenge` not used in system prompt. Phase 249-B.
-- **TD-ONBOARDING-02** — 🟡 HIGH. HandoffDialog shows non-entitled personas. Phase 249-A.
-- **TD-ONBOARDING-03** — 🟡 HIGH. Onboarding copy says "change in Settings" for persona. Phase 249-C.
-- **TD-ONBOARDING-04** — 🟠 MEDIUM. `completeOnboarding` uses full `$set` on preferences (not dot-notation). Phase 249-D.
+### Resolved Onboarding Issues (PM audit #134)
+
+- **TD-ONBOARDING-01** — ✅ RESOLVED. All 4 preferences injected into system prompt (Phase 249-B).
+- **TD-ONBOARDING-02** — ✅ RESOLVED. HandoffDialog receives `selectablePersonas` only (Phase 249-A).
+- **TD-ONBOARDING-03** — ✅ RESOLVED. Copy says "pick a different persona when starting a new conversation" (Phase 249-C).
+- **TD-ONBOARDING-04** — ✅ RESOLVED. Dot-notation + idempotency guard (Phase 249-D).
 
 ---
 
@@ -1003,13 +1006,17 @@ All button styles use Lime Green as the accent color in **both** light and dark 
 | ------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
 | TD-PAYMENT-03 | Billing | Stripe webhook not delivering events. Payment succeeds in Stripe but plan not upgraded, no Transaction created, billing history empty. Webhook code is correct — Stripe Dashboard config must be verified. | 234   |
 
-### Active — HIGH Priority (PM audit #132)
+### Active — HIGH Priority (PM audit #134)
 
-| ID              | Area | Description                                                                                                                          | Phase |
-| --------------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------ | ----- |
-| TD-MODEL-EXT-01 | Code | 31 files use `.tsx` extension with zero JSX content (8 models + 1 database + 5 constants + 7 actions + 9 utils + 1 type). Phase 238. | 238   |
+No active HIGH items.
 
 ### Resolved — HIGH Priority
+
+| ID              | Area | Description                                                                                                                          | Phase | Resolution                                                    |
+| --------------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------ | ----- | ------------------------------------------------------------- |
+| TD-MODEL-EXT-01 | Code | 31 files use `.tsx` extension with zero JSX content (8 models + 1 database + 5 constants + 7 actions + 9 utils + 1 type). Phase 238. | 238   | All 31 files renamed to `.ts`. Zero violations. PM audit #134 |
+
+### Resolved — HIGH Priority (Prior)
 
 | ID               | Area     | Description                                                                                                                                                                | Phase | Resolution                                                                                    |
 | ---------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- | --------------------------------------------------------------------------------------------- |
