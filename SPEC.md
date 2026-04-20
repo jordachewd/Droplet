@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> ...04-20 (PM audit #136). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. **V1.0 MVP RELEASED.** Brand rename complete (Phase 172). Catch blocks documented (Phase 167.2 + Phase 223). Promo text admin-configurable (Phase 162, 180.2–180.3). Global error boundary live (Phase 163). Admin error boundary live (Phase 187-A). Phases 143–250 COMPLETE (all sub-phases). **Onboarding wizard COMPLETE (Phases 240-249) — but 3 regressions found by Codex review (Phase 251).** **Phase 238 COMPLETE (31 non-JSX `.tsx` → `.ts` rename).** **Stripe webhook VERIFIED on localhost (Phase 234-B).** Phase 226 COMPLETE (admin actions split into 5 domain files). Phase 228 COMPLETE (Stripe webhook split — route 1,094→61 lines). Phase 229 COMPLETE (generateResponse extraction — 1,078→861 lines). Phase 225 COMPLETE (full OpenAI route decomposition — 4 modules, route 1,549→883 lines). Phase 230 COMPLETE (.d.tsx → .d.ts rename). Admin sidebar persistence COMPLETE. E2E: 49 tests (8 spec files). Coverage: 85/80/85/85. 730 tests (110 suites). Build passing. Node.js 24.12.0. jsdom pinned to ~24.1.3 (ESM compat). TypeScript 6.0.2 + ESLint 10 fully compatible (audit #103). **Zod v4.1.12** — schema consistency across all server actions and API routes. Prettier pinned to ~3.8.1. **Stripe recurring billing COMPLETE (all Phases 217-A through 217-G).** 0 npm vulnerabilities. All 7 gates GREEN. **0 god files remaining.** All files under 900 lines. **Active backlog: 3 code fixes (Phase 251-A/B/C). Production deployment BLOCKED.**
+> ...04-20 (PM audit #137). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. **V1.0 MVP RELEASED.** Phases 143–251 COMPLETE (all sub-phases). **Onboarding wizard COMPLETE (Phases 240-251).** System prompt uses all 4 onboarding preferences (Phase 249-B + 251-B projection fix). HandoffDialog plan-gated (Phase 249-A). Handoff hydration race fixed (Phase 251-A). Trial badge rendering fixed (Phase 251-C). **Phase 238 COMPLETE (31 non-JSX `.tsx` → `.ts` rename).** **Stripe webhook VERIFIED on localhost (Phase 234-B).** All files under 900 lines. 0 npm vulnerabilities. All 7 gates GREEN. **0 god files remaining.** 730 tests (110 suites). **Active backlog: EMPTY. Production deployment pending.**
 >
 > **V1.0 MVP Released (PM audit #94):**
 >
@@ -271,7 +271,7 @@ At conversation end, user can continue with a different persona:
 - `EXPECTATION_INSTRUCTIONS[expectation]` — shapes AI answer style
 - `COMMUNICATION_STYLE_INSTRUCTIONS[communicationStyle]` — shapes AI formatting
 
-All 4 onboarding preference fields are now injected (Phase 249-B). **However, `getUserById()` does not project `preferences` — see TD-ONBOARDING-05.**
+All 4 onboarding preference fields are now injected (Phase 249-B) and correctly projected from MongoDB (Phase 251-B). No remaining gaps.
 
 ### Resolved Onboarding Issues (PM audit #134)
 
@@ -280,11 +280,11 @@ All 4 onboarding preference fields are now injected (Phase 249-B). **However, `g
 - **TD-ONBOARDING-03** — ✅ RESOLVED. Copy says "pick a different persona when starting a new conversation" (Phase 249-C).
 - **TD-ONBOARDING-04** — ✅ RESOLVED. Dot-notation + idempotency guard (Phase 249-D).
 
-### Unresolved Onboarding/Handoff Issues (PM audit #136 — Codex Review)
+### Resolved Codex Review Regressions (PM audit #137)
 
-- **TD-ONBOARDING-05** — 🔴 CRITICAL. Handoff auto-send races store hydration. `sendMessage` fires with stale `dbTaskId` from previous conversation, causing API to return stop response. Handoff fails silently. Phase 251-A.
-- **TD-ONBOARDING-06** — 🟡 HIGH. `getUserById()` `.select()` missing `preferences` and `onboardingCompleted`. `userData.preferences` is `undefined` in OpenAI route. All 4 onboarding preference fields are dead code in production. Phase 251-B.
-- **TD-ONBOARDING-07** — 🟡 HIGH. Trial badge condition `isTrial && !isAllowed` is always false because `allowedPersonaIds` includes "limited" personas. Lite users see trial personas with no "Trial" badge. Phase 251-C.
+- **TD-ONBOARDING-05** — ✅ RESOLVED. Handoff auto-send gated on `dbTaskId === null && task.length === 0` (Phase 251-A).
+- **TD-ONBOARDING-06** — ✅ RESOLVED. `getUserById()` `.select()` now includes `preferences` and `onboardingCompleted` (Phase 251-B).
+- **TD-ONBOARDING-07** — ✅ RESOLVED. Trial badge condition changed to `isTrial` only (Phase 251-C).
 
 ---
 

@@ -2,7 +2,37 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-04-20 — PM audit #135.
+> Last updated: 2026-04-20 — PM audit #137.
+
+---
+
+## Phase 251 — Codex Review Regression Fixes — COMPLETED (2026-04-20)
+
+> Found by OpenAI Codex code review against `main` branch. 3 regressions in onboarding+handoff code. All verified by PM, fixed by Engineer, re-verified by PM.
+
+### Phase 251-A — Handoff Auto-Send Hydration Race (CRITICAL)
+
+- [x] Added `dbTaskId === null` and `task.length === 0` guard conditions to handoff auto-send effect
+- [x] Added `dbTaskId`, `isLoading`, `task.length` to effect dependency array
+- [x] Handoff auto-send now waits for store hydration to clear previous conversation state
+- [x] No regression on direct `/app?persona=X` navigation
+
+### Phase 251-B — getUserById Missing `preferences` Projection (HIGH)
+
+- [x] Added `onboardingCompleted preferences` to `getUserById()` `.select()` string
+- [x] Updated `user-actions.test.ts` projection expectation to match
+- [x] `userData.preferences` now flows correctly from `getUserById()` → `/api/openai` → `generateResponse()` → `buildUserPreferencesPrompt()`
+- [x] All 4 onboarding preference fields (intent, challenge, expectation, communicationStyle) now reach the AI model
+
+### Phase 251-C — Onboarding Trial Badge Unreachable Condition (HIGH)
+
+- [x] Changed trial badge condition from `isTrial && !isAllowed` to `isTrial`
+- [x] "Trial" badge now renders on limited-access personas for Lite users
+- [x] Compliant with Critical Product Rule #3 (personas are plan-gated)
+
+### Gate Verification
+
+- [x] All 7 gates GREEN: prettier ✓, lint (0 errors, 6 warnings) ✓, tsc ✓, 730 tests ✓, 49 E2E ✓, build ✓, knip ✓
 
 ---
 
