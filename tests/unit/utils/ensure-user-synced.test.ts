@@ -122,7 +122,7 @@ describe("ensure-user-synced", () => {
     expect(connectToDatabaseMock).toHaveBeenCalledTimes(1);
     expect(findOneMock).toHaveBeenCalledWith({ clerkId: user.clerkId });
     expect(userQuery.select).toHaveBeenCalledWith(
-      "clerkId username email role plan firstName lastName userimg registerAt updatedAt dailyConversationsStarted dailyConversationWindowStart stripeCustomerId stripeSubscriptionId subscriptionStatus suspended",
+      "clerkId username email role plan firstName lastName userimg registerAt updatedAt dailyConversationsStarted dailyConversationWindowStart stripeCustomerId stripeSubscriptionId subscriptionStatus suspended onboardingCompleted preferences",
     );
     expect(result).toEqual(user);
     expect(clerkClientFactoryMock).not.toHaveBeenCalled();

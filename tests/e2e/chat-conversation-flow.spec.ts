@@ -1,6 +1,7 @@
 import path from "node:path";
 import { expect, test } from "@playwright/test";
 import { getE2ETestUser, missingCredentialsError } from "./utils/e2e-test-user";
+import { ensureChatInputReady } from "./utils/ensure-chat-input-ready";
 
 const authFile = path.join(__dirname, ".clerk/user.json");
 const e2eTestUser = getE2ETestUser();
@@ -34,11 +35,7 @@ test.describe("chat conversation flow", () => {
     });
 
     try {
-      await page.goto("/app/new");
-      await expect(page.locator(".PersonaCard").first()).toBeVisible();
-      await page.locator(".PersonaCard").first().click();
-
-      await expect(page.locator("#chatInput")).toBeVisible();
+      await ensureChatInputReady(page);
       await page.locator("#chatInput").fill("structural-e2e-chat-prompt");
       await page.getByRole("button", { name: "Send message" }).click();
 

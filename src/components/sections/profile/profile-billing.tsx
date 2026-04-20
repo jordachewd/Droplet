@@ -11,7 +11,7 @@ import {
 import getFormattedDate from "@/lib/utils/getFormattedDate";
 import classNames from "classnames";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { type SubscriptionStatus, type PlanName } from "@/types/PlanData.d";
 import { Transaction } from "@/types/TransactionData.d";
 
@@ -126,6 +126,13 @@ export default function ProfileBilling({
   const [isReactivateConfirmOpen, setIsReactivateConfirmOpen] =
     useState<boolean>(false);
   const [alertMessage, setAlertMessage] = useState<AlertParams | null>(null);
+  const [loadingInvoiceId, setLoadingInvoiceId] = useState<string | null>(null);
+  const nextAlertId = useRef<number>(0);
+
+  function createAlertId(): number {
+    nextAlertId.current += 1;
+    return nextAlertId.current;
+  }
 
   const billingTableHeaderClass = classNames(
     "mb-3 flex items-center justify-between gap-4 rounded-md px-3 py-1.5",
@@ -184,7 +191,7 @@ export default function ProfileBilling({
           ? await cancelSubscriptionAction()
           : await reactivateSubscriptionAction();
       setAlertMessage({
-        id: Date.now(),
+        id: createAlertId(),
         title:
           actionResult.status === 200
             ? "Billing updated"
@@ -197,7 +204,7 @@ export default function ProfileBilling({
     } catch (error) {
       void error;
       setAlertMessage({
-        id: Date.now(),
+        id: createAlertId(),
         title: "Billing update failed",
         text: "Unable to update subscription right now. Please try again.",
         severity: "error",
@@ -216,6 +223,53 @@ export default function ProfileBilling({
   function handleConfirmReactivate(): void {
     setIsReactivateConfirmOpen(false);
     void runSubscriptionAction("reactivate");
+  }
+
+  async function handleInvoiceDownload(invoiceId: string): Promise<void> {
+    if (loadingInvoiceId) {
+      return;
+    }
+
+    setLoadingInvoiceId(invoiceId);
+
+    try {
+      const response = await fetch(
+        `/api/checkout/invoice-url?invoice_id=${encodeURIComponent(invoiceId)}`,
+      );
+
+      if (!response.ok) {
+        setAlertMessage({
+          id: createAlertId(),
+          title: "Invoice unavailable",
+          text: "Unable to retrieve the invoice. Please try again.",
+          severity: "warning",
+          variant: "outlined",
+        });
+        return;
+      }
+
+      const data: unknown = await response.json();
+
+      if (
+        typeof data === "object" &&
+        data !== null &&
+        "url" in data &&
+        typeof (data as { url: unknown }).url === "string"
+      ) {
+        window.open((data as { url: string }).url, "_blank", "noopener");
+      }
+    } catch (error) {
+      void error;
+      setAlertMessage({
+        id: createAlertId(),
+        title: "Invoice unavailable",
+        text: "Unable to retrieve the invoice. Please try again.",
+        severity: "warning",
+        variant: "outlined",
+      });
+    } finally {
+      setLoadingInvoiceId(null);
+    }
   }
 
   return (
@@ -297,6 +351,7 @@ export default function ProfileBilling({
             <p className="hidden flex-1 text-center md:flex">Purchased</p>
             <p className="hidden flex-1 text-center md:flex">Expires</p>
             <p className="min-w-14 text-center">Status</p>
+            <p className="hidden min-w-16 text-center lg:flex">Invoice</p>
           </div>
 
           {userTxns.map((txn, index) => {
@@ -327,6 +382,24 @@ export default function ProfileBilling({
                 </p>
                 <p className="min-w-14 text-center text-xxs">
                   <span className={txnColor}>{txnStatus}</span>
+                </p>
+                <p className="hidden min-w-16 text-center lg:flex">
+                  {txn.stripeInvoiceId ? (
+                    <button
+                      type="button"
+                      className="text-xxs text-sky-600 underline hover:text-sky-500 disabled:opacity-50 dark:text-sky-400 dark:hover:text-sky-300"
+                      disabled={loadingInvoiceId === txn.stripeInvoiceId}
+                      onClick={() =>
+                        void handleInvoiceDownload(txn.stripeInvoiceId!)
+                      }
+                    >
+                      {loadingInvoiceId === txn.stripeInvoiceId
+                        ? "Loading..."
+                        : "View"}
+                    </button>
+                  ) : (
+                    <span className="text-xxs text-slate-400">—</span>
+                  )}
                 </p>
               </div>
             );

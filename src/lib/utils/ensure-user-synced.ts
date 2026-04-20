@@ -7,7 +7,7 @@ import { isMongoDuplicateKeyError } from "@/lib/utils/type-guards";
 import type { UserData } from "@/types/UserData.d";
 
 const USER_SYNC_PROJECTION =
-  "clerkId username email role plan firstName lastName userimg registerAt updatedAt dailyConversationsStarted dailyConversationWindowStart stripeCustomerId stripeSubscriptionId subscriptionStatus suspended";
+  "clerkId username email role plan firstName lastName userimg registerAt updatedAt dailyConversationsStarted dailyConversationWindowStart stripeCustomerId stripeSubscriptionId subscriptionStatus suspended onboardingCompleted preferences";
 const RECENT_RESULT_TTL_MS = 5_000;
 const FAILURE_LOG_WINDOW_MS = 30_000;
 const recentEnsureUserSyncResults = new Map<

@@ -2,7 +2,214 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-04-17 — PM audit #130.
+> Last updated: 2026-04-20 — PM audit #137.
+
+---
+
+## Phase 251 — Codex Review Regression Fixes — COMPLETED (2026-04-20)
+
+> Found by OpenAI Codex code review against `main` branch. 3 regressions in onboarding+handoff code. All verified by PM, fixed by Engineer, re-verified by PM.
+
+### Phase 251-A — Handoff Auto-Send Hydration Race (CRITICAL)
+
+- [x] Added `dbTaskId === null` and `task.length === 0` guard conditions to handoff auto-send effect
+- [x] Added `dbTaskId`, `isLoading`, `task.length` to effect dependency array
+- [x] Handoff auto-send now waits for store hydration to clear previous conversation state
+- [x] No regression on direct `/app?persona=X` navigation
+
+### Phase 251-B — getUserById Missing `preferences` Projection (HIGH)
+
+- [x] Added `onboardingCompleted preferences` to `getUserById()` `.select()` string
+- [x] Updated `user-actions.test.ts` projection expectation to match
+- [x] `userData.preferences` now flows correctly from `getUserById()` → `/api/openai` → `generateResponse()` → `buildUserPreferencesPrompt()`
+- [x] All 4 onboarding preference fields (intent, challenge, expectation, communicationStyle) now reach the AI model
+
+### Phase 251-C — Onboarding Trial Badge Unreachable Condition (HIGH)
+
+- [x] Changed trial badge condition from `isTrial && !isAllowed` to `isTrial`
+- [x] "Trial" badge now renders on limited-access personas for Lite users
+- [x] Compliant with Critical Product Rule #3 (personas are plan-gated)
+
+### Gate Verification
+
+- [x] All 7 gates GREEN: prettier ✓, lint (0 errors, 6 warnings) ✓, tsc ✓, 730 tests ✓, 49 E2E ✓, build ✓, knip ✓
+
+---
+
+## Phase 250 — Prettier Gate Fix — COMPLETED (2026-04-20)
+
+> 6 files from Phases 249/238 were not formatted. Discovered by Engineer audit #135.
+
+- [x] `src/app/(chat)/app/page.tsx` formatted
+- [x] `src/app/(chat)/layout.tsx` formatted
+- [x] `src/components/chat/chat-input.tsx` formatted
+- [x] `src/components/chat/settings/settings-form.tsx` formatted
+- [x] `src/constants/onboarding.ts` formatted
+- [x] `src/types/UserData.d.ts` formatted
+- [x] Prettier gate GREEN
+
+---
+
+## Phase 234-B — Stripe Webhook Verification — CLOSED (2026-04-20)
+
+> Owner action. Stripe CLI localhost testing verified by owner.
+
+- [x] Correct URL used: `http://localhost:3000/api/webhooks/stripe`
+- [x] All 5 event types enabled (`checkout.session.completed`, `invoice.paid`, `invoice.payment_failed`, `customer.subscription.updated`, `customer.subscription.deleted`)
+- [x] `invoice.paid` → HTTP 200
+- [x] `checkout.session.completed` → HTTP 200
+- [x] Transaction appears in MongoDB after payment (owner confirmed)
+- [x] User plan updates after payment (owner confirmed)
+- [x] Profile page shows correct plan and billing history (owner confirmed)
+- [x] Sidebar promo card reflects updated plan (owner confirmed)
+- **Note:** Tested in Stripe sandbox/test mode. Production live-mode verification pending deployment.
+
+---
+
+## Phase 234-D — Email/Invoice Setup — CLOSED (2026-04-20)
+
+> Owner action. Stripe Dashboard configuration.
+
+- [x] "Successful payments" email enabled in Stripe Dashboard → Settings → Customer emails
+- [x] Invoices visible in Stripe Dashboard → Customers → [customer] → Invoices
+- [x] "Create invoice" button available for manual invoicing
+- **Note:** Stripe does not deliver customer emails in sandbox/test mode. Emails will work automatically in live mode. No code changes required.
+
+---
+
+## Phase 238 — Rename 31 Non-JSX `.tsx` Files to `.ts` — COMPLETED (2026-04-20)
+
+> AGENTS.md coding standard: "Utility-only files: `.ts` extension (no JSX)." All 31 files renamed across models, constants, actions, utils, and types. All imports updated. All 7 gates GREEN. Knip clean.
+
+- [x] Phase 238-A: 8 database model files renamed
+- [x] Phase 238-B: 7 database/constants/types files renamed
+- [x] Phase 238-C: 7 server action files renamed
+- [x] Phase 238-D: 9 utility files renamed
+- [x] All imports across `src/` and `tests/` updated
+- [x] Zero non-route/non-page/non-component `.tsx` files with no JSX remain
+- [x] All 7 gates GREEN. 730 tests. Knip clean.
+
+---
+
+## Phase 249 — Onboarding/Handoff Bug Fixes — COMPLETED (2026-04-20)
+
+> Found by PM audit #133 tri-agent deep dive. All 4 fixes validated.
+
+### Phase 249-A — HandoffDialog Plan Entitlement Filter
+
+- [x] `HandoffDialog` receives `selectablePersonas` instead of full `personas` array
+- [x] Lite user no longer sees Premium-only personas in handoff picker
+- [x] Fixes Critical Product Rule #3 (persona plan gating)
+
+### Phase 249-B — System Prompt Uses All 4 User Preferences
+
+- [x] Added `INTENT_INSTRUCTIONS` lookup map (5 entries)
+- [x] Added `CHALLENGE_INSTRUCTIONS` lookup map (5 entries)
+- [x] `buildUserPreferencesPrompt()` now injects all 4 fields: intent, challenge, expectation, communicationStyle
+- [x] AI model is now fully aware of user's goals and challenges from onboarding
+
+### Phase 249-C — Onboarding Persona Copy Fix
+
+- [x] Changed "You can change this later in Settings" → "You can always pick a different persona when starting a new conversation"
+- [x] Accurately reflects that persona selection happens in ChatInput, not Settings
+
+### Phase 249-D — `completeOnboarding` Idempotency + Dot-Notation
+
+- [x] Uses dot-notation `$set` for all preference fields (`"preferences.intent"`, etc.)
+- [x] Query filter includes `onboardingCompleted: { $ne: true }` — replay-safe
+- [x] Returns `{ success: true }` for already-completed users without error
+
+### Additional Fix — `profile-billing.tsx` Lint Error
+
+- [x] Replaced `Date.now()` alert IDs with local ref counter (fixes `react-hooks/purity` lint error)
+
+---
+
+## Phases 240-248 — Onboarding Wizard + Persona Selector + Handoff — COMPLETED (2026-04-20)
+
+> Owner directives: step-by-step onboarding, persona selector in ChatInput, conversation handoff.
+
+### Phase 240 — Onboarding Data Model
+
+- [x] `UserPreferences` interface with `intent`, `challenge`, `expectation`, `communicationStyle`, `defaultPersonaId`, `onboardedAt`
+- [x] `onboardingCompleted: boolean` field on User model
+- [x] Zod schemas for validation (intent, challenge, expectation, communicationStyle, personaId)
+- [x] `completeOnboarding` + `updatePreferences` server actions with auth + Zod
+
+### Phase 241 — Onboarding Wizard UI
+
+- [x] 6-step wizard: 4 quiz steps + persona selection + confirmation
+- [x] Quiz-style radio options with auto-advance (300ms delay)
+- [x] Persona recommendation algorithm (weighted scoring from intent × challenge)
+- [x] Trial badges on limited-access personas
+- [x] Confirmation step with answer summary + "Start your first conversation" CTA
+- [x] Progress bar with step indicator
+
+### Phase 242 — Onboarding Gate
+
+- [x] Layout-level redirect for non-onboarded users to `/app/onboarding`
+- [x] Exempt paths: `/app/onboarding`, `/app/profile`, `/app/plans`
+- [x] Admin bypass (admins skip onboarding entirely)
+- [x] `x-next-pathname` header from proxy used for path detection
+
+### Phase 243 — Settings Page
+
+- [x] `/app/settings` page with 4 preference dropdowns (intent, challenge, expectation, communicationStyle)
+- [x] `updatePreferences` server action with dot-notation partial updates
+- [x] AlertMessage feedback on save
+- [x] Settings link in avatar menu between Profile and Logout
+
+### Phase 244 — System Prompt Personalization
+
+- [x] `buildUserPreferencesPrompt()` injects expectation + communicationStyle into system prompt
+- [x] `EXPECTATION_INSTRUCTIONS` and `COMMUNICATION_STYLE_INSTRUCTIONS` lookup maps
+- [x] User preferences passed through OpenAI route to `buildPersonaAwareSystemPrompt()`
+
+### Phase 245 — Conversation Handoff
+
+- [x] `HandoffDialog` component: modal with persona cards, hero images, labels
+- [x] `buildHandoffContext()`: extracts last 20 messages as plaintext summary
+- [x] Handoff button in conversation end-state notice: "Continue with another persona"
+- [x] Navigation: `/app?persona=X&handoff=taskId`
+- [x] Auto-send handoff context as first message in new conversation (ref-guarded)
+- [x] Ownership validation on source task
+
+### Phase 248 — Persona Selector Restored to ChatInput
+
+- [x] `PersonaSelector` dropdown renders in ChatInput when conversation hasn't started
+- [x] Locked persona badge (lavender pill with droplet icon + label) shows once messages exist
+- [x] `isPersonaLocked = task.length > 0 || isConversationEnded`
+- [x] `selectablePersonas` filtered by `normalizedAllowedPersonaIds`
+- [x] `handlePersonaChange` callback with lock guard
+- [x] Persona grid removed from Settings form (persona selection is now ChatInput-only)
+- [x] Fixed pre-existing bugs: `AlertMessage` type, `handleError` signature, `showAlert` ordering
+- [x] TypeScript: 0 errors. ESLint: 0 new errors.
+
+### Owner Text Instructions Implemented
+
+- [x] Step 3 text: "What do you expect from a Droplet assistant?" (not "AI assistant")
+- [x] Step 5 text: "Meet your Droplet partner" (not "Meet your AI team")
+
+---
+
+## Phase 237 — `/design` Page: CLOSED per Owner Override (PM audit #132, 2026-04-18)
+
+> Tri-agent audit (PM + Architect + Engineer) identified `/design` as publicly accessible dev-only design system preview page. Originally scoped for deletion. **Owner override: page must stay for development use.** Pure static page (408 lines), no data/auth/secrets, no sensitive information. Only imports `Link` from `next/link`. Documented in AGENTS.md and SPEC.md route tables as dev-only with "remove before production" note.
+
+- [x] Owner directive: KEEP `/design` page for development
+- [x] Added `/design` to AGENTS.md route boundary table as Public with production removal note
+- [x] Added `/design` to SPEC.md route map as dev-only
+- [x] TD-DESIGN-01 CLOSED in SPEC.md tech debt table
+- [x] `/checkout-success` undocumented route also added to both route tables (discovered during audit)
+
+---
+
+## Prettier Reformat — PM audit #131 (2026-04-18)
+
+> Ruthless tri-agent audit (PM + Architect + Engineer) discovered Prettier gate failing with 70 files. Fixed by `npx prettier . --write`. All 7 gates GREEN.
+
+- [x] Ran `npx prettier . --write` to reformat 70 files
+- [x] Validation: prettier ✓, lint (0 errors, 6 warnings) ✓, tsc ✓, tests (730/730) ✓, build ✓, knip ✓.
 
 ---
 

@@ -784,7 +784,7 @@ describe("transaction.action", () => {
         },
       );
       expect(transactionQuery.select).toHaveBeenCalledWith(
-        "plan amount billing createdAt expiresOn stripeId",
+        "plan amount billing createdAt expiresOn stripeId stripeInvoiceId",
       );
       expect(transactionQuery.limit).toHaveBeenCalledWith(100);
       expect(transactionQuery.lean).toHaveBeenCalledOnce();

@@ -90,9 +90,10 @@ export async function updateUser(clerkId: string, user: UpdateUserParams) {
       clerkSyncPayload.lastName = parsedUser.data.lastName;
     }
 
+    const client = await clerkClient();
+
     if (Object.keys(clerkSyncPayload).length > 0) {
       try {
-        const client = await clerkClient();
         await client.users.updateUser(
           parsedClerkId.data,
           clerkSyncPayload as unknown as ClerkUpdateUserParams,
@@ -104,9 +105,24 @@ export async function updateUser(clerkId: string, user: UpdateUserParams) {
       }
     }
 
+    if (typeof parsedUser.data.email === "string") {
+      try {
+        await client.emailAddresses.createEmailAddress({
+          userId: parsedClerkId.data,
+          emailAddress: parsedUser.data.email,
+          verified: true,
+          primary: true,
+        });
+      } catch (error) {
+        process.stderr.write(
+          `[user.actions] updateUser Clerk email sync failed for ${parsedClerkId.data}: ${error instanceof Error ? error.message : "unknown"}\n`,
+        );
+      }
+    }
+
     return serializeForClient({
       mongoResponse: updatedUser,
-      message: "User updated successfully (user.actions.tsx)",
+      message: "User updated successfully (user.actions.ts)",
       status: 200,
     });
   } catch (error) {
@@ -205,7 +221,7 @@ export async function getUserById(userId: string) {
 
     const user = await User.findOne({ clerkId: parsedUserId.data })
       .select(
-        "clerkId username email role suspended plan firstName lastName userimg registerAt updatedAt dailyConversationsStarted dailyConversationWindowStart",
+        "clerkId username email role suspended plan firstName lastName userimg registerAt updatedAt dailyConversationsStarted dailyConversationWindowStart onboardingCompleted preferences",
       )
       .lean();
 

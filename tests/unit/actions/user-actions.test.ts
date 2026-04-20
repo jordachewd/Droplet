@@ -93,7 +93,7 @@ describe("user.actions", () => {
       expect(connectToDatabase).toHaveBeenCalledOnce();
       expect(userFindOneMock).toHaveBeenCalledWith({ clerkId: "user_123" });
       expect(userQuery.select).toHaveBeenCalledWith(
-        "clerkId username email role suspended plan firstName lastName userimg registerAt updatedAt dailyConversationsStarted dailyConversationWindowStart",
+        "clerkId username email role suspended plan firstName lastName userimg registerAt updatedAt dailyConversationsStarted dailyConversationWindowStart onboardingCompleted preferences",
       );
       expect(response).toMatchObject({
         clerkId: "user_123",
@@ -150,7 +150,7 @@ describe("user.actions", () => {
       expect(response).toEqual(
         expect.objectContaining({
           status: 200,
-          message: "User updated successfully (user.actions.tsx)",
+          message: "User updated successfully (user.actions.ts)",
         }),
       );
       expect(updateClerkUserMock).not.toHaveBeenCalled();
@@ -176,7 +176,7 @@ describe("user.actions", () => {
       expect(response).toEqual(
         expect.objectContaining({
           status: 200,
-          message: "User updated successfully (user.actions.tsx)",
+          message: "User updated successfully (user.actions.ts)",
         }),
       );
     });
@@ -205,7 +205,7 @@ describe("user.actions", () => {
       expect(response).toEqual(
         expect.objectContaining({
           status: 200,
-          message: "User updated successfully (user.actions.tsx)",
+          message: "User updated successfully (user.actions.ts)",
         }),
       );
     });
@@ -234,7 +234,7 @@ describe("user.actions", () => {
       expect(response).toEqual(
         expect.objectContaining({
           status: 200,
-          message: "User updated successfully (user.actions.tsx)",
+          message: "User updated successfully (user.actions.ts)",
         }),
       );
     });

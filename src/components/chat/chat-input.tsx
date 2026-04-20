@@ -2,12 +2,12 @@ import Image from "next/image";
 import classNames from "classnames";
 import { useState, ChangeEvent, useEffect, useRef, KeyboardEvent } from "react";
 import { Message } from "@/types";
+import { Persona, PersonaId } from "@/types/PersonaData.d";
 import { UploadRouteResponse } from "@/types/UploadData.d";
 import { UploadFileInput } from "@/components/shared/upload-file-input";
 import PersonaSelector from "@/components/shared/persona-selector";
 import Button from "@/components/shared/button";
 import { TooltipArrow } from "@/components/shared/tooltip-arrow";
-import { Persona, PersonaId } from "@/types/PersonaData.d";
 
 interface ChatInputProps {
   loading: boolean;
@@ -18,7 +18,7 @@ interface ChatInputProps {
   personas?: Persona[];
   selectedPersonaId?: PersonaId;
   onPersonaChange?: (personaId: PersonaId) => void;
-  personaSelectorDisabled?: boolean;
+  isPersonaLocked?: boolean;
   sendMessage: (message: Message) => void;
 }
 
@@ -54,7 +54,7 @@ export default function ChatInput({
   personas = [],
   selectedPersonaId,
   onPersonaChange,
-  personaSelectorDisabled = false,
+  isPersonaLocked = false,
   sendMessage,
 }: ChatInputProps) {
   const [prompt, setPrompt] = useState<string>(startPrompt || "");
@@ -241,12 +241,6 @@ export default function ChatInput({
     "bi bi-x absolute -right-1.5 -top-1.5 rounded-full bg-orange-600 pt-[1px]",
     "leading-none text-white shadow-sm transition-all hover:bg-amber-600",
   );
-  const canRenderPersonaSelector =
-    personas.length > 0 &&
-    selectedPersonaId !== undefined &&
-    typeof onPersonaChange === "function";
-  const isPersonaSelectorDisabled =
-    loading || disabled || isUploading || personaSelectorDisabled;
 
   return (
     <div className={chatInputSectionClass}>
@@ -318,14 +312,23 @@ export default function ChatInput({
                 />
               </button>
             ) : null}
+          </div>
 
-            {canRenderPersonaSelector ? (
-              <PersonaSelector
-                personas={personas}
-                selectedPersonaId={selectedPersonaId}
-                onSelect={onPersonaChange}
-                disabled={isPersonaSelectorDisabled}
-              />
+          <div className="flex items-center gap-2">
+            {personas.length > 0 && selectedPersonaId && onPersonaChange ? (
+              isPersonaLocked ? (
+                <span className="ChatInputPersonaBadge flex items-center gap-1.5 rounded-full bg-lavenderHaze-200/60 px-3 py-1 text-xs font-semibold dark:bg-nightIndigo-800/60">
+                  <i className="bi bi-droplet text-xxs" aria-hidden="true"></i>
+                  {personaLabel}
+                </span>
+              ) : (
+                <PersonaSelector
+                  personas={personas}
+                  selectedPersonaId={selectedPersonaId}
+                  disabled={loading || disabled}
+                  onSelect={onPersonaChange}
+                />
+              )
             ) : null}
           </div>
 

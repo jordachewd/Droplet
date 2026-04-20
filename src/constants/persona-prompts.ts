@@ -2,6 +2,7 @@ import "server-only";
 
 import { getPersona } from "@/constants/assistant-personas";
 import { PersonaId } from "@/types/PersonaData.d";
+import type { UserPreferences } from "@/types/UserData.d";
 
 export const PROMPT_VERSION = "1.0";
 
@@ -313,11 +314,93 @@ export function resolvePersonaPromptConfig({
   };
 }
 
+const EXPECTATION_INSTRUCTIONS: Record<string, string> = {
+  direct: "Give straight answers. Skip pleasantries and filler.",
+  guided: "Walk the user through step by step. Structure helps them think.",
+  challenger:
+    "Push back on assumptions. Ask hard questions. Make them reconsider.",
+  explorer: "Think open-ended. Follow threads. Help brainstorm and explore.",
+};
+
+const INTENT_INSTRUCTIONS: Record<string, string> = {
+  productivity:
+    "Prioritize fast, practical execution that removes friction and saves time.",
+  learning:
+    "Teach clearly and progressively so the user can build durable understanding.",
+  creative:
+    "Favor idea generation and creative options before converging on a final direction.",
+  technical:
+    "Bias toward technically correct, implementation-ready guidance with clear tradeoffs.",
+  career:
+    "Give pragmatic career guidance tied to concrete next steps and outcomes.",
+};
+
+const CHALLENGE_INSTRUCTIONS: Record<string, string> = {
+  decisions:
+    "Surface options with tradeoffs, then recommend a clear next move.",
+  learning:
+    "Break complex topics into manageable chunks and verify understanding as you go.",
+  content:
+    "Help structure, draft, and refine content with clear audience-focused output.",
+  software:
+    "Diagnose blockers quickly and provide practical, maintainable implementation paths.",
+  wellness:
+    "Keep advice grounded, supportive, and actionable to reduce stress and maintain focus.",
+};
+
+const COMMUNICATION_STYLE_INSTRUCTIONS: Record<string, string> = {
+  concise:
+    "Keep responses short and sharp. Three sentences beats three paragraphs.",
+  detailed:
+    "Provide full detail with examples. Let the user filter what they need.",
+  structured:
+    "Use lists, tables, headers, and code blocks. Make output scannable.",
+  conversational:
+    "Be natural and conversational, like a colleague thinking out loud together.",
+};
+
+function buildUserPreferencesPrompt(
+  preferences?: UserPreferences | null,
+): string | null {
+  if (!preferences) return null;
+
+  const parts: string[] = [];
+
+  if (preferences.intent && INTENT_INSTRUCTIONS[preferences.intent]) {
+    parts.push(INTENT_INSTRUCTIONS[preferences.intent]);
+  }
+
+  if (preferences.challenge && CHALLENGE_INSTRUCTIONS[preferences.challenge]) {
+    parts.push(CHALLENGE_INSTRUCTIONS[preferences.challenge]);
+  }
+
+  if (
+    preferences.expectation &&
+    EXPECTATION_INSTRUCTIONS[preferences.expectation]
+  ) {
+    parts.push(EXPECTATION_INSTRUCTIONS[preferences.expectation]);
+  }
+
+  if (
+    preferences.communicationStyle &&
+    COMMUNICATION_STYLE_INSTRUCTIONS[preferences.communicationStyle]
+  ) {
+    parts.push(
+      COMMUNICATION_STYLE_INSTRUCTIONS[preferences.communicationStyle],
+    );
+  }
+
+  if (parts.length === 0) return null;
+
+  return `User communication preferences (adapt your tone and format accordingly):\n${parts.join("\n")}`;
+}
+
 export function buildPersonaAwareSystemPrompt(
   personaId?: string | null,
   options?: {
     model?: string | null;
     modelFamily?: PersonaPromptModelFamily | null;
+    userPreferences?: UserPreferences | null;
   },
 ): {
   role: "developer";
@@ -329,7 +412,7 @@ export function buildPersonaAwareSystemPrompt(
     modelFamily: options?.modelFamily,
   });
 
-  return [
+  const messages: { role: "developer"; content: string }[] = [
     {
       role: "developer",
       content: CHAT_PLATFORM_PROMPT,
@@ -339,4 +422,14 @@ export function buildPersonaAwareSystemPrompt(
       content: promptConfig.systemPrompt,
     },
   ];
+
+  const userPrefsPrompt = buildUserPreferencesPrompt(options?.userPreferences);
+  if (userPrefsPrompt) {
+    messages.push({
+      role: "developer",
+      content: userPrefsPrompt,
+    });
+  }
+
+  return messages;
 }

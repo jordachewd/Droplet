@@ -48,7 +48,9 @@ async function handleCheckoutSessionCompleted(
   const parsedEvent = checkoutSessionCompletedEventSchema.safeParse(event);
 
   if (!parsedEvent.success) {
-    logStripeWebhookError("Checkout session metadata is invalid.");
+    logStripeWebhookError(
+      `Checkout session metadata is invalid. Zod errors: ${JSON.stringify(parsedEvent.error.issues)}`,
+    );
     return createWebhookErrorResponse(400);
   }
 
@@ -76,6 +78,10 @@ async function handleCheckoutSessionCompleted(
   } = parsedSession;
 
   await connectToDatabase();
+
+  logStripeWebhookInfo(
+    `Checkout session ${checkoutSessionId}: looking up user _id=${metadataUserId} clerkId=${metadataClerkId} plan=${metadataPlanName} billing=${metadataBilling}`,
+  );
 
   const existingUser = (await User.findOne(
     {
@@ -140,6 +146,10 @@ async function handleCheckoutSessionCompleted(
     transaction,
     context: `checkout.session.completed ${checkoutSessionId}`,
   });
+
+  logStripeWebhookInfo(
+    `Checkout session ${checkoutSessionId}: transaction claim result=${transactionClaim}`,
+  );
 
   if (transactionClaim === "error") {
     return createWebhookErrorResponse(500);
@@ -235,7 +245,9 @@ async function handleInvoicePaid(
   const parsedEvent = invoicePaidEventSchema.safeParse(event);
 
   if (!parsedEvent.success) {
-    logStripeWebhookError("invoice.paid payload is invalid.");
+    logStripeWebhookError(
+      `invoice.paid payload is invalid. Zod errors: ${JSON.stringify(parsedEvent.error.issues)}`,
+    );
     return createWebhookErrorResponse(400);
   }
 
@@ -244,6 +256,10 @@ async function handleInvoicePaid(
   const subscriptionId = resolveExpandableId(payload.subscription);
   const customerId = resolveExpandableId(payload.customer);
   const invoiceMetadata = resolveInvoiceSubscriptionMetadata(payload);
+
+  logStripeWebhookInfo(
+    `invoice.paid ${invoiceId}: subscriptionId=${subscriptionId ?? "null"} customerId=${customerId ?? "null"} hasMetadata=${Boolean(invoiceMetadata)}`,
+  );
 
   await connectToDatabase();
 

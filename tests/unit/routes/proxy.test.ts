@@ -62,7 +62,11 @@ describe("proxy route protection", () => {
     const request = new NextRequest("http://localhost:3000/");
     const response = await proxy(request, mockEvent);
 
-    expect(response).toBeUndefined();
+    expect(response?.status).toBe(200);
+    expect(response?.headers.get("x-middleware-next")).toBe("1");
+    expect(response?.headers.get("x-middleware-request-x-next-pathname")).toBe(
+      "/",
+    );
   });
 
   it("allows unauthenticated webhook requests for Stripe and Clerk", async () => {
@@ -76,8 +80,17 @@ describe("proxy route protection", () => {
     const stripeResponse = await proxy(stripeWebhookRequest, mockEvent);
     const clerkResponse = await proxy(clerkWebhookRequest, mockEvent);
 
-    expect(stripeResponse).toBeUndefined();
-    expect(clerkResponse).toBeUndefined();
+    expect(stripeResponse?.status).toBe(200);
+    expect(stripeResponse?.headers.get("x-middleware-next")).toBe("1");
+    expect(
+      stripeResponse?.headers.get("x-middleware-request-x-next-pathname"),
+    ).toBe("/api/webhooks/stripe");
+
+    expect(clerkResponse?.status).toBe(200);
+    expect(clerkResponse?.headers.get("x-middleware-next")).toBe("1");
+    expect(
+      clerkResponse?.headers.get("x-middleware-request-x-next-pathname"),
+    ).toBe("/api/webhooks/clerk");
   });
 
   it("allows unauthenticated access to status routes", async () => {
@@ -89,9 +102,20 @@ describe("proxy route protection", () => {
     const forbiddenResponse = await proxy(forbiddenRequest, mockEvent);
     const serverErrorResponse = await proxy(serverErrorRequest, mockEvent);
 
-    expect(unauthResponse).toBeUndefined();
-    expect(forbiddenResponse).toBeUndefined();
-    expect(serverErrorResponse).toBeUndefined();
+    expect(unauthResponse?.status).toBe(200);
+    expect(
+      unauthResponse?.headers.get("x-middleware-request-x-next-pathname"),
+    ).toBe("/401");
+
+    expect(forbiddenResponse?.status).toBe(200);
+    expect(
+      forbiddenResponse?.headers.get("x-middleware-request-x-next-pathname"),
+    ).toBe("/403");
+
+    expect(serverErrorResponse?.status).toBe(200);
+    expect(
+      serverErrorResponse?.headers.get("x-middleware-request-x-next-pathname"),
+    ).toBe("/500");
   });
 
   it("allows unknown unauthenticated routes so Next.js can render 404", async () => {
@@ -100,7 +124,11 @@ describe("proxy route protection", () => {
     );
     const response = await proxy(request, mockEvent);
 
-    expect(response).toBeUndefined();
+    expect(response?.status).toBe(200);
+    expect(response?.headers.get("x-middleware-next")).toBe("1");
+    expect(response?.headers.get("x-middleware-request-x-next-pathname")).toBe(
+      "/this-route-does-not-exist",
+    );
   });
 
   it("redirects unauthenticated users from /app routes to /sign-in", async () => {
@@ -141,6 +169,10 @@ describe("proxy route protection", () => {
     const request = new NextRequest("http://localhost:3000/admin");
     const response = await proxy(request, mockEvent);
 
-    expect(response).toBeUndefined();
+    expect(response?.status).toBe(200);
+    expect(response?.headers.get("x-middleware-next")).toBe("1");
+    expect(response?.headers.get("x-middleware-request-x-next-pathname")).toBe(
+      "/admin",
+    );
   });
 });

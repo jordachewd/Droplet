@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> ...04-17 (PM audit #130). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. **V1.0 MVP RELEASED.** Brand rename complete (Phase 172). Catch blocks documented (Phase 167.2 + Phase 223). Promo text admin-configurable (Phase 162, 180.2–180.3). Global error boundary live (Phase 163). Admin error boundary live (Phase 187-A). Phases 143–233 COMPLETE (all sub-phases). Phase 226 COMPLETE (admin actions split into 5 domain files). Phase 228 COMPLETE (Stripe webhook split — route 1,094→61 lines). Phase 229 COMPLETE (generateResponse extraction — 1,078→861 lines). Phase 225 COMPLETE (full OpenAI route decomposition — 4 modules, route 1,549→883 lines). Phase 230 COMPLETE (.d.tsx → .d.ts rename). Admin sidebar persistence COMPLETE. E2E: 49 tests (8 spec files). Coverage: 85/80/85/85. 729 tests (110 suites). Build passing. Node.js 24.12.0. jsdom pinned to ~24.1.3 (ESM compat). TypeScript 6.0.2 + ESLint 10 fully compatible (audit #103). **Zod v4.1.12** — schema consistency across all server actions and API routes. Prettier pinned to ~3.8.1. **Stripe recurring billing COMPLETE (all Phases 217-A through 217-G).** 0 npm vulnerabilities. All 7 gates GREEN. **0 god files remaining.** Largest files: generateResponse.tsx (861), admin-queries.ts (826), normalize-admin-settings.ts (813), openai/route.tsx (805). All under 900 lines. **Active backlog: 4 CRITICAL + 1 HIGH + 1 MEDIUM items (PM audit #130).**
+> ...04-20 (PM audit #137). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. **V1.0 MVP RELEASED.** Phases 143–251 COMPLETE (all sub-phases). **Onboarding wizard COMPLETE (Phases 240-251).** System prompt uses all 4 onboarding preferences (Phase 249-B + 251-B projection fix). HandoffDialog plan-gated (Phase 249-A). Handoff hydration race fixed (Phase 251-A). Trial badge rendering fixed (Phase 251-C). **Phase 238 COMPLETE (31 non-JSX `.tsx` → `.ts` rename).** **Stripe webhook VERIFIED on localhost (Phase 234-B).** All files under 900 lines. 0 npm vulnerabilities. All 7 gates GREEN. **0 god files remaining.** 730 tests (110 suites). **Active backlog: EMPTY. Production deployment pending.**
 >
 > **V1.0 MVP Released (PM audit #94):**
 >
@@ -28,11 +28,13 @@
 >
 > **Remaining Issues:**
 >
-> - **TD-PAYMENT-03** — 🔴 CRITICAL (OWNER ACTION). Stripe webhook not delivering events post-payment. Webhook handler code is correct. Code-level projection bugs FIXED (Phases 234-A, 234-A2). Owner must verify Stripe Dashboard webhook configuration (endpoint URL, signing secret, enabled events, mode match). Stripe CLI was forwarding to wrong URL (`/api/stripe/webhook` instead of `/api/webhooks/stripe`). See PM audit #129, #130.
+> - **TD-PAYMENT-03** — ✅ RESOLVED (PM audit #135). Stripe webhook verified working on localhost by owner. CLI shows HTTP 200 for both `checkout.session.completed` and `invoice.paid`. Transaction created, plan updated, UI reflects changes. Code was always correct — issue was Dashboard configuration (wrong URL, disabled endpoint). Production live-mode verification pending deployment.
 > - **TD-PROJECTION-01** — ✅ RESOLVED (PM audit #130, Phase 234-A). `USER_SYNC_PROJECTION` now includes `stripeCustomerId`, `stripeSubscriptionId`, `subscriptionStatus`, `suspended`.
 > - **TD-BILLING-01** — ✅ RESOLVED (PM audit #130, Phase 234-A2). `getAllTransactions()` `.select()` now includes `stripeId`. Billing history Active/Inactive status works correctly.
 > - **TD-SYNC-01** — ✅ RESOLVED (PM audit #130, Phase 235). MongoDB→Clerk sync expanded to include `firstName` and `lastName` in batched call. Email sync deferred (requires Clerk verification flow — documented as known limitation).
 > - **TD-CHECKOUT-UX-01** — ✅ RESOLVED (PM audit #130, Phase 234-C). Checkout timeout message now warns "If your plan hasn't updated within 10 minutes, please contact support." with amber visual style.
+> - **TD-DESIGN-01** — ✅ CLOSED (PM audit #132). Owner override: `/design` page must stay as dev-only design system preview. Pure static page, no data/auth/secrets. Documented in route table. Remove before production.
+> - **TD-MODEL-EXT-01** — ✅ RESOLVED (PM audit #134, Phase 238). All 31 non-JSX `.tsx` files renamed to `.ts`. Zero violations remaining.
 > - **TD-MEDIA-01** — 🟡 ACCEPTED LIMITATION. Media gen (image/audio) may approach Vercel Hobby 60s timeout. Phase 181 proactive timeout handles gracefully.
 > - **TD-AI-13** — 3 model pricing placeholders (awaiting OpenAI confirmation).
 > - **TD-AI-18** — Advisory: errorMessage forwarding pattern is safe but fragile.
@@ -151,11 +153,12 @@ Each persona has: `id`, `label`, `tagline`, `description`, `category`, `icon`, `
 
 - **Personas are plan-gated** (Lite: 2 personas, Pro: 5 personas, Premium: all 6 personas).
 - Default persona access per plan is hardcoded in constants but overridable by admin via AppSetting.
-- Persona selection UI: `ChatInput` includes a `PersonaSelector` dropdown next to the file upload button for quick persona switching — selector is disabled during active conversations (`messages.length > 0` or `taskStatus === "ended"` — persona is bound per-task). `ChatPersonaPicker` component on `/app/new` page provides full persona browsing with trial badges. `/app/personas` route removed (Phase 210) — redirects to `/app/new`. `/app/new` is labeled "Personas" in sidebar.
+- Persona selection UI: `ChatInput` includes a `PersonaSelector` dropdown above the textarea for quick persona selection at conversation start — selector is locked once messages exist (`messages.length > 0` or conversation ended — persona is permanently bound per-task). Locked state displays a read-only badge (lavender pill with droplet icon + persona label). `ChatPersonaPicker` component on `/app/new` page provides full persona browsing with trial badges. `/app/personas` route removed (Phase 210) — redirects to `/app/new`. `/app/new` is labeled "Personas" in sidebar.
 - Persona is stored per task in `Task.personaId`.
 - System prompt is built per-persona via `buildPersonaAwareSystemPrompt()`.
 - Entitlements resolved via `resolveEntitlements()` in `src/lib/utils/resolve-entitlements.tsx`.
 - `allowedPersonaIds` normalization: `undefined` = all personas (no restriction), `[]` = all blocked, `[...ids]` = exact permitted set.
+- Conversation handoff: at conversation end, user can pick a new persona via `HandoffDialog`. Context (last 20 messages) is summarized and sent as first message in new conversation.
 
 ### Persona Behavioral Requirements
 
@@ -197,7 +200,91 @@ Current implementation covers:
 
 Prompts are versioned and separated from request handlers. `buildPersonaAwareSystemPrompt()` resolves prompts from the new config first, falling back to persona defaults.
 
-**Remaining gap**: Image and audio generation requests are not yet persona-aware � they do not receive persona-specific prompt context. Chat prompts are fully persona-aware.
+**Remaining gap**: ~~Image and audio generation requests are not yet persona-aware~~ — RESOLVED (Phase 26.x). All media generation is persona-aware via `PERSONA_IMAGE_STYLE_HINTS` and `PERSONA_AUDIO_STYLE_HINTS`.
+
+---
+
+## 3B. Onboarding & User Preferences (Phases 240-248)
+
+### Onboarding Flow
+
+New users are redirected to `/app/onboarding` on first login (gate in `(chat)/layout.tsx`). Admin users bypass onboarding entirely.
+
+**6-step wizard:**
+
+| Step | Question                                       | Options (values)                                    |
+| ---- | ---------------------------------------------- | --------------------------------------------------- |
+| 1    | "What brings you to Droplet?"                  | productivity, learning, creative, technical, career |
+| 2    | "What's your biggest challenge right now?"     | decisions, learning, content, software, wellness    |
+| 3    | "What do you expect from a Droplet assistant?" | direct, guided, challenger, explorer                |
+| 4    | "How do you like to receive information?"      | concise, detailed, structured, conversational       |
+| 5    | Persona selection with recommendation          | 6 personas (weighted scoring recommends best match) |
+| 6    | Confirmation with summary                      | Review answers + "Start your first conversation"    |
+
+**Persona recommendation algorithm:** Weighted scoring from `intent × challenge` mapped to persona affinities. Returns highest-scoring persona as "Recommended" badge.
+
+**Data stored:**
+
+- `User.onboardingCompleted: boolean`
+- `User.preferences.intent: UserIntent`
+- `User.preferences.challenge: UserChallenge`
+- `User.preferences.expectation: UserExpectation`
+- `User.preferences.communicationStyle: UserCommunicationStyle`
+- `User.preferences.defaultPersonaId: PersonaId`
+- `User.preferences.onboardedAt: Date`
+
+**Gate exempt paths:** `/app/onboarding`, `/app/profile`, `/app/plans`
+
+### Persona Selection (Per-Conversation)
+
+- **PersonaSelector dropdown** renders in `ChatInput` (above textarea) when starting a new conversation
+- **Persona locked** once first message is sent (`task.length > 0 || isConversationEnded`)
+- **Locked badge** (lavender pill with droplet icon + persona label) replaces selector
+- **No persona override** within a conversation — each conversation is permanently bound to its persona
+- Persona stored per task in `Task.personaId`
+- `selectablePersonas` filtered by `normalizedAllowedPersonaIds` (plan entitlement enforced)
+
+### Conversation Handoff
+
+At conversation end, user can continue with a different persona:
+
+1. "Continue with another persona" button appears in end-state notice
+2. `HandoffDialog` modal shows eligible personas (excluding current)
+3. Navigates to `/app?persona=X&handoff=taskId`
+4. Server fetches source task, builds context via `buildHandoffContext()` (last 20 messages as plaintext summary)
+5. New conversation auto-sends summary as first message (ref-guarded, single fire)
+6. New persona takes over with full context of previous conversation
+
+### Settings Page (`/app/settings`)
+
+- 4 preference dropdowns: Focus (intent), Challenge, Expectation, Communication Style
+- Persona selector NOT on settings (moved to ChatInput per Phase 248)
+- Uses `updatePreferences` server action with dot-notation partial updates
+- Settings link in avatar menu: Plans → Profile → **Settings** → Logout
+
+### System Prompt Integration
+
+`buildPersonaAwareSystemPrompt()` injects user preferences into AI context:
+
+- `INTENT_INSTRUCTIONS[intent]` — shapes AI focus toward user's primary goal
+- `CHALLENGE_INSTRUCTIONS[challenge]` — shapes AI approach to user's biggest obstacle
+- `EXPECTATION_INSTRUCTIONS[expectation]` — shapes AI answer style
+- `COMMUNICATION_STYLE_INSTRUCTIONS[communicationStyle]` — shapes AI formatting
+
+All 4 onboarding preference fields are now injected (Phase 249-B) and correctly projected from MongoDB (Phase 251-B). No remaining gaps.
+
+### Resolved Onboarding Issues (PM audit #134)
+
+- **TD-ONBOARDING-01** — ✅ RESOLVED. All 4 preferences injected into system prompt (Phase 249-B).
+- **TD-ONBOARDING-02** — ✅ RESOLVED. HandoffDialog receives `selectablePersonas` only (Phase 249-A).
+- **TD-ONBOARDING-03** — ✅ RESOLVED. Copy says "pick a different persona when starting a new conversation" (Phase 249-C).
+- **TD-ONBOARDING-04** — ✅ RESOLVED. Dot-notation + idempotency guard (Phase 249-D).
+
+### Resolved Codex Review Regressions (PM audit #137)
+
+- **TD-ONBOARDING-05** — ✅ RESOLVED. Handoff auto-send gated on `dbTaskId === null && task.length === 0` (Phase 251-A).
+- **TD-ONBOARDING-06** — ✅ RESOLVED. `getUserById()` `.select()` now includes `preferences` and `onboardingCompleted` (Phase 251-B).
+- **TD-ONBOARDING-07** — ✅ RESOLVED. Trial badge condition changed to `isTrial` only (Phase 251-C).
 
 ---
 
@@ -750,7 +837,9 @@ All file handling technical debt has been resolved. S3 cleanup on task/user dele
 | `/privacy`                            | Public    | Privacy & Cookie Policy                                                                                                                                             |
 | `/cookies`                            | Public    | Cookie Policy                                                                                                                                                       |
 | `/terms`                              | Public    | Terms & Conditions                                                                                                                                                  |
+| `/design`                             | Public    | Development-only design system preview (typography, buttons, forms, colors). Remove before production.                                                              |
 | `/sign-in`, `/sign-up`                | Auth      | Clerk auth                                                                                                                                                          |
+| `/checkout-success`                   | Special   | Stripe redirect target. Auth required (page-level guard), not proxy-protected. Polls DB for plan update.                                                            |
 | `/app`                                | Protected | Chat dashboard                                                                                                                                                      |
 | `/app/new`                            | Protected | New conversation + persona browsing. Labeled "Personas" in sidebar (Phase 209). Serves as the primary persona selection page.                                       |
 | `/app/library`                        | Protected | Media library (tabs: Chats, Images, Audios, Uploaded). Videos tab removed (PM audit #85). Accessible from sidebar navigation (Phase 209). Removed from avatar menu. |
@@ -845,7 +934,7 @@ All button styles use Lime Green as the accent color in **both** light and dark 
 
 ## 13. Testing
 
-- **Unit tests**: 110 suites, 729 tests (Vitest) — organized by domain in `tests/unit/{actions,components,routes,utils,models,constants,stores}/`. TDD rebuild COMPLETE (Phases 120.1–120.7). All test files rebuilt from scratch using strict TDD methodology. Zero `as never` casts. All tests use shared factories from `tests/unit/test-support/`. Includes streaming, webhook, chat-wrapper, chat-body stop-state, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, persona prompt, rate limiting, task complexity classification, conversation stop enforcement, entitlement resolver, checkout-success page, admin audit trail, OpenAI route tests (split into 5 focused modules), atomic prompt limit, daily conversation limit, media error handling, universal feature access, trial access tests, validation schema security injection tests, AudioPlayer ARIA tests, abort behavior tests, Zustand store tests, upload file size validation, 24 component test files, user model tests, Button component TDD tests, PageHead heading-level TDD tests, suspended user enforcement tests, delete-user-cascade tests, upload model tests, admin-settings-tabs hydration tests, checkout redirect tests, media slot claim/rollback tests.
+- **Unit tests**: 110 suites, 730 tests (Vitest) — organized by domain in `tests/unit/{actions,components,routes,utils,models,constants,stores}/`. TDD rebuild COMPLETE (Phases 120.1–120.7). All test files rebuilt from scratch using strict TDD methodology. Zero `as never` casts. All tests use shared factories from `tests/unit/test-support/`. Includes streaming, webhook, chat-wrapper, chat-body stop-state, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, persona prompt, rate limiting, task complexity classification, conversation stop enforcement, entitlement resolver, checkout-success page, admin audit trail, OpenAI route tests (split into 5 focused modules), atomic prompt limit, daily conversation limit, media error handling, universal feature access, trial access tests, validation schema security injection tests, AudioPlayer ARIA tests, abort behavior tests, Zustand store tests, upload file size validation, 24 component test files, user model tests, Button component TDD tests, PageHead heading-level TDD tests, suspended user enforcement tests, delete-user-cascade tests, upload model tests, admin-settings-tabs hydration tests, checkout redirect tests, media slot claim/rollback tests.
 - **E2E tests**: 8 Playwright spec files. Specs: `admin-settings-propagation`, `auth-boundaries`, `authenticated-accessibility`, `chat-conversation-flow`, `public-structure`, `admin-user-operations`, `billing-checkout-flow`, `error-boundary-handling`. Default 3 browsers (Chromium, Firefox, WebKit); full 7-browser matrix via `PLAYWRIGHT_FULL_MATRIX=1`. WCAG E2E via @axe-core/playwright.
 - **Coverage**: v8 provider, thresholds: 85% statements / 80% branches / 85% functions / 85% lines. Gate PASSES. 7 files explicitly excluded from coverage (complex integration files). Reporters: text, json-summary, lcov. Setup file: `tests/unit/vitest.setup.ts`.
 - **Config**: Vitest `environmentMatchGlobs` for auto-jsdom on `.tsx`. Playwright `actionTimeout: 10s`, `expect.timeout: 5s`. ESLint `no-console` (error), `no-restricted-globals` (alert/confirm). TS `noFallthroughCasesInSwitch`, `forceConsistentCasingInFileNames`. All 7 validation gates GREEN (lint, knip, tsc, unit, E2E, build, prettier).
@@ -917,20 +1006,23 @@ All button styles use Lime Green as the accent color in **both** light and dark 
 | TD-HARDCODE-04    | Content | Hardcoded `$` currency symbol.                                              | 180.4   | ✅ DONE. Currency via `getEffectiveCurrencySymbol()` prop.                           |
 | TD-RATE-CLEANUP   | Data    | `download:` rate-limit keys not cleaned.                                    | 187-D   | ✅ DONE. Key added to `getRateLimitKeys()`.                                          |
 
-### Active — CRITICAL Priority (PM audit #129)
+### Active — CRITICAL Priority (PM audit #131)
 
-| ID               | Area    | Description                                                                                                                                                                                                | Phase |
-| ---------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
-| TD-PAYMENT-03    | Billing | Stripe webhook not delivering events. Payment succeeds in Stripe but plan not upgraded, no Transaction created, billing history empty. Webhook code is correct — Stripe Dashboard config must be verified. | 234   |
-| TD-PROJECTION-01 | Data    | `USER_SYNC_PROJECTION` in `ensure-user-synced.ts` missing `stripeSubscriptionId`, `subscriptionStatus`, `stripeCustomerId`, `suspended`. Profile billing management broken (always null).                  | 234   |
+| ID            | Area    | Description                                                                                                                                                                                                | Phase |
+| ------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| TD-PAYMENT-03 | Billing | Stripe webhook not delivering events. Payment succeeds in Stripe but plan not upgraded, no Transaction created, billing history empty. Webhook code is correct — Stripe Dashboard config must be verified. | 234   |
 
-### Active — HIGH Priority
+### Active — HIGH Priority (PM audit #134)
 
-| ID                | Area | Description                                                                                                                                                    | Phase |
-| ----------------- | ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
-| TD-CHECKOUT-UX-01 | UX   | Checkout success poller timeout message is misleading. Should warn user to contact support if plan doesn't update within 10 minutes. Needs support email link. | 234   |
+No active HIGH items.
 
 ### Resolved — HIGH Priority
+
+| ID              | Area | Description                                                                                                                          | Phase | Resolution                                                    |
+| --------------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------ | ----- | ------------------------------------------------------------- |
+| TD-MODEL-EXT-01 | Code | 31 files use `.tsx` extension with zero JSX content (8 models + 1 database + 5 constants + 7 actions + 9 utils + 1 type). Phase 238. | 238   | All 31 files renamed to `.ts`. Zero violations. PM audit #134 |
+
+### Resolved — HIGH Priority (Prior)
 
 | ID               | Area     | Description                                                                                                                                                                | Phase | Resolution                                                                                    |
 | ---------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- | --------------------------------------------------------------------------------------------- |
