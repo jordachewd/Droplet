@@ -284,8 +284,8 @@ function PersonaStep({
         {personas.map((persona) => {
           const isSelected = selectedPersonaId === persona.id;
           const isRecommended = recommendedPersonaId === persona.id;
-          const isTrial = trialSet.has(persona.id);
           const isAllowed = allowedSet.has(persona.id);
+          const isTrial = trialSet.has(persona.id);
 
           const cardClass = classNames(
             "OnboardingPersonaCard relative flex cursor-pointer flex-col gap-3 rounded-xl border-2 p-4 transition-all duration-200",
@@ -299,6 +299,7 @@ function PersonaStep({
               key={persona.id}
               type="button"
               className={cardClass}
+              data-allowed={isAllowed}
               onClick={() => onSelect(persona.id)}
               aria-pressed={isSelected}
               aria-label={`Select ${persona.label} persona`}
@@ -309,7 +310,7 @@ function PersonaStep({
                 </span>
               )}
 
-              {isTrial && !isAllowed && (
+              {isTrial && (
                 <span className="absolute -top-2 left-3 rounded-full bg-dustyBlue-500 px-2.5 py-0.5 text-xxs font-bold text-white">
                   Trial
                 </span>

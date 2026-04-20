@@ -639,7 +639,13 @@ export default function ChatWrapper({
   };
 
   useEffect(() => {
-    if (handoffContext && !handoffSentRef.current && !isLoading) {
+    if (
+      handoffContext &&
+      !handoffSentRef.current &&
+      !isLoading &&
+      dbTaskId === null &&
+      task.length === 0
+    ) {
       handoffSentRef.current = true;
       sendMessage({
         whois: "user",
@@ -648,7 +654,7 @@ export default function ChatWrapper({
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [handoffContext]);
+  }, [dbTaskId, handoffContext, isLoading, task.length]);
 
   const handleHandoffSelect = useCallback(
     (personaId: PersonaId) => {

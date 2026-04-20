@@ -221,7 +221,7 @@ export async function getUserById(userId: string) {
 
     const user = await User.findOne({ clerkId: parsedUserId.data })
       .select(
-        "clerkId username email role suspended plan firstName lastName userimg registerAt updatedAt dailyConversationsStarted dailyConversationWindowStart",
+        "clerkId username email role suspended plan firstName lastName userimg registerAt updatedAt dailyConversationsStarted dailyConversationWindowStart onboardingCompleted preferences",
       )
       .lean();
 

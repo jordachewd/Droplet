@@ -93,7 +93,7 @@ describe("user.actions", () => {
       expect(connectToDatabase).toHaveBeenCalledOnce();
       expect(userFindOneMock).toHaveBeenCalledWith({ clerkId: "user_123" });
       expect(userQuery.select).toHaveBeenCalledWith(
-        "clerkId username email role suspended plan firstName lastName userimg registerAt updatedAt dailyConversationsStarted dailyConversationWindowStart",
+        "clerkId username email role suspended plan firstName lastName userimg registerAt updatedAt dailyConversationsStarted dailyConversationWindowStart onboardingCompleted preferences",
       );
       expect(response).toMatchObject({
         clerkId: "user_123",
