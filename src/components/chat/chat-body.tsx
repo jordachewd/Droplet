@@ -21,6 +21,7 @@ interface ChatBodyProps {
     stopReason: TaskEndedReason;
     endAction: TaskEndAction;
   } | null;
+  onHandoffRequest?: () => void;
 }
 
 function renderAction({
@@ -102,6 +103,7 @@ export default function ChatBody({
   stopReasonMessages,
   promoContent = DEFAULT_PROMO_CONTENT,
   endState = null,
+  onHandoffRequest,
 }: ChatBodyProps) {
   const parent = useRef<HTMLDivElement | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
@@ -260,6 +262,15 @@ export default function ChatBody({
                   supportEmail,
                   promoContent,
                 })}
+                {onHandoffRequest && (
+                  <button
+                    type="button"
+                    onClick={onHandoffRequest}
+                    className="btn btn-sm btn-outlined"
+                  >
+                    Continue with another persona
+                  </button>
+                )}
                 {endState.endAction === "contact_support" && (
                   <span className="text-xs opacity-80">{supportEmail}</span>
                 )}

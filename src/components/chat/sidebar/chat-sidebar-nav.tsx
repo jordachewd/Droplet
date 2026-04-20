@@ -33,7 +33,7 @@ const WORKSPACE_LINKS: NavLinkItem[] = [
     icon: "bi bi-house",
     exact: true,
   },
-  { href: "/app/new", label: "Personas", icon: "bi bi-grid-3x3-gap" },
+  { href: "/app/new", label: "New Chat", icon: "bi bi-plus-circle" },
   { href: "/app/library", label: "Library", icon: "bi bi-collection" },
 ];
 

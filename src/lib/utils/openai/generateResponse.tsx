@@ -44,6 +44,7 @@ interface GenerateResponseParams {
   retryAttempt?: number;
   highLatency?: boolean;
   explicitPremium?: boolean;
+  userPreferences?: import("@/types/UserData.d").UserPreferences | null;
   modelOverrides?: ModelPolicyModelOverrides;
   claimMediaGenerationSlot?: (params: {
     limitType: "images" | "audio";
@@ -542,12 +543,14 @@ function buildChatCompletionRequestSettings({
   messages,
   maxInputTokens,
   maxOutputTokens,
+  userPreferences,
 }: {
   personaId: string;
   model: string;
   messages: Message[];
   maxInputTokens?: number;
   maxOutputTokens?: number;
+  userPreferences?: import("@/types/UserData.d").UserPreferences | null;
 }): {
   messages: ChatCompletionMessageParam[];
   temperature: number;
@@ -561,6 +564,7 @@ function buildChatCompletionRequestSettings({
     [
       ...buildPersonaAwareSystemPrompt(personaId, {
         model,
+        userPreferences,
       }),
       ...messages,
     ] as Message[],
@@ -591,6 +595,7 @@ async function runChatCompletion({
   retryAttempt = 0,
   highLatency = false,
   explicitPremium = false,
+  userPreferences,
   modelOverrides,
   claimMediaGenerationSlot,
   rollbackMediaGenerationSlot,
@@ -627,6 +632,7 @@ async function runChatCompletion({
     messages,
     maxInputTokens: chatPolicy.maxInputTokens,
     maxOutputTokens: chatPolicy.maxOutputTokens,
+    userPreferences,
   });
   const chatStartTime = Date.now();
   const chatData = await openAiClient.chat.completions.create(
@@ -688,6 +694,7 @@ async function runStreamingChatCompletion({
   retryAttempt = 0,
   highLatency = false,
   explicitPremium = false,
+  userPreferences,
   modelOverrides,
   claimMediaGenerationSlot,
   rollbackMediaGenerationSlot,
@@ -728,6 +735,7 @@ async function runStreamingChatCompletion({
     messages,
     maxInputTokens: chatPolicy.maxInputTokens,
     maxOutputTokens: chatPolicy.maxOutputTokens,
+    userPreferences,
   });
   const chatStartTime = Date.now();
   const chatStream = openAiClient.chat.completions.stream(
@@ -800,6 +808,7 @@ export async function generateResponse({
   retryAttempt = 0,
   highLatency = false,
   explicitPremium = false,
+  userPreferences,
   modelOverrides,
   claimMediaGenerationSlot,
   rollbackMediaGenerationSlot,
@@ -835,6 +844,7 @@ export async function generateResponse({
           retryAttempt: resolvedRetryAttempt,
           highLatency,
           explicitPremium,
+          userPreferences,
           modelOverrides,
           claimMediaGenerationSlot,
           rollbackMediaGenerationSlot,
@@ -863,6 +873,7 @@ export async function generateStreamingResponse({
   retryAttempt = 0,
   highLatency = false,
   explicitPremium = false,
+  userPreferences,
   modelOverrides,
   claimMediaGenerationSlot,
   rollbackMediaGenerationSlot,
@@ -904,6 +915,7 @@ export async function generateStreamingResponse({
           retryAttempt: resolvedRetryAttempt,
           highLatency,
           explicitPremium,
+          userPreferences,
           modelOverrides,
           claimMediaGenerationSlot,
           rollbackMediaGenerationSlot,

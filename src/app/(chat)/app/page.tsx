@@ -8,14 +8,16 @@ import { getEffectiveSupportEmail } from "@/lib/utils/effective-plan-config";
 import { getEffectiveStopReasonMessages } from "@/lib/utils/effective-stop-reasons";
 import { ensureUserSynced } from "@/lib/utils/ensure-user-synced";
 import { resolveEntitlements } from "@/lib/utils/resolve-entitlements";
+import { getTaskByIdForUser } from "@/lib/utils/task-queries";
+import { buildHandoffContext } from "@/lib/utils/build-handoff-context";
 
 interface ChatPageProps {
-  searchParams: Promise<{ persona?: string }>;
+  searchParams: Promise<{ persona?: string; handoff?: string }>;
 }
 
 export default async function ChatPage({ searchParams }: ChatPageProps) {
   const { userId } = await auth();
-  const { persona } = await searchParams;
+  const { persona, handoff } = await searchParams;
   const userData = userId ? await ensureUserSynced(userId) : null;
 
   if (!userData) {
@@ -41,14 +43,33 @@ export default async function ChatPage({ searchParams }: ChatPageProps) {
     fullPersonaAccessByPlan,
   });
 
+  let handoffContext: string | undefined;
+  if (handoff && userId) {
+    const sourceTask = await getTaskByIdForUser({
+      taskId: handoff,
+      userId,
+    });
+    if (sourceTask) {
+      const sourcePersona = personas.find(
+        (p) => p.id === sourceTask.personaId,
+      );
+      handoffContext = buildHandoffContext({
+        messages: sourceTask.messages,
+        sourcePersonaLabel: sourcePersona?.label ?? sourceTask.personaId,
+        sourceTitle: sourceTask.title,
+      });
+    }
+  }
+
   return (
     <ChatWrapper
       personas={personas}
       supportEmail={supportEmail}
       stopReasonMessages={stopReasonMessages}
       promoContent={promoContent}
-      initialPersonaId={persona}
+      initialPersonaId={persona ?? userData.preferences?.defaultPersonaId}
       allowedPersonaIds={entitlements.allowedPersonaIds}
+      handoffContext={handoffContext}
     />
   );
 }

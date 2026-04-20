@@ -15,6 +15,13 @@ const clerkProxy = clerkMiddleware(async (auth, req: NextRequest) => {
   if (userId && !isAdmin && isAdminRoute(req)) {
     return NextResponse.redirect(new URL("/403", req.url));
   }
+
+  const requestHeaders = new Headers(req.headers);
+  requestHeaders.set("x-next-pathname", req.nextUrl.pathname);
+
+  return NextResponse.next({
+    request: { headers: requestHeaders },
+  });
 });
 
 export function proxy(request: NextRequest, event: NextFetchEvent) {

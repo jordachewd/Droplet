@@ -8,6 +8,7 @@ import { Message } from "@/types";
 import ChatIntro from "@/components/chat/chat-intro";
 import ChatBody from "@/components/chat/chat-body";
 import ChatInput from "@/components/chat/chat-input";
+import HandoffDialog from "@/components/chat/handoff-dialog";
 import AlertMessage from "@/components/shared/alert-message";
 import { AlertParams } from "@/types/AlertData.d";
 import { filterAssistantMsg } from "@/lib/utils/openai/filterAssistantMsg";
@@ -40,6 +41,7 @@ interface ChatWrapperProps {
   initialTaskStatus?: TaskStatus;
   initialEndedReason?: TaskEndedReason;
   initialEndAction?: TaskEndAction;
+  handoffContext?: string;
 }
 
 function isAbortError(error: unknown): boolean {
@@ -65,6 +67,7 @@ export default function ChatWrapper({
   initialTaskStatus = "active",
   initialEndedReason,
   initialEndAction,
+  handoffContext,
 }: ChatWrapperProps) {
   const initialMessages = useMemo(
     () => ensureMessagesHaveId(initialMessagesProp ?? []),
@@ -148,6 +151,7 @@ export default function ChatWrapper({
   );
   const [alert, setAlert] = useState<AlertParams | null>(null);
   const [startMsg, setStartMsg] = useState<string>("");
+  const [showHandoffDialog, setShowHandoffDialog] = useState(false);
   const initialEndState = useMemo(
     () =>
       initialTaskStatus === "ended" && initialEndedReason && initialEndAction
@@ -168,21 +172,28 @@ export default function ChatWrapper({
   const router = useRouter();
   const isConversationEnded = taskStatus === "ended";
   const isNewTask = task.length === 0 && !isConversationEnded;
+  const isPersonaLocked = task.length > 0 || isConversationEnded;
+
+  const selectablePersonas = useMemo(
+    () =>
+      personas.filter((p) => normalizedAllowedPersonaIds.includes(p.id)),
+    [personas, normalizedAllowedPersonaIds],
+  );
+
+  const handlePersonaChange = useCallback(
+    (personaId: PersonaId) => {
+      if (!isPersonaLocked) {
+        setSelectedPersonaId(personaId);
+      }
+    },
+    [isPersonaLocked],
+  );
 
   const selectedPersona = useMemo(
     () => personaMap[selectedPersonaId] ?? fallbackPersona,
     [personaMap, selectedPersonaId, fallbackPersona],
   );
-  const selectablePersonas = useMemo(
-    () =>
-      personas.filter((persona) =>
-        normalizedAllowedPersonaIds.includes(persona.id),
-      ),
-    [normalizedAllowedPersonaIds, personas],
-  );
   const isConversationRoute = pathname?.startsWith("/app/c/") ?? false;
-  const shouldDisablePersonaChange =
-    isConversationRoute || task.length > 0 || taskStatus === "ended";
 
   useEffect(() => {
     hydrateConversation({
@@ -208,6 +219,8 @@ export default function ChatWrapper({
   useEffect(() => {
     setPreferredPersonaId(selectedPersonaId);
   }, [selectedPersonaId, setPreferredPersonaId]);
+
+  const handoffSentRef = useRef(false);
 
   useEffect(() => {
     setPersonaId(selectedPersonaId);
@@ -242,17 +255,6 @@ export default function ChatWrapper({
       router.refresh();
     },
     [dbTaskId, router],
-  );
-
-  const handlePersonaChange = useCallback(
-    (nextPersonaId: PersonaId) => {
-      if (!normalizedAllowedPersonaIds.includes(nextPersonaId)) {
-        return;
-      }
-
-      setSelectedPersonaId(resolveSelectablePersonaId(nextPersonaId));
-    },
-    [normalizedAllowedPersonaIds, resolveSelectablePersonaId],
   );
 
   function syncMessagesWithResponse({
@@ -622,6 +624,18 @@ export default function ChatWrapper({
     setIsLoading(false);
   };
 
+  useEffect(() => {
+    if (handoffContext && !handoffSentRef.current && !isLoading) {
+      handoffSentRef.current = true;
+      sendMessage({
+        whois: "user",
+        role: "user",
+        content: handoffContext,
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [handoffContext]);
+
   const showAlert = (
     title: string,
     text: string,
@@ -638,6 +652,18 @@ export default function ChatWrapper({
     setIsLoading(false);
     setMessages((previousMessages) => previousMessages.slice(0, -1));
   };
+
+  const handleHandoffSelect = useCallback(
+    (personaId: PersonaId) => {
+      setShowHandoffDialog(false);
+      if (dbTaskId) {
+        router.push(`/app?persona=${personaId}&handoff=${dbTaskId}`);
+      } else {
+        router.push(`/app?persona=${personaId}`);
+      }
+    },
+    [dbTaskId, router],
+  );
 
   return (
     <section className="ChatWrapper relative flex h-full flex-1 flex-col overflow-hidden -mt-14">
@@ -664,6 +690,7 @@ export default function ChatWrapper({
             stopReasonMessages={stopReasonMessages}
             promoContent={promoContent}
             endState={endState}
+            onHandoffRequest={() => setShowHandoffDialog(true)}
           />
         )}
 
@@ -675,11 +702,20 @@ export default function ChatWrapper({
           placeholder={promoContent.chatInputPlaceholder}
           personaLabel={selectedPersona.label}
           personas={selectablePersonas}
-          selectedPersonaId={selectedPersona.id}
+          selectedPersonaId={selectedPersonaId}
           onPersonaChange={handlePersonaChange}
-          personaSelectorDisabled={shouldDisablePersonaChange}
+          isPersonaLocked={isPersonaLocked}
         />
       </div>
+
+      {showHandoffDialog && (
+        <HandoffDialog
+          personas={personas}
+          currentPersonaId={selectedPersonaId}
+          onSelect={handleHandoffSelect}
+          onClose={() => setShowHandoffDialog(false)}
+        />
+      )}
     </section>
   );
 }

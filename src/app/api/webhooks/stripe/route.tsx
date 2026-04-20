@@ -29,6 +29,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const sig = request.headers.get("stripe-signature");
     const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
+    logStripeWebhookInfo(
+      `Body length: ${body.length}, Signature present: ${Boolean(sig)}, Secret configured: ${Boolean(endpointSecret)}`,
+    );
+
     if (!sig) {
       logStripeWebhookError("Missing stripe-signature header.");
       return createWebhookErrorResponse(400);
@@ -52,15 +56,28 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       return createWebhookErrorResponse(400);
     }
 
+    logStripeWebhookInfo(
+      `Signature verified. Event ID: ${event.id}, Type: ${event.type}`,
+    );
+
     const parsedEvent = stripeWebhookEventSchema.safeParse(event);
 
     if (!parsedEvent.success) {
-      logStripeWebhookError("Invalid Stripe webhook event payload.");
+      logStripeWebhookError(
+        `Invalid Stripe webhook event payload. Zod errors: ${JSON.stringify(parsedEvent.error.issues)}`,
+      );
       return createWebhookErrorResponse(400);
     }
 
     logStripeWebhookInfo(`Event type received: ${parsedEvent.data.type}`);
-    return dispatchStripeWebhookEvent({ event: parsedEvent.data });
+    const result = await dispatchStripeWebhookEvent({
+      event: parsedEvent.data,
+    });
+
+    logStripeWebhookInfo(
+      `Event ${event.id} (${event.type}) handler returned status ${result.status}.`,
+    );
+    return result;
   } catch (error) {
     logStripeWebhookError(
       `Unhandled webhook processing error: ${

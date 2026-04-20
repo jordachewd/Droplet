@@ -1,7 +1,43 @@
 // ====== USER Data Types
 import { PlanData } from "./PlanData.d";
+import { PersonaId } from "./PersonaData.d";
 
 export type UserRoles = "client" | "admin";
+
+export type UserIntent =
+  | "productivity"
+  | "learning"
+  | "creative"
+  | "technical"
+  | "career";
+
+export type UserChallenge =
+  | "decisions"
+  | "learning"
+  | "content"
+  | "software"
+  | "wellness";
+
+export type UserExpectation =
+  | "direct"
+  | "guided"
+  | "challenger"
+  | "explorer";
+
+export type UserCommunicationStyle =
+  | "concise"
+  | "detailed"
+  | "structured"
+  | "conversational";
+
+export interface UserPreferences {
+  intent?: UserIntent;
+  challenge?: UserChallenge;
+  expectation?: UserExpectation;
+  communicationStyle?: UserCommunicationStyle;
+  defaultPersonaId?: PersonaId;
+  onboardedAt?: Date;
+}
 
 /* Used by Clerk Webhook ("user.created") */
 export interface CreateUserParams {
@@ -47,6 +83,8 @@ export interface UserData {
   subscriptionStatus?: PlanData["subscriptionStatus"];
   dailyConversationsStarted?: number;
   dailyConversationWindowStart?: Date | null;
+  onboardingCompleted?: boolean;
+  preferences?: UserPreferences;
   plan: PlanData;
   __v: number;
 }

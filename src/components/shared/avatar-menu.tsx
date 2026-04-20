@@ -208,6 +208,17 @@ export default function AvatarMenu() {
             <span>Profile</span>
           </Link>
 
+          <Link
+            href="/app/settings"
+            className={accountMenuLinkClass}
+            onClick={handleCloseUserMenu}
+            role="menuitem"
+            tabIndex={-1}
+          >
+            <i className="bi bi-gear mr-4" aria-hidden="true"></i>
+            <span>Settings</span>
+          </Link>
+
           <hr className="my-1 border-nightIndigo-100/20" />
 
           <div className="flex min-w-45 items-center px-5 py-2 text-sm">

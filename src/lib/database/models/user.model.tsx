@@ -1,7 +1,10 @@
 import "server-only";
 import { getExpiresOn } from "@/constants/plans";
 import { PlanData } from "@/types/PlanData.d";
-import { UserRoles } from "@/types/UserData.d";
+import {
+  UserRoles,
+  UserPreferences,
+} from "@/types/UserData.d";
 import { Schema, model, models, Document } from "mongoose";
 
 type SubscriptionStatus = "active" | "past_due" | "canceled" | "unpaid";
@@ -19,6 +22,8 @@ interface IUser extends Document {
   plan: PlanData;
   dailyConversationsStarted: number;
   dailyConversationWindowStart?: Date | null;
+  onboardingCompleted: boolean;
+  preferences?: UserPreferences;
   firstName?: string;
   lastName?: string;
   updatedAt?: Date;
@@ -114,6 +119,31 @@ const UserSchema = new Schema<IUser>(
     dailyConversationWindowStart: {
       type: Date,
       default: null,
+    },
+    onboardingCompleted: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    preferences: {
+      intent: {
+        type: String,
+        enum: ["productivity", "learning", "creative", "technical", "career"],
+      },
+      challenge: {
+        type: String,
+        enum: ["decisions", "learning", "content", "software", "wellness"],
+      },
+      expectation: {
+        type: String,
+        enum: ["direct", "guided", "challenger", "explorer"],
+      },
+      communicationStyle: {
+        type: String,
+        enum: ["concise", "detailed", "structured", "conversational"],
+      },
+      defaultPersonaId: { type: String },
+      onboardedAt: { type: Date },
     },
     firstName: {
       type: String,

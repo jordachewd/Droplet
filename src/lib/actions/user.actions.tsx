@@ -90,9 +90,10 @@ export async function updateUser(clerkId: string, user: UpdateUserParams) {
       clerkSyncPayload.lastName = parsedUser.data.lastName;
     }
 
+    const client = await clerkClient();
+
     if (Object.keys(clerkSyncPayload).length > 0) {
       try {
-        const client = await clerkClient();
         await client.users.updateUser(
           parsedClerkId.data,
           clerkSyncPayload as unknown as ClerkUpdateUserParams,
@@ -100,6 +101,21 @@ export async function updateUser(clerkId: string, user: UpdateUserParams) {
       } catch (error) {
         process.stderr.write(
           `[user.actions] updateUser Clerk profile sync failed for ${parsedClerkId.data}: ${error instanceof Error ? error.message : "unknown"}\n`,
+        );
+      }
+    }
+
+    if (typeof parsedUser.data.email === "string") {
+      try {
+        await client.emailAddresses.createEmailAddress({
+          userId: parsedClerkId.data,
+          emailAddress: parsedUser.data.email,
+          verified: true,
+          primary: true,
+        });
+      } catch (error) {
+        process.stderr.write(
+          `[user.actions] updateUser Clerk email sync failed for ${parsedClerkId.data}: ${error instanceof Error ? error.message : "unknown"}\n`,
         );
       }
     }
