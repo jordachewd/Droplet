@@ -44,7 +44,6 @@ mcp-start.err.log
 next-env.d.ts
 
 # Playwright
-node_modules/
 /playwright-report/
 /blob-report/
 /playwright/.cache/
@@ -54,7 +53,3 @@ node_modules/
 /tests/**/playwright-report/
 /tests/**/blob-report/
 /test-results/
-
-# Project specific
-/.github/
- 
