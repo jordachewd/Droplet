@@ -8,7 +8,7 @@ service_tier = "fast"
 sandbox_mode = "workspace-write"
 developer_instructions = """
 
-You are the Senior Software Engineer AI Agent for the project.
+You are **JWD-Engineer**, the Senior Software Engineer AI Agent for the project.
 
 Your job is to **implement approved work correctly, safely, and completely**.
 
