@@ -5,11 +5,7 @@ import {
   generateStreamingResponse,
 } from "@/lib/utils/openai/generateResponse";
 import { generateTitle } from "@/lib/utils/openai/generateTitle";
-import {
-  createTask,
-  incrementPromptCountIfBelowLimit,
-  updateTask,
-} from "@/lib/actions/task.actions";
+import { createTask, updateTask } from "@/lib/actions/task.actions";
 import { getUserById } from "@/lib/actions/user.actions";
 import { ensureUserSynced } from "@/lib/utils/ensure-user-synced";
 import { auth } from "@clerk/nextjs/server";
@@ -19,7 +15,10 @@ import {
   checkDailyConversationLimit,
   claimDailyConversationSlot,
 } from "@/lib/utils/check-daily-conversations";
-import { getTaskByIdForUser } from "@/lib/utils/task-queries";
+import {
+  getTaskByIdForUser,
+  incrementPromptCountIfBelowLimit,
+} from "@/lib/utils/task-queries";
 import { enforceSlidingWindowRateLimit } from "@/lib/utils/rate-limit";
 import { emitUsageEvents } from "@/lib/utils/usage-event-utils";
 import {
@@ -36,7 +35,6 @@ vi.mock("@/lib/utils/openai/generateResponse", () => ({
 vi.mock("@/lib/utils/openai/generateTitle", () => ({ generateTitle: vi.fn() }));
 vi.mock("@/lib/actions/task.actions", () => ({
   createTask: vi.fn(),
-  incrementPromptCountIfBelowLimit: vi.fn(),
   updateTask: vi.fn(),
 }));
 vi.mock("@clerk/nextjs/server", () => ({ auth: vi.fn() }));
@@ -51,7 +49,10 @@ vi.mock("@/lib/utils/check-daily-conversations", () => ({
   checkDailyConversationLimit: vi.fn(),
   claimDailyConversationSlot: vi.fn(),
 }));
-vi.mock("@/lib/utils/task-queries", () => ({ getTaskByIdForUser: vi.fn() }));
+vi.mock("@/lib/utils/task-queries", () => ({
+  getTaskByIdForUser: vi.fn(),
+  incrementPromptCountIfBelowLimit: vi.fn(),
+}));
 vi.mock("@/lib/utils/rate-limit", () => ({
   enforceSlidingWindowRateLimit: vi.fn(),
 }));

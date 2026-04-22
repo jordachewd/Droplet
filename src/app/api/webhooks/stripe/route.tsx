@@ -16,6 +16,7 @@ import {
   logStripeWebhookInfo,
   stripeWebhookEventSchema,
 } from "@/lib/utils/stripe/stripe-webhook-shared";
+import { requireEnv } from "@/lib/utils/require-env";
 import { NextRequest, NextResponse } from "next/server";
 import stripe from "stripe";
 
@@ -27,7 +28,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     const body = await request.text();
     const sig = request.headers.get("stripe-signature");
-    const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    const endpointSecret = requireEnv("STRIPE_WEBHOOK_SECRET");
 
     logStripeWebhookInfo(
       `Body length: ${body.length}, Signature present: ${Boolean(sig)}, Secret configured: ${Boolean(endpointSecret)}`,
@@ -36,11 +37,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     if (!sig) {
       logStripeWebhookError("Missing stripe-signature header.");
       return createWebhookErrorResponse(400);
-    }
-
-    if (!endpointSecret) {
-      logStripeWebhookError("Missing STRIPE_WEBHOOK_SECRET.");
-      return createWebhookErrorResponse(500);
     }
 
     let event: stripe.Event;

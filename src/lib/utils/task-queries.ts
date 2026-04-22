@@ -3,6 +3,8 @@ import { DEFAULT_PERSONA_ID, getPersona } from "@/constants/assistant-personas";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import Task from "@/lib/database/models/tasks.model";
 import Upload from "@/lib/database/models/upload.model";
+import { handleError } from "@/lib/utils/handleError";
+import { nonEmptyStringSchema } from "@/lib/utils/validation-schemas";
 import {
   TaskConversation,
   TaskEndAction,
@@ -12,7 +14,9 @@ import {
 } from "@/types/TaskData.d";
 import { ContentItem, Message, MessageRole } from "@/types";
 import { PersonaId } from "@/types/PersonaData.d";
+import { auth } from "@clerk/nextjs/server";
 import { isValidObjectId } from "mongoose";
+import { z } from "zod";
 
 type TaskRecord = {
   _id: unknown;
@@ -58,6 +62,13 @@ type UploadRecord = {
   taskId?: string;
   createdAt?: Date | string;
 };
+
+const incrementPromptCountSchema = z
+  .object({
+    taskId: nonEmptyStringSchema,
+    limit: z.number().int().positive(),
+  })
+  .strict();
 
 export interface UploadLibraryItem {
   id: string;
@@ -229,6 +240,50 @@ export async function getTaskByIdForUser({
     endAction: task.endAction,
     updatedAt: new Date(task.updatedAt || Date.now()).toISOString(),
   };
+}
+
+export async function incrementPromptCountIfBelowLimit({
+  taskId,
+  limit,
+}: {
+  taskId: string;
+  limit: number;
+}): Promise<boolean> {
+  try {
+    const parsedInput = incrementPromptCountSchema.safeParse({ taskId, limit });
+    if (!parsedInput.success) {
+      throw new Error("Invalid prompt slot claim.");
+    }
+
+    const { userId } = await auth();
+    if (!userId) {
+      throw new Error("Unauthorized");
+    }
+
+    await connectToDatabase();
+
+    const updatedTask = await Task.findOneAndUpdate(
+      {
+        _id: parsedInput.data.taskId,
+        userId,
+        promptCount: { $lt: parsedInput.data.limit },
+      },
+      {
+        $inc: { promptCount: 1 },
+        $set: { updatedAt: new Date() },
+      },
+      {
+        returnDocument: "after",
+        strict: true,
+        upsert: false,
+      },
+    );
+
+    return Boolean(updatedTask);
+  } catch (error) {
+    handleError({ error, source: "incrementPromptCountIfBelowLimit" });
+    return false;
+  }
 }
 
 export async function getMediaItemsByUserId(

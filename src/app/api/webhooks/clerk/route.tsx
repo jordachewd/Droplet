@@ -9,6 +9,7 @@ import {
   deleteUserCascade,
   DeleteUserCascadeStep,
 } from "@/lib/utils/delete-user-cascade";
+import { requireEnv } from "@/lib/utils/require-env";
 import serializeForClient from "@/lib/utils/serialize-for-client";
 import { isMongoDuplicateKeyError } from "@/lib/utils/type-guards";
 import { nonEmptyStringSchema } from "@/lib/utils/validation-schemas";
@@ -290,13 +291,7 @@ async function resolveUserCreatedParams(
 }
 
 export async function POST(req: NextRequest) {
-  const signingSecret = process.env.CLERK_WEBHOOK_SIGNING_SECRET;
-
-  if (!signingSecret) {
-    throw new Error(
-      "Please add CLERK_WEBHOOK_SIGNING_SECRET from Clerk Dashboard to .env or .env.local",
-    );
-  }
+  const signingSecret = requireEnv("CLERK_WEBHOOK_SIGNING_SECRET");
 
   let evt: WebhookEvent;
 

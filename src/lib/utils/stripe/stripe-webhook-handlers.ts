@@ -456,7 +456,14 @@ async function handleInvoicePaymentFailed(
     return createWebhookErrorResponse(500);
   }
 
-  logStripeWebhookError(
+  if (updateResult === "not_matched") {
+    logStripeWebhookInfo(
+      `invoice.payment_failed ${invoiceId}: user ${toStringId(user._id)} already marked as past_due, skipping.`,
+    );
+    return NextResponse.json({ message: "Already processed" }, { status: 200 });
+  }
+
+  logStripeWebhookInfo(
     `invoice.payment_failed ${invoiceId}: marked user ${toStringId(user._id)} as past_due.`,
   );
   return NextResponse.json({ message: "OK" }, { status: 200 });

@@ -76,13 +76,6 @@ const renameTaskSchema = z
   })
   .strict();
 
-const incrementPromptCountSchema = z
-  .object({
-    taskId: nonEmptyStringSchema,
-    limit: z.number().int().positive(),
-  })
-  .strict();
-
 type UpdateTaskInputSchema = z.infer<typeof updateTaskSchema>;
 
 function countUserMessages(messages: Message[]): number {
@@ -309,47 +302,6 @@ export async function renameTask(taskId: string, title: string) {
       status: 500,
       source: "renameTask",
     });
-  }
-}
-
-// ATOMIC PROMPT SLOT CLAIM
-export async function incrementPromptCountIfBelowLimit({
-  taskId,
-  limit,
-}: {
-  taskId: string;
-  limit: number;
-}): Promise<boolean> {
-  try {
-    const parsedInput = incrementPromptCountSchema.safeParse({ taskId, limit });
-    if (!parsedInput.success) throw new Error("Invalid prompt slot claim.");
-
-    const { userId } = await auth();
-    if (!userId) throw new Error("Unauthorized");
-
-    await connectToDatabase();
-
-    const updatedTask = await Task.findOneAndUpdate(
-      {
-        _id: parsedInput.data.taskId,
-        userId,
-        promptCount: { $lt: parsedInput.data.limit },
-      },
-      {
-        $inc: { promptCount: 1 },
-        $set: { updatedAt: new Date() },
-      },
-      {
-        returnDocument: "after",
-        strict: true,
-        upsert: false,
-      },
-    );
-
-    return Boolean(updatedTask);
-  } catch (error) {
-    handleError({ error, source: "incrementPromptCountIfBelowLimit" });
-    return false;
   }
 }
 

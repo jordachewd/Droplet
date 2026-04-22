@@ -99,7 +99,7 @@ describe("POST /api/webhooks/clerk", () => {
     delete process.env.CLERK_WEBHOOK_SIGNING_SECRET;
 
     await expect(POST(buildRequest({}))).rejects.toThrow(
-      "Please add CLERK_WEBHOOK_SIGNING_SECRET from Clerk Dashboard to .env or .env.local",
+      "Missing required environment variable: CLERK_WEBHOOK_SIGNING_SECRET",
     );
   });
 

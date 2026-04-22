@@ -1,5 +1,6 @@
 import PageWrapper from "@/components/layout/page-wrapper";
 import CheckoutPlanStatusPoller from "@/components/shared/checkout-plan-status-poller";
+import { requireEnv } from "@/lib/utils/require-env";
 import { auth } from "@clerk/nextjs/server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -28,19 +29,8 @@ function resolveSessionId(rawSessionId?: string | string[]): string | null {
 }
 
 async function isPaidCheckoutSession(sessionId: string): Promise<boolean> {
-  const stripeSecret = process.env.STRIPE_SECRET_KEY;
-
-  if (!stripeSecret) {
-    process.stderr.write(
-      "[checkout-success] Missing Stripe secret while verifying checkout session.\n",
-    );
-
-    return false;
-  }
-
-  const stripe = new Stripe(stripeSecret);
-
   try {
+    const stripe = new Stripe(requireEnv("STRIPE_SECRET_KEY"));
     const session = await stripe.checkout.sessions.retrieve(sessionId);
     return session.payment_status === "paid";
   } catch (error) {

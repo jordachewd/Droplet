@@ -3,10 +3,10 @@ import { connectToDatabase } from "@/lib/database/mongoose";
 import {
   createTask,
   deleteTask,
-  incrementPromptCountIfBelowLimit,
   renameTask,
   updateTask,
 } from "@/lib/actions/task.actions";
+import { incrementPromptCountIfBelowLimit } from "@/lib/utils/task-queries";
 import {
   createTestMessage,
   createTestTask,

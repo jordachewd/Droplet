@@ -37,7 +37,7 @@ test.describe("route access boundaries", () => {
     test("allows signed-in users to access app namespace", async ({ page }) => {
       await page.goto("/app/profile");
       await expect(page).toHaveURL(/\/app\/profile$/);
-      await expect(page.getByRole("main")).toBeVisible();
+      await expect(page.locator("main").first()).toBeVisible();
     });
   });
 
@@ -48,7 +48,7 @@ test.describe("route access boundaries", () => {
     test("allows admin users to access admin namespace", async ({ page }) => {
       await page.goto("/admin");
       await expect(page).toHaveURL(/\/admin$/);
-      await expect(page.getByRole("main")).toBeVisible();
+      await expect(page.locator("main").first()).toBeVisible();
     });
   });
 });

@@ -5,10 +5,7 @@ import {
 } from "@/lib/utils/openai/generateResponse";
 import { generateTitle } from "@/lib/utils/openai/generateTitle";
 import { TaskEndAction, TaskEndedReason } from "@/types/TaskData.d";
-import {
-  createTask,
-  incrementPromptCountIfBelowLimit,
-} from "@/lib/actions/task.actions";
+import { createTask } from "@/lib/actions/task.actions";
 import { auth } from "@clerk/nextjs/server";
 import { getUserById } from "@/lib/actions/user.actions";
 import { ensureUserSynced } from "@/lib/utils/ensure-user-synced";
@@ -25,7 +22,10 @@ import {
   isExplicitDeepAnalysisRequest,
 } from "@/lib/utils/openai/classify-task-complexity";
 import { claimDailyConversationSlot } from "@/lib/utils/check-daily-conversations";
-import { getTaskByIdForUser } from "@/lib/utils/task-queries";
+import {
+  getTaskByIdForUser,
+  incrementPromptCountIfBelowLimit,
+} from "@/lib/utils/task-queries";
 import { filterAssistantMsg } from "@/lib/utils/openai/filterAssistantMsg";
 import { ensureMessagesHaveId } from "@/lib/utils/message-id";
 import {

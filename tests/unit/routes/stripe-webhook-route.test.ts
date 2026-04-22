@@ -628,7 +628,7 @@ describe("POST /api/webhooks/stripe", () => {
     const payload = await response.json();
 
     expect(response.status).toBe(200);
-    expect(payload).toEqual({ message: "OK" });
+    expect(payload).toEqual({ message: "Already processed" });
   });
 
   it("updates plan and status on customer.subscription.updated", async () => {
