@@ -5,11 +5,11 @@
 > Ref: `SPEC.md` for full specification. `AGENTS.md` for coding rules. `DONE.md` for completed phases.
 > Implementation agent: **Droplet-Engineer** (Senior Developer).
 >
-> **STATUS: PM audit #137 (2026-04-20). Phase 251-A/B/C COMPLETE (Codex review fixes). All 3 regressions fixed and verified. All 7 gates GREEN. 730 tests (110 suites). 0 lint errors. TSC clean. Build clean. Knip clean. Prettier GREEN.**
+> **STATUS: PM audit #138 (2026-04-22). Ruthless deep dive audit complete (tri-agent: Architect + Engineer + PM). All 7 gates verified GREEN by Engineer live run. 730 tests (110 suites). 0 lint errors. TSC clean. Build clean. Knip clean. Prettier GREEN. 5 new tasks added (Phases 253-257). No CRITICAL issues found. 1 pre-production blocker (Phase 253: `/design` removal).**
 >
-> **GATE STATUS: All 7 gates GREEN. 730 tests (110 suites). 0 failures. 0 lint errors. TSC clean. Build clean. Knip clean. Prettier GREEN.**
+> **GATE STATUS: All 7 gates GREEN. 730 tests (110 suites). 0 failures. 0 lint errors (6 accepted warnings). TSC clean. Build clean. Knip clean. Prettier GREEN.**
 >
-> **ACTIVE BACKLOG: 0 code tasks. `/design` page KEPT per owner override (dev-only, remove before production). PRODUCTION DEPLOYMENT PENDING.**
+> **ACTIVE BACKLOG: 5 new code tasks (Phases 253-257). `/design` page must be removed before production (Phase 253). PRODUCTION DEPLOYMENT PENDING pending Phase 253 completion.**
 
 ---
 
@@ -26,10 +26,96 @@
 
 ---
 
-## Execution Order (PM audit #137) — ACTIVE
+## Execution Order (PM audit #138) — ACTIVE
 
-> **No active code tasks. All Codex review regressions FIXED. All phases COMPLETE.**
-> **Next milestone: Production deployment verification (Stripe live-mode webhook + email delivery).**
+> **Priority 1: Phase 253 (remove `/design` page) — pre-production blocker. Must complete before any public launch.**
+> **Priority 2-4: Phases 254-256 — operational and architectural cleanup, complete before next feature work.**
+> **Priority 5: Phase 257 — low-effort gate hygiene.**
+
+---
+
+### Phase 253 — Remove `/design` Page — PRE-PRODUCTION REQUIRED (~10 min)
+
+> **Priority: HIGH. Pre-production blocker. AGENTS.md rule: "Must be removed before production deployment."**
+> Found: Ruthless deep dive audit (PM audit #138). Page ships in production build at `/design`. No auth guard. Publicly accessible. Static-only dev artifact, safe to delete.
+
+**Phase 253-A — Delete `/design` directory and update route table (~10 min)**
+
+- Delete `src/app/(public)/design/` directory and all contents
+- In `AGENTS.md` route table, remove `/design` from the Public namespace entry and remove the `/design` explanatory note beneath it
+- Run `npm run build` to verify route is gone (should return 404, not appear in build output)
+- Acceptance: `/design` produces 404 in build, AGENTS.md route table updated, all 7 gates GREEN
+
+---
+
+### Phase 254 — Fix `invoice.payment_failed` Log Level (~10 min)
+
+> **Priority: MEDIUM. Operational visibility. False-alarm log pollution in production monitoring.**
+> Found: PM audit #138. `handleInvoicePaymentFailed()` in `stripe-webhook-handlers.ts` calls `logStripeWebhookError()` on the success path (line ~460: "marked user as past_due") — a normal billing event outcome incorrectly classified as an error. Misleads on-call monitoring.
+
+- In `src/lib/utils/stripe/stripe-webhook-handlers.ts`, change `logStripeWebhookError(...)` to `logStripeWebhookInfo(...)` for the "marked user as past_due" success log on the `updateResult !== "not_matched"` path
+- Add explicit `logStripeWebhookInfo(...)` for the `not_matched` branch with a clear idempotency message ("user already past_due, skipping")
+- Acceptance: `invoice.payment_failed` success path logs as Info, not Error; `not_matched` path has its own Info log; all 7 gates GREEN
+
+---
+
+### Phase 255 — Standardize `requireEnv()` in Webhook and Billing Files (~15 min)
+
+> **Priority: MEDIUM. Maintenance discipline. Silent misconfiguration risk during deploys.**
+> Found: PM audit #138. 3 files load secrets via bare `process.env.*` with manual null checks instead of `requireEnv()` — inconsistent with every other secret-loading site in the codebase. Risk: deploy with missing secrets fails silently at runtime instead of loudly at startup.
+
+- In `src/app/api/webhooks/stripe/route.tsx`: replace `const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET` + null guard with `const endpointSecret = requireEnv("STRIPE_WEBHOOK_SECRET")` (remove the manual null guard block — `requireEnv()` throws on miss)
+- In `src/app/api/webhooks/clerk/route.tsx`: replace `const signingSecret = process.env.CLERK_WEBHOOK_SIGNING_SECRET` + null guard with `requireEnv("CLERK_WEBHOOK_SIGNING_SECRET")`
+- In `src/app/(public)/checkout-success/page.tsx`: replace `const stripeSecret = process.env.STRIPE_SECRET_KEY` + null guard block with `requireEnv("STRIPE_SECRET_KEY")`
+- Import `requireEnv` from `@/lib/utils/require-env` in each file as needed
+- Acceptance: all 3 files use `requireEnv()`, manual null guards removed, all 7 gates GREEN
+
+---
+
+### Phase 256 — Convert `incrementPromptCountIfBelowLimit` to Private Util (~15 min)
+
+> **Priority: MEDIUM. Architectural hygiene. Server action semantics misapplied to API-route internal helper.**
+> Found: PM audit #138. `incrementPromptCountIfBelowLimit` in `src/lib/actions/task.actions.ts` is exported as a `"use server"` action but is only called from `src/app/api/openai/route.tsx`. Exporting it as a server action means clients could invoke it directly via Next.js's server action mechanism — architecturally confusing, potential self-harm abuse vector against own quota.
+
+- Move `incrementPromptCountIfBelowLimit` from `src/lib/actions/task.actions.ts` to `src/lib/utils/task-queries.tsx` (or a new `src/lib/utils/prompt-slot.ts`) as a **non-exported** private async function
+- Update `src/app/api/openai/route.tsx` to import from the new location
+- Ensure the function retains its auth check and ownership enforcement
+- Remove the export from `task.actions.ts`
+- Acceptance: function is no longer exported as a server action, OpenAI route still uses it, all 7 gates GREEN, no broken imports
+
+---
+
+### Phase 257 — Create `.prettierignore` (~5 min)
+
+> **Priority: LOW. Gate noise prevention. `.agents/` skill markdown files cause Prettier gate noise.**
+> Found: PM audit #138 (Engineer report). Prettier runs against full project root. Third-party skill markdown files in `.agents/` are flagged. A `.prettierignore` prevents future noise.
+
+- Create `.prettierignore` at project root with contents:
+  ```
+  node_modules/
+  .next/
+  .agents/
+  ```
+- Acceptance: `npx prettier . --check` still passes, `.agents/` content no longer checked, all 7 gates GREEN
+
+---
+
+### Phase 258 — UsageEvent Retention Decision + TTL (DECISION REQUIRED, then ~15 min)
+
+> **Priority: LOW now, HIGH at scale. UsageEvent collection grows unbounded.**
+> Found: PM audit #138. `usage-event.model.ts` has no TTL index. `rate-limit-entry.model.ts` correctly uses `expireAfterSeconds: 0`. At production volumes, UsageEvent accumulates ~1.2M docs/year with no archival strategy. Admin analytics queries will degrade.
+
+**Owner decision required before implementation:**
+
+- **Option A**: Add TTL index (e.g., `expireAfterSeconds: 7776000` = 90 days rolling window). Admin analytics is limited to the retention window.
+- **Option B**: Keep indefinitely, monitor query performance. Add MongoDB index on `createdAt` to support range-bounded analytics queries.
+- **Option C**: Partition by month — separate collection per YYYY-MM, rotate manually.
+
+**Implementation (after owner chooses):**
+
+- Add the chosen TTL index or `createdAt` index to `usage-event.model.ts`
+- Document the retention decision in SPEC.md
+- Acceptance: decision documented, index in place, all 7 gates GREEN
 
 ---
 

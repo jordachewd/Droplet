@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> ...04-20 (PM audit #137). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. **V1.0 MVP RELEASED.** Phases 143–251 COMPLETE (all sub-phases). **Onboarding wizard COMPLETE (Phases 240-251).** System prompt uses all 4 onboarding preferences (Phase 249-B + 251-B projection fix). HandoffDialog plan-gated (Phase 249-A). Handoff hydration race fixed (Phase 251-A). Trial badge rendering fixed (Phase 251-C). **Phase 238 COMPLETE (31 non-JSX `.tsx` → `.ts` rename).** **Stripe webhook VERIFIED on localhost (Phase 234-B).** All files under 900 lines. 0 npm vulnerabilities. All 7 gates GREEN. **0 god files remaining.** 730 tests (110 suites). **Active backlog: EMPTY. Production deployment pending.**
+> ...04-22 (PM audit #138). Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. **V1.0 MVP RELEASED.** Phases 143–251 COMPLETE (all sub-phases). **Onboarding wizard COMPLETE (Phases 240-251).** System prompt uses all 4 onboarding preferences (Phase 249-B + 251-B projection fix). HandoffDialog plan-gated (Phase 249-A). Handoff hydration race fixed (Phase 251-A). Trial badge rendering fixed (Phase 251-C). **Phase 238 COMPLETE (31 non-JSX `.tsx` → `.ts` rename).** **Stripe webhook VERIFIED on localhost (Phase 234-B).** All files under 900 lines. 0 npm vulnerabilities. All 7 gates GREEN. **0 god files remaining.** 730 tests (110 suites). **Active backlog: 5 tasks (Phases 253-257). 1 pre-production blocker: Phase 253 (`/design` page removal). 4 medium/low tech-debt cleanup tasks. Production deployment pending Phase 253 completion.** TD-PAYMENT-03 RESOLVED. 4 new TD items added (TD-USAGEEVENT-01, TD-ENV-CONSISTENCY-01, TD-SERVER-ACTION-01, TD-WEBHOOK-LOG-01). 9 Mongoose models confirmed.
 >
 > **V1.0 MVP Released (PM audit #94):**
 >
@@ -1006,15 +1006,28 @@ All button styles use Lime Green as the accent color in **both** light and dark 
 | TD-HARDCODE-04    | Content | Hardcoded `$` currency symbol.                                              | 180.4   | ✅ DONE. Currency via `getEffectiveCurrencySymbol()` prop.                           |
 | TD-RATE-CLEANUP   | Data    | `download:` rate-limit keys not cleaned.                                    | 187-D   | ✅ DONE. Key added to `getRateLimitKeys()`.                                          |
 
-### Active — CRITICAL Priority (PM audit #131)
+### Active — CRITICAL Priority
 
-| ID            | Area    | Description                                                                                                                                                                                                | Phase |
-| ------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
-| TD-PAYMENT-03 | Billing | Stripe webhook not delivering events. Payment succeeds in Stripe but plan not upgraded, no Transaction created, billing history empty. Webhook code is correct — Stripe Dashboard config must be verified. | 234   |
+No active CRITICAL items.
 
-### Active — HIGH Priority (PM audit #134)
+### Active — HIGH Priority (PM audit #138)
 
 No active HIGH items.
+
+### Active — MEDIUM Priority (PM audit #138)
+
+| ID                    | Area | Description                                                                                                                                                                                                                                                                         | Phase |
+| --------------------- | ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| TD-USAGEEVENT-01      | Data | `UsageEvent` model has no TTL index. Collection grows unbounded (~1.2M docs/year at production volumes). Admin analytics queries will degrade. `createdAt` is indexed for range queries, but no auto-expiry. **Owner decision required** on retention policy before implementation. | 258   |
+| TD-ENV-CONSISTENCY-01 | Code | `requireEnv()` inconsistently applied in 3 files: `api/webhooks/stripe/route.tsx`, `api/webhooks/clerk/route.tsx`, `(public)/checkout-success/page.tsx` use bare `process.env.*` with manual null guards. Risk: silent misconfiguration failure on deploy.                          | 255   |
+| TD-SERVER-ACTION-01   | Arch | `incrementPromptCountIfBelowLimit` in `task.actions.ts` is exported as a `"use server"` action but is only called from the OpenAI API route — never from a client form action. Architectural boundary misuse; creates maintenance ambiguity.                                        | 256   |
+| TD-WEBHOOK-LOG-01     | Ops  | `handleInvoicePaymentFailed()` calls `logStripeWebhookError()` on the success path ("marked user as past_due") — a normal billing event outcome. Pollutes production error logs with false positives. `not_matched` (idempotent replay) also logs as error.                         | 254   |
+
+### Resolved — CRITICAL Priority
+
+| ID            | Area    | Description                                                                                                                            | Phase | Resolution                                                                                                                                                                                                                    |
+| ------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------- | ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| TD-PAYMENT-03 | Billing | Stripe webhook not delivering events. Payment succeeds in Stripe but plan not upgraded, no Transaction created, billing history empty. | 234   | ✅ RESOLVED (PM audit #135). Owner verified localhost webhook — HTTP 200 all events. Root cause: webhook disabled in Stripe Dashboard. Phase 234-A/A2/B/C all complete. Production live-mode verification pending deployment. |
 
 ### Resolved — HIGH Priority
 
