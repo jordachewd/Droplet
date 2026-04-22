@@ -2,7 +2,53 @@
 
 > Archive of completed development phases. Moved from `TODO.md` to keep it focused on actionable work.
 > Governed by **Droplet-PM**.
-> Last updated: 2026-04-20 — PM audit #137.
+> Last updated: 2026-04-22 — PM audit #139.
+
+---
+
+## Phase 257 — Create `.prettierignore` — COMPLETED (2026-04-22)
+
+> Found: PM audit #138. Prettier runs against project root including `.agents/` skill markdown files, causing gate noise. A `.prettierignore` prevents future false-positive formatting failures.
+
+- [x] `.prettierignore` created at project root with `node_modules/`, `.next/`, `.agents/`
+- [x] `npx prettier . --check` passes; `.agents/` content excluded from future checks
+- [x] All 7 gates GREEN
+
+---
+
+## Phase 256 — Move `incrementPromptCountIfBelowLimit` to Server-Only Util — COMPLETED (2026-04-22)
+
+> Found: PM audit #138. Function was exported as `"use server"` action in `task.actions.ts` but only called from the OpenAI API route — never from a client form. Architectural boundary misuse. TD-SERVER-ACTION-01 resolved.
+
+- [x] `incrementPromptCountIfBelowLimit` removed from `src/lib/actions/task.actions.ts`
+- [x] Function added to `src/lib/utils/task-queries.ts` (which has `import "server-only"` — not a server action, cannot be invoked by clients)
+- [x] `src/app/api/openai/route.tsx` import updated to `@/lib/utils/task-queries`
+- [x] Auth enforcement (`auth()`) and ownership filter (`{ _id: taskId, userId }`) retained in moved function
+- [x] All related unit tests updated to import from new location: `task-actions.test.ts`, `openai-route-*.test.ts` suites
+- [x] All 7 gates GREEN. TD-SERVER-ACTION-01 RESOLVED.
+
+---
+
+## Phase 255 — Standardize `requireEnv()` in Webhook and Billing Files — COMPLETED (2026-04-22)
+
+> Found: PM audit #138. 3 files loaded secrets via bare `process.env.*` with manual null checks — inconsistent with every other secret-loading site in the codebase. Risk: deploy with missing secrets fails silently at runtime. TD-ENV-CONSISTENCY-01 resolved.
+
+- [x] `src/app/api/webhooks/stripe/route.tsx` — `requireEnv("STRIPE_WEBHOOK_SECRET")` replaces manual null guard
+- [x] `src/app/api/webhooks/clerk/route.tsx` — `requireEnv("CLERK_WEBHOOK_SIGNING_SECRET")` replaces manual null guard
+- [x] `src/app/(public)/checkout-success/page.tsx` — `requireEnv("STRIPE_SECRET_KEY")` replaces manual null guard
+- [x] All 3 files fail-fast and loudly on misconfiguration instead of proceeding with `undefined`
+- [x] All 7 gates GREEN. TD-ENV-CONSISTENCY-01 RESOLVED.
+
+---
+
+## Phase 254 — Fix `invoice.payment_failed` Log Level — COMPLETED (2026-04-22)
+
+> Found: PM audit #138. `handleInvoicePaymentFailed()` called `logStripeWebhookError()` on the success path — a normal billing event outcome incorrectly classified as an error. Polluted production monitoring with false alarms. TD-WEBHOOK-LOG-01 resolved.
+
+- [x] Success path ("marked user as past_due") now uses `logStripeWebhookInfo`
+- [x] `not_matched` idempotent-replay path now has explicit `logStripeWebhookInfo` with clear message ("already marked as past_due, skipping")
+- [x] Parse failure and user-not-found paths retain `logStripeWebhookError` (genuine errors)
+- [x] All 7 gates GREEN. TD-WEBHOOK-LOG-01 RESOLVED.
 
 ---
 
