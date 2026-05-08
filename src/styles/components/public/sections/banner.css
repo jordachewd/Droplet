@@ -1,0 +1,14 @@
+@layer components {
+  .banner-container {
+    @apply rounded-2xl px-6 py-8 shadow-sm bg-linear-245 from-limeGreen-100 via-lavenderHaze-100 to-white w-full;
+    @apply dark:bg-linear-135 dark:from-twilightPurple-1000 dark:via-twilightPurple-800 dark:to-twilightPurple-600;
+  }
+
+  .banner-content {
+    @apply flex flex-col gap-12 lg:flex-row lg:items-center lg:justify-between;
+  }
+
+  .banner-content-box {
+    @apply flex flex-col gap-6;
+  }
+}

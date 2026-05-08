@@ -10,7 +10,7 @@ import { getEffectiveStripeBillingConfig } from "@/lib/utils/effective-stripe-bi
 import { getEffectivePersonaAccessByPlan } from "@/lib/utils/effective-persona-access";
 import { getEffectivePromoContent } from "@/lib/utils/effective-promo-content";
 import Link from "next/link";
-import PageWrapper from "@/components/layout/page-wrapper";
+
 import PageHead from "@/components/layout/page-head";
 
 export const dynamic = "force-dynamic";
@@ -45,7 +45,7 @@ export default async function PlansPage() {
   });
 
   return (
-    <PageWrapper id="PlansPageWrapper">
+    <>
       <PageHead
         title="Choose your plan"
         subtitle="Select the plan that suits your needs!"
@@ -81,6 +81,6 @@ export default async function PlansPage() {
           </div>
         </div>
       </section>
-    </PageWrapper>
+    </>
   );
 }

@@ -1,0 +1,19 @@
+@layer components {
+  .hero-section {
+    @apply pt-14 shadow-2xl backdrop-blur-lg bg-lavenderHaze-500/40 dark:bg-nightIndigo-900/40;
+  }
+
+  .hero-wrapper {
+    @apply flex-col items-center justify-between lg:flex-row gap-12;
+  }
+
+  .hero-content {
+    @apply flex w-full flex-col items-center lg:my-0 gap-8 lg:gap-12;
+    @apply text-center lg:w-1/2 lg:items-start lg:text-left order-1 lg:order-0;
+  }
+
+  .hero-image {
+    @apply relative flex w-full justify-center self-end overflow-hidden order-0 lg:order-1;
+    @apply sm:min-h-105 lg:w-1/2 lg:min-h-125 xl:min-h-150 xxl:min-h-175;
+  }
+}

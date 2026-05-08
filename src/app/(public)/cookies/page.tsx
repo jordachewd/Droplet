@@ -7,7 +7,7 @@ import {
   legalReviewDisclaimer,
 } from "@/constants/cookies-data";
 import { getEffectiveSupportEmail } from "@/lib/utils/effective-plan-config";
-import PageWrapper from "@/components/layout/page-wrapper";
+
 
 export const metadata: Metadata = {
   title: "Cookie Policy | Droplet",
@@ -19,7 +19,7 @@ export default async function CookiesPage() {
   const supportEmail = await getEffectiveSupportEmail();
 
   return (
-    <PageWrapper id="CookiesPage" className="gap-8!">
+    <>
       <PageHead
         title="Cookie Policy"
         subtitle="What Droplet stores in the browser today, why it is needed, and what should be disclosed before adding anything optional."
@@ -65,6 +65,6 @@ export default async function CookiesPage() {
           </Link>
         </div>
       </div>
-    </PageWrapper>
+    </>
   );
 }

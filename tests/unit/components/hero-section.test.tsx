@@ -4,7 +4,7 @@
 import { render, screen } from "@testing-library/react";
 import type { AnchorHTMLAttributes, ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
-import HeroSection from "@/components/sections/homepage/hero-section";
+import HeroSection from "@/components/sections/homepage/HeroSection";
 
 vi.mock("next/image", () => ({
   default: ({ alt, src, ...props }: Record<string, unknown>) => {

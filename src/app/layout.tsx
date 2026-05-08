@@ -1,9 +1,9 @@
 import { Albert_Sans, Dosis } from "next/font/google";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import "@/styles/index.css";
-import DropletTheme from "@/components/layout/droplet-theme";
-import BaseWrapper from "@/components/layout/base-wrapper";
-import AppGradientBg from "@/components/shared/app-gradient-bg";
+import DropletTheme from "@/context/droplet-theme";
+import AppBaseWrapper from "@/components/layout/AppBaseWrapper";
+import AppBaseBackground from "@/components/layout/AppBaseBackground";
 import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata, Viewport } from "next";
 import { ReactNode } from "react";
@@ -37,6 +37,13 @@ const albertsans = Albert_Sans({
   display: "swap",
 });
 
+const clerkAppearance = {
+  variables: {
+    colorPrimary: "#4B0082",
+    colorText: "#191970",
+  },
+};
+
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html
@@ -69,19 +76,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         />
       </head>
       <body>
-        <ClerkProvider
-          appearance={{
-            variables: {
-              colorPrimary: "#4B0082",
-              colorText: "#191970",
-            },
-          }}
-        >
+        <ClerkProvider appearance={clerkAppearance}>
           <DropletTheme>
-            <BaseWrapper>{children}</BaseWrapper>
+            <AppBaseWrapper>{children}</AppBaseWrapper>
           </DropletTheme>
         </ClerkProvider>
-        <AppGradientBg />
+        <AppBaseBackground />
         <Analytics />
       </body>
     </html>

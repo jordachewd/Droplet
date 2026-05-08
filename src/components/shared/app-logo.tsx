@@ -19,10 +19,11 @@ export default function Logo({
   return (
     <Link
       href={href}
-      className={classNames("Logo flex gap-1 items-center", className)}
+      className={classNames("app-logo", className)}
       aria-label={iconOnly ? "Droplet home" : undefined}
     >
       <svg
+        className="app-logo-icon"
         width={size}
         height={size}
         viewBox="0 0 20 20"
@@ -36,9 +37,7 @@ export default function Logo({
         </g>
       </svg>
 
-      {!iconOnly && (
-        <span className="relative text-lg font-medium">droplet</span>
-      )}
+      {!iconOnly && <span className="app-logo-text">droplet</span>}
     </Link>
   );
 }

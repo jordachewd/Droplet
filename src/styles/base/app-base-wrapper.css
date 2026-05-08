@@ -1,5 +1,8 @@
 @layer base {
-  .droplet-gradient-bg {
+  .app-base-wrapper {
+    @apply relative z-0 flex w-full flex-col pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)];
+  }
+  .app-base-background {
     @apply fixed inset-0 -z-10 w-dvw h-dvh transition-all animate-ease-in opacity-60 dark:opacity-80;
     @apply bg-lavenderHaze-300 text-midnightBlue-600 dark:bg-nightIndigo-800 dark:text-lavenderHaze-500;
     @apply bg-radial-[at_100%_0%,var(--color-dustyBlue-500)_0%,var(--color-twilightPurple-400)_30%,var(--color-twilightPurple-300)_50%,var(--color-lavenderHaze-300)_70%,transparent_100%];

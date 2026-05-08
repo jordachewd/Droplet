@@ -3,7 +3,7 @@
 import classNames from "classnames";
 import { ReactNode } from "react";
 import AvatarMenu from "@/components/shared/avatar-menu";
-import ToggleTheme from "@/components/shared/toggle-theme";
+import ToggleTheme from "@/components/shared/ToggleTheme";
 
 type AppHeaderElement = "header" | "section";
 

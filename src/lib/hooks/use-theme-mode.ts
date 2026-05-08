@@ -1,6 +1,6 @@
 "use client";
 
-import { DropletThemeContext } from "@/components/layout/droplet-theme";
+import { DropletThemeContext } from "@/context/droplet-theme";
 import { ThemeMode } from "@/types/ThemeData.d";
 import { useContext } from "react";
 

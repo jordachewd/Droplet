@@ -1,0 +1,5 @@
+@layer components {
+  .persona-wrapper {
+    @apply flex-col gap-6;
+  }
+}

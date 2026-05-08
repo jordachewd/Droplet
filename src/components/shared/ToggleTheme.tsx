@@ -1,6 +1,6 @@
 "use client";
 
-import { TooltipArrow } from "./tooltip-arrow";
+import { TooltipArrow } from "./TooltipArrow";
 import useThemeMode from "@/lib/hooks/use-theme-mode";
 
 export default function ToggleTheme() {
@@ -17,17 +17,17 @@ export default function ToggleTheme() {
   return (
     <TooltipArrow title={tooltipTitle} placement="bottom">
       <button
+        className="app-toggle-switch"
         type="button"
         role="switch"
         aria-checked={darkActive}
         aria-label="Toggle theme mode"
         onClick={handleToggleTheme}
-        className="ToggleTheme toggle-switch"
       >
         <span className="sr-only">{tooltipTitle}</span>
 
-        <span aria-hidden="true" className="toggle-on">
-          <svg viewBox="0 0 24 24" className="toggle-svg" fill="none">
+        <span aria-hidden="true" className="app-toggle-on">
+          <svg viewBox="0 0 24 24" className="app-toggle-svg" fill="none">
             <g stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <line x1="12" y1="2" x2="12" y2="5" />
               <line x1="12" y1="19" x2="12" y2="22" />
@@ -42,28 +42,36 @@ export default function ToggleTheme() {
           </svg>
         </span>
 
-        <span aria-hidden="true" className="toggle-off">
-          <svg viewBox="0 0 24 24" className="toggle-svg" fill="currentColor">
+        <span aria-hidden="true" className="app-toggle-off">
+          <svg
+            viewBox="0 0 24 24"
+            className="app-toggle-svg"
+            fill="currentColor"
+          >
             <path d="M15.1 14.9a6.2 6.2 0 0 1-6-6A6.79 6.79 0 0 1 9.9 4a.98.98 0 0 0-1.2-1.4A10.42 10.42 0 0 0 2 12.5c.2 5.1 4.4 9.3 9.5 9.5 4.5.2 8.5-2.6 9.9-6.6.3-.8-.6-1.7-1.4-1.2a6.78 6.78 0 0 1-4.9.7Z" />
           </svg>
         </span>
 
         <span
           aria-hidden="true"
-          className={`toggle-active ${
+          className={`app-toggle-active ${
             darkActive ? "translate-x-7 " : "translate-x-0"
           }`}
         >
           {darkActive ? (
             <svg
               viewBox="0 0 24 24"
-              className="toggle-svg-active"
+              className="app-toggle-svg-active"
               fill="currentColor"
             >
               <path d="M15.1 14.9a6.2 6.2 0 0 1-6-6A6.79 6.79 0 0 1 9.9 4a.98.98 0 0 0-1.2-1.4A10.42 10.42 0 0 0 2 12.5c.2 5.1 4.4 9.3 9.5 9.5 4.5.2 8.5-2.6 9.9-6.6.3-.8-.6-1.7-1.4-1.2a6.78 6.78 0 0 1-4.9.7Z" />
             </svg>
           ) : (
-            <svg viewBox="0 0 24 24" className="toggle-svg-active" fill="none">
+            <svg
+              viewBox="0 0 24 24"
+              className="app-toggle-svg-active"
+              fill="none"
+            >
               <g stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                 <line x1="12" y1="2" x2="12" y2="5" />
                 <line x1="12" y1="19" x2="12" y2="22" />

@@ -10,7 +10,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { TooltipArrow } from "./tooltip-arrow";
+import { TooltipArrow } from "./TooltipArrow";
 import { useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import LogoutBtn from "./logout-btn";

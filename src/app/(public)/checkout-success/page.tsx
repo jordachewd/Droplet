@@ -1,4 +1,3 @@
-import PageWrapper from "@/components/layout/page-wrapper";
 import CheckoutPlanStatusPoller from "@/components/shared/checkout-plan-status-poller";
 import { requireEnv } from "@/lib/utils/require-env";
 import { auth } from "@clerk/nextjs/server";
@@ -73,10 +72,7 @@ export default async function CheckoutSuccessPage({
   const linkLabel = paymentVerified ? "Go to profile" : "Back to plans";
 
   return (
-    <PageWrapper
-      id="CheckoutSuccessPage"
-      className="h-[calc(100vh-120px)] py-0! items-center justify-center"
-    >
+    <>
       <div className="flex flex-col rounded-2xl gap-6 p-16 text-center shadow-sm bg-lavenderHaze-200 dark:bg-twilightPurple-700">
         <h1 className="heading-3">{title}</h1>
         {paymentVerified && sessionId ? (
@@ -91,6 +87,6 @@ export default async function CheckoutSuccessPage({
           {linkLabel}
         </Link>
       </div>
-    </PageWrapper>
+    </>
   );
 }

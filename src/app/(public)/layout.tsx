@@ -1,27 +1,27 @@
 import { ReactNode } from "react";
-import Footer from "@/components/layout/footer";
-import Header from "@/components/layout/header";
+import PublicFooter from "@/components/public/PublicFooter";
+import PublicHeader from "@/components/public/PublicHeader";
+
+type PublicLayoutProps = {
+  children: ReactNode;
+};
 
 export default function PublicLayout({
   children,
-}: Readonly<{
-  children: ReactNode;
-}>) {
+}: Readonly<PublicLayoutProps>) {
   return (
     <>
       <a href="#public-main-content" className="skip-link">
         Skip to main content
       </a>
-      <Header />
 
-      <main
-        id="public-main-content"
-        className="PublicMain flex flex-col w-full"
-      >
+      <PublicHeader />
+
+      <main className="public-main" id="public-main-content">
         {children}
       </main>
 
-      <Footer />
+      <PublicFooter />
     </>
   );
 }

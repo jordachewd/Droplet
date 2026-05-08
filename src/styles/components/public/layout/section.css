@@ -1,0 +1,9 @@
+@layer components {
+  .public-section {
+    @apply flex w-full m-0 p-0;
+  }
+
+  .public-section-content {
+    @apply flex w-full mx-auto px-6 lg:px-10 xl:px-16;
+  }
+}

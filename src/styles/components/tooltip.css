@@ -1,5 +1,14 @@
 @layer components {
-  .tooltip-content {
-    @apply pointer-events-none absolute z-50 rounded-md bg-nightIndigo-600 p-0.5 text-xxs leading-none text-white opacity-0 shadow transition-opacity duration-200 group-hover:opacity-100 group-focus-within:opacity-100;
+  .app-tooltip {
+    @apply relative inline-block;
+  }
+
+  .app-tooltip-content {
+    @apply pointer-events-none absolute z-50 rounded-md bg-nightIndigo-600 p-0.5 text-xxs leading-none text-white;
+    @apply opacity-0 shadow transition-opacity duration-200 group-hover:opacity-100 group-focus-within:opacity-100 whitespace-nowrap;
+  }
+
+  .app-tooltip-arrow {
+    @apply absolute h-0 w-0;
   }
 }

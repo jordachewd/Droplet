@@ -1,5 +1,0 @@
-@layer base {
-  .app-base-wrapper {
-    @apply relative z-0 flex w-full flex-col pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)];
-  }
-}

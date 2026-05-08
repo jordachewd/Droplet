@@ -12,7 +12,7 @@ import { getEffectivePersonaAccessByPlan } from "@/lib/utils/effective-persona-a
 import { getEffectivePersonaConfig } from "@/lib/utils/effective-persona-config";
 import { getEffectivePlanConfig } from "@/lib/utils/effective-plan-config";
 import { getEffectiveAboutContent } from "@/lib/utils/effective-website-copy";
-import PageWrapper from "@/components/layout/page-wrapper";
+
 
 export const metadata: Metadata = {
   title: "About | Droplet",
@@ -270,7 +270,7 @@ export default async function AboutPage() {
   });
 
   return (
-    <PageWrapper id="AboutPageWrapper">
+    <>
       <PageHead
         title={aboutContent.pageTitle}
         subtitle={aboutContent.pageSubtitle}
@@ -338,6 +338,6 @@ export default async function AboutPage() {
           </div>
         </div>
       </div>
-    </PageWrapper>
+    </>
   );
 }

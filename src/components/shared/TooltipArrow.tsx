@@ -32,20 +32,19 @@ export const TooltipArrow = ({
     return <>{children}</>;
   }
 
+  const contentCss = classNames(
+    "app-tooltip-content",
+    placementStyles[placement],
+  );
+
+  const arrowCss = classNames("app-tooltip-arrow", arrowStyles[placement]);
+
   return (
-    <div className="TooltipArrow group relative inline-flex">
+    <div className="app-tooltip group">
       {children}
-      <span
-        role="tooltip"
-        className={classNames(
-          "tooltip-content whitespace-nowrap",
-          placementStyles[placement],
-        )}
-      >
+      <span className={contentCss} role="tooltip">
         {title}
-        <span
-          className={classNames("absolute h-0 w-0", arrowStyles[placement])}
-        />
+        <span className={arrowCss} />
       </span>
     </div>
   );

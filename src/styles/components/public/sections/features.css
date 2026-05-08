@@ -1,0 +1,5 @@
+@layer components {
+  .features-wrapper {
+    @apply grid gap-8 lg:grid-cols-3;
+  }
+}

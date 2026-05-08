@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import DropletTheme from "@/components/layout/droplet-theme";
+import DropletTheme from "@/context/droplet-theme";
 import useThemeMode from "@/lib/hooks/use-theme-mode";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 

@@ -9,22 +9,37 @@
 @import "./theme/typography.css";
 
 /* Base resets */
-@import "./base/base-wrapper.css";
+@import "./base/app-base-wrapper.css";
 @import "./base/compatibility.css";
 @import "./base/elements.css";
-@import "./base/gradient.css";
 
 /* Component classes */
 @import "./components/typography.css";
 @import "./components/buttons.css";
 @import "./components/tooltip.css";
 @import "./components/layout.css";
+@import "./components/logo.css";
 @import "./components/toggle.css";
 @import "./components/forms.css";
 @import "./components/droplet-globe.css";
+@import "./components/elements.css";
 
 /* Component classes - Chat */
 @import "./components/chat/chat-markdown.css";
 
 /* Component classes - Admin */
 @import "./components/admin/admin.css";
+
+/* Component classes - Public / Layout */
+@import "./components/public/layout/header.css";
+@import "./components/public/layout/main.css";
+@import "./components/public/layout/mobile-nav.css";
+@import "./components/public/layout/footer.css";
+@import "./components/public/layout/section.css";
+
+/* Component classes - Public / Sections */
+@import "./components/public/sections/hero.css";
+@import "./components/public/sections/features.css";
+@import "./components/public/sections/workflow.css";
+@import "./components/public/sections/personas.css";
+@import "./components/public/sections/banner.css";

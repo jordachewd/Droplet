@@ -1,0 +1,14 @@
+@layer components {
+  .public-mobile-nav {
+    @apply overflow-hidden transition-all duration-300 md:hidden max-h-0 opacity-0;
+  }
+  .public-mobile-nav--open {
+    @apply max-h-80 pb-3 opacity-100;
+  }
+  .public-mobile-nav-content {
+    @apply flex flex-col gap-2 rounded-xl border border-slate-300/80 bg-lavenderHaze-100/80 p-2 dark:border-slate-500 dark:bg-nightIndigo-900/80;
+  }
+  .public-mobile-nav-link {
+    @apply rounded-md px-2 py-2 text-base;
+  }
+}

@@ -1,9 +1,10 @@
 import { ReactNode } from "react";
 
-interface MainWrapperProps {
+interface AppBaseWrapperProps {
   children: ReactNode;
 }
 
-export default function BaseWrapper({ children }: MainWrapperProps) {
+export default function AppBaseWrapper({ children }: AppBaseWrapperProps) {
   return <div className="app-base-wrapper">{children}</div>;
 }
+
