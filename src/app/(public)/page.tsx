@@ -16,7 +16,7 @@ export default async function HomePage() {
   return (
     <>
       <HeroSection id="homepage-hero" content={heroContent} />
-      
+
       <FeaturesSection
         id="homepage-features"
         featureCards={landingContent.featureCards}

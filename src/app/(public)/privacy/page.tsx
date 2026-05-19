@@ -8,7 +8,6 @@ import {
 } from "@/constants/privacy-data";
 import { getEffectiveSupportEmail } from "@/lib/utils/effective-plan-config";
 
-
 export const metadata: Metadata = {
   title: "Privacy Policy | Droplet",
   description:

@@ -19,7 +19,6 @@ export default function BannerSection({ id, copy }: CtaBannerProps) {
     >
       <div className="banner-container">
         <div className="banner-content">
-
           <div className="banner-content-box lg:max-w-1/2">
             <h3 className="heading-3 leading-tight">{copy.ctaHeading}</h3>
             <p className="body-2 text-sm md:text-base">{copy.ctaDescription}</p>
@@ -33,7 +32,6 @@ export default function BannerSection({ id, copy }: CtaBannerProps) {
               {copy.ctaSecondaryLabel}
             </Link>
           </div>
-
         </div>
       </div>
     </PublicSection>

@@ -7,4 +7,3 @@ interface AppBaseWrapperProps {
 export default function AppBaseWrapper({ children }: AppBaseWrapperProps) {
   return <div className="app-base-wrapper">{children}</div>;
 }
-

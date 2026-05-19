@@ -7,7 +7,6 @@ import {
 } from "@/constants/terms-data";
 import { getEffectivePlanConfig } from "@/lib/utils/effective-plan-config";
 
-
 export const metadata: Metadata = {
   title: "Terms & Conditions | Droplet",
   description:
