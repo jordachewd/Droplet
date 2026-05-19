@@ -5,7 +5,7 @@ import classNames from "classnames";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
-import ToggleTheme from "@/components/shared/ToggleTheme";
+import ToggleTheme from "@/components/layout/ToggleTheme";
 import AvatarMenu from "@/components/shared/avatar-menu";
 import Button from "@/components/shared/button";
 import Logo from "@/components/shared/app-logo";

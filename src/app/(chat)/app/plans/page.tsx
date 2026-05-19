@@ -12,7 +12,7 @@ import {
 import { getEffectiveStripeBillingConfig } from "@/lib/utils/effective-stripe-billing-config";
 import { getEffectivePersonaAccessByPlan } from "@/lib/utils/effective-persona-access";
 import { getEffectivePromoContent } from "@/lib/utils/effective-promo-content";
-import PageHead from "@/components/layout/page-head";
+import PageHead from "@/components/layout/PageHead";
 import AccountLoadErrorState from "@/components/shared/account-load-error-state";
 
 export default async function AppPlansPage() {
@@ -47,10 +47,10 @@ export default async function AppPlansPage() {
   return userData ? (
     <ChatPageWrapper id="AppPlansPage" scrollable>
       <PageHead
+        id="app-plans-head"
         title="Upgrade your plan"
         subtitle="Select the plan that suits your needs!"
         align="center"
-        className="px-4 mt-12"
       />
 
       <Plans

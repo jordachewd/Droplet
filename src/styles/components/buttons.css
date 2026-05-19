@@ -22,8 +22,8 @@
   }
 
   .btn-text {
-    @apply bg-transparent border-transparent px-5 py-3;
-    @apply text-midnightBlue-500  dark:text-lavenderHaze-500;
+    @apply bg-transparent border-transparent py-2;
+    @apply text-midnightBlue-500 dark:text-lavenderHaze-500;
     @apply hover:text-dustyBlue-500 dark:hover:text-dustyBlue-400;
   }
 

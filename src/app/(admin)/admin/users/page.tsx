@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Button from "@/components/shared/button";
 import FormInput from "@/components/shared/form-input";
-import PageHead from "@/components/layout/page-head";
+import PageHead from "@/components/layout/PageHead";
 import { AdminUsersTable } from "@/components/admin/users/admin-users-table";
 import { getAdminUsers } from "@/lib/utils/admin-queries";
 
@@ -28,6 +28,7 @@ export default async function AdminUsersPage({
   return (
     <section className="AdminUsersPage mx-auto flex w-full max-w-7xl flex-col gap-6">
       <PageHead
+        id="admin-users-head"
         title="Users"
         subtitle="Search by username or email, then inspect account state, plan data, and usage."
       />

@@ -11,7 +11,7 @@ import { getEffectivePersonaAccessByPlan } from "@/lib/utils/effective-persona-a
 import { getEffectivePromoContent } from "@/lib/utils/effective-promo-content";
 import Link from "next/link";
 
-import PageHead from "@/components/layout/page-head";
+import PageHead from "@/components/layout/PageHead";
 
 export const dynamic = "force-dynamic";
 
@@ -47,6 +47,7 @@ export default async function PlansPage() {
   return (
     <>
       <PageHead
+        id="plans-page-head"
         title="Choose your plan"
         subtitle="Select the plan that suits your needs!"
         align="center"

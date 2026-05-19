@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import classNames from "classnames";
 import Link from "next/link";
-import PageHead from "@/components/layout/page-head";
+import PageHead from "@/components/layout/PageHead";
 import {
   legalReviewDisclaimer,
   privacySections,
@@ -31,6 +31,7 @@ export default async function PrivacyPage() {
   return (
     <>
       <PageHead
+        id="privacy-page-head"
         title="Privacy Policy"
         subtitle="How Droplet handles account data, conversations, stored assets, billing records, and provider integrations."
       />

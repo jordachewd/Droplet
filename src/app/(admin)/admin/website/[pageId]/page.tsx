@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import PageHead from "@/components/layout/page-head";
+import PageHead from "@/components/layout/PageHead";
 import TiptapEditor from "@/components/admin/tiptap-editor";
 import { AdminManagedForm } from "@/components/admin/admin-managed-form";
 import { AdminFormSubmitButton } from "@/components/admin/admin-form-submit-button";
@@ -24,6 +24,7 @@ export default async function AdminWebsiteEditorPage({
   return (
     <section className="AdminWebsiteEditorPage mx-auto flex w-full max-w-7xl flex-col gap-6">
       <PageHead
+        id="admin-website-editor-head"
         title={`Edit ${page.title}`}
         subtitle="Update page copy and rich content, then persist the latest HTML output."
       />

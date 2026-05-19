@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
 import classNames from "classnames";
 import Link from "next/link";
-import PageHead from "@/components/layout/page-head";
+import PageHead from "@/components/layout/PageHead";
 import {
   cookieCategories,
   legalReviewDisclaimer,
 } from "@/constants/cookies-data";
 import { getEffectiveSupportEmail } from "@/lib/utils/effective-plan-config";
-
 
 export const metadata: Metadata = {
   title: "Cookie Policy | Droplet",
@@ -21,6 +20,7 @@ export default async function CookiesPage() {
   return (
     <>
       <PageHead
+        id="cookies-page-head"
         title="Cookie Policy"
         subtitle="What Droplet stores in the browser today, why it is needed, and what should be disclosed before adding anything optional."
       />

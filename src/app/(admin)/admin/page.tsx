@@ -1,5 +1,5 @@
 ﻿import Link from "next/link";
-import PageHead from "@/components/layout/page-head";
+import PageHead from "@/components/layout/PageHead";
 import { getAdminDashboardStats } from "@/lib/utils/admin-queries";
 
 export default async function AdminDashboardPage() {
@@ -8,6 +8,7 @@ export default async function AdminDashboardPage() {
   return (
     <section className="AdminDashboardPage mx-auto flex w-full max-w-7xl flex-col gap-6">
       <PageHead
+        id="admin-dashboard-head"
         title="Admin Dashboard"
         subtitle="Operational overview across users, conversations, billing, and usage telemetry."
       />

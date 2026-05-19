@@ -7,7 +7,7 @@ import { UploadRouteResponse } from "@/types/UploadData.d";
 import { UploadFileInput } from "@/components/shared/upload-file-input";
 import PersonaSelector from "@/components/shared/persona-selector";
 import Button from "@/components/shared/button";
-import { TooltipArrow } from "@/components/shared/TooltipArrow";
+import { TooltipArrow } from "@/components/layout/TooltipArrow";
 
 interface ChatInputProps {
   loading: boolean;

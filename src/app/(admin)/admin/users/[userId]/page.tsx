@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import PageHead from "@/components/layout/page-head";
+import PageHead from "@/components/layout/PageHead";
 import {
   removeUserByAdminAction,
   toggleUserSuspensionAction,
@@ -31,6 +31,7 @@ export default async function AdminUserDetailPage({
   return (
     <section className="AdminUserDetailPage mx-auto flex w-full max-w-7xl flex-col gap-6">
       <PageHead
+        id="admin-user-detail-head"
         title={user.username}
         subtitle="Inspect plan state, recent billing, and account-level operational controls."
       />

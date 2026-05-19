@@ -2,7 +2,7 @@
 
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import PageHead from "@/components/layout/page-head";
+import PageHead from "@/components/layout/PageHead";
 
 describe("PageHead", () => {
   it("renders an h1 heading by default", () => {

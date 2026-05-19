@@ -1,4 +1,4 @@
-import PageHead from "@/components/layout/page-head";
+import PageHead from "@/components/layout/PageHead";
 import { getAdminUsageAnalytics } from "@/lib/utils/admin-queries";
 import { getEffectiveCurrencySymbol } from "@/lib/utils/effective-plan-config";
 
@@ -15,6 +15,7 @@ export default async function AdminUsagePage() {
   return (
     <section className="AdminUsagePage mx-auto flex w-full max-w-7xl flex-col gap-6">
       <PageHead
+        id="admin-usage-head"
         title="Usage"
         subtitle="Request-level telemetry grouped by user, model, request type, provider, and time period."
       />

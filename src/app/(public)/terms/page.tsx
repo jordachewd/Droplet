@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import classNames from "classnames";
-import PageHead from "@/components/layout/page-head";
+import PageHead from "@/components/layout/PageHead";
 import {
   buildTermsSections,
   legalReviewDisclaimer,
@@ -24,6 +24,7 @@ export default async function TermsPage() {
   return (
     <>
       <PageHead
+        id="terms-page-head"
         title="Terms & Conditions"
         subtitle="Draft service terms covering account use, pricing, AI-generated content, suspension, and legal review requirements."
       />

@@ -1,7 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import ChatPageWrapper from "@/components/chat/chat-page-wrapper";
-import PageHead from "@/components/layout/page-head";
+import PageHead from "@/components/layout/PageHead";
 import LibraryTabs from "@/components/chat/library-tabs";
 import type {
   LibraryConversationCardItem,
@@ -209,10 +209,10 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
   return (
     <ChatPageWrapper id="LibraryPage" scrollable>
       <PageHead
+        id="library-page-head"
         title="Conversation Library"
         subtitle="Saved sessions grouped by persona."
         align="center"
-        className="px-4 mt-12"
       />
 
       <LibraryTabs

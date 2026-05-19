@@ -1,6 +1,6 @@
 @layer components {
   .public-section {
-    @apply flex w-full m-0 p-0;
+    @apply flex w-full m-0 px-0 py-16;
   }
 
   .public-section-content {

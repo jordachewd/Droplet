@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import classNames from "classnames";
 import Link from "next/link";
-import PageHead from "@/components/layout/page-head";
+import PageHead from "@/components/layout/PageHead";
 import {
   AboutVisualType,
   buildAboutSections,
@@ -12,7 +12,6 @@ import { getEffectivePersonaAccessByPlan } from "@/lib/utils/effective-persona-a
 import { getEffectivePersonaConfig } from "@/lib/utils/effective-persona-config";
 import { getEffectivePlanConfig } from "@/lib/utils/effective-plan-config";
 import { getEffectiveAboutContent } from "@/lib/utils/effective-website-copy";
-
 
 export const metadata: Metadata = {
   title: "About | Droplet",
@@ -272,6 +271,7 @@ export default async function AboutPage() {
   return (
     <>
       <PageHead
+        id="about-page-head"
         title={aboutContent.pageTitle}
         subtitle={aboutContent.pageSubtitle}
         align="center"

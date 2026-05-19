@@ -1,6 +1,6 @@
 import classNames from "classnames";
 import Button from "@/components/shared/button";
-import { TooltipArrow } from "./TooltipArrow";
+import { TooltipArrow } from "../layout/TooltipArrow";
 
 interface SidebarToggleProps {
   title?: string | null;

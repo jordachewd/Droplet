@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import PageHead from "@/components/layout/page-head";
+import PageHead from "@/components/layout/PageHead";
 import { getAdminTransactionDetail } from "@/lib/utils/admin-queries";
 import { getEffectiveCurrencySymbol } from "@/lib/utils/effective-plan-config";
 
@@ -23,6 +23,7 @@ export default async function AdminTransactionDetailPage({
   return (
     <section className="AdminTransactionDetailPage mx-auto flex w-full max-w-7xl flex-col gap-6">
       <PageHead
+        id="admin-transaction-detail-head"
         title="Transaction Detail"
         subtitle="View billing metadata, effective dates, and the associated user account."
       />

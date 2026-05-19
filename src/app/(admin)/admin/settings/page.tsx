@@ -1,4 +1,4 @@
-import PageHead from "@/components/layout/page-head";
+import PageHead from "@/components/layout/PageHead";
 import { getAdminSettingsSnapshot } from "@/lib/utils/admin-queries";
 import { ModelSettingsFormValue } from "@/types/AdminData.d";
 import { AdminModelsSection } from "@/components/admin/settings/admin-models-section";
@@ -167,6 +167,7 @@ export default async function AdminSettingsPage() {
   return (
     <section className="AdminSettingsPage mx-auto flex w-full max-w-7xl flex-col gap-6">
       <PageHead
+        id="admin-settings-head"
         title="Settings"
         subtitle="Persist mutable operational settings for models, pricing, limits, persona content/access, and default theme."
       />

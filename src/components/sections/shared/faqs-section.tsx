@@ -1,4 +1,4 @@
-import PageHead from "@/components/layout/page-head";
+import PageHead from "@/components/layout/PageHead";
 import type { FaqItem } from "@/constants/faqs";
 import classNames from "classnames";
 
@@ -24,6 +24,7 @@ export default function Faqs({ faqsData }: FaqsProps) {
   return (
     <section className={wrapperClassName}>
       <PageHead
+        id="faqs-section-head"
         title="Frequently Asked Questions"
         subtitle="Find answers to the most frequently asked questions below."
         align="center"
