@@ -1,5 +1,9 @@
 @layer components {
-  .persona-wrapper {
-    @apply flex-col gap-6;
+  .persona-spotlight-wrapper {
+    @apply flex-col;
+  }
+
+  .personas-wrapper {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3;
   }
 }

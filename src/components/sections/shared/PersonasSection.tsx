@@ -1,7 +1,7 @@
-import PersonaCard from "@/components/shared/persona-card";
+import PublicSection from "@/components/public/PublicSection";
+import PersonaCard from "@/components/shared/PersonaCard";
 import { PromoContent } from "@/constants/promo-content";
 import { Persona, PersonaAccessLevel, PersonaId } from "@/types/PersonaData.d";
-import classNames from "classnames";
 
 interface PersonasSectionProps {
   personas: Persona[];
@@ -10,7 +10,6 @@ interface PersonasSectionProps {
   showLockedPersonas?: boolean;
   personaAccess?: Partial<Record<PersonaId, PersonaAccessLevel>>;
   personaRequiredPlan?: Partial<Record<PersonaId, "Pro" | "Premium" | null>>;
-  className?: string;
   promoContent?: PromoContent;
 }
 
@@ -21,19 +20,16 @@ export default function PersonasSection({
   showLockedPersonas = true,
   personaAccess,
   personaRequiredPlan,
-  className = "",
   promoContent,
 }: PersonasSectionProps) {
   const allowedPersonaIdSet = new Set(allowedPersonaIds ?? []);
   const enforcePlanFilter = isAppMode && allowedPersonaIds !== undefined;
 
   return (
-    <section
-      className={classNames(
-        "PersonasSection grid grid-cols-1 sm:grid-cols-2",
-        "lg:grid-cols-3 mx-auto w-full max-w-screen-2xl gap-10",
-        className,
-      )}
+    <PublicSection
+      id="personas-section"
+      sectionClass="personas-section"
+      wrapperClass="personas-wrapper"
     >
       {personas.map((persona) => {
         const isLocked =
@@ -65,6 +61,6 @@ export default function PersonasSection({
           />
         );
       })}
-    </section>
+    </PublicSection>
   );
 }

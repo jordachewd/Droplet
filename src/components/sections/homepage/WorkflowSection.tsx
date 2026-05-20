@@ -1,3 +1,4 @@
+import ContentCard from "@/components/layout/ContentCard";
 import PublicSection from "@/components/public/PublicSection";
 import {
   getDefaultLandingContent,
@@ -22,13 +23,11 @@ export default function WorkflowSection({
       sectionClass="workflow-section"
       wrapperClass="workflow-wrapper"
     >
-      <div className="content-card">
-        <p className="eyebrow">{workflowCopy.eyebrow}</p>
-        <h2 className="heading-4 mt-3 leading-tight">{workflowCopy.title}</h2>
-        <p className="body-2 mt-4 max-w-2xl text-sm md:text-base">
-          {workflowCopy.description}
-        </p>
-
+      <ContentCard
+        eyebrow={workflowCopy.eyebrow}
+        title={workflowCopy.title}
+        description={workflowCopy.description}
+      >
         <div className="mt-6 flex flex-col gap-4">
           {howItWorksSteps.map((step) => (
             <article key={step.step} className="workflow-article">
@@ -44,22 +43,21 @@ export default function WorkflowSection({
             </article>
           ))}
         </div>
-      </div>
+      </ContentCard>
 
-      <div className="content-card">
-        <p className="eyebrow">{workflowCopy.rhythmEyebrow}</p>
+      <ContentCard eyebrow={workflowCopy.rhythmEyebrow}>
         <div className="mt-5 flex flex-col gap-4">
           {workflowCopy.rhythmCards.map((card, index) => (
             <article
               key={`${card.label}-${index}`}
               className="workflow-article"
             >
-              <p className="eyebrow">{card.label}</p>
+              <p className="card-eyebrow">{card.label}</p>
               <p className="body-2 mt-2 text-sm">{card.detail}</p>
             </article>
           ))}
         </div>
-      </div>
+      </ContentCard>
     </PublicSection>
   );
 }

@@ -1,6 +1,6 @@
-import Faqs from "@/components/sections/shared/faqs-section";
+import Faqs from "@/components/sections/shared/FaqsSection";
 import ChatPageWrapper from "@/components/chat/chat-page-wrapper";
-import Plans from "@/components/sections/shared/plans-section";
+import PlansSection from "@/components/sections/shared/PlansSection";
 import { ensureUserSynced } from "@/lib/utils/ensure-user-synced";
 import { auth } from "@clerk/nextjs/server";
 import { buildPlans } from "@/constants/plans";
@@ -53,7 +53,7 @@ export default async function AppPlansPage() {
         align="center"
       />
 
-      <Plans
+      <PlansSection
         userData={userData}
         hasLoader
         plansData={plans}
@@ -61,8 +61,8 @@ export default async function AppPlansPage() {
         subscribeCtaLabel={promoContent.plansSubscribeCta}
         popularBadgeLabel={promoContent.planPopularBadge}
         yearlyDiscount={stripeBillingConfig.yearlyDiscount}
-        className="max-w-7xl!"
       />
+
       <Faqs faqsData={faqs} />
     </ChatPageWrapper>
   ) : (

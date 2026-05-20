@@ -4,7 +4,7 @@ import { render, screen } from "@testing-library/react";
 import type { AnchorHTMLAttributes, ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Plan } from "@/types/PlanData.d";
-import Plans from "@/components/sections/shared/plans-section";
+import Plans from "@/components/sections/shared/PlansSection";
 import { useUser } from "@clerk/nextjs";
 import { fireEvent } from "@testing-library/react";
 

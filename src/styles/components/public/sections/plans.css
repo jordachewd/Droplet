@@ -1,0 +1,14 @@
+@layer components {
+  .plans-wrapper {
+    @apply flex-col;
+  }
+
+  .plans-container {
+    @apply flex w-full flex-col md:flex-row justify-between;
+    @apply gap-10 md:gap-8 lg:gap-12 xl:gap-16 2xl:gap-20;
+  }
+
+  .plans-bottom {
+    @apply mt-8 flex items-center justify-center;
+  }
+}

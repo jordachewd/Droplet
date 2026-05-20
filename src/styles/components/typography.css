@@ -46,8 +46,4 @@
   .body-2 {
     @apply text-sm;
   }
-
-  .eyebrow {
-    @apply text-xxs font-medium uppercase tracking-[0.2em] text-dustyBlue-600 dark:text-lavenderHaze-900;
-  }
 }

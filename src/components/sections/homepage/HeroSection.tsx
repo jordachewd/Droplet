@@ -18,12 +18,10 @@ export default function HeroSection({ id, content = defaults }: HeroProps) {
     >
       <div className="hero-content">
         <h1 className="heading-1 whitespace-pre-line">{content.heading}</h1>
-
         <p className="heading-5 max-w-2xl whitespace-pre-line">
           {content.subheading}
         </p>
-
-        <Link className="btn btn-lg btn-contained px-16" href="/app/new">
+        <Link className="btn btn-lg btn-contained px-16" href="/sign-up">
           {content.ctaLabel}
         </Link>
       </div>

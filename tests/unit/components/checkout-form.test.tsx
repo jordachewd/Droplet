@@ -2,7 +2,7 @@
 
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import Checkout from "@/components/shared/checkout-form";
+import Checkout from "@/components/shared/CheckoutForm";
 import { checkoutPlan } from "@/lib/actions/transaction.action";
 import { useFormStatus } from "react-dom";
 import type { CheckoutPlanParams, PlanStatus } from "@/types/PlanData.d";

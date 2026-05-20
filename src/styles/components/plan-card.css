@@ -1,0 +1,47 @@
+@layer components {
+  .plan-card {
+    @apply relative flex w-full flex-col gap-10 overflow-hidden px-10 py-14 align-top;
+    @apply bg-lavenderHaze-500 text-twilightPurple-500 rounded-lg shadow-xl;
+  }
+
+  .plan-card-badge {
+    @apply absolute -left-8 top-3.5 flex -rotate-45 p-1.5 text-2xs;
+    @apply uppercase leading-none tracking-widest shadow-sm px-8 font-bold;
+  }
+
+  .plan-card-top {
+    @apply flex flex-col items-center justify-between;
+  }
+
+  .plan-card-top--icon {
+    @apply text-7xl pb-12;
+  }
+
+  .plan-card-top--row {
+    @apply flex justify-between gap-4 w-full;
+  }
+
+  .plan-card-top--desc {
+    @apply flex pl-0.5 text-xs opacity-80 w-1/2;
+  }
+
+  .plan-card-top--save {
+    @apply text-right text-xs font-semibold uppercase;
+  }
+
+  .plan-card-title {
+    @apply flex items-center leading-none;
+  }
+
+  .plan-card-list {
+    @apply flex w-full flex-col gap-3;
+  }
+
+  .plan-card-list--item {
+    @apply flex items-center gap-4 text-xs;
+  }
+
+  .plan-card-checkout {
+    @apply flex items-center justify-center mt-auto w-full;
+  }
+}

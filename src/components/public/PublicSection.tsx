@@ -17,7 +17,7 @@ export default function PublicSection({
   fullWidth = false,
 }: PublicSectionProps) {
   const sectionCss = classNames("public-section", sectionClass);
-  const wrapperCss = classNames("public-section-content", wrapperClass, {
+  const wrapperCss = classNames("public-section-wrapper", wrapperClass, {
     "max-w-screen-2xl 2xl:px-4": !fullWidth,
   });
 

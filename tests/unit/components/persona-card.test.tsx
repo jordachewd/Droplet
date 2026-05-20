@@ -3,7 +3,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import type { AnchorHTMLAttributes, ReactNode } from "react";
-import PersonaCard from "@/components/shared/persona-card";
+import PersonaCard from "@/components/shared/PersonaCard";
 import type { Persona } from "@/types/PersonaData.d";
 
 vi.mock("next/link", () => ({

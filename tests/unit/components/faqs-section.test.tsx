@@ -2,7 +2,7 @@
 
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import Faqs from "@/components/sections/shared/faqs-section";
+import Faqs from "@/components/sections/shared/FaqsSection";
 
 const sampleFaqs = [
   {

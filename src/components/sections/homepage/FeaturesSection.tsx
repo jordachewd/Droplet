@@ -1,3 +1,4 @@
+import ContentCard from "@/components/layout/ContentCard";
 import PublicSection from "@/components/public/PublicSection";
 import {
   getDefaultLandingContent,
@@ -19,14 +20,13 @@ export default function FeaturesSection({
       sectionClass="features-section"
       wrapperClass="features-wrapper"
     >
-      {featureCards.map((card) => (
-        <article key={card.title} className="content-card">
-          <div className="featured-icon">
-            <i className={card.icon} aria-hidden="true"></i>
-          </div>
-          <h2 className="heading-5 mt-5">{card.title}</h2>
-          <p className="body-2 mt-3 text-sm md:text-base">{card.description}</p>
-        </article>
+      {featureCards.map((card, index) => (
+        <ContentCard
+          key={card.title + index}
+          icon={card.icon}
+          title={card.title}
+          description={card.description}
+        />
       ))}
     </PublicSection>
   );

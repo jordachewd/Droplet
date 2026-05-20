@@ -27,13 +27,13 @@ export default function LoadingBubbles({
 }: LoadingBubblesProps) {
   const bubbles = sizeMappings[size] || sizeMappings.medium;
 
+  const loaderClass = classNames(
+    "flex w-full items-center justify-center gap-1",
+    className,
+  );
+
   const bubbleLoader = (
-    <div
-      className={classNames(
-        "LoadingBubbles flex w-full items-center justify-center gap-1",
-        className,
-      )}
-    >
+    <div className={loaderClass}>
       {bubbles.map((bubbleSize, index) => (
         <div
           key={index}
@@ -51,7 +51,7 @@ export default function LoadingBubbles({
 
   if (wrapped) {
     return (
-      <div className="LoadingBubbles flex h-dvh items-center justify-center">
+      <div className="flex h-dvh items-center justify-center">
         {bubbleLoader}
       </div>
     );

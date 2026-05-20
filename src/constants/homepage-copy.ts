@@ -4,7 +4,9 @@ export interface HomepageCopy {
   ctaHeading: string;
   ctaDescription: string;
   ctaPrimaryLabel: string;
+  ctaPrimaryLink?: string;
   ctaSecondaryLabel: string;
+  ctaSecondaryLink?: string;
   spotlightLabel: string;
   spotlightHeading: string;
   spotlightDescription: string;
@@ -16,7 +18,9 @@ const DEFAULT_HOMEPAGE_COPY: HomepageCopy = {
   ctaDescription:
     "Explore the persona catalog first, or compare the plan limits if you already know how much capacity you need.",
   ctaPrimaryLabel: "Create account",
+  ctaPrimaryLink: "/sign-up",
   ctaSecondaryLabel: "Explore plans",
+  ctaSecondaryLink: "/plans",
   spotlightLabel: "Persona spotlight",
   spotlightHeading: "Different jobs need different voices.",
   spotlightDescription:

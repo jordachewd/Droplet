@@ -6,11 +6,16 @@ interface CtaBannerProps {
   id: string;
   copy: Pick<
     HomepageCopy,
-    "ctaHeading" | "ctaDescription" | "ctaPrimaryLabel" | "ctaSecondaryLabel"
+    | "ctaHeading"
+    | "ctaDescription"
+    | "ctaPrimaryLabel"
+    | "ctaPrimaryLink"
+    | "ctaSecondaryLabel"
+    | "ctaSecondaryLink"
   >;
 }
 
-export default function BannerSection({ id, copy }: CtaBannerProps) {
+export default function CtaBannerSection({ id, copy }: CtaBannerProps) {
   return (
     <PublicSection
       id={id}
@@ -24,11 +29,17 @@ export default function BannerSection({ id, copy }: CtaBannerProps) {
             <p className="body-2 text-sm md:text-base">{copy.ctaDescription}</p>
           </div>
 
-          <div className="banner-content-box md:flex-row lg:flex-col">
-            <Link className="btn btn-lg btn-contained" href="/sign-up">
+          <div className="banner-content-box md:flex-row">
+            <Link
+              className="btn btn-lg btn-contained"
+              href={copy.ctaPrimaryLink || "/"}
+            >
               {copy.ctaPrimaryLabel}
             </Link>
-            <Link className="btn btn-lg btn-outlined" href="/plans">
+            <Link
+              className="btn btn-lg btn-outlined"
+              href={copy.ctaSecondaryLink || "/"}
+            >
               {copy.ctaSecondaryLabel}
             </Link>
           </div>

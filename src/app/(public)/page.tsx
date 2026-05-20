@@ -1,7 +1,7 @@
-import CtaBanner from "@/components/sections/homepage/BannerSection";
+import CtaBannerSection from "@/components/sections/shared/CtaBannerSection";
 import FeaturesSection from "@/components/sections/homepage/FeaturesSection";
 import HeroSection from "@/components/sections/homepage/HeroSection";
-import PersonaSection from "@/components/sections/homepage/PersonaSection";
+import PersonaSpotlight from "@/components/sections/homepage/PersonaSpotlight";
 import WorkflowSection from "@/components/sections/homepage/WorkflowSection";
 import { getEffectiveLandingPageContent } from "@/lib/utils/effective-website-copy";
 
@@ -28,7 +28,7 @@ export default async function HomePage() {
         workflowCopy={landingContent.workflow}
       />
 
-      <PersonaSection
+      <PersonaSpotlight
         id="homepage-personas"
         copy={{
           spotlightLabel: homepageCopy.spotlightLabel,
@@ -38,13 +38,15 @@ export default async function HomePage() {
         featuredPersonaIds={homepageFeaturedPersonaIds}
       />
 
-      <CtaBanner
-        id="homepage-banner"
+      <CtaBannerSection
+        id="home-cta-banner"
         copy={{
           ctaHeading: homepageCopy.ctaHeading,
           ctaDescription: homepageCopy.ctaDescription,
           ctaPrimaryLabel: homepageCopy.ctaPrimaryLabel,
+          ctaPrimaryLink: homepageCopy.ctaPrimaryLink,
           ctaSecondaryLabel: homepageCopy.ctaSecondaryLabel,
+          ctaSecondaryLink: homepageCopy.ctaSecondaryLink,
         }}
       />
     </>

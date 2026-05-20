@@ -2,7 +2,7 @@
 
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import PlanCard from "@/components/shared/plan-card";
+import PlanCard from "@/components/shared/PlanCard";
 import type { Plan } from "@/types/PlanData.d";
 import type { UserData } from "@/types/UserData.d";
 import { getPlanStatus } from "@/lib/utils/getPlanStatus";

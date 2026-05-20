@@ -3,7 +3,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import type { Persona } from "@/types/PersonaData.d";
-import PersonasSection from "@/components/sections/shared/personas-section";
+import PersonasSection from "@/components/sections/shared/PersonasSection";
 
 vi.mock("@/components/shared/persona-card", () => ({
   default: ({

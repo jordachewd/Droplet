@@ -1,0 +1,26 @@
+@layer components {
+  .faqs-wrapper {
+    @apply flex-col;
+  }
+
+  .faqs-content {
+    @apply flex flex-col gap-2.5;
+  }
+
+  .faqs-card {
+    @apply rounded-lg bg-lavenderHaze-400 px-4 py-3 shadow-sm transition-all duration-300 ease-in-out;
+    @apply dark:bg-nightIndigo-900 open:bg-lavenderHaze-100 dark:open:bg-nightIndigo-900/50;
+  }
+
+  .faqs-card--summary {
+    @apply flex cursor-pointer list-none items-center justify-between gap-4 py-1;
+  }
+
+  .faqs-card--summary-icon {
+    @apply text-xl transition-transform duration-300 ease-in-out;
+  }
+
+  .faqs-card--panel {
+    @apply grid grid-rows-[0fr] opacity-0 transition-[grid-template-rows,opacity] duration-300 ease-in-out;
+  }
+}

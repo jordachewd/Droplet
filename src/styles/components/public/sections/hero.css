@@ -4,7 +4,7 @@
   }
 
   .hero-wrapper {
-    @apply flex-col items-center justify-between lg:flex-row gap-12;
+    @apply flex-col items-center justify-between lg:flex-row;
   }
 
   .hero-content {

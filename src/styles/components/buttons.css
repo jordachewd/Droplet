@@ -1,12 +1,12 @@
 @layer components {
   .btn {
     font-family: var(--font-jwd-dosis), sans-serif;
-    @apply inline-flex min-w-0 items-center justify-center px-5 py-3 tracking-wider rounded-full uppercase text-center;
+    @apply inline-flex items-center justify-center px-5 py-3 tracking-wider rounded-full uppercase text-center;
     @apply transition-all duration-500 ease-in-out disabled:cursor-not-allowed disabled:opacity-50 text-base font-semibold;
   }
 
   .btn-xs {
-    @apply text-xxs py-2;
+    @apply text-xxs px-3 py-1.5;
   }
 
   .btn-sm {
@@ -44,7 +44,7 @@
   }
 
   .btn-hero {
-    @apply border-2 text-midnightBlue-500;
+    @apply border-2 px-10 text-midnightBlue-500;
     @apply border-limeGreen-500 bg-limeGreen-500;
     @apply hover:border-limeGreen-600 hover:bg-limeGreen-600;
     @apply dark:hover:border-limeGreen-700 dark:hover:bg-limeGreen-700;

@@ -9,20 +9,19 @@ import Button from "@/components/shared/button";
 interface CheckoutProps {
   plan: CheckoutPlanParams;
   planStatus: PlanStatus;
+  className?: string;
 }
 
 interface CheckoutSubmitButtonProps {
   isIncluded: boolean;
   isCurrent: boolean;
   variant: "text" | "contained" | "outlined" | "hero";
-  className: string;
 }
 
 function CheckoutSubmitButton({
   isIncluded,
   isCurrent,
   variant,
-  className,
 }: CheckoutSubmitButtonProps) {
   const { pending } = useFormStatus();
   const isDisabled = isIncluded || pending;
@@ -34,20 +33,14 @@ function CheckoutSubmitButton({
       "Subscribe";
 
   return (
-    <Button
-      type="submit"
-      variant={variant}
-      size="md"
-      disabled={isDisabled}
-      className={className}
-    >
+    <Button type="submit" size="md" variant={variant} disabled={isDisabled}>
       {buttonLabel}
     </Button>
   );
 }
 
-const Checkout = ({ plan, planStatus }: CheckoutProps) => {
-  const { isIncluded, isCurrent } = planStatus as PlanStatus;
+const CheckoutForm = ({ plan, planStatus, className }: CheckoutProps) => {
+  const { isIncluded, isPopular, isCurrent } = planStatus as PlanStatus;
 
   const onCheckout = async () => {
     const transaction: CheckoutTransactionParams = {
@@ -57,18 +50,17 @@ const Checkout = ({ plan, planStatus }: CheckoutProps) => {
     await checkoutPlan(transaction);
   };
 
-  const variant: "hero" | "text" = isIncluded ? "text" : "hero";
+  const variant: "hero" | "text" | "contained" = isIncluded ? "text" : !isPopular ? "contained" : "hero";
 
   return (
-    <form action={onCheckout} className="Checkout">
+    <form action={onCheckout} className={className}>
       <CheckoutSubmitButton
         isIncluded={isIncluded}
         isCurrent={isCurrent}
         variant={variant}
-        className="w-full min-w-48 sm:min-w-55"
       />
     </form>
   );
 };
 
-export default Checkout;
+export default CheckoutForm;
