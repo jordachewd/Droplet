@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
-import classNames from "classnames";
-import Link from "next/link";
 import PageHead from "@/components/layout/PageHead";
 import {
   legalReviewDisclaimer,
   privacySections,
 } from "@/constants/privacy-data";
 import { getEffectiveSupportEmail } from "@/lib/utils/effective-plan-config";
+import PublicSection from "@/components/public/PublicSection";
+import ContentCard from "@/components/layout/ContentCard";
+import CtaBannerSection from "@/components/sections/shared/CtaBannerSection";
 
 export const metadata: Metadata = {
   title: "Privacy Policy | Droplet",
@@ -33,49 +34,43 @@ export default async function PrivacyPage() {
         id="privacy-page-head"
         title="Privacy Policy"
         subtitle="How Droplet handles account data, conversations, stored assets, billing records, and provider integrations."
+        align="center"
       />
-      <p className="body-2 -mt-6 mb-4 text-sm">{legalReviewDisclaimer}</p>
 
-      {privacySectionsWithContact.map((section) => (
-        <article
-          key={section.title}
-          className={classNames(
-            "rounded-2xl px-6 py-7 shadow-sm",
-            "bg-lavenderHaze-100/76 dark:bg-nightIndigo-900/82",
-          )}
-        >
-          <h2 className="heading-5">{section.title}</h2>
-          <div className="mt-4 flex flex-col gap-4">
-            {section.paragraphs.map((paragraph) => (
-              <p key={paragraph} className="body-2 text-sm md:text-base">
-                {paragraph}
-              </p>
-            ))}
-          </div>
-        </article>
-      ))}
-
-      <div
-        className={classNames(
-          "rounded-2xl px-6 py-7 shadow-sm",
-          "bg-lavenderHaze-200/85 dark:bg-nightIndigo-900/82",
-        )}
+      <PublicSection
+        id="privacy-section"
+        sectionClass="privacy-section"
+        wrapperClass="privacy-wrapper"
       >
-        <h2 className="heading-5">Related policy pages</h2>
-        <p className="body-2 mt-3 text-sm md:text-base">
-          Review the dedicated Cookie Policy for browser storage details and the
-          Terms &amp; Conditions page for account, billing, and service-use
-          rules.
-        </p>
-        <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-          <Link className="btn btn-md btn-contained" href="/cookies">
-            Cookie policy
-          </Link>
-          <Link className="btn btn-md btn-outlined" href="/terms">
-            Terms &amp; conditions
-          </Link>
+        <div className="flex flex-col w-full gap-6">
+          <p className="body-2 -mt-6 mb-4 text-sm text-center">
+            {legalReviewDisclaimer}
+          </p>
+
+          {privacySectionsWithContact.map((section, index) => (
+            <ContentCard key={section.title + index} title={section.title}>
+              {section.paragraphs.map((paragraph, i) => (
+                <p key={paragraph + i} className="body-2 text-sm md:text-base my-2">
+                  {paragraph}
+                </p>
+              ))}
+            </ContentCard>
+          ))}
         </div>
-      </div>
+      </PublicSection>
+
+      <CtaBannerSection
+        id="privacy-cta-banner"
+        copy={{
+          ctaHeading: "Related policy pages",
+          ctaDescription:
+            "Review the dedicated Cookie Policy for browser storage details and the Terms & Conditions page for account, billing, and service-use rules.",
+          ctaPrimaryLabel: "Cookie policy",
+          ctaPrimaryLink: "/cookies",
+          ctaSecondaryLabel: "Terms & Conditions",
+          ctaSecondaryLink: "/terms",
+        }}
+      />
     </>
   );
 }
