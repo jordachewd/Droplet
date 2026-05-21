@@ -1,3 +1,5 @@
+import PageHead from "@/components/layout/PageHead";
+import PublicSection from "@/components/public/PublicSection";
 import CheckoutPlanStatusPoller from "@/components/shared/checkout-plan-status-poller";
 import { requireEnv } from "@/lib/utils/require-env";
 import { auth } from "@clerk/nextjs/server";
@@ -52,6 +54,7 @@ export default async function CheckoutSuccessPage({
     redirect("/sign-in");
   }
 
+  const suffix = "checkout-success";
   const resolvedSearchParams = await searchParams;
   const sessionId = resolveSessionId(resolvedSearchParams.session_id);
   const paymentVerified = sessionId
@@ -73,20 +76,27 @@ export default async function CheckoutSuccessPage({
 
   return (
     <>
-      <div className="flex flex-col rounded-2xl gap-6 p-16 text-center shadow-sm bg-lavenderHaze-200 dark:bg-twilightPurple-700">
-        <h1 className="heading-3">{title}</h1>
-        {paymentVerified && sessionId ? (
-          <CheckoutPlanStatusPoller sessionId={sessionId} />
-        ) : (
-          <p className="body-2 text-sm sm:text-base">{message}</p>
-        )}
-        <Link
-          className="btn btn-sm btn-outlined self-center mt-6"
-          href={linkHref}
-        >
-          {linkLabel}
-        </Link>
-      </div>
+      <PageHead id={`${suffix}-page-head`} title={title} align="center" />
+
+      <PublicSection
+        id={`${suffix}-section`}
+        sectionClass={`${suffix}-section`}
+        wrapperClass={`${suffix}-wrapper`}
+      >
+        <div className="flex flex-col items-center text-center min-h-[55vh] w-full gap-8">
+          {paymentVerified && sessionId ? (
+            <CheckoutPlanStatusPoller sessionId={sessionId} />
+          ) : (
+            <p className="body-2 text-sm sm:text-base">{message}</p>
+          )}
+          <Link
+            className="btn btn-sm btn-outlined self-center mt-6"
+            href={linkHref}
+          >
+            {linkLabel}
+          </Link>
+        </div>
+      </PublicSection>
     </>
   );
 }
