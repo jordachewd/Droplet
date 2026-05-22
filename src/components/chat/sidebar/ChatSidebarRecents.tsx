@@ -1,7 +1,3 @@
- 
-
 export default function ChatSidebarRecents() {
-  return (
-    <div>ChatSidebarRecents</div>
-  )
+  return <div>ChatSidebarRecents</div>;
 }
