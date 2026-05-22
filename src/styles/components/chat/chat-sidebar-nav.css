@@ -1,0 +1,32 @@
+@layer components {
+  .chat-sidebar-nav {
+    @apply mb-auto flex flex-col gap-6 p-4;
+  }
+
+  .chat-sidebar-nav--section {
+    @apply flex flex-col gap-1 transition-all duration-300;
+    @apply text-midnightBlue-600 dark:text-lavenderHaze-600;
+  }
+
+  .chat-sidebar-nav--link {
+    @apply flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-sm transition-all;
+    @apply duration-300 hover:bg-lavenderHaze-300/70 dark:hover:bg-nightIndigo-500/30;
+  }
+
+  .chat-sidebar-nav--link-active {
+    @apply bg-lavenderHaze-100 font-semibold dark:bg-nightIndigo-500/25;
+  }
+
+  .chat-sidebar-nav--link-collapsed {
+    @apply lg:w-auto lg:justify-center lg:px-2;
+  }
+
+  .chat-sidebar-nav--label {
+    @apply overflow-hidden whitespace-nowrap transition-all duration-300;
+    @apply max-w-40 translate-x-0 opacity-100;
+  }
+
+  .chat-sidebar-nav--label-collapsed {
+    @apply lg:max-w-0 lg:-translate-x-1 lg:opacity-0;
+  }
+}

@@ -59,6 +59,10 @@ export default function ChatSidebarWrapper({
     }
   }, [desktopCollapsed]);
 
+  const contentClass = classNames("chat-sidebar-content", {
+    "lg:items-center": desktopCollapsed,
+  });
+
   return (
     <ChatSidebarShell
       id="chat-sidebar"
@@ -66,24 +70,27 @@ export default function ChatSidebarWrapper({
         <ChatSidebarHead isDesktopCollapsed={isDesktopCollapsed} />
       )}
       navigation={({ isSidebarOpen }) => (
-        <div
-          className={classNames(
-            "ChatSidebarNavWrapper flex min-h-0 flex-1 flex-col overflow-y-auto",
-            !isSidebarOpen && "lg:items-center",
-          )}
-        >
+        <div className={contentClass}>
           <ChatSidebarNav isOpen={isSidebarOpen} historyItems={historyItems} />
         </div>
       )}
-      footer={({ isSidebarOpen }) => (
-        <ChatSidebarPromo
-          isOpen={isSidebarOpen}
-          userRole={userRole}
-          planName={userPlanName}
-          isSuspended={isSuspended}
-          promoContent={promoContent}
-        />
-      )}
+      footer={({ isSidebarOpen }) => {
+        const footClass = classNames(
+          "chat-sidebar-footer",
+          !isSidebarOpen && "hidden",
+        );
+
+        return (
+          <div className={footClass}>
+            <ChatSidebarPromo
+              userRole={userRole}
+              planName={userPlanName}
+              isSuspended={isSuspended}
+              promoContent={promoContent}
+            />
+          </div>
+        );
+      }}
     />
   );
 }

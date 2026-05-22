@@ -27,8 +27,11 @@
 @import "./components/typography.css";
 
 /* Component classes - Chat */
+@import "./components/chat/chat-header.css";
 @import "./components/chat/chat-layout.css";
 @import "./components/chat/chat-markdown.css";
+@import "./components/chat/chat-sidebar-nav.css";
+@import "./components/chat/chat-sidebar-recents.css";
 @import "./components/chat/chat-sidebar.css";
 
 /* Component classes - Admin */

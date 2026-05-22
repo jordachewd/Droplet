@@ -13,68 +13,12 @@ import AlertMessage from "@/components/shared/alert-message";
 import ConfirmationModal from "@/components/shared/confirmation-modal";
 import { ConversationListItem } from "@/types/PersonaData.d";
 import { deleteTask, renameTask } from "@/lib/actions/task.actions";
+import ChatSidebarNavLink from "./ChatSidebarNavLink";
+import { WORKSPACE_LINKS } from "@/constants/chat-sidebar-nav";
 
 interface ChatSidebarNavProps {
   isOpen: boolean;
   historyItems: ConversationListItem[];
-}
-
-interface NavLinkItem {
-  href: string;
-  label: string;
-  icon: string;
-  exact?: boolean;
-}
-
-const WORKSPACE_LINKS: NavLinkItem[] = [
-  {
-    href: "/app",
-    label: "Home",
-    icon: "bi bi-house",
-    exact: true,
-  },
-  { href: "/app/new", label: "New Chat", icon: "bi bi-plus-circle" },
-  { href: "/app/library", label: "Library", icon: "bi bi-collection" },
-];
-
-function SidebarNavLink({
-  item,
-  pathname,
-  isOpen,
-}: {
-  item: NavLinkItem;
-  pathname: string;
-  isOpen: boolean;
-}) {
-  const isActive = item.exact
-    ? pathname === item.href
-    : pathname === item.href || pathname.startsWith(`${item.href}/`);
-
-  return (
-    <Link
-      href={item.href}
-      aria-label={item.label}
-      className={classNames(
-        "group sidebar-nav-link duration-300",
-        "hover:bg-lavenderHaze-300/70 dark:hover:bg-nightIndigo-500/30",
-        isActive &&
-          "bg-lavenderHaze-100 font-semibold dark:bg-nightIndigo-500/25",
-        !isOpen && "lg:w-auto lg:justify-center lg:px-2",
-      )}
-    >
-      <i className={classNames(item.icon, "text-base")} aria-hidden="true"></i>
-      <span
-        className={classNames(
-          "overflow-hidden whitespace-nowrap transition-all duration-300",
-          isOpen
-            ? "max-w-40 translate-x-0 opacity-100"
-            : "lg:max-w-0 lg:-translate-x-1 lg:opacity-0",
-        )}
-      >
-        {item.label}
-      </span>
-    </Link>
-  );
 }
 
 export default function ChatSidebarNav({
@@ -83,23 +27,31 @@ export default function ChatSidebarNav({
 }: ChatSidebarNavProps) {
   const pathname = usePathname();
   const router = useRouter();
+
   const [conversationItems, setConversationItems] =
     useState<ConversationListItem[]>(historyItems);
+
   const [deletingConversationId, setDeletingConversationId] = useState<
     string | null
   >(null);
+
   const [pendingDeleteItem, setPendingDeleteItem] =
     useState<ConversationListItem | null>(null);
+
   const [openMenuConversationId, setOpenMenuConversationId] = useState<
     string | null
   >(null);
+
   const [editingConversationId, setEditingConversationId] = useState<
     string | null
   >(null);
+
   const [editingTitle, setEditingTitle] = useState<string>("");
+
   const [renamingConversationId, setRenamingConversationId] = useState<
     string | null
   >(null);
+
   const [alert, setAlert] = useState<{
     id: number | string;
     title: string;
@@ -107,16 +59,11 @@ export default function ChatSidebarNav({
     severity: "success" | "error";
     variant: "outlined";
   } | null>(null);
+
   const menuContainerRef = useRef<HTMLDivElement | null>(null);
   const renameInputRef = useRef<HTMLInputElement | null>(null);
   const skipRenameBlurRef = useRef<boolean>(false);
   const renameSubmissionInFlightRef = useRef<boolean>(false);
-  const headingClass = classNames(
-    "overflow-hidden px-2.5 text-xxs font-semibold uppercase tracking-wide text-midnightBlue-700 transition-all duration-300 dark:text-lavenderHaze-700",
-    isOpen
-      ? "max-h-6 translate-y-0 opacity-100"
-      : "lg:max-h-0 lg:-translate-y-1 lg:opacity-0",
-  );
 
   useEffect(() => {
     setConversationItems(historyItems);
@@ -239,7 +186,6 @@ export default function ChatSidebarNav({
       router.refresh();
     } catch (error) {
       void error;
-      // Deletion failures are surfaced via the user-facing alert below.
       setAlertMessage({
         title: "Delete failed",
         text: "Conversation deletion failed.",
@@ -375,7 +321,7 @@ export default function ChatSidebarNav({
       router.refresh();
     } catch (error) {
       void error;
-      // Rename failures are surfaced via the user-facing alert below.
+
       setAlertMessage({
         title: "Rename failed",
         text: "Conversation rename failed.",
@@ -413,13 +359,17 @@ export default function ChatSidebarNav({
     }
   }
 
+  const headingClass = classNames("chat-sidebar-recents--heading", {
+    "chat-sidebar-recents--heading-collapsed": !isOpen,
+  });
+
   return (
-    <nav className="ChatSidebarNav mb-auto flex flex-col gap-6 p-4">
+    <nav className="chat-sidebar-nav">
       {alert ? <AlertMessage message={alert} /> : null}
 
-      <section className="ChatSidebarNavSection flex flex-col gap-1 transition-all duration-300">
+      <section className="chat-sidebar-nav--section">
         {WORKSPACE_LINKS.map((link) => (
-          <SidebarNavLink
+          <ChatSidebarNavLink
             key={link.href}
             item={link}
             pathname={pathname}
@@ -428,13 +378,13 @@ export default function ChatSidebarNav({
         ))}
       </section>
 
-      {isOpen ? (
-        <section className="ChatSidebarNavSection flex flex-col gap-1 transition-all duration-300">
-          <p className={headingClass}>Recent</p>
+      {isOpen && (
+        <section className="chat-sidebar-nav--section">
+          <h6 className={headingClass}>Recents</h6>
 
-          <div className="flex flex-col gap-1">
+          <div className="chat-sidebar-recents--list">
             {conversationItems.length === 0 && (
-              <p className="px-2.5 py-2 text-xs text-midnightBlue-600 dark:text-lavenderHaze-600">
+              <p className="chat-sidebar-recents--empty">
                 No saved conversations yet.
               </p>
             )}
@@ -451,19 +401,18 @@ export default function ChatSidebarNav({
               const isDeleteDisabled = hasActionInProgress || item.isDemo;
               const isRenameDisabled = hasActionInProgress || item.isDemo;
 
+              const linkClass = classNames("chat-sidebar-recents--link", {
+                "chat-sidebar-recents--link-active": isActive,
+              });
+
+              const dotsClass = classNames("chat-sidebar-recents--dots", {
+                "chat-sidebar-recents--dots-in-action": hasActionInProgress,
+              });
+
               return (
-                <div
-                  key={item.id}
-                  className="group flex w-full items-center gap-1"
-                >
+                <div key={item.id} className="chat-sidebar-recents--item group">
                   {isEditing ? (
-                    <div
-                      className={classNames(
-                        "flex min-w-0 flex-1 items-center gap-2 rounded-lg px-2.5 py-2 transition-all",
-                        isActive &&
-                          "bg-lavenderHaze-100 dark:bg-nightIndigo-500/25",
-                      )}
-                    >
+                    <div className={linkClass}>
                       <i
                         className={classNames(
                           item.personaIcon,
@@ -508,12 +457,7 @@ export default function ChatSidebarNav({
                     <Link
                       href={item.href}
                       aria-label={`${item.title} conversation`}
-                      className={classNames(
-                        "group flex min-w-0 flex-1 items-center gap-2 rounded-lg px-2.5 py-2 transition-all duration-300",
-                        "hover:bg-lavenderHaze-300/70 dark:hover:bg-nightIndigo-500/30",
-                        isActive &&
-                          "bg-lavenderHaze-100 dark:bg-nightIndigo-500/25",
-                      )}
+                      className={linkClass}
                     >
                       <i
                         className={classNames(
@@ -546,15 +490,7 @@ export default function ChatSidebarNav({
                     >
                       <button
                         type="button"
-                        className={classNames(
-                          "SidebarConversationMenuTrigger inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-transparent text-xs text-midnightBlue-700 transition-all dark:text-lavenderHaze-700",
-                          "hover:border-slate-400 hover:bg-lavenderHaze-300/70 hover:opacity-100",
-                          "focus-visible:border-lavenderHaze-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lavenderHaze-300/60",
-                          "dark:hover:border-slate-500 dark:hover:bg-nightIndigo-500/30",
-                          "dark:focus-visible:border-nightIndigo-400 dark:focus-visible:ring-nightIndigo-500/40",
-                          hasActionInProgress &&
-                            "cursor-not-allowed opacity-35 hover:border-transparent hover:bg-transparent",
-                        )}
+                        className={dotsClass}
                         onClick={() =>
                           setOpenMenuConversationId((currentId) =>
                             currentId === item.id ? null : item.id,
@@ -644,7 +580,7 @@ export default function ChatSidebarNav({
             })}
           </div>
         </section>
-      ) : null}
+      )}
 
       <ConfirmationModal
         isOpen={Boolean(pendingDeleteItem)}

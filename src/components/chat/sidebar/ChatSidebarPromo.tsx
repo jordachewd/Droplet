@@ -5,13 +5,13 @@ import classNames from "classnames";
 import { DEFAULT_PROMO_CONTENT, PromoContent } from "@/constants/promo-content";
 import { PlanName } from "@/types/PlanData.d";
 import { UserRoles } from "@/types/UserData.d";
+
 import {
   planPromoAccentClass,
   planPromoCardClass,
 } from "@/components/shared/plan-promo-styles";
 
 interface ChatSidebarPromoProps {
-  isOpen: boolean;
   userRole?: UserRoles;
   planName?: PlanName | null;
   isSuspended?: boolean;
@@ -19,7 +19,6 @@ interface ChatSidebarPromoProps {
 }
 
 export default function ChatSidebarPromo({
-  isOpen,
   userRole,
   planName,
   isSuspended,
@@ -51,26 +50,23 @@ export default function ChatSidebarPromo({
     showUpgradeLink = true;
   }
 
-  const sectionClass = classNames("ChatSidebarPromo p-3", !isOpen && "hidden");
-  const promoCardClass = classNames("ChatSidebarPromoCard", planPromoCardClass);
+  const promoClass = classNames("ChatSidebarPromoCard", planPromoCardClass);
 
   return (
-    <div className={sectionClass}>
-      <div className={promoCardClass}>
-        <div className={planPromoAccentClass}></div>
-        <div className="z-10 flex w-full flex-col gap-2 text-center">
-          <h6 className="heading-6 text-lavenderHaze-300">{title}</h6>
-          <p className="text-xs leading-4">{description}</p>
+    <div className={promoClass}>
+      <div className={planPromoAccentClass}></div>
+      <div className="z-10 flex w-full flex-col gap-2 text-center">
+        <h6 className="heading-6 text-lavenderHaze-300">{title}</h6>
+        <p className="text-xs leading-4">{description}</p>
 
-          {showUpgradeLink && (
-            <Link
-              className="btn btn-sm btn-hero self-center mt-2"
-              href="/app/plans"
-            >
-              {promoContent.promoUpgradeCta}
-            </Link>
-          )}
-        </div>
+        {showUpgradeLink && (
+          <Link
+            className="btn btn-sm btn-hero self-center mt-2"
+            href="/app/plans"
+          >
+            {promoContent.promoUpgradeCta}
+          </Link>
+        )}
       </div>
     </div>
   );

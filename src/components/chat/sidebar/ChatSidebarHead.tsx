@@ -50,7 +50,7 @@ export default function ChatSidebarHead({
   );
 
   return (
-    <div className="chat-sidebar-head group">
+    <div className="chat-sidebar-header group">
       <div className={logoClass} tabIndex={isDesktopCollapsed ? 0 : undefined}>
         <Logo size={32} iconOnly={isDesktopCollapsed} />
       </div>
