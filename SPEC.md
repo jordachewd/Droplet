@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last verified: PM audit #140, 2026-05-21. Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. **V1.0 MVP RELEASED.** Phases 143–257 COMPLETE (all sub-phases). **Phase 253 COMPLETE — `/design` page deleted (commit 816dc81). Pre-production blocker resolved.** Onboarding wizard COMPLETE (Phases 240-251). System prompt uses all 4 onboarding preferences (Phase 249-B + 251-B projection fix). HandoffDialog plan-gated (Phase 249-A). Handoff hydration race fixed (Phase 251-A). Trial badge rendering fixed (Phase 251-C). **Phase 238 COMPLETE (31 non-JSX `.tsx` → `.ts` rename).** **Stripe webhook VERIFIED on localhost (Phase 234-B).** All files under 900 lines. 0 npm vulnerabilities. **⚠️ GATES DEGRADED (audit #140):** TypeScript gate RED (4 real test errors + 1 stale .next cache), Test gate RED (13 failures in 7 files). Root cause: commit `2003629` renamed components to PascalCase and updated props but test assertions and mock paths not fully aligned. 3 AGENTS.md CSS class violations (Button, LoadingBubbles, CheckoutForm). **Phase 259 active — restoring all gates to GREEN.** Knip PASSING (0 issues). Lint PASSING (0 errors, 6 known warnings). **Active backlog: Phase 259 (gate restoration), Phase 258 (owner decision required).** **Production deployment unblocked after Phase 259 completes AND Phase 258 decision is made.** TD-PAYMENT-03 RESOLVED. TD-WEBHOOK-LOG-01 RESOLVED (Phase 254). TD-ENV-CONSISTENCY-01 RESOLVED (Phase 255). TD-SERVER-ACTION-01 RESOLVED (Phase 256). TD-USAGEEVENT-01 ACTIVE (owner decision pending). 9 Mongoose models confirmed.
+> Last verified: PM audit #141, 2026-05-22. Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. **V1.0 MVP RELEASED.** Phases 143–257 COMPLETE (all sub-phases). **Phase 253 COMPLETE — `/design` route deleted (commit 816dc81).** Onboarding wizard COMPLETE (Phases 240-251). System prompt uses all 4 onboarding preferences (Phase 249-B + 251-B projection fix). HandoffDialog plan-gated (Phase 249-A). Handoff hydration race fixed (Phase 251-A). Trial badge rendering fixed (Phase 251-C). **Phase 238 COMPLETE (31 non-JSX `.tsx` → `.ts` rename).** **Stripe webhook VERIFIED on localhost (Phase 234-B).** All files under 900 lines. 0 npm vulnerabilities. **⚠️ CURRENT GATE STATUS (audit #141):** Lint GREEN (0 errors, 6 known warnings), TypeScript RED (5 errors: 1 stale `.next` validator reference + 4 test prop errors), Unit tests RED (13 failed / 717 passed, 7 files failing), Knip GREEN (0 issues). Root cause remains test-contract drift after commit `2003629` (PascalCase rename + required `id` props + CTA change). **Phase 259 active — restoring all gates to GREEN.** **Active backlog: Phase 259 (gate restoration), Phase 258 (owner decision required).** **Production deployment remains blocked until Phase 259 is complete and Phase 258 decision is made.** TD-PAYMENT-03 RESOLVED. TD-WEBHOOK-LOG-01 RESOLVED (Phase 254). TD-ENV-CONSISTENCY-01 RESOLVED (Phase 255). TD-SERVER-ACTION-01 RESOLVED (Phase 256). TD-USAGEEVENT-01 ACTIVE (owner decision pending). 9 Mongoose models confirmed.
 >
 > **V1.0 MVP Released (PM audit #94):**
 >
@@ -33,7 +33,7 @@
 > - **TD-BILLING-01** — ✅ RESOLVED (PM audit #130, Phase 234-A2). `getAllTransactions()` `.select()` now includes `stripeId`. Billing history Active/Inactive status works correctly.
 > - **TD-SYNC-01** — ✅ RESOLVED (PM audit #130, Phase 235). MongoDB→Clerk sync expanded to include `firstName` and `lastName` in batched call. Email sync deferred (requires Clerk verification flow — documented as known limitation).
 > - **TD-CHECKOUT-UX-01** — ✅ RESOLVED (PM audit #130, Phase 234-C). Checkout timeout message now warns "If your plan hasn't updated within 10 minutes, please contact support." with amber visual style.
-> - **TD-DESIGN-01** — ✅ CLOSED (PM audit #132). Owner override: `/design` page must stay as dev-only design system preview. Pure static page, no data/auth/secrets. Documented in route table. Remove before production.
+> - **TD-DESIGN-01** — ✅ CLOSED. `/design` route was removed in Phase 253 (commit 816dc81) and is not part of the active route map.
 > - **TD-MODEL-EXT-01** — ✅ RESOLVED (PM audit #134, Phase 238). All 31 non-JSX `.tsx` files renamed to `.ts`. Zero violations remaining.
 > - **TD-MEDIA-01** — 🟡 ACCEPTED LIMITATION. Media gen (image/audio) may approach Vercel Hobby 60s timeout. Phase 181 proactive timeout handles gracefully.
 > - **TD-AI-13** — 3 model pricing placeholders (awaiting OpenAI confirmation).
@@ -101,7 +101,7 @@ The product monetises through tiered subscription plans paid via Stripe.
 | **Admin**     | All client access + admin dashboard (`/admin/*`)                                                          |
 
 `User.role` is stored in Mongoose and synced to Clerk `publicMetadata.role`.
-Admin access is enforced at the proxy level (`src/proxy.tsx`) via Clerk session claims (`metadata.role === "admin"`).
+Admin access is enforced at the proxy level (`src/proxy.ts`) via Clerk session claims (`metadata.role === "admin"`).
 
 > **Rule (new, PM audit #25):** Admin role users must have full permissions over all features and all personas with no limitations. Admin bypasses all plan limits (conversations, prompts, media generations), all trial restrictions, and all persona gating. This must be enforced in the backend `/api/openai` route, not just in UI components. Tracked as TD-ADMIN-03.
 
@@ -111,7 +111,7 @@ Admin access is enforced at the proxy level (`src/proxy.tsx`) via Clerk session 
 
 ## 3. Personas
 
-6 predefined personas defined in `src/constants/assistant-personas.tsx`:
+6 predefined personas defined in `src/constants/assistant-personas.ts`:
 
 | Persona ID    | Label       | Category     | Image | Audio | Lite | Pro | Premium |
 | ------------- | ----------- | ------------ | ----- | ----- | ---- | --- | ------- |
@@ -156,7 +156,7 @@ Each persona has: `id`, `label`, `tagline`, `description`, `category`, `icon`, `
 - Persona selection UI: `ChatInput` includes a `PersonaSelector` dropdown above the textarea for quick persona selection at conversation start — selector is locked once messages exist (`messages.length > 0` or conversation ended — persona is permanently bound per-task). Locked state displays a read-only badge (lavender pill with droplet icon + persona label). `ChatPersonaPicker` component on `/app/new` page provides full persona browsing with trial badges. `/app/personas` route removed (Phase 210) — redirects to `/app/new`. `/app/new` is labeled "Personas" in sidebar.
 - Persona is stored per task in `Task.personaId`.
 - System prompt is built per-persona via `buildPersonaAwareSystemPrompt()`.
-- Entitlements resolved via `resolveEntitlements()` in `src/lib/utils/resolve-entitlements.tsx`.
+- Entitlements resolved via `resolveEntitlements()` in `src/lib/utils/resolve-entitlements.ts`.
 - `allowedPersonaIds` normalization: `undefined` = all personas (no restriction), `[]` = all blocked, `[...ids]` = exact permitted set.
 - Conversation handoff: at conversation end, user can pick a new persona via `HandoffDialog`. Context (last 20 messages) is summarized and sent as first message in new conversation.
 
@@ -196,7 +196,7 @@ Current implementation covers:
 - **Safety constraints**: `WELLNESS_SAFETY_RULES` for wellness persona
 - **Answer style and formatting**: persona-specific output formatting rules
 - **Version identifier**: `PROMPT_VERSION = "1.0"`
-- **Fallback chain**: model-family prompt ? persona default `systemPrompt` in assistant-personas.tsx
+- **Fallback chain**: model-family prompt ? persona default `systemPrompt` in assistant-personas.ts
 
 Prompts are versioned and separated from request handlers. `buildPersonaAwareSystemPrompt()` resolves prompts from the new config first, falling back to persona defaults.
 
@@ -386,7 +386,7 @@ All 4 onboarding preference fields are now injected (Phase 249-B) and correctly 
 ## 5. Authentication & Authorization
 
 - **Provider**: Clerk (`@clerk/nextjs` v7)
-- **Route protection**: `src/proxy.tsx` (Next.js 16 proxy convention). No `middleware.ts`.
+- **Route protection**: `src/proxy.ts` (Next.js 16 proxy convention). No `middleware.ts`.
 - **Protected routes (target)**: `/app(.*)`, `/admin(.*)`
 - **Admin routes**: `/admin(.*)` � requires `sessionClaims.metadata.role === "admin"`
 - **Server actions**: Must verify `auth()` before DB operations. Ownership enforcement on all read/write operations.
@@ -837,7 +837,6 @@ All file handling technical debt has been resolved. S3 cleanup on task/user dele
 | `/privacy`                            | Public    | Privacy & Cookie Policy                                                                                                                                             |
 | `/cookies`                            | Public    | Cookie Policy                                                                                                                                                       |
 | `/terms`                              | Public    | Terms & Conditions                                                                                                                                                  |
-| `/design`                             | Public    | Development-only design system preview (typography, buttons, forms, colors). Remove before production.                                                              |
 | `/sign-in`, `/sign-up`                | Auth      | Clerk auth                                                                                                                                                          |
 | `/checkout-success`                   | Special   | Stripe redirect target. Auth required (page-level guard), not proxy-protected. Polls DB for plan update.                                                            |
 | `/app`                                | Protected | Chat dashboard                                                                                                                                                      |
@@ -867,7 +866,12 @@ All file handling technical debt has been resolved. S3 cleanup on task/user dele
 ### Design System
 
 - Tailwind CSS v4.2 with custom design tokens
-- CSS architecture: modular `src/styles/` folder (Phase 218 COMPLETE) — entry point `src/styles/index.css`, split into theme tokens (`theme/colors.css`, `theme/layout.css`, `theme/typography.css`), base resets (`base/compatibility.css`, `base/elements.css`, `base/gradient.css`), component classes (`components/typography.css`, `components/buttons.css`, `components/admin.css`, `components/tooltip.css`, `components/chat.css`). Phases 221 adds `components/layout.css` (shared sidebar, header, nav-link classes) and `components/forms.css` (shared form input, field, label classes). Phase 218-C adds `components/toggle.css` (toggle switch classes). Uses Tailwind v4 native `@import` inlining — identical build output.
+- CSS architecture: modular `src/styles/` folder (Phase 218 COMPLETE) with layered orchestration in `src/styles/index.css`.
+- Theme layer: `theme/colors.css`, `theme/layout.css`, `theme/typography.css`.
+- Base layer: `base/app-base-wrapper.css`, `base/compatibility.css`, `base/elements.css`.
+- Shared component layer: `components/typography.css`, `components/buttons.css`, `components/tooltip.css`, `components/layout.css`, `components/logo.css`, `components/plan-card.css`, `components/plans-billing.css`, `components/toggle.css`, `components/forms.css`, `components/droplet-globe.css`, `components/card.css`.
+- Domain component layers: `components/chat/chat-markdown.css`, `components/admin/admin.css`, and public modules under `components/public/layout/*` and `components/public/sections/*`.
+- Styling pattern (owner directive, 2026-05-22): semantic CSS classes + Tailwind utility classes is the approved hybrid. Inline styles are allowed when technically appropriate (dynamic runtime values, CSS variable injection, framework-generated layout values, isolated fallback/error surfaces).
 - Custom fonts: Dosis + Albert Sans
 - Dark/light themes via `data-Droplet-theme` attribute
 - Bootstrap Icons
@@ -937,7 +941,7 @@ All button styles use Lime Green as the accent color in **both** light and dark 
 - **Unit tests**: 110 suites, 730 tests (Vitest) — organized by domain in `tests/unit/{actions,components,routes,utils,models,constants,stores}/`. TDD rebuild COMPLETE (Phases 120.1–120.7). All test files rebuilt from scratch using strict TDD methodology. Zero `as never` casts. All tests use shared factories from `tests/unit/test-support/`. Includes streaming, webhook, chat-wrapper, chat-body stop-state, upload flow, S3 cleanup, idempotency, model policy, retry/backoff, persona prompt, rate limiting, task complexity classification, conversation stop enforcement, entitlement resolver, checkout-success page, admin audit trail, OpenAI route tests (split into 5 focused modules), atomic prompt limit, daily conversation limit, media error handling, universal feature access, trial access tests, validation schema security injection tests, AudioPlayer ARIA tests, abort behavior tests, Zustand store tests, upload file size validation, 24 component test files, user model tests, Button component TDD tests, PageHead heading-level TDD tests, suspended user enforcement tests, delete-user-cascade tests, upload model tests, admin-settings-tabs hydration tests, checkout redirect tests, media slot claim/rollback tests.
 - **E2E tests**: 8 Playwright spec files. Specs: `admin-settings-propagation`, `auth-boundaries`, `authenticated-accessibility`, `chat-conversation-flow`, `public-structure`, `admin-user-operations`, `billing-checkout-flow`, `error-boundary-handling`. Default 3 browsers (Chromium, Firefox, WebKit); full 7-browser matrix via `PLAYWRIGHT_FULL_MATRIX=1`. WCAG E2E via @axe-core/playwright.
 - **Coverage**: v8 provider, thresholds: 85% statements / 80% branches / 85% functions / 85% lines. Gate PASSES. 7 files explicitly excluded from coverage (complex integration files). Reporters: text, json-summary, lcov. Setup file: `tests/unit/vitest.setup.ts`.
-- **Config**: Vitest `environmentMatchGlobs` for auto-jsdom on `.tsx`. Playwright `actionTimeout: 10s`, `expect.timeout: 5s`. ESLint `no-console` (error), `no-restricted-globals` (alert/confirm). TS `noFallthroughCasesInSwitch`, `forceConsistentCasingInFileNames`. All 7 validation gates GREEN (lint, knip, tsc, unit, E2E, build, prettier).
+- **Config**: Vitest `environmentMatchGlobs` for auto-jsdom on `.tsx`. Playwright `actionTimeout: 10s`, `expect.timeout: 5s`. ESLint `no-console` (error), `no-restricted-globals` (alert/confirm). TS `noFallthroughCasesInSwitch`, `forceConsistentCasingInFileNames`. Gate status must be reported per audit run (not evergreen). Current audit #141 status: lint GREEN, tsc RED, unit RED, knip GREEN; E2E/build/prettier not run in this audit pass.
 - **Gaps**: No E2E for Stripe checkout flow. 7 coverage-excluded files include `generateResponse.tsx`.
 
 ---

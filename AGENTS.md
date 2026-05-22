@@ -49,11 +49,11 @@ All seven gates must pass.
 
 1. **Server Components first** — all pages/layouts are Server Components. Read data server-side; never initial-fetch via `useEffect` + `fetch`.
 2. **Server Actions for mutations** — live in `src/lib/actions/`. Invoke via `<form action={...}>` or direct call. Every server action MUST verify auth before DB operations.
-3. **Server-side queries** — read-only data access helpers live in `src/lib/utils/` (e.g., `task-queries.tsx`). These are NOT server actions — they are plain async functions called from Server Components.
+3. **Server-side queries** — read-only data access helpers live in `src/lib/utils/` (e.g., `task-queries.ts`). These are NOT server actions — they are plain async functions called from Server Components.
 4. **Client Components minimal** — `"use client"` only for browser APIs, listeners, `useState`, `useEffect`. Keep small; push reads to parent Server Components.
-5. **Proxy, not middleware** — `src/proxy.tsx` is the Next.js 16 proxy file. Never create `middleware.ts`.
+5. **Proxy, not middleware** — `src/proxy.ts` is the Next.js 16 proxy file. Never create `middleware.ts`.
 6. **Path alias** — use `@/*` from `tsconfig.json` (e.g., `import Header from "@/components/layout/header"`).
-7. **Central policy — no scattered plan logic** — plan limits, model selection, and entitlements must be resolved through central utilities (`resolve-entitlements.tsx`, `ai-model-policy.ts`, `PLAN_LIMITS`). Never hardcode plan rules in UI components, routes, or action files.
+7. **Central policy — no scattered plan logic** — plan limits, model selection, and entitlements must be resolved through central utilities (`resolve-entitlements.ts`, `ai-model-policy.ts`, `PLAN_LIMITS`). Never hardcode plan rules in UI components, routes, or action files.
 8. **Admin audit trail** — every admin mutation must log to `AdminAuditLog` model.
 9. **Code reuse** — extract repetitive patterns into shared utilities, components, or constants. Do not duplicate logic across admin/client/public surfaces. If a pattern appears 3+ times, extract it.
 10. **API route timeouts** — all API routes that call external services (OpenAI, Stripe, AWS) must export `maxDuration` with an appropriate value. Vercel Hobby limits `maxDuration` to 60s. Image gen (15–30s) and audio gen (10–20s) should fit within 60s. Proactive timeout (Phase 181) handles edge cases gracefully.
@@ -63,26 +63,33 @@ All seven gates must pass.
 
 > Route restructure is **complete** (Phase 17). Proxy protects `/app(.*)` and `/admin(.*)` only. Profile and plans are under `/app/*`. Admin is at `/admin/*`. The `(account)` route group has been deleted (Phase 17-C). Public pages (about, plans, personas, privacy, cookies, terms) are live (Phase 18). `/faqs` route removed — FAQs live in `/plans`. Orphan directories (`/dashboard`, `/pricing`) removed (Phase 20).
 
-| Area     | Namespace                                                                         | Protection                                      |
-| -------- | --------------------------------------------------------------------------------- | ----------------------------------------------- |
-| Public   | `/`, `/about`, `/plans`, `/personas`, `/privacy`, `/cookies`, `/terms`, `/design` | None                                            |
-| Checkout | `/checkout-success`                                                               | Auth (page-level guard, Stripe redirect target) |
-| Auth     | `/sign-in`, `/sign-up`                                                            | Clerk managed                                   |
-| App      | `/app(.*)`                                                                        | Auth required (proxy + server)                  |
-| Admin    | `/admin(.*)`                                                                      | Admin role required (proxy + server)            |
+| Area     | Namespace                                                              | Protection                                      |
+| -------- | ---------------------------------------------------------------------- | ----------------------------------------------- |
+| Public   | `/`, `/about`, `/plans`, `/personas`, `/privacy`, `/cookies`, `/terms` | None                                            |
+| Checkout | `/checkout-success`                                                    | Auth (page-level guard, Stripe redirect target) |
+| Auth     | `/sign-in`, `/sign-up`                                                 | Clerk managed                                   |
+| App      | `/app(.*)`                                                             | Auth required (proxy + server)                  |
+| Admin    | `/admin(.*)`                                                           | Admin role required (proxy + server)            |
 
-> **`/design`** is a development-only design system preview page. Must be removed before production deployment.
+> **`/design`** route is removed (Phase 253). Keep it absent unless explicitly re-approved by owner directive.
 > **`/checkout-success`** has its own `auth()` guard with redirect to `/sign-in`. Not proxy-protected because Stripe redirects here before the user reaches `/app`.
 
 ## Coding Standards
 
 - TypeScript `strict: true`, `noUnusedLocals`, `noUnusedParameters`.
 - 2-space indent, semicolons, explicit types where useful.
-- File names: `kebab-case` (except Next.js convention files).
-- Component exports: `PascalCase`. Functions/hooks/variables: `camelCase`.
+- File names: `kebab-case` (except Next.js convention files and component file names).
+- Component file names must be `PascalCase` and component exports must be `PascalCase`.
+- Functions/hooks/variables remain `camelCase`.
 - Each component must have a unique CSS class based on its name in `PascalCase`.
 - Route files: `.tsx` extension for API routes and pages.
 - Utility-only files: `.ts` extension (no JSX).
+
+## Styling Pattern
+
+- Canonical styling lives in `src/styles/` and is orchestrated by `src/styles/index.css`.
+- Component styling uses semantic CSS classes plus utility classes where practical; this hybrid pattern is intentional.
+- Inline CSS minimization is no longer a hard governance rule. Inline styles are acceptable for dynamic runtime values, CSS variable injection, framework-generated layout styles, and isolated fallback/error surfaces.
 
 ## Database Rules
 
@@ -151,8 +158,11 @@ src/app/
 src/styles/         — Tailwind CSS modular architecture (Phase 218)
   index.css         — Entry point: @import "tailwindcss" + orchestrator
   theme/            — @theme tokens: colors.css, layout.css, typography.css
-  base/             — @layer base: compatibility.css, elements.css, gradient.css
-  components/       — @layer components: typography.css, buttons.css, admin.css, tooltip.css, chat.css
+  base/             — @layer base: app-base-wrapper.css, compatibility.css, elements.css
+  components/       — @layer components: typography.css, buttons.css, tooltip.css, layout.css, logo.css, plan-card.css, plans-billing.css, toggle.css, forms.css, droplet-globe.css, card.css
+  components/admin/ — admin.css
+  components/chat/  — chat-markdown.css
+  components/public/ — layout/* and sections/* modular CSS files
 src/components/     — UI components by domain (chat, layout, sections, shared)
 src/lib/actions/    — server actions (mutations only)
 src/lib/database/   — Mongoose models and connection
@@ -160,7 +170,7 @@ src/lib/hooks/      — client hooks
 src/lib/utils/      — utilities + server-side query helpers
 src/constants/      — app constants (plans, openai, aws, assistant-personas)
 src/types/          — shared TypeScript types
-src/proxy.tsx       — route protection (Next.js 16 proxy)
+src/proxy.ts        — route protection (Next.js 16 proxy)
 public/             — static assets
 tests/unit/         — Vitest unit tests
 tests/e2e/          — Playwright E2E tests
