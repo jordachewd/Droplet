@@ -1,7 +1,7 @@
 "use client";
 
 import { KeyboardEvent, useEffect, useState } from "react";
-import Button from "@/components/shared/button";
+import Button from "@/components/shared/Button";
 
 interface AdminSettingsTab {
   id: string;

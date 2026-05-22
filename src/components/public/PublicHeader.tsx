@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import ToggleTheme from "@/components/layout/ToggleTheme";
 import AvatarMenu from "@/components/shared/avatar-menu";
-import Button from "@/components/shared/button";
+import Button from "@/components/shared/Button";
 import Logo from "@/components/shared/app-logo";
 import { MainNavLink } from "@/types/MainNav";
 import PublicMobileNav from "./PublicMobileNav";

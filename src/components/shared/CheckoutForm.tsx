@@ -1,10 +1,11 @@
 "use client";
 
+import classNames from "classnames";
 import { checkoutPlan } from "@/lib/actions/transaction.action";
 import { CheckoutTransactionParams } from "@/types/TransactionData.d";
 import { CheckoutPlanParams, PlanStatus } from "@/types/PlanData.d";
 import { useFormStatus } from "react-dom";
-import Button from "@/components/shared/button";
+import Button from "@/components/shared/Button";
 
 interface CheckoutProps {
   plan: CheckoutPlanParams;
@@ -50,10 +51,14 @@ const CheckoutForm = ({ plan, planStatus, className }: CheckoutProps) => {
     await checkoutPlan(transaction);
   };
 
-  const variant: "hero" | "text" | "contained" = isIncluded ? "text" : !isPopular ? "contained" : "hero";
+  const variant: "hero" | "text" | "contained" = isIncluded
+    ? "text"
+    : !isPopular
+      ? "contained"
+      : "hero";
 
   return (
-    <form action={onCheckout} className={className}>
+    <form action={onCheckout} className={classNames("CheckoutForm", className)}>
       <CheckoutSubmitButton
         isIncluded={isIncluded}
         isCurrent={isCurrent}

@@ -6,7 +6,7 @@ import { UserData } from "@/types/UserData.d";
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { UploadRouteResponse } from "@/types/UploadData.d";
-import Button from "@/components/shared/button";
+import Button from "@/components/shared/Button";
 import FormInput from "@/components/shared/form-input";
 
 type ProfileActionResponse = {

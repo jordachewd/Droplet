@@ -2,7 +2,7 @@
 
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import Button from "@/components/shared/button";
+import Button from "@/components/shared/Button";
 
 describe("Button", () => {
   it("renders with default classes and type", () => {

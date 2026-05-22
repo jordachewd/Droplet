@@ -31,7 +31,7 @@ vi.mock("next/link", () => ({
   ),
 }));
 
-vi.mock("@/components/shared/plan-card", () => ({
+vi.mock("@/components/shared/PlanCard", () => ({
   default: ({
     plan,
     billingCycle,
@@ -46,7 +46,7 @@ vi.mock("@/components/shared/plan-card", () => ({
   },
 }));
 
-vi.mock("@/components/shared/loading-bubbles", () => ({
+vi.mock("@/components/shared/LoadingBubbles", () => ({
   default: () => <div data-testid="loading-bubbles" />,
 }));
 
@@ -124,7 +124,7 @@ describe("Plans section", () => {
 
     expect(screen.getByRole("button", { name: "Monthly" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Yearly" })).toBeTruthy();
-    expect(screen.getByText("Save 35% yearly")).toBeTruthy();
+    expect(screen.getByText("-35%")).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "Yearly" }));
 

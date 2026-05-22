@@ -1,6 +1,6 @@
 import classNames from "classnames";
-import LoadingBubbles from "./loading-bubbles";
-import Button from "@/components/shared/button";
+import LoadingBubbles from "@/components/shared/LoadingBubbles";
+import Button from "@/components/shared/Button";
 import { MouseEvent, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { resolveStoredAssetUrl } from "@/lib/utils/aws/s3-file-reference";

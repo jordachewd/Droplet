@@ -2,7 +2,7 @@
 
 import classNames from "classnames";
 import { ButtonHTMLAttributes, ReactNode } from "react";
-import LoadingBubbles from "@/components/shared/loading-bubbles";
+import LoadingBubbles from "@/components/shared/LoadingBubbles";
 
 type ButtonSize = "xs" | "sm" | "md" | "lg";
 type ButtonVariant =
@@ -38,6 +38,7 @@ export default function Button({
   const isIcon = variant === "icon";
 
   const btnClass = classNames(
+    "Button",
     isIcon ? "icon-btn" : ["btn", `btn-${size}`, `btn-${variant}`],
     className,
   );

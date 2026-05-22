@@ -6,7 +6,7 @@ import { useEffect, useMemo, useRef } from "react";
 import autoAnimate from "@formkit/auto-animate";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import LoadingBubbles from "@/components/shared/loading-bubbles";
+import LoadingBubbles from "@/components/shared/LoadingBubbles";
 import ImageHolder from "@/components/shared/image-holder";
 import AudioPlayer from "@/components/shared/audio-player";
 import { TaskEndAction, TaskEndedReason } from "@/types/TaskData.d";

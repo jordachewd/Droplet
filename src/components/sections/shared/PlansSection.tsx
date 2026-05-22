@@ -6,7 +6,7 @@ import { Plan } from "@/types/PlanData.d";
 import { BillingCycle } from "@/types/PlanData.d";
 import { UserData } from "@/types/UserData.d";
 import PlanCard from "@/components/shared/PlanCard";
-import LoadingBubbles from "@/components/shared/loading-bubbles";
+import LoadingBubbles from "@/components/shared/LoadingBubbles";
 
 import Link from "next/link";
 

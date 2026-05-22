@@ -7,7 +7,11 @@ import PageHead from "@/components/layout/PageHead";
 describe("PageHead", () => {
   it("renders an h1 heading by default", () => {
     render(
-      <PageHead title="Choose your plan" subtitle="Pick the best option." />,
+      <PageHead
+        id="test-page-head"
+        title="Choose your plan"
+        subtitle="Pick the best option."
+      />,
     );
 
     const heading = screen.getByRole("heading", {
@@ -20,7 +24,13 @@ describe("PageHead", () => {
   });
 
   it("renders an h2 heading when headingLevel is h2", () => {
-    render(<PageHead title="Frequently Asked Questions" headingLevel="h2" />);
+    render(
+      <PageHead
+        id="test-page-head-faq"
+        title="Frequently Asked Questions"
+        headingLevel="h2"
+      />,
+    );
 
     const heading = screen.getByRole("heading", {
       level: 2,
@@ -37,7 +47,13 @@ describe("PageHead", () => {
   });
 
   it("renders an h3 heading when headingLevel is h3", () => {
-    render(<PageHead title="Need more help?" headingLevel="h3" />);
+    render(
+      <PageHead
+        id="test-page-head-help"
+        title="Need more help?"
+        headingLevel="h3"
+      />,
+    );
 
     const heading = screen.getByRole("heading", {
       level: 3,

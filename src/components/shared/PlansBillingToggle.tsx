@@ -1,5 +1,5 @@
 import classNames from "classnames";
-import Button from "./button";
+import Button from "@/components/shared/Button";
 import { BillingCycle } from "@/types/PlanData";
 
 type PlansBillingToggleProps = {

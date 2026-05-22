@@ -1,7 +1,7 @@
 import classNames from "classnames";
 import { useEffect, useId, useRef, useState } from "react";
 import { resolveStoredAssetUrl } from "@/lib/utils/aws/s3-file-reference";
-import Button from "@/components/shared/button";
+import Button from "@/components/shared/Button";
 import { useAudioStore } from "@/lib/hooks/use-audio-store";
 
 interface AudioPlayerProps {

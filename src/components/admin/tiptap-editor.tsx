@@ -9,7 +9,7 @@ import Underline from "@tiptap/extension-underline";
 import StarterKit from "@tiptap/starter-kit";
 import { useEffect, useState } from "react";
 import FormInput from "@/components/shared/form-input";
-import Button from "@/components/shared/button";
+import Button from "@/components/shared/Button";
 
 interface TiptapEditorProps {
   inputName: string;

@@ -16,7 +16,7 @@ vi.mock("@/lib/utils/getPlanStatus", () => ({
   getPlanStatus: vi.fn(),
 }));
 
-vi.mock("@/components/shared/checkout-form", () => ({
+vi.mock("@/components/shared/CheckoutForm", () => ({
   default: ({ plan }: { plan: CheckoutPlanParams }) => {
     checkoutRenderMock(plan);
     return <button type="button">Subscribe</button>;
@@ -101,7 +101,8 @@ describe("PlanCard", () => {
     );
 
     expect(screen.getByText("$159.60")).toBeTruthy();
-    expect(screen.getByText("$159.60/year - Save 30%")).toBeTruthy();
+    expect(screen.getByText("/Yr")).toBeTruthy();
+    expect(screen.getByText("Save $68.40")).toBeTruthy();
     expect(checkoutRenderMock).toHaveBeenCalledWith(
       expect.objectContaining({
         billing: "Yearly",

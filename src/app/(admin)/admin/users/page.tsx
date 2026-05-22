@@ -1,5 +1,5 @@
 import Link from "next/link";
-import Button from "@/components/shared/button";
+import Button from "@/components/shared/Button";
 import FormInput from "@/components/shared/form-input";
 import PageHead from "@/components/layout/PageHead";
 import { AdminUsersTable } from "@/components/admin/users/admin-users-table";

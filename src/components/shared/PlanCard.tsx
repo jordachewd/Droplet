@@ -46,7 +46,7 @@ export default function PlanCard({
 
   const { isCurrent, isPopular } = planStatus as PlanStatus;
 
-  const cardClass = classNames("plan-card", {
+  const cardClass = classNames("PlanCard", "plan-card", {
     "bg-dustyBlue-200 text-midnightBlue-500/50": isCurrent,
     "bg-twilightPurple-500 text-white": isPopular,
   });

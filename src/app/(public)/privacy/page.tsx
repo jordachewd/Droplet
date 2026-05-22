@@ -50,7 +50,10 @@ export default async function PrivacyPage() {
           {privacySectionsWithContact.map((section, index) => (
             <ContentCard key={section.title + index} title={section.title}>
               {section.paragraphs.map((paragraph, i) => (
-                <p key={paragraph + i} className="body-2 text-sm md:text-base my-2">
+                <p
+                  key={paragraph + i}
+                  className="body-2 text-sm md:text-base my-2"
+                >
                   {paragraph}
                 </p>
               ))}

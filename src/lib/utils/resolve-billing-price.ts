@@ -11,7 +11,6 @@ export function resolveBillingPrice({
   billingCycle,
   yearlyDiscount,
 }: BillingPriceOptions): number {
-    
   if (billingCycle === "Monthly") {
     return monthlyPrice;
   }

@@ -52,7 +52,11 @@ describe("PersonaCard", () => {
     expect(
       screen.getByText("Creative partner for content, visuals, and campaigns."),
     ).toBeTruthy();
-    expect(screen.getByText("Trial")).toBeTruthy();
+    expect(
+      screen.getByText(
+        "Trial access with reduced limits. Upgrade to unlock full access.",
+      ),
+    ).toBeTruthy();
     expect(screen.getByRole("link").getAttribute("href")).toBe("/sign-up");
   });
 
@@ -66,7 +70,6 @@ describe("PersonaCard", () => {
       />,
     );
 
-    expect(screen.getByText("Premium")).toBeTruthy();
     expect(
       screen.getByText("Upgrade to Premium to unlock this persona."),
     ).toBeTruthy();

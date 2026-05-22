@@ -1,7 +1,7 @@
 "use client";
 
 import AlertMessage, { AlertParams } from "@/components/shared/alert-message";
-import Button from "@/components/shared/button";
+import Button from "@/components/shared/Button";
 import ConfirmationModal from "@/components/shared/confirmation-modal";
 import {
   cancelSubscriptionAction,

@@ -28,6 +28,7 @@ export default function LoadingBubbles({
   const bubbles = sizeMappings[size] || sizeMappings.medium;
 
   const loaderClass = classNames(
+    "LoadingBubbles",
     "flex w-full items-center justify-center gap-1",
     className,
   );

@@ -6,7 +6,7 @@ import { Persona, PersonaId } from "@/types/PersonaData.d";
 import { UploadRouteResponse } from "@/types/UploadData.d";
 import { UploadFileInput } from "@/components/shared/upload-file-input";
 import PersonaSelector from "@/components/shared/persona-selector";
-import Button from "@/components/shared/button";
+import Button from "@/components/shared/Button";
 import { TooltipArrow } from "@/components/layout/TooltipArrow";
 
 interface ChatInputProps {

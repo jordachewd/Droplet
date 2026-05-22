@@ -34,7 +34,7 @@ vi.mock("next/link", () => ({
 
 describe("HeroSection", () => {
   it("renders the homepage headline, CTA, and hero image", () => {
-    render(<HeroSection />);
+    render(<HeroSection id="homepage-hero" />);
 
     expect(
       screen.getByRole("heading", {
@@ -45,7 +45,7 @@ describe("HeroSection", () => {
       screen
         .getByRole("link", { name: "Try it for free" })
         .getAttribute("href"),
-    ).toBe("/app/new");
+    ).toBe("/sign-up");
     expect(
       screen.getByAltText(
         "Droplet assistant visual with floating chat and media creation elements",

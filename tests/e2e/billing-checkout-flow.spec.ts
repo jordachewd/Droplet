@@ -15,7 +15,7 @@ test.describe("billing and checkout flow", () => {
     await page.goto("/app/plans");
     await expect(page).toHaveURL(/\/app\/plans$/);
     await expect(page.locator(".PlanCard").first()).toBeVisible();
-    expect(await page.locator(".Checkout").count()).toBeGreaterThan(0);
+    expect(await page.locator(".CheckoutForm").count()).toBeGreaterThan(0);
     await expect(
       page.getByRole("button", { name: "Subscribe" }).first(),
     ).toBeVisible();

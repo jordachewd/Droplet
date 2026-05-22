@@ -61,7 +61,7 @@ describe("Checkout form", () => {
     const { container } = render(
       <Checkout plan={basePlan} planStatus={basePlanStatus} />,
     );
-    const form = container.querySelector("form.Checkout");
+    const form = container.querySelector("form.CheckoutForm");
 
     expect(form).toBeTruthy();
     fireEvent.submit(form as HTMLFormElement);

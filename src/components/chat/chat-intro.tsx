@@ -2,7 +2,7 @@
 
 import { useUser } from "@clerk/nextjs";
 import classNames from "classnames";
-import LoadingBubbles from "@/components/shared/loading-bubbles";
+import LoadingBubbles from "@/components/shared/LoadingBubbles";
 import type { Persona } from "@/types/PersonaData.d";
 import DropletGlobe from "@/components/shared/droplet-globe";
 

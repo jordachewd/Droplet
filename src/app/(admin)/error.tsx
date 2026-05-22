@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import Button from "@/components/shared/button";
+import Button from "@/components/shared/Button";
 
 interface AdminErrorPageProps {
   error: Error & { digest?: string };

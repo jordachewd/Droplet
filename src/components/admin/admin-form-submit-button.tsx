@@ -1,7 +1,7 @@
 "use client";
 
 import { useFormStatus } from "react-dom";
-import Button from "@/components/shared/button";
+import Button from "@/components/shared/Button";
 
 type ButtonVariant =
   | "contained"

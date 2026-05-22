@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { useEffect, useId, useRef } from "react";
-import Button from "@/components/shared/button";
+import Button from "@/components/shared/Button";
 
 interface ConfirmationModalProps {
   isOpen: boolean;

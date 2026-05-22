@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { Persona } from "@/types/PersonaData.d";
 import PersonasSection from "@/components/sections/shared/PersonasSection";
 
-vi.mock("@/components/shared/persona-card", () => ({
+vi.mock("@/components/shared/PersonaCard", () => ({
   default: ({
     persona,
     href,
