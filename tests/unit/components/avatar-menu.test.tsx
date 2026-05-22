@@ -3,7 +3,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { AnchorHTMLAttributes, ImgHTMLAttributes } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import AvatarMenu from "@/components/shared/avatar-menu";
+import AvatarMenu from "@/components/shared/AvatarMenu";
 import { useClerk, useUser } from "@clerk/nextjs";
 
 type MockNextImageProps = ImgHTMLAttributes<HTMLImageElement> & {

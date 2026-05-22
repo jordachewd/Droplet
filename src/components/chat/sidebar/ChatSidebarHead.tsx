@@ -2,7 +2,7 @@
 
 import classNames from "classnames";
 import Logo from "@/components/shared/app-logo";
-import SidebarToggle from "@/components/shared/sidebar-toggle";
+import SidebarToggle from "@/components/shared/SidebarToggle";
 import { useShallow } from "zustand/react/shallow";
 import { useIsDesktop } from "@/lib/hooks/use-is-desktop";
 import { useUiStore } from "@/lib/hooks/use-ui-store";
@@ -11,7 +11,7 @@ interface SidebarHeadProps {
   isDesktopCollapsed?: boolean;
 }
 
-export default function SidebarHead({
+export default function ChatSidebarHead({
   isDesktopCollapsed = false,
 }: SidebarHeadProps) {
   const {
@@ -38,33 +38,29 @@ export default function SidebarHead({
     toggleMobileSidebarOpen();
   }
 
-  const sidebarExpanded = isDesktop
-    ? !desktopSidebarCollapsed
-    : mobileSidebarOpen;
+  const logoClass = classNames("chat-sidebar-logo", {
+    "justify-center": isDesktopCollapsed,
+  });
+
+  const isExpanded = isDesktop ? !desktopSidebarCollapsed : mobileSidebarOpen;
+
   const toggleVisibilityClass = classNames(
-    "ml-auto transition-all duration-300",
-    isDesktopCollapsed &&
-      "lg:pointer-events-none lg:opacity-0 lg:group-hover:pointer-events-auto lg:group-hover:opacity-100 lg:group-focus-within:pointer-events-auto lg:group-focus-within:opacity-100",
+    "chat-sidebar-toggle",
+    isDesktopCollapsed && "chat-sidebar-toggle--collapsed",
   );
 
   return (
-    <div className="ChatSidebarHead group flex w-full items-center gap-2 px-4 py-3">
-      <div
-        className={classNames(
-          "ChatSidebarHeadLogo flex min-w-0 items-center",
-          isDesktopCollapsed && "lg:justify-center",
-        )}
-        tabIndex={isDesktopCollapsed ? 0 : undefined}
-      >
+    <div className="chat-sidebar-head group">
+      <div className={logoClass} tabIndex={isDesktopCollapsed ? 0 : undefined}>
         <Logo size={32} iconOnly={isDesktopCollapsed} />
       </div>
 
       <div className={toggleVisibilityClass}>
         <SidebarToggle
           icon="bi-layout-sidebar"
-          title={sidebarExpanded ? "Hide menu" : "Show menu"}
+          title={isExpanded ? "Hide menu" : "Show menu"}
           toggleSidebar={handleToggleSidebar}
-          expanded={sidebarExpanded}
+          expanded={isExpanded}
           controlsId="chat-sidebar"
         />
       </div>

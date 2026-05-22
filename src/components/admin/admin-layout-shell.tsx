@@ -4,8 +4,8 @@ import { useEffect } from "react";
 import Link from "next/link";
 import AdminSidebar from "@/components/admin/admin-sidebar";
 import AppHeader from "@/components/shared/app-header";
-import AppLayoutShell from "@/components/shared/app-layout-shell";
-import SidebarToggle from "@/components/shared/sidebar-toggle";
+import AppLayoutShell from "@/components/chat/ChatLayoutWrapper";
+import SidebarToggle from "@/components/shared/SidebarToggle";
 import { useIsDesktop } from "@/lib/hooks/use-is-desktop";
 import { useUiStore } from "@/lib/hooks/use-ui-store";
 import { useShallow } from "zustand/react/shallow";
@@ -80,7 +80,6 @@ export default function AdminLayoutShell({
 
   return (
     <AppLayoutShell
-      className="AdminLayoutShell"
       mainId="admin-layout"
       sidebar={<AdminSidebar links={adminLinks} />}
       header={

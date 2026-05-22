@@ -2,6 +2,7 @@
   .app-base-wrapper {
     @apply relative z-0 flex w-full flex-col pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)];
   }
+
   .app-base-background {
     @apply fixed inset-0 -z-10 w-dvw h-dvh transition-all animate-ease-in opacity-60 dark:opacity-80;
     @apply bg-lavenderHaze-300 text-midnightBlue-600 dark:bg-nightIndigo-800 dark:text-lavenderHaze-500;

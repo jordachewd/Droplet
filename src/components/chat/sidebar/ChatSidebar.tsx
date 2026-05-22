@@ -1,4 +1,4 @@
-import ChatSidebarShell from "@/components/chat/sidebar/chat-sidebar-shell";
+import ChatSidebarWrapper from "@/components/chat/sidebar/ChatSidebarWrapper";
 import { auth } from "@clerk/nextjs/server";
 import { ensureUserSynced } from "@/lib/utils/ensure-user-synced";
 import {
@@ -56,7 +56,7 @@ export default async function ChatSidebar() {
   }
 
   return (
-    <ChatSidebarShell
+    <ChatSidebarWrapper
       historyItems={history}
       userRole={userRole}
       userPlanName={userPlanName}

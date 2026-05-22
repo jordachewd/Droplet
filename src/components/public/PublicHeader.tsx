@@ -5,8 +5,8 @@ import classNames from "classnames";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
-import ToggleTheme from "@/components/layout/ToggleTheme";
-import AvatarMenu from "@/components/shared/avatar-menu";
+import ThemeSwitch from "@/components/shared/ThemeSwitch";
+import AvatarMenu from "@/components/shared/AvatarMenu";
 import Button from "@/components/shared/Button";
 import Logo from "@/components/shared/app-logo";
 import { MainNavLink } from "@/types/MainNav";
@@ -64,7 +64,7 @@ export default function PublicHeader() {
   });
 
   return (
-    <header className={headerCss}>
+    <header id="public-header" className={headerCss}>
       <div className="public-header-wrapper">
         <div className="public-header-main">
           <div className="public-header-logo">
@@ -97,15 +97,15 @@ export default function PublicHeader() {
           </nav>
 
           <div className="public-header-utils">
-            {isSignedIn ? (
-              <AvatarMenu />
-            ) : (
-              <Link className="btn btn-text btn-sm uppercase" href="/sign-in">
+            {!isSignedIn && (
+              <Link className="btn btn-sm btn-text uppercase" href="/sign-in">
                 Login
               </Link>
             )}
 
-            <ToggleTheme />
+            <ThemeSwitch />
+
+            {isSignedIn && <AvatarMenu />}
           </div>
         </div>
 

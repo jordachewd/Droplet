@@ -1,0 +1,29 @@
+@layer components {
+  .app-theme-switch {
+    @apply relative inline-flex h-8 w-15 items-center rounded-full p-1 transition-all duration-300 ease-in-out 
+    motion-reduce:transition-none bg-lavenderHaze-500;
+  }
+
+  .app-theme-switch--on {
+    @apply pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 transition-transform 
+     text-twilightPurple-500 dark:text-lavenderHaze-500 duration-300 motion-reduce:transition-none;
+  }
+
+  .app-theme-switch--off {
+    @apply pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 transition-transform 
+    text-twilightPurple-500 dark:text-lavenderHaze-500 duration-300 motion-reduce:transition-none;
+  }
+
+  .app-theme-switch--active {
+    @apply pointer-events-none absolute left-1 top-1 size-6 rounded-full grid place-items-center;
+    @apply transition-transform duration-300 ease-in-out motion-reduce:transition-none bg-twilightPurple-500;
+  }
+
+  .app-theme-switch--svg {
+    @apply size-3.5 text-twilightPurple-500;
+  }
+
+  .app-theme-switch--svg-active {
+    @apply size-3.5 text-lavenderHaze-500;
+  }
+}

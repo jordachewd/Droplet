@@ -2,7 +2,7 @@
 
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import AppLayoutShell from "@/components/shared/app-layout-shell";
+import AppLayoutShell from "@/components/chat/ChatLayoutWrapper";
 
 describe("AppLayoutShell", () => {
   it("renders skip link, slots, and main content", () => {

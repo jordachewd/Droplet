@@ -1,11 +1,11 @@
+import ChatHeader from "@/components/chat/chat-header";
+import ChatSidebar from "@/components/chat/sidebar/ChatSidebar";
+import ChatLayoutWrapper from "@/components/chat/ChatLayoutWrapper";
+import { ensureUserSynced } from "@/lib/utils/ensure-user-synced";
 import { auth } from "@clerk/nextjs/server";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { ReactNode } from "react";
-import ChatSidebar from "@/components/chat/chat-sidebar";
-import ChatHeader from "@/components/chat/chat-header";
-import AppLayoutShell from "@/components/shared/app-layout-shell";
-import { ensureUserSynced } from "@/lib/utils/ensure-user-synced";
 
 const ONBOARDING_EXEMPT_PATHS = new Set([
   "/app/onboarding",
@@ -19,8 +19,10 @@ interface ChatLayoutProps {
 
 export default async function ChatLayout({ children }: ChatLayoutProps) {
   const { userId } = await auth();
+
   if (userId) {
     const userData = await ensureUserSynced(userId);
+
     if (
       userData &&
       !userData.onboardingCompleted &&
@@ -36,13 +38,12 @@ export default async function ChatLayout({ children }: ChatLayoutProps) {
   }
 
   return (
-    <AppLayoutShell
-      className="ChatLayout"
-      mainId="chat-layout"
+    <ChatLayoutWrapper
+      mainId="chat-main"
       sidebar={<ChatSidebar />}
       header={<ChatHeader />}
     >
       {children}
-    </AppLayoutShell>
+    </ChatLayoutWrapper>
   );
 }

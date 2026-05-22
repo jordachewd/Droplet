@@ -9,25 +9,27 @@
 @import "./theme/typography.css";
 
 /* Base resets */
-@import "./base/app-base-wrapper.css";
+@import "./base/app-base.css";
 @import "./base/compatibility.css";
 @import "./base/elements.css";
 
 /* Component classes */
-@import "./components/typography.css";
+@import "./components/avatar.css";
 @import "./components/buttons.css";
-@import "./components/tooltip.css";
-@import "./components/layout.css";
+@import "./components/card.css";
+@import "./components/droplet-globe.css";
+@import "./components/forms.css";
 @import "./components/logo.css";
 @import "./components/plan-card.css";
 @import "./components/plans-billing.css";
-@import "./components/toggle.css";
-@import "./components/forms.css";
-@import "./components/droplet-globe.css";
-@import "./components/card.css";
+@import "./components/theme-switch.css";
+@import "./components/tooltip.css";
+@import "./components/typography.css";
 
 /* Component classes - Chat */
+@import "./components/chat/chat-layout.css";
 @import "./components/chat/chat-markdown.css";
+@import "./components/chat/chat-sidebar.css";
 
 /* Component classes - Admin */
 @import "./components/admin/admin.css";

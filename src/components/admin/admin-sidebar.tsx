@@ -4,7 +4,7 @@ import classNames from "classnames";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Logo from "@/components/shared/app-logo";
-import SidebarShell from "@/components/shared/sidebar-shell";
+import ChatSidebarShell from "@/components/chat/sidebar/ChatSidebarShell";
 
 interface AdminSidebarLink {
   href: string;
@@ -21,9 +21,8 @@ export default function AdminSidebar({ links }: AdminSidebarProps) {
   const pathname = usePathname();
 
   return (
-    <SidebarShell
+    <ChatSidebarShell
       id="admin-sidebar"
-      className="AdminSidebar"
       header={({ isSidebarOpen }) => (
         <div
           className={classNames(

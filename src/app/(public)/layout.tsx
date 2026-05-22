@@ -11,13 +11,13 @@ export default function PublicLayout({
 }: Readonly<PublicLayoutProps>) {
   return (
     <>
-      <a href="#public-main-content" className="skip-link">
+      <a href="#public-main" className="skip-link">
         Skip to main content
       </a>
 
       <PublicHeader />
 
-      <main className="public-main" id="public-main-content">
+      <main id="public-main" className="public-main">
         {children}
       </main>
 

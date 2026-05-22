@@ -3,10 +3,10 @@
 import { useEffect } from "react";
 import classNames from "classnames";
 import { PromoContent } from "@/constants/promo-content";
-import SidebarHead from "@/components/chat/sidebar/sidebar-head";
-import ChatSidebarNav from "@/components/chat/sidebar/chat-sidebar-nav";
-import ChatSidebarPromo from "@/components/chat/sidebar/chat-sidebar-promo";
-import SidebarShell from "@/components/shared/sidebar-shell";
+import ChatSidebarHead from "@/components/chat/sidebar/ChatSidebarHead";
+import ChatSidebarNav from "@/components/chat/sidebar/ChatSidebarNav";
+import ChatSidebarPromo from "@/components/chat/sidebar/ChatSidebarPromo";
+import ChatSidebarShell from "@/components/chat/sidebar/ChatSidebarShell";
 import { ConversationListItem } from "@/types/PersonaData.d";
 import { PlanName } from "@/types/PlanData.d";
 import { UserRoles } from "@/types/UserData.d";
@@ -23,7 +23,7 @@ interface ChatSidebarShellProps {
 
 const SIDEBAR_STORAGE_KEY = "droplet-sidebar-collapsed";
 
-export default function ChatSidebarShell({
+export default function ChatSidebarWrapper({
   historyItems,
   userRole,
   userPlanName,
@@ -60,11 +60,10 @@ export default function ChatSidebarShell({
   }, [desktopCollapsed]);
 
   return (
-    <SidebarShell
+    <ChatSidebarShell
       id="chat-sidebar"
-      className="ChatSidebar"
       header={({ isDesktopCollapsed }) => (
-        <SidebarHead isDesktopCollapsed={isDesktopCollapsed} />
+        <ChatSidebarHead isDesktopCollapsed={isDesktopCollapsed} />
       )}
       navigation={({ isSidebarOpen }) => (
         <div

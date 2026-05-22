@@ -8,19 +8,17 @@ interface TooltipArrowProps {
 }
 
 const placementStyles = {
-  top: "bottom-full left-1/2 -translate-x-1/2 mb-2 p-1",
-  right: "left-full top-1/2 -translate-y-1/2 ml-2 p-1",
-  bottom: "top-full left-1/2 -translate-x-1/2 mt-2 p-1",
-  left: "right-full top-1/2 -translate-y-1/2 mr-2 p-1",
+  top: "app-tooltip-content--top",
+  right: "app-tooltip-content--right",
+  bottom: "app-tooltip-content--bottom",
+  left: "app-tooltip-content--left",
 };
 
 const arrowStyles = {
-  top: "left-1/2 top-full -translate-x-1/2 border-x-4 border-t-4 border-x-transparent border-t-nightIndigo-600",
-  right:
-    "right-full top-1/2 -translate-y-1/2 border-y-4 border-r-4 border-y-transparent border-r-nightIndigo-600",
-  bottom:
-    "left-1/2 bottom-full -translate-x-1/2 border-x-4 border-b-4 border-x-transparent border-b-nightIndigo-600",
-  left: "left-full top-1/2 -translate-y-1/2 border-y-4 border-l-4 border-y-transparent border-l-nightIndigo-600",
+  top: "app-tooltip-arrow--top",
+  right: "app-tooltip-arrow--right",
+  bottom: "app-tooltip-arrow--bottom",
+  left: "app-tooltip-arrow--left",
 };
 
 export const TooltipArrow = ({

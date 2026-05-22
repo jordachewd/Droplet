@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export default function PublicFooter() {
   return (
-    <footer className="public-footer">
+    <footer id="public-footer" className="public-footer">
       <div className="public-footer-wrapper">
         <div className="public-footer-content">
           <div className="flex border-r border-black/25 pr-4 dark:border-white/10">

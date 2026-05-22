@@ -10,7 +10,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { TooltipArrow } from "../layout/TooltipArrow";
+import { TooltipArrow } from "./TooltipArrow";
 import { useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import LogoutBtn from "./logout-btn";
@@ -118,7 +118,7 @@ export default function AvatarMenu() {
   };
 
   const userInitialsClass = classNames(
-    "inline-flex h-7 w-7 items-center justify-center overflow-hidden rounded-full",
+    "inline-flex h-8 w-8 items-center justify-center overflow-hidden rounded-full",
     "bg-lavenderHaze-500 text-[13px] font-semibold text-white",
     "shadow-[0px_0px_5px_0px_rgba(122,75,204,0.3)]",
   );
@@ -136,7 +136,7 @@ export default function AvatarMenu() {
   );
 
   return (
-    <div className="AvatarMenu relative flex" ref={wrapperRef}>
+    <div className="app-avatar flex relative" ref={wrapperRef}>
       <TooltipArrow title="Account" placement="bottom">
         <button
           ref={triggerRef}
@@ -153,8 +153,8 @@ export default function AvatarMenu() {
               <Image
                 src={imageUrl}
                 alt={fullName ? `${fullName} avatar` : "User avatar"}
-                width={28}
-                height={28}
+                width={32}
+                height={32}
                 className="h-full w-full object-cover"
               />
             ) : (

@@ -1,44 +1,39 @@
 "use client";
 
-import classNames from "classnames";
 import { ReactNode } from "react";
 
-interface AppLayoutShellProps {
+interface ChatLayoutProps {
+  mainId: string;
   sidebar: ReactNode;
   header: ReactNode;
   children: ReactNode;
-  mainId: string;
   skipLinkTarget?: string;
-  className?: string;
 }
 
-export default function AppLayoutShell({
+export default function ChatLayoutWrapper({
+  mainId,
   sidebar,
   header,
   children,
-  mainId,
   skipLinkTarget,
-  className,
-}: AppLayoutShellProps) {
+}: ChatLayoutProps) {
   const skipTarget = skipLinkTarget ?? mainId;
   const skipLinkHref = skipTarget.startsWith("#")
     ? skipTarget
     : `#${skipTarget}`;
 
   return (
-    <div className={classNames("app-layout-shell", className)}>
+    <div className="chat-wrapper">
       <a href={skipLinkHref} className="skip-link">
         Skip to main content
       </a>
 
       {sidebar}
 
-      <main className="app-main">
+      <main id={mainId} tabIndex={-1} className="chat-main">
         {header}
 
-        <div id={mainId} tabIndex={-1} className="app-content">
-          {children}
-        </div>
+        <div className="chat-content">{children}</div>
       </main>
     </div>
   );

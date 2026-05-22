@@ -1,0 +1,43 @@
+@layer components {
+  .chat-sidebar-backdrop {
+    @apply fixed inset-0 z-20 bg-black/35 backdrop-blur-[1px] lg:hidden;
+  }
+
+  .chat-sidebar {
+    @apply flex flex-col fixed bottom-0 left-0 top-0 z-30 w-72 lg:relative lg:z-10;
+    @apply justify-between transition-all duration-300 backdrop-blur-lg;
+    @apply bg-lavenderHaze-100/40 dark:bg-nightIndigo-1000/40;
+  }
+
+  .chat-sidebar-head {
+    @apply flex w-full items-center gap-2 px-4 py-3;
+  }
+
+  .chat-sidebar-logo {
+    @apply flex min-w-0 items-center;
+  }
+
+  .chat-sidebar-toggle {
+    @apply ml-auto transition-all duration-300;
+  }
+
+  .chat-sidebar-toggle--collapsed {
+    @apply lg:pointer-events-none lg:opacity-0 
+    lg:group-hover:pointer-events-auto 
+    lg:group-hover:opacity-100 
+    lg:group-focus-within:pointer-events-auto 
+    lg:group-focus-within:opacity-100;
+  }
+
+  .app-header-bar {
+    @apply sticky left-0 right-0 top-0 z-20 flex w-full px-4 bg-lavenderHaze-500/50 backdrop-blur-lg dark:bg-nightIndigo-500/50;
+  }
+
+  .app-header-inner {
+    @apply mx-auto flex w-full items-center justify-between gap-4 py-2.5;
+  }
+
+  .sidebar-nav-link {
+    @apply flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-sm transition-all;
+  }
+}

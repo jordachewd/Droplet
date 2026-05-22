@@ -2,8 +2,8 @@
 
 import classNames from "classnames";
 import { ReactNode } from "react";
-import AvatarMenu from "@/components/shared/avatar-menu";
-import ToggleTheme from "@/components/layout/ToggleTheme";
+import AvatarMenu from "@/components/shared/AvatarMenu";
+import ThemeSwitch from "@/components/shared/ThemeSwitch";
 
 type AppHeaderElement = "header" | "section";
 
@@ -29,7 +29,7 @@ export default function AppHeader({
 
         <div className="ml-auto flex items-center gap-2">
           {rightSlot ?? null}
-          <ToggleTheme />
+          <ThemeSwitch />
           <AvatarMenu />
         </div>
       </div>

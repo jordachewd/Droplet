@@ -3,7 +3,7 @@
 import classNames from "classnames";
 import { useShallow } from "zustand/react/shallow";
 import AppHeader from "@/components/shared/app-header";
-import SidebarToggle from "@/components/shared/sidebar-toggle";
+import SidebarToggle from "@/components/shared/SidebarToggle";
 import { useChatStore } from "@/lib/hooks/use-chat-store";
 import { useUiStore } from "@/lib/hooks/use-ui-store";
 

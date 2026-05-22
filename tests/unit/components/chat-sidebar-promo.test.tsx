@@ -2,7 +2,7 @@
 
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import ChatSidebarPromo from "@/components/chat/sidebar/chat-sidebar-promo";
+import ChatSidebarPromo from "@/components/chat/sidebar/ChatSidebarPromo";
 
 describe("ChatSidebarPromo", () => {
   it("shows the upgrade CTA for non-suspended client users", () => {

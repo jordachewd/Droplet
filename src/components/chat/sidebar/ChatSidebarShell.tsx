@@ -22,7 +22,6 @@ interface SidebarShellProps {
   header: SidebarShellSlot;
   navigation: SidebarShellSlot;
   footer?: SidebarShellSlot;
-  className?: string;
 }
 
 function renderSlot(
@@ -36,12 +35,11 @@ function renderSlot(
   return slot ?? null;
 }
 
-export default function SidebarShell({
+export default function ChatSidebarShell({
   id,
   header,
   navigation,
   footer,
-  className,
 }: SidebarShellProps) {
   const pathname = usePathname();
   const isDesktopViewport = useIsDesktop();
@@ -77,21 +75,20 @@ export default function SidebarShell({
     isDesktopViewport,
   };
 
-  const sidebarClass = classNames(
-    className,
-    "app-sidebar lg:translate-x-0",
-    mobileSidebarOpen ? "translate-x-0" : "-translate-x-full",
-    isDesktopCollapsed ? "lg:w-16" : "lg:w-56",
-  );
-
-  const backdropClass = classNames(
-    "sidebar-backdrop",
-    !mobileSidebarOpen && "hidden",
-  );
-
   function handleCloseMobileSidebar() {
     setMobileSidebarOpen(false);
   }
+
+  const backdropClass = classNames(
+    "chat-sidebar-backdrop",
+    !mobileSidebarOpen && "hidden",
+  );
+
+  const sidebarClass = classNames(
+    "chat-sidebar lg:translate-x-0",
+    mobileSidebarOpen ? "translate-x-0" : "-translate-x-full",
+    isDesktopCollapsed ? "lg:w-16" : "lg:w-56",
+  );
 
   return (
     <>
@@ -102,11 +99,11 @@ export default function SidebarShell({
         aria-label="Close sidebar overlay"
       />
 
-      <div className={sidebarClass} id={id}>
+      <aside id={id} className={sidebarClass}>
         {renderSlot(header, slotState)}
         {renderSlot(navigation, slotState)}
         {renderSlot(footer, slotState)}
-      </div>
+      </aside>
     </>
   );
 }
