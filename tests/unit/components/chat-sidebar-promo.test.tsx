@@ -8,7 +8,6 @@ describe("ChatSidebarPromo", () => {
   it("shows the upgrade CTA for non-suspended client users", () => {
     render(
       <ChatSidebarPromo
-        isOpen
         planName="Lite"
         userRole="client"
         isSuspended={false}
@@ -20,9 +19,7 @@ describe("ChatSidebarPromo", () => {
   });
 
   it("shows a suspension message and hides upgrade CTA for suspended users", () => {
-    render(
-      <ChatSidebarPromo isOpen planName="Lite" userRole="client" isSuspended />,
-    );
+    render(<ChatSidebarPromo planName="Lite" userRole="client" isSuspended />);
 
     expect(screen.getByText("Account Suspended")).toBeTruthy();
     expect(
@@ -34,7 +31,7 @@ describe("ChatSidebarPromo", () => {
   });
 
   it('renders "ADMIN" label for admin users', () => {
-    render(<ChatSidebarPromo isOpen planName="Lite" userRole="admin" />);
+    render(<ChatSidebarPromo planName="Lite" userRole="admin" />);
 
     expect(screen.getByText("ADMIN")).toBeTruthy();
     expect(screen.queryByRole("link", { name: "Upgrade Now" })).toBeNull();

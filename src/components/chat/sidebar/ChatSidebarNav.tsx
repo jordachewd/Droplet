@@ -30,6 +30,8 @@ export default function ChatSidebarNav({
 
   const [conversationItems, setConversationItems] =
     useState<ConversationListItem[]>(historyItems);
+  const [previousHistoryItems, setPreviousHistoryItems] =
+    useState<ConversationListItem[]>(historyItems);
 
   const [deletingConversationId, setDeletingConversationId] = useState<
     string | null
@@ -65,9 +67,10 @@ export default function ChatSidebarNav({
   const skipRenameBlurRef = useRef<boolean>(false);
   const renameSubmissionInFlightRef = useRef<boolean>(false);
 
-  useEffect(() => {
+  if (historyItems !== previousHistoryItems) {
+    setPreviousHistoryItems(historyItems);
     setConversationItems(historyItems);
-  }, [historyItems]);
+  }
 
   useEffect(() => {
     if (!openMenuConversationId) {
