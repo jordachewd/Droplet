@@ -29,6 +29,15 @@ const mongoSetupError =
 const e2eTestUser = getE2ETestUser();
 const e2eAdminUser = getE2EAdminUser();
 
+function getE2EMongoUrl(): string | undefined {
+  return (
+    process.env.MONGODB_URL_FALLBACK ??
+    getEnvValue("MONGODB_URL_FALLBACK") ??
+    process.env.MONGODB_URL ??
+    getEnvValue("MONGODB_URL")
+  );
+}
+
 async function ensureE2EAppUser(params: {
   clerkId: string;
   email?: string;
@@ -38,7 +47,7 @@ async function ensureE2EAppUser(params: {
   role: "client" | "admin";
   username?: string | null;
 }): Promise<string> {
-  const mongoUrl = process.env.MONGODB_URL ?? getEnvValue("MONGODB_URL");
+  const mongoUrl = getE2EMongoUrl();
   const mongoDbName =
     process.env.MONGODB_DB_NAME ?? getEnvValue("MONGODB_DB_NAME");
 

@@ -1,6 +1,17 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const connectMock = vi.hoisted(() => vi.fn());
+const dnsGetServersMock = vi.hoisted(() => vi.fn(() => ["192.168.1.1"]));
+const dnsSetServersMock = vi.hoisted(() => vi.fn());
+
+vi.mock("node:dns", () => ({
+  default: {
+    getServers: dnsGetServersMock,
+    setServers: dnsSetServersMock,
+  },
+  getServers: dnsGetServersMock,
+  setServers: dnsSetServersMock,
+}));
 
 vi.mock("mongoose", () => ({
   default: { connect: connectMock },
@@ -17,10 +28,12 @@ function setDatabaseEnv(overrides?: {
   mongodbUrl?: string;
   mongodbUrlFallback?: string;
   mongodbDbName?: string;
+  dnsFallbackServers?: string;
 }) {
   process.env.MONGODB_URL = overrides?.mongodbUrl ?? "mongodb://primary";
   process.env.MONGODB_URL_FALLBACK = overrides?.mongodbUrlFallback;
   process.env.MONGODB_DB_NAME = overrides?.mongodbDbName ?? "droplet_test";
+  process.env.DNS_FALLBACK_SERVERS = overrides?.dnsFallbackServers;
 }
 
 async function loadConnectToDatabase() {
@@ -33,6 +46,9 @@ describe("mongoose connection utility", () => {
     process.env = { ...ORIGINAL_ENV };
     clearMongooseCache();
     connectMock.mockReset();
+    dnsGetServersMock.mockReset();
+    dnsGetServersMock.mockReturnValue(["192.168.1.1"]);
+    dnsSetServersMock.mockReset();
     vi.resetModules();
   });
 
@@ -115,6 +131,67 @@ describe("mongoose connection utility", () => {
     expect(String(stderrSpy.mock.calls[0]?.[0])).toContain(
       "Retrying with fallback URI",
     );
+  });
+
+  it("configures DNS fallback before SRV connection when Node DNS is loopback-only", async () => {
+    const connection = { name: "primary_connection" };
+    const stderrSpy = vi
+      .spyOn(process.stderr, "write")
+      .mockImplementation(() => true);
+    dnsGetServersMock.mockReturnValue(["127.0.0.1"]);
+    setDatabaseEnv({
+      mongodbUrl: "mongodb+srv://primary-cluster",
+      dnsFallbackServers: "1.1.1.1,8.8.8.8",
+    });
+    connectMock.mockResolvedValue(connection);
+
+    const connectToDatabase = await loadConnectToDatabase();
+
+    await expect(connectToDatabase()).resolves.toBe(connection);
+    expect(dnsSetServersMock).toHaveBeenCalledWith(["1.1.1.1", "8.8.8.8"]);
+    expect(String(stderrSpy.mock.calls[0]?.[0])).toContain(
+      "configured DNS fallback",
+    );
+  });
+
+  it("does not configure DNS fallback when Node DNS is not loopback-only", async () => {
+    const connection = { name: "primary_connection" };
+    dnsGetServersMock.mockReturnValue(["192.168.1.1"]);
+    setDatabaseEnv({
+      mongodbUrl: "mongodb+srv://primary-cluster",
+    });
+    connectMock.mockResolvedValue(connection);
+
+    const connectToDatabase = await loadConnectToDatabase();
+
+    await expect(connectToDatabase()).resolves.toBe(connection);
+    expect(dnsSetServersMock).not.toHaveBeenCalled();
+  });
+
+  it("continues to MongoDB URI fallback when DNS fallback configuration fails", async () => {
+    const fallbackConnection = { name: "fallback_connection" };
+    const stderrSpy = vi
+      .spyOn(process.stderr, "write")
+      .mockImplementation(() => true);
+    dnsGetServersMock.mockReturnValue(["127.0.0.1"]);
+    dnsSetServersMock.mockImplementationOnce(() => {
+      throw new Error("invalid DNS server");
+    });
+    setDatabaseEnv({
+      mongodbUrl: "mongodb+srv://primary-cluster",
+      mongodbUrlFallback: "mongodb://fallback-cluster",
+    });
+    connectMock
+      .mockRejectedValueOnce(new Error("querySrv ECONNREFUSED"))
+      .mockResolvedValueOnce(fallbackConnection);
+
+    const connectToDatabase = await loadConnectToDatabase();
+
+    await expect(connectToDatabase()).resolves.toBe(fallbackConnection);
+    expect(String(stderrSpy.mock.calls[0]?.[0])).toContain(
+      "DNS fallback configuration failed",
+    );
+    expect(connectMock.mock.calls[1]?.[0]).toBe("mongodb://fallback-cluster");
   });
 
   it("logs missing fallback configuration for SRV DNS failures before rethrowing", async () => {

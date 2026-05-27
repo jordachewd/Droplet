@@ -4,7 +4,6 @@ import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { auth } from "@clerk/nextjs/server";
-import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import ChatLayout from "@/app/(chat)/layout";
 import ChatPage from "@/app/(chat)/app/page";

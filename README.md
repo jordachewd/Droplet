@@ -89,6 +89,14 @@ Visit [Droplet](https://droplet.jwd-apps.com) to create your free account and st
 
 ---
 
+## Development Runtime
+
+- Use Node.js 24 LTS. The repo includes `.nvmrc` and `package.json` engines set to `24`.
+- For local Atlas connections, keep `MONGODB_URL_FALLBACK` configured with the non-SRV MongoDB URI. This protects local development when Node SRV DNS lookups fail against a loopback resolver.
+- Optional: set `DNS_FALLBACK_SERVERS` to a comma-separated DNS server list if the default `1.1.1.1,8.8.8.8` is not appropriate for your network.
+
+---
+
 ## License
 
 Private — all rights reserved.

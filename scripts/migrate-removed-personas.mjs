@@ -12,7 +12,8 @@
  * Usage:
  *   node scripts/migrate-removed-personas.mjs
  *
- * Requires MONGODB_URL and MONGODB_DB_NAME in .env.local
+ * Requires MONGODB_URL and MONGODB_DB_NAME in .env.local.
+ * MONGODB_URL_FALLBACK is used when SRV DNS lookup fails.
  *
  * Safe to run multiple times (idempotent).
  */
@@ -68,6 +69,7 @@ loadDotenvFile(path.join(__dirname, "..", ".env.local"));
 loadDotenvFile(path.join(__dirname, "..", ".env"));
 
 const MONGODB_URL = process.env.MONGODB_URL;
+const MONGODB_URL_FALLBACK = process.env.MONGODB_URL_FALLBACK;
 const MONGODB_DB_NAME = process.env.MONGODB_DB_NAME?.trim();
 
 if (!MONGODB_URL || !MONGODB_DB_NAME) {
@@ -95,12 +97,28 @@ const PERSONA_ACCESS_KEYS = [
 async function run() {
   const { MongoClient } = await import("mongodb");
 
-  const client = new MongoClient(MONGODB_URL, {
+  let client = new MongoClient(MONGODB_URL, {
     serverSelectionTimeoutMS: 5000,
   });
 
   try {
-    await client.connect();
+    try {
+      await client.connect();
+    } catch (error) {
+      if (!isSrvDnsLookupError(error) || !MONGODB_URL_FALLBACK) {
+        throw error;
+      }
+
+      console.warn(
+        "MongoDB SRV DNS lookup failed; retrying with MONGODB_URL_FALLBACK.",
+      );
+      await client.close();
+      client = new MongoClient(MONGODB_URL_FALLBACK, {
+        serverSelectionTimeoutMS: 5000,
+      });
+      await client.connect();
+    }
+
     console.log(`Connected to MongoDB (${MONGODB_DB_NAME})\n`);
 
     const db = client.db(MONGODB_DB_NAME);
@@ -203,6 +221,15 @@ async function run() {
   } finally {
     await client.close();
   }
+}
+
+function isSrvDnsLookupError(error) {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  const message = error.message.toLowerCase();
+  return message.includes("querysrv") || message.includes("econnrefused");
 }
 
 run();

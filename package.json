@@ -3,6 +3,9 @@
   "version": "1.0.1",
   "private": true,
   "author": "JordacheWD",
+  "engines": {
+    "node": "24.x"
+  },
   "scripts": {
     "codex": "dotenv -f .env.codex -- codex",
     "dev": "next dev --webpack",

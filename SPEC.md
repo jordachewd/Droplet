@@ -28,7 +28,7 @@
 >
 > **Remaining Issues:**
 
-- **TD-DB-DNS-01** — 🔴 ACTIVE (PM audit #142, May 27, 2026). On the owner-reported Windows workstation, authenticated `/app` load fails with `querySrv ECONNREFUSED _mongodb._tcp.droplet.vd7t2fs.mongodb.net`. Verified: Windows `Resolve-DnsName` resolves the Atlas SRV record, Node `dns.resolveSrv()` fails with the same error, and local `.env.local` defines `MONGODB_URL` + `MONGODB_DB_NAME` but not `MONGODB_URL_FALLBACK`. Immediate operational fix: define a non-SRV `MONGODB_URL_FALLBACK` locally so the existing connector fallback can execute. Required code follow-up: authenticated app routes must render retry/support UI instead of `notFound()` or `redirect("/sign-in")` when `ensureUserSynced()` fails, and `ChatSidebar` must not mask history-query outage as a normal empty state.
+- **TD-DB-DNS-01** — ✅ RESOLVED (May 27, 2026). Owner workstation reproduced `querySrv ECONNREFUSED _mongodb._tcp.droplet.vd7t2fs.mongodb.net` with Node DNS pointed at loopback `127.0.0.1`, while Windows DNS and public DNS resolved the Atlas SRV record. Resolution: repo pinned to Node.js 24 LTS, Mongo connector now applies a guarded DNS fallback for loopback-only SRV lookups, `MONGODB_URL_FALLBACK` remains the final non-SRV recovery path, E2E/scripts prefer or retry fallback, and authenticated chat routes render retry/support UI on account-load failure.
   > - **TD-PAYMENT-03** — ✅ RESOLVED (PM audit #135). Stripe webhook verified working on localhost by owner. CLI shows HTTP 200 for both `checkout.session.completed` and `invoice.paid`. Transaction created, plan updated, UI reflects changes. Code was always correct — issue was Dashboard configuration (wrong URL, disabled endpoint). Production live-mode verification pending deployment.
   > - **TD-PROJECTION-01** — ✅ RESOLVED (PM audit #130, Phase 234-A). `USER_SYNC_PROJECTION` now includes `stripeCustomerId`, `stripeSubscriptionId`, `subscriptionStatus`, `suspended`.
   > - **TD-BILLING-01** — ✅ RESOLVED (PM audit #130, Phase 234-A2). `getAllTransactions()` `.select()` now includes `stripeId`. Billing history Active/Inactive status works correctly.
@@ -956,6 +956,7 @@ All button styles use Lime Green as the accent color in **both** light and dark 
 | `MONGODB_URL`                       | MongoDB connection string                                                                         |
 | `MONGODB_URL_FALLBACK`              | Strongly recommended non-SRV MongoDB URI used when SRV DNS resolution fails in local environments |
 | `MONGODB_DB_NAME`                   | MongoDB database name                                                                             |
+| `DNS_FALLBACK_SERVERS`              | Optional comma-separated DNS servers for loopback-only Node SRV lookup fallback                   |
 | `NEXT_PUBLIC_API_BASE_URL`          | App base URL                                                                                      |
 | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk public key                                                                                  |
 | `CLERK_SECRET_KEY`                  | Clerk secret                                                                                      |
@@ -964,7 +965,7 @@ All button styles use Lime Green as the accent color in **both** light and dark 
 | `OPENAI_PRJ`                        | OpenAI project                                                                                    |
 | `OPENAI_KEY`                        | OpenAI API key                                                                                    |
 
-If local development uses an Atlas `mongodb+srv://` primary URI, define `MONGODB_URL_FALLBACK` as well. Node SRV DNS lookups can fail even when OS-level DNS tools succeed, and the app's Mongo connector only retries with the fallback URI when that variable is present.
+If local development uses an Atlas `mongodb+srv://` primary URI, define `MONGODB_URL_FALLBACK` as well. Node SRV DNS lookups can fail even when OS-level DNS tools succeed. When Node only sees loopback DNS servers, the Mongo connector applies `DNS_FALLBACK_SERVERS` (default `1.1.1.1,8.8.8.8`) before the SRV attempt, then retries with `MONGODB_URL_FALLBACK` if SRV lookup still fails.
 | `STRIPE_SECRET_KEY` | Stripe secret |
 | `STRIPE_WEBHOOK_SECRET` | Stripe webhook verification |
 | `AWS_S3_REGION` | S3 region |

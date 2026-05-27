@@ -7,6 +7,7 @@
  * - MONGODB_DB_NAME
  *
  * Optional env:
+ * - MONGODB_URL_FALLBACK
  * - STRIPE_PRICE_PRO_MONTHLY
  * - STRIPE_PRICE_PRO_YEARLY
  * - STRIPE_PRICE_PREMIUM_MONTHLY
@@ -65,6 +66,7 @@ loadDotenvFile(path.join(__dirname, "..", ".env.local"));
 loadDotenvFile(path.join(__dirname, "..", ".env"));
 
 const MONGODB_URL = process.env.MONGODB_URL;
+const MONGODB_URL_FALLBACK = process.env.MONGODB_URL_FALLBACK;
 const MONGODB_DB_NAME = process.env.MONGODB_DB_NAME?.trim();
 const RAW_YEARLY_DISCOUNT = process.env.YEARLY_DISCOUNT ?? "30";
 const parsedYearlyDiscount = Number(RAW_YEARLY_DISCOUNT);
@@ -90,12 +92,28 @@ const stripePriceIds = {
 
 async function run() {
   const { MongoClient } = await import("mongodb");
-  const client = new MongoClient(MONGODB_URL, {
+  let client = new MongoClient(MONGODB_URL, {
     serverSelectionTimeoutMS: 5000,
   });
 
   try {
-    await client.connect();
+    try {
+      await client.connect();
+    } catch (error) {
+      if (!isSrvDnsLookupError(error) || !MONGODB_URL_FALLBACK) {
+        throw error;
+      }
+
+      console.warn(
+        "MongoDB SRV DNS lookup failed; retrying with MONGODB_URL_FALLBACK.",
+      );
+      await client.close();
+      client = new MongoClient(MONGODB_URL_FALLBACK, {
+        serverSelectionTimeoutMS: 5000,
+      });
+      await client.connect();
+    }
+
     const db = client.db(MONGODB_DB_NAME);
     const appSettingsCollection = db.collection("appsettings");
     const now = new Date();
@@ -139,6 +157,15 @@ async function run() {
   } finally {
     await client.close();
   }
+}
+
+function isSrvDnsLookupError(error) {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  const message = error.message.toLowerCase();
+  return message.includes("querysrv") || message.includes("econnrefused");
 }
 
 run();
