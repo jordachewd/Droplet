@@ -2,7 +2,7 @@
 
 > Canonical product and system specification for the Droplet AI assistant SaaS.
 > This document is governed by **Droplet-PM** and must reflect approved direction only.
-> Last verified: PM audit #141, 2026-05-22. Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. **V1.0 MVP RELEASED.** Phases 143–257 COMPLETE (all sub-phases). **Phase 253 COMPLETE — `/design` route deleted (commit 816dc81).** Onboarding wizard COMPLETE (Phases 240-251). System prompt uses all 4 onboarding preferences (Phase 249-B + 251-B projection fix). HandoffDialog plan-gated (Phase 249-A). Handoff hydration race fixed (Phase 251-A). Trial badge rendering fixed (Phase 251-C). **Phase 238 COMPLETE (31 non-JSX `.tsx` → `.ts` rename).** **Stripe webhook VERIFIED on localhost (Phase 234-B).** All files under 900 lines. 0 npm vulnerabilities. **⚠️ CURRENT GATE STATUS (audit #141):** Lint GREEN (0 errors, 6 known warnings), TypeScript RED (5 errors: 1 stale `.next` validator reference + 4 test prop errors), Unit tests RED (13 failed / 717 passed, 7 files failing), Knip GREEN (0 issues). Root cause remains test-contract drift after commit `2003629` (PascalCase rename + required `id` props + CTA change). **Phase 259 active — restoring all gates to GREEN.** **Active backlog: Phase 259 (gate restoration), Phase 258 (owner decision required).** **Production deployment remains blocked until Phase 259 is complete and Phase 258 decision is made.** TD-PAYMENT-03 RESOLVED. TD-WEBHOOK-LOG-01 RESOLVED (Phase 254). TD-ENV-CONSISTENCY-01 RESOLVED (Phase 255). TD-SERVER-ACTION-01 RESOLVED (Phase 256). TD-USAGEEVENT-01 ACTIVE (owner decision pending). 9 Mongoose models confirmed.
+> Last verified: PM audit #142, 2026-05-27. Milestones 0–25 COMPLETE. TDD rebuild COMPLETE (Phases 120.1–120.7). WCAG 2.2 AA COMPLETE. **V1.0 MVP RELEASED.** Phases 143–257 COMPLETE (all sub-phases). **Phase 253 COMPLETE — `/design` route deleted (commit 816dc81).** Onboarding wizard COMPLETE (Phases 240-251). System prompt uses all 4 onboarding preferences (Phase 249-B + 251-B projection fix). HandoffDialog plan-gated (Phase 249-A). Handoff hydration race fixed (Phase 251-A). Trial badge rendering fixed (Phase 251-C). **Phase 238 COMPLETE (31 non-JSX `.tsx` → `.ts` rename).** **Stripe webhook VERIFIED on localhost (Phase 234-B).** All files under 900 lines. 0 npm vulnerabilities. **⚠️ CURRENT GATE STATUS (audit #141):** Lint GREEN (0 errors, 6 known warnings), TypeScript RED (5 errors: 1 stale `.next` validator reference + 4 test prop errors), Unit tests RED (13 failed / 717 passed, 7 files failing), Knip GREEN (0 issues). Root cause remains test-contract drift after commit `2003629` (PascalCase rename + required `id` props + CTA change). **Phase 260 active — Mongo SRV resilience + authenticated failure handling.** **Phase 259 is on hold behind Phase 260.** **Active backlog: Phase 260 (Mongo SRV resilience + authenticated failure handling), Phase 259 (gate restoration), Phase 258 (owner decision required).** **Production deployment remains blocked until Phases 260 and 259 are complete and Phase 258 decision is made.** TD-PAYMENT-03 RESOLVED. TD-WEBHOOK-LOG-01 RESOLVED (Phase 254). TD-ENV-CONSISTENCY-01 RESOLVED (Phase 255). TD-SERVER-ACTION-01 RESOLVED (Phase 256). TD-DB-DNS-01 ACTIVE (owner-reported local blocker, PM audit #142). TD-USAGEEVENT-01 ACTIVE (owner decision pending). 9 Mongoose models confirmed.
 >
 > **V1.0 MVP Released (PM audit #94):**
 >
@@ -27,18 +27,19 @@
 > - ✅ Phases 209–216 DONE — Sidebar restructure: label renames, Library link migration, Recent conditional, loading fallback, CSS transitions, toggle relocation, renameTask action, dropdown menu, PersonaSelector move. 644 tests.
 >
 > **Remaining Issues:**
->
-> - **TD-PAYMENT-03** — ✅ RESOLVED (PM audit #135). Stripe webhook verified working on localhost by owner. CLI shows HTTP 200 for both `checkout.session.completed` and `invoice.paid`. Transaction created, plan updated, UI reflects changes. Code was always correct — issue was Dashboard configuration (wrong URL, disabled endpoint). Production live-mode verification pending deployment.
-> - **TD-PROJECTION-01** — ✅ RESOLVED (PM audit #130, Phase 234-A). `USER_SYNC_PROJECTION` now includes `stripeCustomerId`, `stripeSubscriptionId`, `subscriptionStatus`, `suspended`.
-> - **TD-BILLING-01** — ✅ RESOLVED (PM audit #130, Phase 234-A2). `getAllTransactions()` `.select()` now includes `stripeId`. Billing history Active/Inactive status works correctly.
-> - **TD-SYNC-01** — ✅ RESOLVED (PM audit #130, Phase 235). MongoDB→Clerk sync expanded to include `firstName` and `lastName` in batched call. Email sync deferred (requires Clerk verification flow — documented as known limitation).
-> - **TD-CHECKOUT-UX-01** — ✅ RESOLVED (PM audit #130, Phase 234-C). Checkout timeout message now warns "If your plan hasn't updated within 10 minutes, please contact support." with amber visual style.
-> - **TD-DESIGN-01** — ✅ CLOSED. `/design` route was removed in Phase 253 (commit 816dc81) and is not part of the active route map.
-> - **TD-MODEL-EXT-01** — ✅ RESOLVED (PM audit #134, Phase 238). All 31 non-JSX `.tsx` files renamed to `.ts`. Zero violations remaining.
-> - **TD-MEDIA-01** — 🟡 ACCEPTED LIMITATION. Media gen (image/audio) may approach Vercel Hobby 60s timeout. Phase 181 proactive timeout handles gracefully.
-> - **TD-AI-13** — 3 model pricing placeholders (awaiting OpenAI confirmation).
-> - **TD-AI-18** — Advisory: errorMessage forwarding pattern is safe but fragile.
-> - **TD-API-09** — Monitor: `.strict()` in messageTextContentSchema.
+
+- **TD-DB-DNS-01** — 🔴 ACTIVE (PM audit #142, May 27, 2026). On the owner-reported Windows workstation, authenticated `/app` load fails with `querySrv ECONNREFUSED _mongodb._tcp.droplet.vd7t2fs.mongodb.net`. Verified: Windows `Resolve-DnsName` resolves the Atlas SRV record, Node `dns.resolveSrv()` fails with the same error, and local `.env.local` defines `MONGODB_URL` + `MONGODB_DB_NAME` but not `MONGODB_URL_FALLBACK`. Immediate operational fix: define a non-SRV `MONGODB_URL_FALLBACK` locally so the existing connector fallback can execute. Required code follow-up: authenticated app routes must render retry/support UI instead of `notFound()` or `redirect("/sign-in")` when `ensureUserSynced()` fails, and `ChatSidebar` must not mask history-query outage as a normal empty state.
+  > - **TD-PAYMENT-03** — ✅ RESOLVED (PM audit #135). Stripe webhook verified working on localhost by owner. CLI shows HTTP 200 for both `checkout.session.completed` and `invoice.paid`. Transaction created, plan updated, UI reflects changes. Code was always correct — issue was Dashboard configuration (wrong URL, disabled endpoint). Production live-mode verification pending deployment.
+  > - **TD-PROJECTION-01** — ✅ RESOLVED (PM audit #130, Phase 234-A). `USER_SYNC_PROJECTION` now includes `stripeCustomerId`, `stripeSubscriptionId`, `subscriptionStatus`, `suspended`.
+  > - **TD-BILLING-01** — ✅ RESOLVED (PM audit #130, Phase 234-A2). `getAllTransactions()` `.select()` now includes `stripeId`. Billing history Active/Inactive status works correctly.
+  > - **TD-SYNC-01** — ✅ RESOLVED (PM audit #130, Phase 235). MongoDB→Clerk sync expanded to include `firstName` and `lastName` in batched call. Email sync deferred (requires Clerk verification flow — documented as known limitation).
+  > - **TD-CHECKOUT-UX-01** — ✅ RESOLVED (PM audit #130, Phase 234-C). Checkout timeout message now warns "If your plan hasn't updated within 10 minutes, please contact support." with amber visual style.
+  > - **TD-DESIGN-01** — ✅ CLOSED. `/design` route was removed in Phase 253 (commit 816dc81) and is not part of the active route map.
+  > - **TD-MODEL-EXT-01** — ✅ RESOLVED (PM audit #134, Phase 238). All 31 non-JSX `.tsx` files renamed to `.ts`. Zero violations remaining.
+  > - **TD-MEDIA-01** — 🟡 ACCEPTED LIMITATION. Media gen (image/audio) may approach Vercel Hobby 60s timeout. Phase 181 proactive timeout handles gracefully.
+  > - **TD-AI-13** — 3 model pricing placeholders (awaiting OpenAI confirmation).
+  > - **TD-AI-18** — Advisory: errorMessage forwarding pattern is safe but fragile.
+  > - **TD-API-09** — Monitor: `.strict()` in messageTextContentSchema.
 
 ---
 
@@ -401,6 +402,8 @@ When an authenticated user (valid Clerk session) has no corresponding MongoDB Us
 2. If self-healing succeeds, continue normally with the newly created user.
 3. If self-healing fails, show a clear error message with retry guidance and support contact � never a permanent loading spinner.
 4. API routes must return HTTP 503 ("Account not yet provisioned") instead of silently degrading to Lite.
+5. Authenticated app pages must not respond with `notFound()` or `redirect("/sign-in")` when Clerk auth succeeded but self-healing or database access failed. They must render a retry/support state instead.
+6. Sidebar/history surfaces inside authenticated routes must not present database outage as a normal empty state. They must show unavailable messaging or suppress the section until data recovers.
 
 ---
 
@@ -948,26 +951,28 @@ All button styles use Lime Green as the accent color in **both** light and dark 
 
 ## 14. Environment Variables
 
-| Variable                            | Purpose                                                                                 |
-| ----------------------------------- | --------------------------------------------------------------------------------------- |
-| `MONGODB_URL`                       | MongoDB connection string                                                               |
-| `MONGODB_URL_FALLBACK`              | Optional non-SRV MongoDB URI used when SRV DNS resolution fails in local environments   |
-| `MONGODB_DB_NAME`                   | MongoDB database name                                                                   |
-| `NEXT_PUBLIC_API_BASE_URL`          | App base URL                                                                            |
-| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk public key                                                                        |
-| `CLERK_SECRET_KEY`                  | Clerk secret                                                                            |
-| `CLERK_WEBHOOK_SIGNING_SECRET`      | Clerk webhook signing secret used by `verifyWebhook()`                                  |
-| `OPENAI_ORG`                        | OpenAI organization                                                                     |
-| `OPENAI_PRJ`                        | OpenAI project                                                                          |
-| `OPENAI_KEY`                        | OpenAI API key                                                                          |
-| `STRIPE_SECRET_KEY`                 | Stripe secret                                                                           |
-| `STRIPE_WEBHOOK_SECRET`             | Stripe webhook verification                                                             |
-| `AWS_S3_REGION`                     | S3 region                                                                               |
-| `AWS_S3_BUCKET`                     | S3 bucket name                                                                          |
-| `AWS_S3_ACCESS_ID`                  | S3 access key                                                                           |
-| `AWS_S3_SECRET_KEY`                 | S3 secret key                                                                           |
-| `DOWNLOAD_URL_ALLOWLIST`            | Allowed download hosts (opt.)                                                           |
-| `NEXT_ALLOWED_DEV_ORIGINS`          | Comma-separated dev origins for local/LAN dev (opt., defaults to `localhost,127.0.0.1`) |
+| Variable                            | Purpose                                                                                           |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `MONGODB_URL`                       | MongoDB connection string                                                                         |
+| `MONGODB_URL_FALLBACK`              | Strongly recommended non-SRV MongoDB URI used when SRV DNS resolution fails in local environments |
+| `MONGODB_DB_NAME`                   | MongoDB database name                                                                             |
+| `NEXT_PUBLIC_API_BASE_URL`          | App base URL                                                                                      |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk public key                                                                                  |
+| `CLERK_SECRET_KEY`                  | Clerk secret                                                                                      |
+| `CLERK_WEBHOOK_SIGNING_SECRET`      | Clerk webhook signing secret used by `verifyWebhook()`                                            |
+| `OPENAI_ORG`                        | OpenAI organization                                                                               |
+| `OPENAI_PRJ`                        | OpenAI project                                                                                    |
+| `OPENAI_KEY`                        | OpenAI API key                                                                                    |
+
+If local development uses an Atlas `mongodb+srv://` primary URI, define `MONGODB_URL_FALLBACK` as well. Node SRV DNS lookups can fail even when OS-level DNS tools succeed, and the app's Mongo connector only retries with the fallback URI when that variable is present.
+| `STRIPE_SECRET_KEY` | Stripe secret |
+| `STRIPE_WEBHOOK_SECRET` | Stripe webhook verification |
+| `AWS_S3_REGION` | S3 region |
+| `AWS_S3_BUCKET` | S3 bucket name |
+| `AWS_S3_ACCESS_ID` | S3 access key |
+| `AWS_S3_SECRET_KEY` | S3 secret key |
+| `DOWNLOAD_URL_ALLOWLIST` | Allowed download hosts (opt.) |
+| `NEXT_ALLOWED_DEV_ORIGINS` | Comma-separated dev origins for local/LAN dev (opt., defaults to `localhost,127.0.0.1`) |
 
 `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, and `CLERK_WEBHOOK_SIGNING_SECRET` must all come from the same Clerk instance.
 

@@ -2,7 +2,57 @@
 
 ---
 
+## CRITICAL OWNER BLOCKER (Phase 260 — Mongo SRV resilience and authenticated failure handling)
+
+> Last audit: PM audit #142, May 27, 2026. `npm run dev` on this workstation logs `querySrv ECONNREFUSED _mongodb._tcp.droplet.vd7t2fs.mongodb.net` during authenticated `/app` load. Verified: Windows `Resolve-DnsName` succeeds, Node `dns.resolveSrv()` fails with the same error, and local `.env.local` defines `MONGODB_URL` + `MONGODB_DB_NAME` but not `MONGODB_URL_FALLBACK`. The connector already supports SRV fallback, but the fallback path is inactive locally. Current page behavior also violates SPEC self-healing rules by treating authenticated user-sync failure as `notFound()` or `redirect("/sign-in")`, and the chat sidebar masks DB outage as an empty history list.
+
+### Phase 260-A — Restore local Mongo connectivity with fallback URI
+
+- **Task**: Define `MONGODB_URL_FALLBACK` in local `.env.local` using the cluster's non-SRV standard connection string, restart `npm run dev`, and reload `/app`.
+- **Why**: `src/lib/database/mongoose.ts` already retries SRV DNS failures with `MONGODB_URL_FALLBACK`, but local config currently exposes only the SRV URI.
+- **AC**: Authenticated `/app` load succeeds on this workstation even if Node SRV lookup still fails; `ensure-user-synced` and `chat-sidebar` no longer log `querySrv ECONNREFUSED` during normal `/app` load.
+- **Effort**: 5 min.
+
+---
+
+### Phase 260-B — Stop 404 or sign-in fallback on authenticated sync failure
+
+- **Task**: Replace authenticated `ensureUserSynced() === null` handling across affected `/app` routes with a shared retry/support surface (`AccountLoadErrorState` or equivalent). At minimum cover `/app`, `/app/new`, `/app/settings`, and `/app/c/[conversationId]`, then audit the remaining authenticated chat routes for the same fallback bug. Do not use `notFound()` or `redirect("/sign-in")` after Clerk auth already succeeded.
+- **Why**: SPEC requires a clear retry/support state when self-healing fails. Current route behavior is inconsistent and misleading.
+- **AC**: With `ensureUserSynced()` mocked to return `null`, every affected authenticated chat route renders retry/support UI instead of 404 or sign-in redirect.
+- **Effort**: 20 min.
+
+---
+
+### Phase 260-C — Stop sidebar from masking DB outage as empty history
+
+- **Task**: In `ChatSidebar`, skip `getRecentTasksByUserId()` when `ensureUserSynced()` returns `null`, and render explicit unavailable messaging when history loading fails instead of the normal "No saved conversations yet." empty state.
+- **Why**: Empty history is a false signal during DB outage and makes infrastructure failure look like valid zero-state UX.
+- **AC**: Unit test proves `getRecentTasksByUserId()` is not called when user sync fails, and sidebar outage renders unavailable copy instead of the normal empty-history copy.
+- **Effort**: 15 min.
+
+---
+
+### Phase 260-D — Do not cache transient infrastructure failure as null user state
+
+- **Task**: Update `ensureUserSynced()` so successful sync results may be cached, but transient DB/connectivity failures are retried on the next call instead of being cached as `null` for 5 seconds.
+- **Why**: Current null caching can preserve a transient SRV/DNS miss across adjacent authenticated requests.
+- **AC**: A focused unit test proves a failed `connectToDatabase()` call followed by recovery within 5 seconds triggers a fresh retry instead of serving cached `null`.
+- **Effort**: 15 min.
+
+---
+
+### Phase 260-E — Add outage regression tests and env diagnostics
+
+- **Task**: Add focused tests for authenticated route behavior on `ensureUserSynced() === null`, sidebar outage handling, and retry-after-failure behavior. Add one secret-safe diagnostic log indicating whether `MONGODB_URL_FALLBACK` is configured when SRV fallback is attempted.
+- **AC**: New targeted tests pass; first SRV fallback attempt logs configuration presence without printing connection strings or secrets.
+- **Effort**: 25 min.
+
+---
+
 ## CRITICAL BLOCKERS (Phase 259 — pre-deployment gate restoration)
+
+> Phase 259 is on hold until Phase 260-A through 260-C are resolved. Gate cleanup is not the top priority while authenticated `/app` access is still broken on the owner-reported workstation.
 
 > Last audit: PM audit #140, May 21, 2026. TypeScript gate RED (4 real errors + 1 stale). Test gate RED (13 failures, 7 files). Root cause: commit `2003629` renamed components to PascalCase and updated props but tests weren't fully aligned and 3 components are missing AGENTS.md-required PascalCase CSS classes.
 

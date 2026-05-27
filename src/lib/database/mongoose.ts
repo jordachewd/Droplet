@@ -25,7 +25,7 @@ if (!cached) {
   };
 }
 
-let didLogSrvFallback = false;
+let didLogSrvDnsDiagnostic = false;
 
 function isSrvDnsLookupError(error: unknown): boolean {
   if (!(error instanceof Error)) {
@@ -55,20 +55,23 @@ async function connectWithFallbackIfNeeded(): Promise<Mongoose> {
   try {
     return await connectWithUrl(primaryMongoUrl);
   } catch (primaryError) {
-    const canUseFallback =
-      Boolean(MONGODB_URL_FALLBACK) &&
+    const isSrvDnsError =
       primaryMongoUrl.startsWith("mongodb+srv://") &&
       isSrvDnsLookupError(primaryError);
 
-    if (!canUseFallback || !MONGODB_URL_FALLBACK) {
+    if (!isSrvDnsError) {
       throw primaryError;
     }
 
-    if (!didLogSrvFallback) {
+    if (!didLogSrvDnsDiagnostic) {
       process.stderr.write(
-        "[mongoose] MongoDB SRV DNS lookup failed; retrying with MONGODB_URL_FALLBACK.\n",
+        `[mongoose] MongoDB SRV DNS lookup failed; MONGODB_URL_FALLBACK configured: ${MONGODB_URL_FALLBACK ? "yes" : "no"}.${MONGODB_URL_FALLBACK ? " Retrying with fallback URI." : ""}\n`,
       );
-      didLogSrvFallback = true;
+      didLogSrvDnsDiagnostic = true;
+    }
+
+    if (!MONGODB_URL_FALLBACK) {
+      throw primaryError;
     }
 
     return connectWithUrl(MONGODB_URL_FALLBACK);

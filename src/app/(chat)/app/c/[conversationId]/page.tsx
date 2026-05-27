@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { notFound } from "next/navigation";
 import ChatWrapper from "@/components/chat/chat-wrapper";
+import ChatAccountLoadErrorState from "@/components/shared/ChatAccountLoadErrorState";
 import { getEffectivePersonaAccessByPlan } from "@/lib/utils/effective-persona-access";
 import { getEffectivePersonaConfig } from "@/lib/utils/effective-persona-config";
 import { getEffectivePromoContent } from "@/lib/utils/effective-promo-content";
@@ -24,17 +25,22 @@ export default async function ConversationPage({
     notFound();
   }
 
+  const userData = await ensureUserSynced(userId);
+  if (!userData) {
+    return (
+      <ChatAccountLoadErrorState
+        retryHref={`/app/c/${conversationId}`}
+        containerClassName="ConversationPage"
+      />
+    );
+  }
+
   const task = await getTaskByIdForUser({
     taskId: conversationId,
     userId,
   });
 
   if (!task) {
-    notFound();
-  }
-
-  const userData = await ensureUserSynced(userId);
-  if (!userData) {
     notFound();
   }
 

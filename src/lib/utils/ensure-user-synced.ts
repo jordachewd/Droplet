@@ -10,6 +10,10 @@ const USER_SYNC_PROJECTION =
   "clerkId username email role plan firstName lastName userimg registerAt updatedAt dailyConversationsStarted dailyConversationWindowStart stripeCustomerId stripeSubscriptionId subscriptionStatus suspended onboardingCompleted preferences";
 const RECENT_RESULT_TTL_MS = 5_000;
 const FAILURE_LOG_WINDOW_MS = 30_000;
+type EnsureUserSyncResult = {
+  value: UserData | null;
+  shouldCache: boolean;
+};
 const recentEnsureUserSyncResults = new Map<
   string,
   { value: UserData | null; expiresAt: number }
@@ -37,13 +41,13 @@ async function findSyncedUserByClerkId(
  */
 async function ensureUserSyncedUncached(
   clerkUserId: string,
-): Promise<UserData | null> {
+): Promise<EnsureUserSyncResult> {
   try {
     await connectToDatabase();
 
     const existingUser = await findSyncedUserByClerkId(clerkUserId);
     if (existingUser) {
-      return existingUser;
+      return { value: existingUser, shouldCache: true };
     }
 
     // Self-heal: fetch from Clerk and create MongoDB record
@@ -55,7 +59,7 @@ async function ensureUserSyncedUncached(
       process.stderr.write(
         `[ensure-user-synced] No email found for Clerk user ${clerkUserId}.\n`,
       );
-      return null;
+      return { value: null, shouldCache: true };
     }
 
     const username =
@@ -86,14 +90,14 @@ async function ensureUserSyncedUncached(
     } catch (error) {
       if (isMongoDuplicateKeyError(error)) {
         const raceWinnerUser = await findSyncedUserByClerkId(clerkUserId);
-        return raceWinnerUser;
+        return { value: raceWinnerUser, shouldCache: true };
       }
 
       throw error;
     }
 
     if (!newUserId) {
-      return null;
+      return { value: null, shouldCache: true };
     }
 
     try {
@@ -115,7 +119,10 @@ async function ensureUserSyncedUncached(
       .select(USER_SYNC_PROJECTION)
       .lean();
 
-    return created ? (serializeForClient(created) as UserData) : null;
+    return {
+      value: created ? (serializeForClient(created) as UserData) : null,
+      shouldCache: true,
+    };
   } catch (error) {
     const now = Date.now();
     const lastLoggedAt = lastFailureLogAtByUser.get(clerkUserId) ?? 0;
@@ -127,7 +134,7 @@ async function ensureUserSyncedUncached(
       lastFailureLogAtByUser.set(clerkUserId, now);
     }
 
-    return null;
+    return { value: null, shouldCache: false };
   }
 }
 
@@ -135,7 +142,7 @@ export async function ensureUserSynced(
   clerkUserId: string,
 ): Promise<UserData | null> {
   if (process.env.NODE_ENV === "test") {
-    return ensureUserSyncedUncached(clerkUserId);
+    return (await ensureUserSyncedUncached(clerkUserId)).value;
   }
 
   const now = Date.now();
@@ -151,13 +158,15 @@ export async function ensureUserSynced(
   }
 
   const request = ensureUserSyncedUncached(clerkUserId)
-    .then((value) => {
-      recentEnsureUserSyncResults.set(clerkUserId, {
-        value,
-        expiresAt: Date.now() + RECENT_RESULT_TTL_MS,
-      });
+    .then((result) => {
+      if (result.shouldCache) {
+        recentEnsureUserSyncResults.set(clerkUserId, {
+          value: result.value,
+          expiresAt: Date.now() + RECENT_RESULT_TTL_MS,
+        });
+      }
 
-      return value;
+      return result.value;
     })
     .finally(() => {
       inFlightEnsureUserSync.delete(clerkUserId);

@@ -96,4 +96,15 @@ describe("ChatSidebarNav", () => {
       screen.getByRole("link", { name: "Updated launch plan conversation" }),
     ).toBeTruthy();
   });
+
+  it("renders unavailable messaging when recent conversations cannot be loaded", () => {
+    render(<ChatSidebarNav isOpen historyItems={[]} isHistoryUnavailable />);
+
+    expect(
+      screen.getByText(
+        "Recent conversations are temporarily unavailable. Please retry shortly.",
+      ),
+    ).toBeTruthy();
+    expect(screen.queryByText("No saved conversations yet.")).toBeNull();
+  });
 });

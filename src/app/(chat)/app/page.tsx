@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { notFound } from "next/navigation";
 import ChatWrapper from "@/components/chat/chat-wrapper";
+import ChatAccountLoadErrorState from "@/components/shared/ChatAccountLoadErrorState";
 import { getEffectivePersonaAccessByPlan } from "@/lib/utils/effective-persona-access";
 import { getEffectivePersonaConfig } from "@/lib/utils/effective-persona-config";
 import { getEffectivePromoContent } from "@/lib/utils/effective-promo-content";
@@ -18,10 +19,20 @@ interface ChatPageProps {
 export default async function ChatPage({ searchParams }: ChatPageProps) {
   const { userId } = await auth();
   const { persona, handoff } = await searchParams;
-  const userData = userId ? await ensureUserSynced(userId) : null;
+
+  if (!userId) {
+    notFound();
+  }
+
+  const userData = await ensureUserSynced(userId);
 
   if (!userData) {
-    notFound();
+    return (
+      <ChatAccountLoadErrorState
+        retryHref="/app"
+        containerClassName="ChatPage"
+      />
+    );
   }
 
   const isAdmin = userData.role === "admin";
@@ -44,7 +55,7 @@ export default async function ChatPage({ searchParams }: ChatPageProps) {
   });
 
   let handoffContext: string | undefined;
-  if (handoff && userId) {
+  if (handoff) {
     const sourceTask = await getTaskByIdForUser({
       taskId: handoff,
       userId,

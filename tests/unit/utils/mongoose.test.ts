@@ -109,6 +109,32 @@ describe("mongoose connection utility", () => {
     );
     expect(connectMock.mock.calls[1]?.[0]).toBe("mongodb://fallback-cluster");
     expect(stderrSpy).toHaveBeenCalledTimes(1);
+    expect(String(stderrSpy.mock.calls[0]?.[0])).toContain(
+      "MONGODB_URL_FALLBACK configured: yes",
+    );
+    expect(String(stderrSpy.mock.calls[0]?.[0])).toContain(
+      "Retrying with fallback URI",
+    );
+  });
+
+  it("logs missing fallback configuration for SRV DNS failures before rethrowing", async () => {
+    const stderrSpy = vi
+      .spyOn(process.stderr, "write")
+      .mockImplementation(() => true);
+
+    setDatabaseEnv({
+      mongodbUrl: "mongodb+srv://primary-cluster",
+      mongodbUrlFallback: undefined,
+    });
+    connectMock.mockRejectedValueOnce(new Error("querySrv ECONNREFUSED"));
+
+    const connectToDatabase = await loadConnectToDatabase();
+
+    await expect(connectToDatabase()).rejects.toThrow("querySrv ECONNREFUSED");
+    expect(connectMock).toHaveBeenCalledTimes(1);
+    expect(String(stderrSpy.mock.calls[0]?.[0])).toContain(
+      "MONGODB_URL_FALLBACK configured: no",
+    );
   });
 
   it("does not use fallback for non-SRV primary failures", async () => {

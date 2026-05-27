@@ -19,17 +19,20 @@ import { WORKSPACE_LINKS } from "@/constants/chat-sidebar-nav";
 interface ChatSidebarNavProps {
   isOpen: boolean;
   historyItems: ConversationListItem[];
+  isHistoryUnavailable?: boolean;
 }
 
 export default function ChatSidebarNav({
   isOpen,
   historyItems,
+  isHistoryUnavailable = false,
 }: ChatSidebarNavProps) {
   const pathname = usePathname();
   const router = useRouter();
 
   const [conversationItems, setConversationItems] =
     useState<ConversationListItem[]>(historyItems);
+
   const [previousHistoryItems, setPreviousHistoryItems] =
     useState<ConversationListItem[]>(historyItems);
 
@@ -386,11 +389,16 @@ export default function ChatSidebarNav({
           <h6 className={headingClass}>Recents</h6>
 
           <div className="chat-sidebar-recents--list">
-            {conversationItems.length === 0 && (
+            {isHistoryUnavailable ? (
+              <p className="chat-sidebar-recents--empty">
+                Recent conversations are temporarily unavailable. Please retry
+                shortly.
+              </p>
+            ) : conversationItems.length === 0 ? (
               <p className="chat-sidebar-recents--empty">
                 No saved conversations yet.
               </p>
-            )}
+            ) : null}
 
             {conversationItems.slice(0, 6).map((item) => {
               const isActive = pathname === item.href;

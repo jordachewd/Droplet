@@ -1,15 +1,26 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
+import ChatAccountLoadErrorState from "@/components/shared/ChatAccountLoadErrorState";
 import { ensureUserSynced } from "@/lib/utils/ensure-user-synced";
 import ChatPageWrapper from "@/components/chat/chat-page-wrapper";
 import SettingsForm from "@/components/chat/settings/settings-form";
 
 export default async function SettingsPage() {
   const { userId } = await auth();
-  const userData = userId ? await ensureUserSynced(userId) : null;
+
+  if (!userId) {
+    redirect("/sign-in");
+  }
+
+  const userData = await ensureUserSynced(userId);
 
   if (!userData) {
-    redirect("/sign-in");
+    return (
+      <ChatAccountLoadErrorState
+        retryHref="/app/settings"
+        containerClassName="SettingsPage"
+      />
+    );
   }
 
   const prefs = userData.preferences;

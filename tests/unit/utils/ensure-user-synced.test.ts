@@ -378,4 +378,24 @@ describe("ensure-user-synced", () => {
     expect(cachedResult).toEqual(user);
     expect(findOneMock).toHaveBeenCalledTimes(1);
   });
+
+  it("retries after transient failures instead of caching null outside test environment", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+
+    const clerkUserId = "user_retry_after_failure_1";
+    const user = createTestUser({ clerkId: clerkUserId });
+
+    connectToDatabaseMock
+      .mockRejectedValueOnce(new Error("querySrv ECONNREFUSED"))
+      .mockResolvedValueOnce(undefined);
+    findOneMock.mockReturnValue(createSelectLeanQuery(user));
+
+    const firstResult = await ensureUserSynced(clerkUserId);
+    const secondResult = await ensureUserSynced(clerkUserId);
+
+    expect(firstResult).toBeNull();
+    expect(secondResult).toEqual(user);
+    expect(connectToDatabaseMock).toHaveBeenCalledTimes(2);
+    expect(findOneMock).toHaveBeenCalledTimes(1);
+  });
 });

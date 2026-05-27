@@ -15,6 +15,7 @@ import { useShallow } from "zustand/react/shallow";
 
 interface ChatSidebarShellProps {
   historyItems: ConversationListItem[];
+  isHistoryUnavailable?: boolean;
   userRole?: UserRoles;
   userPlanName?: PlanName | null;
   isSuspended?: boolean;
@@ -25,6 +26,7 @@ const SIDEBAR_STORAGE_KEY = "droplet-sidebar-collapsed";
 
 export default function ChatSidebarWrapper({
   historyItems,
+  isHistoryUnavailable,
   userRole,
   userPlanName,
   isSuspended,
@@ -71,7 +73,11 @@ export default function ChatSidebarWrapper({
       )}
       navigation={({ isSidebarOpen }) => (
         <div className={contentClass}>
-          <ChatSidebarNav isOpen={isSidebarOpen} historyItems={historyItems} />
+          <ChatSidebarNav
+            isOpen={isSidebarOpen}
+            historyItems={historyItems}
+            isHistoryUnavailable={isHistoryUnavailable}
+          />
         </div>
       )}
       footer={({ isSidebarOpen }) => {
