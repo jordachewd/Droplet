@@ -1,0 +1,22 @@
+@layer components {
+  .plans-billing {
+    @apply flex items-center justify-center mx-auto gap-3 relative;
+  }
+
+  .plans-billing-toggle {
+    @apply inline-flex items-center gap-1;
+  }
+
+  .plans-billing-toggle--btn {
+    @apply rounded-full border-transparent border-0! py-2!;
+  }
+
+  .plans-billing-toggle--btn-active {
+    @apply text-midnightBlue-600 dark:text-lavenderHaze-600;
+  }
+
+  .plans-billing-save {
+    @apply absolute -top-3 -right-6 text-xxs py-1 px-1.5 font-medium;
+    @apply bg-orange-600 text-white rounded-lg shadow-sm;
+  }
+}

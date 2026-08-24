@@ -1,0 +1,92 @@
+@layer base {
+  *,
+  ::before,
+  ::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  button {
+    cursor: pointer;
+  }
+
+  button:disabled {
+    cursor: not-allowed;
+  }
+
+  body {
+    font-family: var(--font-jwd-albertsans), sans-serif;
+    @apply scroll-smooth antialiased transition-all ease-in;
+    @apply bg-lavenderHaze-300 text-midnightBlue-600 dark:bg-nightIndigo-800 dark:text-lavenderHaze-500;
+    @apply pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] text-base leading-tight;
+  }
+
+  :where(
+    a,
+    button,
+    input,
+    textarea,
+    select,
+    summary,
+    [role="button"],
+    [role="tab"],
+    [tabindex]:not([tabindex="-1"])
+  ):focus-visible {
+    outline: 2px solid var(--color-limeGreen-700);
+    outline-offset: 2px;
+  }
+
+  [data-droplet-theme="dark"]
+    :where(
+      a,
+      button,
+      input,
+      textarea,
+      select,
+      summary,
+      [role="button"],
+      [role="tab"],
+      [tabindex]:not([tabindex="-1"])
+    ):focus-visible {
+    outline-color: var(--color-limeGreen-400);
+  }
+}
+
+/*  all media elements set to block and full width */
+img,
+svg,
+video,
+canvas,
+audio,
+iframe,
+embed,
+object {
+  @apply block max-w-full;
+}
+
+a:not(.btn):not(.icon-btn) {
+  @apply text-midnightBlue-500 hover:text-dustyBlue-500;
+  @apply dark:text-lavenderHaze-500 dark:hover:text-dustyBlue-500;
+  @apply transition-all ease-in;
+}
+
+a.menu-item {
+  font-family: var(--font-jwd-dosis), sans-serif;
+}
+
+.skip-link {
+  @apply fixed left-3 top-3 z-50 rounded-md bg-midnightBlue-600 px-3 py-2 text-sm font-semibold text-lavenderHaze-100;
+  transform: translateY(-200%);
+  transition: transform 120ms ease-in-out;
+}
+
+.skip-link:focus-visible {
+  transform: translateY(0);
+}
+
+hr {
+  @apply border-t border-lavenderHaze-600/30 dark:border-midnightBlue-400/30 my-2;
+}

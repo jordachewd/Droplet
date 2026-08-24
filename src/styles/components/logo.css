@@ -1,0 +1,9 @@
+@layer components {
+  .app-logo {
+    @apply flex gap-1 items-center;
+  }
+
+  .app-logo-text {
+    @apply relative text-lg font-medium;
+  }
+}

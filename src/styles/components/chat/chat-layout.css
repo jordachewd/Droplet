@@ -1,0 +1,19 @@
+@layer components {
+  .chat-wrapper {
+    @apply flex relative h-dvh w-full p-0 m-0 z-10;
+  }
+
+  .chat-main {
+    @apply flex flex-col flex-1 relative h-dvh w-full p-0 m-0 z-10 overflow-y-auto;
+  }
+
+  .chat-content {
+    @apply flex flex-col flex-1 relative h-full min-w-0;
+  }
+
+  .error-card {
+    @apply rounded-lg border  p-6 text-center;
+    @apply border-slate-500 bg-lavenderHaze-100;
+    @apply dark:border-slate-500 dark:bg-nightIndigo-900;
+  }
+}

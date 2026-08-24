@@ -1,0 +1,13 @@
+@layer components {
+  .page-head-section {
+    @apply pt-24! pb-0! md:pt-28! lg:pt-32!;
+  }
+
+  .page-head-wrapper {
+    @apply flex-col gap-3!;
+  }
+
+  .section-head-wrapper {
+    @apply flex flex-col gap-3;
+  }
+}

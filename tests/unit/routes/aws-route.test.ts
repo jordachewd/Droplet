@@ -1,0 +1,322 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { currentUser } from "@clerk/nextjs/server";
+import uploadFileToAWS from "@/lib/utils/aws/uploadFileToAWS";
+import deleteFileFromAWS from "@/lib/utils/aws/deleteFileFromAWS";
+import { generateString } from "@/lib/utils/generateString";
+import { requireActiveUser } from "@/lib/utils/require-active-user";
+import { DELETE, POST } from "@/app/api/aws/route";
+import { enforceSlidingWindowRateLimit } from "@/lib/utils/rate-limit";
+
+vi.mock("@clerk/nextjs/server", () => ({
+  currentUser: vi.fn(),
+}));
+
+vi.mock("@/lib/utils/aws/uploadFileToAWS", () => ({
+  default: vi.fn(),
+}));
+
+vi.mock("@/lib/utils/aws/deleteFileFromAWS", () => ({
+  default: vi.fn(),
+}));
+
+vi.mock("@/lib/utils/generateString", () => ({
+  generateString: vi.fn(),
+}));
+
+vi.mock("@/lib/utils/require-active-user", () => ({
+  requireActiveUser: vi.fn(),
+}));
+
+vi.mock("@/lib/utils/rate-limit", () => ({
+  enforceSlidingWindowRateLimit: vi.fn(),
+}));
+
+type ActiveUserStatus = "active" | "suspended" | "not_provisioned";
+
+function mockActiveUserStatus(status: ActiveUserStatus): void {
+  vi.mocked(requireActiveUser).mockResolvedValue({ status });
+}
+
+function buildRequest(method: "POST" | "DELETE", payload: unknown): Request {
+  return new Request("http://localhost:3000/api/aws", {
+    method,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+}
+
+describe("/api/aws route", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(currentUser).mockResolvedValue({
+      id: "user_123",
+      username: "jwd-user",
+    } as unknown as Awaited<ReturnType<typeof currentUser>>);
+    mockActiveUserStatus("active");
+    vi.mocked(generateString).mockReturnValue("rand123");
+    vi.mocked(uploadFileToAWS).mockResolvedValue(
+      "/api/download?key=user_123%2Ftask_abc%2Ftask_abc_image_rand123.png",
+    );
+    vi.mocked(deleteFileFromAWS).mockResolvedValue(undefined);
+    vi.mocked(enforceSlidingWindowRateLimit).mockResolvedValue({
+      success: true,
+      limit: 30,
+      remaining: 29,
+      resetAt: Date.now() + 60_000,
+      retryAfterMs: 0,
+    });
+  });
+
+  it("returns 401 for upload when user is not authenticated", async () => {
+    vi.mocked(currentUser).mockResolvedValue(null);
+
+    const response = await POST(
+      buildRequest("POST", { taskId: "task_abc", imgBuffer: "ZmFrZQ==" }),
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(401);
+    expect(payload.error).toBe("User not authenticated.");
+    expect(requireActiveUser).not.toHaveBeenCalled();
+  });
+
+  it("returns 403 for upload when account is suspended", async () => {
+    mockActiveUserStatus("suspended");
+
+    const response = await POST(
+      buildRequest("POST", { taskId: "task_abc", imgBuffer: "ZmFrZQ==" }),
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(payload.error).toBe("Account suspended.");
+    expect(uploadFileToAWS).not.toHaveBeenCalled();
+  });
+
+  it("returns 503 for upload when account cannot be provisioned", async () => {
+    mockActiveUserStatus("not_provisioned");
+
+    const response = await POST(
+      buildRequest("POST", { taskId: "task_abc", imgBuffer: "ZmFrZQ==" }),
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(503);
+    expect(payload.error).toContain("Account not yet provisioned");
+    expect(uploadFileToAWS).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 for upload when required payload is missing", async () => {
+    const response = await POST(buildRequest("POST", { taskId: "task_abc" }));
+    const payload = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(payload.error).toBe("TaskId and image buffer are required.");
+  });
+
+  it("returns 429 for upload when rate limit is exceeded", async () => {
+    vi.mocked(enforceSlidingWindowRateLimit).mockResolvedValue({
+      success: false,
+      limit: 30,
+      remaining: 0,
+      resetAt: Date.now() + 1_500,
+      retryAfterMs: 1_500,
+    });
+
+    const response = await POST(
+      buildRequest("POST", { taskId: "task_abc", imgBuffer: "ZmFrZQ==" }),
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(429);
+    expect(response.headers.get("Retry-After")).toBe("2");
+    expect(payload.error).toContain("Too many requests");
+    expect(uploadFileToAWS).not.toHaveBeenCalled();
+  });
+
+  it("uploads image and returns fileUrl", async () => {
+    const response = await POST(
+      buildRequest("POST", {
+        taskId: "task_abc",
+        imgBuffer: Buffer.from("hello-world").toString("base64"),
+      }),
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(uploadFileToAWS).toHaveBeenCalledWith(
+      expect.any(Buffer),
+      "task_abc_image_rand123.png",
+      "image/png",
+      "user_123/task_abc",
+    );
+    expect(payload.fileUrl).toContain("task_abc_image_rand123.png");
+    expect(payload.objectKey).toBe(
+      "user_123/task_abc/task_abc_image_rand123.png",
+    );
+  });
+
+  it("returns 400 when upload payload exceeds 10MB", async () => {
+    const tooLargePayload = Buffer.alloc(10 * 1024 * 1024 + 1).toString(
+      "base64",
+    );
+
+    const response = await POST(
+      buildRequest("POST", {
+        taskId: "task_abc",
+        imgBuffer: tooLargePayload,
+      }),
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(payload.error).toBe("Image payload exceeds 10MB limit.");
+    expect(uploadFileToAWS).not.toHaveBeenCalled();
+  });
+
+  it("returns 500 when upload fails", async () => {
+    vi.mocked(uploadFileToAWS).mockRejectedValue(new Error("S3 unavailable"));
+
+    const response = await POST(
+      buildRequest("POST", {
+        taskId: "task_abc",
+        imgBuffer: Buffer.from("hello-world").toString("base64"),
+      }),
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(payload.error).toBe("File upload failed");
+  });
+
+  it("returns 401 for delete when user is not authenticated", async () => {
+    vi.mocked(currentUser).mockResolvedValue(null);
+
+    const response = await DELETE(
+      buildRequest("DELETE", { folder: "task_abc", fileName: "file.png" }),
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(401);
+    expect(payload.error).toBe("User not authenticated.");
+    expect(requireActiveUser).not.toHaveBeenCalled();
+  });
+
+  it("returns 403 for delete when account is suspended", async () => {
+    mockActiveUserStatus("suspended");
+
+    const response = await DELETE(
+      buildRequest("DELETE", { folder: "task_abc", fileName: "file.png" }),
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(payload.error).toBe("Account suspended.");
+    expect(deleteFileFromAWS).not.toHaveBeenCalled();
+  });
+
+  it("returns 503 for delete when account cannot be provisioned", async () => {
+    mockActiveUserStatus("not_provisioned");
+
+    const response = await DELETE(
+      buildRequest("DELETE", { folder: "task_abc", fileName: "file.png" }),
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(503);
+    expect(payload.error).toContain("Account not yet provisioned");
+    expect(deleteFileFromAWS).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 for delete when payload is incomplete", async () => {
+    const response = await DELETE(
+      buildRequest("DELETE", { folder: "task_abc" }),
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(payload.error).toContain("required for deletion");
+  });
+
+  it("returns 429 for delete when rate limit is exceeded", async () => {
+    vi.mocked(enforceSlidingWindowRateLimit).mockResolvedValue({
+      success: false,
+      limit: 30,
+      remaining: 0,
+      resetAt: Date.now() + 1_500,
+      retryAfterMs: 1_500,
+    });
+
+    const response = await DELETE(
+      buildRequest("DELETE", {
+        folder: "user_123/task_abc",
+        fileName: "file.png",
+      }),
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(429);
+    expect(response.headers.get("Retry-After")).toBe("2");
+    expect(payload.error).toContain("Too many requests");
+    expect(deleteFileFromAWS).not.toHaveBeenCalled();
+  });
+
+  it("deletes image with user id path and returns success", async () => {
+    const response = await DELETE(
+      buildRequest("DELETE", {
+        folder: "user_123/task_abc",
+        fileName: "file.png",
+      }),
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(deleteFileFromAWS).toHaveBeenCalledWith(
+      "user_123/task_abc/file.png",
+    );
+    expect(payload.message).toBe("Image deleted successfully");
+    expect(payload.objectKey).toBe("user_123/task_abc/file.png");
+  });
+
+  it("returns 403 when delete folder does not belong to the authenticated user", async () => {
+    const response = await DELETE(
+      buildRequest("DELETE", {
+        folder: "other_user/task_abc",
+        fileName: "file.png",
+      }),
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(payload.error).toContain("Forbidden");
+    expect(deleteFileFromAWS).not.toHaveBeenCalled();
+  });
+
+  it("deletes image when a fileUrl resolves to an owned object key", async () => {
+    const response = await DELETE(
+      buildRequest("DELETE", {
+        fileUrl: "/api/download?key=user_123%2Fimages%2Ffile.png",
+      }),
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(deleteFileFromAWS).toHaveBeenCalledWith("user_123/images/file.png");
+    expect(payload.objectKey).toBe("user_123/images/file.png");
+  });
+
+  it("returns 500 when delete operation fails", async () => {
+    vi.mocked(deleteFileFromAWS).mockRejectedValue(new Error("Delete failed"));
+
+    const response = await DELETE(
+      buildRequest("DELETE", {
+        folder: "user_123/task_abc",
+        fileName: "file.png",
+      }),
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(payload.error).toBe("File deletion failed");
+  });
+});

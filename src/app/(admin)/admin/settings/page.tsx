@@ -1,0 +1,268 @@
+import PageHead from "@/components/layout/PageHead";
+import { getAdminSettingsSnapshot } from "@/lib/utils/admin-queries";
+import { ModelSettingsFormValue } from "@/types/AdminData.d";
+import { AdminModelsSection } from "@/components/admin/settings/admin-models-section";
+import { AdminPricingSection } from "@/components/admin/settings/admin-pricing-section";
+import { AdminLimitsSection } from "@/components/admin/settings/admin-limits-section";
+import { AdminPersonasSection } from "@/components/admin/settings/admin-personas-section";
+import { AdminThemeSection } from "@/components/admin/settings/admin-theme-section";
+import { AdminSupportSection } from "@/components/admin/settings/admin-support-section";
+import { AdminStopReasonsSection } from "@/components/admin/settings/admin-stop-reasons-section";
+import { AdminSettingsTabs } from "@/components/admin/settings/admin-settings-tabs";
+import { AdminPromoContentSection } from "@/components/admin/settings/admin-promo-content-section";
+import { AdminWebsiteContentSection } from "@/components/admin/settings/admin-website-content-section";
+import {
+  AUDIO_MODEL_OPTIONS,
+  CHAT_MODEL_OPTIONS,
+  IMAGE_MODEL_OPTIONS,
+} from "@/constants/admin-options";
+import {
+  normalizeAboutContentSettings,
+  normalizeFaqContentSettings,
+  normalizeHeroContentSettings,
+  normalizeHomepageCopySettings,
+  normalizeHomepageFeaturedPersonasSettings,
+  normalizeLandingContentSettings,
+  normalizeLimitsSettingsValue,
+  normalizeModelSettingsValue,
+  normalizePersonaAccessSettings,
+  normalizePersonaContentSettings,
+  normalizePromoContentSettings,
+  normalizePricingSettingsValue,
+  normalizeStripePriceIdsSettingsValue,
+  normalizeStopReasonMessagesSettings,
+  normalizeSupportSettingsValue,
+  normalizeThemeSettingsValue,
+  normalizeTrialLimitsSettingsValue,
+} from "@/components/admin/settings/normalize-admin-settings";
+import {
+  AboutContentSettingsFormValue,
+  FaqContentSettingsFormValue,
+  HeroContentSettingsFormValue,
+  HomepageCopySettingsFormValue,
+  HomepageFeaturedPersonasSettingsFormValue,
+  LandingContentSettingsFormValue,
+  LimitsSettingsFormValue,
+  PersonaAccessSettingsFormValue,
+  PersonaContentSettingsFormValue,
+  PricingSettingsFormValue,
+  PromoContentSettingsFormValue,
+  StripePriceIdsSettingsFormValue,
+  StopReasonMessagesSettingsFormValue,
+  SupportSettingsFormValue,
+  ThemeSettingsFormValue,
+  TrialLimitsSettingsFormValue,
+} from "@/components/admin/settings/types";
+import { PersonaId } from "@/types/PersonaData.d";
+import { STOP_REASON_CODES } from "@/constants/stop-reasons";
+
+export default async function AdminSettingsPage() {
+  const snapshot = await getAdminSettingsSnapshot();
+  const modelDefaults = snapshot.defaults.models as ModelSettingsFormValue;
+  const pricingDefaults = snapshot.defaults.pricing as PricingSettingsFormValue;
+  const stripePriceIdsDefaults = snapshot.defaults
+    .stripePriceIds as StripePriceIdsSettingsFormValue;
+  const limitsDefaults = snapshot.defaults.limits as LimitsSettingsFormValue;
+  const trialLimitsDefaults = snapshot.defaults
+    .trialLimits as TrialLimitsSettingsFormValue;
+  const themeDefaults = snapshot.defaults.theme as ThemeSettingsFormValue;
+  const supportDefaults = snapshot.defaults.support as SupportSettingsFormValue;
+  const stopReasonMessagesDefaults = snapshot.defaults
+    .stopReasonMessages as StopReasonMessagesSettingsFormValue;
+  const personaAccessDefaults = snapshot.defaults
+    .personaAccess as PersonaAccessSettingsFormValue;
+  const personaContentDefaults = snapshot.defaults
+    .personaContent as PersonaContentSettingsFormValue;
+  const faqContentDefaults = snapshot.defaults
+    .faqContent as FaqContentSettingsFormValue;
+  const heroContentDefaults = snapshot.defaults
+    .heroContent as HeroContentSettingsFormValue;
+  const homepageCopyDefaults = snapshot.defaults
+    .homepageCopy as HomepageCopySettingsFormValue;
+  const homepageFeaturedPersonasDefaults = snapshot.defaults
+    .homepageFeaturedPersonas as HomepageFeaturedPersonasSettingsFormValue;
+  const landingContentDefaults = snapshot.defaults
+    .landingContent as LandingContentSettingsFormValue;
+  const aboutContentDefaults = snapshot.defaults
+    .aboutContent as AboutContentSettingsFormValue;
+  const promoContentDefaults = snapshot.defaults
+    .promoContent as PromoContentSettingsFormValue;
+
+  const modelValue = normalizeModelSettingsValue(
+    snapshot.settingsByKey["admin.models"]?.value,
+    modelDefaults,
+  );
+  const pricingValue = normalizePricingSettingsValue(
+    snapshot.settingsByKey["admin.pricing"]?.value,
+    pricingDefaults,
+    snapshot.settingsByKey["admin.yearlyDiscount"]?.value,
+  );
+  const stripePriceIdsValue = normalizeStripePriceIdsSettingsValue(
+    snapshot.settingsByKey["admin.stripePriceIds"]?.value,
+    stripePriceIdsDefaults,
+  );
+  const limitsValue = normalizeLimitsSettingsValue(
+    snapshot.settingsByKey["admin.limits"]?.value,
+    limitsDefaults,
+  );
+  const trialLimitsValue = normalizeTrialLimitsSettingsValue(
+    snapshot.settingsByKey["admin.trialLimits"]?.value,
+    trialLimitsDefaults,
+  );
+  const themeValue = normalizeThemeSettingsValue(
+    snapshot.settingsByKey["admin.theme"]?.value,
+    themeDefaults,
+  );
+  const supportValue = normalizeSupportSettingsValue(
+    snapshot.settingsByKey["admin.supportEmail"]?.value,
+    supportDefaults,
+  );
+  const stopReasonMessagesValue = normalizeStopReasonMessagesSettings(
+    snapshot.settingsByKey["admin.stopReasonMessages"]?.value,
+    stopReasonMessagesDefaults,
+  );
+  const personaAccessValue = normalizePersonaAccessSettings(
+    snapshot.settingsByKey as Record<string, { value: unknown }>,
+    personaAccessDefaults,
+  );
+  const personaContentValue = normalizePersonaContentSettings(
+    snapshot.settingsByKey["admin.personaOverrides"]?.value,
+    personaContentDefaults,
+  );
+  const faqContentValue = normalizeFaqContentSettings(
+    snapshot.settingsByKey["admin.faqContent"]?.value,
+    faqContentDefaults,
+  );
+  const heroContentValue = normalizeHeroContentSettings(
+    snapshot.settingsByKey["admin.heroContent"]?.value,
+    heroContentDefaults,
+  );
+  const homepageCopyValue = normalizeHomepageCopySettings(
+    snapshot.settingsByKey["admin.homepageCopy"]?.value,
+    homepageCopyDefaults,
+  );
+  const homepageFeaturedPersonasValue =
+    normalizeHomepageFeaturedPersonasSettings(
+      snapshot.settingsByKey["admin.homepageFeaturedPersonas"]?.value,
+      homepageFeaturedPersonasDefaults,
+    );
+  const landingContentValue = normalizeLandingContentSettings(
+    snapshot.settingsByKey["admin.landingContent"]?.value,
+    landingContentDefaults,
+  );
+  const aboutContentValue = normalizeAboutContentSettings(
+    snapshot.settingsByKey["admin.aboutContent"]?.value,
+    aboutContentDefaults,
+  );
+  const promoContentValue = normalizePromoContentSettings(
+    snapshot.settingsByKey["admin.promoContent"]?.value,
+    promoContentDefaults,
+  );
+  const personaIds = Object.keys(personaContentDefaults) as PersonaId[];
+  const homepagePersonaOptions = personaIds.map((personaId) => ({
+    id: personaId,
+    label: personaContentDefaults[personaId].label,
+  }));
+
+  return (
+    <section className="AdminSettingsPage mx-auto flex w-full max-w-7xl flex-col gap-6">
+      <PageHead
+        id="admin-settings-head"
+        title="Settings"
+        subtitle="Persist mutable operational settings for models, pricing, limits, persona content/access, and default theme."
+      />
+
+      <AdminSettingsTabs
+        tabs={[
+          {
+            id: "models",
+            label: "Models",
+            content: (
+              <AdminModelsSection
+                modelValue={modelValue}
+                modelOptions={{
+                  chat: CHAT_MODEL_OPTIONS,
+                  image: IMAGE_MODEL_OPTIONS,
+                  audio: AUDIO_MODEL_OPTIONS,
+                }}
+              />
+            ),
+          },
+          {
+            id: "plans-pricing",
+            label: "Plans & Pricing",
+            content: (
+              <AdminPricingSection
+                pricingValue={pricingValue}
+                stripePriceIdsValue={stripePriceIdsValue}
+              />
+            ),
+          },
+          {
+            id: "limits",
+            label: "Limits",
+            content: (
+              <AdminLimitsSection
+                limitsValue={limitsValue}
+                trialLimitsValue={trialLimitsValue}
+              />
+            ),
+          },
+          {
+            id: "personas",
+            label: "Personas",
+            content: (
+              <AdminPersonasSection
+                personaAccessValue={personaAccessValue}
+                personaContentValue={personaContentValue}
+                personaIds={personaIds}
+              />
+            ),
+          },
+          {
+            id: "theme",
+            label: "Theme",
+            content: <AdminThemeSection themeValue={themeValue} />,
+          },
+          {
+            id: "support",
+            label: "Support",
+            content: <AdminSupportSection supportValue={supportValue} />,
+          },
+          {
+            id: "promo-content",
+            label: "Promo Copy",
+            content: (
+              <AdminPromoContentSection promoContentValue={promoContentValue} />
+            ),
+          },
+          {
+            id: "stop-reasons",
+            label: "Stop Messages",
+            content: (
+              <AdminStopReasonsSection
+                stopReasonCodes={STOP_REASON_CODES}
+                stopReasonMessagesValue={stopReasonMessagesValue}
+              />
+            ),
+          },
+          {
+            id: "website-copy",
+            label: "Website Copy",
+            content: (
+              <AdminWebsiteContentSection
+                faqContentValue={faqContentValue}
+                heroContentValue={heroContentValue}
+                homepageCopyValue={homepageCopyValue}
+                homepageFeaturedPersonasValue={homepageFeaturedPersonasValue}
+                homepagePersonaOptions={homepagePersonaOptions}
+                landingContentValue={landingContentValue}
+                aboutContentValue={aboutContentValue}
+              />
+            ),
+          },
+        ]}
+      />
+    </section>
+  );
+}

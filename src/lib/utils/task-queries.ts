@@ -1,0 +1,407 @@
+import "server-only";
+import { DEFAULT_PERSONA_ID, getPersona } from "@/constants/assistant-personas";
+import { connectToDatabase } from "@/lib/database/mongoose";
+import Task from "@/lib/database/models/tasks.model";
+import Upload from "@/lib/database/models/upload.model";
+import { handleError } from "@/lib/utils/handleError";
+import { nonEmptyStringSchema } from "@/lib/utils/validation-schemas";
+import {
+  TaskConversation,
+  TaskEndAction,
+  TaskEndedReason,
+  TaskHistoryItem,
+  TaskStatus,
+} from "@/types/TaskData.d";
+import { ContentItem, Message, MessageRole } from "@/types";
+import { PersonaId } from "@/types/PersonaData.d";
+import { auth } from "@clerk/nextjs/server";
+import { isValidObjectId } from "mongoose";
+import { z } from "zod";
+
+type TaskRecord = {
+  _id: unknown;
+  title?: string;
+  personaId?: string;
+  updatedAt?: Date | string;
+  messages?: unknown;
+  usage?: number;
+  promptCount?: number;
+  mediaCount?: number;
+  estimatedBytes?: number;
+  status?: TaskStatus;
+  endedAt?: Date | string;
+  endedReason?: TaskEndedReason;
+  endAction?: TaskEndAction;
+};
+
+export type MediaContentType = "image_url" | "audio_url";
+
+export interface MediaLibraryItem {
+  url: string;
+  taskId: string;
+  taskTitle: string;
+  personaId: PersonaId;
+  createdAt: string;
+}
+
+type MediaAggregateRecord = {
+  url?: string;
+  taskId?: unknown;
+  taskTitle?: string;
+  personaId?: string;
+  createdAt?: Date | string;
+};
+
+type UploadRecord = {
+  _id: unknown;
+  fileName?: string;
+  objectKey?: string;
+  s3Url?: string;
+  contentType?: string;
+  sizeBytes?: number;
+  taskId?: string;
+  createdAt?: Date | string;
+};
+
+const incrementPromptCountSchema = z
+  .object({
+    taskId: nonEmptyStringSchema,
+    limit: z.number().int().positive(),
+  })
+  .strict();
+
+export interface UploadLibraryItem {
+  id: string;
+  fileName: string;
+  objectKey: string;
+  s3Url: string;
+  contentType: string;
+  sizeBytes: number;
+  taskId?: string;
+  createdAt: string;
+}
+
+const messageRoles: MessageRole[] = [
+  "user",
+  "assistant",
+  "system",
+  "developer",
+];
+
+function isMessageRole(value: unknown): value is MessageRole {
+  return (
+    typeof value === "string" && messageRoles.includes(value as MessageRole)
+  );
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function toPlainContent(content: unknown): Message["content"] {
+  if (typeof content === "string" || content === null) {
+    return content;
+  }
+
+  if (!Array.isArray(content)) {
+    return [];
+  }
+
+  return content.reduce<ContentItem[]>((items, entry) => {
+    if (!isRecord(entry)) {
+      return items;
+    }
+
+    const { type, text, image_url, audio_url } = entry;
+
+    if (
+      type !== "text" &&
+      type !== "temp" &&
+      type !== "image_url" &&
+      type !== "audio_url"
+    ) {
+      return items;
+    }
+
+    const item: ContentItem = { type };
+
+    if (typeof text === "string" || text === null) {
+      item.text = text;
+    }
+
+    if (
+      isRecord(image_url) &&
+      (typeof image_url.url === "string" || image_url.url === null)
+    ) {
+      item.image_url = { url: image_url.url };
+    }
+
+    if (typeof audio_url === "string" || audio_url === null) {
+      item.audio_url = audio_url;
+    }
+
+    items.push(item);
+    return items;
+  }, []);
+}
+
+function toPlainMessages(messages: unknown): Message[] {
+  if (!Array.isArray(messages)) {
+    return [];
+  }
+
+  return messages.reduce<Message[]>((items, entry) => {
+    if (!isRecord(entry) || !isMessageRole(entry.role)) {
+      return items;
+    }
+
+    const message: Message = {
+      role: entry.role,
+      content: toPlainContent(entry.content),
+    };
+
+    if (typeof entry.id === "string" && entry.id.trim().length > 0) {
+      message.id = entry.id;
+    }
+
+    if (isMessageRole(entry.whois)) {
+      message.whois = entry.whois;
+    }
+
+    items.push(message);
+    return items;
+  }, []);
+}
+
+export async function getRecentTasksByUserId(
+  userId: string,
+  limit: number = 8,
+  offset: number = 0,
+): Promise<TaskHistoryItem[]> {
+  await connectToDatabase();
+
+  const safeLimit = Math.max(1, Math.min(limit, 100));
+  const safeOffset = Math.min(Math.max(0, offset), 10000);
+
+  const tasks = (await Task.find({ userId })
+    .sort({ updatedAt: -1 })
+    .skip(safeOffset)
+    .limit(safeLimit)
+    .select("_id title personaId updatedAt")
+    .lean()) as TaskRecord[];
+
+  return tasks.map((task) => ({
+    _id: String(task._id),
+    title: task.title || "Untitled conversation",
+    personaId:
+      (task.personaId as TaskHistoryItem["personaId"]) || DEFAULT_PERSONA_ID,
+    updatedAt: new Date(task.updatedAt || Date.now()).toISOString(),
+  }));
+}
+
+export async function getTaskByIdForUser({
+  taskId,
+  userId,
+}: {
+  taskId: string;
+  userId: string;
+}): Promise<TaskConversation | null> {
+  if (!isValidObjectId(taskId)) {
+    return null;
+  }
+
+  await connectToDatabase();
+
+  const task = await Task.findOne({ _id: taskId, userId })
+    .select(
+      "_id title personaId messages usage promptCount mediaCount estimatedBytes status endedAt endedReason endAction updatedAt",
+    )
+    .lean();
+
+  if (!task) {
+    return null;
+  }
+
+  const personaId = String(task.personaId || DEFAULT_PERSONA_ID) as PersonaId;
+
+  return {
+    _id: String(task._id),
+    title: String(task.title || "Untitled conversation"),
+    personaId,
+    messages: toPlainMessages(task.messages),
+    usage: typeof task.usage === "number" ? task.usage : 0,
+    promptCount: typeof task.promptCount === "number" ? task.promptCount : 0,
+    mediaCount: typeof task.mediaCount === "number" ? task.mediaCount : 0,
+    estimatedBytes:
+      typeof task.estimatedBytes === "number" ? task.estimatedBytes : 0,
+    status: task.status === "ended" ? "ended" : "active",
+    endedAt: task.endedAt ? new Date(task.endedAt).toISOString() : undefined,
+    endedReason: task.endedReason,
+    endAction: task.endAction,
+    updatedAt: new Date(task.updatedAt || Date.now()).toISOString(),
+  };
+}
+
+export async function incrementPromptCountIfBelowLimit({
+  taskId,
+  limit,
+}: {
+  taskId: string;
+  limit: number;
+}): Promise<boolean> {
+  try {
+    const parsedInput = incrementPromptCountSchema.safeParse({ taskId, limit });
+    if (!parsedInput.success) {
+      throw new Error("Invalid prompt slot claim.");
+    }
+
+    const { userId } = await auth();
+    if (!userId) {
+      throw new Error("Unauthorized");
+    }
+
+    await connectToDatabase();
+
+    const updatedTask = await Task.findOneAndUpdate(
+      {
+        _id: parsedInput.data.taskId,
+        userId,
+        promptCount: { $lt: parsedInput.data.limit },
+      },
+      {
+        $inc: { promptCount: 1 },
+        $set: { updatedAt: new Date() },
+      },
+      {
+        returnDocument: "after",
+        strict: true,
+        upsert: false,
+      },
+    );
+
+    return Boolean(updatedTask);
+  } catch (error) {
+    handleError({ error, source: "incrementPromptCountIfBelowLimit" });
+    return false;
+  }
+}
+
+export async function getMediaItemsByUserId(
+  userId: string,
+  mediaType: MediaContentType,
+  limit: number = 24,
+  offset: number = 0,
+): Promise<MediaLibraryItem[]> {
+  await connectToDatabase();
+
+  const safeLimit = Math.max(1, Math.min(limit, 100));
+  const safeOffset = Math.min(Math.max(0, offset), 10000);
+
+  const projectUrlExpression: Record<MediaContentType, string> = {
+    image_url: "$messages.content.image_url.url",
+    audio_url: "$messages.content.audio_url",
+  };
+
+  const mediaItems = (await Task.aggregate([
+    {
+      $match: {
+        userId,
+      },
+    },
+    {
+      $unwind: "$messages",
+    },
+    {
+      $unwind: "$messages.content",
+    },
+    {
+      $match: {
+        "messages.content.type": mediaType,
+      },
+    },
+    {
+      $project: {
+        _id: 0,
+        taskId: "$_id",
+        taskTitle: "$title",
+        personaId: "$personaId",
+        createdAt: {
+          $ifNull: ["$updatedAt", "$createdAt"],
+        },
+        url: projectUrlExpression[mediaType],
+      },
+    },
+    {
+      $match: {
+        url: {
+          $type: "string",
+          $ne: "",
+        },
+      },
+    },
+    {
+      $sort: {
+        createdAt: -1,
+      },
+    },
+    {
+      $skip: safeOffset,
+    },
+    {
+      $limit: safeLimit,
+    },
+  ])) as MediaAggregateRecord[];
+
+  return mediaItems.map((item) => ({
+    // Aggregation may return malformed dates from legacy rows; normalize safely.
+    createdAt: (() => {
+      const parsed = new Date(item.createdAt || Date.now());
+      return Number.isNaN(parsed.getTime())
+        ? new Date().toISOString()
+        : parsed.toISOString();
+    })(),
+    url: item.url ?? "",
+    taskId: String(item.taskId ?? ""),
+    taskTitle: item.taskTitle || "Untitled conversation",
+    personaId: getPersona(item.personaId).id,
+  }));
+}
+
+export async function getUploadsByUserId(
+  userId: string,
+  limit: number = 24,
+  offset: number = 0,
+): Promise<UploadLibraryItem[]> {
+  await connectToDatabase();
+
+  const safeLimit = Math.max(1, Math.min(limit, 100));
+  const safeOffset = Math.min(Math.max(0, offset), 10000);
+
+  const uploads = (await Upload.find({ userId })
+    .sort({ createdAt: -1 })
+    .skip(safeOffset)
+    .limit(safeLimit)
+    .select("fileName objectKey s3Url contentType sizeBytes taskId createdAt")
+    .lean()) as UploadRecord[];
+
+  return uploads.map((upload) => {
+    const parsedCreatedAt = new Date(upload.createdAt || Date.now());
+    const createdAt = Number.isNaN(parsedCreatedAt.getTime())
+      ? new Date().toISOString()
+      : parsedCreatedAt.toISOString();
+
+    return {
+      id: String(upload._id),
+      fileName: upload.fileName || "Uploaded file",
+      objectKey: upload.objectKey || "",
+      s3Url: upload.s3Url || "",
+      contentType: upload.contentType || "application/octet-stream",
+      sizeBytes: typeof upload.sizeBytes === "number" ? upload.sizeBytes : 0,
+      taskId:
+        typeof upload.taskId === "string" && upload.taskId.trim().length > 0
+          ? upload.taskId
+          : undefined,
+      createdAt,
+    };
+  });
+}

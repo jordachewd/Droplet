@@ -1,0 +1,102 @@
+"use client";
+
+import { useEffect } from "react";
+import classNames from "classnames";
+import { PromoContent } from "@/constants/promo-content";
+import ChatSidebarHead from "@/components/chat/sidebar/ChatSidebarHead";
+import ChatSidebarNav from "@/components/chat/sidebar/ChatSidebarNav";
+import ChatSidebarPromo from "@/components/chat/sidebar/ChatSidebarPromo";
+import ChatSidebarShell from "@/components/chat/sidebar/ChatSidebarShell";
+import { ConversationListItem } from "@/types/PersonaData.d";
+import { PlanName } from "@/types/PlanData.d";
+import { UserRoles } from "@/types/UserData.d";
+import { useUiStore } from "@/lib/hooks/use-ui-store";
+import { useShallow } from "zustand/react/shallow";
+
+interface ChatSidebarShellProps {
+  historyItems: ConversationListItem[];
+  isHistoryUnavailable?: boolean;
+  userRole?: UserRoles;
+  userPlanName?: PlanName | null;
+  isSuspended?: boolean;
+  promoContent?: PromoContent;
+}
+
+const SIDEBAR_STORAGE_KEY = "droplet-sidebar-collapsed";
+
+export default function ChatSidebarWrapper({
+  historyItems,
+  isHistoryUnavailable,
+  userRole,
+  userPlanName,
+  isSuspended,
+  promoContent,
+}: ChatSidebarShellProps) {
+  const {
+    desktopSidebarCollapsed: desktopCollapsed,
+    setDesktopSidebarCollapsed,
+  } = useUiStore(
+    useShallow((state) => ({
+      desktopSidebarCollapsed: state.desktopSidebarCollapsed,
+      setDesktopSidebarCollapsed: state.setDesktopSidebarCollapsed,
+    })),
+  );
+
+  useEffect(() => {
+    try {
+      const collapsedFromStorage = localStorage.getItem(SIDEBAR_STORAGE_KEY);
+      setDesktopSidebarCollapsed(collapsedFromStorage === "true");
+    } catch (error) {
+      void error;
+      setDesktopSidebarCollapsed(false);
+    }
+  }, [setDesktopSidebarCollapsed]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(SIDEBAR_STORAGE_KEY, String(desktopCollapsed));
+    } catch (error) {
+      void error;
+      // localStorage quota exceeded or unavailable - non-critical UI preference write.
+    }
+  }, [desktopCollapsed]);
+
+  const contentClass = classNames("chat-sidebar-content", {
+    "lg:items-center": desktopCollapsed,
+  });
+
+  return (
+    <ChatSidebarShell
+      id="chat-sidebar"
+      header={({ isDesktopCollapsed }) => (
+        <ChatSidebarHead isDesktopCollapsed={isDesktopCollapsed} />
+      )}
+      navigation={({ isSidebarOpen }) => (
+        <div className={contentClass}>
+          <ChatSidebarNav
+            isOpen={isSidebarOpen}
+            historyItems={historyItems}
+            isHistoryUnavailable={isHistoryUnavailable}
+          />
+        </div>
+      )}
+      footer={({ isSidebarOpen }) => {
+        const footClass = classNames(
+          "chat-sidebar-footer",
+          !isSidebarOpen && "hidden",
+        );
+
+        return (
+          <div className={footClass}>
+            <ChatSidebarPromo
+              userRole={userRole}
+              planName={userPlanName}
+              isSuspended={isSuspended}
+              promoContent={promoContent}
+            />
+          </div>
+        );
+      }}
+    />
+  );
+}

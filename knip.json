@@ -1,0 +1,14 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": ["tests/e2e/global.setup.ts"],
+  "ignoreFiles": ["tests/unit/test-support/server-only.ts"],
+  "ignoreDependencies": ["prettier"],
+  "ignoreBinaries": ["codex"],
+  "ignoreExportsUsedInFile": {
+    "interface": true,
+    "type": true
+  },
+  "ignoreIssues": {
+    "tests/e2e/utils/e2e-test-user.ts": ["exports"]
+  }
+}

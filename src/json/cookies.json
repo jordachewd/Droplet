@@ -1,0 +1,16 @@
+{
+  "cookieCategories": [
+    {
+      "title": "Essential authentication cookies",
+      "description": "Clerk-managed session and security cookies are required for sign-in, session continuity, fraud prevention, and protected route access. Without these cookies, authenticated parts of Droplet cannot function."
+    },
+    {
+      "title": "Functional preference storage",
+      "description": "Droplet stores UI preferences in browser storage so the experience stays consistent across visits. The current documented keys are droplet-theme-mode and droplet-sidebar-collapsed."
+    },
+    {
+      "title": "Optional analytics or future tooling",
+      "description": "If analytics, experimentation, or additional marketing tools are introduced later, Droplet should document them here before activation and obtain consent where required by applicable law."
+    }
+  ]
+}

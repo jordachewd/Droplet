@@ -1,0 +1,49 @@
+@layer components {
+  .heading-1,
+  .heading-2,
+  .heading-3,
+  .heading-4,
+  .heading-5,
+  .heading-6 {
+    font-family: var(--font-jwd-dosis), sans-serif;
+    @apply text-midnightBlue-500 dark:text-lavenderHaze-500;
+    @apply leading-tight font-semibold;
+  }
+
+  .heading-1 {
+    @apply text-6xl leading-[1.125];
+  }
+
+  .heading-2 {
+    @apply text-5xl;
+  }
+
+  .heading-3 {
+    @apply text-4xl;
+  }
+
+  .heading-4 {
+    @apply text-3xl;
+  }
+
+  .heading-5 {
+    @apply text-2xl;
+  }
+
+  .heading-6 {
+    @apply text-xl;
+  }
+
+  .body-1,
+  .body-2 {
+    @apply text-midnightBlue-500 dark:text-lavenderHaze-500;
+  }
+
+  .body-1 {
+    @apply text-base;
+  }
+
+  .body-2 {
+    @apply text-sm;
+  }
+}

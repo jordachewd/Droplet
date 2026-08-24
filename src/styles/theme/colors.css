@@ -1,0 +1,67 @@
+@theme {
+  --color-nightIndigo-100: #ede7f8;
+  --color-nightIndigo-200: #d7cbed;
+  --color-nightIndigo-300: #c1afe1;
+  --color-nightIndigo-400: #ab93d6;
+  --color-nightIndigo-500: #1b003f;
+  --color-nightIndigo-600: #170036;
+  --color-nightIndigo-700: #13002d;
+  --color-nightIndigo-800: #0f0023;
+  --color-nightIndigo-900: #0b001a;
+  --color-nightIndigo-1000: #070011;
+
+  --color-twilightPurple-100: #efe5fb;
+  --color-twilightPurple-200: #dfcbf7;
+  --color-twilightPurple-300: #cfb1f3;
+  --color-twilightPurple-400: #bf97ef;
+  --color-twilightPurple-500: #4b0082;
+  --color-twilightPurple-600: #420072;
+  --color-twilightPurple-700: #380061;
+  --color-twilightPurple-800: #2f0051;
+  --color-twilightPurple-900: #250041;
+  --color-twilightPurple-1000: #1c0031;
+
+  --color-midnightBlue-100: #e7e7f6;
+  --color-midnightBlue-200: #cfcfec;
+  --color-midnightBlue-300: #b7b7e3;
+  --color-midnightBlue-400: #9f9fd9;
+  --color-midnightBlue-500: #191970;
+  --color-midnightBlue-600: #161663;
+  --color-midnightBlue-700: #121255;
+  --color-midnightBlue-800: #0f0f47;
+  --color-midnightBlue-900: #0b0b39;
+  --color-midnightBlue-1000: #08082c;
+
+  --color-lavenderHaze-100: #fcfcff;
+  --color-lavenderHaze-200: #f6f6fe;
+  --color-lavenderHaze-300: #f1f1fd;
+  --color-lavenderHaze-400: #ebebfb;
+  --color-lavenderHaze-500: #e6e6fa;
+  --color-lavenderHaze-600: #cecee1;
+  --color-lavenderHaze-700: #b6b6c9;
+  --color-lavenderHaze-800: #9e9eb0;
+  --color-lavenderHaze-900: #868698;
+  --color-lavenderHaze-1000: #6f6f80;
+
+  --color-dustyBlue-100: #edf4fe;
+  --color-dustyBlue-200: #dbe9fc;
+  --color-dustyBlue-300: #c9def9;
+  --color-dustyBlue-400: #b7d3f7;
+  --color-dustyBlue-500: #6495ed;
+  --color-dustyBlue-600: #5986d5;
+  --color-dustyBlue-700: #4d76bc;
+  --color-dustyBlue-800: #4267a4;
+  --color-dustyBlue-900: #36588b;
+  --color-dustyBlue-1000: #2b4973;
+
+  --color-limeGreen-100: #f9fdd9;
+  --color-limeGreen-200: #f3fbb6;
+  --color-limeGreen-300: #edf993;
+  --color-limeGreen-400: #e7f770;
+  --color-limeGreen-500: #d9f20c;
+  --color-limeGreen-600: #c3da0b;
+  --color-limeGreen-700: #adc20a;
+  --color-limeGreen-800: #97a908;
+  --color-limeGreen-900: #819107;
+  --color-limeGreen-1000: #6b7906;
+}

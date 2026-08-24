@@ -1,0 +1,43 @@
+@layer components {
+  .card {
+    @apply flex flex-col rounded-2xl p-6 shadow-sm;
+    @apply bg-lavenderHaze-100/70 dark:bg-nightIndigo-900/80;
+  }
+
+  .card.card-has-link {
+    @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-md;
+  }
+
+  .card-head {
+    @apply flex justify-between gap-4;
+  }
+
+  .card-head-wrap {
+    @apply flex flex-col min-h-12 justify-center;
+  }
+
+  .card-eyebrow {
+    @apply text-xxs font-semibold uppercase tracking-widest;
+    @apply text-dustyBlue-500 dark:text-lavenderHaze-900;
+  }
+
+  .card-title {
+    font-family: var(--font-jwd-dosis), sans-serif;
+    @apply leading-tight font-medium text-3xl;
+    @apply text-midnightBlue-500 dark:text-lavenderHaze-500;
+  }
+
+  .card-tagline {
+    @apply text-base mt-1 font-medium text-twilightPurple-600 dark:text-lavenderHaze-600;
+  }
+
+  .card-icon {
+    @apply flex w-12 h-12 rounded-full px-3 py-2 text-lg items-center justify-center;
+    @apply bg-lavenderHaze-100 dark:bg-nightIndigo-900/50;
+  }
+
+  .card-desc {
+    @apply mt-6 text-base md:text-[0.9375rem];
+    @apply text-midnightBlue-500 dark:text-lavenderHaze-500;
+  }
+}

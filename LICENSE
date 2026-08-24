@@ -1,0 +1,34 @@
+Copyright (c) 2026 JordacheWD. All rights reserved.
+
+Droplet — source-available for review, not for reuse.
+
+This source code is published publicly for the sole purpose of portfolio
+review, technical evaluation, and study. It is NOT open source.
+
+PERMITTED
+  - Read, study, and reference this code.
+  - Quote short excerpts with attribution, for commentary, review, or
+    educational purposes.
+  - Fork the repository through GitHub for the purpose of review, as
+    provided by the GitHub Terms of Service.
+
+NOT PERMITTED
+  - Use of this code, or any substantial portion of it, in any product or
+    service, whether commercial or non-commercial.
+  - Redistribution, sublicensing, or sale of this code.
+  - Deploying this code, in whole or in substantial part, as a hosted or
+    network-accessible service.
+  - Use of the "Droplet" name, logo, or branding.
+
+Third-party dependencies are governed by their own licenses; nothing here
+alters those terms.
+
+For any use beyond the above, contact office@jordachewd.com.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
